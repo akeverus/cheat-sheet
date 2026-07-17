@@ -11,6 +11,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Пакетная обработка обязательно выполняется вручную оператором и не может запускаться автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Batch как раз чаще запускается автоматически — по cron-расписанию или событию; ручной запуск лишь один из вариантов.",
+                "source_of_confusion": "Ручной запуск встречается в простых случаях, что создаёт впечатление обязательности.",
+                "if_it_were_true": "Если бы запуск был только ручным, не существовало бы планировщиков (`@Scheduled`, `Kubernetes CronJob`) для batch-заданий.",
+                "how_it_should_be": "Запуск может быть по расписанию, по событию или вручную — автоматизация это норма, а не исключение."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Пакетная обработка применяется только для маленьких объёмов данных, где важна минимальная задержка отклика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Batch ориентирован именно на большие объёмы (тысячи–миллиарды записей), а минимальная задержка отклика — задача online-систем.",
+                "source_of_confusion": "Слово «пакет» иногда воспринимают как «небольшая пачка», отсюда ошибка про малые объёмы.",
+                "if_it_were_true": "Если бы batch был для малых данных и низкой задержки, не понадобились бы chunk-транзакции и партиционирование.",
+                "how_it_should_be": "Batch применяют для массовой автономной обработки больших объёмов, где задержка отдельного элемента не критична."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Пакетная обработка — подход, при котором операции выполняются над большими объёмами данных автономно, без real-time взаимодействия с пользователем; задания запускаются по расписанию или событию, обрабатывают данные порциями с commit/rollback и поддерживают перезапуск с точки сбоя.",
               "correct": true,
               "sections": {
@@ -22,8 +46,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "Пакетная обработка — это обработка каждого пользовательского запроса в реальном времени с немедленным ответом, как в обычном REST-контроллере.",
               "correct": false,
               "sections": {
@@ -31,30 +55,6 @@
                 "source_of_confusion": "И batch, и REST «обрабатывают данные», поэтому термины путают.",
                 "if_it_were_true": "Если бы batch отвечал в реальном времени, не было бы смысла в commit/rollback по порциям и перезапуске с точки сбоя.",
                 "how_it_should_be": "Batch запускается по расписанию или событию и обрабатывает данные порциями, а не отвечает на каждый запрос."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Пакетная обработка применяется только для маленьких объёмов данных, где важна минимальная задержка отклика.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Batch ориентирован именно на большие объёмы (тысячи–миллиарды записей), а минимальная задержка отклика — задача online-систем.",
-                "source_of_confusion": "Слово «пакет» иногда воспринимают как «небольшая пачка», отсюда ошибка про малые объёмы.",
-                "if_it_were_true": "Если бы batch был для малых данных и низкой задержки, не понадобились бы chunk-транзакции и партиционирование.",
-                "how_it_should_be": "Batch применяют для массовой автономной обработки больших объёмов, где задержка отдельного элемента не критична."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Пакетная обработка обязательно выполняется вручную оператором и не может запускаться автоматически.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Batch как раз чаще запускается автоматически — по cron-расписанию или событию; ручной запуск лишь один из вариантов.",
-                "source_of_confusion": "Ручной запуск встречается в простых случаях, что создаёт впечатление обязательности.",
-                "if_it_were_true": "Если бы запуск был только ручным, не существовало бы планировщиков (`@Scheduled`, `Kubernetes CronJob`) для batch-заданий.",
-                "how_it_should_be": "Запуск может быть по расписанию, по событию или вручную — автоматизация это норма, а не исключение."
               }
             }
           ]
@@ -71,31 +71,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring Batch` — это HTTP-фреймворк для построения REST API и обработки веб-запросов в реальном времени.",
-              "correct": false,
-              "sections": {
-                "what_actually": "REST API и веб-запросы — это область `Spring MVC`/`Spring WebFlux`; `Spring Batch` решает задачи пакетной обработки.",
-                "source_of_confusion": "Оба входят в экосистему `Spring`, поэтому их функции иногда смешивают.",
-                "if_it_were_true": "Если бы `Spring Batch` был веб-фреймворком, в нём не было бы `ItemReader`/`ItemWriter` и chunk-транзакций.",
-                "how_it_should_be": "`Spring Batch` — про batch-обработку; для REST используют `Spring MVC` или `Spring WebFlux`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`Spring Batch` — фреймворк для пакетной обработки данных в экосистеме `Spring`; он даёт повторно используемые компоненты для чтения, обработки и записи данных (`ItemReader`/`ItemProcessor`/`ItemWriter`) и инфраструктуру: chunk-обработку с управлением транзакциями, retry/skip, параллелизм, restart через `JobRepository`, слушатели и интеграцию со `Spring Boot`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Главная ценность — готовая инфраструктура для надёжной обработки больших объёмов: chunk-oriented processing порциями, политики ошибок, перезапуск с точки сбоя и мониторинг через метаданные.",
-                "example": "Импорт `CSV` в БД через `FlatFileItemReader` → валидирующий `ItemProcessor` → `JdbcBatchItemWriter` с chunk(500), retry на дедлоках и skip на ошибках парсинга.",
-                "when_to_apply": "Берут, когда нужна надёжная пакетная обработка с restart, обработкой ошибок и масштабированием, а не одноразовый скрипт.",
-                "edge_cases": "Для простой однократной задачи без перезапуска и больших объёмов фреймворк может быть избыточен — хватит обычного сервиса с циклом.",
-                "related": "[[spring-batch-interview#Q1]] что такое batch-обработка; [[spring-batch-interview#Q3]] ключевые компоненты; [[spring-batch-interview#Q28]] интеграция со Spring Boot."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Spring Batch` — это ORM-фреймворк, заменяющий `JPA`/`Hibernate` для маппинга объектов на таблицы.",
               "correct": false,
               "sections": {
@@ -106,8 +81,20 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Batch` — это HTTP-фреймворк для построения REST API и обработки веб-запросов в реальном времени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "REST API и веб-запросы — это область `Spring MVC`/`Spring WebFlux`; `Spring Batch` решает задачи пакетной обработки.",
+                "source_of_confusion": "Оба входят в экосистему `Spring`, поэтому их функции иногда смешивают.",
+                "if_it_were_true": "Если бы `Spring Batch` был веб-фреймворком, в нём не было бы `ItemReader`/`ItemWriter` и chunk-транзакций.",
+                "how_it_should_be": "`Spring Batch` — про batch-обработку; для REST используют `Spring MVC` или `Spring WebFlux`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Spring Batch` — это брокер сообщений для асинхронной передачи событий между сервисами.",
               "correct": false,
               "sections": {
@@ -115,6 +102,19 @@
                 "source_of_confusion": "Remote chunking использует брокер, что создаёт впечатление, будто сам фреймворк им является.",
                 "if_it_were_true": "Если бы это был брокер, он хранил бы и доставлял сообщения, а не оркестрировал чтение/обработку/запись.",
                 "how_it_should_be": "`Spring Batch` — оркестратор пакетной обработки, а сообщения передаёт через внешний брокер."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Batch` — фреймворк для пакетной обработки данных в экосистеме `Spring`; он даёт повторно используемые компоненты для чтения, обработки и записи данных (`ItemReader`/`ItemProcessor`/`ItemWriter`) и инфраструктуру: chunk-обработку с управлением транзакциями, retry/skip, параллелизм, restart через `JobRepository`, слушатели и интеграцию со `Spring Boot`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная ценность — готовая инфраструктура для надёжной обработки больших объёмов: chunk-oriented processing порциями, политики ошибок, перезапуск с точки сбоя и мониторинг через метаданные.",
+                "example": "Импорт `CSV` в БД через `FlatFileItemReader` → валидирующий `ItemProcessor` → `JdbcBatchItemWriter` с chunk(500), retry на дедлоках и skip на ошибках парсинга.",
+                "when_to_apply": "Берут, когда нужна надёжная пакетная обработка с restart, обработкой ошибок и масштабированием, а не одноразовый скрипт.",
+                "edge_cases": "Для простой однократной задачи без перезапуска и больших объёмов фреймворк может быть избыточен — хватит обычного сервиса с циклом.",
+                "related": "[[spring-batch-interview#Q1]] что такое batch-обработка; [[spring-batch-interview#Q3]] ключевые компоненты; [[spring-batch-interview#Q28]] интеграция со Spring Boot."
               }
             }
           ]
@@ -143,6 +143,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Архитектура `Spring Batch` требует обязательного брокера сообщений между `ItemReader` и `ItemWriter` внутри шага.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Внутри обычного chunk-`Step` reader и writer связаны напрямую в одном процессе; брокер нужен лишь для remote chunking.",
+                "source_of_confusion": "Remote chunking действительно вставляет брокер, что выдают за общее правило.",
+                "if_it_were_true": "Если бы брокер был обязателен, нельзя было бы запустить простой локальный `Job` без `Kafka`.",
+                "how_it_should_be": "Большинство `Job`-ов работают в одном JVM без брокера; он опционален для распределённого масштабирования."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Ключевыми компонентами `Spring Batch` являются `@Controller`, `@Service` и `@Repository` — стандартные слои Spring MVC.",
               "correct": false,
               "sections": {
@@ -153,8 +165,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Архитектура состоит из трёх уровней: Application Layer (своя бизнес-логика — `Job`, `Step`, читатели/писатели/процессоры), Batch Core (ядро: `Job`, `Step`, `JobLauncher`, `JobRepository`) и Batch Infrastructure (готовые `ItemReader`/`ItemWriter`, retry/skip, слушатели).",
               "correct": true,
               "sections": {
@@ -163,18 +175,6 @@
                 "when_to_apply": "Знание уровней нужно при проектировании задания и понимании, что относится к ядру, а что к инфраструктуре.",
                 "edge_cases": "Граница между Core и Infrastructure условна: готовые читатели формально инфраструктура, но без `Job`/`Step` из Core они бесполезны.",
                 "related": "[[spring-batch-interview#Q2]] что такое Spring Batch; [[spring-batch-interview#Q6]] JobRepository; [[spring-batch-interview#Q9]] Step и модели обработки."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Архитектура `Spring Batch` требует обязательного брокера сообщений между `ItemReader` и `ItemWriter` внутри шага.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Внутри обычного chunk-`Step` reader и writer связаны напрямую в одном процессе; брокер нужен лишь для remote chunking.",
-                "source_of_confusion": "Remote chunking действительно вставляет брокер, что выдают за общее правило.",
-                "if_it_were_true": "Если бы брокер был обязателен, нельзя было бы запустить простой локальный `Job` без `Kafka`.",
-                "how_it_should_be": "Большинство `Job`-ов работают в одном JVM без брокера; он опционален для распределённого масштабирования."
               }
             }
           ]
@@ -191,13 +191,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Job`, `JobInstance` и `JobExecution` — это три синонима для одного и того же объекта запуска задания.",
+              "text": "Один `JobInstance` может иметь только один `JobExecution`, и при сбое создаётся новый `JobInstance`.",
               "correct": false,
               "sections": {
-                "what_actually": "Это три разных понятия: определение (`Job`), экземпляр по параметрам (`JobInstance`) и попытка выполнения (`JobExecution`).",
-                "source_of_confusion": "Имена похожи и все содержат «Job», поэтому их принимают за синонимы.",
-                "if_it_were_true": "Если бы это был один объект, нельзя было бы иметь несколько `JobExecution` у одного `JobInstance` при перезапуске.",
-                "how_it_should_be": "`Job` — blueprint, `JobInstance` — Job+параметры, `JobExecution` — отдельная попытка выполнения."
+                "what_actually": "При перезапуске сбойного задания создаётся новый `JobExecution` в рамках того же `JobInstance`, а не новый инстанс.",
+                "source_of_confusion": "Кажется логичным, что каждая попытка — это новый экземпляр.",
+                "if_it_were_true": "Если бы при сбое рождался новый `JobInstance`, теряалась бы привязка перезапуска к точке сбоя предыдущей попытки.",
+                "how_it_should_be": "`JobInstance` остаётся прежним при тех же параметрах; перезапуск добавляет новый `JobExecution`."
               }
             },
             {
@@ -215,13 +215,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Один `JobInstance` может иметь только один `JobExecution`, и при сбое создаётся новый `JobInstance`.",
+              "text": "`Job`, `JobInstance` и `JobExecution` — это три синонима для одного и того же объекта запуска задания.",
               "correct": false,
               "sections": {
-                "what_actually": "При перезапуске сбойного задания создаётся новый `JobExecution` в рамках того же `JobInstance`, а не новый инстанс.",
-                "source_of_confusion": "Кажется логичным, что каждая попытка — это новый экземпляр.",
-                "if_it_were_true": "Если бы при сбое рождался новый `JobInstance`, теряалась бы привязка перезапуска к точке сбоя предыдущей попытки.",
-                "how_it_should_be": "`JobInstance` остаётся прежним при тех же параметрах; перезапуск добавляет новый `JobExecution`."
+                "what_actually": "Это три разных понятия: определение (`Job`), экземпляр по параметрам (`JobInstance`) и попытка выполнения (`JobExecution`).",
+                "source_of_confusion": "Имена похожи и все содержат «Job», поэтому их принимают за синонимы.",
+                "if_it_were_true": "Если бы это был один объект, нельзя было бы иметь несколько `JobExecution` у одного `JobInstance` при перезапуске.",
+                "how_it_should_be": "`Job` — blueprint, `JobInstance` — Job+параметры, `JobExecution` — отдельная попытка выполнения."
               }
             },
             {
@@ -276,18 +276,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`JobParameters` поддерживают только тип `String`, поэтому даты приходится хранить как текст вручную.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Поддерживаются `String`, `Long`, `Double`, `Date`, `LocalDate`, `LocalDateTime` — даты передаются типизированно через `addLocalDate`/`addLocalDateTime`.",
-                "source_of_confusion": "В старых примерах часто всё передавали строками, отсюда заблуждение.",
-                "if_it_were_true": "Если бы был только `String`, не существовало бы методов `addLong`/`addLocalDate` в `JobParametersBuilder`.",
-                "how_it_should_be": "Используют типизированные методы билдера; ручное хранение даты строкой не требуется."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Доступ к `JobParameters` внутри `ItemReader` работает без каких-либо аннотаций — достаточно обычного `@Value`.",
               "correct": false,
               "sections": {
@@ -295,6 +283,18 @@
                 "source_of_confusion": "Обычный `@Value` для статических свойств работает без scope, что переносят на jobParameters.",
                 "if_it_were_true": "Если бы scope был не нужен, параметры разрешались бы при создании бина, когда `JobParameters` ещё нет.",
                 "how_it_should_be": "Нужен `@StepScope`, создающий proxy, который подставляет параметры в момент выполнения шага."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`JobParameters` поддерживают только тип `String`, поэтому даты приходится хранить как текст вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поддерживаются `String`, `Long`, `Double`, `Date`, `LocalDate`, `LocalDateTime` — даты передаются типизированно через `addLocalDate`/`addLocalDateTime`.",
+                "source_of_confusion": "В старых примерах часто всё передавали строками, отсюда заблуждение.",
+                "if_it_were_true": "Если бы был только `String`, не существовало бы методов `addLong`/`addLocalDate` в `JobParametersBuilder`.",
+                "how_it_should_be": "Используют типизированные методы билдера; ручное хранение даты строкой не требуется."
               }
             }
           ]
@@ -311,18 +311,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`JobRepository` — это `ItemReader`, который читает исходные бизнес-данные для обработки в шаге.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`JobRepository` хранит метаданные запусков, а не читает бизнес-данные; чтение источника — задача `ItemReader`.",
-                "source_of_confusion": "Слово «repository» ассоциируется с доступом к данным в стиле Spring Data.",
-                "if_it_were_true": "Если бы он читал бизнес-данные, не было бы отдельных `ItemReader` для CSV, JDBC и JPA.",
-                "how_it_should_be": "`JobRepository` пишет статусы и контексты в таблицы `BATCH_*`; бизнес-данные читает `ItemReader`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`JobRepository` — центральное хранилище метаданных `Spring Batch`: он сохраняет статус, параметры, время старта/завершения, счётчики read/write и ошибки каждого запуска в таблицы `BATCH_JOB_INSTANCE`, `BATCH_JOB_EXECUTION`, `BATCH_STEP_EXECUTION` и контексты.",
               "correct": true,
               "sections": {
@@ -331,6 +319,18 @@
                 "when_to_apply": "Нужен всегда: `Spring Boot` автоконфигурирует его поверх `DataSource`; кастомизируют через `JobRepositoryFactoryBean` (table prefix, isolation level).",
                 "edge_cases": "В embedded-режиме можно использовать in-memory map-репозиторий, но он не переживает рестарт JVM — для production нужна реляционная БД.",
                 "related": "[[spring-batch-interview#Q4]] JobInstance и JobExecution; [[spring-batch-interview#Q8]] ExecutionContext; [[spring-batch-interview#Q38]] изменения JobRepository в Spring Batch 5."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`JobRepository` — это `ItemReader`, который читает исходные бизнес-данные для обработки в шаге.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JobRepository` хранит метаданные запусков, а не читает бизнес-данные; чтение источника — задача `ItemReader`.",
+                "source_of_confusion": "Слово «repository» ассоциируется с доступом к данным в стиле Spring Data.",
+                "if_it_were_true": "Если бы он читал бизнес-данные, не было бы отдельных `ItemReader` для CSV, JDBC и JPA.",
+                "how_it_should_be": "`JobRepository` пишет статусы и контексты в таблицы `BATCH_*`; бизнес-данные читает `ItemReader`."
               }
             },
             {
@@ -371,30 +371,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`JobLauncher` последовательно выполняет `Step`-ы задания и управляет переходами между ними, а конфигурация `Job` лишь перечисляет доступные шаги.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Порядок шагов и логику задаёт конфигурация `Job` (через `JobBuilder`); `JobLauncher` лишь запускает уже определённый `Job`.",
-                "source_of_confusion": "Раз он «launcher», кажется, что он управляет всем процессом выполнения.",
-                "if_it_were_true": "Если бы лаунчер задавал шаги, не нужен был бы `JobBuilder.start(...).next(...)`.",
-                "how_it_should_be": "`JobLauncher` принимает готовый `Job` и параметры и инициирует выполнение, не определяя шаги."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`JobLauncher` выполняет `Job` синхронно и возвращает управление после завершения; для асинхронного запуска поверх него ставят отдельный планировщик, а неблокирующего режима у самого лаунчера нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Режим зависит от `TaskExecutor`: с `SimpleAsyncTaskExecutor` запуск асинхронный и `run()` возвращается немедленно.",
-                "source_of_confusion": "По умолчанию `TaskExecutor` синхронный, что принимают за единственно возможный режим.",
-                "if_it_were_true": "Если бы был только синхронный режим, нельзя было бы запускать долгие `Job` из веб-запроса без блокировки.",
-                "how_it_should_be": "Можно настроить асинхронный лаунчер через async `TaskExecutor` — поток не блокируется."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`JobLauncher` — интерфейс запуска `Job` с заданными `JobParameters`; метод `run(Job, JobParameters)` валидирует параметры, проверяет через `JobRepository` возможность запуска и стартует задание. Он работает синхронно (блокирует до завершения) или асинхронно (через `SimpleAsyncTaskExecutor` возвращает `JobExecution` сразу).",
               "correct": true,
               "sections": {
@@ -406,8 +382,20 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
+              "text": "`JobLauncher` последовательно выполняет `Step`-ы задания и управляет переходами между ними, а конфигурация `Job` лишь перечисляет доступные шаги.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Порядок шагов и логику задаёт конфигурация `Job` (через `JobBuilder`); `JobLauncher` лишь запускает уже определённый `Job`.",
+                "source_of_confusion": "Раз он «launcher», кажется, что он управляет всем процессом выполнения.",
+                "if_it_were_true": "Если бы лаунчер задавал шаги, не нужен был бы `JobBuilder.start(...).next(...)`.",
+                "how_it_should_be": "`JobLauncher` принимает готовый `Job` и параметры и инициирует выполнение, не определяя шаги."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`JobLauncher` запускает переданный `Job` без обращения к `JobRepository`; проверку уже завершённого `JobInstance` выполняет сам первый `Step` на старте.",
               "correct": false,
               "sections": {
@@ -415,6 +403,18 @@
                 "source_of_confusion": "Кажется, что лаунчер «просто запускает» без проверок состояния.",
                 "if_it_were_true": "Если бы проверки не было, успешные задания запускались бы повторно и дублировали обработку.",
                 "how_it_should_be": "`JobLauncher` валидирует возможность запуска через `JobRepository` и предотвращает повторный запуск `COMPLETED`-инстанса."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`JobLauncher` выполняет `Job` синхронно и возвращает управление после завершения; для асинхронного запуска поверх него ставят отдельный планировщик, а неблокирующего режима у самого лаунчера нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Режим зависит от `TaskExecutor`: с `SimpleAsyncTaskExecutor` запуск асинхронный и `run()` возвращается немедленно.",
+                "source_of_confusion": "По умолчанию `TaskExecutor` синхронный, что принимают за единственно возможный режим.",
+                "if_it_were_true": "Если бы был только синхронный режим, нельзя было бы запускать долгие `Job` из веб-запроса без блокировки.",
+                "how_it_should_be": "Можно настроить асинхронный лаунчер через async `TaskExecutor` — поток не блокируется."
               }
             }
           ]
@@ -431,18 +431,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ExecutionContext` — это пул соединений с базой данных, который `Step` использует для записи данных.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`ExecutionContext` — это key-value хранилище состояния, а соединениями управляет `DataSource`/пул (`HikariCP`).",
-                "source_of_confusion": "И то, и другое связано с инфраструктурой шага, отсюда смешение понятий.",
-                "if_it_were_true": "Если бы это был пул соединений, в нём нельзя было бы хранить произвольные ключи вроде `minId`/`maxId`.",
-                "how_it_should_be": "`ExecutionContext` хранит состояние для обмена между шагами и restart, а соединения даёт `DataSource`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`StepExecutionContext` доступен всем шагам задания так же, как `JobExecutionContext`.",
               "correct": false,
               "sections": {
@@ -453,8 +441,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`ExecutionContext` существует только в памяти и не участвует в перезапуске задания.",
               "correct": false,
               "sections": {
@@ -462,6 +450,18 @@
                 "source_of_confusion": "Похож на обычную in-memory map, что наводит на мысль об отсутствии персистентности.",
                 "if_it_were_true": "Если бы он не сохранялся, перезапуск с точки сбоя был бы невозможен.",
                 "how_it_should_be": "`ExecutionContext` персистится в `JobRepository` и обеспечивает продолжение обработки после сбоя."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ExecutionContext` — это пул соединений с базой данных, который `Step` использует для записи данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ExecutionContext` — это key-value хранилище состояния, а соединениями управляет `DataSource`/пул (`HikariCP`).",
+                "source_of_confusion": "И то, и другое связано с инфраструктурой шага, отсюда смешение понятий.",
+                "if_it_were_true": "Если бы это был пул соединений, в нём нельзя было бы хранить произвольные ключи вроде `minId`/`maxId`.",
+                "how_it_should_be": "`ExecutionContext` хранит состояние для обмена между шагами и restart, а соединения даёт `DataSource`."
               }
             },
             {
@@ -504,18 +504,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Step` реализует только chunk-модель read/process/write; одноразовые операции вроде очистки файлов оформляют как chunk-шаг с reader, возвращающим один элемент.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Помимо chunk есть tasklet-модель именно для одноразовых атомарных операций (очистка, DDL, вызов API).",
-                "source_of_confusion": "Chunk-модель наиболее известна, поэтому tasklet упускают из виду.",
-                "if_it_were_true": "Если бы tasklet не было, простую очистку пришлось бы искусственно оформлять как reader/processor/writer.",
-                "how_it_should_be": "`Step` бывает chunk-oriented или tasklet; для одного действия используют tasklet."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Step` и `Job` по сути эквивалентны: каждый шаг оформляют как отдельный `Job`, а многошаговую обработку собирают, запуская эти `Job`-ы цепочкой один за другим.",
               "correct": false,
               "sections": {
@@ -526,8 +514,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Каждый отдельный элемент в chunk-модели коммитится в своей собственной транзакции.",
               "correct": false,
               "sections": {
@@ -535,6 +523,18 @@
                 "source_of_confusion": "Кажется логичным коммитить поэлементно для надёжности.",
                 "if_it_were_true": "Если бы каждый элемент был отдельной транзакцией, терялся бы смысл chunk-size и снижалась производительность.",
                 "how_it_should_be": "Один chunk = одна транзакция; commit/rollback применяется к порции целиком."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Step` реализует только chunk-модель read/process/write; одноразовые операции вроде очистки файлов оформляют как chunk-шаг с reader, возвращающим один элемент.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Помимо chunk есть tasklet-модель именно для одноразовых атомарных операций (очистка, DDL, вызов API).",
+                "source_of_confusion": "Chunk-модель наиболее известна, поэтому tasklet упускают из виду.",
+                "if_it_were_true": "Если бы tasklet не было, простую очистку пришлось бы искусственно оформлять как reader/processor/writer.",
+                "how_it_should_be": "`Step` бывает chunk-oriented или tasklet; для одного действия используют tasklet."
               }
             }
           ]
@@ -576,18 +576,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Если `ItemProcessor.process()` возвращает `null`, обработка всего chunk прерывается с ошибкой.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Возврат `null` означает фильтрацию: элемент просто пропускается и не передаётся в writer, остальные обрабатываются дальше.",
-                "source_of_confusion": "`null` часто ассоциируется с ошибкой или NPE.",
-                "if_it_were_true": "Если бы `null` ронял chunk, нельзя было бы использовать processor для фильтрации невалидных записей.",
-                "how_it_should_be": "`null` из processor — это штатная фильтрация элемента, а не прерывание chunk."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Каждый элемент chunk-обработки пишется и коммитится отдельной транзакцией внутри `ItemWriter`.",
               "correct": false,
               "sections": {
@@ -595,6 +583,18 @@
                 "source_of_confusion": "Поэлементная запись кажется привычной по обычному CRUD.",
                 "if_it_were_true": "Если бы каждый элемент коммитился отдельно, параметр chunk-size не имел бы смысла.",
                 "how_it_should_be": "Writer получает список элементов chunk и коммитит их единой транзакцией."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Если `ItemProcessor.process()` возвращает `null`, обработка всего chunk прерывается с ошибкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Возврат `null` означает фильтрацию: элемент просто пропускается и не передаётся в writer, остальные обрабатываются дальше.",
+                "source_of_confusion": "`null` часто ассоциируется с ошибкой или NPE.",
+                "if_it_were_true": "Если бы `null` ронял chunk, нельзя было бы использовать processor для фильтрации невалидных записей.",
+                "how_it_should_be": "`null` из processor — это штатная фильтрация элемента, а не прерывание chunk."
               }
             }
           ]
@@ -611,18 +611,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Tasklet` внутри `execute()` сам вызывает связку `ItemReader`/`ItemProcessor`/`ItemWriter`, оборачивая их обработку в один компонент шага.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Tasklet` не использует reader/processor/writer — это одна операция в методе `execute()`; read/process/write — это chunk-модель.",
-                "source_of_confusion": "Обе модели — это `Step`, поэтому компоненты chunk приписывают и tasklet.",
-                "if_it_were_true": "Если бы tasklet требовал reader/writer, он не отличался бы от chunk-шага.",
-                "how_it_should_be": "`Tasklet` — это единая операция в `execute()`, без разделения на read/process/write."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Метод `Tasklet.execute()` возвращает `boolean`: `true` завершает шаг, `false` помечает его как неуспешный.",
               "correct": false,
               "sections": {
@@ -630,6 +618,18 @@
                 "source_of_confusion": "Привычка к void-методам и однократному вызову переносится на tasklet.",
                 "if_it_were_true": "Если бы возврата не было, нельзя было бы организовать циклическую обработку через `CONTINUABLE`.",
                 "how_it_should_be": "`execute()` возвращает `RepeatStatus`, управляя повторными вызовами и завершением шага."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Tasklet` предназначен для обработки больших наборов данных порциями с автоматическими транзакциями per chunk.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обработка больших наборов порциями — это chunk-модель; tasklet рассчитан на одну атомарную операцию.",
+                "source_of_confusion": "Tasklet тоже работает в транзакции, что путают с chunk-транзакциями.",
+                "if_it_were_true": "Если бы tasklet был для больших объёмов, у него были бы chunk-size и restart по элементам.",
+                "how_it_should_be": "Для массовой порционной обработки используют chunk, а tasklet — для единичного действия."
               }
             },
             {
@@ -648,13 +648,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Tasklet` предназначен для обработки больших наборов данных порциями с автоматическими транзакциями per chunk.",
+              "text": "`Tasklet` внутри `execute()` сам вызывает связку `ItemReader`/`ItemProcessor`/`ItemWriter`, оборачивая их обработку в один компонент шага.",
               "correct": false,
               "sections": {
-                "what_actually": "Обработка больших наборов порциями — это chunk-модель; tasklet рассчитан на одну атомарную операцию.",
-                "source_of_confusion": "Tasklet тоже работает в транзакции, что путают с chunk-транзакциями.",
-                "if_it_were_true": "Если бы tasklet был для больших объёмов, у него были бы chunk-size и restart по элементам.",
-                "how_it_should_be": "Для массовой порционной обработки используют chunk, а tasklet — для единичного действия."
+                "what_actually": "`Tasklet` не использует reader/processor/writer — это одна операция в методе `execute()`; read/process/write — это chunk-модель.",
+                "source_of_confusion": "Обе модели — это `Step`, поэтому компоненты chunk приписывают и tasklet.",
+                "if_it_were_true": "Если бы tasklet требовал reader/writer, он не отличался бы от chunk-шага.",
+                "how_it_should_be": "`Tasklet` — это единая операция в `execute()`, без разделения на read/process/write."
               }
             }
           ]
@@ -671,13 +671,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Разницы нет: Chunk и Tasklet — это два названия одной и той же модели обработки шага.",
-              "correct": false,
+              "text": "Chunk обрабатывает набор данных по схеме read→process→write порциями с автоматическими транзакциями per chunk и поддерживает restart с точки сбоя (по chunk); Tasklet выполняет одну атомарную операцию в одной транзакции на вызов и при перезапуске стартует шаг с начала.",
+              "correct": true,
               "sections": {
-                "what_actually": "Это две разные модели: chunk — порционный read/process/write, tasklet — одна атомарная операция.",
-                "source_of_confusion": "Обе настраиваются через `StepBuilder`, отсюда впечатление эквивалентности.",
-                "if_it_were_true": "Если бы они были одним и тем же, не было бы отдельных методов `.chunk(...)` и `.tasklet(...)`.",
-                "how_it_should_be": "Chunk и tasklet различаются моделью, транзакциями и поведением при restart."
+                "explanation": "Chunk собран из `ItemReader`/`ItemProcessor`/`ItemWriter` и масштабируется (многопоточность, партиционирование); tasklet — это один компонент с ограниченным масштабированием.",
+                "example": "Импорт `CSV` в БД делают chunk-шагом (restart, fault tolerance), а очистку временных файлов после импорта — tasklet-шагом.",
+                "when_to_apply": "Если задача — обработка набора данных или нужен restart с точки сбоя, берут chunk; если одноразовое действие (очистка, API, DDL) — tasklet.",
+                "edge_cases": "Грань размывается, когда «одно действие» внутри обрабатывает много записей вручную: формально tasklet, но теряются restart по элементам и chunk-транзакции — лучше переписать на chunk.",
+                "related": "[[spring-batch-interview#Q10]] chunk-oriented processing; [[spring-batch-interview#Q11]] Tasklet; [[spring-batch-interview#Q9]] Step и модели обработки."
               }
             },
             {
@@ -707,14 +708,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Chunk обрабатывает набор данных по схеме read→process→write порциями с автоматическими транзакциями per chunk и поддерживает restart с точки сбоя (по chunk); Tasklet выполняет одну атомарную операцию в одной транзакции на вызов и при перезапуске стартует шаг с начала.",
-              "correct": true,
+              "text": "Разницы нет: Chunk и Tasklet — это два названия одной и той же модели обработки шага.",
+              "correct": false,
               "sections": {
-                "explanation": "Chunk собран из `ItemReader`/`ItemProcessor`/`ItemWriter` и масштабируется (многопоточность, партиционирование); tasklet — это один компонент с ограниченным масштабированием.",
-                "example": "Импорт `CSV` в БД делают chunk-шагом (restart, fault tolerance), а очистку временных файлов после импорта — tasklet-шагом.",
-                "when_to_apply": "Если задача — обработка набора данных или нужен restart с точки сбоя, берут chunk; если одноразовое действие (очистка, API, DDL) — tasklet.",
-                "edge_cases": "Грань размывается, когда «одно действие» внутри обрабатывает много записей вручную: формально tasklet, но теряются restart по элементам и chunk-транзакции — лучше переписать на chunk.",
-                "related": "[[spring-batch-interview#Q10]] chunk-oriented processing; [[spring-batch-interview#Q11]] Tasklet; [[spring-batch-interview#Q9]] Step и модели обработки."
+                "what_actually": "Это две разные модели: chunk — порционный read/process/write, tasklet — одна атомарная операция.",
+                "source_of_confusion": "Обе настраиваются через `StepBuilder`, отсюда впечатление эквивалентности.",
+                "if_it_were_true": "Если бы они были одним и тем же, не было бы отдельных методов `.chunk(...)` и `.tasklet(...)`.",
+                "how_it_should_be": "Chunk и tasklet различаются моделью, транзакциями и поведением при restart."
               }
             }
           ]
@@ -731,6 +731,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Для чтения из БД `Spring Batch` предлагает только курсорный `JdbcCursorItemReader` без вариантов пагинации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть и страничные читатели: `JdbcPagingItemReader`, `JpaPagingItemReader` — thread-safe и пригодные для параллелизма.",
+                "source_of_confusion": "Курсорный reader самый известный, поэтому пагинацию упускают.",
+                "if_it_were_true": "Если бы был только курсорный, нельзя было бы безопасно читать из БД в многопоточном шаге.",
+                "how_it_should_be": "Доступны и cursor-, и paging-варианты для JDBC и JPA."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Batch` не умеет читать `JSON` и `XML` — для них нужно писать собственный `ItemReader` с нуля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для `JSON` есть `JsonItemReader`, для `XML` — `StaxEventItemReader`; писать с нуля не нужно.",
+                "source_of_confusion": "CSV-читатель на слуху, а про JSON/XML-варианты забывают.",
+                "if_it_were_true": "Если бы их не было, обработка XML-выгрузок партнёров требовала бы ручного парсинга.",
+                "how_it_should_be": "Готовые `JsonItemReader` и `StaxEventItemReader` покрывают JSON и XML из коробки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Spring Batch` даёт готовые читатели под разные источники: для файлов — `FlatFileItemReader` (CSV/TSV/fixed-width), `JsonItemReader`, `StaxEventItemReader` (XML), `MultiResourceItemReader`; для БД — `JdbcCursorItemReader`, `JdbcPagingItemReader`, `JpaPagingItemReader`, `JpaCursorItemReader`, `HibernateCursorItemReader`, `StoredProcedureItemReader`; для брокеров/NoSQL — `KafkaItemReader`, `AmqpItemReader`, `MongoItemReader`.",
               "correct": true,
               "sections": {
@@ -742,8 +766,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "`Spring Batch` предоставляет единственный универсальный `ItemReader`, который сам определяет тип источника по строке подключения.",
               "correct": false,
               "sections": {
@@ -751,30 +775,6 @@
                 "source_of_confusion": "Хочется одного простого reader, отсюда миф об универсальном.",
                 "if_it_were_true": "Если бы reader был один, не было бы отдельных `FlatFileItemReader`, `JdbcPagingItemReader`, `KafkaItemReader`.",
                 "how_it_should_be": "Под каждый источник выбирают конкретный готовый reader из набора фреймворка."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Для чтения из БД `Spring Batch` предлагает только курсорный `JdbcCursorItemReader` без вариантов пагинации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Есть и страничные читатели: `JdbcPagingItemReader`, `JpaPagingItemReader` — thread-safe и пригодные для параллелизма.",
-                "source_of_confusion": "Курсорный reader самый известный, поэтому пагинацию упускают.",
-                "if_it_were_true": "Если бы был только курсорный, нельзя было бы безопасно читать из БД в многопоточном шаге.",
-                "how_it_should_be": "Доступны и cursor-, и paging-варианты для JDBC и JPA."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Spring Batch` не умеет читать `JSON` и `XML` — для них нужно писать собственный `ItemReader` с нуля.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для `JSON` есть `JsonItemReader`, для `XML` — `StaxEventItemReader`; писать с нуля не нужно.",
-                "source_of_confusion": "CSV-читатель на слуху, а про JSON/XML-варианты забывают.",
-                "if_it_were_true": "Если бы их не было, обработка XML-выгрузок партнёров требовала бы ручного парсинга.",
-                "how_it_should_be": "Готовые `JsonItemReader` и `StaxEventItemReader` покрывают JSON и XML из коробки."
               }
             }
           ]
@@ -791,13 +791,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`JdbcCursorItemReader` является thread-safe и рекомендован для многопоточных шагов, в отличие от paging-варианта.",
+              "text": "`JdbcPagingItemReader` работает без сортировки и не требует указывать `sortKeys`.",
               "correct": false,
               "sections": {
-                "what_actually": "Курсорный reader не thread-safe (один курсор/соединение); для многопоточности подходит именно `JdbcPagingItemReader`.",
-                "source_of_confusion": "«Курсор» звучит надёжно, а thread-safety переносят не на тот reader.",
-                "if_it_were_true": "Если бы курсорный был thread-safe, не требовалась бы обёртка `SynchronizedItemStreamReader`.",
-                "how_it_should_be": "Для многопоточных шагов берут thread-safe `JdbcPagingItemReader`, а не курсорный."
+                "what_actually": "Paging обязательно требует `sortKeys` для детерминированного порядка страниц — иначе строки дублируются или теряются.",
+                "source_of_confusion": "Кажется, что пагинация работает «как есть» по любому порядку.",
+                "if_it_were_true": "Если бы сортировка была не нужна, страницы по `LIMIT`/`OFFSET` без `ORDER BY` давали бы недетерминированный результат.",
+                "how_it_should_be": "`sortKeys` обязателен: без стабильной сортировки страничное чтение некорректно."
               }
             },
             {
@@ -816,13 +816,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`JdbcPagingItemReader` работает без сортировки и не требует указывать `sortKeys`.",
+              "text": "`JdbcCursorItemReader` является thread-safe и рекомендован для многопоточных шагов, в отличие от paging-варианта.",
               "correct": false,
               "sections": {
-                "what_actually": "Paging обязательно требует `sortKeys` для детерминированного порядка страниц — иначе строки дублируются или теряются.",
-                "source_of_confusion": "Кажется, что пагинация работает «как есть» по любому порядку.",
-                "if_it_were_true": "Если бы сортировка была не нужна, страницы по `LIMIT`/`OFFSET` без `ORDER BY` давали бы недетерминированный результат.",
-                "how_it_should_be": "`sortKeys` обязателен: без стабильной сортировки страничное чтение некорректно."
+                "what_actually": "Курсорный reader не thread-safe (один курсор/соединение); для многопоточности подходит именно `JdbcPagingItemReader`.",
+                "source_of_confusion": "«Курсор» звучит надёжно, а thread-safety переносят не на тот reader.",
+                "if_it_were_true": "Если бы курсорный был thread-safe, не требовалась бы обёртка `SynchronizedItemStreamReader`.",
+                "how_it_should_be": "Для многопоточных шагов берут thread-safe `JdbcPagingItemReader`, а не курсорный."
               }
             },
             {
@@ -851,30 +851,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`JpaPagingItemReader` принимает сырой SQL, а не JPQL, и не требует `EntityManagerFactory`.",
+              "text": "`JpaPagingItemReader` возвращает detached-сущности вне persistence context, поэтому dirty checking их не затрагивает и очистка контекста не требуется.",
               "correct": false,
               "sections": {
-                "what_actually": "Он работает через `JPA`: принимает JPQL (`queryString`) и нуждается в `EntityManagerFactory`; сырой SQL — это для JDBC-читателей.",
-                "source_of_confusion": "JPQL и SQL внешне похожи, отсюда подмена.",
-                "if_it_were_true": "Если бы он принимал сырой SQL без EMF, он не отличался бы от `JdbcPagingItemReader`.",
-                "how_it_should_be": "`JpaPagingItemReader` использует JPQL и `EntityManagerFactory`, а сырой SQL — у JDBC-вариантов."
+                "what_actually": "Прочитанные сущности попадают в persistence context, и для read-only выборок dirty checking стоит отключать (проекции/`readOnly`).",
+                "source_of_confusion": "Кажется, что batch-чтение «снаружи» JPA-сессии.",
+                "if_it_were_true": "Если бы сущности не попадали в контекст, не было бы советов про проекции и `@Transactional(readOnly=true)`.",
+                "how_it_should_be": "Сущности управляются persistence context; чтобы избежать dirty checking, применяют проекции или read-only режим."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`JpaPagingItemReader` выполняет JPQL-запрос целиком и держит все сущности в памяти, а не читает их страницами, поэтому для больших выборок предпочитают `JpaCursorItemReader`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`JpaPagingItemReader` штатно входит во фреймворк, как и `JpaCursorItemReader`; Hibernate-вариант — лишь один из нескольких.",
-                "source_of_confusion": "Hibernate как реализация JPA на слуху, отсюда вывод о единственном варианте.",
-                "if_it_were_true": "Если бы JPA-paging не было, нельзя было бы читать сущности постранично без привязки к Hibernate API.",
-                "how_it_should_be": "Доступны и `JpaPagingItemReader`, и `JpaCursorItemReader` поверх стандартного JPA."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`JpaPagingItemReader` читает данные страницами через `JPA`: ему задают `EntityManagerFactory`, JPQL-запрос (`queryString`), `parameterValues` и `pageSize`; внутри он выполняет постраничные запросы через `EntityManager`. С `Spring Batch 5.0` доступен и `JpaCursorItemReader` — потоковое чтение JPA-курсором, эффективнее для очень больших объёмов.",
               "correct": true,
               "sections": {
@@ -886,15 +874,27 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`JpaPagingItemReader` возвращает detached-сущности вне persistence context, поэтому dirty checking их не затрагивает и очистка контекста не требуется.",
+              "order": 2,
+              "label": "C",
+              "text": "`JpaPagingItemReader` принимает сырой SQL, а не JPQL, и не требует `EntityManagerFactory`.",
               "correct": false,
               "sections": {
-                "what_actually": "Прочитанные сущности попадают в persistence context, и для read-only выборок dirty checking стоит отключать (проекции/`readOnly`).",
-                "source_of_confusion": "Кажется, что batch-чтение «снаружи» JPA-сессии.",
-                "if_it_were_true": "Если бы сущности не попадали в контекст, не было бы советов про проекции и `@Transactional(readOnly=true)`.",
-                "how_it_should_be": "Сущности управляются persistence context; чтобы избежать dirty checking, применяют проекции или read-only режим."
+                "what_actually": "Он работает через `JPA`: принимает JPQL (`queryString`) и нуждается в `EntityManagerFactory`; сырой SQL — это для JDBC-читателей.",
+                "source_of_confusion": "JPQL и SQL внешне похожи, отсюда подмена.",
+                "if_it_were_true": "Если бы он принимал сырой SQL без EMF, он не отличался бы от `JdbcPagingItemReader`.",
+                "how_it_should_be": "`JpaPagingItemReader` использует JPQL и `EntityManagerFactory`, а сырой SQL — у JDBC-вариантов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`JpaPagingItemReader` выполняет JPQL-запрос целиком и держит все сущности в памяти, а не читает их страницами, поэтому для больших выборок предпочитают `JpaCursorItemReader`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JpaPagingItemReader` штатно входит во фреймворк, как и `JpaCursorItemReader`; Hibernate-вариант — лишь один из нескольких.",
+                "source_of_confusion": "Hibernate как реализация JPA на слуху, отсюда вывод о единственном варианте.",
+                "if_it_were_true": "Если бы JPA-paging не было, нельзя было бы читать сущности постранично без привязки к Hibernate API.",
+                "how_it_should_be": "Доступны и `JpaPagingItemReader`, и `JpaCursorItemReader` поверх стандартного JPA."
               }
             }
           ]
@@ -911,18 +911,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для чтения CSV в `Spring Batch` нужно вручную парсить строки в `ItemReader`, готового решения для плоских файлов нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Готовый `FlatFileItemReader` парсит CSV/TSV/fixed-width из коробки через `delimited()`/`fixedLength()` и маппинг по `names`.",
-                "source_of_confusion": "Ручной парсинг встречается в самописных скриптах, отсюда миф.",
-                "if_it_were_true": "Если бы готового reader не было, не существовало бы `FlatFileItemReaderBuilder` с `delimited()`.",
-                "how_it_should_be": "Плоские файлы читают `FlatFileItemReader`, а пишут `FlatFileItemWriter` без ручного парсинга."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`FlatFileItemReader` умеет читать только CSV и не поддерживает fixed-width форматы с фиксированной шириной колонок.",
               "correct": false,
               "sections": {
@@ -933,8 +921,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Заголовок и нижний колонтитул при записи CSV добавить нельзя — `FlatFileItemWriter` пишет только строки данных.",
               "correct": false,
               "sections": {
@@ -945,8 +933,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Для чтения используют `FlatFileItemReader` через `FlatFileItemReaderBuilder`: задают `resource`, `linesToSkip` (заголовок), `delimited().delimiter(\",\")` (для TSV — `\\t`), `names(...)` и `targetType(...)`; для fixed-width — `fixedLength().columns(new Range(...))`. Для записи — `FlatFileItemWriter` с `delimited()`, `names(...)`, `headerCallback`/`footerCallback`.",
               "correct": true,
               "sections": {
@@ -955,6 +943,18 @@
                 "when_to_apply": "Берут для импорта/экспорта файлов от партнёров и интеграций: CSV/TSV через `delimited()`, выгрузки старых систем — через `fixedLength()`.",
                 "edge_cases": "Для TSV меняют только разделитель на `\\t`; для fixed-width важны точные `Range`-границы — смещение на символ ломает маппинг всех последующих полей.",
                 "related": "[[spring-batch-interview#Q13]] стандартные ItemReader; [[spring-batch-interview#Q17]] стандартные ItemWriter; [[spring-batch-interview#Q24]] обёртка FlatFile в SynchronizedItemStreamReader."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для чтения CSV в `Spring Batch` нужно вручную парсить строки в `ItemReader`, готового решения для плоских файлов нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Готовый `FlatFileItemReader` парсит CSV/TSV/fixed-width из коробки через `delimited()`/`fixedLength()` и маппинг по `names`.",
+                "source_of_confusion": "Ручной парсинг встречается в самописных скриптах, отсюда миф.",
+                "if_it_were_true": "Если бы готового reader не было, не существовало бы `FlatFileItemReaderBuilder` с `delimited()`.",
+                "how_it_should_be": "Плоские файлы читают `FlatFileItemReader`, а пишут `FlatFileItemWriter` без ручного парсинга."
               }
             }
           ]
@@ -971,6 +971,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`CompositeItemWriter` выбирает один writer из списка по типу элемента и пишет только им.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Выбор writer по типу — это `ClassifierCompositeItemWriter`; `CompositeItemWriter` шлёт каждый элемент всем делегатам сразу.",
+                "source_of_confusion": "Оба «composite», поэтому их поведение смешивают.",
+                "if_it_were_true": "Если бы `CompositeItemWriter` выбирал один writer, нельзя было бы писать одновременно и в БД, и в файл.",
+                "how_it_should_be": "`CompositeItemWriter` дублирует во все делегаты; роутинг по типу — у `ClassifierCompositeItemWriter`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`JdbcBatchItemWriter` вставляет записи по одной отдельными `INSERT` без пакетной обработки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Он использует JDBC batch (`addBatch`/`executeBatch`) и вставляет элементы chunk пакетом, а не по одному.",
+                "source_of_confusion": "Название с «Item» наводит на мысль о поэлементной вставке.",
+                "if_it_were_true": "Если бы вставка шла по одной, пропадал бы смысл «Batch» в имени и выигрыш chunk-обработки.",
+                "how_it_should_be": "`JdbcBatchItemWriter` выполняет пакетную вставку всего chunk одним JDBC-batch."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Готовые писатели покрывают разные приёмники: файлы — `FlatFileItemWriter` (CSV/TSV/fixed-width), `JsonFileItemWriter`, `StaxEventItemWriter` (XML); БД — `JdbcBatchItemWriter` (batch insert/update через `NamedParameterJdbcTemplate`), `JpaItemWriter`, `HibernateItemWriter`; брокеры/NoSQL — `KafkaItemWriter`, `MongoItemWriter`; композитные — `CompositeItemWriter` (несколько делегатов) и `ClassifierCompositeItemWriter` (роутинг по типу элемента).",
               "correct": true,
               "sections": {
@@ -982,8 +1006,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "`Spring Batch` для записи в БД предлагает только `JpaItemWriter` поверх `JPA`; для чистого JDBC без ORM готового writer нет, и вставку делают в tasklet через `JdbcTemplate`.",
               "correct": false,
               "sections": {
@@ -991,30 +1015,6 @@
                 "source_of_confusion": "Ручная запись через `JdbcTemplate` встречается в самописных решениях.",
                 "if_it_were_true": "Если бы writer-ов не было, нельзя было бы использовать chunk-модель с пакетной вставкой.",
                 "how_it_should_be": "Запись в БД делают готовые `JdbcBatchItemWriter`/`JpaItemWriter`, а не ручной tasklet."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`CompositeItemWriter` выбирает один writer из списка по типу элемента и пишет только им.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Выбор writer по типу — это `ClassifierCompositeItemWriter`; `CompositeItemWriter` шлёт каждый элемент всем делегатам сразу.",
-                "source_of_confusion": "Оба «composite», поэтому их поведение смешивают.",
-                "if_it_were_true": "Если бы `CompositeItemWriter` выбирал один writer, нельзя было бы писать одновременно и в БД, и в файл.",
-                "how_it_should_be": "`CompositeItemWriter` дублирует во все делегаты; роутинг по типу — у `ClassifierCompositeItemWriter`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`JdbcBatchItemWriter` вставляет записи по одной отдельными `INSERT` без пакетной обработки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Он использует JDBC batch (`addBatch`/`executeBatch`) и вставляет элементы chunk пакетом, а не по одному.",
-                "source_of_confusion": "Название с «Item» наводит на мысль о поэлементной вставке.",
-                "if_it_were_true": "Если бы вставка шла по одной, пропадал бы смысл «Batch» в имени и выигрыш chunk-обработки.",
-                "how_it_should_be": "`JdbcBatchItemWriter` выполняет пакетную вставку всего chunk одним JDBC-batch."
               }
             }
           ]
@@ -1043,6 +1043,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "В `Step` можно подключить только один `ItemProcessor`; объединить несколько процессоров невозможно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Несколько процессоров объединяют через `CompositeItemProcessor`, выстраивая цепочку делегатов.",
+                "source_of_confusion": "API `Step` принимает один `processor`, отсюда вывод о невозможности цепочки.",
+                "if_it_were_true": "Если бы цепочки не было, валидацию, обогащение и трансформацию пришлось бы мешать в одном классе.",
+                "how_it_should_be": "`CompositeItemProcessor` позволяет подключить несколько процессоров последовательно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`ItemProcessor<I,O>` трансформирует или фильтрует элементы: получает один элемент типа `I` и возвращает преобразованный элемент типа `O` либо `null` (тогда элемент отфильтровывается и не попадает в writer). Несколько процессоров объединяют через `CompositeItemProcessor`, выстраивая цепочку, где выход одного — вход следующего.",
               "correct": true,
               "sections": {
@@ -1051,18 +1063,6 @@
                 "when_to_apply": "Берут для валидации, обогащения и трансформации элементов между чтением и записью; цепочку — когда логику удобно разбить на независимые шаги.",
                 "edge_cases": "В цепочке типы делегатов должны стыковаться (выход одного = вход следующего), иначе compile/runtime-ошибка; `null` из любого процессора прерывает обработку этого элемента.",
                 "related": "[[spring-batch-interview#Q10]] фильтрация null в chunk; [[spring-batch-interview#Q34]] CompositeItemProcessor подробно; [[spring-batch-interview#Q9]] Step и модели обработки."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "В `Step` можно подключить только один `ItemProcessor`; объединить несколько процессоров невозможно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Несколько процессоров объединяют через `CompositeItemProcessor`, выстраивая цепочку делегатов.",
-                "source_of_confusion": "API `Step` принимает один `processor`, отсюда вывод о невозможности цепочки.",
-                "if_it_were_true": "Если бы цепочки не было, валидацию, обогащение и трансформацию пришлось бы мешать в одном классе.",
-                "how_it_should_be": "`CompositeItemProcessor` позволяет подключить несколько процессоров последовательно."
               }
             },
             {
@@ -1091,18 +1091,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Слушателей всего два: `JobExecutionListener` (`beforeJob`/`afterJob`) для жизненного цикла `Job` и `StepExecutionListener` (`beforeStep`/`afterStep`) для `Step`; отдельных слушателей уровня chunk и item (`ChunkListener`, `ItemReadListener`, `ItemWriteListener`) в `Spring Batch` нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Слушатели есть на всех уровнях: Job, Step, Chunk, Read, Process, Write, Skip, Retry — не только на уровне Job.",
-                "source_of_confusion": "Job-уровень самый заметный, поэтому остальные упускают.",
-                "if_it_were_true": "Если бы был только Job-listener, нельзя было бы реагировать на skip/retry или ошибки записи конкретного chunk.",
-                "how_it_should_be": "Существует целый набор слушателей по уровням обработки, а не один Job-listener."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Слушатели реализуют исключительно через интерфейсы (`ChunkListener`, `ItemReadListener`, `SkipListener`); аннотационный стиль вроде `@AfterRead` или `@OnReadError` в `Spring Batch` не поддерживается — эти аннотации относятся к `Spring Integration`.",
               "correct": false,
               "sections": {
@@ -1113,8 +1101,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Слушатели есть на каждом уровне обработки: `JobExecutionListener` (`beforeJob`/`afterJob`), `StepExecutionListener` (`beforeStep`/`afterStep`), `ChunkListener` (`beforeChunk`/`afterChunk`/`afterChunkError`), `ItemReadListener`, `ItemProcessListener`, `ItemWriteListener` (before/after/onError), `SkipListener` (onSkipInRead/Process/Write) и `RetryListener`. Реализовать можно через интерфейс или через аннотации (`@AfterRead`, `@OnReadError` и т.п.).",
               "correct": true,
               "sections": {
@@ -1126,8 +1114,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Слушатели регистрируются глобально на уровне `JobRepository` и применяются ко всем `Step` контекста сразу; привязывать их к конкретному `Step` через `.listener(...)` в `StepBuilder` не требуется.",
               "correct": false,
               "sections": {
@@ -1135,6 +1123,18 @@
                 "source_of_confusion": "Глобальные бины Spring создают впечатление автоматической регистрации.",
                 "if_it_were_true": "Если бы регистрация была только глобальной, нельзя было бы навесить разные слушатели на разные шаги.",
                 "how_it_should_be": "Слушатель привязывается к конкретному `Step`/`Job` через метод `.listener(...)`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Слушателей всего два: `JobExecutionListener` (`beforeJob`/`afterJob`) для жизненного цикла `Job` и `StepExecutionListener` (`beforeStep`/`afterStep`) для `Step`; отдельных слушателей уровня chunk и item (`ChunkListener`, `ItemReadListener`, `ItemWriteListener`) в `Spring Batch` нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Слушатели есть на всех уровнях: Job, Step, Chunk, Read, Process, Write, Skip, Retry — не только на уровне Job.",
+                "source_of_confusion": "Job-уровень самый заметный, поэтому остальные упускают.",
+                "if_it_were_true": "Если бы был только Job-listener, нельзя было бы реагировать на skip/retry или ошибки записи конкретного chunk.",
+                "how_it_should_be": "Существует целый набор слушателей по уровням обработки, а не один Job-listener."
               }
             }
           ]
@@ -1151,13 +1151,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`StepExecutionListener.afterStep()` возвращает `void` — в нём можно залогировать итоги шага, но изменить `ExitStatus` и повлиять на переходы между шагами нельзя.",
-              "correct": false,
+              "text": "`JobExecutionListener` перехватывает `beforeJob`/`afterJob` — его используют для инициализации ресурсов, уведомлений и логирования итогов; `StepExecutionListener` перехватывает `beforeStep`/`afterStep`, причём `afterStep(StepExecution)` может вернуть кастомный `ExitStatus`, влияющий на условные переходы между шагами.",
+              "correct": true,
               "sections": {
-                "what_actually": "`afterStep` возвращает `ExitStatus`, которым можно задать кастомный статус (например, `COMPLETED_WITH_SKIPS`) для условных переходов.",
-                "source_of_confusion": "Многие listener-методы возвращают void, что переносят и на `afterStep`.",
-                "if_it_were_true": "Если бы возврата не было, нельзя было бы ветвить flow по результату шага.",
-                "how_it_should_be": "`afterStep` возвращает `ExitStatus`, влияющий на выбор следующего шага."
+                "explanation": "В `afterJob` проверяют `jobExecution.getStatus()` и при `FAILED` собирают `getAllFailureExceptions()` для алерта; в `afterStep` смотрят `getSkipCount()` и возвращают, например, `new ExitStatus(\"COMPLETED_WITH_SKIPS\")`.",
+                "example": "`NotificationListener.afterJob` шлёт алерт при `BatchStatus.FAILED`; `ValidationStepListener.afterStep` при `skipCount>0` возвращает `ExitStatus(\"COMPLETED_WITH_SKIPS\")` для ветвления.",
+                "when_to_apply": "Берут для интеграции с жизненным циклом: уведомления, метрики, инициализация/очистка ресурсов и управление потоком через `ExitStatus`.",
+                "edge_cases": "Кастомный `ExitStatus` из `afterStep` должен совпадать с шаблоном в `.on(...)`, иначе переход не сработает; в `afterJob` нельзя полагаться на исключения, которые проглочены skip/retry.",
+                "related": "[[spring-batch-interview#Q19]] типы слушателей; [[spring-batch-interview#Q27]] условные переходы по ExitStatus; [[spring-batch-interview#Q35]] ChunkListener и ItemWriteListener."
               }
             },
             {
@@ -1187,14 +1188,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`JobExecutionListener` перехватывает `beforeJob`/`afterJob` — его используют для инициализации ресурсов, уведомлений и логирования итогов; `StepExecutionListener` перехватывает `beforeStep`/`afterStep`, причём `afterStep(StepExecution)` может вернуть кастомный `ExitStatus`, влияющий на условные переходы между шагами.",
-              "correct": true,
+              "text": "`StepExecutionListener.afterStep()` возвращает `void` — в нём можно залогировать итоги шага, но изменить `ExitStatus` и повлиять на переходы между шагами нельзя.",
+              "correct": false,
               "sections": {
-                "explanation": "В `afterJob` проверяют `jobExecution.getStatus()` и при `FAILED` собирают `getAllFailureExceptions()` для алерта; в `afterStep` смотрят `getSkipCount()` и возвращают, например, `new ExitStatus(\"COMPLETED_WITH_SKIPS\")`.",
-                "example": "`NotificationListener.afterJob` шлёт алерт при `BatchStatus.FAILED`; `ValidationStepListener.afterStep` при `skipCount>0` возвращает `ExitStatus(\"COMPLETED_WITH_SKIPS\")` для ветвления.",
-                "when_to_apply": "Берут для интеграции с жизненным циклом: уведомления, метрики, инициализация/очистка ресурсов и управление потоком через `ExitStatus`.",
-                "edge_cases": "Кастомный `ExitStatus` из `afterStep` должен совпадать с шаблоном в `.on(...)`, иначе переход не сработает; в `afterJob` нельзя полагаться на исключения, которые проглочены skip/retry.",
-                "related": "[[spring-batch-interview#Q19]] типы слушателей; [[spring-batch-interview#Q27]] условные переходы по ExitStatus; [[spring-batch-interview#Q35]] ChunkListener и ItemWriteListener."
+                "what_actually": "`afterStep` возвращает `ExitStatus`, которым можно задать кастомный статус (например, `COMPLETED_WITH_SKIPS`) для условных переходов.",
+                "source_of_confusion": "Многие listener-методы возвращают void, что переносят и на `afterStep`.",
+                "if_it_were_true": "Если бы возврата не было, нельзя было бы ветвить flow по результату шага.",
+                "how_it_should_be": "`afterStep` возвращает `ExitStatus`, влияющий на выбор следующего шага."
               }
             }
           ]
@@ -1211,6 +1211,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`skipLimit` не нужен: при включённом skip пропускается неограниченное число элементов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`skipLimit` обязателен — при превышении лимита бросается `SkipLimitExceededException` и `Job` падает.",
+                "source_of_confusion": "Кажется, что раз skip включён, он терпит любое число ошибок.",
+                "if_it_were_true": "Если бы лимита не было, полностью битый файл «успешно» завершился бы с нулём записанных строк.",
+                "how_it_should_be": "`skipLimit(N)` ограничивает число пропусков; сверх лимита задание прерывается."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Skip-логику включают через `.faultTolerant()` и настраивают: `.skipLimit(N)` задаёт максимум пропусков, `.skip(Exception.class)` указывает, какие исключения пропускать, а `.noSkip(...)` — какие не пропускать; для сложных правил пишут свою `SkipPolicy.shouldSkip(Throwable, long)`. Пропущенные элементы отслеживают через `SkipListener` (`onSkipInRead`/`onSkipInProcess`/`onSkipInWrite`).",
               "correct": true,
               "sections": {
@@ -1222,32 +1234,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Skip-логика работает по умолчанию — указывать `.faultTolerant()` не нужно, любые ошибки пропускаются автоматически.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Skip требует явного `.faultTolerant()` и перечня `.skip(...)`; без этого ошибка роняет chunk и весь `Job`.",
-                "source_of_confusion": "Хочется, чтобы фреймворк сам «прощал» ошибки, отсюда миф об автоматике.",
-                "if_it_were_true": "Если бы skip был включён всегда, критичные ошибки БД незаметно проглатывались бы.",
-                "how_it_should_be": "Skip включают явно через `.faultTolerant()` и `.skip(...)` с лимитом."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "`skipLimit` не нужен: при включённом skip пропускается неограниченное число элементов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`skipLimit` обязателен — при превышении лимита бросается `SkipLimitExceededException` и `Job` падает.",
-                "source_of_confusion": "Кажется, что раз skip включён, он терпит любое число ошибок.",
-                "if_it_were_true": "Если бы лимита не было, полностью битый файл «успешно» завершился бы с нулём записанных строк.",
-                "how_it_should_be": "`skipLimit(N)` ограничивает число пропусков; сверх лимита задание прерывается."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "При skip нельзя узнать, какие именно элементы были пропущены — эта информация теряется.",
               "correct": false,
               "sections": {
@@ -1255,6 +1243,18 @@
                 "source_of_confusion": "Кажется, что пропуск означает полную потерю записи без следов.",
                 "if_it_were_true": "Если бы информация терялась, нельзя было бы построить отчёт по отброшенным строкам.",
                 "how_it_should_be": "`SkipListener` даёт доступ к каждому пропущенному элементу и причине пропуска."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Skip-логика работает по умолчанию — указывать `.faultTolerant()` не нужно, любые ошибки пропускаются автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Skip требует явного `.faultTolerant()` и перечня `.skip(...)`; без этого ошибка роняет chunk и весь `Job`.",
+                "source_of_confusion": "Хочется, чтобы фреймворк сам «прощал» ошибки, отсюда миф об автоматике.",
+                "if_it_were_true": "Если бы skip был включён всегда, критичные ошибки БД незаметно проглатывались бы.",
+                "how_it_should_be": "Skip включают явно через `.faultTolerant()` и `.skip(...)` с лимитом."
               }
             }
           ]
@@ -1271,31 +1271,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Retry в `Spring Batch` применяется в том числе к `ItemReader`, повторяя чтение при любой ошибке источника.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Retry работает для `ItemProcessor` и `ItemWriter`, но не для `ItemReader`; ошибки чтения обрабатывают через skip.",
-                "source_of_confusion": "Кажется естественным повторять и чтение при сбое.",
-                "if_it_were_true": "Если бы reader ретраился, повторное чтение из курсора/потока легко бы сбило позицию.",
-                "how_it_should_be": "Retry охватывает processor и writer; для reader используют skip или ловят ошибку внутри него."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Retry включают через `.faultTolerant()` и настраивают `.retryLimit(N)`, `.retry(Exception.class)` для повторяемых ошибок и `.noRetry(...)` для исключений из retry; для пауз между попытками задают `backOffPolicy` (например, `ExponentialBackOffPolicy`). Retry применяется к `ItemProcessor` и `ItemWriter`, но не к `ItemReader`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Retry повторяет обработку элемента при транзитных ошибках (дедлоки, таймауты, временная недоступность сервиса); часто комбинируют с skip — сначала повторить, при исчерпании попыток пропустить.",
-                "example": "`.faultTolerant().retryLimit(3).retry(DeadlockLoserDataAccessException.class).retry(TimeoutException.class).noRetry(ValidationException.class)` — повторять дедлок/таймаут, но не валидацию.",
-                "when_to_apply": "Берут для устойчивости к временным сбоям инфраструктуры: блокировки БД, сетевые таймауты, кратковременная недоступность внешнего API.",
-                "edge_cases": "Ошибки `ItemReader` не ретраятся — для них нужен skip или обработка в самом reader; постоянные ошибки (валидация) ретраить бессмысленно, их кладут в `noRetry`.",
-                "related": "[[spring-batch-interview#Q21]] skip-логика; [[spring-batch-interview#Q37]] retry + noRollback в транзакциях; [[spring-batch-interview#Q19]] RetryListener."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Retry повторяет элемент бесконечно до успеха — параметр `retryLimit` указывать не требуется.",
               "correct": false,
               "sections": {
@@ -1306,8 +1281,20 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
+              "text": "Retry в `Spring Batch` применяется в том числе к `ItemReader`, повторяя чтение при любой ошибке источника.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Retry работает для `ItemProcessor` и `ItemWriter`, но не для `ItemReader`; ошибки чтения обрабатывают через skip.",
+                "source_of_confusion": "Кажется естественным повторять и чтение при сбое.",
+                "if_it_were_true": "Если бы reader ретраился, повторное чтение из курсора/потока легко бы сбило позицию.",
+                "how_it_should_be": "Retry охватывает processor и writer; для reader используют skip или ловят ошибку внутри него."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Retry и skip нельзя использовать вместе — нужно выбрать одну стратегию обработки ошибок.",
               "correct": false,
               "sections": {
@@ -1315,6 +1302,19 @@
                 "source_of_confusion": "Кажется, что две стратегии конфликтуют.",
                 "if_it_were_true": "Если бы их нельзя было совмещать, не было бы рекомендации «сначала retry, потом skip».",
                 "how_it_should_be": "Retry и skip совместимы: повтор транзитной ошибки, затем пропуск при неудаче."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Retry включают через `.faultTolerant()` и настраивают `.retryLimit(N)`, `.retry(Exception.class)` для повторяемых ошибок и `.noRetry(...)` для исключений из retry; для пауз между попытками задают `backOffPolicy` (например, `ExponentialBackOffPolicy`). Retry применяется к `ItemProcessor` и `ItemWriter`, но не к `ItemReader`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Retry повторяет обработку элемента при транзитных ошибках (дедлоки, таймауты, временная недоступность сервиса); часто комбинируют с skip — сначала повторить, при исчерпании попыток пропустить.",
+                "example": "`.faultTolerant().retryLimit(3).retry(DeadlockLoserDataAccessException.class).retry(TimeoutException.class).noRetry(ValidationException.class)` — повторять дедлок/таймаут, но не валидацию.",
+                "when_to_apply": "Берут для устойчивости к временным сбоям инфраструктуры: блокировки БД, сетевые таймауты, кратковременная недоступность внешнего API.",
+                "edge_cases": "Ошибки `ItemReader` не ретраятся — для них нужен skip или обработка в самом reader; постоянные ошибки (валидация) ретраить бессмысленно, их кладут в `noRetry`.",
+                "related": "[[spring-batch-interview#Q21]] skip-логика; [[spring-batch-interview#Q37]] retry + noRollback в транзакциях; [[spring-batch-interview#Q19]] RetryListener."
               }
             }
           ]
@@ -1343,13 +1343,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Единственный способ ускорить обработку в `Spring Batch` — увеличить размер chunk.",
+              "text": "Partitioning и Remote Chunking — это одно и то же: Master читает данные, а Workers их пишут.",
               "correct": false,
               "sections": {
-                "what_actually": "Размер chunk влияет на оверхед транзакций, но реальное масштабирование даёт параллелизм (потоки, партиции, remote chunking).",
-                "source_of_confusion": "Chunk-size — самый очевидный «рычаг», поэтому его считают единственным.",
-                "if_it_were_true": "Если бы помогал только chunk-size, нельзя было бы распараллелить обработку на несколько ядер/JVM.",
-                "how_it_should_be": "Помимо chunk-size есть многопоточность, partitioning и remote chunking для масштабирования."
+                "what_actually": "Это разные стратегии: при partitioning reader есть на каждом Worker, а при remote chunking читает только Master и шлёт chunks Workers.",
+                "source_of_confusion": "Обе распределяют работу на Workers, отсюда смешение.",
+                "if_it_were_true": "Если бы они совпадали, не было бы отдельной таблицы сравнения reader/writer между ними.",
+                "how_it_should_be": "Partitioning делит данные (reader у каждого Worker); remote chunking централизует чтение на Master."
               }
             },
             {
@@ -1368,13 +1368,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Partitioning и Remote Chunking — это одно и то же: Master читает данные, а Workers их пишут.",
+              "text": "Единственный способ ускорить обработку в `Spring Batch` — увеличить размер chunk.",
               "correct": false,
               "sections": {
-                "what_actually": "Это разные стратегии: при partitioning reader есть на каждом Worker, а при remote chunking читает только Master и шлёт chunks Workers.",
-                "source_of_confusion": "Обе распределяют работу на Workers, отсюда смешение.",
-                "if_it_were_true": "Если бы они совпадали, не было бы отдельной таблицы сравнения reader/writer между ними.",
-                "how_it_should_be": "Partitioning делит данные (reader у каждого Worker); remote chunking централизует чтение на Master."
+                "what_actually": "Размер chunk влияет на оверхед транзакций, но реальное масштабирование даёт параллелизм (потоки, партиции, remote chunking).",
+                "source_of_confusion": "Chunk-size — самый очевидный «рычаг», поэтому его считают единственным.",
+                "if_it_were_true": "Если бы помогал только chunk-size, нельзя было бы распараллелить обработку на несколько ядер/JVM.",
+                "how_it_should_be": "Помимо chunk-size есть многопоточность, partitioning и remote chunking для масштабирования."
               }
             }
           ]
@@ -1391,13 +1391,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Многопоточный `Step` работает с любым `ItemReader`, включая `JdbcCursorItemReader`, без дополнительных условий.",
+              "text": "Многопоточный `Step` гарантирует тот же порядок обработки элементов, что и однопоточный.",
               "correct": false,
               "sections": {
-                "what_actually": "Reader обязан быть thread-safe: курсорный `JdbcCursorItemReader` не подходит, `FlatFileItemReader` нужно обернуть в `SynchronizedItemStreamReader`.",
-                "source_of_confusion": "Кажется, что фреймворк сам синхронизирует доступ к reader.",
-                "if_it_were_true": "Если бы подходил любой reader, многопоточный шаг с курсором не давал бы гонок и битых данных.",
-                "how_it_should_be": "Нужен thread-safe reader (paging) или синхронизирующая обёртка для не-thread-safe."
+                "what_actually": "Порядок обработки в многопоточном шаге не гарантируется — chunks разбираются разными потоками.",
+                "source_of_confusion": "Однопоточный шаг сохраняет порядок, что ошибочно ждут и от многопоточного.",
+                "if_it_were_true": "Если бы порядок сохранялся, параллелизм фактически сводился бы к последовательному выполнению.",
+                "how_it_should_be": "Порядок не гарантирован; если он важен, многопоточный шаг не подходит."
               }
             },
             {
@@ -1415,13 +1415,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Многопоточный `Step` гарантирует тот же порядок обработки элементов, что и однопоточный.",
+              "text": "Многопоточный `Step` работает с любым `ItemReader`, включая `JdbcCursorItemReader`, без дополнительных условий.",
               "correct": false,
               "sections": {
-                "what_actually": "Порядок обработки в многопоточном шаге не гарантируется — chunks разбираются разными потоками.",
-                "source_of_confusion": "Однопоточный шаг сохраняет порядок, что ошибочно ждут и от многопоточного.",
-                "if_it_were_true": "Если бы порядок сохранялся, параллелизм фактически сводился бы к последовательному выполнению.",
-                "how_it_should_be": "Порядок не гарантирован; если он важен, многопоточный шаг не подходит."
+                "what_actually": "Reader обязан быть thread-safe: курсорный `JdbcCursorItemReader` не подходит, `FlatFileItemReader` нужно обернуть в `SynchronizedItemStreamReader`.",
+                "source_of_confusion": "Кажется, что фреймворк сам синхронизирует доступ к reader.",
+                "if_it_were_true": "Если бы подходил любой reader, многопоточный шаг с курсором не давал бы гонок и битых данных.",
+                "how_it_should_be": "Нужен thread-safe reader (paging) или синхронизирующая обёртка для не-thread-safe."
               }
             },
             {
@@ -1451,6 +1451,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "При партиционировании каждый Slave-`Step` читает весь набор данных целиком, а `Partitioner` затем убирает дубликаты, объединяя результаты в Master-шаге.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Каждый Slave обрабатывает свой раздел (например, свой диапазон id) по границам из `ExecutionContext`, без чтения всех данных и дедупликации.",
+                "source_of_confusion": "Кажется, что проще дать всем всё и потом отфильтровать.",
+                "if_it_were_true": "Если бы каждый читал всё, параллелизм не давал бы ускорения, а дублировал работу.",
+                "how_it_should_be": "`Partitioner` задаёт каждому Slave свой непересекающийся диапазон данных."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Партиционирование, как и многопоточный шаг (multithreaded step), не поддерживает рестарт с точки сбоя — при перезапуске все разделы обрабатываются заново с самого начала.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Партиционирование как раз поддерживает restart: каждый Slave имеет свой `ExecutionContext` и продолжает с места сбоя.",
+                "source_of_confusion": "Оба используют `TaskExecutor`, отсюда вывод об одинаковом отсутствии restart.",
+                "if_it_were_true": "Если бы restart не работал, исчезло бы ключевое преимущество partitioning над многопоточным шагом.",
+                "how_it_should_be": "Restart поддерживается благодаря изолированным контекстам Slave-шагов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Partitioning делит данные на разделы и обрабатывает каждый независимым Slave-`Step`. `Partitioner.partition(gridSize)` создаёт `Map<String, ExecutionContext>` с границами разделов (например, `minId`/`maxId`); Slave-reader через `@StepScope` и `@Value(\"#{stepExecutionContext['minId']}\")` читает свой диапазон; Master-`Step` настраивают `.partitioner(\"slaveStep\", partitioner).step(slaveStep).gridSize(N).taskExecutor(...)`.",
               "correct": true,
               "sections": {
@@ -1462,20 +1486,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "При партиционировании каждый Slave-`Step` читает весь набор данных целиком, а `Partitioner` затем убирает дубликаты, объединяя результаты в Master-шаге.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Каждый Slave обрабатывает свой раздел (например, свой диапазон id) по границам из `ExecutionContext`, без чтения всех данных и дедупликации.",
-                "source_of_confusion": "Кажется, что проще дать всем всё и потом отфильтровать.",
-                "if_it_were_true": "Если бы каждый читал всё, параллелизм не давал бы ускорения, а дублировал работу.",
-                "how_it_should_be": "`Partitioner` задаёт каждому Slave свой непересекающийся диапазон данных."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Slave-reader берёт границы своего раздела (`minId`/`maxId`) прямо из `ExecutionContext` без `@StepScope` — обычный синглтон-бин уже видит `stepExecutionContext` через `@Value`.",
               "correct": false,
               "sections": {
@@ -1483,18 +1495,6 @@
                 "source_of_confusion": "Синглтон-бины кажутся достаточными для чтения параметров.",
                 "if_it_were_true": "Если бы scope не требовался, границы раздела были бы одинаковыми для всех Slave при старте контекста.",
                 "how_it_should_be": "Reader партиции объявляют `@StepScope`, чтобы получить свои `minId`/`maxId` per-partition."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Партиционирование, как и многопоточный шаг (multithreaded step), не поддерживает рестарт с точки сбоя — при перезапуске все разделы обрабатываются заново с самого начала.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Партиционирование как раз поддерживает restart: каждый Slave имеет свой `ExecutionContext` и продолжает с места сбоя.",
-                "source_of_confusion": "Оба используют `TaskExecutor`, отсюда вывод об одинаковом отсутствии restart.",
-                "if_it_were_true": "Если бы restart не работал, исчезло бы ключевое преимущество partitioning над многопоточным шагом.",
-                "how_it_should_be": "Restart поддерживается благодаря изолированным контекстам Slave-шагов."
               }
             }
           ]
@@ -1511,6 +1511,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Шаг после `split` (через `.next()`) начинает выполняться сразу, не дожидаясь завершения параллельных flow.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Следующий шаг стартует только после завершения всех flow внутри `split` (точка join).",
+                "source_of_confusion": "Хочется конвейерности, отсюда ожидание раннего старта следующего шага.",
+                "if_it_were_true": "Если бы `next` стартовал раньше, отчёт строился бы по неполным данным импорта.",
+                "how_it_should_be": "После split происходит join: `next`-шаг ждёт завершения всех параллельных flow."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Split/Flow выполняет шаги строго последовательно — это просто другой синтаксис для `.start().next()`.",
               "correct": false,
               "sections": {
@@ -1521,8 +1533,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "Split/Flow выполняет независимые шаги параллельно: каждый шаг оборачивают в `Flow` через `FlowBuilder`, затем объединяют через `.split(taskExecutor).add(flow1, flow2, flow3)`; полученный split-flow ставят в `JobBuilder.start(splitFlow).next(nextStep).end()`. Следующий шаг выполняется после завершения всех параллельных flow.",
               "correct": true,
               "sections": {
@@ -1534,8 +1546,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Параллельные flow в `split` могут свободно делить общие ресурсы и писать в одни и те же таблицы без последствий.",
               "correct": false,
               "sections": {
@@ -1543,18 +1555,6 @@
                 "source_of_confusion": "Кажется, что фреймворк сам разрулит конкурентный доступ.",
                 "if_it_were_true": "Если бы общий доступ был безопасен, не было бы требования о независимости flow.",
                 "how_it_should_be": "Каждый flow должен работать со своими ресурсами; общий доступ требует синхронизации."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Шаг после `split` (через `.next()`) начинает выполняться сразу, не дожидаясь завершения параллельных flow.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Следующий шаг стартует только после завершения всех flow внутри `split` (точка join).",
-                "source_of_confusion": "Хочется конвейерности, отсюда ожидание раннего старта следующего шага.",
-                "if_it_were_true": "Если бы `next` стартовал раньше, отчёт строился бы по неполным данным импорта.",
-                "how_it_should_be": "После split происходит join: `next`-шаг ждёт завершения всех параллельных flow."
               }
             }
           ]
@@ -1571,30 +1571,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Порядок шагов в `Job` задаётся линейно через `.next()`; чтобы разветвить flow по результату, условие проверяют внутри `Tasklet` или процессора шага и пропускают ненужную обработку.",
+              "text": "Шаблон `*` в `.on(\"*\")` нужно ставить первым, иначе специфичные статусы не сработают.",
               "correct": false,
               "sections": {
-                "what_actually": "Ветвление есть: через `.on(exitStatus).to(step)` и `JobExecutionDecider` можно выбирать разные шаги по результату.",
-                "source_of_confusion": "`.next()` для линейной цепочки самый известный, отсюда вывод об отсутствии ветвления.",
-                "if_it_were_true": "Если бы ветвления не было, нельзя было бы направить FAILED-шаг на уведомление, а COMPLETED — на импорт.",
-                "how_it_should_be": "Условный flow через `.on(...).to(...)` позволяет нелинейные переходы по `ExitStatus`."
+                "what_actually": "`*` ловит любой статус, поэтому его ставят последним; первым он перехватил бы все переходы и обошёл специфичные ветки.",
+                "source_of_confusion": "Кажется логичным задать «общий случай» в начале.",
+                "if_it_were_true": "Если бы `*` стоял первым, ветки `COMPLETED`/`FAILED` никогда бы не достигались.",
+                "how_it_should_be": "Специфичные `.on(...)` идут раньше, а `*` ставят последним как fallback."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Условные переходы реагируют только на `BatchStatus` (COMPLETED/FAILED) и не поддерживают кастомные статусы.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Переходы матчат `ExitStatus` (строку), включая кастомные значения вроде `COMPLETED_WITH_SKIPS` из `afterStep`.",
-                "source_of_confusion": "`BatchStatus` и `ExitStatus` путают, считая статусов всего два.",
-                "if_it_were_true": "Если бы кастомных статусов не было, нельзя было бы развести «со skips» и «без skips» на разные ветки.",
-                "how_it_should_be": "Матчинг идёт по `ExitStatus`, который может быть кастомной строкой."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Условный переход выбирает следующий шаг на основе `ExitStatus` предыдущего: в `JobBuilder` пишут `.start(stepA).on(\"COMPLETED\").to(stepB).from(stepA).on(\"FAILED\").to(stepC)...end()`. Поддерживаются шаблоны `*` (любой статус), `FAILED`, `COMPLETED` и кастомные статусы из `StepExecutionListener.afterStep()`. Программный выбор ветки даёт `JobExecutionDecider.decide()`.",
               "correct": true,
               "sections": {
@@ -1606,15 +1594,27 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Шаблон `*` в `.on(\"*\")` нужно ставить первым, иначе специфичные статусы не сработают.",
+              "order": 2,
+              "label": "C",
+              "text": "Порядок шагов в `Job` задаётся линейно через `.next()`; чтобы разветвить flow по результату, условие проверяют внутри `Tasklet` или процессора шага и пропускают ненужную обработку.",
               "correct": false,
               "sections": {
-                "what_actually": "`*` ловит любой статус, поэтому его ставят последним; первым он перехватил бы все переходы и обошёл специфичные ветки.",
-                "source_of_confusion": "Кажется логичным задать «общий случай» в начале.",
-                "if_it_were_true": "Если бы `*` стоял первым, ветки `COMPLETED`/`FAILED` никогда бы не достигались.",
-                "how_it_should_be": "Специфичные `.on(...)` идут раньше, а `*` ставят последним как fallback."
+                "what_actually": "Ветвление есть: через `.on(exitStatus).to(step)` и `JobExecutionDecider` можно выбирать разные шаги по результату.",
+                "source_of_confusion": "`.next()` для линейной цепочки самый известный, отсюда вывод об отсутствии ветвления.",
+                "if_it_were_true": "Если бы ветвления не было, нельзя было бы направить FAILED-шаг на уведомление, а COMPLETED — на импорт.",
+                "how_it_should_be": "Условный flow через `.on(...).to(...)` позволяет нелинейные переходы по `ExitStatus`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Условные переходы реагируют только на `BatchStatus` (COMPLETED/FAILED) и не поддерживают кастомные статусы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Переходы матчат `ExitStatus` (строку), включая кастомные значения вроде `COMPLETED_WITH_SKIPS` из `afterStep`.",
+                "source_of_confusion": "`BatchStatus` и `ExitStatus` путают, считая статусов всего два.",
+                "if_it_were_true": "Если бы кастомных статусов не было, нельзя было бы развести «со skips» и «без skips» на разные ветки.",
+                "how_it_should_be": "Матчинг идёт по `ExitStatus`, который может быть кастомной строкой."
               }
             }
           ]
@@ -1631,30 +1631,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для интеграции со `Spring Boot` нужно вручную создавать бины `JobRepository`, `JobLauncher` и `JobExplorer` — автоконфигурации нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Spring Boot` автоконфигурирует `JobRepository`, `JobLauncher`, `JobExplorer` поверх `DataSource`; вручную их объявляют лишь при кастомизации.",
-                "source_of_confusion": "В чистом `Spring` эти бины настраивают руками, что переносят на Boot.",
-                "if_it_were_true": "Если бы автоконфигурации не было, не было бы свойств `spring.batch.*` в `application.yml`.",
-                "how_it_should_be": "Boot создаёт инфраструктурные бины сам; разработчик объявляет лишь `Job` и `Step`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "В `Spring Boot 3.x` аннотация `@EnableBatchProcessing` обязательна, иначе `Spring Batch` не включится.",
-              "correct": false,
-              "sections": {
-                "what_actually": "С `Spring Boot 3.x`/`Batch 5.x` `@EnableBatchProcessing` не нужна — автоконфигурация включена по умолчанию, а явное её добавление может, наоборот, отключить автоконфигурацию.",
-                "source_of_confusion": "В `Batch 4` аннотация была обязательной, что переносят на новую версию.",
-                "if_it_were_true": "Если бы она была обязательна, базовый Boot-стартер не запускал бы `Job` без неё.",
-                "how_it_should_be": "В Boot 3 batch включается автоконфигурацией; `@EnableBatchProcessing` добавляют только для тонкой кастомизации."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`spring.batch.job.enabled` управляет инициализацией схемы `BATCH_*`, а не автозапуском заданий при старте.",
               "correct": false,
               "sections": {
@@ -1665,8 +1641,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`Spring Boot` автоконфигурирует `Spring Batch`: добавляют `spring-boot-starter-batch` и `DataSource`; в `application.yml` настраивают `spring.batch.job.enabled` (запускать ли `Job` при старте), `spring.batch.jdbc.initialize-schema` (`always`/`embedded`/`never`) и `table-prefix`. Бины `JobRepository`, `JobLauncher`, `JobExplorer` создаются автоматически. С `Spring Boot 3.x`/`Batch 5.x` аннотация `@EnableBatchProcessing` больше не нужна.",
               "correct": true,
               "sections": {
@@ -1675,6 +1651,30 @@
                 "when_to_apply": "Берут практически всегда в Boot-проектах: автоконфигурация даёт готовый `JobRepository`/`JobLauncher` поверх настроенного `DataSource`.",
                 "edge_cases": "В `Spring Boot 3.x`/`Batch 5.x` `JobBuilderFactory`/`StepBuilderFactory` deprecated — нужны `JobBuilder`/`StepBuilder` с явным `JobRepository`; при `job.enabled=true` все `Job` запустятся на старте, что часто нежелательно.",
                 "related": "[[spring-batch-interview#Q6]] JobRepository; [[spring-batch-interview#Q29]] запуск по расписанию; [[spring-batch-interview#Q38]] изменения в Spring Batch 5."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `Spring Boot 3.x` аннотация `@EnableBatchProcessing` обязательна, иначе `Spring Batch` не включится.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С `Spring Boot 3.x`/`Batch 5.x` `@EnableBatchProcessing` не нужна — автоконфигурация включена по умолчанию, а явное её добавление может, наоборот, отключить автоконфигурацию.",
+                "source_of_confusion": "В `Batch 4` аннотация была обязательной, что переносят на новую версию.",
+                "if_it_were_true": "Если бы она была обязательна, базовый Boot-стартер не запускал бы `Job` без неё.",
+                "how_it_should_be": "В Boot 3 batch включается автоконфигурацией; `@EnableBatchProcessing` добавляют только для тонкой кастомизации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Для интеграции со `Spring Boot` нужно вручную создавать бины `JobRepository`, `JobLauncher` и `JobExplorer` — автоконфигурации нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Boot` автоконфигурирует `JobRepository`, `JobLauncher`, `JobExplorer` поверх `DataSource`; вручную их объявляют лишь при кастомизации.",
+                "source_of_confusion": "В чистом `Spring` эти бины настраивают руками, что переносят на Boot.",
+                "if_it_were_true": "Если бы автоконфигурации не было, не было бы свойств `spring.batch.*` в `application.yml`.",
+                "how_it_should_be": "Boot создаёт инфраструктурные бины сам; разработчик объявляет лишь `Job` и `Step`."
               }
             }
           ]
@@ -1691,6 +1691,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Batch-задания можно запускать только при старте приложения; запуск по расписанию `Spring Batch` не поддерживает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Запуск по расписанию делают через `@Scheduled` + `JobLauncher`, `Spring Cloud Data Flow` или внешний планировщик (K8s CronJob, Jenkins).",
+                "source_of_confusion": "Автозапуск при старте через `job.enabled` самый известный режим.",
+                "if_it_were_true": "Если бы расписания не было, нельзя было бы организовать ежедневный ночной отчёт.",
+                "how_it_should_be": "Планирование возможно несколькими способами — внутренним `@Scheduled` и внешними оркестраторами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "При запуске по `@Scheduled` уникальность параметров не важна — один и тот же `Job` можно запускать с одинаковыми параметрами сколько угодно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Повтор с одинаковыми параметрами упрётся в `JobInstanceAlreadyCompleteException`; нужен уникальный параметр (`runTime`/`run.id`).",
+                "source_of_confusion": "Кажется, что каждый запуск по расписанию автоматически уникален.",
+                "if_it_were_true": "Если бы уникальность не требовалась, успешное вчерашнее задание блокировало бы сегодняшний запуск.",
+                "how_it_should_be": "Каждый плановый запуск должен иметь уникальные `JobParameters` (например, timestamp)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Есть три подхода: (1) `@Scheduled(cron=...)` + `JobLauncher` внутри Spring-приложения (нужен `@EnableScheduling`); (2) внешний оркестратор `Spring Cloud Data Flow`; (3) внешний планировщик — `Kubernetes CronJob`, `Jenkins` или системный `crontab`, запускающий jar с нужным `--spring.batch.job.name`.",
               "correct": true,
               "sections": {
@@ -1702,20 +1726,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Batch-задания можно запускать только при старте приложения; запуск по расписанию `Spring Batch` не поддерживает.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Запуск по расписанию делают через `@Scheduled` + `JobLauncher`, `Spring Cloud Data Flow` или внешний планировщик (K8s CronJob, Jenkins).",
-                "source_of_confusion": "Автозапуск при старте через `job.enabled` самый известный режим.",
-                "if_it_were_true": "Если бы расписания не было, нельзя было бы организовать ежедневный ночной отчёт.",
-                "how_it_should_be": "Планирование возможно несколькими способами — внутренним `@Scheduled` и внешними оркестраторами."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Для работы `@Scheduled` в `Spring Batch` достаточно поставить аннотацию — `@EnableScheduling` не требуется.",
               "correct": false,
               "sections": {
@@ -1723,18 +1735,6 @@
                 "source_of_confusion": "Аннотация `@Scheduled` выглядит самодостаточной.",
                 "if_it_were_true": "Если бы `@EnableScheduling` не требовался, любое приложение по умолчанию имело бы планировщик.",
                 "how_it_should_be": "Нужно явно включить планирование через `@EnableScheduling`, иначе `@Scheduled` не сработает."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "При запуске по `@Scheduled` уникальность параметров не важна — один и тот же `Job` можно запускать с одинаковыми параметрами сколько угодно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Повтор с одинаковыми параметрами упрётся в `JobInstanceAlreadyCompleteException`; нужен уникальный параметр (`runTime`/`run.id`).",
-                "source_of_confusion": "Кажется, что каждый запуск по расписанию автоматически уникален.",
-                "if_it_were_true": "Если бы уникальность не требовалась, успешное вчерашнее задание блокировало бы сегодняшний запуск.",
-                "how_it_should_be": "Каждый плановый запуск должен иметь уникальные `JobParameters` (например, timestamp)."
               }
             }
           ]
@@ -1751,18 +1751,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Тестировать `Spring Batch` можно только запустив всё приложение целиком; отдельный `Step` или `ItemProcessor` изолированно проверить нельзя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`JobLauncherTestUtils.launchStep(...)` запускает отдельный шаг, а `ItemProcessor` тестируют прямым вызовом `process(...)`.",
-                "source_of_confusion": "Job воспринимается как монолит, который нельзя разобрать на части в тесте.",
-                "if_it_were_true": "Если бы изоляции не было, нельзя было бы быстро покрыть логику одного процессора unit-тестом.",
-                "how_it_should_be": "Тестируют и весь `Job`, и отдельный `Step`, и компоненты по отдельности."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Spring Batch` даёт тестовую инфраструктуру `spring-batch-test`: аннотация `@SpringBatchTest` инжектирует `JobLauncherTestUtils` (запуск всего `Job` или отдельного `Step`) и `JobRepositoryTestUtils` (очистка метаданных между тестами через `removeJobExecutions()`). Отдельные компоненты (`ItemProcessor`) тестируют изолированно, а end-to-end — с `Testcontainers` PostgreSQL.",
               "correct": true,
               "sections": {
@@ -1774,20 +1762,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`@SpringBatchTest` не нужен — `JobLauncherTestUtils` доступен в любом тесте без специальной аннотации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`JobLauncherTestUtils` и `JobRepositoryTestUtils` регистрирует именно `@SpringBatchTest`; без неё их в контексте нет.",
-                "source_of_confusion": "Кажется, что тестовые утилиты доступны автоматически.",
-                "if_it_were_true": "Если бы аннотация была не нужна, не было бы смысла в модуле `spring-batch-test`.",
-                "how_it_should_be": "`@SpringBatchTest` регистрирует тестовые утилиты и `StepScopeTestExecutionListener`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Очищать метаданные между тестами не требуется — каждый тест автоматически получает чистый `JobRepository`.",
               "correct": false,
               "sections": {
@@ -1795,6 +1771,30 @@
                 "source_of_confusion": "Тесты кажутся изолированными по умолчанию, как с in-memory БД.",
                 "if_it_were_true": "Если бы метаданные сбрасывались сами, не было бы метода `removeJobExecutions()`.",
                 "how_it_should_be": "Между тестами метаданные чистят вручную, иначе идентичные параметры конфликтуют."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Тестировать `Spring Batch` можно только запустив всё приложение целиком; отдельный `Step` или `ItemProcessor` изолированно проверить нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JobLauncherTestUtils.launchStep(...)` запускает отдельный шаг, а `ItemProcessor` тестируют прямым вызовом `process(...)`.",
+                "source_of_confusion": "Job воспринимается как монолит, который нельзя разобрать на части в тесте.",
+                "if_it_were_true": "Если бы изоляции не было, нельзя было бы быстро покрыть логику одного процессора unit-тестом.",
+                "how_it_should_be": "Тестируют и весь `Job`, и отдельный `Step`, и компоненты по отдельности."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@SpringBatchTest` не нужен — `JobLauncherTestUtils` доступен в любом тесте без специальной аннотации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JobLauncherTestUtils` и `JobRepositoryTestUtils` регистрирует именно `@SpringBatchTest`; без неё их в контексте нет.",
+                "source_of_confusion": "Кажется, что тестовые утилиты доступны автоматически.",
+                "if_it_were_true": "Если бы аннотация была не нужна, не было бы смысла в модуле `spring-batch-test`.",
+                "how_it_should_be": "`@SpringBatchTest` регистрирует тестовые утилиты и `StepScopeTestExecutionListener`."
               }
             }
           ]
@@ -1835,6 +1835,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Метрики `Spring Batch` через `Micrometer` включены самим batch-стартером, поэтому `spring-boot-starter-actuator` для их экспорта не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Метрики экспортируются при наличии `actuator`/`Micrometer` на classpath; без них endpoint метрик недоступен.",
+                "source_of_confusion": "Кажется, что метрики встроены в сам batch-стартер.",
+                "if_it_were_true": "Если бы actuator был не нужен, метрики были бы видны в любом batch-приложении без зависимостей.",
+                "how_it_should_be": "Для метрик добавляют `spring-boot-starter-actuator`, тогда `spring.batch.*` появляются в `/actuator/metrics`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Мониторинг идёт через метаданные `JobRepository` (запрашивают `JobExplorer.getLastJobExecution(...)`: статус, время, read/write count) и через метрики `Micrometer`, которые `Spring Batch` экспортирует автоматически (`spring.batch.job`, `spring.batch.step`, `spring.batch.item.read` и др.) в `/actuator/metrics`. `Spring Cloud Task` — расширение для управления жизненным циклом короткоживущих задач (start/end/exit code) с интеграцией в `Spring Cloud Data Flow`.",
               "correct": true,
               "sections": {
@@ -1843,18 +1855,6 @@
                 "when_to_apply": "Берут для наблюдаемости: статус последнего запуска через `JobExplorer`, дашборды/алерты через метрики, lifecycle короткоживущих задач через `Spring Cloud Task`.",
                 "edge_cases": "Метрики `Micrometer` появляются при наличии `spring-boot-starter-actuator`; `Spring Cloud Task` нужен не всегда — для одиночного приложения хватает `JobExplorer` и метрик.",
                 "related": "[[spring-batch-interview#Q43]] метрики и Spring Boot Actuator; [[spring-batch-interview#Q30]] тестирование заданий; [[spring-batch-interview#Q6]] JobRepository как источник метаданных."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Метрики `Spring Batch` через `Micrometer` включены самим batch-стартером, поэтому `spring-boot-starter-actuator` для их экспорта не нужен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Метрики экспортируются при наличии `actuator`/`Micrometer` на classpath; без них endpoint метрик недоступен.",
-                "source_of_confusion": "Кажется, что метрики встроены в сам batch-стартер.",
-                "if_it_were_true": "Если бы actuator был не нужен, метрики были бы видны в любом batch-приложении без зависимостей.",
-                "how_it_should_be": "Для метрик добавляют `spring-boot-starter-actuator`, тогда `spring.batch.*` появляются в `/actuator/metrics`."
               }
             }
           ]
@@ -1871,30 +1871,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Все `JobParameters` участвуют в идентификации `JobInstance`; чтобы служебный флаг не создавал новый инстанс, его передают вне `JobParameters` — через `ExecutionContext` или системное свойство.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Параметр можно сделать non-identifying через `addString(name, value, false)` — тогда он не влияет на идентичность инстанса.",
-                "source_of_confusion": "По умолчанию параметры действительно identifying, что принимают за единственный вариант.",
-                "if_it_were_true": "Если бы non-identifying не существовало, любой служебный флаг создавал бы новый `JobInstance`.",
-                "how_it_should_be": "Флаг `identifying=false` исключает параметр из идентификации `JobInstance`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Уникальность запуска обеспечивается автоматически — фреймворк сам добавляет случайный id к каждому запуску.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Уникальность не добавляется сама: нужен `JobParametersIncrementer` или ручной уникальный параметр (`timestamp`/`run.id`).",
-                "source_of_confusion": "Хочется, чтобы каждый запуск был уникален по умолчанию.",
-                "if_it_were_true": "Если бы id добавлялся сам, не возникал бы `JobInstanceAlreadyCompleteException` при повторе.",
-                "how_it_should_be": "Уникальность задают явно через incrementer или меняющийся параметр."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`RunIdIncrementer` уменьшает существующий параметр, чтобы повторно запустить тот же `JobInstance`.",
               "correct": false,
               "sections": {
@@ -1905,8 +1881,20 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
+              "text": "Все `JobParameters` участвуют в идентификации `JobInstance`; чтобы служебный флаг не создавал новый инстанс, его передают вне `JobParameters` — через `ExecutionContext` или системное свойство.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параметр можно сделать non-identifying через `addString(name, value, false)` — тогда он не влияет на идентичность инстанса.",
+                "source_of_confusion": "По умолчанию параметры действительно identifying, что принимают за единственный вариант.",
+                "if_it_were_true": "Если бы non-identifying не существовало, любой служебный флаг создавал бы новый `JobInstance`.",
+                "how_it_should_be": "Флаг `identifying=false` исключает параметр из идентификации `JobInstance`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`JobParameters` идентифицируют `JobInstance` (Job + параметры). Параметры бывают identifying (по умолчанию, участвуют в идентификации) и non-identifying (`addString(\"k\",\"v\", false)` — не влияют на инстанс). Для гарантии уникальности добавляют изменяющийся параметр (`timestamp`/`run.id`) вручную или через `JobParametersIncrementer` (`RunIdIncrementer` добавляет `run.id++`).",
               "correct": true,
               "sections": {
@@ -1915,6 +1903,18 @@
                 "when_to_apply": "Берут, когда нужно одновременно параметризовать запуск и контролировать идентичность: повторяемость для дедупликации или уникальность для регулярных прогонов.",
                 "edge_cases": "Доступ к параметрам внутри reader/tasklet требует `@StepScope`/`@JobScope`; без уникального параметра повтор завершённого инстанса даст `JobInstanceAlreadyCompleteException`.",
                 "related": "[[spring-batch-interview#Q5]] JobParameters и JobInstance; [[spring-batch-interview#Q41]] инкрементальные задания; [[spring-batch-interview#Q4]] Job, JobInstance, JobExecution."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Уникальность запуска обеспечивается автоматически — фреймворк сам добавляет случайный id к каждому запуску.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Уникальность не добавляется сама: нужен `JobParametersIncrementer` или ручной уникальный параметр (`timestamp`/`run.id`).",
+                "source_of_confusion": "Хочется, чтобы каждый запуск был уникален по умолчанию.",
+                "if_it_were_true": "Если бы id добавлялся сам, не возникал бы `JobInstanceAlreadyCompleteException` при повторе.",
+                "how_it_should_be": "Уникальность задают явно через incrementer или меняющийся параметр."
               }
             }
           ]
@@ -1931,6 +1931,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Запуская `Job` через REST, можно не добавлять уникальный параметр — каждый HTTP-вызов и так создаёт новый `JobInstance`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без уникального параметра повтор с теми же значениями упрётся в `JobInstanceAlreadyCompleteException`/`409`.",
+                "source_of_confusion": "Кажется, что каждый запрос уникален сам по себе.",
+                "if_it_were_true": "Если бы каждый вызов был уникален, повторный POST с той же датой не давал бы конфликта.",
+                "how_it_should_be": "Добавляют уникальный `timestamp`/`run.id`, иначе повторный запуск конфликтует."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "По умолчанию `JobLauncher` синхронный (`run()` блокирует поток до завершения), но его делают асинхронным, задав `SimpleAsyncTaskExecutor`. Для REST берут асинхронный лаунчер: контроллер строит `JobParameters` (с уникальным `timestamp`), вызывает `asyncJobLauncher.run(job, params)` и сразу отдаёт `202 Accepted` с id execution; статус опрашивают через `JobExplorer.getJobExecution(id)`.",
               "correct": true,
               "sections": {
@@ -1942,8 +1954,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`JobLauncher` по умолчанию асинхронный, поэтому в REST-контроллере он сразу не блокирует поток без дополнительной настройки.",
               "correct": false,
               "sections": {
@@ -1954,8 +1966,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "В REST-эндпоинте не нужно ловить исключения запуска — `JobLauncher` сам возвращает корректный HTTP-статус.",
               "correct": false,
               "sections": {
@@ -1963,18 +1975,6 @@
                 "source_of_confusion": "Кажется, что фреймворк сам формирует HTTP-ответ.",
                 "if_it_were_true": "Если бы исключения не нужно было ловить, метод `run()` не объявлял бы их в сигнатуре.",
                 "how_it_should_be": "Контроллер ловит исключения запуска и сам отдаёт подходящий HTTP-код."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Запуская `Job` через REST, можно не добавлять уникальный параметр — каждый HTTP-вызов и так создаёт новый `JobInstance`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Без уникального параметра повтор с теми же значениями упрётся в `JobInstanceAlreadyCompleteException`/`409`.",
-                "source_of_confusion": "Кажется, что каждый запрос уникален сам по себе.",
-                "if_it_were_true": "Если бы каждый вызов был уникален, повторный POST с той же датой не давал бы конфликта.",
-                "how_it_should_be": "Добавляют уникальный `timestamp`/`run.id`, иначе повторный запуск конфликтует."
               }
             }
           ]
@@ -1991,13 +1991,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`CompositeItemProcessor` применяет делегаты параллельно в разных потоках, объединяя их результаты.",
+              "text": "В цепочке `CompositeItemProcessor` если первый делегат вернёт `null`, остальные всё равно вызываются для этого элемента.",
               "correct": false,
               "sections": {
-                "what_actually": "Делегаты применяются последовательно: выход одного — вход следующего; параллельного объединения результатов нет.",
-                "source_of_confusion": "Слово «composite» наводит на мысль о параллельной агрегации.",
-                "if_it_were_true": "Если бы они шли параллельно, типы вход/выход не могли бы образовывать цепочку.",
-                "how_it_should_be": "`CompositeItemProcessor` выполняет делегаты строго по очереди, передавая результат дальше."
+                "what_actually": "Если делегат вернул `null`, элемент пропускается сразу и последующие делегаты не вызываются.",
+                "source_of_confusion": "Кажется, что цепочка обязана пройти все этапы.",
+                "if_it_were_true": "Если бы остальные вызывались с `null`, они получили бы NPE на входе.",
+                "how_it_should_be": "`null` на любом этапе обрывает цепочку и фильтрует элемент."
               }
             },
             {
@@ -2016,13 +2016,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В цепочке `CompositeItemProcessor` если первый делегат вернёт `null`, остальные всё равно вызываются для этого элемента.",
+              "text": "`CompositeItemProcessor` применяет делегаты параллельно в разных потоках, объединяя их результаты.",
               "correct": false,
               "sections": {
-                "what_actually": "Если делегат вернул `null`, элемент пропускается сразу и последующие делегаты не вызываются.",
-                "source_of_confusion": "Кажется, что цепочка обязана пройти все этапы.",
-                "if_it_were_true": "Если бы остальные вызывались с `null`, они получили бы NPE на входе.",
-                "how_it_should_be": "`null` на любом этапе обрывает цепочку и фильтрует элемент."
+                "what_actually": "Делегаты применяются последовательно: выход одного — вход следующего; параллельного объединения результатов нет.",
+                "source_of_confusion": "Слово «composite» наводит на мысль о параллельной агрегации.",
+                "if_it_were_true": "Если бы они шли параллельно, типы вход/выход не могли бы образовывать цепочку.",
+                "how_it_should_be": "`CompositeItemProcessor` выполняет делегаты строго по очереди, передавая результат дальше."
               }
             },
             {
@@ -2051,18 +2051,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ChunkListener` срабатывает один раз на весь `Step`: его `beforeChunk`/`afterChunk` работают как аналоги `beforeStep`/`afterStep`, а не вызываются на каждой порции-транзакции.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`ChunkListener` срабатывает на каждый chunk (`beforeChunk`/`afterChunk`); один раз на шаг вызывается `StepExecutionListener`.",
-                "source_of_confusion": "Названия `Chunk`- и `Step`-listener путают по уровню.",
-                "if_it_were_true": "Если бы он вызывался раз на шаг, нельзя было бы мерить длительность каждой порции.",
-                "how_it_should_be": "`ChunkListener` срабатывает на каждую порцию; `StepExecutionListener` — раз на шаг."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`ItemWriteListener.afterWrite()` получает один записанный элемент `T`, поэтому для аудита всей порции его вызывают по разу на каждый item внутри chunk.",
               "correct": false,
               "sections": {
@@ -2073,8 +2061,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`ChunkListener` вызывается до/после каждого chunk (транзакции): `beforeChunk`/`afterChunk`/`afterChunkError` — в нём пишут метрики и аудит на уровне порции, доставая ошибку отката из `context.getAttribute(ChunkListener.ROLLBACK_EXCEPTION_KEY)`. `ItemWriteListener` ловит запись chunk: `beforeWrite`/`afterWrite`/`onWriteError` получают `Chunk<? extends T>` с элементами для аудита записанных/упавших. Регистрируют через `.listener(...)` в `StepBuilder`.",
               "correct": true,
               "sections": {
@@ -2086,8 +2074,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Причину отката chunk в `afterChunkError` получить нельзя: `ChunkContext` не хранит исключение, и его приходится ловить отдельным `SkipListener.onSkipInWrite()`.",
               "correct": false,
               "sections": {
@@ -2095,6 +2083,18 @@
                 "source_of_confusion": "Кажется, что колбэк лишь сигнализирует факт ошибки без деталей.",
                 "if_it_were_true": "Если бы причины не было, нельзя было бы залогировать конкретное исключение отката.",
                 "how_it_should_be": "`afterChunkError` даёт исключение отката через `ROLLBACK_EXCEPTION_KEY`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ChunkListener` срабатывает один раз на весь `Step`: его `beforeChunk`/`afterChunk` работают как аналоги `beforeStep`/`afterStep`, а не вызываются на каждой порции-транзакции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ChunkListener` срабатывает на каждый chunk (`beforeChunk`/`afterChunk`); один раз на шаг вызывается `StepExecutionListener`.",
+                "source_of_confusion": "Названия `Chunk`- и `Step`-listener путают по уровню.",
+                "if_it_were_true": "Если бы он вызывался раз на шаг, нельзя было бы мерить длительность каждой порции.",
+                "how_it_should_be": "`ChunkListener` срабатывает на каждую порцию; `StepExecutionListener` — раз на шаг."
               }
             }
           ]
@@ -2111,6 +2111,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Remote Partitioning распределяет Slave-шаги по разным JVM через брокер: Manager-`Step` с `Partitioner` создаёт N `StepExecution` и через `MessageChannelPartitionHandler` шлёт `StepExecutionRequest` в топик requests, ожидая ответы из топика replies; Worker-инстансы слушают requests через `IntegrationFlow` + `StepExecutionRequestHandler` и шлют ответ в replies. Нужны `spring-batch-integration` и `spring-integration-kafka`.",
+              "correct": true,
+              "sections": {
+                "explanation": "В отличие от локального partitioning (Q25, потоки в одном JVM) Workers — отдельные процессы; каждый Worker сам читает свой диапазон (`minId`/`maxId` из `stepExecutionContext`) и пишет результат.",
+                "example": "Manager: `StepBuilder.partitioner(\"workerStep\", partitioner).partitionHandler(kafkaHandler).gridSize(10)`; Worker: `IntegrationFlow.from(Kafka.messageDrivenChannelAdapter(..., \"batch-requests\")).handle(StepExecutionRequestHandler...).channel(Kafka.outboundChannelAdapter(..., \"batch-replies\"))`.",
+                "when_to_apply": "Берут, когда данных столько, что одного JVM мало, и нужно горизонтально распределить обработку партиций по нескольким машинам.",
+                "edge_cases": "Manager и Worker разделяют по профилям (`@Profile(\"manager\")`/`@Profile(\"worker\")`); `gridSize` и число Workers должны согласовываться, иначе часть партиций повиснет в ожидании; reader Worker обязан быть `@StepScope`.",
+                "related": "[[spring-batch-interview#Q25]] локальное партиционирование; [[spring-batch-interview#Q39]] PartitionHandler и GridSize; [[spring-batch-interview#Q40]] Remote Chunking через Kafka."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Remote Partitioning — это то же локальное партиционирование, только Worker-шаги выполняются в потоках того же JVM.",
               "correct": false,
               "sections": {
@@ -2121,8 +2134,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "При Remote Partitioning Manager читает все данные и пересылает их Workers как полезную нагрузку сообщений.",
               "correct": false,
               "sections": {
@@ -2133,8 +2146,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Для Remote Partitioning достаточно `spring-boot-starter-batch` — дополнительные зависимости не нужны.",
               "correct": false,
               "sections": {
@@ -2142,19 +2155,6 @@
                 "source_of_confusion": "Базового стартера хватает для локального batch, что переносят на remote.",
                 "if_it_were_true": "Если бы доп. зависимостей не требовалось, не было бы `MessageChannelPartitionHandler` и Kafka-адаптеров.",
                 "how_it_should_be": "Remote-вариант требует `spring-batch-integration` и интеграцию с брокером."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Remote Partitioning распределяет Slave-шаги по разным JVM через брокер: Manager-`Step` с `Partitioner` создаёт N `StepExecution` и через `MessageChannelPartitionHandler` шлёт `StepExecutionRequest` в топик requests, ожидая ответы из топика replies; Worker-инстансы слушают requests через `IntegrationFlow` + `StepExecutionRequestHandler` и шлют ответ в replies. Нужны `spring-batch-integration` и `spring-integration-kafka`.",
-              "correct": true,
-              "sections": {
-                "explanation": "В отличие от локального partitioning (Q25, потоки в одном JVM) Workers — отдельные процессы; каждый Worker сам читает свой диапазон (`minId`/`maxId` из `stepExecutionContext`) и пишет результат.",
-                "example": "Manager: `StepBuilder.partitioner(\"workerStep\", partitioner).partitionHandler(kafkaHandler).gridSize(10)`; Worker: `IntegrationFlow.from(Kafka.messageDrivenChannelAdapter(..., \"batch-requests\")).handle(StepExecutionRequestHandler...).channel(Kafka.outboundChannelAdapter(..., \"batch-replies\"))`.",
-                "when_to_apply": "Берут, когда данных столько, что одного JVM мало, и нужно горизонтально распределить обработку партиций по нескольким машинам.",
-                "edge_cases": "Manager и Worker разделяют по профилям (`@Profile(\"manager\")`/`@Profile(\"worker\")`); `gridSize` и число Workers должны согласовываться, иначе часть партиций повиснет в ожидании; reader Worker обязан быть `@StepScope`.",
-                "related": "[[spring-batch-interview#Q25]] локальное партиционирование; [[spring-batch-interview#Q39]] PartitionHandler и GridSize; [[spring-batch-interview#Q40]] Remote Chunking через Kafka."
               }
             }
           ]
@@ -2171,19 +2171,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Каждый chunk выполняется в одной транзакции: `ItemReader.read()` по умолчанию вне транзакции, а `ItemProcessor`+`ItemWriter` — внутри. Транзакцию настраивают через `DefaultTransactionAttribute` и `.transactionAttribute(...)`: propagation, isolation (`ISOLATION_READ_COMMITTED` и др.) и timeout. Для skip без отката всего chunk указывают `.noRollback(Exception.class)`.",
-              "correct": true,
-              "sections": {
-                "explanation": "По умолчанию для batch берут `READ_COMMITTED` (баланс корректности и нагрузки); `noRollback` оставляет транзакцию валидной при «безобидных» ошибках вроде валидации, не откатывая весь chunk.",
-                "example": "`DefaultTransactionAttribute` с `setIsolationLevel(ISOLATION_READ_COMMITTED)` и `setTimeout(300)` передают в `.transactionAttribute(txAttr)`; `.skip(ValidationException).noRollback(ValidationException).retry(TransientDataAccessException).retryLimit(3)`.",
-                "when_to_apply": "Настраивают, когда нужны конкретный isolation level, timeout на chunk или тонкое управление откатами при skip/retry.",
-                "edge_cases": "`JdbcCursorItemReader` держит открытый `ResultSet` весь шаг — при rollback курсор может сбиться, поэтому для надёжности берут `JdbcPagingItemReader`; `@Transactional` на writer дублирует транзакцию `Step` и не нужен.",
-                "related": "[[spring-batch-interview#Q10]] chunk-обработка и транзакция порции; [[spring-batch-interview#Q21]] skip и noRollback; [[spring-batch-interview#Q22]] retry на транзитных ошибках."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Каждый элемент chunk обрабатывается в собственной транзакции, поэтому isolation level задаётся на элемент.",
               "correct": false,
               "sections": {
@@ -2191,6 +2178,18 @@
                 "source_of_confusion": "Поэлементная транзакция кажется привычной по обычному CRUD.",
                 "if_it_were_true": "Если бы транзакция была на элемент, параметр chunk-size не влиял бы на стоимость rollback.",
                 "how_it_should_be": "Один chunk = одна транзакция; атрибуты транзакции применяются к порции целиком."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`JdbcCursorItemReader` идеален для chunk с откатами, так как его курсор корректно переживает rollback порции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При rollback chunk открытый курсор `JdbcCursorItemReader` может сбиться; для надёжности с откатами берут `JdbcPagingItemReader`.",
+                "source_of_confusion": "Курсор кажется самым «прямым» способом чтения для транзакций.",
+                "if_it_were_true": "Если бы курсор переживал rollback без проблем, не было бы рекомендации в пользу paging-reader.",
+                "how_it_should_be": "Для устойчивости к откатам chunk предпочитают `JdbcPagingItemReader`, а не курсорный."
               }
             },
             {
@@ -2208,13 +2207,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`JdbcCursorItemReader` идеален для chunk с откатами, так как его курсор корректно переживает rollback порции.",
-              "correct": false,
+              "text": "Каждый chunk выполняется в одной транзакции: `ItemReader.read()` по умолчанию вне транзакции, а `ItemProcessor`+`ItemWriter` — внутри. Транзакцию настраивают через `DefaultTransactionAttribute` и `.transactionAttribute(...)`: propagation, isolation (`ISOLATION_READ_COMMITTED` и др.) и timeout. Для skip без отката всего chunk указывают `.noRollback(Exception.class)`.",
+              "correct": true,
               "sections": {
-                "what_actually": "При rollback chunk открытый курсор `JdbcCursorItemReader` может сбиться; для надёжности с откатами берут `JdbcPagingItemReader`.",
-                "source_of_confusion": "Курсор кажется самым «прямым» способом чтения для транзакций.",
-                "if_it_were_true": "Если бы курсор переживал rollback без проблем, не было бы рекомендации в пользу paging-reader.",
-                "how_it_should_be": "Для устойчивости к откатам chunk предпочитают `JdbcPagingItemReader`, а не курсорный."
+                "explanation": "По умолчанию для batch берут `READ_COMMITTED` (баланс корректности и нагрузки); `noRollback` оставляет транзакцию валидной при «безобидных» ошибках вроде валидации, не откатывая весь chunk.",
+                "example": "`DefaultTransactionAttribute` с `setIsolationLevel(ISOLATION_READ_COMMITTED)` и `setTimeout(300)` передают в `.transactionAttribute(txAttr)`; `.skip(ValidationException).noRollback(ValidationException).retry(TransientDataAccessException).retryLimit(3)`.",
+                "when_to_apply": "Настраивают, когда нужны конкретный isolation level, timeout на chunk или тонкое управление откатами при skip/retry.",
+                "edge_cases": "`JdbcCursorItemReader` держит открытый `ResultSet` весь шаг — при rollback курсор может сбиться, поэтому для надёжности берут `JdbcPagingItemReader`; `@Transactional` на writer дублирует транзакцию `Step` и не нужен.",
+                "related": "[[spring-batch-interview#Q10]] chunk-обработка и транзакция порции; [[spring-batch-interview#Q21]] skip и noRollback; [[spring-batch-interview#Q22]] retry на транзитных ошибках."
               }
             }
           ]
@@ -2231,18 +2231,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Spring Batch 5` `@EnableBatchProcessing` по-прежнему обязательна для включения инфраструктуры, а тонкую настройку `JobRepository` делают только через `JobRepositoryFactoryBean`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В `Batch 5`/`Boot 3` `@EnableBatchProcessing` не нужна; кастомизация идёт через `DefaultBatchConfiguration` или явные атрибуты аннотации.",
-                "source_of_confusion": "В `Batch 4` аннотация была обязательной, что переносят на новую версию.",
-                "if_it_were_true": "Если бы она оставалась обязательной, автоконфигурация `BatchAutoConfiguration` не имела бы смысла.",
-                "how_it_should_be": "Аннотация стала опциональной; рекомендованный путь — `DefaultBatchConfiguration`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Spring Batch 5` (вместе со `Spring Boot 3`) — мажорный релиз: `@EnableBatchProcessing` больше не нужна (автоконфигурация через `BatchAutoConfiguration`), кастомизация идёт через наследование `DefaultBatchConfiguration`; рекомендован `JdbcTransactionManager` вместо `DataSourceTransactionManager` (поддерживает `SQLWarning`); минимум Java 17 и поддержка `record` как domain-объектов; `JobParameter` стал generic `JobParameter<T>`; `JobExplorer`/`JobOperator` автоконфигурируются.",
               "correct": true,
               "sections": {
@@ -2254,20 +2242,20 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`Spring Batch 5` рекомендует `DataSourceTransactionManager` как менеджер транзакций по умолчанию для JDBC-ресурсов и постепенно отказывается от `JdbcTransactionManager`.",
+              "order": 1,
+              "label": "B",
+              "text": "В `Spring Batch 5` `@EnableBatchProcessing` по-прежнему обязательна для включения инфраструктуры, а тонкую настройку `JobRepository` делают только через `JobRepositoryFactoryBean`.",
               "correct": false,
               "sections": {
-                "what_actually": "Наоборот: рекомендован `JdbcTransactionManager` (поддерживает `SQLWarning`), `DataSourceTransactionManager` — устаревающий выбор.",
-                "source_of_confusion": "Имена менеджеров похожи, их легко перепутать местами.",
-                "if_it_were_true": "Если бы рекомендовали `DataSourceTransactionManager`, не было бы смысла вводить `JdbcTransactionManager`.",
-                "how_it_should_be": "Предпочтителен `JdbcTransactionManager`; он и идёт по умолчанию в новых конфигурациях."
+                "what_actually": "В `Batch 5`/`Boot 3` `@EnableBatchProcessing` не нужна; кастомизация идёт через `DefaultBatchConfiguration` или явные атрибуты аннотации.",
+                "source_of_confusion": "В `Batch 4` аннотация была обязательной, что переносят на новую версию.",
+                "if_it_were_true": "Если бы она оставалась обязательной, автоконфигурация `BatchAutoConfiguration` не имела бы смысла.",
+                "how_it_should_be": "Аннотация стала опциональной; рекомендованный путь — `DefaultBatchConfiguration`."
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`Spring Batch 5` требует минимум Java 17, но `record` в качестве domain-объектов для `ItemReader`/`ItemWriter` по-прежнему не поддерживает — нужны классы с сеттерами.",
               "correct": false,
               "sections": {
@@ -2275,6 +2263,18 @@
                 "source_of_confusion": "Старые проекты на Java 8 создают ложное ожидание совместимости.",
                 "if_it_were_true": "Если бы поддерживалась Java 8, не использовались бы `record` и другие современные возможности.",
                 "how_it_should_be": "`Batch 5` требует Java 17+ и допускает `record` как доменную модель."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Batch 5` рекомендует `DataSourceTransactionManager` как менеджер транзакций по умолчанию для JDBC-ресурсов и постепенно отказывается от `JdbcTransactionManager`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: рекомендован `JdbcTransactionManager` (поддерживает `SQLWarning`), `DataSourceTransactionManager` — устаревающий выбор.",
+                "source_of_confusion": "Имена менеджеров похожи, их легко перепутать местами.",
+                "if_it_were_true": "Если бы рекомендовали `DataSourceTransactionManager`, не было бы смысла вводить `JdbcTransactionManager`.",
+                "how_it_should_be": "Предпочтителен `JdbcTransactionManager`; он и идёт по умолчанию в новых конфигурациях."
               }
             }
           ]
@@ -2291,18 +2291,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`gridSize` задаёт размер chunk — число элементов в одной транзакции Worker-`Step`, а не количество создаваемых партиций; на число партиций влияет только `TaskExecutor`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`gridSize` — это число партиций (Workers); размер транзакционной порции задаёт `chunk(size, tx)`.",
-                "source_of_confusion": "Оба параметра — числовые «размеры», отсюда путаница.",
-                "if_it_were_true": "Если бы `gridSize` был размером chunk, его не передавали бы в `PartitionHandler`.",
-                "how_it_should_be": "`gridSize` определяет количество партиций; chunk-size — это отдельный параметр шага."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`PartitionHandler` не требуется — Manager-`Step` сам создаёт `StepExecution` для каждой партиции и напрямую запускает Worker-шаги через свой `TaskExecutor`.",
               "correct": false,
               "sections": {
@@ -2313,8 +2301,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "`TaskExecutorPartitionHandler` распределяет Worker-шаги по разным JVM, отправляя запросы разделов через брокер сообщений (`Spring Integration`).",
+              "correct": false,
+              "sections": {
+                "what_actually": "`TaskExecutorPartitionHandler` — локальный параллелизм в одном JVM; для разных JVM нужен `MessageChannelPartitionHandler` (remote).",
+                "source_of_confusion": "Все partition handlers распределяют работу, отсюда смешение local и remote.",
+                "if_it_were_true": "Если бы он работал по сети, не требовался бы отдельный `MessageChannelPartitionHandler` для remote.",
+                "how_it_should_be": "`TaskExecutorPartitionHandler` исполняет партиции локально; удалённый — `MessageChannelPartitionHandler`."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "`gridSize` задаёт размер chunk — число элементов в одной транзакции Worker-`Step`, а не количество создаваемых партиций; на число партиций влияет только `TaskExecutor`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`gridSize` — это число партиций (Workers); размер транзакционной порции задаёт `chunk(size, tx)`.",
+                "source_of_confusion": "Оба параметра — числовые «размеры», отсюда путаница.",
+                "if_it_were_true": "Если бы `gridSize` был размером chunk, его не передавали бы в `PartitionHandler`.",
+                "how_it_should_be": "`gridSize` определяет количество партиций; chunk-size — это отдельный параметр шага."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Manager-`Step` делегирует распределение партиций `PartitionHandler`: `TaskExecutorPartitionHandler` (локальный параллелизм) получает Worker-`Step`, `gridSize` и `TaskExecutor`; `Partitioner.partition(gridSize)` создаёт по `ExecutionContext` на каждую партицию (например, `minId`/`maxId`), а Worker-`Step` с `@StepScope` читает свой диапазон. `gridSize` — число партиций (степень параллелизма).",
               "correct": true,
               "sections": {
@@ -2323,18 +2335,6 @@
                 "when_to_apply": "Берут для параллельной обработки делимых данных в одном JVM с управляемой степенью параллелизма через `gridSize`.",
                 "edge_cases": "Слишком большой `gridSize` создаёт много мелких партиций с оверхедом, слишком малый недогружает CPU; Worker-reader обязан быть `@StepScope` для late binding границ.",
                 "related": "[[spring-batch-interview#Q25]] партиционирование (Partitioner); [[spring-batch-interview#Q36]] RemotePartitioning через Kafka; [[spring-batch-interview#Q40]] Remote Chunking."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`TaskExecutorPartitionHandler` распределяет Worker-шаги по разным JVM, отправляя запросы разделов через брокер сообщений (`Spring Integration`).",
-              "correct": false,
-              "sections": {
-                "what_actually": "`TaskExecutorPartitionHandler` — локальный параллелизм в одном JVM; для разных JVM нужен `MessageChannelPartitionHandler` (remote).",
-                "source_of_confusion": "Все partition handlers распределяют работу, отсюда смешение local и remote.",
-                "if_it_were_true": "Если бы он работал по сети, не требовался бы отдельный `MessageChannelPartitionHandler` для remote.",
-                "how_it_should_be": "`TaskExecutorPartitionHandler` исполняет партиции локально; удалённый — `MessageChannelPartitionHandler`."
               }
             }
           ]
@@ -2351,30 +2351,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "При Remote Chunking каждый Worker сам читает данные через свой `ItemReader`, а Master только агрегирует результат.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В remote chunking reader только на Master; Workers получают готовые chunks и лишь обрабатывают/пишут их.",
-                "source_of_confusion": "Это поведение partitioning, которое путают с remote chunking.",
-                "if_it_were_true": "Если бы Workers читали сами, не нужно было бы слать chunks через брокер.",
-                "how_it_should_be": "Чтение централизовано на Master; Workers обрабатывают присланные данные."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Remote Chunking не требует брокера сообщений — Master и Workers общаются напрямую через общий `DataSource`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Master и Workers обмениваются chunks через брокер (`Kafka` топики requests/replies), а не через общую БД.",
-                "source_of_confusion": "Кажется, что общий `DataSource` достаточен для координации.",
-                "if_it_were_true": "Если бы хватало общего `DataSource`, не подключали бы `spring-integration-kafka`.",
-                "how_it_should_be": "Связь Master-Worker строится на брокере сообщений с топиками запросов и ответов."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Remote Chunking и Partitioning эквивалентны — оба читают данные на каждом Worker и не используют Master.",
               "correct": false,
               "sections": {
@@ -2385,8 +2361,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Remote Chunking — распределённая обработка, где Master читает данные (`ItemReader`) и шлёт chunks Workers через брокер (`Kafka`: топик requests), а Workers обрабатывают (`ItemProcessor`) и пишут (`ItemWriter`), отправляя подтверждение в топик replies; Master синхронно ждёт ответы. Настраивают через `spring-batch-integration` и `spring-integration-kafka` с `MessageChannelPartitionHandler`/integration flow.",
               "correct": true,
               "sections": {
@@ -2395,6 +2371,30 @@
                 "when_to_apply": "Берут, когда узкое место — обработка/запись (CPU/I/O на Workers), а чтение дешёвое и его удобно держать централизованным на Master.",
                 "edge_cases": "Remote chunking даёт постоянный трафик сообщений (chunk за chunk) и сложнее partitioning; если bottleneck в чтении, эта схема не помогает — нужен partitioning.",
                 "related": "[[spring-batch-interview#Q36]] RemotePartitioning через Kafka; [[spring-batch-interview#Q39]] PartitionHandler и GridSize; [[spring-batch-interview#Q23]] стратегии масштабирования."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Remote Chunking не требует брокера сообщений — Master и Workers общаются напрямую через общий `DataSource`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Master и Workers обмениваются chunks через брокер (`Kafka` топики requests/replies), а не через общую БД.",
+                "source_of_confusion": "Кажется, что общий `DataSource` достаточен для координации.",
+                "if_it_were_true": "Если бы хватало общего `DataSource`, не подключали бы `spring-integration-kafka`.",
+                "how_it_should_be": "Связь Master-Worker строится на брокере сообщений с топиками запросов и ответов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При Remote Chunking каждый Worker сам читает данные через свой `ItemReader`, а Master только агрегирует результат.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В remote chunking reader только на Master; Workers получают готовые chunks и лишь обрабатывают/пишут их.",
+                "source_of_confusion": "Это поведение partitioning, которое путают с remote chunking.",
+                "if_it_were_true": "Если бы Workers читали сами, не нужно было бы слать chunks через брокер.",
+                "how_it_should_be": "Чтение централизовано на Master; Workers обрабатывают присланные данные."
               }
             }
           ]
@@ -2424,18 +2424,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Инкрементальные задания означают, что каждый запуск дописывает данные к результату предыдущего в той же `JobInstance`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Инкрементальность здесь про автоматическую генерацию новых уникальных параметров (новый `JobInstance`), а не про дозапись в тот же инстанс.",
-                "source_of_confusion": "Слово «инкрементальный» путают с накоплением данных.",
-                "if_it_were_true": "Если бы запуск дописывал в тот же инстанс, успешный `JobInstance` нельзя было бы переиспользовать без `JobInstanceAlreadyCompleteException`.",
-                "how_it_should_be": "Incrementer порождает новый `JobInstance` на каждый прогон, а не дозаписывает в старый."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`JobParametersIncrementer` обязателен для запуска любого `Job` — без него `Job` вообще не стартует.",
               "correct": false,
               "sections": {
@@ -2443,6 +2431,18 @@
                 "source_of_confusion": "Кажется, что без incrementer уникальность недостижима.",
                 "if_it_were_true": "Если бы он был обязателен, нельзя было бы один раз запустить `Job` с фиксированными параметрами.",
                 "how_it_should_be": "Incrementer нужен лишь для авто-генерации уникальных параметров; запуск без него допустим."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Инкрементальные задания означают, что каждый запуск дописывает данные к результату предыдущего в той же `JobInstance`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Инкрементальность здесь про автоматическую генерацию новых уникальных параметров (новый `JobInstance`), а не про дозапись в тот же инстанс.",
+                "source_of_confusion": "Слово «инкрементальный» путают с накоплением данных.",
+                "if_it_were_true": "Если бы запуск дописывал в тот же инстанс, успешный `JobInstance` нельзя было бы переиспользовать без `JobInstanceAlreadyCompleteException`.",
+                "how_it_should_be": "Incrementer порождает новый `JobInstance` на каждый прогон, а не дозаписывает в старый."
               }
             },
             {
@@ -2471,18 +2471,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@SpringBatchTest` и `JobLauncherTestUtils` умеют запускать только весь `Job` через `launchJob(params)`; отдельный `Step` изолированно протестировать нельзя — метода `launchStep(...)` нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`JobLauncherTestUtils.launchStep(\"stepName\")` запускает отдельный шаг изолированно, не только весь `Job`.",
-                "source_of_confusion": "Запуск целого `Job` — самый частый сценарий в примерах.",
-                "if_it_were_true": "Если бы отдельный шаг нельзя было запустить, метода `launchStep(...)` не существовало бы.",
-                "how_it_should_be": "Тестируют и весь `Job` (`launchJob`), и отдельный `Step` (`launchStep`)."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Подключают `spring-batch-test`; аннотация `@SpringBatchTest` регистрирует `JobLauncherTestUtils`, `JobRepositoryTestUtils` и `StepScopeTestExecutionListener`. `jobLauncherTestUtils.launchJob(params)` запускает весь `Job`, `launchStep(\"importStep\")` — отдельный шаг; результаты проверяют `AssertJ`: `assertThat(execution.getStatus()).isEqualTo(BatchStatus.COMPLETED)`, счётчики `getReadCount()`/`getWriteCount()`/`getSkipCount()`. Метаданные чистят `jobRepositoryTestUtils.removeJobExecutions()`.",
               "correct": true,
               "sections": {
@@ -2491,6 +2479,18 @@
                 "when_to_apply": "Берут для интеграционных и unit-тестов batch: проверка успешности `Job`, корректности счётчиков шага, skip-поведения и работы reader.",
                 "edge_cases": "Перед каждым тестом нужен `removeJobExecutions()`, иначе те же параметры дадут `JobInstanceAlreadyCompleteException`; `@StepScope`-бины активирует `StepScopeTestExecutionListener` из `@SpringBatchTest`.",
                 "related": "[[spring-batch-interview#Q30]] тестирование Spring Batch заданий; [[spring-batch-interview#Q5]] StepScope и late binding; [[spring-batch-interview#Q31]] мониторинг через JobExplorer."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@SpringBatchTest` и `JobLauncherTestUtils` умеют запускать только весь `Job` через `launchJob(params)`; отдельный `Step` изолированно протестировать нельзя — метода `launchStep(...)` нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`JobLauncherTestUtils.launchStep(\"stepName\")` запускает отдельный шаг изолированно, не только весь `Job`.",
+                "source_of_confusion": "Запуск целого `Job` — самый частый сценарий в примерах.",
+                "if_it_were_true": "Если бы отдельный шаг нельзя было запустить, метода `launchStep(...)` не существовало бы.",
+                "how_it_should_be": "Тестируют и весь `Job` (`launchJob`), и отдельный `Step` (`launchStep`)."
               }
             },
             {
@@ -2555,6 +2555,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Кастомные метрики в `Spring Batch` нельзя добавить — доступны только встроенные `spring.batch.*`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кастомные метрики добавляют в слушателе через `MeterRegistry` (`Timer`, `counter`, `gauge`), дополняя встроенные.",
+                "source_of_confusion": "Встроенные метрики на слуху, поэтому про кастомные забывают.",
+                "if_it_were_true": "Если бы кастомные были невозможны, не было бы `BatchMetricsListener` с `MeterRegistry`.",
+                "how_it_should_be": "Через `MeterRegistry` в слушателях регистрируют любые свои метрики поверх встроенных."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`Spring Batch 5` автоматически публикует метрики через `Micrometer` при наличии `spring-boot-starter-actuator`: `spring.batch.job`, `spring.batch.step`, `spring.batch.item.read`/`process`/`write`, `spring.batch.chunk.write`. Их экспонируют в `/actuator/metrics` и `/actuator/prometheus` (через `management.endpoints.web.exposure.include`); кастомные метрики добавляют в слушателе через `MeterRegistry`.",
               "correct": true,
               "sections": {
@@ -2563,18 +2575,6 @@
                 "when_to_apply": "Берут для production-наблюдаемости batch: дашборды длительности/throughput, алерты на `FAILED`, healthcheck заданий.",
                 "edge_cases": "Без `actuator`/`Micrometer` метрик не будет; для кастомных метрик слушатель часто делают `@JobScope`, а тяжёлые теги (id записей) в метрики не кладут из-за cardinality.",
                 "related": "[[spring-batch-interview#Q31]] мониторинг и Spring Cloud Task; [[spring-batch-interview#Q35]] кастомные метрики в ChunkListener; [[spring-batch-interview#Q19]] типы слушателей."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Кастомные метрики в `Spring Batch` нельзя добавить — доступны только встроенные `spring.batch.*`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Кастомные метрики добавляют в слушателе через `MeterRegistry` (`Timer`, `counter`, `gauge`), дополняя встроенные.",
-                "source_of_confusion": "Встроенные метрики на слуху, поэтому про кастомные забывают.",
-                "if_it_were_true": "Если бы кастомные были невозможны, не было бы `BatchMetricsListener` с `MeterRegistry`.",
-                "how_it_should_be": "Через `MeterRegistry` в слушателях регистрируют любые свои метрики поверх встроенных."
               }
             }
           ]

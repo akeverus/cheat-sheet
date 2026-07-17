@@ -34,18 +34,6 @@
               "order": 1
             },
             {
-              "text": "`Quarkus` — это исключительно сборщик native image поверх `GraalVM`, не имеющий своей рантайм-модели и DI.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Native image через `GraalVM` — лишь одна из фич; `Quarkus` — полноценный фреймворк с DI, REST, ORM и реактивным стеком, работающий и на обычной JVM.",
-                "source_of_confusion": "Native image — самая «громкая» фича `Quarkus`, поэтому фреймворк сводят только к ней.",
-                "if_it_were_true": "Если бы это был только компилятор, нельзя было бы запустить `Quarkus` в JVM-режиме, но это штатный и частый сценарий.",
-                "how_it_should_be": "`Quarkus` — фреймворк целиком; native image — опциональный режим упаковки, а не вся суть."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "`Quarkus` — это реализация стандарта `Spring`, просто под другим брендом от `Red Hat`.",
               "correct": false,
               "sections": {
@@ -53,6 +41,18 @@
                 "source_of_confusion": "Оба — популярные Java-фреймворки от крупных вендоров, отсюда мысль, что один копирует стандарт другого.",
                 "if_it_were_true": "Если бы `Quarkus` реализовывал `Spring`, в нём работали бы `@Service`/`@Autowired` как есть, но там CDI-аннотации `@ApplicationScoped`/`@Inject`.",
                 "how_it_should_be": "Это разные стандарты: `Quarkus` — `MicroProfile`/Jakarta, `Spring` — собственная программная модель."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Quarkus` — это исключительно сборщик native image поверх `GraalVM`, не имеющий своей рантайм-модели и DI.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Native image через `GraalVM` — лишь одна из фич; `Quarkus` — полноценный фреймворк с DI, REST, ORM и реактивным стеком, работающий и на обычной JVM.",
+                "source_of_confusion": "Native image — самая «громкая» фича `Quarkus`, поэтому фреймворк сводят только к ней.",
+                "if_it_were_true": "Если бы это был только компилятор, нельзя было бы запустить `Quarkus` в JVM-режиме, но это штатный и частый сценарий.",
+                "how_it_should_be": "`Quarkus` — фреймворк целиком; native image — опциональный режим упаковки, а не вся суть."
               },
               "label": "D",
               "order": 3
@@ -69,13 +69,13 @@
           "question_text": "Чем `Quarkus` отличается от `Spring Boot`?",
           "options": [
             {
-              "text": "Принципиальной разницы нет: оба используют runtime DI, одинаковый cold start и одинаковое потребление памяти.",
+              "text": "`Quarkus` использует `Reactor`/`WebFlux` как реактивный стек, ровно как `Spring`, поэтому реактивный код переносится один в один.",
               "correct": false,
               "sections": {
-                "what_actually": "Ключевое отличие именно в DI: `Quarkus` делает его build-time (`ArC`), `Spring` — runtime; отсюда у `Quarkus` быстрее старт и меньше памяти.",
-                "source_of_confusion": "Оба позволяют писать REST-сервисы похожим образом, поэтому кажется, что под капотом они идентичны.",
-                "if_it_were_true": "Будь они одинаковы, не было бы смысла в отдельном фреймворке и в маркетинге «supersonic», но цифры по старту и памяти реально различаются.",
-                "how_it_should_be": "`Quarkus` — build-time DI, native-first, `MicroProfile`; `Spring Boot` — runtime DI, general-purpose, своя модель."
+                "what_actually": "Реактивный стек `Quarkus` — это `Mutiny` поверх `Vert.x` (`Uni`/`Multi`), а `Reactor` (`Mono`/`Flux`) — стек именно `Spring WebFlux`.",
+                "source_of_confusion": "И `Mutiny`, и `Reactor` — реактивные библиотеки с похожими операторами, поэтому их путают.",
+                "if_it_were_true": "Будь стек общим, типы назывались бы `Mono`/`Flux` и в `Quarkus`, но там `Uni`/`Multi` из `Mutiny`.",
+                "how_it_should_be": "`Quarkus` использует `Mutiny`+`Vert.x`, `Spring` — `Reactor`; это разные API, хоть идея реактивности общая."
               },
               "label": "A",
               "order": 0
@@ -94,13 +94,13 @@
               "order": 1
             },
             {
-              "text": "`Quarkus` использует `Reactor`/`WebFlux` как реактивный стек, ровно как `Spring`, поэтому реактивный код переносится один в один.",
+              "text": "Принципиальной разницы нет: оба используют runtime DI, одинаковый cold start и одинаковое потребление памяти.",
               "correct": false,
               "sections": {
-                "what_actually": "Реактивный стек `Quarkus` — это `Mutiny` поверх `Vert.x` (`Uni`/`Multi`), а `Reactor` (`Mono`/`Flux`) — стек именно `Spring WebFlux`.",
-                "source_of_confusion": "И `Mutiny`, и `Reactor` — реактивные библиотеки с похожими операторами, поэтому их путают.",
-                "if_it_were_true": "Будь стек общим, типы назывались бы `Mono`/`Flux` и в `Quarkus`, но там `Uni`/`Multi` из `Mutiny`.",
-                "how_it_should_be": "`Quarkus` использует `Mutiny`+`Vert.x`, `Spring` — `Reactor`; это разные API, хоть идея реактивности общая."
+                "what_actually": "Ключевое отличие именно в DI: `Quarkus` делает его build-time (`ArC`), `Spring` — runtime; отсюда у `Quarkus` быстрее старт и меньше памяти.",
+                "source_of_confusion": "Оба позволяют писать REST-сервисы похожим образом, поэтому кажется, что под капотом они идентичны.",
+                "if_it_were_true": "Будь они одинаковы, не было бы смысла в отдельном фреймворке и в маркетинге «supersonic», но цифры по старту и памяти реально различаются.",
+                "how_it_should_be": "`Quarkus` — build-time DI, native-first, `MicroProfile`; `Spring Boot` — runtime DI, general-purpose, своя модель."
               },
               "label": "C",
               "order": 2
@@ -129,13 +129,14 @@
           "question_text": "Что такое supersonic subatomic Java?",
           "options": [
             {
-              "text": "Это название отдельного языка программирования, на котором пишут под `Quarkus` вместо Java.",
-              "correct": false,
+              "text": "Это маркетинговый слоган `Quarkus`: **supersonic** (сверхзвуковой) — startup за десятки миллисекунд в native (1-2 сек на JVM), **subatomic** (субатомный) — память от ~30MB. Достигается build-time обработкой аннотаций, tree-shaking неиспользуемых классов, `GraalVM` native image и минимизацией runtime reflection.",
+              "correct": true,
               "sections": {
-                "what_actually": "Это маркетинговый слоган `Quarkus`, описывающий быстрый старт и малую память, а не новый язык — код всё та же Java/Kotlin.",
-                "source_of_confusion": "Звучит как имя технологии, поэтому воспринимается как отдельный язык.",
-                "if_it_were_true": "Будь это язык, у него были бы своя грамматика и компилятор, но `Quarkus`-код компилируется обычным `javac`/`kotlinc`.",
-                "how_it_should_be": "Supersonic subatomic Java — слоган про скорость старта и память, язык остаётся Java."
+                "explanation": "Идея слогана — подчеркнуть, что Java может стартовать и потреблять память на уровне `Go`/`Node.js`, если вынести работу на этап сборки и срезать лишний код.",
+                "example": "Tree-shaking убирает неиспользуемые классы из бинарника, а замена reflection на сгенерированный код позволяет `GraalVM` собрать компактный native image, стартующий за миллисекунды.",
+                "when_to_apply": "На слоган ссылаются, объясняя, зачем `Quarkus` нужен в serverless и Kubernetes: там как раз ценны быстрый старт и низкая память.",
+                "edge_cases": "Цифры зависят от приложения: «десятки миллисекунд» — про native; на JVM старт всё равно быстрее `Spring`, но измеряется секундами.",
+                "related": "[[quarkus-interview#Q1]] зачем нужен Quarkus; [[quarkus-interview#Q8]] что такое native image; [[quarkus-interview#Q10]] плюсы и минусы native."
               },
               "label": "A",
               "order": 0
@@ -153,19 +154,6 @@
               "order": 1
             },
             {
-              "text": "Это маркетинговый слоган `Quarkus`: **supersonic** (сверхзвуковой) — startup за десятки миллисекунд в native (1-2 сек на JVM), **subatomic** (субатомный) — память от ~30MB. Достигается build-time обработкой аннотаций, tree-shaking неиспользуемых классов, `GraalVM` native image и минимизацией runtime reflection.",
-              "correct": true,
-              "sections": {
-                "explanation": "Идея слогана — подчеркнуть, что Java может стартовать и потреблять память на уровне `Go`/`Node.js`, если вынести работу на этап сборки и срезать лишний код.",
-                "example": "Tree-shaking убирает неиспользуемые классы из бинарника, а замена reflection на сгенерированный код позволяет `GraalVM` собрать компактный native image, стартующий за миллисекунды.",
-                "when_to_apply": "На слоган ссылаются, объясняя, зачем `Quarkus` нужен в serverless и Kubernetes: там как раз ценны быстрый старт и низкая память.",
-                "edge_cases": "Цифры зависят от приложения: «десятки миллисекунд» — про native; на JVM старт всё равно быстрее `Spring`, но измеряется секундами.",
-                "related": "[[quarkus-interview#Q1]] зачем нужен Quarkus; [[quarkus-interview#Q8]] что такое native image; [[quarkus-interview#Q10]] плюсы и минусы native."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "Это технология сжатия Docker-образов до субатомного размера, не связанная со стартом приложения.",
               "correct": false,
               "sections": {
@@ -173,6 +161,18 @@
                 "source_of_confusion": "Малая память и компактный native-образ идут рядом, поэтому слоган путают со сжатием образов.",
                 "if_it_were_true": "Будь это про образы, «supersonic» (про скорость старта) не имело бы смысла, но именно старт — половина слогана.",
                 "how_it_should_be": "Supersonic subatomic Java — про скорость старта и память процесса, а не про упаковку контейнеров."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Это название отдельного языка программирования, на котором пишут под `Quarkus` вместо Java.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это маркетинговый слоган `Quarkus`, описывающий быстрый старт и малую память, а не новый язык — код всё та же Java/Kotlin.",
+                "source_of_confusion": "Звучит как имя технологии, поэтому воспринимается как отдельный язык.",
+                "if_it_were_true": "Будь это язык, у него были бы своя грамматика и компилятор, но `Quarkus`-код компилируется обычным `javac`/`kotlinc`.",
+                "how_it_should_be": "Supersonic subatomic Java — слоган про скорость старта и память, язык остаётся Java."
               },
               "label": "D",
               "order": 3
@@ -262,6 +262,18 @@
               "order": 0
             },
             {
+              "text": "Build-time DI важен только тем, что позволяет использовать больше рефлексии в runtime.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: build-time DI минимизирует runtime reflection (wiring уже сгенерирован), что и делает возможным native image.",
+                "source_of_confusion": "DI исторически связан с рефлексией, поэтому кажется, что её становится больше.",
+                "if_it_were_true": "Будь рефлексии больше, native image было бы собрать сложнее, но build-time DI её как раз убирает.",
+                "how_it_should_be": "Смысл build-time DI — убрать рефлексию из старта, а не нарастить её."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "Build-time DI означает, что зависимости задаются вручную в коде, без аннотаций и контейнера.",
               "correct": false,
               "sections": {
@@ -270,8 +282,8 @@
                 "if_it_were_true": "Будь так, не было бы `@Inject` в `Quarkus`-коде, но он там есть и работает как стандартный CDI.",
                 "how_it_should_be": "DI остаётся декларативным через аннотации; меняется лишь момент их обработки — сборка вместо старта."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Build-time DI — это когда контейнер создаётся при старте, но кэшируется на диск для следующего запуска.",
@@ -281,18 +293,6 @@
                 "source_of_confusion": "Кэширование результата — знакомая оптимизация, поэтому build-time DI принимают за дисковый кэш контейнера.",
                 "if_it_were_true": "Будь это кэш, первый запуск был бы медленным как у `Spring`, но `Quarkus` быстр уже на первом старте.",
                 "how_it_should_be": "Граф бинов фиксируется на этапе сборки в сгенерированном коде, а не кэшируется между запусками."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Build-time DI важен только тем, что позволяет использовать больше рефлексии в runtime.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: build-time DI минимизирует runtime reflection (wiring уже сгенерирован), что и делает возможным native image.",
-                "source_of_confusion": "DI исторически связан с рефлексией, поэтому кажется, что её становится больше.",
-                "if_it_were_true": "Будь рефлексии больше, native image было бы собрать сложнее, но build-time DI её как раз убирает.",
-                "how_it_should_be": "Смысл build-time DI — убрать рефлексию из старта, а не нарастить её."
               },
               "label": "D",
               "order": 3
@@ -309,16 +309,28 @@
           "question_text": "Как `Quarkus` генерирует код во время сборки?",
           "options": [
             {
-              "text": "`Quarkus` генерирует код через annotation processor (`APT`) на уровне `javac`, как `Lombok`.",
+              "text": "`Quarkus` генерирует код в runtime при первом обращении к bean, лениво.",
               "correct": false,
               "sections": {
-                "what_actually": "Генерация идёт через Maven/Gradle-плагин и deployment-модули extensions в фазе augmentation, а не через `javac` annotation processing.",
-                "source_of_confusion": "И APT, и `Quarkus` «генерируют код по аннотациям», отсюда смешение механизмов.",
-                "if_it_were_true": "Будь это APT, генерация шла бы при компиляции каждого класса, но `Quarkus` анализирует весь classpath в отдельной фазе сборки.",
-                "how_it_should_be": "Код генерируется build-плагином `Quarkus` в augmentation-фазе, а не `javac`-процессором аннотаций."
+                "what_actually": "Код bean'ов генерируется при сборке и запекается в JAR; в runtime он уже готов, ленивой генерации нет.",
+                "source_of_confusion": "Lazy-инициализация бинов — знакомый приём из `Spring`, отсюда мысль о runtime-генерации.",
+                "if_it_were_true": "Будь генерация ленивой, первый запрос был бы медленным, но `Quarkus` отвечает быстро сразу после старта.",
+                "how_it_should_be": "Генерация — строго build-time; runtime только исполняет уже готовый сгенерированный код."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "`Quarkus` генерирует код только для native image; в JVM-режиме генерации нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Генерация (augmentation, bean'ы) выполняется в обоих режимах — она и даёт быстрый старт на JVM, а native лишь дополнительно компилирует результат.",
+                "source_of_confusion": "Native — самая заметная фича, поэтому генерацию ошибочно привязывают только к ней.",
+                "if_it_were_true": "Будь так, JVM-режим `Quarkus` стартовал бы как `Spring`, но он стартует заметно быстрее за счёт той же генерации.",
+                "how_it_should_be": "Build-time генерация работает всегда; native — отдельный финальный шаг компиляции."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Через Maven/Gradle-плагин и deployment-модули extensions в три шага: **augmentation** (анализ classpath, обработка аннотаций, генерация bean'ов), **static init** (код, исполняемый один раз при сборке, например вычисление конфигурации), **runtime init** (код при старте). Сгенерированный код кладётся в JAR — на старте нет сканирования и рефлексии.",
@@ -330,29 +342,17 @@
                 "edge_cases": "Что-то нельзя инициализировать на сборке (например, открытые сетевые соединения) — такой код относят к runtime init, иначе native image сломается.",
                 "related": "[[quarkus-interview#Q5]] build-time DI; [[quarkus-interview#Q7]] recorder и BuildItem; [[quarkus-interview#Q4]] extensions и их модули."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Quarkus` генерирует код только для native image; в JVM-режиме генерации нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Генерация (augmentation, bean'ы) выполняется в обоих режимах — она и даёт быстрый старт на JVM, а native лишь дополнительно компилирует результат.",
-                "source_of_confusion": "Native — самая заметная фича, поэтому генерацию ошибочно привязывают только к ней.",
-                "if_it_were_true": "Будь так, JVM-режим `Quarkus` стартовал бы как `Spring`, но он стартует заметно быстрее за счёт той же генерации.",
-                "how_it_should_be": "Build-time генерация работает всегда; native — отдельный финальный шаг компиляции."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`Quarkus` генерирует код в runtime при первом обращении к bean, лениво.",
+              "text": "`Quarkus` генерирует код через annotation processor (`APT`) на уровне `javac`, как `Lombok`.",
               "correct": false,
               "sections": {
-                "what_actually": "Код bean'ов генерируется при сборке и запекается в JAR; в runtime он уже готов, ленивой генерации нет.",
-                "source_of_confusion": "Lazy-инициализация бинов — знакомый приём из `Spring`, отсюда мысль о runtime-генерации.",
-                "if_it_were_true": "Будь генерация ленивой, первый запрос был бы медленным, но `Quarkus` отвечает быстро сразу после старта.",
-                "how_it_should_be": "Генерация — строго build-time; runtime только исполняет уже готовый сгенерированный код."
+                "what_actually": "Генерация идёт через Maven/Gradle-плагин и deployment-модули extensions в фазе augmentation, а не через `javac` annotation processing.",
+                "source_of_confusion": "И APT, и `Quarkus` «генерируют код по аннотациям», отсюда смешение механизмов.",
+                "if_it_were_true": "Будь это APT, генерация шла бы при компиляции каждого класса, но `Quarkus` анализирует весь classpath в отдельной фазе сборки.",
+                "how_it_should_be": "Код генерируется build-плагином `Quarkus` в augmentation-фазе, а не `javac`-процессором аннотаций."
               },
               "label": "D",
               "order": 3
@@ -369,18 +369,6 @@
           "question_text": "Что такое recorder и BuildItem?",
           "options": [
             {
-              "text": "`BuildItem` — это лог-запись о ходе сборки, а `Recorder` пишет её в файл.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`BuildItem` — единица данных, передаваемая между build steps; `Recorder` записывает runtime-действия для исполнения при старте, а не логирует сборку.",
-                "source_of_confusion": "Слова «record» и «item» ассоциируются с логированием, отсюда неверная трактовка.",
-                "if_it_were_true": "Будь это логирование, не было бы `BuildProducer`/`@BuildStep`, которые передают данные между шагами сборки.",
-                "how_it_should_be": "`BuildItem` — данные между build steps; `Recorder` — механизм отложенных runtime-действий, не логгер."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`Recorder` — это профайлер, замеряющий время каждого build step.",
               "correct": false,
               "sections": {
@@ -389,8 +377,8 @@
                 "if_it_were_true": "Будь это профайлер, он не влиял бы на то, какой код исполнится в runtime, но `Recorder` именно его и формирует.",
                 "how_it_should_be": "`Recorder` переносит работу со старта в build time, записывая отложенные действия; профилирование тут ни при чём."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`BuildItem` — единица данных, передаваемая между **build steps** (методы `@BuildStep`, обрабатывающие аспекты сборки): один шаг produce'ит item через `BuildProducer`, другой его потребляет. `Recorder` — механизм **записи** runtime-действий во время сборки, которые исполняются при старте. Вместе это ядро `Quarkus`: оно переносит работу со старта в build time.",
@@ -402,8 +390,8 @@
                 "edge_cases": "`Recorder`-методы исполняются в особом контексте: они не делают работу сразу, а «записывают» байткод инициализации, который вставляется в стартовый код.",
                 "related": "[[quarkus-interview#Q6]] фазы генерации кода; [[quarkus-interview#Q4]] deployment-модули extensions; [[quarkus-interview#Q5]] build-time DI."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`BuildItem` и `Recorder` — это аннотации уровня приложения, которые ставят на свои `@Entity`/`@RestController`.",
@@ -413,6 +401,18 @@
                 "source_of_confusion": "Многое в `Quarkus` настраивается аннотациями, поэтому и эти понятия принимают за прикладные.",
                 "if_it_were_true": "Будь они прикладными, их ставили бы в бизнес-классах, но `BuildItem`/`Recorder` живут в deployment-модулях extensions.",
                 "how_it_should_be": "`BuildItem`/`Recorder` — внутренняя build-time машинерия extensions, а не аннотации для прикладных классов."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`BuildItem` — это лог-запись о ходе сборки, а `Recorder` пишет её в файл.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BuildItem` — единица данных, передаваемая между build steps; `Recorder` записывает runtime-действия для исполнения при старте, а не логирует сборку.",
+                "source_of_confusion": "Слова «record» и «item» ассоциируются с логированием, отсюда неверная трактовка.",
+                "if_it_were_true": "Будь это логирование, не было бы `BuildProducer`/`@BuildStep`, которые передают данные между шагами сборки.",
+                "how_it_should_be": "`BuildItem` — данные между build steps; `Recorder` — механизм отложенных runtime-действий, не логгер."
               },
               "label": "D",
               "order": 3
@@ -429,18 +429,6 @@
           "question_text": "Что такое `GraalVM` Native Image?",
           "options": [
             {
-              "text": "Native Image — это режим JVM, который просто отключает интерпретатор и сразу включает JIT.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Native Image — AOT-компилятор, превращающий байткод в нативный исполняемый файл без JVM, а не режим JIT внутри JVM.",
-                "source_of_confusion": "И JIT, и Native Image «ускоряют» Java, поэтому их смешивают.",
-                "if_it_were_true": "Будь это режим JVM, в runtime всё равно требовалась бы JVM, но native binary запускается без неё.",
-                "how_it_should_be": "Native Image — отдельный AOT-компилятор и самостоятельный бинарник, а не настройка JIT в JVM."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Native Image — это упаковка JVM и приложения в один Docker-образ.",
               "correct": false,
               "sections": {
@@ -449,20 +437,20 @@
                 "if_it_were_true": "Будь там JVM внутри, не было бы экономии памяти и мгновенного старта, ради которых всё затевается.",
                 "how_it_should_be": "Native Image исключает JVM из runtime, а не пакует её рядом с приложением."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
-              "text": "Native Image полностью сохраняет все возможности JVM, включая произвольный reflection и dynamic class loading.",
+              "text": "Native Image — это режим JVM, который просто отключает интерпретатор и сразу включает JIT.",
               "correct": false,
               "sections": {
-                "what_actually": "Native Image работает в closed-world: reflection и dynamic proxy нужно регистрировать, а dynamic class loading по умолчанию запрещён.",
-                "source_of_confusion": "Хочется верить, что native — это «та же Java без ограничений», отсюда заблуждение.",
-                "if_it_were_true": "Будь это так, не нужна была бы reachability metadata, но без неё reflection в native падает.",
-                "how_it_should_be": "Native Image накладывает ограничения closed-world; часть динамики недоступна или требует регистрации."
+                "what_actually": "Native Image — AOT-компилятор, превращающий байткод в нативный исполняемый файл без JVM, а не режим JIT внутри JVM.",
+                "source_of_confusion": "И JIT, и Native Image «ускоряют» Java, поэтому их смешивают.",
+                "if_it_were_true": "Будь это режим JVM, в runtime всё равно требовалась бы JVM, но native binary запускается без неё.",
+                "how_it_should_be": "Native Image — отдельный AOT-компилятор и самостоятельный бинарник, а не настройка JIT в JVM."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`GraalVM` Native Image — компилятор от `Oracle`, превращающий JVM-байткод в **нативный исполняемый файл** без JVM (`native-image -jar myapp.jar` → `myapp`). Особенности: AOT-компиляция (Ahead-Of-Time), closed-world (все классы известны при сборке), нет dynamic class loading по умолчанию, reflection и dynamic proxy нужно регистрировать.",
@@ -473,6 +461,18 @@
                 "when_to_apply": "Native Image выбирают, когда критичны cold start и память; цена — долгая сборка и работа с reachability metadata для рефлексии.",
                 "edge_cases": "Closed-world ломает динамику: `Class.forName()` с произвольным именем, dynamic proxy и reflection требуют явной регистрации, иначе runtime-ошибки.",
                 "related": "[[quarkus-interview#Q9]] как Quarkus собирает native; [[quarkus-interview#Q10]] плюсы и минусы; [[quarkus-interview#Q11]] closed-world assumption."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Native Image полностью сохраняет все возможности JVM, включая произвольный reflection и dynamic class loading.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Native Image работает в closed-world: reflection и dynamic proxy нужно регистрировать, а dynamic class loading по умолчанию запрещён.",
+                "source_of_confusion": "Хочется верить, что native — это «та же Java без ограничений», отсюда заблуждение.",
+                "if_it_were_true": "Будь это так, не нужна была бы reachability metadata, но без неё reflection в native падает.",
+                "how_it_should_be": "Native Image накладывает ограничения closed-world; часть динамики недоступна или требует регистрации."
               },
               "label": "D",
               "order": 3
@@ -489,14 +489,13 @@
           "question_text": "Как `Quarkus` собирает native binary?",
           "options": [
             {
-              "text": "Через профиль/флаг сборки: Maven `./mvnw package -Pnative`, Gradle `./gradlew build -Dquarkus.package.type=native`; без локального `GraalVM` — в Docker через `-Dquarkus.native.container-build=true`. Сборка занимает 2-10 минут, результат — `target/myapp-runner` (linux executable ~30-100MB), который кладут в Docker-образ через `Dockerfile.native`.",
-              "correct": true,
+              "text": "Для native binary обязательно нужен установленный локально `GraalVM`, контейнерная сборка невозможна.",
+              "correct": false,
               "sections": {
-                "explanation": "`Quarkus` запускает `GraalVM` `native-image` под капотом, прогоняя весь анализ достижимости, поэтому сборка заметно дольше обычной JVM-упаковки.",
-                "example": "На CI без `GraalVM` удобен container-build: `-Dquarkus.native.container-build=true` соберёт бинарник внутри официального builder-образа, а затем `docker build -f Dockerfile.native` упакует его.",
-                "when_to_apply": "Native-сборку запускают для production-артефактов serverless/Kubernetes, где важны cold start и память; для повседневной разработки используют быстрый JVM-режим и dev mode.",
-                "edge_cases": "Бинарник платформозависим: собранный под Linux `myapp-runner` не запустится на macOS, поэтому в CI почти всегда собирают через Linux-контейнер.",
-                "related": "[[quarkus-interview#Q8]] что такое native image; [[quarkus-interview#Q10]] плюсы и минусы native; [[quarkus-interview#Q12]] reflection в native."
+                "what_actually": "Локальный `GraalVM` не обязателен: `-Dquarkus.native.container-build=true` соберёт бинарник в Docker-контейнере с builder-образом.",
+                "source_of_confusion": "Логично думать, что для native нужен native-инструмент на машине, отсюда заблуждение.",
+                "if_it_were_true": "Будь локальный `GraalVM` обязателен, CI без него не мог бы собирать native, но container-build решает это.",
+                "how_it_should_be": "Есть два пути: локальный `GraalVM` или container-build в Docker; второй и используют чаще на CI."
               },
               "label": "A",
               "order": 0
@@ -526,13 +525,14 @@
               "order": 2
             },
             {
-              "text": "Для native binary обязательно нужен установленный локально `GraalVM`, контейнерная сборка невозможна.",
-              "correct": false,
+              "text": "Через профиль/флаг сборки: Maven `./mvnw package -Pnative`, Gradle `./gradlew build -Dquarkus.package.type=native`; без локального `GraalVM` — в Docker через `-Dquarkus.native.container-build=true`. Сборка занимает 2-10 минут, результат — `target/myapp-runner` (linux executable ~30-100MB), который кладут в Docker-образ через `Dockerfile.native`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Локальный `GraalVM` не обязателен: `-Dquarkus.native.container-build=true` соберёт бинарник в Docker-контейнере с builder-образом.",
-                "source_of_confusion": "Логично думать, что для native нужен native-инструмент на машине, отсюда заблуждение.",
-                "if_it_were_true": "Будь локальный `GraalVM` обязателен, CI без него не мог бы собирать native, но container-build решает это.",
-                "how_it_should_be": "Есть два пути: локальный `GraalVM` или container-build в Docker; второй и используют чаще на CI."
+                "explanation": "`Quarkus` запускает `GraalVM` `native-image` под капотом, прогоняя весь анализ достижимости, поэтому сборка заметно дольше обычной JVM-упаковки.",
+                "example": "На CI без `GraalVM` удобен container-build: `-Dquarkus.native.container-build=true` соберёт бинарник внутри официального builder-образа, а затем `docker build -f Dockerfile.native` упакует его.",
+                "when_to_apply": "Native-сборку запускают для production-артефактов serverless/Kubernetes, где важны cold start и память; для повседневной разработки используют быстрый JVM-режим и dev mode.",
+                "edge_cases": "Бинарник платформозависим: собранный под Linux `myapp-runner` не запустится на macOS, поэтому в CI почти всегда собирают через Linux-контейнер.",
+                "related": "[[quarkus-interview#Q8]] что такое native image; [[quarkus-interview#Q10]] плюсы и минусы native; [[quarkus-interview#Q12]] reflection в native."
               },
               "label": "D",
               "order": 3
@@ -549,13 +549,13 @@
           "question_text": "Какие преимущества и недостатки native image?",
           "options": [
             {
-              "text": "Native image даёт сплошные плюсы без недостатков: и старт быстрее, и сборка быстрее, и throughput выше.",
+              "text": "Недостаток у native только один — чуть больший размер Docker-образа.",
               "correct": false,
               "sections": {
-                "what_actually": "Плюсы (мгновенный старт, малая память) реальны, но есть и минусы: долгая сборка 2-10 мин, сложности с reflection, peak throughput ниже без JIT.",
-                "source_of_confusion": "Эффектные цифры старта затмевают компромиссы, поэтому native кажется бесплатным выигрышем.",
-                "if_it_were_true": "Будь всё так, никто не запускал бы `Quarkus` на JVM, но JVM-режим выбирают именно из-за throughput и простоты сборки.",
-                "how_it_should_be": "Native — это размен: выигрыш в старте/памяти ценой сборки, throughput и сложности с динамикой."
+                "what_actually": "Native-образ как раз меньше (нет JVM); реальные минусы — долгая сборка, проблемы с reflection, отсутствие JIT и сложная отладка.",
+                "source_of_confusion": "Размер образа — заметная характеристика, поэтому его принимают за главный минус.",
+                "if_it_were_true": "Будь образ больше, исчез бы один из плюсов native, но он наоборот компактнее JVM-образа.",
+                "how_it_should_be": "Образ у native меньше; настоящие минусы лежат в сборке, динамике и throughput."
               },
               "label": "A",
               "order": 0
@@ -574,6 +574,18 @@
               "order": 1
             },
             {
+              "text": "Native image даёт сплошные плюсы без недостатков: и старт быстрее, и сборка быстрее, и throughput выше.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Плюсы (мгновенный старт, малая память) реальны, но есть и минусы: долгая сборка 2-10 мин, сложности с reflection, peak throughput ниже без JIT.",
+                "source_of_confusion": "Эффектные цифры старта затмевают компромиссы, поэтому native кажется бесплатным выигрышем.",
+                "if_it_were_true": "Будь всё так, никто не запускал бы `Quarkus` на JVM, но JVM-режим выбирают именно из-за throughput и простоты сборки.",
+                "how_it_should_be": "Native — это размен: выигрыш в старте/памяти ценой сборки, throughput и сложности с динамикой."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
               "text": "Главный плюс native image — что peak throughput выше, чем на разогретой JVM.",
               "correct": false,
               "sections": {
@@ -581,18 +593,6 @@
                 "source_of_confusion": "Раз «native быстрее», кажется, что он быстрее во всём, включая throughput.",
                 "if_it_were_true": "Будь throughput выше, не было бы причин держать throughput-критичные сервисы на JVM, но их там и держат.",
                 "how_it_should_be": "Native выигрывает в cold start и памяти; по peak throughput разогретая JVM обычно впереди."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Недостаток у native только один — чуть больший размер Docker-образа.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Native-образ как раз меньше (нет JVM); реальные минусы — долгая сборка, проблемы с reflection, отсутствие JIT и сложная отладка.",
-                "source_of_confusion": "Размер образа — заметная характеристика, поэтому его принимают за главный минус.",
-                "if_it_were_true": "Будь образ больше, исчез бы один из плюсов native, но он наоборот компактнее JVM-образа.",
-                "how_it_should_be": "Образ у native меньше; настоящие минусы лежат в сборке, динамике и throughput."
               },
               "label": "D",
               "order": 3
@@ -609,18 +609,6 @@
           "question_text": "Что такое closed-world assumption?",
           "options": [
             {
-              "text": "Closed-world assumption — это требование, чтобы приложение не имело доступа в интернет в runtime.",
-              "correct": false,
-              "sections": {
-                "what_actually": "CWA — про то, что все классы/методы/ресурсы известны на этапе компиляции, а не про сетевую изоляцию приложения.",
-                "source_of_confusion": "Слово «closed» наводит на мысль об изоляции/sandbox, отсюда путаница с сетью.",
-                "if_it_were_true": "Будь это про сеть, native-приложения не могли бы делать HTTP-запросы, но они спокойно их делают.",
-                "how_it_should_be": "CWA — про полноту знаний компилятора о коде, а не про доступ в сеть."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Closed-world assumption означает, что приложение можно собрать только из закрытого, проприетарного кода.",
               "correct": false,
               "sections": {
@@ -629,8 +617,8 @@
                 "if_it_were_true": "Будь так, native нельзя было бы собрать из open source библиотек, но `Quarkus` сам open source и прекрасно компилируется в native.",
                 "how_it_should_be": "CWA — про известность кода на этапе сборки, а не про модель лицензирования."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "**Closed-world assumption (CWA)** — Native Image предполагает, что **все** классы, методы, поля и ресурсы известны на этапе компиляции. Что нельзя по умолчанию: reflection с unknown classes, dynamic proxy, `Class.forName()` с динамическими именами, resource loading по динамическим путям, динамическая загрузка JAR. Решение — **reachability metadata**: JSON, объявляющий reflection-используемые классы.",
@@ -642,8 +630,8 @@
                 "edge_cases": "`Quarkus` extensions делают регистрацию автоматически для known-фреймворков (`Hibernate`, `Jackson`); для собственных динамических мест регистрировать приходится вручную.",
                 "related": "[[quarkus-interview#Q8]] что такое native image; [[quarkus-interview#Q12]] reflection в native; [[quarkus-interview#Q4]] extensions и автоматическая регистрация."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Closed-world assumption разрешает любую динамику, просто требует включить специальный флаг компиляции.",
@@ -653,6 +641,18 @@
                 "source_of_confusion": "Хочется верить, что ограничение снимается одним переключателем, отсюда заблуждение.",
                 "if_it_were_true": "Будь такой флаг, не нужна была бы metadata и `@RegisterForReflection`, но они существуют именно из-за CWA.",
                 "how_it_should_be": "Под CWA динамику включают точечно через metadata, а не глобальным флагом."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Closed-world assumption — это требование, чтобы приложение не имело доступа в интернет в runtime.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CWA — про то, что все классы/методы/ресурсы известны на этапе компиляции, а не про сетевую изоляцию приложения.",
+                "source_of_confusion": "Слово «closed» наводит на мысль об изоляции/sandbox, отсюда путаница с сетью.",
+                "if_it_were_true": "Будь это про сеть, native-приложения не могли бы делать HTTP-запросы, но они спокойно их делают.",
+                "how_it_should_be": "CWA — про полноту знаний компилятора о коде, а не про доступ в сеть."
               },
               "label": "D",
               "order": 3
@@ -681,6 +681,19 @@
               "order": 0
             },
             {
+              "text": "Reflection работает только если класс зарегистрирован в **reachability metadata**. Регистрируют аннотацией `@RegisterForReflection` на классе или программно через `ReflectiveClassBuildItem` в `@BuildStep`. Без регистрации — `ClassNotFoundException`/`NoSuchMethodException` в runtime. Сбор metadata можно автоматизировать `GraalVM` tracing agent: `java -agentlib:native-image-agent=config-output-dir=meta-conf -jar app.jar`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Идея в том, что компилятор не видит динамических обращений, поэтому ему нужно явно «подсказать» список классов, к которым приложение лезет рефлексией.",
+                "example": "Для DTO, сериализуемого `Jackson`, ставят `@RegisterForReflection public class MyDto {}`, иначе в native сериализация упадёт с ошибкой об отсутствии метаданных.",
+                "when_to_apply": "Регистрацию делают при подготовке приложения к native: помечают свои DTO/классы и/или прогоняют tracing agent на тестах, чтобы он собрал все reflection-вызовы.",
+                "edge_cases": "Tracing agent ловит только то, что реально вызвалось в прогоне; редкие ветки кода он может пропустить, поэтому покрытие тестами при сборе metadata важно.",
+                "related": "[[quarkus-interview#Q11]] closed-world assumption; [[quarkus-interview#Q8]] что такое native image; [[quarkus-interview#Q4]] extensions и авторегистрация reflection."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "В native image reflection невозможен в принципе: `Quarkus`-extensions вместо него генерируют байткод на этапе сборки, а `@RegisterForReflection` игнорируется.",
               "correct": false,
               "sections": {
@@ -689,8 +702,8 @@
                 "if_it_were_true": "Будь он запрещён полностью, не работали бы `Hibernate`/`Jackson` в native, но они работают за счёт регистрации.",
                 "how_it_should_be": "Reflection в native возможен — нужна только регистрация используемых классов."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "`GraalVM` при сборке сам трассирует весь код и регистрирует любые классы, используемые через reflection, поэтому ни `@RegisterForReflection`, ни `reflect-config.json` не нужны.",
@@ -700,19 +713,6 @@
                 "source_of_confusion": "Хочется единым переключателем снять ограничение, отсюда вымышленный флаг.",
                 "if_it_were_true": "Будь он, не понадобились бы аннотации и tracing agent для сбора конкретных классов.",
                 "how_it_should_be": "Reflection регистрируют поимённо через аннотации/metadata, а не глобальным флагом."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Reflection работает только если класс зарегистрирован в **reachability metadata**. Регистрируют аннотацией `@RegisterForReflection` на классе или программно через `ReflectiveClassBuildItem` в `@BuildStep`. Без регистрации — `ClassNotFoundException`/`NoSuchMethodException` в runtime. Сбор metadata можно автоматизировать `GraalVM` tracing agent: `java -agentlib:native-image-agent=config-output-dir=meta-conf -jar app.jar`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Идея в том, что компилятор не видит динамических обращений, поэтому ему нужно явно «подсказать» список классов, к которым приложение лезет рефлексией.",
-                "example": "Для DTO, сериализуемого `Jackson`, ставят `@RegisterForReflection public class MyDto {}`, иначе в native сериализация упадёт с ошибкой об отсутствии метаданных.",
-                "when_to_apply": "Регистрацию делают при подготовке приложения к native: помечают свои DTO/классы и/или прогоняют tracing agent на тестах, чтобы он собрал все reflection-вызовы.",
-                "edge_cases": "Tracing agent ловит только то, что реально вызвалось в прогоне; редкие ветки кода он может пропустить, поэтому покрытие тестами при сборе metadata важно.",
-                "related": "[[quarkus-interview#Q11]] closed-world assumption; [[quarkus-interview#Q8]] что такое native image; [[quarkus-interview#Q4]] extensions и авторегистрация reflection."
               },
               "label": "D",
               "order": 3
@@ -742,13 +742,13 @@
               "order": 0
             },
             {
-              "text": "`RESTEasy Reactive` и `RESTEasy Classic` используют разные несовместимые аннотации вместо `JAX-RS`.",
+              "text": "`RESTEasy Reactive` обязательно требует, чтобы все методы возвращали `Uni`/`Multi`, иначе не компилируется.",
               "correct": false,
               "sections": {
-                "what_actually": "Обе реализации используют стандартные `JAX-RS`-аннотации (`@Path`, `@GET`, `@Produces`); различается модель исполнения, а не аннотации.",
-                "source_of_confusion": "Раз реализации две, кажется, что и API у них разные.",
-                "if_it_were_true": "Будь аннотации разными, нельзя было бы переносить ресурсы между реализациями почти без правок, но это возможно.",
-                "how_it_should_be": "Аннотации общие (`JAX-RS`); отличие — sync/servlet vs async/`Vert.x`."
+                "what_actually": "Reactive поддерживает и обычные синхронные возвраты, и `Uni`/`Multi`; реактивные типы — опция, а не обязанность.",
+                "source_of_confusion": "Раз реализация «Reactive», кажется, что реактивные типы обязательны везде.",
+                "if_it_were_true": "Будь так, простой `public String hello()` не работал бы в Reactive, но он работает штатно.",
+                "how_it_should_be": "Reactive допускает и sync-методы (с `@Blocking` при блокировке), и реактивные `Uni`/`Multi`."
               },
               "label": "B",
               "order": 1
@@ -766,13 +766,13 @@
               "order": 2
             },
             {
-              "text": "`RESTEasy Reactive` обязательно требует, чтобы все методы возвращали `Uni`/`Multi`, иначе не компилируется.",
+              "text": "`RESTEasy Reactive` и `RESTEasy Classic` используют разные несовместимые аннотации вместо `JAX-RS`.",
               "correct": false,
               "sections": {
-                "what_actually": "Reactive поддерживает и обычные синхронные возвраты, и `Uni`/`Multi`; реактивные типы — опция, а не обязанность.",
-                "source_of_confusion": "Раз реализация «Reactive», кажется, что реактивные типы обязательны везде.",
-                "if_it_were_true": "Будь так, простой `public String hello()` не работал бы в Reactive, но он работает штатно.",
-                "how_it_should_be": "Reactive допускает и sync-методы (с `@Blocking` при блокировке), и реактивные `Uni`/`Multi`."
+                "what_actually": "Обе реализации используют стандартные `JAX-RS`-аннотации (`@Path`, `@GET`, `@Produces`); различается модель исполнения, а не аннотации.",
+                "source_of_confusion": "Раз реализации две, кажется, что и API у них разные.",
+                "if_it_were_true": "Будь аннотации разными, нельзя было бы переносить ресурсы между реализациями почти без правок, но это возможно.",
+                "how_it_should_be": "Аннотации общие (`JAX-RS`); отличие — sync/servlet vs async/`Vert.x`."
               },
               "label": "D",
               "order": 3
@@ -789,6 +789,18 @@
           "question_text": "Какие части `MicroProfile` поддерживает `Quarkus`?",
           "options": [
             {
+              "text": "`Quarkus` поддерживает только Config из `MicroProfile`, остальные части недоступны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поддержан широкий набор: Health, Metrics, OpenAPI, Fault Tolerance, JWT, REST Client и др. — а не только Config.",
+                "source_of_confusion": "Config — самая известная часть `MicroProfile`, поэтому остальное упускают.",
+                "if_it_were_true": "Будь так, не было бы extensions `smallrye-health`/`smallrye-openapi`, но они существуют и широко используются.",
+                "how_it_should_be": "Покрыта большая часть `MicroProfile`, не один лишь Config."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "`MicroProfile` — это собственный стандарт `Quarkus`, не используемый другими фреймворками.",
               "correct": false,
               "sections": {
@@ -797,8 +809,8 @@
                 "if_it_were_true": "Будь это стандарт `Quarkus`, его не реализовывали бы `Open Liberty` и `Helidon`, но они это делают.",
                 "how_it_should_be": "`MicroProfile` — вендоронезависимый стандарт; `Quarkus` — одна из реализаций."
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`MicroProfile` — набор стандартов для облачных Java-приложений от `Eclipse Foundation`. `Quarkus` поддерживает: Config (`@ConfigProperty`), Health (`quarkus-smallrye-health`), Metrics (`micrometer-registry-prometheus`), OpenAPI (`smallrye-openapi`), Fault Tolerance (retry, circuit breaker), JWT (`smallrye-jwt`), REST Client (`rest-client-reactive`), OpenTracing (`opentelemetry`).",
@@ -809,18 +821,6 @@
                 "when_to_apply": "`MicroProfile`-API применяют, когда нужны стандартизированные health/metrics/config/fault-tolerance, переносимые между совместимыми рантаймами.",
                 "edge_cases": "Метрики в современном `Quarkus` дают через `Micrometer`, а не классический `MicroProfile Metrics`: это смещение в сторону `Micrometer`/`OpenTelemetry`.",
                 "related": "[[quarkus-interview#Q15]] Config через MicroProfile; [[quarkus-interview#Q16]] Health/Metrics/OpenAPI; [[quarkus-interview#Q13]] RESTEasy Reactive."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Quarkus` поддерживает только Config из `MicroProfile`, остальные части недоступны.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Поддержан широкий набор: Health, Metrics, OpenAPI, Fault Tolerance, JWT, REST Client и др. — а не только Config.",
-                "source_of_confusion": "Config — самая известная часть `MicroProfile`, поэтому остальное упускают.",
-                "if_it_were_true": "Будь так, не было бы extensions `smallrye-health`/`smallrye-openapi`, но они существуют и широко используются.",
-                "how_it_should_be": "Покрыта большая часть `MicroProfile`, не один лишь Config."
               },
               "label": "C",
               "order": 2
@@ -861,6 +861,18 @@
               "order": 0
             },
             {
+              "text": "Через `MicroProfile Config`. Свойства задают в `application.properties`, инжектят `@ConfigProperty` или type-safe интерфейсом `@ConfigMapping(prefix=\"my\")`. Инжектируемое поле всегда типа `String`; для `int`, `boolean`, `Duration` значение получают строкой и парсят вручную — встроенных converters нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@ConfigMapping` (type-safe конфиг в интерфейсе) — относительно новый механизм (`Quarkus 3+`), он дополняет `@ConfigProperty`, а не объявляет его устаревшим.",
+                "source_of_confusion": "Раз `@ConfigMapping` удобнее, кажется, что он отменяет `@ConfigProperty`.",
+                "if_it_were_true": "Будь `@ConfigProperty` deprecated, его не показывали бы в актуальной документации как рабочий способ.",
+                "how_it_should_be": "`@ConfigProperty` и `@ConfigMapping` сосуществуют: первый — для отдельных свойств, второй — для типобезопасных групп."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "Через `MicroProfile Config`. Свойства задают в `application.properties`, инжектят полем `@ConfigProperty(name=\"my.greeting\") String greeting;`. Параметра `defaultValue` нет: если свойство отсутствует в конфиге, бин не создаётся и старт падает с `DeploymentException`.",
               "correct": false,
               "sections": {
@@ -869,8 +881,8 @@
                 "if_it_were_true": "Будь так, `@ConfigProperty`/`@ConfigMapping` не существовали бы в `Quarkus`, но именно они там штатные.",
                 "how_it_should_be": "Инъекция конфигурации — через `@ConfigProperty`/`@ConfigMapping`, а не `@Value`."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Через `MicroProfile Config`. Свойства задают в `application.properties` (`my.greeting=...`, `quarkus.datasource.jdbc.url=...`), а инжектят полями `@ConfigProperty(name=\"my.greeting\", defaultValue=\"...\") String greeting;` или type-safe интерфейсом `@ConfigMapping(prefix=\"my\")`. Поддерживаются типы `String`, `int`, `boolean`, `Duration`, `Optional<T>`, `List<T>` и custom через converters.",
@@ -881,18 +893,6 @@
                 "when_to_apply": "Config используют для всех настроек приложения — БД, таймауты, фиче-флаги — особенно когда нужно переопределять значения по средам через env/profiles.",
                 "edge_cases": "Приоритет источников фиксирован: env и system properties перекрывают `application.properties`, что удобно для контейнеров, но и источник неожиданных переопределений.",
                 "related": "[[quarkus-interview#Q14]] MicroProfile в Quarkus; [[quarkus-interview#Q16]] встроенные Health/Metrics/OpenAPI; [[quarkus-interview#Q26]] Dev Services и конфигурация."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Через `MicroProfile Config`. Свойства задают в `application.properties`, инжектят `@ConfigProperty` или type-safe интерфейсом `@ConfigMapping(prefix=\"my\")`. Инжектируемое поле всегда типа `String`; для `int`, `boolean`, `Duration` значение получают строкой и парсят вручную — встроенных converters нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@ConfigMapping` (type-safe конфиг в интерфейсе) — относительно новый механизм (`Quarkus 3+`), он дополняет `@ConfigProperty`, а не объявляет его устаревшим.",
-                "source_of_confusion": "Раз `@ConfigMapping` удобнее, кажется, что он отменяет `@ConfigProperty`.",
-                "if_it_were_true": "Будь `@ConfigProperty` deprecated, его не показывали бы в актуальной документации как рабочий способ.",
-                "how_it_should_be": "`@ConfigProperty` и `@ConfigMapping` сосуществуют: первый — для отдельных свойств, второй — для типобезопасных групп."
               },
               "label": "D",
               "order": 3
@@ -909,30 +909,6 @@
           "question_text": "Health, Metrics, OpenAPI — встроенные?",
           "options": [
             {
-              "text": "Health/Metrics/OpenAPI отдаются на стандартных путях `/actuator/health`, `/actuator/metrics`, как в `Spring Boot`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В `Quarkus` эти endpoints живут под префиксом `/q/` (`/q/health`, `/q/metrics`, `/q/openapi`), а `/actuator/...` — это `Spring Boot Actuator`.",
-                "source_of_confusion": "`Actuator` — известный стандарт, его пути по привычке ожидают и в `Quarkus`.",
-                "if_it_were_true": "Будь пути `/actuator/...`, не было бы `/q/health` и `/q/dev`, но именно они в `Quarkus`.",
-                "how_it_should_be": "Endpoints в `Quarkus` под `/q/...`; `/actuator/...` — это `Spring Boot`."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Готовых health и metrics нет: их поднимают вручную через `@Path`-ресурсы или подключают сторонний `Spring Boot Actuator`-стартер.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Они встроены: подключаешь `smallrye-health`/`micrometer-registry-prometheus`/`smallrye-openapi` — и endpoints появляются автоматически.",
-                "source_of_confusion": "В простых фреймворках такие вещи пишут руками, отсюда ожидание ручной работы.",
-                "if_it_were_true": "Будь так, не существовало бы готовых extensions `smallrye-health` и `/q/health`, но они есть.",
-                "how_it_should_be": "Health/Metrics/OpenAPI дают готовые extensions, ручные эндпоинты не нужны."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Health, metrics и OpenAPI входят в `quarkus-core` и доступны всегда — подключать `smallrye-health`/`smallrye-openapi` не нужно.",
               "correct": false,
               "sections": {
@@ -941,8 +917,8 @@
                 "if_it_were_true": "Будь всё включено, минимальное приложение тащило бы лишние модули, что не в духе `Quarkus`.",
                 "how_it_should_be": "Возможности встроенные, но активируются добавлением нужных extensions."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Да, встроены через extensions. Подключив `smallrye-health`, `micrometer-registry-prometheus`, `smallrye-openapi`, получаешь endpoints под `/q/`: `/q/health` (overall), `/q/health/live` (liveness), `/q/health/ready` (readiness), `/q/metrics` (Prometheus), `/q/openapi` (spec), `/q/swagger-ui`, `/q/dev` (только dev mode). Свои проверки пишут через `HealthCheck` с `@Liveness`/`@Readiness`.",
@@ -953,6 +929,30 @@
                 "when_to_apply": "Эти endpoints используют для Kubernetes liveness/readiness-проб, сбора метрик `Prometheus` и публикации `OpenAPI`-спеки для клиентов.",
                 "edge_cases": "`/q/swagger-ui` и `/q/dev` обычно доступны только в dev/test, а в production их часто отключают, чтобы не раскрывать внутренности.",
                 "related": "[[quarkus-interview#Q14]] MicroProfile в Quarkus; [[quarkus-interview#Q29]] интеграция с Kubernetes; [[quarkus-interview#Q24]] dev mode и Dev UI."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Готовых health и metrics нет: их поднимают вручную через `@Path`-ресурсы или подключают сторонний `Spring Boot Actuator`-стартер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они встроены: подключаешь `smallrye-health`/`micrometer-registry-prometheus`/`smallrye-openapi` — и endpoints появляются автоматически.",
+                "source_of_confusion": "В простых фреймворках такие вещи пишут руками, отсюда ожидание ручной работы.",
+                "if_it_were_true": "Будь так, не существовало бы готовых extensions `smallrye-health` и `/q/health`, но они есть.",
+                "how_it_should_be": "Health/Metrics/OpenAPI дают готовые extensions, ручные эндпоинты не нужны."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Health/Metrics/OpenAPI отдаются на стандартных путях `/actuator/health`, `/actuator/metrics`, как в `Spring Boot`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `Quarkus` эти endpoints живут под префиксом `/q/` (`/q/health`, `/q/metrics`, `/q/openapi`), а `/actuator/...` — это `Spring Boot Actuator`.",
+                "source_of_confusion": "`Actuator` — известный стандарт, его пути по привычке ожидают и в `Quarkus`.",
+                "if_it_were_true": "Будь пути `/actuator/...`, не было бы `/q/health` и `/q/dev`, но именно они в `Quarkus`.",
+                "how_it_should_be": "Endpoints в `Quarkus` под `/q/...`; `/actuator/...` — это `Spring Boot`."
               },
               "label": "D",
               "order": 3
@@ -969,19 +969,6 @@
           "question_text": "Что такое `Mutiny`?",
           "options": [
             {
-              "text": "`Mutiny` — реактивная библиотека от `SmallRye`/`Red Hat`, рекомендуемая в `Quarkus`. Два основных типа: `Uni<T>` — асинхронное вычисление одного значения (аналог `Mono<T>` в `Reactor`), `Multi<T>` — поток значений (аналог `Flux<T>`). API event-driven: `user.onItem().transform(...).onFailure().recoverWithItem(...).subscribe().with(...)`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`Mutiny` строится на навигационном API: операторы группируются по событиям (`onItem`, `onFailure`, `onCompletion`), что делает явным, какое именно событие обрабатывается.",
-                "example": "`Uni<User> u = userRepo.findById(1L); u.onItem().transform(x -> x.name).onFailure().recoverWithItem(\"default\").subscribe().with(name -> log.info(name));` — трансформация значения с фолбэком на ошибку.",
-                "when_to_apply": "`Mutiny` используют для неблокирующего кода в `Quarkus`: реактивные REST-эндпоинты, `Hibernate Reactive`, реактивные клиенты, обработка потоков из `Vert.x`.",
-                "edge_cases": "`Mutiny` ленив: пока нет `subscribe()`, цепочка не выполняется — забытый `subscribe` — частая причина «ничего не происходит».",
-                "related": "[[quarkus-interview#Q18]] Mutiny vs Reactor/RxJava; [[quarkus-interview#Q19]] Uni и Multi; [[quarkus-interview#Q20]] Vert.x под капотом."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`Mutiny` — это блокирующая библиотека, упрощающая работу с потоками `Thread`.",
               "correct": false,
               "sections": {
@@ -990,20 +977,8 @@
                 "if_it_were_true": "Будь она блокирующей, не давала бы выигрыша на event-loop `Vert.x`, ради которого её и используют.",
                 "how_it_should_be": "`Mutiny` неблокирующая и реактивная; работа с `Thread` напрямую — другое."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Mutiny` — это ORM-библиотека для реактивного доступа к БД вместо `Hibernate`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Mutiny` — общая реактивная библиотека (типы и операторы); за реактивный доступ к БД отвечает `Hibernate Reactive`, который как раз возвращает `Mutiny`-типы.",
-                "source_of_confusion": "`Hibernate Reactive` отдаёт `Uni`/`Multi`, поэтому `Mutiny` путают с ORM.",
-                "if_it_were_true": "Будь `Mutiny` ORM, в ней были бы `@Entity`/маппинг, но это библиотека реактивных типов.",
-                "how_it_should_be": "`Mutiny` — реактивный фундамент; ORM поверх него — отдельный `Hibernate Reactive`."
-              },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`Mutiny` — это форк `Reactor`, использующий те же типы `Mono` и `Flux`.",
@@ -1013,6 +988,31 @@
                 "source_of_confusion": "Идеи реактивности у `Mutiny` и `Reactor` близки, отсюда мысль о форке.",
                 "if_it_were_true": "Будь это форк `Reactor`, типы назывались бы `Mono`/`Flux`, но в `Mutiny` они `Uni`/`Multi`.",
                 "how_it_should_be": "`Mutiny` — отдельная реализация с собственным API; общая лишь концепция reactive streams."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Mutiny` — реактивная библиотека от `SmallRye`/`Red Hat`, рекомендуемая в `Quarkus`. Два основных типа: `Uni<T>` — асинхронное вычисление одного значения (аналог `Mono<T>` в `Reactor`), `Multi<T>` — поток значений (аналог `Flux<T>`). API event-driven: `user.onItem().transform(...).onFailure().recoverWithItem(...).subscribe().with(...)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Mutiny` строится на навигационном API: операторы группируются по событиям (`onItem`, `onFailure`, `onCompletion`), что делает явным, какое именно событие обрабатывается.",
+                "example": "`Uni<User> u = userRepo.findById(1L); u.onItem().transform(x -> x.name).onFailure().recoverWithItem(\"default\").subscribe().with(name -> log.info(name));` — трансформация значения с фолбэком на ошибку.",
+                "when_to_apply": "`Mutiny` используют для неблокирующего кода в `Quarkus`: реактивные REST-эндпоинты, `Hibernate Reactive`, реактивные клиенты, обработка потоков из `Vert.x`.",
+                "edge_cases": "`Mutiny` ленив: пока нет `subscribe()`, цепочка не выполняется — забытый `subscribe` — частая причина «ничего не происходит».",
+                "related": "[[quarkus-interview#Q18]] Mutiny vs Reactor/RxJava; [[quarkus-interview#Q19]] Uni и Multi; [[quarkus-interview#Q20]] Vert.x под капотом."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Mutiny` — это ORM-библиотека для реактивного доступа к БД вместо `Hibernate`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Mutiny` — общая реактивная библиотека (типы и операторы); за реактивный доступ к БД отвечает `Hibernate Reactive`, который как раз возвращает `Mutiny`-типы.",
+                "source_of_confusion": "`Hibernate Reactive` отдаёт `Uni`/`Multi`, поэтому `Mutiny` путают с ORM.",
+                "if_it_were_true": "Будь `Mutiny` ORM, в ней были бы `@Entity`/маппинг, но это библиотека реактивных типов.",
+                "how_it_should_be": "`Mutiny` — реактивный фундамент; ORM поверх него — отдельный `Hibernate Reactive`."
               },
               "label": "D",
               "order": 3
@@ -1029,18 +1029,6 @@
           "question_text": "Чем `Mutiny` отличается от `Reactor` и `RxJava`?",
           "options": [
             {
-              "text": "Однообъектный тип: `Mutiny` — `Multi<T>`, `Reactor` — `Flux<T>`, `RxJava` — `Observable`/`Flowable`. Многообъектный: `Uni<T>` / `Mono<T>` / `Single`. API: `Mutiny` verbose (`onItem`/`onFailure`), `Reactor`/`RxJava` — compact. Backing: `SmallRye` / `Pivotal` / `ReactiveX`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это три разные библиотеки с разными типами и стилем API: `Mutiny` (`Uni`/`Multi`, `SmallRye`), `Reactor` (`Mono`/`Flux`, `Pivotal`), `RxJava` (`Single`/`Observable`, `ReactiveX`).",
-                "source_of_confusion": "Все три реализуют reactive streams похоже, отсюда мысль об одной библиотеке.",
-                "if_it_were_true": "Будь это одно и то же, не было бы разных типов и вендоров, но они различаются.",
-                "how_it_should_be": "Это три независимые библиотеки от разных команд с разными API."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Однообъектный тип: `Mutiny` — `Uni<T>`, `Reactor` — `Mono<T>`, `RxJava` — `Single`/`Maybe`. Многообъектный: `Multi<T>` / `Flux<T>` / `Observable`,`Flowable`. API: `Mutiny` verbose (явные группы `onItem`/`onFailure`), `Reactor`/`RxJava` — compact (chained). Backing: `SmallRye` / `Pivotal` / `ReactiveX`. `Mutiny` позиционируется как проще для junior.",
               "correct": true,
               "sections": {
@@ -1049,6 +1037,18 @@
                 "when_to_apply": "Разницу учитывают при выборе стека и при переносе кода: операторы и типы не один-в-один, миграция требует перевода API.",
                 "edge_cases": "Все три совместимы через `Reactive Streams` (`Publisher`), поэтому их можно мостить, но операторы и идиомы остаются разными.",
                 "related": "[[quarkus-interview#Q17]] что такое Mutiny; [[quarkus-interview#Q19]] Uni и Multi; [[quarkus-interview#Q2]] Reactor как стек Spring."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Однообъектный тип: `Mutiny` — `Multi<T>`, `Reactor` — `Flux<T>`, `RxJava` — `Observable`/`Flowable`. Многообъектный: `Uni<T>` / `Mono<T>` / `Single`. API: `Mutiny` verbose (`onItem`/`onFailure`), `Reactor`/`RxJava` — compact. Backing: `SmallRye` / `Pivotal` / `ReactiveX`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это три разные библиотеки с разными типами и стилем API: `Mutiny` (`Uni`/`Multi`, `SmallRye`), `Reactor` (`Mono`/`Flux`, `Pivotal`), `RxJava` (`Single`/`Observable`, `ReactiveX`).",
+                "source_of_confusion": "Все три реализуют reactive streams похоже, отсюда мысль об одной библиотеке.",
+                "if_it_were_true": "Будь это одно и то же, не было бы разных типов и вендоров, но они различаются.",
+                "how_it_should_be": "Это три независимые библиотеки от разных команд с разными API."
               },
               "label": "B",
               "order": 1
@@ -1101,13 +1101,13 @@
               "order": 0
             },
             {
-              "text": "`Uni` и `Multi` — hot/eager источники: вычисление стартует сразу при создании, а `.subscribe().with(...)` лишь забирает уже готовый результат.",
+              "text": "`Uni` и `Multi` — это просто псевдонимы Reactor-типов `Mono` и `Flux`: `Mutiny` переиспользует их классы и операторы без собственного API.",
               "correct": false,
               "sections": {
-                "what_actually": "Оба ленивы: цепочка выполняется только при `subscribe()`; без подписки ничего не произойдёт.",
-                "source_of_confusion": "В императивном коде выражения считаются сразу, поэтому ленивость неочевидна.",
-                "if_it_were_true": "Будь так, забытый `subscribe()` всё равно запускал бы работу, но на практике он её не запускает.",
-                "how_it_should_be": "`Uni`/`Multi` ленивы и требуют `subscribe()` для исполнения."
+                "what_actually": "Это реактивные асинхронные типы (значение/поток), а не коллекции в памяти; они не блокируют поток в ожидании данных.",
+                "source_of_confusion": "`Multi` про «много элементов» звучит как коллекция, отсюда аналогия со `List`.",
+                "if_it_were_true": "Будь они коллекциями, не требовался бы `subscribe()` и работал бы обычный `for`, но это реактивные потоки.",
+                "how_it_should_be": "`Uni`/`Multi` — реактивные продюсеры значений, а не структуры данных `List`/`Set`."
               },
               "label": "B",
               "order": 1
@@ -1126,13 +1126,13 @@
               "order": 2
             },
             {
-              "text": "`Uni` и `Multi` — это просто псевдонимы Reactor-типов `Mono` и `Flux`: `Mutiny` переиспользует их классы и операторы без собственного API.",
+              "text": "`Uni` и `Multi` — hot/eager источники: вычисление стартует сразу при создании, а `.subscribe().with(...)` лишь забирает уже готовый результат.",
               "correct": false,
               "sections": {
-                "what_actually": "Это реактивные асинхронные типы (значение/поток), а не коллекции в памяти; они не блокируют поток в ожидании данных.",
-                "source_of_confusion": "`Multi` про «много элементов» звучит как коллекция, отсюда аналогия со `List`.",
-                "if_it_were_true": "Будь они коллекциями, не требовался бы `subscribe()` и работал бы обычный `for`, но это реактивные потоки.",
-                "how_it_should_be": "`Uni`/`Multi` — реактивные продюсеры значений, а не структуры данных `List`/`Set`."
+                "what_actually": "Оба ленивы: цепочка выполняется только при `subscribe()`; без подписки ничего не произойдёт.",
+                "source_of_confusion": "В императивном коде выражения считаются сразу, поэтому ленивость неочевидна.",
+                "if_it_were_true": "Будь так, забытый `subscribe()` всё равно запускал бы работу, но на практике он её не запускает.",
+                "how_it_should_be": "`Uni`/`Multi` ленивы и требуют `subscribe()` для исполнения."
               },
               "label": "D",
               "order": 3
@@ -1149,18 +1149,6 @@
           "question_text": "`Vert.x` под капотом?",
           "options": [
             {
-              "text": "Реактивный стек `Quarkus` построен прямо на `Netty`, без промежуточного `Vert.x`-слоя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Quarkus` использует `Eclipse Vert.x` (который сам построен поверх `Netty`); прикладной слой работает именно с `Vert.x`, а не с голым `Netty`.",
-                "source_of_confusion": "`Vert.x` опирается на `Netty`, отсюда подмена одного другим.",
-                "if_it_were_true": "Будь это голый `Netty`, в `Quarkus` не было бы инжектируемых `Vertx`/`EventBus`, но они есть.",
-                "how_it_should_be": "Под капотом — `Vert.x` (а уже он — на `Netty`); приложение видит `Vert.x` API."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`Vert.x` в `Quarkus` спрятан внутри рантайма: получить `Vertx` или `EventBus` через `@Inject` нельзя, доступ только через высокоуровневые API.",
               "correct": false,
               "sections": {
@@ -1169,8 +1157,8 @@
                 "if_it_were_true": "Будь так, нельзя было бы написать `@Inject Vertx vertx;`, но это рабочий код.",
                 "how_it_should_be": "`Vert.x` доступен и напрямую через DI, и обёрнутым в `Mutiny` API."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`Vert.x` в `Quarkus` обслуживает только HTTP-сервер; DB-драйверы, mailer и `EventBus` построены на отдельных библиотеках, а не на `Vert.x`.",
@@ -1180,6 +1168,18 @@
                 "source_of_confusion": "HTTP-сервер — самая видимая часть, поэтому роль `Vert.x` сужают до него.",
                 "if_it_were_true": "Будь так, реактивные драйверы БД не зависели бы от `Vert.x`, но они построены на `Vert.x SQL Client`.",
                 "how_it_should_be": "`Vert.x` — основа всего реактивного стека: HTTP, БД, `EventBus`, mailer."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Реактивный стек `Quarkus` построен прямо на `Netty`, без промежуточного `Vert.x`-слоя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Quarkus` использует `Eclipse Vert.x` (который сам построен поверх `Netty`); прикладной слой работает именно с `Vert.x`, а не с голым `Netty`.",
+                "source_of_confusion": "`Vert.x` опирается на `Netty`, отсюда подмена одного другим.",
+                "if_it_were_true": "Будь это голый `Netty`, в `Quarkus` не было бы инжектируемых `Vertx`/`EventBus`, но они есть.",
+                "how_it_should_be": "Под капотом — `Vert.x` (а уже он — на `Netty`); приложение видит `Vert.x` API."
               },
               "label": "C",
               "order": 2
@@ -1209,31 +1209,6 @@
           "question_text": "`Hibernate ORM with Panache`?",
           "options": [
             {
-              "text": "`Panache` — слой над `Hibernate`, упрощающий работу с entities. В Active Record стиле entity наследует `PanacheEntity` и получает статические методы: `Person.findByName(...)`, `Person.list(\"age >= ?1\", 18)`, `Person.count()`, `Person.deleteById(1L)`, а инстанс — `p.persist()`. `Panache` убирает boilerplate репозиториев и сам даёт CRUD.",
-              "correct": true,
-              "sections": {
-                "explanation": "Идея в том, что `Panache` берёт на себя типовые операции (find/list/count/delete) и генерирует геттеры/сеттеры, оставляя в entity только поля и доменные запросы.",
-                "example": "`@Entity public class Person extends PanacheEntity { public String name; public int age; public static List<Person> findByName(String n){ return list(\"name\", n);} }` — без репозитория и без boilerplate.",
-                "when_to_apply": "`Panache` берут, чтобы быстро писать persistence-слой с минимумом кода, особенно в небольших сервисах и прототипах.",
-                "edge_cases": "Поля делают `public` — это не нарушение инкапсуляции: `Quarkus` при сборке переписывает доступ в геттеры/сеттеры байткод-трансформацией.",
-                "related": "[[quarkus-interview#Q22]] Active Record vs Repository; [[quarkus-interview#Q23]] Hibernate Reactive; [[quarkus-interview#Q2]] Panache vs Spring Data JPA."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`Panache` не даёт готовых операций: каждый метод вроде `findById`/`listAll` приходится вручную реализовывать в наследнике `PanacheRepository`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Panache` — слой поверх `Hibernate` (ORM), а не база данных; данные по-прежнему хранятся в реальной СУБД.",
-                "source_of_confusion": "Незнакомое имя `Panache` принимают за название хранилища.",
-                "if_it_were_true": "Будь это СУБД, не нужен был бы `quarkus-jdbc-postgresql`, но он подключается вместе с `Panache`.",
-                "how_it_should_be": "`Panache` — удобный слой над `Hibernate`; СУБД остаётся внешней (`PostgreSQL` и т.п.)."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`Panache` полностью заменяет `Hibernate`: у него собственный движок маппинга и генерации SQL, а `Hibernate ORM` внутри не используется.",
               "correct": false,
               "sections": {
@@ -1242,8 +1217,8 @@
                 "if_it_were_true": "Будь `Hibernate` заменён, не было бы extension `quarkus-hibernate-orm-panache`, где оба в названии.",
                 "how_it_should_be": "`Panache` — надстройка над `Hibernate`, а не его замена."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "В `Panache` доступен только Repository-стиль (`PanacheRepository`); Active Record с наследованием `PanacheEntity` не поддерживается.",
@@ -1253,6 +1228,31 @@
                 "source_of_confusion": "В enterprise чаще берут Repository, поэтому Active Record упускают.",
                 "if_it_were_true": "Будь так, не было бы `PanacheEntity` со статическими `persist()`/`findById()`, но он существует.",
                 "how_it_should_be": "`Panache` предлагает и Active Record, и Repository — на выбор."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Panache` — слой над `Hibernate`, упрощающий работу с entities. В Active Record стиле entity наследует `PanacheEntity` и получает статические методы: `Person.findByName(...)`, `Person.list(\"age >= ?1\", 18)`, `Person.count()`, `Person.deleteById(1L)`, а инстанс — `p.persist()`. `Panache` убирает boilerplate репозиториев и сам даёт CRUD.",
+              "correct": true,
+              "sections": {
+                "explanation": "Идея в том, что `Panache` берёт на себя типовые операции (find/list/count/delete) и генерирует геттеры/сеттеры, оставляя в entity только поля и доменные запросы.",
+                "example": "`@Entity public class Person extends PanacheEntity { public String name; public int age; public static List<Person> findByName(String n){ return list(\"name\", n);} }` — без репозитория и без boilerplate.",
+                "when_to_apply": "`Panache` берут, чтобы быстро писать persistence-слой с минимумом кода, особенно в небольших сервисах и прототипах.",
+                "edge_cases": "Поля делают `public` — это не нарушение инкапсуляции: `Quarkus` при сборке переписывает доступ в геттеры/сеттеры байткод-трансформацией.",
+                "related": "[[quarkus-interview#Q22]] Active Record vs Repository; [[quarkus-interview#Q23]] Hibernate Reactive; [[quarkus-interview#Q2]] Panache vs Spring Data JPA."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Panache` не даёт готовых операций: каждый метод вроде `findById`/`listAll` приходится вручную реализовывать в наследнике `PanacheRepository`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Panache` — слой поверх `Hibernate` (ORM), а не база данных; данные по-прежнему хранятся в реальной СУБД.",
+                "source_of_confusion": "Незнакомое имя `Panache` принимают за название хранилища.",
+                "if_it_were_true": "Будь это СУБД, не нужен был бы `quarkus-jdbc-postgresql`, но он подключается вместе с `Panache`.",
+                "how_it_should_be": "`Panache` — удобный слой над `Hibernate`; СУБД остаётся внешней (`PostgreSQL` и т.п.)."
               },
               "label": "D",
               "order": 3
@@ -1281,14 +1281,13 @@
               "order": 0
             },
             {
-              "text": "Active Record: `Person.findById(1)`, entity наследует `PanacheEntity`, знаком по `Rails`/`Django`, но статика хуже тестируется. Repository: `personRepo.findById(1)`, класс `PersonRepository implements PanacheRepository<Person>`, знаком по `Spring Data`, лучше для unit-тестов (можно мокать). В большинстве enterprise-проектов выбирают Repository — лучше для тестов и DDD.",
-              "correct": true,
+              "text": "Repository-стиль не позволяет писать кастомные запросы, только стандартный CRUD.",
+              "correct": false,
               "sections": {
-                "explanation": "Разница в том, где живёт логика доступа: в Active Record — в самой entity (статические методы), в Repository — в отдельном инжектируемом бине.",
-                "example": "`@ApplicationScoped class PersonRepository implements PanacheRepository<Person> { List<Person> findByName(String n){ return list(\"name\", n);} }`, затем `@Inject PersonRepository repo; repo.listAll();` — репозиторий легко подменить mock'ом.",
-                "when_to_apply": "Active Record берут для быстрых прототипов и простых сервисов; Repository — для крупных систем с DDD и упором на тестируемость.",
-                "edge_cases": "Можно смешивать стили в одном проекте, но разнобой усложняет поддержку, поэтому обычно фиксируют один подход на сервис.",
-                "related": "[[quarkus-interview#Q21]] Hibernate ORM with Panache; [[quarkus-interview#Q23]] Hibernate Reactive; [[quarkus-interview#Q27]] тестирование с @InjectMock."
+                "what_actually": "`PanacheRepository` спокойно расширяют кастомными методами (`list(\"name\", n)`, JPQL/HQL-запросы), не ограничиваясь CRUD.",
+                "source_of_confusion": "Базовый интерфейс даёт CRUD из коробки, отсюда впечатление, что это потолок.",
+                "if_it_were_true": "Будь так, нельзя было бы добавить `findByName`, но именно так репозитории и расширяют.",
+                "how_it_should_be": "Repository легко дополняется доменными запросами поверх готового CRUD."
               },
               "label": "B",
               "order": 1
@@ -1306,13 +1305,14 @@
               "order": 2
             },
             {
-              "text": "Repository-стиль не позволяет писать кастомные запросы, только стандартный CRUD.",
-              "correct": false,
+              "text": "Active Record: `Person.findById(1)`, entity наследует `PanacheEntity`, знаком по `Rails`/`Django`, но статика хуже тестируется. Repository: `personRepo.findById(1)`, класс `PersonRepository implements PanacheRepository<Person>`, знаком по `Spring Data`, лучше для unit-тестов (можно мокать). В большинстве enterprise-проектов выбирают Repository — лучше для тестов и DDD.",
+              "correct": true,
               "sections": {
-                "what_actually": "`PanacheRepository` спокойно расширяют кастомными методами (`list(\"name\", n)`, JPQL/HQL-запросы), не ограничиваясь CRUD.",
-                "source_of_confusion": "Базовый интерфейс даёт CRUD из коробки, отсюда впечатление, что это потолок.",
-                "if_it_were_true": "Будь так, нельзя было бы добавить `findByName`, но именно так репозитории и расширяют.",
-                "how_it_should_be": "Repository легко дополняется доменными запросами поверх готового CRUD."
+                "explanation": "Разница в том, где живёт логика доступа: в Active Record — в самой entity (статические методы), в Repository — в отдельном инжектируемом бине.",
+                "example": "`@ApplicationScoped class PersonRepository implements PanacheRepository<Person> { List<Person> findByName(String n){ return list(\"name\", n);} }`, затем `@Inject PersonRepository repo; repo.listAll();` — репозиторий легко подменить mock'ом.",
+                "when_to_apply": "Active Record берут для быстрых прототипов и простых сервисов; Repository — для крупных систем с DDD и упором на тестируемость.",
+                "edge_cases": "Можно смешивать стили в одном проекте, но разнобой усложняет поддержку, поэтому обычно фиксируют один подход на сервис.",
+                "related": "[[quarkus-interview#Q21]] Hibernate ORM with Panache; [[quarkus-interview#Q23]] Hibernate Reactive; [[quarkus-interview#Q27]] тестирование с @InjectMock."
               },
               "label": "D",
               "order": 3
@@ -1329,18 +1329,6 @@
           "question_text": "`Hibernate Reactive` — что это?",
           "options": [
             {
-              "text": "`Hibernate Reactive` — это тот же `Hibernate ORM`, просто с включённым кэшем второго уровня.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Hibernate Reactive` — отдельная реактивная версия `Hibernate` на non-blocking драйверах (`Vert.x SQL Client`), а не классический `Hibernate` с кэшем.",
-                "source_of_confusion": "Кэш — известная фича `Hibernate`, её ошибочно принимают за «реактивность».",
-                "if_it_were_true": "Будь это просто кэш, методы возвращали бы обычные `List`, а не `Uni<List<...>>`.",
-                "how_it_should_be": "`Hibernate Reactive` меняет модель исполнения на неблокирующую, а не включает кэш."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`Hibernate Reactive` использует обычный блокирующий `JDBC`, просто оборачивая вызовы в `Uni`.",
               "correct": false,
               "sections": {
@@ -1349,8 +1337,32 @@
                 "if_it_were_true": "Будь там `JDBC`, не было бы выигрыша на event-loop, ради которого `Hibernate Reactive` и нужен.",
                 "how_it_should_be": "Драйвер — неблокирующий `Vert.x SQL Client`, а не `JDBC`, обёрнутый в `Uni`."
               },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Hibernate Reactive` рекомендуется всем по умолчанию вместо обычного `Hibernate`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Он нужен в high-throughput сценариях; для большинства приложений обычный `Hibernate` проще и достаточен, реактивность не бесплатна по сложности.",
+                "source_of_confusion": "Слово «Reactive» звучит как «современнее и лучше для всех», отсюда вывод о дефолте.",
+                "if_it_were_true": "Будь он дефолтом, документация не подчёркивала бы «не для всех», но она это делает.",
+                "how_it_should_be": "`Hibernate Reactive` — нишевый выбор под нагрузку, а не рекомендация по умолчанию."
+              },
               "label": "B",
               "order": 1
+            },
+            {
+              "text": "`Hibernate Reactive` — это тот же `Hibernate ORM`, просто с включённым кэшем второго уровня.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Hibernate Reactive` — отдельная реактивная версия `Hibernate` на non-blocking драйверах (`Vert.x SQL Client`), а не классический `Hibernate` с кэшем.",
+                "source_of_confusion": "Кэш — известная фича `Hibernate`, её ошибочно принимают за «реактивность».",
+                "if_it_were_true": "Будь это просто кэш, методы возвращали бы обычные `List`, а не `Uni<List<...>>`.",
+                "how_it_should_be": "`Hibernate Reactive` меняет модель исполнения на неблокирующую, а не включает кэш."
+              },
+              "label": "C",
+              "order": 2
             },
             {
               "text": "`Hibernate Reactive` — реактивная версия `Hibernate`, использующая **non-blocking** драйверы (`Vert.x SQL Client`) вместо `JDBC`. Entity наследует `PanacheEntityBase`, а методы возвращают `Mutiny`-типы: `public Uni<List<Person>> list() { return Person.listAll(); }`. Применяют в high-throughput системах, где блокирующий `JDBC` становится bottleneck; для остальных обычный `Hibernate` проще и достаточен.",
@@ -1361,18 +1373,6 @@
                 "when_to_apply": "Реактивный `Hibernate` берут под высокий конкурентный трафик; для типичного CRUD блокирующий `Hibernate` обычно проще и быстрее в разработке.",
                 "edge_cases": "Реактивный код заразен: одна `Uni`-операция тянет реактивность по всей цепочке, поэтому частичный переход на `Hibernate Reactive` редко оправдан.",
                 "related": "[[quarkus-interview#Q21]] Hibernate ORM with Panache; [[quarkus-interview#Q20]] Vert.x SQL Client; [[quarkus-interview#Q17]] Mutiny Uni/Multi."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Hibernate Reactive` рекомендуется всем по умолчанию вместо обычного `Hibernate`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Он нужен в high-throughput сценариях; для большинства приложений обычный `Hibernate` проще и достаточен, реактивность не бесплатна по сложности.",
-                "source_of_confusion": "Слово «Reactive» звучит как «современнее и лучше для всех», отсюда вывод о дефолте.",
-                "if_it_were_true": "Будь он дефолтом, документация не подчёркивала бы «не для всех», но она это делает.",
-                "how_it_should_be": "`Hibernate Reactive` — нишевый выбор под нагрузку, а не рекомендация по умолчанию."
               },
               "label": "D",
               "order": 3
@@ -1389,13 +1389,14 @@
           "question_text": "Что такое dev mode и live reload?",
           "options": [
             {
-              "text": "Dev mode запускается через `./mvnw package` и собирает production-артефакт с отладкой.",
-              "correct": false,
+              "text": "`./mvnw quarkus:dev` запускает dev mode. В нём: **live reload** — изменения в `.java`/`.properties` подхватываются без рестарта JVM; **continuous testing** — тесты гоняются автоматически; **Dev UI** на `/q/dev` (конфиг, БД, kafka topics); **Dev Services** — автозапуск зависимостей в Docker. Смысл — DX уровня `Node.js`/`Python`: меняешь код, F5 в браузере — изменения видно.",
+              "correct": true,
               "sections": {
-                "what_actually": "Dev mode запускают `./mvnw quarkus:dev`; `package` собирает артефакт и не даёт live reload/dev UI.",
-                "source_of_confusion": "`package` — привычная команда сборки, её путают с запуском dev mode.",
-                "if_it_were_true": "Будь так, `quarkus:dev` не существовал бы, но это и есть команда dev mode.",
-                "how_it_should_be": "Dev mode — это `quarkus:dev`; `package` — отдельная сборка артефакта."
+                "explanation": "Live reload работает за счёт перекомпиляции и переинициализации только изменённых частей при следующем HTTP-запросе, а не полного рестарта процесса.",
+                "example": "Поправил метод контроллера, нажал F5 — `Quarkus` пересобрал изменения на лету, и новый ответ виден без перезапуска приложения.",
+                "when_to_apply": "Dev mode используют на протяжении всей разработки: быстрый цикл правка-проверка, авто-тесты и поднятые зависимости через Dev Services.",
+                "edge_cases": "Иногда live reload не справляется с глубокими структурными изменениями (новые extensions, смена конфигурации) — тогда `quarkus:dev` приходится перезапускать вручную.",
+                "related": "[[quarkus-interview#Q25]] continuous testing; [[quarkus-interview#Q26]] Dev Services; [[quarkus-interview#Q16]] Dev UI на /q/dev."
               },
               "label": "A",
               "order": 0
@@ -1425,14 +1426,13 @@
               "order": 2
             },
             {
-              "text": "`./mvnw quarkus:dev` запускает dev mode. В нём: **live reload** — изменения в `.java`/`.properties` подхватываются без рестарта JVM; **continuous testing** — тесты гоняются автоматически; **Dev UI** на `/q/dev` (конфиг, БД, kafka topics); **Dev Services** — автозапуск зависимостей в Docker. Смысл — DX уровня `Node.js`/`Python`: меняешь код, F5 в браузере — изменения видно.",
-              "correct": true,
+              "text": "Dev mode запускается через `./mvnw package` и собирает production-артефакт с отладкой.",
+              "correct": false,
               "sections": {
-                "explanation": "Live reload работает за счёт перекомпиляции и переинициализации только изменённых частей при следующем HTTP-запросе, а не полного рестарта процесса.",
-                "example": "Поправил метод контроллера, нажал F5 — `Quarkus` пересобрал изменения на лету, и новый ответ виден без перезапуска приложения.",
-                "when_to_apply": "Dev mode используют на протяжении всей разработки: быстрый цикл правка-проверка, авто-тесты и поднятые зависимости через Dev Services.",
-                "edge_cases": "Иногда live reload не справляется с глубокими структурными изменениями (новые extensions, смена конфигурации) — тогда `quarkus:dev` приходится перезапускать вручную.",
-                "related": "[[quarkus-interview#Q25]] continuous testing; [[quarkus-interview#Q26]] Dev Services; [[quarkus-interview#Q16]] Dev UI на /q/dev."
+                "what_actually": "Dev mode запускают `./mvnw quarkus:dev`; `package` собирает артефакт и не даёт live reload/dev UI.",
+                "source_of_confusion": "`package` — привычная команда сборки, её путают с запуском dev mode.",
+                "if_it_were_true": "Будь так, `quarkus:dev` не существовал бы, но это и есть команда dev mode.",
+                "how_it_should_be": "Dev mode — это `quarkus:dev`; `package` — отдельная сборка артефакта."
               },
               "label": "D",
               "order": 3
@@ -1449,17 +1449,28 @@
           "question_text": "Continuous testing?",
           "options": [
             {
-              "text": "В dev mode тесты запускаются автоматически при сохранении файла. Управление с клавиатуры: `[r]` — re-run all, `[f]` — re-run failed, `[v]` — toggle verbose, `[p]` — pause, `[h]` — help. Полезно для TDD: пишешь тест — сразу видишь прохождение или падение без ручного запуска сборки.",
-              "correct": true,
+              "text": "Continuous testing запускает только нагрузочные (performance) тесты, не unit-тесты.",
+              "correct": false,
               "sections": {
-                "explanation": "Continuous testing встроен в dev mode и реагирует на изменения файлов, перезапуская затронутые тесты, что даёт мгновенную обратную связь.",
-                "example": "Меняешь логику `UserService`, сохраняешь — связанные тесты тут же перезапускаются, и `[f]` гоняет только упавшие, экономя время на большом наборе.",
-                "when_to_apply": "Continuous testing включают во время активной разработки фичи по TDD: красный-зелёный цикл идёт без переключения в терминал и ручного `mvn test`.",
-                "edge_cases": "Авто-перезапуск умный, но при изменениях в общих зависимостях может перегнать большой набор; тогда помогает `[p]` (pause) и точечный `[f]`.",
-                "related": "[[quarkus-interview#Q24]] dev mode и live reload; [[quarkus-interview#Q27]] @QuarkusTest; [[quarkus-interview#Q26]] Dev Services для тестов."
+                "what_actually": "Он перезапускает обычные тесты (unit/integration) при изменениях, а не специализированные нагрузочные.",
+                "source_of_confusion": "Слово «continuous» ассоциируется с непрерывной нагрузкой, отсюда подмена.",
+                "if_it_were_true": "Будь так, TDD-цикл с unit-тестами не получал бы обратной связи, но именно его continuous testing и обслуживает.",
+                "how_it_should_be": "Continuous testing гоняет ваши обычные тесты; нагрузочное тестирование — отдельная история."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "Continuous testing всегда прогоняет весь набор тестов целиком, без выборочного запуска.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Можно гонять выборочно: `[f]` перезапускает только упавшие, `[r]` — все; то есть выбор есть.",
+                "source_of_confusion": "Полный прогон кажется единственным безопасным режимом, отсюда вывод об отсутствии выборки.",
+                "if_it_were_true": "Будь так, клавиша `[f]` (re-run failed) не имела бы смысла, но она присутствует.",
+                "how_it_should_be": "Есть и полный, и выборочный прогон — `[r]` и `[f]` соответственно."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Continuous testing запускает тесты только при сборке артефакта командой `package`.",
@@ -1470,29 +1481,18 @@
                 "if_it_were_true": "Будь так, не было бы клавиш `[r]`/`[f]` в интерактивном dev-режиме, но они есть.",
                 "how_it_should_be": "Continuous testing — это авто-тесты dev mode по изменению файлов, не шаг `package`."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Continuous testing запускает только нагрузочные (performance) тесты, не unit-тесты.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Он перезапускает обычные тесты (unit/integration) при изменениях, а не специализированные нагрузочные.",
-                "source_of_confusion": "Слово «continuous» ассоциируется с непрерывной нагрузкой, отсюда подмена.",
-                "if_it_were_true": "Будь так, TDD-цикл с unit-тестами не получал бы обратной связи, но именно его continuous testing и обслуживает.",
-                "how_it_should_be": "Continuous testing гоняет ваши обычные тесты; нагрузочное тестирование — отдельная история."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Continuous testing всегда прогоняет весь набор тестов целиком, без выборочного запуска.",
-              "correct": false,
+              "text": "В dev mode тесты запускаются автоматически при сохранении файла. Управление с клавиатуры: `[r]` — re-run all, `[f]` — re-run failed, `[v]` — toggle verbose, `[p]` — pause, `[h]` — help. Полезно для TDD: пишешь тест — сразу видишь прохождение или падение без ручного запуска сборки.",
+              "correct": true,
               "sections": {
-                "what_actually": "Можно гонять выборочно: `[f]` перезапускает только упавшие, `[r]` — все; то есть выбор есть.",
-                "source_of_confusion": "Полный прогон кажется единственным безопасным режимом, отсюда вывод об отсутствии выборки.",
-                "if_it_were_true": "Будь так, клавиша `[f]` (re-run failed) не имела бы смысла, но она присутствует.",
-                "how_it_should_be": "Есть и полный, и выборочный прогон — `[r]` и `[f]` соответственно."
+                "explanation": "Continuous testing встроен в dev mode и реагирует на изменения файлов, перезапуская затронутые тесты, что даёт мгновенную обратную связь.",
+                "example": "Меняешь логику `UserService`, сохраняешь — связанные тесты тут же перезапускаются, и `[f]` гоняет только упавшие, экономя время на большом наборе.",
+                "when_to_apply": "Continuous testing включают во время активной разработки фичи по TDD: красный-зелёный цикл идёт без переключения в терминал и ручного `mvn test`.",
+                "edge_cases": "Авто-перезапуск умный, но при изменениях в общих зависимостях может перегнать большой набор; тогда помогает `[p]` (pause) и точечный `[f]`.",
+                "related": "[[quarkus-interview#Q24]] dev mode и live reload; [[quarkus-interview#Q27]] @QuarkusTest; [[quarkus-interview#Q26]] Dev Services для тестов."
               },
               "label": "D",
               "order": 3
@@ -1509,18 +1509,6 @@
           "question_text": "Dev Services?",
           "options": [
             {
-              "text": "Dev Services поднимает зависимости и в production, заменяя реальные сервисы из конфига.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Dev Services работает только в dev/test mode; в production используется реальный сервис из конфигурации.",
-                "source_of_confusion": "Удобство автозапуска рождает желание иметь его и в проде, отсюда заблуждение.",
-                "if_it_were_true": "Будь так, в проде вместо боевой БД стартовал бы контейнер `Testcontainers`, что недопустимо.",
-                "how_it_should_be": "Dev Services — только для dev/test; production берёт сервисы из конфига."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Dev Services — автоматический запуск зависимостей в Docker-контейнерах при `./mvnw quarkus:dev`. Конфигурацию можно НЕ указывать: задаёшь `quarkus.datasource.db-kind=postgresql`, и `Quarkus` сам поднимет `Postgres` в Docker и подключится. Поддержка: `PostgreSQL`, `MySQL`, `MongoDB`, `Kafka`, `Redis`, `Keycloak`, `Elasticsearch`, `RabbitMQ`. В production — реальный сервис из конфига.",
               "correct": true,
               "sections": {
@@ -1530,8 +1518,8 @@
                 "edge_cases": "Требуется запущенный Docker-демон; на CI/окружениях без Docker Dev Services не сработает, и конфигурацию придётся задавать явно.",
                 "related": "[[quarkus-interview#Q24]] dev mode и live reload; [[quarkus-interview#Q25]] continuous testing; [[quarkus-interview#Q27]] @QuarkusTest и тестовые сервисы."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Dev Services поднимает зависимости как нативные процессы на хосте, без Docker.",
@@ -1541,6 +1529,18 @@
                 "source_of_confusion": "Локальный запуск БД иногда делают нативно, отсюда мысль про процессы на хосте.",
                 "if_it_were_true": "Будь так, не требовался бы запущенный Docker-демон, но он обязателен для Dev Services.",
                 "how_it_should_be": "Dev Services работает через Docker-контейнеры, а не нативные процессы."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Dev Services поднимает зависимости и в production, заменяя реальные сервисы из конфига.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Dev Services работает только в dev/test mode; в production используется реальный сервис из конфигурации.",
+                "source_of_confusion": "Удобство автозапуска рождает желание иметь его и в проде, отсюда заблуждение.",
+                "if_it_were_true": "Будь так, в проде вместо боевой БД стартовал бы контейнер `Testcontainers`, что недопустимо.",
+                "how_it_should_be": "Dev Services — только для dev/test; production берёт сервисы из конфига."
               },
               "label": "C",
               "order": 2
@@ -1569,28 +1569,16 @@
           "question_text": "`@QuarkusTest` и его особенности?",
           "options": [
             {
-              "text": "`@QuarkusTest` запускает приложение **в-процессе**, но поднимает свежий экземпляр на каждый тестовый метод, поэтому состояние между тестами не сохраняется. HTTP-тесты — через `RestAssured`: `given().when().get(\"/people\").then().statusCode(200)`. Mocking — `@InjectMock UserRepository repo;` + `Mockito.when(...)`.",
+              "text": "`@QuarkusTest` запускает приложение **в-процессе** и использует `RestAssured` для HTTP-тестов, а mocking — через `@InjectMock` + `Mockito.when(...)`. При этом `@QuarkusTest` собирает native image перед каждым классом, а `@QuarkusIntegrationTest`, наоборот, гоняет тесты на JVM.",
               "correct": false,
               "sections": {
-                "what_actually": "`@QuarkusTest` запускает приложение **в-процессе** (в той же JVM), а не как отдельный внешний процесс.",
-                "source_of_confusion": "Интеграционные тесты иногда стартуют сервис отдельно, отсюда мысль о внешнем процессе.",
-                "if_it_were_true": "Будь так, нельзя было бы инжектить бины (`@Inject`, `@InjectMock`) прямо в тест, но это работает.",
-                "how_it_should_be": "`@QuarkusTest` — in-process тест в той же JVM с доступом к бинам."
+                "what_actually": "Обычный `@QuarkusTest` гоняет на JVM в-процессе; native проверяет отдельная `@QuarkusIntegrationTest`, и не на каждый тест.",
+                "source_of_confusion": "Тема native в `Quarkus` доминирует, отсюда мысль, что тесты тоже native.",
+                "if_it_were_true": "Будь так, тесты длились бы минутами из-за native-сборки, но `@QuarkusTest` быстрый.",
+                "how_it_should_be": "`@QuarkusTest` — JVM in-process; native-проверка — это `@QuarkusIntegrationTest`."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "`@QuarkusTest` запускает приложение **в-процессе** и использует `RestAssured` для HTTP-тестов. Mocking делают аннотацией `@MockBean UserRepository repo;`, как в `Spring Boot` — `@InjectMock` в `Quarkus` не поддерживается. Для проверки native есть `@QuarkusIntegrationTest`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Mocking поддержан: `@InjectMock UserRepository repo;` + `Mockito.when(repo.findById(1L)).thenReturn(...)` штатно работает в `@QuarkusTest`.",
-                "source_of_confusion": "Build-time DI кажется несовместимым с динамическими моками, отсюда заблуждение.",
-                "if_it_were_true": "Будь так, аннотации `@InjectMock` не существовало бы, но она есть и широко используется.",
-                "how_it_should_be": "Mockito через `@InjectMock` в `@QuarkusTest` поддерживается полноценно."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "`@QuarkusTest` запускает приложение **в-процессе** и использует `RestAssured` для HTTP-тестов: `given().when().get(\"/people\").then().statusCode(200)`. Mocking — через `@InjectMock UserRepository repo;` + `Mockito.when(...)` рядом с `@Inject UserService service;`. Для проверки native есть `@QuarkusIntegrationTest` (медленнее, гоняет в собранном native image).",
@@ -1602,17 +1590,29 @@
                 "edge_cases": "Native-тесты (`@QuarkusIntegrationTest`) медленные и требуют `GraalVM` на CI, поэтому их обычно держат в отдельном профиле, а не гоняют на каждый коммит.",
                 "related": "[[quarkus-interview#Q28]] RestAssured интеграция; [[quarkus-interview#Q22]] почему Repository удобнее для тестов; [[quarkus-interview#Q24]] continuous testing в dev mode."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@QuarkusTest` запускает приложение **в-процессе**, но поднимает свежий экземпляр на каждый тестовый метод, поэтому состояние между тестами не сохраняется. HTTP-тесты — через `RestAssured`: `given().when().get(\"/people\").then().statusCode(200)`. Mocking — `@InjectMock UserRepository repo;` + `Mockito.when(...)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@QuarkusTest` запускает приложение **в-процессе** (в той же JVM), а не как отдельный внешний процесс.",
+                "source_of_confusion": "Интеграционные тесты иногда стартуют сервис отдельно, отсюда мысль о внешнем процессе.",
+                "if_it_were_true": "Будь так, нельзя было бы инжектить бины (`@Inject`, `@InjectMock`) прямо в тест, но это работает.",
+                "how_it_should_be": "`@QuarkusTest` — in-process тест в той же JVM с доступом к бинам."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`@QuarkusTest` запускает приложение **в-процессе** и использует `RestAssured` для HTTP-тестов, а mocking — через `@InjectMock` + `Mockito.when(...)`. При этом `@QuarkusTest` собирает native image перед каждым классом, а `@QuarkusIntegrationTest`, наоборот, гоняет тесты на JVM.",
+              "text": "`@QuarkusTest` запускает приложение **в-процессе** и использует `RestAssured` для HTTP-тестов. Mocking делают аннотацией `@MockBean UserRepository repo;`, как в `Spring Boot` — `@InjectMock` в `Quarkus` не поддерживается. Для проверки native есть `@QuarkusIntegrationTest`.",
               "correct": false,
               "sections": {
-                "what_actually": "Обычный `@QuarkusTest` гоняет на JVM в-процессе; native проверяет отдельная `@QuarkusIntegrationTest`, и не на каждый тест.",
-                "source_of_confusion": "Тема native в `Quarkus` доминирует, отсюда мысль, что тесты тоже native.",
-                "if_it_were_true": "Будь так, тесты длились бы минутами из-за native-сборки, но `@QuarkusTest` быстрый.",
-                "how_it_should_be": "`@QuarkusTest` — JVM in-process; native-проверка — это `@QuarkusIntegrationTest`."
+                "what_actually": "Mocking поддержан: `@InjectMock UserRepository repo;` + `Mockito.when(repo.findById(1L)).thenReturn(...)` штатно работает в `@QuarkusTest`.",
+                "source_of_confusion": "Build-time DI кажется несовместимым с динамическими моками, отсюда заблуждение.",
+                "if_it_were_true": "Будь так, аннотации `@InjectMock` не существовало бы, но она есть и широко используется.",
+                "how_it_should_be": "Mockito через `@InjectMock` в `@QuarkusTest` поддерживается полноценно."
               },
               "label": "D",
               "order": 3
@@ -1629,13 +1629,14 @@
           "question_text": "`RestAssured` интеграция?",
           "options": [
             {
-              "text": "`RestAssured` — DSL для HTTP-тестов исходящих вызовов: он подменяет внешние REST-сервисы, к которым обращается приложение, а не проверяет собственные эндпоинты. Порт и base URL в `Quarkus` настраиваются из коробки, синтаксис — `given().when().get(\"/people\").then().statusCode(200)`.",
-              "correct": false,
+              "text": "`RestAssured` — DSL для HTTP-тестов, и `Quarkus` идёт с готовой настройкой (порт, base URL). Пример: `given().contentType(ContentType.JSON).body(new Person(\"Alice\",30)).when().post(\"/people\").then().statusCode(201).body(\"id\", notNullValue()).body(\"name\", equalTo(\"Alice\"));`. Структура given/when/then делает тест читаемым: подготовка запроса, вызов, проверки ответа.",
+              "correct": true,
               "sections": {
-                "what_actually": "`RestAssured` — DSL для HTTP-тестов (given/when/then), а моки делает `Mockito` (`@InjectMock`); это разные инструменты.",
-                "source_of_confusion": "Оба используются в тестах `Quarkus`, поэтому их роли смешивают.",
-                "if_it_were_true": "Будь это mock-фреймворк, в нём не было бы `.get(\"/people\").then().statusCode(...)`, но именно это его API.",
-                "how_it_should_be": "`RestAssured` — про HTTP-запросы в тестах; моки — это `Mockito`."
+                "explanation": "Идея в декларативной проверке HTTP-контракта: задаёшь заголовки и тело, выполняешь запрос и валидируешь статус и поля ответа через matchers `Hamcrest`.",
+                "example": "В примере проверяется создание `Person`: ожидается `201`, непустой `id` и `name == \"Alice\"` — это сразу и happy-path, и контракт ответа.",
+                "when_to_apply": "`RestAssured` используют в `@QuarkusTest` для тестирования REST-эндпоинтов end-to-end внутри процесса, без поднятия внешнего HTTP-клиента.",
+                "edge_cases": "Проверки строятся на matchers (`notNullValue`, `equalTo`, `greaterThan`); неаккуратный JSON-path в `.body(...)` — частый источник хрупких тестов.",
+                "related": "[[quarkus-interview#Q27]] @QuarkusTest и in-process запуск; [[quarkus-interview#Q13]] RESTEasy Reactive эндпоинты; [[quarkus-interview#Q16]] OpenAPI для контракта."
               },
               "label": "A",
               "order": 0
@@ -1665,14 +1666,13 @@
               "order": 2
             },
             {
-              "text": "`RestAssured` — DSL для HTTP-тестов, и `Quarkus` идёт с готовой настройкой (порт, base URL). Пример: `given().contentType(ContentType.JSON).body(new Person(\"Alice\",30)).when().post(\"/people\").then().statusCode(201).body(\"id\", notNullValue()).body(\"name\", equalTo(\"Alice\"));`. Структура given/when/then делает тест читаемым: подготовка запроса, вызов, проверки ответа.",
-              "correct": true,
+              "text": "`RestAssured` — DSL для HTTP-тестов исходящих вызовов: он подменяет внешние REST-сервисы, к которым обращается приложение, а не проверяет собственные эндпоинты. Порт и base URL в `Quarkus` настраиваются из коробки, синтаксис — `given().when().get(\"/people\").then().statusCode(200)`.",
+              "correct": false,
               "sections": {
-                "explanation": "Идея в декларативной проверке HTTP-контракта: задаёшь заголовки и тело, выполняешь запрос и валидируешь статус и поля ответа через matchers `Hamcrest`.",
-                "example": "В примере проверяется создание `Person`: ожидается `201`, непустой `id` и `name == \"Alice\"` — это сразу и happy-path, и контракт ответа.",
-                "when_to_apply": "`RestAssured` используют в `@QuarkusTest` для тестирования REST-эндпоинтов end-to-end внутри процесса, без поднятия внешнего HTTP-клиента.",
-                "edge_cases": "Проверки строятся на matchers (`notNullValue`, `equalTo`, `greaterThan`); неаккуратный JSON-path в `.body(...)` — частый источник хрупких тестов.",
-                "related": "[[quarkus-interview#Q27]] @QuarkusTest и in-process запуск; [[quarkus-interview#Q13]] RESTEasy Reactive эндпоинты; [[quarkus-interview#Q16]] OpenAPI для контракта."
+                "what_actually": "`RestAssured` — DSL для HTTP-тестов (given/when/then), а моки делает `Mockito` (`@InjectMock`); это разные инструменты.",
+                "source_of_confusion": "Оба используются в тестах `Quarkus`, поэтому их роли смешивают.",
+                "if_it_were_true": "Будь это mock-фреймворк, в нём не было бы `.get(\"/people\").then().statusCode(...)`, но именно это его API.",
+                "how_it_should_be": "`RestAssured` — про HTTP-запросы в тестах; моки — это `Mockito`."
               },
               "label": "D",
               "order": 3
@@ -1689,31 +1689,6 @@
           "question_text": "Как `Quarkus` интегрируется с `Kubernetes`?",
           "options": [
             {
-              "text": "Подключают `quarkus-kubernetes`, и при сборке (`./mvnw package`) генерируются манифесты `target/kubernetes/kubernetes.yaml`/`.json`. Настройка — свойствами: `quarkus.kubernetes.namespace`, `quarkus.kubernetes.replicas=3`, `quarkus.kubernetes.labels.app`, `quarkus.kubernetes.resources.requests/limits.memory/cpu`. Есть extensions для `Helm chart`, `Knative`, `OpenShift`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Идея в том, что деплой-артефакт (манифесты) генерируется из конфигурации приложения на этапе сборки, а не пишется вручную и отдельно от кода.",
-                "example": "`quarkus.kubernetes.replicas=3` + `requests.memory=64Mi` + `limits.memory=128Mi` в `application.properties` сразу попадут в сгенерированный `Deployment`, который остаётся применить `kubectl apply`.",
-                "when_to_apply": "Эту интеграцию используют, когда `Quarkus`-сервис деплоят в Kubernetes/OpenShift и хотят держать описание ресурсов рядом с кодом, а не в отдельных YAML.",
-                "edge_cases": "Сгенерированные манифесты — стартовая точка; для сложных случаев (ingress, секреты, HPA) их дополняют или переходят на `Helm`-extension.",
-                "related": "[[quarkus-interview#Q16]] health-пробы liveness/readiness для K8s; [[quarkus-interview#Q30]] когда выбирать Quarkus; [[quarkus-interview#Q10]] native для плотного scaling."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Подключают `quarkus-kubernetes`, но манифесты `target/kubernetes/kubernetes.yaml` генерируются только при сборке native image (`./mvnw package -Pnative`); на JVM extension отдаёт лишь свойства вроде `quarkus.kubernetes.replicas`, без готовых YAML.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Генерация манифестов через `quarkus-kubernetes` работает независимо от режима упаковки — и на JVM, и в native.",
-                "source_of_confusion": "Native и Kubernetes часто обсуждают вместе, отсюда ложная привязка.",
-                "if_it_were_true": "Будь так, JVM-приложение не получало бы `kubernetes.yaml`, но оно его получает при `package`.",
-                "how_it_should_be": "Манифесты генерируются в обоих режимах; native лишь добавляет преимущества по памяти/старту."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Подключают `quarkus-kubernetes`, и при сборке (`./mvnw package`) генерируется только `Dockerfile` и container image; сами манифесты `Deployment`/`Service` пишут вручную. Настройка образа — свойствами `quarkus.container-image.group`, `quarkus.container-image.name`.",
               "correct": false,
               "sections": {
@@ -1722,8 +1697,8 @@
                 "if_it_were_true": "Будь так, не было бы каталога `target/kubernetes/` после `package`, но он появляется.",
                 "how_it_should_be": "`Quarkus` генерирует манифесты автоматически из конфигурации."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Подключают `quarkus-kubernetes`; манифесты `target/kubernetes/kubernetes.yaml` генерируются при сборке, но настраиваются только Java-аннотациями (`@KubernetesApplication(replicas=3)`) на главном классе — свойства из `application.properties` для них не действуют. Есть extensions для `Helm`, `OpenShift`.",
@@ -1733,6 +1708,31 @@
                 "source_of_confusion": "Принцип «всё из коробки» создаёт впечатление, что extension не требуется.",
                 "if_it_were_true": "Будь всё в core, проекты без Kubernetes тащили бы лишний код, что против философии `Quarkus`.",
                 "how_it_should_be": "Интеграцию добавляют extension'ом `quarkus-kubernetes`, а не получают из core."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Подключают `quarkus-kubernetes`, и при сборке (`./mvnw package`) генерируются манифесты `target/kubernetes/kubernetes.yaml`/`.json`. Настройка — свойствами: `quarkus.kubernetes.namespace`, `quarkus.kubernetes.replicas=3`, `quarkus.kubernetes.labels.app`, `quarkus.kubernetes.resources.requests/limits.memory/cpu`. Есть extensions для `Helm chart`, `Knative`, `OpenShift`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Идея в том, что деплой-артефакт (манифесты) генерируется из конфигурации приложения на этапе сборки, а не пишется вручную и отдельно от кода.",
+                "example": "`quarkus.kubernetes.replicas=3` + `requests.memory=64Mi` + `limits.memory=128Mi` в `application.properties` сразу попадут в сгенерированный `Deployment`, который остаётся применить `kubectl apply`.",
+                "when_to_apply": "Эту интеграцию используют, когда `Quarkus`-сервис деплоят в Kubernetes/OpenShift и хотят держать описание ресурсов рядом с кодом, а не в отдельных YAML.",
+                "edge_cases": "Сгенерированные манифесты — стартовая точка; для сложных случаев (ingress, секреты, HPA) их дополняют или переходят на `Helm`-extension.",
+                "related": "[[quarkus-interview#Q16]] health-пробы liveness/readiness для K8s; [[quarkus-interview#Q30]] когда выбирать Quarkus; [[quarkus-interview#Q10]] native для плотного scaling."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Подключают `quarkus-kubernetes`, но манифесты `target/kubernetes/kubernetes.yaml` генерируются только при сборке native image (`./mvnw package -Pnative`); на JVM extension отдаёт лишь свойства вроде `quarkus.kubernetes.replicas`, без готовых YAML.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Генерация манифестов через `quarkus-kubernetes` работает независимо от режима упаковки — и на JVM, и в native.",
+                "source_of_confusion": "Native и Kubernetes часто обсуждают вместе, отсюда ложная привязка.",
+                "if_it_were_true": "Будь так, JVM-приложение не получало бы `kubernetes.yaml`, но оно его получает при `package`.",
+                "how_it_should_be": "Манифесты генерируются в обоих режимах; native лишь добавляет преимущества по памяти/старту."
               },
               "label": "D",
               "order": 3
@@ -1761,6 +1761,18 @@
               "order": 0
             },
             {
+              "text": "`Quarkus` берут прежде всего под монолиты на bare metal и долгоживущие VM-приложения, где cold start и экономия памяти не важны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Quarkus` нацелен на cloud-native (serverless, Kubernetes); для классических VM/bare metal сервисов его преимущества почти не проявляются.",
+                "source_of_confusion": "«Лёгкий и быстрый» звучит универсально, отсюда мысль про любые среды.",
+                "if_it_were_true": "Будь так, маркетинг не делал бы упор на Kubernetes и serverless, но он делает.",
+                "how_it_should_be": "`Quarkus` — про cloud-native; для не-облачных сервисов `Spring Boot` часто уместнее."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "**Quarkus** — когда: serverless/FaaS (Lambda, Knative) и критичен cold start; Kubernetes + auto-scaling и важна экономия памяти; edge/IoT с ограниченной памятью; команда любит `MicroProfile`/Jakarta EE; нужен быстрый dev-цикл (live reload). **Spring Boot** — когда: уже есть Spring-команда и инфраструктура; нужны редкие интеграции; enterprise (батчи, stream, integration); проект не cloud-native (VM/bare metal).",
               "correct": true,
               "sections": {
@@ -1769,18 +1781,6 @@
                 "when_to_apply": "Этот выбор делают на старте проекта, взвешивая cold start, память, требуемые интеграции и знакомство команды с MicroProfile vs Spring.",
                 "edge_cases": "В `2024` `Spring Boot 3.x` со `Spring Native` сократил отставание по cold start; `Quarkus` обычно всё ещё быстрее, но разрыв меньше, чем раньше.",
                 "related": "[[quarkus-interview#Q1]] зачем нужен Quarkus; [[quarkus-interview#Q2]] отличия от Spring Boot; [[quarkus-interview#Q31]] минусы Quarkus."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Quarkus` берут прежде всего под монолиты на bare metal и долгоживущие VM-приложения, где cold start и экономия памяти не важны.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Quarkus` нацелен на cloud-native (serverless, Kubernetes); для классических VM/bare metal сервисов его преимущества почти не проявляются.",
-                "source_of_confusion": "«Лёгкий и быстрый» звучит универсально, отсюда мысль про любые среды.",
-                "if_it_were_true": "Будь так, маркетинг не делал бы упор на Kubernetes и serverless, но он делает.",
-                "how_it_should_be": "`Quarkus` — про cloud-native; для не-облачных сервисов `Spring Boot` часто уместнее."
               },
               "label": "C",
               "order": 2
@@ -1809,18 +1809,6 @@
           "question_text": "Какие минусы `Quarkus`?",
           "options": [
             {
-              "text": "Минусы: холодный старт и потребление памяти хуже, чем у `Spring Boot`, из-за build-time обработки; runtime-производительность ниже; `MicroProfile` менее знаком Spring-разработчикам; меньше community и готовых интеграций; долгая native-сборка.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Минусы есть: меньше community и материалов, чем у `Spring`, сложности с reflection в native, долгая native-сборка, обучение `Mutiny`.",
-                "source_of_confusion": "Сильные стороны `Quarkus` заметнее, поэтому минусы недооценивают.",
-                "if_it_were_true": "Будь минусов нет, миграция со `Spring` всегда окупалась бы, но обычно она не окупается.",
-                "how_it_should_be": "Минусы реальны: экосистема, native-сложности, кривая обучения `Mutiny`."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Минусы: приложение обязательно компилировать в native image через `GraalVM` — JVM-режим не поддерживается, отсюда `GraalVM` на CI и долгая сборка (2-10 мин); reflection и third-party библиотеки требуют ручной настройки; `Mutiny` нужно осваивать отдельно.",
               "correct": false,
               "sections": {
@@ -1829,8 +1817,8 @@
                 "if_it_were_true": "Будь так, не было бы extension `quarkus-kubernetes` и генерации манифестов, но они есть.",
                 "how_it_should_be": "Kubernetes — плюс `Quarkus`; минусы лежат в экосистеме и native-нюансах."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Минусы: меньше community/материалов, чем у `Spring`; `MicroProfile`/Jakarta EE менее знакомы Spring-разработчикам; сложности с reflection и third-party библиотеками в native; долгая native-сборка (2-10 мин); меньше готовых интеграций; live reload иногда сбоит на глубоких изменениях; native-тесты медленные (нужен `GraalVM` на CI); обучение `Mutiny`; vendor lock-in в экосистему `Red Hat`.",
@@ -1842,8 +1830,8 @@
                 "edge_cases": "Многие минусы смягчаются (растущее community, авто-регистрация reflection в extensions), но обучение `Mutiny` и vendor lock-in остаются заметными.",
                 "related": "[[quarkus-interview#Q12]] reflection в native; [[quarkus-interview#Q10]] минусы native image; [[quarkus-interview#Q30]] когда миграция не окупается."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Минусы: нет полноценного `CDI` — бины связывают вручную, без `@Inject`; экосистема меньше, чем у `Spring`; `MicroProfile`/Jakarta EE непривычны Spring-разработчикам; долгая native-сборка и vendor lock-in в `Red Hat`.",
@@ -1853,6 +1841,18 @@
                 "source_of_confusion": "Раз перечисляем минусы, в них ошибочно записывают даже флагманскую фичу.",
                 "if_it_were_true": "Будь так, не было бы `Mutiny`, `RESTEasy Reactive` и `Hibernate Reactive`, но они в ядре `Quarkus`.",
                 "how_it_should_be": "Реактивность — плюс; минусы — это community, native-нюансы и кривая обучения."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Минусы: холодный старт и потребление памяти хуже, чем у `Spring Boot`, из-за build-time обработки; runtime-производительность ниже; `MicroProfile` менее знаком Spring-разработчикам; меньше community и готовых интеграций; долгая native-сборка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Минусы есть: меньше community и материалов, чем у `Spring`, сложности с reflection в native, долгая native-сборка, обучение `Mutiny`.",
+                "source_of_confusion": "Сильные стороны `Quarkus` заметнее, поэтому минусы недооценивают.",
+                "if_it_were_true": "Будь минусов нет, миграция со `Spring` всегда окупалась бы, но обычно она не окупается.",
+                "how_it_should_be": "Минусы реальны: экосистема, native-сложности, кривая обучения `Mutiny`."
               },
               "label": "D",
               "order": 3

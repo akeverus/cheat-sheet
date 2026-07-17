@@ -22,18 +22,6 @@
               "label": "A"
             },
             {
-              "text": "`Micronaut` ничем не отличается от Spring Boot 3: тот тоже использует compile-time DI с версии 3, разницы в архитектуре нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Spring Boot 3 добавил `spring-aot` для генерации native-hints, но сам DI-граф по-прежнему строится в runtime через рефлексию в `AnnotationConfigApplicationContext`.",
-                "source_of_confusion": "Маркетинг Spring Boot 3 «cloud-native, native ready» создаёт впечатление архитектурного равенства, хотя речь о компиляции hints, а не о смене модели DI.",
-                "if_it_were_true": "Тогда cold start Spring Boot на JVM был бы ~1-2с как у Micronaut, но в реальности это 3-15с из-за classpath scan и рефлексии.",
-                "how_it_should_be": "Micronaut строит DI на этапе компиляции без рефлексии, Spring Boot — в runtime через рефлексию; AOT в Spring лишь надстройка для GraalVM."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
               "text": "`Micronaut` — тонкий wrapper над Spring Framework, использует `org.springframework.context.ApplicationContext` под капотом.",
               "correct": false,
               "sections": {
@@ -42,8 +30,8 @@
                 "if_it_were_true": "Тогда Micronaut тащил бы 30+ МБ spring-core jars и reflection-based DI, что противоречило бы заявленным cold start ~30ms в native.",
                 "how_it_should_be": "Это независимый фреймворк со своим контейнером; общее со Spring — только похожий синтаксис аннотаций."
               },
-              "order": 2,
-              "label": "C"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "`Micronaut` поддерживает только Kotlin; для Java нужен другой фреймворк, потому что annotation processing завязан на kapt.",
@@ -53,6 +41,18 @@
                 "source_of_confusion": "В JetBrains-экосистеме современные JVM-фреймворки часто ассоциируются с Kotlin (Ktor), отсюда ложное обобщение.",
                 "if_it_were_true": "Тогда start.micronaut.io не предлагал бы Java по умолчанию, а Oracle Cloud не использовал бы его на Java в production.",
                 "how_it_should_be": "Java — first-class язык Micronaut; Kotlin и Groovy — равноправные альтернативы, а не единственный вариант."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`Micronaut` ничем не отличается от Spring Boot 3: тот тоже использует compile-time DI с версии 3, разницы в архитектуре нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring Boot 3 добавил `spring-aot` для генерации native-hints, но сам DI-граф по-прежнему строится в runtime через рефлексию в `AnnotationConfigApplicationContext`.",
+                "source_of_confusion": "Маркетинг Spring Boot 3 «cloud-native, native ready» создаёт впечатление архитектурного равенства, хотя речь о компиляции hints, а не о смене модели DI.",
+                "if_it_were_true": "Тогда cold start Spring Boot на JVM был бы ~1-2с как у Micronaut, но в реальности это 3-15с из-за classpath scan и рефлексии.",
+                "how_it_should_be": "Micronaut строит DI на этапе компиляции без рефлексии, Spring Boot — в runtime через рефлексию; AOT в Spring лишь надстройка для GraalVM."
               },
               "order": 3,
               "label": "D"
@@ -81,6 +81,18 @@
               "label": "A"
             },
             {
+              "text": "`Micronaut` поддерживает только блокирующий HTTP и не умеет работать с Reactor/RxJava, в отличие от Spring WebFlux.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HTTP-сервер Micronaut построен на Netty и нативно поддерживает `Publisher<T>`: можно возвращать `Mono`, `Flux`, `Single`, `CompletableFuture`.",
+                "source_of_confusion": "Spring WebFlux воспринимается как «единственный reactive JVM-стек», поэтому Micronaut ошибочно считают конкурентом только Spring MVC.",
+                "if_it_were_true": "Тогда не существовало бы модулей `micronaut-rxjava3`, `micronaut-reactor` и встроенного R2DBC в Micronaut Data.",
+                "how_it_should_be": "Micronaut поддерживает и blocking, и reactive endpoints в одном приложении, выбирая стиль по типу возврата."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
               "text": "`Micronaut` строит DI/AOP в compile time, поэтому cold start 1-2с на JVM против 3-15с у Spring Boot, а memory 80-120 МБ против 150-300 МБ; AOP реализован через сгенерированный `$Intercepted`-subclass, а не CGLIB-proxy в runtime.",
               "correct": true,
               "sections": {
@@ -90,8 +102,8 @@
                 "edge_cases": "Экосистема Spring шире (Security, Data REST, Cloud Gateway); миграция большого Spring-проекта на Micronaut обычно занимает 3-6 месяцев.",
                 "related": "[[micronaut-interview#Q1]] что такое Micronaut; [[micronaut-interview#Q6]] AOP без рефлексии; [[micronaut-interview#Q25]] сравнение производительности."
               },
-              "order": 1,
-              "label": "B"
+              "order": 2,
+              "label": "C"
             },
             {
               "text": "Оба фреймворка используют runtime reflection для DI; `Micronaut` лишь добавляет синтаксический сахар поверх того же механизма.",
@@ -101,18 +113,6 @@
                 "source_of_confusion": "Похожий синтаксис аннотаций (`@Inject`, `@Singleton`) наводит на мысль о похожей реализации внутри.",
                 "if_it_were_true": "Тогда native image не работал бы без `reflect-config.json`, но Micronaut запускается в native без дополнительной конфигурации.",
                 "how_it_should_be": "Micronaut разрешает зависимости через сгенерированный код без рефлексии; Spring — через рефлексию в runtime."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
-              "text": "`Micronaut` поддерживает только блокирующий HTTP и не умеет работать с Reactor/RxJava, в отличие от Spring WebFlux.",
-              "correct": false,
-              "sections": {
-                "what_actually": "HTTP-сервер Micronaut построен на Netty и нативно поддерживает `Publisher<T>`: можно возвращать `Mono`, `Flux`, `Single`, `CompletableFuture`.",
-                "source_of_confusion": "Spring WebFlux воспринимается как «единственный reactive JVM-стек», поэтому Micronaut ошибочно считают конкурентом только Spring MVC.",
-                "if_it_were_true": "Тогда не существовало бы модулей `micronaut-rxjava3`, `micronaut-reactor` и встроенного R2DBC в Micronaut Data.",
-                "how_it_should_be": "Micronaut поддерживает и blocking, и reactive endpoints в одном приложении, выбирая стиль по типу возврата."
               },
               "order": 3,
               "label": "D"
@@ -153,6 +153,18 @@
               "label": "B"
             },
             {
+              "text": "`Micronaut` пригоден только для Google Cloud, а `Quarkus` — только для Red Hat OpenShift.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба фреймворка cloud-agnostic: у Micronaut есть first-class модули для AWS, GCP, Azure, Oracle Cloud, Quarkus работает на любых K8s.",
+                "source_of_confusion": "Quarkus ассоциируется с Red Hat и OpenShift, а Micronaut продвигался Oracle Cloud Infrastructure, отсюда ложная привязка.",
+                "if_it_were_true": "Тогда не существовало бы модулей `micronaut-aws`, `micronaut-azure`, `quarkus-amazon-lambda`.",
+                "how_it_should_be": "Оба фреймворка работают на любом облаке и любом Kubernetes-кластере без привязки к вендору."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
               "text": "`Quarkus` (Red Hat) построен на стандартах MicroProfile/Jakarta EE (CDI, JAX-RS) и имеет более развитый Dev Services; `Micronaut` ближе к Spring-стилю (`@Controller`, `@Inject`) и проще для команд из Spring-мира, а Test Resources — его аналог Dev Services с 4.0.",
               "correct": true,
               "sections": {
@@ -161,18 +173,6 @@
                 "when_to_apply": "Micronaut выбирают при миграции со Spring и нужде в привычном DI; Quarkus — для greenfield на Jakarta EE, команд из JBoss и интеграции с OpenShift.",
                 "edge_cases": "Нельзя смешивать Quarkus extensions с Micronaut beans — это разные `BeanContainer` API; выбор часто диктует экосистема компании (Red Hat vs Oracle support).",
                 "related": "[[micronaut-interview#Q1]] что такое Micronaut; [[micronaut-interview#Q23]] когда выбирать Micronaut; [[micronaut-interview#Q25]] сравнение производительности."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
-              "text": "`Micronaut` пригоден только для Google Cloud, а `Quarkus` — только для Red Hat OpenShift.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Оба фреймворка cloud-agnostic: у Micronaut есть first-class модули для AWS, GCP, Azure, Oracle Cloud, Quarkus работает на любых K8s.",
-                "source_of_confusion": "Quarkus ассоциируется с Red Hat и OpenShift, а Micronaut продвигался Oracle Cloud Infrastructure, отсюда ложная привязка.",
-                "if_it_were_true": "Тогда не существовало бы модулей `micronaut-aws`, `micronaut-azure`, `quarkus-amazon-lambda`.",
-                "how_it_should_be": "Оба фреймворка работают на любом облаке и любом Kubernetes-кластере без привязки к вендору."
               },
               "order": 3,
               "label": "D"
@@ -189,13 +189,13 @@
           "question_text": "Что такое compile-time DI в `Micronaut` и как именно строится граф зависимостей?",
           "options": [
             {
-              "text": "DI-граф строится при первом обращении к бину в runtime через CGLIB-прокси.",
+              "text": "`Micronaut` сканирует classpath в runtime через `ClassLoader`, чтобы найти бины, как делает Spring.",
               "correct": false,
               "sections": {
-                "what_actually": "Это поведение Spring Boot; в Micronaut DI-граф известен на этапе сборки, и ошибки DI ловятся при компиляции, а не в runtime.",
-                "source_of_confusion": "И там, и там есть `@Inject`/`@Singleton`, поэтому механизм lazy-инициализации через прокси ошибочно переносят на Micronaut.",
-                "if_it_were_true": "Тогда ошибка отсутствующей зависимости всплывала бы только при первом вызове в production, но в Micronaut это compile error.",
-                "how_it_should_be": "Micronaut генерирует `$Definition` при сборке, а `BeanContext` инстанцирует бины без CGLIB и без рефлексии."
+                "what_actually": "Classpath-сканирование в runtime — это поведение Spring; Micronaut знает все бины из сгенерированных `BeanDefinitionReference` в `META-INF/services`.",
+                "source_of_confusion": "Оба фреймворка автоматически находят бины, поэтому механизм classpath scan ошибочно приписывают и Micronaut.",
+                "if_it_were_true": "Тогда стартовое время Micronaut росло бы с размером classpath, как у Spring, но оно остаётся стабильно низким.",
+                "how_it_should_be": "Все знания о бинах уже в сгенерированном коде; classpath-скан в runtime не выполняется."
               },
               "order": 0,
               "label": "A"
@@ -213,13 +213,13 @@
               "label": "B"
             },
             {
-              "text": "`Micronaut` сканирует classpath в runtime через `ClassLoader`, чтобы найти бины, как делает Spring.",
+              "text": "DI-граф строится при первом обращении к бину в runtime через CGLIB-прокси.",
               "correct": false,
               "sections": {
-                "what_actually": "Classpath-сканирование в runtime — это поведение Spring; Micronaut знает все бины из сгенерированных `BeanDefinitionReference` в `META-INF/services`.",
-                "source_of_confusion": "Оба фреймворка автоматически находят бины, поэтому механизм classpath scan ошибочно приписывают и Micronaut.",
-                "if_it_were_true": "Тогда стартовое время Micronaut росло бы с размером classpath, как у Spring, но оно остаётся стабильно низким.",
-                "how_it_should_be": "Все знания о бинах уже в сгенерированном коде; classpath-скан в runtime не выполняется."
+                "what_actually": "Это поведение Spring Boot; в Micronaut DI-граф известен на этапе сборки, и ошибки DI ловятся при компиляции, а не в runtime.",
+                "source_of_confusion": "И там, и там есть `@Inject`/`@Singleton`, поэтому механизм lazy-инициализации через прокси ошибочно переносят на Micronaut.",
+                "if_it_were_true": "Тогда ошибка отсутствующей зависимости всплывала бы только при первом вызове в production, но в Micronaut это compile error.",
+                "how_it_should_be": "Micronaut генерирует `$Definition` при сборке, а `BeanContext` инстанцирует бины без CGLIB и без рефлексии."
               },
               "order": 2,
               "label": "C"
@@ -249,14 +249,13 @@
           "question_text": "Как `Micronaut` обрабатывает аннотации в compile time?",
           "options": [
             {
-              "text": "`javac` запускает `MicronautAnnotationProcessor` (JSR-269), который для каждого `@Controller`/`@Singleton`/`@Inject` генерирует `$Definition`-класс и `$Introspection`-класс; они попадают в JAR, а в runtime `BeanContext` использует их без рефлексии и без classpath-сканирования.",
-              "correct": true,
+              "text": "Обработка аннотаций в `Micronaut` идёт через AspectJ compile-time weaving.",
+              "correct": false,
               "sections": {
-                "explanation": "Это стандартный Java annotation processing: вся метаинформация о бинах формируется на этапе компиляции, поэтому в runtime нет ни scan, ни reflection.",
-                "example": "Конвейер выглядит так: `javac` → процессор видит `@Singleton OrderService` → пишет `OrderService$Definition` и `OrderService$Introspection` → они едут в JAR → `BeanContext` читает их на старте.",
-                "when_to_apply": "Понимание этого нужно, чтобы объяснить, почему Micronaut поддерживает native image из коробки и стартует быстрее Spring.",
-                "edge_cases": "В отличие от Spring, classpath-сканирования в runtime нет; все знания о бинах уже зафиксированы в сгенерированном коде.",
-                "related": "[[micronaut-interview#Q4]] что такое compile-time DI; [[micronaut-interview#Q6]] AOP без рефлексии; [[micronaut-interview#Q7]] BeanIntrospection."
+                "what_actually": "Micronaut использует стандартный JSR-269 annotation processing, а не AspectJ; никакого weaving байт-кода через AspectJ нет.",
+                "source_of_confusion": "AspectJ — известный compile-time инструмент для AOP, поэтому его ошибочно приписывают Micronaut.",
+                "if_it_were_true": "Тогда требовался бы `aspectjweaver` и `ajc`-компилятор, но Micronaut работает обычным `javac` с процессором.",
+                "how_it_should_be": "Аннотации обрабатываются штатным annotation processing API без AspectJ."
               },
               "order": 0,
               "label": "A"
@@ -274,13 +273,14 @@
               "label": "B"
             },
             {
-              "text": "Обработка аннотаций в `Micronaut` идёт через AspectJ compile-time weaving.",
-              "correct": false,
+              "text": "`javac` запускает `MicronautAnnotationProcessor` (JSR-269), который для каждого `@Controller`/`@Singleton`/`@Inject` генерирует `$Definition`-класс и `$Introspection`-класс; они попадают в JAR, а в runtime `BeanContext` использует их без рефлексии и без classpath-сканирования.",
+              "correct": true,
               "sections": {
-                "what_actually": "Micronaut использует стандартный JSR-269 annotation processing, а не AspectJ; никакого weaving байт-кода через AspectJ нет.",
-                "source_of_confusion": "AspectJ — известный compile-time инструмент для AOP, поэтому его ошибочно приписывают Micronaut.",
-                "if_it_were_true": "Тогда требовался бы `aspectjweaver` и `ajc`-компилятор, но Micronaut работает обычным `javac` с процессором.",
-                "how_it_should_be": "Аннотации обрабатываются штатным annotation processing API без AspectJ."
+                "explanation": "Это стандартный Java annotation processing: вся метаинформация о бинах формируется на этапе компиляции, поэтому в runtime нет ни scan, ни reflection.",
+                "example": "Конвейер выглядит так: `javac` → процессор видит `@Singleton OrderService` → пишет `OrderService$Definition` и `OrderService$Introspection` → они едут в JAR → `BeanContext` читает их на старте.",
+                "when_to_apply": "Понимание этого нужно, чтобы объяснить, почему Micronaut поддерживает native image из коробки и стартует быстрее Spring.",
+                "edge_cases": "В отличие от Spring, classpath-сканирования в runtime нет; все знания о бинах уже зафиксированы в сгенерированном коде.",
+                "related": "[[micronaut-interview#Q4]] что такое compile-time DI; [[micronaut-interview#Q6]] AOP без рефлексии; [[micronaut-interview#Q7]] BeanIntrospection."
               },
               "order": 2,
               "label": "C"
@@ -321,6 +321,18 @@
               "label": "A"
             },
             {
+              "text": "В native image AOP в `Micronaut` отключается — `@Transactional` и `@CacheResult` перестают работать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В native image AOP полностью работает, потому что proxy-классы (`$Intercepted`) сгенерированы при сборке и попадают в бинарь.",
+                "source_of_confusion": "В Spring AOP в native действительно были проблемы из-за CGLIB, и это обобщают на Micronaut.",
+                "if_it_were_true": "Тогда транзакции и кэширование ломались бы во всех native-деплоях Micronaut, но они работают штатно.",
+                "how_it_should_be": "Compile-time прокси полностью функциональны в native; никакого отключения AOP нет."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
               "text": "Annotation processor генерирует `$Intercepted`-subclass при сборке: для `@Transactional createUser(...)` создаётся `UserService$Intercepted extends UserService`, чей переопределённый метод вызывает interceptors и затем `super`; всё через сгенерированный код без рефлексии.",
               "correct": true,
               "sections": {
@@ -330,8 +342,8 @@
                 "edge_cases": "Плюсы: работает в native, нет JIT-warmup на прокси, стектрейсы читаются проще; ограничение — advice применим к методам, видимым для переопределения (не private/final).",
                 "related": "[[micronaut-interview#Q5]] обработка аннотаций; [[micronaut-interview#Q16]] почему это даёт native image; [[micronaut-interview#Q4]] compile-time DI."
               },
-              "order": 1,
-              "label": "B"
+              "order": 2,
+              "label": "C"
             },
             {
               "text": "`Micronaut` использует JDK dynamic proxy через `java.lang.reflect.Proxy` для AOP.",
@@ -341,18 +353,6 @@
                 "source_of_confusion": "JDK proxy — классический способ AOP в Java, поэтому его ошибочно приписывают Micronaut.",
                 "if_it_were_true": "Тогда нельзя было бы перехватывать методы у класса без интерфейса, но Micronaut перехватывает и такие.",
                 "how_it_should_be": "Используется сгенерированный compile-time subclass, а не рантайм JDK-proxy."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
-              "text": "В native image AOP в `Micronaut` отключается — `@Transactional` и `@CacheResult` перестают работать.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В native image AOP полностью работает, потому что proxy-классы (`$Intercepted`) сгенерированы при сборке и попадают в бинарь.",
-                "source_of_confusion": "В Spring AOP в native действительно были проблемы из-за CGLIB, и это обобщают на Micronaut.",
-                "if_it_were_true": "Тогда транзакции и кэширование ломались бы во всех native-деплоях Micronaut, но они работают штатно.",
-                "how_it_should_be": "Compile-time прокси полностью функциональны в native; никакого отключения AOP нет."
               },
               "order": 3,
               "label": "D"
@@ -369,13 +369,14 @@
           "question_text": "Что такое `BeanIntrospection` в `Micronaut`?",
           "options": [
             {
-              "text": "`BeanIntrospection` — это runtime reflection API, аналог `Class.getDeclaredFields()`.",
-              "correct": false,
+              "text": "`BeanIntrospection` — это сгенерированные в compile time метаданные о бине (поля, методы, аннотации) через `@Introspected`; они заменяют Java Reflection в Jackson-сериализации, Bean Validation и ORM-маппинге, позволяя обращаться к свойствам без `java.lang.reflect`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`BeanIntrospection` — это compile-time метаданные, сгенерированные процессором, а не обёртка над рефлексией.",
-                "source_of_confusion": "По названию кажется, что это introspection через стандартную Java-рефлексию, как `java.beans.Introspector`.",
-                "if_it_were_true": "Тогда в native image он падал бы с `ClassNotFoundException`, ведь рефлексия там не работает без регистрации.",
-                "how_it_should_be": "Это сгенерированные при сборке метаданные, заменяющие рефлексию, а не сам reflection API."
+                "explanation": "Процессор для `@Introspected`-класса создаёт `$Introspection`-класс с явными аксессорами, поэтому в runtime метаданные читаются напрямую, без рефлексии и без classpath-доступа.",
+                "example": "`BeanIntrospection.getIntrospection(Person.class).instantiate(\"Alice\", 30)` создаёт объект, а `getRequiredProperty(\"name\", String.class).get(p)` читает поле — всё через сгенерированный код.",
+                "when_to_apply": "Применяют на всех DTO и entity, которые сериализуются/валидируются, чтобы они работали в GraalVM native image без reflect-config.",
+                "edge_cases": "Без `@Introspected` на JVM Jackson сработает через обычную рефлексию, но в native будет ошибка; для внешних типов используют `@Introspected(classes = ...)`.",
+                "related": "[[micronaut-interview#Q16]] почему это нужно для native image; [[micronaut-interview#Q9]] validation на DTO; [[micronaut-interview#Q17]] подводные камни native."
               },
               "order": 0,
               "label": "A"
@@ -393,14 +394,13 @@
               "label": "B"
             },
             {
-              "text": "`BeanIntrospection` — это сгенерированные в compile time метаданные о бине (поля, методы, аннотации) через `@Introspected`; они заменяют Java Reflection в Jackson-сериализации, Bean Validation и ORM-маппинге, позволяя обращаться к свойствам без `java.lang.reflect`.",
-              "correct": true,
+              "text": "`BeanIntrospection` — это runtime reflection API, аналог `Class.getDeclaredFields()`.",
+              "correct": false,
               "sections": {
-                "explanation": "Процессор для `@Introspected`-класса создаёт `$Introspection`-класс с явными аксессорами, поэтому в runtime метаданные читаются напрямую, без рефлексии и без classpath-доступа.",
-                "example": "`BeanIntrospection.getIntrospection(Person.class).instantiate(\"Alice\", 30)` создаёт объект, а `getRequiredProperty(\"name\", String.class).get(p)` читает поле — всё через сгенерированный код.",
-                "when_to_apply": "Применяют на всех DTO и entity, которые сериализуются/валидируются, чтобы они работали в GraalVM native image без reflect-config.",
-                "edge_cases": "Без `@Introspected` на JVM Jackson сработает через обычную рефлексию, но в native будет ошибка; для внешних типов используют `@Introspected(classes = ...)`.",
-                "related": "[[micronaut-interview#Q16]] почему это нужно для native image; [[micronaut-interview#Q9]] validation на DTO; [[micronaut-interview#Q17]] подводные камни native."
+                "what_actually": "`BeanIntrospection` — это compile-time метаданные, сгенерированные процессором, а не обёртка над рефлексией.",
+                "source_of_confusion": "По названию кажется, что это introspection через стандартную Java-рефлексию, как `java.beans.Introspector`.",
+                "if_it_were_true": "Тогда в native image он падал бы с `ClassNotFoundException`, ведь рефлексия там не работает без регистрации.",
+                "how_it_should_be": "Это сгенерированные при сборке метаданные, заменяющие рефлексию, а не сам reflection API."
               },
               "order": 2,
               "label": "C"
@@ -429,18 +429,6 @@
           "question_text": "Как создать REST-эндпойнт в `Micronaut`?",
           "options": [
             {
-              "text": "Нужна аннотация `@RestController`, как в Spring MVC, иначе контроллер не вернёт JSON.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В Micronaut `@Controller` уже возвращает JSON по умолчанию; аннотации `@RestController` в Micronaut просто нет.",
-                "source_of_confusion": "Привычка из Spring MVC, где `@RestController` = `@Controller` + `@ResponseBody`, переносится на Micronaut.",
-                "if_it_were_true": "Тогда код с `@RestController` компилировался бы, но это несуществующая в Micronaut аннотация — будет ошибка.",
-                "how_it_should_be": "Используется `@Controller`, который по умолчанию сериализует ответ в JSON без дополнительных аннотаций."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
               "text": "`@Get` и `@Post` без указания пути матчат только корень `/` всего приложения.",
               "correct": false,
               "sections": {
@@ -448,6 +436,19 @@
                 "source_of_confusion": "Кажется, что пустой `@Get` всегда означает абсолютный корень, без учёта пути контроллера.",
                 "if_it_were_true": "Тогда для `/users/{id}` нельзя было бы использовать `@Get(\"/{id}\")` относительно `@Controller(\"/users\")`.",
                 "how_it_should_be": "Пустой `@Get` матчит базовый путь контроллера; для подресурса нужен явный путь `@Get(\"/{id}\")`."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Создаётся `@Controller(\"/users\")` с методами `@Get`/`@Post`/`@Delete`, зависимости инжектятся через конструктор; JSON — формат по умолчанию, а HTTP-статус задаётся через `@Status` (например, `@Status(HttpStatus.CREATED)` для POST). Синтаксис похож на Spring MVC, но без `@RestController`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Контроллер связывает HTTP-методы с обработчиками: `@Get(\"/{id}\")` биндит path-переменную, `@Body` — тело запроса, а возвращаемый объект сериализуется в JSON автоматически.",
+                "example": "`@Post @Status(HttpStatus.CREATED) public User create(@Body User user)` принимает JSON-тело, сохраняет и отдаёт 201; `@Delete(\"/{id}\") @Status(HttpStatus.NO_CONTENT)` возвращает 204.",
+                "when_to_apply": "Применяют для любого REST API в Micronaut, особенно при миграции со Spring MVC, где знакомый стиль ускоряет онбординг.",
+                "edge_cases": "Контроллеры по умолчанию JSON, без `@RestController`; для кастомных статусов нужен `@Status`, для path-переменных — совпадение имени параметра с шаблоном пути.",
+                "related": "[[micronaut-interview#Q9]] validation и error handling; [[micronaut-interview#Q10]] declarative HTTP-клиенты; [[micronaut-interview#Q1]] основы Micronaut."
               },
               "order": 1,
               "label": "B"
@@ -465,14 +466,13 @@
               "label": "C"
             },
             {
-              "text": "Создаётся `@Controller(\"/users\")` с методами `@Get`/`@Post`/`@Delete`, зависимости инжектятся через конструктор; JSON — формат по умолчанию, а HTTP-статус задаётся через `@Status` (например, `@Status(HttpStatus.CREATED)` для POST). Синтаксис похож на Spring MVC, но без `@RestController`.",
-              "correct": true,
+              "text": "Нужна аннотация `@RestController`, как в Spring MVC, иначе контроллер не вернёт JSON.",
+              "correct": false,
               "sections": {
-                "explanation": "Контроллер связывает HTTP-методы с обработчиками: `@Get(\"/{id}\")` биндит path-переменную, `@Body` — тело запроса, а возвращаемый объект сериализуется в JSON автоматически.",
-                "example": "`@Post @Status(HttpStatus.CREATED) public User create(@Body User user)` принимает JSON-тело, сохраняет и отдаёт 201; `@Delete(\"/{id}\") @Status(HttpStatus.NO_CONTENT)` возвращает 204.",
-                "when_to_apply": "Применяют для любого REST API в Micronaut, особенно при миграции со Spring MVC, где знакомый стиль ускоряет онбординг.",
-                "edge_cases": "Контроллеры по умолчанию JSON, без `@RestController`; для кастомных статусов нужен `@Status`, для path-переменных — совпадение имени параметра с шаблоном пути.",
-                "related": "[[micronaut-interview#Q9]] validation и error handling; [[micronaut-interview#Q10]] declarative HTTP-клиенты; [[micronaut-interview#Q1]] основы Micronaut."
+                "what_actually": "В Micronaut `@Controller` уже возвращает JSON по умолчанию; аннотации `@RestController` в Micronaut просто нет.",
+                "source_of_confusion": "Привычка из Spring MVC, где `@RestController` = `@Controller` + `@ResponseBody`, переносится на Micronaut.",
+                "if_it_were_true": "Тогда код с `@RestController` компилировался бы, но это несуществующая в Micronaut аннотация — будет ошибка.",
+                "how_it_should_be": "Используется `@Controller`, который по умолчанию сериализует ответ в JSON без дополнительных аннотаций."
               },
               "order": 3,
               "label": "D"
@@ -549,6 +549,18 @@
           "question_text": "Что такое declarative HTTP-клиенты в `Micronaut` и как они работают?",
           "options": [
             {
+              "text": "Для reactive-методов `@Client` нужно отдельно подключать `reactor-core` зависимость вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Reactor включён в `micronaut-reactor` из коробки; достаточно вернуть `Flux`/`Mono` для автоматической адаптации.",
+                "source_of_confusion": "Кажется, что reactive-типы всегда требуют явного подключения reactor-core, как в некоторых проектах.",
+                "if_it_were_true": "Тогда любой reactive-метод клиента не компилировался бы без ручной зависимости, но это работает сразу.",
+                "how_it_should_be": "Reactor доступен через стандартный Micronaut-стек; тип возврата `Flux`/`Mono` достаточен."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "Declarative HTTP-клиент в `Micronaut` работает через CGLIB-прокси в runtime, как OpenFeign.",
               "correct": false,
               "sections": {
@@ -557,8 +569,8 @@
                 "if_it_were_true": "Тогда `@Client` требовал бы reflect-config в native image, но Micronaut-клиенты работают в native из коробки.",
                 "how_it_should_be": "Реализация интерфейса генерируется при сборке без рантайм-прокси и рефлексии."
               },
-              "order": 0,
-              "label": "A"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "`@Client(\"url\")` на интерфейсе с методами `@Get`/`@Post` даёт сгенерированную в compile time реализацию: type-safe, без рефлексии и runtime-прокси — это как Feign, но без proxy. Клиент просто инжектится в сервис через конструктор.",
@@ -570,8 +582,8 @@
                 "edge_cases": "Тип возврата задаёт стиль (`User` blocking, `Mono`/`Flux` reactive); забытая зависимость `micronaut-http-client` даёт compile error, а не `UnsatisfiedDependencyException`.",
                 "related": "[[micronaut-interview#Q11]] reactive vs blocking клиенты; [[micronaut-interview#Q8]] REST-эндпойнты; [[micronaut-interview#Q19]] @Client с service discovery."
               },
-              "order": 1,
-              "label": "B"
+              "order": 2,
+              "label": "C"
             },
             {
               "text": "`@Client`-интерфейс без отдельной реализации даёт `UnsatisfiedDependencyException` при старте приложения.",
@@ -581,18 +593,6 @@
                 "source_of_confusion": "В Spring отсутствие бина даёт `UnsatisfiedDependencyException` на старте, и это ждут от Micronaut.",
                 "if_it_were_true": "Тогда нельзя было бы инжектить `@Client`-интерфейс без ручной реализации, но Micronaut генерирует её сам.",
                 "how_it_should_be": "Клиент реализуется кодогенерацией при сборке; проблемы конфигурации проявляются на компиляции."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
-              "text": "Для reactive-методов `@Client` нужно отдельно подключать `reactor-core` зависимость вручную.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Reactor включён в `micronaut-reactor` из коробки; достаточно вернуть `Flux`/`Mono` для автоматической адаптации.",
-                "source_of_confusion": "Кажется, что reactive-типы всегда требуют явного подключения reactor-core, как в некоторых проектах.",
-                "if_it_were_true": "Тогда любой reactive-метод клиента не компилировался бы без ручной зависимости, но это работает сразу.",
-                "how_it_should_be": "Reactor доступен через стандартный Micronaut-стек; тип возврата `Flux`/`Mono` достаточен."
               },
               "order": 3,
               "label": "D"
@@ -609,13 +609,13 @@
           "question_text": "Как `Micronaut` определяет, делать ли HTTP-вызов `@Client` блокирующим или реактивным?",
           "options": [
             {
-              "text": "Стиль вызова задаётся аннотацией `@Async` на методе клиента — без неё вызов всегда блокирующий.",
+              "text": "Все методы `@Client` блокирующие; reactive нужно вручную оборачивать через `Mono.fromCallable(client::call)`.",
               "correct": false,
               "sections": {
-                "what_actually": "В Micronaut нет `@Async` для declarative HTTP-клиентов; стиль определяется исключительно типом возврата метода.",
-                "source_of_confusion": "В Spring Boot `@Async` включает асинхронное выполнение, и эту модель переносят на Micronaut.",
-                "if_it_were_true": "Тогда `Flux<User> list()` без `@Async` был бы блокирующим, но Micronaut вернёт честный non-blocking `Flux`.",
-                "how_it_should_be": "Реактивность определяется типом возврата (`Mono`/`Flux`), а не специальной аннотацией."
+                "what_actually": "Declarative `@Client` поддерживает reactive-типы изначально и не блокирует поток для `Mono`/`Flux`; обёртка `fromCallable` — антипаттерн.",
+                "source_of_confusion": "В Spring с `RestTemplate` так и приходилось делать, и привычка переносится на Micronaut.",
+                "if_it_were_true": "Тогда не было бы выигрыша в throughput на реактивных путях, но Micronaut держит ~100K req/s без обёрток.",
+                "how_it_should_be": "Reactive поддерживается нативно через тип возврата; ручная обёртка не нужна и вредна."
               },
               "order": 0,
               "label": "A"
@@ -633,6 +633,18 @@
               "label": "B"
             },
             {
+              "text": "Стиль вызова задаётся аннотацией `@Async` на методе клиента — без неё вызов всегда блокирующий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Micronaut нет `@Async` для declarative HTTP-клиентов; стиль определяется исключительно типом возврата метода.",
+                "source_of_confusion": "В Spring Boot `@Async` включает асинхронное выполнение, и эту модель переносят на Micronaut.",
+                "if_it_were_true": "Тогда `Flux<User> list()` без `@Async` был бы блокирующим, но Micronaut вернёт честный non-blocking `Flux`.",
+                "how_it_should_be": "Реактивность определяется типом возврата (`Mono`/`Flux`), а не специальной аннотацией."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
               "text": "По возвращаемому типу метода интерфейса: `T`/`List<T>` → blocking, `Mono<T>`/`Flux<T>` → reactive, `Single<T>`/`Observable<T>` → RxJava, `CompletableFuture<T>` → async. Сетевой слой всегда реактивный (Netty), но публичное API подстраивается под объявленный тип.",
               "correct": true,
               "sections": {
@@ -641,18 +653,6 @@
                 "when_to_apply": "Reactive-методы используют в реактивных контроллерах, чтобы не блокировать event loop; blocking-методы допустимы под `@ExecuteOn(TaskExecutors.IO)`.",
                 "edge_cases": "Блокирующий метод на event-loop'е заблокирует Netty worker и обрушит throughput; `Flux` без `JSON_STREAM` соберёт весь список перед эмиссией; `CompletableFuture` пробрасывает ошибки через `CompletionException`.",
                 "related": "[[micronaut-interview#Q10]] declarative @Client и кодогенерация; [[micronaut-interview#Q22]] Reactor/RxJava в Micronaut; [[micronaut-interview#Q8]] типы возврата контроллеров."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
-              "text": "Все методы `@Client` блокирующие; reactive нужно вручную оборачивать через `Mono.fromCallable(client::call)`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Declarative `@Client` поддерживает reactive-типы изначально и не блокирует поток для `Mono`/`Flux`; обёртка `fromCallable` — антипаттерн.",
-                "source_of_confusion": "В Spring с `RestTemplate` так и приходилось делать, и привычка переносится на Micronaut.",
-                "if_it_were_true": "Тогда не было бы выигрыша в throughput на реактивных путях, но Micronaut держит ~100K req/s без обёрток.",
-                "how_it_should_be": "Reactive поддерживается нативно через тип возврата; ручная обёртка не нужна и вредна."
               },
               "order": 3,
               "label": "D"
@@ -669,18 +669,6 @@
           "question_text": "Как организовать конфигурацию в `Micronaut` и какие способы доступа к настройкам поддерживаются?",
           "options": [
             {
-              "text": "Конфигурация задаётся в `application.yml` только литеральными значениями; подстановка переменных окружения через `${...}` не поддерживается, для этого нужен отдельный плагин.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Micronaut из коробки подставляет переменные окружения и system properties прямо в `application.yml` через синтаксис `${DB_USER:admin}` с дефолтом после двоеточия.",
-                "source_of_confusion": "В части фреймворков интерполяция значений требует дополнительных зависимостей, и это ограничение ошибочно переносят на Micronaut.",
-                "if_it_were_true": "Тогда нельзя было бы вынести пароль БД в `${DB_PASSWORD}` без хардкода, но это стандартный приём в любом Micronaut-проекте.",
-                "how_it_should_be": "Подстановка `${ENV:default}` встроена в загрузчик конфигурации и работает без отдельных плагинов."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
               "text": "Типобезопасную конфигурацию в `Micronaut` можно получить только через `@Value` на каждом отдельном поле; группировать связанные настройки в один класс невозможно.",
               "correct": false,
               "sections": {
@@ -688,6 +676,19 @@
                 "source_of_confusion": "`@Value` — самый заметный способ инжекта свойства, поэтому кажется, что других механизмов нет.",
                 "if_it_were_true": "Тогда сервис с десятком связанных параметров пришлось бы засыпать `@Value`-полями вместо одного `@ConfigurationProperties`-бина.",
                 "how_it_should_be": "Группы настроек оформляют через `@ConfigurationProperties`, а `@Value` применяют для единичных свойств."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Настройки описываются в `application.yml` (`micronaut.application.name`, `server.port`, `datasources`) с подстановкой переменных окружения вида `${DB_USER:admin}`; типобезопасный доступ даёт `@ConfigurationProperties(\"prefix\")` на классе-бине, одиночные значения — `@Value(\"${some.value}\")`. Поддерживаются форматы `properties`, `yml`, `groovy`, `toml` и переменные окружения.",
+              "correct": true,
+              "sections": {
+                "explanation": "Конфигурация в Micronaut многоуровневая: файл задаёт значения с интерполяцией env vars, `@ConfigurationProperties` биндит секцию в типизированный бин, а `@Value` инжектит отдельное свойство — всё с дефолтами через `${KEY:default}`.",
+                "example": "В `application.yml` пишут `datasources.default.username: ${DB_USER:admin}`, затем класс `@ConfigurationProperties(\"my.service\")` с полями `greeting`/`timeout` инжектят в сервис, а `@Value(\"${some.value}\")` подставляет одиночное значение.",
+                "when_to_apply": "Применяют для вынесения секретов и эндпоинтов в env vars, группировки связанных настроек сервиса в один бин и предоставления безопасных дефолтов для локального запуска.",
+                "edge_cases": "Без дефолта `${DB_PASSWORD}` отсутствующая переменная даст ошибку резолва на старте; `@ConfigurationProperties` требует геттеров/сеттеров (или `@ConfigurationInject` для immutable-вариантов).",
+                "related": "[[micronaut-interview#Q13]] environment-specific конфиги и переопределение значений; [[micronaut-interview#Q19]] distributed config через Consul и Vault; [[micronaut-interview#Q1]] основы Micronaut."
               },
               "order": 1,
               "label": "B"
@@ -705,14 +706,13 @@
               "label": "C"
             },
             {
-              "text": "Настройки описываются в `application.yml` (`micronaut.application.name`, `server.port`, `datasources`) с подстановкой переменных окружения вида `${DB_USER:admin}`; типобезопасный доступ даёт `@ConfigurationProperties(\"prefix\")` на классе-бине, одиночные значения — `@Value(\"${some.value}\")`. Поддерживаются форматы `properties`, `yml`, `groovy`, `toml` и переменные окружения.",
-              "correct": true,
+              "text": "Конфигурация задаётся в `application.yml` только литеральными значениями; подстановка переменных окружения через `${...}` не поддерживается, для этого нужен отдельный плагин.",
+              "correct": false,
               "sections": {
-                "explanation": "Конфигурация в Micronaut многоуровневая: файл задаёт значения с интерполяцией env vars, `@ConfigurationProperties` биндит секцию в типизированный бин, а `@Value` инжектит отдельное свойство — всё с дефолтами через `${KEY:default}`.",
-                "example": "В `application.yml` пишут `datasources.default.username: ${DB_USER:admin}`, затем класс `@ConfigurationProperties(\"my.service\")` с полями `greeting`/`timeout` инжектят в сервис, а `@Value(\"${some.value}\")` подставляет одиночное значение.",
-                "when_to_apply": "Применяют для вынесения секретов и эндпоинтов в env vars, группировки связанных настроек сервиса в один бин и предоставления безопасных дефолтов для локального запуска.",
-                "edge_cases": "Без дефолта `${DB_PASSWORD}` отсутствующая переменная даст ошибку резолва на старте; `@ConfigurationProperties` требует геттеров/сеттеров (или `@ConfigurationInject` для immutable-вариантов).",
-                "related": "[[micronaut-interview#Q13]] environment-specific конфиги и переопределение значений; [[micronaut-interview#Q19]] distributed config через Consul и Vault; [[micronaut-interview#Q1]] основы Micronaut."
+                "what_actually": "Micronaut из коробки подставляет переменные окружения и system properties прямо в `application.yml` через синтаксис `${DB_USER:admin}` с дефолтом после двоеточия.",
+                "source_of_confusion": "В части фреймворков интерполяция значений требует дополнительных зависимостей, и это ограничение ошибочно переносят на Micronaut.",
+                "if_it_were_true": "Тогда нельзя было бы вынести пароль БД в `${DB_PASSWORD}` без хардкода, но это стандартный приём в любом Micronaut-проекте.",
+                "how_it_should_be": "Подстановка `${ENV:default}` встроена в загрузчик конфигурации и работает без отдельных плагинов."
               },
               "order": 3,
               "label": "D"
@@ -729,6 +729,18 @@
           "question_text": "Как `Micronaut` выбирает environment-specific конфиги и переопределяет общие значения?",
           "options": [
             {
+              "text": "Можно активировать только одно окружение одновременно; список нескольких профилей не поддерживается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Micronaut поддерживает несколько окружений сразу: `-Dmicronaut.environments=prod,k8s,aws`, применяемых по очереди с нарастающим приоритетом.",
+                "source_of_confusion": "В части систем профиль действительно один, и это ограничение приписывают Micronaut.",
+                "if_it_were_true": "Тогда нельзя было бы накладывать slice'ы конфигурации (`prod` + `k8s` + `aws-region-eu`), а это стандартный облачный паттерн.",
+                "how_it_should_be": "Допустимо несколько окружений через запятую; каждое следующее перекрывает предыдущее."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "Базовый `application.yml` грузится всегда, а `application-{env}.yml` подключается по активным `micronaut.environments` (через `-D`, env var или триггеры); значения мёржатся, и env-specific перекрывает общее. Можно перечислить несколько окружений через запятую (`prod,k8s,aws`) — каждый следующий приоритетнее.",
               "correct": true,
               "sections": {
@@ -738,8 +750,8 @@
                 "edge_cases": "Порядок мёрджа: общий файл → env-specific → env vars → system properties → CLI args; для prod окружение надо задавать явно, на auto-detection по hostname полагаться нельзя.",
                 "related": "[[micronaut-interview#Q18]] application-test.yml в @MicronautTest; [[micronaut-interview#Q19]] distributed config; [[micronaut-interview#Q1]] основы Micronaut."
               },
-              "order": 0,
-              "label": "A"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "Имя файла окружения должно совпадать с системным свойством `spring.profiles.active` — Micronaut читает Spring-конвенцию.",
@@ -749,18 +761,6 @@
                 "source_of_confusion": "Механизм идейно похож на Spring profiles, и мигрирующие со Spring по инерции используют старое свойство.",
                 "if_it_were_true": "Тогда `application-prod.yml` активировался бы через `spring.profiles.active=prod`, но Micronaut эту переменную игнорирует.",
                 "how_it_should_be": "Окружения задаются через `micronaut.environments`; Spring-конвенция в Micronaut не работает."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "Можно активировать только одно окружение одновременно; список нескольких профилей не поддерживается.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Micronaut поддерживает несколько окружений сразу: `-Dmicronaut.environments=prod,k8s,aws`, применяемых по очереди с нарастающим приоритетом.",
-                "source_of_confusion": "В части систем профиль действительно один, и это ограничение приписывают Micronaut.",
-                "if_it_were_true": "Тогда нельзя было бы накладывать slice'ы конфигурации (`prod` + `k8s` + `aws-region-eu`), а это стандартный облачный паттерн.",
-                "how_it_should_be": "Допустимо несколько окружений через запятую; каждое следующее перекрывает предыдущее."
               },
               "order": 2,
               "label": "C"
@@ -789,13 +789,13 @@
           "question_text": "Что такое `Micronaut Data` и чем он отличается от `Spring Data JPA` в работе с запросами?",
           "options": [
             {
-              "text": "`Micronaut Data` — тонкая обёртка над Hibernate, использующая тот же runtime-парсер finder-методов, что и Spring Data.",
+              "text": "Под капотом `Micronaut Data` всегда использует R2DBC, поэтому работа с обычным синхронным JDBC невозможна.",
               "correct": false,
               "sections": {
-                "what_actually": "Micronaut Data не парсит имена методов в runtime: их разбирает annotation processor при компиляции и записывает готовую реализацию с SQL/JPQL.",
-                "source_of_confusion": "API внешне идентичен Spring Data (`findByName`, `CrudRepository`), что создаёт иллюзию общего механизма.",
-                "if_it_were_true": "Тогда репозитории не работали бы в native image без reflect-config, но Micronaut Data там работает из коробки.",
-                "how_it_should_be": "Реализация генерируется при сборке; runtime-парсинга имён и рантайм-прокси нет."
+                "what_actually": "Backends независимы: `@JdbcRepository` (sync JDBC), `@JpaRepository` (Hibernate), `@R2dbcRepository` (reactive), `@MongoRepository`; R2DBC — лишь один из вариантов.",
+                "source_of_confusion": "Micronaut продвигается как «реактивный фреймворк», и это распространяют на Data.",
+                "if_it_were_true": "Тогда нельзя было бы использовать обычный JDBC без реактивного драйвера, но большинство приложений на JDBC/JPA.",
+                "how_it_should_be": "R2DBC — опциональный backend; синхронный JDBC и JPA доступны наравне с ним."
               },
               "order": 0,
               "label": "A"
@@ -814,6 +814,18 @@
               "label": "B"
             },
             {
+              "text": "`Micronaut Data` — тонкая обёртка над Hibernate, использующая тот же runtime-парсер finder-методов, что и Spring Data.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Micronaut Data не парсит имена методов в runtime: их разбирает annotation processor при компиляции и записывает готовую реализацию с SQL/JPQL.",
+                "source_of_confusion": "API внешне идентичен Spring Data (`findByName`, `CrudRepository`), что создаёт иллюзию общего механизма.",
+                "if_it_were_true": "Тогда репозитории не работали бы в native image без reflect-config, но Micronaut Data там работает из коробки.",
+                "how_it_should_be": "Реализация генерируется при сборке; runtime-парсинга имён и рантайм-прокси нет."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
               "text": "`Micronaut Data` не поддерживает `@Query` с произвольным JPQL/SQL — доступны только derived queries из имени метода.",
               "correct": false,
               "sections": {
@@ -821,18 +833,6 @@
                 "source_of_confusion": "Derived queries — самая заметная фича, и кажется, что произвольных запросов нет.",
                 "if_it_were_true": "Тогда нельзя было бы делать bulk update/delete и сложные JOIN'ы, и Micronaut Data не заменил бы Spring Data JPA.",
                 "how_it_should_be": "Произвольные JPQL/SQL-запросы поддерживаются через `@Query` так же, как derived queries."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
-              "text": "Под капотом `Micronaut Data` всегда использует R2DBC, поэтому работа с обычным синхронным JDBC невозможна.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Backends независимы: `@JdbcRepository` (sync JDBC), `@JpaRepository` (Hibernate), `@R2dbcRepository` (reactive), `@MongoRepository`; R2DBC — лишь один из вариантов.",
-                "source_of_confusion": "Micronaut продвигается как «реактивный фреймворк», и это распространяют на Data.",
-                "if_it_were_true": "Тогда нельзя было бы использовать обычный JDBC без реактивного драйвера, но большинство приложений на JDBC/JPA.",
-                "how_it_should_be": "R2DBC — опциональный backend; синхронный JDBC и JPA доступны наравне с ним."
               },
               "order": 3,
               "label": "D"
@@ -849,30 +849,6 @@
           "question_text": "Чем `@JdbcRepository` в `Micronaut Data` отличается от `@JpaRepository` и `@R2dbcRepository` и когда какой выбирать?",
           "options": [
             {
-              "text": "`@JdbcRepository` — это просто JPA без `@Entity`-аннотации, под капотом всё равно работает Hibernate.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@JdbcRepository` не использует Hibernate: он генерирует SQL напрямую, выполняет через обычный JDBC и мапит результат на POJO через compile-time introspection.",
-                "source_of_confusion": "Одинаковый API `CrudRepository` создаёт впечатление общего runtime для всех backends.",
-                "if_it_were_true": "Тогда за `@JdbcRepository` стоял бы `EntityManager` и persistence context, но их там нет — это «чистый» SQL-слой.",
-                "how_it_should_be": "JDBC-backend работает без Hibernate, без EntityManager и lazy loading."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "Реактивный доступ к БД обеспечивает `@JpaRepository` через корутинный wrapper над Hibernate.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Реактивный backend — отдельная аннотация `@R2dbcRepository` на R2DBC-драйверах; JPA фундаментально блокирующая.",
-                "source_of_confusion": "Кажется, что Hibernate можно обернуть в reactive API без потери смысла.",
-                "if_it_were_true": "Тогда Hibernate-вызовы в reactive pipeline блокировали бы event loop, и смысл реактивности терялся бы.",
-                "how_it_should_be": "Реактивность даёт `@R2dbcRepository` поверх R2DBC, а не обёртка над Hibernate."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
               "text": "`@JdbcRepository` — синхронный SQL без Hibernate (лёгкий, быстрый старт, native-friendly), `@JpaRepository` — через Hibernate с lazy loading и dirty checking, `@R2dbcRepository` — non-blocking через R2DBC; три независимых backends с одним API, выбор зависит от модели данных и стиля приложения.",
               "correct": true,
               "sections": {
@@ -882,8 +858,8 @@
                 "edge_cases": "В одном приложении можно смешивать backends (часть репозиториев JDBC, часть JPA) — они изолированы через разные `@Repository`-стереотипы.",
                 "related": "[[micronaut-interview#Q14]] что такое Micronaut Data; [[micronaut-interview#Q22]] reactive поддержка; [[micronaut-interview#Q16]] native image."
               },
-              "order": 2,
-              "label": "C"
+              "order": 0,
+              "label": "A"
             },
             {
               "text": "Все три типа репозиториев взаимозаменяемы: можно объявить `@JdbcRepository`, а в runtime переключить его на R2DBC через property.",
@@ -893,6 +869,30 @@
                 "source_of_confusion": "Хочется иметь единый репозиторий с динамическим выбором backend через конфиг.",
                 "if_it_were_true": "Тогда хватило бы одной `@DataRepository`, но переход с blocking JDBC на R2DBC требует смены сигнатур (`List<T>` → `Flux<T>`).",
                 "how_it_should_be": "Backend задаётся аннотацией на этапе сборки; рантайм-переключение типов несовместимо."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`@JdbcRepository` — это просто JPA без `@Entity`-аннотации, под капотом всё равно работает Hibernate.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@JdbcRepository` не использует Hibernate: он генерирует SQL напрямую, выполняет через обычный JDBC и мапит результат на POJO через compile-time introspection.",
+                "source_of_confusion": "Одинаковый API `CrudRepository` создаёт впечатление общего runtime для всех backends.",
+                "if_it_were_true": "Тогда за `@JdbcRepository` стоял бы `EntityManager` и persistence context, но их там нет — это «чистый» SQL-слой.",
+                "how_it_should_be": "JDBC-backend работает без Hibernate, без EntityManager и lazy loading."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Реактивный доступ к БД обеспечивает `@JpaRepository` через корутинный wrapper над Hibernate.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реактивный backend — отдельная аннотация `@R2dbcRepository` на R2DBC-драйверах; JPA фундаментально блокирующая.",
+                "source_of_confusion": "Кажется, что Hibernate можно обернуть в reactive API без потери смысла.",
+                "if_it_were_true": "Тогда Hibernate-вызовы в reactive pipeline блокировали бы event loop, и смысл реактивности терялся бы.",
+                "how_it_should_be": "Реактивность даёт `@R2dbcRepository` поверх R2DBC, а не обёртка над Hibernate."
               },
               "order": 3,
               "label": "D"
@@ -909,18 +909,6 @@
           "question_text": "Почему `Micronaut` исторически считается «более native-friendly», чем `Spring Boot` до Spring Native/AOT?",
           "options": [
             {
-              "text": "`Micronaut` запускает JIT-компилятор GraalVM на старте и поэтому стартует быстрее, чем Spring Boot.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В native image JIT отсутствует вообще — весь код AOT-скомпилирован; именно отсутствие прогрева JIT даёт мгновенный старт.",
-                "source_of_confusion": "GraalVM известен как JIT (Graal Compiler), и его путают с `native-image` — отдельным AOT-продуктом.",
-                "if_it_were_true": "Тогда у native-бинаря был бы warmup-период, но он стартует на пике сразу, без JIT.",
-                "how_it_should_be": "Micronaut использует AOT-сборку `native-image`; JIT в native не участвует."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
               "text": "`Micronaut` требует меньше памяти, потому что не использует Java вообще — кодогенерация выдаёт чистый C.",
               "correct": false,
               "sections": {
@@ -929,8 +917,8 @@
                 "if_it_were_true": "Тогда Micronaut нельзя было бы запускать на обычной JVM, но это штатный режим работы.",
                 "how_it_should_be": "Генерируется Java-байткод; меньшее потребление памяти — следствие архитектуры, а не другого языка."
               },
-              "order": 1,
-              "label": "B"
+              "order": 0,
+              "label": "A"
             },
             {
               "text": "`Spring Boot` никогда не поддерживал native image; единственный способ собрать Spring-приложение в бинарь — переписать его на Micronaut.",
@@ -940,6 +928,18 @@
                 "source_of_confusion": "В 2018-2021 Spring действительно не имел production-ready native, и это обобщают на сегодня.",
                 "if_it_were_true": "Тогда не существовало бы `spring-aot` и native-приложений на Spring Boot 3, но они есть.",
                 "how_it_should_be": "Оба фреймворка поддерживают native, но с разной зрелостью и историей."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`Micronaut` запускает JIT-компилятор GraalVM на старте и поэтому стартует быстрее, чем Spring Boot.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В native image JIT отсутствует вообще — весь код AOT-скомпилирован; именно отсутствие прогрева JIT даёт мгновенный старт.",
+                "source_of_confusion": "GraalVM известен как JIT (Graal Compiler), и его путают с `native-image` — отдельным AOT-продуктом.",
+                "if_it_were_true": "Тогда у native-бинаря был бы warmup-период, но он стартует на пике сразу, без JIT.",
+                "how_it_should_be": "Micronaut использует AOT-сборку `native-image`; JIT в native не участвует."
               },
               "order": 2,
               "label": "C"
@@ -969,6 +969,18 @@
           "question_text": "При сборке `Micronaut`-приложения в GraalVM native image падает JSON-сериализация DTO («No serializer found»). Что нужно сделать в первую очередь?",
           "options": [
             {
+              "text": "Добавить `-H:+ReportExceptionStackTraces` в опции `native-image` — это автоматически решит проблему с сериализацией.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Этот флаг лишь печатает стек-трейсы внутренних исключений сборки и не влияет на reflection-метаданные; сериализация продолжит падать.",
+                "source_of_confusion": "Флаг полезен при отладке native build, поэтому его принимают за фикс.",
+                "if_it_were_true": "Тогда любая ошибка сериализации лечилась бы одним флагом диагностики, но нужен `@Introspected` или reflect-config.",
+                "how_it_should_be": "Решение — `@Introspected`/`@Serdeable`; флаг диагностики метаданные не добавляет."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "Пометить DTO аннотацией `@Introspected` (или для Jackson-классов `@SerdeImport`/`@Serdeable`) — annotation processor сгенерирует compile-time `BeanIntrospection`, и Jackson/Serde смогут читать поля без рантайм-рефлексии.",
               "correct": true,
               "sections": {
@@ -977,18 +989,6 @@
                 "when_to_apply": "Применяют на все DTO, проходящие через HTTP (request/response body, query binding), и на сущности, которым нужна compile-time интроспекция (валидация, `@Value`).",
                 "edge_cases": "Для DTO в сторонних библиотеках, которые нельзя пометить, используют `@Introspected(classes = ExternalClass.class)`; флаг `-H:+ReportExceptionStackTraces` лишь улучшает диагностику и проблему не решает.",
                 "related": "[[micronaut-interview#Q7]] BeanIntrospection; [[micronaut-interview#Q16]] почему native требует метаданных; [[micronaut-interview#Q24]] этот же минус Micronaut."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "Добавить `-H:+ReportExceptionStackTraces` в опции `native-image` — это автоматически решит проблему с сериализацией.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Этот флаг лишь печатает стек-трейсы внутренних исключений сборки и не влияет на reflection-метаданные; сериализация продолжит падать.",
-                "source_of_confusion": "Флаг полезен при отладке native build, поэтому его принимают за фикс.",
-                "if_it_were_true": "Тогда любая ошибка сериализации лечилась бы одним флагом диагностики, но нужен `@Introspected` или reflect-config.",
-                "how_it_should_be": "Решение — `@Introspected`/`@Serdeable`; флаг диагностики метаданные не добавляет."
               },
               "order": 1,
               "label": "B"
@@ -1029,29 +1029,16 @@
           "question_text": "Что делает аннотация `@MicronautTest` и какие у неё возможности?",
           "options": [
             {
-              "text": "`@MicronautTest` — это аналог `@WebMvcTest` из Spring: поднимает только web-слой без service/repository бинов.",
+              "text": "`@MicronautTest` требует обязательного запуска embedded server на случайном порту для каждого теста, даже если тестируется только service-слой.",
               "correct": false,
               "sections": {
-                "what_actually": "`@MicronautTest` по умолчанию поднимает полный application context; срезы делаются через параметры (`environments`, `@Property`), а не отдельной аннотацией.",
-                "source_of_confusion": "В Spring есть slice-тесты (`@WebMvcTest`), и эту модель ждут от Micronaut.",
-                "if_it_were_true": "Тогда service/repository бины не инжектились бы, но тест ходил бы в реальную БД и был бы flaky.",
-                "how_it_should_be": "Аннотация поднимает полный контекст; web-only тест делается через `EmbeddedServer` + `@Client`."
+                "what_actually": "Embedded server поднимается только при наличии `micronaut-http-server-netty` и инжекте `@Client`/`EmbeddedServer`; для `@Inject UserService` сервер не стартует.",
+                "source_of_confusion": "Раз `@Client`-тесты поднимают сервер, кажется, что он нужен всегда.",
+                "if_it_were_true": "Тогда чистые service-тесты были бы медленными из-за лишнего сервера, но Micronaut оптимизирует загрузку.",
+                "how_it_should_be": "Сервер стартует по необходимости; service-тесты обходятся без него."
               },
               "order": 0,
               "label": "A"
-            },
-            {
-              "text": "`@MicronautTest` поднимает полноценный application context, поддерживает `@Inject`, `@Client`, `@MockBean` и по умолчанию оборачивает каждый тест в транзакцию с откатом; с Micronaut 4 интегрируется с Test Resources, автоматически поднимая Postgres/Kafka/Redis в контейнерах (аналог Quarkus Dev Services).",
-              "correct": true,
-              "sections": {
-                "explanation": "Это полный аналог `@SpringBootTest`, но с DI-инъекциями прямо в тестовый класс, подменой бинов через `@MockBean` и transactional rollback по умолчанию через `MicronautJunit5Extension`.",
-                "example": "`@MicronautTest class UserControllerTest { @Inject @Client(\"/\") HttpClient client; @MockBean(UserRepository.class) UserRepository mockRepo() {...} }` тестирует контроллер end-to-end.",
-                "when_to_apply": "Применяют для интеграционных тестов controller→service→repository с реальной БД из Testcontainers, без ручного управления жизненным циклом контекста.",
-                "edge_cases": "Embedded server стартует только при наличии `micronaut-http-server-netty` и инжекте `@Client`/`EmbeddedServer`; для чистого service-теста сервер не поднимается.",
-                "related": "[[micronaut-interview#Q13]] application-test.yml; [[micronaut-interview#Q8]] REST-эндпойнты под тест; [[micronaut-interview#Q10]] @Client в тестах."
-              },
-              "order": 1,
-              "label": "B"
             },
             {
               "text": "`@MicronautTest` работает только с unit-тестами без application context — для каждого теста нужно вручную создавать `ApplicationContext.run()`.",
@@ -1062,17 +1049,30 @@
                 "if_it_were_true": "Тогда `MicronautJunit5Extension` был бы не нужен, но именно он управляет жизненным циклом контекста.",
                 "how_it_should_be": "Контекст создаётся и шарится автоматически; ручной `run()` в каждом тесте — антипаттерн."
               },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`@MicronautTest` — это аналог `@WebMvcTest` из Spring: поднимает только web-слой без service/repository бинов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@MicronautTest` по умолчанию поднимает полный application context; срезы делаются через параметры (`environments`, `@Property`), а не отдельной аннотацией.",
+                "source_of_confusion": "В Spring есть slice-тесты (`@WebMvcTest`), и эту модель ждут от Micronaut.",
+                "if_it_were_true": "Тогда service/repository бины не инжектились бы, но тест ходил бы в реальную БД и был бы flaky.",
+                "how_it_should_be": "Аннотация поднимает полный контекст; web-only тест делается через `EmbeddedServer` + `@Client`."
+              },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "`@MicronautTest` требует обязательного запуска embedded server на случайном порту для каждого теста, даже если тестируется только service-слой.",
-              "correct": false,
+              "text": "`@MicronautTest` поднимает полноценный application context, поддерживает `@Inject`, `@Client`, `@MockBean` и по умолчанию оборачивает каждый тест в транзакцию с откатом; с Micronaut 4 интегрируется с Test Resources, автоматически поднимая Postgres/Kafka/Redis в контейнерах (аналог Quarkus Dev Services).",
+              "correct": true,
               "sections": {
-                "what_actually": "Embedded server поднимается только при наличии `micronaut-http-server-netty` и инжекте `@Client`/`EmbeddedServer`; для `@Inject UserService` сервер не стартует.",
-                "source_of_confusion": "Раз `@Client`-тесты поднимают сервер, кажется, что он нужен всегда.",
-                "if_it_were_true": "Тогда чистые service-тесты были бы медленными из-за лишнего сервера, но Micronaut оптимизирует загрузку.",
-                "how_it_should_be": "Сервер стартует по необходимости; service-тесты обходятся без него."
+                "explanation": "Это полный аналог `@SpringBootTest`, но с DI-инъекциями прямо в тестовый класс, подменой бинов через `@MockBean` и transactional rollback по умолчанию через `MicronautJunit5Extension`.",
+                "example": "`@MicronautTest class UserControllerTest { @Inject @Client(\"/\") HttpClient client; @MockBean(UserRepository.class) UserRepository mockRepo() {...} }` тестирует контроллер end-to-end.",
+                "when_to_apply": "Применяют для интеграционных тестов controller→service→repository с реальной БД из Testcontainers, без ручного управления жизненным циклом контекста.",
+                "edge_cases": "Embedded server стартует только при наличии `micronaut-http-server-netty` и инжекте `@Client`/`EmbeddedServer`; для чистого service-теста сервер не поднимается.",
+                "related": "[[micronaut-interview#Q13]] application-test.yml; [[micronaut-interview#Q8]] REST-эндпойнты под тест; [[micronaut-interview#Q10]] @Client в тестах."
               },
               "order": 3,
               "label": "D"
@@ -1089,18 +1089,6 @@
           "question_text": "Как `Micronaut` поддерживает service discovery и distributed configuration?",
           "options": [
             {
-              "text": "Только через подключение `spring-cloud-starter-consul-discovery` — `Micronaut` использует те же стартеры, что и Spring Cloud.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Micronaut не использует Spring Cloud стартеры: у него собственный `micronaut-discovery-client` с native-friendly реализацией без reflection-heavy auto-configuration.",
-                "source_of_confusion": "Consul-интеграция в Java-мире ассоциируется со Spring Cloud, отсюда мысль про общие стартеры.",
-                "if_it_were_true": "Тогда native image падал бы на reflection-классах Spring Cloud, или JVM-старт занимал бы 5+ секунд вместо 200мс.",
-                "how_it_should_be": "Discovery реализован через собственный модуль Micronaut, а не через Spring Cloud стартеры."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
               "text": "Service discovery поддерживается только для Kubernetes через DNS; Consul и Eureka требуют сторонних плагинов.",
               "correct": false,
               "sections": {
@@ -1109,8 +1097,8 @@
                 "if_it_were_true": "Тогда команда писала бы самописный `RestTemplate`-discovery вместо `micronaut-discovery-client`, теряя health checks и re-fetch.",
                 "how_it_should_be": "Consul/Eureka/K8s/AWS Cloud Map — часть платформы, а не сторонние плагины."
               },
-              "order": 1,
-              "label": "B"
+              "order": 0,
+              "label": "A"
             },
             {
               "text": "Встроенные модули `micronaut-discovery-client` и `micronaut-config-client` дают native-поддержку Consul/Eureka/K8s/AWS Cloud Map для discovery и Consul/Vault/Parameter Store/etcd для конфигурации; `@Client(id = \"user-service\")` резолвит сервис через настроенный registry, а distributed config читается из `bootstrap.yml` до `application.yml`.",
@@ -1121,6 +1109,18 @@
                 "when_to_apply": "Применяют в микросервисной архитектуре с Consul/Vault, K8s-нативных приложениях с автодискавери и AWS-деплоях с Parameter Store.",
                 "edge_cases": "Distributed config читается из Consul KV, Spring Cloud Config Server, AWS Secrets Manager, Vault, etcd, K8s ConfigMap/Secret через `bootstrap.yml`, а не из git-хранимого `application.yml`.",
                 "related": "[[micronaut-interview#Q10]] declarative @Client; [[micronaut-interview#Q13]] environment-конфиги; [[micronaut-interview#Q20]] serverless-деплои."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Только через подключение `spring-cloud-starter-consul-discovery` — `Micronaut` использует те же стартеры, что и Spring Cloud.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Micronaut не использует Spring Cloud стартеры: у него собственный `micronaut-discovery-client` с native-friendly реализацией без reflection-heavy auto-configuration.",
+                "source_of_confusion": "Consul-интеграция в Java-мире ассоциируется со Spring Cloud, отсюда мысль про общие стартеры.",
+                "if_it_were_true": "Тогда native image падал бы на reflection-классах Spring Cloud, или JVM-старт занимал бы 5+ секунд вместо 200мс.",
+                "how_it_should_be": "Discovery реализован через собственный модуль Micronaut, а не через Spring Cloud стартеры."
               },
               "order": 2,
               "label": "C"
@@ -1149,6 +1149,19 @@
           "question_text": "Почему `Micronaut` особенно подходит для AWS Lambda и других serverless-платформ?",
           "options": [
             {
+              "text": "Compile-time DI без рефлексии даёт холодный старт ~30 ms в native image (vs ~5-10 с у Spring Boot на JVM), что критично для pay-per-invocation модели; `MicronautRequestHandler` интегрирует DI прямо в Lambda handler, создавая контекст один раз при init вне billed time.",
+              "correct": true,
+              "sections": {
+                "explanation": "В serverless каждый cold start оплачивается (latency + billed duration); Spring Boot на JVM — 5-10с init, Micronaut native — ~30мс, JVM-режим — ~500мс, что напрямую влияет на p99 и счёт.",
+                "example": "`class OrderHandler extends MicronautRequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> { @Inject OrderService service; ... }` — DI работает, а `mn create-function-app --features=aws-lambda,graalvm` готовит native-бинарь.",
+                "when_to_apply": "Применяют для event-driven API (API Gateway → Lambda), потоковой обработки (SQS/Kinesis triggers) и scheduled jobs (EventBridge → Lambda).",
+                "edge_cases": "Аналогично работают GCP Functions, Azure Functions, OCI Functions через свои handler'ы; ручной `ApplicationContext.run()` в `execute()` превращает cold start в постоянный 500мс на каждый invoke.",
+                "related": "[[micronaut-interview#Q1]] compile-time DI как основа; [[micronaut-interview#Q16]] native image; [[micronaut-interview#Q23]] когда выбирать Micronaut."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "`Micronaut` — единственный фреймворк, умеющий запускаться внутри Lambda; Spring Boot и Quarkus такой поддержки не имеют.",
               "correct": false,
               "sections": {
@@ -1156,18 +1169,6 @@
                 "source_of_confusion": "Micronaut активно продвигают для serverless, отсюда ложная эксклюзивность.",
                 "if_it_were_true": "Тогда выбор Micronaut обосновывался бы уникальностью, но на ревью этот аргумент разбивается фактами про Spring/Quarkus.",
                 "how_it_should_be": "Все три фреймворка работают в Lambda; Micronaut выигрывает по cold start и памяти, а не монопольно."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "`Micronaut` требует обязательного использования GraalVM native — на стандартной JVM-runtime в Lambda он не работает.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Micronaut отлично работает на стандартной Lambda Java 17/21 runtime со стартом ~500мс (vs 5-10с у Spring Boot); native — опциональная оптимизация.",
-                "source_of_confusion": "Native позиционируется как USP Micronaut, отсюда вывод о его обязательности.",
-                "if_it_were_true": "Тогда команда без GraalVM-тулчейна не получила бы выигрыша, но он есть и в JVM-режиме (10× быстрее старт).",
-                "how_it_should_be": "Native — опция; на обычной JVM-runtime Micronaut уже даёт приемлемый cold start."
               },
               "order": 1,
               "label": "B"
@@ -1185,14 +1186,13 @@
               "label": "C"
             },
             {
-              "text": "Compile-time DI без рефлексии даёт холодный старт ~30 ms в native image (vs ~5-10 с у Spring Boot на JVM), что критично для pay-per-invocation модели; `MicronautRequestHandler` интегрирует DI прямо в Lambda handler, создавая контекст один раз при init вне billed time.",
-              "correct": true,
+              "text": "`Micronaut` требует обязательного использования GraalVM native — на стандартной JVM-runtime в Lambda он не работает.",
+              "correct": false,
               "sections": {
-                "explanation": "В serverless каждый cold start оплачивается (latency + billed duration); Spring Boot на JVM — 5-10с init, Micronaut native — ~30мс, JVM-режим — ~500мс, что напрямую влияет на p99 и счёт.",
-                "example": "`class OrderHandler extends MicronautRequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> { @Inject OrderService service; ... }` — DI работает, а `mn create-function-app --features=aws-lambda,graalvm` готовит native-бинарь.",
-                "when_to_apply": "Применяют для event-driven API (API Gateway → Lambda), потоковой обработки (SQS/Kinesis triggers) и scheduled jobs (EventBridge → Lambda).",
-                "edge_cases": "Аналогично работают GCP Functions, Azure Functions, OCI Functions через свои handler'ы; ручной `ApplicationContext.run()` в `execute()` превращает cold start в постоянный 500мс на каждый invoke.",
-                "related": "[[micronaut-interview#Q1]] compile-time DI как основа; [[micronaut-interview#Q16]] native image; [[micronaut-interview#Q23]] когда выбирать Micronaut."
+                "what_actually": "Micronaut отлично работает на стандартной Lambda Java 17/21 runtime со стартом ~500мс (vs 5-10с у Spring Boot); native — опциональная оптимизация.",
+                "source_of_confusion": "Native позиционируется как USP Micronaut, отсюда вывод о его обязательности.",
+                "if_it_were_true": "Тогда команда без GraalVM-тулчейна не получила бы выигрыша, но он есть и в JVM-режиме (10× быстрее старт).",
+                "how_it_should_be": "Native — опция; на обычной JVM-runtime Micronaut уже даёт приемлемый cold start."
               },
               "order": 3,
               "label": "D"
@@ -1209,29 +1209,16 @@
           "question_text": "Что нужно сделать в `Micronaut`, чтобы получить distributed tracing запросов между микросервисами?",
           "options": [
             {
-              "text": "Подключить `micronaut-tracing-zipkin` (или `jaeger`/`opentelemetry`), включить `tracing.zipkin.enabled=true` с URL коллектора — и Micronaut автоматически проинструментирует HTTP-сервер и клиент; для кастомных spans использовать `@NewSpan`/`@ContinueSpan`/`@SpanTag`.",
-              "correct": true,
+              "text": "Установить `@Traced` на main-класс приложения — это включит автоматический tracing всех методов всех бинов.",
+              "correct": false,
               "sections": {
-                "explanation": "Micronaut Tracing построен поверх OpenTracing/OpenTelemetry: дефолтный фильтр оборачивает каждый HTTP-запрос в span, а declarative-клиенты пробрасывают B3-заголовки автоматически — получается end-to-end trace из коробки.",
-                "example": "`HttpServerFilter` создаёт root span на входе, `HttpClientFilter` инжектит trace context в исходящие вызовы; `@NewSpan` на методе репозитория добавляет span вокруг DB-вызова.",
-                "when_to_apply": "Применяют в микросервисной цепочке `service-A → service-B → DB`, чтобы видеть span-tree и latency по узлам, а не только агрегированные метрики.",
-                "edge_cases": "Метрики (Micrometer/Prometheus) — ортогональная подсистема, обе нужны; в high-RPS ставят `tracing.zipkin.sampler.probability=0.1`, чтобы не раздувать storage.",
-                "related": "[[micronaut-interview#Q19]] discovery и config; [[micronaut-interview#Q10]] declarative @Client с B3-проброса; [[micronaut-interview#Q22]] reactive-стек."
+                "what_actually": "Аннотации `@Traced` в Micronaut нет, а трассировка всех методов всех бинов фатальна для performance (span на каждый getter).",
+                "source_of_confusion": "Хочется одного «глобального переключателя» tracing для всего приложения.",
+                "if_it_were_true": "Тогда в Zipkin был бы шум из span'ов на каждый utility-вызов, и latency деградировала бы.",
+                "how_it_should_be": "Tracing selective: HTTP-границы автоматически, бизнес-методы — точечно через `@NewSpan`."
               },
               "order": 0,
               "label": "A"
-            },
-            {
-              "text": "Достаточно подключить `micronaut-tracing-zipkin`, и Micronaut сам обернёт все контроллеры в spans — никакая конфигурация и аннотации не нужны.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Dependency лишь подключает классы; без `tracing.zipkin.enabled=true` и URL коллектора tracer не активируется и spans никуда не уходят.",
-                "source_of_confusion": "Auto-instrumentation создаёт впечатление, что одной зависимости достаточно.",
-                "if_it_were_true": "Тогда в Zipkin сразу были бы трейсы, но без конфигурации там пусто, и интеграцию ошибочно сочтут нерабочей.",
-                "how_it_should_be": "Нужна и зависимость, и `enabled=true` с URL коллектора; аннотации — для кастомных spans."
-              },
-              "order": 1,
-              "label": "B"
             },
             {
               "text": "Включить `micrometer.metrics.export.prometheus.enabled=true` — Prometheus-метрики автоматически содержат distributed traces по HTTP-запросам.",
@@ -1242,17 +1229,30 @@
                 "if_it_were_true": "Тогда по `http_server_requests_seconds` можно было бы найти, где тормозит цепочка, но span-tree там нет.",
                 "how_it_should_be": "Для tracing нужен отдельный backend (Zipkin/Jaeger/Tempo) и propagation заголовков, а не метрики."
               },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Подключить `micronaut-tracing-zipkin` (или `jaeger`/`opentelemetry`), включить `tracing.zipkin.enabled=true` с URL коллектора — и Micronaut автоматически проинструментирует HTTP-сервер и клиент; для кастомных spans использовать `@NewSpan`/`@ContinueSpan`/`@SpanTag`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Micronaut Tracing построен поверх OpenTracing/OpenTelemetry: дефолтный фильтр оборачивает каждый HTTP-запрос в span, а declarative-клиенты пробрасывают B3-заголовки автоматически — получается end-to-end trace из коробки.",
+                "example": "`HttpServerFilter` создаёт root span на входе, `HttpClientFilter` инжектит trace context в исходящие вызовы; `@NewSpan` на методе репозитория добавляет span вокруг DB-вызова.",
+                "when_to_apply": "Применяют в микросервисной цепочке `service-A → service-B → DB`, чтобы видеть span-tree и latency по узлам, а не только агрегированные метрики.",
+                "edge_cases": "Метрики (Micrometer/Prometheus) — ортогональная подсистема, обе нужны; в high-RPS ставят `tracing.zipkin.sampler.probability=0.1`, чтобы не раздувать storage.",
+                "related": "[[micronaut-interview#Q19]] discovery и config; [[micronaut-interview#Q10]] declarative @Client с B3-проброса; [[micronaut-interview#Q22]] reactive-стек."
+              },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "Установить `@Traced` на main-класс приложения — это включит автоматический tracing всех методов всех бинов.",
+              "text": "Достаточно подключить `micronaut-tracing-zipkin`, и Micronaut сам обернёт все контроллеры в spans — никакая конфигурация и аннотации не нужны.",
               "correct": false,
               "sections": {
-                "what_actually": "Аннотации `@Traced` в Micronaut нет, а трассировка всех методов всех бинов фатальна для performance (span на каждый getter).",
-                "source_of_confusion": "Хочется одного «глобального переключателя» tracing для всего приложения.",
-                "if_it_were_true": "Тогда в Zipkin был бы шум из span'ов на каждый utility-вызов, и latency деградировала бы.",
-                "how_it_should_be": "Tracing selective: HTTP-границы автоматически, бизнес-методы — точечно через `@NewSpan`."
+                "what_actually": "Dependency лишь подключает классы; без `tracing.zipkin.enabled=true` и URL коллектора tracer не активируется и spans никуда не уходят.",
+                "source_of_confusion": "Auto-instrumentation создаёт впечатление, что одной зависимости достаточно.",
+                "if_it_were_true": "Тогда в Zipkin сразу были бы трейсы, но без конфигурации там пусто, и интеграцию ошибочно сочтут нерабочей.",
+                "how_it_should_be": "Нужна и зависимость, и `enabled=true` с URL коллектора; аннотации — для кастомных spans."
               },
               "order": 3,
               "label": "D"
@@ -1281,14 +1281,13 @@
               "label": "A"
             },
             {
-              "text": "`Micronaut` поддерживает и Reactor (по умолчанию), и RxJava (через отдельный модуль); HTTP-стек на Netty+Reactor, и в одном контроллере можно микшировать blocking endpoints с `Mono`/`Flux`-эндпоинтами — фреймворк сам выбирает thread pool по типу возврата.",
-              "correct": true,
+              "text": "В `Micronaut`, как и в Spring WebFlux, нельзя смешивать blocking и reactive endpoints — выбор делается на уровне приложения.",
+              "correct": false,
               "sections": {
-                "explanation": "`RouteExecutor` смотрит на возвращаемый тип через `ConversionService`/`ReactiveTypeConverter`: reactive publisher подписывается на event loop, обычный объект уходит в IO pool, а `@ExecuteOn(IO)` переопределяет это явно.",
-                "example": "На одном контроллере уживаются `@Get public User get()` (blocking, IO pool) и `@Get public Mono<User> getReactive()` (event loop) — выбор по типу возврата, без настройки на уровне приложения.",
-                "when_to_apply": "Применяют при постепенной миграции blocking → reactive endpoint by endpoint, без переписывания всей инфраструктуры, как пришлось бы при разделении MVC/WebFlux в Spring.",
-                "edge_cases": "Даже в Micronaut нельзя блокировать event loop (`Thread.sleep`, JDBC без R2DBC) — для blocking-операций используют `Schedulers.boundedElastic()` или `@ExecuteOn(IO)`.",
-                "related": "[[micronaut-interview#Q11]] reactive vs blocking @Client; [[micronaut-interview#Q15]] R2DBC-репозитории; [[micronaut-interview#Q21]] tracing в reactive."
+                "what_actually": "В Micronaut каждый endpoint независим: рядом могут быть blocking `User get()` и reactive `Mono<User> getReactive()`; фреймворк выбирает executor по типу возврата.",
+                "source_of_confusion": "Spring разделяет MVC и WebFlux на уровне приложения, и это ожидание переносят на Micronaut.",
+                "if_it_were_true": "Тогда пришлось бы заводить два отдельных микросервиса (reactive и blocking) вместо одного, дублируя инфраструктуру.",
+                "how_it_should_be": "Endpoints микшируются в одном приложении; стиль определяется per-method типом возврата."
               },
               "order": 1,
               "label": "B"
@@ -1306,13 +1305,14 @@
               "label": "C"
             },
             {
-              "text": "В `Micronaut`, как и в Spring WebFlux, нельзя смешивать blocking и reactive endpoints — выбор делается на уровне приложения.",
-              "correct": false,
+              "text": "`Micronaut` поддерживает и Reactor (по умолчанию), и RxJava (через отдельный модуль); HTTP-стек на Netty+Reactor, и в одном контроллере можно микшировать blocking endpoints с `Mono`/`Flux`-эндпоинтами — фреймворк сам выбирает thread pool по типу возврата.",
+              "correct": true,
               "sections": {
-                "what_actually": "В Micronaut каждый endpoint независим: рядом могут быть blocking `User get()` и reactive `Mono<User> getReactive()`; фреймворк выбирает executor по типу возврата.",
-                "source_of_confusion": "Spring разделяет MVC и WebFlux на уровне приложения, и это ожидание переносят на Micronaut.",
-                "if_it_were_true": "Тогда пришлось бы заводить два отдельных микросервиса (reactive и blocking) вместо одного, дублируя инфраструктуру.",
-                "how_it_should_be": "Endpoints микшируются в одном приложении; стиль определяется per-method типом возврата."
+                "explanation": "`RouteExecutor` смотрит на возвращаемый тип через `ConversionService`/`ReactiveTypeConverter`: reactive publisher подписывается на event loop, обычный объект уходит в IO pool, а `@ExecuteOn(IO)` переопределяет это явно.",
+                "example": "На одном контроллере уживаются `@Get public User get()` (blocking, IO pool) и `@Get public Mono<User> getReactive()` (event loop) — выбор по типу возврата, без настройки на уровне приложения.",
+                "when_to_apply": "Применяют при постепенной миграции blocking → reactive endpoint by endpoint, без переписывания всей инфраструктуры, как пришлось бы при разделении MVC/WebFlux в Spring.",
+                "edge_cases": "Даже в Micronaut нельзя блокировать event loop (`Thread.sleep`, JDBC без R2DBC) — для blocking-операций используют `Schedulers.boundedElastic()` или `@ExecuteOn(IO)`.",
+                "related": "[[micronaut-interview#Q11]] reactive vs blocking @Client; [[micronaut-interview#Q15]] R2DBC-репозитории; [[micronaut-interview#Q21]] tracing в reactive."
               },
               "order": 3,
               "label": "D"
@@ -1329,6 +1329,19 @@
           "question_text": "Какой сценарий лучше всего подходит для выбора `Micronaut` вместо `Spring Boot` для нового сервиса?",
           "options": [
             {
+              "text": "Микросервис под AWS Lambda (или autoscaling Kubernetes с частыми ребалансами), активно использующий declarative HTTP-клиенты и готовый к GraalVM native image в перспективе — здесь сильные стороны Micronaut напрямую решают боль.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сценарий складывается из четырёх факторов: cold start (~80мс JVM / ~30мс native vs 2-4с Spring), быстрый readiness в autoscaling, compile-time `@Client` без runtime-прокси и дешёвая миграция на native благодаря отсутствию рантайм-рефлексии в DI.",
+                "example": "Для serverless-API `@Client(\"user-service\") interface UserClient` даёт типобезопасные вызовы «бесплатно», а на Lambda каждая секунда старта — это деньги и SLA.",
+                "when_to_apply": "Решающим это становится в serverless-нативных системах (Lambda/Cloud Functions), event-driven с горизонтальным масштабированием и k8s с агрессивным autoscaling.",
+                "edge_cases": "Spring Boot 3 тоже умеет native, но требует больше ручной конфигурации reflection hints; при этом для богатых интеграций и большой Spring-кодовой базы Micronaut не выигрывает.",
+                "related": "[[micronaut-interview#Q20]] serverless-поддержка; [[micronaut-interview#Q10]] declarative @Client; [[micronaut-interview#Q24]] минусы Micronaut."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "Большое существующее монолитное приложение на `Spring Boot`, которое надо постепенно модернизировать — `Micronaut` можно подключить как замену Spring внутри того же модуля.",
               "correct": false,
               "sections": {
@@ -1337,8 +1350,8 @@
                 "if_it_were_true": "Тогда квартал ушёл бы на «модернизацию» переписыванием, ломая рабочий код и теряя редкие Spring-интеграции.",
                 "how_it_should_be": "Micronaut выбирают для greenfield-сервисов, а не как замену Spring внутри Spring-монолита."
               },
-              "order": 0,
-              "label": "A"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "Сервис, где критичны редкие интеграции и максимальная функциональная полнота — поддержка любого брокера (Kafka/RabbitMQ/Pulsar/IBM MQ), всех БД и cloud-провайдеров из коробки.",
@@ -1348,19 +1361,6 @@
                 "source_of_confusion": "Micronaut быстрый, и кажется, что он покрывает и широту интеграций.",
                 "if_it_were_true": "Тогда команда не наткнулась бы на отсутствие нужной интеграции, но это частая причина отката с Micronaut.",
                 "how_it_should_be": "Для максимальной широты интеграций берут Spring Boot; Micronaut — для cold start и памяти."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "Микросервис под AWS Lambda (или autoscaling Kubernetes с частыми ребалансами), активно использующий declarative HTTP-клиенты и готовый к GraalVM native image в перспективе — здесь сильные стороны Micronaut напрямую решают боль.",
-              "correct": true,
-              "sections": {
-                "explanation": "Сценарий складывается из четырёх факторов: cold start (~80мс JVM / ~30мс native vs 2-4с Spring), быстрый readiness в autoscaling, compile-time `@Client` без runtime-прокси и дешёвая миграция на native благодаря отсутствию рантайм-рефлексии в DI.",
-                "example": "Для serverless-API `@Client(\"user-service\") interface UserClient` даёт типобезопасные вызовы «бесплатно», а на Lambda каждая секунда старта — это деньги и SLA.",
-                "when_to_apply": "Решающим это становится в serverless-нативных системах (Lambda/Cloud Functions), event-driven с горизонтальным масштабированием и k8s с агрессивным autoscaling.",
-                "edge_cases": "Spring Boot 3 тоже умеет native, но требует больше ручной конфигурации reflection hints; при этом для богатых интеграций и большой Spring-кодовой базы Micronaut не выигрывает.",
-                "related": "[[micronaut-interview#Q20]] serverless-поддержка; [[micronaut-interview#Q10]] declarative @Client; [[micronaut-interview#Q24]] минусы Micronaut."
               },
               "order": 2,
               "label": "C"
@@ -1401,13 +1401,14 @@
               "label": "A"
             },
             {
-              "text": "Документация `Micronaut` объёмнее, чем у Spring, что замедляет онбординг.",
-              "correct": false,
+              "text": "Native image требует `@Introspected` на всех DTO/POJO, участвующих в сериализации: забыли аннотацию → `ClassNotFoundException` или пустые JSON-поля в runtime, причём на JVM всё работает (Jackson через рефлексию), а в native молча ломается.",
+              "correct": true,
               "sections": {
-                "what_actually": "Документация Micronaut меньше Spring (в разы по объёму примеров); это минус, но факт инвертирован.",
-                "source_of_confusion": "Любая нехватка docs кажется проблемой «объёма», и формулировку переворачивают.",
-                "if_it_were_true": "Тогда онбординг тормозила бы избыточная документация, но проблема — наоборот, её нехватка.",
-                "how_it_should_be": "Документация Micronaut меньше, чем у Spring; «объёмнее» — инверсия факта."
+                "explanation": "GraalVM native не делает классический reflection — Micronaut генерирует introspection-метаданные только для классов с `@Introspected`/`@Serdeable`/`@Entity`; новый DTO без аннотации проходит на JVM и падает в native.",
+                "example": "`micronaut-inject-java` сканирует `@Introspected` и генерирует `*$Introspection.class`; native берёт только эти классы, обычный reflection отключён, поэтому пропущенный DTO даёт null-поле или ошибку десериализации.",
+                "when_to_apply": "Учитывают это при code review Micronaut-проектов с native: проверка «есть ли `@Introspected` на новых DTO» должна быть в чек-листе или ArchUnit-тесте.",
+                "edge_cases": "Минимизируют риск через `micronaut.application.fail-fast=true` и native smoke-test на CI; альтернатива точечной аннотации — `@Introspected` на `package-info.java` для всего пакета.",
+                "related": "[[micronaut-interview#Q7]] BeanIntrospection; [[micronaut-interview#Q16]] почему native требует метаданных; [[micronaut-interview#Q17]] фикс ошибки сериализации."
               },
               "order": 1,
               "label": "B"
@@ -1425,14 +1426,13 @@
               "label": "C"
             },
             {
-              "text": "Native image требует `@Introspected` на всех DTO/POJO, участвующих в сериализации: забыли аннотацию → `ClassNotFoundException` или пустые JSON-поля в runtime, причём на JVM всё работает (Jackson через рефлексию), а в native молча ломается.",
-              "correct": true,
+              "text": "Документация `Micronaut` объёмнее, чем у Spring, что замедляет онбординг.",
+              "correct": false,
               "sections": {
-                "explanation": "GraalVM native не делает классический reflection — Micronaut генерирует introspection-метаданные только для классов с `@Introspected`/`@Serdeable`/`@Entity`; новый DTO без аннотации проходит на JVM и падает в native.",
-                "example": "`micronaut-inject-java` сканирует `@Introspected` и генерирует `*$Introspection.class`; native берёт только эти классы, обычный reflection отключён, поэтому пропущенный DTO даёт null-поле или ошибку десериализации.",
-                "when_to_apply": "Учитывают это при code review Micronaut-проектов с native: проверка «есть ли `@Introspected` на новых DTO» должна быть в чек-листе или ArchUnit-тесте.",
-                "edge_cases": "Минимизируют риск через `micronaut.application.fail-fast=true` и native smoke-test на CI; альтернатива точечной аннотации — `@Introspected` на `package-info.java` для всего пакета.",
-                "related": "[[micronaut-interview#Q7]] BeanIntrospection; [[micronaut-interview#Q16]] почему native требует метаданных; [[micronaut-interview#Q17]] фикс ошибки сериализации."
+                "what_actually": "Документация Micronaut меньше Spring (в разы по объёму примеров); это минус, но факт инвертирован.",
+                "source_of_confusion": "Любая нехватка docs кажется проблемой «объёма», и формулировку переворачивают.",
+                "if_it_were_true": "Тогда онбординг тормозила бы избыточная документация, но проблема — наоборот, её нехватка.",
+                "how_it_should_be": "Документация Micronaut меньше, чем у Spring; «объёмнее» — инверсия факта."
               },
               "order": 3,
               "label": "D"
@@ -1462,18 +1462,6 @@
               "label": "A"
             },
             {
-              "text": "Throughput (req/s) у `Micronaut` в 5-10 раз выше Spring Boot — это главное преимущество.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По TechEmpower и замерам разница в throughput в пределах 10-25%, иногда Spring Boot 3.x даже выигрывает на прогретом JIT — это микро-различия, не порядки.",
-                "source_of_confusion": "Хочется видеть кратное преимущество AOT-фреймворков именно в пропускной способности.",
-                "if_it_were_true": "Тогда миграция ради throughput под 100K RPS окупалась бы, но даёт те же цифры — ROI отрицательный.",
-                "how_it_should_be": "Throughput сопоставим; реальное преимущество — cold start и память."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
               "text": "Memory footprint `Spring Boot` одинаков с Micronaut и Quarkus в любом режиме.",
               "correct": false,
               "sections": {
@@ -1482,8 +1470,8 @@
                 "if_it_were_true": "Тогда sizing подов по Spring-меркам был бы корректен, но pods за-OOM-нутся или переплатят за лимиты.",
                 "how_it_should_be": "Память отличается измеримо (2-3x), особенно в native image."
               },
-              "order": 2,
-              "label": "C"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "Cold start `Spring Boot` 3.x в native режиме всегда быстрее `Micronaut`.",
@@ -1493,6 +1481,18 @@
                 "source_of_confusion": "Раз Spring добавил native, кажется, что он и лидирует по cold start.",
                 "if_it_were_true": "Тогда Spring Native давал бы p99 cold start < 100мс в Lambda, но целевых SLA он не достигает.",
                 "how_it_should_be": "В native Micronaut/Quarkus стартуют быстрее Spring Boot; «всегда быстрее Spring» — неверно."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Throughput (req/s) у `Micronaut` в 5-10 раз выше Spring Boot — это главное преимущество.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По TechEmpower и замерам разница в throughput в пределах 10-25%, иногда Spring Boot 3.x даже выигрывает на прогретом JIT — это микро-различия, не порядки.",
+                "source_of_confusion": "Хочется видеть кратное преимущество AOT-фреймворков именно в пропускной способности.",
+                "if_it_were_true": "Тогда миграция ради throughput под 100K RPS окупалась бы, но даёт те же цифры — ROI отрицательный.",
+                "how_it_should_be": "Throughput сопоставим; реальное преимущество — cold start и память."
               },
               "order": 3,
               "label": "D"
@@ -1509,16 +1509,28 @@
           "question_text": "Что говорит публичный adoption `Micronaut` о его зрелости для enterprise?",
           "options": [
             {
-              "text": "`Micronaut` используется только в стартапах, никаких корпораций — поэтому брать его в enterprise рискованно.",
+              "text": "`Micronaut` поддерживается только Oracle и больше никем, как закрытый внутренний инструмент.",
               "correct": false,
               "sections": {
-                "what_actually": "Micronaut активно используют крупные enterprise: Oracle, Boeing, Walmart Labs, Target, Goldman Sachs (частично), ряд FinTech.",
-                "source_of_confusion": "Меньшая публичность по сравнению со Spring создаёт впечатление «startup-only» фреймворка.",
-                "if_it_were_true": "Тогда архитектурный комитет отверг бы Micronaut на ложном основании, уйдя на Spring с худшим cold start.",
-                "how_it_should_be": "Micronaut применяют tier-1 enterprise; это не «только стартапы»."
+                "what_actually": "Micronaut — open source (Apache 2.0), управляется Micronaut Foundation (некоммерческая, отделена от Oracle); contributors из Object Computing, Sonatype, Boeing, Walmart.",
+                "source_of_confusion": "Связь с Oracle Cloud создаёт впечатление «Oracle-only» проекта.",
+                "if_it_were_true": "Тогда был бы реальный vendor lock-in на Oracle, но управление у независимой Foundation.",
+                "how_it_should_be": "Это открытый проект под Foundation, а не закрытый Oracle-инструмент."
               },
               "order": 0,
               "label": "A"
+            },
+            {
+              "text": "Только Goldman Sachs использует `Micronaut`, и только в одной legacy-системе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Даже Goldman Sachs применяет Micronaut в новых микросервисах; плюс есть Boeing, Walmart, Target, Oracle и разные FinTech.",
+                "source_of_confusion": "Один громкий пример (Goldman Sachs) заслоняет остальной список adoption.",
+                "if_it_were_true": "Тогда недооценка adoption привела бы к отказу от Micronaut и выбору более медленного стека.",
+                "how_it_should_be": "Adoption шире одной компании и не ограничен legacy-системами."
+              },
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "`Micronaut` в production используют Oracle, Boeing, Walmart Labs, Target, Goldman Sachs и FinTech-компании; adoption меньше, чем у Spring, но в enterprise присутствие весомое, особенно где важны cold start и память.",
@@ -1530,29 +1542,17 @@
                 "edge_cases": "Перед решением смотрят свежие (1-2 года) case studies на micronaut.io и активность maintainers в GitHub Issues, а не маркетинговые упоминания.",
                 "related": "[[micronaut-interview#Q23]] когда выбирать Micronaut; [[micronaut-interview#Q24]] минусы Micronaut; [[micronaut-interview#Q20]] serverless-применение."
               },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "`Micronaut` поддерживается только Oracle и больше никем, как закрытый внутренний инструмент.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Micronaut — open source (Apache 2.0), управляется Micronaut Foundation (некоммерческая, отделена от Oracle); contributors из Object Computing, Sonatype, Boeing, Walmart.",
-                "source_of_confusion": "Связь с Oracle Cloud создаёт впечатление «Oracle-only» проекта.",
-                "if_it_were_true": "Тогда был бы реальный vendor lock-in на Oracle, но управление у независимой Foundation.",
-                "how_it_should_be": "Это открытый проект под Foundation, а не закрытый Oracle-инструмент."
-              },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "Только Goldman Sachs использует `Micronaut`, и только в одной legacy-системе.",
+              "text": "`Micronaut` используется только в стартапах, никаких корпораций — поэтому брать его в enterprise рискованно.",
               "correct": false,
               "sections": {
-                "what_actually": "Даже Goldman Sachs применяет Micronaut в новых микросервисах; плюс есть Boeing, Walmart, Target, Oracle и разные FinTech.",
-                "source_of_confusion": "Один громкий пример (Goldman Sachs) заслоняет остальной список adoption.",
-                "if_it_were_true": "Тогда недооценка adoption привела бы к отказу от Micronaut и выбору более медленного стека.",
-                "how_it_should_be": "Adoption шире одной компании и не ограничен legacy-системами."
+                "what_actually": "Micronaut активно используют крупные enterprise: Oracle, Boeing, Walmart Labs, Target, Goldman Sachs (частично), ряд FinTech.",
+                "source_of_confusion": "Меньшая публичность по сравнению со Spring создаёт впечатление «startup-only» фреймворка.",
+                "if_it_were_true": "Тогда архитектурный комитет отверг бы Micronaut на ложном основании, уйдя на Spring с худшим cold start.",
+                "how_it_should_be": "Micronaut применяют tier-1 enterprise; это не «только стартапы»."
               },
               "order": 3,
               "label": "D"

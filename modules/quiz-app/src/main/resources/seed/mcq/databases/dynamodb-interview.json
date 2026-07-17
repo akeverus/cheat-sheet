@@ -11,14 +11,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`DynamoDB` — fully managed serverless `NoSQL` key-value/document-хранилище от `AWS` (с 2012), дающее single-digit-ms latency на любом масштабе. Auto-scaling или provisioned-режим, встроенная HA через репликацию по 3 AZ, multi-region через `Global Tables`, оплата pay-per-request или по provisioned-ёмкости.",
-              "correct": true,
+              "text": "`DynamoDB` — это in-memory кэш наподобие `Redis`, который теряет данные при перезапуске и не имеет durable-хранения.",
+              "correct": false,
               "sections": {
-                "explanation": "Ключевая идея — `AWS` берёт на себя ноды, шардинг и репликацию, а клиент задаёт лишь таблицы, ключи и режим ёмкости; благодаря хешированию по partition key задержка остаётся single-digit-ms независимо от объёма данных.",
-                "example": "Построена на принципах `Amazon Dynamo paper` (2007) и используется внутри `Amazon` — Cart, Prime, ad tech — где нужна предсказуемая задержка при огромных нагрузках.",
-                "when_to_apply": "Выбирают `DynamoDB`, когда нужен serverless-store с известными access-паттернами и стабильной задержкой без управления инфраструктурой.",
-                "edge_cases": "«Fully managed» не значит «бесплатно масштабируется без раздумий»: при плохом выборе ключа партиции получите throttling даже на serverless.",
-                "related": "[[dynamodb-interview#Q2]] сравнение с `MongoDB` и `Cassandra`; [[dynamodb-interview#Q4]] primary key из partition/sort key; [[dynamodb-interview#Q16]] проблема hot partition."
+                "what_actually": "`DynamoDB` — durable-хранилище с репликацией по 3 AZ и опциональным PITR; in-memory кэшем для неё служит отдельный `DAX`.",
+                "source_of_confusion": "У `DynamoDB` есть `DAX` (in-memory cache), поэтому саму базу ошибочно считают кэшем.",
+                "if_it_were_true": "Если бы данные жили только в памяти, не было бы backup, PITR и Global Tables, но всё это в `DynamoDB` есть.",
+                "how_it_should_be": "Это durable-store с дисковой репликацией; роль in-memory-ускорителя играет `DAX` перед `DynamoDB`."
               }
             },
             {
@@ -36,13 +35,14 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`DynamoDB` — это in-memory кэш наподобие `Redis`, который теряет данные при перезапуске и не имеет durable-хранения.",
-              "correct": false,
+              "text": "`DynamoDB` — fully managed serverless `NoSQL` key-value/document-хранилище от `AWS` (с 2012), дающее single-digit-ms latency на любом масштабе. Auto-scaling или provisioned-режим, встроенная HA через репликацию по 3 AZ, multi-region через `Global Tables`, оплата pay-per-request или по provisioned-ёмкости.",
+              "correct": true,
               "sections": {
-                "what_actually": "`DynamoDB` — durable-хранилище с репликацией по 3 AZ и опциональным PITR; in-memory кэшем для неё служит отдельный `DAX`.",
-                "source_of_confusion": "У `DynamoDB` есть `DAX` (in-memory cache), поэтому саму базу ошибочно считают кэшем.",
-                "if_it_were_true": "Если бы данные жили только в памяти, не было бы backup, PITR и Global Tables, но всё это в `DynamoDB` есть.",
-                "how_it_should_be": "Это durable-store с дисковой репликацией; роль in-memory-ускорителя играет `DAX` перед `DynamoDB`."
+                "explanation": "Ключевая идея — `AWS` берёт на себя ноды, шардинг и репликацию, а клиент задаёт лишь таблицы, ключи и режим ёмкости; благодаря хешированию по partition key задержка остаётся single-digit-ms независимо от объёма данных.",
+                "example": "Построена на принципах `Amazon Dynamo paper` (2007) и используется внутри `Amazon` — Cart, Prime, ad tech — где нужна предсказуемая задержка при огромных нагрузках.",
+                "when_to_apply": "Выбирают `DynamoDB`, когда нужен serverless-store с известными access-паттернами и стабильной задержкой без управления инфраструктурой.",
+                "edge_cases": "«Fully managed» не значит «бесплатно масштабируется без раздумий»: при плохом выборе ключа партиции получите throttling даже на serverless.",
+                "related": "[[dynamodb-interview#Q2]] сравнение с `MongoDB` и `Cassandra`; [[dynamodb-interview#Q4]] primary key из partition/sort key; [[dynamodb-interview#Q16]] проблема hot partition."
               }
             },
             {
@@ -83,14 +83,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`DynamoDB` — AWS-only managed key-value/document-store с авто-шардингом и высоким vendor lock-in; `MongoDB` — document-store (self-host или `Atlas`) с гибкой схемой и `$lookup`; `Cassandra` — self-host wide-column для очень большого write-heavy масштаба с ручным шардингом.",
-              "correct": true,
+              "text": "`DynamoDB` можно так же легко self-host на своих серверах, как `MongoDB` и `Cassandra`, без привязки к `AWS`.",
+              "correct": false,
               "sections": {
-                "explanation": "Главное — это разные модели данных и операционные модели: managed-эластичность и lock-in `DynamoDB` против гибкости схемы `MongoDB` и линейного write-масштаба `Cassandra`; именно это, а не синтаксис, определяет выбор.",
-                "example": "`DynamoDB` берут для AWS-native приложений с предсказуемыми паттернами; `MongoDB` — когда нужна гибкая схема и сложные запросы; `Cassandra` — для огромного multi-region write-heavy объёма.",
-                "when_to_apply": "На сравнение опираются при выборе store: managed-удобство `AWS` против гибкости `MongoDB` и масштаба `Cassandra`.",
-                "edge_cases": "У всех джойны слабы или отсутствуют, а у `DynamoDB` ещё и сильный lock-in — это влияет на стратегию выхода из вендора.",
-                "related": "[[dynamodb-interview#Q1]] что такое `DynamoDB`; [[dynamodb-interview#Q3]] когда `DynamoDB` не подходит; [[dynamodb-interview#Q11]] single-table design против джойнов."
+                "what_actually": "`DynamoDB` доступна только как managed-сервис `AWS` (локально есть лишь `DynamoDB Local` для разработки), отсюда высокий lock-in.",
+                "source_of_confusion": "Существование `DynamoDB Local` создаёт иллюзию полноценного self-hosting в проде.",
+                "if_it_were_true": "Если бы её можно было поднять в своём дата-центре, vendor lock-in не был бы высоким, но он высокий.",
+                "how_it_should_be": "Self-host реален для `MongoDB`/`Cassandra`; `DynamoDB` живёт только в `AWS`, что и даёт lock-in."
               }
             },
             {
@@ -108,13 +107,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`DynamoDB` можно так же легко self-host на своих серверах, как `MongoDB` и `Cassandra`, без привязки к `AWS`.",
-              "correct": false,
+              "text": "`DynamoDB` — AWS-only managed key-value/document-store с авто-шардингом и высоким vendor lock-in; `MongoDB` — document-store (self-host или `Atlas`) с гибкой схемой и `$lookup`; `Cassandra` — self-host wide-column для очень большого write-heavy масштаба с ручным шардингом.",
+              "correct": true,
               "sections": {
-                "what_actually": "`DynamoDB` доступна только как managed-сервис `AWS` (локально есть лишь `DynamoDB Local` для разработки), отсюда высокий lock-in.",
-                "source_of_confusion": "Существование `DynamoDB Local` создаёт иллюзию полноценного self-hosting в проде.",
-                "if_it_were_true": "Если бы её можно было поднять в своём дата-центре, vendor lock-in не был бы высоким, но он высокий.",
-                "how_it_should_be": "Self-host реален для `MongoDB`/`Cassandra`; `DynamoDB` живёт только в `AWS`, что и даёт lock-in."
+                "explanation": "Главное — это разные модели данных и операционные модели: managed-эластичность и lock-in `DynamoDB` против гибкости схемы `MongoDB` и линейного write-масштаба `Cassandra`; именно это, а не синтаксис, определяет выбор.",
+                "example": "`DynamoDB` берут для AWS-native приложений с предсказуемыми паттернами; `MongoDB` — когда нужна гибкая схема и сложные запросы; `Cassandra` — для огромного multi-region write-heavy объёма.",
+                "when_to_apply": "На сравнение опираются при выборе store: managed-удобство `AWS` против гибкости `MongoDB` и масштаба `Cassandra`.",
+                "edge_cases": "У всех джойны слабы или отсутствуют, а у `DynamoDB` ещё и сильный lock-in — это влияет на стратегию выхода из вендора.",
+                "related": "[[dynamodb-interview#Q1]] что такое `DynamoDB`; [[dynamodb-interview#Q3]] когда `DynamoDB` не подходит; [[dynamodb-interview#Q11]] single-table design против джойнов."
               }
             }
           ]
@@ -131,18 +131,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`DynamoDB` идеально подходит для ad-hoc аналитики, сложных агрегаций и BI-отчётов прямо по таблице.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для аналитики и агрегаций `DynamoDB` плоха — это OLTP key-value store; BI делают через `Athena`/`Redshift`.",
-                "source_of_confusion": "Раз база масштабируется, кажется, что она потянет и аналитические запросы.",
-                "if_it_were_true": "Если бы она годилась для BI, не пришлось бы экспортировать данные в `Redshift`, но это стандартная практика.",
-                "how_it_should_be": "Аналитику строят на колоночных движках; `DynamoDB` хороша для известных OLTP-паттернов."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`DynamoDB` отлично подходит для full-text search и поиска по подстроке без дополнительных сервисов.",
               "correct": false,
               "sections": {
@@ -153,8 +141,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`DynamoDB` не подходит для сложных запросов (джойны, агрегации), ad-hoc запросов с неизвестными паттернами, reporting/BI, full-text search и multi-region writes на существующих таблицах. Подходит, когда access-паттерны известны, нужна предсказуемая производительность на масштабе и стек serverless-friendly в экосистеме `AWS`.",
               "correct": true,
               "sections": {
@@ -163,6 +151,18 @@
                 "when_to_apply": "Эти ограничения проверяют на этапе выбора хранилища: если паттерны заранее неизвестны, `DynamoDB` лучше не брать.",
                 "edge_cases": "Multi-region writes возможны, но `Global Tables` исторически создавались на новых пустых таблицах, а не включались на существующих с данными.",
                 "related": "[[dynamodb-interview#Q1]] что такое `DynamoDB`; [[dynamodb-interview#Q12]] почему важны access-паттерны; [[dynamodb-interview#Q18]] почему `Scan` дорог."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`DynamoDB` идеально подходит для ad-hoc аналитики, сложных агрегаций и BI-отчётов прямо по таблице.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для аналитики и агрегаций `DynamoDB` плоха — это OLTP key-value store; BI делают через `Athena`/`Redshift`.",
+                "source_of_confusion": "Раз база масштабируется, кажется, что она потянет и аналитические запросы.",
+                "if_it_were_true": "Если бы она годилась для BI, не пришлось бы экспортировать данные в `Redshift`, но это стандартная практика.",
+                "how_it_should_be": "Аналитику строят на колоночных движках; `DynamoDB` хороша для известных OLTP-паттернов."
               }
             },
             {
@@ -191,18 +191,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Partition key и sort key — это просто два обычных индекса, которые можно добавить к таблице в любой момент после создания.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это компоненты primary key, задаваемые при создании таблицы; вторичные индексы (GSI/LSI) — отдельная сущность.",
-                "source_of_confusion": "Слово «key» ассоциируется с индексом, поэтому primary key путают с secondary index.",
-                "if_it_were_true": "Если бы их можно было добавить позже, не пришлось бы пересоздавать таблицу для смены схемы ключей, но приходится.",
-                "how_it_should_be": "Primary key (partition[+sort]) фиксируется при создании; гибкость дают GSI, которые добавляют позже."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Sort key обязателен для каждой таблицы `DynamoDB`, без него таблицу создать нельзя.",
               "correct": false,
               "sections": {
@@ -213,8 +201,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Partition key стоит выбирать с низкой кардинальностью, например статус заказа, чтобы данные лучше группировались.",
               "correct": false,
               "sections": {
@@ -225,8 +213,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Primary key уникально идентифицирует item и бывает двух видов: только partition key (`user_id`) либо составной — partition key плюс sort key. Partition key хешируется и определяет физическую партицию хранения, а sort key задаёт порядок внутри партиции; items с одним PK лежат вместе и эффективно достаются через `Query`.",
               "correct": true,
               "sections": {
@@ -235,6 +223,18 @@
                 "when_to_apply": "Эту модель применяют, проектируя one-to-many связи: общий PK + разные SK дают «родитель и его дети» в одной партиции.",
                 "edge_cases": "PK выбирают с высокой кардинальностью, иначе одна горячая партиция упрётся в лимит и начнёт троттлиться даже при большой общей ёмкости.",
                 "related": "[[dynamodb-interview#Q1]] что такое `DynamoDB`; [[dynamodb-interview#Q13]] стратегии составных ключей; [[dynamodb-interview#Q16]] hot partition при плохом PK."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Partition key и sort key — это просто два обычных индекса, которые можно добавить к таблице в любой момент после создания.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это компоненты primary key, задаваемые при создании таблицы; вторичные индексы (GSI/LSI) — отдельная сущность.",
+                "source_of_confusion": "Слово «key» ассоциируется с индексом, поэтому primary key путают с secondary index.",
+                "if_it_were_true": "Если бы их можно было добавить позже, не пришлось бы пересоздавать таблицу для смены схемы ключей, но приходится.",
+                "how_it_should_be": "Primary key (partition[+sort]) фиксируется при создании; гибкость дают GSI, которые добавляют позже."
               }
             }
           ]
@@ -251,19 +251,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Item` — это одна запись (аналог строки в `SQL`), а `attribute` — поле внутри item (аналог колонки). Каждый item — это `JSON`-документ, и благодаря schema flexibility items в одной таблице могут иметь разный набор атрибутов.",
-              "correct": true,
-              "sections": {
-                "explanation": "В `DynamoDB` нет жёсткой схемы на уровне таблицы: обязательны лишь ключевые атрибуты, а остальные поля свободны от item к item, что и делает модель гибкой по сравнению с `SQL`-таблицей.",
-                "example": "Один item может выглядеть как `{ \"user_id\": \"user#123\", \"order_id\": \"order#456\", \"amount\": 99.99 }`, где `user_id` и `order_id` — атрибуты ключа, а `amount` — обычный атрибут.",
-                "when_to_apply": "Эти понятия используют, описывая модель: в `DynamoDB` мыслят items и attributes, а не строками и колонками со строгой схемой.",
-                "edge_cases": "Schemaless не означает «без ключа»: атрибуты primary key обязаны присутствовать в каждом item, а остальные — нет.",
-                "related": "[[dynamodb-interview#Q4]] partition/sort key как атрибуты; [[dynamodb-interview#Q6]] типы данных атрибутов; [[dynamodb-interview#Q7]] лимит размера item 400 KB."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Item` — это вся таблица целиком, а `attribute` — это отдельный item внутри неё.",
               "correct": false,
               "sections": {
@@ -274,8 +261,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Все items в одной таблице обязаны иметь строго одинаковый набор атрибутов, как колонки в `SQL`.",
               "correct": false,
               "sections": {
@@ -286,8 +273,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`Attribute` в `DynamoDB` может хранить только строки, числа в нём недопустимы.",
               "correct": false,
               "sections": {
@@ -295,6 +282,19 @@
                 "source_of_confusion": "Ключи часто строковые, поэтому кажется, что и значения только строки.",
                 "if_it_were_true": "Если бы числа были запрещены, нельзя было бы хранить `amount` как `N`, но числовой тип поддерживается.",
                 "how_it_should_be": "Атрибут типизирован: `S`, `N`, `B`, `BOOL`, `M`, `L`, `SS`/`NS`/`BS` — широкий набор типов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Item` — это одна запись (аналог строки в `SQL`), а `attribute` — поле внутри item (аналог колонки). Каждый item — это `JSON`-документ, и благодаря schema flexibility items в одной таблице могут иметь разный набор атрибутов.",
+              "correct": true,
+              "sections": {
+                "explanation": "В `DynamoDB` нет жёсткой схемы на уровне таблицы: обязательны лишь ключевые атрибуты, а остальные поля свободны от item к item, что и делает модель гибкой по сравнению с `SQL`-таблицей.",
+                "example": "Один item может выглядеть как `{ \"user_id\": \"user#123\", \"order_id\": \"order#456\", \"amount\": 99.99 }`, где `user_id` и `order_id` — атрибуты ключа, а `amount` — обычный атрибут.",
+                "when_to_apply": "Эти понятия используют, описывая модель: в `DynamoDB` мыслят items и attributes, а не строками и колонками со строгой схемой.",
+                "edge_cases": "Schemaless не означает «без ключа»: атрибуты primary key обязаны присутствовать в каждом item, а остальные — нет.",
+                "related": "[[dynamodb-interview#Q4]] partition/sort key как атрибуты; [[dynamodb-interview#Q6]] типы данных атрибутов; [[dynamodb-interview#Q7]] лимит размера item 400 KB."
               }
             }
           ]
@@ -311,6 +311,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Set-типы в `DynamoDB` (`SS`, `NS`, `BS`) допускают дубликаты и смешивание типов внутри одного set.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sets хранят только уникальные значения одного типа: дубликаты и смешение типов запрещены.",
+                "source_of_confusion": "List допускает дубликаты и смешанные типы, и это свойство переносят на set.",
+                "if_it_were_true": "Если бы set допускал дубликаты, он не отличался бы от `L` (List), но отличие именно в уникальности.",
+                "how_it_should_be": "Для уникальных значений берут set, для повторов и смешения — `L` (List)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`DynamoDB` поддерживает только строки и числа, никаких вложенных структур или коллекций.",
               "correct": false,
               "sections": {
@@ -318,19 +330,6 @@
                 "source_of_confusion": "Базовые примеры показывают строки и числа, поэтому остальные типы упускают.",
                 "if_it_were_true": "Если бы не было `M` и `L`, нельзя было бы хранить вложенный `address` как map, но это типичный кейс.",
                 "how_it_should_be": "Помимо скаляров есть document-типы (`M`, `L`) и set-типы (`SS`, `NS`, `BS`)."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Типы делятся на три группы: scalar — `S` (String), `N` (Number), `B` (Binary), `BOOL`, `NULL`; document — `M` (Map, вложенный объект) и `L` (List, массив); set — `SS` (String Set), `NS` (Number Set), `BS` (Binary Set). Sets хранят уникальные значения одного типа.",
-              "correct": true,
-              "sections": {
-                "explanation": "Тип атрибута задаётся явно (`S`, `N`, `B`, `M`, `L`, sets) и влияет на семантику: scalar хранят значение, document — вложенную структуру, а set — уникальные элементы одного типа без порядка.",
-                "example": "Атрибут можно записать как `{ \"tags\": { \"SS\": [\"premium\", \"verified\"] }, \"address\": { \"M\": { \"city\": { \"S\": \"London\" } } } }`, комбинируя set и вложенный map.",
-                "when_to_apply": "Знание типов нужно при проектировании item: например, set выбирают, когда важна уникальность элементов без дубликатов.",
-                "edge_cases": "Set не может быть пустым и не хранит дубликаты; для упорядоченной коллекции с повторами берут `L` (List).",
-                "related": "[[dynamodb-interview#Q5]] item и attribute; [[dynamodb-interview#Q7]] размер item включает значения атрибутов; [[dynamodb-interview#Q4]] ключевые атрибуты."
               }
             },
             {
@@ -348,13 +347,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Set-типы в `DynamoDB` (`SS`, `NS`, `BS`) допускают дубликаты и смешивание типов внутри одного set.",
-              "correct": false,
+              "text": "Типы делятся на три группы: scalar — `S` (String), `N` (Number), `B` (Binary), `BOOL`, `NULL`; document — `M` (Map, вложенный объект) и `L` (List, массив); set — `SS` (String Set), `NS` (Number Set), `BS` (Binary Set). Sets хранят уникальные значения одного типа.",
+              "correct": true,
               "sections": {
-                "what_actually": "Sets хранят только уникальные значения одного типа: дубликаты и смешение типов запрещены.",
-                "source_of_confusion": "List допускает дубликаты и смешанные типы, и это свойство переносят на set.",
-                "if_it_were_true": "Если бы set допускал дубликаты, он не отличался бы от `L` (List), но отличие именно в уникальности.",
-                "how_it_should_be": "Для уникальных значений берут set, для повторов и смешения — `L` (List)."
+                "explanation": "Тип атрибута задаётся явно (`S`, `N`, `B`, `M`, `L`, sets) и влияет на семантику: scalar хранят значение, document — вложенную структуру, а set — уникальные элементы одного типа без порядка.",
+                "example": "Атрибут можно записать как `{ \"tags\": { \"SS\": [\"premium\", \"verified\"] }, \"address\": { \"M\": { \"city\": { \"S\": \"London\" } } } }`, комбинируя set и вложенный map.",
+                "when_to_apply": "Знание типов нужно при проектировании item: например, set выбирают, когда важна уникальность элементов без дубликатов.",
+                "edge_cases": "Set не может быть пустым и не хранит дубликаты; для упорядоченной коллекции с повторами берут `L` (List).",
+                "related": "[[dynamodb-interview#Q5]] item и attribute; [[dynamodb-interview#Q7]] размер item включает значения атрибутов; [[dynamodb-interview#Q4]] ключевые атрибуты."
               }
             }
           ]
@@ -371,30 +371,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Лимит размера item — 400 MB, и в него входят только значения атрибутов, без их имён.",
+              "text": "При превышении 400 KB `DynamoDB` молча обрезает лишние атрибуты и сохраняет item частично.",
               "correct": false,
               "sections": {
-                "what_actually": "Лимит — 400 KB, а не MB, и считается он вместе с именами атрибутов, не только значениями.",
-                "source_of_confusion": "Путают единицы (KB и MB) и забывают, что имена атрибутов тоже учитываются.",
-                "if_it_were_true": "Если бы лимит был 400 MB, не было бы паттерна выноса больших payload в `S3`, но он стандартный.",
-                "how_it_should_be": "Каждый item ограничен 400 KB суммарно (имена + значения); большие данные выносят в `S3`."
+                "what_actually": "При превышении запись отклоняется с ошибкой `ValidationException`; молчаливого обрезания нет.",
+                "source_of_confusion": "Поведение усечения встречается в других системах, и его переносят сюда.",
+                "if_it_were_true": "Если бы item обрезался, можно было бы писать любые размеры без обработки ошибок, но запись падает.",
+                "how_it_should_be": "Превышение лимита — это явная ошибка записи; обходят её сжатием, сплитом или `S3`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Единственный способ хранить большие данные — увеличить лимит item через настройку таблицы.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Лимит 400 KB жёсткий и не настраивается; данные сжимают, разбивают на items или выносят в `S3`.",
-                "source_of_confusion": "Многие лимиты `AWS` поднимаются через support, поэтому ждут того же и здесь.",
-                "if_it_were_true": "Если бы лимит поднимался, не понадобился бы паттерн `body_s3_uri`, но он используется именно из-за жёсткого лимита.",
-                "how_it_should_be": "Лимит неизменен; обходят его компрессией, сплитом по items или ссылкой на объект в `S3`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Каждый item ограничен 400 KB, включая имена и значения всех атрибутов. Для больших данных применяют workarounds: сжатие перед записью (`gzip`), разбиение на несколько items с составным ключом или хранение payload в `S3` со ссылкой в `DynamoDB`.",
               "correct": true,
               "sections": {
@@ -406,15 +394,27 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "При превышении 400 KB `DynamoDB` молча обрезает лишние атрибуты и сохраняет item частично.",
+              "order": 2,
+              "label": "C",
+              "text": "Единственный способ хранить большие данные — увеличить лимит item через настройку таблицы.",
               "correct": false,
               "sections": {
-                "what_actually": "При превышении запись отклоняется с ошибкой `ValidationException`; молчаливого обрезания нет.",
-                "source_of_confusion": "Поведение усечения встречается в других системах, и его переносят сюда.",
-                "if_it_were_true": "Если бы item обрезался, можно было бы писать любые размеры без обработки ошибок, но запись падает.",
-                "how_it_should_be": "Превышение лимита — это явная ошибка записи; обходят её сжатием, сплитом или `S3`."
+                "what_actually": "Лимит 400 KB жёсткий и не настраивается; данные сжимают, разбивают на items или выносят в `S3`.",
+                "source_of_confusion": "Многие лимиты `AWS` поднимаются через support, поэтому ждут того же и здесь.",
+                "if_it_were_true": "Если бы лимит поднимался, не понадобился бы паттерн `body_s3_uri`, но он используется именно из-за жёсткого лимита.",
+                "how_it_should_be": "Лимит неизменен; обходят его компрессией, сплитом по items или ссылкой на объект в `S3`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Лимит размера item — 400 MB, и в него входят только значения атрибутов, без их имён.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Лимит — 400 KB, а не MB, и считается он вместе с именами атрибутов, не только значениями.",
+                "source_of_confusion": "Путают единицы (KB и MB) и забывают, что имена атрибутов тоже учитываются.",
+                "if_it_were_true": "Если бы лимит был 400 MB, не было бы паттерна выноса больших payload в `S3`, но он стандартный.",
+                "how_it_should_be": "Каждый item ограничен 400 KB суммарно (имена + значения); большие данные выносят в `S3`."
               }
             }
           ]
@@ -431,13 +431,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "GSI обязан использовать тот же partition key, что и основная таблица, меняя только sort key.",
-              "correct": false,
+              "text": "GSI — это альтернативный ключ для таблицы, позволяющий делать `Query` по non-PK атрибутам с собственными partition и sort key. GSI по умолчанию eventually consistent, имеет отдельную provisioned-ёмкость (или наследует on-demand), стоит дополнительного хранилища, по умолчанию sparse, и таких индексов до 20 на таблицу.",
+              "correct": true,
               "sections": {
-                "what_actually": "Тот же PK с другим SK — это LSI; GSI как раз позволяет задать совершенно другой partition key.",
-                "source_of_confusion": "GSI и LSI оба «secondary index», поэтому их ограничения смешивают.",
-                "if_it_were_true": "Если бы GSI требовал тот же PK, нельзя было бы делать `Query` по `status` или `order_id`, но это его главная функция.",
-                "how_it_should_be": "GSI задаёт новый PK (и опционально SK); тот же PK с другим SK — это LSI."
+                "explanation": "GSI заводит собственную проекцию таблицы по другому ключу, чтобы обслуживать access-паттерн по non-PK атрибуту; за гибкость платят отдельной ёмкостью, дублированием данных и eventual consistency.",
+                "example": "На таблице с `PK: user_id, SK: order_id` создают GSI `PK: status, SK: created_at`, чтобы запрашивать заказы по статусу, отсортированные по дате.",
+                "when_to_apply": "GSI добавляют, когда появляется новый access-паттерн по полю, не входящему в primary key, например поиск заказов по `order_id` напрямую.",
+                "edge_cases": "GSI sparse: items без индексируемого атрибута в индекс не попадают, что используют намеренно для паттерна «только активные».",
+                "related": "[[dynamodb-interview#Q9]] отличия LSI от GSI; [[dynamodb-interview#Q10]] sparse-индексы; [[dynamodb-interview#Q4]] primary key основной таблицы."
               }
             },
             {
@@ -467,14 +468,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "GSI — это альтернативный ключ для таблицы, позволяющий делать `Query` по non-PK атрибутам с собственными partition и sort key. GSI по умолчанию eventually consistent, имеет отдельную provisioned-ёмкость (или наследует on-demand), стоит дополнительного хранилища, по умолчанию sparse, и таких индексов до 20 на таблицу.",
-              "correct": true,
+              "text": "GSI обязан использовать тот же partition key, что и основная таблица, меняя только sort key.",
+              "correct": false,
               "sections": {
-                "explanation": "GSI заводит собственную проекцию таблицы по другому ключу, чтобы обслуживать access-паттерн по non-PK атрибуту; за гибкость платят отдельной ёмкостью, дублированием данных и eventual consistency.",
-                "example": "На таблице с `PK: user_id, SK: order_id` создают GSI `PK: status, SK: created_at`, чтобы запрашивать заказы по статусу, отсортированные по дате.",
-                "when_to_apply": "GSI добавляют, когда появляется новый access-паттерн по полю, не входящему в primary key, например поиск заказов по `order_id` напрямую.",
-                "edge_cases": "GSI sparse: items без индексируемого атрибута в индекс не попадают, что используют намеренно для паттерна «только активные».",
-                "related": "[[dynamodb-interview#Q9]] отличия LSI от GSI; [[dynamodb-interview#Q10]] sparse-индексы; [[dynamodb-interview#Q4]] primary key основной таблицы."
+                "what_actually": "Тот же PK с другим SK — это LSI; GSI как раз позволяет задать совершенно другой partition key.",
+                "source_of_confusion": "GSI и LSI оба «secondary index», поэтому их ограничения смешивают.",
+                "if_it_were_true": "Если бы GSI требовал тот же PK, нельзя было бы делать `Query` по `status` или `order_id`, но это его главная функция.",
+                "how_it_should_be": "GSI задаёт новый PK (и опционально SK); тот же PK с другим SK — это LSI."
               }
             }
           ]
@@ -491,6 +491,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "LSI задаёт собственный partition key, отличный от основной таблицы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Свой PK задаёт GSI; LSI всегда наследует partition key основной таблицы и меняет только sort key.",
+                "source_of_confusion": "Свободу выбора PK у GSI переносят на LSI.",
+                "if_it_were_true": "Если бы LSI имел свой PK, он не делил бы партицию и ёмкость с основной таблицей, но он делит.",
+                "how_it_should_be": "LSI = тот же PK + другой SK; новый PK — это про GSI."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "LSI использует тот же partition key, что и основная таблица, но альтернативный sort key. Отличия от GSI: тот же PK (а не другой), создаётся только при создании таблицы (а не в любой момент), поддерживает опцию strongly consistent reads, делит ёмкость с основной таблицей и ограничен 5 индексами на таблицу против 20 GSI.",
               "correct": true,
               "sections": {
@@ -502,8 +514,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "LSI можно добавить к существующей таблице в любой момент, как и GSI.",
               "correct": false,
               "sections": {
@@ -511,18 +523,6 @@
                 "source_of_confusion": "Гибкость GSI ошибочно приписывают и LSI, раз оба secondary index.",
                 "if_it_were_true": "Если бы LSI добавлялся позже, забытый индекс не требовал бы пересоздания таблицы, но требует.",
                 "how_it_should_be": "LSI фиксируется при создании таблицы; для поздних индексов берут GSI."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "LSI задаёт собственный partition key, отличный от основной таблицы.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Свой PK задаёт GSI; LSI всегда наследует partition key основной таблицы и меняет только sort key.",
-                "source_of_confusion": "Свободу выбора PK у GSI переносят на LSI.",
-                "if_it_were_true": "Если бы LSI имел свой PK, он не делил бы партицию и ёмкость с основной таблицей, но он делит.",
-                "how_it_should_be": "LSI = тот же PK + другой SK; новый PK — это про GSI."
               }
             },
             {
@@ -551,13 +551,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Sparse-индекс содержит все items таблицы, даже если индексируемый атрибут у них отсутствует.",
+              "text": "Чтобы исключить item из sparse-индекса, нужно удалить его из основной таблицы.",
               "correct": false,
               "sections": {
-                "what_actually": "Sparse-индекс включает только items, у которых индексируемый атрибут присутствует; остальные не попадают.",
-                "source_of_confusion": "Привычка реляционных индексов «строка всегда в индексе» переносится на `DynamoDB`.",
-                "if_it_were_true": "Если бы все items попадали в индекс, паттерн «маленький индекс активных» не работал бы, но он работает именно из-за разреженности.",
-                "how_it_should_be": "В sparse-индекс попадают только items с индексируемым атрибутом; прочие отсутствуют."
+                "what_actually": "Достаточно убрать у item индексируемый атрибут — он исчезнет из sparse-индекса, оставаясь в таблице.",
+                "source_of_confusion": "Кажется, что наличие в индексе жёстко связано с наличием в таблице.",
+                "if_it_were_true": "Если бы пришлось удалять item из таблицы, нельзя было бы держать «закрытые» заказы вне активного GSI, но их держат в таблице без атрибута.",
+                "how_it_should_be": "Item убирают из индекса удалением индексируемого атрибута, а не удалением самого item."
               }
             },
             {
@@ -576,6 +576,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Sparse-индекс содержит все items таблицы, даже если индексируемый атрибут у них отсутствует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Sparse-индекс включает только items, у которых индексируемый атрибут присутствует; остальные не попадают.",
+                "source_of_confusion": "Привычка реляционных индексов «строка всегда в индексе» переносится на `DynamoDB`.",
+                "if_it_were_true": "Если бы все items попадали в индекс, паттерн «маленький индекс активных» не работал бы, но он работает именно из-за разреженности.",
+                "how_it_should_be": "В sparse-индекс попадают только items с индексируемым атрибутом; прочие отсутствуют."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Sparse-индекс ускоряет запись, потому что меньше данных нужно записать в основную таблицу.",
               "correct": false,
               "sections": {
@@ -583,18 +595,6 @@
                 "source_of_confusion": "Слово «sparse» (разреженный) ассоциируют с экономией записи в саму таблицу.",
                 "if_it_were_true": "Если бы он ускорял запись таблицы, не было бы смысла говорить именно про размер индекса, но речь о нём.",
                 "how_it_should_be": "Sparse уменьшает индекс и стоимость запросов по нему, а не запись основной таблицы."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Чтобы исключить item из sparse-индекса, нужно удалить его из основной таблицы.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Достаточно убрать у item индексируемый атрибут — он исчезнет из sparse-индекса, оставаясь в таблице.",
-                "source_of_confusion": "Кажется, что наличие в индексе жёстко связано с наличием в таблице.",
-                "if_it_were_true": "Если бы пришлось удалять item из таблицы, нельзя было бы держать «закрытые» заказы вне активного GSI, но их держат в таблице без атрибута.",
-                "how_it_should_be": "Item убирают из индекса удалением индексируемого атрибута, а не удалением самого item."
               }
             }
           ]
@@ -611,30 +611,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Single-table design — это нормализация данных по нескольким таблицам, по одной на каждую сущность.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это противоположность: single-table кладёт все сущности в одну таблицу, разделяя их паттернами PK/SK.",
-                "source_of_confusion": "Реляционная нормализация «таблица на сущность» переносится на `DynamoDB`.",
-                "if_it_were_true": "Если бы сущности лежали в разных таблицах, нельзя было бы достать связанные items одним `Query`, но в этом и смысл single-table.",
-                "how_it_should_be": "Все сущности живут в одной таблице; разнесение по таблицам — это реляционный подход."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Главный недостаток single-table design — он дороже, потому что требует много отдельных таблиц.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот, single-table дешевле: одна таблица вместо многих сокращает provisioning и оверхед.",
-                "source_of_confusion": "Слово «design» создаёт впечатление сложной дорогой инфраструктуры.",
-                "if_it_were_true": "Если бы он был дороже, эксперты не рекомендовали бы его как основной паттерн, но рекомендуют ради экономии.",
-                "how_it_should_be": "Single-table снижает стоимость; минус в сложности проектирования, а не в цене таблиц."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Single-table design — паттерн `DynamoDB`, при котором все сущности (users, orders, items, products) хранятся в одной таблице и разделяются через паттерны PK/SK. Плюсы: один `Query` достаёт связанные items без джойнов, атомарные транзакции внутри таблицы, дешевле за счёт одного provisioning. Минусы: сложнее проектировать, нужно знать access-паттерны заранее, не интуитивно для `SQL`-бэкграунда.",
               "correct": true,
               "sections": {
@@ -646,8 +622,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "В single-table design все items обязаны иметь одинаковый набор атрибутов и один тип сущности.",
               "correct": false,
               "sections": {
@@ -655,6 +631,30 @@
                 "source_of_confusion": "Привычка к однородным строкам реляционной таблицы мешает принять разнородность items.",
                 "if_it_were_true": "Если бы все items были одного типа, нельзя было бы хранить user, order и product вместе, но это суть паттерна.",
                 "how_it_should_be": "Single-table намеренно смешивает разнотипные items; различает их атрибут `type` и паттерны ключей."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Single-table design — это нормализация данных по нескольким таблицам, по одной на каждую сущность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это противоположность: single-table кладёт все сущности в одну таблицу, разделяя их паттернами PK/SK.",
+                "source_of_confusion": "Реляционная нормализация «таблица на сущность» переносится на `DynamoDB`.",
+                "if_it_were_true": "Если бы сущности лежали в разных таблицах, нельзя было бы достать связанные items одним `Query`, но в этом и смысл single-table.",
+                "how_it_should_be": "Все сущности живут в одной таблице; разнесение по таблицам — это реляционный подход."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главный недостаток single-table design — он дороже, потому что требует много отдельных таблиц.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот, single-table дешевле: одна таблица вместо многих сокращает provisioning и оверхед.",
+                "source_of_confusion": "Слово «design» создаёт впечатление сложной дорогой инфраструктуры.",
+                "if_it_were_true": "Если бы он был дороже, эксперты не рекомендовали бы его как основной паттерн, но рекомендуют ради экономии.",
+                "how_it_should_be": "Single-table снижает стоимость; минус в сложности проектирования, а не в цене таблиц."
               }
             }
           ]
@@ -671,18 +671,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `DynamoDB`, как и в `SQL`, сначала проектируют модель данных, а запросы пишут потом, под уже готовую схему.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В `DynamoDB` порядок обратный: сначала перечисляют access-паттерны, потом под них проектируют таблицу и индексы.",
-                "source_of_confusion": "Реляционный порядок «модель → запросы» по привычке применяют к `DynamoDB`.",
-                "if_it_were_true": "Если бы модель шла первой, не было бы проблем с неподходящими ключами под новые запросы, но они возникают постоянно.",
-                "how_it_should_be": "Сначала access-паттерны, потом таблица; «модель первой» — это про `SQL`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Access-паттерны нужны только чтобы выбрать между on-demand и provisioned-ёмкостью.",
               "correct": false,
               "sections": {
@@ -690,6 +678,19 @@
                 "source_of_confusion": "Тему capacity путают с темой моделирования доступа.",
                 "if_it_were_true": "Если бы они влияли только на ёмкость, плохой выбор PK не приводил бы к `Scan`, но без паттернов он неизбежен.",
                 "how_it_should_be": "Паттерны задают дизайн ключей и индексов; режим ёмкости — отдельный вопрос."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В отличие от `SQL` (сначала модель, потом запросы), в `DynamoDB` сначала перечисляют access-паттерны (получить пользователя по id, его заказы, заказ с items, топ-10 товаров), затем проектируют таблицу под каждый паттерн — выбирают PK/SK для каждого запроса и планируют GSI, при этом избегая `Scan`. Без upfront-дизайна производительность `DynamoDB` будет ужасной.",
+              "correct": true,
+              "sections": {
+                "explanation": "В `DynamoDB` структура ключей жёстко привязана к запросам, поэтому паттерны перечисляют до проектирования таблицы — иначе под новый запрос придётся либо `Scan`, либо новый GSI с backfill.",
+                "example": "Сначала фиксируют запросы вроде «заказы пользователя за период», и под них кладут `PK: user#123, SK: 2025-04-19#order#456`, чтобы один `Query` покрыл паттерн.",
+                "when_to_apply": "Подход применяют в самом начале проектирования таблицы, до записи данных: каждый будущий запрос должен лечь на ключ или GSI.",
+                "edge_cases": "Появление нового, не предусмотренного паттерна на живой таблице обычно требует добавления GSI или backfill, а не простого нового запроса.",
+                "related": "[[dynamodb-interview#Q11]] single-table требует знать паттерны; [[dynamodb-interview#Q13]] стратегии ключей под паттерны; [[dynamodb-interview#Q18]] почему `Scan` избегают."
               }
             },
             {
@@ -707,14 +708,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В отличие от `SQL` (сначала модель, потом запросы), в `DynamoDB` сначала перечисляют access-паттерны (получить пользователя по id, его заказы, заказ с items, топ-10 товаров), затем проектируют таблицу под каждый паттерн — выбирают PK/SK для каждого запроса и планируют GSI, при этом избегая `Scan`. Без upfront-дизайна производительность `DynamoDB` будет ужасной.",
-              "correct": true,
+              "text": "В `DynamoDB`, как и в `SQL`, сначала проектируют модель данных, а запросы пишут потом, под уже готовую схему.",
+              "correct": false,
               "sections": {
-                "explanation": "В `DynamoDB` структура ключей жёстко привязана к запросам, поэтому паттерны перечисляют до проектирования таблицы — иначе под новый запрос придётся либо `Scan`, либо новый GSI с backfill.",
-                "example": "Сначала фиксируют запросы вроде «заказы пользователя за период», и под них кладут `PK: user#123, SK: 2025-04-19#order#456`, чтобы один `Query` покрыл паттерн.",
-                "when_to_apply": "Подход применяют в самом начале проектирования таблицы, до записи данных: каждый будущий запрос должен лечь на ключ или GSI.",
-                "edge_cases": "Появление нового, не предусмотренного паттерна на живой таблице обычно требует добавления GSI или backfill, а не простого нового запроса.",
-                "related": "[[dynamodb-interview#Q11]] single-table требует знать паттерны; [[dynamodb-interview#Q13]] стратегии ключей под паттерны; [[dynamodb-interview#Q18]] почему `Scan` избегают."
+                "what_actually": "В `DynamoDB` порядок обратный: сначала перечисляют access-паттерны, потом под них проектируют таблицу и индексы.",
+                "source_of_confusion": "Реляционный порядок «модель → запросы» по привычке применяют к `DynamoDB`.",
+                "if_it_were_true": "Если бы модель шла первой, не было бы проблем с неподходящими ключами под новые запросы, но они возникают постоянно.",
+                "how_it_should_be": "Сначала access-паттерны, потом таблица; «модель первой» — это про `SQL`."
               }
             }
           ]
@@ -731,19 +731,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Распространённые паттерны: иерархический (one-to-many) — общий PK `user#123` с разными SK (`profile`, `order#456`, `order#789`), где `Query PK=\"user#123\" AND begins_with(SK,\"order#\")` достаёт все заказы; date-based — SK вида `2025-04-19#order#456` для запросов по диапазону дат; inverted index — GSI, где `PK = SK` и `SK = PK`, для обратного поиска.",
-              "correct": true,
-              "sections": {
-                "explanation": "Стратегии ключей кодируют связи прямо в PK/SK: общий PK с разными SK даёт иерархию, дата в начале SK — диапазоны по времени, инвертированный GSI — обратный поиск.",
-                "example": "Чтобы достать все заказы пользователя одним запросом, используют `KeyConditionExpression` с `begins_with(SK, \"order#\")` при фиксированном `PK = user#123`.",
-                "when_to_apply": "Иерархический паттерн применяют, когда у родителя много детей одного типа и их надо доставать вместе; date-based — когда нужен порядок и диапазоны по времени.",
-                "edge_cases": "В SK кладут дату перед идентификатором (`date#order#id`), чтобы лексикографическая сортировка строки совпадала с хронологической; обратный порядок сломал бы диапазонные запросы.",
-                "related": "[[dynamodb-interview#Q4]] partition и sort key; [[dynamodb-interview#Q12]] паттерны определяют ключи; [[dynamodb-interview#Q11]] single-table и составные ключи."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Inverted index — это паттерн, при котором partition key и sort key основной таблицы просто меняют местами без создания GSI.",
               "correct": false,
               "sections": {
@@ -754,8 +741,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "В date-based ключе дату кладут после идентификатора (`order#456#2025-04-19`), порядок не важен.",
               "correct": false,
               "sections": {
@@ -766,8 +753,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Иерархический паттерн требует отдельной таблицы для каждого типа дочерней сущности.",
               "correct": false,
               "sections": {
@@ -775,6 +762,19 @@
                 "source_of_confusion": "Реляционное «таблица на сущность» снова подменяет single-table подход.",
                 "if_it_were_true": "Если бы нужны были отдельные таблицы, нельзя было бы достать profile и orders одним `Query`, но в этом смысл иерархии.",
                 "how_it_should_be": "One-to-many моделируют общим PK и разными SK в одной таблице."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Распространённые паттерны: иерархический (one-to-many) — общий PK `user#123` с разными SK (`profile`, `order#456`, `order#789`), где `Query PK=\"user#123\" AND begins_with(SK,\"order#\")` достаёт все заказы; date-based — SK вида `2025-04-19#order#456` для запросов по диапазону дат; inverted index — GSI, где `PK = SK` и `SK = PK`, для обратного поиска.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стратегии ключей кодируют связи прямо в PK/SK: общий PK с разными SK даёт иерархию, дата в начале SK — диапазоны по времени, инвертированный GSI — обратный поиск.",
+                "example": "Чтобы достать все заказы пользователя одним запросом, используют `KeyConditionExpression` с `begins_with(SK, \"order#\")` при фиксированном `PK = user#123`.",
+                "when_to_apply": "Иерархический паттерн применяют, когда у родителя много детей одного типа и их надо доставать вместе; date-based — когда нужен порядок и диапазоны по времени.",
+                "edge_cases": "В SK кладут дату перед идентификатором (`date#order#id`), чтобы лексикографическая сортировка строки совпадала с хронологической; обратный порядок сломал бы диапазонные запросы.",
+                "related": "[[dynamodb-interview#Q4]] partition и sort key; [[dynamodb-interview#Q12]] паттерны определяют ключи; [[dynamodb-interview#Q11]] single-table и составные ключи."
               }
             }
           ]
@@ -791,18 +791,30 @@
             {
               "order": 0,
               "label": "A",
-              "text": "On-demand требует заранее планировать и выделять RCU/WCU под пиковую нагрузку, иначе ловит throttling, а provisioned тарифицируется строго по числу запросов — порядка $0.25 за миллион чтений и $1.25 за миллион записей — и масштабируется мгновенно без настройки ёмкости.",
+              "text": "Provisioned всегда дешевле on-demand при любом профиле трафика: за выделенные RCU/WCU платят фиксированную почасовую ставку, которая ниже поштучной оплаты запросов, поэтому on-demand берут лишь на dev/test, где ёмкость лень настраивать.",
               "correct": false,
               "sections": {
-                "what_actually": "Всё наоборот: on-demand — pay-per-request без планирования, provisioned — заранее выделенные RCU/WCU.",
-                "source_of_confusion": "Названия путают: «provisioned» звучит как «по факту», а «on-demand» — как «зарезервировано».",
-                "if_it_were_true": "Если бы on-demand требовал планирования ёмкости, исчез бы его смысл для непредсказуемого трафика, но он именно про отсутствие планирования.",
-                "how_it_should_be": "On-demand — оплата по запросам; provisioned — предвыделенная ёмкость в RCU/WCU."
+                "what_actually": "Provisioned дешевле только на предсказуемой ровной нагрузке; на рваном трафике он переплачивает за простой.",
+                "source_of_confusion": "Скидка reserved capacity создаёт впечатление безусловной выгоды provisioned.",
+                "if_it_were_true": "Если бы он всегда был дешевле, on-demand не существовал бы для непредсказуемых паттернов, но там он выгоднее.",
+                "how_it_should_be": "Дешевизна provisioned условна: она работает на стабильном трафике, а не всегда."
               }
             },
             {
               "order": 1,
               "label": "B",
+              "text": "On-demand масштабируется только вручную — лимиты RCU/WCU приходится поднимать через запрос в поддержку, поэтому на внезапных всплесках он захлёбывается и отдаёт throttling, тогда как provisioned полагается на реактивный auto-scaling с задержкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "On-demand как раз масштабируется мгновенно и автоматически — это его главное достоинство для всплесков.",
+                "source_of_confusion": "Ручной шардинг `Cassandra` ассоциируют с любым NoSQL, включая on-demand `DynamoDB`.",
+                "if_it_were_true": "Если бы он не справлялся со всплесками, его не советовали бы для непредсказуемого трафика, но советуют именно за это.",
+                "how_it_should_be": "On-demand авто-масштабируется мгновенно; ручное планирование — это про provisioned."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "On-demand — оплата по запросам (порядка $0.25 за миллион чтений и $1.25 за миллион записей в us-east-1; в конце 2024 AWS снизил on-demand-цены ещё примерно вдвое), мгновенный auto-scaling, без планирования ёмкости, хорош для непредсказуемого трафика и dev/test. Provisioned — заранее выделенные RCU/WCU, дешевле при стабильном предсказуемом трафике, скидка по reserved capacity до 76%, auto-scaling доступен, но реактивный с задержкой.",
               "correct": true,
               "sections": {
@@ -814,27 +826,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "On-demand масштабируется только вручную — лимиты RCU/WCU приходится поднимать через запрос в поддержку, поэтому на внезапных всплесках он захлёбывается и отдаёт throttling, тогда как provisioned полагается на реактивный auto-scaling с задержкой.",
-              "correct": false,
-              "sections": {
-                "what_actually": "On-demand как раз масштабируется мгновенно и автоматически — это его главное достоинство для всплесков.",
-                "source_of_confusion": "Ручной шардинг `Cassandra` ассоциируют с любым NoSQL, включая on-demand `DynamoDB`.",
-                "if_it_were_true": "Если бы он не справлялся со всплесками, его не советовали бы для непредсказуемого трафика, но советуют именно за это.",
-                "how_it_should_be": "On-demand авто-масштабируется мгновенно; ручное планирование — это про provisioned."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "Provisioned всегда дешевле on-demand при любом профиле трафика: за выделенные RCU/WCU платят фиксированную почасовую ставку, которая ниже поштучной оплаты запросов, поэтому on-demand берут лишь на dev/test, где ёмкость лень настраивать.",
+              "text": "On-demand требует заранее планировать и выделять RCU/WCU под пиковую нагрузку, иначе ловит throttling, а provisioned тарифицируется строго по числу запросов — порядка $0.25 за миллион чтений и $1.25 за миллион записей — и масштабируется мгновенно без настройки ёмкости.",
               "correct": false,
               "sections": {
-                "what_actually": "Provisioned дешевле только на предсказуемой ровной нагрузке; на рваном трафике он переплачивает за простой.",
-                "source_of_confusion": "Скидка reserved capacity создаёт впечатление безусловной выгоды provisioned.",
-                "if_it_were_true": "Если бы он всегда был дешевле, on-demand не существовал бы для непредсказуемых паттернов, но там он выгоднее.",
-                "how_it_should_be": "Дешевизна provisioned условна: она работает на стабильном трафике, а не всегда."
+                "what_actually": "Всё наоборот: on-demand — pay-per-request без планирования, provisioned — заранее выделенные RCU/WCU.",
+                "source_of_confusion": "Названия путают: «provisioned» звучит как «по факту», а «on-demand» — как «зарезервировано».",
+                "if_it_were_true": "Если бы on-demand требовал планирования ёмкости, исчез бы его смысл для непредсказуемого трафика, но он именно про отсутствие планирования.",
+                "how_it_should_be": "On-demand — оплата по запросам; provisioned — предвыделенная ёмкость в RCU/WCU."
               }
             }
           ]
@@ -851,13 +851,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "1 RCU — это одно eventually consistent чтение item любого размера, без ограничения в 4 KB.",
-              "correct": false,
+              "text": "RCU (Read Capacity Unit) — это 1 strongly consistent чтение item до 4 KB, либо 2 eventually consistent чтения до 4 KB, либо 0.5 transactional чтения. WCU (Write Capacity Unit) — это 1 запись item до 1 KB, либо 2 transactional записи. Крупнее блока — больше юнитов: чтение 8 KB strongly consistent = 2 RCU, запись item 2 KB = 2 WCU.",
+              "correct": true,
               "sections": {
-                "what_actually": "1 RCU — это одно strongly consistent чтение item до 4 KB (или два eventually consistent); размер ограничен.",
-                "source_of_confusion": "Безразмерность чтения упрощает модель, поэтому лимит 4 KB забывают.",
-                "if_it_were_true": "Если бы размер не учитывался, чтение 8 KB не стоило бы 2 RCU, но именно столько оно стоит.",
-                "how_it_should_be": "RCU считается на блок до 4 KB; крупный item тратит несколько RCU."
+                "explanation": "RCU и WCU нормируют пропускную способность по размеру item и модели консистентности: чем крупнее item и строже консистентность, тем больше юнитов тратит операция.",
+                "example": "Provisioning `RCU: 1000` даёт около 1000 чтений/сек для items до 4 KB, а `WCU: 500` — около 500 записей/сек для items до 1 KB.",
+                "when_to_apply": "RCU/WCU считают при провижининге provisioned-таблиц, оценивая нагрузку по размеру items и модели консистентности.",
+                "edge_cases": "При нехватке ёмкости запрос отбивается `ProvisionedThroughputExceededException`, и клиент должен ретраить с backoff.",
+                "related": "[[dynamodb-interview#Q14]] provisioned задаёт RCU/WCU; [[dynamodb-interview#Q16]] throttling и hot partition; [[dynamodb-interview#Q22]] транзакции стоят 2x юнитов."
               }
             },
             {
@@ -875,14 +876,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "RCU (Read Capacity Unit) — это 1 strongly consistent чтение item до 4 KB, либо 2 eventually consistent чтения до 4 KB, либо 0.5 transactional чтения. WCU (Write Capacity Unit) — это 1 запись item до 1 KB, либо 2 transactional записи. Крупнее блока — больше юнитов: чтение 8 KB strongly consistent = 2 RCU, запись item 2 KB = 2 WCU.",
-              "correct": true,
+              "text": "1 RCU — это одно eventually consistent чтение item любого размера, без ограничения в 4 KB.",
+              "correct": false,
               "sections": {
-                "explanation": "RCU и WCU нормируют пропускную способность по размеру item и модели консистентности: чем крупнее item и строже консистентность, тем больше юнитов тратит операция.",
-                "example": "Provisioning `RCU: 1000` даёт около 1000 чтений/сек для items до 4 KB, а `WCU: 500` — около 500 записей/сек для items до 1 KB.",
-                "when_to_apply": "RCU/WCU считают при провижининге provisioned-таблиц, оценивая нагрузку по размеру items и модели консистентности.",
-                "edge_cases": "При нехватке ёмкости запрос отбивается `ProvisionedThroughputExceededException`, и клиент должен ретраить с backoff.",
-                "related": "[[dynamodb-interview#Q14]] provisioned задаёт RCU/WCU; [[dynamodb-interview#Q16]] throttling и hot partition; [[dynamodb-interview#Q22]] транзакции стоят 2x юнитов."
+                "what_actually": "1 RCU — это одно strongly consistent чтение item до 4 KB (или два eventually consistent); размер ограничен.",
+                "source_of_confusion": "Безразмерность чтения упрощает модель, поэтому лимит 4 KB забывают.",
+                "if_it_were_true": "Если бы размер не учитывался, чтение 8 KB не стоило бы 2 RCU, но именно столько оно стоит.",
+                "how_it_should_be": "RCU считается на блок до 4 KB; крупный item тратит несколько RCU."
               }
             },
             {
@@ -911,6 +911,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Hot partition — это один partition key, получающий непропорционально много трафика. `DynamoDB` партиционирует данные по хешу PK, и если на один PK (например `status=\"ACTIVE\"` у 99% items) идёт основной трафик, физическая партиция перегружается. Симптомы: throttling при высокой ёмкости, неравномерное распределение запросов. Решения: high-cardinality PK, write sharding с суффиксом, read sharding через `DAX`, adaptive capacity.",
+              "correct": true,
+              "sections": {
+                "explanation": "Hot partition — следствие того, что `DynamoDB` шардирует данные по хешу PK: непропорциональный трафик на один ключ перегружает физическую партицию и троттлит её даже при общем запасе ёмкости.",
+                "example": "Плохой выбор `PK = status` загоняет почти все items под `ACTIVE`, все чтения бьют в одну партицию и упираются в её лимит — отсюда throttling.",
+                "when_to_apply": "Проблему диагностируют, когда видят `ProvisionedThroughputExceededException` несмотря на запас общей ёмкости — это сигнал перекоса по ключу.",
+                "edge_cases": "Adaptive capacity сглаживает кратковременные всплески, но долгосрочный hot partition всё равно требует исправления дизайна ключа.",
+                "related": "[[dynamodb-interview#Q4]] high-cardinality PK; [[dynamodb-interview#Q15]] throttling и RCU/WCU; [[dynamodb-interview#Q17]] adaptive capacity как частичный фикс."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Hot partition возникает, когда у таблицы слишком высокая суммарная provisioned-ёмкость.",
               "correct": false,
               "sections": {
@@ -918,18 +931,6 @@
                 "source_of_confusion": "Раз есть throttling, винят нехватку ёмкости, хотя проблема в распределении.",
                 "if_it_were_true": "Если бы дело было в общей ёмкости, её увеличение чинило бы проблему, но горячая партиция троттлит и при высокой ёмкости.",
                 "how_it_should_be": "Hot partition — это диспропорция трафика по ключу; лечится дизайном ключа, а не наращиванием ёмкости."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Лучшее решение hot partition — выбрать partition key с низкой кардинальностью, чтобы запросы шли в одну партицию.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: берут high-cardinality PK (`user_id`, `order_id`), чтобы трафик распределялся по многим партициям.",
-                "source_of_confusion": "Кажется, что концентрация в одной партиции упрощает работу, но именно она и создаёт горячую точку.",
-                "if_it_were_true": "Если бы низкая кардинальность помогала, `status` в роли PK не вызывал бы throttling, но вызывает.",
-                "how_it_should_be": "PK выбирают высококардинальным; низкая кардинальность — корень hot partition."
               }
             },
             {
@@ -947,14 +948,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Hot partition — это один partition key, получающий непропорционально много трафика. `DynamoDB` партиционирует данные по хешу PK, и если на один PK (например `status=\"ACTIVE\"` у 99% items) идёт основной трафик, физическая партиция перегружается. Симптомы: throttling при высокой ёмкости, неравномерное распределение запросов. Решения: high-cardinality PK, write sharding с суффиксом, read sharding через `DAX`, adaptive capacity.",
-              "correct": true,
+              "text": "Лучшее решение hot partition — выбрать partition key с низкой кардинальностью, чтобы запросы шли в одну партицию.",
+              "correct": false,
               "sections": {
-                "explanation": "Hot partition — следствие того, что `DynamoDB` шардирует данные по хешу PK: непропорциональный трафик на один ключ перегружает физическую партицию и троттлит её даже при общем запасе ёмкости.",
-                "example": "Плохой выбор `PK = status` загоняет почти все items под `ACTIVE`, все чтения бьют в одну партицию и упираются в её лимит — отсюда throttling.",
-                "when_to_apply": "Проблему диагностируют, когда видят `ProvisionedThroughputExceededException` несмотря на запас общей ёмкости — это сигнал перекоса по ключу.",
-                "edge_cases": "Adaptive capacity сглаживает кратковременные всплески, но долгосрочный hot partition всё равно требует исправления дизайна ключа.",
-                "related": "[[dynamodb-interview#Q4]] high-cardinality PK; [[dynamodb-interview#Q15]] throttling и RCU/WCU; [[dynamodb-interview#Q17]] adaptive capacity как частичный фикс."
+                "what_actually": "Наоборот: берут high-cardinality PK (`user_id`, `order_id`), чтобы трафик распределялся по многим партициям.",
+                "source_of_confusion": "Кажется, что концентрация в одной партиции упрощает работу, но именно она и создаёт горячую точку.",
+                "if_it_were_true": "Если бы низкая кардинальность помогала, `status` в роли PK не вызывал бы throttling, но вызывает.",
+                "how_it_should_be": "PK выбирают высококардинальным; низкая кардинальность — корень hot partition."
               }
             }
           ]
@@ -971,6 +971,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Adaptive capacity повышает общую ёмкость таблицы, увеличивая суммарный provisioned-лимит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Он перераспределяет существующую ёмкость к горячей партиции, а не увеличивает общий лимит таблицы.",
+                "source_of_confusion": "«Boosts capacity» воспринимают как рост общего лимита, а не локальное перераспределение.",
+                "if_it_were_true": "Если бы он поднимал общий лимит, менялся бы счёт за provisioned-ёмкость, но adaptive работает внутри выделенного.",
+                "how_it_should_be": "Adaptive перебрасывает уже выделенную ёмкость к горячей партиции, не меняя суммарный provisioned."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Adaptive capacity нужно включать вручную в настройках таблицы, по умолчанию он выключен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Adaptive capacity работает автоматически и постоянно, его не включают руками.",
+                "source_of_confusion": "Многие фичи `AWS` требуют явного включения, и это ожидание переносят сюда.",
+                "if_it_were_true": "Если бы его включали вручную, его отсутствие в конфиге означало бы постоянный throttling всплесков, но он работает по умолчанию.",
+                "how_it_should_be": "Механизм действует автоматически; ручного тумблера для него нет."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Adaptive capacity (с 2018) — механизм, который автоматически перераспределяет ёмкость к горячим партициям. Если таблица provisioned, скажем, на 1000 WCU равномерно, но 90% трафика идёт на одну партицию, `DynamoDB` временно повышает её ёмкость. Эффект — сглаживание краткосрочных проблем hot partition; это не фикс долгосрочных перекосов.",
               "correct": true,
               "sections": {
@@ -982,8 +1006,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "Adaptive capacity полностью устраняет необходимость правильно выбирать partition key.",
               "correct": false,
               "sections": {
@@ -991,30 +1015,6 @@
                 "source_of_confusion": "Автоматичность механизма создаёт иллюзию, что дизайн ключа больше не важен.",
                 "if_it_were_true": "Если бы он чинил всё, плохой PK не вызывал бы устойчивого throttling, но при постоянном перекосе вызывает.",
                 "how_it_should_be": "Adaptive гасит короткие всплески; выбор high-cardinality PK остаётся обязательным."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Adaptive capacity нужно включать вручную в настройках таблицы, по умолчанию он выключен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Adaptive capacity работает автоматически и постоянно, его не включают руками.",
-                "source_of_confusion": "Многие фичи `AWS` требуют явного включения, и это ожидание переносят сюда.",
-                "if_it_were_true": "Если бы его включали вручную, его отсутствие в конфиге означало бы постоянный throttling всплесков, но он работает по умолчанию.",
-                "how_it_should_be": "Механизм действует автоматически; ручного тумблера для него нет."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Adaptive capacity повышает общую ёмкость таблицы, увеличивая суммарный provisioned-лимит.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Он перераспределяет существующую ёмкость к горячей партиции, а не увеличивает общий лимит таблицы.",
-                "source_of_confusion": "«Boosts capacity» воспринимают как рост общего лимита, а не локальное перераспределение.",
-                "if_it_were_true": "Если бы он поднимал общий лимит, менялся бы счёт за provisioned-ёмкость, но adaptive работает внутри выделенного.",
-                "how_it_should_be": "Adaptive перебрасывает уже выделенную ёмкость к горячей партиции, не меняя суммарный provisioned."
               }
             }
           ]
@@ -1043,6 +1043,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`Scan` — самый быстрый и дешёвый способ читать данные: он идёт последовательно по диску одной пачкой, минуя индексы, поэтому в production его предпочитают для сплошных выборок.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Scan` медленный и дорогой (читает всю таблицу), в проде его избегают в пользу `Query`/`GetItem`.",
+                "source_of_confusion": "Простота `Scan` («читает всё без ключей») создаёт ложное ощущение эффективности.",
+                "if_it_were_true": "Если бы `Scan` был быстрым и дешёвым, не было бы смысла проектировать ключи и GSI, но именно ради них уходят от `Scan`.",
+                "how_it_should_be": "`Scan` — крайняя мера на малых данных; в проде читают через ключи и индексы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`GetItem` достаёт один item по полному PK (и SK, если ключ составной) за O(1) с single-digit-ms latency. `Query` достаёт несколько items с одним partition key, с опциональным условием по SK (`=`, `BETWEEN`, `begins_with`), сортировкой по SK и пагинацией — читается только нужная партиция, поэтому быстро. `Scan` читает всю таблицу: медленно и дорого, годится лишь для маленьких таблиц и миграций, в проде избегается.",
               "correct": true,
               "sections": {
@@ -1054,8 +1066,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`GetItem` за один вызов возвращает набор items с одинаковым partition key, сортируя их по sort key, поэтому им заменяют `Query`, когда нужно вычитать всю партицию сразу.",
               "correct": false,
               "sections": {
@@ -1063,18 +1075,6 @@
                 "source_of_confusion": "Обе операции «читают по ключу», поэтому их возможности смешивают.",
                 "if_it_were_true": "Если бы `GetItem` возвращал много items, не нужен был бы отдельный `Query`, но он существует именно для этого.",
                 "how_it_should_be": "`GetItem` — один item по полному PK; набор items одной партиции — это `Query`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Scan` — самый быстрый и дешёвый способ читать данные: он идёт последовательно по диску одной пачкой, минуя индексы, поэтому в production его предпочитают для сплошных выборок.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Scan` медленный и дорогой (читает всю таблицу), в проде его избегают в пользу `Query`/`GetItem`.",
-                "source_of_confusion": "Простота `Scan` («читает всё без ключей») создаёт ложное ощущение эффективности.",
-                "if_it_were_true": "Если бы `Scan` был быстрым и дешёвым, не было бы смысла проектировать ключи и GSI, но именно ради них уходят от `Scan`.",
-                "how_it_should_be": "`Scan` — крайняя мера на малых данных; в проде читают через ключи и индексы."
               }
             }
           ]
@@ -1163,13 +1163,14 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Filter expression может заменить условие по ключу и сделать запрос по любому атрибуту эффективным.",
-              "correct": false,
+              "text": "Filter expression применяется уже после того, как `Query`/`Scan` прочитали items, и до их возврата клиенту. Главный подвох: фильтр не снижает потребление read capacity — items всё равно читаются, а затем отсеиваются. Best practice — использовать key conditions (эффективные) вместо фильтров, а при частой потребности в фильтре заводить отдельный GSI.",
+              "correct": true,
               "sections": {
-                "what_actually": "Эффективность даёт key condition; фильтр лишь отсеивает уже прочитанное, не делая произвольный атрибут быстрым.",
-                "source_of_confusion": "Раз фильтр умеет любой атрибут, кажется, что он равноценен ключевому условию.",
-                "if_it_were_true": "Если бы фильтр был эффективен, не советовали бы добавлять GSI под частые фильтры, но советуют.",
-                "how_it_should_be": "Эффективны key conditions; под частый фильтр заводят GSI, а не полагаются на filter."
+                "explanation": "Фильтр применяется уже после чтения items, поэтому он сокращает размер ответа, но не потребление RCU; для частой фильтрации эффективнее завести GSI и фильтровать ключом.",
+                "example": "`table.query(KeyConditionExpression=Key(\"PK\").eq(\"user#123\"), FilterExpression=Attr(\"status\").eq(\"ACTIVE\"))` прочитает всю партицию пользователя и оплатит её, оставив лишь активные.",
+                "when_to_apply": "Фильтр уместен для редкого добавочного отсева поверх ключевого условия; если фильтрация частая — её выносят в GSI.",
+                "edge_cases": "Если ключевое условие выбрало много items, а фильтр оставил единицы, оплачивается чтение всех выбранных — это легко удваивает счёт незаметно.",
+                "related": "[[dynamodb-interview#Q18]] filter и стоимость чтения; [[dynamodb-interview#Q8]] GSI под частый фильтр; [[dynamodb-interview#Q10]] sparse-индекс как фильтр."
               }
             },
             {
@@ -1187,14 +1188,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Filter expression применяется уже после того, как `Query`/`Scan` прочитали items, и до их возврата клиенту. Главный подвох: фильтр не снижает потребление read capacity — items всё равно читаются, а затем отсеиваются. Best practice — использовать key conditions (эффективные) вместо фильтров, а при частой потребности в фильтре заводить отдельный GSI.",
-              "correct": true,
+              "text": "Filter expression может заменить условие по ключу и сделать запрос по любому атрибуту эффективным.",
+              "correct": false,
               "sections": {
-                "explanation": "Фильтр применяется уже после чтения items, поэтому он сокращает размер ответа, но не потребление RCU; для частой фильтрации эффективнее завести GSI и фильтровать ключом.",
-                "example": "`table.query(KeyConditionExpression=Key(\"PK\").eq(\"user#123\"), FilterExpression=Attr(\"status\").eq(\"ACTIVE\"))` прочитает всю партицию пользователя и оплатит её, оставив лишь активные.",
-                "when_to_apply": "Фильтр уместен для редкого добавочного отсева поверх ключевого условия; если фильтрация частая — её выносят в GSI.",
-                "edge_cases": "Если ключевое условие выбрало много items, а фильтр оставил единицы, оплачивается чтение всех выбранных — это легко удваивает счёт незаметно.",
-                "related": "[[dynamodb-interview#Q18]] filter и стоимость чтения; [[dynamodb-interview#Q8]] GSI под частый фильтр; [[dynamodb-interview#Q10]] sparse-индекс как фильтр."
+                "what_actually": "Эффективность даёт key condition; фильтр лишь отсеивает уже прочитанное, не делая произвольный атрибут быстрым.",
+                "source_of_confusion": "Раз фильтр умеет любой атрибут, кажется, что он равноценен ключевому условию.",
+                "if_it_were_true": "Если бы фильтр был эффективен, не советовали бы добавлять GSI под частые фильтры, но советуют.",
+                "how_it_should_be": "Эффективны key conditions; под частый фильтр заводят GSI, а не полагаются на filter."
               }
             }
           ]
@@ -1224,18 +1224,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Пагинация использует числовое смещение `OFFSET`, как `LIMIT/OFFSET` в `SQL`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`DynamoDB` использует курсор `LastEvaluatedKey`, а не числовой `OFFSET`.",
-                "source_of_confusion": "Опыт `SQL`-пагинации с `OFFSET` переносят на `DynamoDB`.",
-                "if_it_were_true": "Если бы был `OFFSET`, сервер пропускал бы N items на каждой странице, но он работает по ключу-курсору.",
-                "how_it_should_be": "Страницы листают по `ExclusiveStartKey`/`LastEvaluatedKey`, а не по смещению."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Один ответ `Query` может вернуть сколько угодно данных, лимита на размер ответа нет.",
               "correct": false,
               "sections": {
@@ -1246,8 +1234,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Отсутствие `LastEvaluatedKey` в ответе всегда означает, что запрос завершился с ошибкой.",
               "correct": false,
               "sections": {
@@ -1255,6 +1243,18 @@
                 "source_of_confusion": "Пустой токен трактуют как сбой, а не как сигнал конца выборки.",
                 "if_it_were_true": "Если бы это была ошибка, нормальный конец пагинации нельзя было бы отличить от сбоя, но именно так его и определяют.",
                 "how_it_should_be": "Нет `LastEvaluatedKey` — выборка дошла до конца; ошибки приходят отдельными исключениями."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Пагинация использует числовое смещение `OFFSET`, как `LIMIT/OFFSET` в `SQL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DynamoDB` использует курсор `LastEvaluatedKey`, а не числовой `OFFSET`.",
+                "source_of_confusion": "Опыт `SQL`-пагинации с `OFFSET` переносят на `DynamoDB`.",
+                "if_it_were_true": "Если бы был `OFFSET`, сервер пропускал бы N items на каждой странице, но он работает по ключу-курсору.",
+                "how_it_should_be": "Страницы листают по `ExclusiveStartKey`/`LastEvaluatedKey`, а не по смещению."
               }
             }
           ]
@@ -1271,31 +1271,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`TransactWriteItems` позволяет объединить неограниченное число операций в одной транзакции.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Лимит — до 100 операций (и до 4 MB) на транзакцию; «неограниченно» неверно.",
-                "source_of_confusion": "ACID-гарантии создают впечатление отсутствия жёстких лимитов.",
-                "if_it_were_true": "Если бы операций было сколько угодно, не было бы ограничения 4 MB/100 actions, но оно есть.",
-                "how_it_should_be": "Транзакция охватывает до 100 операций; сверх — её надо разбивать."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`TransactWriteItems` — атомарная группа до 100 операций (`Put`, `Update`, `Delete`, `ConditionCheck`) в одной транзакции; `TransactGetItems` — атомарное чтение до 100 items. Свойства: ACID в пределах `DynamoDB`, до 4 MB / 100 items, стоимость 2x WCU/RCU против обычных операций, возможен отказ `ConditionalCheckFailed` с последующим ретраем.",
-              "correct": true,
-              "sections": {
-                "explanation": "Транзакции дают ACID в пределах региона за счёт двухфазного протокола, отсюда удвоенная стоимость и лимит 100 операций; при конфликте условий вся группа атомарно откатывается.",
-                "example": "В одной транзакции можно `Put` заказ, `Update` остатка `SET qty = qty - :n` и `ConditionCheck` активности пользователя — всё применится атомарно или не применится вовсе.",
-                "when_to_apply": "Транзакции берут, когда несколько изменений обязаны примениться все-или-ничего, например списание остатка одновременно с созданием заказа.",
-                "edge_cases": "Транзакция может упасть с `ConditionalCheckFailed`, если условие одной из операций нарушено конкурентной записью — тогда вся группа откатывается и её ретраят.",
-                "related": "[[dynamodb-interview#Q23]] conditional writes без транзакций; [[dynamodb-interview#Q24]] optimistic locking; [[dynamodb-interview#Q15]] транзакции стоят 2x RCU/WCU."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Транзакции в `DynamoDB` бесплатны и потребляют столько же ёмкости, сколько обычные операции.",
               "correct": false,
               "sections": {
@@ -1306,8 +1281,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "DynamoDB-транзакции охватывают несколько таблиц в разных регионах и дают глобальный ACID.",
               "correct": false,
               "sections": {
@@ -1315,6 +1290,31 @@
                 "source_of_confusion": "`Global Tables` создают впечатление глобальных транзакций между регионами.",
                 "if_it_were_true": "Если бы они были межрегиональными, исчез бы конфликт last-writer-wins в Global Tables, но он остаётся.",
                 "how_it_should_be": "Транзакции локальны для региона; межрегиональная репликация eventually consistent, не транзакционна."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`TransactWriteItems` позволяет объединить неограниченное число операций в одной транзакции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Лимит — до 100 операций (и до 4 MB) на транзакцию; «неограниченно» неверно.",
+                "source_of_confusion": "ACID-гарантии создают впечатление отсутствия жёстких лимитов.",
+                "if_it_were_true": "Если бы операций было сколько угодно, не было бы ограничения 4 MB/100 actions, но оно есть.",
+                "how_it_should_be": "Транзакция охватывает до 100 операций; сверх — её надо разбивать."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`TransactWriteItems` — атомарная группа до 100 операций (`Put`, `Update`, `Delete`, `ConditionCheck`) в одной транзакции; `TransactGetItems` — атомарное чтение до 100 items. Свойства: ACID в пределах `DynamoDB`, до 4 MB / 100 items, стоимость 2x WCU/RCU против обычных операций, возможен отказ `ConditionalCheckFailed` с последующим ретраем.",
+              "correct": true,
+              "sections": {
+                "explanation": "Транзакции дают ACID в пределах региона за счёт двухфазного протокола, отсюда удвоенная стоимость и лимит 100 операций; при конфликте условий вся группа атомарно откатывается.",
+                "example": "В одной транзакции можно `Put` заказ, `Update` остатка `SET qty = qty - :n` и `ConditionCheck` активности пользователя — всё применится атомарно или не применится вовсе.",
+                "when_to_apply": "Транзакции берут, когда несколько изменений обязаны примениться все-или-ничего, например списание остатка одновременно с созданием заказа.",
+                "edge_cases": "Транзакция может упасть с `ConditionalCheckFailed`, если условие одной из операций нарушено конкурентной записью — тогда вся группа откатывается и её ретраят.",
+                "related": "[[dynamodb-interview#Q23]] conditional writes без транзакций; [[dynamodb-interview#Q24]] optimistic locking; [[dynamodb-interview#Q15]] транзакции стоят 2x RCU/WCU."
               }
             }
           ]
@@ -1343,18 +1343,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`ConditionExpression` вычисляется уже после применения записи: `DynamoDB` сначала сохраняет новое значение, затем проверяет условие и при провале откатывает item к прежнему состоянию, возвращая `ConditionalCheckFailedException`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Условие проверяется до применения: при провале запись просто не происходит, откатывать нечего.",
-                "source_of_confusion": "Логику «записал, потом проверил, потом откатил» переносят из других систем.",
-                "if_it_were_true": "Если бы запись применялась до проверки, появлялись бы частичные изменения, но условная запись либо проходит, либо нет.",
-                "how_it_should_be": "Условие проверяется перед записью; при `false` операция не выполняется вовсе."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Conditional writes — атомарные условные изменения без транзакций. Через `ConditionExpression` запись применяется только при выполнении условия: `put_item(..., ConditionExpression=\"attribute_not_exists(PK)\")` вставит item лишь если его ещё нет, а `update_item` с `ConditionExpression=\"#s = :expected\"` реализует compare-and-swap. Use cases: идемпотентность (insert if not exists), optimistic locking, атомарные счётчики.",
               "correct": true,
               "sections": {
@@ -1366,8 +1354,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Conditional write всегда применяет изменение, а `ConditionExpression` лишь пишется в журнал/CloudWatch для последующего аудита и на саму запись не влияет.",
               "correct": false,
               "sections": {
@@ -1375,6 +1363,18 @@
                 "source_of_confusion": "Кажется, что `ConditionExpression` — это метаданные, а не управляющая логика.",
                 "if_it_were_true": "Если бы запись всегда применялась, не было бы идемпотентности через `attribute_not_exists`, но она работает за счёт реального отказа.",
                 "how_it_should_be": "Условие реально блокирует запись при `false`; это не аудит, а контроль применения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`ConditionExpression` вычисляется уже после применения записи: `DynamoDB` сначала сохраняет новое значение, затем проверяет условие и при провале откатывает item к прежнему состоянию, возвращая `ConditionalCheckFailedException`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Условие проверяется до применения: при провале запись просто не происходит, откатывать нечего.",
+                "source_of_confusion": "Логику «записал, потом проверил, потом откатил» переносят из других систем.",
+                "if_it_were_true": "Если бы запись применялась до проверки, появлялись бы частичные изменения, но условная запись либо проходит, либо нет.",
+                "how_it_should_be": "Условие проверяется перед записью; при `false` операция не выполняется вовсе."
               }
             }
           ]
@@ -1391,13 +1391,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Optimistic locking в `DynamoDB` берёт явную блокировку строки на время чтения и записи.",
-              "correct": false,
+              "text": "Optimistic locking реализуют через version-атрибут и compare-and-swap: читают item с его `version`, меняют данные в коде, затем пишут с `UpdateExpression=\"SET ..., version = version + 1\"` и `ConditionExpression=\"version = :expected\"`. Если версия за это время изменилась, запись падает `ConditionalCheckFailed` и операцию ретраят (повторное чтение + повторная запись).",
+              "correct": true,
               "sections": {
-                "what_actually": "Явных блокировок нет: используется version-атрибут и compare-and-swap через `ConditionExpression`.",
-                "source_of_confusion": "Пессимистичные блокировки `SQL` переносят на `DynamoDB`.",
-                "if_it_were_true": "Если бы строка блокировалась, не нужен был бы version + CAS, но именно он реализует оптимизм без локов.",
-                "how_it_should_be": "Lock не берут; конкуренцию ловят сравнением версии при записи."
+                "explanation": "Optimistic locking строится поверх conditional write: version-атрибут плюс `ConditionExpression` ловят конкурентное изменение и отбивают запись `ConditionalCheckFailed`, не беря явных блокировок.",
+                "example": "Если два процесса прочитали `version=5`, первый успешно запишет `version=6`, а второй получит `ConditionalCheckFailed`, потому что в таблице уже `6`, а он ждал `5`.",
+                "when_to_apply": "Подход применяют при конкурентных обновлениях одного item, когда блокировки нежелательны, но затирание чужих изменений недопустимо.",
+                "edge_cases": "В Java SDK маппер даёт встроенный `@DynamoDbVersionAttribute`, автоматизирующий инкремент и условие версии поверх того же механизма CAS.",
+                "related": "[[dynamodb-interview#Q23]] conditional writes как основа CAS; [[dynamodb-interview#Q22]] транзакции для нескольких items; [[dynamodb-interview#Q16]] ретраи при конфликте."
               }
             },
             {
@@ -1427,14 +1428,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Optimistic locking реализуют через version-атрибут и compare-and-swap: читают item с его `version`, меняют данные в коде, затем пишут с `UpdateExpression=\"SET ..., version = version + 1\"` и `ConditionExpression=\"version = :expected\"`. Если версия за это время изменилась, запись падает `ConditionalCheckFailed` и операцию ретраят (повторное чтение + повторная запись).",
-              "correct": true,
+              "text": "Optimistic locking в `DynamoDB` берёт явную блокировку строки на время чтения и записи.",
+              "correct": false,
               "sections": {
-                "explanation": "Optimistic locking строится поверх conditional write: version-атрибут плюс `ConditionExpression` ловят конкурентное изменение и отбивают запись `ConditionalCheckFailed`, не беря явных блокировок.",
-                "example": "Если два процесса прочитали `version=5`, первый успешно запишет `version=6`, а второй получит `ConditionalCheckFailed`, потому что в таблице уже `6`, а он ждал `5`.",
-                "when_to_apply": "Подход применяют при конкурентных обновлениях одного item, когда блокировки нежелательны, но затирание чужих изменений недопустимо.",
-                "edge_cases": "В Java SDK маппер даёт встроенный `@DynamoDbVersionAttribute`, автоматизирующий инкремент и условие версии поверх того же механизма CAS.",
-                "related": "[[dynamodb-interview#Q23]] conditional writes как основа CAS; [[dynamodb-interview#Q22]] транзакции для нескольких items; [[dynamodb-interview#Q16]] ретраи при конфликте."
+                "what_actually": "Явных блокировок нет: используется version-атрибут и compare-and-swap через `ConditionExpression`.",
+                "source_of_confusion": "Пессимистичные блокировки `SQL` переносят на `DynamoDB`.",
+                "if_it_were_true": "Если бы строка блокировалась, не нужен был бы version + CAS, но именно он реализует оптимизм без локов.",
+                "how_it_should_be": "Lock не берут; конкуренцию ловят сравнением версии при записи."
               }
             }
           ]
@@ -1451,31 +1451,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "DynamoDB Streams — это change data capture (CDC) для `DynamoDB`: каждое `INSERT`/`UPDATE`/`DELETE` порождает событие в потоке. Запись содержит `eventName`, ключи и образы `NewImage`/`OldImage`. Retention потока — 24 часа. Use cases: триггеры `Lambda` на изменения, репликация в `OpenSearch`, обновление агрегатов/кэша, уведомления, audit log.",
-              "correct": true,
-              "sections": {
-                "explanation": "Streams — это упорядоченный CDC-поток модификаций таблицы с retention 24 часа; на него подписываются потребители, чтобы реагировать на изменения асинхронно, не опрашивая таблицу.",
-                "example": "Событие `{ \"eventName\": \"INSERT\", \"dynamodb\": { \"Keys\": { \"PK\": { \"S\": \"user#123\" } }, \"NewImage\": { ... } } }` потребитель читает и, например, отправляет welcome-email.",
-                "when_to_apply": "Streams включают, когда на изменения данных нужно реагировать асинхронно: пересчитать агрегат, разослать уведомление или зеркалировать в поисковый индекс.",
-                "edge_cases": "Retention потока всего 24 часа: если потребитель отстал более чем на сутки, записи теряются — нельзя строить долгую историю только на Streams.",
-                "related": "[[dynamodb-interview#Q26]] `Lambda`-триггеры на Streams; [[dynamodb-interview#Q28]] Global Tables используют репликацию; [[dynamodb-interview#Q1]] CDC поверх `DynamoDB`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "DynamoDB Streams хранят историю изменений неограниченно долго и заменяют отдельный audit-store.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Retention потока — всего 24 часа; для долгой истории события вычитывают и складывают в отдельное хранилище.",
-                "source_of_confusion": "CDC ассоциируют с бесконечным журналом изменений.",
-                "if_it_were_true": "Если бы retention был бесконечным, не нужно было бы экспортировать события для audit log, но это делают именно из-за 24 часов.",
-                "how_it_should_be": "Streams удерживают записи 24 часа; долгий audit строят, выгружая события в `S3`/лог."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Stream-запись содержит только ключи изменённого item, без старого и нового образов.",
               "correct": false,
               "sections": {
@@ -1486,8 +1461,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Streams фиксируют только операции `INSERT`, игнорируя `UPDATE` и `DELETE`.",
               "correct": false,
               "sections": {
@@ -1495,6 +1470,31 @@
                 "source_of_confusion": "Кажется, что CDC отслеживает только появление новых данных.",
                 "if_it_were_true": "Если бы `DELETE` не попадал в поток, нельзя было бы зеркалировать удаления в `OpenSearch`, но они туда приходят.",
                 "how_it_should_be": "Поток покрывает insert, update и delete; ограничение только вставками неверно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "DynamoDB Streams хранят историю изменений неограниченно долго и заменяют отдельный audit-store.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Retention потока — всего 24 часа; для долгой истории события вычитывают и складывают в отдельное хранилище.",
+                "source_of_confusion": "CDC ассоциируют с бесконечным журналом изменений.",
+                "if_it_were_true": "Если бы retention был бесконечным, не нужно было бы экспортировать события для audit log, но это делают именно из-за 24 часов.",
+                "how_it_should_be": "Streams удерживают записи 24 часа; долгий audit строят, выгружая события в `S3`/лог."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "DynamoDB Streams — это change data capture (CDC) для `DynamoDB`: каждое `INSERT`/`UPDATE`/`DELETE` порождает событие в потоке. Запись содержит `eventName`, ключи и образы `NewImage`/`OldImage`. Retention потока — 24 часа. Use cases: триггеры `Lambda` на изменения, репликация в `OpenSearch`, обновление агрегатов/кэша, уведомления, audit log.",
+              "correct": true,
+              "sections": {
+                "explanation": "Streams — это упорядоченный CDC-поток модификаций таблицы с retention 24 часа; на него подписываются потребители, чтобы реагировать на изменения асинхронно, не опрашивая таблицу.",
+                "example": "Событие `{ \"eventName\": \"INSERT\", \"dynamodb\": { \"Keys\": { \"PK\": { \"S\": \"user#123\" } }, \"NewImage\": { ... } } }` потребитель читает и, например, отправляет welcome-email.",
+                "when_to_apply": "Streams включают, когда на изменения данных нужно реагировать асинхронно: пересчитать агрегат, разослать уведомление или зеркалировать в поисковый индекс.",
+                "edge_cases": "Retention потока всего 24 часа: если потребитель отстал более чем на сутки, записи теряются — нельзя строить долгую историю только на Streams.",
+                "related": "[[dynamodb-interview#Q26]] `Lambda`-триггеры на Streams; [[dynamodb-interview#Q28]] Global Tables используют репликацию; [[dynamodb-interview#Q1]] CDC поверх `DynamoDB`."
               }
             }
           ]
@@ -1511,18 +1511,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Lambda`-триггер на Streams вызывается отдельно на каждую запись, batch-обработки не существует.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Lambda` получает batch записей (размер batch настраивается), а не строго по одной.",
-                "source_of_confusion": "Простая ментальная модель «одно событие — один вызов» вытесняет batch-семантику.",
-                "if_it_were_true": "Если бы вызов был на каждую запись, не было бы параметров batch size и `ReportBatchItemFailures`, но они есть.",
-                "how_it_should_be": "Триггер обрабатывает batch записей; параметры batch и partial-failure это подтверждают."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Lambda`-триггер на DynamoDB Streams вызывается с batch записей и в обработчике итерирует `event[\"Records\"]`, реагируя на `eventName`. Конфигурируется batch size (1–10000), batch window (0–5 сек), parallelization factor (1–10) и filter expressions (обрабатывать только подходящие записи). Подвох: `Lambda` обрабатывает batch, поэтому частичный сбой требует `ReportBatchItemFailures`, иначе ретраится весь batch.",
               "correct": true,
               "sections": {
@@ -1534,8 +1522,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Filter expression в триггере отсеивает записи уже после запуска `Lambda`, не экономя вызовы.",
               "correct": false,
               "sections": {
@@ -1546,8 +1534,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "При частичном сбое batch `Lambda` молча подтверждает весь batch и теряет необработанные записи.",
               "correct": false,
               "sections": {
@@ -1555,6 +1543,18 @@
                 "source_of_confusion": "Поведение «at-most-once» ошибочно приписывают Streams-триггеру.",
                 "if_it_were_true": "Если бы batch молча подтверждался, не понадобился бы механизм `ReportBatchItemFailures`, но он введён ради корректной обработки сбоев.",
                 "how_it_should_be": "Сбой ведёт к ретраю batch; `ReportBatchItemFailures` сужает ретрай до неудавшихся записей."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Lambda`-триггер на Streams вызывается отдельно на каждую запись, batch-обработки не существует.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Lambda` получает batch записей (размер batch настраивается), а не строго по одной.",
+                "source_of_confusion": "Простая ментальная модель «одно событие — один вызов» вытесняет batch-семантику.",
+                "if_it_were_true": "Если бы вызов был на каждую запись, не было бы параметров batch size и `ReportBatchItemFailures`, но они есть.",
+                "how_it_should_be": "Триггер обрабатывает batch записей; параметры batch и partial-failure это подтверждают."
               }
             }
           ]
@@ -1571,18 +1571,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`DAX` — write-back кэш перед `DynamoDB` с microsecond-latency: он принимает `PutItem`/`UpdateItem` в память и асинхронно сбрасывает их в таблицу, ускоряя write-heavy нагрузки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`DAX` кэширует чтения (`GetItem`/`Query`), а не ускоряет записи; запись идёт сквозь него в `DynamoDB`.",
-                "source_of_confusion": "Слово «accelerator» воспринимают как ускорение всех операций, включая запись.",
-                "if_it_were_true": "Если бы `DAX` ускорял запись, он годился бы для write-heavy, но его явно не рекомендуют для записи.",
-                "how_it_should_be": "`DAX` ускоряет чтение; для write-heavy он не предназначен."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`DAX` — managed in-memory кэш перед `DynamoDB`, который отдаёт из кэша strongly consistent чтения, поэтому подходит там, где нужны строго свежие данные без обращения к таблице напрямую.",
               "correct": false,
               "sections": {
@@ -1593,8 +1581,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "`DAX` — write-back кэш перед `DynamoDB` с microsecond-latency: он принимает `PutItem`/`UpdateItem` в память и асинхронно сбрасывает их в таблицу, ускоряя write-heavy нагрузки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DAX` кэширует чтения (`GetItem`/`Query`), а не ускоряет записи; запись идёт сквозь него в `DynamoDB`.",
+                "source_of_confusion": "Слово «accelerator» воспринимают как ускорение всех операций, включая запись.",
+                "if_it_were_true": "Если бы `DAX` ускорял запись, он годился бы для write-heavy, но его явно не рекомендуют для записи.",
+                "how_it_should_be": "`DAX` ускоряет чтение; для write-heavy он не предназначен."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "Подключение `DAX` требует переписать клиента на отдельный, несовместимый с `DynamoDB` SDK интерфейс, поэтому drop-in замены существующего кода не получается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DAX` API-совместим с `DynamoDB` SDK — это drop-in замена клиента без переписывания логики.",
+                "source_of_confusion": "Новый сервис ожидаемо ассоциируют с новым API и миграцией кода.",
+                "if_it_were_true": "Если бы API был несовместим, `DAX` не называли бы drop-in, но именно совместимость — его преимущество.",
+                "how_it_should_be": "`DAX` подключают как drop-in клиент; код запросов остаётся прежним."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`DAX` — managed in-memory кэш перед `DynamoDB` с microsecond-latency и API-совместимостью (drop-in для `DynamoDB` SDK). Кэширует item cache (результаты `GetItem`) и query cache (результаты `Query`). Подходит для read-heavy нагрузок с частым обращением к одним и тем же items. Не подходит, когда нужна strong consistency (`DAX` eventually consistent) или для write-heavy (кэшируются только чтения).",
               "correct": true,
               "sections": {
@@ -1603,18 +1615,6 @@
                 "when_to_apply": "`DAX` ставят перед read-heavy таблицей с горячими items, где одни и те же ключи запрашивают многократно и допустима небольшая задержка консистентности.",
                 "edge_cases": "Так как `DAX` eventually consistent, сразу после записи чтение через него может вернуть устаревшее значение — для свежего читают напрямую из `DynamoDB`.",
                 "related": "[[dynamodb-interview#Q16]] read sharding через `DAX`; [[dynamodb-interview#Q15]] strong vs eventual чтения; [[dynamodb-interview#Q28]] Global Tables и eventual consistency."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Подключение `DAX` требует переписать клиента на отдельный, несовместимый с `DynamoDB` SDK интерфейс, поэтому drop-in замены существующего кода не получается.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`DAX` API-совместим с `DynamoDB` SDK — это drop-in замена клиента без переписывания логики.",
-                "source_of_confusion": "Новый сервис ожидаемо ассоциируют с новым API и миграцией кода.",
-                "if_it_were_true": "Если бы API был несовместим, `DAX` не называли бы drop-in, но именно совместимость — его преимущество.",
-                "how_it_should_be": "`DAX` подключают как drop-in клиент; код запросов остаётся прежним."
               }
             }
           ]
@@ -1631,30 +1631,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Global Tables дают strong consistency между регионами: запись мгновенно видна во всех репликах.",
-              "correct": false,
+              "text": "Global Tables — multi-region репликация для `DynamoDB`. Это multi-master: записи принимаются в любом регионе и реплицируются в остальные. Конфликты решаются по правилу last-writer-wins (по timestamp). Use cases: disaster recovery, низкая задержка для пользователей в разных регионах, compliance/data residency. Подвох: между регионами eventual consistency с задержкой до нескольких секунд.",
+              "correct": true,
               "sections": {
-                "what_actually": "Между регионами консистентность eventual: репликация занимает до нескольких секунд, не мгновенна.",
-                "source_of_confusion": "«Global» ассоциируют с единым мгновенным состоянием во всех регионах.",
-                "if_it_were_true": "Если бы консистентность была strong, не было бы конфликтов last-writer-wins, но они возникают из-за задержки.",
-                "how_it_should_be": "Межрегиональная консистентность eventual; свежесть в другом регионе не гарантируется сразу."
+                "explanation": "Global Tables — это multi-master асинхронная репликация между регионами: локальная запись быстра, но межрегиональная консистентность eventual, а конфликты решает last-writer-wins по timestamp.",
+                "example": "Пользователи в `us-east-1` и `eu-west-1` пишут в локальную реплику с низкой задержкой, а `DynamoDB` асинхронно синхронизирует изменения между регионами.",
+                "when_to_apply": "Global Tables включают для DR и геораспределённого доступа, когда важна низкая локальная задержка и допустима секундная межрегиональная рассинхронизация.",
+                "edge_cases": "При одновременной записи одного item в двух регионах побеждает запись с большим timestamp, поэтому конкурентные обновления в разных регионах могут терять данные.",
+                "related": "[[dynamodb-interview#Q25]] репликация через изменения; [[dynamodb-interview#Q27]] `DAX` и eventual consistency; [[dynamodb-interview#Q3]] ограничения multi-region writes."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Global Tables — это single-master: запись возможна только в одном основном регионе.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Global Tables multi-master: запись принимается в любом регионе и реплицируется в остальные.",
-                "source_of_confusion": "Классическую master-replica модель переносят на Global Tables.",
-                "if_it_were_true": "Если бы был один master, не возникало бы конфликтов записи между регионами, но multi-master их допускает.",
-                "how_it_should_be": "Запись идёт в любой регион (multi-master); конфликты решает last-writer-wins."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Конфликты записи между регионами в Global Tables решаются ручным merge приложения.",
               "correct": false,
               "sections": {
@@ -1665,16 +1654,27 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "Global Tables дают strong consistency между регионами: запись мгновенно видна во всех репликах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Между регионами консистентность eventual: репликация занимает до нескольких секунд, не мгновенна.",
+                "source_of_confusion": "«Global» ассоциируют с единым мгновенным состоянием во всех регионах.",
+                "if_it_were_true": "Если бы консистентность была strong, не было бы конфликтов last-writer-wins, но они возникают из-за задержки.",
+                "how_it_should_be": "Межрегиональная консистентность eventual; свежесть в другом регионе не гарантируется сразу."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "Global Tables — multi-region репликация для `DynamoDB`. Это multi-master: записи принимаются в любом регионе и реплицируются в остальные. Конфликты решаются по правилу last-writer-wins (по timestamp). Use cases: disaster recovery, низкая задержка для пользователей в разных регионах, compliance/data residency. Подвох: между регионами eventual consistency с задержкой до нескольких секунд.",
-              "correct": true,
+              "text": "Global Tables — это single-master: запись возможна только в одном основном регионе.",
+              "correct": false,
               "sections": {
-                "explanation": "Global Tables — это multi-master асинхронная репликация между регионами: локальная запись быстра, но межрегиональная консистентность eventual, а конфликты решает last-writer-wins по timestamp.",
-                "example": "Пользователи в `us-east-1` и `eu-west-1` пишут в локальную реплику с низкой задержкой, а `DynamoDB` асинхронно синхронизирует изменения между регионами.",
-                "when_to_apply": "Global Tables включают для DR и геораспределённого доступа, когда важна низкая локальная задержка и допустима секундная межрегиональная рассинхронизация.",
-                "edge_cases": "При одновременной записи одного item в двух регионах побеждает запись с большим timestamp, поэтому конкурентные обновления в разных регионах могут терять данные.",
-                "related": "[[dynamodb-interview#Q25]] репликация через изменения; [[dynamodb-interview#Q27]] `DAX` и eventual consistency; [[dynamodb-interview#Q3]] ограничения multi-region writes."
+                "what_actually": "Global Tables multi-master: запись принимается в любом регионе и реплицируется в остальные.",
+                "source_of_confusion": "Классическую master-replica модель переносят на Global Tables.",
+                "if_it_were_true": "Если бы был один master, не возникало бы конфликтов записи между регионами, но multi-master их допускает.",
+                "how_it_should_be": "Запись идёт в любой регион (multi-master); конфликты решает last-writer-wins."
               }
             }
           ]
@@ -1691,6 +1691,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "On-demand backup `DynamoDB` снимает сам, автоматически по расписанию — полный снимок таблицы каждый час без участия пользователя, а PITR добавляют только для восстановления между этими ежечасными снимками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "On-demand backup создаётся по явной команде (`create-backup`); автоматичен непрерывный PITR, а не on-demand.",
+                "source_of_confusion": "Непрерывность PITR переносят на on-demand backups как «автоматические».",
+                "if_it_were_true": "Если бы on-demand был автоматическим, не было бы смысла в команде `create-backup`, но её вызывают вручную.",
+                "how_it_should_be": "On-demand backup инициируют командой; автоматический непрерывный механизм — это PITR."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "On-demand backup и PITR снимают данные синхронно и на время копирования блокируют запись в таблицу, поэтому их запускают в окно низкой нагрузки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Backup и PITR не влияют на доступность: запись и чтение продолжаются без блокировок и снижения производительности.",
+                "source_of_confusion": "Опыт блокирующих бэкапов в `SQL`-СУБД переносят на `DynamoDB`.",
+                "if_it_were_true": "Если бы backup блокировал запись, его нельзя было бы держать включённым в проде постоянно, но PITR держат всегда.",
+                "how_it_should_be": "Backup/PITR работают онлайн без блокировки таблицы; нагрузка не страдает."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`DynamoDB` поддерживает on-demand backups (`aws dynamodb create-backup`) — полные снимки таблицы по запросу — и PITR (Point-in-time recovery): непрерывный backup, позволяющий восстановиться на любую секунду за последние 35 дней. PITR стоит около $0.20/GB/месяц дополнительно и включается через `update-continuous-backups`. Best practice — держать PITR включённым для production.",
               "correct": true,
               "sections": {
@@ -1702,8 +1726,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "PITR — непрерывный backup, который включается через `update-continuous-backups` и позволяет восстановить таблицу на любую секунду за последние 35 минут, поэтому защищает только от совсем свежих ошибок.",
               "correct": false,
               "sections": {
@@ -1711,30 +1735,6 @@
                 "source_of_confusion": "Единицу времени (дни) подменяют минутами при пересказе.",
                 "if_it_were_true": "Если бы окно было 35 минут, PITR не защищал бы от обнаруженного через сутки удаления, но он на это и рассчитан.",
                 "how_it_should_be": "PITR покрывает 35 дней с точностью до секунды; «минуты» — ошибка."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "On-demand backup `DynamoDB` снимает сам, автоматически по расписанию — полный снимок таблицы каждый час без участия пользователя, а PITR добавляют только для восстановления между этими ежечасными снимками.",
-              "correct": false,
-              "sections": {
-                "what_actually": "On-demand backup создаётся по явной команде (`create-backup`); автоматичен непрерывный PITR, а не on-demand.",
-                "source_of_confusion": "Непрерывность PITR переносят на on-demand backups как «автоматические».",
-                "if_it_were_true": "Если бы on-demand был автоматическим, не было бы смысла в команде `create-backup`, но её вызывают вручную.",
-                "how_it_should_be": "On-demand backup инициируют командой; автоматический непрерывный механизм — это PITR."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "On-demand backup и PITR снимают данные синхронно и на время копирования блокируют запись в таблицу, поэтому их запускают в окно низкой нагрузки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Backup и PITR не влияют на доступность: запись и чтение продолжаются без блокировок и снижения производительности.",
-                "source_of_confusion": "Опыт блокирующих бэкапов в `SQL`-СУБД переносят на `DynamoDB`.",
-                "if_it_were_true": "Если бы backup блокировал запись, его нельзя было бы держать включённым в проде постоянно, но PITR держат всегда.",
-                "how_it_should_be": "Backup/PITR работают онлайн без блокировки таблицы; нагрузка не страдает."
               }
             }
           ]
@@ -1751,13 +1751,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главная ошибка — слишком мало GSI: без дополнительных индексов не хватает access-паттернов, поэтому в production на каждую таблицу заводят как можно больше GSI про запас.",
+              "text": "`Scan` в production безопасен и даже рекомендуется для сплошного чтения, а единственная реальная ошибка — неверный выбор partition key, ведущий к hot partitions и throttling.",
               "correct": false,
               "sections": {
-                "what_actually": "Частая ошибка обратная — слишком много GSI: каждый удваивает запись и повышает стоимость.",
-                "source_of_confusion": "Раз GSI добавляют паттерны, кажется, что чем их больше, тем лучше.",
-                "if_it_were_true": "Если бы проблемой был дефицит GSI, не предупреждали бы про оверхед лишних индексов, но предупреждают.",
-                "how_it_should_be": "Опасен избыток GSI (оверхед записи и цена), а не их нехватка."
+                "what_actually": "`Scan` в проде — самостоятельная частая ошибка: он медленный и дорогой, его избегают.",
+                "source_of_confusion": "Универсальность `Scan` («читает всё») принимают за допустимость в проде.",
+                "if_it_were_true": "Если бы `Scan` был безопасен, его не включали бы в список антипаттернов, но он там есть.",
+                "how_it_should_be": "И плохой PK, и `Scan` в проде — обе частые ошибки, не только выбор ключа."
               }
             },
             {
@@ -1776,18 +1776,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Scan` в production безопасен и даже рекомендуется для сплошного чтения, а единственная реальная ошибка — неверный выбор partition key, ведущий к hot partitions и throttling.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Scan` в проде — самостоятельная частая ошибка: он медленный и дорогой, его избегают.",
-                "source_of_confusion": "Универсальность `Scan` («читает всё») принимают за допустимость в проде.",
-                "if_it_were_true": "Если бы `Scan` был безопасен, его не включали бы в список антипаттернов, но он там есть.",
-                "how_it_should_be": "И плохой PK, и `Scan` в проде — обе частые ошибки, не только выбор ключа."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Strongly consistent чтения тарифицируются так же, как eventually consistent, поэтому их безопасно включать во всех `Query` и `GetItem` без роста стоимости.",
               "correct": false,
               "sections": {
@@ -1795,6 +1783,18 @@
                 "source_of_confusion": "Желание «всегда свежих данных» заслоняет ценовую цену strong consistency.",
                 "if_it_were_true": "Если бы strong reads были бесплатны, их повсеместное включение не попадало бы в список ошибок, но оно туда входит.",
                 "how_it_should_be": "Strong consistency дороже вдвое; её включают только там, где свежесть реально нужна."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главная ошибка — слишком мало GSI: без дополнительных индексов не хватает access-паттернов, поэтому в production на каждую таблицу заводят как можно больше GSI про запас.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Частая ошибка обратная — слишком много GSI: каждый удваивает запись и повышает стоимость.",
+                "source_of_confusion": "Раз GSI добавляют паттерны, кажется, что чем их больше, тем лучше.",
+                "if_it_were_true": "Если бы проблемой был дефицит GSI, не предупреждали бы про оверхед лишних индексов, но предупреждают.",
+                "how_it_should_be": "Опасен избыток GSI (оверхед записи и цена), а не их нехватка."
               }
             }
           ]

@@ -9,29 +9,16 @@
           "question_text": "Что такое `Helm` и какие задачи он решает?",
           "options": [
             {
-              "text": "`Helm` — пакетный менеджер для Kubernetes (аналог `apt`/`yum` для Linux или `npm` для Node.js). Он упаковывает множество манифестов в единый артефакт `chart`, параметризует деплой через `values.yaml`, версионирует релизы (каждый деплой = новый `revision`), позволяет откатываться через `helm rollback` и управлять зависимостями между chart-ами.",
-              "correct": true,
+              "text": "`Helm` — это система мониторинга, которая собирает метрики Pod-ов и строит дашборды по состоянию кластера.",
+              "correct": false,
               "sections": {
-                "explanation": "Helm решает повторяемость деплоя: один chart разворачивается одинаково в dev/staging/prod через разные values, а история ревизий даёт быстрый откат на предыдущее состояние.",
-                "example": "`helm upgrade my-app bitnami/nginx --values prod-values.yaml`, а при сбое — `helm rollback my-app 2`, что возвращает релиз к ревизии 2 за секунды.",
-                "when_to_apply": "Применяют когда в кластере деплоится приложение из десятков манифестов, которые нужно конфигурировать под окружения и версионировать без ручного редактирования YAML.",
-                "edge_cases": "Helm не управляет состоянием самого приложения (данными в БД); rollback откатывает только манифесты, а необратимые миграции схемы он вернуть не сможет.",
-                "related": "[[helm-interview#Q2]] что такое Chart как пакет; [[helm-interview#Q4]] что такое Release; [[helm-interview#Q11]] install/upgrade/rollback на практике."
+                "what_actually": "Сбором метрик и дашбордами занимаются `Prometheus` и `Grafana`; Helm их лишь может задеплоить как chart, но сам не мониторит.",
+                "source_of_confusion": "Helm часто ставят рядом со стеком наблюдаемости, поэтому ему ошибочно приписывают функции мониторинга.",
+                "if_it_were_true": "Тогда после `helm install` появлялись бы дашборды метрик, но Helm выводит лишь `NOTES.txt`, а не графики.",
+                "how_it_should_be": "Helm — пакетный менеджер для деплоя; наблюдаемость обеспечивают отдельные системы вроде Prometheus."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "`Helm` — это runtime-движок, который заменяет `kube-scheduler` и сам решает, на какие узлы кластера ставить Pod-ы установленного приложения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Размещением Pod-ов по узлам занимается `kube-scheduler` Kubernetes; Helm лишь генерирует и применяет манифесты, а дальше всё решает control plane.",
-                "source_of_confusion": "Helm управляет деплоем, поэтому кажется, что он же отвечает и за планирование размещения Pod-ов.",
-                "if_it_were_true": "Тогда удаление Helm ломало бы scheduling уже работающих приложений, но релизы продолжают жить и без CLI.",
-                "how_it_should_be": "Helm — клиентский пакетный менеджер: он рендерит chart в манифесты и отдаёт их API server, а scheduling делает Kubernetes."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "`Helm` — это CNI-плагин, который настраивает сетевую связность между Pod-ами и реализует сетевые политики внутри кластера.",
@@ -42,17 +29,30 @@
                 "if_it_were_true": "Тогда без Helm Pod-ы не могли бы общаться по сети, но кластер работает с любым CNI и вообще без Helm.",
                 "how_it_should_be": "Helm — это упаковка и деплой манифестов; сеть Pod-ов настраивает отдельный CNI-плагин."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Helm` — пакетный менеджер для Kubernetes (аналог `apt`/`yum` для Linux или `npm` для Node.js). Он упаковывает множество манифестов в единый артефакт `chart`, параметризует деплой через `values.yaml`, версионирует релизы (каждый деплой = новый `revision`), позволяет откатываться через `helm rollback` и управлять зависимостями между chart-ами.",
+              "correct": true,
+              "sections": {
+                "explanation": "Helm решает повторяемость деплоя: один chart разворачивается одинаково в dev/staging/prod через разные values, а история ревизий даёт быстрый откат на предыдущее состояние.",
+                "example": "`helm upgrade my-app bitnami/nginx --values prod-values.yaml`, а при сбое — `helm rollback my-app 2`, что возвращает релиз к ревизии 2 за секунды.",
+                "when_to_apply": "Применяют когда в кластере деплоится приложение из десятков манифестов, которые нужно конфигурировать под окружения и версионировать без ручного редактирования YAML.",
+                "edge_cases": "Helm не управляет состоянием самого приложения (данными в БД); rollback откатывает только манифесты, а необратимые миграции схемы он вернуть не сможет.",
+                "related": "[[helm-interview#Q2]] что такое Chart как пакет; [[helm-interview#Q4]] что такое Release; [[helm-interview#Q11]] install/upgrade/rollback на практике."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`Helm` — это система мониторинга, которая собирает метрики Pod-ов и строит дашборды по состоянию кластера.",
+              "text": "`Helm` — это runtime-движок, который заменяет `kube-scheduler` и сам решает, на какие узлы кластера ставить Pod-ы установленного приложения.",
               "correct": false,
               "sections": {
-                "what_actually": "Сбором метрик и дашбордами занимаются `Prometheus` и `Grafana`; Helm их лишь может задеплоить как chart, но сам не мониторит.",
-                "source_of_confusion": "Helm часто ставят рядом со стеком наблюдаемости, поэтому ему ошибочно приписывают функции мониторинга.",
-                "if_it_were_true": "Тогда после `helm install` появлялись бы дашборды метрик, но Helm выводит лишь `NOTES.txt`, а не графики.",
-                "how_it_should_be": "Helm — пакетный менеджер для деплоя; наблюдаемость обеспечивают отдельные системы вроде Prometheus."
+                "what_actually": "Размещением Pod-ов по узлам занимается `kube-scheduler` Kubernetes; Helm лишь генерирует и применяет манифесты, а дальше всё решает control plane.",
+                "source_of_confusion": "Helm управляет деплоем, поэтому кажется, что он же отвечает и за планирование размещения Pod-ов.",
+                "if_it_were_true": "Тогда удаление Helm ломало бы scheduling уже работающих приложений, но релизы продолжают жить и без CLI.",
+                "how_it_should_be": "Helm — клиентский пакетный менеджер: он рендерит chart в манифесты и отдаёт их API server, а scheduling делает Kubernetes."
               },
               "label": "D",
               "order": 3
@@ -69,6 +69,18 @@
           "question_text": "Что такое `Helm Chart`?",
           "options": [
             {
+              "text": "`Chart` — это один YAML-файл, в котором перечислены все Kubernetes-манифесты приложения без всякой параметризации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Chart — это целая директория с `Chart.yaml`, `values.yaml` и каталогом `templates/`, а не единственный плоский YAML-файл.",
+                "source_of_confusion": "Манифесты Kubernetes часто кладут в один файл, поэтому chart представляют так же.",
+                "if_it_were_true": "Тогда не было бы смысла в `values.yaml` и Go-шаблонах, но именно параметризация — суть Helm.",
+                "how_it_should_be": "Chart — это структурированный пакет из нескольких файлов и каталогов с шаблонами и метаданными."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "`Chart` — это всегда уже работающий экземпляр приложения в кластере с конкретными значениями и текущей ревизией.",
               "correct": false,
               "sections": {
@@ -77,8 +89,20 @@
                 "if_it_were_true": "Тогда нельзя было бы установить один chart дважды под разными именами, но это рутинная операция Helm.",
                 "how_it_should_be": "Chart — это пакет шаблонов; установленный из него экземпляр с values и ревизией — это Release."
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Chart` — это формат образа контейнера, который Docker собирает из `Dockerfile` для запуска приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Образ контейнера собирает Docker из `Dockerfile`; chart же содержит манифесты, которые ссылаются на готовый образ, но сам образом не является.",
+                "source_of_confusion": "И образ, и chart — артефакты доставки приложения, поэтому их путают как «пакет приложения».",
+                "if_it_were_true": "Тогда `helm install` запускал бы сборку образа, но Helm лишь применяет манифесты с уже существующим `image.tag`.",
+                "how_it_should_be": "Chart — пакет Kubernetes-манифестов; образ контейнера — отдельный артефакт, на который chart ссылается."
+              },
+              "label": "C",
+              "order": 2
             },
             {
               "text": "`Chart` — директория (или `.tgz` архив) с фиксированной структурой, содержащая шаблоны Kubernetes-манифестов и метаданные. Chart описывает, как должно быть установлено приложение: при рендеринге Helm подставляет values в Go-шаблоны и получает финальные YAML-манифесты, которые применяются к кластеру.",
@@ -89,30 +113,6 @@
                 "when_to_apply": "Создают chart, когда приложение нужно деплоить повторяемо в несколько окружений или раздавать другим командам как готовый пакет.",
                 "edge_cases": "Файлы в `templates/`, начинающиеся с `_` (например `_helpers.tpl`), не рендерятся как манифесты — это библиотека named templates, а не ресурсы кластера.",
                 "related": "[[helm-interview#Q1]] Helm как пакетный менеджер; [[helm-interview#Q5]] структура директорий chart; [[helm-interview#Q6]] содержимое Chart.yaml."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Chart` — это один YAML-файл, в котором перечислены все Kubernetes-манифесты приложения без всякой параметризации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Chart — это целая директория с `Chart.yaml`, `values.yaml` и каталогом `templates/`, а не единственный плоский YAML-файл.",
-                "source_of_confusion": "Манифесты Kubernetes часто кладут в один файл, поэтому chart представляют так же.",
-                "if_it_were_true": "Тогда не было бы смысла в `values.yaml` и Go-шаблонах, но именно параметризация — суть Helm.",
-                "how_it_should_be": "Chart — это структурированный пакет из нескольких файлов и каталогов с шаблонами и метаданными."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Chart` — это формат образа контейнера, который Docker собирает из `Dockerfile` для запуска приложения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Образ контейнера собирает Docker из `Dockerfile`; chart же содержит манифесты, которые ссылаются на готовый образ, но сам образом не является.",
-                "source_of_confusion": "И образ, и chart — артефакты доставки приложения, поэтому их путают как «пакет приложения».",
-                "if_it_were_true": "Тогда `helm install` запускал бы сборку образа, но Helm лишь применяет манифесты с уже существующим `image.tag`.",
-                "how_it_should_be": "Chart — пакет Kubernetes-манифестов; образ контейнера — отдельный артефакт, на который chart ссылается."
               },
               "label": "D",
               "order": 3
@@ -141,6 +141,18 @@
               "order": 0
             },
             {
+              "text": "`Helm 3` отличается от `Helm 2` только переименованием бинарника и не несёт изменений в архитектуре или безопасности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Helm 3 принёс существенные изменения: удаление Tiller, перенос state в Secret, валидацию схемы values, namespace-scoped релизы.",
+                "source_of_confusion": "Мажорные апгрейды иногда выглядят косметическими, поэтому глубину изменений недооценивают.",
+                "if_it_were_true": "Тогда не пришлось бы мигрировать релизы плагином `helm-2to3`, но миграция реально нужна из-за разного хранения state.",
+                "how_it_should_be": "Helm 3 — это архитектурный сдвиг (client-only, Secret-state, schema), а не просто переименование."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "В `Helm 3` state релиза стали хранить в `ConfigMap` в namespace `kube-system`, как и в `Helm 2`.",
               "correct": false,
               "sections": {
@@ -149,8 +161,8 @@
                 "if_it_were_true": "Тогда state всех релизов смешивался бы в `kube-system`, но Helm 3 изолирует его по namespace релиза.",
                 "how_it_should_be": "Helm 3 хранит историю в `Secret` в namespace релиза, а не в `ConfigMap` в `kube-system`."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Главное отличие — удаление серверного компонента `Tiller`: в Helm 3 остался только client, что устранило pod с широкими правами cluster-admin. State релиза переехал из `ConfigMap` в `kube-system` в `Secret` в namespace релиза, появилась валидация `values.schema.json`, отдельный lifecycle CRD через каталог `crds/`, а команды стали `helm uninstall`/`helm pull` вместо `helm delete`/`helm fetch`.",
@@ -161,18 +173,6 @@
                 "when_to_apply": "Различие важно при миграции legacy-кластеров с Helm 2 и при аудите безопасности: наличие Tiller — красный флаг.",
                 "edge_cases": "Release в Helm 3 привязан к namespace, поэтому два релиза с одним именем в разных namespace не конфликтуют — в Helm 2 имя было глобальным.",
                 "related": "[[helm-interview#Q1]] что такое Helm; [[helm-interview#Q4]] Release и хранение state; [[helm-interview#Q4]] ревизии релиза."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Helm 3` отличается от `Helm 2` только переименованием бинарника и не несёт изменений в архитектуре или безопасности.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Helm 3 принёс существенные изменения: удаление Tiller, перенос state в Secret, валидацию схемы values, namespace-scoped релизы.",
-                "source_of_confusion": "Мажорные апгрейды иногда выглядят косметическими, поэтому глубину изменений недооценивают.",
-                "if_it_were_true": "Тогда не пришлось бы мигрировать релизы плагином `helm-2to3`, но миграция реально нужна из-за разного хранения state.",
-                "how_it_should_be": "Helm 3 — это архитектурный сдвиг (client-only, Secret-state, schema), а не просто переименование."
               },
               "label": "D",
               "order": 3
@@ -189,13 +189,13 @@
           "question_text": "Что такое `Release` в контексте `Helm`?",
           "options": [
             {
-              "text": "`Release` — это публичная версия chart, опубликованная в репозитории `Artifact Hub` и доступная для скачивания другими командами.",
+              "text": "Metadata `Release` хранится в локальном файле на машине инженера, который выполнил `helm install`.",
               "correct": false,
               "sections": {
-                "what_actually": "Опубликованная версия chart в репозитории — это релиз chart как пакета (запись в `index.yaml`), а Helm `Release` — установленный в кластер экземпляр.",
-                "source_of_confusion": "Слово «release» в software-контексте обычно значит «выпущенная версия», отсюда путаница.",
-                "if_it_were_true": "Тогда `helm rollback` откатывал бы версию в репозитории, но он откатывает состояние установленного приложения в кластере.",
-                "how_it_should_be": "Helm Release — это namespaced-экземпляр chart в кластере, а не запись о версии в публичном репозитории."
+                "what_actually": "Metadata релиза хранится в кластере как `Secret` в namespace релиза, поэтому любой с доступом к namespace видит ту же историю.",
+                "source_of_confusion": "В Helm 2 был серверный Tiller, и кажется, будто клиент держит state локально.",
+                "if_it_were_true": "Тогда другой инженер не увидел бы релиз через `helm list`, но список берётся из Secret-ов кластера и виден всем.",
+                "how_it_should_be": "State релиза хранится в кластере в виде Secret-а, а не в локальном файле клиента."
               },
               "label": "A",
               "order": 0
@@ -213,13 +213,13 @@
               "order": 1
             },
             {
-              "text": "Metadata `Release` хранится в локальном файле на машине инженера, который выполнил `helm install`.",
+              "text": "`Release` — это публичная версия chart, опубликованная в репозитории `Artifact Hub` и доступная для скачивания другими командами.",
               "correct": false,
               "sections": {
-                "what_actually": "Metadata релиза хранится в кластере как `Secret` в namespace релиза, поэтому любой с доступом к namespace видит ту же историю.",
-                "source_of_confusion": "В Helm 2 был серверный Tiller, и кажется, будто клиент держит state локально.",
-                "if_it_were_true": "Тогда другой инженер не увидел бы релиз через `helm list`, но список берётся из Secret-ов кластера и виден всем.",
-                "how_it_should_be": "State релиза хранится в кластере в виде Secret-а, а не в локальном файле клиента."
+                "what_actually": "Опубликованная версия chart в репозитории — это релиз chart как пакета (запись в `index.yaml`), а Helm `Release` — установленный в кластер экземпляр.",
+                "source_of_confusion": "Слово «release» в software-контексте обычно значит «выпущенная версия», отсюда путаница.",
+                "if_it_were_true": "Тогда `helm rollback` откатывал бы версию в репозитории, но он откатывает состояние установленного приложения в кластере.",
+                "how_it_should_be": "Helm Release — это namespaced-экземпляр chart в кластере, а не запись о версии в публичном репозитории."
               },
               "label": "C",
               "order": 2
@@ -274,18 +274,6 @@
               "order": 1
             },
             {
-              "text": "Зависимые chart-ы (subcharts) должны лежать в каталоге `crds/`, рядом с Custom Resource Definitions.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Subcharts кладутся в каталог `charts/`; `crds/` предназначен исключительно для Custom Resource Definitions с отдельным lifecycle.",
-                "source_of_confusion": "Оба каталога — про «дополнительные» части chart, поэтому их назначение путают.",
-                "if_it_were_true": "Тогда `helm dependency update` складывал бы `.tgz` в `crds/`, но он кладёт их именно в `charts/`.",
-                "how_it_should_be": "Subcharts живут в `charts/`, а `crds/` — только для CRD-определений."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "Файл `.helmignore` перечисляет values, которые нужно скрыть от пользователя при выводе `helm show values`.",
               "correct": false,
               "sections": {
@@ -293,6 +281,18 @@
                 "source_of_confusion": "Слово «ignore» наводит на мысль о сокрытии данных, а не файлов при упаковке.",
                 "if_it_were_true": "Тогда в нём перечисляли бы ключи values, но синтаксис там — glob-паттерны путей файлов.",
                 "how_it_should_be": "`.helmignore` исключает файлы из `.tgz`-пакета при packaging, а не прячет values."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Зависимые chart-ы (subcharts) должны лежать в каталоге `crds/`, рядом с Custom Resource Definitions.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Subcharts кладутся в каталог `charts/`; `crds/` предназначен исключительно для Custom Resource Definitions с отдельным lifecycle.",
+                "source_of_confusion": "Оба каталога — про «дополнительные» части chart, поэтому их назначение путают.",
+                "if_it_were_true": "Тогда `helm dependency update` складывал бы `.tgz` в `crds/`, но он кладёт их именно в `charts/`.",
+                "how_it_should_be": "Subcharts живут в `charts/`, а `crds/` — только для CRD-определений."
               },
               "label": "D",
               "order": 3
@@ -309,18 +309,6 @@
           "question_text": "Что содержит файл `Chart.yaml`?",
           "options": [
             {
-              "text": "`Chart.yaml` содержит сами Kubernetes-манифесты приложения — Deployment, Service и Ingress в готовом виде.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Манифесты лежат в каталоге `templates/`; `Chart.yaml` хранит только метаданные chart, а не ресурсы кластера.",
-                "source_of_confusion": "Это центральный файл chart, поэтому кажется, что в нём «всё», включая манифесты.",
-                "if_it_were_true": "Тогда не нужен был бы каталог `templates/`, но именно там живут параметризуемые манифесты.",
-                "how_it_should_be": "`Chart.yaml` — это метаданные (имя, версия, зависимости); манифесты — в `templates/`."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`Chart.yaml` — обязательный файл с метаданными chart: `apiVersion` (`v2` для Helm 3), `name`, `description`, `type` (`application` или `library`), `version` (версия самого chart по SemVer), `appVersion` (версия приложения, информационно), а также `keywords`, `maintainers` и секцию `dependencies` с зависимыми chart-ами.",
               "correct": true,
               "sections": {
@@ -329,6 +317,18 @@
                 "when_to_apply": "Редактируют `Chart.yaml` при каждом изменении chart (бамп `version`), при добавлении зависимостей и при смене типа на `library`.",
                 "edge_cases": "`type: library` означает chart без собственных манифестов — только named templates; его нельзя установить напрямую, только подключить как dependency.",
                 "related": "[[helm-interview#Q5]] структура директорий chart; [[helm-interview#Q23]] секция dependencies; [[helm-interview#Q31]] application vs library chart."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Chart.yaml` содержит сами Kubernetes-манифесты приложения — Deployment, Service и Ingress в готовом виде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Манифесты лежат в каталоге `templates/`; `Chart.yaml` хранит только метаданные chart, а не ресурсы кластера.",
+                "source_of_confusion": "Это центральный файл chart, поэтому кажется, что в нём «всё», включая манифесты.",
+                "if_it_were_true": "Тогда не нужен был бы каталог `templates/`, но именно там живут параметризуемые манифесты.",
+                "how_it_should_be": "`Chart.yaml` — это метаданные (имя, версия, зависимости); манифесты — в `templates/`."
               },
               "label": "B",
               "order": 1
@@ -369,30 +369,6 @@
           "question_text": "Что такое файл `values.yaml` и как он используется?",
           "options": [
             {
-              "text": "`values.yaml` — это финальный отрендеренный манифест, который Helm отправляет в кластер после подстановки шаблонов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`values.yaml` — это вход (значения), а не выход; финальные манифесты получаются после рендера шаблонов с этими значениями.",
-                "source_of_confusion": "И values, и манифесты — YAML, поэтому вход и выход рендера путают.",
-                "if_it_were_true": "Тогда `helm template` возвращал бы содержимое `values.yaml`, но он возвращает отрендеренные Kubernetes-ресурсы.",
-                "how_it_should_be": "`values.yaml` поставляет значения в шаблоны; результат рендера — отдельные манифесты."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Значения из `values.yaml` доступны в шаблонах через объект `.Release`, например `.Release.replicaCount`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Значения values доступны через `.Values` (`.Values.replicaCount`); `.Release` хранит метаданные релиза вроде `.Release.Name`.",
-                "source_of_confusion": "Встроенных объектов несколько, поэтому `.Values` и `.Release` легко перепутать.",
-                "if_it_were_true": "Тогда `.Release.image.tag` рендерил бы тег образа, но реально это поле живёт в `.Values.image.tag`.",
-                "how_it_should_be": "К values обращаются через `.Values`; `.Release` — это про имя, namespace и ревизию релиза."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`values.yaml` — файл со значениями по умолчанию для шаблонов; все значения доступны в шаблонах через объект `.Values` (например `.Values.replicaCount`, `.Values.image.tag`). При установке эти значения можно переопределить через `--set` или дополнительные `--values` файлы, что даёт одну параметризуемую базу под разные окружения.",
               "correct": true,
               "sections": {
@@ -402,8 +378,20 @@
                 "edge_cases": "Глубоко вложенные структуры (`resources`, `affinity`) удобнее вставлять целиком через `{{ toYaml .Values.resources | nindent N }}`, а не поле за полем.",
                 "related": "[[helm-interview#Q6]] Chart.yaml vs values.yaml; [[helm-interview#Q20]] переопределение values при установке; [[helm-interview#Q21]] приоритет источников values."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`values.yaml` — это финальный отрендеренный манифест, который Helm отправляет в кластер после подстановки шаблонов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`values.yaml` — это вход (значения), а не выход; финальные манифесты получаются после рендера шаблонов с этими значениями.",
+                "source_of_confusion": "И values, и манифесты — YAML, поэтому вход и выход рендера путают.",
+                "if_it_were_true": "Тогда `helm template` возвращал бы содержимое `values.yaml`, но он возвращает отрендеренные Kubernetes-ресурсы.",
+                "how_it_should_be": "`values.yaml` поставляет значения в шаблоны; результат рендера — отдельные манифесты."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Значения из `values.yaml` нельзя переопределить при установке — для смены конфигурации нужно редактировать сам файл в chart.",
@@ -413,6 +401,18 @@
                 "source_of_confusion": "Слово «значения по умолчанию» создаёт впечатление, что они жёстко зашиты.",
                 "if_it_were_true": "Тогда один chart нельзя было бы развернуть в dev и prod по-разному, но именно для этого и существуют override-механизмы.",
                 "how_it_should_be": "`values.yaml` задаёт дефолты, а `--set` и доп. `--values` переопределяют их при установке."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Значения из `values.yaml` доступны в шаблонах через объект `.Release`, например `.Release.replicaCount`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Значения values доступны через `.Values` (`.Values.replicaCount`); `.Release` хранит метаданные релиза вроде `.Release.Name`.",
+                "source_of_confusion": "Встроенных объектов несколько, поэтому `.Values` и `.Release` легко перепутать.",
+                "if_it_were_true": "Тогда `.Release.image.tag` рендерил бы тег образа, но реально это поле живёт в `.Values.image.tag`.",
+                "how_it_should_be": "К values обращаются через `.Values`; `.Release` — это про имя, namespace и ревизию релиза."
               },
               "label": "D",
               "order": 3
@@ -429,18 +429,6 @@
           "question_text": "Что такое файл `_helpers.tpl`?",
           "options": [
             {
-              "text": "`_helpers.tpl` — это место, где хранятся секреты приложения в base64, чтобы не светить их в `values.yaml`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`_helpers.tpl` хранит named templates, а не секреты; для секретов используют Kubernetes Secret, `helm-secrets` с SOPS или External Secrets.",
-                "source_of_confusion": "Подчёркивание в имени файла наводит на мысль о чём-то скрытом и приватном.",
-                "if_it_were_true": "Тогда секреты лежали бы в chart открытым base64 (не шифрование), что прямо противоречит best practice по секретам.",
-                "how_it_should_be": "`_helpers.tpl` — это библиотека шаблонов; секреты управляются отдельными инструментами."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`_helpers.tpl` рендерится в отдельный Kubernetes-манифест, как и остальные файлы каталога `templates/`.",
               "correct": false,
               "sections": {
@@ -449,8 +437,8 @@
                 "if_it_were_true": "Тогда в кластере появлялся бы ресурс из `define`-блоков, но `define` сам по себе не порождает ресурс.",
                 "how_it_should_be": "Файлы на `_` не рендерятся в манифесты — это библиотека шаблонов, подключаемая через `include`."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`_helpers.tpl` задаёт значения по умолчанию для chart, заменяя собой файл `values.yaml`.",
@@ -460,6 +448,18 @@
                 "source_of_confusion": "Оба файла «вспомогательные», поэтому их роли смешивают.",
                 "if_it_were_true": "Тогда `.Values.replicaCount` читался бы из `_helpers.tpl`, но values берутся из `values.yaml`.",
                 "how_it_should_be": "`_helpers.tpl` — шаблоны; значения по умолчанию — в `values.yaml`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`_helpers.tpl` — это место, где хранятся секреты приложения в base64, чтобы не светить их в `values.yaml`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`_helpers.tpl` хранит named templates, а не секреты; для секретов используют Kubernetes Secret, `helm-secrets` с SOPS или External Secrets.",
+                "source_of_confusion": "Подчёркивание в имени файла наводит на мысль о чём-то скрытом и приватном.",
+                "if_it_were_true": "Тогда секреты лежали бы в chart открытым base64 (не шифрование), что прямо противоречит best practice по секретам.",
+                "how_it_should_be": "`_helpers.tpl` — это библиотека шаблонов; секреты управляются отдельными инструментами."
               },
               "label": "C",
               "order": 2
@@ -502,18 +502,6 @@
               "order": 0
             },
             {
-              "text": "`NOTES.txt` — это changelog chart, который Helm требует обновлять при каждом бампе `version` в `Chart.yaml`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`NOTES.txt` — это post-install сообщение пользователю, а не changelog; Helm не требует его обновлять при бампе версии.",
-                "source_of_confusion": "Текстовый файл в chart ассоциируется с историей изменений вроде `CHANGELOG.md`.",
-                "if_it_were_true": "Тогда `helm install` отказывался бы ставить chart без свежей записи, но он спокойно ставит chart даже без `NOTES.txt`.",
-                "how_it_should_be": "`NOTES.txt` — это рендерящаяся подсказка после установки, а не журнал изменений."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`NOTES.txt` рендерится в `ConfigMap` и монтируется в Pod приложения как файл документации.",
               "correct": false,
               "sections": {
@@ -522,8 +510,8 @@
                 "if_it_were_true": "Тогда в кластере появлялся бы ConfigMap с текстом заметок, но Helm лишь выводит его в терминал.",
                 "how_it_should_be": "`NOTES.txt` рендерится в текст для stdout, а не в ресурс кластера."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "В `NOTES.txt` нельзя использовать шаблонные выражения — это статический текст без доступа к `.Values` и `.Release`.",
@@ -533,6 +521,18 @@
                 "source_of_confusion": "Расширение `.txt` наводит на мысль о простом статическом файле.",
                 "if_it_were_true": "Тогда нельзя было бы вывести разный текст при `ingress.enabled`, но именно условный рендер там и применяют.",
                 "how_it_should_be": "`NOTES.txt` — это шаблон с доступом к `.Values`/`.Release`, а не статический текст."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`NOTES.txt` — это changelog chart, который Helm требует обновлять при каждом бампе `version` в `Chart.yaml`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`NOTES.txt` — это post-install сообщение пользователю, а не changelog; Helm не требует его обновлять при бампе версии.",
+                "source_of_confusion": "Текстовый файл в chart ассоциируется с историей изменений вроде `CHANGELOG.md`.",
+                "if_it_were_true": "Тогда `helm install` отказывался бы ставить chart без свежей записи, но он спокойно ставит chart даже без `NOTES.txt`.",
+                "how_it_should_be": "`NOTES.txt` — это рендерящаяся подсказка после установки, а не журнал изменений."
               },
               "label": "D",
               "order": 3
@@ -574,18 +574,6 @@
               "order": 1
             },
             {
-              "text": "`helm rollback` удаляет релиз целиком из кластера вместе со всей историей ревизий.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Полностью удаляет релиз `helm uninstall`; `helm rollback` лишь возвращает релиз к указанной ревизии, создавая при этом новую.",
-                "source_of_confusion": "И rollback, и uninstall — «отмена» деплоя, поэтому их смешивают.",
-                "if_it_were_true": "Тогда после rollback `helm list` не показывал бы релиз, но он остаётся активным на прежней ревизии.",
-                "how_it_should_be": "`helm rollback` откатывает на ревизию; удаление релиза — это `helm uninstall`."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "`helm repo update` обновляет все установленные релизы до последних версий chart-ов из репозиториев.",
               "correct": false,
               "sections": {
@@ -593,6 +581,18 @@
                 "source_of_confusion": "Слово «update» наводит на мысль об апгрейде приложений, а не индексов.",
                 "if_it_were_true": "Тогда одна команда массово перекатывала бы прод, но обновление релиза — это явный `helm upgrade`.",
                 "how_it_should_be": "`helm repo update` синхронизирует индексы репозиториев; апгрейд релиза делает `helm upgrade`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`helm rollback` удаляет релиз целиком из кластера вместе со всей историей ревизий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Полностью удаляет релиз `helm uninstall`; `helm rollback` лишь возвращает релиз к указанной ревизии, создавая при этом новую.",
+                "source_of_confusion": "И rollback, и uninstall — «отмена» деплоя, поэтому их смешивают.",
+                "if_it_were_true": "Тогда после rollback `helm list` не показывал бы релиз, но он остаётся активным на прежней ревизии.",
+                "how_it_should_be": "`helm rollback` откатывает на ревизию; удаление релиза — это `helm uninstall`."
               },
               "label": "D",
               "order": 3
@@ -609,18 +609,6 @@
           "question_text": "Как установить, обновить и откатить релиз?",
           "options": [
             {
-              "text": "Чтобы обновить релиз, всегда нужно сначала выполнить `helm uninstall`, а затем `helm install` заново — отдельной команды обновления нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для обновления есть `helm upgrade`, который сохраняет историю ревизий; uninstall+install теряет историю и вызывает простой.",
-                "source_of_confusion": "По аналогии с переустановкой пакетов кажется, что апдейт = удалить и поставить.",
-                "if_it_were_true": "Тогда `helm rollback` было бы некуда откатываться, но история ревизий как раз и формируется через `helm upgrade`.",
-                "how_it_should_be": "Обновление делает `helm upgrade` без удаления релиза, сохраняя ревизии для отката."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Флаг `--atomic` при `helm upgrade` означает, что обновление применится мгновенно, без ожидания готовности Pod-ов.",
               "correct": false,
               "sections": {
@@ -628,6 +616,18 @@
                 "source_of_confusion": "Слово «атомарный» ассоциируется с мгновенностью, а не с ожиданием и откатом.",
                 "if_it_were_true": "Тогда сбойный деплой оставлял бы релиз сломанным, но смысл `--atomic` — гарантировать целостный исход (успех или откат).",
                 "how_it_should_be": "`--atomic` ждёт готовности и при неудаче откатывает upgrade на прежнюю ревизию."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`helm rollback my-app` без номера ревизии откатывает релиз к самой первой (ревизии 1) установке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без номера `helm rollback` откатывает к предыдущей ревизии (текущая минус один), а не к первой установке.",
+                "source_of_confusion": "Кажется логичным, что «откат» без аргумента возвращает к исходному состоянию.",
+                "if_it_were_true": "Тогда после десятка апгрейдов откат прыгал бы на самую старую версию, но он сдвигается лишь на один шаг назад.",
+                "how_it_should_be": "Без номера rollback идёт на предыдущую ревизию; для первой нужно указать `helm rollback my-app 1`."
               },
               "label": "B",
               "order": 1
@@ -646,13 +646,13 @@
               "order": 2
             },
             {
-              "text": "`helm rollback my-app` без номера ревизии откатывает релиз к самой первой (ревизии 1) установке.",
+              "text": "Чтобы обновить релиз, всегда нужно сначала выполнить `helm uninstall`, а затем `helm install` заново — отдельной команды обновления нет.",
               "correct": false,
               "sections": {
-                "what_actually": "Без номера `helm rollback` откатывает к предыдущей ревизии (текущая минус один), а не к первой установке.",
-                "source_of_confusion": "Кажется логичным, что «откат» без аргумента возвращает к исходному состоянию.",
-                "if_it_were_true": "Тогда после десятка апгрейдов откат прыгал бы на самую старую версию, но он сдвигается лишь на один шаг назад.",
-                "how_it_should_be": "Без номера rollback идёт на предыдущую ревизию; для первой нужно указать `helm rollback my-app 1`."
+                "what_actually": "Для обновления есть `helm upgrade`, который сохраняет историю ревизий; uninstall+install теряет историю и вызывает простой.",
+                "source_of_confusion": "По аналогии с переустановкой пакетов кажется, что апдейт = удалить и поставить.",
+                "if_it_were_true": "Тогда `helm rollback` было бы некуда откатываться, но история ревизий как раз и формируется через `helm upgrade`.",
+                "how_it_should_be": "Обновление делает `helm upgrade` без удаления релиза, сохраняя ревизии для отката."
               },
               "label": "D",
               "order": 3
@@ -669,13 +669,14 @@
           "question_text": "Как просмотреть сгенерированные манифесты перед установкой?",
           "options": [
             {
-              "text": "Единственный способ увидеть манифесты — установить релиз в кластер и затем прочитать ресурсы через `kubectl get`.",
-              "correct": false,
+              "text": "Локальный рендер без обращения к кластеру — `helm template my-app ./chart -f prod-values.yaml`. Серверная проверка без применения — `helm install ... --dry-run` (отправляет манифесты в API server для валидации). Для отладки добавляют `--debug`. У уже установленного релиза манифесты смотрят через `helm get manifest my-app`, а его values — `helm get values my-app`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Манифесты видны до установки через `helm template` (офлайн-рендер) и `--dry-run`; ставить релиз ради просмотра не нужно.",
-                "source_of_confusion": "Кажется, что результат появляется только после применения в кластер.",
-                "if_it_were_true": "Тогда нельзя было бы делать code review манифестов в CI, но `helm template` именно для этого и используют.",
-                "how_it_should_be": "`helm template` и `--dry-run` показывают манифесты без установки в кластер."
+                "explanation": "`helm template` рендерит полностью офлайн (не нужен кластер), а `--dry-run` дополнительно валидирует результат на API server, ловя ошибки схемы Kubernetes до реального деплоя.",
+                "example": "`helm template my-app ./chart -f prod-values.yaml | kubectl apply --dry-run=client -f -` — рендер и проверка схемы за один пайп.",
+                "when_to_apply": "`helm template` ставят в CI и code review (видеть diff манифестов), `--dry-run` — перед рискованным деплоем в прод, `helm get manifest` — при разборе уже работающего релиза.",
+                "edge_cases": "`helm template` не знает реальных `.Capabilities` кластера и подставляет дефолты, поэтому условный рендер по версии API может отличаться от `--dry-run` против настоящего кластера.",
+                "related": "[[helm-interview#Q10]] обзор команд CLI; [[helm-interview#Q11]] установка и обновление релиза; [[helm-interview#Q13]] helm diff для сравнения изменений."
               },
               "label": "A",
               "order": 0
@@ -705,14 +706,13 @@
               "order": 2
             },
             {
-              "text": "Локальный рендер без обращения к кластеру — `helm template my-app ./chart -f prod-values.yaml`. Серверная проверка без применения — `helm install ... --dry-run` (отправляет манифесты в API server для валидации). Для отладки добавляют `--debug`. У уже установленного релиза манифесты смотрят через `helm get manifest my-app`, а его values — `helm get values my-app`.",
-              "correct": true,
+              "text": "Единственный способ увидеть манифесты — установить релиз в кластер и затем прочитать ресурсы через `kubectl get`.",
+              "correct": false,
               "sections": {
-                "explanation": "`helm template` рендерит полностью офлайн (не нужен кластер), а `--dry-run` дополнительно валидирует результат на API server, ловя ошибки схемы Kubernetes до реального деплоя.",
-                "example": "`helm template my-app ./chart -f prod-values.yaml | kubectl apply --dry-run=client -f -` — рендер и проверка схемы за один пайп.",
-                "when_to_apply": "`helm template` ставят в CI и code review (видеть diff манифестов), `--dry-run` — перед рискованным деплоем в прод, `helm get manifest` — при разборе уже работающего релиза.",
-                "edge_cases": "`helm template` не знает реальных `.Capabilities` кластера и подставляет дефолты, поэтому условный рендер по версии API может отличаться от `--dry-run` против настоящего кластера.",
-                "related": "[[helm-interview#Q10]] обзор команд CLI; [[helm-interview#Q11]] установка и обновление релиза; [[helm-interview#Q13]] helm diff для сравнения изменений."
+                "what_actually": "Манифесты видны до установки через `helm template` (офлайн-рендер) и `--dry-run`; ставить релиз ради просмотра не нужно.",
+                "source_of_confusion": "Кажется, что результат появляется только после применения в кластер.",
+                "if_it_were_true": "Тогда нельзя было бы делать code review манифестов в CI, но `helm template` именно для этого и используют.",
+                "how_it_should_be": "`helm template` и `--dry-run` показывают манифесты без установки в кластер."
               },
               "label": "D",
               "order": 3
@@ -729,31 +729,6 @@
           "question_text": "Как работает команда `helm diff`?",
           "options": [
             {
-              "text": "`helm diff` — это плагин (не входит в стандартный Helm), который показывает различия между установленным релизом и предлагаемым обновлением, как `git diff` для Kubernetes-манифестов. Устанавливается через `helm plugin install`, используется как `helm diff upgrade my-app ./chart -f values.yaml` и активно применяется в GitOps-пайплайнах для code review изменений перед применением.",
-              "correct": true,
-              "sections": {
-                "explanation": "`helm diff` отвечает на вопрос «что именно изменится в кластере, если я выполню upgrade», сравнивая текущее состояние релиза с результатом рендера новых values/chart.",
-                "example": "`helm diff upgrade my-app ./chart --set image.tag=1.3.0` покажет, что в Deployment поменяется только строка `image`, а остальное останется прежним.",
-                "when_to_apply": "Запускают перед каждым прод-апгрейдом и в CI на merge request, чтобы ревьюер видел точную дельту манифестов, а не догадывался по diff values.",
-                "edge_cases": "Это сторонний плагин, поэтому в чистой установке Helm его нет; в CI-образ его надо ставить отдельно, иначе шаг `helm diff` упадёт с «unknown command».",
-                "related": "[[helm-interview#Q12]] просмотр манифестов перед установкой; [[helm-interview#Q11]] upgrade релиза; [[helm-interview#Q35]] GitOps и review изменений."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`helm diff` входит в стандартную поставку Helm и доступен сразу после установки бинарника, без отдельной установки плагина.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`helm diff` — это сторонний плагин (databus23/helm-diff); его ставят отдельно через `helm plugin install`.",
-                "source_of_confusion": "Команда выглядит как нативная подкоманда Helm, отсюда вывод о встроенности.",
-                "if_it_were_true": "Тогда в CI-образ не пришлось бы добавлять установку плагина, но без неё `helm diff` падает как неизвестная команда.",
-                "how_it_should_be": "`helm diff` — внешний плагин, требующий установки через `helm plugin install`."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`helm diff` сравнивает два файла `values.yaml` между собой и показывает, какие значения отличаются.",
               "correct": false,
               "sections": {
@@ -762,8 +737,8 @@
                 "if_it_were_true": "Тогда хватило бы обычного `diff` двух values-файлов, но ценность плагина — показать дельту итоговых ресурсов.",
                 "how_it_should_be": "`helm diff` сравнивает результирующие манифесты релиза, учитывая всю шаблонную логику."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`helm diff` автоматически применяет найденные различия к кластеру, как `helm upgrade` с подтверждением.",
@@ -773,6 +748,31 @@
                 "source_of_confusion": "Раз он анализирует upgrade, кажется, что он его и выполняет.",
                 "if_it_were_true": "Тогда нельзя было бы безопасно использовать его в review, но `helm diff` именно read-only по дизайну.",
                 "how_it_should_be": "`helm diff` — read-only предпросмотр дельты; изменения применяет `helm upgrade`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`helm diff` — это плагин (не входит в стандартный Helm), который показывает различия между установленным релизом и предлагаемым обновлением, как `git diff` для Kubernetes-манифестов. Устанавливается через `helm plugin install`, используется как `helm diff upgrade my-app ./chart -f values.yaml` и активно применяется в GitOps-пайплайнах для code review изменений перед применением.",
+              "correct": true,
+              "sections": {
+                "explanation": "`helm diff` отвечает на вопрос «что именно изменится в кластере, если я выполню upgrade», сравнивая текущее состояние релиза с результатом рендера новых values/chart.",
+                "example": "`helm diff upgrade my-app ./chart --set image.tag=1.3.0` покажет, что в Deployment поменяется только строка `image`, а остальное останется прежним.",
+                "when_to_apply": "Запускают перед каждым прод-апгрейдом и в CI на merge request, чтобы ревьюер видел точную дельту манифестов, а не догадывался по diff values.",
+                "edge_cases": "Это сторонний плагин, поэтому в чистой установке Helm его нет; в CI-образ его надо ставить отдельно, иначе шаг `helm diff` упадёт с «unknown command».",
+                "related": "[[helm-interview#Q12]] просмотр манифестов перед установкой; [[helm-interview#Q11]] upgrade релиза; [[helm-interview#Q35]] GitOps и review изменений."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`helm diff` входит в стандартную поставку Helm и доступен сразу после установки бинарника, без отдельной установки плагина.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`helm diff` — это сторонний плагин (databus23/helm-diff); его ставят отдельно через `helm plugin install`.",
+                "source_of_confusion": "Команда выглядит как нативная подкоманда Helm, отсюда вывод о встроенности.",
+                "if_it_were_true": "Тогда в CI-образ не пришлось бы добавлять установку плагина, но без неё `helm diff` падает как неизвестная команда.",
+                "how_it_should_be": "`helm diff` — внешний плагин, требующий установки через `helm plugin install`."
               },
               "label": "D",
               "order": 3
@@ -789,13 +789,13 @@
           "question_text": "Какой синтаксис используется в `Helm templates`?",
           "options": [
             {
-              "text": "Helm использует синтаксис `Jinja2`, как `Ansible`, с конструкциями `{% if %}` и `{% for %}` для логики в шаблонах.",
+              "text": "Дефис `-` рядом с `{{`/`}}` означает вычитание и используется только в арифметических выражениях шаблона.",
               "correct": false,
               "sections": {
-                "what_actually": "Helm построен на Go `text/template` с Sprig (`{{ if }}`, `{{ range }}`), а не на Jinja2; синтаксис `{% %}` к Helm не относится.",
-                "source_of_confusion": "Оба — шаблонизаторы для YAML в DevOps, поэтому их синтаксис путают.",
-                "if_it_were_true": "Тогда работали бы фильтры Jinja вроде `| default(...)` со скобками, но Helm использует Sprig-функции в стиле `| default 30`.",
-                "how_it_should_be": "Helm — это Go-шаблоны плюс Sprig; Jinja2 применяется в Ansible, а не в Helm."
+                "what_actually": "Дефис у разделителей — это whitespace-trim: он убирает пробелы и переносы строк с соответствующей стороны, а не выполняет арифметику.",
+                "source_of_confusion": "Минус привычно читается как оператор вычитания.",
+                "if_it_were_true": "Тогда `{{- .Values.x }}` означало бы «минус x», но на деле это просто trim пробелов слева.",
+                "how_it_should_be": "`-` у `{{`/`}}` управляет whitespace; арифметику делают функции вроде `sub`/`add`."
               },
               "label": "A",
               "order": 0
@@ -814,13 +814,13 @@
               "order": 1
             },
             {
-              "text": "Дефис `-` рядом с `{{`/`}}` означает вычитание и используется только в арифметических выражениях шаблона.",
+              "text": "Helm использует синтаксис `Jinja2`, как `Ansible`, с конструкциями `{% if %}` и `{% for %}` для логики в шаблонах.",
               "correct": false,
               "sections": {
-                "what_actually": "Дефис у разделителей — это whitespace-trim: он убирает пробелы и переносы строк с соответствующей стороны, а не выполняет арифметику.",
-                "source_of_confusion": "Минус привычно читается как оператор вычитания.",
-                "if_it_were_true": "Тогда `{{- .Values.x }}` означало бы «минус x», но на деле это просто trim пробелов слева.",
-                "how_it_should_be": "`-` у `{{`/`}}` управляет whitespace; арифметику делают функции вроде `sub`/`add`."
+                "what_actually": "Helm построен на Go `text/template` с Sprig (`{{ if }}`, `{{ range }}`), а не на Jinja2; синтаксис `{% %}` к Helm не относится.",
+                "source_of_confusion": "Оба — шаблонизаторы для YAML в DevOps, поэтому их синтаксис путают.",
+                "if_it_were_true": "Тогда работали бы фильтры Jinja вроде `| default(...)` со скобками, но Helm использует Sprig-функции в стиле `| default 30`.",
+                "how_it_should_be": "Helm — это Go-шаблоны плюс Sprig; Jinja2 применяется в Ansible, а не в Helm."
               },
               "label": "C",
               "order": 2
@@ -849,28 +849,16 @@
           "question_text": "Как использовать встроенные объекты `.Values`, `.Release`, `.Chart`?",
           "options": [
             {
-              "text": "`.Chart.AppVersion` возвращает версию самого chart (поле `version` из `Chart.yaml`), а не версию приложения.",
+              "text": "Объекта `.Values` не существует — к значениям из `values.yaml` обращаются напрямую, например `{{ replicaCount }}`.",
               "correct": false,
               "sections": {
-                "what_actually": "`.Chart.AppVersion` — это `appVersion` (версия приложения); версию chart даёт `.Chart.Version` (поле `version`).",
-                "source_of_confusion": "Оба поля про «версию» и доступны через `.Chart`, поэтому их легко перепутать.",
-                "if_it_were_true": "Тогда label `app.kubernetes.io/version` показывал бы версию chart, но туда кладут именно `appVersion` приложения.",
-                "how_it_should_be": "`.Chart.Version` — версия chart; `.Chart.AppVersion` — версия приложения."
+                "what_actually": "Ко всем значениям обращаются через `.Values` (`{{ .Values.replicaCount }}`); голого `{{ replicaCount }}` в Helm нет.",
+                "source_of_confusion": "В некоторых шаблонизаторах переменные доступны без префикса контекста.",
+                "if_it_were_true": "Тогда `{{ replicaCount }}` рендерился бы значением, но Helm выдаст ошибку про неопределённую функцию/переменную.",
+                "how_it_should_be": "Значения values всегда доступны через объект `.Values`, а не по голому имени."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "`.Release.Name` содержит имя chart из `Chart.yaml`, а не имя, заданное при `helm install`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`.Release.Name` — это имя релиза из команды `helm install <name>`; имя chart лежит в `.Chart.Name`.",
-                "source_of_confusion": "Имя релиза часто совпадает с именем chart, поэтому различие стирается.",
-                "if_it_were_true": "Тогда два релиза из одного chart имели бы одинаковое `.Release.Name`, но имена релизов различны и берутся из команды.",
-                "how_it_should_be": "`.Release.Name` — имя релиза из команды установки; имя chart — это `.Chart.Name`."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "`.Values` даёт доступ ко всем значениям из `values.yaml` (`.Values.image.tag`). `.Release` — метаданные релиза (`.Release.Name`, `.Release.Namespace`, `.Release.Revision`). `.Chart` — содержимое `Chart.yaml` (`.Chart.Name`, `.Chart.Version`, `.Chart.AppVersion`). Помимо них есть `.Files` (доступ к файлам chart), `.Capabilities` (возможности кластера) и `.Template` (текущий шаблон).",
@@ -882,17 +870,29 @@
                 "edge_cases": "`.Release.Namespace` доступен в шаблоне, только если он явно задан через `-n`; при дефолтном namespace значение может оказаться пустым в некоторых сценариях рендера.",
                 "related": "[[helm-interview#Q7]] values.yaml и объект .Values; [[helm-interview#Q14]] синтаксис шаблонов; [[helm-interview#Q19]] функции для форматирования значений."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`.Chart.AppVersion` возвращает версию самого chart (поле `version` из `Chart.yaml`), а не версию приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`.Chart.AppVersion` — это `appVersion` (версия приложения); версию chart даёт `.Chart.Version` (поле `version`).",
+                "source_of_confusion": "Оба поля про «версию» и доступны через `.Chart`, поэтому их легко перепутать.",
+                "if_it_were_true": "Тогда label `app.kubernetes.io/version` показывал бы версию chart, но туда кладут именно `appVersion` приложения.",
+                "how_it_should_be": "`.Chart.Version` — версия chart; `.Chart.AppVersion` — версия приложения."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Объекта `.Values` не существует — к значениям из `values.yaml` обращаются напрямую, например `{{ replicaCount }}`.",
+              "text": "`.Release.Name` содержит имя chart из `Chart.yaml`, а не имя, заданное при `helm install`.",
               "correct": false,
               "sections": {
-                "what_actually": "Ко всем значениям обращаются через `.Values` (`{{ .Values.replicaCount }}`); голого `{{ replicaCount }}` в Helm нет.",
-                "source_of_confusion": "В некоторых шаблонизаторах переменные доступны без префикса контекста.",
-                "if_it_were_true": "Тогда `{{ replicaCount }}` рендерился бы значением, но Helm выдаст ошибку про неопределённую функцию/переменную.",
-                "how_it_should_be": "Значения values всегда доступны через объект `.Values`, а не по голому имени."
+                "what_actually": "`.Release.Name` — это имя релиза из команды `helm install <name>`; имя chart лежит в `.Chart.Name`.",
+                "source_of_confusion": "Имя релиза часто совпадает с именем chart, поэтому различие стирается.",
+                "if_it_were_true": "Тогда два релиза из одного chart имели бы одинаковое `.Release.Name`, но имена релизов различны и берутся из команды.",
+                "how_it_should_be": "`.Release.Name` — имя релиза из команды установки; имя chart — это `.Chart.Name`."
               },
               "label": "D",
               "order": 3
@@ -909,18 +909,6 @@
           "question_text": "Как использовать управляющие конструкции: `if`, `range`, `with`?",
           "options": [
             {
-              "text": "Конструкция `with` работает как `range`: она перебирает элементы списка и рендерит блок для каждого из них.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`with` не итерирует — она лишь меняет scope `.` на один объект и пропускает блок, если он пустой; перебор делает `range`.",
-                "source_of_confusion": "Обе конструкции меняют контекст внутри блока, поэтому их поведение смешивают.",
-                "if_it_were_true": "Тогда `with .Values.env` рендерил бы блок по разу на элемент, но `with` выполнит его один раз для всего объекта.",
-                "how_it_should_be": "`range` перебирает коллекцию; `with` один раз сужает scope до объекта."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Блок `if` в Helm рендерится всегда, а значение условия лишь добавляется комментарием в итоговый YAML.",
               "correct": false,
               "sections": {
@@ -929,8 +917,8 @@
                 "if_it_were_true": "Тогда нельзя было бы сделать опциональный Ingress, но `{{- if .Values.ingress.enabled }}` именно скрывает/показывает ресурс.",
                 "how_it_should_be": "При ложном `if` блок не рендерится вообще; это настоящий условный вывод."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Внутри `range` к корневым объектам обращаются как обычно: `.Release.Name` доступен без специального синтаксиса.",
@@ -941,8 +929,8 @@
                 "if_it_were_true": "Тогда `.Release.Name` внутри цикла рендерился бы корректно, но там `.` — это элемент списка, и поле не найдётся.",
                 "how_it_should_be": "Внутри `range`/`with` к корневому контексту обращаются через `$` (`$.Release.Name`)."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`if`/`else if`/`else` — условный рендер блока (`{{- if eq .Values.service.type \"LoadBalancer\" }}...{{- end }}`), с логическими функциями `and`/`or`/`not`. `range` — цикл по списку или map (`{{- range .Values.extraEnv }}...{{- end }}`). `with` — меняет scope на указанный объект и пропускает блок, если значение nil/empty (`{{- with .Values.nodeSelector }}{{- toYaml . | nindent 2 }}{{- end }}`).",
@@ -953,6 +941,18 @@
                 "when_to_apply": "`if` — для опциональных ресурсов (ingress, tls), `range` — для env-переменных и tolerations, `with` — для вложенных блоков, которые могут отсутствовать.",
                 "edge_cases": "Внутри `with` и `range` контекст `.` подменяется на текущий элемент, поэтому к корневым объектам (`.Release`, `.Values`) обращаются через `$` (`$.Release.Name`).",
                 "related": "[[helm-interview#Q14]] синтаксис шаблонов и trim; [[helm-interview#Q15]] встроенные объекты; [[helm-interview#Q19]] функции toYaml и nindent."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Конструкция `with` работает как `range`: она перебирает элементы списка и рендерит блок для каждого из них.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`with` не итерирует — она лишь меняет scope `.` на один объект и пропускает блок, если он пустой; перебор делает `range`.",
+                "source_of_confusion": "Обе конструкции меняют контекст внутри блока, поэтому их поведение смешивают.",
+                "if_it_were_true": "Тогда `with .Values.env` рендерил бы блок по разу на элемент, но `with` выполнит его один раз для всего объекта.",
+                "how_it_should_be": "`range` перебирает коллекцию; `with` один раз сужает scope до объекта."
               },
               "label": "D",
               "order": 3
@@ -969,31 +969,6 @@
           "question_text": "Что такое named templates и функция `include`?",
           "options": [
             {
-              "text": "Named template — именованный переиспользуемый блок шаблона, объявленный через `define` (обычно в `_helpers.tpl`), например `my-app.selectorLabels`. Функция `include` вызывает такой блок и возвращает строку, что позволяет применять к результату pipe-функции (`nindent`, `trim`): `{{- include \"my-app.selectorLabels\" . | nindent 4 }}`. В отличие от `template`, `include` именно возвращает значение.",
-              "correct": true,
-              "sections": {
-                "explanation": "Named templates реализуют переиспользование: общий блок (labels, selector) объявляется один раз через `define`, а `include` вставляет его в любой манифест, сохраняя возможность форматировать через pipe.",
-                "example": "`{{- define \"my-app.selectorLabels\" -}}...{{- end }}` в `_helpers.tpl`, затем `{{- include \"my-app.selectorLabels\" . | nindent 4 }}` в `deployment.yaml`.",
-                "when_to_apply": "Применяют для DRY-блоков, повторяющихся в нескольких манифестах: набор labels, selectorLabels, формирование fullname.",
-                "edge_cases": "Вторым аргументом `include` передают контекст `.`; если забыть его или передать неверный scope, внутри хелпера не будет `.Values`/`.Release`, и рендер упадёт или выдаст пустоту.",
-                "related": "[[helm-interview#Q8]] файл _helpers.tpl; [[helm-interview#Q18]] разница include и template; [[helm-interview#Q19]] pipe-функции nindent/indent."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`include` вызывает блок `define`, но не возвращает строку, поэтому к нему нельзя применить `nindent` или `trim` через pipe.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это поведение `template`: именно `include` возвращает строку и поддерживает pipe; в этом главное преимущество `include`.",
-                "source_of_confusion": "`include` и `template` оба вызывают named templates, поэтому их свойства путают.",
-                "if_it_were_true": "Тогда `include ... | nindent 4` было бы невозможно, но именно эта конструкция — стандартный паттерн форматирования.",
-                "how_it_should_be": "`include` возвращает строку и работает в pipe; не возвращает значение `template`."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Named template объявляется через `range`, а вызывается напрямую как функция: `{{ myAppLabels . }}`.",
               "correct": false,
               "sections": {
@@ -1002,8 +977,8 @@
                 "if_it_were_true": "Тогда `range` создавал бы переиспользуемые блоки, но он лишь итерирует коллекцию.",
                 "how_it_should_be": "Named template объявляется через `define`, вызывается через `include`/`template`."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Контекст в named template передавать не нужно: `include \"my-app.labels\"` без второго аргумента всё равно видит `.Values`.",
@@ -1013,6 +988,31 @@
                 "source_of_confusion": "Снаружи `.Values` доступен глобально, поэтому ждут того же внутри хелпера.",
                 "if_it_were_true": "Тогда `include \"my-app.labels\"` рендерил бы labels, но без контекста хелпер не найдёт `.Chart`/`.Release` и упадёт.",
                 "how_it_should_be": "В `include`/`template` всегда передают контекст `.` вторым аргументом."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Named template — именованный переиспользуемый блок шаблона, объявленный через `define` (обычно в `_helpers.tpl`), например `my-app.selectorLabels`. Функция `include` вызывает такой блок и возвращает строку, что позволяет применять к результату pipe-функции (`nindent`, `trim`): `{{- include \"my-app.selectorLabels\" . | nindent 4 }}`. В отличие от `template`, `include` именно возвращает значение.",
+              "correct": true,
+              "sections": {
+                "explanation": "Named templates реализуют переиспользование: общий блок (labels, selector) объявляется один раз через `define`, а `include` вставляет его в любой манифест, сохраняя возможность форматировать через pipe.",
+                "example": "`{{- define \"my-app.selectorLabels\" -}}...{{- end }}` в `_helpers.tpl`, затем `{{- include \"my-app.selectorLabels\" . | nindent 4 }}` в `deployment.yaml`.",
+                "when_to_apply": "Применяют для DRY-блоков, повторяющихся в нескольких манифестах: набор labels, selectorLabels, формирование fullname.",
+                "edge_cases": "Вторым аргументом `include` передают контекст `.`; если забыть его или передать неверный scope, внутри хелпера не будет `.Values`/`.Release`, и рендер упадёт или выдаст пустоту.",
+                "related": "[[helm-interview#Q8]] файл _helpers.tpl; [[helm-interview#Q18]] разница include и template; [[helm-interview#Q19]] pipe-функции nindent/indent."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`include` вызывает блок `define`, но не возвращает строку, поэтому к нему нельзя применить `nindent` или `trim` через pipe.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это поведение `template`: именно `include` возвращает строку и поддерживает pipe; в этом главное преимущество `include`.",
+                "source_of_confusion": "`include` и `template` оба вызывают named templates, поэтому их свойства путают.",
+                "if_it_were_true": "Тогда `include ... | nindent 4` было бы невозможно, но именно эта конструкция — стандартный паттерн форматирования.",
+                "how_it_should_be": "`include` возвращает строку и работает в pipe; не возвращает значение `template`."
               },
               "label": "D",
               "order": 3
@@ -1041,6 +1041,18 @@
               "order": 0
             },
             {
+              "text": "`template` возвращает строку и поддерживает pipe, а `include` лишь выводит результат напрямую без возможности форматирования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё ровно наоборот: строку с поддержкой pipe возвращает `include`, а `template` выводит напрямую.",
+                "source_of_confusion": "Названия не подсказывают, какая функция «возвращает», поэтому их легко поменять местами.",
+                "if_it_were_true": "Тогда best practice рекомендовал бы `template`, но рекомендуют именно `include` за поддержку pipe.",
+                "how_it_should_be": "Возвращает строку и поддерживает pipe `include`, а не `template`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "`template \"name\" .` выводит результат напрямую, не возвращает значение и не может использоваться в pipe — поэтому к нему нельзя применить `nindent`, `trim` и т.п. `include \"name\" .` возвращает строку, что делает возможным форматирование через pipe (`| nindent 2`). Helm best practice — всегда использовать `include`, потому что только он корректно форматирует вложенный YAML.",
               "correct": true,
               "sections": {
@@ -1049,18 +1061,6 @@
                 "when_to_apply": "Используют `include` практически всегда, особенно когда вставляемый блок — это многострочный YAML внутри отступа (labels, annotations).",
                 "edge_cases": "`template` иногда оставляют для простого вывода без вложенности, но даже там `include` безопаснее; смешение стилей в одном chart затрудняет ревью.",
                 "related": "[[helm-interview#Q17]] named templates и include; [[helm-interview#Q8]] _helpers.tpl как место хелперов; [[helm-interview#Q19]] функции nindent/indent."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`template` возвращает строку и поддерживает pipe, а `include` лишь выводит результат напрямую без возможности форматирования.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Всё ровно наоборот: строку с поддержкой pipe возвращает `include`, а `template` выводит напрямую.",
-                "source_of_confusion": "Названия не подсказывают, какая функция «возвращает», поэтому их легко поменять местами.",
-                "if_it_were_true": "Тогда best practice рекомендовал бы `template`, но рекомендуют именно `include` за поддержку pipe.",
-                "how_it_should_be": "Возвращает строку и поддерживает pipe `include`, а не `template`."
               },
               "label": "C",
               "order": 2
@@ -1089,18 +1089,6 @@
           "question_text": "Какие встроенные функции `Helm templates` часто используются?",
           "options": [
             {
-              "text": "Функции `indent` и `nindent` полностью идентичны и обе просто добавляют указанное число пробелов к каждой строке.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`nindent` дополнительно вставляет перенос строки перед блоком, а `indent` — нет; эта разница часто решает, будет ли YAML валидным.",
-                "source_of_confusion": "Имена почти одинаковы (`n`-префикс), поэтому различие упускают.",
-                "if_it_were_true": "Тогда их можно было бы менять местами, но замена `nindent` на `indent` склеит блок с предыдущей строкой.",
-                "how_it_should_be": "`nindent` = newline + indent; `indent` только добавляет пробелы без переноса."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Функция `default` вызывает ошибку рендера, если основное значение не задано, вместо подстановки дефолта.",
               "correct": false,
               "sections": {
@@ -1109,8 +1097,8 @@
                 "if_it_were_true": "Тогда `{{ .Values.timeout | default 30 }}` ломал бы рендер без timeout, но он спокойно подставит 30.",
                 "how_it_should_be": "`default` подставляет запасное значение; падение при отсутствии обеспечивает `required`."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Часто применяют: строковые (`upper`, `lower`, `trim`, `quote`, `trunc 63`, `printf`), YAML/JSON-конвертацию (`toYaml | nindent N`, `toJson`), значения по умолчанию (`default 30`, `default .Chart.Name`), условную логику (`ternary \"yes\" \"no\" .Values.enabled`), Base64 (`b64enc`/`b64dec`) и отступы (`indent 4`, `nindent 4` — последний добавляет перенос строки перед).",
@@ -1122,8 +1110,8 @@
                 "edge_cases": "Разница `indent` vs `nindent` критична: `nindent` добавляет перенос строки перед блоком, а `indent` нет — перепутав их, легко получить склеенную строку и невалидный YAML.",
                 "related": "[[helm-interview#Q14]] синтаксис шаблонов и pipe; [[helm-interview#Q16]] toYaml внутри with; [[helm-interview#Q17]] nindent при include."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Функция `toYaml` конвертирует YAML обратно в плоскую строку без отступов, поэтому `nindent` после неё бесполезен.",
@@ -1133,6 +1121,18 @@
                 "source_of_confusion": "Название наводит на мысль о «выпрямлении» в одну строку.",
                 "if_it_were_true": "Тогда паттерн `toYaml . | nindent N` не имел бы смысла, но это самый частый способ вставки resources/affinity.",
                 "how_it_should_be": "`toYaml` даёт многострочный YAML, который `nindent N` корректно отступает."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Функции `indent` и `nindent` полностью идентичны и обе просто добавляют указанное число пробелов к каждой строке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`nindent` дополнительно вставляет перенос строки перед блоком, а `indent` — нет; эта разница часто решает, будет ли YAML валидным.",
+                "source_of_confusion": "Имена почти одинаковы (`n`-префикс), поэтому различие упускают.",
+                "if_it_were_true": "Тогда их можно было бы менять местами, но замена `nindent` на `indent` склеит блок с предыдущей строкой.",
+                "how_it_should_be": "`nindent` = newline + indent; `indent` только добавляет пробелы без переноса."
               },
               "label": "D",
               "order": 3
@@ -1149,13 +1149,14 @@
           "question_text": "Как переопределить values при установке chart?",
           "options": [
             {
-              "text": "Переопределить values можно только через файл `-f`; флага `--set` для точечной правды одного значения в Helm нет.",
-              "correct": false,
+              "text": "Через `--set image.tag=2.0.0` (одиночное значение, точка для вложенных), `--set-string` (принудительно строка, полезно для числоподобных значений), `--set-json 'resources={...}'` (JSON-значение), и `--values`/`-f` (файл, можно несколько). Списки задаются как `--set 'tolerations[0].key=dedicated'`. Несколько `-f` применяются по порядку, а `--set` имеет наивысший приоритет.",
+              "correct": true,
               "sections": {
-                "what_actually": "Флаг `--set` (а также `--set-string`/`--set-json`) существует и применяется именно для точечного переопределения значений из командной строки.",
-                "source_of_confusion": "Файлы values привычнее, поэтому про CLI-флаг забывают.",
-                "if_it_were_true": "Тогда нельзя было бы передать тег образа из CI без отдельного файла, но `--set image.tag=$SHA` решает это в одну строку.",
-                "how_it_should_be": "Кроме `-f` есть `--set`/`--set-string`/`--set-json` для точечных override."
+                "explanation": "Override-механизмы позволяют не трогать `values.yaml` chart: окружение-специфичные значения передают файлами `-f`, а точечные переопределения (например тег образа из CI) — флагом `--set`.",
+                "example": "`helm install my-app ./chart -f base-values.yaml -f prod-override.yaml --set image.tag=$CI_SHA` — база, прод-оверрайд и тег из пайплайна.",
+                "when_to_apply": "`-f` — для наборов значений на окружение, `--set` — для динамических значений из CI, `--set-string` — когда YAML иначе превратит значение (хэш-тег) в число.",
+                "edge_cases": "`--set` плохо работает со сложными структурами и значениями с запятыми/точками внутри (их надо экранировать); для таких случаев используют `--set-json` или файл.",
+                "related": "[[helm-interview#Q7]] values.yaml как база значений; [[helm-interview#Q21]] приоритет источников values; [[helm-interview#Q22]] глобальные values."
               },
               "label": "A",
               "order": 0
@@ -1185,14 +1186,13 @@
               "order": 2
             },
             {
-              "text": "Через `--set image.tag=2.0.0` (одиночное значение, точка для вложенных), `--set-string` (принудительно строка, полезно для числоподобных значений), `--set-json 'resources={...}'` (JSON-значение), и `--values`/`-f` (файл, можно несколько). Списки задаются как `--set 'tolerations[0].key=dedicated'`. Несколько `-f` применяются по порядку, а `--set` имеет наивысший приоритет.",
-              "correct": true,
+              "text": "Переопределить values можно только через файл `-f`; флага `--set` для точечной правды одного значения в Helm нет.",
+              "correct": false,
               "sections": {
-                "explanation": "Override-механизмы позволяют не трогать `values.yaml` chart: окружение-специфичные значения передают файлами `-f`, а точечные переопределения (например тег образа из CI) — флагом `--set`.",
-                "example": "`helm install my-app ./chart -f base-values.yaml -f prod-override.yaml --set image.tag=$CI_SHA` — база, прод-оверрайд и тег из пайплайна.",
-                "when_to_apply": "`-f` — для наборов значений на окружение, `--set` — для динамических значений из CI, `--set-string` — когда YAML иначе превратит значение (хэш-тег) в число.",
-                "edge_cases": "`--set` плохо работает со сложными структурами и значениями с запятыми/точками внутри (их надо экранировать); для таких случаев используют `--set-json` или файл.",
-                "related": "[[helm-interview#Q7]] values.yaml как база значений; [[helm-interview#Q21]] приоритет источников values; [[helm-interview#Q22]] глобальные values."
+                "what_actually": "Флаг `--set` (а также `--set-string`/`--set-json`) существует и применяется именно для точечного переопределения значений из командной строки.",
+                "source_of_confusion": "Файлы values привычнее, поэтому про CLI-флаг забывают.",
+                "if_it_were_true": "Тогда нельзя было бы передать тег образа из CI без отдельного файла, но `--set image.tag=$SHA` решает это в одну строку.",
+                "how_it_should_be": "Кроме `-f` есть `--set`/`--set-string`/`--set-json` для точечных override."
               },
               "label": "D",
               "order": 3
@@ -1209,6 +1209,18 @@
           "question_text": "Какой приоритет у разных источников values?",
           "options": [
             {
+              "text": "При нескольких `-f` приоритет имеет первый переданный файл, а последующие лишь дополняют отсутствующие ключи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Среди `-f` побеждает последний переданный файл: более поздние перекрывают более ранние по совпадающим ключам.",
+                "source_of_confusion": "Интуиция «первый — главный» противоречит реальному порядку override.",
+                "if_it_were_true": "Тогда `-f base.yaml -f prod.yaml` игнорировал бы prod-оверрайды, но именно последний файл и должен побеждать.",
+                "how_it_should_be": "Последний `-f` перекрывает предыдущие по одинаковым ключам."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "От низшего к высшему: 1) `values.yaml` внутри chart (дефолты); 2) `values.yaml` родительского chart (для subchart); 3) файлы `--values`/`-f` в порядке передачи (последний перекрывает предыдущие); 4) `--set`/`--set-string`/`--set-json` (наивысший приоритет). То есть более поздние `-f` перекрывают более ранние, а `--set` перекрывает всё.",
               "correct": true,
               "sections": {
@@ -1218,32 +1230,8 @@
                 "edge_cases": "Слияние values — это deep merge по ключам, а не замена целых блоков; но для списков Helm заменяет весь список целиком, а не объединяет элементы.",
                 "related": "[[helm-interview#Q20]] способы override через --set и -f; [[helm-interview#Q7]] values.yaml как база; [[helm-interview#Q22]] global для subchart."
               },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`values.yaml` внутри chart имеет наивысший приоритет и перекрывает любые `--set` и `-f`, переданные при установке.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Дефолтный `values.yaml` chart — это низший приоритет; его перекрывают и `-f`, и `--set`.",
-                "source_of_confusion": "Файл «по умолчанию» кажется главным источником истины.",
-                "if_it_were_true": "Тогда `--set image.tag` из CI игнорировался бы, но он как раз надёжно переопределяет дефолт.",
-                "how_it_should_be": "Встроенный `values.yaml` — низший приоритет; CLI `--set` — высший."
-              },
               "label": "B",
               "order": 1
-            },
-            {
-              "text": "При нескольких `-f` приоритет имеет первый переданный файл, а последующие лишь дополняют отсутствующие ключи.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Среди `-f` побеждает последний переданный файл: более поздние перекрывают более ранние по совпадающим ключам.",
-                "source_of_confusion": "Интуиция «первый — главный» противоречит реальному порядку override.",
-                "if_it_were_true": "Тогда `-f base.yaml -f prod.yaml` игнорировал бы prod-оверрайды, но именно последний файл и должен побеждать.",
-                "how_it_should_be": "Последний `-f` перекрывает предыдущие по одинаковым ключам."
-              },
-              "label": "C",
-              "order": 2
             },
             {
               "text": "`--set` имеет самый низкий приоритет: любое значение из файла `-f` перекрывает то, что задано через `--set`.",
@@ -1253,6 +1241,18 @@
                 "source_of_confusion": "Кажется, что файлы «весомее» точечного флага командной строки.",
                 "if_it_were_true": "Тогда динамический тег образа из CI терялся бы под файлом, но `--set` специально стоит выше файлов.",
                 "how_it_should_be": "`--set` — высший приоритет и перекрывает значения из `-f` и дефолтов."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`values.yaml` внутри chart имеет наивысший приоритет и перекрывает любые `--set` и `-f`, переданные при установке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дефолтный `values.yaml` chart — это низший приоритет; его перекрывают и `-f`, и `--set`.",
+                "source_of_confusion": "Файл «по умолчанию» кажется главным источником истины.",
+                "if_it_were_true": "Тогда `--set image.tag` из CI игнорировался бы, но он как раз надёжно переопределяет дефолт.",
+                "how_it_should_be": "Встроенный `values.yaml` — низший приоритет; CLI `--set` — высший."
               },
               "label": "D",
               "order": 3
@@ -1269,6 +1269,18 @@
           "question_text": "Что такое глобальные values (`global`)?",
           "options": [
             {
+              "text": "Значения из `global` доступны в subchart через секцию с именем самого subchart, например `.Values.postgresql.global`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`global` доступна везде по единому пути `.Values.global`, а не вложена в секцию конкретного subchart.",
+                "source_of_confusion": "Обычные values для subchart лежат в его именованной секции, поэтому ждут того же от global.",
+                "if_it_were_true": "Тогда каждый subchart читал бы свой `global` по-разному, но путь `.Values.global` единый для всех.",
+                "how_it_should_be": "К global обращаются единообразно через `.Values.global`, независимо от subchart."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "`global` — это секция, которая делает значения видимыми только в родительском chart и полностью скрывает их от subcharts.",
               "correct": false,
               "sections": {
@@ -1277,8 +1289,20 @@
                 "if_it_were_true": "Тогда не было бы способа передать общий реестр всем потомкам, но именно для этого `global` и придумана.",
                 "how_it_should_be": "`global` пробрасывает значения во все subcharts, а не прячет их от потомков."
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`global` автоматически переопределяет одноимённые локальные values в каждом subchart, не давая задать локальное значение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`global` — это отдельное пространство `.Values.global`; локальные values subchart существуют независимо и `global` их не затирает.",
+                "source_of_confusion": "Слово «global» наводит на мысль о принудительном перекрытии всего.",
+                "if_it_were_true": "Тогда subchart не мог бы иметь собственный `image.repository`, но локальные значения и global сосуществуют.",
+                "how_it_should_be": "`global` живёт в своём namespace значений; локальные values subchart она не перетирает."
+              },
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Секция `global` в `values.yaml` доступна во всех subcharts через `.Values.global`. В неё кладут значения, общие для родителя и всех потомков: `imageRegistry`, `imagePullSecrets`, `storageClass`. Это единственный механизм передачи values от родителя к дочерним chart-ам без явной переадресации через одноимённую секцию.",
@@ -1289,30 +1313,6 @@
                 "when_to_apply": "`global` используют для общих инфраструктурных значений — реестр образов, pull secrets, storageClass, домен — которые должны быть одинаковы во всех subchart.",
                 "edge_cases": "Если subchart не написан с расчётом на `global` (не читает `.Values.global`), просто положить туда значение недостаточно — потомок должен явно его использовать в своих шаблонах.",
                 "related": "[[helm-interview#Q25]] передача values дочернему chart; [[helm-interview#Q23]] управление зависимостями; [[helm-interview#Q21]] приоритет источников values."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Значения из `global` доступны в subchart через секцию с именем самого subchart, например `.Values.postgresql.global`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`global` доступна везде по единому пути `.Values.global`, а не вложена в секцию конкретного subchart.",
-                "source_of_confusion": "Обычные values для subchart лежат в его именованной секции, поэтому ждут того же от global.",
-                "if_it_were_true": "Тогда каждый subchart читал бы свой `global` по-разному, но путь `.Values.global` единый для всех.",
-                "how_it_should_be": "К global обращаются единообразно через `.Values.global`, независимо от subchart."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`global` автоматически переопределяет одноимённые локальные values в каждом subchart, не давая задать локальное значение.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`global` — это отдельное пространство `.Values.global`; локальные values subchart существуют независимо и `global` их не затирает.",
-                "source_of_confusion": "Слово «global» наводит на мысль о принудительном перекрытии всего.",
-                "if_it_were_true": "Тогда subchart не мог бы иметь собственный `image.repository`, но локальные значения и global сосуществуют.",
-                "how_it_should_be": "`global` живёт в своём namespace значений; локальные values subchart она не перетирает."
               },
               "label": "D",
               "order": 3
@@ -1341,13 +1341,13 @@
               "order": 0
             },
             {
-              "text": "Поле `condition` в зависимости задаёт версию subchart, которую нужно установить из репозитория.",
+              "text": "Зависимости можно указывать только из классических HTTP-репозиториев; OCI-реестры в секции `dependencies` не поддерживаются.",
               "correct": false,
               "sections": {
-                "what_actually": "Версию задаёт поле `version`; `condition` — это булев флаг из values, включающий или выключающий установку зависимости.",
-                "source_of_confusion": "Оба поля рядом в записи зависимости, поэтому их роли путают.",
-                "if_it_were_true": "Тогда `condition: postgresql.enabled` означало бы «версия postgresql.enabled», что бессмысленно как версия.",
-                "how_it_should_be": "`version` — версия subchart; `condition` — флаг его включения через values."
+                "what_actually": "В `repository` можно указать и `oci://`-адрес (например `oci://registry-1.docker.io/bitnamicharts`); OCI как источник зависимостей поддерживается.",
+                "source_of_confusion": "Исторически зависимости тянули из HTTP-репозиториев, отсюда устаревшее представление.",
+                "if_it_were_true": "Тогда нельзя было бы держать subcharts в Harbor/ECR, но OCI-репозитории в `dependencies` работают.",
+                "how_it_should_be": "`repository` принимает и HTTP-, и `oci://`-адреса как источник зависимости."
               },
               "label": "B",
               "order": 1
@@ -1366,13 +1366,13 @@
               "order": 2
             },
             {
-              "text": "Зависимости можно указывать только из классических HTTP-репозиториев; OCI-реестры в секции `dependencies` не поддерживаются.",
+              "text": "Поле `condition` в зависимости задаёт версию subchart, которую нужно установить из репозитория.",
               "correct": false,
               "sections": {
-                "what_actually": "В `repository` можно указать и `oci://`-адрес (например `oci://registry-1.docker.io/bitnamicharts`); OCI как источник зависимостей поддерживается.",
-                "source_of_confusion": "Исторически зависимости тянули из HTTP-репозиториев, отсюда устаревшее представление.",
-                "if_it_were_true": "Тогда нельзя было бы держать subcharts в Harbor/ECR, но OCI-репозитории в `dependencies` работают.",
-                "how_it_should_be": "`repository` принимает и HTTP-, и `oci://`-адреса как источник зависимости."
+                "what_actually": "Версию задаёт поле `version`; `condition` — это булев флаг из values, включающий или выключающий установку зависимости.",
+                "source_of_confusion": "Оба поля рядом в записи зависимости, поэтому их роли путают.",
+                "if_it_were_true": "Тогда `condition: postgresql.enabled` означало бы «версия postgresql.enabled», что бессмысленно как версия.",
+                "how_it_should_be": "`version` — версия subchart; `condition` — флаг его включения через values."
               },
               "label": "D",
               "order": 3
@@ -1389,13 +1389,13 @@
           "question_text": "Что делает команда `helm dependency update`?",
           "options": [
             {
-              "text": "`helm dependency update` обновляет версию самого основного chart в `Chart.yaml` до следующей по SemVer.",
+              "text": "`Chart.lock` создавать не нужно — его генерируют автоматически на каждом `helm install`, поэтому в git его не коммитят.",
               "correct": false,
               "sections": {
-                "what_actually": "Команда работает с зависимостями (subcharts), а не с версией основного chart; поле `version` основного chart она не трогает.",
-                "source_of_confusion": "Слово «update» наводит на мысль о бампе версии текущего chart.",
-                "if_it_were_true": "Тогда каждый запуск менял бы `version` chart, но команда лишь скачивает subcharts и пишет `Chart.lock`.",
-                "how_it_should_be": "`dependency update` обновляет зависимости и `Chart.lock`, а не версию основного chart."
+                "what_actually": "`Chart.lock` создаётся именно `dependency update`/`build` и его коммитят в git для воспроизводимых сборок; install его не генерирует.",
+                "source_of_confusion": "По аналогии с некоторыми lock-файлами кажется, что он эфемерный.",
+                "if_it_were_true": "Тогда версии subcharts плавали бы от сборки к сборке, но `Chart.lock` как раз их фиксирует.",
+                "how_it_should_be": "`Chart.lock` фиксируют в git; обновляет его `dependency update`, а не `install`."
               },
               "label": "A",
               "order": 0
@@ -1413,13 +1413,13 @@
               "order": 1
             },
             {
-              "text": "`Chart.lock` создавать не нужно — его генерируют автоматически на каждом `helm install`, поэтому в git его не коммитят.",
+              "text": "`helm dependency update` обновляет версию самого основного chart в `Chart.yaml` до следующей по SemVer.",
               "correct": false,
               "sections": {
-                "what_actually": "`Chart.lock` создаётся именно `dependency update`/`build` и его коммитят в git для воспроизводимых сборок; install его не генерирует.",
-                "source_of_confusion": "По аналогии с некоторыми lock-файлами кажется, что он эфемерный.",
-                "if_it_were_true": "Тогда версии subcharts плавали бы от сборки к сборке, но `Chart.lock` как раз их фиксирует.",
-                "how_it_should_be": "`Chart.lock` фиксируют в git; обновляет его `dependency update`, а не `install`."
+                "what_actually": "Команда работает с зависимостями (subcharts), а не с версией основного chart; поле `version` основного chart она не трогает.",
+                "source_of_confusion": "Слово «update» наводит на мысль о бампе версии текущего chart.",
+                "if_it_were_true": "Тогда каждый запуск менял бы `version` chart, но команда лишь скачивает subcharts и пишет `Chart.lock`.",
+                "how_it_should_be": "`dependency update` обновляет зависимости и `Chart.lock`, а не версию основного chart."
               },
               "label": "C",
               "order": 2
@@ -1449,19 +1449,6 @@
           "question_text": "Как передать values дочернему chart?",
           "options": [
             {
-              "text": "Values для subchart передаются через одноимённую секцию в родительском `values.yaml`: имя секции должно совпадать с `name` зависимости из `Chart.yaml`. Например, для зависимости `postgresql` родитель пишет `postgresql: {auth: {username: myuser, password: mypassword}}`. Также работает передача общих значений через секцию `global`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Helm маршрутизирует values по имени: всё, что лежит под ключом, равным `name` subchart, попадает в его контекст `.Values`, поэтому достаточно повторить структуру значений потомка под его именем.",
-                "example": "Зависимость `name: redis` + в родительском `values.yaml`: `redis: {enabled: false, auth: {password: redispass}}` — эти значения уйдут в subchart redis.",
-                "when_to_apply": "Используют всегда при конфигурации подключённых subcharts: параметры БД, кэша, размеры persistence — задаются под именованной секцией родителя.",
-                "edge_cases": "Если имя секции не совпадает с `name` зависимости (опечатка, alias), значения просто не дойдут до subchart и тот возьмёт свои дефолты — типичный источник «почему пароль не применился».",
-                "related": "[[helm-interview#Q23]] объявление зависимостей; [[helm-interview#Q22]] global как сквозные values; [[helm-interview#Q24]] скачивание зависимостей."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Values дочернему chart передаются через флаг `--subchart-values` при установке; в родительском `values.yaml` это сделать нельзя.",
               "correct": false,
               "sections": {
@@ -1470,20 +1457,8 @@
                 "if_it_were_true": "Тогда без флага subchart нельзя было бы настроить, но именованная секция в `values.yaml` это решает.",
                 "how_it_should_be": "Values субчарта задают под секцией с его `name` в родительском `values.yaml`."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Имя секции в родительском `values.yaml` может быть любым — Helm сам сопоставит значения с нужным subchart по структуре.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Имя секции обязано совпадать с `name` зависимости из `Chart.yaml`; иначе значения не попадут в нужный subchart.",
-                "source_of_confusion": "Helm делает deep merge, поэтому кажется, что сопоставление умное и по содержимому.",
-                "if_it_were_true": "Тогда опечатка в имени секции была бы безвредной, но она тихо лишает subchart переданных значений.",
-                "how_it_should_be": "Ключ секции должен точно равняться `name` зависимости, иначе маршрутизация values не сработает."
-              },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Передать values потомку через `global` невозможно — `global` доступна только в самом родительском chart.",
@@ -1493,6 +1468,31 @@
                 "source_of_confusion": "Именованная секция — основной путь, поэтому про `global` забывают.",
                 "if_it_were_true": "Тогда общий `imageRegistry` нельзя было бы раздать потомкам, но `global` именно для этого и существует.",
                 "how_it_should_be": "Помимо именованной секции значения потомкам передаёт `global` через `.Values.global`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Values для subchart передаются через одноимённую секцию в родительском `values.yaml`: имя секции должно совпадать с `name` зависимости из `Chart.yaml`. Например, для зависимости `postgresql` родитель пишет `postgresql: {auth: {username: myuser, password: mypassword}}`. Также работает передача общих значений через секцию `global`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Helm маршрутизирует values по имени: всё, что лежит под ключом, равным `name` subchart, попадает в его контекст `.Values`, поэтому достаточно повторить структуру значений потомка под его именем.",
+                "example": "Зависимость `name: redis` + в родительском `values.yaml`: `redis: {enabled: false, auth: {password: redispass}}` — эти значения уйдут в subchart redis.",
+                "when_to_apply": "Используют всегда при конфигурации подключённых subcharts: параметры БД, кэша, размеры persistence — задаются под именованной секцией родителя.",
+                "edge_cases": "Если имя секции не совпадает с `name` зависимости (опечатка, alias), значения просто не дойдут до subchart и тот возьмёт свои дефолты — типичный источник «почему пароль не применился».",
+                "related": "[[helm-interview#Q23]] объявление зависимостей; [[helm-interview#Q22]] global как сквозные values; [[helm-interview#Q24]] скачивание зависимостей."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Имя секции в родительском `values.yaml` может быть любым — Helm сам сопоставит значения с нужным subchart по структуре.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имя секции обязано совпадать с `name` зависимости из `Chart.yaml`; иначе значения не попадут в нужный subchart.",
+                "source_of_confusion": "Helm делает deep merge, поэтому кажется, что сопоставление умное и по содержимому.",
+                "if_it_were_true": "Тогда опечатка в имени секции была бы безвредной, но она тихо лишает subchart переданных значений.",
+                "how_it_should_be": "Ключ секции должен точно равняться `name` зависимости, иначе маршрутизация values не сработает."
               },
               "label": "D",
               "order": 3
@@ -1509,6 +1509,18 @@
           "question_text": "Что такое `Helm Hooks` и зачем они нужны?",
           "options": [
             {
+              "text": "Hooks выполняются параллельно с основными ресурсами релиза, без ожидания их завершения перед продолжением деплоя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Helm выполняет hook в его фазе и ждёт завершения (например, успешного Job) перед переходом к следующему шагу деплоя.",
+                "source_of_confusion": "Кажется, что вспомогательные задачи не должны блокировать основной поток.",
+                "if_it_were_true": "Тогда `pre-upgrade`-миграция могла бы не закончиться до выката кода, но смысл hook — именно дождаться её.",
+                "how_it_should_be": "Helm дожидается завершения hook своей фазы перед продолжением релиза."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "`Helm Hooks` — это webhooks, которые Helm отправляет во внешние HTTP-сервисы (например в Slack) при событиях деплоя.",
               "correct": false,
               "sections": {
@@ -1517,8 +1529,8 @@
                 "if_it_were_true": "Тогда для hook задавали бы URL и метод, но в Helm hook — это аннотация на манифесте ресурса.",
                 "how_it_should_be": "Helm Hook — это аннотированный Kubernetes-ресурс, выполняемый в фазе релиза, а не webhook."
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`Helm Hooks` — механизм выполнения Kubernetes-ресурсов (обычно `Job` или `Pod`) в определённые моменты жизненного цикла релиза. Их применяют для миграций БД до обновления (`pre-upgrade`), инициализации данных при первой установке (`post-install`), cleanup при удалении (`pre-delete`) и проверок после деплоя. Hook объявляется аннотацией `\"helm.sh/hook\"` на любом ресурсе.",
@@ -1530,8 +1542,8 @@
                 "edge_cases": "Hook-ресурсы не управляются как обычные манифесты релиза: они не удаляются автоматически при `helm uninstall`, если не задана `hook-delete-policy`, и могут копиться в namespace.",
                 "related": "[[helm-interview#Q27]] типы хуков; [[helm-interview#Q28]] hook-weight и delete-policy; [[helm-interview#Q32]] test-хуки в helm test."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Hook объявляется не аннотацией, а отдельным полем `kind: Hook` в манифесте ресурса.",
@@ -1541,18 +1553,6 @@
                 "source_of_confusion": "Логично ожидать отдельный тип ресурса под особое поведение.",
                 "if_it_were_true": "Тогда нужен был бы CRD `Hook`, но Helm использует штатные ресурсы с аннотацией.",
                 "how_it_should_be": "Hook — это обычный ресурс с аннотацией `helm.sh/hook`, а не отдельный `kind`."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Hooks выполняются параллельно с основными ресурсами релиза, без ожидания их завершения перед продолжением деплоя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Helm выполняет hook в его фазе и ждёт завершения (например, успешного Job) перед переходом к следующему шагу деплоя.",
-                "source_of_confusion": "Кажется, что вспомогательные задачи не должны блокировать основной поток.",
-                "if_it_were_true": "Тогда `pre-upgrade`-миграция могла бы не закончиться до выката кода, но смысл hook — именно дождаться её.",
-                "how_it_should_be": "Helm дожидается завершения hook своей фазы перед продолжением релиза."
               },
               "label": "D",
               "order": 3
@@ -1569,28 +1569,16 @@
           "question_text": "Какие типы хуков существуют в `Helm`?",
           "options": [
             {
-              "text": "Хуки `pre-upgrade` и `post-upgrade` срабатывают также и при `helm install`, потому что install — это частный случай upgrade.",
+              "text": "Хук `test` выполняется автоматически в конце каждого `helm upgrade`, как часть процедуры деплоя.",
               "correct": false,
               "sections": {
-                "what_actually": "При `helm install` срабатывают `pre-install`/`post-install`; `*-upgrade`-хуки выполняются только при `helm upgrade`.",
-                "source_of_confusion": "Паттерн `upgrade --install` стирает границу между install и upgrade.",
-                "if_it_were_true": "Тогда хватило бы навесить только `pre-upgrade`, но при первой установке он не запустится — нужен и `pre-install`.",
-                "how_it_should_be": "Для покрытия и установки, и обновления навешивают `pre-install,pre-upgrade` явно."
+                "what_actually": "`test`-хуки запускаются только явной командой `helm test <release>`, а не автоматически при upgrade.",
+                "source_of_confusion": "Кажется логичным прогонять тесты сразу после деплоя.",
+                "if_it_were_true": "Тогда каждый upgrade гонял бы тест-Pod-ы, но Helm их создаёт лишь по `helm test`.",
+                "how_it_should_be": "`test`-хуки запускают вручную через `helm test`; upgrade их не вызывает."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "В Helm есть только два типа хуков — `pre-deploy` и `post-deploy`, общие для всех операций с релизом.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Типов больше и они привязаны к конкретным операциям: install, upgrade, rollback, delete (каждая с pre/post) плюс `test`.",
-                "source_of_confusion": "Обобщённые имена `pre/post-deploy` звучат правдоподобно, но в Helm их нет.",
-                "if_it_were_true": "Тогда нельзя было бы запускать хук только при удалении, но `pre-delete`/`post-delete` существуют отдельно.",
-                "how_it_should_be": "Хуки специфичны по операциям (install/upgrade/rollback/delete) плюс отдельный `test`."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Основные типы: `pre-install`/`post-install` (вокруг создания ресурсов при `helm install`), `pre-delete`/`post-delete` (вокруг удаления при `helm uninstall`), `pre-upgrade`/`post-upgrade` (вокруг обновления при `helm upgrade`), `pre-rollback`/`post-rollback` (вокруг отката при `helm rollback`) и `test` (запускается командой `helm test`). Один ресурс можно назначить нескольким хукам через запятую.",
@@ -1602,17 +1590,29 @@
                 "edge_cases": "Хуки `pre-rollback`/`post-rollback` срабатывают при `helm rollback`, о чём часто забывают: миграция, навешенная только на `pre-upgrade`, при откате не выполнится.",
                 "related": "[[helm-interview#Q26]] что такое hooks; [[helm-interview#Q28]] hook-weight и delete-policy; [[helm-interview#Q32]] test как тип хука."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Хуки `pre-upgrade` и `post-upgrade` срабатывают также и при `helm install`, потому что install — это частный случай upgrade.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При `helm install` срабатывают `pre-install`/`post-install`; `*-upgrade`-хуки выполняются только при `helm upgrade`.",
+                "source_of_confusion": "Паттерн `upgrade --install` стирает границу между install и upgrade.",
+                "if_it_were_true": "Тогда хватило бы навесить только `pre-upgrade`, но при первой установке он не запустится — нужен и `pre-install`.",
+                "how_it_should_be": "Для покрытия и установки, и обновления навешивают `pre-install,pre-upgrade` явно."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Хук `test` выполняется автоматически в конце каждого `helm upgrade`, как часть процедуры деплоя.",
+              "text": "В Helm есть только два типа хуков — `pre-deploy` и `post-deploy`, общие для всех операций с релизом.",
               "correct": false,
               "sections": {
-                "what_actually": "`test`-хуки запускаются только явной командой `helm test <release>`, а не автоматически при upgrade.",
-                "source_of_confusion": "Кажется логичным прогонять тесты сразу после деплоя.",
-                "if_it_were_true": "Тогда каждый upgrade гонял бы тест-Pod-ы, но Helm их создаёт лишь по `helm test`.",
-                "how_it_should_be": "`test`-хуки запускают вручную через `helm test`; upgrade их не вызывает."
+                "what_actually": "Типов больше и они привязаны к конкретным операциям: install, upgrade, rollback, delete (каждая с pre/post) плюс `test`.",
+                "source_of_confusion": "Обобщённые имена `pre/post-deploy` звучат правдоподобно, но в Helm их нет.",
+                "if_it_were_true": "Тогда нельзя было бы запускать хук только при удалении, но `pre-delete`/`post-delete` существуют отдельно.",
+                "how_it_should_be": "Хуки специфичны по операциям (install/upgrade/rollback/delete) плюс отдельный `test`."
               },
               "label": "D",
               "order": 3
@@ -1629,30 +1629,6 @@
           "question_text": "Что такое `hook-weight` и `hook-delete-policy`?",
           "options": [
             {
-              "text": "`hook-weight` задаёт приоритет ресурсов: хуки с большим весом получают больше CPU и памяти при выполнении.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`hook-weight` управляет порядком запуска (меньший вес — раньше), а не выделением ресурсов; CPU/память задают через `resources` контейнера.",
-                "source_of_confusion": "Слово «weight» ассоциируется с приоритетом ресурсов, как в QoS Kubernetes.",
-                "if_it_were_true": "Тогда вес влиял бы на throttling Pod-а, но он влияет лишь на очередность хуков.",
-                "how_it_should_be": "`hook-weight` определяет порядок (меньший — первым); ресурсы задаются отдельно."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Меньший `hook-weight` означает, что хук выполнится последним, а наибольший вес — первым.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Сортировка по возрастанию: меньший (в т.ч. отрицательный) вес выполняется первым, больший — позже.",
-                "source_of_confusion": "Интуиция «больший вес важнее, значит раньше» противоречит фактическому порядку.",
-                "if_it_were_true": "Тогда `weight: -10` запускался бы в самом конце, но он как раз идёт перед `weight: 0`.",
-                "how_it_should_be": "Хуки сортируются по возрастанию веса; меньший вес — раньше."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`hook-delete-policy: hook-succeeded` означает удалить hook-ресурс, только если он завершился с ошибкой.",
               "correct": false,
               "sections": {
@@ -1661,8 +1637,8 @@
                 "if_it_were_true": "Тогда упавшие Job-ы убирались бы, но `hook-succeeded` убирает именно успешные.",
                 "how_it_should_be": "`hook-succeeded` чистит после успеха; за ошибку отвечает `hook-failed`."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`hook-weight` определяет порядок выполнения хуков одного типа: хуки сортируются по весу (целые числа, возможны отрицательные), меньший вес выполняется первым. `hook-delete-policy` задаёт, когда удалять hook-ресурс: `before-hook-creation` (удалить старый перед созданием нового, default), `hook-succeeded` (удалить при успехе), `hook-failed` (удалить при ошибке).",
@@ -1673,6 +1649,30 @@
                 "when_to_apply": "`hook-weight` нужен при нескольких зависимых хуках одной фазы; `hook-delete-policy` — почти всегда, чтобы старые hook-Job-ы не оставались мусором.",
                 "edge_cases": "Без `hook-delete-policy: hook-succeeded` успешный Job-хук остаётся в namespace; при следующем деплое имя совпадёт и без `before-hook-creation` создание нового упадёт с конфликтом имён.",
                 "related": "[[helm-interview#Q26]] что такое hooks; [[helm-interview#Q27]] типы хуков и фазы; [[helm-interview#Q32]] test-хуки и их weight."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Меньший `hook-weight` означает, что хук выполнится последним, а наибольший вес — первым.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сортировка по возрастанию: меньший (в т.ч. отрицательный) вес выполняется первым, больший — позже.",
+                "source_of_confusion": "Интуиция «больший вес важнее, значит раньше» противоречит фактическому порядку.",
+                "if_it_were_true": "Тогда `weight: -10` запускался бы в самом конце, но он как раз идёт перед `weight: 0`.",
+                "how_it_should_be": "Хуки сортируются по возрастанию веса; меньший вес — раньше."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`hook-weight` задаёт приоритет ресурсов: хуки с большим весом получают больше CPU и памяти при выполнении.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`hook-weight` управляет порядком запуска (меньший вес — раньше), а не выделением ресурсов; CPU/память задают через `resources` контейнера.",
+                "source_of_confusion": "Слово «weight» ассоциируется с приоритетом ресурсов, как в QoS Kubernetes.",
+                "if_it_were_true": "Тогда вес влиял бы на throttling Pod-а, но он влияет лишь на очередность хуков.",
+                "how_it_should_be": "`hook-weight` определяет порядок (меньший — первым); ресурсы задаются отдельно."
               },
               "label": "D",
               "order": 3
@@ -1689,19 +1689,6 @@
           "question_text": "Как работать с `Helm Repository`?",
           "options": [
             {
-              "text": "Репозиторий добавляют через `helm repo add bitnami https://charts.bitnami.com/bitnami`, индексы обновляют `helm repo update`, список смотрят `helm repo list`. Поиск — `helm search repo nginx` (и `--versions` для всех версий). Удаление — `helm repo remove`. Values chart смотрят `helm show values bitnami/postgresql`, скачивают `helm pull bitnami/postgresql --version 13.2.0` (с `--untar` для распаковки). Репозиторий хранит `index.yaml` — индекс chart-ов с метаданными.",
-              "correct": true,
-              "sections": {
-                "explanation": "Классический Helm-репозиторий — это HTTP-сервер с файлом `index.yaml`, который описывает доступные chart-ы и их версии; CLI кэширует индекс локально и по нему ищет и тянет пакеты.",
-                "example": "`helm repo add bitnami ...` → `helm repo update` → `helm search repo bitnami/postgresql --versions` → `helm install pg bitnami/postgresql`.",
-                "when_to_apply": "Репозитории нужны при использовании публичных chart-ов (bitnami и др.) и для раздачи собственных chart внутри компании через index-based HTTP-репозиторий.",
-                "edge_cases": "Локальный кэш индекса не обновляется сам: после релиза новой версии chart её не видно, пока не выполнить `helm repo update` — частая причина «новой версии нет в search».",
-                "related": "[[helm-interview#Q30]] OCI registry как альтернатива; [[helm-interview#Q10]] команды repo/search; [[helm-interview#Q24]] репозиторий как источник зависимостей."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Репозиторий добавляют через `helm repo add bitnami https://charts.bitnami.com/bitnami`, список смотрят `helm repo list`, а chart ищут `helm search repo nginx` (с `--versions` для всех версий). Локальный `index.yaml` подтягивается с сервера при каждом `helm search`, поэтому новые версии видны сразу и отдельный `helm repo update` не нужен.",
               "correct": false,
               "sections": {
@@ -1710,20 +1697,8 @@
                 "if_it_were_true": "Тогда `helm repo update` был бы лишней командой, но без неё свежие версии не появятся в поиске.",
                 "how_it_should_be": "Перед поиском новых версий выполняют `helm repo update` для обновления локального индекса."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Репозиторий добавляют через `helm repo add`, values смотрят `helm show values bitnami/postgresql`, а chart скачивают `helm pull bitnami/postgresql --version 13.2.0`. Классический HTTP-репозиторий при этом не хранит сводный `index.yaml`: каждый chart адресуется напрямую по URL архива `<repo>/postgresql-13.2.0.tgz` без общего индекса.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Именно `index.yaml` — основа классического репозитория; адресация по тегу без индекса — это свойство OCI-реестров, а не HTTP-репозиториев.",
-                "source_of_confusion": "Подходы repo и OCI смешивают, так как оба хранят chart-ы.",
-                "if_it_were_true": "Тогда `helm search repo` не имел бы где искать, но он как раз читает `index.yaml`.",
-                "how_it_should_be": "Классический репозиторий описывается `index.yaml`; адресация по тегу без индекса — про OCI."
-              },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Список репозиториев смотрят `helm repo list`, values chart — `helm show values bitnami/postgresql`, а команда `helm pull bitnami/postgresql --version 13.2.0` скачивает chart, разворачивает его в кластере и применяет манифесты за один шаг (флаг `--untar` дополнительно распаковывает архив локально).",
@@ -1733,6 +1708,31 @@
                 "source_of_confusion": "Скачивание и установка воспринимаются как одно действие «получить и развернуть».",
                 "if_it_were_true": "Тогда `helm pull` создавал бы Release, но он лишь кладёт `.tgz` на диск.",
                 "how_it_should_be": "`helm pull` скачивает chart локально; деплой в кластер — это `helm install`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Репозиторий добавляют через `helm repo add bitnami https://charts.bitnami.com/bitnami`, индексы обновляют `helm repo update`, список смотрят `helm repo list`. Поиск — `helm search repo nginx` (и `--versions` для всех версий). Удаление — `helm repo remove`. Values chart смотрят `helm show values bitnami/postgresql`, скачивают `helm pull bitnami/postgresql --version 13.2.0` (с `--untar` для распаковки). Репозиторий хранит `index.yaml` — индекс chart-ов с метаданными.",
+              "correct": true,
+              "sections": {
+                "explanation": "Классический Helm-репозиторий — это HTTP-сервер с файлом `index.yaml`, который описывает доступные chart-ы и их версии; CLI кэширует индекс локально и по нему ищет и тянет пакеты.",
+                "example": "`helm repo add bitnami ...` → `helm repo update` → `helm search repo bitnami/postgresql --versions` → `helm install pg bitnami/postgresql`.",
+                "when_to_apply": "Репозитории нужны при использовании публичных chart-ов (bitnami и др.) и для раздачи собственных chart внутри компании через index-based HTTP-репозиторий.",
+                "edge_cases": "Локальный кэш индекса не обновляется сам: после релиза новой версии chart её не видно, пока не выполнить `helm repo update` — частая причина «новой версии нет в search».",
+                "related": "[[helm-interview#Q30]] OCI registry как альтернатива; [[helm-interview#Q10]] команды repo/search; [[helm-interview#Q24]] репозиторий как источник зависимостей."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Репозиторий добавляют через `helm repo add`, values смотрят `helm show values bitnami/postgresql`, а chart скачивают `helm pull bitnami/postgresql --version 13.2.0`. Классический HTTP-репозиторий при этом не хранит сводный `index.yaml`: каждый chart адресуется напрямую по URL архива `<repo>/postgresql-13.2.0.tgz` без общего индекса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Именно `index.yaml` — основа классического репозитория; адресация по тегу без индекса — это свойство OCI-реестров, а не HTTP-репозиториев.",
+                "source_of_confusion": "Подходы repo и OCI смешивают, так как оба хранят chart-ы.",
+                "if_it_were_true": "Тогда `helm search repo` не имел бы где искать, но он как раз читает `index.yaml`.",
+                "how_it_should_be": "Классический репозиторий описывается `index.yaml`; адресация по тегу без индекса — про OCI."
               },
               "label": "D",
               "order": 3
@@ -1749,18 +1749,6 @@
           "question_text": "Что такое `OCI Registry` для `Helm`?",
           "options": [
             {
-              "text": "OCI-реестры для Helm требуют отдельной команды `helm repo add oci://...` перед установкой chart, как классические репозитории.",
-              "correct": false,
-              "sections": {
-                "what_actually": "OCI не требует `helm repo add`: устанавливают по полному URL `helm install ... oci://.../chart --version X`; `repo add` — для index-репозиториев.",
-                "source_of_confusion": "Привычка добавлять репозиторий через `repo add` переносится на OCI.",
-                "if_it_were_true": "Тогда без `repo add` OCI-chart не ставился бы, но Helm работает с ним как `pull` по полному ref.",
-                "how_it_should_be": "OCI-chart устанавливают сразу по `oci://`-URL без шага `helm repo add`."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Начиная с `Helm 3.8`, OCI (Open Container Initiative) реестры поддерживаются нативно: chart-ы хранятся как OCI-артефакты в Docker registry. Работают через `helm registry login`, `helm push chart.tgz oci://registry/charts` и `helm install my-app oci://registry/charts/my-chart --version 1.0.0`. OCI не требует `helm repo add` — установка идёт по полному URL. Преимущества: единый реестр для образов и chart, нативный RBAC, версионирование через digest.",
               "correct": true,
               "sections": {
@@ -1770,20 +1758,8 @@
                 "edge_cases": "В OCI нет `index.yaml`, поэтому `helm search repo` по нему не работает: chart адресуется строго по полному ref и версии, а обзор доступных версий делают средствами самого реестра.",
                 "related": "[[helm-interview#Q29]] классический index-репозиторий; [[helm-interview#Q37]] работа с OCI на практике; [[helm-interview#Q38]] Chart Museum vs OCI."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Поддержка OCI появилась ещё в `Helm 2` и была удалена в `Helm 3` как небезопасная.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Нативная стабильная поддержка OCI появилась в `Helm 3.8`, а не в Helm 2; в Helm 2 её не было.",
-                "source_of_confusion": "Хронологию версий и фич Helm легко перепутать.",
-                "if_it_were_true": "Тогда современные chart нельзя было бы пушить в Harbor через Helm, но `helm push oci://` — стандарт с 3.8.",
-                "how_it_should_be": "OCI-поддержка — это фича Helm 3.8+, а не наследие Helm 2."
-              },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "В OCI-реестре chart-ы по-прежнему индексируются через `index.yaml`, и `helm search repo` ищет по нему так же, как в HTTP-репозитории.",
@@ -1793,6 +1769,30 @@
                 "source_of_confusion": "Оба хранят chart-ы, поэтому ожидают одинаковый механизм поиска.",
                 "if_it_were_true": "Тогда `helm search repo` находил бы OCI-chart-ы, но обзор версий там делают средствами реестра.",
                 "how_it_should_be": "OCI адресует chart по ref/тегу без `index.yaml`; индексный поиск — про HTTP-репозитории."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "OCI-реестры для Helm требуют отдельной команды `helm repo add oci://...` перед установкой chart, как классические репозитории.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OCI не требует `helm repo add`: устанавливают по полному URL `helm install ... oci://.../chart --version X`; `repo add` — для index-репозиториев.",
+                "source_of_confusion": "Привычка добавлять репозиторий через `repo add` переносится на OCI.",
+                "if_it_were_true": "Тогда без `repo add` OCI-chart не ставился бы, но Helm работает с ним как `pull` по полному ref.",
+                "how_it_should_be": "OCI-chart устанавливают сразу по `oci://`-URL без шага `helm repo add`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Поддержка OCI появилась ещё в `Helm 2` и была удалена в `Helm 3` как небезопасная.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нативная стабильная поддержка OCI появилась в `Helm 3.8`, а не в Helm 2; в Helm 2 её не было.",
+                "source_of_confusion": "Хронологию версий и фич Helm легко перепутать.",
+                "if_it_were_true": "Тогда современные chart нельзя было бы пушить в Harbor через Helm, но `helm push oci://` — стандарт с 3.8.",
+                "how_it_should_be": "OCI-поддержка — это фича Helm 3.8+, а не наследие Helm 2."
               },
               "label": "D",
               "order": 3
@@ -1833,6 +1833,18 @@
               "order": 1
             },
             {
+              "text": "Тип chart задаётся в `values.yaml` полем `chartType`, и по умолчанию он равен `library`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тип задаётся в `Chart.yaml` полем `type` и по умолчанию равен `application`, а не `library`; в `values.yaml` его нет.",
+                "source_of_confusion": "Конфигурацию ищут в `values.yaml`, хотя метаданные живут в `Chart.yaml`.",
+                "if_it_were_true": "Тогда без указания chart был бы неустанавливаемым library, но дефолт — устанавливаемый application.",
+                "how_it_should_be": "`type` объявляют в `Chart.yaml`; дефолт — `application`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
               "text": "`Application chart` (`type: application`, default) содержит манифесты и устанавливается напрямую. `Library chart` (`type: library`) не содержит собственных манифестов — это переиспользуемая библиотека named templates, которую нельзя установить отдельно, только подключить как dependency. Library charts применяют для DRY: общие блоки (labels, tolerations, affinity) выносят в одно место и переиспользуют через `include`.",
               "correct": true,
               "sections": {
@@ -1841,18 +1853,6 @@
                 "when_to_apply": "Library chart создают, когда несколько chart-ов в организации должны разделять одинаковые шаблонные блоки (стандартные labels, security context) без копипасты.",
                 "edge_cases": "Попытка `helm install` library chart напрямую завершится ошибкой — у него нет манифестов; он осмыслен только как зависимость для application chart.",
                 "related": "[[helm-interview#Q6]] поле type в Chart.yaml; [[helm-interview#Q23]] подключение через dependencies; [[helm-interview#Q8]] named templates в _helpers.tpl."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Тип chart задаётся в `values.yaml` полем `chartType`, и по умолчанию он равен `library`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Тип задаётся в `Chart.yaml` полем `type` и по умолчанию равен `application`, а не `library`; в `values.yaml` его нет.",
-                "source_of_confusion": "Конфигурацию ищут в `values.yaml`, хотя метаданные живут в `Chart.yaml`.",
-                "if_it_were_true": "Тогда без указания chart был бы неустанавливаемым library, но дефолт — устанавливаемый application.",
-                "how_it_should_be": "`type` объявляют в `Chart.yaml`; дефолт — `application`."
               },
               "label": "D",
               "order": 3
@@ -1869,30 +1869,6 @@
           "question_text": "Как тестировать `Helm Charts`?",
           "options": [
             {
-              "text": "`helm test` рендерит шаблоны chart офлайн и проверяет их корректность без какого-либо установленного релиза.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`helm test` запускает test-хуки в уже установленном релизе; офлайн-рендер без релиза делает `helm template`/`helm lint`.",
-                "source_of_confusion": "Слово «test» наводит на мысль о статической проверке шаблонов.",
-                "if_it_were_true": "Тогда `helm test` работал бы на голом chart без install, но он требует существующий Release.",
-                "how_it_should_be": "`helm test` гоняет тесты против установленного релиза; статику проверяют lint/template."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Test-хук объявляется аннотацией `\"helm.sh/hook\": post-install`, а не `test`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Test-Pod помечают аннотацией `\"helm.sh/hook\": test`; `post-install` — другой тип хука, выполняющийся при установке, а не по `helm test`.",
-                "source_of_confusion": "Тесты часто гоняют после установки, отсюда подмена на `post-install`.",
-                "if_it_were_true": "Тогда тест запускался бы автоматически при install, но `helm test` ищет именно хук `test`.",
-                "how_it_should_be": "Тест-ресурс помечают `\"helm.sh/hook\": test` и запускают командой `helm test`."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`ct` (chart-testing) тестирует абсолютно все chart-ы в репозитории при каждом запуске, не определяя изменённые.",
               "correct": false,
               "sections": {
@@ -1901,8 +1877,20 @@
                 "if_it_were_true": "Тогда `ct lint --target-branch main` не имел бы смысла, но именно target-branch и задаёт базу для определения изменений.",
                 "how_it_should_be": "`ct` тестирует только изменённые chart относительно target-branch, а не все сразу."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`helm test` рендерит шаблоны chart офлайн и проверяет их корректность без какого-либо установленного релиза.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`helm test` запускает test-хуки в уже установленном релизе; офлайн-рендер без релиза делает `helm template`/`helm lint`.",
+                "source_of_confusion": "Слово «test» наводит на мысль о статической проверке шаблонов.",
+                "if_it_were_true": "Тогда `helm test` работал бы на голом chart без install, но он требует существующий Release.",
+                "how_it_should_be": "`helm test` гоняет тесты против установленного релиза; статику проверяют lint/template."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Несколько уровней: `helm lint ./chart --strict` — статический анализ на ошибки; `helm template ... | kubectl apply --dry-run=client -f -` — рендер и проверка схемы; `helm test <release>` — запуск test-хуков (Pod с аннотацией `\"helm.sh/hook\": test`) в уже установленном релизе; `ct` (chart-testing) — инструмент для CI, который определяет изменённые chart-ы, ставит их в Kind/Minikube и гоняет `helm test`.",
@@ -1913,6 +1901,18 @@
                 "when_to_apply": "`helm lint` — на каждый commit/PR, `helm template` — для проверки рендера, `helm test` — после деплоя как smoke-проверка, `ct` — в CI монорепо с множеством chart.",
                 "edge_cases": "`helm test` требует уже установленного релиза — он не рендерит chart с нуля, а запускает тест-Pod против работающей инсталляции; на пустом кластере он работать не будет.",
                 "related": "[[helm-interview#Q33]] что проверяет helm lint; [[helm-interview#Q27]] test как тип хука; [[helm-interview#Q42]] unit-тесты с helm-unittest."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Test-хук объявляется аннотацией `\"helm.sh/hook\": post-install`, а не `test`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Test-Pod помечают аннотацией `\"helm.sh/hook\": test`; `post-install` — другой тип хука, выполняющийся при установке, а не по `helm test`.",
+                "source_of_confusion": "Тесты часто гоняют после установки, отсюда подмена на `post-install`.",
+                "if_it_were_true": "Тогда тест запускался бы автоматически при install, но `helm test` ищет именно хук `test`.",
+                "how_it_should_be": "Тест-ресурс помечают `\"helm.sh/hook\": test` и запускают командой `helm test`."
               },
               "label": "D",
               "order": 3
@@ -1929,6 +1929,18 @@
           "question_text": "Что такое `helm lint` и когда его применять?",
           "options": [
             {
+              "text": "`helm lint ./chart` проверяет структуру директорий и базовую валидность YAML, но для рендеринга Go templates требует активного подключения к API server кластера, поэтому в CI без доступного kube-context команда завершается ошибкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`helm lint` — статический анализ, работающий офлайн без кластера; подключение к API server ему не нужно.",
+                "source_of_confusion": "Многие операции Helm требуют кластер, поэтому это переносят и на lint.",
+                "if_it_were_true": "Тогда lint нельзя было бы запускать в изолированном CI без kubeconfig, но он там и применяется первым шагом.",
+                "how_it_should_be": "`helm lint` работает офлайн без кластера — это его и делает дешёвым CI-шагом."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "`helm lint` проверяет chart на типичные ошибки: корректность `Chart.yaml` (обязательные поля), синтаксис Go templates, базовую валидность YAML и структуру директорий. Запускается как `helm lint ./chart` (с `--values` для конкретных значений и `--strict`, где предупреждения трактуются как ошибки). Применяют в CI на каждый commit/PR перед `helm upgrade`. Он НЕ проверяет семантику Kubernetes API и корректность значений.",
               "correct": true,
               "sections": {
@@ -1938,8 +1950,8 @@
                 "edge_cases": "`lint` не знает семантики Kubernetes: chart с валидным YAML, но несуществующим полем в Deployment, пройдёт lint и упадёт уже при apply — поэтому его дополняют `kubeval`/dry-run.",
                 "related": "[[helm-interview#Q32]] уровни тестирования chart; [[helm-interview#Q12]] dry-run для проверки против API; [[helm-interview#Q36]] lint в CI best practices."
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`helm lint ./chart` проверяет `Chart.yaml` (обязательные поля) и синтаксис Go templates, а затем валидирует отрендеренные манифесты против схемы Kubernetes API и гарантирует, что кластер примет их при `helm upgrade`. Запускают в CI на каждый commit/PR с флагом `--strict`.",
@@ -1950,8 +1962,8 @@
                 "if_it_were_true": "Тогда прошедший lint chart всегда применялся бы без ошибок, но невалидное поле Deployment упадёт уже на apply.",
                 "how_it_should_be": "`lint` ловит синтаксис/структуру; семантику API проверяют dry-run и kubeval."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "`helm lint ./chart` находит ошибки в `Chart.yaml` и Go templates и проверяет валидность YAML; флаг `--strict` смягчает проверку, отключая предупреждения и оставляя только критические ошибки, поэтому его включают в CI, чтобы нестрогие замечания не роняли pipeline.",
@@ -1961,18 +1973,6 @@
                 "source_of_confusion": "Слово «strict» иногда понимают как «только важное», а не «строже ко всему».",
                 "if_it_were_true": "Тогда `--strict` смягчал бы вывод, но он, напротив, превращает warning-и в фейлы.",
                 "how_it_should_be": "`--strict` повышает строгость: warning-и становятся ошибками."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`helm lint ./chart` проверяет структуру директорий и базовую валидность YAML, но для рендеринга Go templates требует активного подключения к API server кластера, поэтому в CI без доступного kube-context команда завершается ошибкой.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`helm lint` — статический анализ, работающий офлайн без кластера; подключение к API server ему не нужно.",
-                "source_of_confusion": "Многие операции Helm требуют кластер, поэтому это переносят и на lint.",
-                "if_it_were_true": "Тогда lint нельзя было бы запускать в изолированном CI без kubeconfig, но он там и применяется первым шагом.",
-                "how_it_should_be": "`helm lint` работает офлайн без кластера — это его и делает дешёвым CI-шагом."
               },
               "label": "D",
               "order": 3
@@ -1989,13 +1989,13 @@
           "question_text": "Как управлять секретами в `Helm`?",
           "options": [
             {
-              "text": "Kubernetes Secret, создаваемый в release Helm, хранит данные в зашифрованном виде, а не просто в base64, поэтому `values.yaml` с секретами можно коммитить в git: при рендеринге chart Helm сам шифрует значения ключом кластера, и в манифесте release они уже недоступны в открытом виде.",
+              "text": "`helm-secrets` — встроенная в Helm подкоманда (`helm secrets enc`/`dec`), которая шифрует `values.yaml` штатными средствами без установки плагинов и без внешнего SOPS; Sealed Secrets и External Secrets Operator нужны лишь для более сложных сценариев с внешним хранилищем.",
               "correct": false,
               "sections": {
-                "what_actually": "Kubernetes Secret — это base64-кодирование, а не шифрование; данные легко декодируются, и plaintext-секреты в git недопустимы.",
-                "source_of_confusion": "Слово «Secret» создаёт ложное ощущение защищённости.",
-                "if_it_were_true": "Тогда не нужны были бы SOPS и Sealed Secrets, но они существуют именно из-за отсутствия шифрования.",
-                "how_it_should_be": "Secret = base64, а не шифрование; секреты шифруют через SOPS/Sealed Secrets или хранят вовне."
+                "what_actually": "`helm-secrets` — это сторонний плагин, который опирается на внешний `SOPS` для шифрования/дешифрования; в ядро Helm он не входит.",
+                "source_of_confusion": "Команда выглядит как `helm secrets ...`, поэтому кажется родной.",
+                "if_it_were_true": "Тогда не пришлось бы ставить плагин и SOPS, но без них `helm secrets` недоступна.",
+                "how_it_should_be": "`helm-secrets` — внешний плагин поверх SOPS, требующий установки."
               },
               "label": "A",
               "order": 0
@@ -2014,13 +2014,13 @@
               "order": 1
             },
             {
-              "text": "`helm-secrets` — встроенная в Helm подкоманда (`helm secrets enc`/`dec`), которая шифрует `values.yaml` штатными средствами без установки плагинов и без внешнего SOPS; Sealed Secrets и External Secrets Operator нужны лишь для более сложных сценариев с внешним хранилищем.",
+              "text": "Kubernetes Secret, создаваемый в release Helm, хранит данные в зашифрованном виде, а не просто в base64, поэтому `values.yaml` с секретами можно коммитить в git: при рендеринге chart Helm сам шифрует значения ключом кластера, и в манифесте release они уже недоступны в открытом виде.",
               "correct": false,
               "sections": {
-                "what_actually": "`helm-secrets` — это сторонний плагин, который опирается на внешний `SOPS` для шифрования/дешифрования; в ядро Helm он не входит.",
-                "source_of_confusion": "Команда выглядит как `helm secrets ...`, поэтому кажется родной.",
-                "if_it_were_true": "Тогда не пришлось бы ставить плагин и SOPS, но без них `helm secrets` недоступна.",
-                "how_it_should_be": "`helm-secrets` — внешний плагин поверх SOPS, требующий установки."
+                "what_actually": "Kubernetes Secret — это base64-кодирование, а не шифрование; данные легко декодируются, и plaintext-секреты в git недопустимы.",
+                "source_of_confusion": "Слово «Secret» создаёт ложное ощущение защищённости.",
+                "if_it_were_true": "Тогда не нужны были бы SOPS и Sealed Secrets, но они существуют именно из-за отсутствия шифрования.",
+                "how_it_should_be": "Secret = base64, а не шифрование; секреты шифруют через SOPS/Sealed Secrets или хранят вовне."
               },
               "label": "C",
               "order": 2
@@ -2049,18 +2049,6 @@
           "question_text": "Как `Helm` интегрируется с `ArgoCD` и `GitOps`?",
           "options": [
             {
-              "text": "`ArgoCD` под капотом выполняет `helm upgrade --install` внутри кластера и хранит состояние релиза как Secret `sh.helm.release.v1`, поэтому релизы видны в `helm list`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "ArgoCD не зовёт `helm install`: он рендерит chart через `helm template` и сам применяет манифесты; обычного Helm-релиза-Secret при этом нет.",
-                "source_of_confusion": "Раз chart деплоится, кажется, что под капотом обязательно `helm install`.",
-                "if_it_were_true": "Тогда `helm list` показывал бы релизы ArgoCD, но их там нет — state хранит ArgoCD, а истина в git.",
-                "how_it_should_be": "ArgoCD рендерит через `helm template` и применяет сам; полноценного Helm-релиза не создаёт."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Откат в GitOps с ArgoCD выполняют командой `helm rollback <release> <revision>`, переключающей приложение на предыдущую ревизию чарта.",
               "correct": false,
               "sections": {
@@ -2069,8 +2057,8 @@
                 "if_it_were_true": "Тогда состояние кластера расходилось бы с git, но GitOss-принцип — git как единственный источник истины.",
                 "how_it_should_be": "Откат в GitOps — это git revert; ArgoCD синхронизирует кластер с изменённым репозиторием."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`ArgoCD` нативно поддерживает Helm-chart-ы как источник приложений: в `Application` указывают `source.helm` с `valueFiles` и `parameters`. GitOps-поток: chart и values хранятся в git, CI гоняет `helm lint`/`ct lint`/тесты, при merge в main ArgoCD обнаруживает изменения и синхронизирует, рендеря chart через `helm template` и применяя diff. Rollback = revert коммита. Альтернатива — Flux Helm Operator с ресурсом `HelmRelease`.",
@@ -2082,8 +2070,8 @@
                 "edge_cases": "Поскольку ArgoCD рендерит через `helm template`, hooks Helm работают иначе: ArgoCD конвертирует их в свои resource hooks/sync waves, и поведение `pre-upgrade` Job может отличаться от чистого `helm upgrade`.",
                 "related": "[[helm-interview#Q39]] ArgoCD с ApplicationSet подробно; [[helm-interview#Q13]] helm diff в review-потоке; [[helm-interview#Q34]] секреты в GitOps."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Flux разворачивает Helm-чарты через тот же CRD `Application`, что и ArgoCD, отличаясь лишь контроллером-реконсилятором.",
@@ -2093,6 +2081,18 @@
                 "source_of_confusion": "Оба — GitOps-контроллеры для Helm, поэтому их CRD путают.",
                 "if_it_were_true": "Тогда манифесты были бы переносимы между контроллерами, но `Application` и `HelmRelease` несовместимы.",
                 "how_it_should_be": "ArgoCD — `Application`, Flux — `HelmRelease`; это разные ресурсы."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`ArgoCD` под капотом выполняет `helm upgrade --install` внутри кластера и хранит состояние релиза как Secret `sh.helm.release.v1`, поэтому релизы видны в `helm list`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "ArgoCD не зовёт `helm install`: он рендерит chart через `helm template` и сам применяет манифесты; обычного Helm-релиза-Secret при этом нет.",
+                "source_of_confusion": "Раз chart деплоится, кажется, что под капотом обязательно `helm install`.",
+                "if_it_were_true": "Тогда `helm list` показывал бы релизы ArgoCD, но их там нет — state хранит ArgoCD, а истина в git.",
+                "how_it_should_be": "ArgoCD рендерит через `helm template` и применяет сам; полноценного Helm-релиза не создаёт."
               },
               "label": "D",
               "order": 3
@@ -2109,6 +2109,19 @@
           "question_text": "Какие best practices применяются при разработке `Helm Charts`?",
           "options": [
             {
+              "text": "Именование: включать имя release во все ресурсы через `{{ include \"my-app.fullname\" . }}`, использовать стандартные labels `app.kubernetes.io/*`, ограничивать длину `trunc 63 | trimSuffix \"-\"`. Values: документировать комментариями, валидировать через `values.schema.json`, не хранить секреты. Шаблоны: выносить блоки в `_helpers.tpl`, использовать `include` вместо `template`. Версионирование: бампать `version` chart при каждом изменении. Безопасность: `runAsNonRoot`, resource limits, не использовать `latest`. CI: `helm lint --strict`, `kubeval`, `ct lint`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Best practices сводятся к воспроизводимости и безопасности: уникальные имена и стандартные labels для управляемости, валидация values, отсутствие секретов в коде, security context и явные версии образов.",
+                "example": "`securityContext: {runAsNonRoot: true, readOnlyRootFilesystem: true}` плюс resource limits на каждый контейнер и `image.tag` вместо `latest` — типичный безопасный default.",
+                "when_to_apply": "Эти правила применяют при разработке любого production-chart и проверяют на code review; для public-chart требования ещё строже (документация values, schema).",
+                "edge_cases": "Тег `latest` особенно опасен: при рестарте Pod может подтянуться другой образ под тем же тегом, что делает деплой невоспроизводимым — поэтому фиксируют конкретную версию.",
+                "related": "[[helm-interview#Q18]] include вместо template; [[helm-interview#Q33]] helm lint в CI; [[helm-interview#Q34]] секреты вне values.yaml."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Именование: задавать ресурсам статическое `metadata.name` без префикса release, чтобы два релиза одного chart в namespace не плодили разные имена объектов.",
               "correct": false,
               "sections": {
@@ -2117,8 +2130,8 @@
                 "if_it_were_true": "Тогда rollback к прежней версии был бы невозможен, но именно поэтому теги пиннят.",
                 "how_it_should_be": "Использовать конкретный `image.tag`, а не `latest`, ради воспроизводимости и отката."
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Шаблоны: для переиспользования блоков предпочитать `template`, а не `include`, потому что вывод `template` можно передать в `nindent` для корректных отступов.",
@@ -2129,8 +2142,8 @@
                 "if_it_were_true": "Тогда не нужны были бы инструменты управления секретами, но они существуют именно из-за этого риска.",
                 "how_it_should_be": "Секреты не хранят в `values.yaml`; их шифруют или выносят в Vault/ESO."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Values: валидировать достаточно директивой `required` в шаблонах; `values.schema.json` дублирует эту проверку, поэтому его добавлять не рекомендуют.",
@@ -2140,19 +2153,6 @@
                 "source_of_confusion": "Кажется, что меньше версий = меньше путаницы.",
                 "if_it_were_true": "Тогда нельзя было бы отличить две разные итерации chart, но SemVer-версионирование для того и нужно.",
                 "how_it_should_be": "`version` бампают на каждое изменение chart по SemVer."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Именование: включать имя release во все ресурсы через `{{ include \"my-app.fullname\" . }}`, использовать стандартные labels `app.kubernetes.io/*`, ограничивать длину `trunc 63 | trimSuffix \"-\"`. Values: документировать комментариями, валидировать через `values.schema.json`, не хранить секреты. Шаблоны: выносить блоки в `_helpers.tpl`, использовать `include` вместо `template`. Версионирование: бампать `version` chart при каждом изменении. Безопасность: `runAsNonRoot`, resource limits, не использовать `latest`. CI: `helm lint --strict`, `kubeval`, `ct lint`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Best practices сводятся к воспроизводимости и безопасности: уникальные имена и стандартные labels для управляемости, валидация values, отсутствие секретов в коде, security context и явные версии образов.",
-                "example": "`securityContext: {runAsNonRoot: true, readOnlyRootFilesystem: true}` плюс resource limits на каждый контейнер и `image.tag` вместо `latest` — типичный безопасный default.",
-                "when_to_apply": "Эти правила применяют при разработке любого production-chart и проверяют на code review; для public-chart требования ещё строже (документация values, schema).",
-                "edge_cases": "Тег `latest` особенно опасен: при рестарте Pod может подтянуться другой образ под тем же тегом, что делает деплой невоспроизводимым — поэтому фиксируют конкретную версию.",
-                "related": "[[helm-interview#Q18]] include вместо template; [[helm-interview#Q33]] helm lint в CI; [[helm-interview#Q34]] секреты вне values.yaml."
               },
               "label": "D",
               "order": 3
@@ -2169,19 +2169,6 @@
           "question_text": "Что такое `OCI Registry` для `Helm` и как с ним работать?",
           "options": [
             {
-              "text": "С `Helm 3.8` (stable) chart-ы можно хранить в OCI-совместимых реестрах (Docker Hub, GHCR, AWS ECR, Harbor, Nexus) как OCI-артефакты, что унифицирует инфраструктуру с Docker-образами. Команды: `helm registry login`, `helm package`, `helm push chart.tgz oci://registry/charts`, `helm install ... oci://registry/charts/my-chart --version X`, `helm pull oci://...`, `helm registry logout`. Отличия: нет `index.yaml` (адресация по тегу), аутентификация через docker login, поддержка подписи `cosign`, ArgoCD умеет OCI с 2.6.",
-              "correct": true,
-              "sections": {
-                "explanation": "OCI-реестр заменяет отдельный Helm-репозиторий: chart кладут рядом с образами в тот же registry, авторизуются стандартными docker-кредами, а целостность обеспечивают через digest и подпись cosign.",
-                "example": "`helm push my-chart-1.0.0.tgz oci://registry.example.com/charts` и затем `helm show chart oci://registry.example.com/charts/my-chart --version 1.0.0` для метаданных.",
-                "when_to_apply": "OCI выбирают, когда уже есть Harbor/ECR/GHCR и хочется единого хранилища образов и chart с общими правами и сканированием.",
-                "edge_cases": "Без `index.yaml` нет общего списка chart-ов: чтобы узнать доступные версии, нужно обращаться к API реестра или знать тег заранее — `helm search` по OCI не работает.",
-                "related": "[[helm-interview#Q30]] основы OCI для Helm; [[helm-interview#Q38]] Chart Museum vs OCI; [[helm-interview#Q43]] подпись chart через cosign."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "В OCI-реестре Helm при `helm push` генерирует `index.yaml`, и chart-ы находятся через `helm search repo`, как в HTTP-репозитории.",
               "correct": false,
               "sections": {
@@ -2189,6 +2176,18 @@
                 "source_of_confusion": "Опыт классических репозиториев переносят на OCI.",
                 "if_it_were_true": "Тогда `helm search repo` находил бы OCI-chart-ы, но обзор версий делают через API реестра.",
                 "how_it_should_be": "OCI адресует chart по ref/тегу без `index.yaml` и без `helm search`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Chart-ы в OCI-реестре подписывают только классическим Helm provenance (`.prov` + GPG); `cosign` подписывает Docker-образы, но не Helm-OCI-артефакты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для OCI-чартов как раз поддерживается подпись через `cosign`/Sigstore (и Notary v2); GPG-provenance — более классический подход.",
+                "source_of_confusion": "Provenance с GPG ассоциируется с подписью chart вообще.",
+                "if_it_were_true": "Тогда keyless-подпись OCI-артефактов была бы невозможна, но `cosign sign oci://...` штатно работает.",
+                "how_it_should_be": "OCI-чарты подписывают через `cosign`/Sigstore; GPG-provenance — отдельный, более старый механизм."
               },
               "label": "B",
               "order": 1
@@ -2206,13 +2205,14 @@
               "order": 2
             },
             {
-              "text": "Chart-ы в OCI-реестре подписывают только классическим Helm provenance (`.prov` + GPG); `cosign` подписывает Docker-образы, но не Helm-OCI-артефакты.",
-              "correct": false,
+              "text": "С `Helm 3.8` (stable) chart-ы можно хранить в OCI-совместимых реестрах (Docker Hub, GHCR, AWS ECR, Harbor, Nexus) как OCI-артефакты, что унифицирует инфраструктуру с Docker-образами. Команды: `helm registry login`, `helm package`, `helm push chart.tgz oci://registry/charts`, `helm install ... oci://registry/charts/my-chart --version X`, `helm pull oci://...`, `helm registry logout`. Отличия: нет `index.yaml` (адресация по тегу), аутентификация через docker login, поддержка подписи `cosign`, ArgoCD умеет OCI с 2.6.",
+              "correct": true,
               "sections": {
-                "what_actually": "Для OCI-чартов как раз поддерживается подпись через `cosign`/Sigstore (и Notary v2); GPG-provenance — более классический подход.",
-                "source_of_confusion": "Provenance с GPG ассоциируется с подписью chart вообще.",
-                "if_it_were_true": "Тогда keyless-подпись OCI-артефактов была бы невозможна, но `cosign sign oci://...` штатно работает.",
-                "how_it_should_be": "OCI-чарты подписывают через `cosign`/Sigstore; GPG-provenance — отдельный, более старый механизм."
+                "explanation": "OCI-реестр заменяет отдельный Helm-репозиторий: chart кладут рядом с образами в тот же registry, авторизуются стандартными docker-кредами, а целостность обеспечивают через digest и подпись cosign.",
+                "example": "`helm push my-chart-1.0.0.tgz oci://registry.example.com/charts` и затем `helm show chart oci://registry.example.com/charts/my-chart --version 1.0.0` для метаданных.",
+                "when_to_apply": "OCI выбирают, когда уже есть Harbor/ECR/GHCR и хочется единого хранилища образов и chart с общими правами и сканированием.",
+                "edge_cases": "Без `index.yaml` нет общего списка chart-ов: чтобы узнать доступные версии, нужно обращаться к API реестра или знать тег заранее — `helm search` по OCI не работает.",
+                "related": "[[helm-interview#Q30]] основы OCI для Helm; [[helm-interview#Q38]] Chart Museum vs OCI; [[helm-interview#Q43]] подпись chart через cosign."
               },
               "label": "D",
               "order": 3
@@ -2229,18 +2229,6 @@
           "question_text": "`Chart Museum` vs `OCI Registry` — в чём разница подходов?",
           "options": [
             {
-              "text": "`OCI Registry` требует поднимать отдельный специализированный сервис под chart-ы и администрировать его отдельно, тогда как `Chart Museum` переиспользует уже существующий container registry (Harbor/ECR/GHCR); поэтому под OCI закладывают новый компонент инфраструктуры, а Chart Museum разворачивают поверх готового реестра образов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Всё наоборот: OCI переиспользует имеющийся container registry, а Chart Museum — отдельный сервис, который надо поднимать и поддерживать.",
-                "source_of_confusion": "Названия не подсказывают, какой подход требует отдельной инфраструктуры.",
-                "if_it_were_true": "Тогда OCI не давал бы экономии на инфраструктуре, но его главный плюс — отсутствие отдельного сервиса.",
-                "how_it_should_be": "Отдельный сервис нужен Chart Museum; OCI работает поверх готового registry."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`Chart Museum` работает по Helm HTTP API с `index.yaml`, требует отдельного сервиса, использует команды `helm repo add/update/install` и Basic auth/token, поддерживает поиск по индексу и provenance-файлы. `OCI Registry` использует OCI Distribution Spec поверх существующего container registry, команды `helm push/pull/install oci://`, docker-аутентификацию, подпись cosign/Notary v2, но поиск только по точному ref. Chart Museum — для совместимости со старым; OCI — для новых проектов с готовым Harbor/ECR/GHCR.",
               "correct": true,
               "sections": {
@@ -2250,20 +2238,20 @@
                 "edge_cases": "OCI теряет удобный поиск по индексу: в Chart Museum `helm search repo` находит chart-ы и версии, а в OCI обзор версий приходится делать средствами реестра — это компромисс за унификацию.",
                 "related": "[[helm-interview#Q37]] работа с OCI на практике; [[helm-interview#Q29]] index-репозитории и helm repo; [[helm-interview#Q43]] подпись chart."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
-              "text": "Оба подхода хранят каталог chart-ов в общем `index.yaml` и одинаково поддерживают полнотекстовый `helm search repo`, поэтому выбор между `Chart Museum` и `OCI Registry` влияет только на способ аутентификации (Basic auth против docker login), но не на механизм поиска chart-ов.",
+              "text": "`OCI Registry` требует поднимать отдельный специализированный сервис под chart-ы и администрировать его отдельно, тогда как `Chart Museum` переиспользует уже существующий container registry (Harbor/ECR/GHCR); поэтому под OCI закладывают новый компонент инфраструктуры, а Chart Museum разворачивают поверх готового реестра образов.",
               "correct": false,
               "sections": {
-                "what_actually": "`index.yaml` и `helm search repo` — это про Chart Museum; OCI адресует chart по точному ref без индекса и поиска.",
-                "source_of_confusion": "Оба хранят chart-ы, поэтому ожидается одинаковый механизм поиска.",
-                "if_it_were_true": "Тогда переход на OCI не терял бы удобный поиск, но именно индексного поиска у OCI нет.",
-                "how_it_should_be": "Индекс и поиск — у Chart Museum; OCI ищет по точному ref."
+                "what_actually": "Всё наоборот: OCI переиспользует имеющийся container registry, а Chart Museum — отдельный сервис, который надо поднимать и поддерживать.",
+                "source_of_confusion": "Названия не подсказывают, какой подход требует отдельной инфраструктуры.",
+                "if_it_were_true": "Тогда OCI не давал бы экономии на инфраструктуре, но его главный плюс — отсутствие отдельного сервиса.",
+                "how_it_should_be": "Отдельный сервис нужен Chart Museum; OCI работает поверх готового registry."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`Chart Museum` подписывает chart-ы через `cosign` и Notary v2 и хранит подписи рядом с образами, а `OCI Registry` полагается только на provenance-файлы `.prov`, которые лежат вместе с `index.yaml` и проверяются при `helm install`.",
@@ -2273,6 +2261,18 @@
                 "source_of_confusion": "Механизмы подписи легко перепутать между подходами.",
                 "if_it_were_true": "Тогда keyless cosign применялся бы к HTTP-репозиторию, но он работает с OCI-артефактами.",
                 "how_it_should_be": "`cosign` — для OCI; provenance `.prov` — для Chart Museum."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Оба подхода хранят каталог chart-ов в общем `index.yaml` и одинаково поддерживают полнотекстовый `helm search repo`, поэтому выбор между `Chart Museum` и `OCI Registry` влияет только на способ аутентификации (Basic auth против docker login), но не на механизм поиска chart-ов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`index.yaml` и `helm search repo` — это про Chart Museum; OCI адресует chart по точному ref без индекса и поиска.",
+                "source_of_confusion": "Оба хранят chart-ы, поэтому ожидается одинаковый механизм поиска.",
+                "if_it_were_true": "Тогда переход на OCI не терял бы удобный поиск, но именно индексного поиска у OCI нет.",
+                "how_it_should_be": "Индекс и поиск — у Chart Museum; OCI ищет по точному ref."
               },
               "label": "D",
               "order": 3
@@ -2289,18 +2289,6 @@
           "question_text": "Как использовать `Helm` в `GitOps` с `ArgoCD` и `ApplicationSet`?",
           "options": [
             {
-              "text": "`ApplicationSet` описывает один `Application` под одно окружение с его `source.helm` и `valueFiles`; чтобы раскатить chart на dev/staging/prod, для каждого окружения заводят отдельный `Application` вручную, меняя `namespace` и набор values-файлов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`ApplicationSet` как раз генерирует множество Application-ов из шаблона и генератора, избавляя от ручного копирования на каждое окружение.",
-                "source_of_confusion": "Суффикс «Set» иногда трактуют как просто «настройку» одного Application.",
-                "if_it_were_true": "Тогда ApplicationSet не давал бы выигрыша при multi-env, но его смысл — именно массовая генерация.",
-                "how_it_should_be": "`ApplicationSet` шаблонизирует и генерирует Application-ы для всех окружений автоматически."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Плейсхолдеры вида `{{env}}` в шаблоне `ApplicationSet` — это Helm Go-templates: ArgoCD рендерит их через `.Values` chart-а, поэтому список окружений задают прямо в `values.yaml`, а не в генераторе `list` внутри `ApplicationSet`.",
               "correct": false,
               "sections": {
@@ -2309,8 +2297,32 @@
                 "if_it_were_true": "Тогда `{{ .Values.env }}` работал бы в ApplicationSet, но он использует переменные генератора (`{{env}}`).",
                 "how_it_should_be": "Подстановки ApplicationSet — это его генератор-переменные, не Helm Go-templates."
               },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Передать `image.tag` из CI в ArgoCD-`Application` можно только через git: команда `argocd app set --helm-set image.tag=$SHA` умеет читать текущие параметры Helm, но не изменять их, поэтому новый тег образа обязательно коммитят в `values.yaml` перед синхронизацией.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тег передают через `helm.parameters` в Application или `argocd app set --helm-set image.tag=$SHA`, а также через argocd-image-updater.",
+                "source_of_confusion": "GitOps-принцип «всё из git» создаёт впечатление, что динамики быть не может.",
+                "if_it_were_true": "Тогда нельзя было бы выкатывать новый образ из пайплайна, но `--helm-set`/parameters именно это и делают.",
+                "how_it_should_be": "Тег образа задают через helm-параметры Application или `argocd app set --helm-set`."
+              },
               "label": "B",
               "order": 1
+            },
+            {
+              "text": "`ApplicationSet` описывает один `Application` под одно окружение с его `source.helm` и `valueFiles`; чтобы раскатить chart на dev/staging/prod, для каждого окружения заводят отдельный `Application` вручную, меняя `namespace` и набор values-файлов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ApplicationSet` как раз генерирует множество Application-ов из шаблона и генератора, избавляя от ручного копирования на каждое окружение.",
+                "source_of_confusion": "Суффикс «Set» иногда трактуют как просто «настройку» одного Application.",
+                "if_it_were_true": "Тогда ApplicationSet не давал бы выигрыша при multi-env, но его смысл — именно массовая генерация.",
+                "how_it_should_be": "`ApplicationSet` шаблонизирует и генерирует Application-ы для всех окружений автоматически."
+              },
+              "label": "C",
+              "order": 2
             },
             {
               "text": "ArgoCD — GitOps-контроллер, синхронизирующий кластер с git; Helm-chart — один из source type. Базовый `Application` указывает `source.helm` с `valueFiles` и `parameters` (например `image.tag` из пайплайна). `ApplicationSet` генерирует Application-ы для нескольких окружений из шаблона (генератор `list` с элементами dev/staging/prod и своими `valuesFile`/`namespace`). Override из CI делают через `argocd app set --helm-set image.tag=$SHA`, а `argocd-image-updater` автоматически подхватывает новые теги образов.",
@@ -2321,18 +2333,6 @@
                 "when_to_apply": "ApplicationSet применяют, когда один chart разворачивается на много окружений/кластеров с разными values — типичный multi-env или multi-tenant сетап.",
                 "edge_cases": "Параметры `{{env}}` в шаблоне ApplicationSet — это его собственная подстановка, не Helm Go-templates; их легко спутать, и `{{ .Values.x }}` в ApplicationSet работать не будет.",
                 "related": "[[helm-interview#Q35]] базовая интеграция Helm и ArgoCD; [[helm-interview#Q20]] override через helm-set параметры; [[helm-interview#Q37]] OCI как source для ArgoCD."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Передать `image.tag` из CI в ArgoCD-`Application` можно только через git: команда `argocd app set --helm-set image.tag=$SHA` умеет читать текущие параметры Helm, но не изменять их, поэтому новый тег образа обязательно коммитят в `values.yaml` перед синхронизацией.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Тег передают через `helm.parameters` в Application или `argocd app set --helm-set image.tag=$SHA`, а также через argocd-image-updater.",
-                "source_of_confusion": "GitOps-принцип «всё из git» создаёт впечатление, что динамики быть не может.",
-                "if_it_were_true": "Тогда нельзя было бы выкатывать новый образ из пайплайна, но `--helm-set`/parameters именно это и делают.",
-                "how_it_should_be": "Тег образа задают через helm-параметры Application или `argocd app set --helm-set`."
               },
               "label": "D",
               "order": 3
@@ -2349,30 +2349,6 @@
           "question_text": "Как управлять секретами через `Helm Secrets` плагин с `SOPS`?",
           "options": [
             {
-              "text": "`helm-secrets` через `SOPS` шифрует имена ключей YAML, оставляя их значения в открытом виде, чтобы git-diff секретов оставался читаемым.",
-              "correct": false,
-              "sections": {
-                "what_actually": "SOPS наоборот шифрует значения, а структуру/ключи оставляет читаемыми для удобного diff; открытыми значения не остаются.",
-                "source_of_confusion": "Кажется логичным «прятать» имена, а не значения.",
-                "if_it_were_true": "Тогда пароли лежали бы в git открыто, что обессмыслило бы плагин; на деле шифруются именно значения.",
-                "how_it_should_be": "SOPS шифрует значения секретов, оставляя структуру YAML читаемой."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`helm-secrets` встраивает симметричный ключ шифрования в секцию `sops:` самого файла, поэтому внешний KMS или `age`-ключ для расшифровки не нужны.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Ключи шифрования держат во внешнем хранилище (AWS/GCP KMS, age, PGP); в файле лежит лишь метаданные о том, каким ключом он зашифрован.",
-                "source_of_confusion": "Хочется верить, что всё самодостаточно в одном файле.",
-                "if_it_were_true": "Тогда любой с файлом мог бы его расшифровать, но доступ контролируется через KMS/age-ключ.",
-                "how_it_should_be": "Ключ хранится в KMS/age вне файла; в файле — лишь ссылка на способ шифрования."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Команда `helm secrets dec secrets.enc.yaml` расшифровывает данные только в памяти и ничего не пишет на диск, поэтому файла `.dec` рядом не появляется.",
               "correct": false,
               "sections": {
@@ -2381,8 +2357,8 @@
                 "if_it_were_true": "Тогда plaintext-секрет не задерживался бы на диске, но `dec` именно создаёт постоянный файл до ручной очистки.",
                 "how_it_should_be": "Файл `.dec` удаляют вручную; автоматически Helm его не чистит."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`helm-secrets` — плагин, который шифрует файлы values через `SOPS` (Mozilla): зашифрованные values хранятся в git, а расшифровка происходит в runtime при деплое. Установка `helm plugin install ...github.com/jkroepke/helm-secrets`. Шифруют через `sops --kms <arn> --encrypt secrets.yaml > secrets.enc.yaml` или `--age`. При деплое: `helm secrets upgrade --install my-app ./chart -f values.yaml -f secrets.enc.yaml` (расшифровка автоматическая). Файл `.sops.yaml` задаёт правила выбора ключа по `path_regex`.",
@@ -2393,6 +2369,30 @@
                 "when_to_apply": "Подход выбирают, когда секреты удобно держать в git-репозитории chart рядом с конфигом, но в зашифрованном виде — типичный GitOps без отдельного secret-хранилища.",
                 "edge_cases": "Альтернатива `helm secrets dec` создаёт файл `.dec` с открытыми секретами на диске; его обязательно удаляют после деплоя (`rm secrets.enc.yaml.dec`), иначе plaintext утечёт.",
                 "related": "[[helm-interview#Q34]] обзор подходов к секретам; [[helm-interview#Q35]] секреты в GitOps с ArgoCD; [[helm-interview#Q36]] не хранить секреты в values.yaml."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`helm-secrets` встраивает симметричный ключ шифрования в секцию `sops:` самого файла, поэтому внешний KMS или `age`-ключ для расшифровки не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ключи шифрования держат во внешнем хранилище (AWS/GCP KMS, age, PGP); в файле лежит лишь метаданные о том, каким ключом он зашифрован.",
+                "source_of_confusion": "Хочется верить, что всё самодостаточно в одном файле.",
+                "if_it_were_true": "Тогда любой с файлом мог бы его расшифровать, но доступ контролируется через KMS/age-ключ.",
+                "how_it_should_be": "Ключ хранится в KMS/age вне файла; в файле — лишь ссылка на способ шифрования."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`helm-secrets` через `SOPS` шифрует имена ключей YAML, оставляя их значения в открытом виде, чтобы git-diff секретов оставался читаемым.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SOPS наоборот шифрует значения, а структуру/ключи оставляет читаемыми для удобного diff; открытыми значения не остаются.",
+                "source_of_confusion": "Кажется логичным «прятать» имена, а не значения.",
+                "if_it_were_true": "Тогда пароли лежали бы в git открыто, что обессмыслило бы плагин; на деле шифруются именно значения.",
+                "how_it_should_be": "SOPS шифрует значения секретов, оставляя структуру YAML читаемой."
               },
               "label": "D",
               "order": 3
@@ -2422,18 +2422,6 @@
               "order": 0
             },
             {
-              "text": "`ArgoCD` не позволяет держать Helm-source и Kustomize-overlay в одном `Application` — под каждый инструмент заводят отдельное приложение.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Их штатно совмещают: через `--post-renderer`, через `helmCharts` в Kustomize и через multi-source в ArgoCD.",
-                "source_of_confusion": "Раз оба про управление манифестами, кажется, что они конкурируют и несовместимы.",
-                "if_it_were_true": "Тогда не существовало бы флага `--post-renderer`, но он создан именно для связки Helm+Kustomize.",
-                "how_it_should_be": "Helm и Kustomize комбинируют несколькими паттернами; они дополняют друг друга."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`--post-renderer` запускает Kustomize ДО рендера Helm-шаблонов, патча сырой chart перед подстановкой values.",
               "correct": false,
               "sections": {
@@ -2441,6 +2429,18 @@
                 "source_of_confusion": "Приставка «post» иногда теряется, и порядок переворачивают.",
                 "if_it_were_true": "Тогда Kustomize правил бы Go-шаблоны до подстановки, но он работает с готовым YAML после `helm template`.",
                 "how_it_should_be": "`post-renderer` патчит уже отрендеренные манифесты — после, а не до рендера Helm."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`ArgoCD` не позволяет держать Helm-source и Kustomize-overlay в одном `Application` — под каждый инструмент заводят отдельное приложение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Их штатно совмещают: через `--post-renderer`, через `helmCharts` в Kustomize и через multi-source в ArgoCD.",
+                "source_of_confusion": "Раз оба про управление манифестами, кажется, что они конкурируют и несовместимы.",
+                "if_it_were_true": "Тогда не существовало бы флага `--post-renderer`, но он создан именно для связки Helm+Kustomize.",
+                "how_it_should_be": "Helm и Kustomize комбинируют несколькими паттернами; они дополняют друг друга."
               },
               "label": "C",
               "order": 2
@@ -2469,18 +2469,6 @@
           "question_text": "Как писать unit-тесты для `Helm Charts` с `helm-unittest`?",
           "options": [
             {
-              "text": "`helm-unittest` разворачивает chart в реальном кластере Kind/Minikube, дожидается готовности Pod-ов и проверяет их состояние после деплоя; тест-файл (`tests/deployment_test.yaml`) описывает `suite`, целевые `templates` и список `tests` с `asserts`, а запускают всё командой `helm unittest ./chart`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`helm-unittest` работает офлайн без кластера: он рендерит шаблоны и проверяет манифесты; установку в Kind делает другой инструмент — `ct`.",
-                "source_of_confusion": "Тестирование chart ассоциируется с реальным деплоем в тестовый кластер.",
-                "if_it_were_true": "Тогда unit-тесты требовали бы Docker и кластер, но их плюс — скорость и отсутствие зависимостей.",
-                "how_it_should_be": "`helm-unittest` тестирует рендер офлайн; деплой в Kind — это про `ct`."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`helm-unittest` — фреймворк для тестирования chart без деплоя в кластер: тесты проверяют, что шаблоны генерируют корректные манифесты при разных values. Устанавливается плагином. Тест-файл (`tests/deployment_test.yaml`) описывает `suite`, целевые `templates` и список `tests` с `set` (значения) и `asserts` (`equal`, `isNotNull`, `hasDocuments` с `count`). Поддерживаются snapshot-тесты (`matchSnapshot`). Запуск `helm unittest ./chart`, обновление снапшотов `--update-snapshot`, в CI — вывод JUnit.",
               "correct": true,
               "sections": {
@@ -2489,6 +2477,18 @@
                 "when_to_apply": "Unit-тесты пишут для chart с нетривиальной шаблонной логикой: условные ресурсы (HPA/Ingress), формирование имён, env-переменные, probes, RBAC — всё, что легко сломать правкой.",
                 "edge_cases": "Snapshot-тесты (`matchSnapshot`) удобны, но хрупки: любое изменение рендера ломает снапшот, и его надо осознанно обновлять через `--update-snapshot`, иначе CI краснеет на легитимных правках.",
                 "related": "[[helm-interview#Q32]] общие уровни тестирования chart; [[helm-interview#Q33]] helm lint как первый шаг; [[helm-interview#Q36]] тесты в CI best practices."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`helm-unittest` разворачивает chart в реальном кластере Kind/Minikube, дожидается готовности Pod-ов и проверяет их состояние после деплоя; тест-файл (`tests/deployment_test.yaml`) описывает `suite`, целевые `templates` и список `tests` с `asserts`, а запускают всё командой `helm unittest ./chart`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`helm-unittest` работает офлайн без кластера: он рендерит шаблоны и проверяет манифесты; установку в Kind делает другой инструмент — `ct`.",
+                "source_of_confusion": "Тестирование chart ассоциируется с реальным деплоем в тестовый кластер.",
+                "if_it_were_true": "Тогда unit-тесты требовали бы Docker и кластер, но их плюс — скорость и отсутствие зависимостей.",
+                "how_it_should_be": "`helm-unittest` тестирует рендер офлайн; деплой в Kind — это про `ct`."
               },
               "label": "B",
               "order": 1
@@ -2553,6 +2553,18 @@
               "order": 1
             },
             {
+              "text": "`cosign sign` подписывает OCI-чарт тем же долгоживущим GPG-keyring (`--keyring`), что и `helm package --sign`, отличаясь лишь форматом вывода подписи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`cosign`/Sigstore поддерживает keyless-подпись (через OIDC-идентичность), что избавляет от управления GPG-ключами — это его ключевое отличие от provenance.",
+                "source_of_confusion": "Обе технологии «подписывают», поэтому модель ключей считают одинаковой.",
+                "if_it_were_true": "Тогда cosign не давал бы преимуществ над GPG-provenance, но именно отказ от ручных ключей — его плюс.",
+                "how_it_should_be": "`cosign` умеет keyless-подпись через OIDC; долгоживущие GPG-ключи — особенность классического provenance."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
               "text": "Helm Provenance — механизм криптографической подписи chart-пакетов через `GPG` для проверки целостности и подлинности. Подписывают через `helm package --sign --key \"...\" --keyring ...`, результат — `.tgz` плюс файл `.prov` (PGP-подписанное сообщение с хешами). Верифицируют при установке через `--verify --keyring`, импортировав публичный ключ издателя. Современная альтернатива — `cosign` (Sigstore): подпись OCI-чарта без управления GPG-ключами (`cosign sign oci://...`). Применяют в enterprise с требованиями supply chain security (SLSA L2+).",
               "correct": true,
               "sections": {
@@ -2561,18 +2573,6 @@
                 "when_to_apply": "Подпись применяют при публикации public chart, в regulated industries и там, где политика supply chain security требует подтверждать происхождение артефактов (SLSA Level 2+).",
                 "edge_cases": "Верификация требует, чтобы у установщика был импортирован публичный ключ издателя; без него `--verify` упадёт, даже если chart подписан корректно — ключ надо распространять отдельно.",
                 "related": "[[helm-interview#Q37]] подпись OCI-чартов через cosign; [[helm-interview#Q38]] provenance vs cosign в Chart Museum/OCI; [[helm-interview#Q36]] безопасность в best practices."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`cosign sign` подписывает OCI-чарт тем же долгоживущим GPG-keyring (`--keyring`), что и `helm package --sign`, отличаясь лишь форматом вывода подписи.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`cosign`/Sigstore поддерживает keyless-подпись (через OIDC-идентичность), что избавляет от управления GPG-ключами — это его ключевое отличие от provenance.",
-                "source_of_confusion": "Обе технологии «подписывают», поэтому модель ключей считают одинаковой.",
-                "if_it_were_true": "Тогда cosign не давал бы преимуществ над GPG-provenance, но именно отказ от ручных ключей — его плюс.",
-                "how_it_should_be": "`cosign` умеет keyless-подпись через OIDC; долгоживущие GPG-ключи — особенность классического provenance."
               },
               "label": "D",
               "order": 3

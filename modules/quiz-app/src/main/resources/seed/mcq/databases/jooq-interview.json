@@ -11,13 +11,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Генерирует схему БД из аннотированных Java-классов (code-first)",
+              "text": "Генерирует типобезопасный Java-DSL из XML-маппингов в рантайме",
               "correct": false,
               "sections": {
-                "what_actually": "Подход code-first (схема выводится из классов с аннотациями) — это про JPA/Hibernate с `@Entity` и `hbm2ddl`, а не про jOOQ.",
-                "source_of_confusion": "Оба инструмента работают с БД и Java-классами, поэтому легко перепутать направление генерации; на собеседовании это ключевая развилка между jOOQ и ORM.",
-                "if_it_were_true": "Тогда jOOQ выводил бы таблицы из Java-модели, и схема БД была бы вторичной — это противоречило бы принципу «схема БД — источник истины».",
-                "how_it_should_be": "В jOOQ направление обратное: код генерируется из существующей схемы (database-first), а не схема из кода."
+                "what_actually": "XML-маппинги (вроде `hbm.xml`) — это способ описать соответствие классов и таблиц в старом Hibernate; jOOQ строит модель из схемы, а не из XML-описаний.",
+                "source_of_confusion": "XML-конфигурация исторически ассоциируется с доступом к данным в Java, поэтому кажется правдоподобным источником генерации.",
+                "if_it_were_true": "Тогда между БД и кодом стоял бы промежуточный XML-слой, и схема БД перестала бы быть прямым источником истины.",
+                "how_it_should_be": "jOOQ генерирует код напрямую из схемы БД (database-first) на этапе сборки, без XML-маппингов как источника."
               }
             },
             {
@@ -48,13 +48,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Генерирует типобезопасный Java-DSL из XML-маппингов в рантайме",
+              "text": "Генерирует схему БД из аннотированных Java-классов (code-first)",
               "correct": false,
               "sections": {
-                "what_actually": "XML-маппинги (вроде `hbm.xml`) — это способ описать соответствие классов и таблиц в старом Hibernate; jOOQ строит модель из схемы, а не из XML-описаний.",
-                "source_of_confusion": "XML-конфигурация исторически ассоциируется с доступом к данным в Java, поэтому кажется правдоподобным источником генерации.",
-                "if_it_were_true": "Тогда между БД и кодом стоял бы промежуточный XML-слой, и схема БД перестала бы быть прямым источником истины.",
-                "how_it_should_be": "jOOQ генерирует код напрямую из схемы БД (database-first) на этапе сборки, без XML-маппингов как источника."
+                "what_actually": "Подход code-first (схема выводится из классов с аннотациями) — это про JPA/Hibernate с `@Entity` и `hbm2ddl`, а не про jOOQ.",
+                "source_of_confusion": "Оба инструмента работают с БД и Java-классами, поэтому легко перепутать направление генерации; на собеседовании это ключевая развилка между jOOQ и ORM.",
+                "if_it_were_true": "Тогда jOOQ выводил бы таблицы из Java-модели, и схема БД была бы вторичной — это противоречило бы принципу «схема БД — источник истины».",
+                "how_it_should_be": "В jOOQ направление обратное: код генерируется из существующей схемы (database-first), а не схема из кода."
               }
             }
           ]
@@ -71,6 +71,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Классы `Table` (таблица), `TableField` (типизированная колонка), `Record` (строка таблицы) и опциональные `POJO`/`Repository`",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Repository` — это понятие из Spring Data, а не артефакт генератора jOOQ. jOOQ генерирует `DAO` (базовый CRUD-класс вроде `AuthorDao`), но не Spring-репозитории.",
+                "source_of_confusion": "jOOQ часто используют со Spring Boot (spring-boot-starter-jooq), а свои репозитории разработчики помечают `@Repository`. Из-за этого DAO легко спутать со Spring-репозиторием.",
+                "if_it_were_true": "Тогда кодген отдавал бы Spring-репозитории с derived-queries, чего jOOQ принципиально не делает — он не репозиторный фреймворк, а построитель SQL.",
+                "how_it_should_be": "Опционально генерируется `DAO` (`AuthorDao`) с базовыми CRUD-методами; Spring-репозитории к генерации jOOQ отношения не имеют."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Классы `Table` (таблица), `Entity` (типизированная колонка), `Record` (строка таблицы) и опциональные `POJO`/`DAO`",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Entity` — термин JPA/Hibernate для управляемой сущности с persistence context. jOOQ типизированную колонку описывает классом `TableField` (`AUTHOR.FIRST_NAME` типа `Field<String>`), а никаких JPA-Entity не генерирует.",
+                "source_of_confusion": "И jOOQ, и ORM работают с БД, поэтому кажется, что jOOQ тоже создаёт «сущности». Но jOOQ — не ORM: он генерирует поля-колонки, а не managed-Entity.",
+                "if_it_were_true": "Тогда у jOOQ был бы persistence context, lazy loading и dirty checking как у Hibernate — но это противоречит его SQL-centric философии (Q4).",
+                "how_it_should_be": "Колонку с типом описывает `TableField`, дающий `Field<String>`/`Field<Integer>`; никакого `Entity` jOOQ не генерирует."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Классы `Table` (таблица), `TableField` (типизированная колонка), `Record` (строка таблицы) и опциональные `POJO`/`DAO`",
               "correct": true,
               "sections": {
@@ -82,8 +106,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "Классы `Table` (таблица), `TableField` (типизированная колонка), `Result` (строка таблицы) и опциональные `POJO`/`DAO`",
               "correct": false,
               "sections": {
@@ -91,30 +115,6 @@
                 "source_of_confusion": "`Result` и `Record` похожи по имени и тесно связаны: `fetch()` отдаёт `Result`, состоящий из `Record`-ов. Легко перепутать контейнер с элементом.",
                 "if_it_were_true": "Тогда строку конкретной таблицы пришлось бы получать как `Result`, и не было бы типизированного `AuthorRecord` с методами `store()`/`update()` для active record.",
                 "how_it_should_be": "Строку конкретной таблицы описывает генерируемый `Record` (`AuthorRecord`); `Result` — это рантайм-список таких записей, а не результат кодгена."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Классы `Table` (таблица), `TableField` (типизированная колонка), `Record` (строка таблицы) и опциональные `POJO`/`Repository`",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Repository` — это понятие из Spring Data, а не артефакт генератора jOOQ. jOOQ генерирует `DAO` (базовый CRUD-класс вроде `AuthorDao`), но не Spring-репозитории.",
-                "source_of_confusion": "jOOQ часто используют со Spring Boot (spring-boot-starter-jooq), а свои репозитории разработчики помечают `@Repository`. Из-за этого DAO легко спутать со Spring-репозиторием.",
-                "if_it_were_true": "Тогда кодген отдавал бы Spring-репозитории с derived-queries, чего jOOQ принципиально не делает — он не репозиторный фреймворк, а построитель SQL.",
-                "how_it_should_be": "Опционально генерируется `DAO` (`AuthorDao`) с базовыми CRUD-методами; Spring-репозитории к генерации jOOQ отношения не имеют."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Классы `Table` (таблица), `Entity` (типизированная колонка), `Record` (строка таблицы) и опциональные `POJO`/`DAO`",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Entity` — термин JPA/Hibernate для управляемой сущности с persistence context. jOOQ типизированную колонку описывает классом `TableField` (`AUTHOR.FIRST_NAME` типа `Field<String>`), а никаких JPA-Entity не генерирует.",
-                "source_of_confusion": "И jOOQ, и ORM работают с БД, поэтому кажется, что jOOQ тоже создаёт «сущности». Но jOOQ — не ORM: он генерирует поля-колонки, а не managed-Entity.",
-                "if_it_were_true": "Тогда у jOOQ был бы persistence context, lazy loading и dirty checking как у Hibernate — но это противоречит его SQL-centric философии (Q4).",
-                "how_it_should_be": "Колонку с типом описывает `TableField`, дающий `Field<String>`/`Field<Integer>`; никакого `Entity` jOOQ не генерирует."
               }
             }
           ]
@@ -131,18 +131,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Configuration` — центральная точка входа, через которую начинается любой запрос и которая держит DSLContext",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Configuration` — это контейнер настроек (соединение/`DataSource`, SQL-диалект, listeners), который `DSLContext` держит внутри себя, а не наоборот; сам по себе запросы он не строит.",
-                "source_of_confusion": "`Configuration` действительно несёт диалект и соединение, поэтому легко перепутать носителя настроек с точкой входа для построения запросов.",
-                "if_it_were_true": "Тогда цепочки `select`/`from`/`where` вызывались бы прямо на `Configuration`, а `DSLContext` был бы вспомогательным держателем — но в API всё ровно наоборот.",
-                "how_it_should_be": "Точка входа — `DSLContext`; он держит `Configuration`, а внутри транзакции локальную `Configuration` оборачивают обратно в `DSL.using(configuration)`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`SQLDialect` — центральная точка входа, через которую начинается любой запрос и которая держит Configuration",
               "correct": false,
               "sections": {
@@ -153,20 +141,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`DSLContext` — вспомогательный билдер условий, через который начинается любой запрос и который держит Configuration",
-              "correct": false,
-              "sections": {
-                "what_actually": "Построением условий занимаются объекты `Condition` и фабрика `DSL` (`DSL.noCondition()`, `field.eq(...)`); `DSLContext` — это полноценная точка входа, а не вспомогательный билдер предикатов.",
-                "source_of_confusion": "Через `DSLContext` доходишь до `where(...)`, поэтому его легко спутать с инструментом сборки условий, хотя сами `Condition` независимы от него.",
-                "if_it_were_true": "Тогда `DSLContext` отвечал бы только за предикаты, а старт запроса делался бы чем-то ещё — но именно с него начинается вся цепочка `select`/`from`/`where`.",
-                "how_it_should_be": "`DSLContext` — центральная точка входа для всего запроса; условия же собираются отдельными `Condition`-объектами и помощниками `DSL`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`DSLContext` — центральная точка входа, через которую начинается любой запрос и которая держит Configuration",
               "correct": true,
               "sections": {
@@ -175,6 +151,30 @@
                 "when_to_apply": "Используется всегда как стартовая точка любого запроса; в Spring Boot его инжектят готовым бином, а не создают вручную через `DSL.using(connection)`.",
                 "edge_cases": "В Spring-приложениях ручное создание через `DSL.using(connection)` ломает участие в транзакциях Spring — стартер уже даёт настроенный бин, подключённый к управляемому соединению.",
                 "related": "Каждый шаг fluent-цепочки возвращает следующий допустимый тип, что и даёт типобезопасность: после `where(...)` нельзя вызвать `from(...)`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Configuration` — центральная точка входа, через которую начинается любой запрос и которая держит DSLContext",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Configuration` — это контейнер настроек (соединение/`DataSource`, SQL-диалект, listeners), который `DSLContext` держит внутри себя, а не наоборот; сам по себе запросы он не строит.",
+                "source_of_confusion": "`Configuration` действительно несёт диалект и соединение, поэтому легко перепутать носителя настроек с точкой входа для построения запросов.",
+                "if_it_were_true": "Тогда цепочки `select`/`from`/`where` вызывались бы прямо на `Configuration`, а `DSLContext` был бы вспомогательным держателем — но в API всё ровно наоборот.",
+                "how_it_should_be": "Точка входа — `DSLContext`; он держит `Configuration`, а внутри транзакции локальную `Configuration` оборачивают обратно в `DSL.using(configuration)`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`DSLContext` — вспомогательный билдер условий, через который начинается любой запрос и который держит Configuration",
+              "correct": false,
+              "sections": {
+                "what_actually": "Построением условий занимаются объекты `Condition` и фабрика `DSL` (`DSL.noCondition()`, `field.eq(...)`); `DSLContext` — это полноценная точка входа, а не вспомогательный билдер предикатов.",
+                "source_of_confusion": "Через `DSLContext` доходишь до `where(...)`, поэтому его легко спутать с инструментом сборки условий, хотя сами `Condition` независимы от него.",
+                "if_it_were_true": "Тогда `DSLContext` отвечал бы только за предикаты, а старт запроса делался бы чем-то ещё — но именно с него начинается вся цепочка `select`/`from`/`where`.",
+                "how_it_should_be": "`DSLContext` — центральная точка входа для всего запроса; условия же собираются отдельными `Condition`-объектами и помощниками `DSL`."
               }
             }
           ]
@@ -191,18 +191,30 @@
             {
               "order": 0,
               "label": "A",
-              "text": "jOOQ — это типобезопасный SQL-билдер с persistence context и lazy loading; JPA/Hibernate — ORM без кеша и lazy loading.",
+              "text": "jOOQ — это типобезопасный SQL-билдер со скрытой проблемой N+1; JPA/Hibernate — ORM, где N+1 не возникает скрыто.",
               "correct": false,
               "sections": {
-                "what_actually": "На самом деле всё наоборот: persistence context, кеш и lazy loading — это атрибуты JPA/Hibernate, а jOOQ их принципиально не имеет, оставаясь построителем SQL плюс лёгкий маппинг результата.",
-                "source_of_confusion": "Оба работают с одной БД и часто стоят рядом в проекте, поэтому легко перепутать, какой именно инструмент держит persistence context и lazy-связи.",
-                "if_it_were_true": "Если бы jOOQ держал persistence context и lazy loading, он был бы ещё одним ORM и тогда же приносил бы скрытую N+1-проблему и неявные JOIN-ы — ровно то, чего он избегает.",
-                "how_it_should_be": "Persistence context и lazy loading надо отнести к JPA/Hibernate; jOOQ — без кеша и без отложенной загрузки."
+                "what_actually": "Скрытая N+1-проблема — классическая ловушка именно JPA/Hibernate из-за lazy loading. В jOOQ её нет: вы видите точный SQL и сами решаете, как тянуть связанные данные (например, через MULTISET).",
+                "source_of_confusion": "N+1 ассоциируется с «множеством запросов», и кажется, будто низкоуровневый SQL-инструмент должен быть к ней склоннее, хотя именно явный SQL её и исключает.",
+                "if_it_were_true": "Если бы jOOQ скрыто порождал N+1, это противоречило бы его принципу «полный контроль над генерируемым SQL без скрытых N+1 и неожиданных JOIN-ов».",
+                "how_it_should_be": "Скрытая N+1 — это про JPA/Hibernate; у jOOQ она не возникает скрыто, потому что весь SQL виден."
               }
             },
             {
               "order": 1,
               "label": "B",
+              "text": "jOOQ — это типобезопасный SQL-билдер, источник истины которого сущности; JPA/Hibernate — ORM, источник истины которого схема БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У jOOQ источник истины — схема БД: код генерируется из существующей схемы (database-first). У JPA/Hibernate источник истины — сущности и их маппинг, из которых может выводиться схема.",
+                "source_of_confusion": "И там, и там есть «таблицы» и «классы», поэтому легко перепутать направление: кто из кого порождается — код из схемы или схема из классов.",
+                "if_it_were_true": "Если бы источником истины jOOQ были сущности, отпала бы кодогенерация из схемы и сама типобезопасность по реальным колонкам — главное преимущество jOOQ.",
+                "how_it_should_be": "Источник истины jOOQ — схема БД (database-first); у JPA/Hibernate — сущности и маппинг."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "jOOQ — это типобезопасный SQL-билдер без кеша и lazy loading; JPA/Hibernate — ORM с persistence context и lazy loading.",
               "correct": true,
               "sections": {
@@ -214,27 +226,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "jOOQ — это типобезопасный SQL-билдер, источник истины которого сущности; JPA/Hibernate — ORM, источник истины которого схема БД.",
-              "correct": false,
-              "sections": {
-                "what_actually": "У jOOQ источник истины — схема БД: код генерируется из существующей схемы (database-first). У JPA/Hibernate источник истины — сущности и их маппинг, из которых может выводиться схема.",
-                "source_of_confusion": "И там, и там есть «таблицы» и «классы», поэтому легко перепутать направление: кто из кого порождается — код из схемы или схема из классов.",
-                "if_it_were_true": "Если бы источником истины jOOQ были сущности, отпала бы кодогенерация из схемы и сама типобезопасность по реальным колонкам — главное преимущество jOOQ.",
-                "how_it_should_be": "Источник истины jOOQ — схема БД (database-first); у JPA/Hibernate — сущности и маппинг."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "jOOQ — это типобезопасный SQL-билдер со скрытой проблемой N+1; JPA/Hibernate — ORM, где N+1 не возникает скрыто.",
+              "text": "jOOQ — это типобезопасный SQL-билдер с persistence context и lazy loading; JPA/Hibernate — ORM без кеша и lazy loading.",
               "correct": false,
               "sections": {
-                "what_actually": "Скрытая N+1-проблема — классическая ловушка именно JPA/Hibernate из-за lazy loading. В jOOQ её нет: вы видите точный SQL и сами решаете, как тянуть связанные данные (например, через MULTISET).",
-                "source_of_confusion": "N+1 ассоциируется с «множеством запросов», и кажется, будто низкоуровневый SQL-инструмент должен быть к ней склоннее, хотя именно явный SQL её и исключает.",
-                "if_it_were_true": "Если бы jOOQ скрыто порождал N+1, это противоречило бы его принципу «полный контроль над генерируемым SQL без скрытых N+1 и неожиданных JOIN-ов».",
-                "how_it_should_be": "Скрытая N+1 — это про JPA/Hibernate; у jOOQ она не возникает скрыто, потому что весь SQL виден."
+                "what_actually": "На самом деле всё наоборот: persistence context, кеш и lazy loading — это атрибуты JPA/Hibernate, а jOOQ их принципиально не имеет, оставаясь построителем SQL плюс лёгкий маппинг результата.",
+                "source_of_confusion": "Оба работают с одной БД и часто стоят рядом в проекте, поэтому легко перепутать, какой именно инструмент держит persistence context и lazy-связи.",
+                "if_it_were_true": "Если бы jOOQ держал persistence context и lazy loading, он был бы ещё одним ORM и тогда же приносил бы скрытую N+1-проблему и неявные JOIN-ы — ровно то, чего он избегает.",
+                "how_it_should_be": "Persistence context и lazy loading надо отнести к JPA/Hibernate; jOOQ — без кеша и без отложенной загрузки."
               }
             }
           ]
@@ -251,30 +251,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`jOOQ` — низкая абстракция (SQL-DSL), низкая типобезопасность запросов, ошибка имени колонки не компилируется",
-              "correct": false,
-              "sections": {
-                "what_actually": "Низкая типобезопасность — это характеристика `Spring Data` (и JPA, и JDBC), где запросы пишутся строками в `@Query`. У `jOOQ` типобезопасность как раз высокая.",
-                "source_of_confusion": "Все три инструмента стоят над JDBC и в строке таблицы соседствуют, поэтому атрибут «низкая типобезопасность» легко по ошибке перенести с `Spring Data` на `jOOQ`.",
-                "if_it_were_true": "Если бы типобезопасность была низкой, ошибка имени колонки не ловилась бы компилятором — что прямо противоречит второй части того же варианта.",
-                "how_it_should_be": "У `jOOQ` типобезопасность запросов высокая: колонки и типы берутся из сгенерированной схемы."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`jOOQ` — низкая абстракция (SQL-DSL), высокая типобезопасность запросов, ошибка имени колонки всплывает в рантайме",
-              "correct": false,
-              "sections": {
-                "what_actually": "Всплывание ошибки в рантайме — поведение строковых запросов `@Query` в `Spring Data`: опечатка в имени колонки замечается только при выполнении.",
-                "source_of_confusion": "«Высокая типобезопасность» и «ошибка в рантайме» в одном варианте звучат правдоподобно, но это взаимоисключающие свойства — рантайм-ошибка как раз признак отсутствия compile-time проверки.",
-                "if_it_were_true": "Если бы опечатки всплывали в рантайме, главное преимущество `jOOQ` над строковыми запросами исчезло бы и смысл DSL из схемы пропал.",
-                "how_it_should_be": "В `jOOQ` опечатка в имени колонки не компилируется — ошибка сдвинута на этап компиляции, а не в рантайм."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`jOOQ` — низкая абстракция (SQL-DSL), высокая типобезопасность запросов, ошибка имени колонки не компилируется",
               "correct": true,
               "sections": {
@@ -286,8 +262,20 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
+              "text": "`jOOQ` — низкая абстракция (SQL-DSL), низкая типобезопасность запросов, ошибка имени колонки не компилируется",
+              "correct": false,
+              "sections": {
+                "what_actually": "Низкая типобезопасность — это характеристика `Spring Data` (и JPA, и JDBC), где запросы пишутся строками в `@Query`. У `jOOQ` типобезопасность как раз высокая.",
+                "source_of_confusion": "Все три инструмента стоят над JDBC и в строке таблицы соседствуют, поэтому атрибут «низкая типобезопасность» легко по ошибке перенести с `Spring Data` на `jOOQ`.",
+                "if_it_were_true": "Если бы типобезопасность была низкой, ошибка имени колонки не ловилась бы компилятором — что прямо противоречит второй части того же варианта.",
+                "how_it_should_be": "У `jOOQ` типобезопасность запросов высокая: колонки и типы берутся из сгенерированной схемы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`jOOQ` — высокая абстракция (ORM), высокая типобезопасность запросов, ошибка имени колонки не компилируется",
               "correct": false,
               "sections": {
@@ -295,6 +283,18 @@
                 "source_of_confusion": "`jOOQ` тоже умеет маппить результат в объекты, из-за чего его легко спутать с ORM, хотя он лишь лёгкий маппер поверх явного SQL.",
                 "if_it_were_true": "Будь `jOOQ` высокоуровневым ORM, он прятал бы SQL и вёл persistence context — но тогда исчез бы его полный контроль над генерируемым запросом.",
                 "how_it_should_be": "`jOOQ` — низкая абстракция (SQL-DSL): вы видите точный SQL, без скрытого ORM-слоя."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`jOOQ` — низкая абстракция (SQL-DSL), высокая типобезопасность запросов, ошибка имени колонки всплывает в рантайме",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всплывание ошибки в рантайме — поведение строковых запросов `@Query` в `Spring Data`: опечатка в имени колонки замечается только при выполнении.",
+                "source_of_confusion": "«Высокая типобезопасность» и «ошибка в рантайме» в одном варианте звучат правдоподобно, но это взаимоисключающие свойства — рантайм-ошибка как раз признак отсутствия compile-time проверки.",
+                "if_it_were_true": "Если бы опечатки всплывали в рантайме, главное преимущество `jOOQ` над строковыми запросами исчезло бы и смысл DSL из схемы пропал.",
+                "how_it_should_be": "В `jOOQ` опечатка в имени колонки не компилируется — ошибка сдвинута на этап компиляции, а не в рантайм."
               }
             }
           ]
@@ -311,6 +311,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`MariaDB`, `SQL Server`, `DB2`",
+              "correct": false,
+              "sections": {
+                "what_actually": "SQL Server и DB2 коммерческие, но MariaDB — open-source-форк MySQL, покрытый бесплатной редакцией jOOQ под Apache 2.0.",
+                "source_of_confusion": "MariaDB используется и в корпоративных средах, поэтому её легко спутать с платными СУБД из коммерческого списка.",
+                "if_it_were_true": "Если бы MariaDB была коммерческой, переход с MySQL на MariaDB ради open-source-свободы терял бы смысл в части лицензии jOOQ.",
+                "how_it_should_be": "Вместо MariaDB в тройке должен стоять Oracle: `Oracle`, `SQL Server`, `DB2`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Oracle`, `MySQL`, `DB2`",
+              "correct": false,
+              "sections": {
+                "what_actually": "Oracle и DB2 коммерческие, но MySQL — open-source-БД (как и MariaDB, SQLite, H2), для неё достаточно Open Source Edition.",
+                "source_of_confusion": "MySQL принадлежит Oracle, и эта ассоциация подталкивает ошибочно считать саму MySQL коммерческой в контексте лицензирования jOOQ.",
+                "if_it_were_true": "Если бы MySQL требовала платную редакцию, огромная доля типичных веб-приложений не могла бы использовать бесплатный jOOQ — что противоречит модели лицензирования.",
+                "how_it_should_be": "Вместо MySQL в тройке должен стоять SQL Server: `Oracle`, `SQL Server`, `DB2`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Oracle`, `SQL Server`, `DB2`",
               "correct": true,
               "sections": {
@@ -322,8 +346,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "`Oracle`, `SQL Server`, `PostgreSQL`",
               "correct": false,
               "sections": {
@@ -331,30 +355,6 @@
                 "source_of_confusion": "PostgreSQL — мощная «взрослая» БД корпоративного уровня, и её легко мысленно поставить в один ряд с платными Oracle/SQL Server.",
                 "if_it_were_true": "Если бы PostgreSQL требовала коммерческую лицензию, бесплатной jOOQ почти не осталось бы смысла — именно PostgreSQL названа основной open-source-БД для бесплатной редакции.",
                 "how_it_should_be": "Вместо PostgreSQL в тройке коммерческих должна стоять DB2: `Oracle`, `SQL Server`, `DB2`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`Oracle`, `MySQL`, `DB2`",
-              "correct": false,
-              "sections": {
-                "what_actually": "Oracle и DB2 коммерческие, но MySQL — open-source-БД (как и MariaDB, SQLite, H2), для неё достаточно Open Source Edition.",
-                "source_of_confusion": "MySQL принадлежит Oracle, и эта ассоциация подталкивает ошибочно считать саму MySQL коммерческой в контексте лицензирования jOOQ.",
-                "if_it_were_true": "Если бы MySQL требовала платную редакцию, огромная доля типичных веб-приложений не могла бы использовать бесплатный jOOQ — что противоречит модели лицензирования.",
-                "how_it_should_be": "Вместо MySQL в тройке должен стоять SQL Server: `Oracle`, `SQL Server`, `DB2`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`MariaDB`, `SQL Server`, `DB2`",
-              "correct": false,
-              "sections": {
-                "what_actually": "SQL Server и DB2 коммерческие, но MariaDB — open-source-форк MySQL, покрытый бесплатной редакцией jOOQ под Apache 2.0.",
-                "source_of_confusion": "MariaDB используется и в корпоративных средах, поэтому её легко спутать с платными СУБД из коммерческого списка.",
-                "if_it_were_true": "Если бы MariaDB была коммерческой, переход с MySQL на MariaDB ради open-source-свободы терял бы смысл в части лицензии jOOQ.",
-                "how_it_should_be": "Вместо MariaDB в тройке должен стоять Oracle: `Oracle`, `SQL Server`, `DB2`."
               }
             }
           ]
@@ -371,18 +371,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`join` (INNER), `leftJoin`, `rightJoin`, `outerJoin`, `crossJoin`; условие — `.on(...)`",
-              "correct": false,
-              "sections": {
-                "what_actually": "Полное внешнее соединение в jOOQ выражается методом `fullOuterJoin`, а не `outerJoin` — отдельного метода `outerJoin` в DSL нет.",
-                "source_of_confusion": "В SQL пишут `FULL OUTER JOIN`, и слово `outer` легко принять за самостоятельное имя метода, опустив `full`.",
-                "if_it_were_true": "Если бы метод назывался `outerJoin`, было бы неоднозначно, какое именно внешнее соединение (left/right/full) имеется в виду, что противоречит типобезопасной модели jOOQ.",
-                "how_it_should_be": "Для полного внешнего соединения используется `fullOuterJoin`, а левое/правое — это `leftJoin`/`rightJoin`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`innerJoin`, `leftJoin`, `rightJoin`, `fullOuterJoin`, `crossJoin`; условие — `.on(...)`",
               "correct": false,
               "sections": {
@@ -393,8 +381,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`join` (INNER), `leftJoin`, `rightJoin`, `fullOuterJoin`, `crossJoin`; условие — `.using(...)`",
               "correct": false,
               "sections": {
@@ -402,6 +390,18 @@
                 "source_of_confusion": "И `on`, и `using` относятся к JOIN, поэтому `using` легко подставить как «способ задать условие», хотя его семантика уже.",
                 "if_it_were_true": "Если бы условие всегда задавалось через `.using(...)`, нельзя было бы выразить соединение по произвольному предикату вроде `BOOK.AUTHOR_ID.eq(AUTHOR.ID)`.",
                 "how_it_should_be": "Произвольное условие соединения навешивается через `.on(...)`; `.using(...)` применяют лишь для JOIN по совпадающим именам колонок."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`join` (INNER), `leftJoin`, `rightJoin`, `outerJoin`, `crossJoin`; условие — `.on(...)`",
+              "correct": false,
+              "sections": {
+                "what_actually": "Полное внешнее соединение в jOOQ выражается методом `fullOuterJoin`, а не `outerJoin` — отдельного метода `outerJoin` в DSL нет.",
+                "source_of_confusion": "В SQL пишут `FULL OUTER JOIN`, и слово `outer` легко принять за самостоятельное имя метода, опустив `full`.",
+                "if_it_were_true": "Если бы метод назывался `outerJoin`, было бы неоднозначно, какое именно внешнее соединение (left/right/full) имеется в виду, что противоречит типобезопасной модели jOOQ.",
+                "how_it_should_be": "Для полного внешнего соединения используется `fullOuterJoin`, а левое/правое — это `leftJoin`/`rightJoin`."
               }
             },
             {
@@ -431,31 +431,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Возвращает первую строку",
+              "text": "Возвращает `List<Record>`",
               "correct": false,
               "sections": {
-                "what_actually": "Брать произвольную одну строку без исключения умеет `fetchAny()`, а не `fetchOne()`.",
-                "source_of_confusion": "И `fetchOne()`, и `fetchAny()` отдают одиночный `Record`, поэтому легко перепутать их поведение на множестве строк.",
-                "if_it_were_true": "Тогда дубликаты в данных тихо проходили бы незамеченными, и баг с неуникальным условием маскировался бы вместо явной ошибки.",
-                "how_it_should_be": "`fetchOne()` бросает `TooManyRowsException`; если нужна именно произвольная одна строка без исключения — вызывайте `fetchAny()`."
+                "what_actually": "Список записей возвращает `fetch()` (`Result<Record>`), а `fetchInto(Class)` — `List<T>`; `fetchOne()` всегда отдаёт максимум одну запись.",
+                "source_of_confusion": "Все эти методы стартуют с `fetch`, поэтому имена путаются, хотя `fetchOne` по смыслу про единичный результат.",
+                "if_it_were_true": "Тогда тип возврата `fetchOne()` был бы коллекцией, и сигнатура совпадала бы с `fetch()`, делая отдельный метод бессмысленным.",
+                "how_it_should_be": "Для нескольких строк используйте `fetch()`/`fetchInto(Class)`; `fetchOne()` же при >1 строке бросает `TooManyRowsException`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Бросает `TooManyRowsException`",
-              "correct": true,
-              "sections": {
-                "explanation": "`fetchOne()` контрактно рассчитан ровно на 0 или 1 строку: 0 строк → `null`, 1 строка → запись, а при двух и более строках он бросает `TooManyRowsException`, не возвращая ничего. Это страховка от незаметного выбора «случайной» строки.",
-                "example": "`dsl.selectFrom(BOOK).where(BOOK.ID.eq(1)).fetchOne()` вернёт одну `BookRecord` или `null`; если бы `ID` был не уникален и совпало две строки — полетело бы `TooManyRowsException`.",
-                "when_to_apply": "Используйте `fetchOne()`, когда выбираете по первичному ключу или уникальному индексу и хотите, чтобы дубликат строк был замечен как ошибка, а не проглочен.",
-                "edge_cases": "При 0 строках `fetchOne()` молча возвращает `null` — для «возможно отсутствует» безопаснее `fetchOptional()` с `Optional<Record>`. Исключение бросается уже после получения второй строки.",
-                "related": "`fetchAny()` в той же ситуации не бросает исключение, а просто берёт произвольную одну строку; `fetchOptional()` даёт ту же защиту от >1, но возвращает `Optional` вместо `null`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Возвращает `null`",
               "correct": false,
               "sections": {
@@ -466,15 +453,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Возвращает `List<Record>`",
+              "order": 2,
+              "label": "C",
+              "text": "Возвращает первую строку",
               "correct": false,
               "sections": {
-                "what_actually": "Список записей возвращает `fetch()` (`Result<Record>`), а `fetchInto(Class)` — `List<T>`; `fetchOne()` всегда отдаёт максимум одну запись.",
-                "source_of_confusion": "Все эти методы стартуют с `fetch`, поэтому имена путаются, хотя `fetchOne` по смыслу про единичный результат.",
-                "if_it_were_true": "Тогда тип возврата `fetchOne()` был бы коллекцией, и сигнатура совпадала бы с `fetch()`, делая отдельный метод бессмысленным.",
-                "how_it_should_be": "Для нескольких строк используйте `fetch()`/`fetchInto(Class)`; `fetchOne()` же при >1 строке бросает `TooManyRowsException`."
+                "what_actually": "Брать произвольную одну строку без исключения умеет `fetchAny()`, а не `fetchOne()`.",
+                "source_of_confusion": "И `fetchOne()`, и `fetchAny()` отдают одиночный `Record`, поэтому легко перепутать их поведение на множестве строк.",
+                "if_it_were_true": "Тогда дубликаты в данных тихо проходили бы незамеченными, и баг с неуникальным условием маскировался бы вместо явной ошибки.",
+                "how_it_should_be": "`fetchOne()` бросает `TooManyRowsException`; если нужна именно произвольная одна строка без исключения — вызывайте `fetchAny()`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Бросает `TooManyRowsException`",
+              "correct": true,
+              "sections": {
+                "explanation": "`fetchOne()` контрактно рассчитан ровно на 0 или 1 строку: 0 строк → `null`, 1 строка → запись, а при двух и более строках он бросает `TooManyRowsException`, не возвращая ничего. Это страховка от незаметного выбора «случайной» строки.",
+                "example": "`dsl.selectFrom(BOOK).where(BOOK.ID.eq(1)).fetchOne()` вернёт одну `BookRecord` или `null`; если бы `ID` был не уникален и совпало две строки — полетело бы `TooManyRowsException`.",
+                "when_to_apply": "Используйте `fetchOne()`, когда выбираете по первичному ключу или уникальному индексу и хотите, чтобы дубликат строк был замечен как ошибка, а не проглочен.",
+                "edge_cases": "При 0 строках `fetchOne()` молча возвращает `null` — для «возможно отсутствует» безопаснее `fetchOptional()` с `Optional<Record>`. Исключение бросается уже после получения второй строки.",
+                "related": "`fetchAny()` в той же ситуации не бросает исключение, а просто берёт произвольную одну строку; `fetchOptional()` даёт ту же защиту от >1, но возвращает `Optional` вместо `null`."
               }
             }
           ]
@@ -491,13 +491,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Чтобы сохранить изменённый `Record` в БД, вызывают метод `persist()`",
-              "correct": false,
+              "text": "Чтобы сохранить изменённый `Record` в БД, вызывают метод `store()`",
+              "correct": true,
               "sections": {
-                "what_actually": "`persist()` — метод JPA `EntityManager`, который переводит новую сущность в managed-состояние в контексте Hibernate. К jOOQ `Record` он отношения не имеет.",
-                "source_of_confusion": "И там и там речь о «сохранении объекта в БД», а jOOQ часто сравнивают с JPA/Hibernate, поэтому JPA-словарь легко переносится на jOOQ по ошибке.",
-                "if_it_were_true": "Если бы у `Record` был `persist()`, jOOQ имел бы скрытый persistence-context с отложенным flush, как Hibernate, — но jOOQ намеренно работает без контекста персистентности.",
-                "how_it_should_be": "У `UpdatableRecord` метод называется `store()` (или явные `insert()`/`update()`); `persist()` остаётся в мире JPA."
+                "explanation": "`Record` в jOOQ — это `UpdatableRecord`: он привязан к таблице, отслеживает changed-флаги полей и сам умеет писать себя в БД. Именно `store()` — штатный метод этого контракта: он делает INSERT для новой строки или UPDATE для уже существующей, затрагивая только изменённые поля.",
+                "example": "BookRecord rec = dsl.selectFrom(BOOK).where(BOOK.ID.eq(1)).fetchOne(); rec.setTitle(\"New title\"); rec.store(); — сгенерируется UPDATE только по полю TITLE, потому что только оно помечено как changed.",
+                "when_to_apply": "Удобно для CRUD внутри сервисного слоя, когда читаешь строку как `Record`, правишь пару полей и сохраняешь обратно без ручного составления UPDATE-запроса.",
+                "edge_cases": "`store()` сам выбирает INSERT или UPDATE по тому, «прикреплён» ли record к существующей строке (наличие ключа). Если ни одно поле не помечено как changed, UPDATE может не выполниться. Для явных операций есть отдельные `insert()`/`update()`/`delete()`.",
+                "related": "`Record` (`UpdatableRecord`) противопоставляется `POJO`: POJO — пассивный data-класс без поведения, его получают через `fetchInto(Class)` и отдают наружу как DTO, чтобы не протаскивать jOOQ-зависимости через слои."
               }
             },
             {
@@ -515,19 +516,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Чтобы сохранить изменённый `Record` в БД, вызывают метод `store()`",
-              "correct": true,
-              "sections": {
-                "explanation": "`Record` в jOOQ — это `UpdatableRecord`: он привязан к таблице, отслеживает changed-флаги полей и сам умеет писать себя в БД. Именно `store()` — штатный метод этого контракта: он делает INSERT для новой строки или UPDATE для уже существующей, затрагивая только изменённые поля.",
-                "example": "BookRecord rec = dsl.selectFrom(BOOK).where(BOOK.ID.eq(1)).fetchOne(); rec.setTitle(\"New title\"); rec.store(); — сгенерируется UPDATE только по полю TITLE, потому что только оно помечено как changed.",
-                "when_to_apply": "Удобно для CRUD внутри сервисного слоя, когда читаешь строку как `Record`, правишь пару полей и сохраняешь обратно без ручного составления UPDATE-запроса.",
-                "edge_cases": "`store()` сам выбирает INSERT или UPDATE по тому, «прикреплён» ли record к существующей строке (наличие ключа). Если ни одно поле не помечено как changed, UPDATE может не выполниться. Для явных операций есть отдельные `insert()`/`update()`/`delete()`.",
-                "related": "`Record` (`UpdatableRecord`) противопоставляется `POJO`: POJO — пассивный data-класс без поведения, его получают через `fetchInto(Class)` и отдают наружу как DTO, чтобы не протаскивать jOOQ-зависимости через слои."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Чтобы сохранить изменённый `Record` в БД, вызывают метод `save()`",
               "correct": false,
               "sections": {
@@ -535,6 +523,18 @@
                 "source_of_confusion": "`save()` — самое интуитивное имя для «сохранить», и многие приходят в jOOQ из Spring Data, где именно так называется операция записи.",
                 "if_it_were_true": "Если бы `Record.save()` существовал, jOOQ предлагал бы repository-абстракцию поверх строк — но jOOQ строит запросы напрямую через DSL, а не через репозитории.",
                 "how_it_should_be": "Запись `Record` делается его собственным методом `store()`; `save()` живёт в репозиториях Spring Data."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Чтобы сохранить изменённый `Record` в БД, вызывают метод `persist()`",
+              "correct": false,
+              "sections": {
+                "what_actually": "`persist()` — метод JPA `EntityManager`, который переводит новую сущность в managed-состояние в контексте Hibernate. К jOOQ `Record` он отношения не имеет.",
+                "source_of_confusion": "И там и там речь о «сохранении объекта в БД», а jOOQ часто сравнивают с JPA/Hibernate, поэтому JPA-словарь легко переносится на jOOQ по ошибке.",
+                "if_it_were_true": "Если бы у `Record` был `persist()`, jOOQ имел бы скрытый persistence-context с отложенным flush, как Hibernate, — но jOOQ намеренно работает без контекста персистентности.",
+                "how_it_should_be": "У `UpdatableRecord` метод называется `store()` (или явные `insert()`/`update()`); `persist()` остаётся в мире JPA."
               }
             }
           ]
@@ -551,19 +551,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`store()` делает `INSERT`, если запись новая, и `UPDATE`, если у неё уже есть первичный ключ",
-              "correct": true,
-              "sections": {
-                "explanation": "`UpdatableRecord` реализует active record: `store()` сам выбирает операцию по состоянию записи. Новая запись (созданная через `newRecord`) ещё не имеет значения PK из БД — `store()` делает `INSERT` и подставляет сгенерированный ключ обратно. Если запись уже привязана к существующей строке (есть PK), `store()` делает `UPDATE`.",
-                "example": "`BookRecord r = dsl.newRecord(BOOK); r.setTitle(\"jOOQ\"); r.store();` выполнит `INSERT` и заполнит `r.getId()` сгенерированным ключом; повторный `r.setTitle(\"...\"); r.store();` выполнит `UPDATE` только изменённой колонки.",
-                "when_to_apply": "Удобно для точечного CRUD внутри сервиса, когда работаете с одной строкой и хотите единым вызовом и создавать, и обновлять её без явного выбора операции.",
-                "edge_cases": "Active record требует, чтобы у таблицы был первичный ключ; для таблиц без PK `store()`/`delete()` не работают — только явные `insertInto`/`update`/`deleteFrom`. `UPDATE` затрагивает лишь поля, помеченные как изменённые (changed flags).",
-                "related": "Альтернатива active record — явные DSL-операции `dsl.insertInto(...)`, `dsl.update(...)`, `dsl.deleteFrom(...)`, которые часто предпочитают за явность; для пачек существуют `batchStore`/`batchInsert`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`store()` делает `INSERT`, если запись новая, и `UPDATE`, если у неё нет первичного ключа",
               "correct": false,
               "sections": {
@@ -571,6 +558,18 @@
                 "source_of_confusion": "Формулировка почти дословно совпадает с правильной и крутится вокруг PK, поэтому булев факт «есть/нет ключа» легко перепутать местами.",
                 "if_it_were_true": "Тогда `store()` обновлял бы строки без первичного ключа, хотя именно отсутствие PK делает active-record-обновление невозможным — jOOQ не знал бы, какую строку обновлять.",
                 "how_it_should_be": "`UPDATE` выполняется как раз когда у записи уже ЕСТЬ первичный ключ существующей строки; без PK active record не применим вовсе."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`store()` делает `INSERT`, если запись новая, и `UPDATE`, если у неё заполнено хотя бы одно not-null поле",
+              "correct": false,
+              "sections": {
+                "what_actually": "Заполненность not-null полей — это требование валидности данных для самого `INSERT`/`UPDATE`, а не критерий выбора между ними; на тип операции она не влияет.",
+                "source_of_confusion": "`INSERT` действительно падает, если обязательные not-null колонки пусты, поэтому not-null-поля кажутся связанными с логикой `store()`.",
+                "if_it_were_true": "Тогда запись с заполненными полями, но без существующего PK, jOOQ пытался бы обновить несуществующую строку, и `UPDATE` не затронул бы ни одной строки.",
+                "how_it_should_be": "Операцию выбирает наличие первичного ключа существующей строки, а not-null поля лишь определяют, пройдёт ли сам `INSERT` по ограничениям схемы."
               }
             },
             {
@@ -588,13 +587,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`store()` делает `INSERT`, если запись новая, и `UPDATE`, если у неё заполнено хотя бы одно not-null поле",
-              "correct": false,
+              "text": "`store()` делает `INSERT`, если запись новая, и `UPDATE`, если у неё уже есть первичный ключ",
+              "correct": true,
               "sections": {
-                "what_actually": "Заполненность not-null полей — это требование валидности данных для самого `INSERT`/`UPDATE`, а не критерий выбора между ними; на тип операции она не влияет.",
-                "source_of_confusion": "`INSERT` действительно падает, если обязательные not-null колонки пусты, поэтому not-null-поля кажутся связанными с логикой `store()`.",
-                "if_it_were_true": "Тогда запись с заполненными полями, но без существующего PK, jOOQ пытался бы обновить несуществующую строку, и `UPDATE` не затронул бы ни одной строки.",
-                "how_it_should_be": "Операцию выбирает наличие первичного ключа существующей строки, а not-null поля лишь определяют, пройдёт ли сам `INSERT` по ограничениям схемы."
+                "explanation": "`UpdatableRecord` реализует active record: `store()` сам выбирает операцию по состоянию записи. Новая запись (созданная через `newRecord`) ещё не имеет значения PK из БД — `store()` делает `INSERT` и подставляет сгенерированный ключ обратно. Если запись уже привязана к существующей строке (есть PK), `store()` делает `UPDATE`.",
+                "example": "`BookRecord r = dsl.newRecord(BOOK); r.setTitle(\"jOOQ\"); r.store();` выполнит `INSERT` и заполнит `r.getId()` сгенерированным ключом; повторный `r.setTitle(\"...\"); r.store();` выполнит `UPDATE` только изменённой колонки.",
+                "when_to_apply": "Удобно для точечного CRUD внутри сервиса, когда работаете с одной строкой и хотите единым вызовом и создавать, и обновлять её без явного выбора операции.",
+                "edge_cases": "Active record требует, чтобы у таблицы был первичный ключ; для таблиц без PK `store()`/`delete()` не работают — только явные `insertInto`/`update`/`deleteFrom`. `UPDATE` затрагивает лишь поля, помеченные как изменённые (changed flags).",
+                "related": "Альтернатива active record — явные DSL-операции `dsl.insertInto(...)`, `dsl.update(...)`, `dsl.deleteFrom(...)`, которые часто предпочитают за явность; для пачек существуют `batchStore`/`batchInsert`."
               }
             }
           ]
@@ -623,6 +623,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Через `DSL.using(configuration)` с локально переданной `Configuration` из лямбды",
+              "correct": true,
+              "sections": {
+                "explanation": "Лямбда `transaction(configuration -> ...)` получает локальную `Configuration`, привязанную к текущей транзакции; именно из неё надо собирать `DSLContext` через `DSL.using(configuration)`. Это даёт корректную транзакционную область, включая вложенные транзакции (savepoints).",
+                "example": "`dsl.transaction(configuration -> { DSLContext ctx = DSL.using(configuration); ctx.insertInto(AUTHOR, AUTHOR.FIRST_NAME).values(\"John\").execute(); });` — нормальное завершение коммитит, исключение откатывает.",
+                "when_to_apply": "Когда нужна транзакция без Spring (`@Transactional` не используется) или нужны вложенные транзакции с savepoints; для значения используют `transactionResult(...)`.",
+                "edge_cases": "Если внутри лямбды звать глобальный `DSLContext` вместо локальной `Configuration`, запросы уйдут мимо транзакционной области, и вложенные транзакции/savepoints сломаются.",
+                "related": "В Spring-проектах чаще полагаются на `@Transactional` со `spring-boot-starter-jooq`, и тогда лямбда-API обычно не нужен (см. Q12)."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Через `DSL.using(dataSource)` с локально переданным `DataSource` из лямбды",
               "correct": false,
               "sections": {
@@ -633,8 +646,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Через `DSL.using(globalDsl)` с глобальным `DSLContext` из внешнего скоупа",
               "correct": false,
               "sections": {
@@ -642,19 +655,6 @@
                 "source_of_confusion": "Глобальный бин `DSLContext` уже под рукой, поэтому возникает соблазн использовать его прямо внутри лямбды.",
                 "if_it_were_true": "Запросы шли бы вне открытой транзакции, и вложенные транзакции (savepoints) не работали бы корректно — ровно то, от чего предостерегает дизайн API.",
                 "how_it_should_be": "Надо работать через локально переданную `Configuration`: `DSL.using(configuration)`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Через `DSL.using(configuration)` с локально переданной `Configuration` из лямбды",
-              "correct": true,
-              "sections": {
-                "explanation": "Лямбда `transaction(configuration -> ...)` получает локальную `Configuration`, привязанную к текущей транзакции; именно из неё надо собирать `DSLContext` через `DSL.using(configuration)`. Это даёт корректную транзакционную область, включая вложенные транзакции (savepoints).",
-                "example": "`dsl.transaction(configuration -> { DSLContext ctx = DSL.using(configuration); ctx.insertInto(AUTHOR, AUTHOR.FIRST_NAME).values(\"John\").execute(); });` — нормальное завершение коммитит, исключение откатывает.",
-                "when_to_apply": "Когда нужна транзакция без Spring (`@Transactional` не используется) или нужны вложенные транзакции с savepoints; для значения используют `transactionResult(...)`.",
-                "edge_cases": "Если внутри лямбды звать глобальный `DSLContext` вместо локальной `Configuration`, запросы уйдут мимо транзакционной области, и вложенные транзакции/savepoints сломаются.",
-                "related": "В Spring-проектах чаще полагаются на `@Transactional` со `spring-boot-starter-jooq`, и тогда лямбда-API обычно не нужен (см. Q12)."
               }
             }
           ]
@@ -671,18 +671,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`JooqDataAccessConverter` — оборачивает SQL-исключения jOOQ в `DataAccessException`",
-              "correct": false,
-              "sections": {
-                "what_actually": "Такого класса в jOOQ и Spring Boot нет; имя выдумано по аналогии с реальными конвертерами вроде `Converter<S,T>` из Spring Core.",
-                "source_of_confusion": "Слово «converter» интуитивно ассоциируется с преобразованием одного типа исключения в другой, поэтому имя звучит правдоподобно.",
-                "if_it_were_true": "Если бы трансляцию делал отдельный `Converter`-бин, его пришлось бы регистрировать в `ConversionService`, а не как jOOQ `ExecuteListener` внутри запроса.",
-                "how_it_should_be": "Реальный компонент — `JooqExceptionTranslator`, и работает он как `ExecuteListener`, а не как Spring `Converter`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`JooqExceptionTranslator` — оборачивает SQL-исключения jOOQ в `DataAccessException`",
               "correct": true,
               "sections": {
@@ -691,6 +679,18 @@
                 "when_to_apply": "Полезно, когда jOOQ и Spring Data JPA/JDBC живут в одном приложении: общий обработчик ошибок (`@ExceptionHandler`/`@ControllerAdvice`) ловит `DataAccessException` независимо от источника запроса.",
                 "edge_cases": "Если создать `DSLContext` вручную через `DSL.using(connection)`, `JooqExceptionTranslator` не подключится и наружу полетят родные `org.jooq.exception.*` без Spring-перевода.",
                 "related": "Связано с автоконфигурацией стартера (бин `DSLContext`, transaction-aware `DataSource`, автоопределение `SQLDialect`) — трансляция исключений лишь одна из четырёх вещей, которые стартер делает за вас."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`JooqExceptionMapper` — оборачивает SQL-исключения jOOQ в `DataAccessException`",
+              "correct": false,
+              "sections": {
+                "what_actually": "Класса с таким именем в стартере нет; `ExceptionMapper` — это термин из JAX-RS (Jakarta REST), а не из jOOQ или Spring Data.",
+                "source_of_confusion": "«Mapper» и «Translator» — близкие по смыслу слова, оба про преобразование, поэтому подмена имени выглядит естественной.",
+                "if_it_were_true": "`ExceptionMapper` из JAX-RS мапит исключения в HTTP-ответы на уровне REST, а не в `DataAccessException` на уровне доступа к данным — это другой слой.",
+                "how_it_should_be": "Корректное имя — `JooqExceptionTranslator`; он работает на уровне выполнения запроса, а не в REST-слое."
               }
             },
             {
@@ -708,13 +708,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`JooqExceptionMapper` — оборачивает SQL-исключения jOOQ в `DataAccessException`",
+              "text": "`JooqDataAccessConverter` — оборачивает SQL-исключения jOOQ в `DataAccessException`",
               "correct": false,
               "sections": {
-                "what_actually": "Класса с таким именем в стартере нет; `ExceptionMapper` — это термин из JAX-RS (Jakarta REST), а не из jOOQ или Spring Data.",
-                "source_of_confusion": "«Mapper» и «Translator» — близкие по смыслу слова, оба про преобразование, поэтому подмена имени выглядит естественной.",
-                "if_it_were_true": "`ExceptionMapper` из JAX-RS мапит исключения в HTTP-ответы на уровне REST, а не в `DataAccessException` на уровне доступа к данным — это другой слой.",
-                "how_it_should_be": "Корректное имя — `JooqExceptionTranslator`; он работает на уровне выполнения запроса, а не в REST-слое."
+                "what_actually": "Такого класса в jOOQ и Spring Boot нет; имя выдумано по аналогии с реальными конвертерами вроде `Converter<S,T>` из Spring Core.",
+                "source_of_confusion": "Слово «converter» интуитивно ассоциируется с преобразованием одного типа исключения в другой, поэтому имя звучит правдоподобно.",
+                "if_it_were_true": "Если бы трансляцию делал отдельный `Converter`-бин, его пришлось бы регистрировать в `ConversionService`, а не как jOOQ `ExecuteListener` внутри запроса.",
+                "how_it_should_be": "Реальный компонент — `JooqExceptionTranslator`, и работает он как `ExecuteListener`, а не как Spring `Converter`."
               }
             }
           ]
@@ -731,18 +731,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Предикат `1 = 1`: `WHERE`-клауза остаётся в итоговом SQL",
-              "correct": false,
-              "sections": {
-                "what_actually": "`1 = 1` в SQL генерирует именно `DSL.trueCondition()` — identity-элемент для цепочки `AND`, который оставляет клаузу `WHERE 1 = 1` на месте.",
-                "source_of_confusion": "Обе функции — «пустые» условия-заглушки для динамического накопления, поэтому их роли легко перепутать; различие именно в том, попадает ли что-то в SQL.",
-                "if_it_were_true": "Тогда `noCondition()` всегда оставлял бы лишний `WHERE 1 = 1`, и не было бы смысла иметь отдельный `trueCondition()` для этого ровно того же эффекта.",
-                "how_it_should_be": "`1 = 1` эмитит `DSL.trueCondition()`; `DSL.noCondition()` не добавляет в SQL ничего и при единственном предикате убирает сам `WHERE`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Предикат `1 = 0`: `WHERE`-клауза остаётся в итоговом SQL",
               "correct": false,
               "sections": {
@@ -753,8 +741,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Ничего: `WHERE`-клауза вообще не генерируется в итоговом SQL",
               "correct": true,
               "sections": {
@@ -763,6 +751,18 @@
                 "when_to_apply": "Динамические фильтры из опциональных query-параметров (поиск с необязательными полями), когда часть условий может вообще отсутствовать и лишний `WHERE` не нужен.",
                 "edge_cases": "Будьте аккуратны с `DSL.and(noCondition())` / `DSL.or(noCondition())` — в некоторых версиях они всё же могут эмитить `1 = 1` / `1 = 0`; чище накапливать от `noCondition()` через `.and(...)`.",
                 "related": "Парные помощники `DSL.trueCondition()` (`1 = 1`) и `DSL.falseCondition()` (`1 = 0`) дают identity для AND и OR, когда клауза обязательна по синтаксису."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Предикат `1 = 1`: `WHERE`-клауза остаётся в итоговом SQL",
+              "correct": false,
+              "sections": {
+                "what_actually": "`1 = 1` в SQL генерирует именно `DSL.trueCondition()` — identity-элемент для цепочки `AND`, который оставляет клаузу `WHERE 1 = 1` на месте.",
+                "source_of_confusion": "Обе функции — «пустые» условия-заглушки для динамического накопления, поэтому их роли легко перепутать; различие именно в том, попадает ли что-то в SQL.",
+                "if_it_were_true": "Тогда `noCondition()` всегда оставлял бы лишний `WHERE 1 = 1`, и не было бы смысла иметь отдельный `trueCondition()` для этого ровно того же эффекта.",
+                "how_it_should_be": "`1 = 1` эмитит `DSL.trueCondition()`; `DSL.noCondition()` не добавляет в SQL ничего и при единственном предикате убирает сам `WHERE`."
               }
             },
             {
@@ -816,18 +816,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`dsl.batchInsert(records)` — обёртка над коллекцией `Record`, отправляющая INSERT'ы пачкой",
-              "correct": false,
-              "sections": {
-                "what_actually": "`batchInsert(records)` — удобная обёртка, которая берёт коллекцию `Record` и выполняет для них INSERT'ы пачкой; работает поверх объектов `Record`, а не по сырому шаблону с bind-параметрами.",
-                "source_of_confusion": "Это тоже batch для вставок и тоже про массовость, поэтому его легко спутать с самой производительной формой однотипных INSERT'ов.",
-                "if_it_were_true": "Если бы `batchInsert(records)` был эталоном эффективности, не выделяли бы отдельно форму с шаблоном и множеством `bind(...)` как самую производительную.",
-                "how_it_should_be": "`batchInsert(records)` — это удобная обёртка над коллекцией `Record`; для максимальной эффективности однотипных строк берут `batch(template).bind(...).bind(...)`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`dsl.batchStore(records)` — обёртка над коллекцией `Record`, делающая INSERT или UPDATE по состоянию",
               "correct": false,
               "sections": {
@@ -835,6 +823,18 @@
                 "source_of_confusion": "Метод тоже из семейства `batch...` и тоже массовый, а «store» ассоциируется с умной записью, поэтому кажется универсально лучшим.",
                 "if_it_were_true": "Если бы `batchStore(records)` был самым эффективным для однотипных вставок, форму с одним шаблоном и множеством `bind(...)` не называли бы самой производительной.",
                 "how_it_should_be": "`batchStore(records)` — обёртка с логикой INSERT/UPDATE по состоянию; для чисто однотипных вставок эффективнее `batch(template).bind(...).bind(...)`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`dsl.batchInsert(records)` — обёртка над коллекцией `Record`, отправляющая INSERT'ы пачкой",
+              "correct": false,
+              "sections": {
+                "what_actually": "`batchInsert(records)` — удобная обёртка, которая берёт коллекцию `Record` и выполняет для них INSERT'ы пачкой; работает поверх объектов `Record`, а не по сырому шаблону с bind-параметрами.",
+                "source_of_confusion": "Это тоже batch для вставок и тоже про массовость, поэтому его легко спутать с самой производительной формой однотипных INSERT'ов.",
+                "if_it_were_true": "Если бы `batchInsert(records)` был эталоном эффективности, не выделяли бы отдельно форму с шаблоном и множеством `bind(...)` как самую производительную.",
+                "how_it_should_be": "`batchInsert(records)` — это удобная обёртка над коллекцией `Record`; для максимальной эффективности однотипных строк берут `batch(template).bind(...).bind(...)`."
               }
             }
           ]
@@ -851,18 +851,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "MULTISET появился в jOOQ 3.13 и собирает результат вложенного подзапроса в одну вложенную коллекцию внутри строки родителя",
-              "correct": false,
-              "sections": {
-                "what_actually": "Версия 3.13 — более ранний релиз jOOQ, в котором конструктора MULTISET для вложенных коллекций ещё не было; для to-many приходилось делать отдельные запросы или схлопывать JOIN вручную.",
-                "source_of_confusion": "3.13 — близкий по номеру минорный релиз той же ветки 3.x, и легко промахнуться на пару версий, помня лишь что фича «свежая для 3.1x».",
-                "if_it_were_true": "Если бы MULTISET был с 3.13, то типобезопасные вложенные коллекции и ad-hoc conversion были бы доступны на два релиза раньше, что не соответствует истории изменений jOOQ.",
-                "how_it_should_be": "Правильная версия — 3.15; в 3.13 нужного конструктора ещё нет."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "MULTISET появился в jOOQ 3.14 и собирает результат вложенного подзапроса в одну вложенную коллекцию внутри строки родителя",
               "correct": false,
               "sections": {
@@ -873,20 +861,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "MULTISET появился в jOOQ 3.17 и собирает результат вложенного подзапроса в одну вложенную коллекцию внутри строки родителя",
-              "correct": false,
-              "sections": {
-                "what_actually": "Версия 3.17 — более поздний релиз ветки 3.x, в котором MULTISET уже давно существует и развивается, но как самостоятельная фича он был введён раньше.",
-                "source_of_confusion": "3.17 — реальная и более «современная» версия, и кажется, что заметная возможность должна относиться к более новому релизу.",
-                "if_it_were_true": "Если бы MULTISET дебютировал в 3.17, то проекты на 3.15–3.16 не могли бы строить вложенные коллекции типобезопасно, что противоречит документации.",
-                "how_it_should_be": "Дебют MULTISET — это 3.15; к 3.17 он уже существует не первый релиз."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "MULTISET появился в jOOQ 3.15 и собирает результат вложенного подзапроса в одну вложенную коллекцию внутри строки родителя",
               "correct": true,
               "sections": {
@@ -895,6 +871,30 @@
                 "when_to_apply": "Когда нужно одним запросом вытащить иерархию to-many (автор и его книги, заказ и его позиции) в готовую вложенную структуру для клиента, избегая отдельного запроса на каждого родителя.",
                 "edge_cases": "MULTISET редко поддерживается БД нативно — jOOQ эмулирует его через SQL/JSON или SQL/XML в зависимости от диалекта. На очень больших объёмах вложенных данных стоит замерять план запроса, так как генерируются JSON/XML-агрегации.",
                 "related": "Связан с проблемой N+1 (которую решает) и с Field.convertFrom() из того же релиза 3.15, позволяющим маппить вложенную коллекцию в собственные типы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "MULTISET появился в jOOQ 3.13 и собирает результат вложенного подзапроса в одну вложенную коллекцию внутри строки родителя",
+              "correct": false,
+              "sections": {
+                "what_actually": "Версия 3.13 — более ранний релиз jOOQ, в котором конструктора MULTISET для вложенных коллекций ещё не было; для to-many приходилось делать отдельные запросы или схлопывать JOIN вручную.",
+                "source_of_confusion": "3.13 — близкий по номеру минорный релиз той же ветки 3.x, и легко промахнуться на пару версий, помня лишь что фича «свежая для 3.1x».",
+                "if_it_were_true": "Если бы MULTISET был с 3.13, то типобезопасные вложенные коллекции и ad-hoc conversion были бы доступны на два релиза раньше, что не соответствует истории изменений jOOQ.",
+                "how_it_should_be": "Правильная версия — 3.15; в 3.13 нужного конструктора ещё нет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "MULTISET появился в jOOQ 3.17 и собирает результат вложенного подзапроса в одну вложенную коллекцию внутри строки родителя",
+              "correct": false,
+              "sections": {
+                "what_actually": "Версия 3.17 — более поздний релиз ветки 3.x, в котором MULTISET уже давно существует и развивается, но как самостоятельная фича он был введён раньше.",
+                "source_of_confusion": "3.17 — реальная и более «современная» версия, и кажется, что заметная возможность должна относиться к более новому релизу.",
+                "if_it_were_true": "Если бы MULTISET дебютировал в 3.17, то проекты на 3.15–3.16 не могли бы строить вложенные коллекции типобезопасно, что противоречит документации.",
+                "how_it_should_be": "Дебют MULTISET — это 3.15; к 3.17 он уже существует не первый релиз."
               }
             }
           ]
@@ -911,31 +911,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Open Source Edition для open-source-БД распространяется под лицензией LGPL версии 2.1",
-              "correct": false,
-              "sections": {
-                "what_actually": "LGPL 2.1 — это copyleft-лицензия (Lesser GPL), которую используют, например, Hibernate ORM и драйверы вроде MariaDB Connector/J; она разрешает линковку с проприетарным кодом, но обязывает раскрывать изменения самой библиотеки.",
-                "source_of_confusion": "LGPL — частая лицензия для Java-инфраструктуры (Hibernate именно под ней), поэтому её легко по аналогии приписать и jOOQ.",
-                "if_it_were_true": "Тогда модификации самого jOOQ нужно было бы открывать, а dual-licensing per workstation для коммерческих БД потерял бы смысл — copyleft работает иначе, чем платная редакция.",
-                "how_it_should_be": "Open Source Edition jOOQ лицензируется под Apache License 2.0, а не под LGPL 2.1."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Open Source Edition для open-source-БД распространяется под лицензией Apache License 2.0",
-              "correct": true,
-              "sections": {
-                "explanation": "jOOQ применяет dual-licensing: при работе только с open-source-БД действует Open Source Edition под пермиссивной Apache License 2.0. Эта лицензия не требует раскрытия исходников и явно разрешает использование в закрытом коммерческом ПО.",
-                "example": "Проект на Spring Boot + PostgreSQL подключает jOOQ Open Source Edition и продаёт продукт клиентам — лицензионных отчислений нет, потому что целевая БД open-source, а Apache 2.0 это позволяет.",
-                "when_to_apply": "Подходит, когда все целевые БД open-source: PostgreSQL, MySQL, MariaDB, SQLite, H2. Тогда jOOQ полностью бесплатен, в том числе внутри коммерческого продукта.",
-                "edge_cases": "Как только хотя бы одна целевая БД коммерческая (Oracle, SQL Server, DB2), требуется уже коммерческая редакция. Коммерческая модель — per developer workstation: платят только за рабочие места, а build- и тест-серверы и конечные пользователи лицензируются бесплатно.",
-                "related": "Лицензирование напрямую влияет на выбор jOOQ (Q6) и на автодетект диалекта в Spring Boot (Q12): для коммерческих диалектов open-source-редакции уже недостаточно."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Open Source Edition для open-source-БД распространяется под лицензией GPL версии 3.0",
               "correct": false,
               "sections": {
@@ -946,8 +921,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Open Source Edition для open-source-БД распространяется под лицензией Eclipse Public License",
               "correct": false,
               "sections": {
@@ -955,6 +930,31 @@
                 "source_of_confusion": "EPL широко распространён в Java-экосистеме (JUnit, Jetty), поэтому его легко по инерции назвать лицензией ещё одной популярной Java-библиотеки.",
                 "if_it_were_true": "Правовой режим был бы file-level copyleft, а не пермиссивный, и условия для коммерческого использования отличались бы от того, что декларирует jOOQ.",
                 "how_it_should_be": "Open Source Edition jOOQ лицензируется под Apache License 2.0, а не под Eclipse Public License."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Open Source Edition для open-source-БД распространяется под лицензией LGPL версии 2.1",
+              "correct": false,
+              "sections": {
+                "what_actually": "LGPL 2.1 — это copyleft-лицензия (Lesser GPL), которую используют, например, Hibernate ORM и драйверы вроде MariaDB Connector/J; она разрешает линковку с проприетарным кодом, но обязывает раскрывать изменения самой библиотеки.",
+                "source_of_confusion": "LGPL — частая лицензия для Java-инфраструктуры (Hibernate именно под ней), поэтому её легко по аналогии приписать и jOOQ.",
+                "if_it_were_true": "Тогда модификации самого jOOQ нужно было бы открывать, а dual-licensing per workstation для коммерческих БД потерял бы смысл — copyleft работает иначе, чем платная редакция.",
+                "how_it_should_be": "Open Source Edition jOOQ лицензируется под Apache License 2.0, а не под LGPL 2.1."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Open Source Edition для open-source-БД распространяется под лицензией Apache License 2.0",
+              "correct": true,
+              "sections": {
+                "explanation": "jOOQ применяет dual-licensing: при работе только с open-source-БД действует Open Source Edition под пермиссивной Apache License 2.0. Эта лицензия не требует раскрытия исходников и явно разрешает использование в закрытом коммерческом ПО.",
+                "example": "Проект на Spring Boot + PostgreSQL подключает jOOQ Open Source Edition и продаёт продукт клиентам — лицензионных отчислений нет, потому что целевая БД open-source, а Apache 2.0 это позволяет.",
+                "when_to_apply": "Подходит, когда все целевые БД open-source: PostgreSQL, MySQL, MariaDB, SQLite, H2. Тогда jOOQ полностью бесплатен, в том числе внутри коммерческого продукта.",
+                "edge_cases": "Как только хотя бы одна целевая БД коммерческая (Oracle, SQL Server, DB2), требуется уже коммерческая редакция. Коммерческая модель — per developer workstation: платят только за рабочие места, а build- и тест-серверы и конечные пользователи лицензируются бесплатно.",
+                "related": "Лицензирование напрямую влияет на выбор jOOQ (Q6) и на автодетект диалекта в Spring Boot (Q12): для коммерческих диалектов open-source-редакции уже недостаточно."
               }
             }
           ]
@@ -971,6 +971,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Опция `pojosAsKotlinDataClasses` генерирует POJO как неизменяемые Kotlin `data class`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это специальная кодген-опция jOOQ для Kotlin: при `pojosAsKotlinDataClasses = true` генератор выпускает POJO-классы в виде Kotlin `data class` с `val`-полями, давая immutability и автоматическую деструктуризацию из коробки.",
+                "example": "В конфигурации генератора `<pojosAsKotlinDataClasses>true</pojosAsKotlinDataClasses>` приводит к тому, что класс `Book` генерируется как `data class Book(val id: Int, val title: String, ...)` вместо обычного Java-POJO с геттерами/сеттерами.",
+                "when_to_apply": "Включают в Kotlin-проектах, где POJO используются как immutable DTO между слоями и нужна деструктуризация (`val (title, year) = book`) и сравнение по значению.",
+                "edge_cases": "Если опцию не включить, генератор по умолчанию выпустит обычные Java-классы — даже в Kotlin-проекте. Для полностью идиоматичного кода дополнительно подключают Kotlin-генератор.",
+                "related": "Связано с лямбда-маппингом `fetch { (title, year) -> ... }`: `data class`-POJO и деструктуризация делают такой маппинг особенно лаконичным, сохраняя типобезопасность jOOQ."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Опция `kotlinNotNullRecordAttributes` генерирует POJO как неизменяемые Kotlin `data class`.",
               "correct": false,
               "sections": {
@@ -981,8 +994,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "Опция `pojosAsJavaRecordClasses` генерирует POJO как неизменяемые Kotlin `data class`.",
               "correct": false,
               "sections": {
@@ -990,19 +1003,6 @@
                 "source_of_confusion": "Обе опции про «POJO как immutable-носитель данных», и имена почти зеркальны (`...AsJavaRecordClasses` против `...AsKotlinDataClasses`), что легко перепутать.",
                 "if_it_were_true": "Если бы `pojosAsJavaRecordClasses` давала Kotlin `data class`, то имя противоречило бы содержимому — оно явно указывает на Java `record`.",
                 "how_it_should_be": "Для Kotlin `data class` нужна `pojosAsKotlinDataClasses`; `pojosAsJavaRecordClasses` выпускает Java `record`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Опция `pojosAsKotlinDataClasses` генерирует POJO как неизменяемые Kotlin `data class`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Это специальная кодген-опция jOOQ для Kotlin: при `pojosAsKotlinDataClasses = true` генератор выпускает POJO-классы в виде Kotlin `data class` с `val`-полями, давая immutability и автоматическую деструктуризацию из коробки.",
-                "example": "В конфигурации генератора `<pojosAsKotlinDataClasses>true</pojosAsKotlinDataClasses>` приводит к тому, что класс `Book` генерируется как `data class Book(val id: Int, val title: String, ...)` вместо обычного Java-POJO с геттерами/сеттерами.",
-                "when_to_apply": "Включают в Kotlin-проектах, где POJO используются как immutable DTO между слоями и нужна деструктуризация (`val (title, year) = book`) и сравнение по значению.",
-                "edge_cases": "Если опцию не включить, генератор по умолчанию выпустит обычные Java-классы — даже в Kotlin-проекте. Для полностью идиоматичного кода дополнительно подключают Kotlin-генератор.",
-                "related": "Связано с лямбда-маппингом `fetch { (title, year) -> ... }`: `data class`-POJO и деструктуризация делают такой маппинг особенно лаконичным, сохраняя типобезопасность jOOQ."
               }
             },
             {
@@ -1031,6 +1031,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Генерация кода из схемы плюс кеш второго уровня",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кеш второго уровня (2L cache) — это разделяемый между сессиями кеш сущностей в Hibernate; jOOQ кеша уровней не имеет.",
+                "source_of_confusion": "Кеш и кодген оба звучат как «инфраструктурные» механизмы, поэтому 2L cache подменяет типизированный DSL в памяти.",
+                "if_it_were_true": "jOOQ хранил бы и переиспользовал результаты между запросами автоматически, скрывая реальный SQL — это противоречит его принципу полного контроля над запросом.",
+                "how_it_should_be": "Вторая опора — типизированный fluent-DSL, отлавливающий невалидный SQL на компиляции; кеш второго уровня не влияет на типобезопасность."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Генерация кода из схемы плюс типизированный fluent-DSL",
               "correct": true,
               "sections": {
@@ -1042,8 +1054,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "Генерация кода из схемы плюс persistence context",
               "correct": false,
               "sections": {
@@ -1054,8 +1066,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Генерация кода из схемы плюс ленивая загрузка",
               "correct": false,
               "sections": {
@@ -1063,18 +1075,6 @@
                 "source_of_confusion": "Это типовая ORM-фича, которую по привычке приписывают любому инструменту доступа к БД, включая jOOQ.",
                 "if_it_were_true": "jOOQ подгружал бы связанные данные за кадром отдельными запросами, что породило бы скрытую N+1 — ровно то, что философия jOOQ исключает.",
                 "how_it_should_be": "Вторая опора — типизированный fluent-DSL; ленивая загрузка не даёт никаких компиляционных гарантий и в jOOQ отсутствует."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Генерация кода из схемы плюс кеш второго уровня",
-              "correct": false,
-              "sections": {
-                "what_actually": "Кеш второго уровня (2L cache) — это разделяемый между сессиями кеш сущностей в Hibernate; jOOQ кеша уровней не имеет.",
-                "source_of_confusion": "Кеш и кодген оба звучат как «инфраструктурные» механизмы, поэтому 2L cache подменяет типизированный DSL в памяти.",
-                "if_it_were_true": "jOOQ хранил бы и переиспользовал результаты между запросами автоматически, скрывая реальный SQL — это противоречит его принципу полного контроля над запросом.",
-                "how_it_should_be": "Вторая опора — типизированный fluent-DSL, отлавливающий невалидный SQL на компиляции; кеш второго уровня не влияет на типобезопасность."
               }
             }
           ]

@@ -11,6 +11,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`Kubernetes` собирает Docker-образы через встроенный `docker build` и запускает их на одной master-машине вместо кластера нод.",
+              "correct": false,
+              "sections": {
+                "what_actually": "K8s не собирает образы (это `docker build`/`buildah`/`kaniko`) и не привязан к одной машине — он оркестрирует готовые образы на кластере нод.",
+                "source_of_confusion": "K8s часто упоминают вместе с Docker, поэтому его роль путают со сборкой и локальным запуском контейнеров.",
+                "if_it_were_true": "Тогда `Job`-под собирал бы образ внутри кластера, но pipeline ломается: образ не попадает в registry, deploy идёт со старым тегом.",
+                "how_it_should_be": "K8s оркестрирует уже собранные образы на множестве нод; сборка — задача CI и инструментов вроде `kaniko`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`Kubernetes` — платформа оркестрации контейнеров с декларативной конфигурацией, self-healing и автомасштабированием поверх внешнего CRI runtime.",
               "correct": true,
               "sections": {
@@ -22,32 +34,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`Kubernetes` собирает Docker-образы через встроенный `docker build` и запускает их на одной master-машине вместо кластера нод.",
-              "correct": false,
-              "sections": {
-                "what_actually": "K8s не собирает образы (это `docker build`/`buildah`/`kaniko`) и не привязан к одной машине — он оркестрирует готовые образы на кластере нод.",
-                "source_of_confusion": "K8s часто упоминают вместе с Docker, поэтому его роль путают со сборкой и локальным запуском контейнеров.",
-                "if_it_were_true": "Тогда `Job`-под собирал бы образ внутри кластера, но pipeline ломается: образ не попадает в registry, deploy идёт со старым тегом.",
-                "how_it_should_be": "K8s оркестрирует уже собранные образы на множестве нод; сборка — задача CI и инструментов вроде `kaniko`."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "`Kubernetes` работает по императивной модели: вы пошагово описываете команды развёртывания через `kubectl run`, а контроллеры reconciliation отсутствуют.",
-              "correct": false,
-              "sections": {
-                "what_actually": "K8s декларативен: вы описываете желаемое состояние в YAML, а reconciliation loop приводит кластер к нему; `kubectl run` — лишь императивная обёртка.",
-                "source_of_confusion": "Императивные команды `kubectl run`/`scale` существуют и работают, поэтому их принимают за основную модель.",
-                "if_it_were_true": "Тогда правки через `kubectl edit` были бы стабильны, но они затираются следующим `kubectl apply -f`, и Git расходится с фактом — drift на проде.",
-                "how_it_should_be": "Желаемое состояние описывается декларативно в манифестах, а контроллеры сводят `status` к `spec`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`Kubernetes` имеет встроенный container runtime и не использует `containerd`/`CRI-O` для запуска контейнеров.",
               "correct": false,
               "sections": {
@@ -55,6 +43,18 @@
                 "source_of_confusion": "Раньше K8s ходил в Docker напрямую через shim, отсюда миф о встроенном runtime.",
                 "if_it_were_true": "Тогда удаление Docker shim в 1.24 ничего бы не сломало, но кластеры без миграции на `containerd` зависли в `ContainerCreating`.",
                 "how_it_should_be": "Запуск контейнеров делает внешний CRI-runtime; `kubelet` лишь управляет им через стандартный интерфейс."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Kubernetes` работает по императивной модели: вы пошагово описываете команды развёртывания через `kubectl run`, а контроллеры reconciliation отсутствуют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "K8s декларативен: вы описываете желаемое состояние в YAML, а reconciliation loop приводит кластер к нему; `kubectl run` — лишь императивная обёртка.",
+                "source_of_confusion": "Императивные команды `kubectl run`/`scale` существуют и работают, поэтому их принимают за основную модель.",
+                "if_it_were_true": "Тогда правки через `kubectl edit` были бы стабильны, но они затираются следующим `kubectl apply -f`, и Git расходится с фактом — drift на проде.",
+                "how_it_should_be": "Желаемое состояние описывается декларативно в манифестах, а контроллеры сводят `status` к `spec`."
               }
             }
           ]
@@ -71,13 +71,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`kube-scheduler` работает на каждой worker-ноде и локально решает, запускать ли под именно тут, без участия Control Plane.",
+              "text": "`etcd` работает на каждой worker-ноде и хранит локальную копию состояния только тех подов, что запущены на ней.",
               "correct": false,
               "sections": {
-                "what_actually": "`kube-scheduler` — единый компонент Control Plane: он watch-ит pending-поды и binding-ит их на ноду через apiserver; на worker-нодах работает `kubelet`.",
-                "source_of_confusion": "`kubelet` действительно на каждой ноде, и его путают со scheduler, так как оба про размещение подов.",
-                "if_it_were_true": "Тогда локальные scheduler-ы потеряли бы глобальный учёт affinity, и реплики `Deployment` оказались бы на одной ноде — её падение убивает весь сервис.",
-                "how_it_should_be": "Scheduler один на Control Plane и видит весь кластер; ноды лишь исполняют его решения через `kubelet`."
+                "what_actually": "`etcd` — единое хранилище Control Plane, разворачивается кворумом 3 или 5 узлов; состояние кластера централизованно, не размазано по нодам.",
+                "source_of_confusion": "Распределённость etcd понимают как «по одному инстансу на ноду», хотя это кворум из нескольких реплик.",
+                "if_it_were_true": "Тогда «локальный etcd» давал бы split-brain: после network partition контроллеры видят разный desired state, поды дублируются на двух нодах.",
+                "how_it_should_be": "`etcd` — централизованный кворум на Control Plane, единая source of truth для всего кластера."
               }
             },
             {
@@ -108,13 +108,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`etcd` работает на каждой worker-ноде и хранит локальную копию состояния только тех подов, что запущены на ней.",
+              "text": "`kube-scheduler` работает на каждой worker-ноде и локально решает, запускать ли под именно тут, без участия Control Plane.",
               "correct": false,
               "sections": {
-                "what_actually": "`etcd` — единое хранилище Control Plane, разворачивается кворумом 3 или 5 узлов; состояние кластера централизованно, не размазано по нодам.",
-                "source_of_confusion": "Распределённость etcd понимают как «по одному инстансу на ноду», хотя это кворум из нескольких реплик.",
-                "if_it_were_true": "Тогда «локальный etcd» давал бы split-brain: после network partition контроллеры видят разный desired state, поды дублируются на двух нодах.",
-                "how_it_should_be": "`etcd` — централизованный кворум на Control Plane, единая source of truth для всего кластера."
+                "what_actually": "`kube-scheduler` — единый компонент Control Plane: он watch-ит pending-поды и binding-ит их на ноду через apiserver; на worker-нодах работает `kubelet`.",
+                "source_of_confusion": "`kubelet` действительно на каждой ноде, и его путают со scheduler, так как оба про размещение подов.",
+                "if_it_were_true": "Тогда локальные scheduler-ы потеряли бы глобальный учёт affinity, и реплики `Deployment` оказались бы на одной ноде — её падение убивает весь сервис.",
+                "how_it_should_be": "Scheduler один на Control Plane и видит весь кластер; ноды лишь исполняют его решения через `kubelet`."
               }
             }
           ]
@@ -143,13 +143,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`etcd` — очередь сообщений между компонентами Control Plane, реализующая полноценную AMQP-шину событий.",
+              "text": "`etcd` — файловая система на каждой ноде, где `kubectl` хранит YAML-манифесты.",
               "correct": false,
               "sections": {
-                "what_actually": "`etcd` — хранилище состояния, а не очередь; компоненты взаимодействуют через `kube-apiserver`, а Watch API даёт нотификации, но это не AMQP/Kafka.",
-                "source_of_confusion": "Watch API напоминает подписку на события, поэтому etcd ошибочно считают шиной сообщений.",
-                "if_it_were_true": "Тогда event bus приложения можно было бы строить на etcd, но миллионы revision ломают compaction, БД пухнет, latency apiserver растёт с 5ms до 500ms.",
-                "how_it_should_be": "etcd хранит состояние; обмен сообщениями делают через apiserver watch или внешние брокеры."
+                "what_actually": "Манифесты хранятся в `etcd` на Control Plane как сериализованные protobuf-объекты, а не как файлы на нодах; на нодах лишь локальный кэш `kubelet`.",
+                "source_of_confusion": "Манифесты пишут в YAML-файлах, и кажется, что они так и лежат где-то на нодах.",
+                "if_it_were_true": "Тогда бэкап «папки с YAML на нодах» спасал бы кластер, но после disaster recovery без `etcdctl snapshot` состояние потеряно.",
+                "how_it_should_be": "Объекты лежат в etcd на Control Plane; бэкап делают через `etcdctl snapshot save`, а не копированием файлов с нод."
               }
             },
             {
@@ -168,13 +168,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`etcd` — файловая система на каждой ноде, где `kubectl` хранит YAML-манифесты.",
+              "text": "`etcd` — очередь сообщений между компонентами Control Plane, реализующая полноценную AMQP-шину событий.",
               "correct": false,
               "sections": {
-                "what_actually": "Манифесты хранятся в `etcd` на Control Plane как сериализованные protobuf-объекты, а не как файлы на нодах; на нодах лишь локальный кэш `kubelet`.",
-                "source_of_confusion": "Манифесты пишут в YAML-файлах, и кажется, что они так и лежат где-то на нодах.",
-                "if_it_were_true": "Тогда бэкап «папки с YAML на нодах» спасал бы кластер, но после disaster recovery без `etcdctl snapshot` состояние потеряно.",
-                "how_it_should_be": "Объекты лежат в etcd на Control Plane; бэкап делают через `etcdctl snapshot save`, а не копированием файлов с нод."
+                "what_actually": "`etcd` — хранилище состояния, а не очередь; компоненты взаимодействуют через `kube-apiserver`, а Watch API даёт нотификации, но это не AMQP/Kafka.",
+                "source_of_confusion": "Watch API напоминает подписку на события, поэтому etcd ошибочно считают шиной сообщений.",
+                "if_it_were_true": "Тогда event bus приложения можно было бы строить на etcd, но миллионы revision ломают compaction, БД пухнет, latency apiserver растёт с 5ms до 500ms.",
+                "how_it_should_be": "etcd хранит состояние; обмен сообщениями делают через apiserver watch или внешние брокеры."
               }
             }
           ]
@@ -191,6 +191,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Контейнеры разделяют ядро хоста через `namespaces` и `cgroups`, а ВМ изолированы гипервизором с отдельной ОС.",
+              "correct": true,
+              "sections": {
+                "explanation": "Контейнеры используют Linux-примитивы (`namespaces` PID/NET/MNT + `cgroups`) для изоляции процессов без отдельного ядра — отсюда плотность сотни/хост и старт за секунды; ВМ запускают полноценную гостевую ОС, что даёт строгую изоляцию ценой overhead.",
+                "example": "`gVisor` и `Kata Containers` — компромисс: контейнеры с user-space ядром (gVisor) или микро-VM (Kata) для multi-tenant нагрузок вроде AWS Fargate.",
+                "when_to_apply": "Выбор делают по требованиям к изоляции и плотности: для multi-tenant с untrusted кодом ближе ВМ/микро-VM, для плотного stateless-микросервиса — контейнеры.",
+                "edge_cases": "Контейнеры разделяют ядро, поэтому kernel-CVE (`Dirty COW`, `runC escape CVE-2019-5736`) ломает изоляцию всех контейнеров ноды — для untrusted-нагрузок нужен `gVisor`/Kata.",
+                "related": "[[kubernetes-interview#Q6]] что такое Pod как процесс в cgroup; [[kubernetes-interview#Q11]] QoS и cgroups для resources; [[kubernetes-interview#Q5]] оркестрация контейнеров vs Swarm."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Контейнеры имеют более строгую security-изоляцию, чем ВМ, благодаря аппаратной виртуализации внутри `runc`.",
               "correct": false,
               "sections": {
@@ -201,8 +214,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "ВМ запускаются за секунды, а контейнеры — за минуты, так как контейнеры тянут полный образ гостевой ОС с ядром.",
               "correct": false,
               "sections": {
@@ -213,8 +226,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Контейнеры и ВМ имеют одинаковый overhead CPU/memory, разница только в размере итогового образа на диске.",
               "correct": false,
               "sections": {
@@ -222,19 +235,6 @@
                 "source_of_confusion": "Размер образа на диске виден сразу, а runtime-overhead памяти неочевиден, поэтому его недооценивают.",
                 "if_it_were_true": "Тогда sizing по VM-метрикам при миграции в K8s был бы корректен, но заказ 8 GB на под вместо 1 GB удорожает кластер в 5×.",
                 "how_it_should_be": "Контейнеры дают существенно меньший runtime-overhead памяти; sizing нельзя переносить с ВМ один в один."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Контейнеры разделяют ядро хоста через `namespaces` и `cgroups`, а ВМ изолированы гипервизором с отдельной ОС.",
-              "correct": true,
-              "sections": {
-                "explanation": "Контейнеры используют Linux-примитивы (`namespaces` PID/NET/MNT + `cgroups`) для изоляции процессов без отдельного ядра — отсюда плотность сотни/хост и старт за секунды; ВМ запускают полноценную гостевую ОС, что даёт строгую изоляцию ценой overhead.",
-                "example": "`gVisor` и `Kata Containers` — компромисс: контейнеры с user-space ядром (gVisor) или микро-VM (Kata) для multi-tenant нагрузок вроде AWS Fargate.",
-                "when_to_apply": "Выбор делают по требованиям к изоляции и плотности: для multi-tenant с untrusted кодом ближе ВМ/микро-VM, для плотного stateless-микросервиса — контейнеры.",
-                "edge_cases": "Контейнеры разделяют ядро, поэтому kernel-CVE (`Dirty COW`, `runC escape CVE-2019-5736`) ломает изоляцию всех контейнеров ноды — для untrusted-нагрузок нужен `gVisor`/Kata.",
-                "related": "[[kubernetes-interview#Q6]] что такое Pod как процесс в cgroup; [[kubernetes-interview#Q11]] QoS и cgroups для resources; [[kubernetes-interview#Q5]] оркестрация контейнеров vs Swarm."
               }
             }
           ]
@@ -251,6 +251,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`Docker Swarm` лучше масштабируется на тысячи нод благодаря более зрелой и богатой экосистеме оркестрации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "K8s масштабируется до ~5000 нод/150K подов, а Swarm — сотни нод с минимальной экосистемой.",
+                "source_of_confusion": "Swarm проще ставится и кажется «легковесным значит масштабируемым».",
+                "if_it_were_true": "Тогда рост с 50 до 500 нод на Swarm прошёл бы гладко, но service discovery теряет записи на 200+ нод, и миграция на K8s занимает полгода.",
+                "how_it_should_be": "Большой масштаб и зрелая экосистема — у K8s; Swarm рассчитан на небольшие кластеры."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "K8s имеет встроенный `HPA`/`VPA`/Cluster Autoscaler, богатую экосистему и managed-сервисы; Swarm — лёгкий старт.",
               "correct": true,
               "sections": {
@@ -262,32 +274,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`Docker Swarm` лучше масштабируется на тысячи нод благодаря более зрелой и богатой экосистеме оркестрации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "K8s масштабируется до ~5000 нод/150K подов, а Swarm — сотни нод с минимальной экосистемой.",
-                "source_of_confusion": "Swarm проще ставится и кажется «легковесным значит масштабируемым».",
-                "if_it_were_true": "Тогда рост с 50 до 500 нод на Swarm прошёл бы гладко, но service discovery теряет записи на 200+ нод, и миграция на K8s занимает полгода.",
-                "how_it_should_be": "Большой масштаб и зрелая экосистема — у K8s; Swarm рассчитан на небольшие кластеры."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "`Docker Swarm` имеет полноценные managed-сервисы в облаке (EKS, GKE, AKS) с автоматическим обновлением Control Plane.",
-              "correct": false,
-              "sections": {
-                "what_actually": "EKS/GKE/AKS — это managed K8s; Docker Inc. свернула Swarm-as-a-service в 2019, облачного аналога для Swarm нет.",
-                "source_of_confusion": "И Swarm, и K8s — оркестраторы, поэтому managed-предложения облаков приписывают обоим.",
-                "if_it_were_true": "Тогда enterprise мог бы заложить managed Swarm в архитектуру, но upstream-поддержка прекратилась, и пришлось авральная миграция в K8s.",
-                "how_it_should_be": "Managed-оркестрация в облаках — это K8s (EKS/GKE/AKS); Swarm разворачивают только самостоятельно."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "K8s и `Docker Swarm` имеют идентичную модель service discovery — оба только через DNS.",
               "correct": false,
               "sections": {
@@ -295,6 +283,18 @@
                 "source_of_confusion": "Базовый DNS есть у обоих, и поверхностно модели выглядят одинаковыми.",
                 "if_it_were_true": "Тогда StatefulSet-нагрузки (Kafka, Zookeeper) одинаково жили бы в Swarm, но без stable network identity кластер брокеров рассыпается при rebalance.",
                 "how_it_should_be": "У K8s богаче сетевая модель (Ingress, headless, stable identity); Swarm ограничен round-robin DNS."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Docker Swarm` имеет полноценные managed-сервисы в облаке (EKS, GKE, AKS) с автоматическим обновлением Control Plane.",
+              "correct": false,
+              "sections": {
+                "what_actually": "EKS/GKE/AKS — это managed K8s; Docker Inc. свернула Swarm-as-a-service в 2019, облачного аналога для Swarm нет.",
+                "source_of_confusion": "И Swarm, и K8s — оркестраторы, поэтому managed-предложения облаков приписывают обоим.",
+                "if_it_were_true": "Тогда enterprise мог бы заложить managed Swarm в архитектуру, но upstream-поддержка прекратилась, и пришлось авральная миграция в K8s.",
+                "how_it_should_be": "Managed-оркестрация в облаках — это K8s (EKS/GKE/AKS); Swarm разворачивают только самостоятельно."
               }
             }
           ]
@@ -311,31 +311,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Pod` — отдельный контейнер с уникальным IP, который сохраняется при перезапуске и пересоздании пода.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Pod может содержать несколько контейнеров, а IP меняется при пересоздании пода — поды эфемерны.",
-                "source_of_confusion": "В простом случае в поде один контейнер, поэтому Pod отождествляют с контейнером.",
-                "if_it_were_true": "Тогда можно было бы кэшировать Pod IP в connection pool, но после рестарта (OOM, eviction) пул держит мёртвые соединения, latency взлетает до timeout.",
-                "how_it_should_be": "Pod — группа из 1+ контейнеров с общим IP, который не сохраняется между пересозданиями."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`Pod` — минимальная единица развёртывания, группирующая 1+ контейнеров с общим сетевым namespace и томами.",
-              "correct": true,
-              "sections": {
-                "explanation": "Контейнеры внутри пода разделяют network/IPC namespace (один IP, общение через `localhost`) и могут совместно использовать volumes — это база для паттернов `sidecar` и `ambassador`.",
-                "example": "Istio sidecar `envoy` рядом с приложением даёт service mesh без изменения кода (Spotify, Lyft); logging sidecar `fluentd` читает логи основного контейнера через общий том.",
-                "when_to_apply": "В один Pod кладут контейнеры, которые должны делить сеть и жизненный цикл (приложение + sidecar); независимые сервисы разносят по разным подам.",
-                "edge_cases": "Поды эфемерны — при пересоздании IP меняется; кэширование Pod IP в connection pool приводит к мёртвым соединениям после рестарта пода.",
-                "related": "[[kubernetes-interview#Q7]] фазы жизненного цикла Pod; [[kubernetes-interview#Q10]] multi-container паттерны; [[kubernetes-interview#Q12]] ReplicaSet, держащий поды."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Pod` — это нода кластера, на которой `kubelet` запускает один или несколько контейнеров приложения.",
               "correct": false,
               "sections": {
@@ -346,8 +321,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`Pod` — это `Deployment` с одной репликой, без механизма перезапуска при падении.",
               "correct": false,
               "sections": {
@@ -355,6 +330,31 @@
                 "source_of_confusion": "Deployment с `replicas: 1` создаёт один под, и его отождествляют с самим подом.",
                 "if_it_were_true": "Тогда `kubectl run --restart=Never` годился бы для prod-сервиса, но после OOM под не пересоздаётся, сервис лежит до ручного `apply`.",
                 "how_it_should_be": "Pod — низкоуровневая единица; устойчивость даёт контроллер (`Deployment`→`ReplicaSet`), пересоздающий упавшие поды."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Pod` — отдельный контейнер с уникальным IP, который сохраняется при перезапуске и пересоздании пода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pod может содержать несколько контейнеров, а IP меняется при пересоздании пода — поды эфемерны.",
+                "source_of_confusion": "В простом случае в поде один контейнер, поэтому Pod отождествляют с контейнером.",
+                "if_it_were_true": "Тогда можно было бы кэшировать Pod IP в connection pool, но после рестарта (OOM, eviction) пул держит мёртвые соединения, latency взлетает до timeout.",
+                "how_it_should_be": "Pod — группа из 1+ контейнеров с общим IP, который не сохраняется между пересозданиями."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Pod` — минимальная единица развёртывания, группирующая 1+ контейнеров с общим сетевым namespace и томами.",
+              "correct": true,
+              "sections": {
+                "explanation": "Контейнеры внутри пода разделяют network/IPC namespace (один IP, общение через `localhost`) и могут совместно использовать volumes — это база для паттернов `sidecar` и `ambassador`.",
+                "example": "Istio sidecar `envoy` рядом с приложением даёт service mesh без изменения кода (Spotify, Lyft); logging sidecar `fluentd` читает логи основного контейнера через общий том.",
+                "when_to_apply": "В один Pod кладут контейнеры, которые должны делить сеть и жизненный цикл (приложение + sidecar); независимые сервисы разносят по разным подам.",
+                "edge_cases": "Поды эфемерны — при пересоздании IP меняется; кэширование Pod IP в connection pool приводит к мёртвым соединениям после рестарта пода.",
+                "related": "[[kubernetes-interview#Q7]] фазы жизненного цикла Pod; [[kubernetes-interview#Q10]] multi-container паттерны; [[kubernetes-interview#Q12]] ReplicaSet, держащий поды."
               }
             }
           ]
@@ -371,18 +371,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Pod переходит из `Running` в `Pending`, когда нода теряет сетевую связь с Control Plane и kubelet перестаёт отвечать.",
-              "correct": false,
-              "sections": {
-                "what_actually": "При потере связи с нодой Pod переходит в `Unknown`, а не `Pending`; `Pending` — фаза до scheduling/pull/init.",
-                "source_of_confusion": "И `Pending`, и `Unknown` означают «под не работает нормально», поэтому их смешивают.",
-                "if_it_were_true": "Тогда alert на `Pending` ловил бы деградацию нод, но сетевые сбои нод дают `Unknown`, и инцидент видят только по жалобам клиентов.",
-                "how_it_should_be": "Потеря ноды → `Unknown`; `Pending` относится к стадии до запуска контейнеров."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Pod остаётся в `Running` после того, как все его контейнеры завершились с exit code 0 и процесс больше не активен.",
               "correct": false,
               "sections": {
@@ -393,8 +381,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Порядок инициализации: основные контейнеры → `postStart` → init-контейнеры → probes, init идут после старта приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Init-контейнеры по определению выполняются ДО основных (миграция БД, ожидание зависимостей), а не после них.",
+                "source_of_confusion": "Слово «init» иногда читают как «инициализация после старта приложения».",
+                "if_it_were_true": "Тогда миграцию БД можно было бы делать после старта app, но приложение поднимается на старой схеме, ловит `column not found`, CrashLoopBackOff.",
+                "how_it_should_be": "Порядок: init (последовательно) → main (параллельно) → `postStart` → probes."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "Pod переходит из `Running` в `Pending`, когда нода теряет сетевую связь с Control Plane и kubelet перестаёт отвечать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При потере связи с нодой Pod переходит в `Unknown`, а не `Pending`; `Pending` — фаза до scheduling/pull/init.",
+                "source_of_confusion": "И `Pending`, и `Unknown` означают «под не работает нормально», поэтому их смешивают.",
+                "if_it_were_true": "Тогда alert на `Pending` ловил бы деградацию нод, но сетевые сбои нод дают `Unknown`, и инцидент видят только по жалобам клиентов.",
+                "how_it_should_be": "Потеря ноды → `Unknown`; `Pending` относится к стадии до запуска контейнеров."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`Pending` длится, пока scheduler не выберет ноду, не завершится pull и init; затем init → main → `postStart` → probes.",
               "correct": true,
               "sections": {
@@ -403,18 +415,6 @@
                 "when_to_apply": "Знание фаз нужно при настройке алертов на застрявшие поды и при проектировании порядка миграций/прогрева в init и probes.",
                 "edge_cases": "При потере связи с нодой Pod переходит в `Unknown`, а не `Pending`; все контейнеры с exit 0 дают `Succeeded`, а `Failed` — когда все завершились и хотя бы один с non-zero.",
                 "related": "[[kubernetes-interview#Q8]] init-контейнеры; [[kubernetes-interview#Q9]] startup/liveness/readiness probes; [[kubernetes-interview#Q11]] QoS и eviction."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Порядок инициализации: основные контейнеры → `postStart` → init-контейнеры → probes, init идут после старта приложения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Init-контейнеры по определению выполняются ДО основных (миграция БД, ожидание зависимостей), а не после них.",
-                "source_of_confusion": "Слово «init» иногда читают как «инициализация после старта приложения».",
-                "if_it_were_true": "Тогда миграцию БД можно было бы делать после старта app, но приложение поднимается на старой схеме, ловит `column not found`, CrashLoopBackOff.",
-                "how_it_should_be": "Порядок: init (последовательно) → main (параллельно) → `postStart` → probes."
               }
             }
           ]
@@ -443,18 +443,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Init-контейнеры запускаются параллельно с основными контейнерами для ускорения общего старта пода.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Init выполняются строго ДО main и строго последовательно — иначе теряется смысл подготовки среды.",
-                "source_of_confusion": "Хочется ускорить старт, и параллельность кажется логичной оптимизацией.",
-                "if_it_were_true": "Тогда переписав init в sidecar, получили бы скорость, но main стартует до миграции, ловит `relation does not exist`, OOM-loop.",
-                "how_it_should_be": "Init идут последовательно и полностью до основных контейнеров."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Init-контейнеры работают параллельно с основными после своего успешного старта.",
               "correct": false,
               "sections": {
@@ -465,8 +453,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Init выполняются последовательно ДО основных (каждый exit 0 → следующий), при неудаче Pod рестартит по `restartPolicy`.",
               "correct": true,
               "sections": {
@@ -475,6 +463,18 @@
                 "when_to_apply": "Init используют для шагов, которые обязаны завершиться до старта приложения: миграции схемы, прогрев данных, подготовка томов.",
                 "edge_cases": "Init не поддерживают `readinessProbe`/`livenessProbe`: пока они идут, Pod в `Pending`; добавленный в init probe валиден по YAML, но игнорируется.",
                 "related": "[[kubernetes-interview#Q7]] место init в жизненном цикле; [[kubernetes-interview#Q10]] init как multi-container паттерн; [[kubernetes-interview#Q9]] probes для основных контейнеров."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Init-контейнеры запускаются параллельно с основными контейнерами для ускорения общего старта пода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Init выполняются строго ДО main и строго последовательно — иначе теряется смысл подготовки среды.",
+                "source_of_confusion": "Хочется ускорить старт, и параллельность кажется логичной оптимизацией.",
+                "if_it_were_true": "Тогда переписав init в sidecar, получили бы скорость, но main стартует до миграции, ловит `relation does not exist`, OOM-loop.",
+                "how_it_should_be": "Init идут последовательно и полностью до основных контейнеров."
               }
             }
           ]
@@ -491,6 +491,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`startupProbe` при неудаче сразу перезапускает контейнер без ожидания `failureThreshold`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`startupProbe` ждёт `failureThreshold × periodSeconds` попыток (например 30×2=60s) — именно это даёт slow-start приложениям время на инициализацию.",
+                "source_of_confusion": "У liveness фейл ведёт к рестарту, и это поведение приписывают startupProbe.",
+                "if_it_were_true": "Тогда JVM с 45s прогрева можно было бы запускать с агрессивной probe, но контейнер рестартит до готовности — все поды в CrashLoopBackOff.",
+                "how_it_should_be": "`startupProbe` терпит до `failureThreshold × periodSeconds`, лишь потом считает старт провалившимся."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`readiness` при неудаче убирает Pod из `Endpoints` Service без рестарта; `liveness` при неудаче перезапускает контейнер.",
               "correct": true,
               "sections": {
@@ -502,32 +514,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`livenessProbe` при неудаче убирает Pod из `Endpoints` Service, но никогда не перезапускает контейнер при фейле.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это поведение `readinessProbe`; `livenessProbe` ПЕРЕЗАПУСКАЕТ контейнер после `failureThreshold` фейлов.",
-                "source_of_confusion": "Обе probes «проверяют здоровье», и их реакции (снять трафик vs рестарт) путают местами.",
-                "if_it_were_true": "Тогда `livenessProbe` годилась бы для «временного отключения трафика», но реальный исход — бесконечный CrashLoopBackOff, MTTR растёт.",
-                "how_it_should_be": "`readiness` снимает трафик без рестарта, `liveness` перезапускает контейнер."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "`startupProbe` при неудаче сразу перезапускает контейнер без ожидания `failureThreshold`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`startupProbe` ждёт `failureThreshold × periodSeconds` попыток (например 30×2=60s) — именно это даёт slow-start приложениям время на инициализацию.",
-                "source_of_confusion": "У liveness фейл ведёт к рестарту, и это поведение приписывают startupProbe.",
-                "if_it_were_true": "Тогда JVM с 45s прогрева можно было бы запускать с агрессивной probe, но контейнер рестартит до готовности — все поды в CrashLoopBackOff.",
-                "how_it_should_be": "`startupProbe` терпит до `failureThreshold × periodSeconds`, лишь потом считает старт провалившимся."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`livenessProbe` должна проверять доступность внешних зависимостей (БД, кэш, очереди) для более точной диагностики.",
               "correct": false,
               "sections": {
@@ -535,6 +523,18 @@
                 "source_of_confusion": "Кажется, что чем больше probe проверяет, тем точнее диагностика.",
                 "if_it_were_true": "Тогда `livenessProbe = SELECT 1 FROM postgres` был бы полезен, но флап primary на 10s рестартит все 50 подов, инцидент растёт с 10s до 5 min.",
                 "how_it_should_be": "Зависимости проверяет `readinessProbe`; `livenessProbe` — только внутреннее состояние процесса."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`livenessProbe` при неудаче убирает Pod из `Endpoints` Service, но никогда не перезапускает контейнер при фейле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это поведение `readinessProbe`; `livenessProbe` ПЕРЕЗАПУСКАЕТ контейнер после `failureThreshold` фейлов.",
+                "source_of_confusion": "Обе probes «проверяют здоровье», и их реакции (снять трафик vs рестарт) путают местами.",
+                "if_it_were_true": "Тогда `livenessProbe` годилась бы для «временного отключения трафика», но реальный исход — бесконечный CrashLoopBackOff, MTTR растёт.",
+                "how_it_should_be": "`readiness` снимает трафик без рестарта, `liveness` перезапускает контейнер."
               }
             }
           ]
@@ -551,31 +551,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Паттерн Ambassador расширяет функциональность основного контейнера, собирая его логи и метрики.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это описание Sidecar; Ambassador проксирует исходящие сетевые соединения от приложения к внешним сервисам, абстрагируя детали подключения.",
-                "source_of_confusion": "Все паттерны — про вспомогательный контейнер рядом, поэтому их роли смешивают.",
-                "if_it_were_true": "Тогда `Envoy`-proxy к Redis собирал бы логи, но его задача — дать приложению ходить на `localhost:6379` вместо удалённого адреса.",
-                "how_it_should_be": "Сбор логов/метрик — это Sidecar/Adapter; Ambassador проксирует исходящие соединения."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Паттерн Sidecar расширяет функциональность основного контейнера, работая рядом с ним в том же поде (общая сеть и тома).",
-              "correct": true,
-              "sections": {
-                "explanation": "Sidecar разделяет network namespace и volumes с основным контейнером, добавляя функциональность без изменения кода приложения — логирование, проксирование, экспорт метрик.",
-                "example": "`Fluentd` рядом с приложением читает его логи через общий том и пересылает в центральное хранилище; `Envoy` sidecar в Istio проксирует трафик.",
-                "when_to_apply": "Sidecar применяют, когда вспомогательная функция должна делить жизненный цикл и сеть с приложением, но её нельзя зашивать в код.",
-                "edge_cases": "Не путать с Init Container: sidecar работает параллельно с main всё время жизни пода, а init отрабатывает и завершается до старта основных контейнеров.",
-                "related": "[[kubernetes-interview#Q6]] общий network namespace пода; [[kubernetes-interview#Q8]] init-контейнеры; [[kubernetes-interview#Q22]] Ingress для входящего трафика."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Паттерн Adapter трансформирует входящий трафик перед передачей его в основной контейнер.",
               "correct": false,
               "sections": {
@@ -586,8 +561,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Паттерн Ambassador запускается до основного контейнера и подготавливает конфигурацию для него.",
               "correct": false,
               "sections": {
@@ -595,6 +570,31 @@
                 "source_of_confusion": "И init, и ambassador — вспомогательные, поэтому «подготовку до старта» приписывают ambassador.",
                 "if_it_were_true": "Тогда ambassador отрабатывал бы и завершался, но он живёт рядом всё время, держа прокси-соединения.",
                 "how_it_should_be": "Подготовка до старта — задача Init Container; Ambassador работает параллельно как сетевой прокси."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Паттерн Ambassador расширяет функциональность основного контейнера, собирая его логи и метрики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание Sidecar; Ambassador проксирует исходящие сетевые соединения от приложения к внешним сервисам, абстрагируя детали подключения.",
+                "source_of_confusion": "Все паттерны — про вспомогательный контейнер рядом, поэтому их роли смешивают.",
+                "if_it_were_true": "Тогда `Envoy`-proxy к Redis собирал бы логи, но его задача — дать приложению ходить на `localhost:6379` вместо удалённого адреса.",
+                "how_it_should_be": "Сбор логов/метрик — это Sidecar/Adapter; Ambassador проксирует исходящие соединения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Паттерн Sidecar расширяет функциональность основного контейнера, работая рядом с ним в том же поде (общая сеть и тома).",
+              "correct": true,
+              "sections": {
+                "explanation": "Sidecar разделяет network namespace и volumes с основным контейнером, добавляя функциональность без изменения кода приложения — логирование, проксирование, экспорт метрик.",
+                "example": "`Fluentd` рядом с приложением читает его логи через общий том и пересылает в центральное хранилище; `Envoy` sidecar в Istio проксирует трафик.",
+                "when_to_apply": "Sidecar применяют, когда вспомогательная функция должна делить жизненный цикл и сеть с приложением, но её нельзя зашивать в код.",
+                "edge_cases": "Не путать с Init Container: sidecar работает параллельно с main всё время жизни пода, а init отрабатывает и завершается до старта основных контейнеров.",
+                "related": "[[kubernetes-interview#Q6]] общий network namespace пода; [[kubernetes-interview#Q8]] init-контейнеры; [[kubernetes-interview#Q22]] Ingress для входящего трафика."
               }
             }
           ]
@@ -611,18 +611,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Guaranteed` присваивается Pod-у, у которого заданы только `requests` без `limits` для CPU и memory у контейнеров.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Guaranteed` требует `requests == limits` для ВСЕХ контейнеров; только `requests` без `limits` даёт `Burstable`.",
-                "source_of_confusion": "Кажется, что заданные `requests` уже «гарантируют» ресурсы, отсюда название класса.",
-                "if_it_were_true": "Тогда только-`requests` защищал бы под, но при memory pressure ноды он вытесняется раньше Guaranteed-сервисов, инцидент ночью.",
-                "how_it_should_be": "Для `Guaranteed` нужно `requests == limits` у всех контейнеров, а не одни `requests`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Burstable` назначается, когда `requests == limits` точно совпадают у всех контейнеров и для CPU, и для memory.",
               "correct": false,
               "sections": {
@@ -630,6 +618,18 @@
                 "source_of_confusion": "Названия классов запоминают без привязки к точному условию requests/limits.",
                 "if_it_were_true": "Тогда `requests==limits` давал бы средний класс, но при capacity planning переоценка eviction-устойчивости на 30% — поды вытесняются раньше плана.",
                 "how_it_should_be": "`requests == limits` → `Guaranteed`; `Burstable` — это `requests < limits`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Guaranteed`-под вытесняется первым при нехватке ресурсов, так как «занимает больше памяти».",
+              "correct": false,
+              "sections": {
+                "what_actually": "Порядок eviction обратный: `BestEffort → Burstable → Guaranteed`; Guaranteed вытесняется последним и наиболее защищён.",
+                "source_of_confusion": "«Занимает больше» интуитивно кажется поводом убить первым.",
+                "if_it_were_true": "Тогда снижение `requests=limits` у critical-сервиса уменьшало бы риск, но это ухудшает класс и увеличивает шанс eviction.",
+                "how_it_should_be": "`Guaranteed` — самый защищённый класс, вытесняется последним."
               }
             },
             {
@@ -648,13 +648,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Guaranteed`-под вытесняется первым при нехватке ресурсов, так как «занимает больше памяти».",
+              "text": "`Guaranteed` присваивается Pod-у, у которого заданы только `requests` без `limits` для CPU и memory у контейнеров.",
               "correct": false,
               "sections": {
-                "what_actually": "Порядок eviction обратный: `BestEffort → Burstable → Guaranteed`; Guaranteed вытесняется последним и наиболее защищён.",
-                "source_of_confusion": "«Занимает больше» интуитивно кажется поводом убить первым.",
-                "if_it_were_true": "Тогда снижение `requests=limits` у critical-сервиса уменьшало бы риск, но это ухудшает класс и увеличивает шанс eviction.",
-                "how_it_should_be": "`Guaranteed` — самый защищённый класс, вытесняется последним."
+                "what_actually": "`Guaranteed` требует `requests == limits` для ВСЕХ контейнеров; только `requests` без `limits` даёт `Burstable`.",
+                "source_of_confusion": "Кажется, что заданные `requests` уже «гарантируют» ресурсы, отсюда название класса.",
+                "if_it_were_true": "Тогда только-`requests` защищал бы под, но при memory pressure ноды он вытесняется раньше Guaranteed-сервисов, инцидент ночью.",
+                "how_it_should_be": "Для `Guaranteed` нужно `requests == limits` у всех контейнеров, а не одни `requests`."
               }
             }
           ]
@@ -671,13 +671,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ReplicaSet` управляет rolling update и rollback образа контейнера через сохранённую history.",
-              "correct": false,
+              "text": "`ReplicaSet` гарантирует заданное число одинаковых реплик пода, пересоздавая упавшие через reconciliation loop.",
+              "correct": true,
               "sections": {
-                "what_actually": "Rolling update и rollback — функциональность `Deployment`; `ReplicaSet` поддерживает только число идентичных подов.",
-                "source_of_confusion": "Deployment работает поверх ReplicaSet, и их возможности приписывают нижнему уровню.",
-                "if_it_were_true": "Тогда `kubectl set image rs/...` обновлял бы поды, но существующие поды не пересоздаются, новый код не доезжает до прода.",
-                "how_it_should_be": "Стратегию обновления и историю даёт `Deployment`; `ReplicaSet` лишь держит количество."
+                "explanation": "Контроллер сверяет фактическое число подов с `spec.replicas` и создаёт/удаляет поды до нужного значения; на практике используется через `Deployment`, который добавляет rolling update и историю.",
+                "example": "Это внутренний механизм всех `Deployment` в проде: каждое обновление создаёт новый `ReplicaSet`, что видно через `kubectl get rs -o wide`.",
+                "when_to_apply": "Напрямую `ReplicaSet` почти не создают — им управляют через `Deployment`; знание нужно для отладки (события подов смотрят на уровне RS).",
+                "edge_cases": "Голый `ReplicaSet` не умеет rolling update и rollback: `kubectl set image rs/...` меняет template, но существующие поды не пересоздаются, новый код не доезжает.",
+                "related": "[[kubernetes-interview#Q13]] Deployment поверх ReplicaSet; [[kubernetes-interview#Q14]] стратегии обновления; [[kubernetes-interview#Q18]] DaemonSet vs ReplicaSet."
               }
             },
             {
@@ -695,6 +696,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "`ReplicaSet` управляет rolling update и rollback образа контейнера через сохранённую history.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Rolling update и rollback — функциональность `Deployment`; `ReplicaSet` поддерживает только число идентичных подов.",
+                "source_of_confusion": "Deployment работает поверх ReplicaSet, и их возможности приписывают нижнему уровню.",
+                "if_it_were_true": "Тогда `kubectl set image rs/...` обновлял бы поды, но существующие поды не пересоздаются, новый код не доезжает до прода.",
+                "how_it_should_be": "Стратегию обновления и историю даёт `Deployment`; `ReplicaSet` лишь держит количество."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`ReplicaSet` используется напрямую для stateful-приложений с гарантией стабильных идентификаторов.",
               "correct": false,
               "sections": {
@@ -702,19 +715,6 @@
                 "source_of_confusion": "ReplicaSet держит реплики, и кажется, что подойдёт и для БД-реплик.",
                 "if_it_were_true": "Тогда PostgreSQL на ReplicaSet работал бы, но после рестарта узел получает новый эфемерный PVC, replica теряет sync.",
                 "how_it_should_be": "Stateful с stable identity — это `StatefulSet`; `ReplicaSet` для stateless с одинаковыми подами."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`ReplicaSet` гарантирует заданное число одинаковых реплик пода, пересоздавая упавшие через reconciliation loop.",
-              "correct": true,
-              "sections": {
-                "explanation": "Контроллер сверяет фактическое число подов с `spec.replicas` и создаёт/удаляет поды до нужного значения; на практике используется через `Deployment`, который добавляет rolling update и историю.",
-                "example": "Это внутренний механизм всех `Deployment` в проде: каждое обновление создаёт новый `ReplicaSet`, что видно через `kubectl get rs -o wide`.",
-                "when_to_apply": "Напрямую `ReplicaSet` почти не создают — им управляют через `Deployment`; знание нужно для отладки (события подов смотрят на уровне RS).",
-                "edge_cases": "Голый `ReplicaSet` не умеет rolling update и rollback: `kubectl set image rs/...` меняет template, но существующие поды не пересоздаются, новый код не доезжает.",
-                "related": "[[kubernetes-interview#Q13]] Deployment поверх ReplicaSet; [[kubernetes-interview#Q14]] стратегии обновления; [[kubernetes-interview#Q18]] DaemonSet vs ReplicaSet."
               }
             }
           ]
@@ -744,6 +744,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`Deployment` напрямую управляет Pod-ами, минуя `ReplicaSet`, для ускорения обновления.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Deployment` ВСЕГДА работает через `ReplicaSet`: иерархия Deployment → ReplicaSet → Pod.",
+                "source_of_confusion": "Пользователь видит Deployment и поды, а промежуточный ReplicaSet остаётся незаметным.",
+                "if_it_were_true": "Тогда `kubectl describe deployment` показывал бы события подов, но они на уровне RS, и root cause не виден без `describe rs`.",
+                "how_it_should_be": "Deployment управляет подами только через ReplicaSet — это фиксированная иерархия."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Deployment` не поддерживает rollback — для отката необходимо вручную применять старый YAML-манифест из Git.",
               "correct": false,
               "sections": {
@@ -754,8 +766,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`Deployment` удаляет старый `ReplicaSet` при каждом обновлении, не сохраняя историю ревизий.",
               "correct": false,
               "sections": {
@@ -763,18 +775,6 @@
                 "source_of_confusion": "Логично предположить, что ненужный старый RS удаляется ради чистоты.",
                 "if_it_were_true": "Тогда `revisionHistoryLimit=0` «экономил бы etcd», но после фейлового deploy откатываться не на что, нужен ручной rebuild.",
                 "how_it_should_be": "Старые ReplicaSet хранятся с нулём реплик в пределах `revisionHistoryLimit` для отката."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Deployment` напрямую управляет Pod-ами, минуя `ReplicaSet`, для ускорения обновления.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Deployment` ВСЕГДА работает через `ReplicaSet`: иерархия Deployment → ReplicaSet → Pod.",
-                "source_of_confusion": "Пользователь видит Deployment и поды, а промежуточный ReplicaSet остаётся незаметным.",
-                "if_it_were_true": "Тогда `kubectl describe deployment` показывал бы события подов, но они на уровне RS, и root cause не виден без `describe rs`.",
-                "how_it_should_be": "Deployment управляет подами только через ReplicaSet — это фиксированная иерархия."
               }
             }
           ]
@@ -791,18 +791,30 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Recreate` обновляет поды постепенно: сначала создаёт новые, затем по одному удаляет старые, без downtime.",
+              "text": "`RollingUpdate` — единственная встроенная стратегия, а `Recreate` приходится реализовывать вручную скриптом.",
               "correct": false,
               "sections": {
-                "what_actually": "Это описание `RollingUpdate`; `Recreate` сначала удаляет ВСЕ старые поды, потом создаёт новые — вызывает downtime, но без двух версий одновременно.",
-                "source_of_confusion": "Обе стратегии «обновляют поды», и их механики путают местами.",
-                "if_it_were_true": "Тогда `Recreate` для stateless API был бы безопасен, но каждый deploy даёт 30-60s downtime, и SLO 99.99% разваливается.",
-                "how_it_should_be": "Постепенная замена — это `RollingUpdate`; `Recreate` удаляет всё разом и пересоздаёт."
+                "what_actually": "Обе стратегии встроены в K8s через `spec.strategy.type`: и `RollingUpdate`, и `Recreate`.",
+                "source_of_confusion": "`RollingUpdate` — дефолт, поэтому `Recreate` считают чем-то самописным.",
+                "if_it_were_true": "Тогда `Recreate` писали бы скриптом `scale to 0 → set image → scale up`, но при сбое скрипта в середине кластер в неконсистентном состоянии.",
+                "how_it_should_be": "`Recreate` задаётся встроенным `strategy.type: Recreate`, без ручных скриптов."
               }
             },
             {
               "order": 1,
               "label": "B",
+              "text": "Blue/Green реализуется через встроенный `strategy.type: BlueGreen` в Kubernetes.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Blue/Green не встроен; его реализуют через `Argo Rollouts`, `Flagger`, `Istio` или ручное переключение `Service selector`.",
+                "source_of_confusion": "Blue/Green часто описывают рядом с K8s, и его принимают за встроенную стратегию.",
+                "if_it_were_true": "Тогда `strategy.type: BlueGreen` просто работал бы, но на проде выясняется, что нужен `Argo Rollouts`, и deadline съезжает.",
+                "how_it_should_be": "Blue/Green делают внешними инструментами поверх K8s, встроены только `RollingUpdate` и `Recreate`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`RollingUpdate maxUnavailable=0` даёт zero-downtime через `maxSurge`; `Recreate` — downtime без overlap версий.",
               "correct": true,
               "sections": {
@@ -814,27 +826,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`RollingUpdate` — единственная встроенная стратегия, а `Recreate` приходится реализовывать вручную скриптом.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Обе стратегии встроены в K8s через `spec.strategy.type`: и `RollingUpdate`, и `Recreate`.",
-                "source_of_confusion": "`RollingUpdate` — дефолт, поэтому `Recreate` считают чем-то самописным.",
-                "if_it_were_true": "Тогда `Recreate` писали бы скриптом `scale to 0 → set image → scale up`, но при сбое скрипта в середине кластер в неконсистентном состоянии.",
-                "how_it_should_be": "`Recreate` задаётся встроенным `strategy.type: Recreate`, без ручных скриптов."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "Blue/Green реализуется через встроенный `strategy.type: BlueGreen` в Kubernetes.",
+              "text": "`Recreate` обновляет поды постепенно: сначала создаёт новые, затем по одному удаляет старые, без downtime.",
               "correct": false,
               "sections": {
-                "what_actually": "Blue/Green не встроен; его реализуют через `Argo Rollouts`, `Flagger`, `Istio` или ручное переключение `Service selector`.",
-                "source_of_confusion": "Blue/Green часто описывают рядом с K8s, и его принимают за встроенную стратегию.",
-                "if_it_were_true": "Тогда `strategy.type: BlueGreen` просто работал бы, но на проде выясняется, что нужен `Argo Rollouts`, и deadline съезжает.",
-                "how_it_should_be": "Blue/Green делают внешними инструментами поверх K8s, встроены только `RollingUpdate` и `Recreate`."
+                "what_actually": "Это описание `RollingUpdate`; `Recreate` сначала удаляет ВСЕ старые поды, потом создаёт новые — вызывает downtime, но без двух версий одновременно.",
+                "source_of_confusion": "Обе стратегии «обновляют поды», и их механики путают местами.",
+                "if_it_were_true": "Тогда `Recreate` для stateless API был бы безопасен, но каждый deploy даёт 30-60s downtime, и SLO 99.99% разваливается.",
+                "how_it_should_be": "Постепенная замена — это `RollingUpdate`; `Recreate` удаляет всё разом и пересоздаёт."
               }
             }
           ]
@@ -851,18 +851,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`kubectl rollout undo` удаляет текущий ReplicaSet и создаёт новый с предыдущим образом с нуля.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Откат не создаёт новый RS — K8s масштабирует существующий старый ReplicaSet (хранился с `replicas=0`) обратно вверх, параллельно уменьшая текущий.",
-                "source_of_confusion": "«Откат» воспринимают как пересоздание, а не как переключение масштаба между существующими RS.",
-                "if_it_were_true": "Тогда удаление старых RS «для чистоты» не мешало бы, но `rollout undo` падает с `no rollout history found`.",
-                "how_it_should_be": "Откат масштабирует сохранённый старый ReplicaSet вверх, не создавая ничего с нуля."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`kubectl rollout history` показывает только последние 2 ревизии, остальные автоматически удаляются.",
               "correct": false,
               "sections": {
@@ -873,8 +861,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "`kubectl rollout pause` полностью останавливает существующие поды и запрещает новые запросы к сервису.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`pause` лишь останавливает процесс раскатки (новые поды перестают создаваться), а существующие поды продолжают работать и обслуживать трафик.",
+                "source_of_confusion": "Слово «pause» понимают как «заморозить весь сервис», а не только раскатку.",
+                "if_it_were_true": "Тогда `pause` вызывал бы downtime, но он используется именно для проверки промежуточного состояния обновления без остановки трафика.",
+                "how_it_should_be": "`pause` приостанавливает только rollout; работающие поды продолжают принимать запросы."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "`kubectl rollout undo` удаляет текущий ReplicaSet и создаёт новый с предыдущим образом с нуля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Откат не создаёт новый RS — K8s масштабирует существующий старый ReplicaSet (хранился с `replicas=0`) обратно вверх, параллельно уменьшая текущий.",
+                "source_of_confusion": "«Откат» воспринимают как пересоздание, а не как переключение масштаба между существующими RS.",
+                "if_it_were_true": "Тогда удаление старых RS «для чистоты» не мешало бы, но `rollout undo` падает с `no rollout history found`.",
+                "how_it_should_be": "Откат масштабирует сохранённый старый ReplicaSet вверх, не создавая ничего с нуля."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`kubectl rollout undo --to-revision=3` откатывает `Deployment` к конкретной сохранённой ревизии.",
               "correct": true,
               "sections": {
@@ -883,18 +895,6 @@
                 "when_to_apply": "Откат на конкретную ревизию нужен, когда несколько последних деплоев плохие и вернуться надо не на предыдущий, а на заведомо рабочий.",
                 "edge_cases": "По умолчанию хранится 10 ревизий (`revisionHistoryLimit`); если вручную удалить старые RS, `rollout undo` падает с `no rollout history found`.",
                 "related": "[[kubernetes-interview#Q13]] Deployment и история ревизий; [[kubernetes-interview#Q14]] стратегии обновления; [[kubernetes-interview#Q36]] helm rollback как аналог."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`kubectl rollout pause` полностью останавливает существующие поды и запрещает новые запросы к сервису.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`pause` лишь останавливает процесс раскатки (новые поды перестают создаваться), а существующие поды продолжают работать и обслуживать трафик.",
-                "source_of_confusion": "Слово «pause» понимают как «заморозить весь сервис», а не только раскатку.",
-                "if_it_were_true": "Тогда `pause` вызывал бы downtime, но он используется именно для проверки промежуточного состояния обновления без остановки трафика.",
-                "how_it_should_be": "`pause` приостанавливает только rollout; работающие поды продолжают принимать запросы."
               }
             }
           ]
@@ -923,6 +923,19 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`StatefulSet` даёт стабильные индексы `pod-0`, `pod-1`, индивидуальный PVC и упорядоченный rollout.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стабильные сетевые идентификаторы (DNS `pod-0.service.ns.svc.cluster.local`) нужны для cluster membership в Kafka/Cassandra/etcd (`pod-0` — primary, остальные — replicas); индивидуальный PVC на под создаётся через `volumeClaimTemplates` и сохраняется даже при удалении StatefulSet.",
+                "example": "Kafka StatefulSet с `pod-0`,`pod-1`,`pod-2` brokers + headless Service для peer discovery; PostgreSQL operator (Zalando, Crunchy) на StatefulSet.",
+                "when_to_apply": "`StatefulSet` берут для stateful-нагрузок со стабильной идентичностью и собственным хранилищем: БД, брокеры, кеши, ZooKeeper, Elasticsearch.",
+                "edge_cases": "Обновление идёт последовательно в обратном порядке (`pod-N → pod-0`) с ожиданием Ready; `Parallel` podManagementPolicy для Kafka рестартит всех брокеров разом, ISR теряется.",
+                "related": "[[kubernetes-interview#Q17]] StatefulSet vs Deployment; [[kubernetes-interview#Q29]] PVC и volumeClaimTemplates; [[kubernetes-interview#Q12]] почему не ReplicaSet для stateful."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`StatefulSet` даёт уникальные имена подам, но все они разделяют один общий PersistentVolume для согласованности.",
               "correct": false,
               "sections": {
@@ -933,8 +946,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`StatefulSet` обновляет и масштабирует поды параллельно и в случайном порядке, ровно так же, как `Deployment`.",
               "correct": false,
               "sections": {
@@ -942,19 +955,6 @@
                 "source_of_confusion": "Поведение Deployment (параллельный rollout) переносят на StatefulSet.",
                 "if_it_were_true": "Тогда `Parallel` podManagementPolicy ускорял бы Kafka rolling update, но все брокеры рестартят разом, ISR теряется, кластер молчит 5 мин.",
                 "how_it_should_be": "StatefulSet обновляет поды по одному в обратном порядке, ожидая готовности каждого."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`StatefulSet` даёт стабильные индексы `pod-0`, `pod-1`, индивидуальный PVC и упорядоченный rollout.",
-              "correct": true,
-              "sections": {
-                "explanation": "Стабильные сетевые идентификаторы (DNS `pod-0.service.ns.svc.cluster.local`) нужны для cluster membership в Kafka/Cassandra/etcd (`pod-0` — primary, остальные — replicas); индивидуальный PVC на под создаётся через `volumeClaimTemplates` и сохраняется даже при удалении StatefulSet.",
-                "example": "Kafka StatefulSet с `pod-0`,`pod-1`,`pod-2` brokers + headless Service для peer discovery; PostgreSQL operator (Zalando, Crunchy) на StatefulSet.",
-                "when_to_apply": "`StatefulSet` берут для stateful-нагрузок со стабильной идентичностью и собственным хранилищем: БД, брокеры, кеши, ZooKeeper, Elasticsearch.",
-                "edge_cases": "Обновление идёт последовательно в обратном порядке (`pod-N → pod-0`) с ожиданием Ready; `Parallel` podManagementPolicy для Kafka рестартит всех брокеров разом, ISR теряется.",
-                "related": "[[kubernetes-interview#Q17]] StatefulSet vs Deployment; [[kubernetes-interview#Q29]] PVC и volumeClaimTemplates; [[kubernetes-interview#Q12]] почему не ReplicaSet для stateful."
               }
             }
           ]
@@ -971,31 +971,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Deployment` удаляет поды параллельно со случайными суффиксами, `StatefulSet` — последовательно с индексами.",
-              "correct": true,
-              "sections": {
-                "explanation": "Deployment оптимизирован для stateless-нагрузок, где порядок не важен, и удаляет поды параллельно (имена со случайными суффиксами `abc-xyz12`); StatefulSet гарантирует предсказуемый порядок и стабильные порядковые индексы (`pod-0`, `pod-1`), что требуется базам данных и кластерным системам.",
-                "example": "Frontend SPA на Deployment скейлится в любом порядке; PostgreSQL на StatefulSet удаляет `pod-2`, потом `pod-1`, чтобы не потерять кворум.",
-                "when_to_apply": "Deployment выбирают для REST API и frontend; StatefulSet — для БД, очередей и кешей со стабильной адресацией реплик.",
-                "edge_cases": "DNS у Deployment непредсказуем (`abc-xyz12`), а у StatefulSet стабилен (`pod-0.service.namespace.svc.cluster.local`) — на это завязана адресация конкретной реплики.",
-                "related": "[[kubernetes-interview#Q16]] что такое StatefulSet; [[kubernetes-interview#Q13]] Deployment поверх ReplicaSet; [[kubernetes-interview#Q29]] индивидуальный PVC на реплику."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`StatefulSet` и `Deployment` создают поды с одинаковыми случайными суффиксами в именах, без порядковых индексов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "StatefulSet использует порядковые индексы (`pod-0`, `pod-1`), а Deployment — случайные суффиксы (`pod-abc12`); стабильные имена StatefulSet критичны для DNS-адресации реплик.",
-                "source_of_confusion": "Оба контроллера создают наборы подов, и схему именования считают общей.",
-                "if_it_were_true": "Тогда нельзя было бы адресовать `pod-0` напрямую, но именно стабильные имена нужны Kafka/ZooKeeper для discovery.",
-                "how_it_should_be": "Deployment даёт случайные суффиксы, StatefulSet — стабильные порядковые индексы."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Deployment` сохраняет индивидуальный PVC для каждой реплики при масштабировании через volumeClaimTemplates.",
               "correct": false,
               "sections": {
@@ -1006,8 +981,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`StatefulSet` удаляет поды параллельно при масштабировании вниз, как и `Deployment`.",
               "correct": false,
               "sections": {
@@ -1015,6 +990,31 @@
                 "source_of_confusion": "Параллельное удаление Deployment переносят на StatefulSet.",
                 "if_it_were_true": "Тогда scale-down кластера БД был бы быстрым, но одновременное удаление нескольких реплик роняет кворум.",
                 "how_it_should_be": "StatefulSet удаляет поды по одному в обратном порядке, Deployment — параллельно."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`StatefulSet` и `Deployment` создают поды с одинаковыми случайными суффиксами в именах, без порядковых индексов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "StatefulSet использует порядковые индексы (`pod-0`, `pod-1`), а Deployment — случайные суффиксы (`pod-abc12`); стабильные имена StatefulSet критичны для DNS-адресации реплик.",
+                "source_of_confusion": "Оба контроллера создают наборы подов, и схему именования считают общей.",
+                "if_it_were_true": "Тогда нельзя было бы адресовать `pod-0` напрямую, но именно стабильные имена нужны Kafka/ZooKeeper для discovery.",
+                "how_it_should_be": "Deployment даёт случайные суффиксы, StatefulSet — стабильные порядковые индексы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Deployment` удаляет поды параллельно со случайными суффиксами, `StatefulSet` — последовательно с индексами.",
+              "correct": true,
+              "sections": {
+                "explanation": "Deployment оптимизирован для stateless-нагрузок, где порядок не важен, и удаляет поды параллельно (имена со случайными суффиксами `abc-xyz12`); StatefulSet гарантирует предсказуемый порядок и стабильные порядковые индексы (`pod-0`, `pod-1`), что требуется базам данных и кластерным системам.",
+                "example": "Frontend SPA на Deployment скейлится в любом порядке; PostgreSQL на StatefulSet удаляет `pod-2`, потом `pod-1`, чтобы не потерять кворум.",
+                "when_to_apply": "Deployment выбирают для REST API и frontend; StatefulSet — для БД, очередей и кешей со стабильной адресацией реплик.",
+                "edge_cases": "DNS у Deployment непредсказуем (`abc-xyz12`), а у StatefulSet стабилен (`pod-0.service.namespace.svc.cluster.local`) — на это завязана адресация конкретной реплики.",
+                "related": "[[kubernetes-interview#Q16]] что такое StatefulSet; [[kubernetes-interview#Q13]] Deployment поверх ReplicaSet; [[kubernetes-interview#Q29]] индивидуальный PVC на реплику."
               }
             }
           ]
@@ -1031,31 +1031,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`DaemonSet` запускает фиксированное количество реплик пода независимо от числа нод в кластере.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это описание `ReplicaSet`; DaemonSet запускает по одной копии на каждой ноде, и число подов растёт/падает вместе с числом нод.",
-                "source_of_confusion": "И DaemonSet, и ReplicaSet «держат набор подов», поэтому фиксированное число приписывают DaemonSet.",
-                "if_it_were_true": "Тогда добавление ноды не давало бы агента на ней, но DaemonSet как раз автоматически разворачивает под на новой ноде.",
-                "how_it_should_be": "Фиксированное число — у `ReplicaSet`; DaemonSet привязан к числу нод (один на ноду)."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`DaemonSet` гарантирует запуск ровно одной копии пода на каждой ноде и автоматически добавляет под на новую ноду.",
-              "correct": true,
-              "sections": {
-                "explanation": "Это ключевое свойство DaemonSet: при добавлении ноды в кластер он сам запускает на ней под без дополнительных действий, а при удалении ноды — убирает.",
-                "example": "Типичные применения — `Fluentd`/`Filebeat` для сбора логов, `Node Exporter` для метрик нод, `Calico`/`Cilium` как сетевые плагины.",
-                "when_to_apply": "`DaemonSet` берут для системных агентов, которые должны жить на каждой ноде: логирование, мониторинг, сеть, security.",
-                "edge_cases": "Чтобы под DaemonSet попал и на control-plane ноды (с taint), нужен соответствующий `toleration` — иначе агент туда не сядет.",
-                "related": "[[kubernetes-interview#Q12]] ReplicaSet (фиксированное число vs по ноде); [[kubernetes-interview#Q19]] Job для разовых задач; [[kubernetes-interview#Q38]] Fluentd как DaemonSet для логов."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`DaemonSet` используется для запуска краткосрочных задач на всех нодах, завершающихся после выполнения.",
               "correct": false,
               "sections": {
@@ -1066,8 +1041,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`DaemonSet` запускает несколько реплик пода на каждой ноде для обеспечения высокой доступности агентов.",
               "correct": false,
               "sections": {
@@ -1075,6 +1050,31 @@
                 "source_of_confusion": "HA обычно достигают несколькими репликами, и это правило переносят на DaemonSet.",
                 "if_it_were_true": "Тогда на ноде было бы два `Node Exporter`, но они конфликтовали бы за один порт/hostPath.",
                 "how_it_should_be": "DaemonSet держит ровно одну копию на ноду; HA обеспечивается тем, что агент есть на каждой ноде."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`DaemonSet` запускает фиксированное количество реплик пода независимо от числа нод в кластере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание `ReplicaSet`; DaemonSet запускает по одной копии на каждой ноде, и число подов растёт/падает вместе с числом нод.",
+                "source_of_confusion": "И DaemonSet, и ReplicaSet «держат набор подов», поэтому фиксированное число приписывают DaemonSet.",
+                "if_it_were_true": "Тогда добавление ноды не давало бы агента на ней, но DaemonSet как раз автоматически разворачивает под на новой ноде.",
+                "how_it_should_be": "Фиксированное число — у `ReplicaSet`; DaemonSet привязан к числу нод (один на ноду)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`DaemonSet` гарантирует запуск ровно одной копии пода на каждой ноде и автоматически добавляет под на новую ноду.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это ключевое свойство DaemonSet: при добавлении ноды в кластер он сам запускает на ней под без дополнительных действий, а при удалении ноды — убирает.",
+                "example": "Типичные применения — `Fluentd`/`Filebeat` для сбора логов, `Node Exporter` для метрик нод, `Calico`/`Cilium` как сетевые плагины.",
+                "when_to_apply": "`DaemonSet` берут для системных агентов, которые должны жить на каждой ноде: логирование, мониторинг, сеть, security.",
+                "edge_cases": "Чтобы под DaemonSet попал и на control-plane ноды (с taint), нужен соответствующий `toleration` — иначе агент туда не сядет.",
+                "related": "[[kubernetes-interview#Q12]] ReplicaSet (фиксированное число vs по ноде); [[kubernetes-interview#Q19]] Job для разовых задач; [[kubernetes-interview#Q38]] Fluentd как DaemonSet для логов."
               }
             }
           ]
@@ -1091,18 +1091,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Job` запускает под, который работает постоянно и перезапускается при падении, как `Deployment`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это описание `Deployment` с `restartPolicy: Always`; Job — для конечных задач, под завершается после выполнения работы.",
-                "source_of_confusion": "И Job, и Deployment управляют подами, но у них противоположный жизненный цикл.",
-                "if_it_were_true": "Тогда `restartPolicy: Always` был бы валиден для Job, но Job допускает только `Never`/`OnFailure`.",
-                "how_it_should_be": "Постоянно работающий под — это `Deployment`; Job завершается после выполнения задачи."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`CronJob` с `concurrencyPolicy=Forbid` останавливает текущее выполнение и запускает новое по расписанию.",
               "correct": false,
               "sections": {
@@ -1110,6 +1098,18 @@
                 "source_of_confusion": "Оба политики решают конфликт параллельных запусков, и их эффекты путают.",
                 "if_it_were_true": "Тогда `Forbid` прерывал бы текущий Job, но он наоборот защищает уже идущий, пропуская новый.",
                 "how_it_should_be": "Прерывание текущего ради нового — это `Replace`; `Forbid` пропускает новый запуск."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`CronJob` создаёт один под напрямую по расписанию, минуя объект `Job`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CronJob создаёт объект `Job` по расписанию, а уже Job создаёт поды: иерархия CronJob → Job → Pod.",
+                "source_of_confusion": "С точки зрения пользователя по расписанию «просто появляется под», и промежуточный Job не замечают.",
+                "if_it_were_true": "Тогда не было бы retry-логики и параллелизма Job, но именно слой Job даёт `backoffLimit` и `completions`.",
+                "how_it_should_be": "CronJob по расписанию создаёт Job, а Job — поды; это трёхуровневая иерархия."
               }
             },
             {
@@ -1128,13 +1128,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`CronJob` создаёт один под напрямую по расписанию, минуя объект `Job`.",
+              "text": "`Job` запускает под, который работает постоянно и перезапускается при падении, как `Deployment`.",
               "correct": false,
               "sections": {
-                "what_actually": "CronJob создаёт объект `Job` по расписанию, а уже Job создаёт поды: иерархия CronJob → Job → Pod.",
-                "source_of_confusion": "С точки зрения пользователя по расписанию «просто появляется под», и промежуточный Job не замечают.",
-                "if_it_were_true": "Тогда не было бы retry-логики и параллелизма Job, но именно слой Job даёт `backoffLimit` и `completions`.",
-                "how_it_should_be": "CronJob по расписанию создаёт Job, а Job — поды; это трёхуровневая иерархия."
+                "what_actually": "Это описание `Deployment` с `restartPolicy: Always`; Job — для конечных задач, под завершается после выполнения работы.",
+                "source_of_confusion": "И Job, и Deployment управляют подами, но у них противоположный жизненный цикл.",
+                "if_it_were_true": "Тогда `restartPolicy: Always` был бы валиден для Job, но Job допускает только `Never`/`OnFailure`.",
+                "how_it_should_be": "Постоянно работающий под — это `Deployment`; Job завершается после выполнения задачи."
               }
             }
           ]
@@ -1151,18 +1151,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ClusterIP` доступен снаружи кластера по IP-адресу любой ноды и фиксированному порту в диапазоне 30000-32767.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`ClusterIP` доступен ТОЛЬКО внутри кластера через виртуальный IP; для внешнего доступа нужен `NodePort` или `LoadBalancer`.",
-                "source_of_confusion": "У ClusterIP есть IP, и кажется, что по нему можно достучаться снаружи.",
-                "if_it_were_true": "Тогда public API на ClusterIP работал бы, но `curl` снаружи получает timeout, инцидент со сторонними клиентами.",
-                "how_it_should_be": "ClusterIP — только внутрикластерный; внешний доступ дают NodePort/LoadBalancer."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`NodePort` доступен только внутри кластера и, в отличие от `ClusterIP`, не открывает порт на нодах.",
               "correct": false,
               "sections": {
@@ -1173,20 +1161,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`LoadBalancer` заменяет `ClusterIP` и `NodePort`, создавая только внешний балансировщик без внутреннего IP.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`LoadBalancer` — надстройка над `NodePort`, который надстройка над `ClusterIP`; при создании автоматически появляются и ClusterIP, и NodePort.",
-                "source_of_confusion": "LoadBalancer виден как «внешняя точка», и внутренние слои считают ненужными.",
-                "if_it_were_true": "Тогда не было бы внутреннего IP, но внутренний трафик всё равно идёт через `kube-proxy` без stickiness, session affinity ломается.",
-                "how_it_should_be": "LoadBalancer включает в себя ClusterIP и NodePort, а не заменяет их."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`ClusterIP` (по умолчанию) — стабильный виртуальный IP внутри кластера, который `kube-proxy` транслирует в IP подов.",
               "correct": true,
               "sections": {
@@ -1195,6 +1171,30 @@
                 "when_to_apply": "`ClusterIP` берут для межсервисного взаимодействия внутри кластера; `LoadBalancer` — для внешнего трафика, `Headless` — для StatefulSet.",
                 "edge_cases": "`ClusterIP` доступен только внутри кластера; для публичного API его недостаточно — снаружи `curl` получит timeout, нужен `NodePort`/`LoadBalancer`.",
                 "related": "[[kubernetes-interview#Q21]] разница ClusterIP/NodePort/LoadBalancer; [[kubernetes-interview#Q22]] Ingress для L7; [[kubernetes-interview#Q24]] DNS для Service."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`ClusterIP` доступен снаружи кластера по IP-адресу любой ноды и фиксированному порту в диапазоне 30000-32767.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ClusterIP` доступен ТОЛЬКО внутри кластера через виртуальный IP; для внешнего доступа нужен `NodePort` или `LoadBalancer`.",
+                "source_of_confusion": "У ClusterIP есть IP, и кажется, что по нему можно достучаться снаружи.",
+                "if_it_were_true": "Тогда public API на ClusterIP работал бы, но `curl` снаружи получает timeout, инцидент со сторонними клиентами.",
+                "how_it_should_be": "ClusterIP — только внутрикластерный; внешний доступ дают NodePort/LoadBalancer."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`LoadBalancer` заменяет `ClusterIP` и `NodePort`, создавая только внешний балансировщик без внутреннего IP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`LoadBalancer` — надстройка над `NodePort`, который надстройка над `ClusterIP`; при создании автоматически появляются и ClusterIP, и NodePort.",
+                "source_of_confusion": "LoadBalancer виден как «внешняя точка», и внутренние слои считают ненужными.",
+                "if_it_were_true": "Тогда не было бы внутреннего IP, но внутренний трафик всё равно идёт через `kube-proxy` без stickiness, session affinity ломается.",
+                "how_it_should_be": "LoadBalancer включает в себя ClusterIP и NodePort, а не заменяет их."
               }
             }
           ]
@@ -1236,18 +1236,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`LoadBalancer` создаёт только внешний IP и работает в обход `NodePort`, направляя трафик напрямую в поды.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`LoadBalancer` ВКЛЮЧАЕТ `NodePort` (порт на нодах) и `ClusterIP` (внутренний IP); облачный LB шлёт трафик на NodePort нод, далее kube-proxy → поды.",
-                "source_of_confusion": "Виден только внешний IP, и внутренние слои считают отсутствующими.",
-                "if_it_were_true": "Тогда при отладке не было бы `targetPort 30xxx` в iptables, но он есть, и без понимания этого теряют час на reverse-engineering.",
-                "how_it_should_be": "LoadBalancer всегда стоит поверх NodePort и ClusterIP."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`ClusterIP`/`NodePort`/`LoadBalancer` — три независимых механизма без иерархической зависимости.",
               "correct": false,
               "sections": {
@@ -1255,6 +1243,18 @@
                 "source_of_confusion": "Три разных `type` выглядят как независимые альтернативы.",
                 "if_it_were_true": "Тогда можно было бы удалить «лишний» ClusterIP при создании LoadBalancer, но Service ломается и восстанавливается только пересозданием с downtime.",
                 "how_it_should_be": "Типы вложены друг в друга; верхний всегда содержит нижние."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`LoadBalancer` создаёт только внешний IP и работает в обход `NodePort`, направляя трафик напрямую в поды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`LoadBalancer` ВКЛЮЧАЕТ `NodePort` (порт на нодах) и `ClusterIP` (внутренний IP); облачный LB шлёт трафик на NodePort нод, далее kube-proxy → поды.",
+                "source_of_confusion": "Виден только внешний IP, и внутренние слои считают отсутствующими.",
+                "if_it_were_true": "Тогда при отладке не было бы `targetPort 30xxx` в iptables, но он есть, и без понимания этого теряют час на reverse-engineering.",
+                "how_it_should_be": "LoadBalancer всегда стоит поверх NodePort и ClusterIP."
               }
             }
           ]
@@ -1271,18 +1271,30 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Ingress` — тип `Service`, заменяющий `LoadBalancer` для HTTP-трафика, не требующий контроллера.",
+              "text": "`Ingress` автоматически выпускает TLS-сертификаты Let's Encrypt без дополнительных инструментов.",
               "correct": false,
               "sections": {
-                "what_actually": "Ingress — отдельный ресурс, не тип Service; без установленного Ingress-контроллера манифест не работает.",
-                "source_of_confusion": "Ingress и Service оба про сетевой доступ, и Ingress принимают за разновидность Service.",
-                "if_it_were_true": "Тогда Ingress в свежем kubeadm-кластере без `nginx-ingress` сразу работал бы, но внешний URL отдаёт 404.",
-                "how_it_should_be": "Ingress — самостоятельный L7-ресурс, исполняемый отдельным контроллером."
+                "what_actually": "Ingress хранит ссылку на готовый Secret с сертификатом; автоматический выпуск делает отдельный `cert-manager`, а не core K8s.",
+                "source_of_confusion": "В туториалах Ingress часто идёт в связке с cert-manager, и его функции приписывают самому Ingress.",
+                "if_it_were_true": "Тогда `tls.secretName` сам бы наполнялся сертификатом, но через 90 дней prod-сертификат истекает с `ERR_CERT_DATE_INVALID`.",
+                "how_it_should_be": "Выпуск и ротацию TLS делает `cert-manager`; Ingress лишь ссылается на готовый Secret."
               }
             },
             {
               "order": 1,
               "label": "B",
+              "text": "`Ingress` управляет TCP/UDP-трафиком на L4 по IP-адресам и портам в обход Ingress-контроллера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ingress работает на L7 (HTTP/HTTPS) с маршрутизацией по host/path; для TCP/UDP нужен Gateway API или Service `LoadBalancer`.",
+                "source_of_confusion": "Ingress — про вход в кластер, и его роль расширяют до любого протокола.",
+                "if_it_were_true": "Тогда PostgreSQL TCP проходил бы через Ingress, но манифест валиден, а трафик 5432 не маршрутизируется.",
+                "how_it_should_be": "Ingress — L7 для HTTP/HTTPS; TCP/UDP идут через Gateway API или LoadBalancer."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Ingress` — отдельный L7-ресурс для HTTP/HTTPS-маршрутизации по хостам и путям, требующий Ingress-контроллера.",
               "correct": true,
               "sections": {
@@ -1294,27 +1306,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`Ingress` управляет TCP/UDP-трафиком на L4 по IP-адресам и портам в обход Ingress-контроллера.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Ingress работает на L7 (HTTP/HTTPS) с маршрутизацией по host/path; для TCP/UDP нужен Gateway API или Service `LoadBalancer`.",
-                "source_of_confusion": "Ingress — про вход в кластер, и его роль расширяют до любого протокола.",
-                "if_it_were_true": "Тогда PostgreSQL TCP проходил бы через Ingress, но манифест валиден, а трафик 5432 не маршрутизируется.",
-                "how_it_should_be": "Ingress — L7 для HTTP/HTTPS; TCP/UDP идут через Gateway API или LoadBalancer."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "`Ingress` автоматически выпускает TLS-сертификаты Let's Encrypt без дополнительных инструментов.",
+              "text": "`Ingress` — тип `Service`, заменяющий `LoadBalancer` для HTTP-трафика, не требующий контроллера.",
               "correct": false,
               "sections": {
-                "what_actually": "Ingress хранит ссылку на готовый Secret с сертификатом; автоматический выпуск делает отдельный `cert-manager`, а не core K8s.",
-                "source_of_confusion": "В туториалах Ingress часто идёт в связке с cert-manager, и его функции приписывают самому Ingress.",
-                "if_it_were_true": "Тогда `tls.secretName` сам бы наполнялся сертификатом, но через 90 дней prod-сертификат истекает с `ERR_CERT_DATE_INVALID`.",
-                "how_it_should_be": "Выпуск и ротацию TLS делает `cert-manager`; Ingress лишь ссылается на готовый Secret."
+                "what_actually": "Ingress — отдельный ресурс, не тип Service; без установленного Ingress-контроллера манифест не работает.",
+                "source_of_confusion": "Ingress и Service оба про сетевой доступ, и Ingress принимают за разновидность Service.",
+                "if_it_were_true": "Тогда Ingress в свежем kubeadm-кластере без `nginx-ingress` сразу работал бы, но внешний URL отдаёт 404.",
+                "how_it_should_be": "Ingress — самостоятельный L7-ресурс, исполняемый отдельным контроллером."
               }
             }
           ]
@@ -1343,13 +1343,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`port` — это порт на каждой ноде кластера, доступный снаружи для внешних клиентов.",
+              "text": "`nodePort` — порт контейнера, `port` — порт ноды для внешнего доступа, `targetPort` — порт Service внутри кластера.",
               "correct": false,
               "sections": {
-                "what_actually": "Это описание `nodePort`; `port` — порт самого Service внутри кластера, по которому к нему обращаются другие поды.",
-                "source_of_confusion": "Оба — числовые порты Service, и внешний `nodePort` путают с внутренним `port`.",
-                "if_it_were_true": "Тогда `port` открывался бы наружу на нодах, но внешний доступ даёт именно `nodePort` (30000-32767).",
-                "how_it_should_be": "`port` — внутренний порт Service; внешний порт на ноде — это `nodePort`."
+                "what_actually": "Поля перепутаны: `nodePort` (30000-32767) — порт на ноде для внешнего трафика, `port` — порт виртуального IP Service, `targetPort` — порт процесса в контейнере.",
+                "source_of_confusion": "Три похожих поля «...Port» легко переставить местами по памяти.",
+                "if_it_were_true": "Тогда такая Service-конфигурация маршрутизировала бы трафик правильно, но при перепутанных полях он не доходит до контейнера.",
+                "how_it_should_be": "`targetPort` — контейнер, `port` — Service внутри кластера, `nodePort` — порт на ноде."
               }
             },
             {
@@ -1368,13 +1368,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`nodePort` — порт контейнера, `port` — порт ноды для внешнего доступа, `targetPort` — порт Service внутри кластера.",
+              "text": "`port` — это порт на каждой ноде кластера, доступный снаружи для внешних клиентов.",
               "correct": false,
               "sections": {
-                "what_actually": "Поля перепутаны: `nodePort` (30000-32767) — порт на ноде для внешнего трафика, `port` — порт виртуального IP Service, `targetPort` — порт процесса в контейнере.",
-                "source_of_confusion": "Три похожих поля «...Port» легко переставить местами по памяти.",
-                "if_it_were_true": "Тогда такая Service-конфигурация маршрутизировала бы трафик правильно, но при перепутанных полях он не доходит до контейнера.",
-                "how_it_should_be": "`targetPort` — контейнер, `port` — Service внутри кластера, `nodePort` — порт на ноде."
+                "what_actually": "Это описание `nodePort`; `port` — порт самого Service внутри кластера, по которому к нему обращаются другие поды.",
+                "source_of_confusion": "Оба — числовые порты Service, и внешний `nodePort` путают с внутренним `port`.",
+                "if_it_were_true": "Тогда `port` открывался бы наружу на нодах, но внешний доступ даёт именно `nodePort` (30000-32767).",
+                "how_it_should_be": "`port` — внутренний порт Service; внешний порт на ноде — это `nodePort`."
               }
             }
           ]
@@ -1391,30 +1391,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "DNS-запись сервиса имеет формат `<namespace>.<service-name>.cluster.local` без суффикса `svc`.",
-              "correct": false,
+              "text": "`CoreDNS` обеспечивает DNS в кластере: сервисы доступны по имени `<service>.<namespace>.svc.cluster.local`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Корректный формат — `<service>.<namespace>.svc.cluster.local`; суффикс `svc` обязателен, а порядок именно service-then-namespace.",
-                "source_of_confusion": "Порядок меток и наличие `svc` легко перепутать, если запоминать на слух.",
-                "if_it_were_true": "Тогда хардкод такого имени работал бы, но вызовы из другого namespace падают с `NXDOMAIN`, отладка тонет в DNS-кэше.",
-                "how_it_should_be": "Формат — `<service>.<namespace>.svc.cluster.local` с обязательным `svc`."
+                "explanation": "CoreDNS запускается как Deployment в `kube-system` и автоматически создаёт DNS-запись для каждого Service; поды в том же namespace используют короткое имя, из другого — полное.",
+                "example": "В том же namespace — `curl http://backend-svc:80/api`; из другого — `backend-svc.production.svc.cluster.local`; headless — `postgres-0.postgres-headless.default.svc.cluster.local`.",
+                "when_to_apply": "Понимание формата DNS нужно при настройке межсервисных вызовов и адресации конкретных подов StatefulSet через headless Service.",
+                "edge_cases": "Суффикс `svc` — обязательная часть иерархии; неправильное имя (`<namespace>.<service>.cluster.local`) даёт `NXDOMAIN`, а отладку усложняет кэш CoreDNS.",
+                "related": "[[kubernetes-interview#Q20]] Service, для которого создаётся запись; [[kubernetes-interview#Q16]] headless DNS для StatefulSet; [[kubernetes-interview#Q2]] CoreDNS в кластере."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Из другого namespace сервис недоступен по DNS — нужно использовать IP-адрес ClusterIP напрямую.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Из другого namespace достаточно полного имени с namespace (`backend-svc.production.svc.cluster.local`); IP использовать не нужно и нежелательно — он может меняться.",
-                "source_of_confusion": "Короткое имя действительно не резолвится между namespace, и отсюда вывод о недоступности по DNS вообще.",
-                "if_it_were_true": "Тогда пришлось бы хардкодить ClusterIP, но при пересоздании Service IP меняется, и вызовы ломаются.",
-                "how_it_should_be": "Из другого namespace зовут полное FQDN-имя сервиса, а не его IP."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "DNS в Kubernetes реализован через `kube-proxy`, который хранит записи в iptables каждой ноды.",
               "correct": false,
               "sections": {
@@ -1425,16 +1414,27 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "DNS-запись сервиса имеет формат `<namespace>.<service-name>.cluster.local` без суффикса `svc`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Корректный формат — `<service>.<namespace>.svc.cluster.local`; суффикс `svc` обязателен, а порядок именно service-then-namespace.",
+                "source_of_confusion": "Порядок меток и наличие `svc` легко перепутать, если запоминать на слух.",
+                "if_it_were_true": "Тогда хардкод такого имени работал бы, но вызовы из другого namespace падают с `NXDOMAIN`, отладка тонет в DNS-кэше.",
+                "how_it_should_be": "Формат — `<service>.<namespace>.svc.cluster.local` с обязательным `svc`."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "`CoreDNS` обеспечивает DNS в кластере: сервисы доступны по имени `<service>.<namespace>.svc.cluster.local`.",
-              "correct": true,
+              "text": "Из другого namespace сервис недоступен по DNS — нужно использовать IP-адрес ClusterIP напрямую.",
+              "correct": false,
               "sections": {
-                "explanation": "CoreDNS запускается как Deployment в `kube-system` и автоматически создаёт DNS-запись для каждого Service; поды в том же namespace используют короткое имя, из другого — полное.",
-                "example": "В том же namespace — `curl http://backend-svc:80/api`; из другого — `backend-svc.production.svc.cluster.local`; headless — `postgres-0.postgres-headless.default.svc.cluster.local`.",
-                "when_to_apply": "Понимание формата DNS нужно при настройке межсервисных вызовов и адресации конкретных подов StatefulSet через headless Service.",
-                "edge_cases": "Суффикс `svc` — обязательная часть иерархии; неправильное имя (`<namespace>.<service>.cluster.local`) даёт `NXDOMAIN`, а отладку усложняет кэш CoreDNS.",
-                "related": "[[kubernetes-interview#Q20]] Service, для которого создаётся запись; [[kubernetes-interview#Q16]] headless DNS для StatefulSet; [[kubernetes-interview#Q2]] CoreDNS в кластере."
+                "what_actually": "Из другого namespace достаточно полного имени с namespace (`backend-svc.production.svc.cluster.local`); IP использовать не нужно и нежелательно — он может меняться.",
+                "source_of_confusion": "Короткое имя действительно не резолвится между namespace, и отсюда вывод о недоступности по DNS вообще.",
+                "if_it_were_true": "Тогда пришлось бы хардкодить ClusterIP, но при пересоздании Service IP меняется, и вызовы ломаются.",
+                "how_it_should_be": "Из другого namespace зовут полное FQDN-имя сервиса, а не его IP."
               }
             }
           ]
@@ -1451,14 +1451,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`NetworkPolicy` ограничивает ingress/egress выбранных подов и требует CNI-плагина с поддержкой.",
-              "correct": true,
+              "text": "`NetworkPolicy` реализуется самим `kube-proxy` без дополнительных CNI-плагинов.",
+              "correct": false,
               "sections": {
-                "explanation": "Манифест объявляет правила в рамках namespace, а CNI-плагин реализует их через iptables/eBPF; без поддерживающего CNI (Calico/Cilium/Weave) манифест создаётся в etcd, но эффекта нет.",
-                "example": "PCI-DSS изоляция payment-сервиса через Calico: egress только на `postgres-svc:5432` и `vault:8200`, ingress только из `api-gateway`.",
-                "when_to_apply": "`NetworkPolicy` применяют для сегментации трафика между подами/namespace и реализации least-privilege на сетевом уровне.",
-                "edge_cases": "По умолчанию K8s allow-all (все поды общаются); whitelist начинается только после первой политики для пода, а без Calico/Cilium политика — лишь декорация в etcd.",
-                "related": "[[kubernetes-interview#Q26]] ConfigMap для конфигурации сети; [[kubernetes-interview#Q33]] RBAC как другой уровень контроля доступа; [[kubernetes-interview#Q2]] kube-proxy и сетевая модель."
+                "what_actually": "`kube-proxy` НЕ реализует политики; нужен CNI с поддержкой (Calico, Cilium, Weave), а стандартный `kubenet` их не поддерживает.",
+                "source_of_confusion": "kube-proxy уже программирует сетевые правила, и фильтрацию приписывают ему.",
+                "if_it_were_true": "Тогда 50 политик на kubeadm без Calico работали бы, но `apply` проходит, а трафик не фильтруется — security audit находит дыру через год.",
+                "how_it_should_be": "Политики исполняет CNI-плагин (Calico/Cilium/Weave), а не kube-proxy."
               }
             },
             {
@@ -1488,13 +1487,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`NetworkPolicy` реализуется самим `kube-proxy` без дополнительных CNI-плагинов.",
-              "correct": false,
+              "text": "`NetworkPolicy` ограничивает ingress/egress выбранных подов и требует CNI-плагина с поддержкой.",
+              "correct": true,
               "sections": {
-                "what_actually": "`kube-proxy` НЕ реализует политики; нужен CNI с поддержкой (Calico, Cilium, Weave), а стандартный `kubenet` их не поддерживает.",
-                "source_of_confusion": "kube-proxy уже программирует сетевые правила, и фильтрацию приписывают ему.",
-                "if_it_were_true": "Тогда 50 политик на kubeadm без Calico работали бы, но `apply` проходит, а трафик не фильтруется — security audit находит дыру через год.",
-                "how_it_should_be": "Политики исполняет CNI-плагин (Calico/Cilium/Weave), а не kube-proxy."
+                "explanation": "Манифест объявляет правила в рамках namespace, а CNI-плагин реализует их через iptables/eBPF; без поддерживающего CNI (Calico/Cilium/Weave) манифест создаётся в etcd, но эффекта нет.",
+                "example": "PCI-DSS изоляция payment-сервиса через Calico: egress только на `postgres-svc:5432` и `vault:8200`, ingress только из `api-gateway`.",
+                "when_to_apply": "`NetworkPolicy` применяют для сегментации трафика между подами/namespace и реализации least-privilege на сетевом уровне.",
+                "edge_cases": "По умолчанию K8s allow-all (все поды общаются); whitelist начинается только после первой политики для пода, а без Calico/Cilium политика — лишь декорация в etcd.",
+                "related": "[[kubernetes-interview#Q26]] ConfigMap для конфигурации сети; [[kubernetes-interview#Q33]] RBAC как другой уровень контроля доступа; [[kubernetes-interview#Q2]] kube-proxy и сетевая модель."
               }
             }
           ]
@@ -1511,18 +1511,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ConfigMap` шифрует данные через base64 для безопасного хранения паролей.",
-              "correct": false,
-              "sections": {
-                "what_actually": "ConfigMap хранит данные В ОТКРЫТОМ ВИДЕ; base64-кодирование — атрибут `Secret`, и это тоже не шифрование.",
-                "source_of_confusion": "Base64 выглядит как «закодировано», что путают с шифрованием.",
-                "if_it_were_true": "Тогда DB-пароль в ConfigMap был бы защищён, но `kubectl get cm -o yaml` показывает его plaintext, утечка через describe в публичном чате.",
-                "how_it_should_be": "ConfigMap — plaintext без защиты; пароли держат в Secret или Vault."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`ConfigMap` хранит конфигурацию в plaintext и используется как env-vars, CLI-аргументы или volume-mount файлы.",
               "correct": true,
               "sections": {
@@ -1531,6 +1519,18 @@
                 "when_to_apply": "`ConfigMap` берут для открытой конфигурации; для паролей и токенов — `Secret` или external Vault.",
                 "edge_cases": "Изменение ConfigMap обновляет volume-mount с задержкой ~1 min, но env-vars фиксируются на старте контейнера и требуют `kubectl rollout restart`.",
                 "related": "[[kubernetes-interview#Q27]] Secret для конфиденциальных данных; [[kubernetes-interview#Q28]] способы передачи конфигурации; [[kubernetes-interview#Q30]] configMap как тип тома."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Изменение `ConfigMap` немедленно обновляет переменные окружения во всех запущенных подах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "env-vars фиксируются при старте контейнера и не меняются до restart; авто-обновляется только volume-mount (с задержкой ~1 min).",
+                "source_of_confusion": "Кажется, что раз ConfigMap «живой» объект, его изменения сразу долетают везде.",
+                "if_it_were_true": "Тогда смена `LOG_LEVEL` сразу бы подействовала, но через 30 мин выясняется, что нужен `kubectl rollout restart`.",
+                "how_it_should_be": "env подхватывают изменения только после рестарта пода; мгновенно обновляются лишь volume-mount файлы."
               }
             },
             {
@@ -1548,13 +1548,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Изменение `ConfigMap` немедленно обновляет переменные окружения во всех запущенных подах.",
+              "text": "`ConfigMap` шифрует данные через base64 для безопасного хранения паролей.",
               "correct": false,
               "sections": {
-                "what_actually": "env-vars фиксируются при старте контейнера и не меняются до restart; авто-обновляется только volume-mount (с задержкой ~1 min).",
-                "source_of_confusion": "Кажется, что раз ConfigMap «живой» объект, его изменения сразу долетают везде.",
-                "if_it_were_true": "Тогда смена `LOG_LEVEL` сразу бы подействовала, но через 30 мин выясняется, что нужен `kubectl rollout restart`.",
-                "how_it_should_be": "env подхватывают изменения только после рестарта пода; мгновенно обновляются лишь volume-mount файлы."
+                "what_actually": "ConfigMap хранит данные В ОТКРЫТОМ ВИДЕ; base64-кодирование — атрибут `Secret`, и это тоже не шифрование.",
+                "source_of_confusion": "Base64 выглядит как «закодировано», что путают с шифрованием.",
+                "if_it_were_true": "Тогда DB-пароль в ConfigMap был бы защищён, но `kubectl get cm -o yaml` показывает его plaintext, утечка через describe в публичном чате.",
+                "how_it_should_be": "ConfigMap — plaintext без защиты; пароли держат в Secret или Vault."
               }
             }
           ]
@@ -1571,30 +1571,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Secret` шифрует данные через AES-256 перед сохранением в etcd по умолчанию, без дополнительной настройки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По умолчанию Secret хранится в etcd plaintext (только base64); Encryption at Rest включается отдельно через `EncryptionConfiguration` apiserver.",
-                "source_of_confusion": "Само слово «Secret» внушает, что внутри есть шифрование из коробки.",
-                "if_it_were_true": "Тогда компрометация etcd была бы безопасна, но snapshot etcd в S3 без шифрования даёт plaintext доступ ко всем паролям.",
-                "how_it_should_be": "Шифрование at rest нужно включать явно через `EncryptionConfiguration`; по умолчанию только base64."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`Secret` типа `Opaque` автоматически ротируется каждые 24 часа силами `kube-controller-manager`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "K8s НЕ ротирует Secret автоматически; ротация — задача Vault, cert-manager (для TLS) или CI/CD.",
-                "source_of_confusion": "От security-механизма ждут «из коробки» ротации, как у managed-сервисов.",
-                "if_it_were_true": "Тогда старые creds быстро инвалидировались бы, но без ротации бывший разработчик годами имеет valid-доступ через `kubectl get secret -o yaml`.",
-                "how_it_should_be": "Ротацию настраивают внешне (Vault, cert-manager, CI/CD); K8s сам её не делает."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Secret` хранит данные в base64-кодировании, а не в шифровании; реальная защита требует дополнительных мер.",
               "correct": true,
               "sections": {
@@ -1606,8 +1582,20 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
+              "text": "`Secret` шифрует данные через AES-256 перед сохранением в etcd по умолчанию, без дополнительной настройки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию Secret хранится в etcd plaintext (только base64); Encryption at Rest включается отдельно через `EncryptionConfiguration` apiserver.",
+                "source_of_confusion": "Само слово «Secret» внушает, что внутри есть шифрование из коробки.",
+                "if_it_were_true": "Тогда компрометация etcd была бы безопасна, но snapshot etcd в S3 без шифрования даёт plaintext доступ ко всем паролям.",
+                "how_it_should_be": "Шифрование at rest нужно включать явно через `EncryptionConfiguration`; по умолчанию только base64."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Secret` и `ConfigMap` имеют идентичный уровень защиты — оба plaintext без кодирования.",
               "correct": false,
               "sections": {
@@ -1615,6 +1603,18 @@
                 "source_of_confusion": "Оба хранят пары ключ-значение, и их защиту считают одинаковой.",
                 "if_it_were_true": "Тогда пароли в ConfigMap «всё равно одинаково» были бы безопасны, но публичный `kubectl describe cm` ведёт к инциденту на GDPR-аудите.",
                 "how_it_should_be": "Secret защищён сильнее ConfigMap (base64 + RBAC + опц. шифрование), и пароли кладут именно в Secret."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Secret` типа `Opaque` автоматически ротируется каждые 24 часа силами `kube-controller-manager`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "K8s НЕ ротирует Secret автоматически; ротация — задача Vault, cert-manager (для TLS) или CI/CD.",
+                "source_of_confusion": "От security-механизма ждут «из коробки» ротации, как у managed-сервисов.",
+                "if_it_were_true": "Тогда старые creds быстро инвалидировались бы, но без ротации бывший разработчик годами имеет valid-доступ через `kubectl get secret -o yaml`.",
+                "how_it_should_be": "Ротацию настраивают внешне (Vault, cert-manager, CI/CD); K8s сам её не делает."
               }
             }
           ]
@@ -1631,30 +1631,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Downward API` передаёт данные из внешних сервисов (БД, Vault) в переменные окружения контейнера.",
-              "correct": false,
+              "text": "`Downward API` позволяет контейнеру получать метаданные о самом поде из его спецификации.",
+              "correct": true,
               "sections": {
-                "what_actually": "Downward API предоставляет метаданные самого пода (имя, namespace, IP, labels, requests/limits); для внешних данных используют Secret или интеграции с Vault.",
-                "source_of_confusion": "«API для передачи данных» звучит так, будто оно тянет данные откуда угодно.",
-                "if_it_were_true": "Тогда пароль БД приходил бы через Downward API, но оно знает только про сам под, а не про внешние системы.",
-                "how_it_should_be": "Внешние данные — через Secret/Vault; Downward API даёт только метаданные пода."
+                "explanation": "Это уникальный механизм, позволяющий избежать хардкода pod-имён: приложение узнаёт своё имя через `POD_NAME` из `fieldRef: metadata.name`, а лимиты — через `resourceFieldRef`. Доступны имя, namespace, labels и ресурсы пода.",
+                "example": "`POD_NAME` через `fieldRef` для логирования и трейсинга, `CPU_LIMIT` через `resourceFieldRef` для настройки пула потоков под лимиты.",
+                "when_to_apply": "Downward API применяют, когда контейнеру нужны данные о самом себе (имя, namespace, ресурсы), которые нельзя знать заранее.",
+                "edge_cases": "Downward API даёт только метаданные пода; данные из внешних систем (БД, Vault) передают через Secret или интеграции, а не через него.",
+                "related": "[[kubernetes-interview#Q26]] ConfigMap как источник конфигурации; [[kubernetes-interview#Q27]] Secret для секретов; [[kubernetes-interview#Q30]] downwardAPI как тип тома."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`ConfigMap`/`Secret` как Volume обновляет переменные окружения контейнера без перезапуска пода.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Монтирование как Volume обновляет файлы в контейнере автоматически, но не переменные окружения; env фиксируются при старте и не меняются до перезапуска.",
-                "source_of_confusion": "Авто-обновление volume-mount переносят и на env-переменные.",
-                "if_it_were_true": "Тогда правка ConfigMap меняла бы env на лету, но env требует `rollout restart`, а сразу обновляются только файлы.",
-                "how_it_should_be": "Volume-mount обновляет файлы, а не env; env-переменные неизменны до рестарта."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Переменные окружения из `ConfigMap` и из `Secret` передаются разными механизмами и не могут использоваться одновременно.",
               "correct": false,
               "sections": {
@@ -1665,16 +1654,27 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "`Downward API` передаёт данные из внешних сервисов (БД, Vault) в переменные окружения контейнера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Downward API предоставляет метаданные самого пода (имя, namespace, IP, labels, requests/limits); для внешних данных используют Secret или интеграции с Vault.",
+                "source_of_confusion": "«API для передачи данных» звучит так, будто оно тянет данные откуда угодно.",
+                "if_it_were_true": "Тогда пароль БД приходил бы через Downward API, но оно знает только про сам под, а не про внешние системы.",
+                "how_it_should_be": "Внешние данные — через Secret/Vault; Downward API даёт только метаданные пода."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "`Downward API` позволяет контейнеру получать метаданные о самом поде из его спецификации.",
-              "correct": true,
+              "text": "`ConfigMap`/`Secret` как Volume обновляет переменные окружения контейнера без перезапуска пода.",
+              "correct": false,
               "sections": {
-                "explanation": "Это уникальный механизм, позволяющий избежать хардкода pod-имён: приложение узнаёт своё имя через `POD_NAME` из `fieldRef: metadata.name`, а лимиты — через `resourceFieldRef`. Доступны имя, namespace, labels и ресурсы пода.",
-                "example": "`POD_NAME` через `fieldRef` для логирования и трейсинга, `CPU_LIMIT` через `resourceFieldRef` для настройки пула потоков под лимиты.",
-                "when_to_apply": "Downward API применяют, когда контейнеру нужны данные о самом себе (имя, namespace, ресурсы), которые нельзя знать заранее.",
-                "edge_cases": "Downward API даёт только метаданные пода; данные из внешних систем (БД, Vault) передают через Secret или интеграции, а не через него.",
-                "related": "[[kubernetes-interview#Q26]] ConfigMap как источник конфигурации; [[kubernetes-interview#Q27]] Secret для секретов; [[kubernetes-interview#Q30]] downwardAPI как тип тома."
+                "what_actually": "Монтирование как Volume обновляет файлы в контейнере автоматически, но не переменные окружения; env фиксируются при старте и не меняются до перезапуска.",
+                "source_of_confusion": "Авто-обновление volume-mount переносят и на env-переменные.",
+                "if_it_were_true": "Тогда правка ConfigMap меняла бы env на лету, но env требует `rollout restart`, а сразу обновляются только файлы.",
+                "how_it_should_be": "Volume-mount обновляет файлы, а не env; env-переменные неизменны до рестарта."
               }
             }
           ]
@@ -1691,19 +1691,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`PVC` — запрос пользователя на хранилище, биндится 1-к-1 с `PV` (статически провижн или динамически через `StorageClass`).",
-              "correct": true,
-              "sections": {
-                "explanation": "PVC описывает требования (размер, accessMode, StorageClass), а K8s находит подходящий PV или создаёт его через CSI-провайдер (`gp3`, `pd-ssd`); после bind связь 1:1 неразрывна.",
-                "example": "PostgreSQL StatefulSet с `volumeClaimTemplates` + `StorageClass: gp3-encrypted` — каждой реплике свой EBS, ReclaimPolicy `Retain` для prod-БД.",
-                "when_to_apply": "PV/PVC используют для данных, которые должны пережить пересоздание пода: БД, файлы приложения, кеши с состоянием.",
-                "edge_cases": "Поведение при удалении PVC зависит от `persistentVolumeReclaimPolicy`: `Delete` уничтожает PV и данные, `Retain` оставляет PV для ручной обработки.",
-                "related": "[[kubernetes-interview#Q16]] StatefulSet и volumeClaimTemplates; [[kubernetes-interview#Q30]] типы томов; [[kubernetes-interview#Q17]] индивидуальный PVC vs общий том."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Pod создаёт `PersistentVolume` напрямую без промежуточного `PersistentVolumeClaim`.",
               "correct": false,
               "sections": {
@@ -1714,8 +1701,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`PersistentVolume` с режимом `ReadWriteOnce` монтируется одновременно несколькими подами на разных нодах.",
               "correct": false,
               "sections": {
@@ -1723,6 +1710,19 @@
                 "source_of_confusion": "«ReadWriteOnce» читают как «один раз можно записать», а не «одна нода».",
                 "if_it_were_true": "Тогда RWO-PVC из EBS работал бы на разных нодах, но при rolling update новый под застревает в `Pending` с `Multi-Attach error`.",
                 "how_it_should_be": "RWO привязан к одной ноде; для нескольких нод нужен RWX-том."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`PVC` — запрос пользователя на хранилище, биндится 1-к-1 с `PV` (статически провижн или динамически через `StorageClass`).",
+              "correct": true,
+              "sections": {
+                "explanation": "PVC описывает требования (размер, accessMode, StorageClass), а K8s находит подходящий PV или создаёт его через CSI-провайдер (`gp3`, `pd-ssd`); после bind связь 1:1 неразрывна.",
+                "example": "PostgreSQL StatefulSet с `volumeClaimTemplates` + `StorageClass: gp3-encrypted` — каждой реплике свой EBS, ReclaimPolicy `Retain` для prod-БД.",
+                "when_to_apply": "PV/PVC используют для данных, которые должны пережить пересоздание пода: БД, файлы приложения, кеши с состоянием.",
+                "edge_cases": "Поведение при удалении PVC зависит от `persistentVolumeReclaimPolicy`: `Delete` уничтожает PV и данные, `Retain` оставляет PV для ручной обработки.",
+                "related": "[[kubernetes-interview#Q16]] StatefulSet и volumeClaimTemplates; [[kubernetes-interview#Q30]] типы томов; [[kubernetes-interview#Q17]] индивидуальный PVC vs общий том."
               }
             },
             {
@@ -1751,13 +1751,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`emptyDir` хранит данные независимо от жизненного цикла пода и сохраняется после его удаления.",
+              "text": "`PersistentVolume` типа `configMap` используется для хранения больших бинарных файлов приложения.",
               "correct": false,
               "sections": {
-                "what_actually": "`emptyDir` создаётся при старте пода и удаляется вместе с ним; это временное хранилище для обмена данными между контейнерами или промежуточных вычислений.",
-                "source_of_confusion": "Слово «Dir» ассоциируется с постоянной директорией на диске.",
-                "if_it_were_true": "Тогда данные БД можно было бы держать в emptyDir, но после пересоздания пода они теряются.",
-                "how_it_should_be": "Постоянство даёт `PersistentVolume`; `emptyDir` живёт ровно столько, сколько под."
+                "what_actually": "`configMap` как том предназначен для небольших конфигурационных файлов (до 1 MiB); для бинарных файлов нужен PV с реальным хранилищем (EBS, NFS, Ceph).",
+                "source_of_confusion": "configMap монтируется как файлы, и кажется, что туда можно класть что угодно.",
+                "if_it_were_true": "Тогда большой бинарник лёг бы в configMap, но он упирается в лимит размера объекта в etcd.",
+                "how_it_should_be": "configMap — для мелких конфигов; большие файлы держат на PV с настоящим хранилищем."
               }
             },
             {
@@ -1776,6 +1776,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "`emptyDir` хранит данные независимо от жизненного цикла пода и сохраняется после его удаления.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`emptyDir` создаётся при старте пода и удаляется вместе с ним; это временное хранилище для обмена данными между контейнерами или промежуточных вычислений.",
+                "source_of_confusion": "Слово «Dir» ассоциируется с постоянной директорией на диске.",
+                "if_it_were_true": "Тогда данные БД можно было бы держать в emptyDir, но после пересоздания пода они теряются.",
+                "how_it_should_be": "Постоянство даёт `PersistentVolume`; `emptyDir` живёт ровно столько, сколько под."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`hostPath` монтирует сетевое хранилище (NFS) в контейнер через абстракцию CSI-драйвера.",
               "correct": false,
               "sections": {
@@ -1783,18 +1795,6 @@
                 "source_of_confusion": "hostPath относят к «внешнему» хранилищу, путая с сетевыми томами.",
                 "if_it_were_true": "Тогда hostPath работал бы одинаково на всех нодах, но данные привязаны к ноде, и при переезде пода их там нет.",
                 "how_it_should_be": "Для NFS используют PV типа nfs или CSI; hostPath — это локальная директория ноды."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`PersistentVolume` типа `configMap` используется для хранения больших бинарных файлов приложения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`configMap` как том предназначен для небольших конфигурационных файлов (до 1 MiB); для бинарных файлов нужен PV с реальным хранилищем (EBS, NFS, Ceph).",
-                "source_of_confusion": "configMap монтируется как файлы, и кажется, что туда можно класть что угодно.",
-                "if_it_were_true": "Тогда большой бинарник лёг бы в configMap, но он упирается в лимит размера объекта в etcd.",
-                "how_it_should_be": "configMap — для мелких конфигов; большие файлы держат на PV с настоящим хранилищем."
               }
             }
           ]
@@ -1811,6 +1811,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`HPA` вертикально меняет `requests`/`limits` CPU/memory контейнера в зависимости от текущей нагрузки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Изменение `requests`/`limits` — это `VPA` (Vertical Pod Autoscaler); HPA меняет только число реплик.",
+                "source_of_confusion": "Оба — про ресурсы под нагрузкой, и вертикальное масштабирование приписывают HPA.",
+                "if_it_were_true": "Тогда HPA «подкрутил бы limits», но нагрузка превышает limit в 2×, throttling CPU 50%, p99 latency 5s.",
+                "how_it_should_be": "HPA — горизонтально (replicas), VPA — вертикально (requests/limits)."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`HPA` масштабирует количество нод кластера при нехватке ресурсов для планирования новых подов.",
               "correct": false,
               "sections": {
@@ -1821,8 +1833,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`HPA` работает без дополнительных компонентов — метрики CPU встроены в `kube-apiserver`.",
               "correct": false,
               "sections": {
@@ -1833,8 +1845,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`HPA` автоматически меняет `spec.replicas` Deployment/StatefulSet на основе метрик CPU/memory.",
               "correct": true,
               "sections": {
@@ -1843,18 +1855,6 @@
                 "when_to_apply": "`HPA` применяют для горизонтального масштабирования stateless-нагрузок под переменный трафик по CPU/memory или внешним метрикам.",
                 "edge_cases": "Для CPU/memory нужен установленный `Metrics Server` — без него `kubectl get hpa` показывает `<unknown>/70%`, и autoscaling не срабатывает.",
                 "related": "[[kubernetes-interview#Q11]] QoS и requests для расчёта утилизации; [[kubernetes-interview#Q32]] VPA и Cluster Autoscaler; [[kubernetes-interview#Q39]] HPA как механизм HA."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`HPA` вертикально меняет `requests`/`limits` CPU/memory контейнера в зависимости от текущей нагрузки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Изменение `requests`/`limits` — это `VPA` (Vertical Pod Autoscaler); HPA меняет только число реплик.",
-                "source_of_confusion": "Оба — про ресурсы под нагрузкой, и вертикальное масштабирование приписывают HPA.",
-                "if_it_were_true": "Тогда HPA «подкрутил бы limits», но нагрузка превышает limit в 2×, throttling CPU 50%, p99 latency 5s.",
-                "how_it_should_be": "HPA — горизонтально (replicas), VPA — вертикально (requests/limits)."
               }
             }
           ]
@@ -1871,18 +1871,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`VPA` масштабирует количество реплик подов вертикально, добавляя больше экземпляров при нагрузке.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Добавление экземпляров — это HPA (горизонтальное масштабирование); VPA корректирует requests/limits существующих подов (вертикальное).",
-                "source_of_confusion": "Слово «вертикальное» путают с «больше реплик в высоту списка».",
-                "if_it_were_true": "Тогда VPA плодил бы реплики, но он меняет ресурсы одного пода, а число реплик — забота HPA.",
-                "how_it_should_be": "Реплики добавляет HPA; VPA меняет requests/limits контейнера."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Cluster Autoscaler` масштабирует количество реплик Deployment при высокой загрузке CPU.",
               "correct": false,
               "sections": {
@@ -1890,6 +1878,18 @@
                 "source_of_confusion": "«Autoscaler» обобщают до любого масштабирования, включая реплики.",
                 "if_it_were_true": "Тогда CA реагировал бы на CPU реплик, но он смотрит на неразмещённые поды и недозагруженные ноды.",
                 "how_it_should_be": "CA масштабирует ноды; реплики — задача HPA."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`VPA` масштабирует количество реплик подов вертикально, добавляя больше экземпляров при нагрузке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Добавление экземпляров — это HPA (горизонтальное масштабирование); VPA корректирует requests/limits существующих подов (вертикальное).",
+                "source_of_confusion": "Слово «вертикальное» путают с «больше реплик в высоту списка».",
+                "if_it_were_true": "Тогда VPA плодил бы реплики, но он меняет ресурсы одного пода, а число реплик — забота HPA.",
+                "how_it_should_be": "Реплики добавляет HPA; VPA меняет requests/limits контейнера."
               }
             },
             {
@@ -1931,6 +1931,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`RoleBinding` привязывает только `Role`, но не `ClusterRole`, даже внутри своего namespace.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RoleBinding` привязывает обе: `Role` (namespace-scoped) или `ClusterRole` (как шаблон) с ограничением действия одним namespace.",
+                "source_of_confusion": "Имена `RoleBinding`/`ClusterRoleBinding` наводят на строгое соответствие Role/ClusterRole.",
+                "if_it_were_true": "Тогда пришлось бы дублировать `view`-роль в каждом namespace, и 40 одинаковых Role в etcd дают drift при изменении canonical-роли.",
+                "how_it_should_be": "RoleBinding умеет ссылаться и на ClusterRole, ограничивая её действие namespace."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`ServiceAccount` — способ аутентификации внешних пользователей через kubectl.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ServiceAccount` идентифицирует поды и процессы внутри кластера; внешних юзеров аутентифицируют через x509-сертификаты, OIDC или webhook auth.",
+                "source_of_confusion": "ServiceAccount даёт токен, и его принимают за способ логина людей.",
+                "if_it_were_true": "Тогда монтаж SA-токена в внешний Jenkins был бы нормой, но токен утекает в job logs, давая злоумышленнику prod kubectl.",
+                "how_it_should_be": "ServiceAccount — для внутрикластерных процессов; внешние юзеры идут через OIDC/x509."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Role` задаёт права в namespace, `ClusterRole` — cluster-wide; binding'и привязывают их к Subject.",
               "correct": true,
               "sections": {
@@ -1942,8 +1966,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "`ClusterRole` применяется только в одном namespace и, как и `Role`, не даёт прав в других namespace.",
               "correct": false,
               "sections": {
@@ -1951,30 +1975,6 @@
                 "source_of_confusion": "Через RoleBinding ClusterRole применяют в namespace, и отсюда вывод, что она namespace-scoped.",
                 "if_it_were_true": "Тогда удаление `ClusterRole view` «ради изоляции» было бы безопасно, но все RoleBinding на её основе ломаются в десятках namespace.",
                 "how_it_should_be": "ClusterRole — cluster-scoped; namespace-ограничение — лишь поведение RoleBinding."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`RoleBinding` привязывает только `Role`, но не `ClusterRole`, даже внутри своего namespace.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`RoleBinding` привязывает обе: `Role` (namespace-scoped) или `ClusterRole` (как шаблон) с ограничением действия одним namespace.",
-                "source_of_confusion": "Имена `RoleBinding`/`ClusterRoleBinding` наводят на строгое соответствие Role/ClusterRole.",
-                "if_it_were_true": "Тогда пришлось бы дублировать `view`-роль в каждом namespace, и 40 одинаковых Role в etcd дают drift при изменении canonical-роли.",
-                "how_it_should_be": "RoleBinding умеет ссылаться и на ClusterRole, ограничивая её действие namespace."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`ServiceAccount` — способ аутентификации внешних пользователей через kubectl.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`ServiceAccount` идентифицирует поды и процессы внутри кластера; внешних юзеров аутентифицируют через x509-сертификаты, OIDC или webhook auth.",
-                "source_of_confusion": "ServiceAccount даёт токен, и его принимают за способ логина людей.",
-                "if_it_were_true": "Тогда монтаж SA-токена в внешний Jenkins был бы нормой, но токен утекает в job logs, давая злоумышленнику prod kubectl.",
-                "how_it_should_be": "ServiceAccount — для внутрикластерных процессов; внешние юзеры идут через OIDC/x509."
               }
             }
           ]
@@ -2003,6 +2003,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`ResourceQuota` автоматически устанавливает requests и limits для подов без явных настроек ресурсов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Автоматическую установку дефолтных requests/limits делает `LimitRange`; ResourceQuota лишь запрещает создание подов сверх квоты namespace.",
+                "source_of_confusion": "Оба объекта про ресурсы namespace, и их функции смешивают.",
+                "if_it_were_true": "Тогда под без requests получал бы дефолты от ResourceQuota, но дефолты подставляет LimitRange, а Quota только проверяет потолок.",
+                "how_it_should_be": "Дефолты задаёт LimitRange; ResourceQuota контролирует суммарный лимит."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`ResourceQuota` ограничивает суммарное потребление ресурсов всего namespace, а `LimitRange` — отдельных подов и контейнеров.",
               "correct": true,
               "sections": {
@@ -2011,18 +2023,6 @@
                 "when_to_apply": "ResourceQuota применяют для дележа кластера между командами, LimitRange — чтобы у каждого контейнера были адекватные дефолты ресурсов.",
                 "edge_cases": "Namespace не даёт сетевой изоляции — поды из разных namespace свободно общаются по IP; для изоляции нужна NetworkPolicy с namespaceSelector.",
                 "related": "[[kubernetes-interview#Q44]] LimitRange vs ResourceQuota подробнее; [[kubernetes-interview#Q11]] QoS и BestEffort без limits; [[kubernetes-interview#Q25]] NetworkPolicy для изоляции namespace."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`ResourceQuota` автоматически устанавливает requests и limits для подов без явных настроек ресурсов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Автоматическую установку дефолтных requests/limits делает `LimitRange`; ResourceQuota лишь запрещает создание подов сверх квоты namespace.",
-                "source_of_confusion": "Оба объекта про ресурсы namespace, и их функции смешивают.",
-                "if_it_were_true": "Тогда под без requests получал бы дефолты от ResourceQuota, но дефолты подставляет LimitRange, а Quota только проверяет потолок.",
-                "how_it_should_be": "Дефолты задаёт LimitRange; ResourceQuota контролирует суммарный лимит."
               }
             },
             {
@@ -2063,18 +2063,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "PSS уровня `Baseline` разрешает запуск контейнеров от root с полным набором capabilities.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Baseline` запрещает privileged-контейнеры, hostNetwork/hostPID и небезопасные sysctls; root допустим, но с ограничениями, а полная свобода — у `Privileged`.",
-                "source_of_confusion": "`Baseline` звучит как «минимальный = почти ничего не запрещает».",
-                "if_it_were_true": "Тогда `Baseline` давал бы «полную защиту», но runAsRoot + `CAP_NET_ADMIN` контейнер всё равно проходит, namespace компрометируется.",
-                "how_it_should_be": "`Baseline` ограничивает опасные возможности; полный non-root hardening — это `Restricted`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`allowPrivilegeEscalation: false` блокирует получение контейнером прав выше parent-процесса.",
               "correct": true,
               "sections": {
@@ -2086,8 +2074,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`readOnlyRootFilesystem: true` запрещает запись только в `/etc`, остальные директории доступны.",
               "correct": false,
               "sections": {
@@ -2095,6 +2083,18 @@
                 "source_of_confusion": "Кажется, что защищается только «системная» часть FS вроде `/etc`.",
                 "if_it_were_true": "Тогда `/tmp` оставался бы writable без настройки, но Spring Boot `OutputStream` падает с `Read-only file system`, под в CrashLoop.",
                 "how_it_should_be": "Read-only вся корневая FS; writable-пути добавляют отдельными томами."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "PSS уровня `Baseline` разрешает запуск контейнеров от root с полным набором capabilities.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Baseline` запрещает privileged-контейнеры, hostNetwork/hostPID и небезопасные sysctls; root допустим, но с ограничениями, а полная свобода — у `Privileged`.",
+                "source_of_confusion": "`Baseline` звучит как «минимальный = почти ничего не запрещает».",
+                "if_it_were_true": "Тогда `Baseline` давал бы «полную защиту», но runAsRoot + `CAP_NET_ADMIN` контейнер всё равно проходит, namespace компрометируется.",
+                "how_it_should_be": "`Baseline` ограничивает опасные возможности; полный non-root hardening — это `Restricted`."
               }
             }
           ]
@@ -2123,13 +2123,14 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`helm install` сразу применяет ресурсы без возможности preview.",
-              "correct": false,
+              "text": "`Helm` — пакетный менеджер K8s: chart-ы с Go-шаблонами и `values.yaml`, версионируемые релизы.",
+              "correct": true,
               "sections": {
-                "what_actually": "`helm template` рендерит итоговый YAML, а `helm install --dry-run` проверяет корректность без применения.",
-                "source_of_confusion": "Команда `install` звучит как «сразу в кластер, без проверки».",
-                "if_it_were_true": "Тогда сложный chart катился бы в prod вслепую, но опечатка в `nindent` ломает 5 манифестов разом, prod 20 мин неконсистентен.",
-                "how_it_should_be": "Перед применением используют `helm template`/`--dry-run` для preview."
+                "explanation": "Chart упаковывает связанные манифесты с параметризацией через `values.yaml`; Helm 3 хранит revision history в Secret'ах namespace релиза, и `helm rollback <revision>` откатывает к предыдущей версии за секунды.",
+                "example": "stable charts из Bitnami/ArtifactHub (postgres, redis, prometheus); ArgoCD ApplicationSet + Helm для GitOps.",
+                "when_to_apply": "`Helm` берут для упаковки и переиспользования сложных наборов манифестов с параметризацией и версионированием релизов.",
+                "edge_cases": "`helm template`/`--dry-run` рендерят итоговый YAML без применения; без проверки опечатка в `nindent` ломает сразу несколько манифестов в проде.",
+                "related": "[[kubernetes-interview#Q15]] rollback Deployment vs helm rollback; [[kubernetes-interview#Q45]] Kustomize vs Helm; [[kubernetes-interview#Q22]] Ingress в chart-ах."
               }
             },
             {
@@ -2147,14 +2148,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Helm` — пакетный менеджер K8s: chart-ы с Go-шаблонами и `values.yaml`, версионируемые релизы.",
-              "correct": true,
+              "text": "`helm install` сразу применяет ресурсы без возможности preview.",
+              "correct": false,
               "sections": {
-                "explanation": "Chart упаковывает связанные манифесты с параметризацией через `values.yaml`; Helm 3 хранит revision history в Secret'ах namespace релиза, и `helm rollback <revision>` откатывает к предыдущей версии за секунды.",
-                "example": "stable charts из Bitnami/ArtifactHub (postgres, redis, prometheus); ArgoCD ApplicationSet + Helm для GitOps.",
-                "when_to_apply": "`Helm` берут для упаковки и переиспользования сложных наборов манифестов с параметризацией и версионированием релизов.",
-                "edge_cases": "`helm template`/`--dry-run` рендерят итоговый YAML без применения; без проверки опечатка в `nindent` ломает сразу несколько манифестов в проде.",
-                "related": "[[kubernetes-interview#Q15]] rollback Deployment vs helm rollback; [[kubernetes-interview#Q45]] Kustomize vs Helm; [[kubernetes-interview#Q22]] Ingress в chart-ах."
+                "what_actually": "`helm template` рендерит итоговый YAML, а `helm install --dry-run` проверяет корректность без применения.",
+                "source_of_confusion": "Команда `install` звучит как «сразу в кластер, без проверки».",
+                "if_it_were_true": "Тогда сложный chart катился бы в prod вслепую, но опечатка в `nindent` ломает 5 манифестов разом, prod 20 мин неконсистентен.",
+                "how_it_should_be": "Перед применением используют `helm template`/`--dry-run` для preview."
               }
             }
           ]
@@ -2171,31 +2171,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`kubectl rollout undo deployment/backend` откатывает Deployment на предыдущую ревизию, сохраняя историю.",
-              "correct": true,
-              "sections": {
-                "explanation": "Команда использует ReplicaSet из revisionHistory Deployment для отката; доступные ревизии смотрят через `kubectl rollout history`, а конкретную — через `--to-revision=N`.",
-                "example": "После плохого деплоя: `kubectl rollout history deployment/backend` → `kubectl rollout undo deployment/backend` возвращает рабочую версию за секунды.",
-                "when_to_apply": "`rollout undo` — основной incident-response инструмент при выкаченном баге, когда нужно быстро вернуть предыдущую рабочую версию.",
-                "edge_cases": "`kubectl logs --previous` показывает логи предыдущего запуска того же контейнера (после CrashLoopBackOff), а не соседнего контейнера — для выбора контейнера нужен `-c`.",
-                "related": "[[kubernetes-interview#Q15]] откат Deployment подробно; [[kubernetes-interview#Q13]] история ревизий Deployment; [[kubernetes-interview#Q14]] стратегии rollout."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`kubectl logs my-pod --previous` показывает логи соседнего контейнера в том же поде.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Флаг `--previous` показывает логи предыдущего запуска того же контейнера (полезно после CrashLoopBackOff); для выбора контейнера используют `-c`.",
-                "source_of_confusion": "«previous» читают как «другой/соседний», а не «предыдущий запуск».",
-                "if_it_were_true": "Тогда `--previous` переключал бы между контейнерами, но для этого служит флаг `-c <имя>`.",
-                "how_it_should_be": "`--previous` — логи прошлого запуска того же контейнера; соседний выбирают через `-c`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`kubectl apply -f deployment.yaml` работает только для создания новых ресурсов и ошибается при обновлении существующих.",
               "correct": false,
               "sections": {
@@ -2206,8 +2181,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`kubectl exec -it my-pod -- /bin/sh` всегда запускает shell в init-контейнере пода.",
               "correct": false,
               "sections": {
@@ -2215,6 +2190,31 @@
                 "source_of_confusion": "Init упоминается в lifecycle пода, и кажется, что exec попадает туда.",
                 "if_it_were_true": "Тогда можно было бы дебажить init через exec, но он уже завершён; для выбора контейнера служит `-c`.",
                 "how_it_should_be": "`exec` идёт в основной контейнер; init к моменту exec уже отработали."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`kubectl logs my-pod --previous` показывает логи соседнего контейнера в том же поде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Флаг `--previous` показывает логи предыдущего запуска того же контейнера (полезно после CrashLoopBackOff); для выбора контейнера используют `-c`.",
+                "source_of_confusion": "«previous» читают как «другой/соседний», а не «предыдущий запуск».",
+                "if_it_were_true": "Тогда `--previous` переключал бы между контейнерами, но для этого служит флаг `-c <имя>`.",
+                "how_it_should_be": "`--previous` — логи прошлого запуска того же контейнера; соседний выбирают через `-c`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`kubectl rollout undo deployment/backend` откатывает Deployment на предыдущую ревизию, сохраняя историю.",
+              "correct": true,
+              "sections": {
+                "explanation": "Команда использует ReplicaSet из revisionHistory Deployment для отката; доступные ревизии смотрят через `kubectl rollout history`, а конкретную — через `--to-revision=N`.",
+                "example": "После плохого деплоя: `kubectl rollout history deployment/backend` → `kubectl rollout undo deployment/backend` возвращает рабочую версию за секунды.",
+                "when_to_apply": "`rollout undo` — основной incident-response инструмент при выкаченном баге, когда нужно быстро вернуть предыдущую рабочую версию.",
+                "edge_cases": "`kubectl logs --previous` показывает логи предыдущего запуска того же контейнера (после CrashLoopBackOff), а не соседнего контейнера — для выбора контейнера нужен `-c`.",
+                "related": "[[kubernetes-interview#Q15]] откат Deployment подробно; [[kubernetes-interview#Q13]] история ревизий Deployment; [[kubernetes-interview#Q14]] стратегии rollout."
               }
             }
           ]
@@ -2231,18 +2231,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Prometheus` использует push-модель, в которой приложения сами отправляют метрики на сервер.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Prometheus использует pull-модель: сам сервер периодически скрейпит `/metrics` у подов; push поддержан только через Pushgateway для short-lived jobs.",
-                "source_of_confusion": "Многие системы метрик push-овые, и эту модель приписывают Prometheus.",
-                "if_it_were_true": "Тогда приложения слали бы метрики напрямую, но Prometheus сам опрашивает таргеты по service discovery.",
-                "how_it_should_be": "Prometheus тянет метрики (pull); push — исключение через Pushgateway."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Fluentd`/`Fluent Bit` обычно разворачиваются как `DaemonSet` для сбора логов с каждой ноды кластера.",
               "correct": true,
               "sections": {
@@ -2251,6 +2239,18 @@
                 "when_to_apply": "DaemonSet-агент логов применяют, когда нужно собрать логи всех контейнеров со всех нод в едином месте.",
                 "edge_cases": "Prometheus использует pull-модель (сам скрейпит `/metrics`), а Metrics Server держит лишь текущие значения с окном ~1 мин для HPA и `kubectl top`, а не долгую историю.",
                 "related": "[[kubernetes-interview#Q18]] DaemonSet как механизм; [[kubernetes-interview#Q31]] Metrics Server для HPA; [[kubernetes-interview#Q39]] observability и HA."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Loki` хранит индексы по содержимому логов, что делает его более тяжёлым решением, чем ELK Stack.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Loki индексирует только метаданные (labels), а сами логи хранит сжатыми в чанках — это делает его легче ELK, где Elasticsearch индексирует полнотекстово.",
+                "source_of_confusion": "Любую log-систему ассоциируют с полнотекстовым индексом, как у Elasticsearch.",
+                "if_it_were_true": "Тогда Loki был бы тяжелее ELK, но его суть — экономия именно на отказе от полнотекстового индекса.",
+                "how_it_should_be": "Loki индексирует только labels и потому легче полнотекстового ELK."
               }
             },
             {
@@ -2268,13 +2268,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Loki` хранит индексы по содержимому логов, что делает его более тяжёлым решением, чем ELK Stack.",
+              "text": "`Prometheus` использует push-модель, в которой приложения сами отправляют метрики на сервер.",
               "correct": false,
               "sections": {
-                "what_actually": "Loki индексирует только метаданные (labels), а сами логи хранит сжатыми в чанках — это делает его легче ELK, где Elasticsearch индексирует полнотекстово.",
-                "source_of_confusion": "Любую log-систему ассоциируют с полнотекстовым индексом, как у Elasticsearch.",
-                "if_it_were_true": "Тогда Loki был бы тяжелее ELK, но его суть — экономия именно на отказе от полнотекстового индекса.",
-                "how_it_should_be": "Loki индексирует только labels и потому легче полнотекстового ELK."
+                "what_actually": "Prometheus использует pull-модель: сам сервер периодически скрейпит `/metrics` у подов; push поддержан только через Pushgateway для short-lived jobs.",
+                "source_of_confusion": "Многие системы метрик push-овые, и эту модель приписывают Prometheus.",
+                "if_it_were_true": "Тогда приложения слали бы метрики напрямую, но Prometheus сам опрашивает таргеты по service discovery.",
+                "how_it_should_be": "Prometheus тянет метрики (pull); push — исключение через Pushgateway."
               }
             }
           ]
@@ -2291,18 +2291,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`PodDisruptionBudget minAvailable: 2` запрещает любые voluntary disruptions и блокирует drain ноды.",
-              "correct": false,
-              "sections": {
-                "what_actually": "PDB не запрещает disruptions, а гарантирует минимальное число доступных подов; drain идёт постепенно, ожидая ready новых реплик.",
-                "source_of_confusion": "«Budget» воспринимают как полный запрет, а не как лимит одновременных потерь.",
-                "if_it_were_true": "Тогда `minAvailable: 100%` был бы нормой, но drain первой ноды не проходит, и кластер-апгрейд блокируется навсегда.",
-                "how_it_should_be": "PDB ограничивает число одновременно недоступных подов, а не запрещает drain."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`podAntiAffinity` с `topologyKey: kubernetes.io/hostname` собирает все поды на одной ноде для снижения latency.",
               "correct": false,
               "sections": {
@@ -2313,8 +2301,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`PodDisruptionBudget` и `podAntiAffinity` — взаимодополняющие механизмы высокой доступности.",
               "correct": true,
               "sections": {
@@ -2323,6 +2311,18 @@
                 "when_to_apply": "PDB и anti-affinity сочетают для критичных сервисов, чтобы пережить и плановое обслуживание, и внезапное падение ноды/зоны.",
                 "edge_cases": "PDB с `minAvailable: 100%` блокирует drain первой ноды навсегда — кластер-апгрейд не проходит; Raft требует нечётное число etcd (3/5), а не 2.",
                 "related": "[[kubernetes-interview#Q11]] QoS и защита от eviction; [[kubernetes-interview#Q43]] anti-affinity и scheduling; [[kubernetes-interview#Q3]] кворум etcd."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`PodDisruptionBudget minAvailable: 2` запрещает любые voluntary disruptions и блокирует drain ноды.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PDB не запрещает disruptions, а гарантирует минимальное число доступных подов; drain идёт постепенно, ожидая ready новых реплик.",
+                "source_of_confusion": "«Budget» воспринимают как полный запрет, а не как лимит одновременных потерь.",
+                "if_it_were_true": "Тогда `minAvailable: 100%` был бы нормой, но drain первой ноды не проходит, и кластер-апгрейд блокируется навсегда.",
+                "how_it_should_be": "PDB ограничивает число одновременно недоступных подов, а не запрещает drain."
               }
             },
             {
@@ -2411,6 +2411,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Spring Boot сам определяет K8s-окружение и включает раздельные health probes без какой-либо настройки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Probes требуют явного `management.endpoint.health.probes.enabled: true` + actuator; auto-detect лишь при `spring.main.cloud-platform=kubernetes` (Spring Boot 2.3+).",
+                "source_of_confusion": "Spring Boot многое настраивает по умолчанию, и от probes ждут того же.",
+                "if_it_were_true": "Тогда JVM без actuator-зависимости имела бы `/actuator/health/liveness`, но он отдаёт 404, livenessProbe фейлит, CrashLoopBackOff.",
+                "how_it_should_be": "Probes включают явно через actuator + `probes.enabled: true`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Spring Boot в K8s требует `management.endpoint.health.probes.enabled: true` и actuator с раздельными probes.",
               "correct": true,
               "sections": {
@@ -2419,18 +2431,6 @@
                 "when_to_apply": "Эту конфигурацию применяют при деплое любого Spring Boot-сервиса в K8s, чтобы probes были корректными и не вызывали каскадных сбоев.",
                 "edge_cases": "Без `spring-boot-starter-actuator` и `probes.enabled` эндпоинт `/actuator/health/liveness` отдаёт 404, `livenessProbe` фейлит, и под уходит в CrashLoopBackOff с самого старта.",
                 "related": "[[kubernetes-interview#Q9]] три типа probes; [[kubernetes-interview#Q42]] graceful shutdown Spring Boot; [[kubernetes-interview#Q7]] порядок probes в жизненном цикле."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Spring Boot сам определяет K8s-окружение и включает раздельные health probes без какой-либо настройки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Probes требуют явного `management.endpoint.health.probes.enabled: true` + actuator; auto-detect лишь при `spring.main.cloud-platform=kubernetes` (Spring Boot 2.3+).",
-                "source_of_confusion": "Spring Boot многое настраивает по умолчанию, и от probes ждут того же.",
-                "if_it_were_true": "Тогда JVM без actuator-зависимости имела бы `/actuator/health/liveness`, но он отдаёт 404, livenessProbe фейлит, CrashLoopBackOff.",
-                "how_it_should_be": "Probes включают явно через actuator + `probes.enabled: true`."
               }
             },
             {
@@ -2471,18 +2471,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "При получении SIGTERM Kubernetes немедленно отправляет SIGKILL, не ожидая завершения запросов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Между SIGTERM и SIGKILL Kubernetes ждёт `terminationGracePeriodSeconds` (по умолчанию 30s); за это время приложение завершает активные запросы.",
-                "source_of_confusion": "SIGTERM и SIGKILL идут парой, и их разносят по времени неправильно.",
-                "if_it_were_true": "Тогда graceful shutdown был бы невозможен, но именно окно до SIGKILL позволяет дообработать in-flight запросы.",
-                "how_it_should_be": "После SIGTERM есть `terminationGracePeriodSeconds` до SIGKILL для корректного завершения."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Kubernetes отправляет SIGTERM и параллельно убирает под из Endpoints, создавая race condition без `preStop` hook.",
               "correct": true,
               "sections": {
@@ -2494,8 +2482,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`preStop` hook выполняется после отправки SIGTERM, что решает race condition с обновлением Endpoints.",
               "correct": false,
               "sections": {
@@ -2506,8 +2494,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`terminationGracePeriodSeconds` применяется только к контейнерам в namespace `kube-system` для системных компонентов.",
               "correct": false,
               "sections": {
@@ -2515,6 +2503,18 @@
                 "source_of_confusion": "Системные настройки ассоциируют с kube-system.",
                 "if_it_were_true": "Тогда обычные сервисы не имели бы graceful-окна, но поле работает для любого пода.",
                 "how_it_should_be": "`terminationGracePeriodSeconds` действует для подов во всех namespace."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При получении SIGTERM Kubernetes немедленно отправляет SIGKILL, не ожидая завершения запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Между SIGTERM и SIGKILL Kubernetes ждёт `terminationGracePeriodSeconds` (по умолчанию 30s); за это время приложение завершает активные запросы.",
+                "source_of_confusion": "SIGTERM и SIGKILL идут парой, и их разносят по времени неправильно.",
+                "if_it_were_true": "Тогда graceful shutdown был бы невозможен, но именно окно до SIGKILL позволяет дообработать in-flight запросы.",
+                "how_it_should_be": "После SIGTERM есть `terminationGracePeriodSeconds` до SIGKILL для корректного завершения."
               }
             }
           ]
@@ -2531,6 +2531,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Taint/Toleration — механизм отталкивания (нода отталкивает поды), а Node Affinity — притяжения (под тянется к ноде).",
+              "correct": true,
+              "sections": {
+                "explanation": "Это ключевое концептуальное различие: Taint ставится на ноду администратором, Toleration — в спецификации пода командой разработчиков, а Node Affinity описывает требования пода к ноде через `matchExpressions`. Toleration лишь разрешает попасть на ноду, а притягивает именно affinity.",
+                "example": "GPU-ноды с taint `type=gpu:NoSchedule` пускают только поды с toleration; nodeAffinity `kubernetes.io/arch In [amd64]` притягивает поды к нужной архитектуре.",
+                "when_to_apply": "Taints резервируют ноды под особые нагрузки (GPU, отдельные команды), Node Affinity притягивает поды к нодам с нужными свойствами (зона, арх).",
+                "edge_cases": "Эффекты taint различаются: `NoSchedule` влияет только на новые поды, а `NoExecute` выгоняет уже запущенные поды без toleration.",
+                "related": "[[kubernetes-interview#Q39]] anti-affinity для HA; [[kubernetes-interview#Q2]] scheduler и размещение подов; [[kubernetes-interview#Q11]] QoS и eviction."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Taint с эффектом `NoSchedule` немедленно выгоняет уже запущенные поды без toleration с ноды, не дожидаясь завершения их работы.",
               "correct": false,
               "sections": {
@@ -2541,8 +2554,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "Node Affinity с `requiredDuringScheduling` — это мягкое предпочтение, и scheduler может его проигнорировать.",
               "correct": false,
               "sections": {
@@ -2550,19 +2563,6 @@
                 "source_of_confusion": "Длинные имена `required`/`preferred` читают невнимательно и меняют смысл местами.",
                 "if_it_were_true": "Тогда под всё равно разместился бы где-то, но при `required` без подходящей ноды он висит в `Pending`.",
                 "how_it_should_be": "`required` — жёсткое требование; мягкое — `preferred`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Taint/Toleration — механизм отталкивания (нода отталкивает поды), а Node Affinity — притяжения (под тянется к ноде).",
-              "correct": true,
-              "sections": {
-                "explanation": "Это ключевое концептуальное различие: Taint ставится на ноду администратором, Toleration — в спецификации пода командой разработчиков, а Node Affinity описывает требования пода к ноде через `matchExpressions`. Toleration лишь разрешает попасть на ноду, а притягивает именно affinity.",
-                "example": "GPU-ноды с taint `type=gpu:NoSchedule` пускают только поды с toleration; nodeAffinity `kubernetes.io/arch In [amd64]` притягивает поды к нужной архитектуре.",
-                "when_to_apply": "Taints резервируют ноды под особые нагрузки (GPU, отдельные команды), Node Affinity притягивает поды к нодам с нужными свойствами (зона, арх).",
-                "edge_cases": "Эффекты taint различаются: `NoSchedule` влияет только на новые поды, а `NoExecute` выгоняет уже запущенные поды без toleration.",
-                "related": "[[kubernetes-interview#Q39]] anti-affinity для HA; [[kubernetes-interview#Q2]] scheduler и размещение подов; [[kubernetes-interview#Q11]] QoS и eviction."
               }
             },
             {
@@ -2603,18 +2603,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`LimitRange` автоматически масштабирует requests при увеличении нагрузки на контейнер.",
-              "correct": false,
-              "sections": {
-                "what_actually": "LimitRange не масштабирует ресурсы динамически; он задаёт статические дефолты при создании пода, а динамику делает VPA.",
-                "source_of_confusion": "«Range» наводит на мысль о гибком/динамическом диапазоне под нагрузку.",
-                "if_it_were_true": "Тогда LimitRange подстраивал бы requests на лету, но это задача Vertical Pod Autoscaler.",
-                "how_it_should_be": "LimitRange задаёт статические значения; динамику ресурсов даёт VPA."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "При наличии `ResourceQuota` в namespace поды без явных requests отклоняются только на нодах с нехваткой ресурсов.",
               "correct": false,
               "sections": {
@@ -2625,8 +2613,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`LimitRange` задаёт дефолтные requests/limits для отдельных контейнеров, а `ResourceQuota` — суммарный потолок для namespace.",
               "correct": true,
               "sections": {
@@ -2635,6 +2623,18 @@
                 "when_to_apply": "LimitRange ставят в каждом prod-namespace для дефолтов и границ контейнеров; ResourceQuota — для дележа суммарных ресурсов между командами.",
                 "edge_cases": "При наличии ResourceQuota (с requests/limits CPU) поды без явных requests отклоняются ВСЕГДА при создании, независимо от состояния нод.",
                 "related": "[[kubernetes-interview#Q11]] QoS и BestEffort без limits; [[kubernetes-interview#Q34]] Namespace и ResourceQuota; [[kubernetes-interview#Q32]] VPA как динамическая альтернатива."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`LimitRange` автоматически масштабирует requests при увеличении нагрузки на контейнер.",
+              "correct": false,
+              "sections": {
+                "what_actually": "LimitRange не масштабирует ресурсы динамически; он задаёт статические дефолты при создании пода, а динамику делает VPA.",
+                "source_of_confusion": "«Range» наводит на мысль о гибком/динамическом диапазоне под нагрузку.",
+                "if_it_were_true": "Тогда LimitRange подстраивал бы requests на лету, но это задача Vertical Pod Autoscaler.",
+                "how_it_should_be": "LimitRange задаёт статические значения; динамику ресурсов даёт VPA."
               }
             }
           ]
@@ -2664,6 +2664,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`kubectl apply -k` применяет Helm-чарт из директории с `Chart.yaml` без установки Helm.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`apply -k` работает только с Kustomize (`kustomization.yaml`); Helm-чарт требует `helm install/upgrade` или ArgoCD/Flux с Helm-плагином.",
+                "source_of_confusion": "И chart, и kustomization — это «директория с манифестами», и их путают.",
+                "if_it_were_true": "Тогда Bitnami-chart разворачивался бы через `apply -k chart-dir/`, но без `kustomization.yaml` манифесты не применяются, deploy ничего не делает.",
+                "how_it_should_be": "`apply -k` — только для Kustomize; Helm-chart ставят через `helm install`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Kustomize` требует отдельной установки и не входит в стандартный kubectl.",
               "correct": false,
               "sections": {
@@ -2674,8 +2686,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`Helm` и `Kustomize` используют одинаковый подход к конфигурированию через overlay-систему без шаблонизатора.",
               "correct": false,
               "sections": {
@@ -2683,18 +2695,6 @@
                 "source_of_confusion": "Оба решают параметризацию манифестов под окружения, и подходы считают идентичными.",
                 "if_it_were_true": "Тогда у Kustomize были бы шаблоны вроде `{{ }}`, но он работает только со стратегическими merge-патчами.",
                 "how_it_should_be": "Helm шаблонизирует через Go templates; Kustomize накладывает overlay-патчи без шаблонов."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`kubectl apply -k` применяет Helm-чарт из директории с `Chart.yaml` без установки Helm.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`apply -k` работает только с Kustomize (`kustomization.yaml`); Helm-чарт требует `helm install/upgrade` или ArgoCD/Flux с Helm-плагином.",
-                "source_of_confusion": "И chart, и kustomization — это «директория с манифестами», и их путают.",
-                "if_it_were_true": "Тогда Bitnami-chart разворачивался бы через `apply -k chart-dir/`, но без `kustomization.yaml` манифесты не применяются, deploy ничего не делает.",
-                "how_it_should_be": "`apply -k` — только для Kustomize; Helm-chart ставят через `helm install`."
               }
             }
           ]
