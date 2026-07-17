@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -63,6 +64,10 @@ public class AppProperties {
     /** Настройки импорта вопросов из markdown. */
     @Valid @NotNull
     private Import importSettings = new Import();
+
+    /** Выбор алгоритма интервального повторения. */
+    @Valid @NotNull
+    private Scheduling scheduling = new Scheduling();
 
     /**
      * Если true — при старте приложения чистит таблицы questions/answer_options
@@ -149,6 +154,25 @@ public class AppProperties {
         /** Минимальная длина code block для определения типа вопроса CODE (символов). */
         @Min(10)
         private int minCodeBlockLength = 50;
+    }
+
+    /**
+     * Выбор планировщика интервального повторения.
+     *
+     * <p>Настраивается через {@code app.scheduling.algorithm}. По умолчанию
+     * {@code sm2} (текущее поведение, fallback). {@code fsrs} включает FSRS-4.5
+     * (после валидации на своих данных можно сделать дефолтом).</p>
+     */
+    @Getter @Setter
+    public static class Scheduling {
+        /** Алгоритм планировщика: {@code sm2} | {@code fsrs}. */
+        @Pattern(regexp = "sm2|fsrs", message = "app.scheduling.algorithm: допустимо sm2 | fsrs")
+        private String algorithm = "sm2";
+
+        /** {@code true}, если выбран FSRS-планировщик. */
+        public boolean isFsrs() {
+            return "fsrs".equalsIgnoreCase(algorithm);
+        }
     }
 
     /**
