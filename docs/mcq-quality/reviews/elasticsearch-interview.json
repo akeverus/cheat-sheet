@@ -1,0 +1,41 @@
+{
+  "topic_slug": "elasticsearch-interview",
+  "round": 8,
+  "status": "WIP c2 (§1 fact-scan CLEAN + freshness sidecar + correct-trim 44; c3 enrich/code-tie/skel/blind pending)",
+  "reviewed_commit": "HEAD (c2 WIP)",
+  "blocks_total": 44,
+  "profile": "EXTREME STRONG-raw — correct = энциклопедии 23-46 слов, code-rich, самый длинный/детальный в 42/44; дистракторы-заглушки 6-17 слов; sections богатые (avg ~840ch). Крупнейший файл ROUND-8 вместе с cassandra (44 блока).",
+  "baseline_gates_raw": {
+    "verify_mcq_json": "OK",
+    "correct_longest_rate": "0.955 (42/44)",
+    "option_length_ratio": "3.82 (worst Q42; 43 блоков >1.35)",
+    "correct_wrong_avg_ratio": "2.352 (correct̄=33сл / wronḡ=14сл)",
+    "sentence_parity": "3 (worst Q20; 24 блоков >1)",
+    "detail_parity": "0.977 (43/44 correct доминирует)",
+    "style_guessability": "0.962 (len 0.95, code 0.96)",
+    "absolute_marker_gap": "0.227 (ok)",
+    "correct_position_distribution": "1.0 (A/B/C/D=[11,11,11,11])",
+    "correct_position_sequence": "3 (PASS — корпус-свип уже de-cycled; c1 de-cycle НЕ нужен)",
+    "duplicate_ngrams": 0,
+    "source_coverage": "missing"
+  },
+  "c1_note": "POS pattern-free (корпус-свип de-cycle 2026-07-17; seq=3/dist=1.0 PASS), c1 de-cycle НЕ требуется. Correct seq ACDDCCAADADBCCACDADBADBCACCDCBBABBABBDACDDBB.",
+  "c2_done": {
+    "fact_scan_result": "§1 CLEAN — все 44 correct факт-корректны, single-defensible, актуальны для ES 8.x/9.x + Spring Data ES 5.x. Проверены: Lucene/JSON/near-RT, cluster/node/shard/replica/mapping, text-vs-keyword, инвертированный индекс, analyzer 3 этапа, refresh/flush, sharding hash(_routing)%primary, роли узлов, green/yellow/red, Query DSL leaf/compound, query-vs-filter context, bool query, BM25 (k1=1.2/b=0.75), агрегации metric/bucket/pipeline, CRUD+bulk NDJSON, optimistic locking _seq_no/_primary_term, Spring Boot integration, ILM, security, alias, pagination from-size/search_after/PIT, Runtime Fields, autocomplete, percolate. НЕТ факт-ошибок и version-staleness — version-claim'ы (BM25 c 5.0, _version deprecated 6.7, Runtime Fields 7.11) исторически точны. Фикс верного НЕ потребовался.",
+    "freshness_sidecar": "создан docs/mcq-quality/fact-freshness/elasticsearch-interview.json (ES 8.x-9.x/Lucene 9.x/Spring Data ES 5.x; version_sensitive_notes Q25/Q30/Q42/Q37/Q11/Q41/Q32-33) → SOURCE_COVERAGE missing→ok.",
+    "correct_trim": "все 44 correct обрезаны 33ср→19.9ср слов (fact-preserving): полные каталоги/примеры дублируются в rich sections (avg ~840ch, untouched), trim НЕ теряет педагогику. Только correct.text; sections байт-сохранены; correct-флаг/label/order нетронуты; single-correct. Correct БЫЛ первичным form-tell по длине → байт-лок НЕ аксиома (mtls/spring-mvc/networking-прецедент).",
+    "invariants": "verify-mcq-json OK; label/order ABCD/0-3 везде; ровно 1 correct на блок."
+  },
+  "gates_after_c2": {
+    "correct_longest_rate": "0.955 → 0.795",
+    "option_length_ratio": "3.82 → 2.45 (worst Q42)",
+    "correct_wrong_avg_ratio": "2.352 → 1.415 (correct̄=20 / wronḡ=14)",
+    "sentence_parity": "3 (без изменений — c3 merge)",
+    "detail_parity": "0.977 → 0.75",
+    "style_guessability": "0.962 → 0.869 (len 0.82, code 0.87)",
+    "absolute_marker_gap": "0.227 → 0.273 (лёгкий регресс от trim — при enrich НЕ добавлять абсолюты, де-абсолютить дистракторы)",
+    "source_coverage": "ok",
+    "position_gates": "PASS (dist 1.0, seq 3)"
+  },
+  "next": "c3 band-enrich дистракторов Q1-22 / Q23-44 (заглушки 6-17w → parity ~cw±2, distinct плаузибл-ложь + code-spans, БЕЗ абсолютов) → file-wide code/detail-tie (STYLE code-guess) + SENTENCE merge + де-абсолют → skel-HARD-0 (semicolon/opening_class) → BATCHED blind (2 correctness + form-adversary) → FINAL. Короткие code-dense correct (Q11=8/Q31=7/Q32=9w) — OPTION_LENGTH ровнять enrich'ем дистрактора вниз, не раздувая correct."
+}
