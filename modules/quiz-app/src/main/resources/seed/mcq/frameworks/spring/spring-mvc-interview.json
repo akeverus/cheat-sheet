@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`BindingResult` хранит результат привязки и валидации и обязан идти СРАЗУ ПОСЛЕ валидируемого аргумента, без него провал валидации даёт `MethodArgumentNotValidException` (для `@RequestBody`) или `BindException` (для `@ModelAttribute`).",
+              "text": "`BindingResult` хранит результат привязки и валидации и обязан идти сразу после валидируемого аргумента, без него провал валидации даёт `MethodArgumentNotValidException` (для `@RequestBody`) или `BindException` (для `@ModelAttribute`).",
               "correct": true,
               "sections": {
                 "explanation": "Порядок критичен: `Spring` связывает каждый `BindingResult` с предшествующим ему валидируемым аргументом. Через него читают `getFieldErrors()` и `getGlobalErrors()`.",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`DispatcherServlet` — центральный сервлет (`Front Controller`) со своим ДОЧЕРНИМ контекстом (контроллеры, `ViewResolver`), `ContextLoaderListener` создаёт КОРНЕВОЙ `ApplicationContext` (сервисы), веб-бины видят корневые бины, но не наоборот.",
+              "text": "`DispatcherServlet` — центральный сервлет (`Front Controller`) со своим дочерним контекстом (контроллеры, `ViewResolver`), `ContextLoaderListener` создаёт корневой `ApplicationContext` (сервисы), веб-бины видят корневые бины, но не наоборот.",
               "correct": true,
               "sections": {
                 "explanation": "Иерархия контекстов: общий корневой для бизнес-слоя и дочерний для веб-слоя. Видимость односторонняя — веб видит бизнес, но не наоборот.",
@@ -1164,7 +1164,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`ContextLoaderListener` создаёт КОРНЕВОЙ контекст (сервисы, репозитории), а `DispatcherServlet` — ДОЧЕРНИЙ (контроллеры, `ViewResolver`), и корневой контекст видит бины веб-слоя и инжектит контроллеры в сервисы.",
+              "text": "`ContextLoaderListener` создаёт корневой контекст (сервисы, репозитории), а `DispatcherServlet` — дочерний (контроллеры, `ViewResolver`), и корневой контекст видит бины веб-слоя и инжектит контроллеры в сервисы.",
               "correct": false,
               "sections": {
                 "what_actually": "Видимость односторонняя: дочерний (веб) видит корневой (бизнес), но корневой бины веб-слоя НЕ видит.",
@@ -1188,7 +1188,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`ContextLoaderListener` создаёт ДОЧЕРНИЙ `WebApplicationContext` (контроллеры, `ViewResolver`), а `DispatcherServlet` при старте поднимает КОРНЕВОЙ контекст (сервисы, репозитории), веб-бины дочернего контекста видят корневые бины сервисов, но не наоборот.",
+              "text": "`ContextLoaderListener` создаёт дочерний `WebApplicationContext` (контроллеры, `ViewResolver`), а `DispatcherServlet` при старте поднимает корневой контекст (сервисы, репозитории), веб-бины дочернего контекста видят корневые бины сервисов, но не наоборот.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `ContextLoaderListener` создаёт КОРНЕВОЙ контекст (сервисы), а `DispatcherServlet` — ДОЧЕРНИЙ (контроллеры).",
@@ -1355,7 +1355,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Исключение обрабатывается по приоритету: локальный `@ExceptionHandler` контроллера → `@ControllerAdvice` (глобальный) → `@ResponseStatus` на классе исключения → `DefaultHandlerExceptionResolver` → `500`, в REST обычно `@RestControllerAdvice` с форматом RFC 7807.",
+              "text": "Исключение обрабатывается по приоритету: локальный `@ExceptionHandler` контроллера, `@ControllerAdvice` (глобальный), `@ResponseStatus` на классе исключения, `DefaultHandlerExceptionResolver`, `500`, в REST обычно `@RestControllerAdvice` с форматом RFC 7807.",
               "correct": true,
               "sections": {
                 "explanation": "Spring перебирает уровни сверху вниз, пока не найдёт подходящий обработчик. Локальный имеет приоритет над глобальным.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@RequestBody` берёт данные из тела запроса (`JSON` → объект, POST/PUT), `@RequestParam` — из query/form-параметров (`?key=value`), `@PathVariable` — из сегмента URL (`/path/{id}`), все три читают разные части запроса и не взаимозаменяемы.",
+              "text": "`@RequestBody` берёт данные из тела запроса (`JSON`-объект, POST/PUT), `@RequestParam` — из query/form-параметров (`?key=value`), `@PathVariable` — из сегмента URL (`/path/{id}`), все три читают разные части запроса и не взаимозаменяемы.",
               "correct": true,
               "sections": {
                 "explanation": "Источник данных — ключевое различие: тело, query-строка или путь. Выбор зависит от семантики данных и REST-конвенций.",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Полная цепочка: DTO с ограничениями (`@NotBlank`/`@Size`) → аргумент `@Valid` в контроллере → ошибки в `BindingResult` или `MethodArgumentNotValidException` → глобальный `@RestControllerAdvice` возвращает `400` с `JSON` ошибок.",
+              "text": "Полная цепочка: DTO с ограничениями (`@NotBlank`/`@Size`), аргумент `@Valid` в контроллере, ошибки в `BindingResult` или `MethodArgumentNotValidException`, глобальный `@RestControllerAdvice` возвращает `400` с `JSON` ошибок.",
               "correct": true,
               "sections": {
                 "explanation": "Валидация декларативна и многослойна: правила на DTO, запуск через `@Valid`, единая обработка ошибок в advice. Это отделяет проверку от бизнес-логики.",
@@ -1847,7 +1847,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`DispatcherServlet` обрабатывает запрос строго фиксированной цепочкой вызовов: `getHandler()` через `HandlerMapping` находит handler → `preHandle()` интерцепторов → `HandlerAdapter.handle()` вызывает контроллер → `ModelAndView` → `postHandle()` → `ViewResolver` → `render()` → `afterCompletion()`, а при `@ResponseBody` шаг `ViewResolver` пропускается.",
+              "text": "`DispatcherServlet` обрабатывает запрос строго фиксированной цепочкой вызовов: `getHandler()` через `HandlerMapping` находит handler, `preHandle()` интерцепторов, `HandlerAdapter.handle()` вызывает контроллер, `ModelAndView`, `postHandle()`, `ViewResolver`, `render()`, `afterCompletion()`, а при `@ResponseBody` шаг `ViewResolver` пропускается.",
               "correct": true,
               "sections": {
                 "explanation": "Цепочка детерминирована: маппинг, интерцепторы, адаптер, контроллер, рендеринг. Ключевые компоненты — `HandlerMapping`, `HandlerAdapter`, `ViewResolver`, `HandlerExceptionResolver`.",
@@ -1943,7 +1943,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`HandlerInterceptor` работает ВНУТРИ `DispatcherServlet` с доступом к handler'у и `ModelAndView`, `Filter` (`jakarta.servlet.Filter`) — на уровне контейнера ДО `DispatcherServlet`, не знает о контроллере, фильтры для CORS/кодировки, интерцепторы для логики MVC.",
+              "text": "`HandlerInterceptor` работает внутри `DispatcherServlet` с доступом к handler'у и `ModelAndView`, `Filter` (`jakarta.servlet.Filter`) — на уровне контейнера до `DispatcherServlet`, не знает о контроллере, фильтры для CORS/кодировки, интерцепторы для логики MVC.",
               "correct": true,
               "sections": {
                 "explanation": "Ключевое различие — уровень: фильтр снаружи MVC, интерцептор внутри. Только интерцептор видит, какой именно контроллер будет вызван.",
@@ -2171,7 +2171,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Метод, помеченный `@ModelAttribute`, вызывается уже ПОСЛЕ основного `@RequestMapping`-метода контроллера, чтобы дополнить недостающими данными модель, которую вернул обработчик перед рендерингом `View`.",
+              "text": "Метод, помеченный `@ModelAttribute`, вызывается уже после основного `@RequestMapping`-метода контроллера, чтобы дополнить недостающими данными модель, которую вернул обработчик перед рендерингом `View`.",
               "correct": false,
               "sections": {
                 "what_actually": "Метод-`@ModelAttribute` вызывается ПЕРЕД обработчиком, наполняя модель до выполнения основного метода.",
@@ -2207,7 +2207,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Здесь `@ModelAttribute` на методе предзаполняет модель данными для ВСЕХ методов контроллера: вызывается ПЕРЕД каждым `@RequestMapping`-методом и добавляет атрибут, а рендеринг наступает уже после обработчика.",
+              "text": "Здесь `@ModelAttribute` на методе предзаполняет модель данными для всех методов контроллера: вызывается перед каждым `@RequestMapping`-методом и добавляет атрибут, а рендеринг наступает уже после обработчика.",
               "correct": true,
               "sections": {
                 "explanation": "Это способ переиспользовать общие данные (справочники, текущий пользователь) во всех view контроллера без дублирования. В `@ControllerAdvice` работает глобально.",
@@ -2231,7 +2231,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "При инициализации `DispatcherServlet.init()` создаёт `WebApplicationContext` и через `onRefresh()` → `initStrategies()` загружает стратегии (`initHandlerMappings()` и другие), при запросе `getHandler()` перебирает `HandlerMapping` по `Order` и возвращает `HandlerExecutionChain`.",
+              "text": "При инициализации `DispatcherServlet.init()` создаёт `WebApplicationContext` и через `onRefresh()`, `initStrategies()` загружает стратегии (`initHandlerMappings()` и другие), при запросе `getHandler()` перебирает `HandlerMapping` по `Order` и возвращает `HandlerExecutionChain`.",
               "correct": true,
               "sections": {
                 "explanation": "Инициализация поднимает все стратегии один раз; на каждый запрос диспетчер выбирает первый подходящий `HandlerMapping` по приоритету. Кастомный mapping добавляют с высоким `@Order`.",
@@ -2363,7 +2363,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Multipart (`multipart/form-data`) принимают так: один файл — `@RequestParam(\"file\") MultipartFile`, несколько — `List<MultipartFile>`, JSON плюс файл — через `@RequestPart`, лимиты в `spring.servlet.multipart.*`, а `MaxUploadSizeExceededException` ловят в `@ControllerAdvice` → `413`.",
+              "text": "Multipart (`multipart/form-data`) принимают так: один файл — `@RequestParam(\"file\") MultipartFile`, несколько — `List<MultipartFile>`, JSON плюс файл — через `@RequestPart`, лимиты в `spring.servlet.multipart.*`, а `MaxUploadSizeExceededException` ловят в `@ControllerAdvice`, отдавая `413`.",
               "correct": true,
               "sections": {
                 "explanation": "`@RequestParam` подходит для простых файлов/полей, а `@RequestPart` — когда нужна десериализация и валидация именованной части как объекта. Лимиты декларативны.",
@@ -2411,7 +2411,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Здесь `Spring MVC` даёт три подхода без блокировки Servlet-потока: `Callable<T>` (выполняется в `AsyncTaskExecutor`), `DeferredResult<T>` (результат ставит ВНЕШНИЙ код через `setResult()`) и `@Async` с `CompletableFuture<T>`, Servlet-поток освобождается сразу.",
+              "text": "Здесь `Spring MVC` даёт три подхода без блокировки Servlet-потока: `Callable<T>` (выполняется в `AsyncTaskExecutor`), `DeferredResult<T>` (результат ставит внешний код через `setResult()`) и `@Async` с `CompletableFuture<T>`, Servlet-поток освобождается сразу.",
               "correct": true,
               "sections": {
                 "explanation": "Все три снимают нагрузку с пула Servlet-потоков. `Callable`/`@Async` управляются Spring-executor'ом, а `DeferredResult` завершается внешним источником.",
@@ -2471,7 +2471,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Здесь `Spring MVC` ищет обработчик по приоритету: локальный `@ExceptionHandler` контроллера (высший) → `@ExceptionHandler` в `@ControllerAdvice` (по `@Order` и специфичности типа) → `ResponseStatusExceptionResolver` → `DefaultHandlerExceptionResolver` → страница ошибки контейнера.",
+              "text": "Здесь `Spring MVC` ищет обработчик по приоритету: локальный `@ExceptionHandler` контроллера (высший), `@ExceptionHandler` в `@ControllerAdvice` (по `@Order` и специфичности типа), `ResponseStatusExceptionResolver`, `DefaultHandlerExceptionResolver`, страница ошибки контейнера.",
               "correct": true,
               "sections": {
                 "explanation": "Поиск идёт от самого узкого к самому широкому. Среди advice выигрывает меньший `@Order` и более специфичный тип исключения.",
