@@ -263,7 +263,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "Sync Status (`Synced`, `OutOfSync`, `Unknown`) сравнивает `Git` и кластер. Health Status (`Healthy`, `Progressing`, `Degraded`, `Suspended`, `Missing`) отражает состояние ресурсов; отдельно есть Operation State последней операции.",
+              "text": "Sync Status (`Synced`, `OutOfSync`, `Unknown`) сравнивает `Git` и кластер. Health Status (`Healthy`, `Progressing`, `Degraded`, `Suspended`, `Missing`) отражает состояние ресурсов, отдельно есть Operation State последней операции.",
               "correct": true,
               "sections": {
                 "explanation": "Sync и Health — независимые оси: приложение может быть `Synced` (манифесты совпадают), но `Degraded`, если под падает в `CrashLoopBackOff`; и наоборот, `OutOfSync` при полностью `Healthy` подах.",
@@ -347,7 +347,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "Manual sync (по умолчанию): `ArgoCD` помечает расхождение `OutOfSync`, но применяет изменения только по команде человека. Automated sync применяет их сам; `prune` и `selfHeal` по умолчанию отключены.",
+              "text": "Manual sync (по умолчанию): `ArgoCD` помечает расхождение `OutOfSync`, но применяет изменения только по команде человека. Automated sync применяет их сам, `prune` и `selfHeal` по умолчанию отключены.",
               "correct": true,
               "sections": {
                 "explanation": "Разница в том, кто нажимает «синхронизировать»: в manual — оператор, что даёт контрольную точку перед prod-деплоем; в automated — сам контроллер, что обеспечивает непрерывную сходимость к `Git` без ручных действий.",
@@ -503,7 +503,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "`Sync Hooks` — ресурсы (обычно `Job`), выполняемые в определённые фазы синхронизации по аннотации `argocd.argoproj.io/hook`. Фазы: `PreSync`, `Sync`, `PostSync`, `SyncFail` и `Skip`; удаление хука после запуска регулирует `hook-delete-policy`.",
+              "text": "`Sync Hooks` — ресурсы (обычно `Job`), выполняемые в определённые фазы синхронизации по аннотации `argocd.argoproj.io/hook`. Фазы: `PreSync`, `Sync`, `PostSync`, `SyncFail` и `Skip`, удаление хука после запуска регулирует `hook-delete-policy`.",
               "correct": true,
               "sections": {
                 "explanation": "Хуки привязывают побочные действия к моменту синка: `PreSync` гарантирует, что миграция выполнится до деплоя приложения, а `PostSync` — что smoke-тест запустится только после успешного применения манифестов.",
@@ -935,7 +935,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "`ArgoCD` ставится в один управляющий кластер и управляет многими целевыми. Внешний кластер регистрируют `argocd cluster add`; создаётся `Secret` с label `argocd.argoproj.io/secret-type: cluster`, содержащий `server`, `bearerToken` и `caData` кластера.",
+              "text": "`ArgoCD` ставится в один управляющий кластер и управляет многими целевыми. Внешний кластер регистрируют `argocd cluster add`, создаётся `Secret` с label `argocd.argoproj.io/secret-type: cluster`, содержащий `server`, `bearerToken` и `caData` кластера.",
               "correct": true,
               "sections": {
                 "explanation": "Один `ArgoCD` хранит credentials всех целевых кластеров в cluster-secrets и обращается к их API напрямую, поэтому `destination.server` в `Application` может указывать на любой зарегистрированный кластер.",
@@ -983,7 +983,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "`ArgoCD` сам секреты не хранит. Подходы: `Sealed Secrets` (шифрование прямо в `Git`), `External Secrets Operator` (синхронизация из внешних хранилищ), `ArgoCD Vault Plugin` и `SOPS`; чаще всего рекомендуют ESO или Sealed Secrets.",
+              "text": "`ArgoCD` сам секреты не хранит. Подходы: `Sealed Secrets` (шифрование прямо в `Git`), `External Secrets Operator` (синхронизация из внешних хранилищ), `ArgoCD Vault Plugin` и `SOPS`, чаще всего рекомендуют ESO или Sealed Secrets.",
               "correct": true,
               "sections": {
                 "explanation": "Все подходы решают конфликт «секреты нельзя класть в `Git` в открытом виде» по-разному: `Sealed Secrets` хранит зашифрованное в `Git`, ESO держит секреты во внешнем хранилище, а в `Git` лежит лишь ссылка-`ExternalSecret`.",
@@ -1091,7 +1091,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`ArgoCD` хранит историю деплоев (10 ревизий); откат — через UI или `argocd app rollback`. Важно: деплоятся манифесты старой git-ревизии, `Git` не меняется — правильный откат это `git revert`.",
+              "text": "`ArgoCD` хранит историю деплоев (10 ревизий), откат — через UI или `argocd app rollback`. Важно: деплоятся манифесты старой git-ревизии, `Git` не меняется — правильный откат это `git revert`.",
               "correct": true,
               "sections": {
                 "explanation": "`argocd app rollback` — это оперативная мера: он деплоит старую ревизию и приостанавливает авто-синк, чтобы тот не вернул HEAD; но раз `Git` не изменён, источник истины всё ещё указывает на новую версию.",
@@ -1307,7 +1307,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "`ArgoCD Notifications` шлёт уведомления о событиях приложений: в `argocd-notifications-cm` описывают `trigger`, `template` и `service`, а на `Application` вешают аннотацию-подписку; каналы — Slack, Teams, Email, PagerDuty.",
+              "text": "`ArgoCD Notifications` шлёт уведомления о событиях приложений: в `argocd-notifications-cm` описывают `trigger`, `template` и `service`, а на `Application` вешают аннотацию-подписку, каналы — Slack, Teams, Email, PagerDuty.",
               "correct": true,
               "sections": {
                 "explanation": "Связка триггер→шаблон→сервис разделяет «когда слать» (условие на статус), «что слать» (шаблон) и «куда слать» (канал), а аннотация-подписка на `Application` подключает конкретное приложение к конкретному каналу.",
@@ -1331,7 +1331,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`ignoreDifferences` — список полей, расхождения в которых `ArgoCD` игнорирует, чтобы приложение не висело `OutOfSync` (типично для полей от `HPA` или мутирующего webhook); пути задают через `jsonPointers` или `jqPathExpressions`.",
+              "text": "`ignoreDifferences` — список полей, расхождения в которых `ArgoCD` игнорирует, чтобы приложение не висело `OutOfSync` (типично для полей от `HPA` или мутирующего webhook), пути задают через `jsonPointers` или `jqPathExpressions`.",
               "correct": true,
               "sections": {
                 "explanation": "Без `ignoreDifferences` поля, изменяемые контроллерами кластера (а не человеком), создавали бы вечный дрейф; механизм говорит `ArgoCD` «эти поля управляются извне, не считай их расхождением».",
@@ -1415,7 +1415,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "`ArgoCD`: богатый веб-UI, централизованный multi-cluster, `ApplicationSet`, встроенный `Dex` для SSO. `Flux CD`: чисто pull-only без UI, federated multi-cluster, нативный `SOPS`, `HelmRelease`; оба CNCF Graduated.",
+              "text": "`ArgoCD`: богатый веб-UI, централизованный multi-cluster, `ApplicationSet`, встроенный `Dex` для SSO. `Flux CD`: чисто pull-only без UI, federated multi-cluster, нативный `SOPS`, `HelmRelease`, оба CNCF Graduated.",
               "correct": true,
               "sections": {
                 "explanation": "Ключевые различия — наличие UI, модель multi-cluster (централизованная vs federated) и философия (`ArgoCD` допускает ручной деплой через UI, `Flux` строго pull-only), что определяет выбор под нужды команды.",
@@ -1703,7 +1703,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "`resource.exclusions` в `argocd-cm` убирает виды ресурсов из управления по `apiGroups`/`kinds`; зеркальная `resource.inclusions` — whitelist. Часто исключают `Event`, снижая нагрузку на `Redis`.",
+              "text": "`resource.exclusions` в `argocd-cm` убирает виды ресурсов из управления по `apiGroups`/`kinds`, зеркальная `resource.inclusions` — whitelist. Часто исключают `Event`, снижая нагрузку на `Redis`.",
               "correct": true,
               "sections": {
                 "explanation": "Exclusions/inclusions работают на уровне видов ресурсов глобально, а не отдельных полей: они говорят `ArgoCD`, какие типы вообще не watch-ить, что особенно полезно для шумных `Event` или ресурсов, управляемых другими операторами.",
