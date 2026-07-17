@@ -155,7 +155,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Чтобы получить `ServletContext`, бин обязан наследоваться от базового `HttpServlet` и переопределить метод `init(ServletConfig)`, откуда затем вызвать `getServletContext()` при инициализации сервлета контейнером.",
+              "text": "Чтобы получить `ServletContext`, бин обязан наследовать базовый `HttpServlet` или `GenericServlet`, переопределить метод `init(ServletConfig)` и уже оттуда через `ServletConfig` вызвать `getServletContext()`, а не через `ServletContextAware` или `@Autowired`.",
               "correct": false,
               "sections": {
                 "what_actually": "Наследование от `HttpServlet` не требуется; обычный `@Component` получает контекст через `@Autowired` или Aware-интерфейс.",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`LocaleResolver` определяет локаль пользователя по его IP-адресу через встроенную в `Spring MVC` geolocation-базу, а бин `MessageSource` подставляет нужный перевод строки уже по вычисленным координатам региона.",
+              "text": "`LocaleResolver` определяет локаль по IP-адресу через встроенную в `Spring MVC` geolocation-базу, а бины `MessageSource`, `LocaleChangeInterceptor`, `AcceptHeaderLocaleResolver` и `SessionLocaleResolver` подставляют перевод по вычисленному `Locale`.",
               "correct": false,
               "sections": {
                 "what_actually": "Стандартные `LocaleResolver` берут локаль из заголовка `Accept-Language`, cookie или сессии, а не по IP.",
@@ -264,7 +264,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`HandlerInterceptor` работает на уровне сервлет-контейнера, ещё до `DispatcherServlet`, поэтому не имеет доступа ни к контроллеру, ни к `ModelAndView`, как обычный `Filter`.",
+              "text": "`HandlerInterceptor` работает на уровне сервлет-контейнера, как `Filter` из `web.xml`, ещё до `DispatcherServlet` и `HandlerMapping`, поэтому не видит ни `@Controller`, ни `ModelAndView`, ни `HandlerExecutionChain`.",
               "correct": false,
               "sections": {
                 "what_actually": "Это описание `Filter`; `HandlerInterceptor` работает внутри `DispatcherServlet` и получает `handler` (метод контроллера).",
@@ -276,7 +276,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Если метод `preHandle()` вернёт `true`, обработка запроса немедленно прерывается и целевой контроллер не вызывается, а шаги `postHandle()` и `afterCompletion()` при этом полностью пропускаются.",
+              "text": "Если метод `preHandle()` вернёт `true`, обработка запроса немедленно прерывается (контроллер не вызывается), а шаги `postHandle()` (до рендеринга) и `afterCompletion()` (после ответа) полностью пропускаются.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `true` означает продолжить цепочку и вызвать контроллер, а `false` — прервать обработку.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`ModelAndView` хранит исключительно логическое имя представления (`View`) и не переносит данные модели — атрибуты для рендеринга добавляют отдельно через параметр `Model` или `ModelMap`.",
+              "text": "`ModelAndView` хранит исключительно логическое имя `View` и не переносит модель — данные для рендеринга кладут отдельно через `Model`, `ModelMap` или `@ModelAttribute`, а имя разрешает `ViewResolver` в `DispatcherServlet`.",
               "correct": false,
               "sections": {
                 "what_actually": "`ModelAndView` хранит И модель (данные), И имя view — отсюда название «Model-And-View».",
@@ -684,7 +684,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Даже при объявленном рядом `BindingResult` фреймворк `Spring` всё равно бросит `MethodArgumentNotValidException`, если в связанном `@RequestBody`-аргументе обнаружится хотя бы одна ошибка валидации поля.",
+              "text": "Даже при объявленном рядом `BindingResult` фреймворк `Spring` всё равно бросит `MethodArgumentNotValidException`, если в связанном `@RequestBody`-аргументе с `@Valid` найдётся хотя бы одна ошибка поля, а не наполнит `BindException`.",
               "correct": false,
               "sections": {
                 "what_actually": "При наличии `BindingResult` исключение НЕ бросается — ошибки кладутся в него, и контроллер решает, что делать.",
@@ -731,7 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@RequestBody` читает значения из query-параметров запроса вида `?name=John` и собирает из них целевой объект через `WebDataBinder`, работая при этом точно так же, как это делает аннотация `@ModelAttribute` на параметре метода.",
+              "text": "`@RequestBody` читает значения из query-параметров запроса вида `?name=John` и собирает из них целевой объект через `WebDataBinder` и `ServletModelAttributeMethodProcessor`, работая при этом точно так же, как аннотация `@ModelAttribute` с `HttpMessageConverter` на параметре метода.",
               "correct": false,
               "sections": {
                 "what_actually": "Из query-параметров собирает объект `@ModelAttribute`; `@RequestBody` читает именно тело запроса (`JSON`/`XML`).",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Controller` нельзя применять для REST API ни при каких настройках: аннотация `@ResponseBody` на его методах молча игнорируется, а результат всегда уходит в `ViewResolver` как имя представления.",
+              "text": "`@Controller` нельзя применять для REST: `@ResponseBody` на его методах молча игнорируется, а результат всегда уходит в `ViewResolver` как имя `View`, минуя `HttpMessageConverter`, `MappingJackson2HttpMessageConverter` и `Jackson`, в отличие от `@RestController`.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Controller` + `@ResponseBody` на методе даёт ровно тот же REST-эффект; `@RestController` лишь убирает дублирование аннотации.",
@@ -971,7 +971,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ViewResolver` участвует в формировании любого ответа, включая `JSON` из `@RestController`, где он преобразует логическое имя представления в готовое тело через цепочку `HttpMessageConverter` перед отправкой.",
+              "text": "`ViewResolver` участвует в формировании любого ответа, включая `JSON` из `@RestController`, где он преобразует логическое имя `View` в тело через `HttpMessageConverter`, `MappingJackson2HttpMessageConverter` и `ContentNegotiatingViewResolver`.",
               "correct": false,
               "sections": {
                 "what_actually": "В `@RestController` (с `@ResponseBody`) `ViewResolver` пропускается — ответ пишется напрямую через `HttpMessageConverter`.",
@@ -1176,7 +1176,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`DispatcherServlet` — это сервлетный `Filter`, который перехватывает каждый HTTP-запрос ещё до инициализации `ApplicationContext` и делегирует его в `HandlerMapping`, а собственного контекста не создаёт и работает поверх корневого.",
+              "text": "`DispatcherServlet` — это сервлетный `Filter`, который перехватывает каждый HTTP-запрос ещё до `ApplicationContext` и `ContextLoaderListener`, делегирует его в `HandlerMapping` и `HandlerAdapter`, своего контекста не создаёт.",
               "correct": false,
               "sections": {
                 "what_actually": "`DispatcherServlet` — это сервлет (Front Controller), и он работает поверх уже поднятого `WebApplicationContext`, а не до контекста.",
@@ -1211,7 +1211,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Spring Boot` дефолтная реализация — это `CommonsMultipartResolver` на базе библиотеки Apache Commons FileUpload, а более новый `StandardServletMultipartResolver` подключают вручную отдельным бином в конфигурации приложения.",
+              "text": "В `Spring Boot` дефолтная реализация multipart — это `CommonsMultipartResolver` на базе библиотеки `Apache Commons FileUpload`, а более новый `StandardServletMultipartResolver` с `MultipartFile` подключают вручную бином `WebMvcConfigurer` только под `Servlet 3.0`.",
               "correct": false,
               "sections": {
                 "what_actually": "В `Spring Boot` по умолчанию используется `StandardServletMultipartResolver` (Servlet 3.0+); Commons — альтернатива для старых сред.",
