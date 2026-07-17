@@ -11,14 +11,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Prometheus Server` сам scrape-ит таргеты и хранит метрики в `TSDB`, вычисляет alert rules и шлёт firing-алерты в `Alertmanager`, который маршрутизирует уведомления; `Pushgateway` буферит метрики short-lived jobs, `exporters` переводят чужие системы в формат Prometheus, а `Grafana` читает данные по `PromQL`.",
-              "correct": true,
+              "text": "`Exporters` содержат логику алертинга: они сами запускают alert rules и шлют уведомления напрямую в Slack при превышении порогов, минуя сервер.",
+              "correct": false,
               "sections": {
-                "explanation": "Архитектура строится на разделении ответственности: сервер только детектирует условие и переводит правило в `FIRING`, а решение «кому и как уведомить» вынесено в `Alertmanager`. Это позволяет масштабировать сбор и алертинг независимо.",
-                "example": "`Prometheus Server` делает HTTP `GET /actuator/prometheus` к `Spring Boot`-приложению каждые 15s, складывает сэмплы в `TSDB`, а при превышении порога ошибок шлёт `POST /api/v2/alerts` в `Alertmanager`, который пишет в `#alerts` Slack.",
-                "when_to_apply": "Эту схему держат в голове при проектировании мониторинга: разносят детект (правила на сервере) и доставку (каналы в Alertmanager), а short-lived jobs заранее планируют под Pushgateway.",
-                "edge_cases": "`Node Exporter`, `JMX Exporter`, `Redis Exporter` — это агенты-переходники для систем без нативной поддержки формата Prometheus; их тоже scrape-ит сервер как обычные таргеты.",
-                "related": "[[prometheus-grafana-interview#Q4]] роль Pushgateway; [[prometheus-grafana-interview#Q5]] связь Server и Alertmanager; [[prometheus-grafana-interview#Q2]] что такое TSDB."
+                "what_actually": "`Exporters` только переводят метрики чужих систем в формат Prometheus и отдают их по HTTP; никакой логики алертинга в них нет.",
+                "source_of_confusion": "Раз exporter «знает» метрики системы, кажется, что он может и сам решать о превышении порога — но это не его роль.",
+                "if_it_were_true": "Если бы exporters алертили сами, каждый из десятков exporter-ов пришлось бы настраивать на пороги и каналы, что неуправляемо.",
+                "how_it_should_be": "Alert rules живут исключительно в `Prometheus Server`; exporters — только источник метрик."
               }
             },
             {
@@ -36,6 +35,19 @@
             {
               "order": 2,
               "label": "C",
+              "text": "`Prometheus Server` сам scrape-ит таргеты и хранит метрики в `TSDB`, вычисляет alert rules и шлёт firing-алерты в `Alertmanager`, который маршрутизирует уведомления; `Pushgateway` буферит метрики short-lived jobs, `exporters` переводят чужие системы в формат Prometheus, а `Grafana` читает данные по `PromQL`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Архитектура строится на разделении ответственности: сервер только детектирует условие и переводит правило в `FIRING`, а решение «кому и как уведомить» вынесено в `Alertmanager`. Это позволяет масштабировать сбор и алертинг независимо.",
+                "example": "`Prometheus Server` делает HTTP `GET /actuator/prometheus` к `Spring Boot`-приложению каждые 15s, складывает сэмплы в `TSDB`, а при превышении порога ошибок шлёт `POST /api/v2/alerts` в `Alertmanager`, который пишет в `#alerts` Slack.",
+                "when_to_apply": "Эту схему держат в голове при проектировании мониторинга: разносят детект (правила на сервере) и доставку (каналы в Alertmanager), а short-lived jobs заранее планируют под Pushgateway.",
+                "edge_cases": "`Node Exporter`, `JMX Exporter`, `Redis Exporter` — это агенты-переходники для систем без нативной поддержки формата Prometheus; их тоже scrape-ит сервер как обычные таргеты.",
+                "related": "[[prometheus-grafana-interview#Q4]] роль Pushgateway; [[prometheus-grafana-interview#Q5]] связь Server и Alertmanager; [[prometheus-grafana-interview#Q2]] что такое TSDB."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`Prometheus Server` принимает уже готовые алерты от `Alertmanager` и сам вычисляет их состояние (`PENDING`/`FIRING`), а Alertmanager только оценивает PromQL.",
               "correct": false,
               "sections": {
@@ -43,18 +55,6 @@
                 "source_of_confusion": "Кажется логичным, что специализированный «manager» алертов и должен их вычислять, отсюда путаница в направлении.",
                 "if_it_were_true": "Если бы Alertmanager вычислял правила, ему нужен был бы доступ к TSDB и PromQL-движку, но он не хранит временные ряды вообще.",
                 "how_it_should_be": "Вычисление alert rules и состояние `FIRING`/`PENDING` — на стороне сервера; `Alertmanager` лишь маршрутизирует готовые алерты."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Exporters` содержат логику алертинга: они сами запускают alert rules и шлют уведомления напрямую в Slack при превышении порогов, минуя сервер.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Exporters` только переводят метрики чужих систем в формат Prometheus и отдают их по HTTP; никакой логики алертинга в них нет.",
-                "source_of_confusion": "Раз exporter «знает» метрики системы, кажется, что он может и сам решать о превышении порога — но это не его роль.",
-                "if_it_were_true": "Если бы exporters алертили сами, каждый из десятков exporter-ов пришлось бы настраивать на пороги и каналы, что неуправляемо.",
-                "how_it_should_be": "Alert rules живут исключительно в `Prometheus Server`; exporters — только источник метрик."
               }
             }
           ]
@@ -71,6 +71,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Данные хранятся в 24-часовых блоках, а `compaction` не применяется — блоки только накапливаются до достижения retention limit.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Базовый размер блока — ~2 часа, а не 24; `compaction` — обязательная часть TSDB, иначе диск заполнялся бы огромным числом мелких блоков.",
+                "source_of_confusion": "Цифра «24 часа» интуитивна (сутки), а слово compaction звучит как опциональная оптимизация, отсюда ошибка.",
+                "if_it_were_true": "Если бы compaction не было, число каталогов-блоков и размер `index` росли бы линейно, замедляя запросы до неприемлемого уровня.",
+                "how_it_should_be": "Блоки ~2 часа, и compaction периодически сливает их в более крупные для экономии места и ускорения чтения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Все данные `TSDB` лежат в одном большом файле и сжимаются алгоритмом `LZ4` поверх значений `float64`.",
               "correct": false,
               "sections": {
@@ -81,8 +93,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`TSDB` хранит данные в 2-часовых блоках на диске, последние ~2 часа держит в памяти (head block) плюс `WAL` для durability, а старые блоки периодически уплотняет через `compaction`.",
               "correct": true,
               "sections": {
@@ -94,8 +106,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`TSDB` держит все данные только в памяти и периодически сбрасывает снапшоты на диск без использования `WAL`.",
               "correct": false,
               "sections": {
@@ -103,18 +115,6 @@
                 "source_of_confusion": "Поскольку последние ~2 часа действительно в памяти (head block), легко решить, что диск и WAL не участвуют вовсе.",
                 "if_it_were_true": "Если бы WAL не было, любой `OOM` или `kill -9` стирал бы последние минуты метрик, но Prometheus их восстанавливает из лога.",
                 "how_it_should_be": "Свежие данные пишутся и в память, и в `WAL`; затем формируется блок на диске, а старые блоки уплотняются compaction-ом."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Данные хранятся в 24-часовых блоках, а `compaction` не применяется — блоки только накапливаются до достижения retention limit.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Базовый размер блока — ~2 часа, а не 24; `compaction` — обязательная часть TSDB, иначе диск заполнялся бы огромным числом мелких блоков.",
-                "source_of_confusion": "Цифра «24 часа» интуитивна (сутки), а слово compaction звучит как опциональная оптимизация, отсюда ошибка.",
-                "if_it_were_true": "Если бы compaction не было, число каталогов-блоков и размер `index` росли бы линейно, замедляя запросы до неприемлемого уровня.",
-                "how_it_should_be": "Блоки ~2 часа, и compaction периодически сливает их в более крупные для экономии места и ускорения чтения."
               }
             }
           ]
@@ -131,18 +131,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Pull-модель означает, что таргеты сами периодически отправляют метрики в `Prometheus` по расписанию.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это описание push-модели. В pull всё наоборот: `Prometheus Server` инициирует HTTP-запросы к таргетам, а не таргеты шлют данные серверу.",
-                "source_of_confusion": "Слово «сбор» подталкивает к образу, где источники активно «сдают» данные в центр, что путает pull с push.",
-                "if_it_were_true": "Если бы таргеты сами слали метрики, `Prometheus` не мог бы контролировать частоту scrape и легко определять недоступность через `up`.",
-                "how_it_should_be": "В pull сервер сам опрашивает таргеты по HTTP; push реализован отдельно через `Pushgateway` для short-lived jobs."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Pull-модель неудобна тем, что `Prometheus` не может автоматически определить недоступность таргета.",
               "correct": false,
               "sections": {
@@ -150,6 +138,18 @@
                 "source_of_confusion": "Кажется, что раз сервер сам ходит к таргету, он «не узнает» о падении — но именно неудачный scrape и есть сигнал.",
                 "if_it_were_true": "Если бы pull не детектировал down, не было бы стандартного алерта `up == 0`, который повсеместно используется на практике.",
                 "how_it_should_be": "Pull как раз даёт бесплатный health-check: успех/провал scrape отражается в синтетической метрике `up`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Prometheus` использует pull, потому что push-модель технически невозможна в современных облачных средах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Push вполне реализуем технически — `Pushgateway` как раз принимает push. Prometheus выбирает pull по архитектурным соображениям, а не из-за невозможности push.",
+                "source_of_confusion": "Раз Prometheus «выбрал» pull, легко домыслить, что push был недоступен технически, хотя это вопрос дизайна, а не ограничений.",
+                "if_it_were_true": "Если бы push был невозможен, не существовало бы `Pushgateway` и `remote_write`, но обе технологии работают в облаке.",
+                "how_it_should_be": "Pull выбран ради контроля нагрузки и обнаружения недоступности; push поддерживается там, где он уместен."
               }
             },
             {
@@ -168,13 +168,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Prometheus` использует pull, потому что push-модель технически невозможна в современных облачных средах.",
+              "text": "Pull-модель означает, что таргеты сами периодически отправляют метрики в `Prometheus` по расписанию.",
               "correct": false,
               "sections": {
-                "what_actually": "Push вполне реализуем технически — `Pushgateway` как раз принимает push. Prometheus выбирает pull по архитектурным соображениям, а не из-за невозможности push.",
-                "source_of_confusion": "Раз Prometheus «выбрал» pull, легко домыслить, что push был недоступен технически, хотя это вопрос дизайна, а не ограничений.",
-                "if_it_were_true": "Если бы push был невозможен, не существовало бы `Pushgateway` и `remote_write`, но обе технологии работают в облаке.",
-                "how_it_should_be": "Pull выбран ради контроля нагрузки и обнаружения недоступности; push поддерживается там, где он уместен."
+                "what_actually": "Это описание push-модели. В pull всё наоборот: `Prometheus Server` инициирует HTTP-запросы к таргетам, а не таргеты шлют данные серверу.",
+                "source_of_confusion": "Слово «сбор» подталкивает к образу, где источники активно «сдают» данные в центр, что путает pull с push.",
+                "if_it_were_true": "Если бы таргеты сами слали метрики, `Prometheus` не мог бы контролировать частоту scrape и легко определять недоступность через `up`.",
+                "how_it_should_be": "В pull сервер сам опрашивает таргеты по HTTP; push реализован отдельно через `Pushgateway` для short-lived jobs."
               }
             }
           ]
@@ -191,6 +191,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`Pushgateway` принимает метрики по HTTP push от short-lived jobs (cron, batch, CI/CD), которые завершаются быстрее `scrape_interval`, и хранит их до следующего scrape от сервера.",
+              "correct": true,
+              "sections": {
+                "explanation": "Короткоживущие задачи не успевают быть scraped напрямую, поэтому отдают результат в Pushgateway, а `Prometheus` забирает его оттуда по pull. Для long-running сервисов это не нужно.",
+                "example": "Отправка выглядит так: `echo \"batch_job_duration_seconds 120.5\" | curl --data-binary @- http://pushgateway:9091/metrics/job/batch_import/instance/server01`.",
+                "when_to_apply": "Применяют его точечно: для разовых job-ов и CI/CD-шагов, где результат нужно зафиксировать до завершения процесса, а не как постоянный канал метрик.",
+                "edge_cases": "У метрик в Pushgateway нет автоматического TTL — они живут, пока не удалены явно; для горизонтально масштабированных сервисов несколько инстансов перезапишут друг друга.",
+                "related": "[[prometheus-grafana-interview#Q3]] почему pull, а Pushgateway — исключение; [[prometheus-grafana-interview#Q1]] место Pushgateway в архитектуре; [[prometheus-grafana-interview#Q35]] Remote Write для долгого хранения."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`Pushgateway` используется как основной способ сбора метрик со всех long-running сервисов вместо scrape.",
               "correct": false,
               "sections": {
@@ -201,8 +214,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`Pushgateway` используется для дедупликации и маршрутизации алертов из нескольких `Prometheus Server`-ов.",
               "correct": false,
               "sections": {
@@ -213,8 +226,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`Pushgateway` используется для долгосрочного хранения метрик и замены `TSDB` в `Prometheus`.",
               "correct": false,
               "sections": {
@@ -222,19 +235,6 @@
                 "source_of_confusion": "Слово «gateway» создаёт впечатление хранилища-шлюза, отсюда ошибочная роль long-term storage.",
                 "if_it_were_true": "Если бы Pushgateway хранил историю, не было бы нужды в remote_write и внешних TSDB, но они активно используются.",
                 "how_it_should_be": "Долгое хранение — через remote_write во внешнюю TSDB; Pushgateway держит метрики лишь до следующего scrape."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Pushgateway` принимает метрики по HTTP push от short-lived jobs (cron, batch, CI/CD), которые завершаются быстрее `scrape_interval`, и хранит их до следующего scrape от сервера.",
-              "correct": true,
-              "sections": {
-                "explanation": "Короткоживущие задачи не успевают быть scraped напрямую, поэтому отдают результат в Pushgateway, а `Prometheus` забирает его оттуда по pull. Для long-running сервисов это не нужно.",
-                "example": "Отправка выглядит так: `echo \"batch_job_duration_seconds 120.5\" | curl --data-binary @- http://pushgateway:9091/metrics/job/batch_import/instance/server01`.",
-                "when_to_apply": "Применяют его точечно: для разовых job-ов и CI/CD-шагов, где результат нужно зафиксировать до завершения процесса, а не как постоянный канал метрик.",
-                "edge_cases": "У метрик в Pushgateway нет автоматического TTL — они живут, пока не удалены явно; для горизонтально масштабированных сервисов несколько инстансов перезапишут друг друга.",
-                "related": "[[prometheus-grafana-interview#Q3]] почему pull, а Pushgateway — исключение; [[prometheus-grafana-interview#Q1]] место Pushgateway в архитектуре; [[prometheus-grafana-interview#Q35]] Remote Write для долгого хранения."
               }
             }
           ]
@@ -251,6 +251,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`Alertmanager` хранит временные ряды и выполняет `PromQL`-запросы для вычисления алертов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Хранением временных рядов занимается `TSDB` в `Prometheus Server`, а PromQL выполняет сам сервер. Alertmanager вообще не работает с временными рядами.",
+                "source_of_confusion": "Поскольку алерты основаны на метриках, кажется, что Alertmanager и хранит эти метрики, — но он оперирует только готовыми алертами.",
+                "if_it_were_true": "Если бы Alertmanager хранил ряды, он дублировал бы TSDB и PromQL-движок, что архитектурно избыточно.",
+                "how_it_should_be": "TSDB и PromQL — в `Prometheus Server`; Alertmanager принимает уже готовые алерты как набор лейблов и аннотаций."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`Alertmanager` принимает firing-алерты от `Prometheus Server`, дедуплицирует, группирует и маршрутизирует их, а затем отправляет уведомления по нужным каналам (email/Slack/PagerDuty).",
               "correct": true,
               "sections": {
@@ -259,18 +271,6 @@
                 "when_to_apply": "Связку держат в голове при дизайне алертинга: пороги и условия описывают как код в Prometheus, а каналы, расписания и эскалации настраивают в Alertmanager.",
                 "edge_cases": "Один `Alertmanager` может принимать алерты от нескольких `Prometheus Server`-ов (HA-сетап), и тогда дедупликация особенно важна.",
                 "related": "[[prometheus-grafana-interview#Q21]] маршрутизация алертов; [[prometheus-grafana-interview#Q24]] дедупликация и группировка; [[prometheus-grafana-interview#Q1]] разделение ответственности в архитектуре."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`Alertmanager` сам вычисляет alert rules и определяет состояние `FIRING`/`PENDING`, а Prometheus лишь хранит метрики.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Вычисление alert rules — ответственность `Prometheus Server`. `Alertmanager` получает уже готовые firing-алерты и решает, что с ними делать.",
-                "source_of_confusion": "Название «Alertmanager» намекает, что он и есть генератор алертов, отсюда ошибочное приписывание вычисления правил.",
-                "if_it_were_true": "Если бы Alertmanager вычислял правила, ему нужен был бы доступ к TSDB и PromQL, но он не хранит временные ряды.",
-                "how_it_should_be": "Состояние `FIRING`/`PENDING` определяет сервер; Alertmanager управляет судьбой готового алерта."
               }
             },
             {
@@ -288,13 +288,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Alertmanager` хранит временные ряды и выполняет `PromQL`-запросы для вычисления алертов.",
+              "text": "`Alertmanager` сам вычисляет alert rules и определяет состояние `FIRING`/`PENDING`, а Prometheus лишь хранит метрики.",
               "correct": false,
               "sections": {
-                "what_actually": "Хранением временных рядов занимается `TSDB` в `Prometheus Server`, а PromQL выполняет сам сервер. Alertmanager вообще не работает с временными рядами.",
-                "source_of_confusion": "Поскольку алерты основаны на метриках, кажется, что Alertmanager и хранит эти метрики, — но он оперирует только готовыми алертами.",
-                "if_it_were_true": "Если бы Alertmanager хранил ряды, он дублировал бы TSDB и PromQL-движок, что архитектурно избыточно.",
-                "how_it_should_be": "TSDB и PromQL — в `Prometheus Server`; Alertmanager принимает уже готовые алерты как набор лейблов и аннотаций."
+                "what_actually": "Вычисление alert rules — ответственность `Prometheus Server`. `Alertmanager` получает уже готовые firing-алерты и решает, что с ними делать.",
+                "source_of_confusion": "Название «Alertmanager» намекает, что он и есть генератор алертов, отсюда ошибочное приписывание вычисления правил.",
+                "if_it_were_true": "Если бы Alertmanager вычислял правила, ему нужен был бы доступ к TSDB и PromQL, но он не хранит временные ряды.",
+                "how_it_should_be": "Состояние `FIRING`/`PENDING` определяет сервер; Alertmanager управляет судьбой готового алерта."
               }
             }
           ]
@@ -311,13 +311,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для метрики «число активных соединений к БД, которое может расти и падать» правильный тип — `Counter`.",
+              "text": "Для метрики «число активных соединений к БД, которое может расти и падать» правильный тип — `Histogram`.",
               "correct": false,
               "sections": {
-                "what_actually": "`Counter` — только для монотонно растущих значений (сбрасывается лишь при рестарте). Число соединений может уменьшаться, поэтому подходит `Gauge`.",
-                "source_of_confusion": "Слово «число» ассоциируется со счётчиком, поэтому `Counter` выбирают на автомате, игнорируя возможность убывания.",
-                "if_it_were_true": "Если бы это был Counter, любое освобождение соединения трактовалось бы как «сброс» и ломало `rate()`.",
-                "how_it_should_be": "Для значения, которое и растёт, и падает, нужен `Gauge`."
+                "what_actually": "`Histogram` нужен для распределения значений по бакетам (например, latency). Для одного текущего числа соединений достаточно `Gauge`.",
+                "source_of_confusion": "Histogram кажется «универсальным» для любых числовых данных, но он про распределение наблюдений, а не про текущее значение.",
+                "if_it_were_true": "Если бы это был Histogram, появились бы бессмысленные `_bucket`-метрики по бакетам числа соединений, которых никто не строил.",
+                "how_it_should_be": "Текущее изменяемое значение — это `Gauge`; Histogram оставьте для длительностей и размеров."
               }
             },
             {
@@ -336,13 +336,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для метрики «число активных соединений к БД, которое может расти и падать» правильный тип — `Histogram`.",
+              "text": "Для метрики «число активных соединений к БД, которое может расти и падать» правильный тип — `Counter`.",
               "correct": false,
               "sections": {
-                "what_actually": "`Histogram` нужен для распределения значений по бакетам (например, latency). Для одного текущего числа соединений достаточно `Gauge`.",
-                "source_of_confusion": "Histogram кажется «универсальным» для любых числовых данных, но он про распределение наблюдений, а не про текущее значение.",
-                "if_it_were_true": "Если бы это был Histogram, появились бы бессмысленные `_bucket`-метрики по бакетам числа соединений, которых никто не строил.",
-                "how_it_should_be": "Текущее изменяемое значение — это `Gauge`; Histogram оставьте для длительностей и размеров."
+                "what_actually": "`Counter` — только для монотонно растущих значений (сбрасывается лишь при рестарте). Число соединений может уменьшаться, поэтому подходит `Gauge`.",
+                "source_of_confusion": "Слово «число» ассоциируется со счётчиком, поэтому `Counter` выбирают на автомате, игнорируя возможность убывания.",
+                "if_it_were_true": "Если бы это был Counter, любое освобождение соединения трактовалось бы как «сброс» и ломало `rate()`.",
+                "how_it_should_be": "Для значения, которое и растёт, и падает, нужен `Gauge`."
               }
             },
             {
@@ -383,6 +383,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`Summary` всегда точнее `Histogram`, даже при агрегации по нескольким инстансам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Квантиль математически не суммируется, поэтому при агрегации Summary даёт неверный результат; Histogram в этом сценарии точнее, так как агрегирует бакеты.",
+                "source_of_confusion": "Локально (один инстанс) Summary действительно точен, и это ошибочно обобщают на агрегированный случай.",
+                "if_it_were_true": "Если бы Summary был точен при агрегации, можно было бы «усреднить P99» по инстансам, но усреднение перцентилей математически некорректно.",
+                "how_it_should_be": "Для одного инстанса Summary точен, но при агрегации по флоту точнее Histogram через `histogram_quantile()`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Histogram` вычисляет квантили на стороне клиента и агрегируется между инстансами, а `Summary` — на стороне сервера и не агрегируется.",
               "correct": false,
               "sections": {
@@ -393,8 +405,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`Histogram` вычисляет квантили на стороне сервера (PromQL) и позволяет агрегировать данные по нескольким инстансам, а `Summary` вычисляет квантили на стороне клиента и не агрегируется.",
               "correct": true,
               "sections": {
@@ -403,18 +415,6 @@
                 "when_to_apply": "Histogram выбирают, когда нужны агрегируемые по сервисам перцентили (P95/P99 latency); Summary — лишь когда точный квантиль нужен на одном инстансе без агрегации.",
                 "edge_cases": "В современных системах предпочитают Histogram + `histogram_quantile()`, потому что только так можно корректно агрегировать перцентили по флоту инстансов.",
                 "related": "[[prometheus-grafana-interview#Q6]] типы метрик в целом; [[prometheus-grafana-interview#Q11]] как работает histogram_quantile(); [[prometheus-grafana-interview#Q8]] именование метрик-гистограмм."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Summary` всегда точнее `Histogram`, даже при агрегации по нескольким инстансам.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Квантиль математически не суммируется, поэтому при агрегации Summary даёт неверный результат; Histogram в этом сценарии точнее, так как агрегирует бакеты.",
-                "source_of_confusion": "Локально (один инстанс) Summary действительно точен, и это ошибочно обобщают на агрегированный случай.",
-                "if_it_were_true": "Если бы Summary был точен при агрегации, можно было бы «усреднить P99» по инстансам, но усреднение перцентилей математически некорректно.",
-                "how_it_should_be": "Для одного инстанса Summary точен, но при агрегации по флоту точнее Histogram через `histogram_quantile()`."
               }
             }
           ]
@@ -431,30 +431,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Правильное имя для метрики длительности HTTP-запросов — `http_request_ms` в `camelCase`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Нарушены две конвенции: единица не в базовых единицах СИ (нужны `_seconds`, а не `_ms`), и имя должно быть в `snake_case`.",
-                "source_of_confusion": "Миллисекунды привычны разработчикам, а camelCase — типичный стиль кода, поэтому их по инерции переносят в имена метрик.",
-                "if_it_were_true": "Если бы `_ms` был валиден, дашборды и алерты пришлось бы каждый раз нормализовать единицы вручную, чего конвенция СИ как раз избегает.",
-                "how_it_should_be": "Базовая единица времени — секунды: `http_request_duration_seconds` в snake_case."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Правильное имя для метрики длительности HTTP-запросов — `http_request_duration_seconds_total`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Суффикс `_total` зарезервирован для `Counter`, а длительность — это `Histogram`/`Summary`; добавлять `_total` к длительности неверно.",
-                "source_of_confusion": "`_total` встречается у многих метрик, поэтому его ошибочно лепят и к длительности «для единообразия».",
-                "if_it_were_true": "Если бы у Histogram было `_total`, инструменты решили бы, что это монотонный счётчик, и применяли бы к нему `rate()` как к Counter.",
-                "how_it_should_be": "У Histogram длительности `_total` не нужен — корректно `http_request_duration_seconds` (с авто-суффиксами `_bucket`/`_sum`/`_count`)."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Правильное имя для метрики длительности HTTP-запросов — `httpRequestDurationSeconds` в `camelCase`.",
               "correct": false,
               "sections": {
@@ -465,8 +441,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Правильное имя для метрики длительности HTTP-запросов — `http_request_duration_seconds` в `snake_case` с единицей в секундах.",
               "correct": true,
               "sections": {
@@ -475,6 +451,30 @@
                 "when_to_apply": "Конвенцию применяют при ревью каждой новой метрики: проверяют snake_case, единицу СИ в суффиксе и `_total` только у Counter — это держит дашборды и алерты единообразными.",
                 "edge_cases": "Не дублируйте единицы и не кладите лейблы в имя: `request_duration_seconds_total` или `user_id_total` — плохие имена.",
                 "related": "[[prometheus-grafana-interview#Q6]] типы метрик и суффикс _total для Counter; [[prometheus-grafana-interview#Q7]] суффиксы Histogram; [[prometheus-grafana-interview#Q17]] почему лейблы не кладут в имя."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Правильное имя для метрики длительности HTTP-запросов — `http_request_duration_seconds_total`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Суффикс `_total` зарезервирован для `Counter`, а длительность — это `Histogram`/`Summary`; добавлять `_total` к длительности неверно.",
+                "source_of_confusion": "`_total` встречается у многих метрик, поэтому его ошибочно лепят и к длительности «для единообразия».",
+                "if_it_were_true": "Если бы у Histogram было `_total`, инструменты решили бы, что это монотонный счётчик, и применяли бы к нему `rate()` как к Counter.",
+                "how_it_should_be": "У Histogram длительности `_total` не нужен — корректно `http_request_duration_seconds` (с авто-суффиксами `_bucket`/`_sum`/`_count`)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Правильное имя для метрики длительности HTTP-запросов — `http_request_ms` в `camelCase`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нарушены две конвенции: единица не в базовых единицах СИ (нужны `_seconds`, а не `_ms`), и имя должно быть в `snake_case`.",
+                "source_of_confusion": "Миллисекунды привычны разработчикам, а camelCase — типичный стиль кода, поэтому их по инерции переносят в имена метрик.",
+                "if_it_were_true": "Если бы `_ms` был валиден, дашборды и алерты пришлось бы каждый раз нормализовать единицы вручную, чего конвенция СИ как раз избегает.",
+                "how_it_should_be": "Базовая единица времени — секунды: `http_request_duration_seconds` в snake_case."
               }
             }
           ]
@@ -491,19 +491,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`rate()` вычисляет среднюю скорость изменения `Counter` за весь range (сглаживает выбросы), а `irate()` — мгновенную скорость по последним двум точкам внутри range.",
-              "correct": true,
-              "sections": {
-                "explanation": "`rate()` усредняет по всему окну и устойчив к спайкам, поэтому годится для дашбордов и алертов; `irate()` реагирует на последние изменения и полезен для real-time отладки.",
-                "example": "`rate(http_requests_total[5m])` даёт сглаженный RPS за 5 минут; `irate(http_requests_total[5m])` берёт лишь два последних сэмпла и резко скачет.",
-                "when_to_apply": "`rate()` берут по умолчанию для дашбордов RPS и для всех alert rules; `irate()` достают только при ручной диагностике, когда нужно увидеть свежий всплеск в реальном времени.",
-                "edge_cases": "`irate()` нельзя использовать в alert rules — он слишком нестабилен и вызывает ложные срабатывания; для алертов берут `rate()` с окном минимум 5m.",
-                "related": "[[prometheus-grafana-interview#Q10]] чем increase() отличается от rate(); [[prometheus-grafana-interview#Q14]] почему нужен range vector; [[prometheus-grafana-interview#Q19]] rate() в alert rules."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`irate()` вычисляет среднюю скорость изменения counter за весь range и хорошо подходит для alert rules.",
               "correct": false,
               "sections": {
@@ -511,6 +498,18 @@
                 "source_of_confusion": "Имена похожи, поэтому свойства `rate()` (усреднение, пригодность для алертов) ошибочно приписывают `irate()`.",
                 "if_it_were_true": "Если бы `irate()` усреднял окно, он не «прыгал» бы на спайках и был бы безопасен в алертах, но на практике он именно прыгает.",
                 "how_it_should_be": "Усреднение по окну и пригодность для алертов — у `rate()`; `irate()` — мгновенная скорость для диагностики."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`rate()` вычисляет мгновенную скорость по последним двум точкам, а `irate()` — среднюю за весь range.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Определения перепутаны: `rate()` усредняет по окну, а `irate()` — это «instantaneous rate» по двум последним точкам.",
+                "source_of_confusion": "Без знания этимологии (`i` = instant) легко поменять функции местами.",
+                "if_it_were_true": "Если бы `rate()` был мгновенным, он бы давал шумные графики и ложные алерты, но на практике он стабилен — потому что усредняет.",
+                "how_it_should_be": "Мгновенная скорость — `irate()`, усреднение по окну — `rate()`."
               }
             },
             {
@@ -528,13 +527,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`rate()` вычисляет мгновенную скорость по последним двум точкам, а `irate()` — среднюю за весь range.",
-              "correct": false,
+              "text": "`rate()` вычисляет среднюю скорость изменения `Counter` за весь range (сглаживает выбросы), а `irate()` — мгновенную скорость по последним двум точкам внутри range.",
+              "correct": true,
               "sections": {
-                "what_actually": "Определения перепутаны: `rate()` усредняет по окну, а `irate()` — это «instantaneous rate» по двум последним точкам.",
-                "source_of_confusion": "Без знания этимологии (`i` = instant) легко поменять функции местами.",
-                "if_it_were_true": "Если бы `rate()` был мгновенным, он бы давал шумные графики и ложные алерты, но на практике он стабилен — потому что усредняет.",
-                "how_it_should_be": "Мгновенная скорость — `irate()`, усреднение по окну — `rate()`."
+                "explanation": "`rate()` усредняет по всему окну и устойчив к спайкам, поэтому годится для дашбордов и алертов; `irate()` реагирует на последние изменения и полезен для real-time отладки.",
+                "example": "`rate(http_requests_total[5m])` даёт сглаженный RPS за 5 минут; `irate(http_requests_total[5m])` берёт лишь два последних сэмпла и резко скачет.",
+                "when_to_apply": "`rate()` берут по умолчанию для дашбордов RPS и для всех alert rules; `irate()` достают только при ручной диагностике, когда нужно увидеть свежий всплеск в реальном времени.",
+                "edge_cases": "`irate()` нельзя использовать в alert rules — он слишком нестабилен и вызывает ложные срабатывания; для алертов берут `rate()` с окном минимум 5m.",
+                "related": "[[prometheus-grafana-interview#Q10]] чем increase() отличается от rate(); [[prometheus-grafana-interview#Q14]] почему нужен range vector; [[prometheus-grafana-interview#Q19]] rate() в alert rules."
               }
             }
           ]
@@ -563,6 +563,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`increase(v[d])` возвращает мгновенную скорость counter по последним двум точкам за период `d`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание `irate()`. `increase()` про абсолютный прирост за период, а не про мгновенную скорость.",
+                "source_of_confusion": "Три функции (`rate`/`irate`/`increase`) работают с range vector, поэтому их семантику смешивают.",
+                "if_it_were_true": "Если бы increase давал мгновенную скорость, его нельзя было бы использовать для «сколько ошибок за сутки», а его используют именно так.",
+                "how_it_should_be": "Мгновенная скорость — `irate()`; суммарный прирост — `increase()`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`increase(v[d])` возвращает абсолютный прирост `Counter` за период `d` и полезен для отчётов вида «всего X событий за период».",
               "correct": true,
               "sections": {
@@ -571,18 +583,6 @@
                 "when_to_apply": "`increase(http_requests_total[1h])` ≈ `rate(http_requests_total[1h]) * 3600`: оба дают число запросов за час, но через increase читается нагляднее.",
                 "edge_cases": "`increase()` экстраполирует на краях окна, поэтому может возвращать нецелые значения даже для целочисленного счётчика.",
                 "related": "[[prometheus-grafana-interview#Q9]] разница rate() и irate(); [[prometheus-grafana-interview#Q15]] increase в расчёте error rate; [[prometheus-grafana-interview#Q39]] increase в error budget за 30d."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`increase(v[d])` возвращает мгновенную скорость counter по последним двум точкам за период `d`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это описание `irate()`. `increase()` про абсолютный прирост за период, а не про мгновенную скорость.",
-                "source_of_confusion": "Три функции (`rate`/`irate`/`increase`) работают с range vector, поэтому их семантику смешивают.",
-                "if_it_were_true": "Если бы increase давал мгновенную скорость, его нельзя было бы использовать для «сколько ошибок за сутки», а его используют именно так.",
-                "how_it_should_be": "Мгновенная скорость — `irate()`; суммарный прирост — `increase()`."
               }
             },
             {
@@ -611,30 +611,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`histogram_quantile(0.99, http_request_duration_seconds_bucket[5m])` — правильный способ вычислить P99 latency.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Не хватает `rate()` вокруг range vector: `histogram_quantile` ожидает instant vector бакетов, полученный через `rate(..._bucket[5m])`, иначе запрос некорректен.",
-                "source_of_confusion": "Кажется, что можно сразу передать `_bucket[5m]`, ведь это «уже бакеты», но range vector нельзя подавать напрямую.",
-                "if_it_were_true": "Если бы range vector принимался напрямую, не было бы стандартного паттерна `histogram_quantile(φ, rate(..._bucket[5m]))`, но он повсеместен.",
-                "how_it_should_be": "Сначала `rate()` к `_bucket`, потом `histogram_quantile()` поверх результата."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`histogram_quantile(0.99, rate(http_request_duration_seconds_count[5m]))` — правильный способ вычислить P99 latency.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`histogram_quantile` работает с `_bucket`-метриками (лейбл `le`), а не с `_count`. `_count` — просто число наблюдений, без распределения по бакетам.",
-                "source_of_confusion": "И `_count`, и `_bucket` относятся к Histogram, поэтому их легко перепутать при наборе запроса.",
-                "if_it_were_true": "Если бы хватало `_count`, не нужны были бы бакеты вовсе, но именно бакеты несут информацию о распределении для квантиля.",
-                "how_it_should_be": "Аргумент `histogram_quantile` — это `rate(..._bucket[5m])`, а не `_count`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))` — правильный способ вычислить P99 latency из `Histogram`.",
               "correct": true,
               "sections": {
@@ -646,8 +622,20 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
+              "text": "`histogram_quantile(0.99, http_request_duration_seconds_bucket[5m])` — правильный способ вычислить P99 latency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Не хватает `rate()` вокруг range vector: `histogram_quantile` ожидает instant vector бакетов, полученный через `rate(..._bucket[5m])`, иначе запрос некорректен.",
+                "source_of_confusion": "Кажется, что можно сразу передать `_bucket[5m]`, ведь это «уже бакеты», но range vector нельзя подавать напрямую.",
+                "if_it_were_true": "Если бы range vector принимался напрямую, не было бы стандартного паттерна `histogram_quantile(φ, rate(..._bucket[5m]))`, но он повсеместен.",
+                "how_it_should_be": "Сначала `rate()` к `_bucket`, потом `histogram_quantile()` поверх результата."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`histogram_quantile(0.99, rate(http_request_duration_seconds_sum[5m]))` — правильный способ вычислить P99 latency.",
               "correct": false,
               "sections": {
@@ -655,6 +643,18 @@
                 "source_of_confusion": "`_sum` тоже автогенерируется Histogram, поэтому его ошибочно подставляют вместо `_bucket`.",
                 "if_it_were_true": "Если бы `_sum` годился, квантиль считался бы из одной суммы без распределения, что математически невозможно.",
                 "how_it_should_be": "Для квантиля нужен `rate(..._bucket[5m])`; `_sum` пригоден лишь для среднего (`_sum/_count`)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`histogram_quantile(0.99, rate(http_request_duration_seconds_count[5m]))` — правильный способ вычислить P99 latency.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`histogram_quantile` работает с `_bucket`-метриками (лейбл `le`), а не с `_count`. `_count` — просто число наблюдений, без распределения по бакетам.",
+                "source_of_confusion": "И `_count`, и `_bucket` относятся к Histogram, поэтому их легко перепутать при наборе запроса.",
+                "if_it_were_true": "Если бы хватало `_count`, не нужны были бы бакеты вовсе, но именно бакеты несут информацию о распределении для квантиля.",
+                "how_it_should_be": "Аргумент `histogram_quantile` — это `rate(..._bucket[5m])`, а не `_count`."
               }
             }
           ]
@@ -671,18 +671,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`label_replace()` используется для изменения имени метрики (metric name) на основе regex.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`label_replace` работает только с лейблами, а не с именем метрики. Для переименования метрики используют recording rule.",
-                "source_of_confusion": "Имя метрики технически хранится в лейбле `__name__`, отсюда соблазн менять его через label_replace.",
-                "if_it_were_true": "Если бы это переименовывало метрику, исчезла бы необходимость в recording rules для нормализации имён, но они для этого и нужны.",
-                "how_it_should_be": "Менять имя метрики — через recording rule; `label_replace` лишь добавляет/правит обычные лейблы."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`label_replace()` удаляет лейбл из метрики по имени.",
               "correct": false,
               "sections": {
@@ -693,8 +681,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`label_replace()` заменяет значение лейбла фиксированной константой без regex.",
               "correct": false,
               "sections": {
@@ -702,6 +690,18 @@
                 "source_of_confusion": "Если regex тривиален (`(.*)`), результат похож на константу, отсюда ощущение «без regex».",
                 "if_it_were_true": "Если бы regex не участвовал, нельзя было бы извлекать подстроки (hostname, namespace) в новый лейбл, а это основной кейс функции.",
                 "how_it_should_be": "`label_replace` всегда применяет regex к `src_label`; результат подставляется через группы `$1`, `$2`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`label_replace()` используется для изменения имени метрики (metric name) на основе regex.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`label_replace` работает только с лейблами, а не с именем метрики. Для переименования метрики используют recording rule.",
+                "source_of_confusion": "Имя метрики технически хранится в лейбле `__name__`, отсюда соблазн менять его через label_replace.",
+                "if_it_were_true": "Если бы это переименовывало метрику, исчезла бы необходимость в recording rules для нормализации имён, но они для этого и нужны.",
+                "how_it_should_be": "Менять имя метрики — через recording rule; `label_replace` лишь добавляет/правит обычные лейблы."
               }
             },
             {
@@ -731,6 +731,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`by (label1)` и `without (label1)` делают одно и то же — это синонимы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это противоположные операторы группировки: один оставляет перечисленные лейблы, другой их убирает.",
+                "source_of_confusion": "Оба «настраивают группировку», поэтому кажутся взаимозаменяемыми.",
+                "if_it_were_true": "Если бы они были синонимами, замена одного на другой не меняла бы результат, но `sum by (pod)` и `sum without (pod)` дают разные ряды.",
+                "how_it_should_be": "`by` и `without` — антагонисты по набору сохраняемых лейблов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`by (label1)` применяется только к `Counter`, а `without (label1)` — только к `Gauge`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба оператора работают с любыми типами метрик; тип метрики не влияет на выбор `by`/`without`.",
+                "source_of_confusion": "Counter и Gauge — частые типы, поэтому их ошибочно привязывают к операторам группировки.",
+                "if_it_were_true": "Если бы `by` работал лишь с Counter, нельзя было бы посчитать `avg by (instance) (node_memory_bytes)` по Gauge, а это обычная операция.",
+                "how_it_should_be": "`by`/`without` применимы к любому типу метрики и к любому агрегатору."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`by (label1)` оставляет только указанные лейблы после агрегации, а `without (label1)` убирает указанные и оставляет все остальные.",
               "correct": true,
               "sections": {
@@ -742,8 +766,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "`by (label1)` убирает указанные лейблы, а `without (label1)` оставляет только их.",
               "correct": false,
               "sections": {
@@ -751,30 +775,6 @@
                 "source_of_confusion": "Английские «by» и «without» без практики легко перепутать в их влиянии на набор лейблов.",
                 "if_it_were_true": "Если бы `by (service)` убирал `service`, результат группировался бы по всему, кроме сервиса, что противоречит типовому `sum by (service)`.",
                 "how_it_should_be": "`by` оставляет перечисленные лейблы, `without` — удаляет перечисленные."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`by (label1)` и `without (label1)` делают одно и то же — это синонимы.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это противоположные операторы группировки: один оставляет перечисленные лейблы, другой их убирает.",
-                "source_of_confusion": "Оба «настраивают группировку», поэтому кажутся взаимозаменяемыми.",
-                "if_it_were_true": "Если бы они были синонимами, замена одного на другой не меняла бы результат, но `sum by (pod)` и `sum without (pod)` дают разные ряды.",
-                "how_it_should_be": "`by` и `without` — антагонисты по набору сохраняемых лейблов."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`by (label1)` применяется только к `Counter`, а `without (label1)` — только к `Gauge`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Оба оператора работают с любыми типами метрик; тип метрики не влияет на выбор `by`/`without`.",
-                "source_of_confusion": "Counter и Gauge — частые типы, поэтому их ошибочно привязывают к операторам группировки.",
-                "if_it_were_true": "Если бы `by` работал лишь с Counter, нельзя было бы посчитать `avg by (instance) (node_memory_bytes)` по Gauge, а это обычная операция.",
-                "how_it_should_be": "`by`/`without` применимы к любому типу метрики и к любому агрегатору."
               }
             }
           ]
@@ -803,6 +803,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`http_requests_total{job=\"api\"}[5m]` можно использовать в арифметике напрямую: `http_requests_total[5m] / 100`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Range vector нельзя использовать в арифметике: сначала его нужно свернуть функцией (например, `rate()`), и уже результат делить.",
+                "source_of_confusion": "Деление на число выглядит безобидно, поэтому кажется, что range vector участвует в арифметике как обычное значение.",
+                "if_it_were_true": "Если бы это работало, выражения вроде `metric[5m] * 2` были бы валидны, но PromQL отвергает арифметику над range vector.",
+                "how_it_should_be": "Сначала `rate(metric[5m])` (instant vector), затем арифметика над результатом."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`http_requests_total{job=\"api\"}[5m]` — это range vector, и его можно использовать только как аргумент функций вроде `rate()`, `increase()`, `delta()`.",
               "correct": true,
               "sections": {
@@ -814,8 +826,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`http_requests_total{job=\"api\"}[5m]` — это instant vector с одним значением.",
               "correct": false,
               "sections": {
@@ -823,18 +835,6 @@
                 "source_of_confusion": "Запрос возвращает «что-то одно» на экране отладки, отсюда впечатление instant.",
                 "if_it_were_true": "Если бы `[5m]` давал одно значение, не было бы нужды оборачивать его в `rate()`, но именно `rate()` сводит набор к одному числу.",
                 "how_it_should_be": "`[5m]` всегда означает range vector — несколько сэмплов на ряд за окно."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`http_requests_total{job=\"api\"}[5m]` можно использовать в арифметике напрямую: `http_requests_total[5m] / 100`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Range vector нельзя использовать в арифметике: сначала его нужно свернуть функцией (например, `rate()`), и уже результат делить.",
-                "source_of_confusion": "Деление на число выглядит безобидно, поэтому кажется, что range vector участвует в арифметике как обычное значение.",
-                "if_it_were_true": "Если бы это работало, выражения вроде `metric[5m] * 2` были бы валидны, но PromQL отвергает арифметику над range vector.",
-                "how_it_should_be": "Сначала `rate(metric[5m])` (instant vector), затем арифметика над результатом."
               }
             }
           ]
@@ -851,13 +851,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Процент 5xx ошибок считается как `rate(http_requests_total{status=~\"5..\"}[5m]) / 100`.",
-              "correct": false,
+              "text": "Процент 5xx ошибок считается как `sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])) * 100`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Это неверно: мы делим на 100, а не на общее число запросов. Получится бессмысленная величина, а не доля ошибок.",
-                "source_of_confusion": "Деление на 100 ассоциируется с «процентом», отсюда подмена знаменателя.",
-                "if_it_were_true": "Если бы это давало процент, результат не зависел бы от общего трафика, но доля ошибок очевидно должна зависеть от всех запросов.",
-                "how_it_should_be": "Процент = `rate(ошибки) / rate(все) * 100`, знаменатель — это все запросы, а не константа 100."
+                "explanation": "Классический паттерн: `rate` считаем отдельно для числителя (ошибки 5xx) и знаменателя (все запросы), затем делим; важно одинаковое окно `[5m]` с обеих сторон.",
+                "example": "Этот паттерн — основа алертов по error rate и SLO-дашбордов; для разреза по сервисам/эндпоинтам обе части оборачивают в `sum by (...)` с одинаковыми лейблами.",
+                "when_to_apply": "По сервисам: `100 * sum by (service) (rate(http_server_requests_seconds_count{status=~\"5..\"}[5m])) / sum by (service) (rate(http_server_requests_seconds_count[5m]))`.",
+                "edge_cases": "Для SLO-availability за период берут `increase(...[30d])` вместо `rate(...[5m])`: `1 - sum(increase(ошибки[30d])) / sum(increase(все[30d]))`.",
+                "related": "[[prometheus-grafana-interview#Q9]] rate() для числителя и знаменателя; [[prometheus-grafana-interview#Q13]] sum by (service) для error rate; [[prometheus-grafana-interview#Q38]] error rate как SLI."
               }
             },
             {
@@ -875,19 +876,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Процент 5xx ошибок считается как `sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])) * 100`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Классический паттерн: `rate` считаем отдельно для числителя (ошибки 5xx) и знаменателя (все запросы), затем делим; важно одинаковое окно `[5m]` с обеих сторон.",
-                "example": "Этот паттерн — основа алертов по error rate и SLO-дашбордов; для разреза по сервисам/эндпоинтам обе части оборачивают в `sum by (...)` с одинаковыми лейблами.",
-                "when_to_apply": "По сервисам: `100 * sum by (service) (rate(http_server_requests_seconds_count{status=~\"5..\"}[5m])) / sum by (service) (rate(http_server_requests_seconds_count[5m]))`.",
-                "edge_cases": "Для SLO-availability за период берут `increase(...[30d])` вместо `rate(...[5m])`: `1 - sum(increase(ошибки[30d])) / sum(increase(все[30d]))`.",
-                "related": "[[prometheus-grafana-interview#Q9]] rate() для числителя и знаменателя; [[prometheus-grafana-interview#Q13]] sum by (service) для error rate; [[prometheus-grafana-interview#Q38]] error rate как SLI."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Процент 5xx ошибок считается как `count(http_requests_total{status=~\"5..\"}) * 100`.",
               "correct": false,
               "sections": {
@@ -895,6 +883,18 @@
                 "source_of_confusion": "`count` звучит как «посчитать запросы», но в PromQL это подсчёт рядов, а не событий.",
                 "if_it_were_true": "Если бы count давал число запросов, метрика не зависела бы от времени, но запросы накапливаются в Counter и считаются через rate.",
                 "how_it_should_be": "Доля ошибок — это `rate(ошибки) / rate(все) * 100`, а не `count` рядов."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Процент 5xx ошибок считается как `rate(http_requests_total{status=~\"5..\"}[5m]) / 100`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это неверно: мы делим на 100, а не на общее число запросов. Получится бессмысленная величина, а не доля ошибок.",
+                "source_of_confusion": "Деление на 100 ассоциируется с «процентом», отсюда подмена знаменателя.",
+                "if_it_were_true": "Если бы это давало процент, результат не зависел бы от общего трафика, но доля ошибок очевидно должна зависеть от всех запросов.",
+                "how_it_should_be": "Процент = `rate(ошибки) / rate(все) * 100`, знаменатель — это все запросы, а не константа 100."
               }
             }
           ]
@@ -911,18 +911,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "High cardinality — это хорошо, потому что даёт максимум деталей для анализа и не влияет на производительность.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Cardinality напрямую влияет на потребление памяти, размер индекса и скорость запросов; бесконтрольный рост приводит к OOM `Prometheus Server`.",
-                "source_of_confusion": "«Больше деталей — лучше» — соблазнительная, но ошибочная эвристика для метрик.",
-                "if_it_were_true": "Если бы cardinality не влияла на ресурсы, не было бы лимитов вроде `sample_limit` и предупреждений о взрыве рядов, но они существуют.",
-                "how_it_should_be": "Детальность нужна, но через логи/трейсы; в метриках высокий cardinality деградирует TSDB."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "High cardinality означает высокую частоту scrape (например, каждую секунду) и решается уменьшением `scrape_interval`.",
               "correct": false,
               "sections": {
@@ -933,8 +921,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "High cardinality означает, что метрика имеет тип `Histogram` с большим числом бакетов, и решается переходом на `Summary`.",
               "correct": false,
               "sections": {
@@ -942,6 +930,18 @@
                 "source_of_confusion": "Бакеты Histogram действительно добавляют ряды, отсюда их преувеличивают как главную причину.",
                 "if_it_were_true": "Если бы причиной были бакеты, замена на Summary решала бы проблему, но Summary не агрегируется и cardinality лейблов не убирает.",
                 "how_it_should_be": "Корень — лейблы с большим множеством значений; нормализуйте их, а не меняйте тип метрики."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "High cardinality — это хорошо, потому что даёт максимум деталей для анализа и не влияет на производительность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cardinality напрямую влияет на потребление памяти, размер индекса и скорость запросов; бесконтрольный рост приводит к OOM `Prometheus Server`.",
+                "source_of_confusion": "«Больше деталей — лучше» — соблазнительная, но ошибочная эвристика для метрик.",
+                "if_it_were_true": "Если бы cardinality не влияла на ресурсы, не было бы лимитов вроде `sample_limit` и предупреждений о взрыве рядов, но они существуют.",
+                "how_it_should_be": "Детальность нужна, но через логи/трейсы; в метриках высокий cardinality деградирует TSDB."
               }
             },
             {
@@ -984,18 +984,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Нельзя добавлять лейблы с конечным множеством значений, такие как `status`, `method`, `environment`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это как раз допустимые лейблы: множество значений ограничено (несколько десятков максимум), что даёт контролируемую cardinality.",
-                "source_of_confusion": "Любые лейблы кажутся «риском cardinality», поэтому под запрет ошибочно попадают и безопасные.",
-                "if_it_were_true": "Если бы `status`/`method` были запрещены, нельзя было бы считать error rate по статусам, а это базовый сценарий мониторинга.",
-                "how_it_should_be": "Запрещены лейблы с неограниченным множеством (`user_id`, `request_id`); `status`/`method`/`environment` — наоборот, рекомендованы."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "В метрики можно добавлять любые лейблы — `Prometheus` эффективно справляется с миллионами уникальных комбинаций.",
               "correct": false,
               "sections": {
@@ -1006,8 +994,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Метрики должны содержать как можно больше уникальных лейблов для максимальной детализации.",
               "correct": false,
               "sections": {
@@ -1015,6 +1003,18 @@
                 "source_of_confusion": "Интуиция «детальнее — лучше» из аналитики ошибочно переносится на time-series метрики.",
                 "if_it_were_true": "Если бы максимум лейблов был благом, рекомендации не советовали бы шаблоны URL вместо ID, но именно это и рекомендуется.",
                 "how_it_should_be": "Лейблов должно быть ровно столько, сколько нужно для агрегации; детальность — в логах/трейсах."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Нельзя добавлять лейблы с конечным множеством значений, такие как `status`, `method`, `environment`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это как раз допустимые лейблы: множество значений ограничено (несколько десятков максимум), что даёт контролируемую cardinality.",
+                "source_of_confusion": "Любые лейблы кажутся «риском cardinality», поэтому под запрет ошибочно попадают и безопасные.",
+                "if_it_were_true": "Если бы `status`/`method` были запрещены, нельзя было бы считать error rate по статусам, а это базовый сценарий мониторинга.",
+                "how_it_should_be": "Запрещены лейблы с неограниченным множеством (`user_id`, `request_id`); `status`/`method`/`environment` — наоборот, рекомендованы."
               }
             }
           ]
@@ -1031,13 +1031,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Recording rules — это способ задать пороги алертинга в `Prometheus` и отправить их в `Alertmanager`.",
+              "text": "Recording rules — это способ записи логов приложения в `TSDB` `Prometheus` вместе с метриками.",
               "correct": false,
               "sections": {
-                "what_actually": "Это описание alert rules, а не recording rules. Recording rules не отправляют алерты — они сохраняют результат `PromQL` как новую метрику.",
-                "source_of_confusion": "И recording, и alert rules задаются в `rule_files` со схожим YAML, поэтому их роли путают.",
-                "if_it_were_true": "Если бы recording rules алертили, не было бы отдельного `alert:`-ключа и поля `for:`, но они есть именно у alert rules.",
-                "how_it_should_be": "Пороги и отправка в Alertmanager — у alert rules; recording rules лишь предвычисляют метрику."
+                "what_actually": "`Prometheus` не работает с логами — только с числовыми временными рядами. Для логов используют `Loki`/`ELK`.",
+                "source_of_confusion": "Слово «recording» («запись») наводит на мысль о записи логов, хотя речь о записи вычисленной метрики.",
+                "if_it_were_true": "Если бы recording rules писали логи, Prometheus дублировал бы Loki, но он принципиально хранит только метрики.",
+                "how_it_should_be": "Recording rules сохраняют результат PromQL как метрику; логи — отдельный стек (`Loki`/`ELK`)."
               }
             },
             {
@@ -1056,13 +1056,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Recording rules — это способ записи логов приложения в `TSDB` `Prometheus` вместе с метриками.",
+              "text": "Recording rules — это способ задать пороги алертинга в `Prometheus` и отправить их в `Alertmanager`.",
               "correct": false,
               "sections": {
-                "what_actually": "`Prometheus` не работает с логами — только с числовыми временными рядами. Для логов используют `Loki`/`ELK`.",
-                "source_of_confusion": "Слово «recording» («запись») наводит на мысль о записи логов, хотя речь о записи вычисленной метрики.",
-                "if_it_were_true": "Если бы recording rules писали логи, Prometheus дублировал бы Loki, но он принципиально хранит только метрики.",
-                "how_it_should_be": "Recording rules сохраняют результат PromQL как метрику; логи — отдельный стек (`Loki`/`ELK`)."
+                "what_actually": "Это описание alert rules, а не recording rules. Recording rules не отправляют алерты — они сохраняют результат `PromQL` как новую метрику.",
+                "source_of_confusion": "И recording, и alert rules задаются в `rule_files` со схожим YAML, поэтому их роли путают.",
+                "if_it_were_true": "Если бы recording rules алертили, не было бы отдельного `alert:`-ключа и поля `for:`, но они есть именно у alert rules.",
+                "how_it_should_be": "Пороги и отправка в Alertmanager — у alert rules; recording rules лишь предвычисляют метрику."
               }
             },
             {
@@ -1091,6 +1091,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Алерт переходит из `inactive` в `firing` только по решению оператора — автоматического перехода нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Prometheus` автоматически управляет состояниями на основе результата `PromQL` и `for:`; ручное вмешательство не требуется.",
+                "source_of_confusion": "Ручные silences и acknowledgements создают впечатление, что переход тоже ручной.",
+                "if_it_were_true": "Если бы переход требовал оператора, ночные инциденты не алертили бы без дежурного у консоли, что противоречит цели мониторинга.",
+                "how_it_should_be": "Переходы состояний автоматические; оператор может лишь заглушить уведомление через silence."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Алерт сразу переходит из `inactive` в `firing`, а состояния `pending` не существует.",
               "correct": false,
               "sections": {
@@ -1098,18 +1110,6 @@
                 "source_of_confusion": "Если у правила нет `for:`, переход кажется мгновенным, отсюда вывод об отсутствии `pending`.",
                 "if_it_were_true": "Если бы `pending` не было, любой кратковременный спайк сразу слал бы алерт, но `for:` как раз вводит промежуточное состояние.",
                 "how_it_should_be": "Последовательность — `inactive → pending → firing`; `pending` отфильтровывает кратковременные срабатывания."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Алерт проходит стадии `firing → pending → inactive` — сначала отправляется, потом проверяется условие.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Направление обратное: сначала проверяется условие, затем (при соблюдении `for:`) состояние становится `firing`, и только потом уходит уведомление.",
-                "source_of_confusion": "Кажется логичным «сначала сработать, потом проверять», но Prometheus сначала вычисляет PromQL.",
-                "if_it_were_true": "Если бы алерт сперва отправлялся, уведомления летели бы до подтверждения условия, что вызывало бы лавину ложных алертов.",
-                "how_it_should_be": "Сначала условие истинно → `pending` (выдержка `for:`) → `firing` → отправка в Alertmanager."
               }
             },
             {
@@ -1128,13 +1128,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Алерт переходит из `inactive` в `firing` только по решению оператора — автоматического перехода нет.",
+              "text": "Алерт проходит стадии `firing → pending → inactive` — сначала отправляется, потом проверяется условие.",
               "correct": false,
               "sections": {
-                "what_actually": "`Prometheus` автоматически управляет состояниями на основе результата `PromQL` и `for:`; ручное вмешательство не требуется.",
-                "source_of_confusion": "Ручные silences и acknowledgements создают впечатление, что переход тоже ручной.",
-                "if_it_were_true": "Если бы переход требовал оператора, ночные инциденты не алертили бы без дежурного у консоли, что противоречит цели мониторинга.",
-                "how_it_should_be": "Переходы состояний автоматические; оператор может лишь заглушить уведомление через silence."
+                "what_actually": "Направление обратное: сначала проверяется условие, затем (при соблюдении `for:`) состояние становится `firing`, и только потом уходит уведомление.",
+                "source_of_confusion": "Кажется логичным «сначала сработать, потом проверять», но Prometheus сначала вычисляет PromQL.",
+                "if_it_were_true": "Если бы алерт сперва отправлялся, уведомления летели бы до подтверждения условия, что вызывало бы лавину ложных алертов.",
+                "how_it_should_be": "Сначала условие истинно → `pending` (выдержка `for:`) → `firing` → отправка в Alertmanager."
               }
             }
           ]
@@ -1151,13 +1151,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`for:` задаёт частоту вычисления alert rule — как часто `Prometheus` проверяет условие.",
-              "correct": false,
+              "text": "`for:` задаёт минимальный период, в течение которого условие alert rule должно непрерывно выполняться, прежде чем алерт перейдёт из `pending` в `firing`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Частоту проверки задаёт `evaluation_interval` (в группе или глобально). `for:` — про длительность непрерывного срабатывания условия, а не про частоту.",
-                "source_of_confusion": "Оба параметра — про время, поэтому `for:` путают с интервалом вычисления.",
-                "if_it_were_true": "Если бы `for:` управлял частотой, нельзя было бы одновременно проверять часто (`15s`) и требовать выдержки `5m`, а это типичная комбинация.",
-                "how_it_should_be": "Частота проверки — `evaluation_interval`; `for:` — минимальная длительность истинности условия до `firing`."
+                "explanation": "Это отфильтровывает кратковременные спайки: если условие вернётся к ложному до истечения периода, алерт уходит в `inactive` без уведомления.",
+                "example": "`for:` подбирают под тип алерта: малое значение для критичных (быстрая реакция), большее — для шумных предупреждений, чтобы не дёргать дежурного на каждый кратковременный скачок.",
+                "when_to_apply": "`expr: jvm_memory_used_bytes{area=\"heap\"} / jvm_memory_max_bytes{area=\"heap\"} > 0.9`, `for: 5m` — алерт только если >90% heap в течение 5 минут.",
+                "edge_cases": "Рекомендации: для критичных `2m–5m`, для предупреждений `10m–15m`; `for: 0m` (или отсутствие) — мгновенно, не рекомендуется для production.",
+                "related": "[[prometheus-grafana-interview#Q19]] состояния pending/firing; [[prometheus-grafana-interview#Q9]] почему rate(), а не irate() с for:; [[prometheus-grafana-interview#Q21]] group_wait в Alertmanager как смежный таймер."
               }
             },
             {
@@ -1187,14 +1188,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`for:` задаёт минимальный период, в течение которого условие alert rule должно непрерывно выполняться, прежде чем алерт перейдёт из `pending` в `firing`.",
-              "correct": true,
+              "text": "`for:` задаёт частоту вычисления alert rule — как часто `Prometheus` проверяет условие.",
+              "correct": false,
               "sections": {
-                "explanation": "Это отфильтровывает кратковременные спайки: если условие вернётся к ложному до истечения периода, алерт уходит в `inactive` без уведомления.",
-                "example": "`for:` подбирают под тип алерта: малое значение для критичных (быстрая реакция), большее — для шумных предупреждений, чтобы не дёргать дежурного на каждый кратковременный скачок.",
-                "when_to_apply": "`expr: jvm_memory_used_bytes{area=\"heap\"} / jvm_memory_max_bytes{area=\"heap\"} > 0.9`, `for: 5m` — алерт только если >90% heap в течение 5 минут.",
-                "edge_cases": "Рекомендации: для критичных `2m–5m`, для предупреждений `10m–15m`; `for: 0m` (или отсутствие) — мгновенно, не рекомендуется для production.",
-                "related": "[[prometheus-grafana-interview#Q19]] состояния pending/firing; [[prometheus-grafana-interview#Q9]] почему rate(), а не irate() с for:; [[prometheus-grafana-interview#Q21]] group_wait в Alertmanager как смежный таймер."
+                "what_actually": "Частоту проверки задаёт `evaluation_interval` (в группе или глобально). `for:` — про длительность непрерывного срабатывания условия, а не про частоту.",
+                "source_of_confusion": "Оба параметра — про время, поэтому `for:` путают с интервалом вычисления.",
+                "if_it_were_true": "Если бы `for:` управлял частотой, нельзя было бы одновременно проверять часто (`15s`) и требовать выдержки `5m`, а это типичная комбинация.",
+                "how_it_should_be": "Частота проверки — `evaluation_interval`; `for:` — минимальная длительность истинности условия до `firing`."
               }
             }
           ]
@@ -1224,18 +1224,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Маршрутизация в `Alertmanager` — это один фиксированный receiver для всех алертов, без гибкой настройки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Alertmanager` строит дерево маршрутов с матчерами по лейблам, что даёт гибкое направление каждого типа алерта в свой канал.",
-                "source_of_confusion": "Простые сетапы действительно имеют один receiver, и это обобщают на всю модель.",
-                "if_it_were_true": "Если бы receiver был один, нельзя было бы слать critical в PagerDuty, а warning в Slack, но это стандартная практика.",
-                "how_it_should_be": "Маршрутизация — это дерево routes с матчерами; один receiver — лишь частный (корневой) случай."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Маршрутизация алертов делается через recording rules в `Prometheus Server`, а не в `Alertmanager`.",
               "correct": false,
               "sections": {
@@ -1246,8 +1234,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Маршрутизация в `Alertmanager` работает только по полю `alertname` и не поддерживает custom-лейблы.",
               "correct": false,
               "sections": {
@@ -1255,6 +1243,18 @@
                 "source_of_confusion": "`alertname` — самый заметный лейбл, поэтому кажется единственным критерием маршрутизации.",
                 "if_it_were_true": "Если бы матчинг шёл только по `alertname`, нельзя было бы направить critical-алерты в отдельный канал, но это базовый кейс.",
                 "how_it_should_be": "Матчеры принимают любые лейблы; `alertname` — лишь один из них."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Маршрутизация в `Alertmanager` — это один фиксированный receiver для всех алертов, без гибкой настройки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Alertmanager` строит дерево маршрутов с матчерами по лейблам, что даёт гибкое направление каждого типа алерта в свой канал.",
+                "source_of_confusion": "Простые сетапы действительно имеют один receiver, и это обобщают на всю модель.",
+                "if_it_were_true": "Если бы receiver был один, нельзя было бы слать critical в PagerDuty, а warning в Slack, но это стандартная практика.",
+                "how_it_should_be": "Маршрутизация — это дерево routes с матчерами; один receiver — лишь частный (корневой) случай."
               }
             }
           ]
@@ -1331,18 +1331,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Silence полностью отключает evaluation alert rules в `Prometheus Server` на заданный период.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Silence живёт в `Alertmanager` и не влияет на evaluation правил: `Prometheus` продолжает оценивать условия и слать firing-алерты, просто уведомления не уходят.",
-                "source_of_confusion": "Раз «тишина», кажется, что и вычисление правил остановлено, но затронуты только нотификации.",
-                "if_it_were_true": "Если бы silence отключал evaluation, история алертов прерывалась бы на время maintenance, но алерты продолжают регистрироваться.",
-                "how_it_should_be": "Silence глушит только уведомления в Alertmanager; evaluation в Prometheus продолжается."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Silence — постоянное правило в конфигурации `Alertmanager`, применяемое ко всем алертам по умолчанию.",
               "correct": false,
               "sections": {
@@ -1353,8 +1341,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Silence автоматически создаётся `Alertmanager` при каждом повторе firing-алерта, чтобы избежать спама.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Повтор уведомлений контролируется `repeat_interval`, а не автоматическими silence. Silence всегда создаётся явно.",
+                "source_of_confusion": "Антиспам-логика существует (`repeat_interval`, группировка), и её ошибочно приписывают авто-silence.",
+                "if_it_were_true": "Если бы silence создавался сам, нельзя было бы предсказать, какие алерты заглушены, что сломало бы on-call.",
+                "how_it_should_be": "Антиспам — это `repeat_interval`/группировка; silence создаётся оператором вручную."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "Silence полностью отключает evaluation alert rules в `Prometheus Server` на заданный период.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Silence живёт в `Alertmanager` и не влияет на evaluation правил: `Prometheus` продолжает оценивать условия и слать firing-алерты, просто уведомления не уходят.",
+                "source_of_confusion": "Раз «тишина», кажется, что и вычисление правил остановлено, но затронуты только нотификации.",
+                "if_it_were_true": "Если бы silence отключал evaluation, история алертов прерывалась бы на время maintenance, но алерты продолжают регистрироваться.",
+                "how_it_should_be": "Silence глушит только уведомления в Alertmanager; evaluation в Prometheus продолжается."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Silence — временное подавление уведомлений в `Alertmanager` по матчерам лейблов с заданным периодом (`startsAt`/`endsAt`); создаётся вручную через UI или API.",
               "correct": true,
               "sections": {
@@ -1363,18 +1375,6 @@
                 "when_to_apply": "Через API: `POST /api/v2/silences` с `matchers: [{name: \"environment\", value: \"staging\"}]`, `startsAt`, `endsAt`, `comment: \"Planned deployment\"`.",
                 "edge_cases": "Отличие от inhibition: silence — ручное/временное действие по матчерам, а inhibition — автоматическое правило по source-алерту.",
                 "related": "[[prometheus-grafana-interview#Q22]] чем inhibition отличается от silence; [[prometheus-grafana-interview#Q21]] лейблы для матчеров; [[prometheus-grafana-interview#Q5]] алерты всё равно доходят до Alertmanager."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Silence автоматически создаётся `Alertmanager` при каждом повторе firing-алерта, чтобы избежать спама.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Повтор уведомлений контролируется `repeat_interval`, а не автоматическими silence. Silence всегда создаётся явно.",
-                "source_of_confusion": "Антиспам-логика существует (`repeat_interval`, группировка), и её ошибочно приписывают авто-silence.",
-                "if_it_were_true": "Если бы silence создавался сам, нельзя было бы предсказать, какие алерты заглушены, что сломало бы on-call.",
-                "how_it_should_be": "Антиспам — это `repeat_interval`/группировка; silence создаётся оператором вручную."
               }
             }
           ]
@@ -1391,18 +1391,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Дедупликация и группировка — это одно и то же и делается только по `alertname`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это два разных механизма: дедупликация убирает одинаковые алерты от разных источников, группировка объединяет разные алерты с общими лейблами в одно уведомление; оба настраиваются по произвольным лейблам.",
-                "source_of_confusion": "Оба механизма «схлопывают» алерты, поэтому их объединяют в один и привязывают к `alertname`.",
-                "if_it_were_true": "Если бы это был один механизм по `alertname`, нельзя было бы группировать по `cluster`, но `group_by: ['alertname', 'cluster']` — типовая настройка.",
-                "how_it_should_be": "Дедупликация — про одинаковые алерты от HA-серверов; группировка — про объединение по `group_by`; оба работают по набору лейблов."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Дедупликация происходит в `Prometheus Server`, а `Alertmanager` только рассылает уведомления.",
               "correct": false,
               "sections": {
@@ -1410,6 +1398,19 @@
                 "source_of_confusion": "Кажется, что источник алерта (Prometheus) и должен убирать дубликаты, но дубликаты появляются именно на стыке нескольких серверов.",
                 "if_it_were_true": "Если бы дедупликацию делал Prometheus, в HA-сетапе два сервера слали бы по два одинаковых уведомления, чего Alertmanager как раз избегает.",
                 "how_it_should_be": "Дедупликация — в Alertmanager (точка схождения HA-серверов); Prometheus лишь шлёт свои алерты."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Дедупликация объединяет одинаковые по лейблам алерты от нескольких `Prometheus Server`-ов в один, а группировка по `group_by` сводит все алерты с совпадающими лейблами в одно уведомление.",
+              "correct": true,
+              "sections": {
+                "explanation": "Дедупликация важна для HA-сетапа с несколькими `Prometheus`, а группировка решает проблему «шторма уведомлений»: 100 упавших pod-ов — одно сообщение в Slack.",
+                "example": "Группировку настраивают, чтобы один сбой не превращался в сотни сообщений: `group_by` выбирают по осям, по которым логично объединять (например, `alertname` + `cluster`).",
+                "when_to_apply": "С `group_by: ['alertname', 'cluster']` уведомление выглядит как `[FIRING: 100] PodCrashLooping (cluster=prod-eu)` со списком pod-ов внутри.",
+                "edge_cases": "Тайминги: `group_wait: 30s` (собрать первую группу), `group_interval: 5m` (между повторными отправками группы), `repeat_interval: 4h` (повтор пока не resolved).",
+                "related": "[[prometheus-grafana-interview#Q21]] group_by в маршрутизации; [[prometheus-grafana-interview#Q22]] inhibition против шторма; [[prometheus-grafana-interview#Q5]] откуда приходят алерты для дедупликации."
               }
             },
             {
@@ -1427,14 +1428,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Дедупликация объединяет одинаковые по лейблам алерты от нескольких `Prometheus Server`-ов в один, а группировка по `group_by` сводит все алерты с совпадающими лейблами в одно уведомление.",
-              "correct": true,
+              "text": "Дедупликация и группировка — это одно и то же и делается только по `alertname`.",
+              "correct": false,
               "sections": {
-                "explanation": "Дедупликация важна для HA-сетапа с несколькими `Prometheus`, а группировка решает проблему «шторма уведомлений»: 100 упавших pod-ов — одно сообщение в Slack.",
-                "example": "Группировку настраивают, чтобы один сбой не превращался в сотни сообщений: `group_by` выбирают по осям, по которым логично объединять (например, `alertname` + `cluster`).",
-                "when_to_apply": "С `group_by: ['alertname', 'cluster']` уведомление выглядит как `[FIRING: 100] PodCrashLooping (cluster=prod-eu)` со списком pod-ов внутри.",
-                "edge_cases": "Тайминги: `group_wait: 30s` (собрать первую группу), `group_interval: 5m` (между повторными отправками группы), `repeat_interval: 4h` (повтор пока не resolved).",
-                "related": "[[prometheus-grafana-interview#Q21]] group_by в маршрутизации; [[prometheus-grafana-interview#Q22]] inhibition против шторма; [[prometheus-grafana-interview#Q5]] откуда приходят алерты для дедупликации."
+                "what_actually": "Это два разных механизма: дедупликация убирает одинаковые алерты от разных источников, группировка объединяет разные алерты с общими лейблами в одно уведомление; оба настраиваются по произвольным лейблам.",
+                "source_of_confusion": "Оба механизма «схлопывают» алерты, поэтому их объединяют в один и привязывают к `alertname`.",
+                "if_it_were_true": "Если бы это был один механизм по `alertname`, нельзя было бы группировать по `cluster`, но `group_by: ['alertname', 'cluster']` — типовая настройка.",
+                "how_it_should_be": "Дедупликация — про одинаковые алерты от HA-серверов; группировка — про объединение по `group_by`; оба работают по набору лейблов."
               }
             }
           ]
@@ -1451,31 +1451,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Нужно добавить `spring-boot-starter-actuator` и `micrometer-registry-prometheus`, открыть эндпоинт `prometheus` через `management.endpoints.web.exposure.include` и настроить `scrape_configs` в `Prometheus`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Стандартная схема: `Micrometer` предоставляет реестр, `actuator` — эндпоинт `/actuator/prometheus`, а `Prometheus Server` scrape-ит его по HTTP в формате `text/plain; version=0.0.4`.",
-                "example": "Эту схему применяют при заведении мониторинга нового сервиса: добавляют две зависимости, открывают эндпоинт и регистрируют сервис как scrape-цель в Prometheus или ServiceMonitor.",
-                "when_to_apply": "В `prometheus.yml`: `job_name: 'spring-boot-app'`, `metrics_path: '/actuator/prometheus'`, `scrape_interval: 15s`, `targets: ['localhost:8080']`.",
-                "edge_cases": "Полезно задать common-теги: `management.metrics.tags.application: ${spring.application.name}` и `environment: ${spring.profiles.active:default}`.",
-                "related": "[[prometheus-grafana-interview#Q26]] кастомные метрики через Micrometer; [[prometheus-grafana-interview#Q27]] какие метрики экспортируются автоматически; [[prometheus-grafana-interview#Q28]] common tags для всех метрик."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Для подключения `Prometheus` к `Spring Boot` достаточно добавить только `spring-boot-starter-actuator` без дополнительных зависимостей.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Без `micrometer-registry-prometheus` эндпоинт `/actuator/prometheus` не создаётся: actuator сам по себе не умеет экспортировать метрики в формате Prometheus.",
-                "source_of_confusion": "Actuator отдаёт `/actuator/metrics` в JSON, и это путают с Prometheus-форматом.",
-                "if_it_were_true": "Если бы хватало одного actuator, не было бы отдельного registry-стартера, но именно он добавляет нужный эндпоинт и формат.",
-                "how_it_should_be": "Нужна пара: `spring-boot-starter-actuator` + `micrometer-registry-prometheus`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Для подключения нужна зависимость `spring-boot-starter-prometheus` — единственная официальная интеграция.",
               "correct": false,
               "sections": {
@@ -1486,8 +1461,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Для подключения нужно отключить `spring-boot-starter-actuator` и написать собственный эндпоинт `/metrics`.",
               "correct": false,
               "sections": {
@@ -1495,6 +1470,31 @@
                 "source_of_confusion": "Кажется, что свой эндпоинт даст контроль, но он лишь дублирует готовую инфраструктуру.",
                 "if_it_were_true": "Если бы свой `/metrics` был лучше, не существовало бы стандарта `/actuator/prometheus`, но он де-факто общепринят.",
                 "how_it_should_be": "Используйте готовый `/actuator/prometheus` от actuator + Micrometer, а не самописный эндпоинт."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для подключения `Prometheus` к `Spring Boot` достаточно добавить только `spring-boot-starter-actuator` без дополнительных зависимостей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `micrometer-registry-prometheus` эндпоинт `/actuator/prometheus` не создаётся: actuator сам по себе не умеет экспортировать метрики в формате Prometheus.",
+                "source_of_confusion": "Actuator отдаёт `/actuator/metrics` в JSON, и это путают с Prometheus-форматом.",
+                "if_it_were_true": "Если бы хватало одного actuator, не было бы отдельного registry-стартера, но именно он добавляет нужный эндпоинт и формат.",
+                "how_it_should_be": "Нужна пара: `spring-boot-starter-actuator` + `micrometer-registry-prometheus`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Нужно добавить `spring-boot-starter-actuator` и `micrometer-registry-prometheus`, открыть эндпоинт `prometheus` через `management.endpoints.web.exposure.include` и настроить `scrape_configs` в `Prometheus`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стандартная схема: `Micrometer` предоставляет реестр, `actuator` — эндпоинт `/actuator/prometheus`, а `Prometheus Server` scrape-ит его по HTTP в формате `text/plain; version=0.0.4`.",
+                "example": "Эту схему применяют при заведении мониторинга нового сервиса: добавляют две зависимости, открывают эндпоинт и регистрируют сервис как scrape-цель в Prometheus или ServiceMonitor.",
+                "when_to_apply": "В `prometheus.yml`: `job_name: 'spring-boot-app'`, `metrics_path: '/actuator/prometheus'`, `scrape_interval: 15s`, `targets: ['localhost:8080']`.",
+                "edge_cases": "Полезно задать common-теги: `management.metrics.tags.application: ${spring.application.name}` и `environment: ${spring.profiles.active:default}`.",
+                "related": "[[prometheus-grafana-interview#Q26]] кастомные метрики через Micrometer; [[prometheus-grafana-interview#Q27]] какие метрики экспортируются автоматически; [[prometheus-grafana-interview#Q28]] common tags для всех метрик."
               }
             }
           ]
@@ -1511,6 +1511,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Кастомный `Counter` создаётся автоматически при любом HTTP-запросе и не требует явного создания.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Автоматически создаются только стандартные метрики (`http_server_requests` и т.п.). Кастомную бизнес-метрику (например, `orders_created_total`) нужно явно регистрировать.",
+                "source_of_confusion": "Раз HTTP-метрики появляются сами, кажется, что и бизнес-метрики возникнут автоматически.",
+                "if_it_were_true": "Если бы бизнес-метрики создавались сами, Prometheus «угадывал» бы предметную область, что невозможно.",
+                "how_it_should_be": "Авто-метрики — инфраструктурные; бизнес-метрику регистрируют явно через `Counter.builder`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Кастомный `Counter` создаётся через `new PrometheusCounter()` напрямую, без регистрации в `MeterRegistry`.",
               "correct": false,
               "sections": {
@@ -1521,8 +1533,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "Кастомный `Counter` создаётся через `Counter.builder(\"orders_created_total\").tag(...).register(registry)` на внедрённом `MeterRegistry` и увеличивается через `counter.increment()`.",
               "correct": true,
               "sections": {
@@ -1531,18 +1543,6 @@
                 "when_to_apply": "`MeterRegistry` внедряется в конструктор сервиса; `orderCreatedCounter.increment()` вызывается после успешного создания заказа.",
                 "edge_cases": "Для длительностей берут `Timer.builder(...).publishPercentileHistogram(true).register(registry)` или аннотацию `@Timed(percentiles = {0.5, 0.95, 0.99})`.",
                 "related": "[[prometheus-grafana-interview#Q6]] выбор типа метрики (Counter/Gauge); [[prometheus-grafana-interview#Q25]] подключение Micrometer к Spring Boot; [[prometheus-grafana-interview#Q28]] common tags для всех метрик."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Кастомный `Counter` создаётся автоматически при любом HTTP-запросе и не требует явного создания.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Автоматически создаются только стандартные метрики (`http_server_requests` и т.п.). Кастомную бизнес-метрику (например, `orders_created_total`) нужно явно регистрировать.",
-                "source_of_confusion": "Раз HTTP-метрики появляются сами, кажется, что и бизнес-метрики возникнут автоматически.",
-                "if_it_were_true": "Если бы бизнес-метрики создавались сами, Prometheus «угадывал» бы предметную область, что невозможно.",
-                "how_it_should_be": "Авто-метрики — инфраструктурные; бизнес-метрику регистрируют явно через `Counter.builder`."
               }
             },
             {
@@ -1583,18 +1583,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Spring Boot Actuator` экспортирует только кастомные метрики, зарегистрированные через `@Timed` или `Counter.builder`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это перевёрнуто: кастомные метрики идут поверх большого набора автоматических. Авто-метрики — основа observability-стека Spring Boot.",
-                "source_of_confusion": "Раз кастомные метрики требуют кода, кажется, что без кода метрик нет вовсе.",
-                "if_it_were_true": "Если бы автоматических метрик не было, `/actuator/prometheus` был бы почти пустым на свежем приложении, но он богат из коробки.",
-                "how_it_should_be": "Кастомные метрики дополняют большой набор авто-метрик, а не заменяют его."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Spring Boot Actuator` + `Micrometer` автоматически регистрирует метрики JVM, HTTP-сервера/клиента, DataSource (HikariCP), cache, Kafka, system и logback при наличии соответствующих зависимостей.",
               "correct": true,
               "sections": {
@@ -1606,8 +1594,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`Spring Boot Actuator` вообще не экспортирует метрики — для этого нужна отдельная библиотека `spring-boot-metrics-exporter`.",
               "correct": false,
               "sections": {
@@ -1615,6 +1603,18 @@
                 "source_of_confusion": "Название `spring-boot-metrics-exporter` звучит правдоподобно, отсюда ложная уверенность.",
                 "if_it_were_true": "Если бы actuator не экспортировал метрики, не было бы эндпоинта `/actuator/prometheus`, но он есть.",
                 "how_it_should_be": "Метрики идут через actuator + Micrometer-registry; отдельного `metrics-exporter` не существует."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Boot Actuator` экспортирует только кастомные метрики, зарегистрированные через `@Timed` или `Counter.builder`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это перевёрнуто: кастомные метрики идут поверх большого набора автоматических. Авто-метрики — основа observability-стека Spring Boot.",
+                "source_of_confusion": "Раз кастомные метрики требуют кода, кажется, что без кода метрик нет вовсе.",
+                "if_it_were_true": "Если бы автоматических метрик не было, `/actuator/prometheus` был бы почти пустым на свежем приложении, но он богат из коробки.",
+                "how_it_should_be": "Кастомные метрики дополняют большой набор авто-метрик, а не заменяют его."
               }
             }
           ]
@@ -1631,30 +1631,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Общие теги добавляются только к кастомным метрикам, но не к автоматическим (JVM, HTTP, DataSource).",
-              "correct": false,
+              "text": "Общие теги добавляются через `management.metrics.tags.*` в `application.yml` или программно через `MeterRegistryCustomizer#commonTags`, и применяются автоматически ко всем метрикам.",
+              "correct": true,
               "sections": {
-                "what_actually": "Common tags применяются ко ВСЕМ метрикам, включая автоматические. В этом и смысл — пометить всё приложение целиком, а не только кастомные метрики.",
-                "source_of_confusion": "Кажется, что «общие теги» — это про метрики, которые ты сам создаёшь, отсюда сужение области.",
-                "if_it_were_true": "Если бы common tags не покрывали JVM/HTTP, фильтрация по `application` в Grafana работала бы лишь для части метрик, что бесполезно.",
-                "how_it_should_be": "Common tags помечают все метрики приложения, включая авто-метрики."
+                "explanation": "Это два корректных способа, покрывающих 100% метрик. `MeterRegistryCustomizer` удобен, когда значения тегов нужно получить программно (например, из environment или build-info).",
+                "example": "Common tags задают на старте проекта, чтобы все метрики приложения можно было фильтровать в Grafana по `application`/`environment`/`region` и отличать инстансы между средами.",
+                "when_to_apply": "В YAML: `management.metrics.tags: {application: ..., environment: production, region: eu-west-1}`; в коде — `registry.config().commonTags(\"application\", appName, \"version\", buildVersion)`.",
+                "edge_cases": "Все метрики (включая JVM/HTTP/DataSource) получают эти теги, что позволяет фильтровать и агрегировать в `Grafana` по `application`, `environment` и т.п.",
+                "related": "[[prometheus-grafana-interview#Q26]] теги отдельной метрики через .tag(); [[prometheus-grafana-interview#Q27]] какие авто-метрики получат common tags; [[prometheus-grafana-interview#Q30]] использование тегов в переменных Grafana."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Общие теги нельзя изменить в runtime и задаются только в коде через аннотацию `@CommonTag`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Аннотации `@CommonTag` не существует. Common tags задаются в `application.yml` или через `MeterRegistryCustomizer`, а Spring Profile позволяет переключать значения между средами.",
-                "source_of_confusion": "Аннотационный стиль Spring наводит на мысль о специальной аннотации, которой нет.",
-                "if_it_were_true": "Если бы был только `@CommonTag` в коде, нельзя было бы менять `environment` через профиль без пересборки, но это делают конфигом.",
-                "how_it_should_be": "Common tags — это `management.metrics.tags.*` или `MeterRegistryCustomizer#commonTags`, а не аннотация."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Общие теги добавляются прописыванием их вручную в каждый вызов `Counter.builder()` и `Timer.builder()`.",
               "correct": false,
               "sections": {
@@ -1665,16 +1654,27 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "Общие теги нельзя изменить в runtime и задаются только в коде через аннотацию `@CommonTag`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотации `@CommonTag` не существует. Common tags задаются в `application.yml` или через `MeterRegistryCustomizer`, а Spring Profile позволяет переключать значения между средами.",
+                "source_of_confusion": "Аннотационный стиль Spring наводит на мысль о специальной аннотации, которой нет.",
+                "if_it_were_true": "Если бы был только `@CommonTag` в коде, нельзя было бы менять `environment` через профиль без пересборки, но это делают конфигом.",
+                "how_it_should_be": "Common tags — это `management.metrics.tags.*` или `MeterRegistryCustomizer#commonTags`, а не аннотация."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "Общие теги добавляются через `management.metrics.tags.*` в `application.yml` или программно через `MeterRegistryCustomizer#commonTags`, и применяются автоматически ко всем метрикам.",
-              "correct": true,
+              "text": "Общие теги добавляются только к кастомным метрикам, но не к автоматическим (JVM, HTTP, DataSource).",
+              "correct": false,
               "sections": {
-                "explanation": "Это два корректных способа, покрывающих 100% метрик. `MeterRegistryCustomizer` удобен, когда значения тегов нужно получить программно (например, из environment или build-info).",
-                "example": "Common tags задают на старте проекта, чтобы все метрики приложения можно было фильтровать в Grafana по `application`/`environment`/`region` и отличать инстансы между средами.",
-                "when_to_apply": "В YAML: `management.metrics.tags: {application: ..., environment: production, region: eu-west-1}`; в коде — `registry.config().commonTags(\"application\", appName, \"version\", buildVersion)`.",
-                "edge_cases": "Все метрики (включая JVM/HTTP/DataSource) получают эти теги, что позволяет фильтровать и агрегировать в `Grafana` по `application`, `environment` и т.п.",
-                "related": "[[prometheus-grafana-interview#Q26]] теги отдельной метрики через .tag(); [[prometheus-grafana-interview#Q27]] какие авто-метрики получат common tags; [[prometheus-grafana-interview#Q30]] использование тегов в переменных Grafana."
+                "what_actually": "Common tags применяются ко ВСЕМ метрикам, включая автоматические. В этом и смысл — пометить всё приложение целиком, а не только кастомные метрики.",
+                "source_of_confusion": "Кажется, что «общие теги» — это про метрики, которые ты сам создаёшь, отсюда сужение области.",
+                "if_it_were_true": "Если бы common tags не покрывали JVM/HTTP, фильтрация по `application` в Grafana работала бы лишь для части метрик, что бесполезно.",
+                "how_it_should_be": "Common tags помечают все метрики приложения, включая авто-метрики."
               }
             }
           ]
@@ -1691,6 +1691,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Data Source в `Grafana` — это только `Prometheus`, других источников данных не поддерживается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Grafana` поддерживает десятки источников: Loki, InfluxDB, MySQL, PostgreSQL, Elasticsearch, Jaeger, Tempo, CloudWatch и многие другие, а не только Prometheus.",
+                "source_of_confusion": "В мониторинге Grafana чаще всего видят с Prometheus, отсюда вывод об эксклюзивности.",
+                "if_it_were_true": "Если бы был только Prometheus, нельзя было бы строить дашборды по логам Loki или SQL-базам, но это распространённая практика.",
+                "how_it_should_be": "Grafana — мультибэкендный инструмент; Prometheus — лишь один из многих data sources."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Data Source — подключение к источнику данных в `Grafana`; `Prometheus` добавляется через `Configuration → Data Sources` с указанием URL (например, `http://prometheus:9090`) или через provisioning YAML-файлом.",
               "correct": true,
               "sections": {
@@ -1702,32 +1714,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Data Source в `Grafana` — это только `Prometheus`, других источников данных не поддерживается.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Grafana` поддерживает десятки источников: Loki, InfluxDB, MySQL, PostgreSQL, Elasticsearch, Jaeger, Tempo, CloudWatch и многие другие, а не только Prometheus.",
-                "source_of_confusion": "В мониторинге Grafana чаще всего видят с Prometheus, отсюда вывод об эксклюзивности.",
-                "if_it_were_true": "Если бы был только Prometheus, нельзя было бы строить дашборды по логам Loki или SQL-базам, но это распространённая практика.",
-                "how_it_should_be": "Grafana — мультибэкендный инструмент; Prometheus — лишь один из многих data sources."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "Data Source в `Grafana` требует установки специального агента на каждый `Prometheus Server` для сбора данных.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Никакого агента не нужно: `Grafana` сама делает HTTP-запросы к `Prometheus API` (обычно `:9090/api/v1/query`). Подключение чисто сетевое.",
-                "source_of_confusion": "Многие интеграции мониторинга используют агентов, и это переносят на Grafana.",
-                "if_it_were_true": "Если бы требовался агент, добавление data source через один URL было бы невозможно, но именно так оно и работает.",
-                "how_it_should_be": "Grafana обращается к Prometheus API по HTTP; агент на сервере не требуется."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Data Source в `Grafana` конфигурируется только через UI и не поддерживает код-ификацию.",
               "correct": false,
               "sections": {
@@ -1735,6 +1723,18 @@
                 "source_of_confusion": "Раз добавление через UI самое наглядное, кажется, что других путей нет.",
                 "if_it_were_true": "Если бы был только UI, нельзя было бы версионировать data sources в Git, но provisioning именно это и решает.",
                 "how_it_should_be": "Помимо UI есть provisioning YAML — основной способ для GitOps."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Data Source в `Grafana` требует установки специального агента на каждый `Prometheus Server` для сбора данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакого агента не нужно: `Grafana` сама делает HTTP-запросы к `Prometheus API` (обычно `:9090/api/v1/query`). Подключение чисто сетевое.",
+                "source_of_confusion": "Многие интеграции мониторинга используют агентов, и это переносят на Grafana.",
+                "if_it_were_true": "Если бы требовался агент, добавление data source через один URL было бы невозможно, но именно так оно и работает.",
+                "how_it_should_be": "Grafana обращается к Prometheus API по HTTP; агент на сервере не требуется."
               }
             }
           ]
@@ -1751,18 +1751,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Templating — это механизм генерации дашбордов по шаблонам JSON без возможности интерактивного переключения значений.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Смысл templating — именно в интерактивном переключении значений (dropdown в шапке дашборда). Генерация дашбордов из шаблонов — отдельная задача (jsonnet/grafonnet).",
-                "source_of_confusion": "Слово «шаблон» наводит на мысль о шаблонизации JSON, а не о переменных в UI.",
-                "if_it_were_true": "Если бы templating не давал интерактива, не было бы dropdown-ов `$service`/`$env` в шапке дашборда, но они есть.",
-                "how_it_should_be": "Templating — это динамические переменные в UI, подставляемые в запросы; кодогенерация дашбордов — другое."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Templating — механизм динамических переменных в дашборде, которые подставляются в `PromQL`-запросы (например, `$service`, `$__interval`) для переключения между инстансами и сервисами без правки панелей.",
               "correct": true,
               "sections": {
@@ -1774,20 +1762,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Templating — это серверный кэш запросов `Prometheus` в `Grafana`, ускоряющий рендер дашбордов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Кэш запросов — отдельная фича (query caching). Templating — про динамические переменные в UI, а не про кэширование.",
-                "source_of_confusion": "Оба «ускоряют работу с дашбордом», поэтому их функции смешивают.",
-                "if_it_were_true": "Если бы templating был кэшем, переменные-dropdown не появлялись бы в шапке, но они — суть templating.",
-                "how_it_should_be": "Кэширование — это query caching; templating — это переменные дашборда."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Templating требует использования только кастомного типа переменных Custom и не поддерживает Query.",
               "correct": false,
               "sections": {
@@ -1795,6 +1771,30 @@
                 "source_of_confusion": "Custom — самый простой для понимания тип, отсюда вывод о его эксклюзивности.",
                 "if_it_were_true": "Если бы был только Custom, нельзя было бы автоматически подтягивать список сервисов через `label_values`, но это типовой кейс Query-переменной.",
                 "how_it_should_be": "Типов переменных много; Query (на основе PromQL) — основной для динамических списков."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Templating — это механизм генерации дашбордов по шаблонам JSON без возможности интерактивного переключения значений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смысл templating — именно в интерактивном переключении значений (dropdown в шапке дашборда). Генерация дашбордов из шаблонов — отдельная задача (jsonnet/grafonnet).",
+                "source_of_confusion": "Слово «шаблон» наводит на мысль о шаблонизации JSON, а не о переменных в UI.",
+                "if_it_were_true": "Если бы templating не давал интерактива, не было бы dropdown-ов `$service`/`$env` в шапке дашборда, но они есть.",
+                "how_it_should_be": "Templating — это динамические переменные в UI, подставляемые в запросы; кодогенерация дашбордов — другое."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Templating — это серверный кэш запросов `Prometheus` в `Grafana`, ускоряющий рендер дашбордов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кэш запросов — отдельная фича (query caching). Templating — про динамические переменные в UI, а не про кэширование.",
+                "source_of_confusion": "Оба «ускоряют работу с дашбордом», поэтому их функции смешивают.",
+                "if_it_were_true": "Если бы templating был кэшем, переменные-dropdown не появлялись бы в шапке, но они — суть templating.",
+                "how_it_should_be": "Кэширование — это query caching; templating — это переменные дашборда."
               }
             }
           ]
@@ -1811,30 +1811,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Grafana Alerts` и `Alertmanager` — одно и то же и используют один и тот же UI и storage.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это разные системы: правила Grafana-alerts хранятся в Grafana, а правила для Alertmanager — в Prometheus (files/ConfigMap); UI и модель тоже различаются.",
-                "source_of_confusion": "Оба про алертинг и оба интегрируются с Grafana, поэтому кажутся одним продуктом.",
-                "if_it_were_true": "Если бы это была одна система, не нужно было бы выбирать между Grafana-managed и Prometheus-alerts, но такой выбор реально стоит перед командами.",
-                "how_it_should_be": "Это два разных механизма с разным хранением правил и разной моделью маршрутизации."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`Grafana Alerts` поддерживают только email-уведомления, а `Alertmanager` — все остальные каналы.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Оба поддерживают примерно одинаковый набор каналов: Slack, PagerDuty, OpsGenie, email, webhook. Различие не в каналах, а в модели и хранении правил.",
-                "source_of_confusion": "Email — самый базовый канал, его ошибочно считают единственным у Grafana.",
-                "if_it_were_true": "Если бы Grafana слала только email, GrafanaCloud-алерты в Slack были бы невозможны, но они работают.",
-                "how_it_should_be": "Каналы у обоих сопоставимы; различие — в кросс-бэкендности и хранении правил."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Grafana Alerts` работают поверх любого Grafana data source (Prometheus, Loki, SQL и т.д.), хранят правила в Grafana и имеют Contact points/Notification policies; `Alertmanager` работает только с Prometheus-алертами и не поддерживает inhibition через Grafana.",
               "correct": true,
               "sections": {
@@ -1846,8 +1822,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`Alertmanager` не поддерживает silences, в отличие от `Grafana Alerts`.",
               "correct": false,
               "sections": {
@@ -1855,6 +1831,30 @@
                 "source_of_confusion": "Раз Grafana предлагает удобный UI для silences, кажется, что это её эксклюзив.",
                 "if_it_were_true": "Если бы у Alertmanager не было silences, нельзя было бы глушить алерты на maintenance до Grafana-alerts, но это делали годами.",
                 "how_it_should_be": "Silences есть у обоих; уникален для Alertmanager именно inhibition."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Grafana Alerts` и `Alertmanager` — одно и то же и используют один и тот же UI и storage.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные системы: правила Grafana-alerts хранятся в Grafana, а правила для Alertmanager — в Prometheus (files/ConfigMap); UI и модель тоже различаются.",
+                "source_of_confusion": "Оба про алертинг и оба интегрируются с Grafana, поэтому кажутся одним продуктом.",
+                "if_it_were_true": "Если бы это была одна система, не нужно было бы выбирать между Grafana-managed и Prometheus-alerts, но такой выбор реально стоит перед командами.",
+                "how_it_should_be": "Это два разных механизма с разным хранением правил и разной моделью маршрутизации."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Grafana Alerts` поддерживают только email-уведомления, а `Alertmanager` — все остальные каналы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба поддерживают примерно одинаковый набор каналов: Slack, PagerDuty, OpsGenie, email, webhook. Различие не в каналах, а в модели и хранении правил.",
+                "source_of_confusion": "Email — самый базовый канал, его ошибочно считают единственным у Grafana.",
+                "if_it_were_true": "Если бы Grafana слала только email, GrafanaCloud-алерты в Slack были бы невозможны, но они работают.",
+                "how_it_should_be": "Каналы у обоих сопоставимы; различие — в кросс-бэкендности и хранении правил."
               }
             }
           ]
@@ -1871,13 +1871,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Loki` — это TSDB для метрик, являющаяся полной заменой `Prometheus`.",
+              "text": "`Loki` использует Pull-модель сбора логов, как `Prometheus` для метрик.",
               "correct": false,
               "sections": {
-                "what_actually": "`Loki` хранит логи, а не метрики. Заменой Prometheus для метрик в стеке LGTM является `Mimir`, а не Loki.",
-                "source_of_confusion": "Loki «вдохновлён Prometheus» и живёт в той же экосистеме, отсюда вывод о замене для метрик.",
-                "if_it_were_true": "Если бы Loki хранил метрики, не было бы отдельного `Mimir` в стеке LGTM, но он там есть именно для метрик.",
-                "how_it_should_be": "Loki — для логов; Prometheus-совместимое хранилище метрик — это Mimir."
+                "what_actually": "`Loki` использует Push-модель: агенты (`Promtail`/`Alloy`) отправляют логи в Loki. Модели сбора у Loki и Prometheus разные.",
+                "source_of_confusion": "Раз Loki «как Prometheus», логично предположить и одинаковую модель сбора, но это не так.",
+                "if_it_were_true": "Если бы Loki был pull, ему пришлось бы самому ходить за логами на каждый под, но логи как раз пушат агенты.",
+                "how_it_should_be": "Loki — push (Promtail/Alloy → Loki); Prometheus — pull для метрик."
               }
             },
             {
@@ -1895,18 +1895,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Loki` использует Pull-модель сбора логов, как `Prometheus` для метрик.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Loki` использует Push-модель: агенты (`Promtail`/`Alloy`) отправляют логи в Loki. Модели сбора у Loki и Prometheus разные.",
-                "source_of_confusion": "Раз Loki «как Prometheus», логично предположить и одинаковую модель сбора, но это не так.",
-                "if_it_were_true": "Если бы Loki был pull, ему пришлось бы самому ходить за логами на каждый под, но логи как раз пушат агенты.",
-                "how_it_should_be": "Loki — push (Promtail/Alloy → Loki); Prometheus — pull для метрик."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`Loki` — система агрегации логов, вдохновлённая `Prometheus`; индексирует только лейблы (без полнотекстового индекса), использует push через `Promtail`/`Alloy` и язык запросов `LogQL`.",
               "correct": true,
               "sections": {
@@ -1915,6 +1903,18 @@
                 "when_to_apply": "LogQL: `{service=\"order-service\"} |= \"ERROR\"` фильтрует логи; `rate({service=\"order-service\"} |= \"Exception\" [5m])` строит метрику из логов.",
                 "edge_cases": "В стеке LGTM: `Loki` — логи, `Grafana` — визуализация, `Tempo` — трейсы, `Mimir` — метрики; в Grafana можно ходить trace → metrics → logs.",
                 "related": "[[prometheus-grafana-interview#Q3]] почему Prometheus — pull, а Loki — push; [[prometheus-grafana-interview#Q29]] Loki как data source в Grafana; [[prometheus-grafana-interview#Q16]] почему индексация лейблов важна для cardinality."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Loki` — это TSDB для метрик, являющаяся полной заменой `Prometheus`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Loki` хранит логи, а не метрики. Заменой Prometheus для метрик в стеке LGTM является `Mimir`, а не Loki.",
+                "source_of_confusion": "Loki «вдохновлён Prometheus» и живёт в той же экосистеме, отсюда вывод о замене для метрик.",
+                "if_it_were_true": "Если бы Loki хранил метрики, не было бы отдельного `Mimir` в стеке LGTM, но он там есть именно для метрик.",
+                "how_it_should_be": "Loki — для логов; Prometheus-совместимое хранилище метрик — это Mimir."
               }
             }
           ]
@@ -1931,19 +1931,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Prometheus` поддерживает более 20 механизмов service discovery, включая `static_configs`, `file_sd_configs`, `kubernetes_sd_configs`, `consul_sd_configs`, `ec2_sd_configs`, `dns_sd_configs` и `http_sd_configs`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Исторически `Prometheus` поддерживает большой набор SD под разные платформы и сервис-регистри, что упрощает интеграцию с любой инфраструктурой.",
-                "example": "Механизм SD выбирают под платформу: `static_configs`/`file_sd` для статики и bare-metal, `kubernetes_sd` в кластере, `consul_sd`/`ec2_sd` — когда таргеты живут в соответствующем реестре.",
-                "when_to_apply": "`static_configs` — фиксированный список хостов; `file_sd_configs` — из JSON/YAML с горячим обновлением без reload; `kubernetes_sd_configs` — pod/service/node/endpoint.",
-                "edge_cases": "Для динамических сред (`Kubernetes`, `Consul`, `EC2`) SD-механизмы сами подхватывают изменения, фильтруя таргеты через `relabel_configs`.",
-                "related": "[[prometheus-grafana-interview#Q34]] детали Kubernetes SD; [[prometheus-grafana-interview#Q3]] SD как часть pull-модели; [[prometheus-grafana-interview#Q1]] где SD в архитектуре сбора."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Prometheus` поддерживает только `static_configs` — список таргетов прописывается в конфиге вручную.",
               "correct": false,
               "sections": {
@@ -1951,6 +1938,18 @@
                 "source_of_confusion": "В простых демо действительно используют `static_configs`, и это обобщают на весь продукт.",
                 "if_it_were_true": "Если бы был только статический список, в Kubernetes пришлось бы вручную править конфиг при каждом новом pod, что неуправляемо.",
                 "how_it_should_be": "Помимо `static_configs` есть 20+ динамических SD, автоматически подхватывающих таргеты."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Prometheus` требует установки отдельного Service Discovery Agent на каждый таргет для автоматического обнаружения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Агент на таргете не нужен: SD-механизмы работают на стороне `Prometheus Server`, запрашивая списки таргетов у внешних API (Kubernetes API, Consul, EC2 API).",
+                "source_of_confusion": "Многие системы используют агентов, и это переносят на Prometheus SD.",
+                "if_it_were_true": "Если бы требовался агент на каждом таргете, pull-модель «знай только адрес» теряла бы смысл, но SD как раз централизован на сервере.",
+                "how_it_should_be": "SD выполняется сервером через API внешних систем; агент на таргете не требуется."
               }
             },
             {
@@ -1968,13 +1967,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Prometheus` требует установки отдельного Service Discovery Agent на каждый таргет для автоматического обнаружения.",
-              "correct": false,
+              "text": "`Prometheus` поддерживает более 20 механизмов service discovery, включая `static_configs`, `file_sd_configs`, `kubernetes_sd_configs`, `consul_sd_configs`, `ec2_sd_configs`, `dns_sd_configs` и `http_sd_configs`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Агент на таргете не нужен: SD-механизмы работают на стороне `Prometheus Server`, запрашивая списки таргетов у внешних API (Kubernetes API, Consul, EC2 API).",
-                "source_of_confusion": "Многие системы используют агентов, и это переносят на Prometheus SD.",
-                "if_it_were_true": "Если бы требовался агент на каждом таргете, pull-модель «знай только адрес» теряла бы смысл, но SD как раз централизован на сервере.",
-                "how_it_should_be": "SD выполняется сервером через API внешних систем; агент на таргете не требуется."
+                "explanation": "Исторически `Prometheus` поддерживает большой набор SD под разные платформы и сервис-регистри, что упрощает интеграцию с любой инфраструктурой.",
+                "example": "Механизм SD выбирают под платформу: `static_configs`/`file_sd` для статики и bare-metal, `kubernetes_sd` в кластере, `consul_sd`/`ec2_sd` — когда таргеты живут в соответствующем реестре.",
+                "when_to_apply": "`static_configs` — фиксированный список хостов; `file_sd_configs` — из JSON/YAML с горячим обновлением без reload; `kubernetes_sd_configs` — pod/service/node/endpoint.",
+                "edge_cases": "Для динамических сред (`Kubernetes`, `Consul`, `EC2`) SD-механизмы сами подхватывают изменения, фильтруя таргеты через `relabel_configs`.",
+                "related": "[[prometheus-grafana-interview#Q34]] детали Kubernetes SD; [[prometheus-grafana-interview#Q3]] SD как часть pull-модели; [[prometheus-grafana-interview#Q1]] где SD в архитектуре сбора."
               }
             }
           ]
@@ -1991,13 +1991,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Kubernetes SD работает путём чтения списка таргетов из статического `ConfigMap` без обращения к `Kubernetes API`.",
+              "text": "Kubernetes SD работает только для Pod-ов и не поддерживает Service или Node.",
               "correct": false,
               "sections": {
-                "what_actually": "`ConfigMap` можно использовать для конфигурации самого Prometheus, но SD работает через реальные запросы к `Kubernetes API` для динамического обнаружения pod/service/endpoints/node.",
-                "source_of_confusion": "Конфиг Prometheus часто лежит в ConfigMap, и это путают с источником списка таргетов.",
-                "if_it_were_true": "Если бы таргеты брались из статического ConfigMap, новые pod-ы не обнаруживались бы автоматически, что противоречит сути Kubernetes SD.",
-                "how_it_should_be": "Список таргетов берётся из Kubernetes API в реальном времени, а не из статического ConfigMap."
+                "what_actually": "`Prometheus` поддерживает роли `pod`, `service`, `endpoints`, `node` и `ingress`; каждая даёт свой список таргетов и метаданных через префикс `__meta_kubernetes_*`.",
+                "source_of_confusion": "Pod — самый частый объект scraping, отсюда вывод об эксклюзивности роли `pod`.",
+                "if_it_were_true": "Если бы поддерживались только pod-ы, нельзя было бы scrape-ить node-метрики через роль `node`, но эта роль существует.",
+                "how_it_should_be": "Ролей несколько (`pod`, `service`, `endpoints`, `node`, `ingress`); каждая обнаруживает свой тип ресурса."
               }
             },
             {
@@ -2016,6 +2016,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Kubernetes SD работает путём чтения списка таргетов из статического `ConfigMap` без обращения к `Kubernetes API`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ConfigMap` можно использовать для конфигурации самого Prometheus, но SD работает через реальные запросы к `Kubernetes API` для динамического обнаружения pod/service/endpoints/node.",
+                "source_of_confusion": "Конфиг Prometheus часто лежит в ConfigMap, и это путают с источником списка таргетов.",
+                "if_it_were_true": "Если бы таргеты брались из статического ConfigMap, новые pod-ы не обнаруживались бы автоматически, что противоречит сути Kubernetes SD.",
+                "how_it_should_be": "Список таргетов берётся из Kubernetes API в реальном времени, а не из статического ConfigMap."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Kubernetes SD требует установки `DaemonSet` с `Prometheus Agent` на каждый worker node.",
               "correct": false,
               "sections": {
@@ -2023,18 +2035,6 @@
                 "source_of_confusion": "DaemonSet-паттерн привычен для node-exporter, и его ошибочно переносят на SD.",
                 "if_it_were_true": "Если бы SD требовал агента на каждом node, добавление node автоматически не подхватывалось бы централизованным сервером, но оно подхватывается через API.",
                 "how_it_should_be": "SD централизован: сервер запрашивает Kubernetes API; DaemonSet нужен лишь для node-level exporter-ов."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Kubernetes SD работает только для Pod-ов и не поддерживает Service или Node.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Prometheus` поддерживает роли `pod`, `service`, `endpoints`, `node` и `ingress`; каждая даёт свой список таргетов и метаданных через префикс `__meta_kubernetes_*`.",
-                "source_of_confusion": "Pod — самый частый объект scraping, отсюда вывод об эксклюзивности роли `pod`.",
-                "if_it_were_true": "Если бы поддерживались только pod-ы, нельзя было бы scrape-ить node-метрики через роль `node`, но эта роль существует.",
-                "how_it_should_be": "Ролей несколько (`pod`, `service`, `endpoints`, `node`, `ingress`); каждая обнаруживает свой тип ресурса."
               }
             }
           ]
@@ -2111,6 +2111,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Federation полностью заменяет Remote Write и используется для интеграции с `Thanos`/`VictoriaMetrics`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Thanos` и `VictoriaMetrics` интегрируются через Remote Write (или Thanos sidecar), а не через federation. Federation решает другую задачу — агрегацию между Prometheus-серверами.",
+                "source_of_confusion": "Оба механизма «связывают Prometheus с чем-то», поэтому их роли смешивают.",
+                "if_it_were_true": "Если бы federation заменял Remote Write, конфиги Thanos/VictoriaMetrics использовали бы `/federate`, но они используют `remote_write`.",
+                "how_it_should_be": "Интеграция с внешними TSDB — Remote Write; federation — агрегация между Prometheus-узлами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Federation работает по push-модели: local `Prometheus` отправляют данные в global `Prometheus`.",
               "correct": false,
               "sections": {
@@ -2121,8 +2133,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "Federation — механизм иерархической агрегации по pull через `/federate`, и он предпочтительнее Remote Write для больших объёмов и low latency.",
               "correct": false,
               "sections": {
@@ -2130,18 +2142,6 @@
                 "source_of_confusion": "Первая часть утверждения верна, поэтому вторую (ложную) ошибочно принимают за истину.",
                 "if_it_were_true": "Если бы federation масштабировался лучше push, не советовали бы Remote Write для multi-cluster, но именно его и советуют.",
                 "how_it_should_be": "Federation хорош для общего обзора; для объёмов и low latency берут Remote Write."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Federation полностью заменяет Remote Write и используется для интеграции с `Thanos`/`VictoriaMetrics`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Thanos` и `VictoriaMetrics` интегрируются через Remote Write (или Thanos sidecar), а не через federation. Federation решает другую задачу — агрегацию между Prometheus-серверами.",
-                "source_of_confusion": "Оба механизма «связывают Prometheus с чем-то», поэтому их роли смешивают.",
-                "if_it_were_true": "Если бы federation заменял Remote Write, конфиги Thanos/VictoriaMetrics использовали бы `/federate`, но они используют `remote_write`.",
-                "how_it_should_be": "Интеграция с внешними TSDB — Remote Write; federation — агрегация между Prometheus-узлами."
               }
             },
             {
@@ -2171,6 +2171,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`Thanos` не совместим с `Prometheus API` и требует переписывания запросов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Thanos Querier` предоставляет Prometheus-совместимый API: существующие Grafana-дашборды и PromQL-запросы работают без изменений.",
+                "source_of_confusion": "Раз Thanos — микросервисная надстройка, кажется, что у него свой API.",
+                "if_it_were_true": "Если бы Thanos требовал переписывать PromQL, миграция была бы дорогой, но Thanos как раз обеспечивает совместимость.",
+                "how_it_should_be": "Thanos Querier совместим с Prometheus API; запросы и дашборды переносятся без правок."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`Thanos` расширяет `Prometheus` через sidecar/receive и хранит данные в object storage (S3/GCS); `VictoriaMetrics` — самостоятельная TSDB с Prometheus-совместимым API, более эффективным сжатием и простым деплоем (один бинарь).",
               "correct": true,
               "sections": {
@@ -2182,8 +2194,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`Thanos` и `VictoriaMetrics` — это одно и то же, отличие только в названии.",
               "correct": false,
               "sections": {
@@ -2194,8 +2206,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`VictoriaMetrics` использует object storage (S3/GCS) как основное хранилище, а `Thanos` — локальные диски.",
               "correct": false,
               "sections": {
@@ -2203,18 +2215,6 @@
                 "source_of_confusion": "Оба связаны с «облачным хранением метрик», поэтому object storage ошибочно приписывают VictoriaMetrics.",
                 "if_it_were_true": "Если бы VictoriaMetrics требовал S3, его нельзя было бы запустить одним бинарём на локальном диске, но именно так его часто и деплоят.",
                 "how_it_should_be": "Object storage — это Thanos; VictoriaMetrics хранит данные на локальных дисках в своём формате."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Thanos` не совместим с `Prometheus API` и требует переписывания запросов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Thanos Querier` предоставляет Prometheus-совместимый API: существующие Grafana-дашборды и PromQL-запросы работают без изменений.",
-                "source_of_confusion": "Раз Thanos — микросервисная надстройка, кажется, что у него свой API.",
-                "if_it_were_true": "Если бы Thanos требовал переписывать PromQL, миграция была бы дорогой, но Thanos как раз обеспечивает совместимость.",
-                "how_it_should_be": "Thanos Querier совместим с Prometheus API; запросы и дашборды переносятся без правок."
               }
             }
           ]
@@ -2231,18 +2231,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "SLI — это целевое значение, а SLO — измеримая метрика качества сервиса.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Определения перепутаны: SLI — измеримая метрика (например, доля успешных запросов), а SLO — целевое значение для SLI (например, 99.9%).",
-                "source_of_confusion": "Аббревиатуры похожи (отличаются одной буквой), отсюда частая перестановка.",
-                "if_it_were_true": "Если бы SLI был целью, нельзя было бы «измерить SLI через PromQL», но именно SLI и измеряют запросом.",
-                "how_it_should_be": "SLI — что измеряем (метрика); SLO — какое значение целевое."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "SLI (Service Level Indicator) — измеримая метрика качества (availability, latency, error rate, throughput, saturation); SLO (Service Level Objective) — целевое значение для SLI (например, availability ≥ 99.9%).",
               "correct": true,
               "sections": {
@@ -2254,8 +2242,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "SLI и SLO — это одно и то же, разные названия одной метрики.",
               "correct": false,
               "sections": {
@@ -2263,6 +2251,18 @@
                 "source_of_confusion": "Обе аббревиатуры из мира SRE и звучат похоже, поэтому их отождествляют.",
                 "if_it_were_true": "Если бы это была одна метрика, фраза «SLI нарушил SLO» не имела бы смысла, но она используется постоянно.",
                 "how_it_should_be": "SLI — измерение, SLO — цель для него, SLA — контракт; это три разных понятия."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "SLI — это целевое значение, а SLO — измеримая метрика качества сервиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Определения перепутаны: SLI — измеримая метрика (например, доля успешных запросов), а SLO — целевое значение для SLI (например, 99.9%).",
+                "source_of_confusion": "Аббревиатуры похожи (отличаются одной буквой), отсюда частая перестановка.",
+                "if_it_were_true": "Если бы SLI был целью, нельзя было бы «измерить SLI через PromQL», но именно SLI и измеряют запросом.",
+                "how_it_should_be": "SLI — что измеряем (метрика); SLO — какое значение целевое."
               }
             },
             {
@@ -2291,18 +2291,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Error budget — это бюджет в рублях на инфраструктуру `Prometheus` и `Grafana` в рамках SRE-практик.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Error budget не связан с финансовым бюджетом: это допустимая «ошибка сервиса» относительно SLO, измеряемая в процентах или минутах downtime.",
-                "source_of_confusion": "Слово «бюджет» наводит на деньги, хотя речь о допустимой доле ошибок.",
-                "if_it_were_true": "Если бы это были рубли, его нельзя было бы вычислить через `increase()` по запросам, но именно так его и считают.",
-                "how_it_should_be": "Error budget — допустимый объём ошибок (`1 − SLO`), а не финансовый бюджет."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Error budget всегда равен 100% и не зависит от SLO.",
               "correct": false,
               "sections": {
@@ -2313,8 +2301,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Error budget нельзя вычислить через `PromQL` — только вручную в таблицах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Error budget прекрасно считается через `PromQL` поверх `increase()` и `rate()`; есть готовые выражения с `sum(increase(http_requests_total{status=~\"5..\"}[30d]))`.",
+                "source_of_confusion": "Концептуально error budget — менеджерская метрика, отсюда вывод о «ручном» расчёте.",
+                "if_it_were_true": "Если бы его нельзя было выразить в PromQL, не было бы SLO-дашбордов с бюджетом в Grafana, но они повсеместны.",
+                "how_it_should_be": "Error budget считается запросом PromQL над `increase()`/`rate()`, а не вручную."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "Error budget — это бюджет в рублях на инфраструктуру `Prometheus` и `Grafana` в рамках SRE-практик.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Error budget не связан с финансовым бюджетом: это допустимая «ошибка сервиса» относительно SLO, измеряемая в процентах или минутах downtime.",
+                "source_of_confusion": "Слово «бюджет» наводит на деньги, хотя речь о допустимой доле ошибок.",
+                "if_it_were_true": "Если бы это были рубли, его нельзя было бы вычислить через `increase()` по запросам, но именно так его и считают.",
+                "how_it_should_be": "Error budget — допустимый объём ошибок (`1 − SLO`), а не финансовый бюджет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Error budget — допустимый объём ошибок/деградаций в рамках SLO за период; при SLO 99.9% availability за 30 дней допустимое downtime ≈ 43.2 минуты в месяц.",
               "correct": true,
               "sections": {
@@ -2323,18 +2335,6 @@
                 "when_to_apply": "Расчёт: `0.1% × 30 × 24 × 60 = 43.2` минуты; оставшийся бюджет — `(1 - sum(increase(ошибки[30d])) / sum(increase(все[30d]))) / 0.001`.",
                 "edge_cases": "Доля «хороших» запросов: `sum(increase(http_requests_total{status!~\"5..\"}[30d])) / sum(increase(http_requests_total[30d])) * 100`.",
                 "related": "[[prometheus-grafana-interview#Q38]] SLI/SLO как основа error budget; [[prometheus-grafana-interview#Q10]] increase() для подсчёта за 30d; [[prometheus-grafana-interview#Q15]] PromQL для доли ошибок."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Error budget нельзя вычислить через `PromQL` — только вручную в таблицах.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Error budget прекрасно считается через `PromQL` поверх `increase()` и `rate()`; есть готовые выражения с `sum(increase(http_requests_total{status=~\"5..\"}[30d]))`.",
-                "source_of_confusion": "Концептуально error budget — менеджерская метрика, отсюда вывод о «ручном» расчёте.",
-                "if_it_were_true": "Если бы его нельзя было выразить в PromQL, не было бы SLO-дашбордов с бюджетом в Grafana, но они повсеместны.",
-                "how_it_should_be": "Error budget считается запросом PromQL над `increase()`/`rate()`, а не вручную."
               }
             }
           ]

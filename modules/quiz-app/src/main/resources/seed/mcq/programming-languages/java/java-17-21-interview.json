@@ -9,6 +9,18 @@
           "question_text": "Что такое `record` в Java и какую проблему они решают?",
           "options": [
             {
+              "text": "`record` — это сахар поверх Lombok `@Value`, добавляющий аннотации в classpath во время компиляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`record` — часть спецификации языка, он не зависит от Lombok и не использует annotation processing для генерации методов.",
+                "source_of_confusion": "И `record`, и `@Value` устраняют boilerplate, поэтому их функции смешивают в одно понятие.",
+                "if_it_were_true": "Тогда `record` без Lombok в classpath не компилировался бы, но он работает на чистом JDK без зависимостей.",
+                "how_it_should_be": "`record` встроен в язык: компилятор сам генерирует канонический конструктор и аксессоры без сторонних библиотек."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "`record` (JEP 395, стабилен с Java 16/17) — финальный класс-носитель неизменяемых данных: JDK сам генерирует канонический конструктор, аксессоры без префикса `get`, `equals`/`hashCode`/`toString`. Решает проблему boilerplate для DTO/POJO.",
               "correct": true,
               "sections": {
@@ -17,18 +29,6 @@
                 "when_to_apply": "Применяй для DTO в REST-контроллерах, событий в Kafka, ключей кэша Caffeine, value-объектов в доменной модели — везде, где нужен иммутабельный носитель данных.",
                 "edge_cases": "`record` нельзя пометить `@Entity` (Hibernate требует no-args конструктор и mutable proxy для lazy loading), а Jackson до новых версий ищет `getName()`, а не `name()`.",
                 "related": "[[java-17-21-interview#Q2]] ограничения record; [[java-17-21-interview#Q4]] отличие от Lombok @Value."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`record` — это сахар поверх Lombok `@Value`, добавляющий аннотации в classpath во время компиляции.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`record` — часть спецификации языка, он не зависит от Lombok и не использует annotation processing для генерации методов.",
-                "source_of_confusion": "И `record`, и `@Value` устраняют boilerplate, поэтому их функции смешивают в одно понятие.",
-                "if_it_were_true": "Тогда `record` без Lombok в classpath не компилировался бы, но он работает на чистом JDK без зависимостей.",
-                "how_it_should_be": "`record` встроен в язык: компилятор сам генерирует канонический конструктор и аксессоры без сторонних библиотек."
               },
               "label": "B",
               "order": 1
@@ -69,18 +69,6 @@
           "question_text": "Какие ограничения есть у `record`?",
           "options": [
             {
-              "text": "`record` может быть `abstract` и наследоваться другими `record` для построения полиморфных иерархий.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`record` всегда конкретный и неявно `final`, наследование одного `record` от другого запрещено компилятором.",
-                "source_of_confusion": "От классов ждут поддержки наследования, и `record` ошибочно считают обычным классом в этом плане.",
-                "if_it_were_true": "Тогда `abstract record Base` компилировался бы, но компилятор отвергает такой модификатор у record.",
-                "how_it_should_be": "Полиморфизм record достигается только через `implements` интерфейсов, а не через наследование."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`record` неявно `final`, нельзя добавлять instance-поля в теле и нельзя быть `abstract`; при этом он может `implements` интерфейсы (часто `sealed`) и иметь `static`-члены. Полиморфизм достигается реализацией интерфейсов.",
               "correct": true,
               "sections": {
@@ -89,6 +77,18 @@
                 "when_to_apply": "Применяй когда нужна закрытая иерархия value-объектов: реализуй общий интерфейс несколькими record вместо наследования.",
                 "edge_cases": "`record` может реализовывать `Comparable`, `Serializable`, `sealed`-интерфейсы; static-поле вроде `public static final Point ORIGIN` тоже допустимо.",
                 "related": "[[java-17-21-interview#Q1]] что такое record; [[java-17-21-interview#Q5]] sealed-классы для иерархий."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`record` запрещает реализовывать интерфейсы — это нарушило бы транспарентность данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`record` свободно реализует любые интерфейсы, включая `Comparable`, `Serializable` и `sealed`-интерфейсы.",
+                "source_of_confusion": "Из-за иммутабельности и финальности кажется, что record «закрыт» для любых внешних контрактов.",
+                "if_it_were_true": "Тогда `record Circle(double r) implements Shape` не компилировался бы, но это легальный и частый паттерн.",
+                "how_it_should_be": "Реализация интерфейсов — единственный механизм полиморфизма record, и он полностью разрешён."
               },
               "label": "B",
               "order": 1
@@ -106,13 +106,13 @@
               "order": 2
             },
             {
-              "text": "`record` запрещает реализовывать интерфейсы — это нарушило бы транспарентность данных.",
+              "text": "`record` может быть `abstract` и наследоваться другими `record` для построения полиморфных иерархий.",
               "correct": false,
               "sections": {
-                "what_actually": "`record` свободно реализует любые интерфейсы, включая `Comparable`, `Serializable` и `sealed`-интерфейсы.",
-                "source_of_confusion": "Из-за иммутабельности и финальности кажется, что record «закрыт» для любых внешних контрактов.",
-                "if_it_were_true": "Тогда `record Circle(double r) implements Shape` не компилировался бы, но это легальный и частый паттерн.",
-                "how_it_should_be": "Реализация интерфейсов — единственный механизм полиморфизма record, и он полностью разрешён."
+                "what_actually": "`record` всегда конкретный и неявно `final`, наследование одного `record` от другого запрещено компилятором.",
+                "source_of_confusion": "От классов ждут поддержки наследования, и `record` ошибочно считают обычным классом в этом плане.",
+                "if_it_were_true": "Тогда `abstract record Base` компилировался бы, но компилятор отвергает такой модификатор у record.",
+                "how_it_should_be": "Полиморфизм record достигается только через `implements` интерфейсов, а не через наследование."
               },
               "label": "D",
               "order": 3
@@ -129,18 +129,6 @@
           "question_text": "Можно ли кастомизировать конструктор `record`?",
           "options": [
             {
-              "text": "В compact-конструкторе `public Range { ... }` нужно вручную написать `this.start = start;`, иначе поле останется `0`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Присваивание полей в compact-конструкторе компилятор делает автоматически после тела блока — руками писать его нельзя.",
-                "source_of_confusion": "Привычка к обычным конструкторам, где присваивание полей всегда явное, переносится на compact-форму.",
-                "if_it_were_true": "Тогда копирование `this.start = start;` собиралось бы, но компилятор даёт ошибку `final field assigned twice`.",
-                "how_it_should_be": "В compact-конструкторе пишут только валидацию и нормализацию параметров, а присваивание делает компилятор."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Кастомный канонический конструктор должен иметь специальное имя `canonical()` — это зарезервированный метод JDK.",
               "correct": false,
               "sections": {
@@ -149,8 +137,32 @@
                 "if_it_were_true": "Тогда `public canonical(String x)` вызывался бы при создании record, но IDE видит обычный метод, и валидация не срабатывает.",
                 "how_it_should_be": "Канонический конструктор пишется как `public Email(String value) { ... }` с именем самого record."
               },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В compact-конструкторе `public Range { ... }` нужно вручную написать `this.start = start;`, иначе поле останется `0`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Присваивание полей в compact-конструкторе компилятор делает автоматически после тела блока — руками писать его нельзя.",
+                "source_of_confusion": "Привычка к обычным конструкторам, где присваивание полей всегда явное, переносится на compact-форму.",
+                "if_it_were_true": "Тогда копирование `this.start = start;` собиралось бы, но компилятор даёт ошибку `final field assigned twice`.",
+                "how_it_should_be": "В compact-конструкторе пишут только валидацию и нормализацию параметров, а присваивание делает компилятор."
+              },
               "label": "B",
               "order": 1
+            },
+            {
+              "text": "Дополнительный конструктор `record`-а может полностью заменить канонический и не делегировать ему.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Любой не-канонический конструктор обязан первой строкой вызвать `this(...)` — делегирование каноническому обязательно.",
+                "source_of_confusion": "В обычных классах конструкторы независимы, поэтому правило обязательного делегирования у record неочевидно.",
+                "if_it_were_true": "Тогда `public User(String name) { this.name = name; }` собирался бы, но компилятор требует делегирования через `this(...)`.",
+                "how_it_should_be": "Дополнительный конструктор задаёт дефолты и делегирует каноническому: `public User(String name) { this(name, 0); }`."
+              },
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Да: compact-конструктор (`public Range { ... }`) добавляет валидацию без присваивания полей, кастомный канонический заменяет сгенерированный для нормализации, а дополнительные конструкторы обязаны делегировать каноническому через `this(...)`.",
@@ -161,18 +173,6 @@
                 "when_to_apply": "Используй compact для инвариантов (`start <= end`), canonical для нормализации (trim, lowercase), дополнительные конструкторы для значений по умолчанию.",
                 "edge_cases": "В compact-конструкторе присваивание полей делает компилятор автоматически после тела; ручное `this.start = start;` даст ошибку `final field assigned twice`.",
                 "related": "[[java-17-21-interview#Q1]] что такое record; [[java-17-21-interview#Q2]] ограничения record."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Дополнительный конструктор `record`-а может полностью заменить канонический и не делегировать ему.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Любой не-канонический конструктор обязан первой строкой вызвать `this(...)` — делегирование каноническому обязательно.",
-                "source_of_confusion": "В обычных классах конструкторы независимы, поэтому правило обязательного делегирования у record неочевидно.",
-                "if_it_were_true": "Тогда `public User(String name) { this.name = name; }` собирался бы, но компилятор требует делегирования через `this(...)`.",
-                "how_it_should_be": "Дополнительный конструктор задаёт дефолты и делегирует каноническому: `public User(String name) { this(name, 0); }`."
               },
               "label": "D",
               "order": 3
@@ -201,18 +201,6 @@
               "order": 0
             },
             {
-              "text": "Lombok `@Value` лучше, потому что его аксессоры называются `getX()` и совместимы со старыми библиотеками.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`record` использует аксессоры `x()` без префикса — это часть контракта; `getX()` у `@Value` уже не преимущество на Java 17+.",
-                "source_of_confusion": "JavaBeans-конвенция с `getX()` долго была стандартом, поэтому её считают универсально лучшей.",
-                "if_it_were_true": "Тогда переход на `record` ломал бы все библиотеки, но современный Jackson и Spring работают с record-аксессорами.",
-                "how_it_should_be": "Аксессоры `x()` у record поддерживаются актуальными фреймворками, и держаться за `getX()` ради legacy не нужно."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`record` уступает обычному классу, потому что его `equals`/`hashCode` работают только по identity.",
               "correct": false,
               "sections": {
@@ -221,8 +209,8 @@
                 "if_it_were_true": "Тогда два `new Point(1, 2)` были бы не равны, но record делает их равными по значению компонентов.",
                 "how_it_should_be": "`record` генерирует value-based `equals`/`hashCode`, поэтому переопределять их вручную обычно не нужно."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`record` — часть спецификации языка с value-семантикой и поддержкой record patterns; обычный класс даёт максимум гибкости (mutable, наследование); Lombok `@Value` — внешняя зависимость без интеграции с pattern matching.",
@@ -233,6 +221,18 @@
                 "when_to_apply": "Выбирай `record` для иммутабельных носителей данных, обычный класс — где нужно изменяемое состояние или наследование, `@Value` — только в старых проектах.",
                 "edge_cases": "`record` сравнивает компоненты через `Objects.equals` (value-based equality); только `record` интегрирован с pattern matching, чего Lombok `@Value` не умеет.",
                 "related": "[[java-17-21-interview#Q1]] что такое record; [[java-17-21-interview#Q11]] record patterns и деконструкция."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Lombok `@Value` лучше, потому что его аксессоры называются `getX()` и совместимы со старыми библиотеками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`record` использует аксессоры `x()` без префикса — это часть контракта; `getX()` у `@Value` уже не преимущество на Java 17+.",
+                "source_of_confusion": "JavaBeans-конвенция с `getX()` долго была стандартом, поэтому её считают универсально лучшей.",
+                "if_it_were_true": "Тогда переход на `record` ломал бы все библиотеки, но современный Jackson и Spring работают с record-аксессорами.",
+                "how_it_should_be": "Аксессоры `x()` у record поддерживаются актуальными фреймворками, и держаться за `getX()` ради legacy не нужно."
               },
               "label": "D",
               "order": 3
@@ -249,29 +249,16 @@
           "question_text": "(!) Что такое sealed-классы и интерфейсы?",
           "options": [
             {
-              "text": "`sealed` (JEP 409, Java 17) ограничивает наследование явным `permits`-списком; перечисленные подклассы обязаны быть `final`/`sealed`/`non-sealed` и находиться в том же модуле (или пакете). Это даёт exhaustiveness в `switch` и алгебраические типы.",
-              "correct": true,
+              "text": "`sealed`-иерархия обязана быть в том же пакете и не работает с модульной системой JPMS.",
+              "correct": false,
               "sections": {
-                "explanation": "Компилятор знает полный набор подтипов закрытой иерархии, поэтому `switch` без `default` проверяется на полноту, а `sealed` + `record` образуют sum types.",
-                "example": "Машина состояний заказа: `sealed interface OrderState permits Created, Paid, Shipped, Cancelled` — добавление нового состояния подсветит все непокрытые `switch`.",
-                "when_to_apply": "Применяй когда набор подтипов конечен и известен заранее: доменные state-machine, разбор выражений, дискриминированные union-типы из JSON.",
-                "edge_cases": "Проверка `permits` выполняется на этапе компиляции; runtime знает список через `getPermittedSubclasses()`, но это не источник security.",
-                "related": "[[java-17-21-interview#Q6]] модификаторы подклассов; [[java-17-21-interview#Q7]] sealed и pattern matching."
+                "what_actually": "В модульном проекте permits-подклассы должны быть в том же модуле (не пакете); в немодульном — в том же пакете.",
+                "source_of_confusion": "Правило размещения для немодульного кода (тот же пакет) ошибочно переносят на любой проект.",
+                "if_it_were_true": "Тогда `sealed` нельзя было бы применять в JPMS-проектах, но там работает правило «один модуль».",
+                "how_it_should_be": "Подклассы sealed-типа размещаются в том же модуле для JPMS и в том же пакете для немодульного кода."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "`sealed` запрещает наследование вообще — это просто синоним `final` для интерфейсов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`sealed` разрешает наследование, но только типам из `permits`; `final` же запрещает любое наследование полностью.",
-                "source_of_confusion": "И `sealed`, и `final` звучат как «закрытие», поэтому их семантику путают.",
-                "if_it_were_true": "Тогда `sealed interface Shape permits Circle` не имел бы наследников, но `Circle` именно реализует `Shape`.",
-                "how_it_should_be": "`sealed` — это контролируемое наследование разрешённым списком, а не полный запрет, как у `final`."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "`sealed` — это runtime-проверка через рефлексию: класс падает с `IllegalAccessException`, если наследник не в `permits`.",
@@ -282,17 +269,30 @@
                 "if_it_were_true": "Тогда чужой подкласс компилировался бы и падал только в runtime, но компилятор блокирует его сразу.",
                 "how_it_should_be": "Нарушение `permits` ловится на компиляции, поэтому запрещённый наследник просто не соберётся."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`sealed` (JEP 409, Java 17) ограничивает наследование явным `permits`-списком; перечисленные подклассы обязаны быть `final`/`sealed`/`non-sealed` и находиться в том же модуле (или пакете). Это даёт exhaustiveness в `switch` и алгебраические типы.",
+              "correct": true,
+              "sections": {
+                "explanation": "Компилятор знает полный набор подтипов закрытой иерархии, поэтому `switch` без `default` проверяется на полноту, а `sealed` + `record` образуют sum types.",
+                "example": "Машина состояний заказа: `sealed interface OrderState permits Created, Paid, Shipped, Cancelled` — добавление нового состояния подсветит все непокрытые `switch`.",
+                "when_to_apply": "Применяй когда набор подтипов конечен и известен заранее: доменные state-machine, разбор выражений, дискриминированные union-типы из JSON.",
+                "edge_cases": "Проверка `permits` выполняется на этапе компиляции; runtime знает список через `getPermittedSubclasses()`, но это не источник security.",
+                "related": "[[java-17-21-interview#Q6]] модификаторы подклассов; [[java-17-21-interview#Q7]] sealed и pattern matching."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`sealed`-иерархия обязана быть в том же пакете и не работает с модульной системой JPMS.",
+              "text": "`sealed` запрещает наследование вообще — это просто синоним `final` для интерфейсов.",
               "correct": false,
               "sections": {
-                "what_actually": "В модульном проекте permits-подклассы должны быть в том же модуле (не пакете); в немодульном — в том же пакете.",
-                "source_of_confusion": "Правило размещения для немодульного кода (тот же пакет) ошибочно переносят на любой проект.",
-                "if_it_were_true": "Тогда `sealed` нельзя было бы применять в JPMS-проектах, но там работает правило «один модуль».",
-                "how_it_should_be": "Подклассы sealed-типа размещаются в том же модуле для JPMS и в том же пакете для немодульного кода."
+                "what_actually": "`sealed` разрешает наследование, но только типам из `permits`; `final` же запрещает любое наследование полностью.",
+                "source_of_confusion": "И `sealed`, и `final` звучат как «закрытие», поэтому их семантику путают.",
+                "if_it_were_true": "Тогда `sealed interface Shape permits Circle` не имел бы наследников, но `Circle` именно реализует `Shape`.",
+                "how_it_should_be": "`sealed` — это контролируемое наследование разрешённым списком, а не полный запрет, как у `final`."
               },
               "label": "D",
               "order": 3
@@ -321,6 +321,18 @@
               "order": 0
             },
             {
+              "text": "`non-sealed` означает «псевдо-final, но открыто только для рефлексии».",
+              "correct": false,
+              "sections": {
+                "what_actually": "`non-sealed` явно открывает иерархию для свободного наследования любым классом — это полная противоположность `final`.",
+                "source_of_confusion": "Приставка `non-` в `non-sealed` создаёт впечатление частичного, а не полного открытия.",
+                "if_it_were_true": "Тогда наследовать `non-sealed`-класс можно было бы только через рефлексию, но это делает любой обычный класс.",
+                "how_it_should_be": "`non-sealed` снимает ограничение полностью: после него любой класс может наследовать тип напрямую."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "Подкласс sealed-родителя обязан быть `final` (закрыт), `sealed` (продолжает цепочку со своим `permits`) или `non-sealed` (открыт для свободного наследования); компилятор требует явного выбора. `record` и `enum` неявно `final`.",
               "correct": true,
               "sections": {
@@ -330,8 +342,8 @@
                 "edge_cases": "`record` и `enum`, реализующие sealed-интерфейс, считаются неявно `final`, поэтому явный модификатор для них не требуется.",
                 "related": "[[java-17-21-interview#Q5]] что такое sealed; [[java-17-21-interview#Q7]] sealed и pattern matching."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Подкласс может быть `abstract` без других модификаторов — это закроет иерархию.",
@@ -341,18 +353,6 @@
                 "source_of_confusion": "`abstract` ассоциируется с ограничением создания экземпляров и потому кажется достаточным для «закрытия».",
                 "if_it_were_true": "Тогда `abstract class Discount extends Payment` собирался бы, но компилятор требует ещё и sealed-модификатор.",
                 "how_it_should_be": "`abstract`-подкласс дополнительно помечается `sealed` или `non-sealed`, иначе иерархия не валидна."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`non-sealed` означает «псевдо-final, но открыто только для рефлексии».",
-              "correct": false,
-              "sections": {
-                "what_actually": "`non-sealed` явно открывает иерархию для свободного наследования любым классом — это полная противоположность `final`.",
-                "source_of_confusion": "Приставка `non-` в `non-sealed` создаёт впечатление частичного, а не полного открытия.",
-                "if_it_were_true": "Тогда наследовать `non-sealed`-класс можно было бы только через рефлексию, но это делает любой обычный класс.",
-                "how_it_should_be": "`non-sealed` снимает ограничение полностью: после него любой класс может наследовать тип напрямую."
               },
               "label": "D",
               "order": 3
@@ -369,6 +369,19 @@
           "question_text": "Как sealed-классы работают с pattern matching?",
           "options": [
             {
+              "text": "Компилятор анализирует `permits`-список и проверяет, что `switch` покрывает все подтипы; иначе — ошибка `the switch expression does not cover all possible input values`. Это exhaustiveness check: новый permits-подкласс ломает компиляцию во всех непокрытых `switch`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Зная полный набор подтипов закрытой иерархии, компилятор делает `default` ненужным и превращает добавление подтипа в надёжный рефакторинг-net.",
+                "example": "`sealed interface Result permits Success, Failure` — добавление `Pending` подсветит на CI все `switch`-ветки, где он не обработан.",
+                "when_to_apply": "Применяй для типобезопасной диспетчеризации по закрытой иерархии вместо цепочек `if/else instanceof`, особенно при моделировании ADT.",
+                "edge_cases": "`MatchException` бросается в runtime только при binary incompatibility (иерархия изменилась после компиляции); основная защита — compile-time error.",
+                "related": "[[java-17-21-interview#Q5]] что такое sealed; [[java-17-21-interview#Q9]] pattern matching для switch."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "`switch` по `sealed`-интерфейсу всегда требует `default`-ветки независимо от полноты покрытия.",
               "correct": false,
               "sections": {
@@ -377,8 +390,8 @@
                 "if_it_were_true": "Тогда полный `switch` без `default` не компилировался бы, но для sealed-иерархии он валиден.",
                 "how_it_should_be": "Для покрытой sealed-иерархии `default` не нужен; добавлять его — значит маскировать новый подтип."
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Pattern matching работает только с `enum`, а sealed-классы приходится проверять цепочкой `if/else instanceof`.",
@@ -388,19 +401,6 @@
                 "source_of_confusion": "Исторически exhaustiveness ассоциировался только с `enum`, и это правило не расширяют на sealed.",
                 "if_it_were_true": "Тогда `case Circle c -> ...` по sealed `Shape` не компилировался бы, но это штатный синтаксис.",
                 "how_it_should_be": "Sealed-иерархии напрямую поддерживаются в `switch`, заменяя длинные `if/else instanceof`."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Компилятор анализирует `permits`-список и проверяет, что `switch` покрывает все подтипы; иначе — ошибка `the switch expression does not cover all possible input values`. Это exhaustiveness check: новый permits-подкласс ломает компиляцию во всех непокрытых `switch`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Зная полный набор подтипов закрытой иерархии, компилятор делает `default` ненужным и превращает добавление подтипа в надёжный рефакторинг-net.",
-                "example": "`sealed interface Result permits Success, Failure` — добавление `Pending` подсветит на CI все `switch`-ветки, где он не обработан.",
-                "when_to_apply": "Применяй для типобезопасной диспетчеризации по закрытой иерархии вместо цепочек `if/else instanceof`, особенно при моделировании ADT.",
-                "edge_cases": "`MatchException` бросается в runtime только при binary incompatibility (иерархия изменилась после компиляции); основная защита — compile-time error.",
-                "related": "[[java-17-21-interview#Q5]] что такое sealed; [[java-17-21-interview#Q9]] pattern matching для switch."
               },
               "label": "C",
               "order": 2
@@ -441,18 +441,6 @@
               "order": 0
             },
             {
-              "text": "Pattern matching работает только с финальными классами и записями, а обычные классы запрещены.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Pattern matching доступен с любым типом — class, interface, record, sealed; финальность не является требованием.",
-                "source_of_confusion": "Финальность record и sealed-листьев создаёт впечатление, что только финальные типы поддерживаются.",
-                "if_it_were_true": "Тогда `if (obj instanceof List list)` не компилировался бы, но проверка работает и для интерфейсов.",
-                "how_it_should_be": "`instanceof X x` применим к любому ссылочному типу независимо от его финальности."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Pattern variable можно объявить с тем же именем, что и существующая переменная — она затенит внешнюю.",
               "correct": false,
               "sections": {
@@ -460,6 +448,18 @@
                 "source_of_confusion": "В блочных областях локальные переменные иногда могут затенять внешние, и это ожидание переносят на pattern.",
                 "if_it_were_true": "Тогда `instanceof String s` рядом с параметром `s` собирался бы, но компилятор сообщает о конфликте имён.",
                 "how_it_should_be": "Pattern-переменной дают уникальное имя, чтобы избежать ошибки конфликта со существующей переменной."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Pattern matching работает только с финальными классами и записями, а обычные классы запрещены.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pattern matching доступен с любым типом — class, interface, record, sealed; финальность не является требованием.",
+                "source_of_confusion": "Финальность record и sealed-листьев создаёт впечатление, что только финальные типы поддерживаются.",
+                "if_it_were_true": "Тогда `if (obj instanceof List list)` не компилировался бы, но проверка работает и для интерфейсов.",
+                "how_it_should_be": "`instanceof X x` применим к любому ссылочному типу независимо от его финальности."
               },
               "label": "C",
               "order": 2
@@ -489,6 +489,18 @@
           "question_text": "(!) Что такое pattern matching для `switch`?",
           "options": [
             {
+              "text": "Pattern matching в `switch` запрещает `null` — для null-проверки нужна отдельная `if`-ветка перед switch.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Java 21 явно разрешает `case null` (или комбинированный `case null, default`) — null-обработка стала частью switch.",
+                "source_of_confusion": "До Java 21 `switch` действительно бросал NPE на null, и старое поведение считают актуальным.",
+                "if_it_were_true": "Тогда null всегда падал бы в NPE, но `case null -> ...` штатно ловит его внутри switch.",
+                "how_it_should_be": "Null обрабатывается прямо в `switch` через `case null`, без отдельной защитной проверки снаружи."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "`switch` (JEP 441, Java 21) принимает паттерны типов (`case Integer i`), отдельный `case null`, а при `sealed`-иерархии требует exhaustiveness — компилятор проверяет полноту веток. Это превращает `switch` в полноценный механизм диспетчеризации.",
               "correct": true,
               "sections": {
@@ -498,32 +510,8 @@
                 "edge_cases": "Порядок case важен: более конкретные паттерны идут раньше общих, иначе ошибка dominance; стрелочный синтаксис `case X ->` исключает fall-through.",
                 "related": "[[java-17-21-interview#Q7]] sealed и exhaustiveness; [[java-17-21-interview#Q10]] guarded patterns (when)."
               },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`switch` с pattern matching работает только в statement-форме; для switch-expression нужен старый стиль без паттернов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Pattern matching одинаково работает и в switch-statement, и в switch-expression (с `yield`/`->`).",
-                "source_of_confusion": "Switch-expression появился раньше pattern matching, поэтому их считают несовместимыми.",
-                "if_it_were_true": "Тогда `String r = switch (obj) { case Integer i -> ... }` не компилировался бы, но это валидное выражение.",
-                "how_it_should_be": "Паттерны доступны в обеих формах `switch`, в том числе в выражении, возвращающем значение."
-              },
               "label": "B",
               "order": 1
-            },
-            {
-              "text": "Pattern matching в `switch` запрещает `null` — для null-проверки нужна отдельная `if`-ветка перед switch.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Java 21 явно разрешает `case null` (или комбинированный `case null, default`) — null-обработка стала частью switch.",
-                "source_of_confusion": "До Java 21 `switch` действительно бросал NPE на null, и старое поведение считают актуальным.",
-                "if_it_were_true": "Тогда null всегда падал бы в NPE, но `case null -> ...` штатно ловит его внутри switch.",
-                "how_it_should_be": "Null обрабатывается прямо в `switch` через `case null`, без отдельной защитной проверки снаружи."
-              },
-              "label": "C",
-              "order": 2
             },
             {
               "text": "Каждая ветка pattern-matching `switch` обязательно требует `break` в конце.",
@@ -533,6 +521,18 @@
                 "source_of_confusion": "Классический `switch` со `case ... : break;` глубоко въелся в привычку.",
                 "if_it_were_true": "Тогда `case Integer i -> { ...; break; }` собирался бы, но компилятор даёт ошибку `break outside switch or loop`.",
                 "how_it_should_be": "В стрелочных ветках значение возвращается напрямую или через `yield`, а `break` не используется."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`switch` с pattern matching работает только в statement-форме; для switch-expression нужен старый стиль без паттернов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pattern matching одинаково работает и в switch-statement, и в switch-expression (с `yield`/`->`).",
+                "source_of_confusion": "Switch-expression появился раньше pattern matching, поэтому их считают несовместимыми.",
+                "if_it_were_true": "Тогда `String r = switch (obj) { case Integer i -> ... }` не компилировался бы, но это валидное выражение.",
+                "how_it_should_be": "Паттерны доступны в обеих формах `switch`, в том числе в выражении, возвращающем значение."
               },
               "label": "D",
               "order": 3
@@ -549,6 +549,30 @@
           "question_text": "Что такое guarded patterns (when clause)?",
           "options": [
             {
+              "text": "Guard в `when` влияет на exhaustiveness: `case Integer i when i > 0` считается покрытием всех `Integer`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Guard не учитывается в exhaustiveness check; нужна минимум одна ветка без guard для покрытия типа.",
+                "source_of_confusion": "Кажется, что раз ветка обрабатывает `Integer`, она покрывает весь тип независимо от условия.",
+                "if_it_were_true": "Тогда `switch` только из guarded-веток компилировался бы, но компилятор требует ещё `case Integer i ->`.",
+                "how_it_should_be": "Для покрытия типа добавляют unguarded-ветку, а guarded-ветки лишь различают подслучаи."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`when` можно использовать только с record-патернами, для type-патернов он недоступен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`when` работает с любым паттерном — type, record, deconstruction — в любых сочетаниях.",
+                "source_of_confusion": "Guards часто показывают на record-примерах, и это создаёт впечатление ограничения.",
+                "if_it_were_true": "Тогда `case String s when s.isEmpty() -> ...` не компилировался бы, но это корректный type-pattern с guard.",
+                "how_it_should_be": "Guard `when` применим к type-паттерну так же, как и к record-деконструкции."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "`when` — это альтернатива `default` для непокрытых случаев в switch.",
               "correct": false,
               "sections": {
@@ -557,8 +581,8 @@
                 "if_it_were_true": "Тогда `case String s when -> ...` без условия был бы валиден как catch-all, но это синтаксическая ошибка.",
                 "how_it_should_be": "`when` уточняет уже совпавший паттерн, а непокрытые случаи ловит отдельная ветка `default`."
               },
-              "label": "A",
-              "order": 0
+              "label": "C",
+              "order": 2
             },
             {
               "text": "`when` — guard-условие, которое выполняется после успешного матчинга паттерна; ветка выбирается только если паттерн совпал И guard истинен. Это позволяет дискриминировать варианты внутри одного типа.",
@@ -569,30 +593,6 @@
                 "when_to_apply": "Применяй для дифференциации состояний внутри типа: `case Pending p when p.timeout() < NOW -> cancel()` в обработке заказов.",
                 "edge_cases": "`when` не учитывается в exhaustiveness check: нужна хотя бы одна ветка без guard, иначе компилятор потребует покрытия оставшихся значений.",
                 "related": "[[java-17-21-interview#Q9]] pattern matching для switch; [[java-17-21-interview#Q11]] record patterns."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Guard в `when` влияет на exhaustiveness: `case Integer i when i > 0` считается покрытием всех `Integer`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Guard не учитывается в exhaustiveness check; нужна минимум одна ветка без guard для покрытия типа.",
-                "source_of_confusion": "Кажется, что раз ветка обрабатывает `Integer`, она покрывает весь тип независимо от условия.",
-                "if_it_were_true": "Тогда `switch` только из guarded-веток компилировался бы, но компилятор требует ещё `case Integer i ->`.",
-                "how_it_should_be": "Для покрытия типа добавляют unguarded-ветку, а guarded-ветки лишь различают подслучаи."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`when` можно использовать только с record-патернами, для type-патернов он недоступен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`when` работает с любым паттерном — type, record, deconstruction — в любых сочетаниях.",
-                "source_of_confusion": "Guards часто показывают на record-примерах, и это создаёт впечатление ограничения.",
-                "if_it_were_true": "Тогда `case String s when s.isEmpty() -> ...` не компилировался бы, но это корректный type-pattern с guard.",
-                "how_it_should_be": "Guard `when` применим к type-паттерну так же, как и к record-деконструкции."
               },
               "label": "D",
               "order": 3
@@ -621,13 +621,13 @@
               "order": 0
             },
             {
-              "text": "Record patterns работают только с одним уровнем — вложенные records деконструировать нельзя.",
+              "text": "Record patterns поддерживают переименование компонентов: `case Point(int a = x, int b = y)`.",
               "correct": false,
               "sections": {
-                "what_actually": "Record patterns поддерживают произвольную вложенность: `case Box(Item(String name, int qty)) -> ...`.",
-                "source_of_confusion": "Простые примеры обычно показывают один уровень, и это принимают за ограничение.",
-                "if_it_were_true": "Тогда `instanceof Line(Point(var x1, var y1), Point(var x2, var y2))` не компилировался бы, но это валидно.",
-                "how_it_should_be": "Вложенные records деконструируются рекурсивно на любую глубину одним паттерном."
+                "what_actually": "Имена в pattern — это просто новые локальные переменные с произвольным именем; синтаксиса `=` для переименования нет.",
+                "source_of_confusion": "Аналогии с destructuring в JS/Python, где есть переименование, переносят на Java.",
+                "if_it_were_true": "Тогда `Point(int a = x, ...)` собирался бы, но компилятор отвергает такой синтаксис как несуществующий.",
+                "how_it_should_be": "В record pattern сразу пишут желаемое имя переменной: `case Point(int a, int b) -> ...`."
               },
               "label": "B",
               "order": 1
@@ -646,13 +646,13 @@
               "order": 2
             },
             {
-              "text": "Record patterns поддерживают переименование компонентов: `case Point(int a = x, int b = y)`.",
+              "text": "Record patterns работают только с одним уровнем — вложенные records деконструировать нельзя.",
               "correct": false,
               "sections": {
-                "what_actually": "Имена в pattern — это просто новые локальные переменные с произвольным именем; синтаксиса `=` для переименования нет.",
-                "source_of_confusion": "Аналогии с destructuring в JS/Python, где есть переименование, переносят на Java.",
-                "if_it_were_true": "Тогда `Point(int a = x, ...)` собирался бы, но компилятор отвергает такой синтаксис как несуществующий.",
-                "how_it_should_be": "В record pattern сразу пишут желаемое имя переменной: `case Point(int a, int b) -> ...`."
+                "what_actually": "Record patterns поддерживают произвольную вложенность: `case Box(Item(String name, int qty)) -> ...`.",
+                "source_of_confusion": "Простые примеры обычно показывают один уровень, и это принимают за ограничение.",
+                "if_it_were_true": "Тогда `instanceof Line(Point(var x1, var y1), Point(var x2, var y2))` не компилировался бы, но это валидно.",
+                "how_it_should_be": "Вложенные records деконструируются рекурсивно на любую глубину одним паттерном."
               },
               "label": "D",
               "order": 3
@@ -669,13 +669,14 @@
           "question_text": "Что такое unnamed patterns и unnamed variables?",
           "options": [
             {
-              "text": "`_` в Java 21 запрещён везде, как было после Java 9.",
-              "correct": false,
+              "text": "Unnamed pattern `_` и unnamed variable `_` (JEP 443, preview в Java 21) обозначают компонент или переменную, которая нужна структурно, но её значение не используется: `case Point(int x, _) -> x`. Это подавляет «unused variable» предупреждения.",
+              "correct": true,
               "sections": {
-                "what_actually": "В Java 21 (preview) `_` снова разрешён — но как unnamed pattern/variable, обозначающий «значение не интересует».",
-                "source_of_confusion": "Java 9 действительно запретила `_` как идентификатор, и этот запрет считают абсолютным.",
-                "if_it_were_true": "Тогда `case Point(var x, _) -> x` не компилировался бы, но это валидный unnamed pattern.",
-                "how_it_should_be": "`_` вернулся в особой роли — как маркер игнорируемого значения, а не как обычное имя переменной."
+                "explanation": "`_` добавляет ясность намерения — явно показывает, что значение игнорируется намеренно; в Java 21 требуется `--enable-preview`.",
+                "example": "`try (var _ = lock.acquire()) { ... }` для side-effect ресурса или `catch (NumberFormatException _)`, где переменная исключения не нужна.",
+                "when_to_apply": "Используй для игнорируемых компонентов record-деконструкции, неиспользуемых переменных цикла и ресурсов try-with-resources ради side-effect.",
+                "edge_cases": "Чтение `_` запрещено компилятором (compile-time error, а не runtime); до Java 9 `_` был валидным идентификатором, теперь это запрещено.",
+                "related": "[[java-17-21-interview#Q11]] record patterns; [[java-17-21-interview#Q14]] switch expressions."
               },
               "label": "A",
               "order": 0
@@ -705,14 +706,13 @@
               "order": 2
             },
             {
-              "text": "Unnamed pattern `_` и unnamed variable `_` (JEP 443, preview в Java 21) обозначают компонент или переменную, которая нужна структурно, но её значение не используется: `case Point(int x, _) -> x`. Это подавляет «unused variable» предупреждения.",
-              "correct": true,
+              "text": "`_` в Java 21 запрещён везде, как было после Java 9.",
+              "correct": false,
               "sections": {
-                "explanation": "`_` добавляет ясность намерения — явно показывает, что значение игнорируется намеренно; в Java 21 требуется `--enable-preview`.",
-                "example": "`try (var _ = lock.acquire()) { ... }` для side-effect ресурса или `catch (NumberFormatException _)`, где переменная исключения не нужна.",
-                "when_to_apply": "Используй для игнорируемых компонентов record-деконструкции, неиспользуемых переменных цикла и ресурсов try-with-resources ради side-effect.",
-                "edge_cases": "Чтение `_` запрещено компилятором (compile-time error, а не runtime); до Java 9 `_` был валидным идентификатором, теперь это запрещено.",
-                "related": "[[java-17-21-interview#Q11]] record patterns; [[java-17-21-interview#Q14]] switch expressions."
+                "what_actually": "В Java 21 (preview) `_` снова разрешён — но как unnamed pattern/variable, обозначающий «значение не интересует».",
+                "source_of_confusion": "Java 9 действительно запретила `_` как идентификатор, и этот запрет считают абсолютным.",
+                "if_it_were_true": "Тогда `case Point(var x, _) -> x` не компилировался бы, но это валидный unnamed pattern.",
+                "how_it_should_be": "`_` вернулся в особой роли — как маркер игнорируемого значения, а не как обычное имя переменной."
               },
               "label": "D",
               "order": 3
@@ -729,31 +729,6 @@
           "question_text": "Что такое text blocks?",
           "options": [
             {
-              "text": "Text block — многострочный литерал `\"\"\"...\"\"\"` (JEP 378, стабилен с Java 15/17): JDK удаляет общий incidental-отступ по позиции закрывающих `\"\"\"`, `\\` в конце склеивает строки, `\\s` сохраняет пробел. Даёт читаемый JSON/SQL/HTML без склейки `+ \"\\n\"`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Минимальный общий отступ всех строк удаляется автоматически (incidental whitespace); стандартные escape-последовательности `\\n`, `\\t` продолжают работать.",
-                "example": "Многострочный SQL `\"\"\"SELECT u.name FROM users u WHERE u.status = 'ACTIVE'\"\"\"` читается без конкатенации и экранирования кавычек.",
-                "when_to_apply": "Применяй для SQL в Spring `@Query`, JSON-фикстур в WireMock-тестах, GraphQL-схем и любых многострочных шаблонов.",
-                "edge_cases": "Переменные через `${}` — это String Templates (preview/удалены), а не часть text blocks; text block — только литерал и работает с `String.formatted()`.",
-                "related": "[[java-17-21-interview#Q14]] switch expressions; [[java-17-21-interview#Q27]] String Templates."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Text block `\"\"\"...\"\"\"` сохраняет ровно те пробелы, которые написаны в коде, без удаления отступа.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Java удаляет минимальный общий отступ (incidental whitespace) у всех строк по позиции закрывающих `\"\"\"`.",
-                "source_of_confusion": "Литерал визуально содержит все пробелы исходника, поэтому кажется, что они сохраняются дословно.",
-                "if_it_were_true": "Тогда SQL с отступом 8 пробелов уходил бы в БД с лидирующими пробелами, но JDK обрезает общий отступ.",
-                "how_it_should_be": "Отступ выравнивается по правому краю закрывающих `\"\"\"`, и лишние ведущие пробелы удаляются."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Внутри text block нельзя использовать обычные escape-последовательности `\\n`, `\\t`.",
               "correct": false,
               "sections": {
@@ -762,8 +737,8 @@
                 "if_it_were_true": "Тогда `\"\"\"a\\tb\"\"\"` давал бы буквальные `\\t`, но табуляция вставляется как обычно.",
                 "how_it_should_be": "В text block работают и привычные escape, и новые `\\`/`\\s` для управления переносами и пробелами."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Text block — это `String.format`-выражение, переменные подставляются через `${var}`.",
@@ -773,6 +748,31 @@
                 "source_of_confusion": "Шаблонные строки в других языках используют `${}`, и это переносят на Java text blocks.",
                 "if_it_were_true": "Тогда `\"\"\"Hello ${name}\"\"\"` подставлял бы значение, но возвращает буквальную строку `Hello ${name}`.",
                 "how_it_should_be": "Для подстановки используют `.formatted(...)`, а text block остаётся неинтерполируемым литералом."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Text block — многострочный литерал `\"\"\"...\"\"\"` (JEP 378, стабилен с Java 15/17): JDK удаляет общий incidental-отступ по позиции закрывающих `\"\"\"`, `\\` в конце склеивает строки, `\\s` сохраняет пробел. Даёт читаемый JSON/SQL/HTML без склейки `+ \"\\n\"`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Минимальный общий отступ всех строк удаляется автоматически (incidental whitespace); стандартные escape-последовательности `\\n`, `\\t` продолжают работать.",
+                "example": "Многострочный SQL `\"\"\"SELECT u.name FROM users u WHERE u.status = 'ACTIVE'\"\"\"` читается без конкатенации и экранирования кавычек.",
+                "when_to_apply": "Применяй для SQL в Spring `@Query`, JSON-фикстур в WireMock-тестах, GraphQL-схем и любых многострочных шаблонов.",
+                "edge_cases": "Переменные через `${}` — это String Templates (preview/удалены), а не часть text blocks; text block — только литерал и работает с `String.formatted()`.",
+                "related": "[[java-17-21-interview#Q14]] switch expressions; [[java-17-21-interview#Q27]] String Templates."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Text block `\"\"\"...\"\"\"` сохраняет ровно те пробелы, которые написаны в коде, без удаления отступа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Java удаляет минимальный общий отступ (incidental whitespace) у всех строк по позиции закрывающих `\"\"\"`.",
+                "source_of_confusion": "Литерал визуально содержит все пробелы исходника, поэтому кажется, что они сохраняются дословно.",
+                "if_it_were_true": "Тогда SQL с отступом 8 пробелов уходил бы в БД с лидирующими пробелами, но JDK обрезает общий отступ.",
+                "how_it_should_be": "Отступ выравнивается по правому краю закрывающих `\"\"\"`, и лишние ведущие пробелы удаляются."
               },
               "label": "D",
               "order": 3
@@ -789,16 +789,28 @@
           "question_text": "Что такое switch expressions и чем они отличаются от switch statement?",
           "options": [
             {
-              "text": "Switch expression обязан иметь `default`, даже если все варианты `enum` покрыты.",
+              "text": "Switch expression нельзя использовать как правую часть присваивания — только в `return`.",
               "correct": false,
               "sections": {
-                "what_actually": "Для `enum` и `sealed`-типов компилятор выводит exhaustiveness, и `default` не обязателен.",
-                "source_of_confusion": "Классический `switch` по числам часто требует `default`, и это правило переносят на expression.",
-                "if_it_were_true": "Тогда полный `switch` по enum без `default` не компилировался бы, но он валиден.",
-                "how_it_should_be": "Для покрытого enum `default` не нужен; добавлять его — значит маскировать новое значение."
+                "what_actually": "Switch expression — полноценное выражение: его можно присваивать переменной, передавать в метод и возвращать.",
+                "source_of_confusion": "Имя «switch» исторически ассоциируется с инструкцией, а не с выражением, дающим значение.",
+                "if_it_were_true": "Тогда `var x = switch (d) { ... };` не компилировался бы, но это штатное присваивание результата.",
+                "how_it_should_be": "Результат switch expression присваивают переменной или используют в любом выражении."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "`yield` нужен в каждой ветке switch expression — без него код не скомпилируется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`yield` нужен только в block-форме `case X -> { ...; yield value; }`; для `case X -> value` он не используется.",
+                "source_of_confusion": "`yield` подаётся как «способ вернуть значение», и кажется обязательным для каждой ветки.",
+                "if_it_were_true": "Тогда `case A -> yield 1;` был бы корректен, но компилятор даёт ошибку на такой синтаксис.",
+                "how_it_should_be": "Single-expression ветка возвращает значение напрямую, а `yield` применяют лишь в блочной форме."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Switch expression (JEP 361, стабилен с Java 14/17) возвращает значение через `->` (single result) или `yield` (block), требует exhaustive-покрытия для `enum`/`sealed` и не имеет fall-through. Statement же ничего не возвращает и требует `break`.",
@@ -810,29 +822,17 @@
                 "edge_cases": "`yield` нужен только в block-форме `case X -> { ...; yield value; }`; для single-expression `case X -> value` `yield` не используется.",
                 "related": "[[java-17-21-interview#Q9]] pattern matching для switch; [[java-17-21-interview#Q35]] отличия Java 17 и 21."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Switch expression нельзя использовать как правую часть присваивания — только в `return`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Switch expression — полноценное выражение: его можно присваивать переменной, передавать в метод и возвращать.",
-                "source_of_confusion": "Имя «switch» исторически ассоциируется с инструкцией, а не с выражением, дающим значение.",
-                "if_it_were_true": "Тогда `var x = switch (d) { ... };` не компилировался бы, но это штатное присваивание результата.",
-                "how_it_should_be": "Результат switch expression присваивают переменной или используют в любом выражении."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`yield` нужен в каждой ветке switch expression — без него код не скомпилируется.",
+              "text": "Switch expression обязан иметь `default`, даже если все варианты `enum` покрыты.",
               "correct": false,
               "sections": {
-                "what_actually": "`yield` нужен только в block-форме `case X -> { ...; yield value; }`; для `case X -> value` он не используется.",
-                "source_of_confusion": "`yield` подаётся как «способ вернуть значение», и кажется обязательным для каждой ветки.",
-                "if_it_were_true": "Тогда `case A -> yield 1;` был бы корректен, но компилятор даёт ошибку на такой синтаксис.",
-                "how_it_should_be": "Single-expression ветка возвращает значение напрямую, а `yield` применяют лишь в блочной форме."
+                "what_actually": "Для `enum` и `sealed`-типов компилятор выводит exhaustiveness, и `default` не обязателен.",
+                "source_of_confusion": "Классический `switch` по числам часто требует `default`, и это правило переносят на expression.",
+                "if_it_were_true": "Тогда полный `switch` по enum без `default` не компилировался бы, но он валиден.",
+                "how_it_should_be": "Для покрытого enum `default` не нужен; добавлять его — значит маскировать новое значение."
               },
               "label": "D",
               "order": 3
@@ -849,18 +849,6 @@
           "question_text": "(!) Что такое виртуальные потоки и какую проблему они решают?",
           "options": [
             {
-              "text": "Virtual threads ускоряют CPU-bound вычисления — каждая задача физически выполняется параллельно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Virtual threads не ускоряют CPU-bound: они мапятся на тот же набор carrier-threads по числу CPU; ускорение только для I/O-bound.",
-                "source_of_confusion": "«Миллионы потоков» создают впечатление безграничного параллелизма для любых задач.",
-                "if_it_were_true": "Тогда compute-сервис на virtual threads ускорился бы кратно, но throughput падает из-за overhead continuation-stacks.",
-                "how_it_should_be": "Для CPU-bound оставляют platform threads/`ForkJoinPool`, а virtual threads берут для I/O-bound."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Virtual threads — это `ForkJoinPool` под капотом, идентичный `parallelStream`.",
               "correct": false,
               "sections": {
@@ -869,8 +857,32 @@
                 "if_it_were_true": "Тогда `parallelStream` вёл бы себя как virtual threads, но он перегружает common pool и не паркуется на I/O.",
                 "how_it_should_be": "Virtual threads — это park/unmount-модель для I/O, а `parallelStream` — параллельная обработка CPU-данных."
               },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Virtual threads ускоряют CPU-bound вычисления — каждая задача физически выполняется параллельно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Virtual threads не ускоряют CPU-bound: они мапятся на тот же набор carrier-threads по числу CPU; ускорение только для I/O-bound.",
+                "source_of_confusion": "«Миллионы потоков» создают впечатление безграничного параллелизма для любых задач.",
+                "if_it_were_true": "Тогда compute-сервис на virtual threads ускорился бы кратно, но throughput падает из-за overhead continuation-stacks.",
+                "how_it_should_be": "Для CPU-bound оставляют platform threads/`ForkJoinPool`, а virtual threads берут для I/O-bound."
+              },
               "label": "B",
               "order": 1
+            },
+            {
+              "text": "Virtual threads автоматически делают любой код non-blocking, включая JNI и `synchronized`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`synchronized` всё ещё пинит carrier (до Java 24), а JNI блокирует carrier; только pure-Java JDK-API использует virtual unmount.",
+                "source_of_confusion": "Слова «не блокируют OS-поток» воспринимают как «делают весь код неблокирующим».",
+                "if_it_were_true": "Тогда `synchronized` + I/O масштабировался бы свободно, но он вызывает pinning и обвал throughput.",
+                "how_it_should_be": "Для unmount нужны блокирующие JDK-вызовы; `synchronized`/JNI заменяют на `ReentrantLock`/чистый Java-код."
+              },
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Virtual threads (JEP 444, Java 21) — лёгкие потоки, мультиплексируемые JDK на ограниченном пуле carrier-threads; на блокирующих JDK-вызовах они автоматически паркуются и освобождают carrier. Это даёт высокий concurrency для I/O-bound нагрузки без перехода на reactive.",
@@ -881,18 +893,6 @@
                 "when_to_apply": "Применяй для I/O-bound нагрузки: веб-серверов, микросервисов с большим числом одновременных запросов и блокирующих вызовов в БД/HTTP.",
                 "edge_cases": "Virtual threads НЕ ускоряют CPU-bound (тот же набор carrier-threads по числу CPU); `synchronized` и JNI пинят carrier до Java 24.",
                 "related": "[[java-17-21-interview#Q17]] отличие от платформенных; [[java-17-21-interview#Q19]] pinning."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Virtual threads автоматически делают любой код non-blocking, включая JNI и `synchronized`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`synchronized` всё ещё пинит carrier (до Java 24), а JNI блокирует carrier; только pure-Java JDK-API использует virtual unmount.",
-                "source_of_confusion": "Слова «не блокируют OS-поток» воспринимают как «делают весь код неблокирующим».",
-                "if_it_were_true": "Тогда `synchronized` + I/O масштабировался бы свободно, но он вызывает pinning и обвал throughput.",
-                "how_it_should_be": "Для unmount нужны блокирующие JDK-вызовы; `synchronized`/JNI заменяют на `ReentrantLock`/чистый Java-код."
               },
               "label": "D",
               "order": 3
@@ -909,28 +909,17 @@
           "question_text": "Как создать и запустить виртуальный поток?",
           "options": [
             {
-              "text": "`Thread.startVirtualThread(...)` создаёт пул из 1000 виртуальных потоков и ставит задачу в очередь.",
-              "correct": false,
+              "text": "Способы: `Thread.startVirtualThread(Runnable)`, `Thread.ofVirtual().start(Runnable)` (builder) и `Executors.newVirtualThreadPerTaskExecutor()` для Executor-API; в Spring Boot 3.2 — флаг `spring.threads.virtual.enabled=true`. Это три уровня API: ad-hoc, builder и Executor-совместимый.",
+              "correct": true,
               "sections": {
-                "what_actually": "`startVirtualThread` создаёт ровно один virtual thread и сразу запускает Runnable — пула там нет.",
-                "source_of_confusion": "Слово «virtual threads» во множественном числе наводит на мысль о пуле потоков.",
-                "if_it_were_true": "Тогда один вызов давал бы 1000 потоков, но создаётся один поток на каждый вызов.",
-                "how_it_should_be": "Для множества потоков либо вызывают `startVirtualThread` в цикле, либо берут `newVirtualThreadPerTaskExecutor`."
+                "explanation": "`startVirtualThread` создаёт ровно один поток и сразу запускает Runnable; `newVirtualThreadPerTaskExecutor` даёт по виртуальному потоку на каждую задачу.",
+                "example": "`try (var e = Executors.newVirtualThreadPerTaskExecutor()) { IntStream.range(0, 10_000).forEach(i -> e.submit(() -> { Thread.sleep(1000); return i; })); }`.",
+                "when_to_apply": "Используй `startVirtualThread` для ad-hoc задач, `newVirtualThreadPerTaskExecutor` для пакетной обработки и миграции Tomcat-коннектора в Spring Boot 3.2.",
+                "edge_cases": "Проверка типа — `Thread.currentThread().isVirtual()`; `ScheduledExecutorService` не поддерживает virtual threads напрямую в JDK 21.",
+                "related": "[[java-17-21-interview#Q15]] что такое virtual threads; [[java-17-21-interview#Q20]] virtual threads в Spring Boot."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Virtual thread можно создать только через прямую подмену `Thread.currentThread()` через JNI.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это не часть public API; стандартные способы — `Thread.startVirtualThread`, `Thread.ofVirtual()` и `newVirtualThreadPerTaskExecutor()`.",
-                "source_of_confusion": "Низкоуровневая природа потоков создаёт впечатление необходимости нативных трюков.",
-                "if_it_were_true": "Тогда без JNI virtual thread не создать, но публичный API делает это в одну строку.",
-                "how_it_should_be": "Virtual threads создаются обычными методами `Thread`/`Executors` без какого-либо JNI."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Для virtual threads нужен `ScheduledExecutorService.newScheduledThreadPool(N, virtualFactory)` — других способов нет.",
@@ -941,18 +930,29 @@
                 "if_it_were_true": "Тогда scheduled-pipeline на virtual threads собирался бы, но JDK предупреждает о неподдержке.",
                 "how_it_should_be": "Планирование оставляют platform-`ScheduledExecutorService`, а задачи исполняют на virtual-per-task executor."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Thread.startVirtualThread(...)` создаёт пул из 1000 виртуальных потоков и ставит задачу в очередь.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`startVirtualThread` создаёт ровно один virtual thread и сразу запускает Runnable — пула там нет.",
+                "source_of_confusion": "Слово «virtual threads» во множественном числе наводит на мысль о пуле потоков.",
+                "if_it_were_true": "Тогда один вызов давал бы 1000 потоков, но создаётся один поток на каждый вызов.",
+                "how_it_should_be": "Для множества потоков либо вызывают `startVirtualThread` в цикле, либо берут `newVirtualThreadPerTaskExecutor`."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Способы: `Thread.startVirtualThread(Runnable)`, `Thread.ofVirtual().start(Runnable)` (builder) и `Executors.newVirtualThreadPerTaskExecutor()` для Executor-API; в Spring Boot 3.2 — флаг `spring.threads.virtual.enabled=true`. Это три уровня API: ad-hoc, builder и Executor-совместимый.",
-              "correct": true,
+              "text": "Virtual thread можно создать только через прямую подмену `Thread.currentThread()` через JNI.",
+              "correct": false,
               "sections": {
-                "explanation": "`startVirtualThread` создаёт ровно один поток и сразу запускает Runnable; `newVirtualThreadPerTaskExecutor` даёт по виртуальному потоку на каждую задачу.",
-                "example": "`try (var e = Executors.newVirtualThreadPerTaskExecutor()) { IntStream.range(0, 10_000).forEach(i -> e.submit(() -> { Thread.sleep(1000); return i; })); }`.",
-                "when_to_apply": "Используй `startVirtualThread` для ad-hoc задач, `newVirtualThreadPerTaskExecutor` для пакетной обработки и миграции Tomcat-коннектора в Spring Boot 3.2.",
-                "edge_cases": "Проверка типа — `Thread.currentThread().isVirtual()`; `ScheduledExecutorService` не поддерживает virtual threads напрямую в JDK 21.",
-                "related": "[[java-17-21-interview#Q15]] что такое virtual threads; [[java-17-21-interview#Q20]] virtual threads в Spring Boot."
+                "what_actually": "Это не часть public API; стандартные способы — `Thread.startVirtualThread`, `Thread.ofVirtual()` и `newVirtualThreadPerTaskExecutor()`.",
+                "source_of_confusion": "Низкоуровневая природа потоков создаёт впечатление необходимости нативных трюков.",
+                "if_it_were_true": "Тогда без JNI virtual thread не создать, но публичный API делает это в одну строку.",
+                "how_it_should_be": "Virtual threads создаются обычными методами `Thread`/`Executors` без какого-либо JNI."
               },
               "label": "D",
               "order": 3
@@ -969,6 +969,18 @@
           "question_text": "В чём архитектурное отличие виртуальных потоков от платформенных?",
           "options": [
             {
+              "text": "Virtual thread всегда быстрее platform thread, поэтому надо мигрировать всё подряд.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для CPU-bound кода virtual thread добавляет overhead и замедляет; выигрыш только для I/O-bound за счёт высокого concurrency.",
+                "source_of_confusion": "Слово «лёгкий» воспринимают как «всегда быстрее во всех сценариях».",
+                "if_it_were_true": "Тогда миграция compute-сервиса улучшала бы latency, но p99 растёт и приходится откатываться.",
+                "how_it_should_be": "Мигрируют выборочно: I/O-bound — на virtual threads, CPU-bound — оставляют на platform-пуле."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Platform thread — обёртка над OS thread (1:1, дорогой, ~1 МБ стека, ограничен ulimit); virtual thread — лёгкая JDK-управляемая continuation, исполняемая на пуле carrier-threads (M:N) и паркующаяся на блокирующих JDK-вызовах. Это позволяет создавать миллионы потоков без затрат памяти и file descriptors.",
               "correct": true,
               "sections": {
@@ -978,32 +990,8 @@
                 "edge_cases": "Virtual threads всегда daemon, игнорируют приоритеты, а `ThreadLocal` на миллионах потоков становится дорогим из-за множества копий.",
                 "related": "[[java-17-21-interview#Q15]] что такое virtual threads; [[java-17-21-interview#Q19]] pinning."
               },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Virtual thread — это просто platform thread с маленьким стеком 4 КБ.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Стек virtual thread динамический и хранится в heap как continuation; это не «platform thread с уменьшенным стеком».",
-                "source_of_confusion": "Оба называются «потоками», и разница сводится к мысли «virtual = просто меньше памяти».",
-                "if_it_were_true": "Тогда `-Xss512k` настраивал бы virtual threads, но этот флаг влияет на platform threads и ломает их.",
-                "how_it_should_be": "Virtual thread — JDK-managed continuation на heap, а не platform thread с фиксированным малым стеком."
-              },
               "label": "B",
               "order": 1
-            },
-            {
-              "text": "Virtual thread всегда быстрее platform thread, поэтому надо мигрировать всё подряд.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для CPU-bound кода virtual thread добавляет overhead и замедляет; выигрыш только для I/O-bound за счёт высокого concurrency.",
-                "source_of_confusion": "Слово «лёгкий» воспринимают как «всегда быстрее во всех сценариях».",
-                "if_it_were_true": "Тогда миграция compute-сервиса улучшала бы latency, но p99 растёт и приходится откатываться.",
-                "how_it_should_be": "Мигрируют выборочно: I/O-bound — на virtual threads, CPU-bound — оставляют на platform-пуле."
-              },
-              "label": "C",
-              "order": 2
             },
             {
               "text": "Platform thread — это абстракция Loom, а virtual thread — это реальный OS thread.",
@@ -1013,6 +1001,18 @@
                 "source_of_confusion": "Слово «virtual» путают с «реальным», переворачивая роли терминов местами.",
                 "if_it_were_true": "Тогда virtual thread занимал бы отдельный OS-поток, но тысячи virtual threads делят немного carrier-threads.",
                 "how_it_should_be": "Platform = реальный OS thread 1:1; virtual = лёгкая continuation поверх carrier-threads M:N."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Virtual thread — это просто platform thread с маленьким стеком 4 КБ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стек virtual thread динамический и хранится в heap как continuation; это не «platform thread с уменьшенным стеком».",
+                "source_of_confusion": "Оба называются «потоками», и разница сводится к мысли «virtual = просто меньше памяти».",
+                "if_it_were_true": "Тогда `-Xss512k` настраивал бы virtual threads, но этот флаг влияет на platform threads и ломает их.",
+                "how_it_should_be": "Virtual thread — JDK-managed continuation на heap, а не platform thread с фиксированным малым стеком."
               },
               "label": "D",
               "order": 3
@@ -1029,13 +1029,13 @@
           "question_text": "(!) Когда НЕ стоит использовать виртуальные потоки?",
           "options": [
             {
-              "text": "Virtual threads подходят для всех задач без исключений; legacy thread-pool можно удалить.",
+              "text": "Virtual threads нельзя использовать с Spring Boot — фреймворк завязан на platform threads.",
               "correct": false,
               "sections": {
-                "what_actually": "Для CPU-bound, для нагрузки с большим `ThreadLocal` state и для кода с `synchronized` virtual threads дают регрессию.",
-                "source_of_confusion": "Маркетинг «масштабирование без пулов» воспринимают как универсальную замену любым потокам.",
-                "if_it_were_true": "Тогда удаление `ForkJoinPool` для compute было бы безопасным, но throughput batch-обработки падает на 30%.",
-                "how_it_should_be": "Platform-пулы оставляют для CPU-bound и проблемного legacy-кода, переводя на virtual threads только I/O."
+                "what_actually": "Spring Boot 3.2+ официально поддерживает virtual threads через `spring.threads.virtual.enabled=true`.",
+                "source_of_confusion": "Старые версии Spring действительно работали только на platform threads, и это считают вечным ограничением.",
+                "if_it_were_true": "Тогда флаг `spring.threads.virtual.enabled` не существовал бы, но он есть с Boot 3.2.",
+                "how_it_should_be": "В Spring Boot 3.2+ virtual threads включаются одним флагом для встроенного веб-сервера и async."
               },
               "label": "A",
               "order": 0
@@ -1054,18 +1054,6 @@
               "order": 1
             },
             {
-              "text": "Virtual threads нельзя использовать с Spring Boot — фреймворк завязан на platform threads.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Spring Boot 3.2+ официально поддерживает virtual threads через `spring.threads.virtual.enabled=true`.",
-                "source_of_confusion": "Старые версии Spring действительно работали только на platform threads, и это считают вечным ограничением.",
-                "if_it_were_true": "Тогда флаг `spring.threads.virtual.enabled` не существовал бы, но он есть с Boot 3.2.",
-                "how_it_should_be": "В Spring Boot 3.2+ virtual threads включаются одним флагом для встроенного веб-сервера и async."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "Virtual threads запрещены при использовании JDBC, потому что connection pool с ними не работает.",
               "correct": false,
               "sections": {
@@ -1073,6 +1061,18 @@
                 "source_of_confusion": "Блокирующая природа JDBC создаёт ложное впечатление несовместимости с virtual threads.",
                 "if_it_were_true": "Тогда REST-сервис с БД нельзя было бы масштабировать на Loom, но это его основной use-case.",
                 "how_it_should_be": "JDBC c современным пулом работает поверх virtual threads и масштабирует блокирующие вызовы в БД."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Virtual threads подходят для всех задач без исключений; legacy thread-pool можно удалить.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для CPU-bound, для нагрузки с большим `ThreadLocal` state и для кода с `synchronized` virtual threads дают регрессию.",
+                "source_of_confusion": "Маркетинг «масштабирование без пулов» воспринимают как универсальную замену любым потокам.",
+                "if_it_were_true": "Тогда удаление `ForkJoinPool` для compute было бы безопасным, но throughput batch-обработки падает на 30%.",
+                "how_it_should_be": "Platform-пулы оставляют для CPU-bound и проблемного legacy-кода, переводя на virtual threads только I/O."
               },
               "label": "D",
               "order": 3
@@ -1101,18 +1101,6 @@
               "order": 0
             },
             {
-              "text": "Pinning происходит только при `wait`/`notify`; обычные блокировки `ReentrantLock` всегда пинят.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`ReentrantLock` корректно паркует virtual thread без pinning; пинят именно `synchronized`-блоки и JNI-кадры.",
-                "source_of_confusion": "Любая блокировка кажется одинаково «удерживающей» поток на carrier.",
-                "if_it_were_true": "Тогда замена `synchronized` на `ReentrantLock` не помогала бы, но именно она устраняет pinning.",
-                "how_it_should_be": "`ReentrantLock` безопасен для virtual threads, а pinning вызывают `synchronized` и нативные кадры."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Pinning — ситуация, когда virtual thread не может выйти из carrier (через `synchronized`-блок или JNI-кадр на стеке): блокировка carrier превращает M:N в 1:1 и резко режет throughput. Диагностика — `-Djdk.tracePinnedThreads=full`.",
               "correct": true,
               "sections": {
@@ -1121,6 +1109,18 @@
                 "when_to_apply": "Проверяй pinning перед включением virtual threads в нагруженном сервисе и включай трассировку флагом для диагностики.",
                 "edge_cases": "`ReentrantLock` паркует virtual thread без pinning, а несуществующего флага вроде `-XX:+UseVirtualThreadFix` нет — помогает только рефакторинг или Java 24 (JEP 491).",
                 "related": "[[java-17-21-interview#Q15]] что такое virtual threads; [[java-17-21-interview#Q18]] когда не использовать virtual threads."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Pinning происходит только при `wait`/`notify`; обычные блокировки `ReentrantLock` всегда пинят.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ReentrantLock` корректно паркует virtual thread без pinning; пинят именно `synchronized`-блоки и JNI-кадры.",
+                "source_of_confusion": "Любая блокировка кажется одинаково «удерживающей» поток на carrier.",
+                "if_it_were_true": "Тогда замена `synchronized` на `ReentrantLock` не помогала бы, но именно она устраняет pinning.",
+                "how_it_should_be": "`ReentrantLock` безопасен для virtual threads, а pinning вызывают `synchronized` и нативные кадры."
               },
               "label": "C",
               "order": 2
@@ -1149,13 +1149,14 @@
           "question_text": "Как виртуальные потоки работают с Spring Boot?",
           "options": [
             {
-              "text": "Spring Boot 3.2 включает virtual threads автоматически — флаг не нужен.",
-              "correct": false,
+              "text": "`spring.threads.virtual.enabled=true` (Spring Boot 3.2+) включает virtual threads для встроенного Tomcat/Jetty (HTTP-обработчики), `@Scheduled` и `@Async`-executor по умолчанию; для Kafka/RabbitMQ-листенеров нужна отдельная конфигурация executor'ов. Это низкорисковый путь миграции.",
+              "correct": true,
               "sections": {
-                "what_actually": "Включение явное: `spring.threads.virtual.enabled=true` или программная настройка executor'а; по умолчанию используется обычный пул.",
-                "source_of_confusion": "«Из коробки» воспринимают как «включено по умолчанию без действий».",
-                "if_it_were_true": "Тогда Tomcat сразу работал бы на virtual threads, но без флага он использует старый thread pool.",
-                "how_it_should_be": "Для virtual threads флаг выставляют явно в `application.yml`, иначе сервер остаётся на platform-пуле."
+                "explanation": "Thread-per-request модель сохраняется, требуется только нагрузочное тестирование; ручная конфигурация нужна лишь для кастомных executor'ов.",
+                "example": "BFF на Spring Boot 3.2 включает флаг и переводит синхронные REST-вызовы в legacy-сервисы на virtual threads без правки бизнес-кода.",
+                "when_to_apply": "Применяй флаг для синхронных I/O-bound HTTP-сервисов, чтобы убрать reactive WebFlux и упростить код, сохранив thread-per-request.",
+                "edge_cases": "В Spring Boot 3.0/3.1 флага нет — нужен ручной `TomcatProtocolHandlerCustomizer`; перед включением проверь драйверы БД на `synchronized` с I/O.",
+                "related": "[[java-17-21-interview#Q15]] что такое virtual threads; [[java-17-21-interview#Q17]] отличие от платформенных."
               },
               "label": "A",
               "order": 0
@@ -1185,14 +1186,13 @@
               "order": 2
             },
             {
-              "text": "`spring.threads.virtual.enabled=true` (Spring Boot 3.2+) включает virtual threads для встроенного Tomcat/Jetty (HTTP-обработчики), `@Scheduled` и `@Async`-executor по умолчанию; для Kafka/RabbitMQ-листенеров нужна отдельная конфигурация executor'ов. Это низкорисковый путь миграции.",
-              "correct": true,
+              "text": "Spring Boot 3.2 включает virtual threads автоматически — флаг не нужен.",
+              "correct": false,
               "sections": {
-                "explanation": "Thread-per-request модель сохраняется, требуется только нагрузочное тестирование; ручная конфигурация нужна лишь для кастомных executor'ов.",
-                "example": "BFF на Spring Boot 3.2 включает флаг и переводит синхронные REST-вызовы в legacy-сервисы на virtual threads без правки бизнес-кода.",
-                "when_to_apply": "Применяй флаг для синхронных I/O-bound HTTP-сервисов, чтобы убрать reactive WebFlux и упростить код, сохранив thread-per-request.",
-                "edge_cases": "В Spring Boot 3.0/3.1 флага нет — нужен ручной `TomcatProtocolHandlerCustomizer`; перед включением проверь драйверы БД на `synchronized` с I/O.",
-                "related": "[[java-17-21-interview#Q15]] что такое virtual threads; [[java-17-21-interview#Q17]] отличие от платформенных."
+                "what_actually": "Включение явное: `spring.threads.virtual.enabled=true` или программная настройка executor'а; по умолчанию используется обычный пул.",
+                "source_of_confusion": "«Из коробки» воспринимают как «включено по умолчанию без действий».",
+                "if_it_were_true": "Тогда Tomcat сразу работал бы на virtual threads, но без флага он использует старый thread pool.",
+                "how_it_should_be": "Для virtual threads флаг выставляют явно в `application.yml`, иначе сервер остаётся на platform-пуле."
               },
               "label": "D",
               "order": 3
@@ -1209,17 +1209,28 @@
           "question_text": "(!) Что такое structured concurrency?",
           "options": [
             {
-              "text": "Structured concurrency (JEP, preview в Java 21) — модель, в которой группа параллельных задач рассматривается как единое целое: parent дожидается всех детей, отмена parent отменяет всех детей, исключение в одном ребёнке отменяет других. Реализация — `StructuredTaskScope`.",
-              "correct": true,
+              "text": "SC отказался от virtual threads и работает только с platform threads.",
+              "correct": false,
               "sections": {
-                "explanation": "Это устраняет проблему orphan-потоков и сложного error-propagation в `CompletableFuture`-чейнах: жизненный цикл подзадач ограничен scope родителя.",
-                "example": "Параллельные fan-out вызовы 5 микросервисов с автоматической отменой остальных при первой ошибке (booking flow, search aggregation).",
-                "when_to_apply": "Применяй для параллельных fan-out вызовов с агрегацией результатов, когда нужна гарантированная отмена и понятное распространение ошибок.",
-                "edge_cases": "SC построен поверх virtual threads — каждый fork создаёт virtual thread; ручной `synchronized` вокруг `fork` нарушает контракт scope.",
-                "related": "[[java-17-21-interview#Q22]] StructuredTaskScope; [[java-17-21-interview#Q23]] стратегии завершения."
+                "what_actually": "SC построен поверх virtual threads — каждый `fork` создаёт virtual thread; именно их дешевизна делает SC практичным.",
+                "source_of_confusion": "Structured concurrency и virtual threads вышли вместе, и их роли путают как взаимоисключающие.",
+                "if_it_were_true": "Тогда каждый fork стоил бы ~1 МБ платформенного стека, но fork-и дёшевы благодаря virtual threads.",
+                "how_it_should_be": "SC опирается на virtual threads, поэтому массовый fan-out не упирается в память."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "SC требует ручного управления через `synchronized`-блоки для безопасности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "SC имеет встроенную синхронизацию через `join()` и `throwIfFailed()`; ручной `synchronized` нарушает контракт scope.",
+                "source_of_confusion": "Многопоточность ассоциируется с обязательной ручной синхронизацией доступа.",
+                "if_it_were_true": "Тогда `scope.fork(...)` пришлось бы оборачивать в `synchronized`, но это ведёт к deadlock и потере отмен.",
+                "how_it_should_be": "Корректность обеспечивают `join()`/`throwIfFailed()`, а не ручные блокировки вокруг scope."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Structured concurrency — это новое имя для `CompletableFuture.allOf()` без новых API.",
@@ -1230,29 +1241,18 @@
                 "if_it_were_true": "Тогда SC находился бы в `CompletableFuture`, но это отдельный API с автоматической отменой siblings.",
                 "how_it_should_be": "SC — это новый `StructuredTaskScope` с owner-lifecycle, а не синоним `allOf()`."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "SC отказался от virtual threads и работает только с platform threads.",
-              "correct": false,
-              "sections": {
-                "what_actually": "SC построен поверх virtual threads — каждый `fork` создаёт virtual thread; именно их дешевизна делает SC практичным.",
-                "source_of_confusion": "Structured concurrency и virtual threads вышли вместе, и их роли путают как взаимоисключающие.",
-                "if_it_were_true": "Тогда каждый fork стоил бы ~1 МБ платформенного стека, но fork-и дёшевы благодаря virtual threads.",
-                "how_it_should_be": "SC опирается на virtual threads, поэтому массовый fan-out не упирается в память."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "SC требует ручного управления через `synchronized`-блоки для безопасности.",
-              "correct": false,
+              "text": "Structured concurrency (JEP, preview в Java 21) — модель, в которой группа параллельных задач рассматривается как единое целое: parent дожидается всех детей, отмена parent отменяет всех детей, исключение в одном ребёнке отменяет других. Реализация — `StructuredTaskScope`.",
+              "correct": true,
               "sections": {
-                "what_actually": "SC имеет встроенную синхронизацию через `join()` и `throwIfFailed()`; ручной `synchronized` нарушает контракт scope.",
-                "source_of_confusion": "Многопоточность ассоциируется с обязательной ручной синхронизацией доступа.",
-                "if_it_were_true": "Тогда `scope.fork(...)` пришлось бы оборачивать в `synchronized`, но это ведёт к deadlock и потере отмен.",
-                "how_it_should_be": "Корректность обеспечивают `join()`/`throwIfFailed()`, а не ручные блокировки вокруг scope."
+                "explanation": "Это устраняет проблему orphan-потоков и сложного error-propagation в `CompletableFuture`-чейнах: жизненный цикл подзадач ограничен scope родителя.",
+                "example": "Параллельные fan-out вызовы 5 микросервисов с автоматической отменой остальных при первой ошибке (booking flow, search aggregation).",
+                "when_to_apply": "Применяй для параллельных fan-out вызовов с агрегацией результатов, когда нужна гарантированная отмена и понятное распространение ошибок.",
+                "edge_cases": "SC построен поверх virtual threads — каждый fork создаёт virtual thread; ручной `synchronized` вокруг `fork` нарушает контракт scope.",
+                "related": "[[java-17-21-interview#Q22]] StructuredTaskScope; [[java-17-21-interview#Q23]] стратегии завершения."
               },
               "label": "D",
               "order": 3
@@ -1269,18 +1269,6 @@
           "question_text": "Как использовать StructuredTaskScope?",
           "options": [
             {
-              "text": "`StructuredTaskScope` управляется через `start()`/`stop()` — try-with-resources не нужен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`StructuredTaskScope` реализует `AutoCloseable` и должен использоваться в try-with-resources, чтобы scope закрылся и дети были отменены.",
-                "source_of_confusion": "Многие lifecycle-объекты имеют `start()`/`stop()`, и эту модель переносят на scope.",
-                "if_it_were_true": "Тогда `scope.start()` существовал бы, но без try-with-resources при исключении дети утекают как orphan.",
-                "how_it_should_be": "Scope создают в try-with-resources, и его закрытие автоматически отменяет незавершённые задачи."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Создаётся в `try-with-resources`: `try (var scope = new StructuredTaskScope.ShutdownOnFailure()) { var s1 = scope.fork(call1); var s2 = scope.fork(call2); scope.join(); scope.throwIfFailed(); ... }`. `fork` возвращает `Subtask<T>`, `join` ждёт всех, `throwIfFailed` пробрасывает первое исключение.",
               "correct": true,
               "sections": {
@@ -1290,8 +1278,8 @@
                 "edge_cases": "`StructuredTaskScope` реализует `AutoCloseable`, поэтому try-with-resources обязателен; пропуск `join()` даёт `IllegalStateException`.",
                 "related": "[[java-17-21-interview#Q21]] что такое structured concurrency; [[java-17-21-interview#Q23]] стратегии завершения."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`scope.fork(Callable)` запускает задачу синхронно и возвращает результат сразу.",
@@ -1302,8 +1290,8 @@
                 "if_it_were_true": "Тогда `fork` возвращал бы `T`, но `subtask.get()` до `join()` бросает `IllegalStateException`.",
                 "how_it_should_be": "`fork` стартует подзадачу асинхронно, а её результат читают через `subtask.get()` после `join()`."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`scope.join()` нужно вызывать только если хотя бы одна задача упала; для успешных можно сразу читать результаты.",
@@ -1313,6 +1301,18 @@
                 "source_of_confusion": "Кажется, что для успешных задач результат уже готов и ждать необязательно.",
                 "if_it_were_true": "Тогда чтение `subtask.get()` без `join()` всегда работало бы, но половина запусков даёт `IllegalStateException`.",
                 "how_it_should_be": "`join()` вызывают всегда перед чтением результатов, независимо от исхода задач."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`StructuredTaskScope` управляется через `start()`/`stop()` — try-with-resources не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`StructuredTaskScope` реализует `AutoCloseable` и должен использоваться в try-with-resources, чтобы scope закрылся и дети были отменены.",
+                "source_of_confusion": "Многие lifecycle-объекты имеют `start()`/`stop()`, и эту модель переносят на scope.",
+                "if_it_were_true": "Тогда `scope.start()` существовал бы, но без try-with-resources при исключении дети утекают как orphan.",
+                "how_it_should_be": "Scope создают в try-with-resources, и его закрытие автоматически отменяет незавершённые задачи."
               },
               "label": "D",
               "order": 3
@@ -1329,18 +1329,6 @@
           "question_text": "Какие стратегии завершения есть в StructuredTaskScope?",
           "options": [
             {
-              "text": "Стратегии задаются enum-параметром `StructuredTaskScope.Policy.FAIL_FAST/SUCCESS_FAST/ALL`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "API использует разные классы-наследники, а не enum: `ShutdownOnFailure`, `ShutdownOnSuccess` и кастомные через extension.",
-                "source_of_confusion": "Поведенческие стратегии часто реализуют через enum-флаги, и это ожидание переносят на scope.",
-                "if_it_were_true": "Тогда `new StructuredTaskScope(Policy.FAIL_FAST)` собирался бы, но такого enum в API нет.",
-                "how_it_should_be": "Стратегию выбирают конкретным подклассом scope, а кастомную пишут наследованием от `StructuredTaskScope`."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`ShutdownOnSuccess` ждёт пока все задачи закончатся, и возвращает первый успешный результат.",
               "correct": false,
               "sections": {
@@ -1348,6 +1336,18 @@
                 "source_of_confusion": "Слово «success» воспринимают как «дождаться, пока всё успешно завершится».",
                 "if_it_were_true": "Тогда стратегия не давала бы выигрыша по latency, но она как раз обрывает остальные задачи ради скорости.",
                 "how_it_should_be": "`ShutdownOnSuccess` завершает scope по первому успеху, отменяя ещё работающие подзадачи."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Стратегии задаются enum-параметром `StructuredTaskScope.Policy.FAIL_FAST/SUCCESS_FAST/ALL`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "API использует разные классы-наследники, а не enum: `ShutdownOnFailure`, `ShutdownOnSuccess` и кастомные через extension.",
+                "source_of_confusion": "Поведенческие стратегии часто реализуют через enum-флаги, и это ожидание переносят на scope.",
+                "if_it_were_true": "Тогда `new StructuredTaskScope(Policy.FAIL_FAST)` собирался бы, но такого enum в API нет.",
+                "how_it_should_be": "Стратегию выбирают конкретным подклассом scope, а кастомную пишут наследованием от `StructuredTaskScope`."
               },
               "label": "B",
               "order": 1
@@ -1401,13 +1401,14 @@
               "order": 0
             },
             {
-              "text": "`ScopedValue` хранит данные в heap-таблице по `Thread.currentThread()` — идентично `ThreadLocal`.",
-              "correct": false,
+              "text": "`ScopedValue` (JEP, preview в Java 21) — immutable binding на время выполнения lambda через `where(KEY, val).run()`; в отличие от `ThreadLocal`, нет утечек при virtual threads, нет неявного наследования, а propagation в `StructuredTaskScope` явное.",
+              "correct": true,
               "sections": {
-                "what_actually": "`ScopedValue` использует stack-based binding по фрейму вызова, а не map по thread; это снимает утечки и неконтролируемый размер.",
-                "source_of_confusion": "`ThreadLocal` хранит данные в map по потоку, и эту модель приписывают `ScopedValue`.",
-                "if_it_were_true": "Тогда у миллиона virtual threads рос бы storage линейно, но binding живёт только на время вызова.",
-                "how_it_should_be": "Значение `ScopedValue` существует в пределах stack-кадра `run()` и исчезает при выходе из scope."
+                "explanation": "`ScopedValue` использует stack-based binding по фрейму вызова, что решает проблему `ThreadLocal` storage у миллиона virtual threads и даёт ясную область видимости.",
+                "example": "Распространение `RequestId`/`TenantId` в Spring-контроллере через virtual thread + `StructuredTaskScope` без ThreadLocal-leak.",
+                "when_to_apply": "Применяй для request-scoped данных (user, requestId, tenantId) в приложениях на virtual threads вместо `ThreadLocal`.",
+                "edge_cases": "API не имеет `set`/`remove`: значение неизменяемо внутри `where(...).run()`; чтение незаданного `ScopedValue` бросает `NoSuchElementException`, наличие проверяют `isBound()`.",
+                "related": "[[java-17-21-interview#Q15]] что такое virtual threads; [[java-17-21-interview#Q21]] structured concurrency."
               },
               "label": "B",
               "order": 1
@@ -1425,14 +1426,13 @@
               "order": 2
             },
             {
-              "text": "`ScopedValue` (JEP, preview в Java 21) — immutable binding на время выполнения lambda через `where(KEY, val).run()`; в отличие от `ThreadLocal`, нет утечек при virtual threads, нет неявного наследования, а propagation в `StructuredTaskScope` явное.",
-              "correct": true,
+              "text": "`ScopedValue` хранит данные в heap-таблице по `Thread.currentThread()` — идентично `ThreadLocal`.",
+              "correct": false,
               "sections": {
-                "explanation": "`ScopedValue` использует stack-based binding по фрейму вызова, что решает проблему `ThreadLocal` storage у миллиона virtual threads и даёт ясную область видимости.",
-                "example": "Распространение `RequestId`/`TenantId` в Spring-контроллере через virtual thread + `StructuredTaskScope` без ThreadLocal-leak.",
-                "when_to_apply": "Применяй для request-scoped данных (user, requestId, tenantId) в приложениях на virtual threads вместо `ThreadLocal`.",
-                "edge_cases": "API не имеет `set`/`remove`: значение неизменяемо внутри `where(...).run()`; чтение незаданного `ScopedValue` бросает `NoSuchElementException`, наличие проверяют `isBound()`.",
-                "related": "[[java-17-21-interview#Q15]] что такое virtual threads; [[java-17-21-interview#Q21]] structured concurrency."
+                "what_actually": "`ScopedValue` использует stack-based binding по фрейму вызова, а не map по thread; это снимает утечки и неконтролируемый размер.",
+                "source_of_confusion": "`ThreadLocal` хранит данные в map по потоку, и эту модель приписывают `ScopedValue`.",
+                "if_it_were_true": "Тогда у миллиона virtual threads рос бы storage линейно, но binding живёт только на время вызова.",
+                "how_it_should_be": "Значение `ScopedValue` существует в пределах stack-кадра `run()` и исчезает при выходе из scope."
               },
               "label": "D",
               "order": 3
@@ -1449,29 +1449,16 @@
           "question_text": "(!) Что такое Sequenced Collections?",
           "options": [
             {
-              "text": "Sequenced Collections (JEP 431, Java 21, stable) — три новых интерфейса (`SequencedCollection`, `SequencedSet`, `SequencedMap`), унифицирующие доступ к first/last/reversed для упорядоченных коллекций (`List`, `Deque`, `LinkedHashSet`, `LinkedHashMap`).",
-              "correct": true,
+              "text": "Sequenced Collections — это immutable-обёртки над `List`, аналог `List.copyOf()`.",
+              "correct": false,
               "sections": {
-                "explanation": "До Java 21 не было общего абстрактного типа «упорядоченная коллекция» — приходилось писать разный код для `LinkedHashSet` и `Deque`, а у `LinkedHashSet` последний элемент вообще получался только итерацией.",
-                "example": "Универсальный обработчик «взять последний элемент» работает одинаково для `List`, `Deque` и `LinkedHashSet` через `seq.getLast()`.",
-                "when_to_apply": "Применяй для обобщённого доступа к первому/последнему элементу в Spring Cache и при обработке LRU-эвикций.",
-                "edge_cases": "Это интерфейсы, добавленные к существующим коллекциям, а не новые классы; `ArrayList`/`LinkedHashSet` реализуют их без замены, а mutability зависит от реализации.",
-                "related": "[[java-17-21-interview#Q26]] методы SequencedCollection; [[java-17-21-interview#Q29]] улучшения API коллекций."
+                "what_actually": "Sequenced — это интерфейсы, а не immutable-обёртки; mutability определяется конкретной реализацией.",
+                "source_of_confusion": "Появление новых интерфейсов смешивают с фабриками неизменяемых коллекций.",
+                "if_it_were_true": "Тогда `addFirst()` всегда бросал бы `UnsupportedOperationException`, но на mutable-списке он изменяет коллекцию.",
+                "how_it_should_be": "Sequenced-интерфейсы описывают порядок, а изменяемость зависит от реализации, а не от самого интерфейса."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Sequenced Collections — это новые классы-коллекции, заменяющие `ArrayList` и `LinkedList`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это новые интерфейсы, добавленные к существующим коллекциям; `ArrayList`/`LinkedHashSet` сами реализуют их без замены.",
-                "source_of_confusion": "Новую функциональность ожидают увидеть в виде новых классов, а не интерфейсов поверх старых.",
-                "if_it_were_true": "Тогда пришлось бы мигрировать `ArrayList` на класс `SequencedList`, но такого класса не существует.",
-                "how_it_should_be": "Sequenced Collections — это интерфейсы-надстройки, и существующие коллекции получают их методы без замены типа."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Sequenced Collections доступны только начиная с Java 24 — в Java 21 это ещё preview.",
@@ -1482,17 +1469,30 @@
                 "if_it_were_true": "Тогда `list.getLast()` требовал бы `--enable-preview`, но он работает в обычной сборке Java 21.",
                 "how_it_should_be": "API доступен в Java 21 без preview-флагов, и `getLast()` можно использовать сразу."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Sequenced Collections — это новые классы-коллекции, заменяющие `ArrayList` и `LinkedList`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это новые интерфейсы, добавленные к существующим коллекциям; `ArrayList`/`LinkedHashSet` сами реализуют их без замены.",
+                "source_of_confusion": "Новую функциональность ожидают увидеть в виде новых классов, а не интерфейсов поверх старых.",
+                "if_it_were_true": "Тогда пришлось бы мигрировать `ArrayList` на класс `SequencedList`, но такого класса не существует.",
+                "how_it_should_be": "Sequenced Collections — это интерфейсы-надстройки, и существующие коллекции получают их методы без замены типа."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Sequenced Collections — это immutable-обёртки над `List`, аналог `List.copyOf()`.",
-              "correct": false,
+              "text": "Sequenced Collections (JEP 431, Java 21, stable) — три новых интерфейса (`SequencedCollection`, `SequencedSet`, `SequencedMap`), унифицирующие доступ к first/last/reversed для упорядоченных коллекций (`List`, `Deque`, `LinkedHashSet`, `LinkedHashMap`).",
+              "correct": true,
               "sections": {
-                "what_actually": "Sequenced — это интерфейсы, а не immutable-обёртки; mutability определяется конкретной реализацией.",
-                "source_of_confusion": "Появление новых интерфейсов смешивают с фабриками неизменяемых коллекций.",
-                "if_it_were_true": "Тогда `addFirst()` всегда бросал бы `UnsupportedOperationException`, но на mutable-списке он изменяет коллекцию.",
-                "how_it_should_be": "Sequenced-интерфейсы описывают порядок, а изменяемость зависит от реализации, а не от самого интерфейса."
+                "explanation": "До Java 21 не было общего абстрактного типа «упорядоченная коллекция» — приходилось писать разный код для `LinkedHashSet` и `Deque`, а у `LinkedHashSet` последний элемент вообще получался только итерацией.",
+                "example": "Универсальный обработчик «взять последний элемент» работает одинаково для `List`, `Deque` и `LinkedHashSet` через `seq.getLast()`.",
+                "when_to_apply": "Применяй для обобщённого доступа к первому/последнему элементу в Spring Cache и при обработке LRU-эвикций.",
+                "edge_cases": "Это интерфейсы, добавленные к существующим коллекциям, а не новые классы; `ArrayList`/`LinkedHashSet` реализуют их без замены, а mutability зависит от реализации.",
+                "related": "[[java-17-21-interview#Q26]] методы SequencedCollection; [[java-17-21-interview#Q29]] улучшения API коллекций."
               },
               "label": "D",
               "order": 3
@@ -1509,18 +1509,6 @@
           "question_text": "Какие методы добавляет интерфейс SequencedCollection?",
           "options": [
             {
-              "text": "`reversed()` создаёт полную копию `LinkedHashMap` в обратном порядке.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`reversed()` возвращает view, а не копию; изменения в оригинале видны через reversed и наоборот.",
-                "source_of_confusion": "«Перевёрнутая коллекция» интуитивно воспринимается как отдельный новый объект.",
-                "if_it_were_true": "Тогда правка оригинала не отражалась бы в reversed, но они разделяют одни и те же данные.",
-                "how_it_should_be": "`reversed()` — это lazy-view на исходную коллекцию, синхронизированный с ней по содержимому."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Java 21 добавила `SequencedMap` и `SequencedCollection` с методами доступа к краям: `firstEntry()`, `lastEntry()`, `getFirst()`, `getLast()`, `reversed()`, `addFirst()`, `addLast()`, `putFirst()`, `pollLastEntry()`. `reversed()` возвращает view, а не копию.",
               "correct": true,
               "sections": {
@@ -1530,20 +1518,20 @@
                 "edge_cases": "`reversed()` возвращает view: изменения в оригинале видны через reversed и наоборот; `putFirst()` всегда вставляет/перемещает элемент в начало, не проверяя размер.",
                 "related": "[[java-17-21-interview#Q25]] что такое Sequenced Collections; [[java-17-21-interview#Q38]] SequencedCollection и SequencedMap."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
-              "text": "`SequencedMap` доступна с Java 8 через `Collections.synchronizedSortedMap()`.",
+              "text": "`reversed()` создаёт полную копию `LinkedHashMap` в обратном порядке.",
               "correct": false,
               "sections": {
-                "what_actually": "Интерфейсы `SequencedCollection`/`SequencedMap` добавлены в Java 21 (JEP 431); в Java 8 их нет.",
-                "source_of_confusion": "Старые утилиты `Collections` тоже работают с упорядоченными мапами, и их путают с новым API.",
-                "if_it_were_true": "Тогда `map.firstEntry()` через Sequenced-API работал бы на Java 8, но там этого интерфейса нет.",
-                "how_it_should_be": "Sequenced-методы появились только в Java 21, а в Java 8 порядок получают через специфичные API коллекций."
+                "what_actually": "`reversed()` возвращает view, а не копию; изменения в оригинале видны через reversed и наоборот.",
+                "source_of_confusion": "«Перевёрнутая коллекция» интуитивно воспринимается как отдельный новый объект.",
+                "if_it_were_true": "Тогда правка оригинала не отражалась бы в reversed, но они разделяют одни и те же данные.",
+                "how_it_should_be": "`reversed()` — это lazy-view на исходную коллекцию, синхронизированный с ней по содержимому."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`putFirst()` работает только если map пуста; иначе бросает `IllegalStateException`.",
@@ -1553,6 +1541,18 @@
                 "source_of_confusion": "«В начало» воспринимают как операцию, осмысленную только для пустой коллекции.",
                 "if_it_were_true": "Тогда `putFirst()` на непустой map падал бы, но он спокойно перемещает ключ в начало порядка.",
                 "how_it_should_be": "`putFirst()` помещает запись в начало независимо от текущего размера map."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`SequencedMap` доступна с Java 8 через `Collections.synchronizedSortedMap()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Интерфейсы `SequencedCollection`/`SequencedMap` добавлены в Java 21 (JEP 431); в Java 8 их нет.",
+                "source_of_confusion": "Старые утилиты `Collections` тоже работают с упорядоченными мапами, и их путают с новым API.",
+                "if_it_were_true": "Тогда `map.firstEntry()` через Sequenced-API работал бы на Java 8, но там этого интерфейса нет.",
+                "how_it_should_be": "Sequenced-методы появились только в Java 21, а в Java 8 порядок получают через специфичные API коллекций."
               },
               "label": "D",
               "order": 3
@@ -1569,6 +1569,18 @@
           "question_text": "Что такое String Templates?",
           "options": [
             {
+              "text": "String Templates полностью заменяют `StringBuilder` и `MessageFormat` в Java 21+.",
+              "correct": false,
+              "sections": {
+                "what_actually": "String Templates были экспериментальными и убраны; `StringBuilder` и `MessageFormat` по-прежнему актуальны.",
+                "source_of_confusion": "Новый синтаксис интерполяции кажется универсальной заменой старым средствам сборки строк.",
+                "if_it_were_true": "Тогда `StringBuilder` устарел бы, но он остаётся основным инструментом эффективной конкатенации.",
+                "how_it_should_be": "`StringBuilder` и `MessageFormat` продолжают использоваться, а String Templates были временным preview."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "String Templates (`STR.\"...\"`) стабильны с Java 21 и доступны в Java 23+.",
               "correct": false,
               "sections": {
@@ -1577,8 +1589,8 @@
                 "if_it_were_true": "Тогда `STR.\"Hello \\{name}\"` собирался бы на Java 23, но компилятор там его уже не понимает.",
                 "how_it_should_be": "В Java 21-22 это была preview-фича, а в Java 23+ её нет — нужен `String.formatted()`."
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Процессоры `FMT` и `RAW` не существовали — был доступен только `STR`.",
@@ -1589,8 +1601,8 @@
                 "if_it_were_true": "Тогда `FMT.\"Pi ≈ %.4f\\{pi}\"` был бы невалиден, но он работал в preview-версиях.",
                 "how_it_should_be": "Кроме `STR` существовали `FMT` и `RAW`, дающие форматирование и доступ к fragments/values."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "String Templates (JEP 430, preview в Java 21-22) — механизм интерполяции через `STR.\"...\\{expr}...\"`; они были удалены в Java 23 как неудачный эксперимент. Текущая рекомендация — `\"Hello, %s\".formatted(name)`.",
@@ -1601,18 +1613,6 @@
                 "when_to_apply": "Применяй `String.formatted()` для интерполяции и text blocks для многострочных шаблонов; код с `STR.` не следует писать для Java 23+.",
                 "edge_cases": "Код с `STR.` не компилируется в Java 23+, так как JEP 465 убрал фичу; `StringBuilder` и `MessageFormat` остаются актуальными.",
                 "related": "[[java-17-21-interview#Q13]] text blocks; [[java-17-21-interview#Q41]] String Templates (детали)."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "String Templates полностью заменяют `StringBuilder` и `MessageFormat` в Java 21+.",
-              "correct": false,
-              "sections": {
-                "what_actually": "String Templates были экспериментальными и убраны; `StringBuilder` и `MessageFormat` по-прежнему актуальны.",
-                "source_of_confusion": "Новый синтаксис интерполяции кажется универсальной заменой старым средствам сборки строк.",
-                "if_it_were_true": "Тогда `StringBuilder` устарел бы, но он остаётся основным инструментом эффективной конкатенации.",
-                "how_it_should_be": "`StringBuilder` и `MessageFormat` продолжают использоваться, а String Templates были временным preview."
               },
               "label": "D",
               "order": 3
@@ -1629,6 +1629,18 @@
           "question_text": "Что такое Foreign Function & Memory API?",
           "options": [
             {
+              "text": "FFM API доступен только в Java 21 preview; в Java 22 его убрали, как String Templates.",
+              "correct": false,
+              "sections": {
+                "what_actually": "FFM API (JEP 454) стал stable в Java 22; в отличие от String Templates он не был удалён.",
+                "source_of_confusion": "Несколько preview-фич Java 21 действительно отозвали, и это распространяют на FFM.",
+                "if_it_were_true": "Тогда в Java 22 не было бы `java.lang.foreign`, но пакет там стабилен и поддерживается.",
+                "how_it_should_be": "FFM API закрепился как стабильный в Java 22 и остаётся официальной заменой JNI."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "FFM API — просто ещё одна обёртка над JNI без принципиальных преимуществ.",
               "correct": false,
               "sections": {
@@ -1637,8 +1649,8 @@
                 "if_it_were_true": "Тогда для FFM по-прежнему нужны были бы header-файлы и C-реализации, но он обходится без них.",
                 "how_it_should_be": "FFM — это самостоятельный безопасный API без C-glue, а не тонкая надстройка над JNI."
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`MemorySegment` предназначен только для работы с файлами через mmap.",
@@ -1648,18 +1660,6 @@
                 "source_of_confusion": "Связь с памятью и файлами через mmap создаёт впечатление узкой специализации.",
                 "if_it_were_true": "Тогда off-heap буфер нельзя было бы выделить через `Arena`, но это один из основных сценариев.",
                 "how_it_should_be": "`MemorySegment` универсален: он описывает off-heap буферы, native-память и mmapped-файлы одинаково."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "FFM API доступен только в Java 21 preview; в Java 22 его убрали, как String Templates.",
-              "correct": false,
-              "sections": {
-                "what_actually": "FFM API (JEP 454) стал stable в Java 22; в отличие от String Templates он не был удалён.",
-                "source_of_confusion": "Несколько preview-фич Java 21 действительно отозвали, и это распространяют на FFM.",
-                "if_it_were_true": "Тогда в Java 22 не было бы `java.lang.foreign`, но пакет там стабилен и поддерживается.",
-                "how_it_should_be": "FFM API закрепился как стабильный в Java 22 и остаётся официальной заменой JNI."
               },
               "label": "C",
               "order": 2
@@ -1689,29 +1689,16 @@
           "question_text": "Какие улучшения появились в API коллекций и утилитах?",
           "options": [
             {
-              "text": "Java 16+: `Stream.toList()` (unmodifiable), `mapMulti()`; Java 21: `HashMap.newHashMap(n)` (корректная ёмкость без rehashing), `Math.ceilDiv()`, Sequenced-Collections API. Это набор удобных дополнений к стандартной библиотеке.",
-              "correct": true,
+              "text": "`Math.ceilDiv()` доступен с Java 8 через `Math.ceil(a / (double) b)`.",
+              "correct": false,
               "sections": {
-                "explanation": "`Stream.toList()` возвращает неизменяемый список, `newHashMap(n)` задаёт правильную начальную ёмкость для n элементов, а `Math.ceilDiv()` делит с округлением вверх без потери точности.",
-                "example": "`var map = HashMap.newHashMap(100);` готовит мапу под 100 элементов без rehashing; `Math.ceilDiv(totalItems, pageSize)` считает число страниц.",
-                "when_to_apply": "Используй `toList()` вместо `collect(toUnmodifiableList())` и `newHashMap(n)` для избежания rehashing при известном размере.",
-                "edge_cases": "`Stream.toList()` возвращает unmodifiable-список — добавление бросит `UnsupportedOperationException`; `newHashMap(100)` не ставит лимит, а лишь начальную ёмкость.",
-                "related": "[[java-17-21-interview#Q26]] методы SequencedCollection; [[java-17-21-interview#Q25]] Sequenced Collections."
+                "what_actually": "`Math.ceilDiv(int, int)` добавлен в Java 18; `Math.ceil(a / (double) b)` работает через double и теряет точность на больших числах.",
+                "source_of_confusion": "Деление с округлением вверх давно делали вручную через double, и это считают эквивалентом.",
+                "if_it_were_true": "Тогда новый метод был бы избыточен, но целочисленный `ceilDiv` точнее для больших значений.",
+                "how_it_should_be": "`Math.ceilDiv()` появился в Java 18 и даёт точное целочисленное округление вверх без double."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "`Stream.toList()` в Java 16 возвращает `ArrayList` — тот же результат, что и `collect(toList())`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Stream.toList()` возвращает unmodifiable-список, тогда как `collect(toList())` даёт изменяемый `ArrayList`.",
-                "source_of_confusion": "Оба метода превращают стрим в список, и разницу в изменяемости упускают.",
-                "if_it_were_true": "Тогда `stream.toList().add(x)` работал бы, но он бросает `UnsupportedOperationException`.",
-                "how_it_should_be": "`toList()` даёт неизменяемый список; для изменяемого по-прежнему используют `collect(toList())`."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "`HashMap.newHashMap(100)` создаёт map с жёстким лимитом в 100 элементов.",
@@ -1722,17 +1709,30 @@
                 "if_it_were_true": "Тогда 101-й `put` падал бы с ошибкой, но map спокойно принимает больше элементов.",
                 "how_it_should_be": "`newHashMap(n)` оптимизирует начальную ёмкость под n элементов, не ограничивая итоговый размер."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Stream.toList()` в Java 16 возвращает `ArrayList` — тот же результат, что и `collect(toList())`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Stream.toList()` возвращает unmodifiable-список, тогда как `collect(toList())` даёт изменяемый `ArrayList`.",
+                "source_of_confusion": "Оба метода превращают стрим в список, и разницу в изменяемости упускают.",
+                "if_it_were_true": "Тогда `stream.toList().add(x)` работал бы, но он бросает `UnsupportedOperationException`.",
+                "how_it_should_be": "`toList()` даёт неизменяемый список; для изменяемого по-прежнему используют `collect(toList())`."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`Math.ceilDiv()` доступен с Java 8 через `Math.ceil(a / (double) b)`.",
-              "correct": false,
+              "text": "Java 16+: `Stream.toList()` (unmodifiable), `mapMulti()`; Java 21: `HashMap.newHashMap(n)` (корректная ёмкость без rehashing), `Math.ceilDiv()`, Sequenced-Collections API. Это набор удобных дополнений к стандартной библиотеке.",
+              "correct": true,
               "sections": {
-                "what_actually": "`Math.ceilDiv(int, int)` добавлен в Java 18; `Math.ceil(a / (double) b)` работает через double и теряет точность на больших числах.",
-                "source_of_confusion": "Деление с округлением вверх давно делали вручную через double, и это считают эквивалентом.",
-                "if_it_were_true": "Тогда новый метод был бы избыточен, но целочисленный `ceilDiv` точнее для больших значений.",
-                "how_it_should_be": "`Math.ceilDiv()` появился в Java 18 и даёт точное целочисленное округление вверх без double."
+                "explanation": "`Stream.toList()` возвращает неизменяемый список, `newHashMap(n)` задаёт правильную начальную ёмкость для n элементов, а `Math.ceilDiv()` делит с округлением вверх без потери точности.",
+                "example": "`var map = HashMap.newHashMap(100);` готовит мапу под 100 элементов без rehashing; `Math.ceilDiv(totalItems, pageSize)` считает число страниц.",
+                "when_to_apply": "Используй `toList()` вместо `collect(toUnmodifiableList())` и `newHashMap(n)` для избежания rehashing при известном размере.",
+                "edge_cases": "`Stream.toList()` возвращает unmodifiable-список — добавление бросит `UnsupportedOperationException`; `newHashMap(100)` не ставит лимит, а лишь начальную ёмкость.",
+                "related": "[[java-17-21-interview#Q26]] методы SequencedCollection; [[java-17-21-interview#Q25]] Sequenced Collections."
               },
               "label": "D",
               "order": 3
@@ -1749,18 +1749,6 @@
           "question_text": "Что такое сильная инкапсуляция внутренних API JDK?",
           "options": [
             {
-              "text": "Достаточно поднять JDK runtime — внутренние API JDK останутся доступны через рефлексию как раньше.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`--illegal-access=permit` удалён в Java 17, и рефлексия на `sun.misc.*` бросает `InaccessibleObjectException`.",
-                "source_of_confusion": "Раньше внутренние API были доступны «по умолчанию», и это ожидание сохраняется.",
-                "if_it_were_true": "Тогда старые библиотеки стартовали бы без флагов, но они падают на доступе к закрытым API.",
-                "how_it_should_be": "Для доступа к внутренним API нужен явный `--add-opens`, а лучше — миграция на публичные API."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "С Java 17 (JEP 403) включена сильная инкапсуляция: внутренние API (`sun.misc.*`, `com.sun.*`, `jdk.internal.*`) недоступны через рефлексию по умолчанию. Для legacy нужен явный `--add-opens`, а лучше — миграция на `VarHandle`/`MethodHandle`.",
               "correct": true,
               "sections": {
@@ -1770,20 +1758,20 @@
                 "edge_cases": "`--add-opens` указывается per-модуль; `sun.misc.Unsafe` инкапсулирован — вместо него берут `VarHandle` (read/write на разные memory orderings) или `MethodHandle`.",
                 "related": "[[java-17-21-interview#Q31]] стратегия миграции; [[java-17-21-interview#Q35]] отличия Java 17 и 21."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
-              "text": "`--add-opens` действует на весь classpath независимо от модуля — пишется один раз и забывается.",
+              "text": "Достаточно поднять JDK runtime — внутренние API JDK останутся доступны через рефлексию как раньше.",
               "correct": false,
               "sections": {
-                "what_actually": "`--add-opens` указывается per-модуль (`java.base/sun.nio.ch=ALL-UNNAMED`); забыв один модуль, получишь `InaccessibleObjectException`.",
-                "source_of_confusion": "Глобальные флаги JVM создают впечатление, что и `--add-opens` действует на всё сразу.",
-                "if_it_were_true": "Тогда одной строки хватало бы для любого внутреннего API, но каждый модуль открывают отдельно.",
-                "how_it_should_be": "Каждый нужный модуль/пакет открывают своим `--add-opens`, перечисляя их явно."
+                "what_actually": "`--illegal-access=permit` удалён в Java 17, и рефлексия на `sun.misc.*` бросает `InaccessibleObjectException`.",
+                "source_of_confusion": "Раньше внутренние API были доступны «по умолчанию», и это ожидание сохраняется.",
+                "if_it_were_true": "Тогда старые библиотеки стартовали бы без флагов, но они падают на доступе к закрытым API.",
+                "how_it_should_be": "Для доступа к внутренним API нужен явный `--add-opens`, а лучше — миграция на публичные API."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`sun.misc.Unsafe` можно использовать в Java 17 без флагов — он по-прежнему public API.",
@@ -1793,6 +1781,18 @@
                 "source_of_confusion": "`Unsafe` десятилетиями был доступен в обход модулей, и его считают стабильным public API.",
                 "if_it_were_true": "Тогда рефлексивный доступ к `Unsafe` работал бы свободно, но он закрыт сильной инкапсуляцией.",
                 "how_it_should_be": "Вместо `Unsafe` используют `VarHandle` для атомарных операций и `MethodHandle` для динамических вызовов."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`--add-opens` действует на весь classpath независимо от модуля — пишется один раз и забывается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`--add-opens` указывается per-модуль (`java.base/sun.nio.ch=ALL-UNNAMED`); забыв один модуль, получишь `InaccessibleObjectException`.",
+                "source_of_confusion": "Глобальные флаги JVM создают впечатление, что и `--add-opens` действует на всё сразу.",
+                "if_it_were_true": "Тогда одной строки хватало бы для любого внутреннего API, но каждый модуль открывают отдельно.",
+                "how_it_should_be": "Каждый нужный модуль/пакет открывают своим `--add-opens`, перечисляя их явно."
               },
               "label": "D",
               "order": 3
@@ -1809,28 +1809,16 @@
           "question_text": "(!) Какова стратегия миграции с Java 8/11 на Java 17/21?",
           "options": [
             {
-              "text": "Все `javax.*`-пакеты переименованы в `java.*` при миграции на Java 17+.",
+              "text": "Нельзя мигрировать напрямую с Java 11 на Java 21 — нужно проходить каждую промежуточную версию.",
               "correct": false,
               "sections": {
-                "what_actually": "`javax.*` → `jakarta.*` только для Jakarta EE (Spring Boot 3); стандартные `javax.crypto`, `javax.sql` в JDK остались в `javax.*`.",
-                "source_of_confusion": "Громкий переход `javax`→`jakarta` обобщают на все пакеты с префиксом `javax`.",
-                "if_it_were_true": "Тогда `javax.crypto.Cipher` стал бы `java.crypto.Cipher`, но этот пакет в JDK не переименовывали.",
-                "how_it_should_be": "Переименование затрагивает только Jakarta EE API, а `javax.*` из JDK остаются на месте."
+                "what_actually": "Можно мигрировать напрямую на любую LTS; прохождение промежуточных версий не обязательно.",
+                "source_of_confusion": "Аналогия с пошаговыми апгрейдами баз данных переносится на JDK.",
+                "if_it_were_true": "Тогда пришлось бы последовательно ставить 12, 13, ..., 20, но компилировать можно сразу под 21.",
+                "how_it_should_be": "С Java 11 переходят сразу на Java 21, минуя промежуточные не-LTS релизы."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Security Manager был убран в Java 21 — все его вызовы нужно удалить именно к Java 21.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Security Manager deprecated с Java 17 и удалён в Java 24 (не 21); в Java 21 он ещё присутствует с предупреждениями.",
-                "source_of_confusion": "Java 21 как свежий LTS считают версией, где «всё устаревшее уже удалено».",
-                "if_it_were_true": "Тогда код с `System.getSecurityManager()` не компилировался бы на Java 21, но он там ещё работает.",
-                "how_it_should_be": "Security Manager доживает в Java 21 с предупреждениями, а удаляют его в Java 24."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Шаги миграции: обновить зависимости → запустить тесты → ловить `InaccessibleObjectException` → добавить `--add-opens` → заменить `javax`→`jakarta` (если Jakarta EE) → убрать удалённые API (Nashorn, `finalize()`). Тесты первыми выявляют проблемы.",
@@ -1842,17 +1830,29 @@
                 "edge_cases": "`javax`→`jakarta` касается только Jakarta EE (Spring Boot 3); `javax.crypto`/`javax.sql` в JDK остались в `javax.*`. Мигрировать с Java 11 на 21 можно напрямую.",
                 "related": "[[java-17-21-interview#Q30]] инкапсуляция внутренних API; [[java-17-21-interview#Q35]] отличия Java 17 и 21."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Все `javax.*`-пакеты переименованы в `java.*` при миграции на Java 17+.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`javax.*` → `jakarta.*` только для Jakarta EE (Spring Boot 3); стандартные `javax.crypto`, `javax.sql` в JDK остались в `javax.*`.",
+                "source_of_confusion": "Громкий переход `javax`→`jakarta` обобщают на все пакеты с префиксом `javax`.",
+                "if_it_were_true": "Тогда `javax.crypto.Cipher` стал бы `java.crypto.Cipher`, но этот пакет в JDK не переименовывали.",
+                "how_it_should_be": "Переименование затрагивает только Jakarta EE API, а `javax.*` из JDK остаются на месте."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Нельзя мигрировать напрямую с Java 11 на Java 21 — нужно проходить каждую промежуточную версию.",
+              "text": "Security Manager был убран в Java 21 — все его вызовы нужно удалить именно к Java 21.",
               "correct": false,
               "sections": {
-                "what_actually": "Можно мигрировать напрямую на любую LTS; прохождение промежуточных версий не обязательно.",
-                "source_of_confusion": "Аналогия с пошаговыми апгрейдами баз данных переносится на JDK.",
-                "if_it_were_true": "Тогда пришлось бы последовательно ставить 12, 13, ..., 20, но компилировать можно сразу под 21.",
-                "how_it_should_be": "С Java 11 переходят сразу на Java 21, минуя промежуточные не-LTS релизы."
+                "what_actually": "Security Manager deprecated с Java 17 и удалён в Java 24 (не 21); в Java 21 он ещё присутствует с предупреждениями.",
+                "source_of_confusion": "Java 21 как свежий LTS считают версией, где «всё устаревшее уже удалено».",
+                "if_it_were_true": "Тогда код с `System.getSecurityManager()` не компилировался бы на Java 21, но он там ещё работает.",
+                "how_it_should_be": "Security Manager доживает в Java 21 с предупреждениями, а удаляют его в Java 24."
               },
               "label": "D",
               "order": 3
@@ -1893,18 +1893,6 @@
               "order": 1
             },
             {
-              "text": "`RandomGeneratorFactory` нельзя использовать для перечисления алгоритмов — нужен `ServiceLoader`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`RandomGeneratorFactory.all()` специально предназначен для перечисления доступных алгоритмов PRNG; `ServiceLoader` не нужен.",
-                "source_of_confusion": "Перечисление провайдеров привычно делать через `ServiceLoader`, и это переносят на PRNG.",
-                "if_it_were_true": "Тогда список алгоритмов получался бы только через SPI, но `RandomGeneratorFactory.all()` отдаёт его напрямую.",
-                "how_it_should_be": "Алгоритмы перечисляют через `RandomGeneratorFactory.all()`, а не через `ServiceLoader`."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "Enhanced PRNG (JEP 356, Java 17): интерфейс `RandomGenerator` объединяет все генераторы псевдослучайных чисел; добавлены алгоритмы вроде `Xoshiro256PlusPlus` и `L128X256MixRandom`, а `JumpableGenerator` нужен для параллельных симуляций. Старый `Random` теперь реализует `RandomGenerator`.",
               "correct": true,
               "sections": {
@@ -1913,6 +1901,18 @@
                 "when_to_apply": "Бери `JumpableGenerator` для параллельных Monte Carlo симуляций, `Xoshiro` для скорости и `SecureRandom` для криптографии.",
                 "edge_cases": "`java.util.Random` не deprecated — он реализует `RandomGenerator`; PRNG не подходит для ключей/токенов, для них всегда `SecureRandom`.",
                 "related": "[[java-17-21-interview#Q21]] structured concurrency; [[java-17-21-interview#Q33]] улучшения NPE."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`RandomGeneratorFactory` нельзя использовать для перечисления алгоритмов — нужен `ServiceLoader`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RandomGeneratorFactory.all()` специально предназначен для перечисления доступных алгоритмов PRNG; `ServiceLoader` не нужен.",
+                "source_of_confusion": "Перечисление провайдеров привычно делать через `ServiceLoader`, и это переносят на PRNG.",
+                "if_it_were_true": "Тогда список алгоритмов получался бы только через SPI, но `RandomGeneratorFactory.all()` отдаёт его напрямую.",
+                "how_it_should_be": "Алгоритмы перечисляют через `RandomGeneratorFactory.all()`, а не через `ServiceLoader`."
               },
               "label": "D",
               "order": 3
@@ -1929,14 +1929,13 @@
           "question_text": "Какие улучшения получил NullPointerException?",
           "options": [
             {
-              "text": "Helpful NullPointerExceptions (JEP 358, по умолчанию с Java 17) печатают цепочку вида `Cannot invoke \"X\" because the return value of \"Y\" is null`: JVM анализирует bytecode фрейма, чтобы указать точную позицию null в выражении.",
-              "correct": true,
+              "text": "Helpful NPE можно отключить только пересборкой JVM из исходников.",
+              "correct": false,
               "sections": {
-                "explanation": "Сообщение строится по анализу bytecode, поэтому называет метод/поле, давшее null, в длинной цепочке вызовов без ручного `Objects.requireNonNull` на каждом звене.",
-                "example": "`user.getAddress().getCity().toUpperCase()` теперь даёт `Cannot invoke \"Address.getCity()\" because the return value of \"User.getAddress()\" is null`.",
-                "when_to_apply": "Помогает в production-логах без дебаггера при диагностике chained-вызовов в обработке ответов API.",
-                "edge_cases": "Анализ идёт по bytecode, не по локальным именам — JVM не выводит имя переменной; фичу можно отключить флагом `-XX:-ShowCodeDetailsInExceptionMessages`.",
-                "related": "[[java-17-21-interview#Q34]] Compact Number Formatting; [[java-17-21-interview#Q31]] стратегия миграции."
+                "what_actually": "Фичу выключают одной опцией `-XX:-ShowCodeDetailsInExceptionMessages`, без всякой пересборки JVM.",
+                "source_of_confusion": "Кажется, что встроенное поведение JVM нельзя изменить без модификации самой JVM.",
+                "if_it_were_true": "Тогда legacy-системам с custom-парсингом стектрейсов пришлось бы собирать свой JDK, но достаточно флага.",
+                "how_it_should_be": "Helpful NPE отключают флагом `-XX:-ShowCodeDetailsInExceptionMessages` при запуске JVM."
               },
               "label": "A",
               "order": 0
@@ -1954,6 +1953,19 @@
               "order": 1
             },
             {
+              "text": "Helpful NullPointerExceptions (JEP 358, по умолчанию с Java 17) печатают цепочку вида `Cannot invoke \"X\" because the return value of \"Y\" is null`: JVM анализирует bytecode фрейма, чтобы указать точную позицию null в выражении.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сообщение строится по анализу bytecode, поэтому называет метод/поле, давшее null, в длинной цепочке вызовов без ручного `Objects.requireNonNull` на каждом звене.",
+                "example": "`user.getAddress().getCity().toUpperCase()` теперь даёт `Cannot invoke \"Address.getCity()\" because the return value of \"User.getAddress()\" is null`.",
+                "when_to_apply": "Помогает в production-логах без дебаггера при диагностике chained-вызовов в обработке ответов API.",
+                "edge_cases": "Анализ идёт по bytecode, не по локальным именам — JVM не выводит имя переменной; фичу можно отключить флагом `-XX:-ShowCodeDetailsInExceptionMessages`.",
+                "related": "[[java-17-21-interview#Q34]] Compact Number Formatting; [[java-17-21-interview#Q31]] стратегия миграции."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
               "text": "Helpful NPE требует флаг `-XX:+ShowCodeDetailsInExceptionMessages` в Java 17+.",
               "correct": false,
               "sections": {
@@ -1961,18 +1973,6 @@
                 "source_of_confusion": "В первых версиях фича была за флагом, и это требование считают актуальным.",
                 "if_it_were_true": "Тогда без флага NPE печатал бы только класс исключения, но детальное сообщение появляется само.",
                 "how_it_should_be": "В Java 17 helpful NPE активны по умолчанию, и явный флаг лишь раздувает `JAVA_OPTS`."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Helpful NPE можно отключить только пересборкой JVM из исходников.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Фичу выключают одной опцией `-XX:-ShowCodeDetailsInExceptionMessages`, без всякой пересборки JVM.",
-                "source_of_confusion": "Кажется, что встроенное поведение JVM нельзя изменить без модификации самой JVM.",
-                "if_it_were_true": "Тогда legacy-системам с custom-парсингом стектрейсов пришлось бы собирать свой JDK, но достаточно флага.",
-                "how_it_should_be": "Helpful NPE отключают флагом `-XX:-ShowCodeDetailsInExceptionMessages` при запуске JVM."
               },
               "label": "D",
               "order": 3
@@ -1989,13 +1989,13 @@
           "question_text": "Что такое Compact Number Formatting?",
           "options": [
             {
-              "text": "Compact Number Formatting работает только для английской локали и не поддерживает суффиксы других языков.",
+              "text": "Compact Number Formatting поддерживает единственный стиль и не различает короткую и длинную формы.",
               "correct": false,
               "sections": {
-                "what_actually": "Формат учитывает локаль: для `Locale.of(\"ru\")` он выдаёт `\"1 млн\"`, а не английское `\"1M\"`.",
-                "source_of_confusion": "Примеры обычно показывают `Locale.US`, и поддержку других языков упускают.",
-                "if_it_were_true": "Тогда русская локаль давала бы `\"1M\"`, но `getCompactNumberInstance(Locale.of(\"ru\"), ...)` возвращает `\"1 млн\"`.",
-                "how_it_should_be": "Compact-формат локализует суффиксы под язык пользователя, включая русские `млн`/`млрд`."
+                "what_actually": "Формат принимает `NumberFormat.Style.SHORT` и `LONG`, давая компактную (`1M`) или развёрнутую форму.",
+                "source_of_confusion": "Кажется, что «компактный формат» по определению имеет только одну, короткую форму.",
+                "if_it_were_true": "Тогда параметр `Style` был бы бессмысленным, но он переключает между короткой и длинной записью.",
+                "how_it_should_be": "Стиль `SHORT`/`LONG` выбирает между `\"1M\"` и развёрнутой формулировкой числа."
               },
               "label": "A",
               "order": 0
@@ -2014,6 +2014,18 @@
               "order": 1
             },
             {
+              "text": "Compact Number Formatting работает только для английской локали и не поддерживает суффиксы других языков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Формат учитывает локаль: для `Locale.of(\"ru\")` он выдаёт `\"1 млн\"`, а не английское `\"1M\"`.",
+                "source_of_confusion": "Примеры обычно показывают `Locale.US`, и поддержку других языков упускают.",
+                "if_it_were_true": "Тогда русская локаль давала бы `\"1M\"`, но `getCompactNumberInstance(Locale.of(\"ru\"), ...)` возвращает `\"1 млн\"`.",
+                "how_it_should_be": "Compact-формат локализует суффиксы под язык пользователя, включая русские `млн`/`млрд`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
               "text": "Compact Number Formatting округляет всегда до целого и не умеет показывать дробную часть вроде `1.5K`.",
               "correct": false,
               "sections": {
@@ -2021,18 +2033,6 @@
                 "source_of_confusion": "Слово «compact» воспринимают как «обязательно до целого без дробей».",
                 "if_it_were_true": "Тогда `1_500` всегда давал бы `\"2K\"` или `\"1K\"`, но с одним дробным знаком получается `\"1.5K\"`.",
                 "how_it_should_be": "Точность управляется `maximumFractionDigits`, поэтому компактный формат может показывать `1.5K`."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Compact Number Formatting поддерживает единственный стиль и не различает короткую и длинную формы.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Формат принимает `NumberFormat.Style.SHORT` и `LONG`, давая компактную (`1M`) или развёрнутую форму.",
-                "source_of_confusion": "Кажется, что «компактный формат» по определению имеет только одну, короткую форму.",
-                "if_it_were_true": "Тогда параметр `Style` был бы бессмысленным, но он переключает между короткой и длинной записью.",
-                "how_it_should_be": "Стиль `SHORT`/`LONG` выбирает между `\"1M\"` и развёрнутой формулировкой числа."
               },
               "label": "D",
               "order": 3
@@ -2049,18 +2049,6 @@
           "question_text": "(!) Какие ключевые отличия между Java 17 и Java 21?",
           "options": [
             {
-              "text": "Java 21 LTS полностью заменяет Java 17 — использовать Java 17 для новых проектов не стоит.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Java 17 поддерживается до 2029, и некоторые фреймворки/библиотеки ещё не полностью совместимы с Java 21.",
-                "source_of_confusion": "Каждый новый LTS воспринимают как немедленную замену предыдущего во всех случаях.",
-                "if_it_were_true": "Тогда Java 17 сразу перестала бы получать обновления, но её поддержка длится до 2029.",
-                "how_it_should_be": "Java 17 остаётся валидным выбором при неготовых зависимостях, хотя для новых проектов предпочтительна 21."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Virtual Threads появились в Java 17 как стабильная фича.",
               "correct": false,
               "sections": {
@@ -2069,8 +2057,8 @@
                 "if_it_were_true": "Тогда `Thread.startVirtualThread` работал бы на Java 17 без preview, но там его ещё нет в стабильном виде.",
                 "how_it_should_be": "Virtual Threads стали стабильными в Java 21, а Java 17 принесла стабильные records и sealed-классы."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Java 17 → 21: добавлены virtual threads (JEP 444), record patterns, switch pattern matching и sequenced collections. Java 17 — это релиз про систему типов (records, sealed, instanceof patterns), Java 21 — про конкурентность и завершение pattern matching.",
@@ -2081,6 +2069,18 @@
                 "when_to_apply": "Выбирай Java 21 для новых сервисов, а Java 17 — когда часть библиотек ещё не поддерживает 21 и нужна стабильная база.",
                 "edge_cases": "Java 17 поддерживается до 2029, поэтому не устарела; String Templates в Java 21 были preview и позже удалены, а FFM в 21 — ещё preview.",
                 "related": "[[java-17-21-interview#Q20]] virtual threads в Spring Boot; [[java-17-21-interview#Q9]] pattern matching для switch."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Java 21 LTS полностью заменяет Java 17 — использовать Java 17 для новых проектов не стоит.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Java 17 поддерживается до 2029, и некоторые фреймворки/библиотеки ещё не полностью совместимы с Java 21.",
+                "source_of_confusion": "Каждый новый LTS воспринимают как немедленную замену предыдущего во всех случаях.",
+                "if_it_were_true": "Тогда Java 17 сразу перестала бы получать обновления, но её поддержка длится до 2029.",
+                "how_it_should_be": "Java 17 остаётся валидным выбором при неготовых зависимостях, хотя для новых проектов предпочтительна 21."
               },
               "label": "C",
               "order": 2
@@ -2109,18 +2109,6 @@
           "question_text": "Virtual Threads: детали реализации, Continuation и Carrier Threads",
           "options": [
             {
-              "text": "`StructuredTaskScope` автоматически параллелизует все методы без изменений кода.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`StructuredTaskScope` требует явного `scope.fork()` для каждой задачи; существующий последовательный код надо рефакторить.",
-                "source_of_confusion": "Слова «structured concurrency» воспринимают как автоматическое распараллеливание.",
-                "if_it_were_true": "Тогда обычный последовательный метод сам стал бы параллельным, но без `fork` ничего не распараллеливается.",
-                "how_it_should_be": "Каждую параллельную ветку оформляют явным `scope.fork(...)`, и только так код становится конкурентным."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`ShutdownOnFailure` отменяет всё при первой ошибке, а `ShutdownOnSuccess` ждёт завершения всех задач.",
               "correct": false,
               "sections": {
@@ -2129,8 +2117,8 @@
                 "if_it_were_true": "Тогда `ShutdownOnSuccess` не давал бы выигрыша по latency, но он как раз обрывает остальные задачи по первому успеху.",
                 "how_it_should_be": "`ShutdownOnSuccess` останавливается на первом успехе, отменяя ещё работающие подзадачи."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`StructuredTaskScope` не позволяет получить результаты forked-задач.",
@@ -2140,6 +2128,18 @@
                 "source_of_confusion": "Акцент на отмене и lifecycle затмевает механизм получения результатов.",
                 "if_it_were_true": "Тогда параллельный fetch был бы бесполезен, но именно агрегация результатов — его основной смысл.",
                 "how_it_should_be": "Результаты подзадач читают через `subtask.get()` после `join()`, агрегируя их в итоговый объект."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`StructuredTaskScope` автоматически параллелизует все методы без изменений кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`StructuredTaskScope` требует явного `scope.fork()` для каждой задачи; существующий последовательный код надо рефакторить.",
+                "source_of_confusion": "Слова «structured concurrency» воспринимают как автоматическое распараллеливание.",
+                "if_it_were_true": "Тогда обычный последовательный метод сам стал бы параллельным, но без `fork` ничего не распараллеливается.",
+                "how_it_should_be": "Каждую параллельную ветку оформляют явным `scope.fork(...)`, и только так код становится конкурентным."
               },
               "label": "C",
               "order": 2
@@ -2254,18 +2254,6 @@
               "order": 1
             },
             {
-              "text": "`reversed()` создаёт новую копию коллекции в обратном порядке.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`reversed()` возвращает view; изменения в оригинале отражаются в reversed и наоборот, копия не создаётся.",
-                "source_of_confusion": "«Перевёрнутая коллекция» воспринимается как отдельный самостоятельный объект.",
-                "if_it_were_true": "Тогда правка оригинала не была бы видна через reversed, но они разделяют одни данные.",
-                "how_it_should_be": "`reversed()` — это lazy-view на исходную коллекцию, синхронизированный с её содержимым."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "`SequencedSet` включает `HashSet` и `TreeSet` как свои реализации.",
               "correct": false,
               "sections": {
@@ -2273,6 +2261,18 @@
                 "source_of_confusion": "`HashSet` — самый известный Set, и его машинально относят к любому Set-интерфейсу.",
                 "if_it_were_true": "Тогда `new HashSet<>().getFirst()` имел бы смысл, но у `HashSet` нет определённого порядка элементов.",
                 "how_it_should_be": "`SequencedSet` реализуют только сеты с порядком, а `HashSet` остаётся вне этой иерархии."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`reversed()` создаёт новую копию коллекции в обратном порядке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`reversed()` возвращает view; изменения в оригинале отражаются в reversed и наоборот, копия не создаётся.",
+                "source_of_confusion": "«Перевёрнутая коллекция» воспринимается как отдельный самостоятельный объект.",
+                "if_it_were_true": "Тогда правка оригинала не была бы видна через reversed, но они разделяют одни данные.",
+                "how_it_should_be": "`reversed()` — это lazy-view на исходную коллекцию, синхронизированный с её содержимым."
               },
               "label": "D",
               "order": 3
@@ -2289,30 +2289,6 @@
           "question_text": "Pattern Matching for switch: guards и exhaustiveness (Java 21)",
           "options": [
             {
-              "text": "Компилятор проверяет любую switch-expression на exhaustiveness, требуя `default` для всех типов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Exhaustiveness работает только для sealed-иерархий и `enum`; для произвольного `Object` или открытого интерфейса `default` обязателен.",
-                "source_of_confusion": "Опыт с Kotlin `when`, который строже, переносят на Java для любых типов.",
-                "if_it_were_true": "Тогда `switch (anyObject)` без `default` компилировался бы, но `Object`-ом может быть что угодно, и `default` нужен.",
-                "how_it_should_be": "Exhaustiveness без `default` доступна для закрытых наборов (sealed/enum), а для открытых типов `default` обязателен."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Pattern matching работает только в `switch`, а `instanceof` остался как в Java 8.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Pattern matching for `instanceof` появился раньше (Java 16): `if (obj instanceof Integer i)`; с Java 21 он поддерживает и record patterns.",
-                "source_of_confusion": "Pattern matching ассоциируют именно со `switch`, как в Scala/Kotlin.",
-                "if_it_were_true": "Тогда `if (obj instanceof Point(int x, int y))` не компилировался бы, но это валидный синтаксис.",
-                "how_it_should_be": "Pattern matching работает и в `instanceof`, и в `switch`; Java расширяла его поэтапно — 16, затем 21."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Sealed-иерархия фиксирует список подтипов на compile-time через `permits`; компилятор проверяет, что `switch` покрывает все варианты, и доказывает exhaustiveness без `default`. Для произвольных `Object`/открытых интерфейсов `default` обязателен.",
               "correct": true,
               "sections": {
@@ -2322,8 +2298,20 @@
                 "edge_cases": "Guard в `when` не учитывается в exhaustiveness; `null` без `case null` всё ещё даёт NPE даже при sealed; более общий паттерн раньше специфичного — ошибка dominance.",
                 "related": "[[java-17-21-interview#Q40]] record patterns; [[java-17-21-interview#Q9]] pattern matching для switch."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Компилятор проверяет любую switch-expression на exhaustiveness, требуя `default` для всех типов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Exhaustiveness работает только для sealed-иерархий и `enum`; для произвольного `Object` или открытого интерфейса `default` обязателен.",
+                "source_of_confusion": "Опыт с Kotlin `when`, который строже, переносят на Java для любых типов.",
+                "if_it_were_true": "Тогда `switch (anyObject)` без `default` компилировался бы, но `Object`-ом может быть что угодно, и `default` нужен.",
+                "how_it_should_be": "Exhaustiveness без `default` доступна для закрытых наборов (sealed/enum), а для открытых типов `default` обязателен."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Pattern Matching for switch — синтаксический сахар над if-else без bytecode-оптимизаций.",
@@ -2333,6 +2321,18 @@
                 "source_of_confusion": "Лаконичный синтаксис создаёт впечатление чистого сахара, как у diamond-оператора.",
                 "if_it_were_true": "Тогда на больших sealed-иерархиях switch был бы медленнее if-else, но бенчмарки показывают равную или лучшую скорость.",
                 "how_it_should_be": "JIT реально оптимизирует pattern matching через `invokedynamic` и type-profile, а не как простой if-else."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Pattern matching работает только в `switch`, а `instanceof` остался как в Java 8.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pattern matching for `instanceof` появился раньше (Java 16): `if (obj instanceof Integer i)`; с Java 21 он поддерживает и record patterns.",
+                "source_of_confusion": "Pattern matching ассоциируют именно со `switch`, как в Scala/Kotlin.",
+                "if_it_were_true": "Тогда `if (obj instanceof Point(int x, int y))` не компилировался бы, но это валидный синтаксис.",
+                "how_it_should_be": "Pattern matching работает и в `instanceof`, и в `switch`; Java расширяла его поэтапно — 16, затем 21."
               },
               "label": "D",
               "order": 3
@@ -2349,18 +2349,6 @@
           "question_text": "(!) Record Patterns: деконструкция в switch и instanceof",
           "options": [
             {
-              "text": "Record Patterns делают cast быстрее на JIT-уровне — это оптимизация bytecode.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Bytecode для record pattern и для `instanceof + getter()` практически идентичен после inlining; главное преимущество — type safety и читаемость, а не скорость.",
-                "source_of_confusion": "Новые синтаксические возможности часто связывают с производительностью.",
-                "if_it_were_true": "Тогда record patterns выбирали бы ради микро-оптимизаций, но их проектировали для expressiveness и корректности.",
-                "how_it_should_be": "Record patterns дают compile-time безопасность и компактность, а производительность остаётся прежней."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Record Patterns работают только в `switch`, а `if (obj instanceof Record(...))` не поддерживается.",
               "correct": false,
               "sections": {
@@ -2368,6 +2356,19 @@
                 "source_of_confusion": "Pattern matching for switch чаще показывают в туториалах, и решают, что record patterns только для switch.",
                 "if_it_were_true": "Тогда compact-деконструкция в одиночной проверке была бы невозможна, но `if (obj instanceof User(String name, _))` — частый паттерн.",
                 "how_it_should_be": "Record patterns доступны в обоих контекстах, расширяя pattern matching for instanceof из Java 16."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Record Patterns (JEP 440, Java 21) деконструируют record на компоненты прямо в паттерне; nested-паттерны плюс exhaustiveness-check позволяют компилятору гарантировать обработку всех вариантов без runtime cast-ошибок. Работают и в `instanceof`, и в `switch`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`obj instanceof ColoredPoint(Point(int x, int y), String color)` одновременно проверяет тип, рекурсивно деконструирует вложенный record и привязывает компоненты — без ручных cast и getter-вызовов.",
+                "example": "`switch (expr) { case Num(int v) -> v; case Add(Expr l, Expr r) -> eval(l) + eval(r); }` — functional-style pattern matching как в Scala/Haskell.",
+                "when_to_apply": "Применяй для AST/IR в compiler-like коде, domain-событий в event-sourced системах и рефакторинга цепочек instanceof.",
+                "edge_cases": "Тип компонента в nested-паттерне указывают явно (`Add(Expr l, Expr r)`); деконструировать можно только record, а `_` (unnamed pattern) игнорирует компонент.",
+                "related": "[[java-17-21-interview#Q39]] pattern matching for switch; [[java-17-21-interview#Q15]] что такое virtual threads."
               },
               "label": "B",
               "order": 1
@@ -2385,14 +2386,13 @@
               "order": 2
             },
             {
-              "text": "Record Patterns (JEP 440, Java 21) деконструируют record на компоненты прямо в паттерне; nested-паттерны плюс exhaustiveness-check позволяют компилятору гарантировать обработку всех вариантов без runtime cast-ошибок. Работают и в `instanceof`, и в `switch`.",
-              "correct": true,
+              "text": "Record Patterns делают cast быстрее на JIT-уровне — это оптимизация bytecode.",
+              "correct": false,
               "sections": {
-                "explanation": "`obj instanceof ColoredPoint(Point(int x, int y), String color)` одновременно проверяет тип, рекурсивно деконструирует вложенный record и привязывает компоненты — без ручных cast и getter-вызовов.",
-                "example": "`switch (expr) { case Num(int v) -> v; case Add(Expr l, Expr r) -> eval(l) + eval(r); }` — functional-style pattern matching как в Scala/Haskell.",
-                "when_to_apply": "Применяй для AST/IR в compiler-like коде, domain-событий в event-sourced системах и рефакторинга цепочек instanceof.",
-                "edge_cases": "Тип компонента в nested-паттерне указывают явно (`Add(Expr l, Expr r)`); деконструировать можно только record, а `_` (unnamed pattern) игнорирует компонент.",
-                "related": "[[java-17-21-interview#Q39]] pattern matching for switch; [[java-17-21-interview#Q15]] что такое virtual threads."
+                "what_actually": "Bytecode для record pattern и для `instanceof + getter()` практически идентичен после inlining; главное преимущество — type safety и читаемость, а не скорость.",
+                "source_of_confusion": "Новые синтаксические возможности часто связывают с производительностью.",
+                "if_it_were_true": "Тогда record patterns выбирали бы ради микро-оптимизаций, но их проектировали для expressiveness и корректности.",
+                "how_it_should_be": "Record patterns дают compile-time безопасность и компактность, а производительность остаётся прежней."
               },
               "label": "D",
               "order": 3
@@ -2409,29 +2409,16 @@
           "question_text": "String Templates (preview): StringTemplate.STR",
           "options": [
             {
-              "text": "String Templates (JEP 430, preview Java 21, удалены из Java 23) позволяют написать кастомный процессор (например `SQL.`), который видит `template.fragments()` и `template.values()` раздельно: fragments идут как SQL-текст, а values становятся bind-параметрами `PreparedStatement` — это безопасный SQL.",
-              "correct": true,
+              "text": "`STR` — это статический метод класса `String` для конкатенации строк.",
+              "correct": false,
               "sections": {
-                "explanation": "Ключевая идея — разделение fragments и values на уровне runtime API: процессор собирает результат безопасно, и values никогда не попадают в SQL-текст, что исключает injection.",
-                "example": "Процессор `SQL.\"SELECT * FROM users WHERE name = \\{evilInput}\"` даёт `WHERE name = ?` и связывает `evilInput` как параметр — `DROP TABLE` не срабатывает.",
-                "when_to_apply": "Применяй (там, где фича доступна) для типобезопасного SQL, HTML с escape, shell-команд и JSON-сериализации через кастомные процессоры.",
-                "edge_cases": "`STR` без кастомного процессора не безопаснее конкатенации; фича в preview (Java 21) и удалена из Java 23, поэтому требует `--enable-preview`, а позже отсутствует вовсе.",
-                "related": "[[java-17-21-interview#Q40]] record patterns; [[java-17-21-interview#Q27]] String Templates (обзор)."
+                "what_actually": "`STR` — это template processor, объект `StringTemplate.Processor`; синтаксис `STR.\"...\"` создаёт `StringTemplate` и вызывает `process()`.",
+                "source_of_confusion": "Имя `STR` в верхнем регистре выглядит как статическая константа или метод.",
+                "if_it_were_true": "Тогда можно было бы звать `STR.process(...)` напрямую, но единственный способ — template-литерал `STR.\"...\"`.",
+                "how_it_should_be": "`STR` — это процессор-объект, применяемый через специальный синтаксис template-литерала, а не метод `String`."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Процессор `STR` автоматически экранирует SQL-инъекции в любой подставляемой строке.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`STR` — простой интерполятор, он не делает escape для SQL/HTML/JSON; защита — задача кастомного процессора (`SQL`, `HTML`).",
-                "source_of_confusion": "Название «String Templates» ассоциируют с typed-шаблонизаторами вроде Mustache, где escape встроен.",
-                "if_it_were_true": "Тогда `STR.\"WHERE name = '\\{userName}'\"` был бы безопасен, но injection там остаётся, как при конкатенации.",
-                "how_it_should_be": "Безопасность обеспечивает кастомный процессор, разделяющий fragments и values, а `STR` сам по себе не защищает."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "`String.format` и String Templates делают одно и то же — `STR.\"...\"` это просто новый синтаксис.",
@@ -2442,17 +2429,30 @@
                 "if_it_were_true": "Тогда новая фича не имела бы смысла, но её ценность — в кастомных процессорах поверх structured-данных.",
                 "how_it_should_be": "`STR` — лишь простейший процессор; реальная сила — в доступе к fragments/values и собственных процессорах."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "String Templates (JEP 430, preview Java 21, удалены из Java 23) позволяют написать кастомный процессор (например `SQL.`), который видит `template.fragments()` и `template.values()` раздельно: fragments идут как SQL-текст, а values становятся bind-параметрами `PreparedStatement` — это безопасный SQL.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ключевая идея — разделение fragments и values на уровне runtime API: процессор собирает результат безопасно, и values никогда не попадают в SQL-текст, что исключает injection.",
+                "example": "Процессор `SQL.\"SELECT * FROM users WHERE name = \\{evilInput}\"` даёт `WHERE name = ?` и связывает `evilInput` как параметр — `DROP TABLE` не срабатывает.",
+                "when_to_apply": "Применяй (там, где фича доступна) для типобезопасного SQL, HTML с escape, shell-команд и JSON-сериализации через кастомные процессоры.",
+                "edge_cases": "`STR` без кастомного процессора не безопаснее конкатенации; фича в preview (Java 21) и удалена из Java 23, поэтому требует `--enable-preview`, а позже отсутствует вовсе.",
+                "related": "[[java-17-21-interview#Q40]] record patterns; [[java-17-21-interview#Q27]] String Templates (обзор)."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`STR` — это статический метод класса `String` для конкатенации строк.",
+              "text": "Процессор `STR` автоматически экранирует SQL-инъекции в любой подставляемой строке.",
               "correct": false,
               "sections": {
-                "what_actually": "`STR` — это template processor, объект `StringTemplate.Processor`; синтаксис `STR.\"...\"` создаёт `StringTemplate` и вызывает `process()`.",
-                "source_of_confusion": "Имя `STR` в верхнем регистре выглядит как статическая константа или метод.",
-                "if_it_were_true": "Тогда можно было бы звать `STR.process(...)` напрямую, но единственный способ — template-литерал `STR.\"...\"`.",
-                "how_it_should_be": "`STR` — это процессор-объект, применяемый через специальный синтаксис template-литерала, а не метод `String`."
+                "what_actually": "`STR` — простой интерполятор, он не делает escape для SQL/HTML/JSON; защита — задача кастомного процессора (`SQL`, `HTML`).",
+                "source_of_confusion": "Название «String Templates» ассоциируют с typed-шаблонизаторами вроде Mustache, где escape встроен.",
+                "if_it_were_true": "Тогда `STR.\"WHERE name = '\\{userName}'\"` был бы безопасен, но injection там остаётся, как при конкатенации.",
+                "how_it_should_be": "Безопасность обеспечивает кастомный процессор, разделяющий fragments и values, а `STR` сам по себе не защищает."
               },
               "label": "D",
               "order": 3
@@ -2469,18 +2469,6 @@
           "question_text": "Unnamed Classes и Instance Main Methods (preview)",
           "options": [
             {
-              "text": "Это просто синтаксический сахар: Hello World теперь можно писать без `class` и `static`, и в этом вся суть.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наблюдение верно, но неполно: реальная цель — снизить когнитивную нагрузку для новичков и поэтапно вводить OO-концепции (часть Project Amber).",
-                "source_of_confusion": "Любую новую синтаксическую возможность по привычке описывают как «просто сахар».",
-                "if_it_were_true": "Тогда фича сводилась бы к удалению ключевых слов, но дизайн затрагивает loading и method resolution.",
-                "how_it_should_be": "Это продуманное снижение порога входа с правилами выбора main-метода, а не косметика над синтаксисом."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "JEP 445/463 (Project Amber) уменьшает порог входа: можно писать `void main()` без `public class`, без `static` и без `args` — компилятор оборачивает код в unnamed top-level class. Фича в preview и требует `--enable-preview --source 21+`.",
               "correct": true,
               "sections": {
@@ -2490,8 +2478,8 @@
                 "edge_cases": "Работает только для top-level; `extends`/`implements` у unnamed class запрещены; приоритет main: `static main(String[])` > `static main()` > `main(String[])` > `main()`.",
                 "related": "[[java-17-21-interview#Q39]] pattern matching for switch; [[java-17-21-interview#Q40]] record patterns."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Unnamed Classes предназначены для embedded-систем с ограниченной памятью, так как убирают class overhead.",
@@ -2501,6 +2489,18 @@
                 "source_of_confusion": "Слово «unnamed» звучит как «нет объекта/класса», отсюда мысль про экономию памяти.",
                 "if_it_were_true": "Тогда фичу применяли бы для IoT/микроконтроллеров, но Java на embedded — отдельный target, независимый от Amber.",
                 "how_it_should_be": "Unnamed class — это про эргономику исходника, а runtime по-прежнему имеет обычный synthetic-класс."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Это просто синтаксический сахар: Hello World теперь можно писать без `class` и `static`, и в этом вся суть.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наблюдение верно, но неполно: реальная цель — снизить когнитивную нагрузку для новичков и поэтапно вводить OO-концепции (часть Project Amber).",
+                "source_of_confusion": "Любую новую синтаксическую возможность по привычке описывают как «просто сахар».",
+                "if_it_were_true": "Тогда фича сводилась бы к удалению ключевых слов, но дизайн затрагивает loading и method resolution.",
+                "how_it_should_be": "Это продуманное снижение порога входа с правилами выбора main-метода, а не косметика над синтаксисом."
               },
               "label": "C",
               "order": 2

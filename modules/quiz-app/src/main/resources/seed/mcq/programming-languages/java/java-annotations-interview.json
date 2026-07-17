@@ -11,6 +11,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Аннотация — это разновидность generic-параметра, ограничивающая тип во время компиляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Generics работают с системой типов (`<T extends X>`), а аннотации — с метаданными; это независимые механизмы, не подмножества друг друга.",
+                "source_of_confusion": "И дженерики, и аннотации задаются в угловых/квадратных скобках рядом с типом, что создаёт ложную связь.",
+                "if_it_were_true": "Тогда аннотация давала бы type-safety, но компилятор не ловит логические ошибки через `@MyAnnotation`, только дженерики через bounds.",
+                "how_it_should_be": "Для ограничения типов используют дженерики; аннотация лишь помечает элемент метаданными для внешнего читателя."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Аннотация — это специальный комментарий для `Javadoc` (как `@param`, `@return`), который игнорируется компилятором.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Javadoc`-теги живут только в `/** ... */` и читаются `javadoc`-тулом; настоящая аннотация — полноценный тип `@interface` с проверкой компилятора и runtime-доступом.",
+                "source_of_confusion": "И теги Javadoc, и аннотации начинаются с символа `@`, поэтому их путают как «разновидности комментариев».",
+                "if_it_were_true": "Тогда `Spring` не видел бы `@Component`, ведь комментарии не попадают в байт-код и недоступны рефлексии.",
+                "how_it_should_be": "Аннотация компилируется в тип и при `RUNTIME` доступна через `Reflection`; Javadoc-тег — только текст документации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Аннотация — механизм метапрограммирования, добавляющий метаданные к элементам кода (классам, методам, полям, параметрам) без изменения семантики программы; сама по себе она ничего не выполняет.",
               "correct": true,
               "sections": {
@@ -22,8 +46,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "Аннотация — это директива препроцессора, которая разворачивается в исходный код до компиляции байт-кода, как макрос в `C/C++`.",
               "correct": false,
               "sections": {
@@ -31,30 +55,6 @@
                 "source_of_confusion": "Внешнее сходство `@Annotation` с C-макросами и кодогенерация `Lombok` создают иллюзию «препроцессора».",
                 "if_it_were_true": "Тогда `@MyAnnotation` сама бы вставляла методы в место применения, но без процессора ничего не генерируется.",
                 "how_it_should_be": "Аннотация — это метаданные; кодогенерацию делает отдельный `Annotation Processor`, а не подстановка текста."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Аннотация — это специальный комментарий для `Javadoc` (как `@param`, `@return`), который игнорируется компилятором.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Javadoc`-теги живут только в `/** ... */` и читаются `javadoc`-тулом; настоящая аннотация — полноценный тип `@interface` с проверкой компилятора и runtime-доступом.",
-                "source_of_confusion": "И теги Javadoc, и аннотации начинаются с символа `@`, поэтому их путают как «разновидности комментариев».",
-                "if_it_were_true": "Тогда `Spring` не видел бы `@Component`, ведь комментарии не попадают в байт-код и недоступны рефлексии.",
-                "how_it_should_be": "Аннотация компилируется в тип и при `RUNTIME` доступна через `Reflection`; Javadoc-тег — только текст документации."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Аннотация — это разновидность generic-параметра, ограничивающая тип во время компиляции.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Generics работают с системой типов (`<T extends X>`), а аннотации — с метаданными; это независимые механизмы, не подмножества друг друга.",
-                "source_of_confusion": "И дженерики, и аннотации задаются в угловых/квадратных скобках рядом с типом, что создаёт ложную связь.",
-                "if_it_were_true": "Тогда аннотация давала бы type-safety, но компилятор не ловит логические ошибки через `@MyAnnotation`, только дженерики через bounds.",
-                "how_it_should_be": "Для ограничения типов используют дженерики; аннотация лишь помечает элемент метаданными для внешнего читателя."
               }
             }
           ]
@@ -71,31 +71,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Аннотация `@Override` имеет `RetentionPolicy.RUNTIME` и доступна через рефлексию.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@Override` имеет `RetentionPolicy.SOURCE`: существует только для проверки компилятором и в `.class` не попадает, через `Reflection` её не достать.",
-                "source_of_confusion": "`@Override` повсеместна и важна, поэтому кажется «полноценной runtime-аннотацией», как `@Deprecated`.",
-                "if_it_were_true": "Тогда `method.isAnnotationPresent(Override.class)` строил бы отчёт по переопределённым методам, но в runtime он всегда `false`.",
-                "how_it_should_be": "`@Override` — `SOURCE`-маркер для `javac`; для runtime-видимости нужен `RUNTIME`, как у `@Deprecated`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`@Deprecated` имеет `RetentionPolicy.RUNTIME` и с `Java 9` поддерживает атрибуты `since` и `forRemoval`; она видна компилятору, IDE и runtime-инструментам.",
-              "correct": true,
-              "sections": {
-                "explanation": "`@Deprecated` сохраняется в байт-коде (в отличие от `SOURCE`-аннотаций); JEP 277 (`Java 9`) добавил `since` (версия устаревания) и `forRemoval` (планируется удаление).",
-                "example": "При выводе из эксплуатации публичного API: `@Deprecated(since = \"11\", forRemoval = true)` плюс инструмент `jdeprscan` для поиска использований в зависимостях.",
-                "when_to_apply": "Помечают устаревший элемент при миграции API (`Spring 5 → 6`, `Jakarta EE`), чтобы компилятор и IDE предупреждали потребителей.",
-                "edge_cases": "В отличие от `@Deprecated`, аннотации `@Override` и `@SuppressWarnings` имеют `SOURCE` retention и через `Reflection` недоступны.",
-                "related": "[[java-annotations-interview#Q8]] как выбрать RetentionPolicy; [[java-annotations-interview#Q34]] @SafeVarargs и @FunctionalInterface; [[java-annotations-interview#Q1]] что такое аннотация в принципе."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Аннотация `@SuppressWarnings` сохраняется в байт-коде и доступна через `Method.getAnnotation()`.",
               "correct": false,
               "sections": {
@@ -106,8 +81,20 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
+              "text": "Аннотация `@Override` имеет `RetentionPolicy.RUNTIME` и доступна через рефлексию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Override` имеет `RetentionPolicy.SOURCE`: существует только для проверки компилятором и в `.class` не попадает, через `Reflection` её не достать.",
+                "source_of_confusion": "`@Override` повсеместна и важна, поэтому кажется «полноценной runtime-аннотацией», как `@Deprecated`.",
+                "if_it_were_true": "Тогда `method.isAnnotationPresent(Override.class)` строил бы отчёт по переопределённым методам, но в runtime он всегда `false`.",
+                "how_it_should_be": "`@Override` — `SOURCE`-маркер для `javac`; для runtime-видимости нужен `RUNTIME`, как у `@Deprecated`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Аннотация `@FunctionalInterface` допускает два абстрактных метода при условии, что один из них `default`.",
               "correct": false,
               "sections": {
@@ -115,6 +102,19 @@
                 "source_of_confusion": "`default`-методы выглядят как «обычные методы интерфейса», поэтому кажется, что их можно смешивать с абстрактными произвольно.",
                 "if_it_were_true": "Тогда лямбда подошла бы к интерфейсу с двумя abstract-методами, но компилятор требует единственный SAM.",
                 "how_it_should_be": "Функциональный интерфейс — это один абстрактный метод (SAM); `default`/`static` контракт не нарушают, но и не заменяют ограничение."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Deprecated` имеет `RetentionPolicy.RUNTIME` и с `Java 9` поддерживает атрибуты `since` и `forRemoval`; она видна компилятору, IDE и runtime-инструментам.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@Deprecated` сохраняется в байт-коде (в отличие от `SOURCE`-аннотаций); JEP 277 (`Java 9`) добавил `since` (версия устаревания) и `forRemoval` (планируется удаление).",
+                "example": "При выводе из эксплуатации публичного API: `@Deprecated(since = \"11\", forRemoval = true)` плюс инструмент `jdeprscan` для поиска использований в зависимостях.",
+                "when_to_apply": "Помечают устаревший элемент при миграции API (`Spring 5 → 6`, `Jakarta EE`), чтобы компилятор и IDE предупреждали потребителей.",
+                "edge_cases": "В отличие от `@Deprecated`, аннотации `@Override` и `@SuppressWarnings` имеют `SOURCE` retention и через `Reflection` недоступны.",
+                "related": "[[java-annotations-interview#Q8]] как выбрать RetentionPolicy; [[java-annotations-interview#Q34]] @SafeVarargs и @FunctionalInterface; [[java-annotations-interview#Q1]] что такое аннотация в принципе."
               }
             }
           ]
@@ -143,6 +143,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Элементы аннотации могут объявлять `throws`, чтобы сигнализировать об ошибках обработки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Элементы не имеют тела и не могут бросать `throws`; ошибки обработки сообщает `Annotation Processor` через `Messager.printMessage(ERROR, ...)`.",
+                "source_of_confusion": "Элемент похож на метод, а методы умеют `throws`, поэтому кажется логичным разрешить исключения.",
+                "if_it_were_true": "Тогда `String value() throws ParseException;` компилировался бы, но `javac` отвергает «throws clause not allowed».",
+                "how_it_should_be": "Сигнализация об ошибках — задача процессора/валидатора в runtime, а не элемента аннотации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Элементы аннотации объявляются как обычные поля класса с модификатором доступа.",
               "correct": false,
               "sections": {
@@ -153,8 +165,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Аннотация объявляется ключевым словом `@interface`, а её элементы — как методы без параметров с опциональным `default`.",
               "correct": true,
               "sections": {
@@ -163,18 +175,6 @@
                 "when_to_apply": "Создают свою `@interface`, когда нужны декларативные метаданные уровня сервиса под AOP, валидацию или кодогенерацию.",
                 "edge_cases": "`@interface` — не `interface` и не `class`: элементы не могут иметь тело, бросать `throws` или принимать параметры; `private`-модификатор запрещён.",
                 "related": "[[java-annotations-interview#Q4]] допустимые типы элементов; [[java-annotations-interview#Q6]] роль value() и default; [[java-annotations-interview#Q36]] best practices при создании аннотаций."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Элементы аннотации могут объявлять `throws`, чтобы сигнализировать об ошибках обработки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Элементы не имеют тела и не могут бросать `throws`; ошибки обработки сообщает `Annotation Processor` через `Messager.printMessage(ERROR, ...)`.",
-                "source_of_confusion": "Элемент похож на метод, а методы умеют `throws`, поэтому кажется логичным разрешить исключения.",
-                "if_it_were_true": "Тогда `String value() throws ParseException;` компилировался бы, но `javac` отвергает «throws clause not allowed».",
-                "how_it_should_be": "Сигнализация об ошибках — задача процессора/валидатора в runtime, а не элемента аннотации."
               }
             }
           ]
@@ -191,13 +191,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Допустимы примитивы, `String`, `Class`, `Enum`, коллекции (`List`, `Map`) и пользовательские классы.",
+              "text": "Допустимы только примитивы и `String`; для сложных данных используется сериализация в `byte[]`.",
               "correct": false,
               "sections": {
-                "what_actually": "Коллекции и произвольные классы запрещены JLS §9.6.1; разрешены только восемь категорий, для множества значений используют массив, а не `List`.",
-                "source_of_confusion": "В обычном Java-коде поля бывают `List`/`Map`, поэтому их ожидают и в элементах аннотации.",
-                "if_it_were_true": "Тогда `List<String> tags();` компилировался бы, но `javac` выдаёт «invalid type for annotation member».",
-                "how_it_should_be": "Вместо `List<String>` берут `String[]`; коллекции и пользовательские классы в элементах недопустимы."
+                "what_actually": "Это слишком узко: `Class`, `enum`, вложенные аннотации и массивы тоже работают из коробки и type-safe; `byte[]`-сериализация — антипаттерн.",
+                "source_of_confusion": "Примитивы и `String` — самые частые типы элементов, поэтому остальные категории упускают из виду.",
+                "if_it_were_true": "Тогда конфиг паковали бы в `byte[] data();` через JSON, но теряли бы проверку схемы компилятором и падали в runtime.",
+                "how_it_should_be": "Сложные данные выражают через `Class`/`enum`/вложенные аннотации и массивы, а не упаковку в `byte[]`."
               }
             },
             {
@@ -215,13 +215,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Допустимы только примитивы и `String`; для сложных данных используется сериализация в `byte[]`.",
+              "text": "Допустимы примитивы, `String`, `Class`, `Enum`, коллекции (`List`, `Map`) и пользовательские классы.",
               "correct": false,
               "sections": {
-                "what_actually": "Это слишком узко: `Class`, `enum`, вложенные аннотации и массивы тоже работают из коробки и type-safe; `byte[]`-сериализация — антипаттерн.",
-                "source_of_confusion": "Примитивы и `String` — самые частые типы элементов, поэтому остальные категории упускают из виду.",
-                "if_it_were_true": "Тогда конфиг паковали бы в `byte[] data();` через JSON, но теряли бы проверку схемы компилятором и падали в runtime.",
-                "how_it_should_be": "Сложные данные выражают через `Class`/`enum`/вложенные аннотации и массивы, а не упаковку в `byte[]`."
+                "what_actually": "Коллекции и произвольные классы запрещены JLS §9.6.1; разрешены только восемь категорий, для множества значений используют массив, а не `List`.",
+                "source_of_confusion": "В обычном Java-коде поля бывают `List`/`Map`, поэтому их ожидают и в элементах аннотации.",
+                "if_it_were_true": "Тогда `List<String> tags();` компилировался бы, но `javac` выдаёт «invalid type for annotation member».",
+                "how_it_should_be": "Вместо `List<String>` берут `String[]`; коллекции и пользовательские классы в элементах недопустимы."
               }
             },
             {
@@ -276,18 +276,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`TYPE_USE` применимо только к аннотациям с `RetentionPolicy.SOURCE`, иначе компилятор выдаст ошибку.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Ограничения по retention нет: `TYPE_USE`-аннотации бывают `SOURCE` (для чекеров), `CLASS` и `RUNTIME`; выбор зависит от задачи.",
-                "source_of_confusion": "`TYPE_USE` чаще всего встречается у статических анализаторов с `SOURCE`, поэтому кажется обязательным.",
-                "if_it_were_true": "Тогда `RUNTIME`-аннотация в позиции типа не компилировалась бы, но `@NonNull` с runtime-валидацией работает.",
-                "how_it_should_be": "`@Retention` и `@Target` независимы: `TYPE_USE` совместим с любым retention под конкретную задачу."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`TYPE_USE` — это псевдоним для `ElementType.TYPE` и нужен только для обратной совместимости.",
               "correct": false,
               "sections": {
@@ -295,6 +283,18 @@
                 "source_of_confusion": "Имена `TYPE` и `TYPE_USE` похожи, поэтому их принимают за синонимы.",
                 "if_it_were_true": "Тогда `@Target(TYPE)` разрешал бы `List<@MyMarker String>`, но компилятор это отвергает без `TYPE_USE`.",
                 "how_it_should_be": "Это разные категории: для использования типа внутри `<>` или после cast нужен именно `TYPE_USE`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`TYPE_USE` применимо только к аннотациям с `RetentionPolicy.SOURCE`, иначе компилятор выдаст ошибку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ограничения по retention нет: `TYPE_USE`-аннотации бывают `SOURCE` (для чекеров), `CLASS` и `RUNTIME`; выбор зависит от задачи.",
+                "source_of_confusion": "`TYPE_USE` чаще всего встречается у статических анализаторов с `SOURCE`, поэтому кажется обязательным.",
+                "if_it_were_true": "Тогда `RUNTIME`-аннотация в позиции типа не компилировалась бы, но `@NonNull` с runtime-валидацией работает.",
+                "how_it_should_be": "`@Retention` и `@Target` независимы: `TYPE_USE` совместим с любым retention под конкретную задачу."
               }
             }
           ]
@@ -311,18 +311,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Элемент `value()` разрешает опускать имя только если все остальные элементы имеют `default`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Имя `value()` опускают, когда это единственный указываемый элемент при применении; остальные могут не иметь `default`, если их вообще не указывают.",
-                "source_of_confusion": "Условие «остальные с default» близко к правилу, поэтому его принимают за точную формулировку.",
-                "if_it_were_true": "Тогда `@Tag(\"x\")` требовал бы `default` на всех прочих элементах, но достаточно их просто не указывать.",
-                "how_it_should_be": "Shorthand `value()` работает, пока `value` — единственный указанный элемент данного применения, а не от наличия `default` у других."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Если все элементы имеют `default`, аннотацию можно применять без скобок как маркерную (`@MyAnnotation`); имя `value()` опускают, когда это единственный указываемый элемент.",
               "correct": true,
               "sections": {
@@ -331,6 +319,18 @@
                 "when_to_apply": "`default` задают для опциональных параметров с нейтральным значением; `value()` используют как имя основного атрибута ради краткой записи `@Tag(\"x\")`.",
                 "edge_cases": "Если хотя бы один элемент без `default`, его придётся указывать явно; `null` как `default` запрещён JLS — для «не задано» берут sentinel.",
                 "related": "[[java-annotations-interview#Q3]] объявление аннотации и элементов; [[java-annotations-interview#Q4]] допустимые типы и sentinel-значения; [[java-annotations-interview#Q36]] value() в best practices."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Элемент `value()` разрешает опускать имя только если все остальные элементы имеют `default`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Имя `value()` опускают, когда это единственный указываемый элемент при применении; остальные могут не иметь `default`, если их вообще не указывают.",
+                "source_of_confusion": "Условие «остальные с default» близко к правилу, поэтому его принимают за точную формулировку.",
+                "if_it_were_true": "Тогда `@Tag(\"x\")` требовал бы `default` на всех прочих элементах, но достаточно их просто не указывать.",
+                "how_it_should_be": "Shorthand `value()` работает, пока `value` — единственный указанный элемент данного применения, а не от наличия `default` у других."
               }
             },
             {
@@ -371,30 +371,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Мета-аннотации — это аннотации, которые автоматически применяются ко всем классам в пакете.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Такого механизма нет: аннотации применяются явно; `package-info.java` аннотирует сам пакет, но не каждый класс в нём.",
-                "source_of_confusion": "Приставка «мета-» наводит на мысль о «глобальном» действии на уровне пакета или модуля.",
-                "if_it_were_true": "Тогда `@Transactional` в `package-info.java` обернул бы все сервисы, но `Spring` его там не видит — транзакции не работают.",
-                "how_it_should_be": "Мета-аннотация описывает другую аннотацию; массовое применение к классам пакета не существует."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Мета-аннотации — это набор аннотаций `Spring` (`@Service`, `@Repository`), наследующих `@Component`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это составные (composed) аннотации Spring, а не мета-аннотации; JLS определяет мета-аннотации в `java.lang.annotation`, Spring-композиция строится поверх них.",
-                "source_of_confusion": "`@Service` помечена `@Component`, что выглядит как «аннотация над аннотацией», то есть как мета-аннотация.",
-                "if_it_were_true": "Тогда копирование `@Service` без `@Target(ANNOTATION_TYPE)` делало бы её мета-аннотацией, но Spring не сканирует такую — бины не создаются.",
-                "how_it_should_be": "Стандартные мета-аннотации — это `@Retention`/`@Target`/`@Inherited` и т.д.; `@Service` — пример composed-аннотации."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Мета-аннотации — это аннотации над другими аннотациями, задающие их поведение: `@Retention`, `@Target`, `@Documented`, `@Inherited`, `@Repeatable`.",
               "correct": true,
               "sections": {
@@ -406,8 +382,20 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
+              "text": "Мета-аннотации — это аннотации, которые автоматически применяются ко всем классам в пакете.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Такого механизма нет: аннотации применяются явно; `package-info.java` аннотирует сам пакет, но не каждый класс в нём.",
+                "source_of_confusion": "Приставка «мета-» наводит на мысль о «глобальном» действии на уровне пакета или модуля.",
+                "if_it_were_true": "Тогда `@Transactional` в `package-info.java` обернул бы все сервисы, но `Spring` его там не видит — транзакции не работают.",
+                "how_it_should_be": "Мета-аннотация описывает другую аннотацию; массовое применение к классам пакета не существует."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Мета-аннотации — это аннотации, видимые только в `Reflection API` через `MetaAnnotation.class`.",
               "correct": false,
               "sections": {
@@ -415,6 +403,18 @@
                 "source_of_confusion": "Кажется, что для особого вида аннотаций должен быть специальный класс-маркер в API.",
                 "if_it_were_true": "Тогда поиск `MetaAnnotation.class` в JDK что-то возвращал бы, но его не существует — приходится дублировать аннотации.",
                 "how_it_should_be": "Мета-аннотация — это просто аннотация на объявлении `@interface`; отдельного класса для неё в JDK нет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Мета-аннотации — это набор аннотаций `Spring` (`@Service`, `@Repository`), наследующих `@Component`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это составные (composed) аннотации Spring, а не мета-аннотации; JLS определяет мета-аннотации в `java.lang.annotation`, Spring-композиция строится поверх них.",
+                "source_of_confusion": "`@Service` помечена `@Component`, что выглядит как «аннотация над аннотацией», то есть как мета-аннотация.",
+                "if_it_were_true": "Тогда копирование `@Service` без `@Target(ANNOTATION_TYPE)` делало бы её мета-аннотацией, но Spring не сканирует такую — бины не создаются.",
+                "how_it_should_be": "Стандартные мета-аннотации — это `@Retention`/`@Target`/`@Inherited` и т.д.; `@Service` — пример composed-аннотации."
               }
             }
           ]
@@ -431,18 +431,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`RetentionPolicy.SOURCE` сохраняет аннотацию в `.class`, но скрывает её от рефлексии.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`SOURCE` удаляется до генерации байт-кода — в `.class` её физически нет; «в `.class`, но скрыта от рефлексии» — это `CLASS` (атрибут `RuntimeInvisibleAnnotations`).",
-                "source_of_confusion": "`SOURCE` и `CLASS` оба «не runtime», поэтому их поведение в байт-коде путают.",
-                "if_it_were_true": "Тогда собственный процессор читал бы `SOURCE`-аннотацию через `getAnnotation()` в runtime, но получает `null`.",
-                "how_it_should_be": "`SOURCE` стирается компилятором; «есть в `.class`, но не видно рефлексии» — это `CLASS`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`RetentionPolicy.CLASS` — значение по умолчанию, и аннотация всегда доступна через `getAnnotation()`.",
               "correct": false,
               "sections": {
@@ -453,8 +441,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`RetentionPolicy.RUNTIME` требует обязательного `@Target(ElementType.TYPE)`, иначе компиляция не пройдёт.",
               "correct": false,
               "sections": {
@@ -462,6 +450,18 @@
                 "source_of_confusion": "Многие runtime-аннотации стоят на классах, поэтому связь `RUNTIME` ↔ `TYPE` кажется обязательной.",
                 "if_it_were_true": "Тогда `@Inject` на конструкторе/поле не работал бы без `@Target(TYPE)`, но DI прекрасно работает на полях.",
                 "how_it_should_be": "Retention задаёт жизненный цикл, `@Target` — область применения; они задаются независимо."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`RetentionPolicy.SOURCE` сохраняет аннотацию в `.class`, но скрывает её от рефлексии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SOURCE` удаляется до генерации байт-кода — в `.class` её физически нет; «в `.class`, но скрыта от рефлексии» — это `CLASS` (атрибут `RuntimeInvisibleAnnotations`).",
+                "source_of_confusion": "`SOURCE` и `CLASS` оба «не runtime», поэтому их поведение в байт-коде путают.",
+                "if_it_were_true": "Тогда собственный процессор читал бы `SOURCE`-аннотацию через `getAnnotation()` в runtime, но получает `null`.",
+                "how_it_should_be": "`SOURCE` стирается компилятором; «есть в `.class`, но не видно рефлексии» — это `CLASS`."
               }
             },
             {
@@ -504,18 +504,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@Target({})` означает «применимо ко всему, включая `TYPE_USE` и `TYPE_PARAMETER`».",
-              "correct": false,
-              "sections": {
-                "what_actually": "Пустой массив означает обратное: аннотация ни к чему не применима напрямую и используется только как тип-член других аннотаций.",
-                "source_of_confusion": "Пустой массив кажется «без ограничений», то есть «разрешено всё».",
-                "if_it_were_true": "Тогда `@Target({})` ставился бы на любой элемент, но даёт «annotation type is not applicable».",
-                "how_it_should_be": "Пустой `@Target({})` — это «нигде»; «везде, кроме TYPE_USE/TYPE_PARAMETER» — это отсутствие `@Target`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`@Target(ElementType.TYPE)` разрешает применение только к классам, но не к интерфейсам или enum'ам.",
               "correct": false,
               "sections": {
@@ -526,8 +514,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`ElementType.RECORD_COMPONENT` появился в Java 8 одновременно с `TYPE_USE`.",
               "correct": false,
               "sections": {
@@ -535,6 +523,18 @@
                 "source_of_confusion": "Все три — относительно новые `ElementType`, поэтому их относят к одной версии.",
                 "if_it_were_true": "Тогда на `Java 8` работал бы `@Target(RECORD_COMPONENT)`, но там нет ни records, ни этой константы.",
                 "how_it_should_be": "`RECORD_COMPONENT` — это `Java 16`; `TYPE_USE`/`TYPE_PARAMETER` — `Java 8`, разные эпохи JDK."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Target({})` означает «применимо ко всему, включая `TYPE_USE` и `TYPE_PARAMETER`».",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пустой массив означает обратное: аннотация ни к чему не применима напрямую и используется только как тип-член других аннотаций.",
+                "source_of_confusion": "Пустой массив кажется «без ограничений», то есть «разрешено всё».",
+                "if_it_were_true": "Тогда `@Target({})` ставился бы на любой элемент, но даёт «annotation type is not applicable».",
+                "how_it_should_be": "Пустой `@Target({})` — это «нигде»; «везде, кроме TYPE_USE/TYPE_PARAMETER» — это отсутствие `@Target`."
               }
             }
           ]
@@ -576,18 +576,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@Inherited` заставляет аннотацию наследоваться интерфейсами и методами подклассов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@Inherited` работает только для аннотаций на классах через `extends`; на `implements`, методах, полях и параметрах не срабатывает (JLS §9.6.4.3).",
-                "source_of_confusion": "Слово «inherited» наводит на мысль о наследовании во всех формах, включая интерфейсы.",
-                "if_it_were_true": "Тогда `@Auditable` с интерфейса поднималась бы на реализацию, но Spring AOP не оборачивает прокси — audit log пуст.",
-                "how_it_should_be": "Наследование `@Inherited` ограничено `extends` на классах; интерфейсы и методы требуют ручного обхода."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`@Inherited` отсутствует по умолчанию, но компилятор добавляет её ко всем `@Retention(RUNTIME)` автоматически.",
               "correct": false,
               "sections": {
@@ -595,6 +583,18 @@
                 "source_of_confusion": "Кажется, что раз аннотация runtime-видима, наследование «логично включить автоматически».",
                 "if_it_were_true": "Тогда `@RequiresAuth` без `@Inherited` всё равно наследовалась бы, но security-чек на подклассе не срабатывает.",
                 "how_it_should_be": "`@Inherited` указывают явно; retention на наследование не влияет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Inherited` заставляет аннотацию наследоваться интерфейсами и методами подклассов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Inherited` работает только для аннотаций на классах через `extends`; на `implements`, методах, полях и параметрах не срабатывает (JLS §9.6.4.3).",
+                "source_of_confusion": "Слово «inherited» наводит на мысль о наследовании во всех формах, включая интерфейсы.",
+                "if_it_were_true": "Тогда `@Auditable` с интерфейса поднималась бы на реализацию, но Spring AOP не оборачивает прокси — audit log пуст.",
+                "how_it_should_be": "Наследование `@Inherited` ограничено `extends` на классах; интерфейсы и методы требуют ручного обхода."
               }
             }
           ]
@@ -611,18 +611,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Inherited` работает и для классов, и для интерфейсов, если они реализуют `java.lang.annotation.Annotation`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@Inherited` не действует через `implements`: даже помеченный интерфейс не передаёт аннотацию реализации — JLS §9.6.4.3 покрывает только `extends` на классах.",
-                "source_of_confusion": "Все аннотации неявно расширяют `Annotation`, что путают с механизмом наследования через интерфейс.",
-                "if_it_were_true": "Тогда `@Auditable` на `interface UserService` появлялась бы на `UserServiceImpl`, но AOP-прокси её не видит — аудит-логи теряются.",
-                "how_it_should_be": "Наследование идёт только по `extends` классов; интерфейсы требуют `AnnotatedElementUtils`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`@Inherited` заставляет `@Override`-методы подхватывать аннотации родительского метода.",
               "correct": false,
               "sections": {
@@ -630,6 +618,18 @@
                 "source_of_confusion": "Раз метод «переопределяет» родительский, кажется, что и аннотации должны переходить.",
                 "if_it_were_true": "Тогда `@PreAuthorize(\"hasRole('ADMIN')\")` с абстрактного метода работала бы в реализации, но security-чек обходится.",
                 "how_it_should_be": "Аннотации метода не наследуются при `@Override`; нужен явный повтор или `AnnotatedElementUtils`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Spring использует `@Inherited` напрямую через `Class.getAnnotation()` для поиска мета-аннотаций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring обходит иерархию вручную через `AnnotatedElementUtils.findMergedAnnotation()`, потому что стандартный `@Inherited` слишком ограничен (только `extends`, только классы).",
+                "source_of_confusion": "`getAnnotation()` действительно учитывает `@Inherited`, поэтому кажется достаточным и для Spring.",
+                "if_it_were_true": "Тогда `clazz.getAnnotation(MyValidator.class)` находил бы аннотацию на интерфейсе, но возвращает `null` — валидация не запускается.",
+                "how_it_should_be": "Spring расширяет `@Inherited` своим обходом интерфейсов и методов через `MergedAnnotations`."
               }
             },
             {
@@ -648,13 +648,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Spring использует `@Inherited` напрямую через `Class.getAnnotation()` для поиска мета-аннотаций.",
+              "text": "`@Inherited` работает и для классов, и для интерфейсов, если они реализуют `java.lang.annotation.Annotation`.",
               "correct": false,
               "sections": {
-                "what_actually": "Spring обходит иерархию вручную через `AnnotatedElementUtils.findMergedAnnotation()`, потому что стандартный `@Inherited` слишком ограничен (только `extends`, только классы).",
-                "source_of_confusion": "`getAnnotation()` действительно учитывает `@Inherited`, поэтому кажется достаточным и для Spring.",
-                "if_it_were_true": "Тогда `clazz.getAnnotation(MyValidator.class)` находил бы аннотацию на интерфейсе, но возвращает `null` — валидация не запускается.",
-                "how_it_should_be": "Spring расширяет `@Inherited` своим обходом интерфейсов и методов через `MergedAnnotations`."
+                "what_actually": "`@Inherited` не действует через `implements`: даже помеченный интерфейс не передаёт аннотацию реализации — JLS §9.6.4.3 покрывает только `extends` на классах.",
+                "source_of_confusion": "Все аннотации неявно расширяют `Annotation`, что путают с механизмом наследования через интерфейс.",
+                "if_it_were_true": "Тогда `@Auditable` на `interface UserService` появлялась бы на `UserServiceImpl`, но AOP-прокси её не видит — аудит-логи теряются.",
+                "how_it_should_be": "Наследование идёт только по `extends` классов; интерфейсы требуют `AnnotatedElementUtils`."
               }
             }
           ]
@@ -671,13 +671,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`TYPE_USE` и `TYPE_PARAMETER` — это одно и то же, разница только в именовании.",
-              "correct": false,
+              "text": "`TYPE_USE` аннотирует позицию использования типа (cast, throws, generic-аргумент, тип поля), а `TYPE_PARAMETER` — объявление параметра типа `<T>`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Это разные `ElementType` с разной семантикой: `TYPE_USE` — на любой позиции типа, `TYPE_PARAMETER` — на объявлении `<T>`; компилятор различает их по контексту.",
-                "source_of_confusion": "Оба имени содержат «TYPE» и относятся к дженерикам, поэтому кажутся синонимами.",
-                "if_it_were_true": "Тогда `@Target(TYPE_USE)` подошёл бы для `class Box<@Covariant T>`, но компилятор его отвергает.",
-                "how_it_should_be": "Использование типа — `TYPE_USE`; объявление параметра `<T>` — `TYPE_PARAMETER`, это разные категории."
+                "explanation": "Это разные позиции для компилятора: в `List<@NonNull String>` `@NonNull` стоит на `TYPE_USE` (использование типа `String`), а в `class Box<@Covariant T>` `@Covariant` — на `TYPE_PARAMETER` (объявление `T`).",
+                "example": "Nullability-аннотации (`@Nullable`, `@NonNull` из `JSpecify`) — `TYPE_USE`; variance/immutability-маркеры (`@Covariant`, `@Immutable` Checker Framework) — `TYPE_PARAMETER`.",
+                "when_to_apply": "`TYPE_USE` выбирают для проверки nullability на конкретных позициях типа; `TYPE_PARAMETER` — для ограничений на самом параметре дженерика.",
+                "edge_cases": "Оба `ElementType` добавлены только в `Java 8` (JSR 308); на `Java 7` `List<@NonNull String>` не компилируется — «annotation not allowed here».",
+                "related": "[[java-annotations-interview#Q5]] аннотируемые элементы и Java 8; [[java-annotations-interview#Q9]] @Target и TYPE_USE; [[java-annotations-interview#Q43]] @NonNull и Checker Framework."
               }
             },
             {
@@ -707,14 +708,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`TYPE_USE` аннотирует позицию использования типа (cast, throws, generic-аргумент, тип поля), а `TYPE_PARAMETER` — объявление параметра типа `<T>`.",
-              "correct": true,
+              "text": "`TYPE_USE` и `TYPE_PARAMETER` — это одно и то же, разница только в именовании.",
+              "correct": false,
               "sections": {
-                "explanation": "Это разные позиции для компилятора: в `List<@NonNull String>` `@NonNull` стоит на `TYPE_USE` (использование типа `String`), а в `class Box<@Covariant T>` `@Covariant` — на `TYPE_PARAMETER` (объявление `T`).",
-                "example": "Nullability-аннотации (`@Nullable`, `@NonNull` из `JSpecify`) — `TYPE_USE`; variance/immutability-маркеры (`@Covariant`, `@Immutable` Checker Framework) — `TYPE_PARAMETER`.",
-                "when_to_apply": "`TYPE_USE` выбирают для проверки nullability на конкретных позициях типа; `TYPE_PARAMETER` — для ограничений на самом параметре дженерика.",
-                "edge_cases": "Оба `ElementType` добавлены только в `Java 8` (JSR 308); на `Java 7` `List<@NonNull String>` не компилируется — «annotation not allowed here».",
-                "related": "[[java-annotations-interview#Q5]] аннотируемые элементы и Java 8; [[java-annotations-interview#Q9]] @Target и TYPE_USE; [[java-annotations-interview#Q43]] @NonNull и Checker Framework."
+                "what_actually": "Это разные `ElementType` с разной семантикой: `TYPE_USE` — на любой позиции типа, `TYPE_PARAMETER` — на объявлении `<T>`; компилятор различает их по контексту.",
+                "source_of_confusion": "Оба имени содержат «TYPE» и относятся к дженерикам, поэтому кажутся синонимами.",
+                "if_it_were_true": "Тогда `@Target(TYPE_USE)` подошёл бы для `class Box<@Covariant T>`, но компилятор его отвергает.",
+                "how_it_should_be": "Использование типа — `TYPE_USE`; объявление параметра `<T>` — `TYPE_PARAMETER`, это разные категории."
               }
             }
           ]
@@ -731,6 +731,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Контейнерная аннотация должна быть помечена `@Repeatable`, как и вложенная.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Repeatable` ставится только на «одиночной» аннотации и ссылается на контейнер; сам контейнер `@Repeatable` не несёт — иначе бесконечная рекурсия.",
+                "source_of_confusion": "Раз обе аннотации связаны, кажется, что обе должны нести `@Repeatable`.",
+                "if_it_were_true": "Тогда `@Repeatable` на контейнере компилировался бы, но даёт «containing annotation type cannot be itself repeatable».",
+                "how_it_should_be": "`@Repeatable` ставят только на повторяемую аннотацию; контейнер её не имеет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для чтения повторяемых аннотаций подходит `getAnnotation()` — он возвращает массив.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`getAnnotation(Schedule.class)` при двух применениях вернёт `null` (нет одиночной), а контейнер достаётся через `getAnnotation(Schedules.class)`; правильный API — `getAnnotationsByType()`.",
+                "source_of_confusion": "`getAnnotation()` — самый известный метод, поэтому им пытаются читать и повторяемые аннотации.",
+                "if_it_were_true": "Тогда scheduler читал бы все `@Schedule` через `getAnnotation()`, но пропускает методы с двумя — задачи не запускаются.",
+                "how_it_should_be": "Для повторяемых аннотаций используют `getAnnotationsByType()`, разворачивающий контейнер автоматически."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`@Repeatable` требует объявления аннотации-контейнера с `value()` типа массива повторяемой аннотации; компилятор автоматически оборачивает два и более применения в контейнер.",
               "correct": true,
               "sections": {
@@ -742,8 +766,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "`@Repeatable` позволяет применять аннотацию несколько раз без объявления контейнера.",
               "correct": false,
               "sections": {
@@ -751,30 +775,6 @@
                 "source_of_confusion": "Кажется, что `@Repeatable` сама по себе снимает запрет на дубли без дополнительных объявлений.",
                 "if_it_were_true": "Тогда `@Repeatable` без контейнера компилировался бы, но даёт «invalid repeatable annotation».",
                 "how_it_should_be": "Нужно объявить контейнер с `value() Type[]` и сослаться на него в `@Repeatable`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Контейнерная аннотация должна быть помечена `@Repeatable`, как и вложенная.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@Repeatable` ставится только на «одиночной» аннотации и ссылается на контейнер; сам контейнер `@Repeatable` не несёт — иначе бесконечная рекурсия.",
-                "source_of_confusion": "Раз обе аннотации связаны, кажется, что обе должны нести `@Repeatable`.",
-                "if_it_were_true": "Тогда `@Repeatable` на контейнере компилировался бы, но даёт «containing annotation type cannot be itself repeatable».",
-                "how_it_should_be": "`@Repeatable` ставят только на повторяемую аннотацию; контейнер её не имеет."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Для чтения повторяемых аннотаций подходит `getAnnotation()` — он возвращает массив.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`getAnnotation(Schedule.class)` при двух применениях вернёт `null` (нет одиночной), а контейнер достаётся через `getAnnotation(Schedules.class)`; правильный API — `getAnnotationsByType()`.",
-                "source_of_confusion": "`getAnnotation()` — самый известный метод, поэтому им пытаются читать и повторяемые аннотации.",
-                "if_it_were_true": "Тогда scheduler читал бы все `@Schedule` через `getAnnotation()`, но пропускает методы с двумя — задачи не запускаются.",
-                "how_it_should_be": "Для повторяемых аннотаций используют `getAnnotationsByType()`, разворачивающий контейнер автоматически."
               }
             }
           ]
@@ -791,13 +791,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Составная аннотация — это аннотация, содержащая другие аннотации как элементы через `Annotation[] value()`.",
+              "text": "Составная аннотация автоматически включает поведение родителя только при `@Inherited`.",
               "correct": false,
               "sections": {
-                "what_actually": "Это композиция через поля (как у `@Repeatable`-контейнера), а не мета-аннотирование, лежащее в основе Spring composed-паттерна.",
-                "source_of_confusion": "Контейнер с `value()` массива аннотаций выглядит как «составная» аннотация.",
-                "if_it_were_true": "Тогда упаковка `@Controller` и `@ResponseBody` в массив регистрировала бы контроллер, но Spring не видит stereotype — `404` на всех endpoint'ах.",
-                "how_it_should_be": "Composed-аннотация помечена другими аннотациями (мета-аннотирование), а не хранит их в `value()`."
+                "what_actually": "`@Inherited` действует на уровне «класс наследует аннотацию с предка», а composed работает на уровне «аннотация помечена другой аннотацией» — это разные механизмы.",
+                "source_of_confusion": "Оба связаны со словом «наследование», поэтому их смешивают.",
+                "if_it_were_true": "Тогда `@Inherited` на `@RestController` давал бы автоматическую регистрацию наследников, но Component Scan всё равно требует мета-`@Component`.",
+                "how_it_should_be": "Composed-аннотация работает через мета-аннотирование независимо от `@Inherited`."
               }
             },
             {
@@ -816,13 +816,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Составная аннотация автоматически включает поведение родителя только при `@Inherited`.",
+              "text": "Составная аннотация — это аннотация, содержащая другие аннотации как элементы через `Annotation[] value()`.",
               "correct": false,
               "sections": {
-                "what_actually": "`@Inherited` действует на уровне «класс наследует аннотацию с предка», а composed работает на уровне «аннотация помечена другой аннотацией» — это разные механизмы.",
-                "source_of_confusion": "Оба связаны со словом «наследование», поэтому их смешивают.",
-                "if_it_were_true": "Тогда `@Inherited` на `@RestController` давал бы автоматическую регистрацию наследников, но Component Scan всё равно требует мета-`@Component`.",
-                "how_it_should_be": "Composed-аннотация работает через мета-аннотирование независимо от `@Inherited`."
+                "what_actually": "Это композиция через поля (как у `@Repeatable`-контейнера), а не мета-аннотирование, лежащее в основе Spring composed-паттерна.",
+                "source_of_confusion": "Контейнер с `value()` массива аннотаций выглядит как «составная» аннотация.",
+                "if_it_were_true": "Тогда упаковка `@Controller` и `@ResponseBody` в массив регистрировала бы контроллер, но Spring не видит stereotype — `404` на всех endpoint'ах.",
+                "how_it_should_be": "Composed-аннотация помечена другими аннотациями (мета-аннотирование), а не хранит их в `value()`."
               }
             },
             {
@@ -851,30 +851,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Да, через `public @interface Child extends Parent` можно наследовать элементы.",
+              "text": "Нет, но можно реализовать интерфейс `Annotation` вручную для эмуляции наследования.",
               "correct": false,
               "sections": {
-                "what_actually": "`extends` в объявлении аннотации запрещён JLS: все аннотации неявно расширяют `java.lang.annotation.Annotation`, явное `extends` — ошибка компиляции.",
-                "source_of_confusion": "Интерфейсы поддерживают `extends`, а аннотация синтаксически похожа на интерфейс.",
-                "if_it_were_true": "Тогда общие поля валидации выносились бы в `extends BaseValidation`, но build падает с «'{' expected».",
-                "how_it_should_be": "Вместо `extends` используют мета-аннотирование или включение аннотации как элемента."
+                "what_actually": "`class implements Annotation` остаётся обычным классом, а не аннотацией: `getAnnotation()` его не возвращает, JVM не пишет `RuntimeVisibleAnnotations`.",
+                "source_of_confusion": "Раз аннотации расширяют `Annotation`, кажется, что ручная реализация интерфейса даст ту же роль.",
+                "if_it_were_true": "Тогда `class CachedImpl implements Cached` работал бы как `@Cached`, но `getAnnotation()` возвращает `null` — кэш не активируется.",
+                "how_it_should_be": "Аннотацию нельзя сэмулировать классом; для переиспользования применяют composed-паттерн."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Да, но только если родительская аннотация помечена `@Inherited`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@Inherited` распространяет аннотацию с класса-предка на наследников при `getAnnotation()`, но не позволяет наследовать сам тип аннотации через `extends`.",
-                "source_of_confusion": "`@Inherited` связана со словом «наследование», поэтому кажется, что она разрешает `extends`.",
-                "if_it_were_true": "Тогда `@Inherited` на родителе делал бы `extends` валидным, но компилятор всё равно падает на `extends`.",
-                "how_it_should_be": "`@Inherited` — про наследование аннотации классами; объявить `@interface extends` всё равно нельзя."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Нет: аннотации неявно расширяют `java.lang.annotation.Annotation`, и для переиспользования применяют композицию, мета-аннотации или составные аннотации.",
               "correct": true,
               "sections": {
@@ -886,15 +874,27 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Нет, но можно реализовать интерфейс `Annotation` вручную для эмуляции наследования.",
+              "order": 2,
+              "label": "C",
+              "text": "Да, через `public @interface Child extends Parent` можно наследовать элементы.",
               "correct": false,
               "sections": {
-                "what_actually": "`class implements Annotation` остаётся обычным классом, а не аннотацией: `getAnnotation()` его не возвращает, JVM не пишет `RuntimeVisibleAnnotations`.",
-                "source_of_confusion": "Раз аннотации расширяют `Annotation`, кажется, что ручная реализация интерфейса даст ту же роль.",
-                "if_it_were_true": "Тогда `class CachedImpl implements Cached` работал бы как `@Cached`, но `getAnnotation()` возвращает `null` — кэш не активируется.",
-                "how_it_should_be": "Аннотацию нельзя сэмулировать классом; для переиспользования применяют composed-паттерн."
+                "what_actually": "`extends` в объявлении аннотации запрещён JLS: все аннотации неявно расширяют `java.lang.annotation.Annotation`, явное `extends` — ошибка компиляции.",
+                "source_of_confusion": "Интерфейсы поддерживают `extends`, а аннотация синтаксически похожа на интерфейс.",
+                "if_it_were_true": "Тогда общие поля валидации выносились бы в `extends BaseValidation`, но build падает с «'{' expected».",
+                "how_it_should_be": "Вместо `extends` используют мета-аннотирование или включение аннотации как элемента."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Да, но только если родительская аннотация помечена `@Inherited`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Inherited` распространяет аннотацию с класса-предка на наследников при `getAnnotation()`, но не позволяет наследовать сам тип аннотации через `extends`.",
+                "source_of_confusion": "`@Inherited` связана со словом «наследование», поэтому кажется, что она разрешает `extends`.",
+                "if_it_were_true": "Тогда `@Inherited` на родителе делал бы `extends` валидным, но компилятор всё равно падает на `extends`.",
+                "how_it_should_be": "`@Inherited` — про наследование аннотации классами; объявить `@interface extends` всё равно нельзя."
               }
             }
           ]
@@ -911,18 +911,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Аннотации с `RetentionPolicy.SOURCE` можно читать через `getAnnotation()` при флаге `-parameters`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`SOURCE`-аннотации удаляются `javac` сразу после обработки и физически отсутствуют в `.class` — никакой runtime-флаг их не возвращает.",
-                "source_of_confusion": "Флаг `-parameters` влияет на runtime-видимость имён параметров, что переносят и на `SOURCE`-аннотации.",
-                "if_it_were_true": "Тогда `@MyApiDoc(SOURCE)` генерировал бы Swagger через рефлексию, но endpoint'ы не появляются в OpenAPI.",
-                "how_it_should_be": "Для чтения рефлексией нужен `RUNTIME`; `SOURCE` недоступен независимо от флагов компиляции."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`isAnnotationPresent(X.class)` всегда вернёт `true`, если аннотация есть в исходнике.",
               "correct": false,
               "sections": {
@@ -933,8 +921,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`getAnnotations()` возвращает только аннотации, объявленные на самом элементе, игнорируя `@Inherited`.",
               "correct": false,
               "sections": {
@@ -945,8 +933,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Для чтения через рефлексию аннотация должна иметь `@Retention(RetentionPolicy.RUNTIME)`.",
               "correct": true,
               "sections": {
@@ -955,6 +943,18 @@
                 "when_to_apply": "`RUNTIME` обязателен, когда любой фреймворк или собственный код читает аннотацию в работающей JVM через `getAnnotation()`/`isAnnotationPresent()`.",
                 "edge_cases": "`getAnnotations()` учитывает `@Inherited` (поднимает аннотацию с суперкласса), а `getDeclaredAnnotations()` возвращает только объявленные на самом элементе.",
                 "related": "[[java-annotations-interview#Q8]] зачем нужен RUNTIME retention; [[java-annotations-interview#Q17]] getAnnotation() vs getDeclaredAnnotation(); [[java-annotations-interview#Q11]] @Inherited в обходе иерархии."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Аннотации с `RetentionPolicy.SOURCE` можно читать через `getAnnotation()` при флаге `-parameters`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SOURCE`-аннотации удаляются `javac` сразу после обработки и физически отсутствуют в `.class` — никакой runtime-флаг их не возвращает.",
+                "source_of_confusion": "Флаг `-parameters` влияет на runtime-видимость имён параметров, что переносят и на `SOURCE`-аннотации.",
+                "if_it_were_true": "Тогда `@MyApiDoc(SOURCE)` генерировал бы Swagger через рефлексию, но endpoint'ы не появляются в OpenAPI.",
+                "how_it_should_be": "Для чтения рефлексией нужен `RUNTIME`; `SOURCE` недоступен независимо от флагов компиляции."
               }
             }
           ]
@@ -971,6 +971,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`getDeclaredAnnotation()` возвращает `null` для всех `RUNTIME`-аннотаций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`null` возвращается только когда аннотации нет на самом элементе; для собственных `RUNTIME`-аннотаций метод возвращает их инстанс.",
+                "source_of_confusion": "Слово «Declared» наводит на мысль, что метод как-то урезан и часто отдаёт `null`.",
+                "if_it_were_true": "Тогда `getDeclaredAnnotation()` всегда был бы `null`, и проверки опускали бы, но это даёт NPE на первом запросе.",
+                "how_it_should_be": "`getDeclaredAnnotation()` возвращает аннотацию, объявленную на элементе; `null` — лишь если её там нет."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Оба метода идентичны; `getDeclaredAnnotation()` оставлен для совместимости с Java 5.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Методы различаются учётом `@Inherited`: на классе с предком, имеющим `@Inherited`-аннотацию, результаты разные.",
+                "source_of_confusion": "На классе без иерархии оба метода совпадают, что создаёт впечатление идентичности.",
+                "if_it_were_true": "Тогда замена `getAnnotation()` на `getDeclaredAnnotation()` была бы безопасной, но `@Audited` с базового класса перестаёт находиться.",
+                "how_it_should_be": "`getDeclaredAnnotation()` — «только своё», `getAnnotation()` — с учётом `@Inherited`; они не взаимозаменяемы."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`getAnnotation()` учитывает `@Inherited` (поднимает аннотацию с суперкласса), а `getDeclaredAnnotation()` возвращает только аннотации, объявленные непосредственно на элементе.",
               "correct": true,
               "sections": {
@@ -982,8 +1006,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "`getAnnotation()` разворачивает контейнер повторяемых аннотаций в массив.",
               "correct": false,
               "sections": {
@@ -991,30 +1015,6 @@
                 "source_of_confusion": "Раз аннотация повторяемая, кажется, что `getAnnotation()` должен вернуть все её экземпляры.",
                 "if_it_were_true": "Тогда `(Schedule[]) getAnnotation(Schedule.class)` дал бы массив, но кидает `ClassCastException` — scheduler стартует пустым.",
                 "how_it_should_be": "Контейнер разворачивает `getAnnotationsByType()`; `getAnnotation()` массива не возвращает."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`getDeclaredAnnotation()` возвращает `null` для всех `RUNTIME`-аннотаций.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`null` возвращается только когда аннотации нет на самом элементе; для собственных `RUNTIME`-аннотаций метод возвращает их инстанс.",
-                "source_of_confusion": "Слово «Declared» наводит на мысль, что метод как-то урезан и часто отдаёт `null`.",
-                "if_it_were_true": "Тогда `getDeclaredAnnotation()` всегда был бы `null`, и проверки опускали бы, но это даёт NPE на первом запросе.",
-                "how_it_should_be": "`getDeclaredAnnotation()` возвращает аннотацию, объявленную на элементе; `null` — лишь если её там нет."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Оба метода идентичны; `getDeclaredAnnotation()` оставлен для совместимости с Java 5.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Методы различаются учётом `@Inherited`: на классе с предком, имеющим `@Inherited`-аннотацию, результаты разные.",
-                "source_of_confusion": "На классе без иерархии оба метода совпадают, что создаёт впечатление идентичности.",
-                "if_it_were_true": "Тогда замена `getAnnotation()` на `getDeclaredAnnotation()` была бы безопасной, но `@Audited` с базового класса перестаёт находиться.",
-                "how_it_should_be": "`getDeclaredAnnotation()` — «только своё», `getAnnotation()` — с учётом `@Inherited`; они не взаимозаменяемы."
               }
             }
           ]
@@ -1043,6 +1043,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "В Java 9+ через `ModuleLayer.boot().modules()` можно получить все аннотированные классы напрямую.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ModuleLayer` возвращает только список модулей; перечислить классы внутри него стандартного API нет — нужны `ClassGraph` или `Reflections`.",
+                "source_of_confusion": "JPMS даёт доступ к модулям, что путают с доступом к их содержимому-классам.",
+                "if_it_were_true": "Тогда «нативный JPMS-подход» заменил бы `ClassGraph`, но Component Scan не находит бинов — `NoSuchBeanDefinition`.",
+                "how_it_should_be": "`ModuleLayer` перечисляет модули, не классы; для классов нужна сканирующая библиотека."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Стандартный JDK не имеет API сканирования classpath; используют библиотеки `Spring`, `Reflections`, `ClassGraph`.",
               "correct": true,
               "sections": {
@@ -1051,18 +1063,6 @@
                 "when_to_apply": "Сканирование по пакету применяют, когда нужно автоматически найти все классы с заданной аннотацией без их явного перечисления.",
                 "edge_cases": "`Package.getAnnotations()` возвращает аннотации самого пакета из `package-info.java`, а не список классов в нём — для перечисления классов JDK API нет.",
                 "related": "[[java-annotations-interview#Q16]] чтение аннотаций через Reflection; [[java-annotations-interview#Q26]] фреймворки на Annotation Processing; [[java-annotations-interview#Q27]] @ComponentScan в Spring."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "В Java 9+ через `ModuleLayer.boot().modules()` можно получить все аннотированные классы напрямую.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`ModuleLayer` возвращает только список модулей; перечислить классы внутри него стандартного API нет — нужны `ClassGraph` или `Reflections`.",
-                "source_of_confusion": "JPMS даёт доступ к модулям, что путают с доступом к их содержимому-классам.",
-                "if_it_were_true": "Тогда «нативный JPMS-подход» заменил бы `ClassGraph`, но Component Scan не находит бинов — `NoSuchBeanDefinition`.",
-                "how_it_should_be": "`ModuleLayer` перечисляет модули, не классы; для классов нужна сканирующая библиотека."
               }
             },
             {
@@ -1091,18 +1091,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Method.getParameters()` возвращает имена параметров без дополнительных флагов компиляции.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Без `-parameters` `javac` стирает имена, и `Parameter.getName()` возвращает `arg0`, `arg1` — имена не сохраняются в байт-коде.",
-                "source_of_confusion": "Имена есть в исходнике, поэтому ждут их и в runtime без специальных флагов.",
-                "if_it_were_true": "Тогда `@RequestParam` без имени работал бы всегда, но даёт `Required String parameter 'arg0'` — 400 на каждый вызов.",
-                "how_it_should_be": "Для сохранения имён нужен флаг `-parameters`; иначе доступны лишь `arg0`/`arg1`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Method.getParameterAnnotations()` возвращает `List<Annotation>`, общий для всех параметров.",
               "correct": false,
               "sections": {
@@ -1113,8 +1101,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`Method.getParameters()` (Java 8+) возвращает `Parameter[]`, через который можно читать и аннотации, и имена (с флагом `-parameters`).",
               "correct": true,
               "sections": {
@@ -1126,8 +1114,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "До Java 8 нельзя было получить аннотации параметров — только через `Parameter` API.",
               "correct": false,
               "sections": {
@@ -1135,6 +1123,18 @@
                 "source_of_confusion": "`Parameter` API популярен и нов, поэтому кажется единственным способом.",
                 "if_it_were_true": "Тогда переписывание legacy-кода на `Parameter` было бы вынужденным, но `getParameterAnnotations()` работает и на `Java 7`.",
                 "how_it_should_be": "Аннотации параметров доступны с `Java 5` через `getParameterAnnotations()`; `Parameter` — удобство `Java 8`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Method.getParameters()` возвращает имена параметров без дополнительных флагов компиляции.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `-parameters` `javac` стирает имена, и `Parameter.getName()` возвращает `arg0`, `arg1` — имена не сохраняются в байт-коде.",
+                "source_of_confusion": "Имена есть в исходнике, поэтому ждут их и в runtime без специальных флагов.",
+                "if_it_were_true": "Тогда `@RequestParam` без имени работал бы всегда, но даёт `Required String parameter 'arg0'` — 400 на каждый вызов.",
+                "how_it_should_be": "Для сохранения имён нужен флаг `-parameters`; иначе доступны лишь `arg0`/`arg1`."
               }
             }
           ]
@@ -1151,13 +1151,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`AnnotatedElement` реализуют только `Class` и `Method`, остальные элементы используют отдельные API.",
-              "correct": false,
+              "text": "`AnnotatedElement` — общий интерфейс для всех элементов, поддерживающих аннотации: `Class`, `Method`, `Field`, `Constructor`, `Parameter`, `Package`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`Field`, `Constructor`, `Parameter`, `Package`, `AccessibleObject` тоже реализуют `AnnotatedElement` — API унифицирован для обобщённого обхода.",
-                "source_of_confusion": "`Class` и `Method` упоминают чаще всего, поэтому остальные реализации упускают.",
-                "if_it_were_true": "Тогда для `Field` и `Constructor` писали бы дублирующий код через `instanceof`, и забытая ветка ломала бы инъекцию на конструкторах.",
-                "how_it_should_be": "Все рефлексивные элементы реализуют `AnnotatedElement`; отдельных API для них не нужно."
+                "explanation": "Это единая точка входа: абстрактный код для работы с аннотациями пишется один раз и переиспользуется через `AnnotatedElement`, без ветвлений по конкретному типу.",
+                "example": "Spring `MergedAnnotations.from(AnnotatedElement)` для `@Transactional` на классах и методах; Bean Validation обходит `Field`/`Method`/`Parameter` единообразно.",
+                "when_to_apply": "`AnnotatedElement` используют, когда нужно обработать аннотации на разных видах элементов одним обобщённым методом.",
+                "edge_cases": "Методы `AnnotatedElement` работают только с `RUNTIME`-аннотациями: `SOURCE` удалены `javac` и через `getAnnotationsByType()` их не достать.",
+                "related": "[[java-annotations-interview#Q16]] методы чтения аннотаций; [[java-annotations-interview#Q19]] Parameter как AnnotatedElement; [[java-annotations-interview#Q17]] getAnnotation() vs getDeclaredAnnotation()."
               }
             },
             {
@@ -1187,14 +1188,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`AnnotatedElement` — общий интерфейс для всех элементов, поддерживающих аннотации: `Class`, `Method`, `Field`, `Constructor`, `Parameter`, `Package`.",
-              "correct": true,
+              "text": "`AnnotatedElement` реализуют только `Class` и `Method`, остальные элементы используют отдельные API.",
+              "correct": false,
               "sections": {
-                "explanation": "Это единая точка входа: абстрактный код для работы с аннотациями пишется один раз и переиспользуется через `AnnotatedElement`, без ветвлений по конкретному типу.",
-                "example": "Spring `MergedAnnotations.from(AnnotatedElement)` для `@Transactional` на классах и методах; Bean Validation обходит `Field`/`Method`/`Parameter` единообразно.",
-                "when_to_apply": "`AnnotatedElement` используют, когда нужно обработать аннотации на разных видах элементов одним обобщённым методом.",
-                "edge_cases": "Методы `AnnotatedElement` работают только с `RUNTIME`-аннотациями: `SOURCE` удалены `javac` и через `getAnnotationsByType()` их не достать.",
-                "related": "[[java-annotations-interview#Q16]] методы чтения аннотаций; [[java-annotations-interview#Q19]] Parameter как AnnotatedElement; [[java-annotations-interview#Q17]] getAnnotation() vs getDeclaredAnnotation()."
+                "what_actually": "`Field`, `Constructor`, `Parameter`, `Package`, `AccessibleObject` тоже реализуют `AnnotatedElement` — API унифицирован для обобщённого обхода.",
+                "source_of_confusion": "`Class` и `Method` упоминают чаще всего, поэтому остальные реализации упускают.",
+                "if_it_were_true": "Тогда для `Field` и `Constructor` писали бы дублирующий код через `instanceof`, и забытая ветка ломала бы инъекцию на конструкторах.",
+                "how_it_should_be": "Все рефлексивные элементы реализуют `AnnotatedElement`; отдельных API для них не нужно."
               }
             }
           ]
@@ -1211,6 +1211,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`Annotation Processor` работает на этапе загрузки классов JVM и кэширует аннотации для ускорения рефлексии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JVM при `defineClass` ничего не обрабатывает в смысле APT; кэширование рефлексии делают фреймворки приложения (Spring `MergedAnnotations`).",
+                "source_of_confusion": "Загрузка классов и обработка аннотаций оба «runtime-этапы», поэтому их объединяют.",
+                "if_it_were_true": "Тогда APT снижал бы latency на старте, но POC показывает ноль изменений — sprint потрачен зря.",
+                "how_it_should_be": "Кэширование аннотаций — задача фреймворков в runtime; APT тут ни при чём."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`Annotation Processor` вызывается `javac` на этапе компиляции и может генерировать новые файлы и сообщения, но не модифицировать существующие.",
               "correct": true,
               "sections": {
@@ -1222,32 +1234,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`Annotation Processor` выполняется JVM при старте приложения и заменяет рефлексию на прекомпилированный код.",
-              "correct": false,
-              "sections": {
-                "what_actually": "APT работает в `javac` на этапе компиляции, до сборки `.class`; в JVM ничего не запускается, и runtime-рефлексия остаётся прежней.",
-                "source_of_confusion": "Кодогенерация ассоциируется с «ускорением рефлексии», что переносят на runtime-этап.",
-                "if_it_were_true": "Тогда без `annotationProcessor` в Gradle классы генерировались бы при старте, но получаем `ClassNotFoundException` в crash-loop.",
-                "how_it_should_be": "APT — compile-time механизм `javac`; в runtime он не работает."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "`Annotation Processor` работает на этапе загрузки классов JVM и кэширует аннотации для ускорения рефлексии.",
-              "correct": false,
-              "sections": {
-                "what_actually": "JVM при `defineClass` ничего не обрабатывает в смысле APT; кэширование рефлексии делают фреймворки приложения (Spring `MergedAnnotations`).",
-                "source_of_confusion": "Загрузка классов и обработка аннотаций оба «runtime-этапы», поэтому их объединяют.",
-                "if_it_were_true": "Тогда APT снижал бы latency на старте, но POC показывает ноль изменений — sprint потрачен зря.",
-                "how_it_should_be": "Кэширование аннотаций — задача фреймворков в runtime; APT тут ни при чём."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Процессор может удалять `.java` файлы, помеченные аннотацией.",
               "correct": false,
               "sections": {
@@ -1255,6 +1243,18 @@
                 "source_of_confusion": "Раз процессор «управляет файлами», кажется, что он может и удалять.",
                 "if_it_were_true": "Тогда APT-«чистильщик» удалял бы устаревшие файлы, но `FilerException: cannot delete` — build падает.",
                 "how_it_should_be": "APT может только создавать новые файлы; удаление и модификация недоступны."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Annotation Processor` выполняется JVM при старте приложения и заменяет рефлексию на прекомпилированный код.",
+              "correct": false,
+              "sections": {
+                "what_actually": "APT работает в `javac` на этапе компиляции, до сборки `.class`; в JVM ничего не запускается, и runtime-рефлексия остаётся прежней.",
+                "source_of_confusion": "Кодогенерация ассоциируется с «ускорением рефлексии», что переносят на runtime-этап.",
+                "if_it_were_true": "Тогда без `annotationProcessor` в Gradle классы генерировались бы при старте, но получаем `ClassNotFoundException` в crash-loop.",
+                "how_it_should_be": "APT — compile-time механизм `javac`; в runtime он не работает."
               }
             }
           ]
@@ -1271,31 +1271,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Процессор расширяет `RoundEnvironment` и переопределяет метод `processRound()`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`RoundEnvironment` — параметр метода `process(Set, RoundEnvironment)`, а не базовый класс; собственный процессор наследуется от `AbstractProcessor`.",
-                "source_of_confusion": "`RoundEnvironment` фигурирует в сигнатуре `process()`, поэтому его принимают за супертип.",
-                "if_it_were_true": "Тогда `class MyProcessor extends RoundEnvironment` компилировался бы, но даёт «cannot inherit from RoundEnvironment».",
-                "how_it_should_be": "Процессор расширяет `AbstractProcessor` и переопределяет `process()`; `RoundEnvironment` — его аргумент."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Процессор расширяет `AbstractProcessor`, аннотируется `@SupportedAnnotationTypes`/`@SupportedSourceVersion` и регистрируется через `META-INF/services`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`AbstractProcessor` даёт хуки `init`/`process`, мета-аннотации описывают контракт для `javac`, а регистрация через SPI или `@AutoService` делает процессор видимым на `processorpath`.",
-                "example": "MapStruct `MappingProcessor`, Dagger 2 `ComponentProcessor`, Immutables — все наследуют `AbstractProcessor` и регистрируются через `@AutoService(Processor.class)`.",
-                "when_to_apply": "Свой процессор пишут для генерации кода (билдеры, мапперы) или compile-time валидации конфигурации по собственной аннотации.",
-                "edge_cases": "В методе `process(Set, RoundEnvironment)` `RoundEnvironment` — параметр, а не базовый класс; ошибки сообщают через `Messager.printMessage(ERROR, ...)`.",
-                "related": "[[java-annotations-interview#Q21]] что такое Annotation Processor; [[java-annotations-interview#Q24]] способы регистрации процессора; [[java-annotations-interview#Q23]] раунды обработки."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Процессор реализует `java.lang.reflect.AnnotationHandler` и регистрируется в `module-info`.",
               "correct": false,
               "sections": {
@@ -1306,8 +1281,20 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
+              "text": "Процессор расширяет `RoundEnvironment` и переопределяет метод `processRound()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RoundEnvironment` — параметр метода `process(Set, RoundEnvironment)`, а не базовый класс; собственный процессор наследуется от `AbstractProcessor`.",
+                "source_of_confusion": "`RoundEnvironment` фигурирует в сигнатуре `process()`, поэтому его принимают за супертип.",
+                "if_it_were_true": "Тогда `class MyProcessor extends RoundEnvironment` компилировался бы, но даёт «cannot inherit from RoundEnvironment».",
+                "how_it_should_be": "Процессор расширяет `AbstractProcessor` и переопределяет `process()`; `RoundEnvironment` — его аргумент."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Процессор запускается командой `java -agentlib:apt` во время выполнения.",
               "correct": false,
               "sections": {
@@ -1315,6 +1302,19 @@
                 "source_of_confusion": "Аббревиатура «apt» и наличие javaagent-механизма создают иллюзию runtime-запуска.",
                 "if_it_were_true": "Тогда `-agentlib:apt` в JVM-параметрах запускал бы процессор, но JVM не стартует — «Could not find agent library».",
                 "how_it_should_be": "Процессор запускает `javac` через `-processorpath`; runtime-агенты тут не используются."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Процессор расширяет `AbstractProcessor`, аннотируется `@SupportedAnnotationTypes`/`@SupportedSourceVersion` и регистрируется через `META-INF/services`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`AbstractProcessor` даёт хуки `init`/`process`, мета-аннотации описывают контракт для `javac`, а регистрация через SPI или `@AutoService` делает процессор видимым на `processorpath`.",
+                "example": "MapStruct `MappingProcessor`, Dagger 2 `ComponentProcessor`, Immutables — все наследуют `AbstractProcessor` и регистрируются через `@AutoService(Processor.class)`.",
+                "when_to_apply": "Свой процессор пишут для генерации кода (билдеры, мапперы) или compile-time валидации конфигурации по собственной аннотации.",
+                "edge_cases": "В методе `process(Set, RoundEnvironment)` `RoundEnvironment` — параметр, а не базовый класс; ошибки сообщают через `Messager.printMessage(ERROR, ...)`.",
+                "related": "[[java-annotations-interview#Q21]] что такое Annotation Processor; [[java-annotations-interview#Q24]] способы регистрации процессора; [[java-annotations-interview#Q23]] раунды обработки."
               }
             }
           ]
@@ -1343,13 +1343,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Раунд обработки — это JVM-термин для `Just-In-Time` компиляции аннотаций.",
+              "text": "Процессор обязан возвращать `true` во всех раундах, чтобы не прерывать обработку.",
               "correct": false,
               "sections": {
-                "what_actually": "Раунды — compile-time понятие `javac` (фаза `ANNOTATION_PROCESSING`); JIT работает в runtime над байт-кодом и к APT отношения не имеет.",
-                "source_of_confusion": "И раунды, и JIT — про «компиляцию», поэтому термины смешивают.",
-                "if_it_were_true": "Тогда `-XX:+PrintCompilation` показывал бы раунды APT, но там только JIT-логи — источник проблемы не виден.",
-                "how_it_should_be": "Раунды — это `javac` на этапе компиляции; JIT — отдельный runtime-механизм."
+                "what_actually": "Возвращаемое значение — это «claim» аннотации: `true` означает «обработал, другим не передавать»; цикл раундов от него не зависит.",
+                "source_of_confusion": "`return true` интуитивно читается как «продолжить», поэтому кажется обязательным.",
+                "if_it_were_true": "Тогда `true` для `*` был бы безопасен, но Lombok не получает `@Getter` — классы без геттеров, тесты падают.",
+                "how_it_should_be": "`true`/`false` управляет claim'ом аннотаций для других процессоров, а не продолжением раундов."
               }
             },
             {
@@ -1368,13 +1368,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Процессор обязан возвращать `true` во всех раундах, чтобы не прерывать обработку.",
+              "text": "Раунд обработки — это JVM-термин для `Just-In-Time` компиляции аннотаций.",
               "correct": false,
               "sections": {
-                "what_actually": "Возвращаемое значение — это «claim» аннотации: `true` означает «обработал, другим не передавать»; цикл раундов от него не зависит.",
-                "source_of_confusion": "`return true` интуитивно читается как «продолжить», поэтому кажется обязательным.",
-                "if_it_were_true": "Тогда `true` для `*` был бы безопасен, но Lombok не получает `@Getter` — классы без геттеров, тесты падают.",
-                "how_it_should_be": "`true`/`false` управляет claim'ом аннотаций для других процессоров, а не продолжением раундов."
+                "what_actually": "Раунды — compile-time понятие `javac` (фаза `ANNOTATION_PROCESSING`); JIT работает в runtime над байт-кодом и к APT отношения не имеет.",
+                "source_of_confusion": "И раунды, и JIT — про «компиляцию», поэтому термины смешивают.",
+                "if_it_were_true": "Тогда `-XX:+PrintCompilation` показывал бы раунды APT, но там только JIT-логи — источник проблемы не виден.",
+                "how_it_should_be": "Раунды — это `javac` на этапе компиляции; JIT — отдельный runtime-механизм."
               }
             }
           ]
@@ -1391,13 +1391,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно положить класс-процессор в classpath проекта — `javac` сам найдёт всё, что наследует `AbstractProcessor`.",
+              "text": "В Kotlin-проекте конфигурация `annotationProcessor` работает идентично Java — `kapt` это просто алиас.",
               "correct": false,
               "sections": {
-                "what_actually": "Без файла `META-INF/services/javax.annotation.processing.Processor` (или `@AutoService`) `javac` не запустит процессор, и кодогенерация молча не произойдёт.",
-                "source_of_confusion": "Кажется, что наследование `AbstractProcessor` само регистрирует процессор, как с интерфейсами SPI без файла.",
-                "if_it_were_true": "Тогда сборка генерировала бы классы автоматически, но проходит без сгенерированных файлов — баг находят поздно.",
-                "how_it_should_be": "Нужен SPI-файл или `@AutoService`; classpath сам процессор не активирует."
+                "what_actually": "`annotationProcessor` запускает процессор только над Java-исходниками; для Kotlin-классов нужен `kapt` (или `KSP`).",
+                "source_of_confusion": "Обе конфигурации про обработку аннотаций, поэтому их считают эквивалентными.",
+                "if_it_were_true": "Тогда `annotationProcessor` обрабатывал бы `.kt`-файлы, но аннотации в Kotlin игнорируются — код не генерируется.",
+                "how_it_should_be": "Для Kotlin используют `kapt`/`KSP`; `annotationProcessor` покрывает только Java."
               }
             },
             {
@@ -1415,13 +1415,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В Kotlin-проекте конфигурация `annotationProcessor` работает идентично Java — `kapt` это просто алиас.",
+              "text": "Достаточно положить класс-процессор в classpath проекта — `javac` сам найдёт всё, что наследует `AbstractProcessor`.",
               "correct": false,
               "sections": {
-                "what_actually": "`annotationProcessor` запускает процессор только над Java-исходниками; для Kotlin-классов нужен `kapt` (или `KSP`).",
-                "source_of_confusion": "Обе конфигурации про обработку аннотаций, поэтому их считают эквивалентными.",
-                "if_it_were_true": "Тогда `annotationProcessor` обрабатывал бы `.kt`-файлы, но аннотации в Kotlin игнорируются — код не генерируется.",
-                "how_it_should_be": "Для Kotlin используют `kapt`/`KSP`; `annotationProcessor` покрывает только Java."
+                "what_actually": "Без файла `META-INF/services/javax.annotation.processing.Processor` (или `@AutoService`) `javac` не запустит процессор, и кодогенерация молча не произойдёт.",
+                "source_of_confusion": "Кажется, что наследование `AbstractProcessor` само регистрирует процессор, как с интерфейсами SPI без файла.",
+                "if_it_were_true": "Тогда сборка генерировала бы классы автоматически, но проходит без сгенерированных файлов — баг находят поздно.",
+                "how_it_should_be": "Нужен SPI-файл или `@AutoService`; classpath сам процессор не активирует."
               }
             },
             {
@@ -1451,6 +1451,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Процессор может удалять `.java`-файлы через `Filer.delete()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "API не предоставляет метода `Filer.delete()`; доступны только `createSourceFile`/`createClassFile`/`createResource`.",
+                "source_of_confusion": "Раз `Filer` управляет файлами, кажется логичным наличие метода удаления.",
+                "if_it_were_true": "Тогда чистка через `File.delete()` была бы безопасной, но она ломает инкрементальную сборку Gradle.",
+                "how_it_should_be": "Процессор только создаёт файлы; удаление не входит в контракт `Filer`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Процессор может зависеть от собственного сгенерированного кода в том же раунде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Раунды защищают от такой циклической зависимости: сгенерированный код компилируется в следующем раунде, а не в текущем.",
+                "source_of_confusion": "Кажется, что раз файл создан в `process()`, он сразу доступен процессору.",
+                "if_it_were_true": "Тогда ссылка на `Generated*Impl` в том же раунде компилировалась бы, но даёт `cannot find symbol`.",
+                "how_it_should_be": "Сгенерированный код доступен только в следующем раунде; в текущем на него ссылаться нельзя."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Процессор может только создавать новые исходники, но не модифицировать существующие.",
               "correct": true,
               "sections": {
@@ -1462,20 +1486,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Процессор может удалять `.java`-файлы через `Filer.delete()`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "API не предоставляет метода `Filer.delete()`; доступны только `createSourceFile`/`createClassFile`/`createResource`.",
-                "source_of_confusion": "Раз `Filer` управляет файлами, кажется логичным наличие метода удаления.",
-                "if_it_were_true": "Тогда чистка через `File.delete()` была бы безопасной, но она ломает инкрементальную сборку Gradle.",
-                "how_it_should_be": "Процессор только создаёт файлы; удаление не входит в контракт `Filer`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Порядок вызова процессоров строго определяется алфавитом по имени класса.",
               "correct": false,
               "sections": {
@@ -1483,18 +1495,6 @@
                 "source_of_confusion": "Детерминированный порядок упростил бы зависимости, поэтому его ошибочно предполагают.",
                 "if_it_were_true": "Тогда процессор A читал бы результат B стабильно, но на другой машине порядок иной — сборка ломается недетерминированно.",
                 "how_it_should_be": "Порядок процессоров не определён; зависимости решают через раунды, а не порядок."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Процессор может зависеть от собственного сгенерированного кода в том же раунде.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Раунды защищают от такой циклической зависимости: сгенерированный код компилируется в следующем раунде, а не в текущем.",
-                "source_of_confusion": "Кажется, что раз файл создан в `process()`, он сразу доступен процессору.",
-                "if_it_were_true": "Тогда ссылка на `Generated*Impl` в том же раунде компилировалась бы, но даёт `cannot find symbol`.",
-                "how_it_should_be": "Сгенерированный код доступен только в следующем раунде; в текущем на него ссылаться нельзя."
               }
             }
           ]
@@ -1511,6 +1511,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`Dagger 2` использует runtime-рефлексию через `@Inject`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Dagger 2 — compile-time DI: граф зависимостей строится процессором в `Dagger*Component`, рефлексии нет.",
+                "source_of_confusion": "`@Inject` ассоциируется с runtime-DI вроде Spring, поэтому Dagger считают рефлексивным.",
+                "if_it_were_true": "Тогда на Android cold-start рос бы как у рефлексивных DI, но Dagger именно избегает этих 100ms.",
+                "how_it_should_be": "Dagger 2 генерирует DI-код в compile-time; runtime-рефлексия в нём не используется."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`Lombok` — стандартный APT, использующий только `Filer.createSourceFile()`.",
               "correct": false,
               "sections": {
@@ -1521,8 +1533,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`Micronaut` и `Quarkus` обрабатывают DI-аннотации в compile-time для быстрого старта и низкого потребления памяти.",
               "correct": true,
               "sections": {
@@ -1534,8 +1546,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`MapStruct` генерирует прокси через CGLIB в рантайме.",
               "correct": false,
               "sections": {
@@ -1543,18 +1555,6 @@
                 "source_of_confusion": "Многие мапперы (ModelMapper) работают через рефлексию, что переносят и на MapStruct.",
                 "if_it_were_true": "Тогда ошибка маппинга проявлялась бы как runtime `ClassCastException`, но MapStruct ловит её на компиляции.",
                 "how_it_should_be": "MapStruct генерирует обычный код через APT; CGLIB-прокси в runtime он не создаёт."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Dagger 2` использует runtime-рефлексию через `@Inject`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Dagger 2 — compile-time DI: граф зависимостей строится процессором в `Dagger*Component`, рефлексии нет.",
-                "source_of_confusion": "`@Inject` ассоциируется с runtime-DI вроде Spring, поэтому Dagger считают рефлексивным.",
-                "if_it_were_true": "Тогда на Android cold-start рос бы как у рефлексивных DI, но Dagger именно избегает этих 100ms.",
-                "how_it_should_be": "Dagger 2 генерирует DI-код в compile-time; runtime-рефлексия в нём не используется."
               }
             }
           ]
@@ -1571,30 +1571,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Service` и `@Repository` функционально идентичны.",
+              "text": "`@Autowired` работает на `private`-полях без рефлексии.",
               "correct": false,
               "sections": {
-                "what_actually": "`@Repository` дополнительно включает перевод persistence-исключений в `DataAccessException` через `PersistenceExceptionTranslationPostProcessor`.",
-                "source_of_confusion": "Оба — stereotype-аннотации поверх `@Component`, поэтому кажутся взаимозаменяемыми.",
-                "if_it_were_true": "Тогда DAO с `@Service` тоже транслировал бы исключения, но бросает raw `SQLException` мимо exception translation.",
-                "how_it_should_be": "`@Repository` добавляет exception translation; для DAO-слоя используют именно её."
+                "what_actually": "Spring внедряет значения в `private`-поля через `Field.setAccessible(true)` — это рефлексивный доступ.",
+                "source_of_confusion": "Инъекция «просто работает», поэтому кажется, что рефлексия не задействована.",
+                "if_it_were_true": "Тогда на GraalVM native image поле инжектилось бы без конфигурации, но без reflect-config остаётся `null`.",
+                "how_it_should_be": "Field-инъекция использует рефлексию; на native image нужна явная reflect-config."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`@Component` сканируется автоматически без `@ComponentScan`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Сканирование требует явного `@ComponentScan` или `@SpringBootApplication`; без них бин не регистрируется.",
-                "source_of_confusion": "В Spring Boot сканирование «работает само», но это `@SpringBootApplication` включает `@ComponentScan`.",
-                "if_it_were_true": "Тогда любой `@Component` подхватывался бы всегда, но без сканирования `@Autowired` даёт `NoSuchBeanDefinitionException`.",
-                "how_it_should_be": "Для регистрации `@Component` нужен `@ComponentScan` (явный или через `@SpringBootApplication`)."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Stereotype-аннотации (`@Component`, `@Service`, ...) требуют `RUNTIME` retention для component scan — Spring читает их рефлексией при старте контекста.",
               "correct": true,
               "sections": {
@@ -1606,15 +1594,27 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`@Autowired` работает на `private`-полях без рефлексии.",
+              "order": 2,
+              "label": "C",
+              "text": "`@Service` и `@Repository` функционально идентичны.",
               "correct": false,
               "sections": {
-                "what_actually": "Spring внедряет значения в `private`-поля через `Field.setAccessible(true)` — это рефлексивный доступ.",
-                "source_of_confusion": "Инъекция «просто работает», поэтому кажется, что рефлексия не задействована.",
-                "if_it_were_true": "Тогда на GraalVM native image поле инжектилось бы без конфигурации, но без reflect-config остаётся `null`.",
-                "how_it_should_be": "Field-инъекция использует рефлексию; на native image нужна явная reflect-config."
+                "what_actually": "`@Repository` дополнительно включает перевод persistence-исключений в `DataAccessException` через `PersistenceExceptionTranslationPostProcessor`.",
+                "source_of_confusion": "Оба — stereotype-аннотации поверх `@Component`, поэтому кажутся взаимозаменяемыми.",
+                "if_it_were_true": "Тогда DAO с `@Service` тоже транслировал бы исключения, но бросает raw `SQLException` мимо exception translation.",
+                "how_it_should_be": "`@Repository` добавляет exception translation; для DAO-слоя используют именно её."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Component` сканируется автоматически без `@ComponentScan`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сканирование требует явного `@ComponentScan` или `@SpringBootApplication`; без них бин не регистрируется.",
+                "source_of_confusion": "В Spring Boot сканирование «работает само», но это `@SpringBootApplication` включает `@ComponentScan`.",
+                "if_it_were_true": "Тогда любой `@Component` подхватывался бы всегда, но без сканирования `@Autowired` даёт `NoSuchBeanDefinitionException`.",
+                "how_it_should_be": "Для регистрации `@Component` нужен `@ComponentScan` (явный или через `@SpringBootApplication`)."
               }
             }
           ]
@@ -1631,30 +1631,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Self-invocation через `this.placeOrder()` срабатывает прокси `@Transactional`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Прокси перехватывает только внешние вызовы через bean-ссылку; вызов через `this` идёт мимо прокси, и advice не применяется.",
-                "source_of_confusion": "Метод помечен `@Transactional`, поэтому кажется, что транзакция откроется при любом его вызове.",
-                "if_it_were_true": "Тогда внутренний вызов открывал бы транзакцию, но `commit/rollback` игнорируется — грязные данные в БД.",
-                "how_it_should_be": "Для срабатывания прокси нужен внешний вызов через bean-ссылку, а не `this`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`@Transactional` на `private`-методе работает через CGLIB.",
-              "correct": false,
-              "sections": {
-                "what_actually": "CGLIB генерирует subclass и переопределяет только `public`/`protected`-методы; `private` перехватить нельзя.",
-                "source_of_confusion": "Аннотация стоит на методе, поэтому кажется, что прокси её обработает независимо от модификатора.",
-                "if_it_were_true": "Тогда транзакция открывалась бы на `private`-методе, но на проде её нет — данные не откатываются.",
-                "how_it_should_be": "AOP перехватывает `public`/`protected`-методы; `private` остаётся без advice."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`final`-метод можно перехватить CGLIB-прокси.",
               "correct": false,
               "sections": {
@@ -1665,8 +1641,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Кастомная AOP-аннотация требует `RUNTIME` retention и наличия `@Aspect`-бина: Spring читает её рефлексией и привязывает advice.",
               "correct": true,
               "sections": {
@@ -1675,6 +1651,30 @@
                 "when_to_apply": "Такой подход выбирают для cross-cutting concerns (логирование, метрики, ретраи), привязанных к методам через аннотацию.",
                 "edge_cases": "Self-invocation через `this` обходит прокси, а `@Transactional` на `private`/`final`-методе игнорируется, так как CGLIB их не перехватывает.",
                 "related": "[[java-annotations-interview#Q29]] создание AOP-аннотации; [[java-annotations-interview#Q27]] аннотации в Spring; [[java-annotations-interview#Q8]] RUNTIME retention."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@Transactional` на `private`-методе работает через CGLIB.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CGLIB генерирует subclass и переопределяет только `public`/`protected`-методы; `private` перехватить нельзя.",
+                "source_of_confusion": "Аннотация стоит на методе, поэтому кажется, что прокси её обработает независимо от модификатора.",
+                "if_it_were_true": "Тогда транзакция открывалась бы на `private`-методе, но на проде её нет — данные не откатываются.",
+                "how_it_should_be": "AOP перехватывает `public`/`protected`-методы; `private` остаётся без advice."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Self-invocation через `this.placeOrder()` срабатывает прокси `@Transactional`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прокси перехватывает только внешние вызовы через bean-ссылку; вызов через `this` идёт мимо прокси, и advice не применяется.",
+                "source_of_confusion": "Метод помечен `@Transactional`, поэтому кажется, что транзакция откроется при любом его вызове.",
+                "if_it_were_true": "Тогда внутренний вызов открывал бы транзакцию, но `commit/rollback` игнорируется — грязные данные в БД.",
+                "how_it_should_be": "Для срабатывания прокси нужен внешний вызов через bean-ссылку, а не `this`."
               }
             }
           ]
@@ -1691,6 +1691,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Достаточно объявить `@LogExecutionTime` с `@Target(METHOD)` — `Spring AOP` сам поднимет proxy на все помеченные методы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без `@Aspect`+`@EnableAspectJAutoProxy` (или `spring-boot-starter-aop`) аннотация просто игнорируется — advice не привязывается.",
+                "source_of_confusion": "Кажется, что наличие аннотации на методе автоматически включает AOP-обёртку.",
+                "if_it_were_true": "Тогда логирование появлялось бы само, но на проде «логика залогирована», а в логе тишина.",
+                "how_it_should_be": "Нужен аспект с `@Aspect` и включённый AOP; одной аннотации недостаточно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Аспект сработает на private-методе того же класса, если он помечен `@LogExecutionTime`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring AOP через CGLIB/JDK-proxy перехватывает только public-методы и только при внешнем вызове через bean-ссылку; private и self-invocation не оборачиваются.",
+                "source_of_confusion": "Аннотация на методе создаёт впечатление, что advice применится при любом вызове.",
+                "if_it_were_true": "Тогда private-метод логировался бы, но advice молчит — разработчик часами ищет причину.",
+                "how_it_should_be": "Advice работает на public-методах при внешнем вызове; private-методы вне зоны прокси."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Кастомная AOP-аннотация обязана иметь `@Retention(RUNTIME)`, а pointcut `@Around(\"@annotation(logExecutionTime)\")` биндит экземпляр аннотации к параметру аспекта — это позволяет читать `label()` без рефлексии.",
               "correct": true,
               "sections": {
@@ -1702,20 +1726,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Достаточно объявить `@LogExecutionTime` с `@Target(METHOD)` — `Spring AOP` сам поднимет proxy на все помеченные методы.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Без `@Aspect`+`@EnableAspectJAutoProxy` (или `spring-boot-starter-aop`) аннотация просто игнорируется — advice не привязывается.",
-                "source_of_confusion": "Кажется, что наличие аннотации на методе автоматически включает AOP-обёртку.",
-                "if_it_were_true": "Тогда логирование появлялось бы само, но на проде «логика залогирована», а в логе тишина.",
-                "how_it_should_be": "Нужен аспект с `@Aspect` и включённый AOP; одной аннотации недостаточно."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Аннотация может иметь `@Retention(CLASS)`, потому что `Spring AOP` читает её через bytecode-инструментацию при загрузке класса.",
               "correct": false,
               "sections": {
@@ -1723,18 +1735,6 @@
                 "source_of_confusion": "AOP ассоциируется с bytecode-weaving (как AspectJ), что переносят на Spring AOP.",
                 "if_it_were_true": "Тогда `CLASS`-аннотация работала бы в pointcut, но она невидима рефлексии — advice не применяется.",
                 "how_it_should_be": "Spring AOP читает аннотацию рефлексией, поэтому нужен `RUNTIME`, а не `CLASS`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Аспект сработает на private-методе того же класса, если он помечен `@LogExecutionTime`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Spring AOP через CGLIB/JDK-proxy перехватывает только public-методы и только при внешнем вызове через bean-ссылку; private и self-invocation не оборачиваются.",
-                "source_of_confusion": "Аннотация на методе создаёт впечатление, что advice применится при любом вызове.",
-                "if_it_were_true": "Тогда private-метод логировался бы, но advice молчит — разработчик часами ищет причину.",
-                "how_it_should_be": "Advice работает на public-методах при внешнем вызове; private-методы вне зоны прокси."
               }
             }
           ]
@@ -1751,18 +1751,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Valid` на параметре контроллера и `@Validated` на классе сервиса взаимозаменяемы — оба запускают каскадную валидацию.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@Validated` поддерживает только method-level validation на бинах через прокси и не запускает каскадный обход вложенных объектов, который делает `@Valid`.",
-                "source_of_confusion": "Имена `@Valid` и `@Validated` похожи и обе про валидацию, поэтому их считают синонимами.",
-                "if_it_were_true": "Тогда замена `@Valid` на `@Validated` в DTO-параметре сохраняла бы каскад, но он перестаёт запускаться.",
-                "how_it_should_be": "`@Valid` — каскадная валидация содержимого; `@Validated` — method-level через прокси, это разные роли."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`@Valid` запускает каскадную валидацию вложенного объекта, а `@NotNull` лишь требует, чтобы ссылка не была `null`: без `@Valid` поля внутри `Address` не проверяются, даже при `@NotBlank` на них.",
               "correct": true,
               "sections": {
@@ -1774,20 +1762,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`@NotEmpty` и `@NotBlank` идентичны для `String`: оба отвергают `null`, пустую строку и строку из пробелов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@NotEmpty` проверяет лишь не-null и ненулевую длину; строку из пробелов `\"   \"` он пропускает, а отвергает её только `@NotBlank`.",
-                "source_of_confusion": "Обе аннотации требуют «непустоту», поэтому разницу про пробелы упускают.",
-                "if_it_were_true": "Тогда `@NotEmpty` блокировал бы `\"   \"`, но запрос с пробелами проходит, и в БД попадают невидимые пустые имена.",
-                "how_it_should_be": "Для строк, где пробелы недопустимы, используют `@NotBlank`; `@NotEmpty` пробелы пропускает."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Все аннотации `Bean Validation` имеют `CLASS` retention, чтобы быть доступными процессору `Hibernate Validator` на этапе компиляции.",
               "correct": false,
               "sections": {
@@ -1795,6 +1771,30 @@
                 "source_of_confusion": "Валидация ассоциируется с «проверкой на компиляции», что наводит на `CLASS`-retention.",
                 "if_it_were_true": "Тогда `@NotNull` была бы невидима рефлексии в runtime, но именно так её читает валидатор при вызове API.",
                 "how_it_should_be": "Аннотации валидации — `RUNTIME`; проверка идёт при вызове через `Validator.validate()`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@Valid` на параметре контроллера и `@Validated` на классе сервиса взаимозаменяемы — оба запускают каскадную валидацию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Validated` поддерживает только method-level validation на бинах через прокси и не запускает каскадный обход вложенных объектов, который делает `@Valid`.",
+                "source_of_confusion": "Имена `@Valid` и `@Validated` похожи и обе про валидацию, поэтому их считают синонимами.",
+                "if_it_were_true": "Тогда замена `@Valid` на `@Validated` в DTO-параметре сохраняла бы каскад, но он перестаёт запускаться.",
+                "how_it_should_be": "`@Valid` — каскадная валидация содержимого; `@Validated` — method-level через прокси, это разные роли."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@NotEmpty` и `@NotBlank` идентичны для `String`: оба отвергают `null`, пустую строку и строку из пробелов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@NotEmpty` проверяет лишь не-null и ненулевую длину; строку из пробелов `\"   \"` он пропускает, а отвергает её только `@NotBlank`.",
+                "source_of_confusion": "Обе аннотации требуют «непустоту», поэтому разницу про пробелы упускают.",
+                "if_it_were_true": "Тогда `@NotEmpty` блокировал бы `\"   \"`, но запрос с пробелами проходит, и в БД попадают невидимые пустые имена.",
+                "how_it_should_be": "Для строк, где пробелы недопустимы, используют `@NotBlank`; `@NotEmpty` пробелы пропускает."
               }
             }
           ]
@@ -1835,6 +1835,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Аннотация без `@Documented` не будет работать с `@Valid` каскадно, потому что `Hibernate Validator` обходит только документированные аннотации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Documented` влияет только на Javadoc и не связана с каскадной валидацией; её удаление ничего в проверке не меняет.",
+                "source_of_confusion": "`@Documented` часто стоит на constraint-аннотациях, поэтому её роль преувеличивают.",
+                "if_it_were_true": "Тогда удаление `@Documented` ломало бы каскад на `Address`, но валидация продолжает работать.",
+                "how_it_should_be": "Каскад управляется `@Valid` и `@Constraint`, а `@Documented` — только видимость в Javadoc."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Аннотация валидации обязана объявлять `message()`, `groups()`, `payload()` — это контракт `Bean Validation API`; валидатор подключается через `@Constraint(validatedBy=...)` и работает на любом инстансе.",
               "correct": true,
               "sections": {
@@ -1843,18 +1855,6 @@
                 "when_to_apply": "Кастомный `@Constraint` создают, когда стандартных аннотаций недостаточно и нужна доменная проверка с параметрами.",
                 "edge_cases": "`isValid()` обычно возвращает `true` для `null` (это зона `@NotNull`); для инъекции зависимостей в валидатор нужен `SpringConstraintValidatorFactory`.",
                 "related": "[[java-annotations-interview#Q30]] стандартные аннотации Bean Validation; [[java-annotations-interview#Q4]] допустимые типы для groups()/payload(); [[java-annotations-interview#Q8]] RUNTIME retention валидаторов."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Аннотация без `@Documented` не будет работать с `@Valid` каскадно, потому что `Hibernate Validator` обходит только документированные аннотации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@Documented` влияет только на Javadoc и не связана с каскадной валидацией; её удаление ничего в проверке не меняет.",
-                "source_of_confusion": "`@Documented` часто стоит на constraint-аннотациях, поэтому её роль преувеличивают.",
-                "if_it_were_true": "Тогда удаление `@Documented` ломало бы каскад на `Address`, но валидация продолжает работать.",
-                "how_it_should_be": "Каскад управляется `@Valid` и `@Constraint`, а `@Documented` — только видимость в Javadoc."
               }
             }
           ]
@@ -1871,30 +1871,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@JsonIgnore` на поле исключает его и при сериализации, и при десериализации, но `@JsonProperty` на том же поле перекрывает `@JsonIgnore`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Сочетание `@JsonIgnore` и `@JsonProperty` на одном свойстве даёт неоднозначное поведение: `@JsonProperty` может «разморозить» поле, и оно неожиданно попадёт в вывод.",
-                "source_of_confusion": "Кажется, что `@JsonIgnore` всегда сильнее и гарантированно скрывает поле.",
-                "if_it_were_true": "Тогда `password` с `@JsonIgnore` + `@JsonProperty(\"pwd\")` был бы скрыт, но пароль уходит наружу в API-ответе.",
-                "how_it_should_be": "Не смешивают `@JsonIgnore` с `@JsonProperty` на одном поле; для скрытия оставляют только `@JsonIgnore`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`@JsonInclude(NON_NULL)` на классе исключает `null`-поля и при сериализации, и при десериализации `null` в поле не записывается.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@JsonInclude(NON_NULL)` влияет только на сериализацию (что попадёт в JSON); при десериализации `null` из запроса всё равно запишется в поле.",
-                "source_of_confusion": "Название «include» кажется симметричным для обоих направлений.",
-                "if_it_were_true": "Тогда `NON_NULL` блокировал бы входящие `null` в PATCH-запросах, но он их пропускает — валидные данные затираются нулями.",
-                "how_it_should_be": "`@JsonInclude` управляет только сериализацией; для входящих `null` используют отдельную логику."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`@JsonFormat(pattern = \"yyyy-MM-dd\")` на `LocalDate` работает в любом `ObjectMapper` без дополнительных модулей.",
               "correct": false,
               "sections": {
@@ -1905,8 +1881,20 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
+              "text": "`@JsonIgnore` на поле исключает его и при сериализации, и при десериализации, но `@JsonProperty` на том же поле перекрывает `@JsonIgnore`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сочетание `@JsonIgnore` и `@JsonProperty` на одном свойстве даёт неоднозначное поведение: `@JsonProperty` может «разморозить» поле, и оно неожиданно попадёт в вывод.",
+                "source_of_confusion": "Кажется, что `@JsonIgnore` всегда сильнее и гарантированно скрывает поле.",
+                "if_it_were_true": "Тогда `password` с `@JsonIgnore` + `@JsonProperty(\"pwd\")` был бы скрыт, но пароль уходит наружу в API-ответе.",
+                "how_it_should_be": "Не смешивают `@JsonIgnore` с `@JsonProperty` на одном поле; для скрытия оставляют только `@JsonIgnore`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`@JsonCreator` указывает `Jackson` использовать конкретный конструктор/фабрику для десериализации, а каждый параметр должен быть помечен `@JsonProperty`, иначе `Jackson` упадёт без default-конструктора.",
               "correct": true,
               "sections": {
@@ -1915,6 +1903,18 @@
                 "when_to_apply": "`@JsonCreator` применяют, когда у класса нет пустого конструктора и сеттеров — типичный случай неизменяемых DTO.",
                 "edge_cases": "`@JsonInclude(NON_NULL)` влияет только на сериализацию; `@JsonFormat` на `LocalDate` требует `jackson-datatype-jsr310` и регистрации `JavaTimeModule`.",
                 "related": "[[java-annotations-interview#Q19]] флаг -parameters и имена параметров; [[java-annotations-interview#Q16]] RUNTIME-чтение аннотаций; [[java-annotations-interview#Q33]] аннотации в JPA/Hibernate."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@JsonInclude(NON_NULL)` на классе исключает `null`-поля и при сериализации, и при десериализации `null` в поле не записывается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@JsonInclude(NON_NULL)` влияет только на сериализацию (что попадёт в JSON); при десериализации `null` из запроса всё равно запишется в поле.",
+                "source_of_confusion": "Название «include» кажется симметричным для обоих направлений.",
+                "if_it_were_true": "Тогда `NON_NULL` блокировал бы входящие `null` в PATCH-запросах, но он их пропускает — валидные данные затираются нулями.",
+                "how_it_should_be": "`@JsonInclude` управляет только сериализацией; для входящих `null` используют отдельную логику."
               }
             }
           ]
@@ -1931,6 +1931,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`@Enumerated` по умолчанию хранит enum как `STRING` — это рекомендованный режим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дефолт `@Enumerated` — `ORDINAL` (числовой индекс); рекомендуемым же является `EnumType.STRING`, его задают явно.",
+                "source_of_confusion": "Раз `STRING` рекомендуют, его ошибочно считают и значением по умолчанию.",
+                "if_it_were_true": "Тогда добавление enum-значения в середину было бы безопасным, но при `ORDINAL` оно ломает все существующие данные.",
+                "how_it_should_be": "Дефолт — `ORDINAL`; для устойчивости к изменениям enum явно ставят `@Enumerated(EnumType.STRING)`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`@OneToMany(mappedBy=..., orphanRemoval=true)` удаляет ребёнка при разрыве ассоциации (например, при `setItems(null)` или удалении элемента из коллекции).",
               "correct": true,
               "sections": {
@@ -1942,8 +1954,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`@Entity` без `@Table` использует имя класса в нижнем регистре с подчёркиваниями.",
               "correct": false,
               "sections": {
@@ -1954,8 +1966,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`@Version` для optimistic locking — runtime-only, JPA не использует её для UPDATE.",
               "correct": false,
               "sections": {
@@ -1963,18 +1975,6 @@
                 "source_of_confusion": "Поле кажется просто счётчиком, который читается, но не участвует в запросах.",
                 "if_it_were_true": "Тогда версию проверяли бы вручную, но это теряет автоматический `OptimisticLockException` при конкурентной правке.",
                 "how_it_should_be": "`@Version` участвует в `UPDATE ... WHERE version = ?`; ручная проверка не нужна."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`@Enumerated` по умолчанию хранит enum как `STRING` — это рекомендованный режим.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Дефолт `@Enumerated` — `ORDINAL` (числовой индекс); рекомендуемым же является `EnumType.STRING`, его задают явно.",
-                "source_of_confusion": "Раз `STRING` рекомендуют, его ошибочно считают и значением по умолчанию.",
-                "if_it_were_true": "Тогда добавление enum-значения в середину было бы безопасным, но при `ORDINAL` оно ломает все существующие данные.",
-                "how_it_should_be": "Дефолт — `ORDINAL`; для устойчивости к изменениям enum явно ставят `@Enumerated(EnumType.STRING)`."
               }
             }
           ]
@@ -1991,13 +1991,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@SafeVarargs` подавляет любые предупреждения, как `@SuppressWarnings(\"all\")`.",
+              "text": "`@FunctionalInterface` — marker-аннотация без runtime-эффекта и без compile-check.",
               "correct": false,
               "sections": {
-                "what_actually": "`@SafeVarargs` подавляет только heap pollution warning от сочетания varargs + generics, а не любые предупреждения компилятора.",
-                "source_of_confusion": "Слово «Safe» создаёт впечатление универсального подавления, как у `@SuppressWarnings`.",
-                "if_it_were_true": "Тогда `@SafeVarargs` ставили бы на не-varargs методы, но компилятор даёт «not applicable».",
-                "how_it_should_be": "Для широкого подавления используют `@SuppressWarnings`; `@SafeVarargs` узко про varargs+generics."
+                "what_actually": "Это compile-time проверка: интерфейс с двумя и более абстрактными методами не компилируется под `@FunctionalInterface`.",
+                "source_of_confusion": "Маркерные аннотации часто ничего не проверяют, что переносят и на `@FunctionalInterface`.",
+                "if_it_were_true": "Тогда добавление второго абстрактного метода проходило бы тихо, но лямбда-API ломается без диагностики.",
+                "how_it_should_be": "`@FunctionalInterface` принудительно проверяет единственный SAM на этапе компиляции."
               }
             },
             {
@@ -2016,13 +2016,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@FunctionalInterface` — marker-аннотация без runtime-эффекта и без compile-check.",
+              "text": "`@SafeVarargs` подавляет любые предупреждения, как `@SuppressWarnings(\"all\")`.",
               "correct": false,
               "sections": {
-                "what_actually": "Это compile-time проверка: интерфейс с двумя и более абстрактными методами не компилируется под `@FunctionalInterface`.",
-                "source_of_confusion": "Маркерные аннотации часто ничего не проверяют, что переносят и на `@FunctionalInterface`.",
-                "if_it_were_true": "Тогда добавление второго абстрактного метода проходило бы тихо, но лямбда-API ломается без диагностики.",
-                "how_it_should_be": "`@FunctionalInterface` принудительно проверяет единственный SAM на этапе компиляции."
+                "what_actually": "`@SafeVarargs` подавляет только heap pollution warning от сочетания varargs + generics, а не любые предупреждения компилятора.",
+                "source_of_confusion": "Слово «Safe» создаёт впечатление универсального подавления, как у `@SuppressWarnings`.",
+                "if_it_were_true": "Тогда `@SafeVarargs` ставили бы на не-varargs методы, но компилятор даёт «not applicable».",
+                "how_it_should_be": "Для широкого подавления используют `@SuppressWarnings`; `@SafeVarargs` узко про varargs+generics."
               }
             },
             {
@@ -2051,18 +2051,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Дубликаты `ElementType` в `@Target` молча игнорируются компилятором.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это compile-error `duplicate element ElementType.FIELD`, а не молчаливое игнорирование.",
-                "source_of_confusion": "Кажется, что лишний дубль в массиве — безобидное повторение, которое компилятор «схлопнет».",
-                "if_it_were_true": "Тогда копипаст мета-аннотации с дублем собирался бы, но build падает, и причина неочевидна.",
-                "how_it_should_be": "Дубликат в `@Target` — ошибка компиляции; константы должны быть уникальны."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Дубликаты допустимы, но вызывают `IllegalArgumentException` в runtime.",
               "correct": false,
               "sections": {
@@ -2073,8 +2061,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Дубль `ElementType.FIELD` в `@Target` — ошибка компиляции: спецификация запрещает повторяющиеся константы в массиве `@Target`.",
               "correct": true,
               "sections": {
@@ -2086,8 +2074,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`@Target({})` (пустой массив) запрещает применять аннотацию вообще нигде и потому не компилируется.",
               "correct": false,
               "sections": {
@@ -2095,6 +2083,18 @@
                 "source_of_confusion": "«Нигде нельзя применить» звучит как нечто, что компилятор должен запретить.",
                 "if_it_were_true": "Тогда `@Target({})` давал бы ошибку сборки, но он валиден и оставляет «отключённую» аннотацию в коде.",
                 "how_it_should_be": "Пустой `@Target({})` компилируется; ошибкой является именно дубликат константы."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Дубликаты `ElementType` в `@Target` молча игнорируются компилятором.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это compile-error `duplicate element ElementType.FIELD`, а не молчаливое игнорирование.",
+                "source_of_confusion": "Кажется, что лишний дубль в массиве — безобидное повторение, которое компилятор «схлопнет».",
+                "if_it_were_true": "Тогда копипаст мета-аннотации с дублем собирался бы, но build падает, и причина неочевидна.",
+                "how_it_should_be": "Дубликат в `@Target` — ошибка компиляции; константы должны быть уникальны."
               }
             }
           ]
@@ -2111,6 +2111,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Всегда явно ставить `@Retention` и `@Target`, плюс `@Documented` для публичных API — это делает контракт явным, ограничивает применение и включает аннотацию в Javadoc.",
+              "correct": true,
+              "sections": {
+                "explanation": "По умолчанию retention — `CLASS`, что обычно не то, что нужно; явный `@Target` улучшает ошибки компиляции, а `@Documented` показывает аннотацию в документации публичного API.",
+                "example": "Каждая кастомная аннотация в проекте получает `@Retention(RUNTIME)` (для рефлексии), `@Target(METHOD)` и `@Documented`, если она часть публичного контракта.",
+                "when_to_apply": "Эти правила применяют при создании любой собственной `@interface`, чтобы поведение не зависело от неочевидных значений по умолчанию.",
+                "edge_cases": "Дополнительно: `value()` для основного атрибута даёт краткую запись, `default` — для опциональных параметров, а группировку делают через composed-аннотации.",
+                "related": "[[java-annotations-interview#Q7]] стандартные мета-аннотации; [[java-annotations-interview#Q8]] выбор RetentionPolicy; [[java-annotations-interview#Q6]] value() и default."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "По умолчанию аннотация имеет `RetentionPolicy.RUNTIME`, поэтому указывать `@Retention` необязательно.",
               "correct": false,
               "sections": {
@@ -2121,8 +2134,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`value()` нужен только для совместимости с Java 5, в современном коде он избыточен.",
               "correct": false,
               "sections": {
@@ -2133,8 +2146,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`default` для атрибута запрещён в кастомных аннотациях.",
               "correct": false,
               "sections": {
@@ -2142,19 +2155,6 @@
                 "source_of_confusion": "Кажется, что значения по умолчанию — фича только языковых аннотаций, не пользовательских.",
                 "if_it_were_true": "Тогда каждое использование требовало бы все атрибуты, но это даёт нечитаемый код и ломает клиентов при добавлении поля.",
                 "how_it_should_be": "`default` свободно используют для опциональных элементов кастомных аннотаций."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Всегда явно ставить `@Retention` и `@Target`, плюс `@Documented` для публичных API — это делает контракт явным, ограничивает применение и включает аннотацию в Javadoc.",
-              "correct": true,
-              "sections": {
-                "explanation": "По умолчанию retention — `CLASS`, что обычно не то, что нужно; явный `@Target` улучшает ошибки компиляции, а `@Documented` показывает аннотацию в документации публичного API.",
-                "example": "Каждая кастомная аннотация в проекте получает `@Retention(RUNTIME)` (для рефлексии), `@Target(METHOD)` и `@Documented`, если она часть публичного контракта.",
-                "when_to_apply": "Эти правила применяют при создании любой собственной `@interface`, чтобы поведение не зависело от неочевидных значений по умолчанию.",
-                "edge_cases": "Дополнительно: `value()` для основного атрибута даёт краткую запись, `default` — для опциональных параметров, а группировку делают через composed-аннотации.",
-                "related": "[[java-annotations-interview#Q7]] стандартные мета-аннотации; [[java-annotations-interview#Q8]] выбор RetentionPolicy; [[java-annotations-interview#Q6]] value() и default."
               }
             }
           ]
@@ -2171,19 +2171,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Самостоятельная обработка `RUNTIME`-аннотаций требует кэшировать результат рефлексии: `Method.getAnnotation()` каждый раз заново парсит метаданные.",
-              "correct": true,
-              "sections": {
-                "explanation": "Рефлексивное чтение аннотаций дороже прямого доступа; в горячем пути результат кэшируют, как это делают сами фреймворки (Spring, Jackson).",
-                "example": "В hot path используют `ConcurrentHashMap<Method, MyAnnotation>` с `computeIfAbsent`, чтобы не вызывать `getAnnotation()` на каждом запросе.",
-                "when_to_apply": "Кэш применяют, когда собственный код читает аннотации часто (на каждый вызов/запрос), а не один раз при старте.",
-                "edge_cases": "`SOURCE`/`CLASS`-аннотации вообще не нагружают runtime; Spring строит `TransactionAttribute` один раз, а на GraalVM рефлексия требует `reflect-config.json`.",
-                "related": "[[java-annotations-interview#Q16]] чтение аннотаций через Reflection; [[java-annotations-interview#Q8]] retention и runtime-видимость; [[java-annotations-interview#Q27]] Spring читает аннотации при старте."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`@Retention(SOURCE)` создаёт runtime-overhead на уровне `RUNTIME`.",
               "correct": false,
               "sections": {
@@ -2191,6 +2178,18 @@
                 "source_of_confusion": "Кажется, что любая аннотация как-то «весит» в runtime независимо от retention.",
                 "if_it_were_true": "Тогда удаление `@Override` ради «производительности» имело бы смысл, но лишь теряет compile-time проверку.",
                 "how_it_should_be": "`SOURCE` не влияет на runtime; overhead создают только `RUNTIME`-аннотации при рефлексии."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "GraalVM native image видит все runtime-аннотации без конфигурации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Native image требует `reflect-config.json` для классов с runtime-рефлексией; без него аннотации недоступны.",
+                "source_of_confusion": "На обычной JVM рефлексия «просто работает», что переносят и на native image.",
+                "if_it_were_true": "Тогда контроллер с `@RequestMapping` работал бы в native image из коробки, но без конфигурации даёт `404`.",
+                "how_it_should_be": "Для native image runtime-рефлексию аннотаций описывают в `reflect-config.json`."
               }
             },
             {
@@ -2208,13 +2207,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "GraalVM native image видит все runtime-аннотации без конфигурации.",
-              "correct": false,
+              "text": "Самостоятельная обработка `RUNTIME`-аннотаций требует кэшировать результат рефлексии: `Method.getAnnotation()` каждый раз заново парсит метаданные.",
+              "correct": true,
               "sections": {
-                "what_actually": "Native image требует `reflect-config.json` для классов с runtime-рефлексией; без него аннотации недоступны.",
-                "source_of_confusion": "На обычной JVM рефлексия «просто работает», что переносят и на native image.",
-                "if_it_were_true": "Тогда контроллер с `@RequestMapping` работал бы в native image из коробки, но без конфигурации даёт `404`.",
-                "how_it_should_be": "Для native image runtime-рефлексию аннотаций описывают в `reflect-config.json`."
+                "explanation": "Рефлексивное чтение аннотаций дороже прямого доступа; в горячем пути результат кэшируют, как это делают сами фреймворки (Spring, Jackson).",
+                "example": "В hot path используют `ConcurrentHashMap<Method, MyAnnotation>` с `computeIfAbsent`, чтобы не вызывать `getAnnotation()` на каждом запросе.",
+                "when_to_apply": "Кэш применяют, когда собственный код читает аннотации часто (на каждый вызов/запрос), а не один раз при старте.",
+                "edge_cases": "`SOURCE`/`CLASS`-аннотации вообще не нагружают runtime; Spring строит `TransactionAttribute` один раз, а на GraalVM рефлексия требует `reflect-config.json`.",
+                "related": "[[java-annotations-interview#Q16]] чтение аннотаций через Reflection; [[java-annotations-interview#Q8]] retention и runtime-видимость; [[java-annotations-interview#Q27]] Spring читает аннотации при старте."
               }
             }
           ]
@@ -2231,18 +2231,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "APT работает в одном раунде, всегда ровно один проход.",
-              "correct": false,
-              "sections": {
-                "what_actually": "APT работает в нескольких раундах, пока процессоры генерируют новые `.java`-файлы; финал отмечается `processingOver()`.",
-                "source_of_confusion": "Кажется, что обработка аннотаций — однократный проход компилятора.",
-                "if_it_were_true": "Тогда сгенерированный аннотированный код не обрабатывался бы дальше, но раунды как раз для этого и нужны.",
-                "how_it_should_be": "Раундов может быть несколько; их число определяется появлением новых файлов."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Регистрация процессора — через `META-INF/services/javax.annotation.processing.Processor` или `@AutoService`; это SPI-механизм, который `javac` читает при старте APT.",
               "correct": true,
               "sections": {
@@ -2254,20 +2242,20 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`Filer.createSourceFile()` может перезаписать уже существующий исходник пользователя.",
+              "order": 1,
+              "label": "B",
+              "text": "APT работает в одном раунде, всегда ровно один проход.",
               "correct": false,
               "sections": {
-                "what_actually": "API запрещает перезапись: повторное создание файла с тем же именем даёт `FilerException`.",
-                "source_of_confusion": "Раз `Filer` пишет файлы, кажется, что он может и перезаписывать существующие.",
-                "if_it_were_true": "Тогда процессор затирал бы пользовательские правки, но получает `FilerException` при конфликте имён.",
-                "how_it_should_be": "`Filer` только создаёт новые файлы; перезапись существующих запрещена."
+                "what_actually": "APT работает в нескольких раундах, пока процессоры генерируют новые `.java`-файлы; финал отмечается `processingOver()`.",
+                "source_of_confusion": "Кажется, что обработка аннотаций — однократный проход компилятора.",
+                "if_it_were_true": "Тогда сгенерированный аннотированный код не обрабатывался бы дальше, но раунды как раз для этого и нужны.",
+                "how_it_should_be": "Раундов может быть несколько; их число определяется появлением новых файлов."
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`process()` возвращает `false` — сигнал «прервать обработку».",
               "correct": false,
               "sections": {
@@ -2275,6 +2263,18 @@
                 "source_of_confusion": "`false` интуитивно читается как «стоп»/«ошибка».",
                 "if_it_were_true": "Тогда `false` останавливал бы APT, но цепочка процессоров получает дубль-обработку, ломая инкрементальную сборку.",
                 "how_it_should_be": "`true`/`false` управляет claim'ом аннотаций для других процессоров, не прерыванием."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Filer.createSourceFile()` может перезаписать уже существующий исходник пользователя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "API запрещает перезапись: повторное создание файла с тем же именем даёт `FilerException`.",
+                "source_of_confusion": "Раз `Filer` пишет файлы, кажется, что он может и перезаписывать существующие.",
+                "if_it_were_true": "Тогда процессор затирал бы пользовательские правки, но получает `FilerException` при конфликте имён.",
+                "how_it_should_be": "`Filer` только создаёт новые файлы; перезапись существующих запрещена."
               }
             }
           ]
@@ -2291,18 +2291,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Lombok — стандартный APT-процессор, использующий только публичный `Filer.createSourceFile()`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Lombok хакает `com.sun.tools.javac` internals и модифицирует AST на месте, а не создаёт новые файлы через `Filer`.",
-                "source_of_confusion": "Lombok подключается как процессор, поэтому кажется, что он использует публичный API.",
-                "if_it_were_true": "Тогда апгрейд JDK без `--add-opens jdk.compiler/...` не ломал бы сборку, но даёт `IllegalAccessError`.",
-                "how_it_should_be": "Lombok — AST-хак через internals; стандартный `Filer` для модификации классов он не использует."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`@Data` на Kotlin-классе работает идентично Java `@Data`.",
               "correct": false,
               "sections": {
@@ -2313,8 +2301,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Lombok `@Builder` модифицирует существующий `.java`-файл на диске.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lombok меняет только AST в памяти `javac`; исходные `.java`-файлы на диске остаются нетронутыми.",
+                "source_of_confusion": "Раз появляются новые методы, кажется, что исходник на диске тоже меняется.",
+                "if_it_were_true": "Тогда в git появлялись бы изменённые `.java`, но разработчик не находит таких файлов.",
+                "how_it_should_be": "Lombok правит AST в памяти компилятора; файлы исходников он не переписывает."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "Lombok — стандартный APT-процессор, использующий только публичный `Filer.createSourceFile()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lombok хакает `com.sun.tools.javac` internals и модифицирует AST на месте, а не создаёт новые файлы через `Filer`.",
+                "source_of_confusion": "Lombok подключается как процессор, поэтому кажется, что он использует публичный API.",
+                "if_it_were_true": "Тогда апгрейд JDK без `--add-opens jdk.compiler/...` не ломал бы сборку, но даёт `IllegalAccessError`.",
+                "how_it_should_be": "Lombok — AST-хак через internals; стандартный `Filer` для модификации классов он не использует."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "В Kotlin лучше использовать `data class` вместо Lombok `@Data`: `data class` нативно генерирует `equals/hashCode/toString/copy`.",
               "correct": true,
               "sections": {
@@ -2323,18 +2335,6 @@
                 "when_to_apply": "`data class` выбирают в Kotlin-проектах; `@Data` оставляют там, где код на Java и Lombok действительно работает.",
                 "edge_cases": "Lombok меняет только AST в памяти `javac`, исходники на диске не трогает; апгрейд JDK без `--add-opens` ломает его с `IllegalAccessError`.",
                 "related": "[[java-annotations-interview#Q25]] почему стандартный APT add-only; [[java-annotations-interview#Q26]] фреймворки на Annotation Processing; [[java-annotations-interview#Q41]] KSP vs KAPT в Kotlin."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Lombok `@Builder` модифицирует существующий `.java`-файл на диске.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Lombok меняет только AST в памяти `javac`; исходные `.java`-файлы на диске остаются нетронутыми.",
-                "source_of_confusion": "Раз появляются новые методы, кажется, что исходник на диске тоже меняется.",
-                "if_it_were_true": "Тогда в git появлялись бы изменённые `.java`, но разработчик не находит таких файлов.",
-                "how_it_should_be": "Lombok правит AST в памяти компилятора; файлы исходников он не переписывает."
               }
             }
           ]
@@ -2351,30 +2351,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "MapStruct мапит поля через рефлексию в `Mapper.toDto()` в рантайме.",
-              "correct": false,
-              "sections": {
-                "what_actually": "MapStruct генерирует чистый Java-код без рефлексии в `*MapperImpl`; маппинг — это обычные вызовы геттеров/сеттеров.",
-                "source_of_confusion": "Многие мапперы (ModelMapper/Dozer) рефлексивны, что переносят и на MapStruct.",
-                "if_it_were_true": "Тогда CPU-профайлер показывал бы нагрузку рефлексии MapStruct, но это ложный диагноз — рефлексии нет.",
-                "how_it_should_be": "MapStruct генерирует прямой код; рефлексии в runtime он не использует."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`@Mapping(target = \"createdAt\", expression = \"java(LocalDateTime.now())\")` выполняется в compile-time.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Expression — это код, вставляемый в сгенерированный метод; он исполняется в runtime при каждом вызове маппинга.",
-                "source_of_confusion": "Раз MapStruct работает в compile-time, кажется, что и выражение вычисляется тогда же.",
-                "if_it_were_true": "Тогда `createdAt` был бы зафиксирован на компиляции, но на деле каждый вызов даёт разный timestamp.",
-                "how_it_should_be": "Expression исполняется в runtime внутри сгенерированного метода, а не на компиляции."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`@InheritInverseConfiguration` поддерживает только `Long → Long` — не nested-объекты.",
               "correct": false,
               "sections": {
@@ -2385,8 +2361,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "MapStruct + Spring требует `@Mapper(componentModel = \"spring\")` для регистрации `*MapperImpl` как бина — без этого `@Autowired UserMapper` падает с `NoSuchBeanDefinitionException`.",
               "correct": true,
               "sections": {
@@ -2395,6 +2371,30 @@
                 "when_to_apply": "`componentModel = \"spring\"` указывают всегда, когда маппер инжектится в Spring-компоненты через DI.",
                 "edge_cases": "MapStruct генерирует код без рефлексии в `target/generated-sources`; `expression = \"java(...)\"` исполняется в runtime при каждом вызове, а не на компиляции.",
                 "related": "[[java-annotations-interview#Q27]] аннотации и DI в Spring; [[java-annotations-interview#Q26]] фреймворки на APT; [[java-annotations-interview#Q21]] APT как генератор кода."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@Mapping(target = \"createdAt\", expression = \"java(LocalDateTime.now())\")` выполняется в compile-time.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Expression — это код, вставляемый в сгенерированный метод; он исполняется в runtime при каждом вызове маппинга.",
+                "source_of_confusion": "Раз MapStruct работает в compile-time, кажется, что и выражение вычисляется тогда же.",
+                "if_it_were_true": "Тогда `createdAt` был бы зафиксирован на компиляции, но на деле каждый вызов даёт разный timestamp.",
+                "how_it_should_be": "Expression исполняется в runtime внутри сгенерированного метода, а не на компиляции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "MapStruct мапит поля через рефлексию в `Mapper.toDto()` в рантайме.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MapStruct генерирует чистый Java-код без рефлексии в `*MapperImpl`; маппинг — это обычные вызовы геттеров/сеттеров.",
+                "source_of_confusion": "Многие мапперы (ModelMapper/Dozer) рефлексивны, что переносят и на MapStruct.",
+                "if_it_were_true": "Тогда CPU-профайлер показывал бы нагрузку рефлексии MapStruct, но это ложный диагноз — рефлексии нет.",
+                "how_it_should_be": "MapStruct генерирует прямой код; рефлексии в runtime он не использует."
               }
             }
           ]
@@ -2424,18 +2424,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "KAPT работает напрямую с Kotlin AST без генерации Java-stubs.",
-              "correct": false,
-              "sections": {
-                "what_actually": "KAPT именно генерирует Java-заглушки для всего Kotlin-кода — это и есть источник медленной сборки.",
-                "source_of_confusion": "Раз KAPT обрабатывает Kotlin, кажется, что он работает с Kotlin AST напрямую.",
-                "if_it_were_true": "Тогда KAPT и KSP были бы равны по скорости, но команда упускает 2-4× ускорение CI от KSP.",
-                "how_it_should_be": "С Kotlin AST напрямую работает KSP; KAPT генерирует промежуточные Java-stubs."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "KSP-процессоры пишутся на Java через стандартный `AbstractProcessor`.",
               "correct": false,
               "sections": {
@@ -2443,6 +2431,18 @@
                 "source_of_confusion": "APT-процессоры пишут на `AbstractProcessor`, что по инерции переносят на KSP.",
                 "if_it_were_true": "Тогда APT-процессор переиспользовался бы в KSP, но даёт compile-error на отсутствующих API.",
                 "how_it_should_be": "KSP-процессор реализует `SymbolProcessor` на Kotlin; `AbstractProcessor` тут не применим."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "KAPT работает напрямую с Kotlin AST без генерации Java-stubs.",
+              "correct": false,
+              "sections": {
+                "what_actually": "KAPT именно генерирует Java-заглушки для всего Kotlin-кода — это и есть источник медленной сборки.",
+                "source_of_confusion": "Раз KAPT обрабатывает Kotlin, кажется, что он работает с Kotlin AST напрямую.",
+                "if_it_were_true": "Тогда KAPT и KSP были бы равны по скорости, но команда упускает 2-4× ускорение CI от KSP.",
+                "how_it_should_be": "С Kotlin AST напрямую работает KSP; KAPT генерирует промежуточные Java-stubs."
               }
             },
             {
@@ -2471,18 +2471,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Repeatable` работает без объявления container annotation.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Компилятор требует ссылку на container через `@Repeatable(Container.class)`; без неё — ошибка компиляции.",
-                "source_of_confusion": "Кажется, что `@Repeatable` сама снимает запрет на дубли без дополнительных типов.",
-                "if_it_were_true": "Тогда `@Repeatable` без контейнера собирался бы, но даёт `error: containing type ... not found` — проект не компилируется.",
-                "how_it_should_be": "Нужен container annotation с `value()` массива, на который ссылается `@Repeatable`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Для чтения повторяемых аннотаций нужен `getAnnotationsByType()`, а не `getAnnotation()`: при двух применениях `getAnnotation(Role.class)` вернёт `null`, потому что там сидит container.",
               "correct": true,
               "sections": {
@@ -2491,6 +2479,18 @@
                 "when_to_apply": "`getAnnotationsByType()` применяют всегда для повторяемых аннотаций, не предполагая наличие контейнера заранее.",
                 "edge_cases": "Container обязан иметь `value()` типа массива и retention не слабее повторяемой; при одном применении контейнер не создаётся, и `getAnnotation()` вернёт голую аннотацию.",
                 "related": "[[java-annotations-interview#Q13]] объявление @Repeatable и контейнера; [[java-annotations-interview#Q16]] чтение аннотаций через Reflection; [[java-annotations-interview#Q17]] getAnnotation() возвращает контейнер."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@Repeatable` работает без объявления container annotation.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Компилятор требует ссылку на container через `@Repeatable(Container.class)`; без неё — ошибка компиляции.",
+                "source_of_confusion": "Кажется, что `@Repeatable` сама снимает запрет на дубли без дополнительных типов.",
+                "if_it_were_true": "Тогда `@Repeatable` без контейнера собирался бы, но даёт `error: containing type ... not found` — проект не компилируется.",
+                "how_it_should_be": "Нужен container annotation с `value()` массива, на который ссылается `@Repeatable`."
               }
             },
             {
@@ -2555,6 +2555,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Lombok `@NonNull` идентичен Spring `@NonNull` — оба только hint.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lombok `@NonNull` генерирует реальную runtime null-проверку в байт-коде конструктора/метода, а Spring `@NonNull` — лишь compile-time hint.",
+                "source_of_confusion": "Одинаковое имя `@NonNull` создаёт впечатление одинакового поведения.",
+                "if_it_were_true": "Тогда миграция с Lombok на Spring `@NonNull` ничего не меняла бы, но тихо убирает защиту — NPE проявляется глубже в стеке.",
+                "how_it_should_be": "Lombok `@NonNull` добавляет runtime-проверку; Spring/Checker `@NonNull` — только статическая подсказка."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "`@NotNull` (Bean Validation) и `@NonNull` (TYPE_USE) — разные слои: runtime-валидация против static analysis; они дополняют друг друга, не заменяют.",
               "correct": true,
               "sections": {
@@ -2563,18 +2575,6 @@
                 "when_to_apply": "Оба слоя используют вместе: `@NonNull` предупреждает при компиляции, `@NotNull` — при вызове API с некорректными данными.",
                 "edge_cases": "`@NonNull` не генерирует runtime-кода (только hint), тогда как Lombok `@NonNull` вставляет реальную null-проверку в байт-код метода/конструктора.",
                 "related": "[[java-annotations-interview#Q30]] @NotNull и @Valid в Bean Validation; [[java-annotations-interview#Q12]] TYPE_USE и TYPE_PARAMETER; [[java-annotations-interview#Q5]] аннотируемые позиции типа."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Lombok `@NonNull` идентичен Spring `@NonNull` — оба только hint.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Lombok `@NonNull` генерирует реальную runtime null-проверку в байт-коде конструктора/метода, а Spring `@NonNull` — лишь compile-time hint.",
-                "source_of_confusion": "Одинаковое имя `@NonNull` создаёт впечатление одинакового поведения.",
-                "if_it_were_true": "Тогда миграция с Lombok на Spring `@NonNull` ничего не меняла бы, но тихо убирает защиту — NPE проявляется глубже в стеке.",
-                "how_it_should_be": "Lombok `@NonNull` добавляет runtime-проверку; Spring/Checker `@NonNull` — только статическая подсказка."
               }
             }
           ]

@@ -22,18 +22,6 @@
               "label": "A"
             },
             {
-              "text": "`Generics` в Go — это синоним пустого интерфейса `interface{}`: значения хранятся как `any`, а нужный тип достаётся через type assertion в runtime.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Generics параметризуют тип на этапе компиляции и сохраняют статическую типобезопасность, тогда как `interface{}` теряет тип и требует приведения в runtime.",
-                "source_of_confusion": "И generics, и `interface{}` позволяют писать «универсальный» код, поэтому их легко спутать как один и тот же механизм.",
-                "if_it_were_true": "Если бы это был `interface{}`, то `Max[T]` возвращал бы `any` и требовал `.(int)`, но он возвращает уже конкретный `T` без приведения.",
-                "how_it_should_be": "Это разные подходы: generics дают типобезопасность без boxing, а `interface{}` — гибкость ценой runtime-приведений и накладных расходов."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
               "text": "`Generics` — это макросы препроцессора, которые текстово подставляют тип перед компиляцией, как `#define` в C.",
               "correct": false,
               "sections": {
@@ -42,8 +30,8 @@
                 "if_it_were_true": "Будь это макросы, компилятор не проверял бы constraints и не выдавал понятных ошибок типа — он работал бы со слепым текстом.",
                 "how_it_should_be": "Generics — типизированная конструкция: компилятор знает про `T` и его constraint и проверяет корректность операций над `T`."
               },
-              "order": 2,
-              "label": "C"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "`Generics` доступны в Go с первого релиза 2009 года и всегда были основным способом писать переиспользуемый код.",
@@ -53,6 +41,18 @@
                 "source_of_confusion": "Многие языки (Java, C#) имеют generics давно, поэтому ошибочно кажется, что и Go всегда их поддерживал.",
                 "if_it_were_true": "Если бы generics были с 2009 года, не было бы целой эпохи `go generate` и `interface{}`-обёрток в стандартной библиотеке.",
                 "how_it_should_be": "Generics — относительно новая фича Go 1.18; до неё язык намеренно обходился без параметрических типов."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`Generics` в Go — это синоним пустого интерфейса `interface{}`: значения хранятся как `any`, а нужный тип достаётся через type assertion в runtime.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Generics параметризуют тип на этапе компиляции и сохраняют статическую типобезопасность, тогда как `interface{}` теряет тип и требует приведения в runtime.",
+                "source_of_confusion": "И generics, и `interface{}` позволяют писать «универсальный» код, поэтому их легко спутать как один и тот же механизм.",
+                "if_it_were_true": "Если бы это был `interface{}`, то `Max[T]` возвращал бы `any` и требовал `.(int)`, но он возвращает уже конкретный `T` без приведения.",
+                "how_it_should_be": "Это разные подходы: generics дают типобезопасность без boxing, а `interface{}` — гибкость ценой runtime-приведений и накладных расходов."
               },
               "order": 3,
               "label": "D"
@@ -81,6 +81,18 @@
               "label": "A"
             },
             {
+              "text": "Generics не добавляли, потому что сообщество единогласно проголосовало против них, и никто из core-команды никогда не хотел их реализовывать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На самом деле спрос был огромным, а команда активно работала над дизайном много лет — речь шла о «как», а не «надо ли».",
+                "source_of_confusion": "Долгое отсутствие generics создаёт впечатление, что их вообще не планировали добавлять.",
+                "if_it_were_true": "Если бы все были против, не появилось бы официального `Type Parameters Proposal` и десятков итераций дизайна.",
+                "how_it_should_be": "Generics всегда были желанной фичей; задержка объясняется сложностью реализации, а не отказом от идеи."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
               "text": "Создатели Go (`Rob Pike`, `Ken Thompson`) намеренно избегали generics из-за усложнения языка, проблем с error handling и type inference и негативного опыта с C++ templates. С 2009 по 2022 искали удачный дизайн; главный вопрос был — что выбрать в реализации.",
               "correct": true,
               "sections": {
@@ -90,8 +102,8 @@
                 "edge_cases": "Долгий дизайн не означал «никогда»: команда явно говорила, что добавит generics, только когда найдёт реализацию, не ломающую простоту языка.",
                 "related": "[[go-generics-interview#Q12]] выбранная гибридная реализация; [[go-generics-interview#Q22]] негативный опыт с C++ templates; [[go-generics-interview#Q18]] ограничения как плата за простоту."
               },
-              "order": 1,
-              "label": "B"
+              "order": 2,
+              "label": "C"
             },
             {
               "text": "Generics отсутствовали, потому что Go компилируется в байткод виртуальной машины, а её формат не поддерживал параметры типов до версии 1.18.",
@@ -101,18 +113,6 @@
                 "source_of_confusion": "Многие языки с generics (Java, C#) действительно работают на VM, отсюда ложный перенос этой модели на Go.",
                 "if_it_were_true": "Будь у Go виртуальная машина, профиль производительности и деплой выглядели бы иначе, но Go даёт самодостаточные нативные бинарники.",
                 "how_it_should_be": "Причина задержки — поиск дизайна, а не формат байткода; Go вообще не использует виртуальную машину для исполнения."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
-              "text": "Generics не добавляли, потому что сообщество единогласно проголосовало против них, и никто из core-команды никогда не хотел их реализовывать.",
-              "correct": false,
-              "sections": {
-                "what_actually": "На самом деле спрос был огромным, а команда активно работала над дизайном много лет — речь шла о «как», а не «надо ли».",
-                "source_of_confusion": "Долгое отсутствие generics создаёт впечатление, что их вообще не планировали добавлять.",
-                "if_it_were_true": "Если бы все были против, не появилось бы официального `Type Parameters Proposal` и десятков итераций дизайна.",
-                "how_it_should_be": "Generics всегда были желанной фичей; задержка объясняется сложностью реализации, а не отказом от идеи."
               },
               "order": 3,
               "label": "D"
@@ -153,6 +153,18 @@
               "label": "B"
             },
             {
+              "text": "Type parameter можно объявить прямо в имени переменной: `var x[T] int`, и компилятор сделает x параметрическим.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Параметры типа объявляются у функций и типов в квадратных скобках после имени, а не у обычных переменных; `var x[T]` — не валидный синтаксис.",
+                "source_of_confusion": "Квадратные скобки в Go также означают индексацию и срезы, поэтому их роль в объявлении типов путают с обращением к переменной.",
+                "if_it_were_true": "Если бы можно было параметризовать переменную, нарушилась бы модель монотипизации значений: переменная всегда имеет конкретный тип.",
+                "how_it_should_be": "Параметризуются функции и типы (`func F[T any]`, `type S[T any]`), а не отдельные переменные."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
               "text": "Type parameters пишутся в квадратных скобках после имени: `func PrintSlice[T any](s []T)`. Несколько параметров — через запятую с общим constraint: `func Map[T, U any](s []T, f func(T) U) []U`. Generic-тип объявляется так же: `type Stack[T any] struct { items []T }`.",
               "correct": true,
               "sections": {
@@ -161,18 +173,6 @@
                 "when_to_apply": "Применяй этот синтаксис при написании любой generic-функции или контейнера: квадратные скобки для параметров типа, обычные круглые — для аргументов.",
                 "edge_cases": "Для функций тип обычно выводится из аргументов, но для типов (`Stack[int]{}`) его нужно задавать явно — type inference на конструкторы структур не распространяется.",
                 "related": "[[go-generics-interview#Q1]] зачем нужны generics; [[go-generics-interview#Q9]] подробнее про generic struct; [[go-generics-interview#Q20]] где работает type inference."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
-              "text": "Type parameter можно объявить прямо в имени переменной: `var x[T] int`, и компилятор сделает x параметрическим.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Параметры типа объявляются у функций и типов в квадратных скобках после имени, а не у обычных переменных; `var x[T]` — не валидный синтаксис.",
-                "source_of_confusion": "Квадратные скобки в Go также означают индексацию и срезы, поэтому их роль в объявлении типов путают с обращением к переменной.",
-                "if_it_were_true": "Если бы можно было параметризовать переменную, нарушилась бы модель монотипизации значений: переменная всегда имеет конкретный тип.",
-                "how_it_should_be": "Параметризуются функции и типы (`func F[T any]`, `type S[T any]`), а не отдельные переменные."
               },
               "order": 3,
               "label": "D"
@@ -189,13 +189,13 @@
           "question_text": "Что такое constraint в Go generics?",
           "options": [
             {
-              "text": "`Constraint` — это рантайм-проверка, которая при вызове generic-функции бросает panic, если переданный тип не подходит.",
+              "text": "`Constraint` — это базовый класс, от которого generic-тип должен наследоваться, как `T extends Number` в Java.",
               "correct": false,
               "sections": {
-                "what_actually": "Constraint проверяется компилятором на этапе компиляции, а не в runtime: несоответствие типа даёт ошибку сборки, а не panic.",
-                "source_of_confusion": "Слово «ограничение» ассоциируется с проверками во время выполнения (как assert), отсюда идея про panic.",
-                "if_it_were_true": "Если бы это была runtime-проверка, type safety терялась бы и неподходящий тип компилировался бы, что противоречит сути generics.",
-                "how_it_should_be": "Constraint — это статическое ограничение: `Sum([]string{...})` не скомпилируется, а не упадёт в runtime."
+                "what_actually": "В Go нет наследования классов: constraint — это interface с type set, а тип «удовлетворяет» ему по структуре, а не наследуется.",
+                "source_of_confusion": "Java-формулировка `T extends Number` создаёт впечатление наследования, и её переносят на Go.",
+                "if_it_were_true": "Если бы требовалось наследование, нельзя было бы ограничивать встроенные `int`/`float64`, у которых нет базового класса.",
+                "how_it_should_be": "Constraint — это interface; соответствие определяется type set и набором методов, а не иерархией наследования."
               },
               "order": 0,
               "label": "A"
@@ -213,13 +213,13 @@
               "label": "B"
             },
             {
-              "text": "`Constraint` — это базовый класс, от которого generic-тип должен наследоваться, как `T extends Number` в Java.",
+              "text": "`Constraint` — это рантайм-проверка, которая при вызове generic-функции бросает panic, если переданный тип не подходит.",
               "correct": false,
               "sections": {
-                "what_actually": "В Go нет наследования классов: constraint — это interface с type set, а тип «удовлетворяет» ему по структуре, а не наследуется.",
-                "source_of_confusion": "Java-формулировка `T extends Number` создаёт впечатление наследования, и её переносят на Go.",
-                "if_it_were_true": "Если бы требовалось наследование, нельзя было бы ограничивать встроенные `int`/`float64`, у которых нет базового класса.",
-                "how_it_should_be": "Constraint — это interface; соответствие определяется type set и набором методов, а не иерархией наследования."
+                "what_actually": "Constraint проверяется компилятором на этапе компиляции, а не в runtime: несоответствие типа даёт ошибку сборки, а не panic.",
+                "source_of_confusion": "Слово «ограничение» ассоциируется с проверками во время выполнения (как assert), отсюда идея про panic.",
+                "if_it_were_true": "Если бы это была runtime-проверка, type safety терялась бы и неподходящий тип компилировался бы, что противоречит сути generics.",
+                "how_it_should_be": "Constraint — это статическое ограничение: `Sum([]string{...})` не скомпилируется, а не упадёт в runtime."
               },
               "order": 2,
               "label": "C"
@@ -249,14 +249,13 @@
           "question_text": "Что такое встроенные constraints any и comparable?",
           "options": [
             {
-              "text": "`any` — это алиас для `interface{}`, добавленный в 1.18; ему удовлетворяет любой тип. `comparable` — встроенный constraint для типов, которые можно сравнивать через `==` и `!=`: примитивы, structs (если все поля comparable), pointers, channels, arrays. НЕ включает slices, maps, functions.",
-              "correct": true,
+              "text": "`comparable` включает любые типы, в том числе slices и maps, ведь Go умеет сравнивать их поэлементно через `==`.",
+              "correct": false,
               "sections": {
-                "explanation": "`any` снимает любые ограничения (`func Print[T any](v T)`), а `comparable` разрешает сравнение значений и потому годится для ключей map и поиска: `func Contains[T comparable](slice []T, target T) bool`.",
-                "example": "`Contains([]int{1, 2, 3}, 2)` вернёт `true`, `Contains([]string{\"a\", \"b\"}, \"c\")` — `false`; обе работают, потому что `int` и `string` удовлетворяют `comparable`.",
-                "when_to_apply": "Бери `any`, когда тип неважен и сравнение не нужно, и `comparable`, когда внутри требуется `==`/`!=` или нужно использовать `T` как ключ map.",
-                "edge_cases": "Тип со slice/map/func полем не является `comparable`, поэтому `Contains` со срезами в качестве `T` не скомпилируется — это типичная ловушка.",
-                "related": "[[go-generics-interview#Q4]] что такое constraint в целом; [[go-generics-interview#Q16]] comparable как ключ в generic Set; [[go-generics-interview#Q24]] any vs generics при выборе подхода."
+                "what_actually": "`comparable` НЕ включает slices, maps и functions: их вообще нельзя сравнивать через `==` (только с `nil`), поэтому они выпадают из constraint.",
+                "source_of_confusion": "Существование `reflect.DeepEqual` создаёт иллюзию, что срезы и карты сравнимы оператором `==`.",
+                "if_it_were_true": "Если бы slices были comparable, компилятор разрешал бы `s1 == s2` для срезов, но он это запрещает с ошибкой.",
+                "how_it_should_be": "`comparable` охватывает примитивы, pointers, channels, comparable-structs и arrays, но не slices/maps/functions."
               },
               "order": 0,
               "label": "A"
@@ -274,13 +273,14 @@
               "label": "B"
             },
             {
-              "text": "`comparable` включает любые типы, в том числе slices и maps, ведь Go умеет сравнивать их поэлементно через `==`.",
-              "correct": false,
+              "text": "`any` — это алиас для `interface{}`, добавленный в 1.18; ему удовлетворяет любой тип. `comparable` — встроенный constraint для типов, которые можно сравнивать через `==` и `!=`: примитивы, structs (если все поля comparable), pointers, channels, arrays. НЕ включает slices, maps, functions.",
+              "correct": true,
               "sections": {
-                "what_actually": "`comparable` НЕ включает slices, maps и functions: их вообще нельзя сравнивать через `==` (только с `nil`), поэтому они выпадают из constraint.",
-                "source_of_confusion": "Существование `reflect.DeepEqual` создаёт иллюзию, что срезы и карты сравнимы оператором `==`.",
-                "if_it_were_true": "Если бы slices были comparable, компилятор разрешал бы `s1 == s2` для срезов, но он это запрещает с ошибкой.",
-                "how_it_should_be": "`comparable` охватывает примитивы, pointers, channels, comparable-structs и arrays, но не slices/maps/functions."
+                "explanation": "`any` снимает любые ограничения (`func Print[T any](v T)`), а `comparable` разрешает сравнение значений и потому годится для ключей map и поиска: `func Contains[T comparable](slice []T, target T) bool`.",
+                "example": "`Contains([]int{1, 2, 3}, 2)` вернёт `true`, `Contains([]string{\"a\", \"b\"}, \"c\")` — `false`; обе работают, потому что `int` и `string` удовлетворяют `comparable`.",
+                "when_to_apply": "Бери `any`, когда тип неважен и сравнение не нужно, и `comparable`, когда внутри требуется `==`/`!=` или нужно использовать `T` как ключ map.",
+                "edge_cases": "Тип со slice/map/func полем не является `comparable`, поэтому `Contains` со срезами в качестве `T` не скомпилируется — это типичная ловушка.",
+                "related": "[[go-generics-interview#Q4]] что такое constraint в целом; [[go-generics-interview#Q16]] comparable как ключ в generic Set; [[go-generics-interview#Q24]] any vs generics при выборе подхода."
               },
               "order": 2,
               "label": "C"
@@ -321,6 +321,18 @@
               "label": "A"
             },
             {
+              "text": "Interface с type set можно использовать и как тип переменной, и как constraint — он ничем не отличается от обычного interface.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Interface с type set — это только constraint: `var x Number` не компилируется, потому что переменной нельзя присвоить «одно из множества типов».",
+                "source_of_confusion": "Раз type set объявляется как `interface`, кажется, что он полностью взаимозаменяем с обычным interface.",
+                "if_it_were_true": "Если бы им можно было типизировать переменную, компилятор не знал бы конкретный тип `x` и его layout в памяти.",
+                "how_it_should_be": "Type set годен только как ограничение параметра типа; как тип значения он не используется."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
               "text": "`Type set` — новый синтаксис interface в Go 1.18: объединение типов через `|`. Например `type Signed interface { int | int8 | int16 | int32 | int64 }`. Type set можно комбинировать (`type Integer interface { Signed | Unsigned }`) и наращивать (`type Number interface { Integer | float32 | float64 }`).",
               "correct": true,
               "sections": {
@@ -330,8 +342,8 @@
                 "edge_cases": "Type set ≠ обычный interface: первый описывает допустимые типы для constraint, второй описывает методы для значения; смешивать их роли нельзя.",
                 "related": "[[go-generics-interview#Q4]] constraint как interface с type set; [[go-generics-interview#Q8]] оператор ~ внутри type set; [[go-generics-interview#Q17]] type sets для арифметики."
               },
-              "order": 1,
-              "label": "B"
+              "order": 2,
+              "label": "C"
             },
             {
               "text": "`Type set` записывается через запятую: `type Signed interface { int, int8, int16 }`, как поля структуры.",
@@ -341,18 +353,6 @@
                 "source_of_confusion": "Запятая привычна как разделитель полей структуры и параметров, поэтому её ошибочно применяют и к type set.",
                 "if_it_were_true": "Если бы разделителем была запятая, синтаксис конфликтовал бы с перечислением методов и полей внутри interface.",
                 "how_it_should_be": "Правильный разделитель — вертикальная черта `|`, обозначающая объединение типов."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
-              "text": "Interface с type set можно использовать и как тип переменной, и как constraint — он ничем не отличается от обычного interface.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Interface с type set — это только constraint: `var x Number` не компилируется, потому что переменной нельзя присвоить «одно из множества типов».",
-                "source_of_confusion": "Раз type set объявляется как `interface`, кажется, что он полностью взаимозаменяем с обычным interface.",
-                "if_it_were_true": "Если бы им можно было типизировать переменную, компилятор не знал бы конкретный тип `x` и его layout в памяти.",
-                "how_it_should_be": "Type set годен только как ограничение параметра типа; как тип значения он не используется."
               },
               "order": 3,
               "label": "D"
@@ -369,13 +369,14 @@
           "question_text": "Что находится в пакете constraints (golang.org/x/exp/constraints)?",
           "options": [
             {
-              "text": "В пакете `constraints` лежат готовые generic-коллекции: `constraints.List`, `constraints.Map`, `constraints.Set`.",
-              "correct": false,
+              "text": "`golang.org/x/exp/constraints` (в стандарт пока не вошёл) даёт предопределённые constraints: `Signed`, `Unsigned`, `Integer` (`Signed | Unsigned`), `Float`, `Complex` и `Ordered` (`Integer | Float | ~string`). Они избавляют от ручного перечисления типов в каждом проекте.",
+              "correct": true,
               "sections": {
-                "what_actually": "Пакет `constraints` содержит предопределённые *ограничения типов* (`Signed`, `Ordered` и т.д.), а не коллекции; контейнеры пишут отдельно или берут из `slices`/`maps`.",
-                "source_of_confusion": "Слово «constraints» во множественном числе создаёт впечатление набора структур данных.",
-                "if_it_were_true": "Будь там коллекции, их импортировали бы как `constraints.List[int]{}`, но пакет экспортирует именно interface-constraints.",
-                "how_it_should_be": "В `constraints` лежат `Signed`, `Unsigned`, `Integer`, `Float`, `Complex`, `Ordered` — наборы допустимых типов."
+                "explanation": "Самый используемый — `Ordered`: он охватывает все типы, поддерживающие `<`, `>`, `<=`, `>=`, поэтому годится для `Min`, `Max`, `Sort`.",
+                "example": "`func Min[T constraints.Ordered](a, b T) T { if a < b { return a }; return b }` работает для `int`, `float64`, `string` — все они входят в `Ordered`.",
+                "when_to_apply": "Импортируй `constraints`, когда нужны стандартные числовые или упорядоченные ограничения и не хочется самому выписывать длинные type sets.",
+                "edge_cases": "Поскольку пакет experimental (`x/exp`), его API может меняться; для критичного production-кода стоит закреплять версию или дублировать нужный constraint локально.",
+                "related": "[[go-generics-interview#Q6]] type sets, на которых построены эти constraints; [[go-generics-interview#Q17]] Numeric для арифметики; [[go-generics-interview#Q26]] x/exp как experimental источник."
               },
               "order": 0,
               "label": "A"
@@ -393,14 +394,13 @@
               "label": "B"
             },
             {
-              "text": "`golang.org/x/exp/constraints` (в стандарт пока не вошёл) даёт предопределённые constraints: `Signed`, `Unsigned`, `Integer` (`Signed | Unsigned`), `Float`, `Complex` и `Ordered` (`Integer | Float | ~string`). Они избавляют от ручного перечисления типов в каждом проекте.",
-              "correct": true,
+              "text": "В пакете `constraints` лежат готовые generic-коллекции: `constraints.List`, `constraints.Map`, `constraints.Set`.",
+              "correct": false,
               "sections": {
-                "explanation": "Самый используемый — `Ordered`: он охватывает все типы, поддерживающие `<`, `>`, `<=`, `>=`, поэтому годится для `Min`, `Max`, `Sort`.",
-                "example": "`func Min[T constraints.Ordered](a, b T) T { if a < b { return a }; return b }` работает для `int`, `float64`, `string` — все они входят в `Ordered`.",
-                "when_to_apply": "Импортируй `constraints`, когда нужны стандартные числовые или упорядоченные ограничения и не хочется самому выписывать длинные type sets.",
-                "edge_cases": "Поскольку пакет experimental (`x/exp`), его API может меняться; для критичного production-кода стоит закреплять версию или дублировать нужный constraint локально.",
-                "related": "[[go-generics-interview#Q6]] type sets, на которых построены эти constraints; [[go-generics-interview#Q17]] Numeric для арифметики; [[go-generics-interview#Q26]] x/exp как experimental источник."
+                "what_actually": "Пакет `constraints` содержит предопределённые *ограничения типов* (`Signed`, `Ordered` и т.д.), а не коллекции; контейнеры пишут отдельно или берут из `slices`/`maps`.",
+                "source_of_confusion": "Слово «constraints» во множественном числе создаёт впечатление набора структур данных.",
+                "if_it_were_true": "Будь там коллекции, их импортировали бы как `constraints.List[int]{}`, но пакет экспортирует именно interface-constraints.",
+                "how_it_should_be": "В `constraints` лежат `Signed`, `Unsigned`, `Integer`, `Float`, `Complex`, `Ordered` — наборы допустимых типов."
               },
               "order": 2,
               "label": "C"
@@ -429,18 +429,6 @@
           "question_text": "Зачем нужен оператор ~ (tilde) в constraints и что он означает?",
           "options": [
             {
-              "text": "`~T` означает «указатель на тип T», то есть `~int` — это то же самое, что `*int`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`~T` означает «типы, у которых underlying type равен T», включая named types, а не указатель; для указателя пишут `*int`.",
-                "source_of_confusion": "Тильда визуально похожа на оператор и легко путается с символами указателя/адреса.",
-                "if_it_were_true": "Будь `~int` указателем, нельзя было бы передавать значение `MyInt` в функцию с таким constraint, а оно как раз проходит.",
-                "how_it_should_be": "`~int` принимает `int` и все типы с underlying `int` (например `type MyInt int`), а не указатели."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
               "text": "`~int` в constraint расширяет множество только до псевдонимов через `type MyInt = int` (алиасы), но не до новых defined-типов `type MyInt int`.",
               "correct": false,
               "sections": {
@@ -448,6 +436,19 @@
                 "source_of_confusion": "Алиасы и defined-типы записываются почти одинаково (`=` против пробела), поэтому их роли при `~` путают.",
                 "if_it_were_true": "Если бы `~` работал только для алиасов, он был бы бесполезен: алиас и так уже `int` и подходит без тильды.",
                 "how_it_should_be": "`~int` нужен ради defined-типов с underlying `int`; именно они без тильды не проходят constraint `int`."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`~T` задаёт типы, у которых **underlying type** равен `T`, включая named types. `int | float64` примет только сами `int` и `float64`, а `~int | ~float64` примет ещё и любой `type MyInt int` с underlying `int`. Это критично для библиотек.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сравни: `func sum1[T Number]` с `Number = int | float64` и `func sum2[T Number2]` с `Number2 = ~int | ~float64` — второй вариант принимает named-типы поверх примитивов.",
+                "example": "Для `var x MyInt = 5`: `sum1(x, x)` даст ошибку («`MyInt` не является `int`»), а `sum2(x, x)` скомпилируется, потому что underlying у `MyInt` — это `int`.",
+                "when_to_apply": "Используй `~` в constraints, когда хочешь поддержать пользовательские типы поверх примитивов, например `time.Duration` (`~int64`) или собственные `type Celsius float64`.",
+                "edge_cases": "Без `~` constraint работает только с точными типами из списка, и `time.Duration` или `MyInt` в него не пройдут — это частая причина «странных» ошибок компиляции.",
+                "related": "[[go-generics-interview#Q6]] type sets, где применяется ~; [[go-generics-interview#Q4]] constraint как набор допустимых типов; [[go-generics-interview#Q17]] числовые constraints с named-типами."
               },
               "order": 1,
               "label": "B"
@@ -465,14 +466,13 @@
               "label": "C"
             },
             {
-              "text": "`~T` задаёт типы, у которых **underlying type** равен `T`, включая named types. `int | float64` примет только сами `int` и `float64`, а `~int | ~float64` примет ещё и любой `type MyInt int` с underlying `int`. Это критично для библиотек.",
-              "correct": true,
+              "text": "`~T` означает «указатель на тип T», то есть `~int` — это то же самое, что `*int`.",
+              "correct": false,
               "sections": {
-                "explanation": "Сравни: `func sum1[T Number]` с `Number = int | float64` и `func sum2[T Number2]` с `Number2 = ~int | ~float64` — второй вариант принимает named-типы поверх примитивов.",
-                "example": "Для `var x MyInt = 5`: `sum1(x, x)` даст ошибку («`MyInt` не является `int`»), а `sum2(x, x)` скомпилируется, потому что underlying у `MyInt` — это `int`.",
-                "when_to_apply": "Используй `~` в constraints, когда хочешь поддержать пользовательские типы поверх примитивов, например `time.Duration` (`~int64`) или собственные `type Celsius float64`.",
-                "edge_cases": "Без `~` constraint работает только с точными типами из списка, и `time.Duration` или `MyInt` в него не пройдут — это частая причина «странных» ошибок компиляции.",
-                "related": "[[go-generics-interview#Q6]] type sets, где применяется ~; [[go-generics-interview#Q4]] constraint как набор допустимых типов; [[go-generics-interview#Q17]] числовые constraints с named-типами."
+                "what_actually": "`~T` означает «типы, у которых underlying type равен T», включая named types, а не указатель; для указателя пишут `*int`.",
+                "source_of_confusion": "Тильда визуально похожа на оператор и легко путается с символами указателя/адреса.",
+                "if_it_were_true": "Будь `~int` указателем, нельзя было бы передавать значение `MyInt` в функцию с таким constraint, а оно как раз проходит.",
+                "how_it_should_be": "`~int` принимает `int` и все типы с underlying `int` (например `type MyInt int`), а не указатели."
               },
               "order": 3,
               "label": "D"
@@ -549,6 +549,18 @@
           "question_text": "Как работают методы на generic types и какое у них ключевое ограничение?",
           "options": [
             {
+              "text": "Внутри метода generic-типа нельзя использовать `T` — он виден только в сигнатуре, но не в теле метода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`T` доступен и в теле метода: можно объявлять `var zero T`, индексировать `s.items` элементами типа `T` и возвращать их.",
+                "source_of_confusion": "Ограничение на новые параметры типа путают с мнимым ограничением на использование существующего `T`.",
+                "if_it_were_true": "Если бы `T` не был виден в теле, нельзя было бы реализовать `Top() (T, bool)`, а он реализуется без проблем.",
+                "how_it_should_be": "Параметр `T` структуры полностью доступен в теле метода для объявлений, операций и возвращаемых значений."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "Методы generic-типа могут вводить собственные новые type-параметры, например `func (s *Stack[T]) Map[U any](f func(T) U) *Stack[U]`.",
               "correct": false,
               "sections": {
@@ -557,8 +569,8 @@
                 "if_it_were_true": "Если бы методы вводили свой `U`, реализация и type inference сильно усложнились бы — этого как раз избегали.",
                 "how_it_should_be": "Методам доступны только параметры типа структуры; для второго типа нужна top-level функция `Map[T, U any](s *Stack[T], ...)`."
               },
-              "order": 0,
-              "label": "A"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "Методы generic-типа используют параметры типа самой структуры и могут оперировать `T` внутри: `func (s *Stack[T]) Top() (T, bool)`. Ключевое ограничение — методы НЕ могут вводить новые type-параметры: `func (s *Stack[T]) Map[U any](...)` даёт ошибку «methods cannot have type parameters».",
@@ -570,8 +582,8 @@
                 "edge_cases": "Метод может свободно использовать `T` (`var zero T`, `s.items[i]`), но второй независимый тип в сигнатуре метода невозможен — частая причина переписывания цепочек в вложенные вызовы.",
                 "related": "[[go-generics-interview#Q9]] объявление методов на generic struct; [[go-generics-interview#Q15]] Map как top-level функция; [[go-generics-interview#Q19]] почему нет generic-методов на receiver."
               },
-              "order": 1,
-              "label": "B"
+              "order": 2,
+              "label": "C"
             },
             {
               "text": "Generic-тип вообще не может иметь методов — методы определяются только на обычных не-параметризованных типах.",
@@ -581,18 +593,6 @@
                 "source_of_confusion": "Раз у метода нельзя ввести новый тип, ошибочно делают вывод, что методов у generic-типов нет совсем.",
                 "if_it_were_true": "Если бы методы были запрещены, `Stack[T]` нельзя было бы наделить `Push`/`Pop`, и контейнеры стали бы бесполезны.",
                 "how_it_should_be": "Методы на generic-типах есть и широко используются; ограничено только введение нового параметра типа в методе."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
-              "text": "Внутри метода generic-типа нельзя использовать `T` — он виден только в сигнатуре, но не в теле метода.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`T` доступен и в теле метода: можно объявлять `var zero T`, индексировать `s.items` элементами типа `T` и возвращать их.",
-                "source_of_confusion": "Ограничение на новые параметры типа путают с мнимым ограничением на использование существующего `T`.",
-                "if_it_were_true": "Если бы `T` не был виден в теле, нельзя было бы реализовать `Top() (T, bool)`, а он реализуется без проблем.",
-                "how_it_should_be": "Параметр `T` структуры полностью доступен в теле метода для объявлений, операций и возвращаемых значений."
               },
               "order": 3,
               "label": "D"
@@ -609,13 +609,13 @@
           "question_text": "Что такое generic interface в Go и чем он интересен?",
           "options": [
             {
-              "text": "Generic interface — это просто другое название для constraint с type set вроде `int | float64`; отдельной сущности нет.",
+              "text": "Generic interface стирает тип в runtime, как Java erasure, поэтому `Compare(other T)` фактически принимает `interface{}`.",
               "correct": false,
               "sections": {
-                "what_actually": "Generic interface — это interface с *параметром типа* и методами (`Comparable[T any]`), а не type-set-constraint; это разные конструкции.",
-                "source_of_confusion": "Оба понятия связаны со словом «interface» и появились в 1.18, отсюда их смешение.",
-                "if_it_were_true": "Если бы это был type-set-constraint, у него не было бы методов вроде `Compare(other T) int`, но у generic interface они есть.",
-                "how_it_should_be": "Generic interface параметризует методы типом (`Compare(other T)`); type-set-constraint лишь перечисляет допустимые типы."
+                "what_actually": "Go не стирает типы: в generic interface `T` остаётся конкретным на этапе компиляции, и `Compare` принимает именно `T`, а не `interface{}`.",
+                "source_of_confusion": "Сравнение Go-generics с Java-erasure (см. вопрос про различия) подталкивает к ложному выводу о стирании.",
+                "if_it_were_true": "Если бы тип стирался, компилятор не отлавливал бы передачу неподходящего аргумента в `Compare`, но он её ловит.",
+                "how_it_should_be": "В Go типы доступны в runtime через `GCShape`; параметр `T` в generic interface не превращается в `interface{}`."
               },
               "order": 0,
               "label": "A"
@@ -633,6 +633,18 @@
               "label": "B"
             },
             {
+              "text": "Generic interface — это просто другое название для constraint с type set вроде `int | float64`; отдельной сущности нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Generic interface — это interface с *параметром типа* и методами (`Comparable[T any]`), а не type-set-constraint; это разные конструкции.",
+                "source_of_confusion": "Оба понятия связаны со словом «interface» и появились в 1.18, отсюда их смешение.",
+                "if_it_were_true": "Если бы это был type-set-constraint, у него не было бы методов вроде `Compare(other T) int`, но у generic interface они есть.",
+                "how_it_should_be": "Generic interface параметризует методы типом (`Compare(other T)`); type-set-constraint лишь перечисляет допустимые типы."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
               "text": "Generic interface — это interface с параметром типа: `type Comparable[T any] interface { Compare(other T) int }`. Тип реализует его, предоставив метод нужной сигнатуры. Самое интересное — рекурсивные constraints вида `T Comparable[T]`, где тип ограничивается интерфейсом над самим собой.",
               "correct": true,
               "sections": {
@@ -641,18 +653,6 @@
                 "when_to_apply": "Используй generic interfaces, когда нужно типобезопасно выразить «объект, умеющий взаимодействовать со своим же типом» — компараторы, билдеры, рекурсивные структуры.",
                 "edge_cases": "Рекурсивный constraint `T Comparable[T]` поначалу выглядит запутанно и его легко записать неверно (перепутать `T` и конкретный тип), но именно он даёт строгую самоссылку типа.",
                 "related": "[[go-generics-interview#Q4]] interface как constraint; [[go-generics-interview#Q6]] type sets против методных interface; [[go-generics-interview#Q9]] generic struct, реализующая такой interface."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
-              "text": "Generic interface стирает тип в runtime, как Java erasure, поэтому `Compare(other T)` фактически принимает `interface{}`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Go не стирает типы: в generic interface `T` остаётся конкретным на этапе компиляции, и `Compare` принимает именно `T`, а не `interface{}`.",
-                "source_of_confusion": "Сравнение Go-generics с Java-erasure (см. вопрос про различия) подталкивает к ложному выводу о стирании.",
-                "if_it_were_true": "Если бы тип стирался, компилятор не отлавливал бы передачу неподходящего аргумента в `Compare`, но он её ловит.",
-                "how_it_should_be": "В Go типы доступны в runtime через `GCShape`; параметр `T` в generic interface не превращается в `interface{}`."
               },
               "order": 3,
               "label": "D"
@@ -669,18 +669,6 @@
           "question_text": "Как реализованы generics в Go — через monomorphization или dictionary passing?",
           "options": [
             {
-              "text": "Go использует чистую `monomorphization`, как C++: на каждый конкретный тип компилятор генерирует полностью отдельную копию кода.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Go применяет гибрид (`GCShape stenciling`): отдельные копии — только для разных shapes, а одинаковые shapes делят общий код с dictionary, не чистая monomorphization.",
-                "source_of_confusion": "C++/Rust как самые известные примеры generics создают впечатление, что и Go копирует код на каждый тип.",
-                "if_it_were_true": "Будь это чистая monomorphization, бинарники Go раздувались бы как в C++, но они заметно компактнее именно из-за деления по shapes.",
-                "how_it_should_be": "Go — гибрид: monomorphization по shapes плюс dictionary passing для одинаковых shapes."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
               "text": "Go использует чистый `dictionary passing`, как Java/Haskell: один экземпляр кода на все типы, тип передаётся словарём в runtime.",
               "correct": false,
               "sections": {
@@ -688,6 +676,19 @@
                 "source_of_confusion": "Java/Haskell как известные носители dictionary/erasure подталкивают приписать ту же модель и Go.",
                 "if_it_were_true": "Если бы был чистый dictionary, не было бы выигрыша по runtime над `interface{}` для разных shapes, а он есть.",
                 "how_it_should_be": "Go сочетает оба подхода: разные shapes — разный код, одинаковые — общий код плюс словарь."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Go использует **гибрид (GCShape stenciling)**: `monomorphization` (отдельный код) для разных GCShape и `dictionary passing` (общий код плюс словарь) для одинаковых shapes. `GCShape` — то, что важно для GC: размер типа и наличие/layout указателей в нём.",
+              "correct": true,
+              "sections": {
+                "explanation": "Типы одной shape делят сгенерированный код: `Print[int]` и `Print[int64]` (оба 8 байт, без указателей) используют один экземпляр, а `Print[string]` и `Print[*User]` — другие shapes.",
+                "example": "`Print[int](42)` и `Print[int64](42)` попадают в одну shape, `Print[string](\"hi\")` — в другую, `Print[*User](&u)` — в третью (указатель), и для разных shapes генерируется отдельный код.",
+                "when_to_apply": "Это знание помогает понимать trade-off: меньше бинарник, чем при чистой monomorphization, чуть медленнее по runtime и меньше работы GC — баланс между размером и скоростью.",
+                "edge_cases": "Граница shapes не очевидна: типы одного размера, но с разным layout указателей попадают в разные shapes, что может неожиданно влиять на дублирование кода.",
+                "related": "[[go-generics-interview#Q13]] подробнее про GCShape; [[go-generics-interview#Q14]] влияние на производительность; [[go-generics-interview#Q22]] сравнение с чистой monomorphization в C++."
               },
               "order": 1,
               "label": "B"
@@ -705,14 +706,13 @@
               "label": "C"
             },
             {
-              "text": "Go использует **гибрид (GCShape stenciling)**: `monomorphization` (отдельный код) для разных GCShape и `dictionary passing` (общий код плюс словарь) для одинаковых shapes. `GCShape` — то, что важно для GC: размер типа и наличие/layout указателей в нём.",
-              "correct": true,
+              "text": "Go использует чистую `monomorphization`, как C++: на каждый конкретный тип компилятор генерирует полностью отдельную копию кода.",
+              "correct": false,
               "sections": {
-                "explanation": "Типы одной shape делят сгенерированный код: `Print[int]` и `Print[int64]` (оба 8 байт, без указателей) используют один экземпляр, а `Print[string]` и `Print[*User]` — другие shapes.",
-                "example": "`Print[int](42)` и `Print[int64](42)` попадают в одну shape, `Print[string](\"hi\")` — в другую, `Print[*User](&u)` — в третью (указатель), и для разных shapes генерируется отдельный код.",
-                "when_to_apply": "Это знание помогает понимать trade-off: меньше бинарник, чем при чистой monomorphization, чуть медленнее по runtime и меньше работы GC — баланс между размером и скоростью.",
-                "edge_cases": "Граница shapes не очевидна: типы одного размера, но с разным layout указателей попадают в разные shapes, что может неожиданно влиять на дублирование кода.",
-                "related": "[[go-generics-interview#Q13]] подробнее про GCShape; [[go-generics-interview#Q14]] влияние на производительность; [[go-generics-interview#Q22]] сравнение с чистой monomorphization в C++."
+                "what_actually": "Go применяет гибрид (`GCShape stenciling`): отдельные копии — только для разных shapes, а одинаковые shapes делят общий код с dictionary, не чистая monomorphization.",
+                "source_of_confusion": "C++/Rust как самые известные примеры generics создают впечатление, что и Go копирует код на каждый тип.",
+                "if_it_were_true": "Будь это чистая monomorphization, бинарники Go раздувались бы как в C++, но они заметно компактнее именно из-за деления по shapes.",
+                "how_it_should_be": "Go — гибрид: monomorphization по shapes плюс dictionary passing для одинаковых shapes."
               },
               "order": 3,
               "label": "D"
@@ -729,6 +729,18 @@
           "question_text": "Что такое GCShape в реализации Go generics?",
           "options": [
             {
+              "text": "`GCShape` группирует типы по их имени и пакету: `int` из одного пакета и `int` из другого — разные shapes.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Shape зависит от размера и layout указателей, а не от имени или пакета; `int` всюду имеет одну и ту же shape.",
+                "source_of_confusion": "Понятие «тип из пакета» создаёт ощущение, что идентичность пакета влияет и на shape.",
+                "if_it_were_true": "Если бы имя/пакет определяли shape, named-типы с тем же layout не делили бы код, и бинарник раздувался бы зря.",
+                "how_it_should_be": "Группировка идёт по GC-характеристикам (размер, указатели), а не по имени или месту объявления типа."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "`GCShape` группирует типы по характеристикам, критичным для сборщика мусора: размер (8 байт, 16 байт, ...), содержит ли тип указатели и каков их layout. Типы одной shape делят сгенерированный код, типы разных shapes получают отдельные копии.",
               "correct": true,
               "sections": {
@@ -738,8 +750,8 @@
                 "edge_cases": "Два типа одинакового размера, но с разным расположением указателей (например `[2]int` и `[1]*T`), попадают в *разные* shapes именно из-за требований GC, хотя байтовый размер совпадает.",
                 "related": "[[go-generics-interview#Q12]] GCShape stenciling как способ реализации; [[go-generics-interview#Q14]] как shape влияет на overhead; [[go-generics-interview#Q21]] отличие от runtime-типов Java."
               },
-              "order": 0,
-              "label": "A"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "`GCShape` — это тег, который программист вручную проставляет на тип через `//go:gcshape`, чтобы помочь компилятору.",
@@ -749,18 +761,6 @@
                 "source_of_confusion": "Наличие директив-комментариев в Go (`//go:embed`) создаёт впечатление, что и shape можно задать вручную.",
                 "if_it_were_true": "Если бы shape назначалась вручную, разработчики постоянно ошибались бы с GC-layout, и безопасность памяти страдала бы.",
                 "how_it_should_be": "Shape вычисляется автоматически из свойств типа, важных для GC, без участия программиста."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "`GCShape` группирует типы по их имени и пакету: `int` из одного пакета и `int` из другого — разные shapes.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Shape зависит от размера и layout указателей, а не от имени или пакета; `int` всюду имеет одну и ту же shape.",
-                "source_of_confusion": "Понятие «тип из пакета» создаёт ощущение, что идентичность пакета влияет и на shape.",
-                "if_it_were_true": "Если бы имя/пакет определяли shape, named-типы с тем же layout не делили бы код, и бинарник раздувался бы зря.",
-                "how_it_should_be": "Группировка идёт по GC-характеристикам (размер, указатели), а не по имени или месту объявления типа."
               },
               "order": 2,
               "label": "C"
@@ -789,13 +789,13 @@
           "question_text": "Какова производительность generics в Go по сравнению с обычным и interface{} кодом?",
           "options": [
             {
-              "text": "Generics всегда заметно медленнее обычного кода и медленнее `interface{}`, потому что на каждый вызов создаётся словарь и происходит боксинг.",
+              "text": "Generics в Go дают абсолютный zero-cost overhead, как шаблоны C++, и всегда работают ровно с той же скоростью, что рукописный код под конкретный тип.",
               "correct": false,
               "sections": {
-                "what_actually": "Generics обычно *быстрее* `interface{}` (нет боксинга value-типов) и близки к обычному коду; overhead есть, но небольшой и не «всегда заметный».",
-                "source_of_confusion": "Слово «дополнительный механизм» (словарь) ассоциируется с замедлением, отсюда вывод о постоянной просадке.",
-                "if_it_were_true": "Если бы generics были медленнее `interface{}`, не было бы смысла переписывать `interface{}`-утилиты на generics ради скорости.",
-                "how_it_should_be": "Для value-типов generics избегают боксинга и потому быстрее `interface{}`; overhead против не-generic кода мал."
+                "what_actually": "Go-generics близки к рукописному коду, но не zero-cost: гибрид с dictionary для shared shapes добавляет небольшой overhead, особенно при указателях.",
+                "source_of_confusion": "Маркетинг C++/Rust про «zero-cost abstractions» ошибочно переносят на гибридную модель Go.",
+                "if_it_were_true": "Будь overhead нулевым, не было бы измеримых ~1–3% и дополнительной стоимости для типов с указателями.",
+                "how_it_should_be": "Go жертвует частью производительности ради компактных бинарников; абсолютный zero-cost даёт только чистая monomorphization C++/Rust."
               },
               "order": 0,
               "label": "A"
@@ -814,6 +814,18 @@
               "label": "B"
             },
             {
+              "text": "Generics всегда заметно медленнее обычного кода и медленнее `interface{}`, потому что на каждый вызов создаётся словарь и происходит боксинг.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Generics обычно *быстрее* `interface{}` (нет боксинга value-типов) и близки к обычному коду; overhead есть, но небольшой и не «всегда заметный».",
+                "source_of_confusion": "Слово «дополнительный механизм» (словарь) ассоциируется с замедлением, отсюда вывод о постоянной просадке.",
+                "if_it_were_true": "Если бы generics были медленнее `interface{}`, не было бы смысла переписывать `interface{}`-утилиты на generics ради скорости.",
+                "how_it_should_be": "Для value-типов generics избегают боксинга и потому быстрее `interface{}`; overhead против не-generic кода мал."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
               "text": "Производительность generics не зависит от того, есть ли в `T` указатели — overhead одинаков для `int` и для `*User`.",
               "correct": false,
               "sections": {
@@ -821,18 +833,6 @@
                 "source_of_confusion": "Кажется, что generics — единый механизм с фиксированной ценой, без различий по содержимому типа.",
                 "if_it_were_true": "Если бы цена была одинаковой, не было бы смысла в GCShape-делении по наличию указателей, но именно оно влияет на overhead.",
                 "how_it_should_be": "Наличие указателей в `T` напрямую меняет накладные расходы: указатели требуют GC-словаря, value-типы — почти нет."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
-              "text": "Generics в Go дают абсолютный zero-cost overhead, как шаблоны C++, и всегда работают ровно с той же скоростью, что рукописный код под конкретный тип.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Go-generics близки к рукописному коду, но не zero-cost: гибрид с dictionary для shared shapes добавляет небольшой overhead, особенно при указателях.",
-                "source_of_confusion": "Маркетинг C++/Rust про «zero-cost abstractions» ошибочно переносят на гибридную модель Go.",
-                "if_it_were_true": "Будь overhead нулевым, не было бы измеримых ~1–3% и дополнительной стоимости для типов с указателями.",
-                "how_it_should_be": "Go жертвует частью производительности ради компактных бинарников; абсолютный zero-cost даёт только чистая monomorphization C++/Rust."
               },
               "order": 3,
               "label": "D"
@@ -849,30 +849,6 @@
           "question_text": "Как реализовать generic Map/Filter/Reduce в Go?",
           "options": [
             {
-              "text": "В Go их вызывают цепочкой методов, как в Java Stream API: `nums.Map(f).Filter(p).Reduce(0, g)`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В Go нет fluent-цепочек для этих операций: их пишут как отдельные top-level функции и вкладывают вызовы, а не соединяют точками.",
-                "source_of_confusion": "Привычка к `stream().map().filter()` из Java/Kotlin создаёт ожидание цепочек и в Go.",
-                "if_it_were_true": "Если бы цепочки работали, `Map` был бы методом, меняющим тип элементов, но методы не могут вводить новый параметр типа `U`.",
-                "how_it_should_be": "Корректно — вложенные вызовы функций: `Reduce(Filter(Map(nums, f), p), 0, g)`, без точечной цепочки."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "`Reduce` нельзя сделать generic, потому что аккумулятор и элементы всегда должны быть одного типа.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Reduce[T, U any](s []T, initial U, f func(U, T) U) U` использует два разных типа: элементы `T` и аккумулятор `U` могут отличаться.",
-                "source_of_confusion": "Привычные числовые свёртки (`sum`), где тип один, создают впечатление, что `Reduce` моно-типовая.",
-                "if_it_were_true": "Если бы типы обязаны были совпадать, нельзя было бы свернуть `[]int` в `string` или в структуру, а с двумя параметрами это легко.",
-                "how_it_should_be": "`Reduce` параметризуется двумя типами `T` и `U`, поэтому аккумулятор может быть любого типа, отличного от элементов."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
               "text": "Их пишут как top-level generic-функции: `Map[T, U any](s []T, f func(T) U) []U` преобразует элементы, `Filter[T any](s []T, pred func(T) bool) []T` отбирает, `Reduce[T, U any](s []T, initial U, f func(U, T) U) U` сворачивает. В отличие от Java Stream API, это не цепочки, а вложенные вызовы.",
               "correct": true,
               "sections": {
@@ -882,8 +858,8 @@
                 "edge_cases": "Из-за запрета generic-методов нельзя соединить их в `xs.map(...).filter(...)`; читаемость вложенных вызовов хуже, и часто проще оставить явный цикл.",
                 "related": "[[go-generics-interview#Q10]] почему нет fluent-цепочек (методы без type-параметров); [[go-generics-interview#Q19]] workaround через top-level функции; [[go-generics-interview#Q26]] похожие функции в slices/maps."
               },
-              "order": 2,
-              "label": "C"
+              "order": 0,
+              "label": "A"
             },
             {
               "text": "`Filter` должен возвращать `[]U` с новым типом, поэтому его сигнатура — `Filter[T, U any](s []T, pred func(T) bool) []U`.",
@@ -893,6 +869,30 @@
                 "source_of_confusion": "По аналогии с `Map`, у которого два типа, ошибочно добавляют второй параметр и в `Filter`.",
                 "if_it_were_true": "Если бы `Filter` возвращал `[]U`, было бы непонятно, откуда брать значения типа `U`, ведь предикат лишь отбирает существующие элементы.",
                 "how_it_should_be": "`Filter[T any](s []T, pred func(T) bool) []T` использует один тип: отфильтрованные элементы остаются типа `T`."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "В Go их вызывают цепочкой методов, как в Java Stream API: `nums.Map(f).Filter(p).Reduce(0, g)`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Go нет fluent-цепочек для этих операций: их пишут как отдельные top-level функции и вкладывают вызовы, а не соединяют точками.",
+                "source_of_confusion": "Привычка к `stream().map().filter()` из Java/Kotlin создаёт ожидание цепочек и в Go.",
+                "if_it_were_true": "Если бы цепочки работали, `Map` был бы методом, меняющим тип элементов, но методы не могут вводить новый параметр типа `U`.",
+                "how_it_should_be": "Корректно — вложенные вызовы функций: `Reduce(Filter(Map(nums, f), p), 0, g)`, без точечной цепочки."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`Reduce` нельзя сделать generic, потому что аккумулятор и элементы всегда должны быть одного типа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Reduce[T, U any](s []T, initial U, f func(U, T) U) U` использует два разных типа: элементы `T` и аккумулятор `U` могут отличаться.",
+                "source_of_confusion": "Привычные числовые свёртки (`sum`), где тип один, создают впечатление, что `Reduce` моно-типовая.",
+                "if_it_were_true": "Если бы типы обязаны были совпадать, нельзя было бы свернуть `[]int` в `string` или в структуру, а с двумя параметрами это легко.",
+                "how_it_should_be": "`Reduce` параметризуется двумя типами `T` и `U`, поэтому аккумулятор может быть любого типа, отличного от элементов."
               },
               "order": 3,
               "label": "D"
@@ -909,18 +909,6 @@
           "question_text": "Как реализовать generic коллекции (Stack, Queue, Set) в Go?",
           "options": [
             {
-              "text": "В Go есть встроенный generic `Set[T]` в стандартной библиотеке, поэтому писать его вручную не нужно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Встроенного `Set` в Go нет: его обычно пишут вручную поверх `map[T]struct{}` с параметром `T comparable`.",
-                "source_of_confusion": "Наличие `Set` во многих языках (Java, Python) создаёт ожидание готового типа и в Go.",
-                "if_it_were_true": "Если бы `Set` был в стандарте, не приходилось бы постоянно копировать его реализацию по проектам.",
-                "how_it_should_be": "Generic `Set` реализуют самостоятельно через `map[T]struct{}`; в стандартной библиотеке его нет."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
               "text": "Для generic `Set` ключи можно делать любого типа `T any`, ведь map в Go принимает любые ключи.",
               "correct": false,
               "sections": {
@@ -929,8 +917,8 @@
                 "if_it_were_true": "Если бы ключом мог быть любой `T`, можно было бы класть срезы в `Set`, но `map[[]int]struct{}` не компилируется.",
                 "how_it_should_be": "`Set[T comparable]` — ключ должен быть сравнимым; именно `comparable` гарантирует корректную работу map."
               },
-              "order": 1,
-              "label": "B"
+              "order": 0,
+              "label": "A"
             },
             {
               "text": "Элементы `Set` хранят как `map[T]bool`, и это единственно правильный способ — `map[T]struct{}` использовать нельзя.",
@@ -940,6 +928,18 @@
                 "source_of_confusion": "`map[T]bool` нагляднее («есть/нет»), поэтому его считают единственно верным вариантом.",
                 "if_it_were_true": "Если бы `map[T]struct{}` было нельзя, его не использовали бы повсеместно в Go-коде для множеств.",
                 "how_it_should_be": "Оба варианта валидны, но `struct{}` экономнее по памяти; `map[T]bool` — не «единственно правильный»."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "В Go есть встроенный generic `Set[T]` в стандартной библиотеке, поэтому писать его вручную не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Встроенного `Set` в Go нет: его обычно пишут вручную поверх `map[T]struct{}` с параметром `T comparable`.",
+                "source_of_confusion": "Наличие `Set` во многих языках (Java, Python) создаёт ожидание готового типа и в Go.",
+                "if_it_were_true": "Если бы `Set` был в стандарте, не приходилось бы постоянно копировать его реализацию по проектам.",
+                "how_it_should_be": "Generic `Set` реализуют самостоятельно через `map[T]struct{}`; в стандартной библиотеке его нет."
               },
               "order": 2,
               "label": "C"
@@ -969,6 +969,18 @@
           "question_text": "Как задать generic constraints для арифметических (math) операций?",
           "options": [
             {
+              "text": "Достаточно объявить `func Sum[T any](nums []T) T` — оператор `+` работает над любым `T any`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Под `T any` оператор `+` недоступен: нужен числовой (или строковый) constraint вроде `Numeric`, перечисляющий типы с арифметикой.",
+                "source_of_confusion": "Раз `any` принимает «всё», ошибочно полагают, что и все операции над ним разрешены.",
+                "if_it_were_true": "Если бы `+` работал под `any`, для `T = struct{}` или `T = func()` сложение было бы бессмысленным и небезопасным.",
+                "how_it_should_be": "Для арифметики constraint обязан ограничивать `T` числовыми типами; `any` операторы не разрешает."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "Объявляют числовой constraint, объединяющий целые и дробные типы: `type Numeric interface { constraints.Integer | constraints.Float }`. Тогда `func Sum[T Numeric](nums []T) T` разрешает внутри арифметику `+`, `-`, `*`, `/` над `T`, потому что все типы из type set их поддерживают.",
               "correct": true,
               "sections": {
@@ -977,18 +989,6 @@
                 "when_to_apply": "Применяй такой constraint для статистических и числовых утилит (сумма, среднее, норма), где важна и общность по числовым типам, и доступность арифметики.",
                 "edge_cases": "`T(len(nums))` нужно писать явно: смешивать `int` (`len`) и `T` напрямую нельзя, иначе компилятор выдаст ошибку несовпадения типов — частая ловушка в `Average`.",
                 "related": "[[go-generics-interview#Q7]] откуда берутся Integer/Float; [[go-generics-interview#Q4]] type set и доступные операции; [[go-generics-interview#Q14]] почему числовые generics быстрее interface{}."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "Достаточно объявить `func Sum[T any](nums []T) T` — оператор `+` работает над любым `T any`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Под `T any` оператор `+` недоступен: нужен числовой (или строковый) constraint вроде `Numeric`, перечисляющий типы с арифметикой.",
-                "source_of_confusion": "Раз `any` принимает «всё», ошибочно полагают, что и все операции над ним разрешены.",
-                "if_it_were_true": "Если бы `+` работал под `any`, для `T = struct{}` или `T = func()` сложение было бы бессмысленным и небезопасным.",
-                "how_it_should_be": "Для арифметики constraint обязан ограничивать `T` числовыми типами; `any` операторы не разрешает."
               },
               "order": 1,
               "label": "B"
@@ -1029,29 +1029,16 @@
           "question_text": "Какие основные минусы и ограничения у generics в Go?",
           "options": [
             {
-              "text": "Главный минус в том, что generics в Go работают медленнее `interface{}` и всегда раздувают бинарник сильнее, чем чистая monomorphization C++.",
+              "text": "Главный недостаток в том, что generics в Go полностью стираются в runtime, как в Java, и тип `T` недоступен через reflect.",
               "correct": false,
               "sections": {
-                "what_actually": "Производительность — не основная претензия: generics обычно быстрее `interface{}`, а гибрид GCShape даёт компактнее бинарник, чем чистая monomorphization. Минусы — в выразительности.",
-                "source_of_confusion": "Любая абстракция кажется «дорогой», поэтому overhead ошибочно ставят во главу списка ограничений.",
-                "if_it_were_true": "Если бы скорость была главным минусом, не рекомендовали бы переходить с `interface{}` на generics ради производительности.",
-                "how_it_should_be": "Ключевые ограничения — отсутствие generic-методов, HKT, специализации, const generics и слабый type inference, а не скорость."
+                "what_actually": "Go не стирает типы: благодаря GCShape тип присутствует в runtime, и reflection над значениями работает; erasure — это про Java, не про Go.",
+                "source_of_confusion": "Сравнение с Java-generics подталкивает приписать Go то же стирание типов.",
+                "if_it_were_true": "Если бы тип стирался, не было бы выигрыша по производительности над `interface{}` и доступа к типу в runtime, но они есть.",
+                "how_it_should_be": "Минусы Go-generics — в выразительности (методы, HKT, специализация), а не в стирании типов; типы в Go доступны в runtime."
               },
               "order": 0,
               "label": "A"
-            },
-            {
-              "text": "Главные ограничения выразительности: методы не могут иметь своих type-параметров (нет fluent API); нет higher-kinded types (`[F[_]]`); нет специализации под конкретный `T`; нет const generics (`[N int]`); type inference иногда не срабатывает; constraints — это interfaces, а не type traits; чем больше generics, тем дольше компиляция; нет идиоматичных sum types (`Either[L, R]`); деление по GCShape не так оптимально, как чистая monomorphization.",
-              "correct": true,
-              "sections": {
-                "explanation": "В сумме Go-generics — наименее мощные среди современных языков, но достаточные для большинства задач: контейнеров и общих алгоритмов.",
-                "example": "Например нельзя написать `stack.Map(f).Filter(p)` (нет generic-методов) и нельзя `Array[N int]` для compile-time размеров (нет const generics, как в Rust).",
-                "when_to_apply": "Учитывай эти границы при дизайне: если задача требует HKT, специализации или fluent-цепочек, в Go придётся либо упростить API, либо вынести логику в top-level функции.",
-                "edge_cases": "Многие ограничения намеренны (упрощают реализацию и ошибки компилятора), но из-за них сложные функциональные паттерны в Go выражаются громоздко.",
-                "related": "[[go-generics-interview#Q10]] запрет generic-методов; [[go-generics-interview#Q19]] почему нет type-параметров у методов; [[go-generics-interview#Q23]] сравнение с более мощными generics Rust."
-              },
-              "order": 1,
-              "label": "B"
             },
             {
               "text": "Основное ограничение — generics нельзя использовать со структурами, только с функциями; generic struct в Go не существует.",
@@ -1062,17 +1049,30 @@
                 "if_it_were_true": "Если бы generic-структур не было, нельзя было бы написать типобезопасные контейнеры, а они пишутся повсеместно.",
                 "how_it_should_be": "Generic-типы и структуры есть; реальные минусы — отсутствие generic-методов, HKT, const generics и т.д."
               },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Главный минус в том, что generics в Go работают медленнее `interface{}` и всегда раздувают бинарник сильнее, чем чистая monomorphization C++.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Производительность — не основная претензия: generics обычно быстрее `interface{}`, а гибрид GCShape даёт компактнее бинарник, чем чистая monomorphization. Минусы — в выразительности.",
+                "source_of_confusion": "Любая абстракция кажется «дорогой», поэтому overhead ошибочно ставят во главу списка ограничений.",
+                "if_it_were_true": "Если бы скорость была главным минусом, не рекомендовали бы переходить с `interface{}` на generics ради производительности.",
+                "how_it_should_be": "Ключевые ограничения — отсутствие generic-методов, HKT, специализации, const generics и слабый type inference, а не скорость."
+              },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "Главный недостаток в том, что generics в Go полностью стираются в runtime, как в Java, и тип `T` недоступен через reflect.",
-              "correct": false,
+              "text": "Главные ограничения выразительности: методы не могут иметь своих type-параметров (нет fluent API); нет higher-kinded types (`[F[_]]`); нет специализации под конкретный `T`; нет const generics (`[N int]`); type inference иногда не срабатывает; constraints — это interfaces, а не type traits; чем больше generics, тем дольше компиляция; нет идиоматичных sum types (`Either[L, R]`); деление по GCShape не так оптимально, как чистая monomorphization.",
+              "correct": true,
               "sections": {
-                "what_actually": "Go не стирает типы: благодаря GCShape тип присутствует в runtime, и reflection над значениями работает; erasure — это про Java, не про Go.",
-                "source_of_confusion": "Сравнение с Java-generics подталкивает приписать Go то же стирание типов.",
-                "if_it_were_true": "Если бы тип стирался, не было бы выигрыша по производительности над `interface{}` и доступа к типу в runtime, но они есть.",
-                "how_it_should_be": "Минусы Go-generics — в выразительности (методы, HKT, специализация), а не в стирании типов; типы в Go доступны в runtime."
+                "explanation": "В сумме Go-generics — наименее мощные среди современных языков, но достаточные для большинства задач: контейнеров и общих алгоритмов.",
+                "example": "Например нельзя написать `stack.Map(f).Filter(p)` (нет generic-методов) и нельзя `Array[N int]` для compile-time размеров (нет const generics, как в Rust).",
+                "when_to_apply": "Учитывай эти границы при дизайне: если задача требует HKT, специализации или fluent-цепочек, в Go придётся либо упростить API, либо вынести логику в top-level функции.",
+                "edge_cases": "Многие ограничения намеренны (упрощают реализацию и ошибки компилятора), но из-за них сложные функциональные паттерны в Go выражаются громоздко.",
+                "related": "[[go-generics-interview#Q10]] запрет generic-методов; [[go-generics-interview#Q19]] почему нет type-параметров у методов; [[go-generics-interview#Q23]] сравнение с более мощными generics Rust."
               },
               "order": 3,
               "label": "D"
@@ -1089,18 +1089,6 @@
           "question_text": "Почему в Go нельзя объявить generic method (с собственными type-параметрами) на receiver?",
           "options": [
             {
-              "text": "Потому что это техническая невозможность: компилятор Go в принципе не способен сгенерировать код для метода с параметром типа.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это сознательное ограничение дизайна (ради простоты реализации и type inference), а не техническая невозможность; компилятор справился бы, но цена сложности сочтена слишком высокой.",
-                "source_of_confusion": "Раз фича отсутствует, кажется, что её нельзя реализовать в принципе.",
-                "if_it_were_true": "Если бы это было физически невозможно, то и top-level функции с несколькими типами не работали бы, а они работают.",
-                "how_it_should_be": "Запрет — осознанное проектное решение для упрощения языка, а не неспособность компилятора."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
               "text": "Потому что методы вообще не поддерживают generics: ни параметры структуры, ни собственные параметры в методах использовать нельзя.",
               "correct": false,
               "sections": {
@@ -1109,8 +1097,8 @@
                 "if_it_were_true": "Если бы методы не поддерживали параметры структуры, у `Stack[T]` не было бы метода `Push(item T)`, а он есть.",
                 "how_it_should_be": "Методы свободно используют `T` структуры; нельзя лишь ввести независимый параметр типа в сигнатуре метода."
               },
-              "order": 1,
-              "label": "B"
+              "order": 0,
+              "label": "A"
             },
             {
               "text": "Это сделано **намеренно** — чтобы упростить реализацию generics и type inference. Цена решения — нет fluent generic API: нельзя написать `func (l *List[T]) Map[U any](f func(T) U) *List[U]`, потому что метод не может ввести новый параметр `U`.",
@@ -1121,6 +1109,18 @@
                 "when_to_apply": "Помни про это при проектировании API: трансформации, меняющие тип элементов, оформляй функциями, принимающими структуру первым аргументом, а не методами.",
                 "edge_cases": "Результат менее эргономичен (`Map(list, f)` вместо `list.Map(f)`), и цепочки преобразований в Go выглядят как вложенные вызовы, а не как fluent-методы.",
                 "related": "[[go-generics-interview#Q10]] то же ограничение со стороны методов; [[go-generics-interview#Q15]] Map/Filter как top-level функции; [[go-generics-interview#Q18]] это ограничение в общем списке минусов."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Потому что это техническая невозможность: компилятор Go в принципе не способен сгенерировать код для метода с параметром типа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это сознательное ограничение дизайна (ради простоты реализации и type inference), а не техническая невозможность; компилятор справился бы, но цена сложности сочтена слишком высокой.",
+                "source_of_confusion": "Раз фича отсутствует, кажется, что её нельзя реализовать в принципе.",
+                "if_it_were_true": "Если бы это было физически невозможно, то и top-level функции с несколькими типами не работали бы, а они работают.",
+                "how_it_should_be": "Запрет — осознанное проектное решение для упрощения языка, а не неспособность компилятора."
               },
               "order": 2,
               "label": "C"
@@ -1149,6 +1149,19 @@
           "question_text": "Где в Go работает type inference для generics, а где тип нужно указывать явно?",
           "options": [
             {
+              "text": "Type inference работает для **аргументов функций**: компилятор выводит `T` из переданных значений, поэтому `Min(1, 2)` определяет `T = int`, хотя можно указать и явно `Min[int](1, 2)`. А для **литералов структур** тип нужно указывать: `Stack[int]{}` — обязательно, `Stack{}` — ошибка.",
+              "correct": true,
+              "sections": {
+                "explanation": "Из значений аргументов компилятор однозначно вычисляет параметр типа функции; у литерала структуры значений-аргументов для вывода нет, поэтому тип задаётся явно.",
+                "example": "`Min(1, 2)` выводит `int`, `Min[int](1, 2)` — явная форма, а `s := Stack[int]{}` обязателен, потому что `s := Stack{}` не компилируется без аргумента типа.",
+                "when_to_apply": "Полагайся на inference для краткости вызовов функций, но всегда указывай аргумент типа при создании generic-структур и при неоднозначном выводе.",
+                "edge_cases": "Inference в Go слабее, чем в Rust/Scala: при неоднозначности (например тип только в возвращаемом значении) его не хватает, и приходится писать `[T]` явно.",
+                "related": "[[go-generics-interview#Q3]] синтаксис явного указания типа; [[go-generics-interview#Q9]] почему у структуры тип обязателен; [[go-generics-interview#Q23]] более сильный inference в Rust."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "Type inference в Go работает везде, включая литералы структур: можно писать `s := Stack{}` и тип выведется из дальнейшего использования.",
               "correct": false,
               "sections": {
@@ -1156,18 +1169,6 @@
                 "source_of_confusion": "Удачный вывод типов для функций ошибочно распространяют и на конструкторы структур.",
                 "if_it_were_true": "Если бы тип выводился из дальнейшего использования, поле `items []T` до первого `Push` имело бы неопределённый layout.",
                 "how_it_should_be": "Inference покрывает аргументы функций, но не литералы структур; для структуры тип задаётся явно."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "Type inference в Go мощнее, чем в Rust и Scala, и почти никогда не требует явного указания типа.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Inference в Go *менее* мощный, чем в Rust/Scala: он часто требует явных аргументов типа, особенно когда тип не выводится из аргументов функции.",
-                "source_of_confusion": "Уверенный вывод для простых функций создаёт ложное впечатление о его силе.",
-                "if_it_were_true": "Если бы он был мощнее Rust/Scala, не приходилось бы регулярно писать `Min[int](...)` или указывать тип структуры.",
-                "how_it_should_be": "Go-inference слабее Rust/Scala и нередко требует явных аргументов типа."
               },
               "order": 1,
               "label": "B"
@@ -1185,14 +1186,13 @@
               "label": "C"
             },
             {
-              "text": "Type inference работает для **аргументов функций**: компилятор выводит `T` из переданных значений, поэтому `Min(1, 2)` определяет `T = int`, хотя можно указать и явно `Min[int](1, 2)`. А для **литералов структур** тип нужно указывать: `Stack[int]{}` — обязательно, `Stack{}` — ошибка.",
-              "correct": true,
+              "text": "Type inference в Go мощнее, чем в Rust и Scala, и почти никогда не требует явного указания типа.",
+              "correct": false,
               "sections": {
-                "explanation": "Из значений аргументов компилятор однозначно вычисляет параметр типа функции; у литерала структуры значений-аргументов для вывода нет, поэтому тип задаётся явно.",
-                "example": "`Min(1, 2)` выводит `int`, `Min[int](1, 2)` — явная форма, а `s := Stack[int]{}` обязателен, потому что `s := Stack{}` не компилируется без аргумента типа.",
-                "when_to_apply": "Полагайся на inference для краткости вызовов функций, но всегда указывай аргумент типа при создании generic-структур и при неоднозначном выводе.",
-                "edge_cases": "Inference в Go слабее, чем в Rust/Scala: при неоднозначности (например тип только в возвращаемом значении) его не хватает, и приходится писать `[T]` явно.",
-                "related": "[[go-generics-interview#Q3]] синтаксис явного указания типа; [[go-generics-interview#Q9]] почему у структуры тип обязателен; [[go-generics-interview#Q23]] более сильный inference в Rust."
+                "what_actually": "Inference в Go *менее* мощный, чем в Rust/Scala: он часто требует явных аргументов типа, особенно когда тип не выводится из аргументов функции.",
+                "source_of_confusion": "Уверенный вывод для простых функций создаёт ложное впечатление о его силе.",
+                "if_it_were_true": "Если бы он был мощнее Rust/Scala, не приходилось бы регулярно писать `Min[int](...)` или указывать тип структуры.",
+                "how_it_should_be": "Go-inference слабее Rust/Scala и нередко требует явных аргументов типа."
               },
               "order": 3,
               "label": "D"
@@ -1209,29 +1209,16 @@
           "question_text": "Чем generics в Go отличаются от generics в Java (type erasure)?",
           "options": [
             {
-              "text": "Java использует `type erasure`: параметры типа стираются в `Object` и в runtime недоступны. Go использует гибрид (monomorphization + dictionary через GCShape): типы присутствуют в runtime. Из-за этого Go часто быстрее (нет боксинга примитивов), тогда как `List<Integer>` в Java хранит boxed `Integer` в heap, а не `int`.",
-              "correct": true,
+              "text": "Go поддерживает wildcards (`? extends T`) так же, как Java, — это часть type sets.",
+              "correct": false,
               "sections": {
-                "explanation": "Java стирает типы ради совместимости со старым байткодом, поэтому `T.class` напрямую недоступен (нужен трюк), а в Go тип сохраняется через shape и reflection над значениями работает.",
-                "example": "В Java `List<Integer>` боксит каждое число в объект `Integer` на heap, а Go-аналог `[]int` или generic-контейнер хранит `int` без боксинга — отсюда выигрыш Go по производительности.",
-                "when_to_apply": "Это различие важно учитывать, сравнивая профиль памяти и скорости: Java-generics удобны, но платят боксингом примитивов, Go — нет.",
-                "edge_cases": "Ни Go, ни Java не поддерживают generic-массивы, но Java вдобавок имеет wildcards (`? extends T`), которых в Go нет — там вместо них type sets (`int | float64`).",
-                "related": "[[go-generics-interview#Q12]] как реализованы Go-generics; [[go-generics-interview#Q14]] выигрыш Go по боксингу; [[go-generics-interview#Q23]] сравнение с Rust."
+                "what_actually": "В Go нет wildcards: ковариантность/контрвариантность через `? extends T`/`? super T` отсутствует, вместо них используются type sets (`int | float64`).",
+                "source_of_confusion": "Раз и там, и там есть «ограничения типов», wildcards Java ошибочно приписывают и Go.",
+                "if_it_were_true": "Если бы wildcards были, можно было бы писать `[]? extends Number`, но Go такого синтаксиса не имеет.",
+                "how_it_should_be": "Go обходится без wildcards; ограничения выражаются через type sets и constraints, а не через `? extends`."
               },
               "order": 0,
               "label": "A"
-            },
-            {
-              "text": "И Go, и Java используют type erasure: в обоих языках параметр типа стирается, и в runtime тип `T` недоступен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Только Java стирает типы; Go сохраняет их в runtime через GCShape, поэтому модели реализации принципиально разные.",
-                "source_of_confusion": "Слово «generics» в обоих языках создаёт впечатление одинаковой реализации.",
-                "if_it_were_true": "Если бы Go стирал типы, не было бы преимущества по боксингу над Java и доступа к типу в runtime, но оно есть.",
-                "how_it_should_be": "Erasure — особенность Java; Go использует гибрид с сохранением типов в runtime."
-              },
-              "order": 1,
-              "label": "B"
             },
             {
               "text": "Java generics не боксят примитивы: `List<Integer>` хранит `int` на стеке так же эффективно, как Go-срез.",
@@ -1242,17 +1229,30 @@
                 "if_it_were_true": "Если бы боксинга не было, не появилось бы предложений вроде Project Valhalla про value types в Java.",
                 "how_it_should_be": "Java хранит boxed `Integer` на heap; беспроблемный примитивный layout даёт как раз Go."
               },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Java использует `type erasure`: параметры типа стираются в `Object` и в runtime недоступны. Go использует гибрид (monomorphization + dictionary через GCShape): типы присутствуют в runtime. Из-за этого Go часто быстрее (нет боксинга примитивов), тогда как `List<Integer>` в Java хранит boxed `Integer` в heap, а не `int`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Java стирает типы ради совместимости со старым байткодом, поэтому `T.class` напрямую недоступен (нужен трюк), а в Go тип сохраняется через shape и reflection над значениями работает.",
+                "example": "В Java `List<Integer>` боксит каждое число в объект `Integer` на heap, а Go-аналог `[]int` или generic-контейнер хранит `int` без боксинга — отсюда выигрыш Go по производительности.",
+                "when_to_apply": "Это различие важно учитывать, сравнивая профиль памяти и скорости: Java-generics удобны, но платят боксингом примитивов, Go — нет.",
+                "edge_cases": "Ни Go, ни Java не поддерживают generic-массивы, но Java вдобавок имеет wildcards (`? extends T`), которых в Go нет — там вместо них type sets (`int | float64`).",
+                "related": "[[go-generics-interview#Q12]] как реализованы Go-generics; [[go-generics-interview#Q14]] выигрыш Go по боксингу; [[go-generics-interview#Q23]] сравнение с Rust."
+              },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "Go поддерживает wildcards (`? extends T`) так же, как Java, — это часть type sets.",
+              "text": "И Go, и Java используют type erasure: в обоих языках параметр типа стирается, и в runtime тип `T` недоступен.",
               "correct": false,
               "sections": {
-                "what_actually": "В Go нет wildcards: ковариантность/контрвариантность через `? extends T`/`? super T` отсутствует, вместо них используются type sets (`int | float64`).",
-                "source_of_confusion": "Раз и там, и там есть «ограничения типов», wildcards Java ошибочно приписывают и Go.",
-                "if_it_were_true": "Если бы wildcards были, можно было бы писать `[]? extends Number`, но Go такого синтаксиса не имеет.",
-                "how_it_should_be": "Go обходится без wildcards; ограничения выражаются через type sets и constraints, а не через `? extends`."
+                "what_actually": "Только Java стирает типы; Go сохраняет их в runtime через GCShape, поэтому модели реализации принципиально разные.",
+                "source_of_confusion": "Слово «generics» в обоих языках создаёт впечатление одинаковой реализации.",
+                "if_it_were_true": "Если бы Go стирал типы, не было бы преимущества по боксингу над Java и доступа к типу в runtime, но оно есть.",
+                "how_it_should_be": "Erasure — особенность Java; Go использует гибрид с сохранением типов в runtime."
               },
               "order": 3,
               "label": "D"
@@ -1281,14 +1281,13 @@
               "label": "A"
             },
             {
-              "text": "C++ использует чистую monomorphization (копия кода на каждый тип) — это даёт максимум runtime-производительности (zero overhead), но медленную компиляцию, большие бинарники и печально известные нечитаемые ошибки. Go использует гибрид: компилируется быстрее, бинарник меньше, runtime очень близок к C++, а ошибки понятнее. Type sets в Go ≈ C++20 concepts.",
-              "correct": true,
+              "text": "У C++ templates понятные сообщения об ошибках, а у Go-generics — известно ужасные и нечитаемые.",
+              "correct": false,
               "sections": {
-                "explanation": "Trade-off прямой: C++ платит размером и скоростью сборки за абсолютный zero-cost, Go платит крошечным runtime-overhead за компактность и удобство.",
-                "example": "Шаблон `std::vector<int>` в C++ инстанцируется в отдельный код, а Go-generic для типов одной shape делит код, поэтому бинарник Go не раздувается так же сильно.",
-                "when_to_apply": "Это сравнение полезно, когда выбирают язык под требования: предельная производительность и контроль — C++, баланс скорости/простоты/сборки — Go.",
-                "edge_cases": "До C++20 у шаблонов не было аналога type sets, и ошибки были особенно загадочными; `concepts` приблизили C++ к понятным ограничениям Go.",
-                "related": "[[go-generics-interview#Q12]] гибридная реализация Go; [[go-generics-interview#Q14]] почему Go близок, но не равен C++ по скорости; [[go-generics-interview#Q23]] сравнение с Rust (тоже monomorphization)."
+                "what_actually": "Всё наоборот: именно C++ templates печально известны нечитаемыми ошибками, а Go проектировался ради понятных сообщений компилятора.",
+                "source_of_confusion": "Стереотип «C++ сложный, но зрелый» ошибочно переносят на качество его сообщений об ошибках.",
+                "if_it_were_true": "Если бы у C++ ошибки были понятными, не возникли бы `concepts` в C++20, призванные их улучшить.",
+                "how_it_should_be": "Понятные ошибки — сильная сторона Go; нечитаемые диагностики шаблонов — известная боль C++."
               },
               "order": 1,
               "label": "B"
@@ -1306,13 +1305,14 @@
               "label": "C"
             },
             {
-              "text": "У C++ templates понятные сообщения об ошибках, а у Go-generics — известно ужасные и нечитаемые.",
-              "correct": false,
+              "text": "C++ использует чистую monomorphization (копия кода на каждый тип) — это даёт максимум runtime-производительности (zero overhead), но медленную компиляцию, большие бинарники и печально известные нечитаемые ошибки. Go использует гибрид: компилируется быстрее, бинарник меньше, runtime очень близок к C++, а ошибки понятнее. Type sets в Go ≈ C++20 concepts.",
+              "correct": true,
               "sections": {
-                "what_actually": "Всё наоборот: именно C++ templates печально известны нечитаемыми ошибками, а Go проектировался ради понятных сообщений компилятора.",
-                "source_of_confusion": "Стереотип «C++ сложный, но зрелый» ошибочно переносят на качество его сообщений об ошибках.",
-                "if_it_were_true": "Если бы у C++ ошибки были понятными, не возникли бы `concepts` в C++20, призванные их улучшить.",
-                "how_it_should_be": "Понятные ошибки — сильная сторона Go; нечитаемые диагностики шаблонов — известная боль C++."
+                "explanation": "Trade-off прямой: C++ платит размером и скоростью сборки за абсолютный zero-cost, Go платит крошечным runtime-overhead за компактность и удобство.",
+                "example": "Шаблон `std::vector<int>` в C++ инстанцируется в отдельный код, а Go-generic для типов одной shape делит код, поэтому бинарник Go не раздувается так же сильно.",
+                "when_to_apply": "Это сравнение полезно, когда выбирают язык под требования: предельная производительность и контроль — C++, баланс скорости/простоты/сборки — Go.",
+                "edge_cases": "До C++20 у шаблонов не было аналога type sets, и ошибки были особенно загадочными; `concepts` приблизили C++ к понятным ограничениям Go.",
+                "related": "[[go-generics-interview#Q12]] гибридная реализация Go; [[go-generics-interview#Q14]] почему Go близок, но не равен C++ по скорости; [[go-generics-interview#Q23]] сравнение с Rust (тоже monomorphization)."
               },
               "order": 3,
               "label": "D"
@@ -1329,6 +1329,19 @@
           "question_text": "Чем generics в Go отличаются от generics в Rust?",
           "options": [
             {
+              "text": "Rust использует чистую monomorphization (zero-cost, ~100% производительности), Go — гибрид GCShape (~95%). Rust traits **намного мощнее** Go-constraints (`T: Add<Output=T> + Default + Copy`), у Rust есть const generics и специализация (nightly) и сильный type inference, тогда как у Go всего этого нет, а inference слабее.",
+              "correct": true,
+              "sections": {
+                "explanation": "Traits в Rust описывают и поведение, и сложные комбинации ограничений с associated types, тогда как Go-constraints ограничены type sets и набором методов.",
+                "example": "В Rust `fn sum<T: Add<Output=T> + Default + Copy>(items: &[T]) -> T` выражает тонкие требования к `T`; в Go аналог проще, но ограниченнее, без такой композиции ограничений.",
+                "when_to_apply": "Сравнение помогает выбрать язык: нужны предельная производительность и богатая система типов — Rust; нужна простота и быстрая разработка — Go.",
+                "edge_cases": "HKT нет ни в Go, ни в Rust, но Rust компенсирует это associated types, const generics и специализацией, которых в Go нет совсем.",
+                "related": "[[go-generics-interview#Q12]] гибрид Go против monomorphization; [[go-generics-interview#Q18]] отсутствие const generics и специализации в Go; [[go-generics-interview#Q22]] сравнение с C++ (тоже monomorphization)."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "Rust, как и Go, использует гибрид GCShape: одинаковые shapes делят код, разные — копируются.",
               "correct": false,
               "sections": {
@@ -1337,8 +1350,8 @@
                 "if_it_were_true": "Если бы Rust делил код по shapes, он не давал бы 100% zero-cost абстракций, которыми известен.",
                 "how_it_should_be": "Rust — pure monomorphization; GCShape-гибрид есть только у Go."
               },
-              "order": 0,
-              "label": "A"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "Constraints Go (interfaces с type sets) мощнее, чем Rust traits, потому что Go умеет higher-kinded types, а Rust нет.",
@@ -1348,19 +1361,6 @@
                 "source_of_confusion": "Желание видеть Go «не хуже» подталкивает преувеличить силу его constraints.",
                 "if_it_were_true": "Если бы Go умел HKT, можно было бы писать `[F[_]]`, но такого синтаксиса в Go нет.",
                 "how_it_should_be": "Rust traits выразительнее Go-interfaces; HKT отсутствуют в обоих языках."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "Rust использует чистую monomorphization (zero-cost, ~100% производительности), Go — гибрид GCShape (~95%). Rust traits **намного мощнее** Go-constraints (`T: Add<Output=T> + Default + Copy`), у Rust есть const generics и специализация (nightly) и сильный type inference, тогда как у Go всего этого нет, а inference слабее.",
-              "correct": true,
-              "sections": {
-                "explanation": "Traits в Rust описывают и поведение, и сложные комбинации ограничений с associated types, тогда как Go-constraints ограничены type sets и набором методов.",
-                "example": "В Rust `fn sum<T: Add<Output=T> + Default + Copy>(items: &[T]) -> T` выражает тонкие требования к `T`; в Go аналог проще, но ограниченнее, без такой композиции ограничений.",
-                "when_to_apply": "Сравнение помогает выбрать язык: нужны предельная производительность и богатая система типов — Rust; нужна простота и быстрая разработка — Go.",
-                "edge_cases": "HKT нет ни в Go, ни в Rust, но Rust компенсирует это associated types, const generics и специализацией, которых в Go нет совсем.",
-                "related": "[[go-generics-interview#Q12]] гибрид Go против monomorphization; [[go-generics-interview#Q18]] отсутствие const generics и специализации в Go; [[go-generics-interview#Q22]] сравнение с C++ (тоже monomorphization)."
               },
               "order": 2,
               "label": "C"
@@ -1401,13 +1401,14 @@
               "label": "A"
             },
             {
-              "text": "`interface{}` всегда быстрее generics, поэтому для горячих путей выбирают именно его.",
-              "correct": false,
+              "text": "**Generics** — когда критична type safety, важна производительность (нет боксинга) и есть алгоритмы на коллекциях (`Sort`, `Min`, `Max`, `Sum`). **`interface{}`/`any`** — для гетерогенных данных разных типов в одном месте, когда нужен type assertion в runtime или когда простота важнее производительности. Не превращай весь код в generic — оставляй их для библиотек и общих утилит.",
+              "correct": true,
               "sections": {
-                "what_actually": "Для однородных value-типов generics обычно *быстрее* `interface{}` (нет боксинга); `interface{}` выбирают за гибкость, а не за скорость.",
-                "source_of_confusion": "Простота `interface{}` создаёт ложное ощущение, что он и эффективнее.",
-                "if_it_were_true": "Если бы `interface{}` был быстрее, не было бы смысла писать `MinGeneric` ради производительности.",
-                "how_it_should_be": "На горячих однородных путях generics предпочтительнее по скорости; `interface{}` — про гибкость и type assertion."
+                "explanation": "Generics фиксируют один конкретный `T` и проверяются компилятором; `interface{}` сознательно теряет тип ради хранения разнородных значений, требуя приведения при доступе.",
+                "example": "`MinGeneric[T constraints.Ordered](a, b T) T` типобезопасен и быстр, а `MinAny(a, b any) any` гибче, но требует `type switch` внутри и боксит значения.",
+                "when_to_apply": "Выбирай generics для однородных типобезопасных утилит, а `interface{}` — там, где данные действительно разнородны или важнее простота, чем строгая типизация и скорость.",
+                "edge_cases": "Чрезмерная generic-параметризация усложняет API и компиляцию; разумно держать generics в общих библиотеках, а прикладной код часто проще на `interface{}` или конкретных типах.",
+                "related": "[[go-generics-interview#Q14]] почему generics быстрее interface{}; [[go-generics-interview#Q5]] any как constraint; [[go-generics-interview#Q18]] ограничения, влияющие на выбор."
               },
               "order": 1,
               "label": "B"
@@ -1425,14 +1426,13 @@
               "label": "C"
             },
             {
-              "text": "**Generics** — когда критична type safety, важна производительность (нет боксинга) и есть алгоритмы на коллекциях (`Sort`, `Min`, `Max`, `Sum`). **`interface{}`/`any`** — для гетерогенных данных разных типов в одном месте, когда нужен type assertion в runtime или когда простота важнее производительности. Не превращай весь код в generic — оставляй их для библиотек и общих утилит.",
-              "correct": true,
+              "text": "`interface{}` всегда быстрее generics, поэтому для горячих путей выбирают именно его.",
+              "correct": false,
               "sections": {
-                "explanation": "Generics фиксируют один конкретный `T` и проверяются компилятором; `interface{}` сознательно теряет тип ради хранения разнородных значений, требуя приведения при доступе.",
-                "example": "`MinGeneric[T constraints.Ordered](a, b T) T` типобезопасен и быстр, а `MinAny(a, b any) any` гибче, но требует `type switch` внутри и боксит значения.",
-                "when_to_apply": "Выбирай generics для однородных типобезопасных утилит, а `interface{}` — там, где данные действительно разнородны или важнее простота, чем строгая типизация и скорость.",
-                "edge_cases": "Чрезмерная generic-параметризация усложняет API и компиляцию; разумно держать generics в общих библиотеках, а прикладной код часто проще на `interface{}` или конкретных типах.",
-                "related": "[[go-generics-interview#Q14]] почему generics быстрее interface{}; [[go-generics-interview#Q5]] any как constraint; [[go-generics-interview#Q18]] ограничения, влияющие на выбор."
+                "what_actually": "Для однородных value-типов generics обычно *быстрее* `interface{}` (нет боксинга); `interface{}` выбирают за гибкость, а не за скорость.",
+                "source_of_confusion": "Простота `interface{}` создаёт ложное ощущение, что он и эффективнее.",
+                "if_it_were_true": "Если бы `interface{}` был быстрее, не было бы смысла писать `MinGeneric` ради производительности.",
+                "how_it_should_be": "На горячих однородных путях generics предпочтительнее по скорости; `interface{}` — про гибкость и type assertion."
               },
               "order": 3,
               "label": "D"
@@ -1462,18 +1462,6 @@
               "label": "A"
             },
             {
-              "text": "Пакеты `slices` и `maps` существуют в стандарте с Go 1.0 и просто получили generic-версии функций в 1.18.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Стандартные `slices`/`maps` появились только в Go 1.21; до этого их в стандартной библиотеке не было (жили в `x/exp`).",
-                "source_of_confusion": "Давние пакеты `sort` и встроенные map создают впечатление, что `slices`/`maps` тоже были всегда.",
-                "if_it_were_true": "Если бы они были с 1.0, не понадобился бы экспериментальный `golang.org/x/exp/slices` до 1.21.",
-                "how_it_should_be": "`slices` и `maps` — новые стандартные пакеты с 1.21, а не существовавшие с самого начала."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
               "text": "`slices.Sort` требует, чтобы вы передали функцию-компаратор вторым аргументом, как `sort.Slice`.",
               "correct": false,
               "sections": {
@@ -1482,8 +1470,8 @@
                 "if_it_were_true": "Если бы компаратор был обязателен, `slices.Sort` не был бы короче и удобнее старого `sort.Slice`.",
                 "how_it_should_be": "`slices.Sort` использует естественный порядок `constraints.Ordered`; компаратор нужен лишь в `slices.SortFunc`."
               },
-              "order": 2,
-              "label": "C"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "`maps.Keys(m)` возвращает срез `[]K` ключей в строго отсортированном порядке, гарантированном спецификацией.",
@@ -1493,6 +1481,18 @@
                 "source_of_confusion": "Желание детерминизма создаёт иллюзию, что стандарт гарантирует порядок ключей.",
                 "if_it_were_true": "Если бы порядок был отсортирован, не пришлось бы дополнительно вызывать `slices.Sort` над результатом `Keys`.",
                 "how_it_should_be": "`maps.Keys` даёт ключи в неопределённом порядке; для упорядочивания их сортируют явно."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Пакеты `slices` и `maps` существуют в стандарте с Go 1.0 и просто получили generic-версии функций в 1.18.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Стандартные `slices`/`maps` появились только в Go 1.21; до этого их в стандартной библиотеке не было (жили в `x/exp`).",
+                "source_of_confusion": "Давние пакеты `sort` и встроенные map создают впечатление, что `slices`/`maps` тоже были всегда.",
+                "if_it_were_true": "Если бы они были с 1.0, не понадобился бы экспериментальный `golang.org/x/exp/slices` до 1.21.",
+                "how_it_should_be": "`slices` и `maps` — новые стандартные пакеты с 1.21, а не существовавшие с самого начала."
               },
               "order": 3,
               "label": "D"
@@ -1509,16 +1509,28 @@
           "question_text": "Что такое golang.org/x/exp/slices и maps и как они связаны со стандартом?",
           "options": [
             {
-              "text": "`golang.org/x/exp` — это часть стандартной библиотеки, и его API стабилен и гарантированно не меняется между версиями.",
+              "text": "После Go 1.21 `golang.org/x/exp/slices` полностью удалён, и старый код, импортирующий его, перестаёт компилироваться.",
               "correct": false,
               "sections": {
-                "what_actually": "`x/exp` — *experimental* пакет вне стандарта; его API может меняться без гарантий совместимости, в отличие от стандартной библиотеки.",
-                "source_of_confusion": "Префикс `golang.org/x/` (официальный домен Go) создаёт впечатление, что это часть стандарта.",
-                "if_it_were_true": "Если бы API был стабилен, не было бы предупреждения использовать стандартные `slices`/`maps` для production.",
-                "how_it_should_be": "`x/exp` — экспериментальный и нестабильный; для production берут стандартные пакеты."
+                "what_actually": "`x/exp/slices` не удалён: старый импорт продолжает работать, просто для нового кода рекомендуют стандартный `slices`; миграция не принудительная.",
+                "source_of_confusion": "Переезд в стандарт ошибочно понимают как одномоментное удаление experimental-версии.",
+                "if_it_were_true": "Если бы пакет удалили, существующие проекты массово ломались бы при обновлении Go, чего не произошло.",
+                "how_it_should_be": "`x/exp/slices` остаётся доступным; стандартный `slices` — рекомендуемая, но не единственная опция."
               },
               "order": 0,
               "label": "A"
+            },
+            {
+              "text": "`constraints` уже переехал в стандартную библиотеку вместе со `slices` и `maps` в Go 1.21.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`slices` и `maps` переехали в стандарт в 1.21, а `constraints` *по-прежнему* остаётся в `golang.org/x/exp/constraints`.",
+                "source_of_confusion": "Раз три пакета часто упоминают вместе, делают вывод, что и переехали они одновременно.",
+                "if_it_were_true": "Если бы `constraints` был в стандарте, его импортировали бы как `import \"constraints\"`, но реально нужен полный путь из `x/exp`.",
+                "how_it_should_be": "В стандарт вошли `slices`/`maps`; `constraints` всё ещё живёт в экспериментальном `x/exp`."
+              },
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "До Go 1.21 пакеты `slices` и `maps` (и `constraints`) жили в `golang.org/x/exp` — это experimental-репозиторий, где обкатывают API до включения в стандарт. С Go 1.21 большинство переехало в стандарт (`slices`, `maps`), а `constraints` пока остаётся в `x/exp`.",
@@ -1530,29 +1542,17 @@
                 "edge_cases": "Поскольку `x/exp` experimental, его API может ломаться при обновлении; для критичного кода стоит закреплять версию модуля или копировать нужное локально.",
                 "related": "[[go-generics-interview#Q25]] стандартные slices/maps с 1.21; [[go-generics-interview#Q7]] constraints всё ещё в x/exp; [[go-generics-interview#Q24]] выбор инструментов для production."
               },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "После Go 1.21 `golang.org/x/exp/slices` полностью удалён, и старый код, импортирующий его, перестаёт компилироваться.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`x/exp/slices` не удалён: старый импорт продолжает работать, просто для нового кода рекомендуют стандартный `slices`; миграция не принудительная.",
-                "source_of_confusion": "Переезд в стандарт ошибочно понимают как одномоментное удаление experimental-версии.",
-                "if_it_were_true": "Если бы пакет удалили, существующие проекты массово ломались бы при обновлении Go, чего не произошло.",
-                "how_it_should_be": "`x/exp/slices` остаётся доступным; стандартный `slices` — рекомендуемая, но не единственная опция."
-              },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "`constraints` уже переехал в стандартную библиотеку вместе со `slices` и `maps` в Go 1.21.",
+              "text": "`golang.org/x/exp` — это часть стандартной библиотеки, и его API стабилен и гарантированно не меняется между версиями.",
               "correct": false,
               "sections": {
-                "what_actually": "`slices` и `maps` переехали в стандарт в 1.21, а `constraints` *по-прежнему* остаётся в `golang.org/x/exp/constraints`.",
-                "source_of_confusion": "Раз три пакета часто упоминают вместе, делают вывод, что и переехали они одновременно.",
-                "if_it_were_true": "Если бы `constraints` был в стандарте, его импортировали бы как `import \"constraints\"`, но реально нужен полный путь из `x/exp`.",
-                "how_it_should_be": "В стандарт вошли `slices`/`maps`; `constraints` всё ещё живёт в экспериментальном `x/exp`."
+                "what_actually": "`x/exp` — *experimental* пакет вне стандарта; его API может меняться без гарантий совместимости, в отличие от стандартной библиотеки.",
+                "source_of_confusion": "Префикс `golang.org/x/` (официальный домен Go) создаёт впечатление, что это часть стандарта.",
+                "if_it_were_true": "Если бы API был стабилен, не было бы предупреждения использовать стандартные `slices`/`maps` для production.",
+                "how_it_should_be": "`x/exp` — экспериментальный и нестабильный; для production берут стандартные пакеты."
               },
               "order": 3,
               "label": "D"

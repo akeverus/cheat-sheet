@@ -9,6 +9,18 @@
           "question_text": "С чего начинать JVM tuning, чтобы не делать «магии флагов»?",
           "options": [
             {
+              "text": "Начинать нужно с увеличения heap до максимума доступной памяти: больший heap снижает частоту `GC`, а значит и общее влияние пауз, поэтому это самый безопасный первый шаг до любой диагностики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Больший heap снижает частоту `GC`, но удлиняет отдельные паузы и не лечит высокий allocation rate — поэтому он не безопасный первый шаг, а отложенное решение проблемы.",
+                "source_of_confusion": "Снижение частоты `GC` ошибочно приравнивают к снижению длительности пауз, поэтому heap раздувают раньше диагностики.",
+                "if_it_were_true": "Если бы рост heap надёжно снижал паузы, не существовало бы проблем с долгими STW-паузами на больших heap у `Parallel`/`G1`.",
+                "how_it_should_be": "Сначала измеряют allocation/promotion rate и паузы, а размер heap подбирают как следствие гипотезы, а не вслепую."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Начинать нужно с baseline: зафиксировать текущие `SLI/SLO` (`latency` p50/p95/p99, error rate, throughput), описать профиль нагрузки, задокументировать окружение (`JDK`, лимиты, флаги) и собрать `GC`-логи + `JFR`-записи под реальной нагрузкой. Тюнинг — инженерный процесс с гипотезой, измерением и верификацией.",
               "correct": true,
               "sections": {
@@ -18,8 +30,8 @@
                 "edge_cases": "Если профиль нагрузки нестабилен (промо, ночной батч), baseline снимают по нескольким репрезентативным окнам, иначе сравнение «до/после» будет искажено разной нагрузкой.",
                 "related": "[[jvm-performance-tuning-interview#Q2]] какие метрики мониторить [[jvm-performance-tuning-interview#Q3]] как проверять эффект тюнинга [[jvm-performance-tuning-interview#Q38]] сильный ответ за 60 секунд"
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Начинать нужно сразу с подбора `GC`-флагов из популярных статей: включить `ZGC`, поднять `-Xmx` и выставить `-XX:MaxGCPauseMillis=50` — это даёт быстрый результат без лишних замеров.",
@@ -29,18 +41,6 @@
                 "source_of_confusion": "Готовые наборы флагов из интернета выглядят авторитетно и обещают мгновенный эффект, поэтому соблазняют пропустить замеры.",
                 "if_it_were_true": "Если бы чужие флаги подходили всем, не было бы регрессий после слепого копирования — но нагрузка и heap у всех разные.",
                 "how_it_should_be": "Сначала снимают baseline и формулируют гипотезу, и только потом меняют один параметр под конкретную проблему."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Начинать нужно с увеличения heap до максимума доступной памяти: больший heap снижает частоту `GC`, а значит и общее влияние пауз, поэтому это самый безопасный первый шаг до любой диагностики.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Больший heap снижает частоту `GC`, но удлиняет отдельные паузы и не лечит высокий allocation rate — поэтому он не безопасный первый шаг, а отложенное решение проблемы.",
-                "source_of_confusion": "Снижение частоты `GC` ошибочно приравнивают к снижению длительности пауз, поэтому heap раздувают раньше диагностики.",
-                "if_it_were_true": "Если бы рост heap надёжно снижал паузы, не существовало бы проблем с долгими STW-паузами на больших heap у `Parallel`/`G1`.",
-                "how_it_should_be": "Сначала измеряют allocation/promotion rate и паузы, а размер heap подбирают как следствие гипотезы, а не вслепую."
               },
               "label": "C",
               "order": 2
@@ -69,13 +69,13 @@
           "question_text": "Какие метрики обязательно мониторить перед изменениями JVM?",
           "options": [
             {
-              "text": "Достаточно мониторить только среднее время ответа и общий процент `CPU` — этих двух метрик хватает, чтобы оценить эффект любого `GC`-тюнинга.",
+              "text": "Главное — мониторить только количество потоков и открытых сокетов; именно они напрямую отражают качество работы `GC` и `JIT`.",
               "correct": false,
               "sections": {
-                "what_actually": "Среднее скрывает хвосты: `GC`-паузы бьют по p99, а не по average, поэтому без percentiles и метрик пауз эффект тюнинга не виден.",
-                "source_of_confusion": "Среднее и `CPU` проще всего достать из любой панели, поэтому кажется, что их достаточно.",
-                "if_it_were_true": "Если бы среднего хватало, не было бы инцидентов, где p99 деградировал при стабильном average response time.",
-                "how_it_should_be": "Берут полный набор: percentiles latency, метрики `GC`-пауз, allocation rate, heap и threads, а не только два агрегата."
+                "what_actually": "Threads и сокеты относятся к concurrency и `I/O`, а не к `GC`/`JIT`; они не показывают паузы, allocation rate и heap-occupancy.",
+                "source_of_confusion": "Высокий thread count иногда коррелирует с проблемами, поэтому его ошибочно считают главным индикатором `GC`.",
+                "if_it_were_true": "Если бы потоки отражали `GC`, нельзя было бы иметь длинные паузы при стабильном числе потоков.",
+                "how_it_should_be": "Метрики потоков — лишь часть картины; `GC`-эффект меряют паузами, частотой, overhead % и allocation rate."
               },
               "label": "A",
               "order": 0
@@ -94,6 +94,18 @@
               "order": 1
             },
             {
+              "text": "Достаточно мониторить только среднее время ответа и общий процент `CPU` — этих двух метрик хватает, чтобы оценить эффект любого `GC`-тюнинга.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Среднее скрывает хвосты: `GC`-паузы бьют по p99, а не по average, поэтому без percentiles и метрик пауз эффект тюнинга не виден.",
+                "source_of_confusion": "Среднее и `CPU` проще всего достать из любой панели, поэтому кажется, что их достаточно.",
+                "if_it_were_true": "Если бы среднего хватало, не было бы инцидентов, где p99 деградировал при стабильном average response time.",
+                "how_it_should_be": "Берут полный набор: percentiles latency, метрики `GC`-пауз, allocation rate, heap и threads, а не только два агрегата."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
               "text": "Ключевая метрика — только размер heap в момент `Full GC`; если он не растёт, остальные показатели можно не собирать.",
               "correct": false,
               "sections": {
@@ -101,18 +113,6 @@
                 "source_of_confusion": "`Full GC` ассоциируется с худшим случаем, поэтому кажется, что одной этой точки достаточно.",
                 "if_it_were_true": "Если бы хватало heap при `Full GC`, нельзя было бы объяснить деградацию latency без единого `Full GC` (например, частые длинные Young).",
                 "how_it_should_be": "Heap-occupancy дополняют latency-percentiles, pause-метриками, allocation/promotion rate и thread-метриками."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Главное — мониторить только количество потоков и открытых сокетов; именно они напрямую отражают качество работы `GC` и `JIT`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Threads и сокеты относятся к concurrency и `I/O`, а не к `GC`/`JIT`; они не показывают паузы, allocation rate и heap-occupancy.",
-                "source_of_confusion": "Высокий thread count иногда коррелирует с проблемами, поэтому его ошибочно считают главным индикатором `GC`.",
-                "if_it_were_true": "Если бы потоки отражали `GC`, нельзя было бы иметь длинные паузы при стабильном числе потоков.",
-                "how_it_should_be": "Метрики потоков — лишь часть картины; `GC`-эффект меряют паузами, частотой, overhead % и allocation rate."
               },
               "label": "D",
               "order": 3
@@ -129,6 +129,18 @@
           "question_text": "Как корректно проверять эффект тюнинга JVM?",
           "options": [
             {
+              "text": "Достаточно сравнить cold-start нового инстанса со старым: если новый стартует быстрее в первые секунды, тюнинг считается удачным.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cold-start меряет warm-up и `JIT`, а не устойчивую производительность; сравнивать нужно warm vs warm под одинаковой нагрузкой.",
+                "source_of_confusion": "Первые секунды легко наблюдать при рестарте, поэтому cold-start ошибочно берут за показатель.",
+                "if_it_were_true": "Если бы cold-start отражал эффект, не существовало бы регрессий, проявляющихся только на peak-производительности после warm-up.",
+                "how_it_should_be": "Сравнивают прогретые инстансы под одинаковым профилем, а cold-start учитывают отдельно (для startup-оптимизаций)."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Эффект проверяют по одному прогону сразу после изменения: если среднее время ответа улучшилось хоть на одном запросе, изменение можно фиксировать как успешное.",
               "correct": false,
               "sections": {
@@ -136,18 +148,6 @@
                 "source_of_confusion": "Быстрый одиночный прогон экономит время, поэтому соблазняет принять решение по нему.",
                 "if_it_were_true": "Если бы хватало одного прогона, не было бы случаев, когда «улучшение» оказывалось вариативностью нагрузки между запусками.",
                 "how_it_should_be": "Прогоняют одинаковый профиль несколько раз, смотрят хвосты и стабильность, а решение принимают по воспроизводимым данным."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Чтобы быстрее увидеть результат, меняют сразу несколько флагов за одну итерацию: так суммарный эффект заметнее и тюнинг идёт быстрее.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Множество одновременных изменений делает невозможным атрибуцию: непонятно, какой флаг помог, а какой навредил.",
-                "source_of_confusion": "Кажется, что батч изменений ускоряет тюнинг, поэтому хочется менять всё разом.",
-                "if_it_were_true": "Если бы это работало, не приходилось бы потом откатывать пакет флагов целиком при первой же регрессии.",
-                "how_it_should_be": "Меняют строго один параметр за итерацию, чтобы каждый эффект был атрибутируем к конкретному изменению."
               },
               "label": "B",
               "order": 1
@@ -166,13 +166,13 @@
               "order": 2
             },
             {
-              "text": "Достаточно сравнить cold-start нового инстанса со старым: если новый стартует быстрее в первые секунды, тюнинг считается удачным.",
+              "text": "Чтобы быстрее увидеть результат, меняют сразу несколько флагов за одну итерацию: так суммарный эффект заметнее и тюнинг идёт быстрее.",
               "correct": false,
               "sections": {
-                "what_actually": "Cold-start меряет warm-up и `JIT`, а не устойчивую производительность; сравнивать нужно warm vs warm под одинаковой нагрузкой.",
-                "source_of_confusion": "Первые секунды легко наблюдать при рестарте, поэтому cold-start ошибочно берут за показатель.",
-                "if_it_were_true": "Если бы cold-start отражал эффект, не существовало бы регрессий, проявляющихся только на peak-производительности после warm-up.",
-                "how_it_should_be": "Сравнивают прогретые инстансы под одинаковым профилем, а cold-start учитывают отдельно (для startup-оптимизаций)."
+                "what_actually": "Множество одновременных изменений делает невозможным атрибуцию: непонятно, какой флаг помог, а какой навредил.",
+                "source_of_confusion": "Кажется, что батч изменений ускоряет тюнинг, поэтому хочется менять всё разом.",
+                "if_it_were_true": "Если бы это работало, не приходилось бы потом откатывать пакет флагов целиком при первой же регрессии.",
+                "how_it_should_be": "Меняют строго один параметр за итерацию, чтобы каждый эффект был атрибутируем к конкретному изменению."
               },
               "label": "D",
               "order": 3
@@ -189,18 +189,6 @@
           "question_text": "Какие сборщики мусора доступны в современной JVM и чем они отличаются?",
           "options": [
             {
-              "text": "В современной `JVM` остался только один сборщик — `G1`; остальные (`Serial`, `Parallel`, `ZGC`) удалены как устаревшие, поэтому выбора алгоритма больше нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Все перечисленные сборщики живы в `JDK 21+`: `G1` — default, но `Serial`, `Parallel`, `ZGC`, `Shenandoah` доступны и выбираются флагами.",
-                "source_of_confusion": "`G1` действительно default с `JDK 9`, поэтому ошибочно кажется единственным.",
-                "if_it_were_true": "Если бы остался один `G1`, не было бы флагов `-XX:+UseZGC`/`-XX:+UseParallelGC` и не имел бы смысла выбор под `SLA`.",
-                "how_it_should_be": "В `JVM` несколько production-ready сборщиков; `G1` — лишь дефолт, а под задачу выбирают подходящий."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Все сборщики (`Serial`, `Parallel`, `G1`, `ZGC`) — полностью concurrent и не имеют stop-the-world пауз вообще; разница только в максимальном размере heap.",
               "correct": false,
               "sections": {
@@ -209,8 +197,8 @@
                 "if_it_were_true": "Если бы STW не было ни у кого, не существовало бы метрики `MaxGCPauseMillis` и проблемы `Full GC` в `G1`.",
                 "how_it_should_be": "STW-долю надо различать: у `Serial`/`Parallel` — всё, у `G1` — часть, у `ZGC`/`Shenandoah` — субмиллисекундные паузы."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`ZGC` и `Shenandoah` подходят только для маленьких heap (< 1 ГБ); на больших heap они работают хуже `G1`, поэтому их берут для embedded.",
@@ -221,8 +209,8 @@
                 "if_it_were_true": "Если бы они были для маленьких heap, не имело бы смысла переходить на `ZGC` при heap > 16 ГБ ради tail latency.",
                 "how_it_should_be": "`ZGC`/`Shenandoah` берут для больших heap и жёстких SLA по паузам; для embedded подходит `Serial`."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "В `JDK 21+` доступны: `Serial` (STW, паузы в секунды, малый heap, embedded), `Parallel`/Throughput (STW, сотни мс, batch), `G1` (default, concurrent marking + STW-компактизация, десятки мс, универсальный backend), `ZGC` (concurrent, < 1 мс, большие heap, low-latency), `Shenandoah` (concurrent, < 10 мс, OpenJDK). Ключевое отличие — сколько работы делается concurrent, а сколько в stop-the-world.",
@@ -233,6 +221,18 @@
                 "when_to_apply": "Этот обзор используют, чтобы выбрать сборщик под `SLA`: throughput-задачи → `Parallel`, универсальный backend → `G1`, жёсткий SLA по паузам на больших heap → `ZGC`/`Shenandoah`.",
                 "edge_cases": "Чем ниже паузы, тем выше плата `CPU` за barriers и concurrent-потоки; `ZGC` тратит 10-15% `CPU` на load barriers, что не всегда приемлемо.",
                 "related": "[[jvm-performance-tuning-interview#Q5]] устройство G1 [[jvm-performance-tuning-interview#Q6]] как работает ZGC [[jvm-performance-tuning-interview#Q8]] выбор GC под SLA"
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В современной `JVM` остался только один сборщик — `G1`; остальные (`Serial`, `Parallel`, `ZGC`) удалены как устаревшие, поэтому выбора алгоритма больше нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Все перечисленные сборщики живы в `JDK 21+`: `G1` — default, но `Serial`, `Parallel`, `ZGC`, `Shenandoah` доступны и выбираются флагами.",
+                "source_of_confusion": "`G1` действительно default с `JDK 9`, поэтому ошибочно кажется единственным.",
+                "if_it_were_true": "Если бы остался один `G1`, не было бы флагов `-XX:+UseZGC`/`-XX:+UseParallelGC` и не имел бы смысла выбор под `SLA`.",
+                "how_it_should_be": "В `JVM` несколько production-ready сборщиков; `G1` — лишь дефолт, а под задачу выбирают подходящий."
               },
               "label": "D",
               "order": 3
@@ -249,19 +249,6 @@
           "question_text": "Как устроен G1 GC и какие у него фазы?",
           "options": [
             {
-              "text": "`G1` (`Garbage-First`) делит heap на регионы одинакового размера (1-32 МБ) и собирает в первую очередь регионы с наибольшим количеством мусора. Фазы: Young GC (STW, эвакуация `Eden`/`Survivor`), Concurrent Marking (Initial Mark → Concurrent Mark → Remark STW → Cleanup), Mixed GC (STW, Young + часть Old с максимумом мусора), Full GC (STW fallback — его нужно избегать).",
-              "correct": true,
-              "sections": {
-                "explanation": "Регионная модель и набор фаз (Young → concurrent marking → Mixed → Full как fallback) позволяют `G1` собирать инкрементально и держать целевую паузу `-XX:MaxGCPauseMillis`.",
-                "example": "Ключевые флаги: `-XX:+UseG1GC` (default в `JDK 9+`), `-XX:MaxGCPauseMillis=200` (target pause), `-XX:G1HeapRegionSize=16m`, `-XX:InitiatingHeapOccupancyPercent=45` (порог запуска marking).",
-                "when_to_apply": "Знание фаз нужно при чтении `GC`-логов: частые Mixed/Full GC и `To-space exhausted` указывают, что `G1` не успевает concurrent marking и нужен тюнинг порогов.",
-                "edge_cases": "Регионный layout (`Eden`/`Survivor`/`Old`/`Humongous`/`Free`) объясняет проблему humongous-объектов: объект > 50% региона выпадает из обычной эвакуации и фрагментирует heap.",
-                "related": "[[jvm-performance-tuning-interview#Q4]] обзор сборщиков [[jvm-performance-tuning-interview#Q10]] флаги G1 [[jvm-performance-tuning-interview#Q14]] humongous allocations"
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`G1` делит heap на две фиксированные области — Young и Old — без регионов; вся сборка выполняется одной полной stop-the-world паузой по всему heap при каждом цикле.",
               "correct": false,
               "sections": {
@@ -270,8 +257,8 @@
                 "if_it_were_true": "Если бы `G1` собирал всё одной полной паузой, не было бы смысла в названии `Garbage-First` и в инкрементальных Mixed GC.",
                 "how_it_should_be": "`G1` собирает по регионам, начиная с самых «мусорных», и большую часть работы делает concurrent с приложением."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Главная и самая частая операция `G1` — это `Full GC`; именно к нему `G1` стремится в нормальном режиме, а Young GC — редкий вспомогательный шаг.",
@@ -282,8 +269,8 @@
                 "if_it_were_true": "Если бы `Full GC` был нормой, паузы исчислялись бы секундами и `G1` не имел бы смысла как low-pause сборщик.",
                 "how_it_should_be": "Штатно работают Young и Mixed GC; частый `Full GC` — сигнал проблемы, а не нормальный режим."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "В `G1` нет concurrent-фаз: marking, эвакуация и компактизация выполняются полностью в stop-the-world, поэтому `G1` не подходит для low-latency.",
@@ -293,6 +280,19 @@
                 "source_of_confusion": "Наличие STW-фаз в `G1` ошибочно обобщают на «всё STW».",
                 "if_it_were_true": "Если бы всё было STW, не существовало бы `-XX:InitiatingHeapOccupancyPercent`, управляющего запуском именно concurrent marking.",
                 "how_it_should_be": "Marking в `G1` идёт concurrent; stop-the-world — лишь часть фаз, а не весь цикл."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`G1` (`Garbage-First`) делит heap на регионы одинакового размера (1-32 МБ) и собирает в первую очередь регионы с наибольшим количеством мусора. Фазы: Young GC (STW, эвакуация `Eden`/`Survivor`), Concurrent Marking (Initial Mark → Concurrent Mark → Remark STW → Cleanup), Mixed GC (STW, Young + часть Old с максимумом мусора), Full GC (STW fallback — его нужно избегать).",
+              "correct": true,
+              "sections": {
+                "explanation": "Регионная модель и набор фаз (Young → concurrent marking → Mixed → Full как fallback) позволяют `G1` собирать инкрементально и держать целевую паузу `-XX:MaxGCPauseMillis`.",
+                "example": "Ключевые флаги: `-XX:+UseG1GC` (default в `JDK 9+`), `-XX:MaxGCPauseMillis=200` (target pause), `-XX:G1HeapRegionSize=16m`, `-XX:InitiatingHeapOccupancyPercent=45` (порог запуска marking).",
+                "when_to_apply": "Знание фаз нужно при чтении `GC`-логов: частые Mixed/Full GC и `To-space exhausted` указывают, что `G1` не успевает concurrent marking и нужен тюнинг порогов.",
+                "edge_cases": "Регионный layout (`Eden`/`Survivor`/`Old`/`Humongous`/`Free`) объясняет проблему humongous-объектов: объект > 50% региона выпадает из обычной эвакуации и фрагментирует heap.",
+                "related": "[[jvm-performance-tuning-interview#Q4]] обзор сборщиков [[jvm-performance-tuning-interview#Q10]] флаги G1 [[jvm-performance-tuning-interview#Q14]] humongous allocations"
               },
               "label": "D",
               "order": 3
@@ -309,18 +309,6 @@
           "question_text": "Как работает ZGC и почему у него паузы менее 1 мс?",
           "options": [
             {
-              "text": "`ZGC` достигает малых пауз за счёт того, что откладывает перемещение объектов и почти не делает компактизацию — heap у него остаётся слегка фрагментированным, зато нет дорогих перемещений на горячем пути.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`ZGC` как раз делает concurrent relocation (перемещение объектов) через forwarding tables и load barriers — без компактизации он бы фрагментировался и не масштабировался до ТБ.",
-                "source_of_confusion": "Кажется, что отказ от relocation = экономия, поэтому низкие паузы относят на счёт отсутствия перемещений.",
-                "if_it_were_true": "Если бы `ZGC` не компактил, на больших heap он деградировал бы от фрагментации, а не держал паузы < 1 мс.",
-                "how_it_should_be": "Малые паузы дают colored pointers + load barriers, позволяющие перемещать объекты concurrent, а не отказ от relocation."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`ZGC` достигает субмиллисекундных пауз, не зависящих от размера heap, за счёт: colored pointers (биты в указателях хранят состояние объекта marked/remapped/finalizable, что позволяет обновлять ссылки без STW), load barriers (`JIT` вставляет проверку при чтении ссылки и прозрачно обновляет перемещённый объект) и concurrent relocation (объекты перемещаются параллельно через forwarding tables). Паузы < 1 мс, heap до 16 ТБ, overhead 10-15% `CPU`.",
               "correct": true,
               "sections": {
@@ -329,6 +317,18 @@
                 "when_to_apply": "`ZGC` берут для low-latency сервисов с большими heap (> 16 ГБ), где `G1` после тюнинга не укладывается в жёсткий SLA по tail latency и есть `CPU` headroom на barriers.",
                 "edge_cases": "Паузы не растут с heap, но `CPU`-overhead на load barriers стоит 10-15% — на `CPU`-bound сервисе без запаса ядер это может съесть выигрыш по latency.",
                 "related": "[[jvm-performance-tuning-interview#Q4]] обзор сборщиков [[jvm-performance-tuning-interview#Q7]] ZGC vs Shenandoah [[jvm-performance-tuning-interview#Q9]] когда переходить с G1"
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`ZGC` использует Brooks pointers — дополнительное машинное слово в каждом объекте под forwarding-адрес; именно поэтому у него overhead памяти на объект.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Brooks pointers — это механизм `Shenandoah`, а не `ZGC`; `ZGC` использует colored pointers (биты в указателе) и не добавляет слово к объекту.",
+                "source_of_confusion": "`ZGC` и `Shenandoah` часто сравнивают рядом, поэтому их механизмы путают.",
+                "if_it_were_true": "Если бы `ZGC` хранил forwarding в объекте, у него был бы memory overhead на объект, которого у него нет.",
+                "how_it_should_be": "`ZGC` кодирует состояние в битах указателя (colored pointers); forwarding-слово в объекте — это `Shenandoah`."
               },
               "label": "B",
               "order": 1
@@ -346,13 +346,13 @@
               "order": 2
             },
             {
-              "text": "`ZGC` использует Brooks pointers — дополнительное машинное слово в каждом объекте под forwarding-адрес; именно поэтому у него overhead памяти на объект.",
+              "text": "`ZGC` достигает малых пауз за счёт того, что откладывает перемещение объектов и почти не делает компактизацию — heap у него остаётся слегка фрагментированным, зато нет дорогих перемещений на горячем пути.",
               "correct": false,
               "sections": {
-                "what_actually": "Brooks pointers — это механизм `Shenandoah`, а не `ZGC`; `ZGC` использует colored pointers (биты в указателе) и не добавляет слово к объекту.",
-                "source_of_confusion": "`ZGC` и `Shenandoah` часто сравнивают рядом, поэтому их механизмы путают.",
-                "if_it_were_true": "Если бы `ZGC` хранил forwarding в объекте, у него был бы memory overhead на объект, которого у него нет.",
-                "how_it_should_be": "`ZGC` кодирует состояние в битах указателя (colored pointers); forwarding-слово в объекте — это `Shenandoah`."
+                "what_actually": "`ZGC` как раз делает concurrent relocation (перемещение объектов) через forwarding tables и load barriers — без компактизации он бы фрагментировался и не масштабировался до ТБ.",
+                "source_of_confusion": "Кажется, что отказ от relocation = экономия, поэтому низкие паузы относят на счёт отсутствия перемещений.",
+                "if_it_were_true": "Если бы `ZGC` не компактил, на больших heap он деградировал бы от фрагментации, а не держал паузы < 1 мс.",
+                "how_it_should_be": "Малые паузы дают colored pointers + load barriers, позволяющие перемещать объекты concurrent, а не отказ от relocation."
               },
               "label": "D",
               "order": 3
@@ -369,13 +369,14 @@
           "question_text": "Как работает Shenandoah GC и чем он отличается от ZGC?",
           "options": [
             {
-              "text": "`Shenandoah` отличается от `ZGC` тем, что использует те же colored pointers, но добавляет паузы в сотни миллисекунд ради экономии `CPU` — это его главный trade-off.",
-              "correct": false,
+              "text": "`Shenandoah` — concurrent low-pause сборщик в `OpenJDK` (Red Hat). Главное отличие от `ZGC` — Brooks pointers: дополнительный указатель на forwarding-адрес в каждом объекте (+1 machine word overhead), вместо colored pointers. Паузы обычно 1-5 мс (< 10 мс), heap ограничен `RAM` (не 16 ТБ как у `ZGC`), доступен только в `OpenJDK`, generational пока experimental (`JEP 404`).",
+              "correct": true,
               "sections": {
-                "what_actually": "`Shenandoah` использует Brooks pointers (не colored), а его паузы 1-5 мс, не сотни; это low-pause сборщик, а не throughput-ориентированный.",
-                "source_of_confusion": "Оба сборщика concurrent, поэтому их механизмы и характеристики смешивают.",
-                "if_it_were_true": "Если бы паузы были в сотни мс, `Shenandoah` не относили бы к low-latency `GC` наравне с `ZGC`.",
-                "how_it_should_be": "`Shenandoah` = Brooks pointers + паузы 1-5 мс; colored pointers — это `ZGC`."
+                "explanation": "`Shenandoah` решает ту же задачу low-pause, что и `ZGC`, но через Brooks pointers (слово на объект) вместо colored pointers, с чуть большими паузами и привязкой к `OpenJDK`.",
+                "example": "Включение: `-XX:+UseShenandoahGC -XX:ShenandoahGCHeuristics=adaptive -Xmx8g -Xms8g`. На практике для новых проектов чаще берут `ZGC` (меньше паузы, нет overhead на объект).",
+                "when_to_apply": "`Shenandoah` остаётся хорошим выбором, если вы уже на `OpenJDK`/Red Hat и нужен low-latency `GC` с проверенной историей, а 1-5 мс пауз укладываются в `SLA`.",
+                "edge_cases": "Brooks pointer добавляет машинное слово к каждому объекту — на heap с миллиардами мелких объектов это заметный memory overhead, которого нет у colored-pointer подхода `ZGC`.",
+                "related": "[[jvm-performance-tuning-interview#Q6]] как работает ZGC [[jvm-performance-tuning-interview#Q8]] выбор GC под SLA [[jvm-performance-tuning-interview#Q9]] когда переходить с G1"
               },
               "label": "A",
               "order": 0
@@ -393,14 +394,13 @@
               "order": 1
             },
             {
-              "text": "`Shenandoah` — concurrent low-pause сборщик в `OpenJDK` (Red Hat). Главное отличие от `ZGC` — Brooks pointers: дополнительный указатель на forwarding-адрес в каждом объекте (+1 machine word overhead), вместо colored pointers. Паузы обычно 1-5 мс (< 10 мс), heap ограничен `RAM` (не 16 ТБ как у `ZGC`), доступен только в `OpenJDK`, generational пока experimental (`JEP 404`).",
-              "correct": true,
+              "text": "`Shenandoah` отличается от `ZGC` тем, что использует те же colored pointers, но добавляет паузы в сотни миллисекунд ради экономии `CPU` — это его главный trade-off.",
+              "correct": false,
               "sections": {
-                "explanation": "`Shenandoah` решает ту же задачу low-pause, что и `ZGC`, но через Brooks pointers (слово на объект) вместо colored pointers, с чуть большими паузами и привязкой к `OpenJDK`.",
-                "example": "Включение: `-XX:+UseShenandoahGC -XX:ShenandoahGCHeuristics=adaptive -Xmx8g -Xms8g`. На практике для новых проектов чаще берут `ZGC` (меньше паузы, нет overhead на объект).",
-                "when_to_apply": "`Shenandoah` остаётся хорошим выбором, если вы уже на `OpenJDK`/Red Hat и нужен low-latency `GC` с проверенной историей, а 1-5 мс пауз укладываются в `SLA`.",
-                "edge_cases": "Brooks pointer добавляет машинное слово к каждому объекту — на heap с миллиардами мелких объектов это заметный memory overhead, которого нет у colored-pointer подхода `ZGC`.",
-                "related": "[[jvm-performance-tuning-interview#Q6]] как работает ZGC [[jvm-performance-tuning-interview#Q8]] выбор GC под SLA [[jvm-performance-tuning-interview#Q9]] когда переходить с G1"
+                "what_actually": "`Shenandoah` использует Brooks pointers (не colored), а его паузы 1-5 мс, не сотни; это low-pause сборщик, а не throughput-ориентированный.",
+                "source_of_confusion": "Оба сборщика concurrent, поэтому их механизмы и характеристики смешивают.",
+                "if_it_were_true": "Если бы паузы были в сотни мс, `Shenandoah` не относили бы к low-latency `GC` наравне с `ZGC`.",
+                "how_it_should_be": "`Shenandoah` = Brooks pointers + паузы 1-5 мс; colored pointers — это `ZGC`."
               },
               "label": "C",
               "order": 2
@@ -429,6 +429,19 @@
           "question_text": "Как выбирать GC под разные SLA?",
           "options": [
             {
+              "text": "Выбор определяется `SLA` и нагрузкой: p99 < 500 мс → `G1` с тюнингом (default, достаточно для большинства); p99 < 50 мс → `ZGC` или `Shenandoah` (concurrent компактизация); max throughput (batch) → `Parallel GC` (минимальный overhead); heap > 32 ГБ + low latency → `ZGC` (масштабируется до ТБ); минимальный footprint → `Serial`/`Epsilon`. Trade-off: чем ниже паузы, тем выше требования к `CPU` и операционной дисциплине.",
+              "correct": true,
+              "sections": {
+                "explanation": "Сначала фиксируют требование (p99, throughput, footprint), затем под него подбирают сборщик: `G1` для умеренных SLA, `ZGC`/`Shenandoah` для жёстких, `Parallel` для batch.",
+                "example": "Пример: сервис с SLA p99 < 20 мс на `G1` давал p99 = 45 мс из-за mixed GC; переход на `-XX:+UseZGC -XX:+ZGenerational` снизил p99 до 8 мс ценой ~12% `CPU`.",
+                "when_to_apply": "Это решение принимают на старте проекта и при изменении `SLA`/нагрузки: сначала фиксируют требование по tail latency и throughput, затем подбирают сборщик под него.",
+                "edge_cases": "Низкие паузы не бесплатны: barriers и concurrent-потоки берут `CPU`; на `CPU`-bound сервисе без headroom переход на low-pause `GC` может ухудшить throughput.",
+                "related": "[[jvm-performance-tuning-interview#Q4]] обзор сборщиков [[jvm-performance-tuning-interview#Q9]] когда переходить с G1 [[jvm-performance-tuning-interview#Q6]] как работает ZGC"
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Выбор `GC` определяется в первую очередь размером heap, а `SLA` вторичен: при heap < 4 ГБ разумно брать `Serial`, при большем — `Parallel`, а требования к паузам учитывают уже как поправку.",
               "correct": false,
               "sections": {
@@ -436,18 +449,6 @@
                 "source_of_confusion": "Размер heap — заметный параметр, поэтому его ошибочно делают главным критерием, а `SLA` сдвигают на второй план.",
                 "if_it_were_true": "Если бы решал в основном heap, нельзя было бы объяснить выбор `ZGC` ради p99 < 50 мс при умеренном heap.",
                 "how_it_should_be": "Сначала фиксируют `SLA` (tail latency, throughput), и уже под него подбирают сборщик, учитывая heap как один из факторов."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Для жёсткого SLA по throughput (batch-обработка) правильный выбор — `ZGC`, потому что его concurrent-фазы минимизируют паузы приложения и тем самым дают максимальную пропускную способность.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для max throughput берут `Parallel GC` (минимальный overhead); `ZGC` тратит `CPU` на barriers и оптимизирован под latency, поэтому по пиковому throughput он проигрывает.",
-                "source_of_confusion": "Низкие паузы ошибочно приравнивают к высокой пропускной способности, хотя barriers как раз отъедают throughput.",
-                "if_it_were_true": "Если бы `ZGC` выигрывал по throughput, `Parallel GC` не рекомендовали бы для batch-задач.",
-                "how_it_should_be": "Throughput-сценарии → `Parallel GC`; `ZGC` выбирают, когда критична именно tail latency."
               },
               "label": "B",
               "order": 1
@@ -465,14 +466,13 @@
               "order": 2
             },
             {
-              "text": "Выбор определяется `SLA` и нагрузкой: p99 < 500 мс → `G1` с тюнингом (default, достаточно для большинства); p99 < 50 мс → `ZGC` или `Shenandoah` (concurrent компактизация); max throughput (batch) → `Parallel GC` (минимальный overhead); heap > 32 ГБ + low latency → `ZGC` (масштабируется до ТБ); минимальный footprint → `Serial`/`Epsilon`. Trade-off: чем ниже паузы, тем выше требования к `CPU` и операционной дисциплине.",
-              "correct": true,
+              "text": "Для жёсткого SLA по throughput (batch-обработка) правильный выбор — `ZGC`, потому что его concurrent-фазы минимизируют паузы приложения и тем самым дают максимальную пропускную способность.",
+              "correct": false,
               "sections": {
-                "explanation": "Сначала фиксируют требование (p99, throughput, footprint), затем под него подбирают сборщик: `G1` для умеренных SLA, `ZGC`/`Shenandoah` для жёстких, `Parallel` для batch.",
-                "example": "Пример: сервис с SLA p99 < 20 мс на `G1` давал p99 = 45 мс из-за mixed GC; переход на `-XX:+UseZGC -XX:+ZGenerational` снизил p99 до 8 мс ценой ~12% `CPU`.",
-                "when_to_apply": "Это решение принимают на старте проекта и при изменении `SLA`/нагрузки: сначала фиксируют требование по tail latency и throughput, затем подбирают сборщик под него.",
-                "edge_cases": "Низкие паузы не бесплатны: barriers и concurrent-потоки берут `CPU`; на `CPU`-bound сервисе без headroom переход на low-pause `GC` может ухудшить throughput.",
-                "related": "[[jvm-performance-tuning-interview#Q4]] обзор сборщиков [[jvm-performance-tuning-interview#Q9]] когда переходить с G1 [[jvm-performance-tuning-interview#Q6]] как работает ZGC"
+                "what_actually": "Для max throughput берут `Parallel GC` (минимальный overhead); `ZGC` тратит `CPU` на barriers и оптимизирован под latency, поэтому по пиковому throughput он проигрывает.",
+                "source_of_confusion": "Низкие паузы ошибочно приравнивают к высокой пропускной способности, хотя barriers как раз отъедают throughput.",
+                "if_it_were_true": "Если бы `ZGC` выигрывал по throughput, `Parallel GC` не рекомендовали бы для batch-задач.",
+                "how_it_should_be": "Throughput-сценарии → `Parallel GC`; `ZGC` выбирают, когда критична именно tail latency."
               },
               "label": "D",
               "order": 3
@@ -489,6 +489,18 @@
           "question_text": "Когда имеет смысл переходить с G1 на ZGC/Shenandoah?",
           "options": [
             {
+              "text": "Главный критерий перехода — снижение `CPU`-потребления: `ZGC` размазывает работу `GC` по concurrent-фазам вместо резких STW-всплесков `G1`, поэтому мигрируют ради экономии ядер и более ровной нагрузки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `ZGC` добавляет 10-15% `CPU` на load barriers; миграция увеличивает суммарное `CPU`-потребление, даже если сглаживает всплески.",
+                "source_of_confusion": "Concurrent-работу без длинных STW принимают за «лёгкость», отсюда ожидание экономии `CPU`.",
+                "if_it_were_true": "Если бы `ZGC` экономил `CPU`, не требовалось бы условие наличия `CPU` headroom перед переходом.",
+                "how_it_should_be": "Переходят ради tail latency, заранее заложив рост `CPU`; экономия ядер — не повод для миграции."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Переход оправдан, когда выполнены ОДНОВРЕМЕННО все условия: нужна низкая tail latency под большой нагрузкой (p99/p999 критичны для бизнеса); `G1` после разумного тюнинга не укладывается в `SLA` (mixed GC паузы > target); heap достаточно большой (> 8-16 ГБ), чтобы concurrent `GC` дал выигрыш; есть `CPU` headroom (10-15% на barriers).",
               "correct": true,
               "sections": {
@@ -497,18 +509,6 @@
                 "when_to_apply": "Решение о миграции принимают после того, как `G1` исчерпал тюнинг через `-XX:MaxGCPauseMillis` и пороги, но всё ещё не держит SLA по хвостам.",
                 "edge_cases": "Если хотя бы одно условие не выполнено (маленький heap или нет `CPU` headroom), переход не даст выигрыша или даже ухудшит throughput из-за overhead barriers.",
                 "related": "[[jvm-performance-tuning-interview#Q6]] как работает ZGC [[jvm-performance-tuning-interview#Q7]] ZGC vs Shenandoah [[jvm-performance-tuning-interview#Q8]] выбор GC под SLA"
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Переходить на `ZGC` стоит, как только он стал production-default: это современный рекомендуемый сборщик, и стандартизация платформы на нём упрощает эксплуатацию, поэтому ждать особых условий незачем.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`ZGC` не универсально лучше: на маленьком heap и `CPU`-bound нагрузке его barriers съедают `CPU` без выигрыша по паузам — `G1` остаётся разумным дефолтом для большинства.",
-                "source_of_confusion": "«Новый рекомендуемый default» ошибочно читают как «лучший в любом сценарии», игнорируя профиль нагрузки.",
-                "if_it_were_true": "Если бы `ZGC` выигрывал везде, `G1` не оставался бы дефолтом и рекомендацией для большинства backend-сервисов.",
-                "how_it_should_be": "Переходят только при совпадении условий (жёсткий SLA, большой heap, `CPU` headroom), а не как только сборщик стал доступен."
               },
               "label": "B",
               "order": 1
@@ -526,13 +526,13 @@
               "order": 2
             },
             {
-              "text": "Главный критерий перехода — снижение `CPU`-потребления: `ZGC` размазывает работу `GC` по concurrent-фазам вместо резких STW-всплесков `G1`, поэтому мигрируют ради экономии ядер и более ровной нагрузки.",
+              "text": "Переходить на `ZGC` стоит, как только он стал production-default: это современный рекомендуемый сборщик, и стандартизация платформы на нём упрощает эксплуатацию, поэтому ждать особых условий незачем.",
               "correct": false,
               "sections": {
-                "what_actually": "Наоборот: `ZGC` добавляет 10-15% `CPU` на load barriers; миграция увеличивает суммарное `CPU`-потребление, даже если сглаживает всплески.",
-                "source_of_confusion": "Concurrent-работу без длинных STW принимают за «лёгкость», отсюда ожидание экономии `CPU`.",
-                "if_it_were_true": "Если бы `ZGC` экономил `CPU`, не требовалось бы условие наличия `CPU` headroom перед переходом.",
-                "how_it_should_be": "Переходят ради tail latency, заранее заложив рост `CPU`; экономия ядер — не повод для миграции."
+                "what_actually": "`ZGC` не универсально лучше: на маленьком heap и `CPU`-bound нагрузке его barriers съедают `CPU` без выигрыша по паузам — `G1` остаётся разумным дефолтом для большинства.",
+                "source_of_confusion": "«Новый рекомендуемый default» ошибочно читают как «лучший в любом сценарии», игнорируя профиль нагрузки.",
+                "if_it_were_true": "Если бы `ZGC` выигрывал везде, `G1` не оставался бы дефолтом и рекомендацией для большинства backend-сервисов.",
+                "how_it_should_be": "Переходят только при совпадении условий (жёсткий SLA, большой heap, `CPU` headroom), а не как только сборщик стал доступен."
               },
               "label": "D",
               "order": 3
@@ -561,14 +561,13 @@
               "order": 0
             },
             {
-              "text": "Heap: `-Xms4g -Xmx4g` (фиксированный, `Xms` = `Xmx` для prod). G1-основные: `-XX:MaxGCPauseMillis=200` (target пауза), `-XX:G1HeapRegionSize=16m`, `-XX:G1NewSizePercent=20`, `-XX:G1MaxNewSizePercent=60`. Concurrent marking: `-XX:InitiatingHeapOccupancyPercent=45`, `-XX:G1MixedGCCountTarget=8`, `-XX:G1MixedGCLiveThresholdPercent=85`. Параллелизм: `-XX:ParallelGCThreads` (≈ cores), `-XX:ConcGCThreads` (≈ 1/4 от parallel).",
-              "correct": true,
+              "text": "Размер региона задаётся флагом `-XX:NewRatio`, а `-XX:G1HeapRegionSize` в современных `JDK` уже не действует и игнорируется сборщиком.",
+              "correct": false,
               "sections": {
-                "explanation": "Флаги `G1` делятся на группы heap/основные/concurrent-marking/параллелизм, но точка входа одна — `-XX:MaxGCPauseMillis`, а остальное крутят лишь под конкретную проблему из логов.",
-                "example": "`G1` хорошо самонастраивается через `-XX:MaxGCPauseMillis`: начинают тюнинг именно с него и лишь потом подкручивают `IHOP`, размер региона и new-size проценты под конкретную проблему из логов.",
-                "when_to_apply": "Эти флаги меняют по одному и только при наличии baseline-метрик; например, `IHOP` поднимают, когда concurrent marking стартует слишком рано и тратит `CPU` впустую.",
-                "edge_cases": "Слишком агрессивный `MaxGCPauseMillis` (например, 20 мс на большом heap) заставляет `G1` дробить Young на крошечные части, что роняет throughput и учащает паузы.",
-                "related": "[[jvm-performance-tuning-interview#Q5]] устройство G1 [[jvm-performance-tuning-interview#Q11]] сигналы в GC-логах [[jvm-performance-tuning-interview#Q33]] обязательные prod-флаги"
+                "what_actually": "Размер региона задаёт именно `-XX:G1HeapRegionSize` (степень двойки, 1-32 МБ); `-XX:NewRatio` — это про соотношение young/old в `Parallel`, не про регионы `G1`.",
+                "source_of_confusion": "`NewRatio` — известный старый флаг, поэтому его ошибочно тянут в контекст `G1`.",
+                "if_it_were_true": "Если бы `G1HeapRegionSize` игнорировался, его не использовали бы для борьбы с humongous-объектами.",
+                "how_it_should_be": "Регион `G1` настраивается `-XX:G1HeapRegionSize`; `NewRatio` относится к другому сборщику."
               },
               "label": "B",
               "order": 1
@@ -586,13 +585,14 @@
               "order": 2
             },
             {
-              "text": "Размер региона задаётся флагом `-XX:NewRatio`, а `-XX:G1HeapRegionSize` в современных `JDK` уже не действует и игнорируется сборщиком.",
-              "correct": false,
+              "text": "Heap: `-Xms4g -Xmx4g` (фиксированный, `Xms` = `Xmx` для prod). G1-основные: `-XX:MaxGCPauseMillis=200` (target пауза), `-XX:G1HeapRegionSize=16m`, `-XX:G1NewSizePercent=20`, `-XX:G1MaxNewSizePercent=60`. Concurrent marking: `-XX:InitiatingHeapOccupancyPercent=45`, `-XX:G1MixedGCCountTarget=8`, `-XX:G1MixedGCLiveThresholdPercent=85`. Параллелизм: `-XX:ParallelGCThreads` (≈ cores), `-XX:ConcGCThreads` (≈ 1/4 от parallel).",
+              "correct": true,
               "sections": {
-                "what_actually": "Размер региона задаёт именно `-XX:G1HeapRegionSize` (степень двойки, 1-32 МБ); `-XX:NewRatio` — это про соотношение young/old в `Parallel`, не про регионы `G1`.",
-                "source_of_confusion": "`NewRatio` — известный старый флаг, поэтому его ошибочно тянут в контекст `G1`.",
-                "if_it_were_true": "Если бы `G1HeapRegionSize` игнорировался, его не использовали бы для борьбы с humongous-объектами.",
-                "how_it_should_be": "Регион `G1` настраивается `-XX:G1HeapRegionSize`; `NewRatio` относится к другому сборщику."
+                "explanation": "Флаги `G1` делятся на группы heap/основные/concurrent-marking/параллелизм, но точка входа одна — `-XX:MaxGCPauseMillis`, а остальное крутят лишь под конкретную проблему из логов.",
+                "example": "`G1` хорошо самонастраивается через `-XX:MaxGCPauseMillis`: начинают тюнинг именно с него и лишь потом подкручивают `IHOP`, размер региона и new-size проценты под конкретную проблему из логов.",
+                "when_to_apply": "Эти флаги меняют по одному и только при наличии baseline-метрик; например, `IHOP` поднимают, когда concurrent marking стартует слишком рано и тратит `CPU` впустую.",
+                "edge_cases": "Слишком агрессивный `MaxGCPauseMillis` (например, 20 мс на большом heap) заставляет `G1` дробить Young на крошечные части, что роняет throughput и учащает паузы.",
+                "related": "[[jvm-performance-tuning-interview#Q5]] устройство G1 [[jvm-performance-tuning-interview#Q11]] сигналы в GC-логах [[jvm-performance-tuning-interview#Q33]] обязательные prod-флаги"
               },
               "label": "D",
               "order": 3
@@ -681,18 +681,6 @@
               "order": 0
             },
             {
-              "text": "`GC`-логи в production включать нельзя: они дают 30-50% overhead и сами замедляют приложение сильнее, чем любая `GC`-пауза, поэтому их держат только в dev.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Overhead `GC`-логов близок к нулю; их рекомендуют держать always-on в production, иначе post-mortem диагностика невозможна.",
-                "source_of_confusion": "Слово «логирование» ассоциируется с дорогим `I/O`, отсюда страх большого overhead.",
-                "if_it_were_true": "Если бы overhead был 30-50%, `GC`-логи не входили бы в список обязательных prod-флагов.",
-                "how_it_should_be": "`GC`-логи держат always-on в проде с ротацией; их стоимость пренебрежимо мала."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Анализировать `GC`-логи можно только вручную глазами в текстовом редакторе; специализированных инструментов вроде `GCEasy` или `JFR`/`JMC` для этого не существует.",
               "correct": false,
               "sections": {
@@ -701,8 +689,8 @@
                 "if_it_were_true": "Если бы инструментов не было, нельзя было бы быстро строить графики p99-пауз по суточным логам.",
                 "how_it_should_be": "Логи разбирают через `GCEasy`/`GCViewer`/`JMC`; ручной просмотр — лишь для единичных строк."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "С `JDK 9+` используется Unified Logging (замена `-XX:+PrintGCDetails`). Полный prod-лог: `-Xlog:gc*:file=gc-%t.log:time,uptime,level,tags:filecount=10,filesize=50m`. Краткий (только паузы): `-Xlog:gc:stdout:time,uptime`. Подробный (age table, regions): `-Xlog:gc*,gc+age=trace,gc+heap=debug:...`. Инструменты анализа: `GCEasy` (онлайн), `GCViewer` (desktop), `JFR` + `JMC` (встроенный, самый мощный), `Censum` (Azul).",
@@ -713,6 +701,18 @@
                 "when_to_apply": "Логи включают always-on в production (overhead близок к нулю) и анализируют при разборе инцидентов и при тюнинге: тренд пауз и occupancy из лога — основа для гипотез.",
                 "edge_cases": "`%t` в имени файла и `filecount`/`filesize` нужны, чтобы ротация не съела диск и чтобы рестарты не перетирали предыдущий лог; без ротации `gc.log` со временем переполнит том.",
                 "related": "[[jvm-performance-tuning-interview#Q11]] сигналы в GC-логах [[jvm-performance-tuning-interview#Q13]] allocation/promotion [[jvm-performance-tuning-interview#Q33]] обязательные prod-флаги"
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`GC`-логи в production включать нельзя: они дают 30-50% overhead и сами замедляют приложение сильнее, чем любая `GC`-пауза, поэтому их держат только в dev.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Overhead `GC`-логов близок к нулю; их рекомендуют держать always-on в production, иначе post-mortem диагностика невозможна.",
+                "source_of_confusion": "Слово «логирование» ассоциируется с дорогим `I/O`, отсюда страх большого overhead.",
+                "if_it_were_true": "Если бы overhead был 30-50%, `GC`-логи не входили бы в список обязательных prod-флагов.",
+                "how_it_should_be": "`GC`-логи держат always-on в проде с ротацией; их стоимость пренебрежимо мала."
               },
               "label": "D",
               "order": 3
@@ -729,6 +729,18 @@
           "question_text": "Как объяснить влияние allocation/promotion на latency?",
           "options": [
             {
+              "text": "Чтобы снизить allocation rate, нужно создавать как можно больше короткоживущих объектов: чем чаще срабатывает Young GC, тем меньше объектов доживает до `Old` и тем ниже promotion.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Больше короткоживущих объектов = выше allocation rate и чаще Young GC, что увеличивает overhead, а не снижает его; цель — меньше аллокаций, а не больше.",
+                "source_of_confusion": "Логика «Young GC дешёвый, пусть работает чаще» доводится до абсурда.",
+                "if_it_were_true": "Если бы рост аллокаций снижал нагрузку, не было бы смысла выносить объекты в `static final` и пулить буферы.",
+                "how_it_should_be": "Снижают именно число аллокаций в hot-path (reuse, отказ от лишних объектов), а не наращивают их."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Высокий allocation rate (> 1 ГБ/с) увеличивает частоту Young GC; высокий promotion rate перегружает `Old Generation`, провоцируя Mixed/Full GC. Итог: растут паузы и нестабильность tail latency. Снижают allocation rate переиспользованием объектов и отказом от лишних промежуточных аллокаций в hot-path (вынос `DateTimeFormatter` в `static final`, отказ от лишних `StringBuilder`).",
               "correct": true,
               "sections": {
@@ -738,32 +750,8 @@
                 "edge_cases": "Не всякая аллокация вредна: благодаря escape analysis short-lived объекты могут вообще не попадать в heap; проблема именно в объектах, переживающих Young и уходящих в `Old`.",
                 "related": "[[jvm-performance-tuning-interview#Q2]] какие метрики мониторить [[jvm-performance-tuning-interview#Q14]] humongous allocations [[jvm-performance-tuning-interview#Q22]] escape analysis"
               },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Allocation rate и promotion rate на latency не влияют: паузы `GC` зависят исключительно от размера heap, поэтому достаточно выставить большой `-Xmx` и забыть про аллокации в коде.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Allocation/promotion напрямую влияют на частоту и характер пауз; большой heap лишь отсрочит сборку, но высокий promotion всё равно перегрузит `Old` и спровоцирует Mixed/Full GC.",
-                "source_of_confusion": "Кажется, что heap полностью поглощает проблему аллокаций, поэтому код не оптимизируют.",
-                "if_it_were_true": "Если бы аллокации не влияли, снижение allocation rate не давало бы измеримого падения p99.",
-                "how_it_should_be": "Лечат высокий allocation/promotion на уровне кода (hot-path), а heap подбирают как следствие."
-              },
               "label": "B",
               "order": 1
-            },
-            {
-              "text": "Чтобы снизить allocation rate, нужно создавать как можно больше короткоживущих объектов: чем чаще срабатывает Young GC, тем меньше объектов доживает до `Old` и тем ниже promotion.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Больше короткоживущих объектов = выше allocation rate и чаще Young GC, что увеличивает overhead, а не снижает его; цель — меньше аллокаций, а не больше.",
-                "source_of_confusion": "Логика «Young GC дешёвый, пусть работает чаще» доводится до абсурда.",
-                "if_it_were_true": "Если бы рост аллокаций снижал нагрузку, не было бы смысла выносить объекты в `static final` и пулить буферы.",
-                "how_it_should_be": "Снижают именно число аллокаций в hot-path (reuse, отказ от лишних объектов), а не наращивают их."
-              },
-              "label": "C",
-              "order": 2
             },
             {
               "text": "Promotion rate важен только для `ZGC` и не имеет значения для `G1`: в `G1` все объекты живут в одном поколении, поэтому понятия promotion там нет.",
@@ -773,6 +761,18 @@
                 "source_of_confusion": "`G1` иногда ошибочно считают «не совсем поколенческим» из-за регионной модели.",
                 "if_it_were_true": "Если бы в `G1` не было promotion, не существовало бы Mixed GC, собирающего часть `Old`.",
                 "how_it_should_be": "Promotion есть и в `G1`: объекты переживают Young и уходят в `Old`, перегружая его при высоком rate."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Allocation rate и promotion rate на latency не влияют: паузы `GC` зависят исключительно от размера heap, поэтому достаточно выставить большой `-Xmx` и забыть про аллокации в коде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Allocation/promotion напрямую влияют на частоту и характер пауз; большой heap лишь отсрочит сборку, но высокий promotion всё равно перегрузит `Old` и спровоцирует Mixed/Full GC.",
+                "source_of_confusion": "Кажется, что heap полностью поглощает проблему аллокаций, поэтому код не оптимизируют.",
+                "if_it_were_true": "Если бы аллокации не влияли, снижение allocation rate не давало бы измеримого падения p99.",
+                "how_it_should_be": "Лечат высокий allocation/promotion на уровне кода (hot-path), а heap подбирают как следствие."
               },
               "label": "D",
               "order": 3
@@ -789,6 +789,30 @@
           "question_text": "Что такое Humongous Allocations в G1 и как с ними бороться?",
           "options": [
             {
+              "text": "Чтобы убрать humongous-объекты, нужно уменьшать `-XX:G1HeapRegionSize` до минимума (1 МБ): чем меньше регион, тем меньше объектов попадает в категорию humongous.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Меньший регион снижает порог humongous (50% от меньшего размера), поэтому humongous становится БОЛЬШЕ, а не меньше; для борьбы регион увеличивают.",
+                "source_of_confusion": "Интуиция «меньше регион — меньше humongous» инвертирует зависимость от порога.",
+                "if_it_were_true": "Если бы уменьшение региона помогало, совет был бы про `-XX:G1HeapRegionSize=1m`, а не `=32m`.",
+                "how_it_should_be": "Размер региона увеличивают (например, до 32 МБ), чтобы крупные объекты перестали быть humongous."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Humongous-объекты безопасны и даже желательны: они размещаются в `Eden`, перемещаются при каждом Young GC и помогают `G1` лучше дефрагментировать heap.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Humongous идут в `Old`, плохо перемещаются и фрагментируют heap; они проблема, а не помощь дефрагментации.",
+                "source_of_confusion": "Раз `G1` умеет с ними работать, кажется, что они безвредны.",
+                "if_it_were_true": "Если бы они были желательны, не было бы рекомендаций их обнаруживать и устранять через region size/streaming.",
+                "how_it_should_be": "Humongous фрагментируют heap и провоцируют `Full GC`; их минимизируют, а не поощряют."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "Humongous в `G1` — это объект, который занимает менее 1% региона; такие мелкие объекты размещаются в `Eden` и собираются обычным Young GC без каких-либо проблем.",
               "correct": false,
               "sections": {
@@ -797,8 +821,8 @@
                 "if_it_were_true": "Если бы humongous были мелкими, не существовало бы проблемы фрагментации и совета увеличивать размер региона.",
                 "how_it_should_be": "Humongous = объект > 50% региона, идущий в `Old`; мелкие объекты тут ни при чём."
               },
-              "label": "A",
-              "order": 0
+              "label": "C",
+              "order": 2
             },
             {
               "text": "В `G1` объект humongous, если занимает более 50% размера региона. Такие объекты размещаются напрямую в `Old Generation` (один или несколько смежных регионов), плохо перемещаются и фрагментируют heap. Частые причины: большие `byte[]` (сериализация, `I/O`-буферы), крупные `String` (JSON/XML), большие коллекции (`Arrays.copyOf` при расширении `ArrayList`). Решения: увеличить `-XX:G1HeapRegionSize`, использовать streaming вместо буферизации, пулить буферы.",
@@ -809,30 +833,6 @@
                 "when_to_apply": "С humongous борются, когда `GC`-логи показывают много humongous-регионов и связанные с ними `Evacuation Failure`/фрагментацию, ведущие к `Full GC`.",
                 "edge_cases": "Увеличение размера региона снижает число humongous, но укрупняет гранулярность сборки; иногда правильнее не растить регион, а устранить сам крупный объект (streaming, чанкование).",
                 "related": "[[jvm-performance-tuning-interview#Q5]] устройство G1 [[jvm-performance-tuning-interview#Q10]] флаги G1 [[jvm-performance-tuning-interview#Q13]] allocation rate и latency"
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Чтобы убрать humongous-объекты, нужно уменьшать `-XX:G1HeapRegionSize` до минимума (1 МБ): чем меньше регион, тем меньше объектов попадает в категорию humongous.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Меньший регион снижает порог humongous (50% от меньшего размера), поэтому humongous становится БОЛЬШЕ, а не меньше; для борьбы регион увеличивают.",
-                "source_of_confusion": "Интуиция «меньше регион — меньше humongous» инвертирует зависимость от порога.",
-                "if_it_were_true": "Если бы уменьшение региона помогало, совет был бы про `-XX:G1HeapRegionSize=1m`, а не `=32m`.",
-                "how_it_should_be": "Размер региона увеличивают (например, до 32 МБ), чтобы крупные объекты перестали быть humongous."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Humongous-объекты безопасны и даже желательны: они размещаются в `Eden`, перемещаются при каждом Young GC и помогают `G1` лучше дефрагментировать heap.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Humongous идут в `Old`, плохо перемещаются и фрагментируют heap; они проблема, а не помощь дефрагментации.",
-                "source_of_confusion": "Раз `G1` умеет с ними работать, кажется, что они безвредны.",
-                "if_it_were_true": "Если бы они были желательны, не было бы рекомендаций их обнаруживать и устранять через region size/streaming.",
-                "how_it_should_be": "Humongous фрагментируют heap и провоцируют `Full GC`; их минимизируют, а не поощряют."
               },
               "label": "D",
               "order": 3
@@ -861,6 +861,18 @@
               "order": 0
             },
             {
+              "text": "Code Cache и `Metaspace` — это просто названия частей `Old Generation`; они растут и собираются вместе с обычными объектами при Mixed GC.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Code Cache (JIT-код) и `Metaspace` (метаданные классов) — отдельные non-heap области, не часть `Old` и не собираются Mixed GC объектов.",
+                "source_of_confusion": "Всё «внутри `JVM`» по инерции относят к heap-поколениям.",
+                "if_it_were_true": "Если бы они были в `Old`, не нужны были бы отдельные лимиты `-XX:ReservedCodeCacheSize` и `-XX:MaxMetaspaceSize`.",
+                "how_it_should_be": "Code Cache и `Metaspace` — самостоятельные non-heap области со своими лимитами и жизненным циклом."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "Direct Buffers (`NIO`) и thread stacks аллоцируются внутри Java heap и собираются обычным `GC`, поэтому отдельно их в расчёте памяти учитывать не нужно.",
               "correct": false,
               "sections": {
@@ -869,8 +881,8 @@
                 "if_it_were_true": "Если бы они были в heap, не существовало бы отдельного `-XX:MaxDirectMemorySize` и `-Xss`.",
                 "how_it_should_be": "Direct buffers и stacks — native-области; их считают отдельно от heap при расчёте `RSS`."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Память `JVM` не ограничивается heap. `RSS` ≈ Heap (`-Xmx`: `Eden`/`Survivors`/`Old`) + Non-Heap (`Metaspace`, Compressed Class Space, Code Cache) + Native (Thread Stacks `-Xss`×N, Direct Buffers `NIO`, JNI/native libs, GC native data, internal structures: symbol tables и пр.). Полная формула расчёта учитывает heap + metaspace + code cache (~240 МБ) + thread stacks + direct buffers + GC overhead (10-20% heap) + JNI + internal.",
@@ -881,18 +893,6 @@
                 "when_to_apply": "Эту полную картину применяют при сайзинге контейнера и расчёте лимитов: считают все области, а не только heap, и оставляют запас на native.",
                 "edge_cases": "Доли native-областей зависят от приложения: много потоков раздувает thread stacks, активный `NIO` — direct buffers, динамическая генерация классов — `Metaspace`; универсального «20% на non-heap» не существует.",
                 "related": "[[jvm-performance-tuning-interview#Q16]] native memory и NMT [[jvm-performance-tuning-interview#Q17]] расчёт heap и off-heap [[jvm-performance-tuning-interview#Q29]] JVM в Kubernetes"
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Code Cache и `Metaspace` — это просто названия частей `Old Generation`; они растут и собираются вместе с обычными объектами при Mixed GC.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Code Cache (JIT-код) и `Metaspace` (метаданные классов) — отдельные non-heap области, не часть `Old` и не собираются Mixed GC объектов.",
-                "source_of_confusion": "Всё «внутри `JVM`» по инерции относят к heap-поколениям.",
-                "if_it_were_true": "Если бы они были в `Old`, не нужны были бы отдельные лимиты `-XX:ReservedCodeCacheSize` и `-XX:MaxMetaspaceSize`.",
-                "how_it_should_be": "Code Cache и `Metaspace` — самостоятельные non-heap области со своими лимитами и жизненным циклом."
               },
               "label": "D",
               "order": 3
@@ -909,18 +909,6 @@
           "question_text": "Что такое Native Memory и как его отслеживать?",
           "options": [
             {
-              "text": "Native Memory — это синоним Java heap; `jcmd VM.native_memory` показывает только содержимое heap (`Eden`/`Old`) и ничего про thread stacks или Code Cache.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Native Memory — это память ВНЕ heap; NMT как раз показывает non-heap категории (Thread, Code, Class, Direct), а не только heap.",
-                "source_of_confusion": "Слово «memory» обобщают до heap, игнорируя native-области.",
-                "if_it_were_true": "Если бы NMT показывал только heap, он не помогал бы искать native-утечки вне `-Xmx`.",
-                "how_it_should_be": "Native Memory — это thread stacks, `Metaspace`, code cache, direct, JNI; NMT разбивает именно их."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Native Memory Tracking — встроенный и почти бесплатный инструмент: его включают одним флагом, и он трассирует всю память процесса, включая аллокации сторонних `C`-библиотек через JNI.",
               "correct": false,
               "sections": {
@@ -928,6 +916,19 @@
                 "source_of_confusion": "«Встроенный инструмент» создаёт впечатление дешевизны и полного охвата всей памяти процесса.",
                 "if_it_were_true": "Если бы NMT покрывал всё и почти даром, не существовало бы потребности в `jemalloc`/native-профайлерах.",
                 "how_it_should_be": "NMT включают флагом, он имеет overhead и покрывает `JVM`-память; native-библиотеки требуют отдельных инструментов."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Native Memory — память, выделенная `JVM` за пределами Java heap через `malloc`/`mmap`: thread stacks, `Metaspace`, Code Cache, GC structures, Direct Buffers, JNI. Отслеживают через Native Memory Tracking (NMT): `-XX:NativeMemoryTracking=summary` (5-10% overhead), снимок `jcmd <pid> VM.native_memory summary`, и diff против baseline (`VM.native_memory baseline` → позже `summary.diff`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Native Memory — это всё, что `JVM` выделяет вне heap; отслеживают через NMT (`-XX:NativeMemoryTracking`) и снимки/diff `jcmd VM.native_memory`.",
+                "example": "Вывод NMT разбивает память по категориям: `Java Heap`, `Class` (Metaspace), `Thread` (N × `-Xss`), `Code` (JIT cache), `GC`, `Internal`, `Direct` — видно, какая область растёт.",
+                "when_to_apply": "NMT включают, когда `RSS` контейнера растёт без видимого роста heap (подозрение на native-утечку: JNI, direct buffers, classloaders), и сравнивают снимки во времени через baseline/diff.",
+                "edge_cases": "NMT даёт overhead 5-10% и не покрывает чистый `malloc` сторонних native-библиотек (только `JVM`-аллокации) — для них нужны `jemalloc`/`async-profiler` с native-режимом.",
+                "related": "[[jvm-performance-tuning-interview#Q15]] области памяти JVM [[jvm-performance-tuning-interview#Q28]] metaspace leak [[jvm-performance-tuning-interview#Q29]] JVM в Kubernetes"
               },
               "label": "B",
               "order": 1
@@ -945,14 +946,13 @@
               "order": 2
             },
             {
-              "text": "Native Memory — память, выделенная `JVM` за пределами Java heap через `malloc`/`mmap`: thread stacks, `Metaspace`, Code Cache, GC structures, Direct Buffers, JNI. Отслеживают через Native Memory Tracking (NMT): `-XX:NativeMemoryTracking=summary` (5-10% overhead), снимок `jcmd <pid> VM.native_memory summary`, и diff против baseline (`VM.native_memory baseline` → позже `summary.diff`).",
-              "correct": true,
+              "text": "Native Memory — это синоним Java heap; `jcmd VM.native_memory` показывает только содержимое heap (`Eden`/`Old`) и ничего про thread stacks или Code Cache.",
+              "correct": false,
               "sections": {
-                "explanation": "Native Memory — это всё, что `JVM` выделяет вне heap; отслеживают через NMT (`-XX:NativeMemoryTracking`) и снимки/diff `jcmd VM.native_memory`.",
-                "example": "Вывод NMT разбивает память по категориям: `Java Heap`, `Class` (Metaspace), `Thread` (N × `-Xss`), `Code` (JIT cache), `GC`, `Internal`, `Direct` — видно, какая область растёт.",
-                "when_to_apply": "NMT включают, когда `RSS` контейнера растёт без видимого роста heap (подозрение на native-утечку: JNI, direct buffers, classloaders), и сравнивают снимки во времени через baseline/diff.",
-                "edge_cases": "NMT даёт overhead 5-10% и не покрывает чистый `malloc` сторонних native-библиотек (только `JVM`-аллокации) — для них нужны `jemalloc`/`async-profiler` с native-режимом.",
-                "related": "[[jvm-performance-tuning-interview#Q15]] области памяти JVM [[jvm-performance-tuning-interview#Q28]] metaspace leak [[jvm-performance-tuning-interview#Q29]] JVM в Kubernetes"
+                "what_actually": "Native Memory — это память ВНЕ heap; NMT как раз показывает non-heap категории (Thread, Code, Class, Direct), а не только heap.",
+                "source_of_confusion": "Слово «memory» обобщают до heap, игнорируя native-области.",
+                "if_it_were_true": "Если бы NMT показывал только heap, он не помогал бы искать native-утечки вне `-Xmx`.",
+                "how_it_should_be": "Native Memory — это thread stacks, `Metaspace`, code cache, direct, JNI; NMT разбивает именно их."
               },
               "label": "D",
               "order": 3
@@ -969,6 +969,18 @@
           "question_text": "Как правильно рассчитать размер heap и off-heap?",
           "options": [
             {
+              "text": "`MaxDirectMemorySize` ограничивать не нужно: по умолчанию он равен нулю, поэтому `NIO`-буферы вообще не потребляют память сверх heap.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `MaxDirectMemorySize` не ноль, а равен `-Xmx`; неограниченные direct buffers могут съесть native-память и вызвать `OOMKilled`.",
+                "source_of_confusion": "Раз про direct buffers вспоминают редко, кажется, что их дефолт безопасен.",
+                "if_it_were_true": "Если бы дефолт был ноль, `NIO`-приложения не падали бы по direct memory без явного лимита.",
+                "how_it_should_be": "`-XX:MaxDirectMemorySize` ограничивают явно (например, 128 МБ); его дефолт = `-Xmx`, а не ноль."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Правило для контейнеров: оставлять 25-30% от memory limit на non-heap. Для limit 4 ГБ: Heap 3 ГБ (`-Xmx3g`), `Metaspace` ~256 МБ, Code Cache ~240 МБ, thread stacks ~200 МБ (200 потоков × 1 МБ), direct buffers ~128 МБ, GC overhead ~150 МБ — итого non-heap ~974 МБ, берут 1 ГБ запас. Конфигурация: `-Xms3g -Xmx3g -XX:MaxMetaspaceSize=256m -XX:ReservedCodeCacheSize=256m -XX:MaxDirectMemorySize=128m -Xss512k`.",
               "correct": true,
               "sections": {
@@ -978,32 +990,8 @@
                 "edge_cases": "Доли non-heap зависят от профиля: сервис с тысячами потоков или активным `NIO` потребует больше запаса, чем «25-30%» — числа в примере ориентировочны, а не догма.",
                 "related": "[[jvm-performance-tuning-interview#Q15]] области памяти JVM [[jvm-performance-tuning-interview#Q16]] native memory [[jvm-performance-tuning-interview#Q29]] JVM в Kubernetes"
               },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Правильный расчёт — выставить `-Xmx` равным memory limit контейнера (для 4 ГБ limit ставят `-Xmx4g`): так `JVM` использует всю выделенную память максимально эффективно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`-Xmx` = container limit не оставляет места под non-heap (metaspace, stacks, direct), и контейнер ловит `OOMKilled` — это классическая ошибка, а не эффективность.",
-                "source_of_confusion": "«Использовать всю память» звучит как оптимизация, поэтому heap раздувают до лимита.",
-                "if_it_were_true": "Если бы `-Xmx` = limit был верен, не было бы правила про 25-30% запаса на non-heap.",
-                "how_it_should_be": "Heap берут 60-75% от лимита, остальное резервируют под non-heap (metaspace, code cache, stacks, direct)."
-              },
               "label": "B",
               "order": 1
-            },
-            {
-              "text": "`MaxDirectMemorySize` ограничивать не нужно: по умолчанию он равен нулю, поэтому `NIO`-буферы вообще не потребляют память сверх heap.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По умолчанию `MaxDirectMemorySize` не ноль, а равен `-Xmx`; неограниченные direct buffers могут съесть native-память и вызвать `OOMKilled`.",
-                "source_of_confusion": "Раз про direct buffers вспоминают редко, кажется, что их дефолт безопасен.",
-                "if_it_were_true": "Если бы дефолт был ноль, `NIO`-приложения не падали бы по direct memory без явного лимита.",
-                "how_it_should_be": "`-XX:MaxDirectMemorySize` ограничивают явно (например, 128 МБ); его дефолт = `-Xmx`, а не ноль."
-              },
-              "label": "C",
-              "order": 2
             },
             {
               "text": "`MaxMetaspaceSize` по умолчанию упирается в разумный потолок около 64 МБ, поэтому в контейнере его обычно не настраивают — `Metaspace` сам не вырастет настолько, чтобы это стало проблемой.",
@@ -1013,6 +1001,18 @@
                 "source_of_confusion": "PermGen из `JDK 7` имел дефолтный потолок, и это свойство ошибочно переносят на `Metaspace`.",
                 "if_it_were_true": "Если бы `Metaspace` упирался в ~64 МБ, не было бы class-leak'ов, съедающих гигабайты native-памяти.",
                 "how_it_should_be": "`Metaspace` по умолчанию unlimited; его обязательно ограничивают, иначе class-leak ведёт к `OOMKilled`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Правильный расчёт — выставить `-Xmx` равным memory limit контейнера (для 4 ГБ limit ставят `-Xmx4g`): так `JVM` использует всю выделенную память максимально эффективно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`-Xmx` = container limit не оставляет места под non-heap (metaspace, stacks, direct), и контейнер ловит `OOMKilled` — это классическая ошибка, а не эффективность.",
+                "source_of_confusion": "«Использовать всю память» звучит как оптимизация, поэтому heap раздувают до лимита.",
+                "if_it_were_true": "Если бы `-Xmx` = limit был верен, не было бы правила про 25-30% запаса на non-heap.",
+                "how_it_should_be": "Heap берут 60-75% от лимита, остальное резервируют под non-heap (metaspace, code cache, stacks, direct)."
               },
               "label": "D",
               "order": 3
@@ -1029,6 +1029,30 @@
           "question_text": "Что такое String Deduplication и когда она полезна?",
           "options": [
             {
+              "text": "`String Deduplication` особенно эффективна для уникальных строк вроде UUID и хешей: чем уникальнее значения, тем больше дубликатов она находит и схлопывает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Уникальные строки (UUID, hash) по определению не имеют дубликатов, поэтому dedup на них бесполезен и только добавляет overhead таблиц.",
+                "source_of_confusion": "«Много разных строк» путают с «много дубликатов».",
+                "if_it_were_true": "Если бы dedup помогал на уникальных строках, его не отмечали бы как бесполезный для UUID/hash.",
+                "how_it_should_be": "Dedup выгоден на повторяющихся значениях (статусы, коды), а не на уникальных строках."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Чтобы включить dedup, достаточно флага `-XX:+UseStringDeduplication` с `Parallel GC`; именно `Parallel` — единственный сборщик, поддерживающий эту функцию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Parallel GC` не поддерживает string deduplication; функция работает в `G1` (и `ZGC`), а не в `Parallel`.",
+                "source_of_confusion": "`Parallel` известен как throughput-сборщик, и его ошибочно наделяют дополнительными фичами.",
+                "if_it_were_true": "Если бы dedup был в `Parallel`, его не описывали бы как функцию именно `G1`/`ZGC`.",
+                "how_it_should_be": "Dedup доступен в `G1`/`ZGC`; для `Parallel` флаг `-XX:+UseStringDeduplication` не действует."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "`String Deduplication` дедуплицирует абсолютно любые объекты в heap (не только строки) и работает в любом сборщике, включая `Serial` и `Parallel`, без всяких ограничений.",
               "correct": false,
               "sections": {
@@ -1037,8 +1061,8 @@
                 "if_it_were_true": "Если бы дедуплицировались любые объекты, не было бы привязки к `String` и к конкретным сборщикам.",
                 "how_it_should_be": "Дедуплицируется только содержимое строк в `G1`/`ZGC`; произвольные объекты и другие `GC` не затрагиваются."
               },
-              "label": "A",
-              "order": 0
+              "label": "C",
+              "order": 2
             },
             {
               "text": "`String Deduplication` — функция `G1` (и `ZGC`), которая находит строки с одинаковым `char[]`/`byte[]` содержимым и заменяет дубликаты ссылкой на один массив. Включение: `-XX:+UseStringDeduplication`, `-XX:StringDeduplicationAgeThreshold=3` (после N `GC`-циклов). Полезна, когда приложение держит много строк (кеши, справочники) с дублирующимися значениями (коды стран, статусы, имена полей) при высоком heap pressure.",
@@ -1049,30 +1073,6 @@
                 "when_to_apply": "Включают, когда heap pressure высокий, аллокации изменить нельзя, а в памяти много одинаковых строк — например, справочные значения, повторяющиеся в тысячах записей.",
                 "edge_cases": "НЕ полезна для уникальных строк (UUID, hash), на маленьком heap (overhead dedup-таблиц не окупается) и для короткоживущих строк (Young GC собирает их раньше, чем dedup сработает после N циклов).",
                 "related": "[[jvm-performance-tuning-interview#Q13]] allocation rate [[jvm-performance-tuning-interview#Q15]] области памяти JVM [[jvm-performance-tuning-interview#Q17]] расчёт heap"
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`String Deduplication` особенно эффективна для уникальных строк вроде UUID и хешей: чем уникальнее значения, тем больше дубликатов она находит и схлопывает.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Уникальные строки (UUID, hash) по определению не имеют дубликатов, поэтому dedup на них бесполезен и только добавляет overhead таблиц.",
-                "source_of_confusion": "«Много разных строк» путают с «много дубликатов».",
-                "if_it_were_true": "Если бы dedup помогал на уникальных строках, его не отмечали бы как бесполезный для UUID/hash.",
-                "how_it_should_be": "Dedup выгоден на повторяющихся значениях (статусы, коды), а не на уникальных строках."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Чтобы включить dedup, достаточно флага `-XX:+UseStringDeduplication` с `Parallel GC`; именно `Parallel` — единственный сборщик, поддерживающий эту функцию.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Parallel GC` не поддерживает string deduplication; функция работает в `G1` (и `ZGC`), а не в `Parallel`.",
-                "source_of_confusion": "`Parallel` известен как throughput-сборщик, и его ошибочно наделяют дополнительными фичами.",
-                "if_it_were_true": "Если бы dedup был в `Parallel`, его не описывали бы как функцию именно `G1`/`ZGC`.",
-                "how_it_should_be": "Dedup доступен в `G1`/`ZGC`; для `Parallel` флаг `-XX:+UseStringDeduplication` не действует."
               },
               "label": "D",
               "order": 3
@@ -1089,18 +1089,6 @@
           "question_text": "Как настроить Metaspace и зачем?",
           "options": [
             {
-              "text": "`Metaspace` хранит обычные объекты приложения (экземпляры классов и массивы), поэтому его размер должен быть сопоставим с `-Xmx` и расти вместе с нагрузкой.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Metaspace` хранит метаданные классов (`Class`-объекты, методы, constant pool), а не экземпляры; экземпляры живут в heap (`-Xmx`).",
-                "source_of_confusion": "Слово «class» в названии путают с «экземпляры классов».",
-                "if_it_were_true": "Если бы там жили объекты, его размер зависел бы от нагрузки, а не от числа загруженных классов.",
-                "how_it_should_be": "`Metaspace` — про метаданные классов; объекты приложения находятся в heap, не в `Metaspace`."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`Metaspace` по умолчанию ограничен значением `-Xmx`, поэтому отдельно настраивать `MaxMetaspaceSize` не требуется — он не может вырасти больше heap.",
               "correct": false,
               "sections": {
@@ -1109,8 +1097,8 @@
                 "if_it_were_true": "Если бы он был ограничен `-Xmx`, class-leak не приводил бы к `OOMKilled` при стабильном heap.",
                 "how_it_should_be": "`Metaspace` unlimited по умолчанию и независим от `-Xmx`; его ограничивают `-XX:MaxMetaspaceSize`."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`Metaspace` (замена `PermGen` с `JDK 8`) хранит метаданные классов: `Class`-объекты, vtables, методы, constant pool. Настройка: `-XX:MaxMetaspaceSize=256m` (по умолчанию unlimited!), `-XX:MetaspaceSize=128m` (начальный размер, избегает ресайзов при старте), `-XX:CompressedClassSpaceSize=128m` (часть под class pointers). Ограничивать важно: без лимита `Metaspace` растёт до исчерпания native-памяти, в контейнере → `OOMKilled` без Java `OutOfMemoryError`.",
@@ -1121,6 +1109,18 @@
                 "when_to_apply": "`MaxMetaspaceSize` задают при сайзинге каждого сервиса, особенно где есть генерация классов или много classloaders, чтобы class-leak не съел всю native-память тихо.",
                 "edge_cases": "Лимит превращает class-leak в явный `OutOfMemoryError: Metaspace` вместо тихого `OOMKilled` контейнера — это благо для диагностики, но требует адекватного значения, иначе нормальное приложение упрётся в потолок.",
                 "related": "[[jvm-performance-tuning-interview#Q15]] области памяти JVM [[jvm-performance-tuning-interview#Q27]] class loading [[jvm-performance-tuning-interview#Q28]] metaspace leak"
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Metaspace` хранит обычные объекты приложения (экземпляры классов и массивы), поэтому его размер должен быть сопоставим с `-Xmx` и расти вместе с нагрузкой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Metaspace` хранит метаданные классов (`Class`-объекты, методы, constant pool), а не экземпляры; экземпляры живут в heap (`-Xmx`).",
+                "source_of_confusion": "Слово «class» в названии путают с «экземпляры классов».",
+                "if_it_were_true": "Если бы там жили объекты, его размер зависел бы от нагрузки, а не от числа загруженных классов.",
+                "how_it_should_be": "`Metaspace` — про метаданные классов; объекты приложения находятся в heap, не в `Metaspace`."
               },
               "label": "C",
               "order": 2
@@ -1149,6 +1149,18 @@
           "question_text": "Как работает JIT-компилятор и Tiered Compilation?",
           "options": [
             {
+              "text": "Уровень 0 (интерпретатор) не собирает никакого профиля; профилирование появляется только на уровне 4 (`C2`), поэтому без `C2` `JIT` не знает, какие методы горячие.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Профиль собирается уже на уровне 0 (интерпретатор) и уровне 3 (`C1` + MDO); именно по нему `C2` решает, что оптимизировать.",
+                "source_of_confusion": "Кажется, что профилирование — привилегия самого «умного» уровня.",
+                "if_it_were_true": "Если бы профиль был только на `C2`, `JVM` не знала бы, какие методы продвигать до `C2`.",
+                "how_it_should_be": "Профиль собирают интерпретатор и `C1`-уровни; `C2` лишь использует уже накопленный профиль."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "`JIT` компилирует весь байт-код приложения один раз при старте `JVM` (ahead-of-time): после запуска интерпретатор уже не используется, а Tiered Compilation просто выбирает один из двух компиляторов заранее.",
               "correct": false,
               "sections": {
@@ -1157,8 +1169,8 @@
                 "if_it_were_true": "Если бы всё компилировалось при старте, не было бы warm-up и медленных первых минут работы.",
                 "how_it_should_be": "`JIT` компилирует hot-методы на лету (Tier 1→4); холодный код остаётся интерпретируемым."
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Tiered Compilation означает, что `C2` компилирует быстрее `C1` благодаря более зрелому оптимизатору, поэтому по-настоящему hot-методы разумно отправлять сразу на уровень 4, минуя `C1` и промежуточное профилирование.",
@@ -1168,18 +1180,6 @@
                 "source_of_confusion": "«`C2` даёт более быстрый КОД» ошибочно распространяют на скорость самой КОМПИЛЯЦИИ и делают вывод, что `C1` можно пропустить.",
                 "if_it_were_true": "Если бы `C2` компилировал быстрее, `C1` и уровни 1-3 были бы не нужны, а Tiered Compilation не давал бы выигрыша по времени старта.",
                 "how_it_should_be": "`C1` быстрый на компиляцию, `C2` медленный, но даёт оптимальный код; уровни 0→3 нужны, чтобы `C2` работал по собранному профилю."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Уровень 0 (интерпретатор) не собирает никакого профиля; профилирование появляется только на уровне 4 (`C2`), поэтому без `C2` `JIT` не знает, какие методы горячие.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Профиль собирается уже на уровне 0 (интерпретатор) и уровне 3 (`C1` + MDO); именно по нему `C2` решает, что оптимизировать.",
-                "source_of_confusion": "Кажется, что профилирование — привилегия самого «умного» уровня.",
-                "if_it_were_true": "Если бы профиль был только на `C2`, `JVM` не знала бы, какие методы продвигать до `C2`.",
-                "how_it_should_be": "Профиль собирают интерпретатор и `C1`-уровни; `C2` лишь использует уже накопленный профиль."
               },
               "label": "C",
               "order": 2
@@ -1222,18 +1222,6 @@
               "order": 0
             },
             {
-              "text": "Warm-up — это миф: `JVM` компилирует все методы в нативный код мгновенно при старте, поэтому первый запрос обрабатывается ровно с той же скоростью, что и миллионный.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Warm-up реален: на старте работает интерпретатор/`C1`, а `C2` оптимизирует hot-методы лишь спустя минуты, поэтому первые запросы медленнее в 5-10 раз.",
-                "source_of_confusion": "Хочется верить в мгновенную пиковую производительность, отсюда отрицание warm-up.",
-                "if_it_were_true": "Если бы warm-up не было, не существовало бы практики прогрева перед подачей трафика.",
-                "how_it_should_be": "Первые минуты медленнее из-за поэтапной `JIT`-компиляции; пиковая скорость достигается после прогрева."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Чтобы убрать warm-up, нужно сразу подавать 100% трафика на новый pod: чем выше нагрузка с первой секунды, тем быстрее `JIT` всё скомпилирует и тем меньше деградация.",
               "correct": false,
               "sections": {
@@ -1242,8 +1230,8 @@
                 "if_it_were_true": "Если бы это работало, не было бы рекомендации делать постепенный ramp-up и readiness-задержку.",
                 "how_it_should_be": "Трафик наращивают постепенно (ramp-up), дав `JIT` прогреть hot-методы, а не вливают 100% сразу."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Для корректного бенчмарка нужно сравнивать холодный новый инстанс со старым прогретым: разница в первые секунды и есть честный показатель эффекта изменения.",
@@ -1253,6 +1241,18 @@
                 "source_of_confusion": "Cold-start легко наблюдать при рестарте, поэтому его берут за эталон сравнения.",
                 "if_it_were_true": "Если бы cold vs warm был честным, любой рестарт «улучшал» бы метрики просто за счёт прогрева.",
                 "how_it_should_be": "Бенчмаркают только прогретые инстансы под одинаковым профилем; cold-start меряют отдельно."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Warm-up — это миф: `JVM` компилирует все методы в нативный код мгновенно при старте, поэтому первый запрос обрабатывается ровно с той же скоростью, что и миллионный.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Warm-up реален: на старте работает интерпретатор/`C1`, а `C2` оптимизирует hot-методы лишь спустя минуты, поэтому первые запросы медленнее в 5-10 раз.",
+                "source_of_confusion": "Хочется верить в мгновенную пиковую производительность, отсюда отрицание warm-up.",
+                "if_it_were_true": "Если бы warm-up не было, не существовало бы практики прогрева перед подачей трафика.",
+                "how_it_should_be": "Первые минуты медленнее из-за поэтапной `JIT`-компиляции; пиковая скорость достигается после прогрева."
               },
               "label": "D",
               "order": 3
@@ -1269,6 +1269,30 @@
           "question_text": "Что такое Escape Analysis и какие оптимизации она включает?",
           "options": [
             {
+              "text": "Scalar Replacement означает, что `JIT` заменяет несколько объектов одним общим синглтоном в heap, чтобы сэкономить память на одинаковых экземплярах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Scalar Replacement раскладывает объект, не покидающий метод, в отдельные поля-скаляры (на регистрах/стеке) БЕЗ аллокации; это не объединение в синглтон.",
+                "source_of_confusion": "«Scalar» путают с «общий/единственный экземпляр».",
+                "if_it_were_true": "Если бы это был синглтон в heap, аллокация бы осталась, а смысл оптимизации — её устранить.",
+                "how_it_should_be": "Scalar Replacement устраняет аллокацию, разложив объект в скалярные поля, а не заменяя его синглтоном."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Escape Analysis` добавляет синхронизацию вокруг каждого локального объекта для thread-safety; флаг `-XX:+EliminateLocks` наоборот включает дополнительные блокировки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lock Elision УДАЛЯЕТ ненужные `synchronized` для не-escape объектов; `-XX:+EliminateLocks` именно убирает блокировки, а не добавляет их.",
+                "source_of_confusion": "Тему «locks» в названии флага читают наоборот.",
+                "if_it_were_true": "Если бы анализ добавлял локи, он бы замедлял код, а не оптимизировал его.",
+                "how_it_should_be": "Для локальных не-escape объектов синхронизация удаляется (lock elision), а не добавляется."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "`Escape Analysis` определяет, какие объекты пора эвакуировать из `Eden` в `Old Generation` во время Young GC; это часть работы сборщика мусора, а не `JIT`-компилятора.",
               "correct": false,
               "sections": {
@@ -1277,8 +1301,8 @@
                 "if_it_were_true": "Если бы это была работа `GC`, она не отключалась бы флагом `-XX:-DoEscapeAnalysis` у компилятора.",
                 "how_it_should_be": "`Escape Analysis` делает `C2` на этапе компиляции, решая судьбу аллокации; promotion в `Old` — дело `GC`."
               },
-              "label": "A",
-              "order": 0
+              "label": "C",
+              "order": 2
             },
             {
               "text": "`Escape Analysis` — анализ `C2`, определяющий, выходит ли объект за пределы метода или потока. На основе результата применяются три оптимизации: Scalar Replacement (объект, не покидающий метод, раскладывается в поля-скаляры без аллокации на heap), Stack Allocation (через scalar replacement), Lock Elision (удаление ненужных `synchronized`, если объект не escape). Флаги (default true): `-XX:+DoEscapeAnalysis`, `-XX:+EliminateAllocations`, `-XX:+EliminateLocks`.",
@@ -1289,30 +1313,6 @@
                 "when_to_apply": "Эту оптимизацию учитывают, объясняя, почему создание short-lived объектов в Java часто бесплатно — `C2` превращает `new Point(x,y)` в поля на стеке.",
                 "edge_cases": "Escape analysis срабатывает только когда `C2` уверен, что объект не escape: ссылка в поле, передача в неинлайненный метод или возврат из метода ломают анализ, и аллокация остаётся на heap.",
                 "related": "[[jvm-performance-tuning-interview#Q13]] allocation rate [[jvm-performance-tuning-interview#Q20]] Tiered Compilation [[jvm-performance-tuning-interview#Q24]] inlining открывает оптимизации"
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Scalar Replacement означает, что `JIT` заменяет несколько объектов одним общим синглтоном в heap, чтобы сэкономить память на одинаковых экземплярах.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Scalar Replacement раскладывает объект, не покидающий метод, в отдельные поля-скаляры (на регистрах/стеке) БЕЗ аллокации; это не объединение в синглтон.",
-                "source_of_confusion": "«Scalar» путают с «общий/единственный экземпляр».",
-                "if_it_were_true": "Если бы это был синглтон в heap, аллокация бы осталась, а смысл оптимизации — её устранить.",
-                "how_it_should_be": "Scalar Replacement устраняет аллокацию, разложив объект в скалярные поля, а не заменяя его синглтоном."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Escape Analysis` добавляет синхронизацию вокруг каждого локального объекта для thread-safety; флаг `-XX:+EliminateLocks` наоборот включает дополнительные блокировки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Lock Elision УДАЛЯЕТ ненужные `synchronized` для не-escape объектов; `-XX:+EliminateLocks` именно убирает блокировки, а не добавляет их.",
-                "source_of_confusion": "Тему «locks» в названии флага читают наоборот.",
-                "if_it_were_true": "Если бы анализ добавлял локи, он бы замедлял код, а не оптимизировал его.",
-                "how_it_should_be": "Для локальных не-escape объектов синхронизация удаляется (lock elision), а не добавляется."
               },
               "label": "D",
               "order": 3
@@ -1389,18 +1389,6 @@
           "question_text": "Что такое On-Stack Replacement (OSR) и Inlining?",
           "options": [
             {
-              "text": "OSR (On-Stack Replacement) — это когда `GC` перемещает объекты со стека в heap во время паузы; к `JIT`-компиляции цикла он отношения не имеет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "OSR — это `JIT`-механизм: замена интерпретируемого кода метода на скомпилированный прямо во время выполнения (важно для длинных циклов), а не перемещение объектов `GC`.",
-                "source_of_confusion": "«On-Stack» ассоциируют со стеком объектов и работой `GC`.",
-                "if_it_were_true": "Если бы OSR был про `GC`, он не управлялся бы порогами компиляции `JIT`.",
-                "how_it_should_be": "OSR подменяет код выполняющегося метода на лету; перемещение объектов — задача `GC`, не OSR."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Inlining — это вынос тела метода в отдельную функцию для переиспользования; цель — уменьшить размер скомпилированного кода за счёт устранения дублирования.",
               "correct": false,
               "sections": {
@@ -1408,6 +1396,19 @@
                 "source_of_confusion": "Термин путают с обычным рефакторингом «extract method».",
                 "if_it_were_true": "Если бы inlining выносил код, он не открывал бы escape analysis и constant folding на развёрнутом коде.",
                 "how_it_should_be": "Inlining встраивает callee в caller, устраняя накладные расходы вызова; это не вынос в функцию."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "OSR (On-Stack Replacement) — замена интерпретируемого кода на `JIT`-скомпилированный прямо во время выполнения метода, без ожидания следующего вызова; важна для длинных циклов (`JIT` подменяет код в середине цикла). Inlining — встраивание тела вызываемого метода в вызывающий, самая важная оптимизация `JIT`. Флаги: `-XX:MaxInlineSize=35`, `-XX:FreqInlineSize=325`, `-XX:InlineSmallCode=2000`; диагностика `-XX:+PrintInlining`.",
+              "correct": true,
+              "sections": {
+                "explanation": "OSR подменяет код выполняющегося метода на лету (важно для длинных циклов), а inlining встраивает callee в caller, открывая дорогу остальным оптимизациям.",
+                "example": "Пример OSR: цикл на `10_000_000` итераций оптимизируется прямо в процессе, не дожидаясь повторного вызова метода. Пример inlining: `doubleIt(x)` встраивается, и `calculate()` превращается в `x * 2 + 1`.",
+                "when_to_apply": "Эти механизмы важны для интервью: inlining открывает двери другим оптимизациям (escape analysis, constant folding, dead code elimination работают лучше на развёрнутом коде).",
+                "edge_cases": "Inlining ограничен размером метода (`MaxInlineSize`/`FreqInlineSize`): слишком крупный метод не встроится, поэтому горячие пути держат компактными, иначе `C2` выдаст «callee is too large».",
+                "related": "[[jvm-performance-tuning-interview#Q20]] Tiered Compilation [[jvm-performance-tuning-interview#Q22]] escape analysis [[jvm-performance-tuning-interview#Q13]] снижение аллокаций"
               },
               "label": "B",
               "order": 1
@@ -1425,14 +1426,13 @@
               "order": 2
             },
             {
-              "text": "OSR (On-Stack Replacement) — замена интерпретируемого кода на `JIT`-скомпилированный прямо во время выполнения метода, без ожидания следующего вызова; важна для длинных циклов (`JIT` подменяет код в середине цикла). Inlining — встраивание тела вызываемого метода в вызывающий, самая важная оптимизация `JIT`. Флаги: `-XX:MaxInlineSize=35`, `-XX:FreqInlineSize=325`, `-XX:InlineSmallCode=2000`; диагностика `-XX:+PrintInlining`.",
-              "correct": true,
+              "text": "OSR (On-Stack Replacement) — это когда `GC` перемещает объекты со стека в heap во время паузы; к `JIT`-компиляции цикла он отношения не имеет.",
+              "correct": false,
               "sections": {
-                "explanation": "OSR подменяет код выполняющегося метода на лету (важно для длинных циклов), а inlining встраивает callee в caller, открывая дорогу остальным оптимизациям.",
-                "example": "Пример OSR: цикл на `10_000_000` итераций оптимизируется прямо в процессе, не дожидаясь повторного вызова метода. Пример inlining: `doubleIt(x)` встраивается, и `calculate()` превращается в `x * 2 + 1`.",
-                "when_to_apply": "Эти механизмы важны для интервью: inlining открывает двери другим оптимизациям (escape analysis, constant folding, dead code elimination работают лучше на развёрнутом коде).",
-                "edge_cases": "Inlining ограничен размером метода (`MaxInlineSize`/`FreqInlineSize`): слишком крупный метод не встроится, поэтому горячие пути держат компактными, иначе `C2` выдаст «callee is too large».",
-                "related": "[[jvm-performance-tuning-interview#Q20]] Tiered Compilation [[jvm-performance-tuning-interview#Q22]] escape analysis [[jvm-performance-tuning-interview#Q13]] снижение аллокаций"
+                "what_actually": "OSR — это `JIT`-механизм: замена интерпретируемого кода метода на скомпилированный прямо во время выполнения (важно для длинных циклов), а не перемещение объектов `GC`.",
+                "source_of_confusion": "«On-Stack» ассоциируют со стеком объектов и работой `GC`.",
+                "if_it_were_true": "Если бы OSR был про `GC`, он не управлялся бы порогами компиляции `JIT`.",
+                "how_it_should_be": "OSR подменяет код выполняющегося метода на лету; перемещение объектов — задача `GC`, не OSR."
               },
               "label": "D",
               "order": 3
@@ -1449,6 +1449,18 @@
           "question_text": "Как искать CPU bottleneck в JVM-приложении?",
           "options": [
             {
+              "text": "Для поиска `CPU` bottleneck достаточно посмотреть `top`/`htop` по процессу: они точно показывают, какой именно Java-метод потребляет `CPU`, без всякого профайлера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`top` показывает потребление процесса/потока, но не метод; нужен `async-profiler`/`JFR`, чтобы получить method-level flame graph.",
+                "source_of_confusion": "Утилиты ОС знакомы и доступны, поэтому кажутся достаточными для Java.",
+                "if_it_were_true": "Если бы `top` показывал методы, не нужны были бы flame graph и `JFR`.",
+                "how_it_should_be": "Для method-level картины снимают flame graph профайлером; `top` даёт лишь общий процент по процессу."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Рабочий путь: метрики `CPU` + latency (`Prometheus`/`Grafana`) → если `CPU` > 80% → `async-profiler`/`JFR` CPU flame graph → выделение hot-методов и lock contention → определить, проблема в коде (оптимизация алгоритма) или в `JVM` (тюнинг `GC`/`JIT`). Если `CPU` < 80% — проверить `I/O`, locks, thread contention. Инструменты: `./profiler.sh -d 30 -e cpu <pid>` (без safepoint bias), `jcmd <pid> JFR.start settings=profile`, alloc-профилирование `-e alloc`.",
               "correct": true,
               "sections": {
@@ -1458,32 +1470,8 @@
                 "edge_cases": "Частая ошибка — лечить алгоритмическую проблему тюнингом `GC`: если bottleneck в `CPU`-горячем методе, никакие `GC`-флаги не помогут, нужна оптимизация кода.",
                 "related": "[[jvm-performance-tuning-interview#Q2]] какие метрики мониторить [[jvm-performance-tuning-interview#Q26]] safepoint bias [[jvm-performance-tuning-interview#Q13]] allocation profiling"
               },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Высокий `CPU` в большинстве случаев означает, что все ядра съедает `GC`, поэтому первым шагом стоит увеличить heap и перейти на `ZGC`: с большим heap и низкопаузным сборщиком `GC` перестаёт молотить `CPU`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Высокий `CPU` чаще всего в коде приложения (алгоритмы, lock contention), а не в `GC`. Сначала профиль (`async-profiler`/`JFR`) подтверждает источник, и только потом решают, тюнить `GC` или переписывать код.",
-                "source_of_confusion": "`GC` — заметная статья `CPU`, поэтому его назначают виновником по умолчанию, пропуская шаг с flame graph.",
-                "if_it_were_true": "Если бы `CPU` всегда упирался в `GC`, профилирование было бы не нужно, а смена сборщика чинила бы любой `CPU`-bottleneck.",
-                "how_it_should_be": "Сначала подтвердить источник профайлером; тюнинг `GC`/`ZGC` помогает, только если `CPU` действительно тратится на сборку."
-              },
               "label": "B",
               "order": 1
-            },
-            {
-              "text": "Для поиска `CPU` bottleneck достаточно посмотреть `top`/`htop` по процессу: они точно показывают, какой именно Java-метод потребляет `CPU`, без всякого профайлера.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`top` показывает потребление процесса/потока, но не метод; нужен `async-profiler`/`JFR`, чтобы получить method-level flame graph.",
-                "source_of_confusion": "Утилиты ОС знакомы и доступны, поэтому кажутся достаточными для Java.",
-                "if_it_were_true": "Если бы `top` показывал методы, не нужны были бы flame graph и `JFR`.",
-                "how_it_should_be": "Для method-level картины снимают flame graph профайлером; `top` даёт лишь общий процент по процессу."
-              },
-              "label": "C",
-              "order": 2
             },
             {
               "text": "Стандартный safepoint-based профайлер даёт достаточно точную картину `CPU`, поэтому выбор инструмента вторичен: для поиска hot-методов подойдёт любой из привычных профилировщиков без специальной настройки.",
@@ -1493,6 +1481,18 @@
                 "source_of_confusion": "Раз профайлер показывает какой-то стек, его считают верным, не зная про систематический сдвиг выборки к safepoint'ам.",
                 "if_it_were_true": "Если бы все профайлеры были одинаково точны, safepoint bias не был бы известной проблемой, а `async-profiler` не создавали бы специально для её обхода.",
                 "how_it_should_be": "Для `CPU`-профиля брать инструмент без safepoint bias (`async-profiler`, `JFR`); выбор инструмента влияет на корректность картины."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Высокий `CPU` в большинстве случаев означает, что все ядра съедает `GC`, поэтому первым шагом стоит увеличить heap и перейти на `ZGC`: с большим heap и низкопаузным сборщиком `GC` перестаёт молотить `CPU`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Высокий `CPU` чаще всего в коде приложения (алгоритмы, lock contention), а не в `GC`. Сначала профиль (`async-profiler`/`JFR`) подтверждает источник, и только потом решают, тюнить `GC` или переписывать код.",
+                "source_of_confusion": "`GC` — заметная статья `CPU`, поэтому его назначают виновником по умолчанию, пропуская шаг с flame graph.",
+                "if_it_were_true": "Если бы `CPU` всегда упирался в `GC`, профилирование было бы не нужно, а смена сборщика чинила бы любой `CPU`-bottleneck.",
+                "how_it_should_be": "Сначала подтвердить источник профайлером; тюнинг `GC`/`ZGC` помогает, только если `CPU` действительно тратится на сборку."
               },
               "label": "D",
               "order": 3
@@ -1509,16 +1509,28 @@
           "question_text": "Что такое safepoint bias и почему профили могут врать?",
           "options": [
             {
-              "text": "Safepoint — это точка, где приложение само решает приостановиться для логирования; к профилированию и остановке потоков для `GC` понятие safepoint отношения не имеет.",
+              "text": "Safepoint bias делает профиль ТОЧНЕЕ: снятие стеков только в safepoint гарантирует, что все hot-методы попадают в выборку без искажений.",
               "correct": false,
               "sections": {
-                "what_actually": "Safepoint — это место, где `JVM` может безопасно остановить ВСЕ потоки (для `GC`, deopt, profiling); это не пользовательская точка логирования.",
-                "source_of_confusion": "Слово «safe» трактуют бытово, в отрыве от механизма остановки потоков.",
-                "if_it_were_true": "Если бы safepoint был про логи, не было бы связи с safepoint bias профайлеров и stop-the-world.",
-                "how_it_should_be": "Safepoint — точка безопасной остановки потоков `JVM`; именно в ней snapshot-профайлеры снимают стек."
+                "what_actually": "Наоборот: snapshot только в safepoint ИСКАЖАЕТ профиль — короткие методы и counted loops между safepoints недооцениваются или невидимы.",
+                "source_of_confusion": "«Безопасные точки» звучат как «надёжные/точные», отсюда инверсия смысла.",
+                "if_it_were_true": "Если бы bias повышал точность, не советовали бы переходить на `async-profiler` без него.",
+                "how_it_should_be": "Safepoint bias занижает короткие hot-методы; точную картину дают профайлеры без привязки к safepoint."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "Чтобы избавиться от safepoint bias, нужно увеличить частоту safepoints через флаги; `async-profiler` и `JFR` страдают от bias ровно так же, как остальные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`async-profiler` и `JFR` (AsyncGetCallTrace) как раз НЕ имеют safepoint bias — они снимают стеки в произвольных точках, а не наращиванием частоты safepoints.",
+                "source_of_confusion": "Кажется, что проблему решает «больше safepoints», а не другой механизм сэмплинга.",
+                "if_it_were_true": "Если бы они страдали от bias, их не рекомендовали бы как решение проблемы.",
+                "how_it_should_be": "Решение — профайлер без safepoint-привязки (`async-profiler`/`JFR`), а не учащение safepoints."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Safepoint — точка, где `JVM` может безопасно остановить поток (для `GC`, deopt). Часть профилировщиков снимает стеки ТОЛЬКО в safepoint, отсюда safepoint bias. Последствия: короткие hot-методы между safepoints недооцениваются, counted loops без safepoint polls невидимы, профиль может показать 100% времени в `Thread.sleep()` вместо реального bottleneck. Решение — `async-profiler` или `JFR` (AsyncGetCallTrace), снимающие стеки в произвольных точках.",
@@ -1530,29 +1542,17 @@
                 "edge_cases": "Bias особенно искажает counted loops (циклы по `int`-счётчику без safepoint poll внутри): профайлер «не видит» их тело, и реальный hot-цикл выпадает из картины.",
                 "related": "[[jvm-performance-tuning-interview#Q25]] поиск CPU bottleneck [[jvm-performance-tuning-interview#Q23]] PrintCompilation [[jvm-performance-tuning-interview#Q3]] верификация результатов"
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Safepoint bias делает профиль ТОЧНЕЕ: снятие стеков только в safepoint гарантирует, что все hot-методы попадают в выборку без искажений.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: snapshot только в safepoint ИСКАЖАЕТ профиль — короткие методы и counted loops между safepoints недооцениваются или невидимы.",
-                "source_of_confusion": "«Безопасные точки» звучат как «надёжные/точные», отсюда инверсия смысла.",
-                "if_it_were_true": "Если бы bias повышал точность, не советовали бы переходить на `async-profiler` без него.",
-                "how_it_should_be": "Safepoint bias занижает короткие hot-методы; точную картину дают профайлеры без привязки к safepoint."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Чтобы избавиться от safepoint bias, нужно увеличить частоту safepoints через флаги; `async-profiler` и `JFR` страдают от bias ровно так же, как остальные.",
+              "text": "Safepoint — это точка, где приложение само решает приостановиться для логирования; к профилированию и остановке потоков для `GC` понятие safepoint отношения не имеет.",
               "correct": false,
               "sections": {
-                "what_actually": "`async-profiler` и `JFR` (AsyncGetCallTrace) как раз НЕ имеют safepoint bias — они снимают стеки в произвольных точках, а не наращиванием частоты safepoints.",
-                "source_of_confusion": "Кажется, что проблему решает «больше safepoints», а не другой механизм сэмплинга.",
-                "if_it_were_true": "Если бы они страдали от bias, их не рекомендовали бы как решение проблемы.",
-                "how_it_should_be": "Решение — профайлер без safepoint-привязки (`async-profiler`/`JFR`), а не учащение safepoints."
+                "what_actually": "Safepoint — это место, где `JVM` может безопасно остановить ВСЕ потоки (для `GC`, deopt, profiling); это не пользовательская точка логирования.",
+                "source_of_confusion": "Слово «safe» трактуют бытово, в отрыве от механизма остановки потоков.",
+                "if_it_were_true": "Если бы safepoint был про логи, не было бы связи с safepoint bias профайлеров и stop-the-world.",
+                "how_it_should_be": "Safepoint — точка безопасной остановки потоков `JVM`; именно в ней snapshot-профайлеры снимают стек."
               },
               "label": "D",
               "order": 3
@@ -1569,13 +1569,14 @@
           "question_text": "Как устроен Class Loading в JVM и какие проблемы он вызывает?",
           "options": [
             {
-              "text": "`ClassLoader` в `JVM` плоский: есть один-единственный загрузчик, который грузит все классы из classpath, поэтому никакой иерархии и делегирования не существует.",
-              "correct": false,
+              "text": "`ClassLoader` организован по delegation hierarchy: Bootstrap (java.base) → Platform (java.sql, java.xml) → Application (classpath) → Custom (Spring, Tomcat, OSGi). Принцип parent-first: загрузчик спрашивает родителя первым, и только если тот не нашёл — загружает сам (так `java.lang.String` всегда один). Проблемы: `ClassNotFoundException`, `NoClassDefFoundError`, `LinkageError` (разные loaders загрузили один класс), Metaspace leak, slow startup. Диагностика: `-Xlog:class+load=info`, `-Xlog:class+unload=info`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Загрузчиков несколько и они образуют иерархию (Bootstrap → Platform → Application → Custom) с parent-first делегированием, а не один плоский loader.",
-                "source_of_confusion": "В простых приложениях кажется, что всё грузит «один classpath».",
-                "if_it_were_true": "Если бы loader был один, не возникало бы `LinkageError` от разных загрузчиков и кастомных classloaders.",
-                "how_it_should_be": "Загрузка идёт по иерархии с делегированием родителю; единственный плоский loader — упрощение."
+                "explanation": "Загрузчики образуют иерархию с parent-first делегированием, что гарантирует единственность core-классов, но порождает `LinkageError` и Metaspace-leak при кастомных loaders.",
+                "example": "Пример `LinkageError`: два разных classloaders загрузили класс с одним именем, и cast между ними падает, хотя байт-код идентичен — частая боль в app-серверах и hot-reload.",
+                "when_to_apply": "Иерархию и parent-first учитывают при отладке конфликтов версий библиотек и `ClassCastException` между «одинаковыми» классами из разных загрузчиков.",
+                "edge_cases": "Parent-first гарантирует единственность core-классов, но ломается в кастомных child-first загрузчиках (некоторые app-серверы), где child грузит свою версию раньше родителя — отсюда тонкие конфликты версий.",
+                "related": "[[jvm-performance-tuning-interview#Q19]] настройка Metaspace [[jvm-performance-tuning-interview#Q28]] metaspace leak [[jvm-performance-tuning-interview#Q32]] startup time"
               },
               "label": "A",
               "order": 0
@@ -1593,14 +1594,13 @@
               "order": 1
             },
             {
-              "text": "`ClassLoader` организован по delegation hierarchy: Bootstrap (java.base) → Platform (java.sql, java.xml) → Application (classpath) → Custom (Spring, Tomcat, OSGi). Принцип parent-first: загрузчик спрашивает родителя первым, и только если тот не нашёл — загружает сам (так `java.lang.String` всегда один). Проблемы: `ClassNotFoundException`, `NoClassDefFoundError`, `LinkageError` (разные loaders загрузили один класс), Metaspace leak, slow startup. Диагностика: `-Xlog:class+load=info`, `-Xlog:class+unload=info`.",
-              "correct": true,
+              "text": "`ClassLoader` в `JVM` плоский: есть один-единственный загрузчик, который грузит все классы из classpath, поэтому никакой иерархии и делегирования не существует.",
+              "correct": false,
               "sections": {
-                "explanation": "Загрузчики образуют иерархию с parent-first делегированием, что гарантирует единственность core-классов, но порождает `LinkageError` и Metaspace-leak при кастомных loaders.",
-                "example": "Пример `LinkageError`: два разных classloaders загрузили класс с одним именем, и cast между ними падает, хотя байт-код идентичен — частая боль в app-серверах и hot-reload.",
-                "when_to_apply": "Иерархию и parent-first учитывают при отладке конфликтов версий библиотек и `ClassCastException` между «одинаковыми» классами из разных загрузчиков.",
-                "edge_cases": "Parent-first гарантирует единственность core-классов, но ломается в кастомных child-first загрузчиках (некоторые app-серверы), где child грузит свою версию раньше родителя — отсюда тонкие конфликты версий.",
-                "related": "[[jvm-performance-tuning-interview#Q19]] настройка Metaspace [[jvm-performance-tuning-interview#Q28]] metaspace leak [[jvm-performance-tuning-interview#Q32]] startup time"
+                "what_actually": "Загрузчиков несколько и они образуют иерархию (Bootstrap → Platform → Application → Custom) с parent-first делегированием, а не один плоский loader.",
+                "source_of_confusion": "В простых приложениях кажется, что всё грузит «один classpath».",
+                "if_it_were_true": "Если бы loader был один, не возникало бы `LinkageError` от разных загрузчиков и кастомных classloaders.",
+                "how_it_should_be": "Загрузка идёт по иерархии с делегированием родителю; единственный плоский loader — упрощение."
               },
               "label": "C",
               "order": 2
@@ -1641,18 +1641,6 @@
               "order": 0
             },
             {
-              "text": "Каждый `Groovy`/script-eval переиспользует один и тот же ClassLoader, поэтому динамическая генерация классов в принципе не может вызвать Metaspace leak.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: `Groovy`/script-eval часто создаёт НОВЫЙ ClassLoader на каждый eval, и без кеширования это классическая причина Metaspace leak.",
-                "source_of_confusion": "Кажется, что фреймворк «умный» и сам переиспользует загрузчики.",
-                "if_it_were_true": "Если бы ClassLoader переиспользовался, dynamic class generation не упоминали бы как частую причину leak.",
-                "how_it_should_be": "Dynamic generation плодит ClassLoader'ы и классы; их кешируют, иначе `Metaspace` растёт."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Диагностировать Metaspace leak можно только перезапуском `JVM` и замером, через сколько времени снова упадёт; инструментов вроде `jcmd VM.classloader_stats` для этого нет.",
               "correct": false,
               "sections": {
@@ -1660,6 +1648,18 @@
                 "source_of_confusion": "Кажется, что class-loading непрозрачен и наблюдаем только по факту OOM.",
                 "if_it_were_true": "Если бы инструментов не было, нельзя было бы найти удерживаемый ClassLoader в heap dump.",
                 "how_it_should_be": "Leak диагностируют через `classloader_stats`, NMT и heap dump, а не методом перезапусков."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Каждый `Groovy`/script-eval переиспользует один и тот же ClassLoader, поэтому динамическая генерация классов в принципе не может вызвать Metaspace leak.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `Groovy`/script-eval часто создаёт НОВЫЙ ClassLoader на каждый eval, и без кеширования это классическая причина Metaspace leak.",
+                "source_of_confusion": "Кажется, что фреймворк «умный» и сам переиспользует загрузчики.",
+                "if_it_were_true": "Если бы ClassLoader переиспользовался, dynamic class generation не упоминали бы как частую причину leak.",
+                "how_it_should_be": "Dynamic generation плодит ClassLoader'ы и классы; их кешируют, иначе `Metaspace` растёт."
               },
               "label": "C",
               "order": 2
@@ -1702,13 +1702,13 @@
               "order": 0
             },
             {
-              "text": "В Kubernetes heap нужно выставлять в 100% от memory limit (`-XX:MaxRAMPercentage=100`): контейнер изолирован, поэтому вся память безопасно отдаётся под heap.",
+              "text": "Для QoS Guaranteed в Kubernetes нужно, чтобы `limits` были вдвое больше `requests` по памяти; равные `limits` и `requests` дают худший класс обслуживания.",
               "correct": false,
               "sections": {
-                "what_actually": "100% под heap не оставляет места под non-heap (metaspace, stacks, direct, code cache), и pod ловит `OOMKilled`; берут 60-75%.",
-                "source_of_confusion": "«Контейнер изолирован» создаёт ложное ощущение, что вся память — для heap.",
-                "if_it_were_true": "Если бы 100% было безопасно, не существовало бы правила про 25-30% запаса на non-heap.",
-                "how_it_should_be": "Heap = 60-75% от limit; остаток резервируют под non-heap, иначе `OOMKilled`."
+                "what_actually": "QoS Guaranteed требует `limits` = `requests` (по `CPU` и памяти); неравные значения дают Burstable, а не Guaranteed.",
+                "source_of_confusion": "Кажется, что больший `limit` = «больше гарантий», отсюда инверсия правила.",
+                "if_it_were_true": "Если бы Guaranteed требовал `limits` > `requests`, под со строго равными значениями не получал бы этот класс.",
+                "how_it_should_be": "Guaranteed — это `limits` == `requests`; превышение лимита над запросом даёт Burstable."
               },
               "label": "B",
               "order": 1
@@ -1726,13 +1726,13 @@
               "order": 2
             },
             {
-              "text": "Для QoS Guaranteed в Kubernetes нужно, чтобы `limits` были вдвое больше `requests` по памяти; равные `limits` и `requests` дают худший класс обслуживания.",
+              "text": "В Kubernetes heap нужно выставлять в 100% от memory limit (`-XX:MaxRAMPercentage=100`): контейнер изолирован, поэтому вся память безопасно отдаётся под heap.",
               "correct": false,
               "sections": {
-                "what_actually": "QoS Guaranteed требует `limits` = `requests` (по `CPU` и памяти); неравные значения дают Burstable, а не Guaranteed.",
-                "source_of_confusion": "Кажется, что больший `limit` = «больше гарантий», отсюда инверсия правила.",
-                "if_it_were_true": "Если бы Guaranteed требовал `limits` > `requests`, под со строго равными значениями не получал бы этот класс.",
-                "how_it_should_be": "Guaranteed — это `limits` == `requests`; превышение лимита над запросом даёт Burstable."
+                "what_actually": "100% под heap не оставляет места под non-heap (metaspace, stacks, direct, code cache), и pod ловит `OOMKilled`; берут 60-75%.",
+                "source_of_confusion": "«Контейнер изолирован» создаёт ложное ощущение, что вся память — для heap.",
+                "if_it_were_true": "Если бы 100% было безопасно, не существовало бы правила про 25-30% запаса на non-heap.",
+                "how_it_should_be": "Heap = 60-75% от limit; остаток резервируют под non-heap, иначе `OOMKilled`."
               },
               "label": "D",
               "order": 3
@@ -1749,18 +1749,6 @@
           "question_text": "Какие ошибки в контейнерном tuning встречаются чаще всего?",
           "options": [
             {
-              "text": "Одинаковые `JVM`-флаги для всех сервисов кластера — оправданное упрощение эксплуатации: единый шаблон снижает риск ошибок конфигурации, а разброс профилей нагрузки между сервисами на практике невелик и памятью можно пренебречь.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Единый набор флагов ведёт к over/under provisioning: сервисы отличаются профилем нагрузки и памяти, поэтому `-Xmx`, `Metaspace` и `GC` подбирают под каждый, а не копируют один шаблон.",
-                "source_of_confusion": "Операционное удобство единого конфига перевешивает в голове реальную разницу профилей нагрузки между сервисами.",
-                "if_it_were_true": "Если бы профили были одинаковы, персональный сайзинг heap/`Metaspace` был бы лишней работой, а `OOMKilled` от единых флагов не случался бы.",
-                "how_it_should_be": "Флаги подбирают под профиль каждого сервиса; единый шаблон — стартовая точка, а не финальная конфигурация."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Частые ошибки: `-Xmx` = memory limit (`OOMKilled`, non-heap не учтён → берут 60-75%); нет `MaxMetaspaceSize` (Metaspace grows → `OOMKilled`, ограничить 256-512 МБ); игнорирование Direct Buffers (`NIO` ест native → `-XX:MaxDirectMemorySize`); одинаковые флаги для всех сервисов (over/under provisioning → профиль под каждый); слишком жёсткие `CPU` limits (throttling → `GC` паузы растут); нет `-XX:+UseContainerSupport` (`JVM` видит host resources); нет стресс-тестов autoscaling.",
               "correct": true,
               "sections": {
@@ -1770,20 +1758,20 @@
                 "edge_cases": "`CPU` throttling коварен: при жёстком `cpu.limit` `GC`-потоки получают меньше квоты, и паузы растут не из-за `GC`-настроек, а из-за нехватки `CPU` — лечится не флагами `GC`, а лимитами.",
                 "related": "[[jvm-performance-tuning-interview#Q29]] JVM в Kubernetes [[jvm-performance-tuning-interview#Q31]] container-aware JVM [[jvm-performance-tuning-interview#Q17]] расчёт heap"
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
-              "text": "Жёсткие `CPU` limits повышают стабильность: чем меньше `CPU` отдано контейнеру, тем меньше работы у сборщика и тем короче паузы, поэтому урезание `CPU` — безопасный способ сдержать `GC`.",
+              "text": "Одинаковые `JVM`-флаги для всех сервисов кластера — оправданное упрощение эксплуатации: единый шаблон снижает риск ошибок конфигурации, а разброс профилей нагрузки между сервисами на практике невелик и памятью можно пренебречь.",
               "correct": false,
               "sections": {
-                "what_actually": "Жёсткие `CPU` limits дают throttling: под квотой `GC`-потокам не хватает `CPU`, и паузы РАСТУТ, а не сокращаются. Ограничение `CPU` не уменьшает объём работы сборщика.",
-                "source_of_confusion": "«Меньше `CPU` → меньше нагрузки» переносят на `GC`, не учитывая, что сборка сама конкурирует за те же урезанные ядра.",
-                "if_it_were_true": "Если бы урезание `CPU` укорачивало паузы, throttling не был бы проблемой, а мониторинг `cpu.stat throttled` был бы не нужен.",
-                "how_it_should_be": "`CPU` limits ставят с запасом и мониторят throttling; нехватка `CPU` удлиняет `GC`-паузы, а не сокращает их."
+                "what_actually": "Единый набор флагов ведёт к over/under provisioning: сервисы отличаются профилем нагрузки и памяти, поэтому `-Xmx`, `Metaspace` и `GC` подбирают под каждый, а не копируют один шаблон.",
+                "source_of_confusion": "Операционное удобство единого конфига перевешивает в голове реальную разницу профилей нагрузки между сервисами.",
+                "if_it_were_true": "Если бы профили были одинаковы, персональный сайзинг heap/`Metaspace` был бы лишней работой, а `OOMKilled` от единых флагов не случался бы.",
+                "how_it_should_be": "Флаги подбирают под профиль каждого сервиса; единый шаблон — стартовая точка, а не финальная конфигурация."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Direct Buffers аллоцируются через `ByteBuffer` внутри `JVM`, поэтому они учитываются в `-Xmx` вместе с обычными объектами, и отдельно ограничивать их через `-XX:MaxDirectMemorySize` не требуется.",
@@ -1793,6 +1781,18 @@
                 "source_of_confusion": "`ByteBuffer` — Java-объект, поэтому предполагают, что и его буфер живёт в heap, хотя direct-буфер лежит в native.",
                 "if_it_were_true": "Если бы Direct Buffers входили в `-Xmx`, флага `-XX:MaxDirectMemorySize` не существовало бы, а `NIO`-нагрузка не давала бы native-роста памяти.",
                 "how_it_should_be": "Direct Buffers — native-память вне `-Xmx`; их учитывают в non-heap бюджете и ограничивают `-XX:MaxDirectMemorySize`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Жёсткие `CPU` limits повышают стабильность: чем меньше `CPU` отдано контейнеру, тем меньше работы у сборщика и тем короче паузы, поэтому урезание `CPU` — безопасный способ сдержать `GC`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Жёсткие `CPU` limits дают throttling: под квотой `GC`-потокам не хватает `CPU`, и паузы РАСТУТ, а не сокращаются. Ограничение `CPU` не уменьшает объём работы сборщика.",
+                "source_of_confusion": "«Меньше `CPU` → меньше нагрузки» переносят на `GC`, не учитывая, что сборка сама конкурирует за те же урезанные ядра.",
+                "if_it_were_true": "Если бы урезание `CPU` укорачивало паузы, throttling не был бы проблемой, а мониторинг `cpu.stat throttled` был бы не нужен.",
+                "how_it_should_be": "`CPU` limits ставят с запасом и мониторят throttling; нехватка `CPU` удлиняет `GC`-паузы, а не сокращает их."
               },
               "label": "D",
               "order": 3
@@ -1809,6 +1809,18 @@
           "question_text": "Как JVM определяет ресурсы в контейнере (Container-Aware JVM)?",
           "options": [
             {
+              "text": "Число `GC`-потоков `JVM` определяет по количеству физических ядер ноды, а не по `CPU` limit контейнера, поэтому cgroup `cpu.quota` на `ParallelGCThreads`/`ConcGCThreads` не влияет и их приходится задавать вручную в каждом поде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "С `UseContainerSupport` `JVM` выводит `ParallelGCThreads`/`ConcGCThreads` из cgroup `CPU` limit, а не из ядер ноды; при limit = 1 core `GC`-потоков будет мало, поэтому их иногда задают явно.",
+                "source_of_confusion": "Помнят до-контейнерное поведение, где потоки шли от ядер хоста, и считают, что cgroup на них не влияет.",
+                "if_it_were_true": "Если бы cgroup не влиял на `GC`-потоки, `JVM` в поде с 1 CPU поднимала бы десятки потоков сборки и упиралась в throttling.",
+                "how_it_should_be": "Число `GC`-потоков `JVM` берёт из cgroup `CPU` limit; вручную задают только при явной нехватке (`-XX:ParallelGCThreads`)."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Даже в `JDK 21` `JVM` по умолчанию видит ресурсы хост-машины, а не контейнера: она читает физические ядра и общую `RAM` узла, поэтому в Kubernetes heap безопаснее считать от ресурсов ноды, а не от лимитов пода.",
               "correct": false,
               "sections": {
@@ -1816,18 +1828,6 @@
                 "source_of_confusion": "Помнят старое (до `JDK 10`) поведение, когда `JVM` действительно видела хост, и переносят его на современные версии.",
                 "if_it_were_true": "Если бы `JVM 21` игнорировала cgroup, `UseContainerSupport` и авто-сайзинг heap от memory limit были бы бессмысленны.",
                 "how_it_should_be": "С `JDK 10+` heap считают от memory limit пода (cgroup), а не от ресурсов ноды."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Без явного `-Xmx` `JVM` в контейнере отдаёт под heap 100% memory limit, чтобы максимально использовать выделенную память; меньше — только при ручной настройке.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По умолчанию (без `-Xmx`) `JVM` берёт лишь ~25% memory limit под heap (или ~50% для small heaps), а не 100% — это консервативный дефолт.",
-                "source_of_confusion": "Кажется логичным, что `JVM` «забирает всё», раз лимит выделен ей.",
-                "if_it_were_true": "Если бы дефолт был 100%, не было бы смысла рекомендовать явный `-Xmx`/`MaxRAMPercentage`.",
-                "how_it_should_be": "Дефолтный heap — около 25% лимита; для предсказуемости его задают явно через `-Xmx`/проценты."
               },
               "label": "B",
               "order": 1
@@ -1846,13 +1846,13 @@
               "order": 2
             },
             {
-              "text": "Число `GC`-потоков `JVM` определяет по количеству физических ядер ноды, а не по `CPU` limit контейнера, поэтому cgroup `cpu.quota` на `ParallelGCThreads`/`ConcGCThreads` не влияет и их приходится задавать вручную в каждом поде.",
+              "text": "Без явного `-Xmx` `JVM` в контейнере отдаёт под heap 100% memory limit, чтобы максимально использовать выделенную память; меньше — только при ручной настройке.",
               "correct": false,
               "sections": {
-                "what_actually": "С `UseContainerSupport` `JVM` выводит `ParallelGCThreads`/`ConcGCThreads` из cgroup `CPU` limit, а не из ядер ноды; при limit = 1 core `GC`-потоков будет мало, поэтому их иногда задают явно.",
-                "source_of_confusion": "Помнят до-контейнерное поведение, где потоки шли от ядер хоста, и считают, что cgroup на них не влияет.",
-                "if_it_were_true": "Если бы cgroup не влиял на `GC`-потоки, `JVM` в поде с 1 CPU поднимала бы десятки потоков сборки и упиралась в throttling.",
-                "how_it_should_be": "Число `GC`-потоков `JVM` берёт из cgroup `CPU` limit; вручную задают только при явной нехватке (`-XX:ParallelGCThreads`)."
+                "what_actually": "По умолчанию (без `-Xmx`) `JVM` берёт лишь ~25% memory limit под heap (или ~50% для small heaps), а не 100% — это консервативный дефолт.",
+                "source_of_confusion": "Кажется логичным, что `JVM` «забирает всё», раз лимит выделен ей.",
+                "if_it_were_true": "Если бы дефолт был 100%, не было бы смысла рекомендовать явный `-Xmx`/`MaxRAMPercentage`.",
+                "how_it_should_be": "Дефолтный heap — около 25% лимита; для предсказуемости его задают явно через `-Xmx`/проценты."
               },
               "label": "D",
               "order": 3
@@ -1869,28 +1869,17 @@
           "question_text": "Как оптимизировать startup time JVM в контейнерах?",
           "options": [
             {
-              "text": "Самый надёжный способ ускорить startup — увеличить `-Xmx`: чем больше heap, тем быстрее `JVM` загружает классы и инициализирует приложение при запуске.",
-              "correct": false,
+              "text": "Быстрый startup критичен для autoscaling и rolling deployments. Техники по эффекту: AppCDS (20-40%), `-XX:TieredStopAtLevel=1` только `C1` (30-50% start, но хуже peak), Spring AOT/GraalVM native (80-95%), lazy initialization (10-30%), reduce classpath (10-20%). Примеры: `-XX:TieredStopAtLevel=1` для short-lived задач, `spring.main.lazy-initialization=true`, `-XX:SharedArchiveFile=app-cds.jsa`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Размер heap почти не влияет на startup (загрузка классов, `JIT`, инициализация бинов); ускоряют CDS, lazy init, reduce classpath, а не рост `-Xmx`.",
-                "source_of_confusion": "Привычка «больше heap — лучше» переносится и на startup.",
-                "if_it_were_true": "Если бы `-Xmx` ускорял старт, его указывали бы в техниках оптимизации startup, а его там нет.",
-                "how_it_should_be": "Startup сокращают AppCDS/lazy init/AOT; heap отвечает за runtime-память, не за время старта."
+                "explanation": "Startup сокращают, убирая работу со старта: AppCDS кеширует метаданные классов, lazy init откладывает бины, `TieredStopAtLevel=1` и GraalVM меняют модель компиляции.",
+                "example": "Цепочка ускорения: Cold Start 15-30 с → AppCDS → 10-20 с → Lazy Init → 7-15 с → `TieredStopAtLevel=1` → 5-10 с → GraalVM Native → 0.5-2 с.",
+                "when_to_apply": "Эти техники применяют, когда долгий startup мешает autoscaling/rolling deploy: подбирают по балансу выигрыша и сложности (AppCDS дёшев, GraalVM native — дорог).",
+                "edge_cases": "`-XX:TieredStopAtLevel=1` ускоряет старт, но убирает `C2` и роняет peak-производительность — годится для short-lived задач, но вреден для long-running сервиса под нагрузкой.",
+                "related": "[[jvm-performance-tuning-interview#Q20]] Tiered Compilation [[jvm-performance-tuning-interview#Q21]] warm-up в проде [[jvm-performance-tuning-interview#Q34]] CDS/AppCDS"
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "`-XX:TieredStopAtLevel=1` идеален для long-running сервисов: он включает `C2` раньше и даёт и быстрый старт, и максимальную peak-производительность одновременно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`-XX:TieredStopAtLevel=1` ОТКЛЮЧАЕТ `C2` (только `C1`): старт быстрее, но peak хуже; для long-running сервиса это вредно, он для short-lived задач.",
-                "source_of_confusion": "«Stop at 1» ошибочно читают как «дойти до уровня выше».",
-                "if_it_were_true": "Если бы он давал максимальный peak, не было бы оговорки «хуже peak perf».",
-                "how_it_should_be": "Уровень 1 — только `C1`, без `C2`; long-running сервисам нужен полный Tiered (до `C2`)."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "AppCDS и GraalVM native — это одно и то же: оба компилируют приложение в нативный бинарник ahead-of-time, дают одинаковое ускорение 80-95% и взаимозаменяемы.",
@@ -1901,18 +1890,29 @@
                 "if_it_were_true": "Если бы они были одним и тем же, не различались бы по выигрышу (20-40% vs 80-95%) и сложности.",
                 "how_it_should_be": "AppCDS — class-data sharing; GraalVM native — AOT-компиляция; эффект и стоимость у них разные."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Самый надёжный способ ускорить startup — увеличить `-Xmx`: чем больше heap, тем быстрее `JVM` загружает классы и инициализирует приложение при запуске.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Размер heap почти не влияет на startup (загрузка классов, `JIT`, инициализация бинов); ускоряют CDS, lazy init, reduce classpath, а не рост `-Xmx`.",
+                "source_of_confusion": "Привычка «больше heap — лучше» переносится и на startup.",
+                "if_it_were_true": "Если бы `-Xmx` ускорял старт, его указывали бы в техниках оптимизации startup, а его там нет.",
+                "how_it_should_be": "Startup сокращают AppCDS/lazy init/AOT; heap отвечает за runtime-память, не за время старта."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Быстрый startup критичен для autoscaling и rolling deployments. Техники по эффекту: AppCDS (20-40%), `-XX:TieredStopAtLevel=1` только `C1` (30-50% start, но хуже peak), Spring AOT/GraalVM native (80-95%), lazy initialization (10-30%), reduce classpath (10-20%). Примеры: `-XX:TieredStopAtLevel=1` для short-lived задач, `spring.main.lazy-initialization=true`, `-XX:SharedArchiveFile=app-cds.jsa`.",
-              "correct": true,
+              "text": "`-XX:TieredStopAtLevel=1` идеален для long-running сервисов: он включает `C2` раньше и даёт и быстрый старт, и максимальную peak-производительность одновременно.",
+              "correct": false,
               "sections": {
-                "explanation": "Startup сокращают, убирая работу со старта: AppCDS кеширует метаданные классов, lazy init откладывает бины, `TieredStopAtLevel=1` и GraalVM меняют модель компиляции.",
-                "example": "Цепочка ускорения: Cold Start 15-30 с → AppCDS → 10-20 с → Lazy Init → 7-15 с → `TieredStopAtLevel=1` → 5-10 с → GraalVM Native → 0.5-2 с.",
-                "when_to_apply": "Эти техники применяют, когда долгий startup мешает autoscaling/rolling deploy: подбирают по балансу выигрыша и сложности (AppCDS дёшев, GraalVM native — дорог).",
-                "edge_cases": "`-XX:TieredStopAtLevel=1` ускоряет старт, но убирает `C2` и роняет peak-производительность — годится для short-lived задач, но вреден для long-running сервиса под нагрузкой.",
-                "related": "[[jvm-performance-tuning-interview#Q20]] Tiered Compilation [[jvm-performance-tuning-interview#Q21]] warm-up в проде [[jvm-performance-tuning-interview#Q34]] CDS/AppCDS"
+                "what_actually": "`-XX:TieredStopAtLevel=1` ОТКЛЮЧАЕТ `C2` (только `C1`): старт быстрее, но peak хуже; для long-running сервиса это вредно, он для short-lived задач.",
+                "source_of_confusion": "«Stop at 1» ошибочно читают как «дойти до уровня выше».",
+                "if_it_were_true": "Если бы он давал максимальный peak, не было бы оговорки «хуже peak perf».",
+                "how_it_should_be": "Уровень 1 — только `C1`, без `C2`; long-running сервисам нужен полный Tiered (до `C2`)."
               },
               "label": "D",
               "order": 3
@@ -1942,13 +1942,13 @@
               "order": 0
             },
             {
-              "text": "Для production главное — НЕ включать `GC`-логи и heap dump on OOM: они дают большой overhead и заполняют диск, поэтому диагностику делают только вручную в момент инцидента.",
+              "text": "Ограничивать `MaxMetaspaceSize` в production не нужно и даже вредно: без лимита `Metaspace` сам подстраивается, а лимит вызывает падения на нормальном приложении.",
               "correct": false,
               "sections": {
-                "what_actually": "`GC`-логи и heap dump on OOM — обязательны и почти бесплатны; без них post-mortem невозможен, а «вручную в момент инцидента» уже поздно — данные потеряны.",
-                "source_of_confusion": "Страх overhead и заполнения диска переоценивает стоимость логов/дампа.",
-                "if_it_were_true": "Если бы их не нужно было включать, их не называли бы главным правилом production.",
-                "how_it_should_be": "`GC`-логи и heap dump on OOM держат always-on с ротацией; они дёшевы и критичны для разбора."
+                "what_actually": "В production `MaxMetaspaceSize` обязателен: без лимита class-leak растит `Metaspace` до `OOMKilled` контейнера без Java-OOM; лимит делает проблему явной.",
+                "source_of_confusion": "Кажется, что «авто-подстройка» безопаснее жёсткого лимита.",
+                "if_it_were_true": "Если бы лимит был вреден, его не включали бы в обязательные prod-флаги памяти.",
+                "how_it_should_be": "`MaxMetaspaceSize` задают всегда; адекватное значение защищает от тихого `OOMKilled` при class-leak."
               },
               "label": "B",
               "order": 1
@@ -1966,13 +1966,13 @@
               "order": 2
             },
             {
-              "text": "Ограничивать `MaxMetaspaceSize` в production не нужно и даже вредно: без лимита `Metaspace` сам подстраивается, а лимит вызывает падения на нормальном приложении.",
+              "text": "Для production главное — НЕ включать `GC`-логи и heap dump on OOM: они дают большой overhead и заполняют диск, поэтому диагностику делают только вручную в момент инцидента.",
               "correct": false,
               "sections": {
-                "what_actually": "В production `MaxMetaspaceSize` обязателен: без лимита class-leak растит `Metaspace` до `OOMKilled` контейнера без Java-OOM; лимит делает проблему явной.",
-                "source_of_confusion": "Кажется, что «авто-подстройка» безопаснее жёсткого лимита.",
-                "if_it_were_true": "Если бы лимит был вреден, его не включали бы в обязательные prod-флаги памяти.",
-                "how_it_should_be": "`MaxMetaspaceSize` задают всегда; адекватное значение защищает от тихого `OOMKilled` при class-leak."
+                "what_actually": "`GC`-логи и heap dump on OOM — обязательны и почти бесплатны; без них post-mortem невозможен, а «вручную в момент инцидента» уже поздно — данные потеряны.",
+                "source_of_confusion": "Страх overhead и заполнения диска переоценивает стоимость логов/дампа.",
+                "if_it_were_true": "Если бы их не нужно было включать, их не называли бы главным правилом production.",
+                "how_it_should_be": "`GC`-логи и heap dump on OOM держат always-on с ротацией; они дёшевы и критичны для разбора."
               },
               "label": "D",
               "order": 3
@@ -2001,14 +2001,13 @@
               "order": 0
             },
             {
-              "text": "`CDS` (Class Data Sharing) сохраняет предобработанные метаданные классов в shared archive (`.jsa`) и переиспользует их при запуске через memory-mapped files. Шаги: `-XX:DumpLoadedClassList=classes.lst` → `-Xshare:dump -XX:SharedClassListFile=... -XX:SharedArchiveFile=app-cds.jsa` → запуск с `-Xshare:on -XX:SharedArchiveFile=app-cds.jsa`. Даёт: классы из memory-mapped archive грузятся быстрее парсинга из JAR, общая память между `JVM`-процессами на хосте, экономия 20-40% startup и 10-15% footprint.",
-              "correct": true,
+              "text": "`CDS` доступен только в коммерческом Oracle `JDK` и требует платной лицензии; в `OpenJDK` механизма class data sharing нет вовсе.",
+              "correct": false,
               "sections": {
-                "explanation": "`CDS`/AppCDS сохраняет parsed-метаданные классов в `.jsa` и грузит их через memory-mapped files, ускоряя старт и экономя footprint между процессами на хосте.",
-                "example": "Dynamic CDS (`JDK 13+`) упрощает создание: `-XX:ArchiveClassesAtExit=app-cds.jsa` автоматически собирает архив при выходе, затем `-XX:SharedArchiveFile=app-cds.jsa` для запуска.",
-                "when_to_apply": "`CDS`/AppCDS включают, когда важен быстрый старт (autoscaling, rolling deploy) и приложение грузит много классов; архив пересобирают при смене состава зависимостей.",
-                "edge_cases": "Архив привязан к версии `JDK` и classpath: после апгрейда `JDK` или изменения зависимостей старый `.jsa` игнорируется (или падает валидация), и его нужно пересоздать.",
-                "related": "[[jvm-performance-tuning-interview#Q20]] Tiered Compilation [[jvm-performance-tuning-interview#Q32]] startup time [[jvm-performance-tuning-interview#Q27]] class loading"
+                "what_actually": "`CDS`/AppCDS есть в `OpenJDK` (базовый `CDS` давно, AppCDS с `JDK 10`, Dynamic CDS с `JDK 13`) и бесплатен; платная лицензия не нужна.",
+                "source_of_confusion": "Часть `JVM`-фич исторически была коммерческой (старый AOT/JFR), что переносят на `CDS`.",
+                "if_it_were_true": "Если бы `CDS` был только в Oracle `JDK`, его не описывали бы как стандартный способ ускорения старта в `OpenJDK`.",
+                "how_it_should_be": "`CDS`/AppCDS — часть `OpenJDK` и бесплатны; лицензия для них не требуется."
               },
               "label": "B",
               "order": 1
@@ -2026,13 +2025,14 @@
               "order": 2
             },
             {
-              "text": "`CDS` доступен только в коммерческом Oracle `JDK` и требует платной лицензии; в `OpenJDK` механизма class data sharing нет вовсе.",
-              "correct": false,
+              "text": "`CDS` (Class Data Sharing) сохраняет предобработанные метаданные классов в shared archive (`.jsa`) и переиспользует их при запуске через memory-mapped files. Шаги: `-XX:DumpLoadedClassList=classes.lst` → `-Xshare:dump -XX:SharedClassListFile=... -XX:SharedArchiveFile=app-cds.jsa` → запуск с `-Xshare:on -XX:SharedArchiveFile=app-cds.jsa`. Даёт: классы из memory-mapped archive грузятся быстрее парсинга из JAR, общая память между `JVM`-процессами на хосте, экономия 20-40% startup и 10-15% footprint.",
+              "correct": true,
               "sections": {
-                "what_actually": "`CDS`/AppCDS есть в `OpenJDK` (базовый `CDS` давно, AppCDS с `JDK 10`, Dynamic CDS с `JDK 13`) и бесплатен; платная лицензия не нужна.",
-                "source_of_confusion": "Часть `JVM`-фич исторически была коммерческой (старый AOT/JFR), что переносят на `CDS`.",
-                "if_it_were_true": "Если бы `CDS` был только в Oracle `JDK`, его не описывали бы как стандартный способ ускорения старта в `OpenJDK`.",
-                "how_it_should_be": "`CDS`/AppCDS — часть `OpenJDK` и бесплатны; лицензия для них не требуется."
+                "explanation": "`CDS`/AppCDS сохраняет parsed-метаданные классов в `.jsa` и грузит их через memory-mapped files, ускоряя старт и экономя footprint между процессами на хосте.",
+                "example": "Dynamic CDS (`JDK 13+`) упрощает создание: `-XX:ArchiveClassesAtExit=app-cds.jsa` автоматически собирает архив при выходе, затем `-XX:SharedArchiveFile=app-cds.jsa` для запуска.",
+                "when_to_apply": "`CDS`/AppCDS включают, когда важен быстрый старт (autoscaling, rolling deploy) и приложение грузит много классов; архив пересобирают при смене состава зависимостей.",
+                "edge_cases": "Архив привязан к версии `JDK` и classpath: после апгрейда `JDK` или изменения зависимостей старый `.jsa` игнорируется (или падает валидация), и его нужно пересоздать.",
+                "related": "[[jvm-performance-tuning-interview#Q20]] Tiered Compilation [[jvm-performance-tuning-interview#Q32]] startup time [[jvm-performance-tuning-interview#Q27]] class loading"
               },
               "label": "D",
               "order": 3
@@ -2049,6 +2049,18 @@
           "question_text": "Как работают Compressed Oops и Compressed Class Pointers?",
           "options": [
             {
+              "text": "Чтобы сэкономить память на большом сервисе, нужно ставить `-Xmx` в диапазоне 33-37 ГБ: это чуть выше 32 ГБ, поэтому всё ещё внутри зоны эффективных Compressed Oops.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Диапазон 33-37 ГБ — худший: Compressed Oops уже выключены, но полезного пространства меньше, чем при 31 ГБ; этой зоны как раз избегают.",
+                "source_of_confusion": "Кажется, что «чуть выше 32» — это ещё безопасная зона.",
+                "if_it_were_true": "Если бы 33-37 ГБ были эффективны, не советовали бы не входить в зону 32-38 ГБ.",
+                "how_it_should_be": "Зону 32-38 ГБ обходят: ставят либо <32 ГБ (с Compressed Oops), либо заметно больше, где выгода окупает потерю."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Compressed Oops сжимают указатели за счёт алгоритма сжатия (как `gzip`) при каждом доступе к объекту: `JVM` распаковывает адрес из словаря, поэтому есть `CPU`-overhead на распаковку.",
               "correct": false,
               "sections": {
@@ -2056,18 +2068,6 @@
                 "source_of_confusion": "Слово «compressed» ассоциируется с архиваторами и словарным сжатием.",
                 "if_it_were_true": "Если бы был словарь и распаковка, не работала бы простая формула `real = oop << 3`.",
                 "how_it_should_be": "Compressed Oops используют сдвиг/base над выровненными адресами, а не алгоритмическое сжатие данных."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Compressed Oops масштабируются линейно с размером heap: при `-Xmx` = 64 ГБ экономия на указателях максимальна, поэтому для лучшей плотности памяти на объект стоит выделять heap как можно больше.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Compressed Oops ВЫКЛЮЧАЮТСЯ при heap > ~32 ГБ; на 64 ГБ указатели снова 64-битные, и объекты становятся больше, а не плотнее — линейного масштабирования выгоды нет.",
-                "source_of_confusion": "Модель «эффект растёт вместе с heap» кажется естественной и не учитывает жёсткий порог 32 ГБ.",
-                "if_it_were_true": "Если бы выгода масштабировалась до 64 ГБ, не было бы парадокса «31 ГБ эффективнее 33 ГБ».",
-                "how_it_should_be": "Compressed Oops активны лишь до ~32 ГБ heap; за порогом они отключаются, увеличивая объекты."
               },
               "label": "B",
               "order": 1
@@ -2086,13 +2086,13 @@
               "order": 2
             },
             {
-              "text": "Чтобы сэкономить память на большом сервисе, нужно ставить `-Xmx` в диапазоне 33-37 ГБ: это чуть выше 32 ГБ, поэтому всё ещё внутри зоны эффективных Compressed Oops.",
+              "text": "Compressed Oops масштабируются линейно с размером heap: при `-Xmx` = 64 ГБ экономия на указателях максимальна, поэтому для лучшей плотности памяти на объект стоит выделять heap как можно больше.",
               "correct": false,
               "sections": {
-                "what_actually": "Диапазон 33-37 ГБ — худший: Compressed Oops уже выключены, но полезного пространства меньше, чем при 31 ГБ; этой зоны как раз избегают.",
-                "source_of_confusion": "Кажется, что «чуть выше 32» — это ещё безопасная зона.",
-                "if_it_were_true": "Если бы 33-37 ГБ были эффективны, не советовали бы не входить в зону 32-38 ГБ.",
-                "how_it_should_be": "Зону 32-38 ГБ обходят: ставят либо <32 ГБ (с Compressed Oops), либо заметно больше, где выгода окупает потерю."
+                "what_actually": "Compressed Oops ВЫКЛЮЧАЮТСЯ при heap > ~32 ГБ; на 64 ГБ указатели снова 64-битные, и объекты становятся больше, а не плотнее — линейного масштабирования выгоды нет.",
+                "source_of_confusion": "Модель «эффект растёт вместе с heap» кажется естественной и не учитывает жёсткий порог 32 ГБ.",
+                "if_it_were_true": "Если бы выгода масштабировалась до 64 ГБ, не было бы парадокса «31 ГБ эффективнее 33 ГБ».",
+                "how_it_should_be": "Compressed Oops активны лишь до ~32 ГБ heap; за порогом они отключаются, увеличивая объекты."
               },
               "label": "D",
               "order": 3
@@ -2133,18 +2133,6 @@
               "order": 1
             },
             {
-              "text": "`-XX:+UseNUMA` в production обычно отключают: NUMA-aware аллокация добавляет на каждый выделяемый объект решение о выборе сокета, и этот overhead в аллокаторе перевешивает выигрыш от локальности памяти.",
-              "correct": false,
-              "sections": {
-                "what_actually": "На multi-socket серверах `UseNUMA` УСКОРЯЕТ работу за счёт локального доступа к памяти; overhead размещения ничтожен, и на подходящем железе флаг default true — его не отключают.",
-                "source_of_confusion": "Дополнительную логику размещения объектов интуитивно записывают в дорогой overhead аллокатора.",
-                "if_it_were_true": "Если бы overhead размещения перевешивал выигрыш, `UseNUMA` не включали бы по умолчанию при обнаружении NUMA.",
-                "how_it_should_be": "На NUMA-железе `UseNUMA` повышает производительность (локальная память); выключать его там не нужно."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "NUMA (Non-Uniform Memory Access) — архитектура многопроцессорных систем, где у каждого `CPU` своя локальная память с быстрым доступом и удалённая с медленным. NUMA-aware аллокация в `G1` включается `-XX:+UseNUMA` (default true, если NUMA detected), чтобы объекты размещались в локальной для потока памяти. Проверка топологии: `numactl --hardware` (node distances показывают, насколько медленнее доступ к remote node).",
               "correct": true,
               "sections": {
@@ -2153,6 +2141,18 @@
                 "when_to_apply": "NUMA-aware важен на серверах с 2+ `CPU` sockets (bare metal), heap > 32 ГБ и latency-sensitive приложениях, где remote-доступ к памяти заметно бьёт по латентности.",
                 "edge_cases": "НЕ важен в контейнерах с `CPU` limit 1-4 cores (обычно один NUMA node), на VM с малым числом vCPU и в облаке (часто NUMA-прозрачно) — там `UseNUMA` ничего не даёт.",
                 "related": "[[jvm-performance-tuning-interview#Q4]] обзор сборщиков [[jvm-performance-tuning-interview#Q29]] JVM в Kubernetes [[jvm-performance-tuning-interview#Q35]] Compressed Oops"
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`-XX:+UseNUMA` в production обычно отключают: NUMA-aware аллокация добавляет на каждый выделяемый объект решение о выборе сокета, и этот overhead в аллокаторе перевешивает выигрыш от локальности памяти.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На multi-socket серверах `UseNUMA` УСКОРЯЕТ работу за счёт локального доступа к памяти; overhead размещения ничтожен, и на подходящем железе флаг default true — его не отключают.",
+                "source_of_confusion": "Дополнительную логику размещения объектов интуитивно записывают в дорогой overhead аллокатора.",
+                "if_it_were_true": "Если бы overhead размещения перевешивал выигрыш, `UseNUMA` не включали бы по умолчанию при обнаружении NUMA.",
+                "how_it_should_be": "На NUMA-железе `UseNUMA` повышает производительность (локальная память); выключать его там не нужно."
               },
               "label": "D",
               "order": 3
@@ -2169,6 +2169,18 @@
           "question_text": "Какие anti-patterns JVM tuning звучат слабо на интервью?",
           "options": [
             {
+              "text": "Правильно сразу заявить «перешли на `ZGC`, и латентность выправилась»: переход на современный low-pause сборщик — самый высокоэффективный первый шаг по latency и показывает знание актуальных технологий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это anti-pattern «перешли на `ZGC`, всё починилось»: игнорирует root cause; сильнее — «сначала снизили allocation rate, затем рассмотрели смену `GC`».",
+                "source_of_confusion": "Смена на модный low-pause `GC` кажется самым высокоэффективным рычагом для latency.",
+                "if_it_were_true": "Если бы смена `GC` была лучшим первым шагом, не предупреждали бы про игнорирование root cause.",
+                "how_it_should_be": "Сначала ищут и устраняют причину (allocation/promotion), и лишь потом рассматривают смену сборщика."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Слабые anti-patterns и сильные замены: «ставим random флаги из интернета» (нет инженерного подхода) → «мы анализировали `GC`-логи и `JFR`»; «увеличили heap, стало лучше» (нет baseline/proof) → «p99 снизился с X до Y мс»; «помогло один раз → универсальное решение» (нет понимания trade-offs) → «работает при условии X,Y,Z»; «перешли на `ZGC`, всё починилось» (игнор root cause) → «сначала снизили allocation rate»; игнор версии `JDK`; «нет `GC`-логов в production» → «`GC`-логи always-on, ~0 overhead».",
               "correct": true,
               "sections": {
@@ -2178,8 +2190,8 @@
                 "edge_cases": "Anti-pattern не в самом действии (heap иногда увеличить правильно), а в отсутствии данных и понимания trade-offs за ним — слабым ответ делает именно «потому что так советуют», а не «потому что метрики показали».",
                 "related": "[[jvm-performance-tuning-interview#Q1]] с чего начинать tuning [[jvm-performance-tuning-interview#Q3]] как проверять эффект [[jvm-performance-tuning-interview#Q38]] сильный ответ за 60 секунд"
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Сильный ответ — сказать «мы взяли production-конфиг флагов из доклада уважаемой команды и применили его, стало лучше»: опора на проверенный чужой опыт выглядит как обоснованное инженерное решение.",
@@ -2190,8 +2202,8 @@
                 "if_it_were_true": "Если бы чужой набор флагов был сильным аргументом, его не относили бы к слабым anti-pattern'ам.",
                 "how_it_should_be": "Сильный ответ опирается на собственные `GC`-логи/`JFR` и измеримый результат, а не на чужой набор флагов."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Хорошая практика — говорить «увеличили heap, и стало лучше» без чисел: интервьюеру важен сам факт улучшения, а конкретные p99-метрики только перегружают ответ.",
@@ -2201,18 +2213,6 @@
                 "source_of_confusion": "Кажется, что детали-метрики избыточны и достаточно факта «стало лучше».",
                 "if_it_were_true": "Если бы хватало факта без чисел, не требовали бы измеримый результат как признак сильного ответа.",
                 "how_it_should_be": "Приводят конкретные метрики (p99 до/после); «стало лучше» без чисел звучит неубедительно."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Правильно сразу заявить «перешли на `ZGC`, и латентность выправилась»: переход на современный low-pause сборщик — самый высокоэффективный первый шаг по latency и показывает знание актуальных технологий.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это anti-pattern «перешли на `ZGC`, всё починилось»: игнорирует root cause; сильнее — «сначала снизили allocation rate, затем рассмотрели смену `GC`».",
-                "source_of_confusion": "Смена на модный low-pause `GC` кажется самым высокоэффективным рычагом для latency.",
-                "if_it_were_true": "Если бы смена `GC` была лучшим первым шагом, не предупреждали бы про игнорирование root cause.",
-                "how_it_should_be": "Сначала ищут и устраняют причину (allocation/promotion), и лишь потом рассматривают смену сборщика."
               },
               "label": "D",
               "order": 3
@@ -2229,18 +2229,6 @@
           "question_text": "Как дать сильный ответ по JVM tuning за 60 секунд?",
           "options": [
             {
-              "text": "Сильный 60-секундный ответ — это перечислить как можно больше `JVM`-флагов, которые вы знаете: длинный список флагов лучше всего демонстрирует глубину экспертизы интервьюеру.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Список флагов без контекста, диагностики и результата звучит как «магия флагов»; сильный ответ — структура CDIC с данными и измеримым эффектом.",
-                "source_of_confusion": "Кажется, что знание многих флагов само по себе впечатляет.",
-                "if_it_were_true": "Если бы хватало списка флагов, не нужна была бы структура Context→Diagnostics→Intervention→Consequence.",
-                "how_it_should_be": "Дают связный нарратив CDIC (контекст, данные, изменение, результат), а не перечень флагов."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Структура CDIC (Context → Diagnostics → Intervention → Consequence): 1) Контекст — «E-commerce сервис, SLA p99 < 300 мс, 5000 RPS, `JDK 21`, `G1`, heap 8 ГБ»; 2) Диагностика — «`JFR` + `GC`-логи: allocation rate 1.5 ГБ/с, частый promotion в `Old`, mixed GC паузы до 450 мс»; 3) Изменение — «оптимизировали allocation hot-path (pooling, lazy init), `-XX:G1NewSizePercent`=40, `-XX:InitiatingHeapOccupancyPercent`=55»; 4) Результат — «p99 с 460 до 180 мс, allocation rate до 500 МБ/с, `CPU` +5%».",
               "correct": true,
               "sections": {
@@ -2250,20 +2238,8 @@
                 "edge_cases": "Сила ответа — в связке всех четырёх элементов: контекст без чисел или изменение без результата звучат слабее; убедителен именно полный путь от диагностики к измеримому consequence.",
                 "related": "[[jvm-performance-tuning-interview#Q1]] с чего начинать tuning [[jvm-performance-tuning-interview#Q3]] как проверять эффект [[jvm-performance-tuning-interview#Q37]] слабые anti-patterns"
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Лучший ответ начинается сразу с изменения: «я выставил `-XX:+UseZGC` и `-Xmx16g`» — интервьюеру не нужны контекст и диагностика, важно только конкретное действие.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Без контекста и диагностики действие повисает в воздухе; CDIC требует сперва описать контекст и данные, чтобы изменение было обоснованным.",
-                "source_of_confusion": "Конкретное действие выглядит «по делу», поэтому соблазняет пропустить контекст.",
-                "if_it_were_true": "Если бы хватало изменения, не было бы шагов Context и Diagnostics в структуре.",
-                "how_it_should_be": "Сначала контекст и диагностика, затем изменение и результат — иначе непонятно, почему именно это действие."
-              },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Достаточно назвать результат «всё стало быстрее» без конкретных цифр и без объяснения, что и почему меняли: главное — уверенно заявить об успехе.",
@@ -2273,6 +2249,30 @@
                 "source_of_confusion": "Уверенный тон кажется заменой доказательствам.",
                 "if_it_were_true": "Если бы хватало «стало быстрее», не требовали бы измеримый результат и полную структуру CDIC.",
                 "how_it_should_be": "Называют измеримый результат и связывают его с контекстом, диагностикой и изменением."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Сильный 60-секундный ответ — это перечислить как можно больше `JVM`-флагов, которые вы знаете: длинный список флагов лучше всего демонстрирует глубину экспертизы интервьюеру.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Список флагов без контекста, диагностики и результата звучит как «магия флагов»; сильный ответ — структура CDIC с данными и измеримым эффектом.",
+                "source_of_confusion": "Кажется, что знание многих флагов само по себе впечатляет.",
+                "if_it_were_true": "Если бы хватало списка флагов, не нужна была бы структура Context→Diagnostics→Intervention→Consequence.",
+                "how_it_should_be": "Дают связный нарратив CDIC (контекст, данные, изменение, результат), а не перечень флагов."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Лучший ответ начинается сразу с изменения: «я выставил `-XX:+UseZGC` и `-Xmx16g`» — интервьюеру не нужны контекст и диагностика, важно только конкретное действие.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без контекста и диагностики действие повисает в воздухе; CDIC требует сперва описать контекст и данные, чтобы изменение было обоснованным.",
+                "source_of_confusion": "Конкретное действие выглядит «по делу», поэтому соблазняет пропустить контекст.",
+                "if_it_were_true": "Если бы хватало изменения, не было бы шагов Context и Diagnostics в структуре.",
+                "how_it_should_be": "Сначала контекст и диагностика, затем изменение и результат — иначе непонятно, почему именно это действие."
               },
               "label": "D",
               "order": 3

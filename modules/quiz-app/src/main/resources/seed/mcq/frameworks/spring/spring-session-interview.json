@@ -11,6 +11,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`Spring Session` — это библиотека для генерации `JWT`-токенов, заменяющая серверное хранение состояния полностью stateless-подходом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Session` хранит серверное состояние во внешнем store; `JWT` — это противоположный, stateless-подход без серверного хранилища сессий.",
+                "source_of_confusion": "И `JWT`, и `Spring Session` решают аутентификацию в распределённых системах, поэтому их роли смешивают.",
+                "if_it_were_true": "Если бы это было так, `Spring Session` не нуждался бы в `Redis`/`JDBC`, но именно туда он пишет сессию.",
+                "how_it_should_be": "`JWT` описывают как stateless-альтернативу `Spring Session`; сама библиотека про serverside-сессии во внешнем store."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`Spring Session` — абстракция управления сессиями, выносящая HTTP-сессию из памяти контейнера сервлетов (`Tomcat`/`Jetty`) во внешнее хранилище (`Redis`, `JDBC`, `MongoDB`), чтобы любой узел кластера видел одну и ту же сессию без sticky sessions.",
               "correct": true,
               "sections": {
@@ -22,32 +34,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`Spring Session` — это библиотека для генерации `JWT`-токенов, заменяющая серверное хранение состояния полностью stateless-подходом.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Spring Session` хранит серверное состояние во внешнем store; `JWT` — это противоположный, stateless-подход без серверного хранилища сессий.",
-                "source_of_confusion": "И `JWT`, и `Spring Session` решают аутентификацию в распределённых системах, поэтому их роли смешивают.",
-                "if_it_were_true": "Если бы это было так, `Spring Session` не нуждался бы в `Redis`/`JDBC`, но именно туда он пишет сессию.",
-                "how_it_should_be": "`JWT` описывают как stateless-альтернативу `Spring Session`; сама библиотека про serverside-сессии во внешнем store."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "`Spring Session` — это встроенный в `Tomcat` менеджер сессий, ускоряющий доступ к in-memory сессии за счёт кэширования.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Spring Session` не встроен в `Tomcat` и не оптимизирует его in-memory сессию — он подменяет хранилище на внешнее.",
-                "source_of_confusion": "Обе технологии управляют HTTP-сессией, поэтому `Spring Session` принимают за часть контейнера.",
-                "if_it_were_true": "Если бы он был частью `Tomcat`, он не работал бы одинаково на `Jetty` и `Undertow`, но он контейнеро-независим.",
-                "how_it_should_be": "`Tomcat` Session Manager — отдельная вещь; `Spring Session` перехватывает `getSession()` и работает поверх любого контейнера."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`Spring Session` — это система кэширования результатов методов, аналог `@Cacheable`, привязывающая кэш к HTTP-сессии.",
               "correct": false,
               "sections": {
@@ -55,6 +43,18 @@
                 "source_of_confusion": "И кэш, и сессия часто живут в `Redis`, поэтому их назначение путают.",
                 "if_it_were_true": "Если бы это был кэш методов, у него были бы аннотации уровня кэширования, но API крутится вокруг `HttpSession`.",
                 "how_it_should_be": "Кэш методов — это `Spring Cache`/`@Cacheable`; `Spring Session` отвечает за внешнее хранение HTTP-сессий."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Session` — это встроенный в `Tomcat` менеджер сессий, ускоряющий доступ к in-memory сессии за счёт кэширования.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Session` не встроен в `Tomcat` и не оптимизирует его in-memory сессию — он подменяет хранилище на внешнее.",
+                "source_of_confusion": "Обе технологии управляют HTTP-сессией, поэтому `Spring Session` принимают за часть контейнера.",
+                "if_it_were_true": "Если бы он был частью `Tomcat`, он не работал бы одинаково на `Jetty` и `Undertow`, но он контейнеро-независим.",
+                "how_it_should_be": "`Tomcat` Session Manager — отдельная вещь; `Spring Session` перехватывает `getSession()` и работает поверх любого контейнера."
               }
             }
           ]
@@ -83,14 +83,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Подключают зависимость `spring-session-data-redis` — в Spring Boot 3.x стор определяется автоматически по наличию зависимости на classpath (свойство `spring.session.store-type` из Boot 2.x удалено); задают `timeout`, `namespace`, `flush-mode` и координаты `Redis`; при коллизии нескольких сторов выбор фиксируют аннотацией `@EnableRedisHttpSession`. После этого `Spring Session` перехватывает `getSession()` и грузит сессию из `Redis` как hash вместо памяти контейнера.",
-              "correct": true,
+              "text": "При `store-type: redis` сессия по-прежнему хранится в памяти `Tomcat`, а `Redis` используется только как резервная копия раз в час.",
+              "correct": false,
               "sections": {
-                "explanation": "Достаточно стартера `spring-session-data-redis` на classpath — `Spring Boot` 3.x сам выбирает стор по зависимости и поднимает `RedisSessionRepository` и фильтр, заменяющий хранилище сессии; задавать `store-type` не нужно, это свойство Boot 2.x удалено.",
-                "example": "Сессия лежит в `Redis` под ключом `myapp:session:sessions:<sessionId>` с полями `lastAccessedTime`, `maxInactiveInterval`, `sessionAttr:<name>`; при коллизии сторов стор фиксируют аннотацией `@EnableRedisHttpSession`.",
-                "when_to_apply": "Используют, когда нужно общее быстрое хранилище сессий для кластера с низкой задержкой и поддержкой TTL/событий истечения.",
-                "edge_cases": "`flush-mode: on-save` пишет в `Redis` в конце запроса; при `immediate` запись идёт сразу, что повышает нагрузку, но снижает риск потери при сбое.",
-                "related": "[[spring-session-interview#Q1]] зачем нужен `Spring Session`; [[spring-session-interview#Q3]] аналогичная настройка `JDBC`; [[spring-session-interview#Q8]] сериализация значений в `Redis`."
+                "what_actually": "`Spring Session` подменяет основное хранилище: сессия читается и пишется в `Redis` на каждом запросе, а не лежит в памяти `Tomcat`.",
+                "source_of_confusion": "Идея «бэкап раз в час» напоминает session replication, поэтому её ошибочно приписывают `Redis` store.",
+                "if_it_were_true": "Если бы `Redis` был лишь часовым бэкапом, при падении узла свежая сессия терялась бы, чего `Spring Session` как раз избегает.",
+                "how_it_should_be": "`Redis` — первичное хранилище; запись управляется `flush-mode`, а не часовым бэкапом."
               }
             },
             {
@@ -108,13 +107,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "При `store-type: redis` сессия по-прежнему хранится в памяти `Tomcat`, а `Redis` используется только как резервная копия раз в час.",
-              "correct": false,
+              "text": "Подключают зависимость `spring-session-data-redis` — в Spring Boot 3.x стор определяется автоматически по наличию зависимости на classpath (свойство `spring.session.store-type` из Boot 2.x удалено); задают `timeout`, `namespace`, `flush-mode` и координаты `Redis`; при коллизии нескольких сторов выбор фиксируют аннотацией `@EnableRedisHttpSession`. После этого `Spring Session` перехватывает `getSession()` и грузит сессию из `Redis` как hash вместо памяти контейнера.",
+              "correct": true,
               "sections": {
-                "what_actually": "`Spring Session` подменяет основное хранилище: сессия читается и пишется в `Redis` на каждом запросе, а не лежит в памяти `Tomcat`.",
-                "source_of_confusion": "Идея «бэкап раз в час» напоминает session replication, поэтому её ошибочно приписывают `Redis` store.",
-                "if_it_were_true": "Если бы `Redis` был лишь часовым бэкапом, при падении узла свежая сессия терялась бы, чего `Spring Session` как раз избегает.",
-                "how_it_should_be": "`Redis` — первичное хранилище; запись управляется `flush-mode`, а не часовым бэкапом."
+                "explanation": "Достаточно стартера `spring-session-data-redis` на classpath — `Spring Boot` 3.x сам выбирает стор по зависимости и поднимает `RedisSessionRepository` и фильтр, заменяющий хранилище сессии; задавать `store-type` не нужно, это свойство Boot 2.x удалено.",
+                "example": "Сессия лежит в `Redis` под ключом `myapp:session:sessions:<sessionId>` с полями `lastAccessedTime`, `maxInactiveInterval`, `sessionAttr:<name>`; при коллизии сторов стор фиксируют аннотацией `@EnableRedisHttpSession`.",
+                "when_to_apply": "Используют, когда нужно общее быстрое хранилище сессий для кластера с низкой задержкой и поддержкой TTL/событий истечения.",
+                "edge_cases": "`flush-mode: on-save` пишет в `Redis` в конце запроса; при `immediate` запись идёт сразу, что повышает нагрузку, но снижает риск потери при сбое.",
+                "related": "[[spring-session-interview#Q1]] зачем нужен `Spring Session`; [[spring-session-interview#Q3]] аналогичная настройка `JDBC`; [[spring-session-interview#Q8]] сериализация значений в `Redis`."
               }
             }
           ]
@@ -143,13 +143,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`JDBC` store требует `MongoDB`-зависимости и создаёт коллекции вместо таблиц для хранения атрибутов.",
+              "text": "`JDBC` store, как и `Redis`, имеет встроенный TTL на уровне БД, поэтому очистка истёкших сессий не нужна.",
               "correct": false,
               "sections": {
-                "what_actually": "`JDBC` store работает с реляционной БД и таблицами; коллекции `MongoDB` — это отдельный модуль `spring-session-mongodb`.",
-                "source_of_confusion": "Оба — внешние хранилища `Spring Session`, поэтому их зависимости путают.",
-                "if_it_were_true": "Если бы `JDBC` зависел от `MongoDB`, ему не нужен был бы `DataSource`, но он использует именно его.",
-                "how_it_should_be": "`spring-session-jdbc` использует `DataSource` и SQL-таблицы; `MongoDB` — это `spring-session-mongodb`."
+                "what_actually": "В реляционной БД нет нативного TTL на строки, поэтому `JDBC` store требует периодической задачи очистки по `cleanup-cron`.",
+                "source_of_confusion": "У `Redis` TTL действительно встроен, и это свойство ошибочно переносят на `JDBC`.",
+                "if_it_were_true": "Если бы TTL был в БД, таблицы не распухали бы, но без `cleanup-cron` истёкшие записи накапливаются.",
+                "how_it_should_be": "Очистку делает `cleanup-cron`-задача `Spring Boot`; автоматического TTL у строк БД нет."
               }
             },
             {
@@ -168,13 +168,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`JDBC` store, как и `Redis`, имеет встроенный TTL на уровне БД, поэтому очистка истёкших сессий не нужна.",
+              "text": "`JDBC` store требует `MongoDB`-зависимости и создаёт коллекции вместо таблиц для хранения атрибутов.",
               "correct": false,
               "sections": {
-                "what_actually": "В реляционной БД нет нативного TTL на строки, поэтому `JDBC` store требует периодической задачи очистки по `cleanup-cron`.",
-                "source_of_confusion": "У `Redis` TTL действительно встроен, и это свойство ошибочно переносят на `JDBC`.",
-                "if_it_were_true": "Если бы TTL был в БД, таблицы не распухали бы, но без `cleanup-cron` истёкшие записи накапливаются.",
-                "how_it_should_be": "Очистку делает `cleanup-cron`-задача `Spring Boot`; автоматического TTL у строк БД нет."
+                "what_actually": "`JDBC` store работает с реляционной БД и таблицами; коллекции `MongoDB` — это отдельный модуль `spring-session-mongodb`.",
+                "source_of_confusion": "Оба — внешние хранилища `Spring Session`, поэтому их зависимости путают.",
+                "if_it_were_true": "Если бы `JDBC` зависел от `MongoDB`, ему не нужен был бы `DataSource`, но он использует именно его.",
+                "how_it_should_be": "`spring-session-jdbc` использует `DataSource` и SQL-таблицы; `MongoDB` — это `spring-session-mongodb`."
               }
             }
           ]
@@ -191,30 +191,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring Session` полностью отключает `Spring Security`, заменяя аутентификацию собственным механизмом проверки cookie.",
-              "correct": false,
+              "text": "При аутентификации `SecurityContext` сохраняется как атрибут сессии во внешнем store (`Redis`/`JDBC`), а `sessionManagement` `Spring Security` (`maximumSessions`, `expiredUrl`, политика создания) работает поверх этой сессии; `FindByIndexNameSessionRepository` позволяет найти все сессии пользователя.",
+              "correct": true,
               "sections": {
-                "what_actually": "`Spring Session` не заменяет аутентификацию `Spring Security` — он лишь хранит сессию (включая `SecurityContext`) во внешнем store.",
-                "source_of_confusion": "Обе работают с cookie и сессией, из-за чего кажется, что одна вытесняет другую.",
-                "if_it_were_true": "Если бы `Spring Security` отключался, не было бы смысла в `SecurityContext`-атрибуте в сессии, но он там и хранится.",
-                "how_it_should_be": "Аутентификацией занимается `Spring Security`; `Spring Session` лишь персистит её результат в общую сессию."
+                "explanation": "`Spring Security` кладёт `SecurityContext` в сессию, а `Spring Session` хранит эту сессию внешне, поэтому залогиненность переживает переключение между узлами кластера.",
+                "example": "`http.sessionManagement(s -> s.maximumSessions(1).expiredUrl(\"/session-expired\"))` ограничивает одну активную сессию на пользователя поверх внешнего store.",
+                "when_to_apply": "Используют, когда нужны single sign-on в кластере, контроль числа сессий и принудительный logout пользователя из админки.",
+                "edge_cases": "Без `Spring Session` `maximumSessions` в кластере ненадёжен, так как `SessionRegistry` по умолчанию локален для узла и не видит сессии на других инстансах.",
+                "related": "[[spring-session-interview#Q5]] `FindByIndexNameSessionRepository`; [[spring-session-interview#Q12]] concurrency control; [[spring-session-interview#Q15]] когда лучше `JWT` вместо сессий."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Интеграция требует ручной сериализации `Authentication` в `JWT` и хранения токена вместо сессии в `Redis`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`SecurityContext` хранится как обычный атрибут сессии, никакой ручной упаковки в `JWT` интеграция не требует.",
-                "source_of_confusion": "`JWT` — популярная альтернатива сессиям, поэтому его примешивают и к session-based интеграции.",
-                "if_it_were_true": "Если бы нужен был `JWT`, это был бы уже stateless-подход без серверной сессии, что противоречит `Spring Session`.",
-                "how_it_should_be": "`SecurityContext` сериализуется как session-атрибут автоматически; `JWT` — это отдельный stateless-сценарий."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Для интеграции достаточно `JWT`, а `SecurityContext` в сессию `Spring Security` не сохраняет вообще.",
               "correct": false,
               "sections": {
@@ -225,16 +214,27 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "Интеграция требует ручной сериализации `Authentication` в `JWT` и хранения токена вместо сессии в `Redis`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`SecurityContext` хранится как обычный атрибут сессии, никакой ручной упаковки в `JWT` интеграция не требует.",
+                "source_of_confusion": "`JWT` — популярная альтернатива сессиям, поэтому его примешивают и к session-based интеграции.",
+                "if_it_were_true": "Если бы нужен был `JWT`, это был бы уже stateless-подход без серверной сессии, что противоречит `Spring Session`.",
+                "how_it_should_be": "`SecurityContext` сериализуется как session-атрибут автоматически; `JWT` — это отдельный stateless-сценарий."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "При аутентификации `SecurityContext` сохраняется как атрибут сессии во внешнем store (`Redis`/`JDBC`), а `sessionManagement` `Spring Security` (`maximumSessions`, `expiredUrl`, политика создания) работает поверх этой сессии; `FindByIndexNameSessionRepository` позволяет найти все сессии пользователя.",
-              "correct": true,
+              "text": "`Spring Session` полностью отключает `Spring Security`, заменяя аутентификацию собственным механизмом проверки cookie.",
+              "correct": false,
               "sections": {
-                "explanation": "`Spring Security` кладёт `SecurityContext` в сессию, а `Spring Session` хранит эту сессию внешне, поэтому залогиненность переживает переключение между узлами кластера.",
-                "example": "`http.sessionManagement(s -> s.maximumSessions(1).expiredUrl(\"/session-expired\"))` ограничивает одну активную сессию на пользователя поверх внешнего store.",
-                "when_to_apply": "Используют, когда нужны single sign-on в кластере, контроль числа сессий и принудительный logout пользователя из админки.",
-                "edge_cases": "Без `Spring Session` `maximumSessions` в кластере ненадёжен, так как `SessionRegistry` по умолчанию локален для узла и не видит сессии на других инстансах.",
-                "related": "[[spring-session-interview#Q5]] `FindByIndexNameSessionRepository`; [[spring-session-interview#Q12]] concurrency control; [[spring-session-interview#Q15]] когда лучше `JWT` вместо сессий."
+                "what_actually": "`Spring Session` не заменяет аутентификацию `Spring Security` — он лишь хранит сессию (включая `SecurityContext`) во внешнем store.",
+                "source_of_confusion": "Обе работают с cookie и сессией, из-за чего кажется, что одна вытесняет другую.",
+                "if_it_were_true": "Если бы `Spring Security` отключался, не было бы смысла в `SecurityContext`-атрибуте в сессии, но он там и хранится.",
+                "how_it_should_be": "Аутентификацией занимается `Spring Security`; `Spring Session` лишь персистит её результат в общую сессию."
               }
             }
           ]
@@ -251,31 +251,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`FindByIndexNameSessionRepository` — расширение репозитория сессий, индексирующее сессии по имени пользователя (`principalName`) и позволяющее найти все сессии конкретного пользователя через `findByPrincipalName`, например для просмотра активных сессий или принудительного logout.",
-              "correct": true,
-              "sections": {
-                "explanation": "Обычный репозиторий ищет сессию только по `sessionId`; индексированный добавляет обратный индекс «пользователь → его сессии», что нужно для управления сессиями по логину.",
-                "example": "`sessionRepository.findByPrincipalName(\"john\")` вернёт map всех сессий пользователя, а проход по ним с `deleteById` выполнит invalidate всех его сессий.",
-                "when_to_apply": "Применяют для «выйти на всех устройствах», ограничения числа сессий и отображения списка активных входов пользователя в личном кабинете.",
-                "edge_cases": "Индекс требует `@EnableRedisIndexedHttpSession` — только `Redis` поддерживает это natively; с обычным `@EnableRedisHttpSession` поиск по пользователю недоступен.",
-                "related": "[[spring-session-interview#Q4]] интеграция со `Spring Security`; [[spring-session-interview#Q12]] concurrency control поверх этого репозитория; [[spring-session-interview#Q2]] базовая настройка `Redis`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`FindByIndexNameSessionRepository` ищет сессию исключительно по `sessionId` и ничего не знает об имени пользователя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Поиск по `sessionId` умеет и обычный `SessionRepository`; смысл индексированного варианта именно в поиске по `principalName`.",
-                "source_of_confusion": "Оба интерфейса работают с сессиями, поэтому их методы поиска смешивают.",
-                "if_it_were_true": "Если бы он искал лишь по id, не было бы метода `findByPrincipalName`, но он есть и центральный.",
-                "how_it_should_be": "По `sessionId` ищет базовый репозиторий; индексированный добавляет именно поиск по пользователю."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Этот репозиторий работает с любым store, включая `JDBC` и `MongoDB`, не требуя специальной аннотации.",
               "correct": false,
               "sections": {
@@ -286,8 +261,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "`FindByIndexNameSessionRepository` — это кэш-репозиторий, который держит копии всех сессий в локальной памяти узла.",
               "correct": false,
               "sections": {
@@ -295,6 +270,31 @@
                 "source_of_confusion": "Слово «repository» ассоциируется с in-memory коллекцией, отсюда идея локальной копии.",
                 "if_it_were_true": "Если бы все сессии лежали в памяти узла, терялся бы смысл внешнего store для кластера.",
                 "how_it_should_be": "Сессии и индекс живут во внешнем store; репозиторий лишь предоставляет к ним доступ."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`FindByIndexNameSessionRepository` ищет сессию исключительно по `sessionId` и ничего не знает об имени пользователя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поиск по `sessionId` умеет и обычный `SessionRepository`; смысл индексированного варианта именно в поиске по `principalName`.",
+                "source_of_confusion": "Оба интерфейса работают с сессиями, поэтому их методы поиска смешивают.",
+                "if_it_were_true": "Если бы он искал лишь по id, не было бы метода `findByPrincipalName`, но он есть и центральный.",
+                "how_it_should_be": "По `sessionId` ищет базовый репозиторий; индексированный добавляет именно поиск по пользователю."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`FindByIndexNameSessionRepository` — расширение репозитория сессий, индексирующее сессии по имени пользователя (`principalName`) и позволяющее найти все сессии конкретного пользователя через `findByPrincipalName`, например для просмотра активных сессий или принудительного logout.",
+              "correct": true,
+              "sections": {
+                "explanation": "Обычный репозиторий ищет сессию только по `sessionId`; индексированный добавляет обратный индекс «пользователь → его сессии», что нужно для управления сессиями по логину.",
+                "example": "`sessionRepository.findByPrincipalName(\"john\")` вернёт map всех сессий пользователя, а проход по ним с `deleteById` выполнит invalidate всех его сессий.",
+                "when_to_apply": "Применяют для «выйти на всех устройствах», ограничения числа сессий и отображения списка активных входов пользователя в личном кабинете.",
+                "edge_cases": "Индекс требует `@EnableRedisIndexedHttpSession` — только `Redis` поддерживает это natively; с обычным `@EnableRedisHttpSession` поиск по пользователю недоступен.",
+                "related": "[[spring-session-interview#Q4]] интеграция со `Spring Security`; [[spring-session-interview#Q12]] concurrency control поверх этого репозитория; [[spring-session-interview#Q2]] базовая настройка `Redis`."
               }
             }
           ]
@@ -311,6 +311,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Для событий истечения достаточно `@Scheduled`-задачи, опрашивающей `Redis`; никаких keyspace notifications не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Session` доставляет `SessionExpiredEvent` через keyspace notifications `Redis` (`notify-keyspace-events Eg`), а не через ручной polling.",
+                "source_of_confusion": "Polling — привычный способ узнать об истечении, поэтому его предлагают вместо notifications.",
+                "if_it_were_true": "Если бы хватало `@Scheduled`, настройка `notify-keyspace-events` была бы бесполезной, но без неё события молчат.",
+                "how_it_should_be": "Истечение ловят через keyspace notifications и `@EventListener`; самописный polling здесь лишний."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "События сессий приходят только в виде HTTP-вебхуков, которые нужно принимать отдельным контроллером по URL.",
               "correct": false,
               "sections": {
@@ -321,8 +333,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "Слушают события `SessionCreatedEvent`, `SessionDeletedEvent`, `SessionExpiredEvent` через `@EventListener`; для получения событий истечения/удаления из `Redis` нужно включить keyspace notifications (`notify-keyspace-events Eg`).",
               "correct": true,
               "sections": {
@@ -331,18 +343,6 @@
                 "when_to_apply": "Применяют для аудита логинов, освобождения связанных ресурсов при удалении сессии и метрик по числу истёкших сессий.",
                 "edge_cases": "Без `notify-keyspace-events Eg` в `Redis` события истечения/удаления не доставляются, и слушатели `SessionExpiredEvent` молчат.",
                 "related": "[[spring-session-interview#Q7]] управление timeout, влияющим на истечение; [[spring-session-interview#Q2]] базовая настройка `Redis`; [[spring-session-interview#Q14]] мониторинг сессий через `Actuator`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Для событий истечения достаточно `@Scheduled`-задачи, опрашивающей `Redis`; никаких keyspace notifications не требуется.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Spring Session` доставляет `SessionExpiredEvent` через keyspace notifications `Redis` (`notify-keyspace-events Eg`), а не через ручной polling.",
-                "source_of_confusion": "Polling — привычный способ узнать об истечении, поэтому его предлагают вместо notifications.",
-                "if_it_were_true": "Если бы хватало `@Scheduled`, настройка `notify-keyspace-events` была бы бесполезной, но без неё события молчат.",
-                "how_it_should_be": "Истечение ловят через keyspace notifications и `@EventListener`; самописный polling здесь лишний."
               }
             },
             {
@@ -371,30 +371,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Timeout сессии можно задать только пересборкой приложения через системное свойство `-Dsession.timeout` при старте JVM.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Timeout настраивается свойством `spring.session.timeout` в конфиге и меняется программно через `setMaxInactiveInterval`, без пересборки.",
-                "source_of_confusion": "JVM-флаги — привычный способ конфигурации, поэтому его приписывают и timeout сессии.",
-                "if_it_were_true": "Если бы нужен был JVM-флаг, свойство `spring.session.timeout` ничего бы не делало, но оно работает.",
-                "how_it_should_be": "Timeout задают свойством или программно; JVM-флаг и пересборка для этого не нужны."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Программно timeout задаётся в миллисекундах через `session.setMaxInactiveInterval(ms)` и принимает значение в `long`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`setMaxInactiveInterval` принимает время в секундах как `int`, а не миллисекунды в `long`.",
-                "source_of_confusion": "Многие API времени в Java оперируют миллисекундами, отсюда ошибочное ожидание.",
-                "if_it_were_true": "Если бы это были миллисекунды, `1800` означало бы менее 2 секунд, а не 30 минут, как задумано.",
-                "how_it_should_be": "Метод принимает секунды (`int`); для duration-формата используют свойство `spring.session.timeout`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Глобально timeout задают свойством `spring.session.timeout` (ISO 8601, например `30m`); программно — `session.setMaxInactiveInterval(seconds)`, что позволяет, например, выдавать админам более длинный timeout, чем обычным пользователям.",
               "correct": true,
               "sections": {
@@ -406,8 +382,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Глобальный timeout настраивается только в `Redis` через `EXPIRE` и недоступен из свойств `Spring`.",
               "correct": false,
               "sections": {
@@ -415,6 +391,30 @@
                 "source_of_confusion": "Так как `Redis` использует `EXPIRE`, кажется, что timeout настраивают только на стороне `Redis`.",
                 "if_it_were_true": "Если бы свойства не влияли, секция `spring.session.timeout` была бы бесполезной, но она задаёт TTL.",
                 "how_it_should_be": "Timeout задают на уровне `Spring`; трансляция в `EXPIRE` происходит автоматически внутри store."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Программно timeout задаётся в миллисекундах через `session.setMaxInactiveInterval(ms)` и принимает значение в `long`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`setMaxInactiveInterval` принимает время в секундах как `int`, а не миллисекунды в `long`.",
+                "source_of_confusion": "Многие API времени в Java оперируют миллисекундами, отсюда ошибочное ожидание.",
+                "if_it_were_true": "Если бы это были миллисекунды, `1800` означало бы менее 2 секунд, а не 30 минут, как задумано.",
+                "how_it_should_be": "Метод принимает секунды (`int`); для duration-формата используют свойство `spring.session.timeout`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Timeout сессии можно задать только пересборкой приложения через системное свойство `-Dsession.timeout` при старте JVM.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Timeout настраивается свойством `spring.session.timeout` в конфиге и меняется программно через `setMaxInactiveInterval`, без пересборки.",
+                "source_of_confusion": "JVM-флаги — привычный способ конфигурации, поэтому его приписывают и timeout сессии.",
+                "if_it_were_true": "Если бы нужен был JVM-флаг, свойство `spring.session.timeout` ничего бы не делало, но оно работает.",
+                "how_it_should_be": "Timeout задают свойством или программно; JVM-флаг и пересборка для этого не нужны."
               }
             }
           ]
@@ -431,6 +431,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "По умолчанию `Spring Session` использует Java serialization для `Redis`; в production переходят на JSON, объявив бин `RedisSerializer` (`GenericJackson2JsonRedisSerializer`), при этом учитывая, что смена сериализации делает существующие сессии нечитаемыми и требует стратегии миграции.",
+              "correct": true,
+              "sections": {
+                "explanation": "Java serialization хрупка к версиям классов и неудобна для отладки; JSON-сериализатор делает значения в `Redis` читаемыми и устойчивее к эволюции модели.",
+                "example": "Бин `springSessionDefaultRedisSerializer`, возвращающий `new GenericJackson2JsonRedisSerializer()`, переключает запись атрибутов сессии на JSON.",
+                "when_to_apply": "Применяют в production для кросс-версионной совместимости, читаемости данных в `Redis` и интеграции с инструментами, не понимающими Java-сериализацию.",
+                "edge_cases": "При смене сериализатора уже лежащие в `Redis` сессии становятся нечитаемыми, поэтому нужен rolling deploy и/или версионирование ключей, иначе все потеряют сессию.",
+                "related": "[[spring-session-interview#Q2]] базовая настройка `Redis` store; [[spring-session-interview#Q11]] миграция с in-memory на `Redis`; [[spring-session-interview#Q10]] поведение store в кластере."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Сменить сериализацию нельзя: `Spring Session` жёстко зашит на Java serialization и не позволяет подменить `RedisSerializer`.",
               "correct": false,
               "sections": {
@@ -438,18 +451,6 @@
                 "source_of_confusion": "Java serialization идёт из коробки, поэтому кажется единственно возможной.",
                 "if_it_were_true": "Если бы подмена была запрещена, точка расширения `springSessionDefaultRedisSerializer` была бы бессмысленной.",
                 "how_it_should_be": "Дефолт переопределяется бином сериализатора; JSON — штатный production-вариант."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Переход на JSON-сериализацию автоматически конвертирует все ранее сохранённые сессии в новый формат без потерь.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Автоконвертации нет: ранее записанные Java-сериализованные значения станут нечитаемыми, что требует стратегии миграции.",
-                "source_of_confusion": "Хочется верить в бесшовную миграцию, поэтому предполагают автоконвертацию.",
-                "if_it_were_true": "Если бы старые сессии конвертировались сами, не нужны были бы rolling deploy и версионирование ключей.",
-                "how_it_should_be": "Старые сессии не мигрируют сами; нужен rolling deploy и/или версионирование ключей сессий."
               }
             },
             {
@@ -467,14 +468,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "По умолчанию `Spring Session` использует Java serialization для `Redis`; в production переходят на JSON, объявив бин `RedisSerializer` (`GenericJackson2JsonRedisSerializer`), при этом учитывая, что смена сериализации делает существующие сессии нечитаемыми и требует стратегии миграции.",
-              "correct": true,
+              "text": "Переход на JSON-сериализацию автоматически конвертирует все ранее сохранённые сессии в новый формат без потерь.",
+              "correct": false,
               "sections": {
-                "explanation": "Java serialization хрупка к версиям классов и неудобна для отладки; JSON-сериализатор делает значения в `Redis` читаемыми и устойчивее к эволюции модели.",
-                "example": "Бин `springSessionDefaultRedisSerializer`, возвращающий `new GenericJackson2JsonRedisSerializer()`, переключает запись атрибутов сессии на JSON.",
-                "when_to_apply": "Применяют в production для кросс-версионной совместимости, читаемости данных в `Redis` и интеграции с инструментами, не понимающими Java-сериализацию.",
-                "edge_cases": "При смене сериализатора уже лежащие в `Redis` сессии становятся нечитаемыми, поэтому нужен rolling deploy и/или версионирование ключей, иначе все потеряют сессию.",
-                "related": "[[spring-session-interview#Q2]] базовая настройка `Redis` store; [[spring-session-interview#Q11]] миграция с in-memory на `Redis`; [[spring-session-interview#Q10]] поведение store в кластере."
+                "what_actually": "Автоконвертации нет: ранее записанные Java-сериализованные значения станут нечитаемыми, что требует стратегии миграции.",
+                "source_of_confusion": "Хочется верить в бесшовную миграцию, поэтому предполагают автоконвертацию.",
+                "if_it_were_true": "Если бы старые сессии конвертировались сами, не нужны были бы rolling deploy и версионирование ключей.",
+                "how_it_should_be": "Старые сессии не мигрируют сами; нужен rolling deploy и/или версионирование ключей сессий."
               }
             }
           ]
@@ -504,13 +504,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В `WebFlux` используют тот же `HttpSession`, что и в MVC, поскольку API сессий в реактивном стеке идентичен сервлетному.",
+              "text": "`Spring Session` не поддерживает реактивный стек, поэтому в `WebFlux` сессии хранят только в памяти инстанса.",
               "correct": false,
               "sections": {
-                "what_actually": "`HttpSession` — сервлетный API и в `WebFlux` недоступен; реактивный аналог — `WebSession` с `Mono`-доступом.",
-                "source_of_confusion": "Оба про «сессию», поэтому ожидают одинаковый API в обоих стеках.",
-                "if_it_were_true": "Если бы `HttpSession` работал в `WebFlux`, не нужен был бы отдельный тип `WebSession`, но он введён намеренно.",
-                "how_it_should_be": "В реактивном стеке используют `WebSession`; `HttpSession` остаётся сервлетным MVC-API."
+                "what_actually": "`Spring Session` поддерживает `WebFlux` через `WebSession` и внешний `Redis` store, а не ограничивает реактивный стек памятью узла.",
+                "source_of_confusion": "Реактивность ассоциируется с отказом от состояния, отсюда вывод об отсутствии поддержки.",
+                "if_it_were_true": "Если бы поддержки не было, аннотация `@EnableRedisWebSession` не существовала бы.",
+                "how_it_should_be": "Реактивные сессии хранятся во внешнем store через `WebSession`; in-memory не обязателен."
               }
             },
             {
@@ -528,13 +528,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Spring Session` не поддерживает реактивный стек, поэтому в `WebFlux` сессии хранят только в памяти инстанса.",
+              "text": "В `WebFlux` используют тот же `HttpSession`, что и в MVC, поскольку API сессий в реактивном стеке идентичен сервлетному.",
               "correct": false,
               "sections": {
-                "what_actually": "`Spring Session` поддерживает `WebFlux` через `WebSession` и внешний `Redis` store, а не ограничивает реактивный стек памятью узла.",
-                "source_of_confusion": "Реактивность ассоциируется с отказом от состояния, отсюда вывод об отсутствии поддержки.",
-                "if_it_were_true": "Если бы поддержки не было, аннотация `@EnableRedisWebSession` не существовала бы.",
-                "how_it_should_be": "Реактивные сессии хранятся во внешнем store через `WebSession`; in-memory не обязателен."
+                "what_actually": "`HttpSession` — сервлетный API и в `WebFlux` недоступен; реактивный аналог — `WebSession` с `Mono`-доступом.",
+                "source_of_confusion": "Оба про «сессию», поэтому ожидают одинаковый API в обоих стеках.",
+                "if_it_were_true": "Если бы `HttpSession` работал в `WebFlux`, не нужен был бы отдельный тип `WebSession`, но он введён намеренно.",
+                "how_it_should_be": "В реактивном стеке используют `WebSession`; `HttpSession` остаётся сервлетным MVC-API."
               }
             }
           ]
@@ -551,18 +551,30 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В кластере `Spring Session` всё равно требует sticky sessions, чтобы привязать пользователя к узлу, где лежит его in-memory сессия.",
+              "text": "Каждый узел кластера хранит собственную копию сессии и синхронизирует её с другими узлами по протоколу репликации.",
               "correct": false,
               "sections": {
-                "what_actually": "Смысл `Spring Session` как раз в отказе от sticky sessions: сессия общая во внешнем store, и узел не важен.",
-                "source_of_confusion": "Sticky sessions — классическое решение для in-memory сессий, поэтому его переносят и сюда.",
-                "if_it_were_true": "Если бы sticky sessions были обязательны, внешний store не давал бы преимуществ для кластера, но он их даёт.",
-                "how_it_should_be": "Sticky sessions не нужны; любой узел читает общую сессию из store."
+                "what_actually": "`Spring Session` не реплицирует копии между узлами — есть один общий external store, откуда все читают.",
+                "source_of_confusion": "Tomcat session replication работает именно через копии, поэтому модель путают.",
+                "if_it_were_true": "Если бы шла межузловая репликация, был бы риск рассинхрона, которого общий store избегает.",
+                "how_it_should_be": "Источник истины — общий store (`Redis`); межузловая репликация копий не используется."
               }
             },
             {
               "order": 1,
               "label": "B",
+              "text": "Балансировщик в кластере обязан расшифровывать `SESSION` cookie и сам решать, на каком узле лежит сессия.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Балансировщик просто маршрутизирует запрос (round-robin); поиск сессии по `sessionId` делает фильтр `Spring Session`, а не LB.",
+                "source_of_confusion": "Раз cookie содержит `sessionId`, кажется, что её должен интерпретировать балансировщик.",
+                "if_it_were_true": "Если бы LB читал cookie, он становился бы stateful, чего внешний store как раз позволяет избежать.",
+                "how_it_should_be": "LB маршрутизирует без знания о сессии; её загружает фильтр приложения из общего store."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Браузер шлёт `SESSION` cookie, балансировщик направляет запрос на любой узел (round-robin), фильтр `Spring Session` грузит сессию из общего store (`Redis`) по `sessionId`, отдаёт её через `HttpSession` и сохраняет изменения обратно — sticky sessions не нужны.",
               "correct": true,
               "sections": {
@@ -574,27 +586,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Каждый узел кластера хранит собственную копию сессии и синхронизирует её с другими узлами по протоколу репликации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Spring Session` не реплицирует копии между узлами — есть один общий external store, откуда все читают.",
-                "source_of_confusion": "Tomcat session replication работает именно через копии, поэтому модель путают.",
-                "if_it_were_true": "Если бы шла межузловая репликация, был бы риск рассинхрона, которого общий store избегает.",
-                "how_it_should_be": "Источник истины — общий store (`Redis`); межузловая репликация копий не используется."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "Балансировщик в кластере обязан расшифровывать `SESSION` cookie и сам решать, на каком узле лежит сессия.",
+              "text": "В кластере `Spring Session` всё равно требует sticky sessions, чтобы привязать пользователя к узлу, где лежит его in-memory сессия.",
               "correct": false,
               "sections": {
-                "what_actually": "Балансировщик просто маршрутизирует запрос (round-robin); поиск сессии по `sessionId` делает фильтр `Spring Session`, а не LB.",
-                "source_of_confusion": "Раз cookie содержит `sessionId`, кажется, что её должен интерпретировать балансировщик.",
-                "if_it_were_true": "Если бы LB читал cookie, он становился бы stateful, чего внешний store как раз позволяет избежать.",
-                "how_it_should_be": "LB маршрутизирует без знания о сессии; её загружает фильтр приложения из общего store."
+                "what_actually": "Смысл `Spring Session` как раз в отказе от sticky sessions: сессия общая во внешнем store, и узел не важен.",
+                "source_of_confusion": "Sticky sessions — классическое решение для in-memory сессий, поэтому его переносят и сюда.",
+                "if_it_were_true": "Если бы sticky sessions были обязательны, внешний store не давал бы преимуществ для кластера, но он их даёт.",
+                "how_it_should_be": "Sticky sessions не нужны; любой узел читает общую сессию из store."
               }
             }
           ]
@@ -611,13 +611,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Миграция выполняется автоматически: при первом запуске `Spring Session` сам перенесёт все in-memory сессии `Tomcat` в `Redis`.",
+              "text": "Для миграции обязателен двойной store на постоянной основе: и `Redis`, и память `Tomcat` навсегда работают параллельно.",
               "correct": false,
               "sections": {
-                "what_actually": "Автоматического переноса нет: in-memory сессии `Tomcat` недоступны `Spring Session` и при деплое просто теряются.",
-                "source_of_confusion": "Хочется бесшовной миграции, поэтому предполагают автоперенос состояния.",
-                "if_it_were_true": "Если бы перенос был автоматическим, не нужны были бы rolling restart и план повторного входа.",
-                "how_it_should_be": "In-memory сессии не мигрируют сами; используют rolling restart или плановое окно с relogin."
+                "what_actually": "Двойное хранилище — лишь временный приём на период миграции, а не постоянная архитектура; цель — единый external store.",
+                "source_of_confusion": "Идея временного `MapSessionRepository` создаёт впечатление, что двойной store нужен всегда.",
+                "if_it_were_true": "Если бы двойной store был постоянным, терялся бы смысл единого источника истины в кластере.",
+                "how_it_should_be": "После миграции остаётся один external store; двойное хранилище — временная мера."
               }
             },
             {
@@ -648,13 +648,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для миграции обязателен двойной store на постоянной основе: и `Redis`, и память `Tomcat` навсегда работают параллельно.",
+              "text": "Миграция выполняется автоматически: при первом запуске `Spring Session` сам перенесёт все in-memory сессии `Tomcat` в `Redis`.",
               "correct": false,
               "sections": {
-                "what_actually": "Двойное хранилище — лишь временный приём на период миграции, а не постоянная архитектура; цель — единый external store.",
-                "source_of_confusion": "Идея временного `MapSessionRepository` создаёт впечатление, что двойной store нужен всегда.",
-                "if_it_were_true": "Если бы двойной store был постоянным, терялся бы смысл единого источника истины в кластере.",
-                "how_it_should_be": "После миграции остаётся один external store; двойное хранилище — временная мера."
+                "what_actually": "Автоматического переноса нет: in-memory сессии `Tomcat` недоступны `Spring Session` и при деплое просто теряются.",
+                "source_of_confusion": "Хочется бесшовной миграции, поэтому предполагают автоперенос состояния.",
+                "if_it_were_true": "Если бы перенос был автоматическим, не нужны были бы rolling restart и план повторного входа.",
+                "how_it_should_be": "In-memory сессии не мигрируют сами; используют rolling restart или плановое окно с relogin."
               }
             }
           ]
@@ -671,18 +671,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Concurrency Control ограничивает общее число сессий во всём приложении, а не число сессий на одного пользователя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`maximumSessions` ограничивает число одновременных сессий именно одного пользователя, а не глобальный лимит на приложение.",
-                "source_of_confusion": "Слово «concurrency» воспринимают как общую нагрузку, отсюда трактовка про всё приложение.",
-                "if_it_were_true": "Если бы лимит был глобальным, привязка к `principalName` была бы не нужна, но реестр считает сессии по пользователю.",
-                "how_it_should_be": "Лимит применяется per-user; общее число сессий приложения этим механизмом не ограничивают."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "В кластере достаточно дефолтного `SessionRegistry` в памяти — он автоматически видит сессии на всех узлах.",
               "correct": false,
               "sections": {
@@ -690,6 +678,19 @@
                 "source_of_confusion": "Раз есть встроенный реестр, кажется, что он работает в кластере из коробки.",
                 "if_it_were_true": "Если бы in-memory реестр видел все узлы, не понадобился бы backed-вариант поверх `Spring Session`.",
                 "how_it_should_be": "Для кластера берут `SpringSessionBackedSessionRegistry`; in-memory реестр пригоден лишь для одного узла."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Concurrency Control — ограничение числа одновременных сессий одного пользователя через `sessionManagement().maximumSessions(n)` и `maxSessionsPreventsLogin`; в кластере нужен `SessionRegistry` поверх `Spring Session` — `SpringSessionBackedSessionRegistry`, иначе реестр сессий локален для узла.",
+              "correct": true,
+              "sections": {
+                "explanation": "`maximumSessions(n)` задаёт лимит активных сессий на пользователя, а `maxSessionsPreventsLogin` решает: блокировать новый логин или завершать старую сессию при превышении.",
+                "example": "`http.sessionManagement(s -> s.maximumSessions(3).maxSessionsPreventsLogin(true).sessionRegistry(reg))` плюс бин `SpringSessionBackedSessionRegistry` даёт контроль 3 сессий в кластере.",
+                "when_to_apply": "Применяют, когда нужно запретить параллельные входы (например один лицензированный аккаунт) или ограничить число устройств пользователя.",
+                "edge_cases": "Обычный `SessionRegistry` хранит данные в памяти узла и в кластере не видит сессии на других инстансах; для корректной работы нужен `SpringSessionBackedSessionRegistry`.",
+                "related": "[[spring-session-interview#Q5]] `FindByIndexNameSessionRepository`, на котором строится реестр; [[spring-session-interview#Q4]] `sessionManagement` `Spring Security`; [[spring-session-interview#Q10]] работа в кластере."
               }
             },
             {
@@ -707,14 +708,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Concurrency Control — ограничение числа одновременных сессий одного пользователя через `sessionManagement().maximumSessions(n)` и `maxSessionsPreventsLogin`; в кластере нужен `SessionRegistry` поверх `Spring Session` — `SpringSessionBackedSessionRegistry`, иначе реестр сессий локален для узла.",
-              "correct": true,
+              "text": "Concurrency Control ограничивает общее число сессий во всём приложении, а не число сессий на одного пользователя.",
+              "correct": false,
               "sections": {
-                "explanation": "`maximumSessions(n)` задаёт лимит активных сессий на пользователя, а `maxSessionsPreventsLogin` решает: блокировать новый логин или завершать старую сессию при превышении.",
-                "example": "`http.sessionManagement(s -> s.maximumSessions(3).maxSessionsPreventsLogin(true).sessionRegistry(reg))` плюс бин `SpringSessionBackedSessionRegistry` даёт контроль 3 сессий в кластере.",
-                "when_to_apply": "Применяют, когда нужно запретить параллельные входы (например один лицензированный аккаунт) или ограничить число устройств пользователя.",
-                "edge_cases": "Обычный `SessionRegistry` хранит данные в памяти узла и в кластере не видит сессии на других инстансах; для корректной работы нужен `SpringSessionBackedSessionRegistry`.",
-                "related": "[[spring-session-interview#Q5]] `FindByIndexNameSessionRepository`, на котором строится реестр; [[spring-session-interview#Q4]] `sessionManagement` `Spring Security`; [[spring-session-interview#Q10]] работа в кластере."
+                "what_actually": "`maximumSessions` ограничивает число одновременных сессий именно одного пользователя, а не глобальный лимит на приложение.",
+                "source_of_confusion": "Слово «concurrency» воспринимают как общую нагрузку, отсюда трактовка про всё приложение.",
+                "if_it_were_true": "Если бы лимит был глобальным, привязка к `principalName` была бы не нужна, но реестр считает сессии по пользователю.",
+                "how_it_should_be": "Лимит применяется per-user; общее число сессий приложения этим механизмом не ограничивают."
               }
             }
           ]
@@ -731,19 +731,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Tomcat` Session Manager хранит сессии в памяти контейнера и в кластере требует sticky sessions или репликации, тогда как `Spring Session` выносит сессии во внешний store (`Redis`/`JDBC`/`MongoDB`), работает на любом контейнере и реактивном стеке и умеет поиск по пользователю и `Actuator`-метрики.",
-              "correct": true,
-              "sections": {
-                "explanation": "Ключевое различие — где хранится сессия и насколько решение привязано к контейнеру: `Tomcat`-менеджер контейнеро-зависим и in-memory, `Spring Session` — внешний и контейнеро-независимый.",
-                "example": "В кластере `Tomcat` нужны sticky sessions/replication, а `Spring Session` позволяет любому узлу обработать запрос и даёт `FindByIndexNameSessionRepository` для поиска сессий по пользователю.",
-                "when_to_apply": "Выбирают `Spring Session` в облачных/контейнерных средах с эфемерными инстансами; `Tomcat`-менеджер достаточно для простого одноузлового деплоя.",
-                "edge_cases": "`Spring Session` добавляет сетевую задержку на каждый доступ к store, тогда как in-memory `Tomcat` быстрее, но не переживает падение узла и горизонтальное масштабирование.",
-                "related": "[[spring-session-interview#Q1]] зачем нужен внешний store; [[spring-session-interview#Q9]] поддержка `WebFlux`; [[spring-session-interview#Q14]] мониторинг через `Actuator`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Различий по сути нет: `Spring Session` — это просто обёртка над `Tomcat` Session Manager с тем же in-memory хранилищем.",
               "correct": false,
               "sections": {
@@ -751,6 +738,18 @@
                 "source_of_confusion": "Обе технологии управляют HTTP-сессией, отсюда вывод об эквивалентности.",
                 "if_it_were_true": "Если бы это была обёртка над `Tomcat`, она не работала бы на `Jetty`/`Undertow`, но `Spring Session` работает.",
                 "how_it_should_be": "`Spring Session` — независимый слой с внешним store; `Tomcat`-менеджер — это in-memory контейнерное решение."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Tomcat` Session Manager даёт поиск всех сессий пользователя из коробки, а `Spring Session` такой возможности лишён.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Поиск сессий по пользователю даёт именно `Spring Session` (`FindByIndexNameSessionRepository`), а у `Tomcat`-менеджера этого нет.",
+                "source_of_confusion": "Раз `Tomcat` управляет сессиями, кажется, что у него богаче API поиска.",
+                "if_it_were_true": "Если бы `Tomcat` умел find-by-user, не понадобился бы индексированный репозиторий `Spring Session`.",
+                "how_it_should_be": "Find-by-user — фича `Spring Session`; `Tomcat`-менеджер такой возможности не предоставляет."
               }
             },
             {
@@ -768,13 +767,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Tomcat` Session Manager даёт поиск всех сессий пользователя из коробки, а `Spring Session` такой возможности лишён.",
-              "correct": false,
+              "text": "`Tomcat` Session Manager хранит сессии в памяти контейнера и в кластере требует sticky sessions или репликации, тогда как `Spring Session` выносит сессии во внешний store (`Redis`/`JDBC`/`MongoDB`), работает на любом контейнере и реактивном стеке и умеет поиск по пользователю и `Actuator`-метрики.",
+              "correct": true,
               "sections": {
-                "what_actually": "Поиск сессий по пользователю даёт именно `Spring Session` (`FindByIndexNameSessionRepository`), а у `Tomcat`-менеджера этого нет.",
-                "source_of_confusion": "Раз `Tomcat` управляет сессиями, кажется, что у него богаче API поиска.",
-                "if_it_were_true": "Если бы `Tomcat` умел find-by-user, не понадобился бы индексированный репозиторий `Spring Session`.",
-                "how_it_should_be": "Find-by-user — фича `Spring Session`; `Tomcat`-менеджер такой возможности не предоставляет."
+                "explanation": "Ключевое различие — где хранится сессия и насколько решение привязано к контейнеру: `Tomcat`-менеджер контейнеро-зависим и in-memory, `Spring Session` — внешний и контейнеро-независимый.",
+                "example": "В кластере `Tomcat` нужны sticky sessions/replication, а `Spring Session` позволяет любому узлу обработать запрос и даёт `FindByIndexNameSessionRepository` для поиска сессий по пользователю.",
+                "when_to_apply": "Выбирают `Spring Session` в облачных/контейнерных средах с эфемерными инстансами; `Tomcat`-менеджер достаточно для простого одноузлового деплоя.",
+                "edge_cases": "`Spring Session` добавляет сетевую задержку на каждый доступ к store, тогда как in-memory `Tomcat` быстрее, но не переживает падение узла и горизонтальное масштабирование.",
+                "related": "[[spring-session-interview#Q1]] зачем нужен внешний store; [[spring-session-interview#Q9]] поддержка `WebFlux`; [[spring-session-interview#Q14]] мониторинг через `Actuator`."
               }
             }
           ]
@@ -851,30 +851,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring Session` обязателен для любого приложения на `Spring Boot`, даже одноузлового и stateless.",
+              "text": "Для stateless `JWT`-аутентификации `Spring Session` всё равно необходим, чтобы хранить токены на сервере в `Redis`.",
               "correct": false,
               "sections": {
-                "what_actually": "`Spring Session` не обязателен: для stateless `JWT` или одного узла без HA достаточно стандартных средств без внешнего store.",
-                "source_of_confusion": "Раз библиотека из экосистемы `Spring`, кажется, что её надо подключать всегда.",
-                "if_it_were_true": "Если бы он был обязателен, не имело бы смысла обсуждать `STATELESS`-политику без сессий, но она валидный выбор.",
-                "how_it_should_be": "Его подключают по необходимости (shared-сессии в кластере); для stateless/одноузловых сценариев он избыточен."
+                "what_actually": "`JWT` self-contained и не требует серверного хранилища; ставят `SessionCreationPolicy.STATELESS` без `Spring Session`.",
+                "source_of_confusion": "И `JWT`, и сессии связаны с аутентификацией, поэтому их совмещают там, где не нужно.",
+                "if_it_were_true": "Если бы `JWT` требовал серверного хранения, он перестал бы быть stateless, что противоречит его сути.",
+                "how_it_should_be": "При `JWT` сервер токены не хранит; `Spring Session` тут избыточен, режим — `STATELESS`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "В высоконагруженных read-heavy сценариях `Spring Session` всегда выгоден, так как чтение сессии бесплатно и не нагружает store.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Каждый запрос читает (и часто пишет) сессию во внешний store, поэтому при большом RPM это заметная дополнительная нагрузка.",
-                "source_of_confusion": "Кэширующий характер `Redis` создаёт иллюзию «бесплатного» чтения сессии.",
-                "if_it_were_true": "Если бы чтение было бесплатным, store не становился бы узким местом, но именно это происходит под нагрузкой.",
-                "how_it_should_be": "Доступ к сессии стоит обращения к store; в read-heavy сценариях это аргумент против лишних сессий."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Spring Session` избыточен при stateless `JWT`-аутентификации, на одноузловых приложениях без HA, в read-heavy высоконагруженных сценариях (каждый запрос читает сессию из store) и для микросервисов без общей сессии — там лучше `Spring Security` + `JWT` + `SessionCreationPolicy.STATELESS`.",
               "correct": true,
               "sections": {
@@ -886,15 +874,27 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Для stateless `JWT`-аутентификации `Spring Session` всё равно необходим, чтобы хранить токены на сервере в `Redis`.",
+              "order": 2,
+              "label": "C",
+              "text": "В высоконагруженных read-heavy сценариях `Spring Session` всегда выгоден, так как чтение сессии бесплатно и не нагружает store.",
               "correct": false,
               "sections": {
-                "what_actually": "`JWT` self-contained и не требует серверного хранилища; ставят `SessionCreationPolicy.STATELESS` без `Spring Session`.",
-                "source_of_confusion": "И `JWT`, и сессии связаны с аутентификацией, поэтому их совмещают там, где не нужно.",
-                "if_it_were_true": "Если бы `JWT` требовал серверного хранения, он перестал бы быть stateless, что противоречит его сути.",
-                "how_it_should_be": "При `JWT` сервер токены не хранит; `Spring Session` тут избыточен, режим — `STATELESS`."
+                "what_actually": "Каждый запрос читает (и часто пишет) сессию во внешний store, поэтому при большом RPM это заметная дополнительная нагрузка.",
+                "source_of_confusion": "Кэширующий характер `Redis` создаёт иллюзию «бесплатного» чтения сессии.",
+                "if_it_were_true": "Если бы чтение было бесплатным, store не становился бы узким местом, но именно это происходит под нагрузкой.",
+                "how_it_should_be": "Доступ к сессии стоит обращения к store; в read-heavy сценариях это аргумент против лишних сессий."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Session` обязателен для любого приложения на `Spring Boot`, даже одноузлового и stateless.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Session` не обязателен: для stateless `JWT` или одного узла без HA достаточно стандартных средств без внешнего store.",
+                "source_of_confusion": "Раз библиотека из экосистемы `Spring`, кажется, что её надо подключать всегда.",
+                "if_it_were_true": "Если бы он был обязателен, не имело бы смысла обсуждать `STATELESS`-политику без сессий, но она валидный выбор.",
+                "how_it_should_be": "Его подключают по необходимости (shared-сессии в кластере); для stateless/одноузловых сценариев он избыточен."
               }
             }
           ]

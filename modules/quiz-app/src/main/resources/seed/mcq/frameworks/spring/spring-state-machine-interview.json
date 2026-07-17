@@ -11,6 +11,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "State Machine — это шаблон проектирования для распределённых транзакций между несколькими микросервисами с компенсирующими шагами при сбое.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описана `Saga`, а не State Machine: Saga координирует распределённую транзакцию, тогда как FSM управляет состояниями одного локального объекта.",
+                "source_of_confusion": "И FSM, и Saga оперируют «шагами» и «состояниями», поэтому их роли путают в контексте workflow.",
+                "if_it_were_true": "Тогда `Spring State Machine` требовал бы брокер сообщений и компенсации для каждого перехода, но он работает в рамках одного процесса.",
+                "how_it_should_be": "State Machine моделирует жизненный цикл одного объекта; распределённые транзакции между сервисами — это Saga."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "State Machine — модель поведения объекта через набор состояний и переходов между ними по событиям; `Spring State Machine` реализует FSM в Spring и применяется, когда у объекта есть чёткие состояния (`PENDING → CONFIRMED → SHIPPED`), переходы требуют валидации и побочных эффектов, а состояние нужно сохранять между запросами.",
               "correct": true,
               "sections": {
@@ -22,32 +34,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "State Machine — это шаблон проектирования для распределённых транзакций между несколькими микросервисами с компенсирующими шагами при сбое.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Описана `Saga`, а не State Machine: Saga координирует распределённую транзакцию, тогда как FSM управляет состояниями одного локального объекта.",
-                "source_of_confusion": "И FSM, и Saga оперируют «шагами» и «состояниями», поэтому их роли путают в контексте workflow.",
-                "if_it_were_true": "Тогда `Spring State Machine` требовал бы брокер сообщений и компенсации для каждого перехода, но он работает в рамках одного процесса.",
-                "how_it_should_be": "State Machine моделирует жизненный цикл одного объекта; распределённые транзакции между сервисами — это Saga."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "State Machine применяют для любого enum-поля в сущности, потому что она автоматически валидирует допустимые значения этого поля.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для простого enum без сложных переходов FSM избыточен: документация прямо советует не использовать её там, где хватает одного поля.",
-                "source_of_confusion": "Состояния часто хранят в enum, поэтому кажется, что любой enum уже требует машины состояний.",
-                "if_it_were_true": "Тогда каждый enum-атрибут тянул бы за собой конфигурацию переходов и guard-ов, что раздуло бы код без пользы.",
-                "how_it_should_be": "FSM оправдана при валидируемых переходах и побочных эффектах, а не для хранения набора допустимых значений."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "State Machine — это механизм кэширования, который запоминает последний результат метода и возвращает его при повторном вызове с теми же аргументами.",
               "correct": false,
               "sections": {
@@ -55,6 +43,18 @@
                 "source_of_confusion": "И кэш, и FSM «хранят состояние между вызовами», и эта общая фраза подменяет понятия.",
                 "if_it_were_true": "Тогда `sendEvent` возвращал бы закэшированный ответ метода, но он инициирует переход и возвращает результат принятия события.",
                 "how_it_should_be": "Кэшированием занимается `@Cacheable`; FSM управляет состоянием объекта и переходами по событиям."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "State Machine применяют для любого enum-поля в сущности, потому что она автоматически валидирует допустимые значения этого поля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для простого enum без сложных переходов FSM избыточен: документация прямо советует не использовать её там, где хватает одного поля.",
+                "source_of_confusion": "Состояния часто хранят в enum, поэтому кажется, что любой enum уже требует машины состояний.",
+                "if_it_were_true": "Тогда каждый enum-атрибут тянул бы за собой конфигурацию переходов и guard-ов, что раздуло бы код без пользы.",
+                "how_it_should_be": "FSM оправдана при валидируемых переходах и побочных эффектах, а не для хранения набора допустимых значений."
               }
             }
           ]
@@ -83,14 +83,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Нужно подключить `spring-statemachine-core`, описать enum-ы состояний и событий, создать конфиг с `@EnableStateMachine extends StateMachineConfigurerAdapter`, в `configure(StateMachineStateConfigurer)` задать `.initial(...)`, `.states(...)`, `.end(...)`, а в `configure(StateMachineTransitionConfigurer)` описать переходы через `.withExternal().source(...).target(...).event(...)`.",
-              "correct": true,
+              "text": "Переходы настраиваются в `StateMachineStateConfigurer`, а сами состояния — в `StateMachineTransitionConfigurer`, то есть конфигураторы отвечают за противоположное своим именам.",
+              "correct": false,
               "sections": {
-                "explanation": "Базовая настройка состоит из трёх частей: зависимость `spring-statemachine-core`, два enum-а (состояния и события) и конфиг-класс, переопределяющий два метода `configure` — для состояний и для переходов.",
-                "example": "В `states.withStates().initial(PENDING).states(EnumSet.allOf(...)).end(DELIVERED)` задаём набор и финал, а в `transitions.withExternal().source(PENDING).target(CONFIRMED).event(CONFIRM)` — один переход.",
-                "when_to_apply": "Применяют этот минимальный шаблон для одной singleton-машины на приложение, когда нужно быстро смоделировать жизненный цикл одной сущности без фабрики и персистенса.",
-                "edge_cases": "Если забыть `.initial(...)`, машина не будет иметь стартового состояния и не запустится корректно; а пропущенный `event(...)` сделает переход немаршрутизируемым событием.",
-                "related": "[[spring-state-machine-interview#Q1]] зачем нужна State Machine; [[spring-state-machine-interview#Q3]] отправка события и чтение состояния; [[spring-state-machine-interview#Q8]] StateMachineFactory вместо singleton."
+                "what_actually": "Роли перепутаны: `StateMachineStateConfigurer` описывает состояния, а `StateMachineTransitionConfigurer` — переходы.",
+                "source_of_confusion": "Оба конфигуратора передаются в одноимённые `configure`-методы, и их легко перепутать без практики.",
+                "if_it_were_true": "Тогда `.withExternal().source().target().event()` вызывался бы на конфигураторе состояний, но этих методов там нет.",
+                "how_it_should_be": "State-конфигуратор задаёт `initial/states/end`, transition-конфигуратор — `source/target/event`."
               }
             },
             {
@@ -108,13 +107,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Переходы настраиваются в `StateMachineStateConfigurer`, а сами состояния — в `StateMachineTransitionConfigurer`, то есть конфигураторы отвечают за противоположное своим именам.",
-              "correct": false,
+              "text": "Нужно подключить `spring-statemachine-core`, описать enum-ы состояний и событий, создать конфиг с `@EnableStateMachine extends StateMachineConfigurerAdapter`, в `configure(StateMachineStateConfigurer)` задать `.initial(...)`, `.states(...)`, `.end(...)`, а в `configure(StateMachineTransitionConfigurer)` описать переходы через `.withExternal().source(...).target(...).event(...)`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Роли перепутаны: `StateMachineStateConfigurer` описывает состояния, а `StateMachineTransitionConfigurer` — переходы.",
-                "source_of_confusion": "Оба конфигуратора передаются в одноимённые `configure`-методы, и их легко перепутать без практики.",
-                "if_it_were_true": "Тогда `.withExternal().source().target().event()` вызывался бы на конфигураторе состояний, но этих методов там нет.",
-                "how_it_should_be": "State-конфигуратор задаёт `initial/states/end`, transition-конфигуратор — `source/target/event`."
+                "explanation": "Базовая настройка состоит из трёх частей: зависимость `spring-statemachine-core`, два enum-а (состояния и события) и конфиг-класс, переопределяющий два метода `configure` — для состояний и для переходов.",
+                "example": "В `states.withStates().initial(PENDING).states(EnumSet.allOf(...)).end(DELIVERED)` задаём набор и финал, а в `transitions.withExternal().source(PENDING).target(CONFIRMED).event(CONFIRM)` — один переход.",
+                "when_to_apply": "Применяют этот минимальный шаблон для одной singleton-машины на приложение, когда нужно быстро смоделировать жизненный цикл одной сущности без фабрики и персистенса.",
+                "edge_cases": "Если забыть `.initial(...)`, машина не будет иметь стартового состояния и не запустится корректно; а пропущенный `event(...)` сделает переход немаршрутизируемым событием.",
+                "related": "[[spring-state-machine-interview#Q1]] зачем нужна State Machine; [[spring-state-machine-interview#Q3]] отправка события и чтение состояния; [[spring-state-machine-interview#Q8]] StateMachineFactory вместо singleton."
               }
             }
           ]
@@ -143,13 +143,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Текущее состояние получают через `stateMachine.sendEvent(null)`, который при `null`-событии возвращает имя активного состояния.",
+              "text": "Результат `sendEvent` всегда означает успешный переход, поэтому проверять `ResultType` не требуется — достаточно факта вызова метода.",
               "correct": false,
               "sections": {
-                "what_actually": "Чтение состояния и отправка события — разные операции: состояние читают `getState().getId()`, а `sendEvent` инициирует переход.",
-                "source_of_confusion": "Кажется удобным использовать один метод и для чтения, и для записи состояния.",
-                "if_it_were_true": "Тогда `sendEvent(null)` имел бы смысл «запрос состояния», но он ожидает `Message` с событием.",
-                "how_it_should_be": "Для чтения — `getState().getId()`; для перехода — `sendEvent(Mono.just(message))`."
+                "what_actually": "`sendEvent` возвращает `StateMachineEventResult` с `ResultType`, который бывает `ACCEPTED`, `DENIED` или `DEFERRED`; без проверки отклонённое событие потеряется молча.",
+                "source_of_confusion": "Метод возвращает значение, и кажется, что сам факт его выполнения = успех перехода.",
+                "if_it_were_true": "Тогда событие из неподходящего состояния тоже считалось бы успешным, и состояние «менялось» бы вопреки правилам.",
+                "how_it_should_be": "Всегда проверяйте `getResultType() == ACCEPTED`, иначе отклонённый переход останется незамеченным."
               }
             },
             {
@@ -168,13 +168,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Результат `sendEvent` всегда означает успешный переход, поэтому проверять `ResultType` не требуется — достаточно факта вызова метода.",
+              "text": "Текущее состояние получают через `stateMachine.sendEvent(null)`, который при `null`-событии возвращает имя активного состояния.",
               "correct": false,
               "sections": {
-                "what_actually": "`sendEvent` возвращает `StateMachineEventResult` с `ResultType`, который бывает `ACCEPTED`, `DENIED` или `DEFERRED`; без проверки отклонённое событие потеряется молча.",
-                "source_of_confusion": "Метод возвращает значение, и кажется, что сам факт его выполнения = успех перехода.",
-                "if_it_were_true": "Тогда событие из неподходящего состояния тоже считалось бы успешным, и состояние «менялось» бы вопреки правилам.",
-                "how_it_should_be": "Всегда проверяйте `getResultType() == ACCEPTED`, иначе отклонённый переход останется незамеченным."
+                "what_actually": "Чтение состояния и отправка события — разные операции: состояние читают `getState().getId()`, а `sendEvent` инициирует переход.",
+                "source_of_confusion": "Кажется удобным использовать один метод и для чтения, и для записи состояния.",
+                "if_it_were_true": "Тогда `sendEvent(null)` имел бы смысл «запрос состояния», но он ожидает `Message` с событием.",
+                "how_it_should_be": "Для чтения — `getState().getId()`; для перехода — `sendEvent(Mono.just(message))`."
               }
             }
           ]
@@ -191,30 +191,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Guard — это побочный эффект, который выполняется при переходе: отправка письма, резервирование товара, запись в журнал.",
-              "correct": false,
+              "text": "Guard — это условие (предикат над `StateContext`), которое должно вернуть `true`, чтобы переход выполнился; если guard возвращает `false`, переход не происходит. Его подключают к переходу через `.guard(...)` и используют для бизнес-валидации, например проверки, что оплата подтверждена перед переходом `PENDING → CONFIRMED`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Описан Action, а не Guard: Action выполняет побочный эффект, тогда как Guard лишь возвращает `true/false`, разрешая или блокируя переход.",
-                "source_of_confusion": "Guard и Action подключаются к одному и тому же переходу, и их назначения путают.",
-                "if_it_were_true": "Тогда guard, вернувший `void`, не мог бы блокировать переход, но его суть — именно булев результат.",
-                "how_it_should_be": "Guard отвечает на вопрос «можно ли перейти?»; побочные эффекты выполняет Action."
+                "explanation": "Guard — это страж перехода: лямбда `context -> boolean`, решающая, разрешён ли переход. При `false` событие не приводит к смене состояния, защищая инварианты жизненного цикла.",
+                "example": "`Guard<...> g = ctx -> paymentService.isVerified((String) ctx.getMessageHeader(\"orderId\"))`, подключённый как `.source(PENDING).target(CONFIRMED).event(CONFIRM).guard(g)`.",
+                "when_to_apply": "Применяют, когда переход допустим лишь при выполнении бизнес-условия: оплата прошла, лимит не превышен, документ подписан, число попыток не исчерпано.",
+                "edge_cases": "Guard должен делегировать в сервис, а не содержать тяжёлую логику; в `withChoice()` несколько guard-ов через `.first(...).last(...)` задают условное ветвление, где `last` — ветка по умолчанию.",
+                "related": "[[spring-state-machine-interview#Q5]] Action как побочный эффект перехода; [[spring-state-machine-interview#Q6]] Extended State для чтения в guard; [[spring-state-machine-interview#Q15]] типичные ошибки с логикой в конфигурации."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Guard — это финальное состояние машины, после входа в которое дальнейшие переходы запрещены.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Финальное состояние задаётся через `.end(...)`, а Guard — это условие перед переходом, а не состояние.",
-                "source_of_confusion": "И guard, и end-состояние «ограничивают» движение машины, что создаёт ложную связь понятий.",
-                "if_it_were_true": "Тогда у guard был бы свой идентификатор состояния, но guard — это лямбда-предикат, привязанная к переходу.",
-                "how_it_should_be": "Завершение моделируют `end()`-состоянием; Guard проверяет допустимость конкретного перехода."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Если Guard возвращает `false`, переход всё равно выполняется, но State Machine логирует предупреждение о нарушенном условии.",
               "correct": false,
               "sections": {
@@ -225,16 +214,27 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "Guard — это финальное состояние машины, после входа в которое дальнейшие переходы запрещены.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Финальное состояние задаётся через `.end(...)`, а Guard — это условие перед переходом, а не состояние.",
+                "source_of_confusion": "И guard, и end-состояние «ограничивают» движение машины, что создаёт ложную связь понятий.",
+                "if_it_were_true": "Тогда у guard был бы свой идентификатор состояния, но guard — это лямбда-предикат, привязанная к переходу.",
+                "how_it_should_be": "Завершение моделируют `end()`-состоянием; Guard проверяет допустимость конкретного перехода."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "Guard — это условие (предикат над `StateContext`), которое должно вернуть `true`, чтобы переход выполнился; если guard возвращает `false`, переход не происходит. Его подключают к переходу через `.guard(...)` и используют для бизнес-валидации, например проверки, что оплата подтверждена перед переходом `PENDING → CONFIRMED`.",
-              "correct": true,
+              "text": "Guard — это побочный эффект, который выполняется при переходе: отправка письма, резервирование товара, запись в журнал.",
+              "correct": false,
               "sections": {
-                "explanation": "Guard — это страж перехода: лямбда `context -> boolean`, решающая, разрешён ли переход. При `false` событие не приводит к смене состояния, защищая инварианты жизненного цикла.",
-                "example": "`Guard<...> g = ctx -> paymentService.isVerified((String) ctx.getMessageHeader(\"orderId\"))`, подключённый как `.source(PENDING).target(CONFIRMED).event(CONFIRM).guard(g)`.",
-                "when_to_apply": "Применяют, когда переход допустим лишь при выполнении бизнес-условия: оплата прошла, лимит не превышен, документ подписан, число попыток не исчерпано.",
-                "edge_cases": "Guard должен делегировать в сервис, а не содержать тяжёлую логику; в `withChoice()` несколько guard-ов через `.first(...).last(...)` задают условное ветвление, где `last` — ветка по умолчанию.",
-                "related": "[[spring-state-machine-interview#Q5]] Action как побочный эффект перехода; [[spring-state-machine-interview#Q6]] Extended State для чтения в guard; [[spring-state-machine-interview#Q15]] типичные ошибки с логикой в конфигурации."
+                "what_actually": "Описан Action, а не Guard: Action выполняет побочный эффект, тогда как Guard лишь возвращает `true/false`, разрешая или блокируя переход.",
+                "source_of_confusion": "Guard и Action подключаются к одному и тому же переходу, и их назначения путают.",
+                "if_it_were_true": "Тогда guard, вернувший `void`, не мог бы блокировать переход, но его суть — именно булев результат.",
+                "how_it_should_be": "Guard отвечает на вопрос «можно ли перейти?»; побочные эффекты выполняет Action."
               }
             }
           ]
@@ -251,31 +251,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Action — это побочный эффект, выполняемый при переходе либо при входе/выходе из состояния (отправка письма, резервирование товара, запись в `Extended State`). Подключается к переходу через `.action(...)` или как entry/exit-действие в `.state(STATE, entryAction, exitAction)`; реализуется как `Action<S,E>` — лямбда над `StateContext`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Action отвечает за «что сделать» во время перехода или смены состояния. В отличие от guard, он ничего не возвращает, а выполняет работу: вызывает сервисы, пишет в контекст.",
-                "example": "`Action<...> a = ctx -> emailService.sendConfirmation((String) ctx.getMessageHeader(\"orderId\"))`, подключённый как `.target(CONFIRMED).event(CONFIRM).action(a)`.",
-                "when_to_apply": "Применяют, когда переход должен вызвать видимый эффект: уведомление, обновление склада, простановка `confirmedAt` в extended state, инкремент счётчика.",
-                "edge_cases": "Entry/exit-действия задаются в `.state(SHIPPED, entryAction, exitAction)` и срабатывают при входе/выходе независимо от того, каким событием вызван переход; исключение в action может прервать переход.",
-                "related": "[[spring-state-machine-interview#Q4]] Guard как условие перед action; [[spring-state-machine-interview#Q6]] Extended State для данных action-а; [[spring-state-machine-interview#Q14]] @WithStateMachine как декларативная альтернатива action-бинам."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Action — это условие, разрешающее или запрещающее переход: если оно возвращает `false`, машина остаётся в текущем состоянии.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Описан Guard: именно он возвращает булев результат и блокирует переход; Action выполняет побочный эффект и ничего не решает о допустимости.",
-                "source_of_confusion": "Action и Guard вешаются на один переход, поэтому их легко перепутать местами.",
-                "if_it_were_true": "Тогда `Action<S,E>` имел бы сигнатуру с `boolean`, но он реализует `execute(context)` без возвращаемого значения.",
-                "how_it_should_be": "Решает о переходе Guard; Action лишь выполняет работу, когда переход уже разрешён."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Action можно подключить только ко всей машине целиком, привязать его к конкретному переходу или к входу в состояние невозможно.",
               "correct": false,
               "sections": {
@@ -286,8 +261,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Entry-action и exit-action — это одно и то же действие, которое Spring выполняет дважды для надёжности при каждой смене состояния.",
               "correct": false,
               "sections": {
@@ -295,6 +270,31 @@
                 "source_of_confusion": "Оба передаются в один метод `.state(STATE, entry, exit)`, и их роли сливаются.",
                 "if_it_were_true": "Тогда нельзя было бы, например, логировать вход и освобождать ресурс на выходе по отдельности.",
                 "how_it_should_be": "Entry срабатывает на входе, exit — на выходе; это два независимых хука состояния."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Action — это условие, разрешающее или запрещающее переход: если оно возвращает `false`, машина остаётся в текущем состоянии.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Описан Guard: именно он возвращает булев результат и блокирует переход; Action выполняет побочный эффект и ничего не решает о допустимости.",
+                "source_of_confusion": "Action и Guard вешаются на один переход, поэтому их легко перепутать местами.",
+                "if_it_were_true": "Тогда `Action<S,E>` имел бы сигнатуру с `boolean`, но он реализует `execute(context)` без возвращаемого значения.",
+                "how_it_should_be": "Решает о переходе Guard; Action лишь выполняет работу, когда переход уже разрешён."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Action — это побочный эффект, выполняемый при переходе либо при входе/выходе из состояния (отправка письма, резервирование товара, запись в `Extended State`). Подключается к переходу через `.action(...)` или как entry/exit-действие в `.state(STATE, entryAction, exitAction)`; реализуется как `Action<S,E>` — лямбда над `StateContext`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Action отвечает за «что сделать» во время перехода или смены состояния. В отличие от guard, он ничего не возвращает, а выполняет работу: вызывает сервисы, пишет в контекст.",
+                "example": "`Action<...> a = ctx -> emailService.sendConfirmation((String) ctx.getMessageHeader(\"orderId\"))`, подключённый как `.target(CONFIRMED).event(CONFIRM).action(a)`.",
+                "when_to_apply": "Применяют, когда переход должен вызвать видимый эффект: уведомление, обновление склада, простановка `confirmedAt` в extended state, инкремент счётчика.",
+                "edge_cases": "Entry/exit-действия задаются в `.state(SHIPPED, entryAction, exitAction)` и срабатывают при входе/выходе независимо от того, каким событием вызван переход; исключение в action может прервать переход.",
+                "related": "[[spring-state-machine-interview#Q4]] Guard как условие перед action; [[spring-state-machine-interview#Q6]] Extended State для данных action-а; [[spring-state-machine-interview#Q14]] @WithStateMachine как декларативная альтернатива action-бинам."
               }
             }
           ]
@@ -311,6 +311,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Extended State хранит данные только в пределах одного перехода и полностью очищается сразу после смены состояния.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Переменные extended state живут вместе с машиной и переживают переходы, а при персистенсе сохраняются и восстанавливаются.",
+                "source_of_confusion": "Заголовки сообщения действительно живут один переход, и это свойство ошибочно переносят на extended state.",
+                "if_it_were_true": "Тогда нельзя было бы накапливать `retryCount` между несколькими событиями, что и есть его типичное применение.",
+                "how_it_should_be": "Заголовки сообщения недолговечны; Extended State сохраняется между переходами и при персистенсе."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Extended State — это список всех состояний машины, перечисленных через `EnumSet.allOf(...)` в конфигурации.",
               "correct": false,
               "sections": {
@@ -321,8 +333,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "Extended State — это key-value хранилище в контексте машины (`context.getExtendedState().getVariables()`), которое позволяет передавать данные между actions и guards без загрязнения заголовков сообщений. Оно персистируется вместе с машиной через `StateMachineContext`, поэтому переживает восстановление состояния.",
               "correct": true,
               "sections": {
@@ -331,18 +343,6 @@
                 "when_to_apply": "Применяют, когда данные нужно пронести между переходами и прочитать в guard/action, не передавая их в каждом заголовке сообщения отдельно.",
                 "edge_cases": "Extended State сохраняется в `DefaultStateMachineContext` при персистенсе; если конвертер не настроен, сложные объекты могут не сериализоваться — храните примитивы и простые типы.",
                 "related": "[[spring-state-machine-interview#Q4]] Guard читает значения из extended state; [[spring-state-machine-interview#Q5]] Action пишет в extended state; [[spring-state-machine-interview#Q7]] persistence сохраняет extended state."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Extended State хранит данные только в пределах одного перехода и полностью очищается сразу после смены состояния.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Переменные extended state живут вместе с машиной и переживают переходы, а при персистенсе сохраняются и восстанавливаются.",
-                "source_of_confusion": "Заголовки сообщения действительно живут один переход, и это свойство ошибочно переносят на extended state.",
-                "if_it_were_true": "Тогда нельзя было бы накапливать `retryCount` между несколькими событиями, что и есть его типичное применение.",
-                "how_it_should_be": "Заголовки сообщения недолговечны; Extended State сохраняется между переходами и при персистенсе."
               }
             },
             {
@@ -371,30 +371,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Spring State Machine сохраняет состояние автоматически: достаточно пометить машину `@Transactional`, и переходы будут коммититься в БД.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Автоматического сохранения нет: нужно явно использовать `StateMachinePersist` и сам читать/писать `StateMachineContext`.",
-                "source_of_confusion": "`@Transactional` действительно автоматизирует транзакции, и эту «магию» приписывают и персистенсу FSM.",
-                "if_it_were_true": "Тогда не было бы интерфейса `StateMachinePersist` с методами `read/write`, но он существует именно для ручного сохранения.",
-                "how_it_should_be": "Состояние читают `persist.read(id)` и пишут `persist.write(ctx, id)` явно; аннотация это не делает."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Для восстановления состояния достаточно вызвать `stateMachine.start()` — он сам подтянет последнее сохранённое состояние из БД.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`start()` запускает машину с `initial`-состояния; чтобы восстановить прогресс, нужно прочитать контекст и вызвать `resetStateMachine(ctx)`.",
-                "source_of_confusion": "Кажется логичным, что «запуск» машины подразумевает загрузку её последнего состояния.",
-                "if_it_were_true": "Тогда `StateMachinePersist.read` и `resetStateMachine` были бы не нужны, но именно они восстанавливают состояние.",
-                "how_it_should_be": "Сначала `read` + `resetStateMachine(ctx)`, и только потом `startReactively()` — иначе прогресс теряется."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Используют `StateMachinePersist<S,E,ID>`: перед обработкой читают `persist.read(id)` и восстанавливают машину через `getStateMachineAccessor().doWithAllRegions(a -> a.resetStateMachine(ctx))`, а после перехода сохраняют новое состояние `persist.write(new DefaultStateMachineContext<>(state, ..., variables, ...), id)`. Состояние и extended state хранят в БД (например, JPA-entity с `@Enumerated(STRING)`).",
               "correct": true,
               "sections": {
@@ -406,8 +382,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Extended State при персистенсе не сохраняется — в БД пишется только идентификатор текущего состояния, переменные всегда обнуляются.",
               "correct": false,
               "sections": {
@@ -415,6 +391,30 @@
                 "source_of_confusion": "Состояние воспринимают как «главное», а переменные — как временные, поэтому считают, что их не пишут.",
                 "if_it_were_true": "Тогда `retryCount` или `paymentId` терялись бы при восстановлении, ломая guard-ы на их основе.",
                 "how_it_should_be": "В контекст передают и состояние, и переменные; extended state персистируется наравне с состоянием."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для восстановления состояния достаточно вызвать `stateMachine.start()` — он сам подтянет последнее сохранённое состояние из БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`start()` запускает машину с `initial`-состояния; чтобы восстановить прогресс, нужно прочитать контекст и вызвать `resetStateMachine(ctx)`.",
+                "source_of_confusion": "Кажется логичным, что «запуск» машины подразумевает загрузку её последнего состояния.",
+                "if_it_were_true": "Тогда `StateMachinePersist.read` и `resetStateMachine` были бы не нужны, но именно они восстанавливают состояние.",
+                "how_it_should_be": "Сначала `read` + `resetStateMachine(ctx)`, и только потом `startReactively()` — иначе прогресс теряется."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Spring State Machine сохраняет состояние автоматически: достаточно пометить машину `@Transactional`, и переходы будут коммититься в БД.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Автоматического сохранения нет: нужно явно использовать `StateMachinePersist` и сам читать/писать `StateMachineContext`.",
+                "source_of_confusion": "`@Transactional` действительно автоматизирует транзакции, и эту «магию» приписывают и персистенсу FSM.",
+                "if_it_were_true": "Тогда не было бы интерфейса `StateMachinePersist` с методами `read/write`, но он существует именно для ручного сохранения.",
+                "how_it_should_be": "Состояние читают `persist.read(id)` и пишут `persist.write(ctx, id)` явно; аннотация это не делает."
               }
             }
           ]
@@ -431,6 +431,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "StateMachineFactory создаёт отдельный экземпляр машины для каждой сущности через `factory.getStateMachine(id)`; включается через `@EnableStateMachineFactory`. Его используют, когда каждый объект (заказ, пользователь) должен иметь независимую машину, потому что `@EnableStateMachine` даёт один singleton на приложение, не thread-safe для разных бизнес-объектов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Фабрика — это способ получить «по машине на объект». Вместо общего singleton-а каждый заказ получает свой экземпляр FSM, что устраняет гонки между разными бизнес-сущностями.",
+                "example": "`@EnableStateMachineFactory` на конфиге → `StateMachine<...> sm = factory.getStateMachine(orderId.toString()); sm.startReactively().block();` для конкретного заказа.",
+                "when_to_apply": "Применяют в многопользовательских/многозаказных сценариях, где каждая сущность обрабатывается параллельно и должна иметь собственное состояние, обычно в паре с персистенсом.",
+                "edge_cases": "Фабрику часто конфигурируют с `autoStartup(false)`, чтобы стартовать машину вручную после восстановления контекста; без фабрики singleton-машина небезопасна при конкурентной обработке разных объектов.",
+                "related": "[[spring-state-machine-interview#Q2]] базовая конфигурация с @EnableStateMachine; [[spring-state-machine-interview#Q7]] persistence для машин из фабрики; [[spring-state-machine-interview#Q15]] ошибка использования singleton для многих объектов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "StateMachineFactory — это пул потоков, который параллельно выполняет переходы одной общей машины, ускоряя обработку событий.",
               "correct": false,
               "sections": {
@@ -438,18 +451,6 @@
                 "source_of_confusion": "Слово «factory» и тема многопоточности наводят на мысль о пуле исполнителей.",
                 "if_it_were_true": "Тогда `getStateMachine(id)` возвращал бы поток, а не машину, но он отдаёт экземпляр FSM для сущности.",
                 "how_it_should_be": "Фабрика выдаёт независимые машины по id; распараллеливание переходов одной машины она не делает."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "StateMachineFactory нужен только для тестов: в продакшене всегда используют один singleton через `@EnableStateMachine`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Singleton-машина не thread-safe для разных объектов, поэтому в проде с множеством сущностей применяют именно фабрику.",
-                "source_of_confusion": "Singleton кажется проще, и фабрику ошибочно считают «тестовой» усложнённой версией.",
-                "if_it_were_true": "Тогда параллельная обработка двух заказов на одном singleton приводила бы к гонкам состояний.",
-                "how_it_should_be": "Для многих независимых объектов в проде нужна фабрика; singleton годится лишь для одной сущности."
               }
             },
             {
@@ -467,14 +468,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "StateMachineFactory создаёт отдельный экземпляр машины для каждой сущности через `factory.getStateMachine(id)`; включается через `@EnableStateMachineFactory`. Его используют, когда каждый объект (заказ, пользователь) должен иметь независимую машину, потому что `@EnableStateMachine` даёт один singleton на приложение, не thread-safe для разных бизнес-объектов.",
-              "correct": true,
+              "text": "StateMachineFactory нужен только для тестов: в продакшене всегда используют один singleton через `@EnableStateMachine`.",
+              "correct": false,
               "sections": {
-                "explanation": "Фабрика — это способ получить «по машине на объект». Вместо общего singleton-а каждый заказ получает свой экземпляр FSM, что устраняет гонки между разными бизнес-сущностями.",
-                "example": "`@EnableStateMachineFactory` на конфиге → `StateMachine<...> sm = factory.getStateMachine(orderId.toString()); sm.startReactively().block();` для конкретного заказа.",
-                "when_to_apply": "Применяют в многопользовательских/многозаказных сценариях, где каждая сущность обрабатывается параллельно и должна иметь собственное состояние, обычно в паре с персистенсом.",
-                "edge_cases": "Фабрику часто конфигурируют с `autoStartup(false)`, чтобы стартовать машину вручную после восстановления контекста; без фабрики singleton-машина небезопасна при конкурентной обработке разных объектов.",
-                "related": "[[spring-state-machine-interview#Q2]] базовая конфигурация с @EnableStateMachine; [[spring-state-machine-interview#Q7]] persistence для машин из фабрики; [[spring-state-machine-interview#Q15]] ошибка использования singleton для многих объектов."
+                "what_actually": "Singleton-машина не thread-safe для разных объектов, поэтому в проде с множеством сущностей применяют именно фабрику.",
+                "source_of_confusion": "Singleton кажется проще, и фабрику ошибочно считают «тестовой» усложнённой версией.",
+                "if_it_were_true": "Тогда параллельная обработка двух заказов на одном singleton приводила бы к гонкам состояний.",
+                "how_it_should_be": "Для многих независимых объектов в проде нужна фабрика; singleton годится лишь для одной сущности."
               }
             }
           ]
@@ -504,13 +504,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Иерархические состояния задаются перечислением вложенных enum-ов внутри одной константы, например `PROCESSING.PAYMENT_PENDING`.",
+              "text": "Родительское состояние можно объявить без указания начального подсостояния — машина при входе сама выберет первое по алфавиту.",
               "correct": false,
               "sections": {
-                "what_actually": "Вложенность задаётся не синтаксисом enum, а конфигурацией: отдельным блоком `withStates().parent(...)`, где родитель связывает подсостояния.",
-                "source_of_confusion": "Точечная нотация привычна для вложенности в Java, и её ожидают и здесь.",
-                "if_it_were_true": "Тогда enum-константы содержали бы точки, что невозможно: `PROCESSING.PAYMENT_PENDING` — не валидное имя константы.",
-                "how_it_should_be": "Подсостояния — обычные enum-константы, а их связь с родителем выражается через `parent(...)` в конфиге."
+                "what_actually": "Родителю-контейнеру нужно явное `initial`-подсостояние; без него вход в составное состояние неоднозначен и конфигурация некорректна.",
+                "source_of_confusion": "Кажется, что машина «угадает» стартовое подсостояние, как делает с глобальным initial.",
+                "if_it_were_true": "Тогда порядок enum-констант менял бы поведение машины, что было бы хрупко и непредсказуемо.",
+                "how_it_should_be": "Для составного состояния задают `initial(...)` подсостояние явно, как и для машины в целом."
               }
             },
             {
@@ -528,13 +528,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Родительское состояние можно объявить без указания начального подсостояния — машина при входе сама выберет первое по алфавиту.",
+              "text": "Иерархические состояния задаются перечислением вложенных enum-ов внутри одной константы, например `PROCESSING.PAYMENT_PENDING`.",
               "correct": false,
               "sections": {
-                "what_actually": "Родителю-контейнеру нужно явное `initial`-подсостояние; без него вход в составное состояние неоднозначен и конфигурация некорректна.",
-                "source_of_confusion": "Кажется, что машина «угадает» стартовое подсостояние, как делает с глобальным initial.",
-                "if_it_were_true": "Тогда порядок enum-констант менял бы поведение машины, что было бы хрупко и непредсказуемо.",
-                "how_it_should_be": "Для составного состояния задают `initial(...)` подсостояние явно, как и для машины в целом."
+                "what_actually": "Вложенность задаётся не синтаксисом enum, а конфигурацией: отдельным блоком `withStates().parent(...)`, где родитель связывает подсостояния.",
+                "source_of_confusion": "Точечная нотация привычна для вложенности в Java, и её ожидают и здесь.",
+                "if_it_were_true": "Тогда enum-константы содержали бы точки, что невозможно: `PROCESSING.PAYMENT_PENDING` — не валидное имя константы.",
+                "how_it_should_be": "Подсостояния — обычные enum-константы, а их связь с родителем выражается через `parent(...)` в конфиге."
               }
             }
           ]
@@ -551,18 +551,30 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Regions — это разные экземпляры State Machine, созданные фабрикой для разных бизнес-объектов и работающие в отдельных потоках.",
+              "text": "Regions — это синоним иерархических подсостояний: машина в любой момент находится ровно в одном из них.",
               "correct": false,
               "sections": {
-                "what_actually": "Описаны экземпляры из `StateMachineFactory`; regions же — это параллельные подавтоматы внутри одной машины, а не отдельные машины.",
-                "source_of_confusion": "И регионы, и фабрика связаны с «параллельностью», поэтому понятия смешивают.",
-                "if_it_were_true": "Тогда регионы получали бы по `getStateMachine(id)`, но они описываются через `region(...)` внутри одной конфигурации.",
-                "how_it_should_be": "Фабрика создаёт отдельные машины на объект; regions — параллельные ветки внутри одной машины."
+                "what_actually": "В отличие от иерархии (одно активное подсостояние), регионы активны одновременно — это «и»-композиция, а не «или».",
+                "source_of_confusion": "И иерархия, и регионы используют `parent(...)`, поэтому их считают одним механизмом.",
+                "if_it_were_true": "Тогда нельзя было бы вести оплату и резерв склада параллельно, ради чего регионы и нужны.",
+                "how_it_should_be": "Иерархия — одно активное подсостояние; регионы — несколько активных подавтоматов сразу."
               }
             },
             {
               "order": 1,
               "label": "B",
+              "text": "Переход в join-состояние срабатывает, как только хотя бы один из регионов достигнет своего конечного состояния.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Join — это синхронизация: переход срабатывает только когда ВСЕ регионы достигли своих end-состояний, а не один из них.",
+                "source_of_confusion": "Логика «достаточно одного» интуитивно проще, и её приписывают join по умолчанию.",
+                "if_it_were_true": "Тогда заказ перешёл бы дальше, пока второй процесс (например резерв склада) ещё не завершён.",
+                "how_it_should_be": "Join ждёт завершения всех регионов; именно в этом его назначение как точки синхронизации."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Regions — это параллельные независимые подавтоматы внутри одного составного состояния; они позволяют моделировать одновременные процессы. Их разделяют через `parent(PROCESSING).region(\"PAYMENT\")` и `region(\"INVENTORY\")`, а `fork`/`join` распараллеливают и синхронизируют ветки: переход в `join`-состояние срабатывает только когда оба региона завершены.",
               "correct": true,
               "sections": {
@@ -574,27 +586,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Regions — это синоним иерархических подсостояний: машина в любой момент находится ровно в одном из них.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В отличие от иерархии (одно активное подсостояние), регионы активны одновременно — это «и»-композиция, а не «или».",
-                "source_of_confusion": "И иерархия, и регионы используют `parent(...)`, поэтому их считают одним механизмом.",
-                "if_it_were_true": "Тогда нельзя было бы вести оплату и резерв склада параллельно, ради чего регионы и нужны.",
-                "how_it_should_be": "Иерархия — одно активное подсостояние; регионы — несколько активных подавтоматов сразу."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "Переход в join-состояние срабатывает, как только хотя бы один из регионов достигнет своего конечного состояния.",
+              "text": "Regions — это разные экземпляры State Machine, созданные фабрикой для разных бизнес-объектов и работающие в отдельных потоках.",
               "correct": false,
               "sections": {
-                "what_actually": "Join — это синхронизация: переход срабатывает только когда ВСЕ регионы достигли своих end-состояний, а не один из них.",
-                "source_of_confusion": "Логика «достаточно одного» интуитивно проще, и её приписывают join по умолчанию.",
-                "if_it_were_true": "Тогда заказ перешёл бы дальше, пока второй процесс (например резерв склада) ещё не завершён.",
-                "how_it_should_be": "Join ждёт завершения всех регионов; именно в этом его назначение как точки синхронизации."
+                "what_actually": "Описаны экземпляры из `StateMachineFactory`; regions же — это параллельные подавтоматы внутри одной машины, а не отдельные машины.",
+                "source_of_confusion": "И регионы, и фабрика связаны с «параллельностью», поэтому понятия смешивают.",
+                "if_it_were_true": "Тогда регионы получали бы по `getStateMachine(id)`, но они описываются через `region(...)` внутри одной конфигурации.",
+                "how_it_should_be": "Фабрика создаёт отдельные машины на объект; regions — параллельные ветки внутри одной машины."
               }
             }
           ]
@@ -611,13 +611,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "StateMachineListener — это guard, который вызывается перед каждым переходом и может его отменить, вернув `false`.",
+              "text": "Listener регистрируется автоматически, если пометить класс `@Component`; явная регистрация в конфигурации не нужна.",
               "correct": false,
               "sections": {
-                "what_actually": "Listener только наблюдает и не влияет на переход; отменяет переход именно Guard своим булевым результатом.",
-                "source_of_confusion": "И listener, и guard «вклиниваются» в переход, поэтому их возможности путают.",
-                "if_it_were_true": "Тогда `stateChanged` возвращал бы `boolean`, но он `void` — это уведомление, а не решение.",
-                "how_it_should_be": "Listener реагирует на уже произошедшие события; блокировать переход может только Guard."
+                "what_actually": "Listener подключают явно через `config.withConfiguration().listener(...)`; одной `@Component` для привязки к машине недостаточно.",
+                "source_of_confusion": "Многие Spring-бины подхватываются автоматически, и это ожидание переносят на listener.",
+                "if_it_were_true": "Тогда любой бин-наследник адаптера молча слушал бы все машины, что было бы неуправляемо.",
+                "how_it_should_be": "Listener регистрируют явно в конфигурации машины через `.listener(...)`."
               }
             },
             {
@@ -648,13 +648,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Listener регистрируется автоматически, если пометить класс `@Component`; явная регистрация в конфигурации не нужна.",
+              "text": "StateMachineListener — это guard, который вызывается перед каждым переходом и может его отменить, вернув `false`.",
               "correct": false,
               "sections": {
-                "what_actually": "Listener подключают явно через `config.withConfiguration().listener(...)`; одной `@Component` для привязки к машине недостаточно.",
-                "source_of_confusion": "Многие Spring-бины подхватываются автоматически, и это ожидание переносят на listener.",
-                "if_it_were_true": "Тогда любой бин-наследник адаптера молча слушал бы все машины, что было бы неуправляемо.",
-                "how_it_should_be": "Listener регистрируют явно в конфигурации машины через `.listener(...)`."
+                "what_actually": "Listener только наблюдает и не влияет на переход; отменяет переход именно Guard своим булевым результатом.",
+                "source_of_confusion": "И listener, и guard «вклиниваются» в переход, поэтому их возможности путают.",
+                "if_it_were_true": "Тогда `stateChanged` возвращал бы `boolean`, но он `void` — это уведомление, а не решение.",
+                "how_it_should_be": "Listener реагирует на уже произошедшие события; блокировать переход может только Guard."
               }
             }
           ]
@@ -671,18 +671,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "State Machine нельзя протестировать через `@SpringBootTest`, потому что машина создаётся лениво и недоступна для инъекции в тест.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Машину спокойно инжектят в `@SpringBootTest` через `@Autowired StateMachine<...>` и тестируют отправкой событий.",
-                "source_of_confusion": "Реактивный старт и фабрики создают впечатление, что машина «недоступна» в тесте.",
-                "if_it_were_true": "Тогда официальные примеры с `@Autowired StateMachine` в тестах были бы невозможны, но они работают.",
-                "how_it_should_be": "В тесте инжектят `StateMachine`, стартуют её и проверяют переходы как в проде."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Достаточно проверить, что `sendEvent` не бросил исключение — успешность перехода подтверждать через `ResultType` и состояние не нужно.",
               "correct": false,
               "sections": {
@@ -690,6 +678,19 @@
                 "source_of_confusion": "В привычных тестах «нет исключения = успех», и это правило ошибочно переносят на FSM.",
                 "if_it_were_true": "Тогда тест `shouldNotShipPendingOrder` всегда был бы зелёным, не отлавливая реальную ошибку перехода.",
                 "how_it_should_be": "Проверяют `getResultType() == ACCEPTED` для валидных и неприятие плюс неизменность состояния для невалидных переходов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `@SpringBootTest` инжектят `StateMachine<S,E>`, в `@BeforeEach` стартуют её `startReactively().block()`, затем шлют событие и проверяют результат: `sendEvent(Mono.just(MessageBuilder.withPayload(CONFIRM).build())).blockFirst().getResultType() == ResultType.ACCEPTED` и состояние `getState().getId()`. Тестируют как разрешённые переходы (принято + новое состояние), так и запрещённые (не принято + состояние не изменилось).",
+              "correct": true,
+              "sections": {
+                "explanation": "Тест FSM сводится к проверке двух вещей: что валидный переход принимается и меняет состояние, и что невалидный отклоняется, оставляя состояние прежним.",
+                "example": "`shouldConfirmPendingOrder`: из `PENDING` шлём `CONFIRM`, ждём `ACCEPTED` и `getState().getId() == CONFIRMED`; `shouldNotShipPendingOrder`: `SHIP` из `PENDING` даёт не-`ACCEPTED` и состояние остаётся `PENDING`.",
+                "when_to_apply": "Применяют для покрытия графа переходов: каждый допустимый путь, каждый запрещённый переход, срабатывание guard-ов и наличие нужных побочных эффектов.",
+                "edge_cases": "Машину нужно стартовать в `@BeforeEach`, иначе события не обрабатываются; для изоляции тестов состояние сбрасывают между ними, а проверять надо и `ResultType`, и итоговое состояние, а не что-то одно.",
+                "related": "[[spring-state-machine-interview#Q3]] отправка события и ResultType; [[spring-state-machine-interview#Q4]] Guard, который проверяют в тестах; [[spring-state-machine-interview#Q11]] Listener для отлова непринятых событий."
               }
             },
             {
@@ -707,14 +708,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В `@SpringBootTest` инжектят `StateMachine<S,E>`, в `@BeforeEach` стартуют её `startReactively().block()`, затем шлют событие и проверяют результат: `sendEvent(Mono.just(MessageBuilder.withPayload(CONFIRM).build())).blockFirst().getResultType() == ResultType.ACCEPTED` и состояние `getState().getId()`. Тестируют как разрешённые переходы (принято + новое состояние), так и запрещённые (не принято + состояние не изменилось).",
-              "correct": true,
+              "text": "State Machine нельзя протестировать через `@SpringBootTest`, потому что машина создаётся лениво и недоступна для инъекции в тест.",
+              "correct": false,
               "sections": {
-                "explanation": "Тест FSM сводится к проверке двух вещей: что валидный переход принимается и меняет состояние, и что невалидный отклоняется, оставляя состояние прежним.",
-                "example": "`shouldConfirmPendingOrder`: из `PENDING` шлём `CONFIRM`, ждём `ACCEPTED` и `getState().getId() == CONFIRMED`; `shouldNotShipPendingOrder`: `SHIP` из `PENDING` даёт не-`ACCEPTED` и состояние остаётся `PENDING`.",
-                "when_to_apply": "Применяют для покрытия графа переходов: каждый допустимый путь, каждый запрещённый переход, срабатывание guard-ов и наличие нужных побочных эффектов.",
-                "edge_cases": "Машину нужно стартовать в `@BeforeEach`, иначе события не обрабатываются; для изоляции тестов состояние сбрасывают между ними, а проверять надо и `ResultType`, и итоговое состояние, а не что-то одно.",
-                "related": "[[spring-state-machine-interview#Q3]] отправка события и ResultType; [[spring-state-machine-interview#Q4]] Guard, который проверяют в тестах; [[spring-state-machine-interview#Q11]] Listener для отлова непринятых событий."
+                "what_actually": "Машину спокойно инжектят в `@SpringBootTest` через `@Autowired StateMachine<...>` и тестируют отправкой событий.",
+                "source_of_confusion": "Реактивный старт и фабрики создают впечатление, что машина «недоступна» в тесте.",
+                "if_it_were_true": "Тогда официальные примеры с `@Autowired StateMachine` в тестах были бы невозможны, но они работают.",
+                "how_it_should_be": "В тесте инжектят `StateMachine`, стартуют её и проверяют переходы как в проде."
               }
             }
           ]
@@ -731,19 +731,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "State Machine управляет состояниями ОДНОГО локального объекта (заказ, документ) с локальным ACID-состоянием и откатом через guards/exit-actions, и она проще. Saga координирует РАСПРЕДЕЛЁННУЮ транзакцию между несколькими сервисами через события, с распределённым состоянием, компенсирующими транзакциями и eventual consistency, и она сложнее.",
-              "correct": true,
-              "sections": {
-                "explanation": "Ключевое различие — масштаб: FSM живёт в рамках одного объекта и одной БД, а Saga охватывает несколько сервисов и распределённую транзакцию через события.",
-                "example": "FSM подходит для `Order: PENDING → CONFIRMED → SHIPPED` в одном сервисе; Saga — для оформления заказа, где оплата, склад и доставка — разные сервисы с компенсациями при сбое.",
-                "when_to_apply": "FSM применяют для локальных объектов с конечным набором состояний; Saga — для многошаговых распределённых бизнес-процессов между несколькими сервисами.",
-                "edge_cases": "Откат в FSM — это guard-ы и exit-actions внутри ACID-границы; в Saga — компенсирующие транзакции при eventual consistency, потому что общей ACID-транзакции между сервисами нет.",
-                "related": "[[spring-state-machine-interview#Q1]] когда применять State Machine; [[spring-state-machine-interview#Q4]] Guard как локальная защита перехода; [[spring-state-machine-interview#Q10]] regions для параллельных процессов внутри объекта."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "State Machine и Saga — это одно и то же: Saga просто другое название для распределённого варианта State Machine.",
               "correct": false,
               "sections": {
@@ -751,6 +738,18 @@
                 "source_of_confusion": "Saga часто реализуют как машину состояний, отсюда вывод, что это синонимы.",
                 "if_it_were_true": "Тогда не различались бы их транзакционные модели — локальный ACID против eventual consistency — но они принципиально разные.",
                 "how_it_should_be": "FSM — про состояния одного объекта; Saga — про распределённую транзакцию между сервисами."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Откат в Saga выполняется через guards и exit-actions так же, как в State Machine, потому что обе используют единую ACID-транзакцию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У Saga нет общей ACID-транзакции между сервисами; откат делают компенсирующими транзакциями, а guards/exit-actions — это механизм локальной FSM.",
+                "source_of_confusion": "Оба паттерна «откатывают» прогресс, и механизмы отката ошибочно отождествляют.",
+                "if_it_were_true": "Тогда сбой в одном сервисе автоматически откатывал бы остальные, но распределённого ACID между сервисами нет.",
+                "how_it_should_be": "FSM откатывается локально через guards/actions; Saga — компенсирующими транзакциями при eventual consistency."
               }
             },
             {
@@ -768,13 +767,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Откат в Saga выполняется через guards и exit-actions так же, как в State Machine, потому что обе используют единую ACID-транзакцию.",
-              "correct": false,
+              "text": "State Machine управляет состояниями ОДНОГО локального объекта (заказ, документ) с локальным ACID-состоянием и откатом через guards/exit-actions, и она проще. Saga координирует РАСПРЕДЕЛЁННУЮ транзакцию между несколькими сервисами через события, с распределённым состоянием, компенсирующими транзакциями и eventual consistency, и она сложнее.",
+              "correct": true,
               "sections": {
-                "what_actually": "У Saga нет общей ACID-транзакции между сервисами; откат делают компенсирующими транзакциями, а guards/exit-actions — это механизм локальной FSM.",
-                "source_of_confusion": "Оба паттерна «откатывают» прогресс, и механизмы отката ошибочно отождествляют.",
-                "if_it_were_true": "Тогда сбой в одном сервисе автоматически откатывал бы остальные, но распределённого ACID между сервисами нет.",
-                "how_it_should_be": "FSM откатывается локально через guards/actions; Saga — компенсирующими транзакциями при eventual consistency."
+                "explanation": "Ключевое различие — масштаб: FSM живёт в рамках одного объекта и одной БД, а Saga охватывает несколько сервисов и распределённую транзакцию через события.",
+                "example": "FSM подходит для `Order: PENDING → CONFIRMED → SHIPPED` в одном сервисе; Saga — для оформления заказа, где оплата, склад и доставка — разные сервисы с компенсациями при сбое.",
+                "when_to_apply": "FSM применяют для локальных объектов с конечным набором состояний; Saga — для многошаговых распределённых бизнес-процессов между несколькими сервисами.",
+                "edge_cases": "Откат в FSM — это guard-ы и exit-actions внутри ACID-границы; в Saga — компенсирующие транзакции при eventual consistency, потому что общей ACID-транзакции между сервисами нет.",
+                "related": "[[spring-state-machine-interview#Q1]] когда применять State Machine; [[spring-state-machine-interview#Q4]] Guard как локальная защита перехода; [[spring-state-machine-interview#Q10]] regions для параллельных процессов внутри объекта."
               }
             }
           ]
@@ -851,30 +851,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главная ошибка — использовать `StateMachineFactory` вместо одного singleton: фабрика создаёт лишние экземпляры и приводит к гонкам состояний.",
+              "text": "Непринятые события (`eventNotAccepted`) можно игнорировать — Spring сам бросит исключение, если событие не подошло, и вызов упадёт с ошибкой.",
               "correct": false,
               "sections": {
-                "what_actually": "Всё наоборот: гонки даёт singleton для многих объектов, а фабрика как раз решает проблему, выдавая независимую машину на сущность.",
-                "source_of_confusion": "Singleton кажется «экономнее», и фабрику ошибочно записывают в источник проблем.",
-                "if_it_were_true": "Тогда параллельная обработка двух заказов на одном singleton была бы безопасной, но это и есть источник гонок.",
-                "how_it_should_be": "Для множества объектов берут фабрику; singleton небезопасен при конкурентной обработке."
+                "what_actually": "Непринятые события теряются молча без исключения; чтобы их заметить, нужен Listener на `eventNotAccepted` или проверка `ResultType`.",
+                "source_of_confusion": "Ожидают, что «невалидное» событие приведёт к ошибке, как при нарушении контракта метода.",
+                "if_it_were_true": "Тогда не нужен был бы ни listener, ни проверка `ResultType`, но именно они спасают от тихой потери событий.",
+                "how_it_should_be": "Отлавливают `eventNotAccepted` listener-ом или проверяют `ResultType == ACCEPTED` после отправки."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Бизнес-логику следует писать прямо внутри Actions и Guards — делегирование в сервисы считается антипаттерном и усложняет конфигурацию.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Рекомендация обратная: Actions и Guards должны делегировать в сервисы, а не содержать бизнес-логику, иначе она прячется в конфигурации и не тестируется.",
-                "source_of_confusion": "Лямбды в конфиге выглядят компактно, и кажется, что логику удобно держать прямо там.",
-                "if_it_were_true": "Тогда тяжёлую бизнес-логику нельзя было бы переиспользовать и юнит-тестировать отдельно от FSM.",
-                "how_it_should_be": "Actions/Guards остаются тонкими и делегируют в сервисы, где живёт тестируемая бизнес-логика."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Главные ошибки: singleton-машина (`@EnableStateMachine`) для множества объектов вместо `StateMachineFactory`; игнорирование thread safety одного экземпляра (нужно персистить и восстанавливать на каждый запрос); бизнес-логика прямо в Actions/Guards вместо делегирования в сервисы; отсутствие обработки `eventNotAccepted` (события теряются молча); отсутствие end-состояний (машина никогда не завершается).",
               "correct": true,
               "sections": {
@@ -886,15 +874,27 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Непринятые события (`eventNotAccepted`) можно игнорировать — Spring сам бросит исключение, если событие не подошло, и вызов упадёт с ошибкой.",
+              "order": 2,
+              "label": "C",
+              "text": "Бизнес-логику следует писать прямо внутри Actions и Guards — делегирование в сервисы считается антипаттерном и усложняет конфигурацию.",
               "correct": false,
               "sections": {
-                "what_actually": "Непринятые события теряются молча без исключения; чтобы их заметить, нужен Listener на `eventNotAccepted` или проверка `ResultType`.",
-                "source_of_confusion": "Ожидают, что «невалидное» событие приведёт к ошибке, как при нарушении контракта метода.",
-                "if_it_were_true": "Тогда не нужен был бы ни listener, ни проверка `ResultType`, но именно они спасают от тихой потери событий.",
-                "how_it_should_be": "Отлавливают `eventNotAccepted` listener-ом или проверяют `ResultType == ACCEPTED` после отправки."
+                "what_actually": "Рекомендация обратная: Actions и Guards должны делегировать в сервисы, а не содержать бизнес-логику, иначе она прячется в конфигурации и не тестируется.",
+                "source_of_confusion": "Лямбды в конфиге выглядят компактно, и кажется, что логику удобно держать прямо там.",
+                "if_it_were_true": "Тогда тяжёлую бизнес-логику нельзя было бы переиспользовать и юнит-тестировать отдельно от FSM.",
+                "how_it_should_be": "Actions/Guards остаются тонкими и делегируют в сервисы, где живёт тестируемая бизнес-логика."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главная ошибка — использовать `StateMachineFactory` вместо одного singleton: фабрика создаёт лишние экземпляры и приводит к гонкам состояний.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: гонки даёт singleton для многих объектов, а фабрика как раз решает проблему, выдавая независимую машину на сущность.",
+                "source_of_confusion": "Singleton кажется «экономнее», и фабрику ошибочно записывают в источник проблем.",
+                "if_it_were_true": "Тогда параллельная обработка двух заказов на одном singleton была бы безопасной, но это и есть источник гонок.",
+                "how_it_should_be": "Для множества объектов берут фабрику; singleton небезопасен при конкурентной обработке."
               }
             }
           ]

@@ -9,6 +9,18 @@
           "question_text": "Что такое performance testing и зачем он нужен?",
           "options": [
             {
+              "text": "`Performance testing` — это функциональное тестирование, которое проверяет корректность бизнес-логики при одном пользователе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Корректность бизнес-логики проверяют функциональные тесты; performance testing меряет поведение под нагрузкой, а не правильность ответа.",
+                "source_of_confusion": "И то, и другое называют «тестированием», поэтому нефункциональную проверку путают с функциональной.",
+                "if_it_were_true": "Тогда хватило бы обычных unit/integration-тестов, но они не покажут p99 при 2000 RPS и не найдут breaking point.",
+                "how_it_should_be": "Это отдельная ось нефункциональных тестов: throughput, latency, стабильность под нагрузкой, а не верификация логики."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "`Performance testing` — систематическая проверка нефункциональных характеристик системы под нагрузкой: `throughput`, `latency`, `resource utilization`, `scalability`, `stability`. Цель — убедиться, что система держит ожидаемый и пиковый трафик, и найти границы применимости до того, как их найдут пользователи.",
               "correct": true,
               "sections": {
@@ -17,18 +29,6 @@
                 "when_to_apply": "Применяют для верификации SLA/SLO, поиска breaking point, проверки утечек и масштабируемости — на каждом значимом изменении инфраструктуры или критичного кода.",
                 "edge_cases": "Без системных метрик (CPU, GC, DB pool) результат «p99 вырос» не объясняет причину; нужен мониторинг ресурсов параллельно с нагрузкой.",
                 "related": "[[performance-testing-interview#Q2]] типы performance-тестов; [[performance-testing-interview#Q11]] throughput, latency, response time; [[performance-testing-interview#Q14]] связь с SLI/SLO/SLA."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "`Performance testing` — это функциональное тестирование, которое проверяет корректность бизнес-логики при одном пользователе.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Корректность бизнес-логики проверяют функциональные тесты; performance testing меряет поведение под нагрузкой, а не правильность ответа.",
-                "source_of_confusion": "И то, и другое называют «тестированием», поэтому нефункциональную проверку путают с функциональной.",
-                "if_it_were_true": "Тогда хватило бы обычных unit/integration-тестов, но они не покажут p99 при 2000 RPS и не найдут breaking point.",
-                "how_it_should_be": "Это отдельная ось нефункциональных тестов: throughput, latency, стабильность под нагрузкой, а не верификация логики."
               },
               "order": 1,
               "label": "B"
@@ -69,18 +69,6 @@
           "question_text": "Какие бывают типы performance-тестов и чем они отличаются?",
           "options": [
             {
-              "text": "Все типы (`load`, `stress`, `spike`, `soak`) — это разные инструменты: для каждого нужен свой отдельный фреймворк.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это не разные инструменты, а разные профили нагрузки на одном скрипте: тот же `Gatling`/`k6`-сценарий гоняют и как load, и как stress.",
-                "source_of_confusion": "Кажется, что под каждую задачу нужен «свой» специализированный тул, отсюда вывод про разные инструменты.",
-                "if_it_were_true": "Тогда пришлось бы держать четыре отдельных кодовых базы тестов, но достаточно менять injection-профиль.",
-                "how_it_should_be": "Меняется только профиль (ровная полка, рост до отказа, всплеск, длинная полка), а скрипт и инструмент остаются прежними."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
               "text": "Каждый тип отвечает на свой вопрос и отличается профилем нагрузки: `load` — держит ли SLA под ожидаемой нагрузкой (ровная полка), `stress` — где breaking point (рост до отказа), `spike` — резкий всплеск и откат, `soak` — деградация/утечки на длинной полке (часы), `volume` — большой объём данных, `scalability` — рост throughput при росте ресурсов.",
               "correct": true,
               "sections": {
@@ -89,6 +77,18 @@
                 "when_to_apply": "Тип теста выбирают по вопросу: SLA → load, граница → stress, Black Friday → spike, утечки → soak, большая БД → volume.",
                 "edge_cases": "`Smoke` (1-10 VU) — это проверка работоспособности скрипта, а не нагрузочный тест; его путают с полноценным load.",
                 "related": "[[performance-testing-interview#Q5]] load testing подробно; [[performance-testing-interview#Q6]] stress и breaking point; [[performance-testing-interview#Q7]] soak testing."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`Stress` testing — это проверка, что система держит ровно ожидаемую нагрузку без её превышения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Держать ровно ожидаемую нагрузку проверяет `load`; `stress` поднимает нагрузку выше ожидаемой, чтобы найти breaking point.",
+                "source_of_confusion": "И load, и stress поднимают нагрузку, поэтому их цели смешивают.",
+                "if_it_were_true": "Тогда stress не нашёл бы точку отказа, ведь он бы не выходил за пределы нормы.",
+                "how_it_should_be": "Stress намеренно превышает ожидаемую нагрузку до отказа; подтверждение SLO при норме — это load."
               },
               "order": 1,
               "label": "B"
@@ -106,13 +106,13 @@
               "label": "C"
             },
             {
-              "text": "`Stress` testing — это проверка, что система держит ровно ожидаемую нагрузку без её превышения.",
+              "text": "Все типы (`load`, `stress`, `spike`, `soak`) — это разные инструменты: для каждого нужен свой отдельный фреймворк.",
               "correct": false,
               "sections": {
-                "what_actually": "Держать ровно ожидаемую нагрузку проверяет `load`; `stress` поднимает нагрузку выше ожидаемой, чтобы найти breaking point.",
-                "source_of_confusion": "И load, и stress поднимают нагрузку, поэтому их цели смешивают.",
-                "if_it_were_true": "Тогда stress не нашёл бы точку отказа, ведь он бы не выходил за пределы нормы.",
-                "how_it_should_be": "Stress намеренно превышает ожидаемую нагрузку до отказа; подтверждение SLO при норме — это load."
+                "what_actually": "Это не разные инструменты, а разные профили нагрузки на одном скрипте: тот же `Gatling`/`k6`-сценарий гоняют и как load, и как stress.",
+                "source_of_confusion": "Кажется, что под каждую задачу нужен «свой» специализированный тул, отсюда вывод про разные инструменты.",
+                "if_it_were_true": "Тогда пришлось бы держать четыре отдельных кодовых базы тестов, но достаточно менять injection-профиль.",
+                "how_it_should_be": "Меняется только профиль (ровная полка, рост до отказа, всплеск, длинная полка), а скрипт и инструмент остаются прежними."
               },
               "order": 3,
               "label": "D"
@@ -129,18 +129,6 @@
           "question_text": "Что такое baseline, benchmark и SLA в performance testing?",
           "options": [
             {
-              "text": "`Baseline` — это требования из контракта с клиентом, нарушение которых ведёт к санкциям.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Контрактные требования с санкциями — это `SLA`; baseline — эталонное измерение текущего состояния системы.",
-                "source_of_confusion": "И baseline, и SLA — «опорные» числа, поэтому их роли путают.",
-                "if_it_were_true": "Тогда baseline нельзя было бы свободно перемеривать после каждого изменения, но именно для этого он и нужен.",
-                "how_it_should_be": "Baseline — снимок «как сейчас» для сравнения до/после; контракт с санкциями — это SLA."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
               "text": "`Benchmark` — это целевое значение, которое система обязана выполнять по внутренней договорённости команды.",
               "correct": false,
               "sections": {
@@ -149,8 +137,32 @@
                 "if_it_were_true": "Тогда benchmark не требовал бы внешней точки отсчёта, но его суть именно в сравнении с чем-то снаружи.",
                 "how_it_should_be": "Benchmark меряет нас против внешнего эталона, а внутренняя цель команды — это SLO."
               },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`Baseline` — это требования из контракта с клиентом, нарушение которых ведёт к санкциям.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Контрактные требования с санкциями — это `SLA`; baseline — эталонное измерение текущего состояния системы.",
+                "source_of_confusion": "И baseline, и SLA — «опорные» числа, поэтому их роли путают.",
+                "if_it_were_true": "Тогда baseline нельзя было бы свободно перемеривать после каждого изменения, но именно для этого он и нужен.",
+                "how_it_should_be": "Baseline — снимок «как сейчас» для сравнения до/после; контракт с санкциями — это SLA."
+              },
               "order": 1,
               "label": "B"
+            },
+            {
+              "text": "Все три понятия — синонимы одного и того же целевого числа производительности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это три разных вещи: baseline — текущее состояние, benchmark — внешний эталон, SLA/SLO — обязательства; путать их нельзя.",
+                "source_of_confusion": "Все три — «числа про производительность», что создаёт иллюзию синонимичности.",
+                "if_it_were_true": "Тогда не было бы смысла различать «до изменения», «у конкурента» и «что обещаем» — но это три разные роли.",
+                "how_it_should_be": "У каждого своя функция: измерить себя, сравнить с другими, зафиксировать контракт; синонимами они не являются."
+              },
+              "order": 2,
+              "label": "C"
             },
             {
               "text": "`Baseline` — эталонное измерение текущего состояния (фиксируется до изменений для сравнения «до/после»); `benchmark` — сравнение с внешним эталоном (конкурент, теоретический максимум); `SLA/SLO` — контрактные/целевые требования, которые система обязана выполнять.",
@@ -161,18 +173,6 @@
                 "when_to_apply": "Baseline снимают до любой оптимизации; benchmark — при выборе целевой архитектуры; SLA/SLO — при формулировке обязательств перед клиентом.",
                 "edge_cases": "Баг — это когда нарушен SLA/SLO, а не просто «медленно»; без baseline нельзя доказать, что «стало лучше».",
                 "related": "[[performance-testing-interview#Q1]] что такое performance testing; [[performance-testing-interview#Q14]] SLI/SLO/SLA подробно; [[performance-testing-interview#Q38]] сравнение с baseline в анализе."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
-              "text": "Все три понятия — синонимы одного и того же целевого числа производительности.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это три разных вещи: baseline — текущее состояние, benchmark — внешний эталон, SLA/SLO — обязательства; путать их нельзя.",
-                "source_of_confusion": "Все три — «числа про производительность», что создаёт иллюзию синонимичности.",
-                "if_it_were_true": "Тогда не было бы смысла различать «до изменения», «у конкурента» и «что обещаем» — но это три разные роли.",
-                "how_it_should_be": "У каждого своя функция: измерить себя, сравнить с другими, зафиксировать контракт; синонимами они не являются."
               },
               "order": 3,
               "label": "D"
@@ -201,18 +201,6 @@
               "label": "A"
             },
             {
-              "text": "Внутри performance testing нет иерархии — есть только один уровень full-stack нагрузочного теста.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Иерархия есть: micro-benchmark (`JMH`), component/service load (`k6`+`Testcontainers`), end-to-end на stage-окружении.",
-                "source_of_confusion": "Кажется, что «нагрузка» — это всегда полный прогон всей системы, отсюда вывод об одном уровне.",
-                "if_it_were_true": "Тогда нельзя было бы гонять быстрый smoke на PR — а именно component-уровень делают shift-left.",
-                "how_it_should_be": "Уровней три: micro-benchmark для hot-path, service-load на PR, full-stack перед релизом."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
               "text": "`JMH` применяют для end-to-end нагрузочного теста полного окружения с реальными БД и очередями.",
               "correct": false,
               "sections": {
@@ -221,8 +209,8 @@
                 "if_it_were_true": "Тогда JMH поднимал бы реальные БД и очереди, но он работает в рамках одной JVM на уровне методов.",
                 "how_it_should_be": "JMH — нижний уровень (микробенчмарк), а end-to-end нагрузку дают сетевые инструменты на полном окружении."
               },
-              "order": 2,
-              "label": "C"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "`Performance testing` лежит сбоку от классической пирамиды — это отдельная ось нефункциональных тестов, но внутри неё своя иерархия: micro-benchmark (`JMH`) → component/service load (`k6`+`Testcontainers`, `Gatling` на PR) → end-to-end (`JMeter`/`Gatling` на stage перед релизом).",
@@ -233,6 +221,18 @@
                 "when_to_apply": "Распределяют уровни по стоимости и частоте: дешёвые микробенчмарки и smoke часто, дорогой full-stack — реже.",
                 "edge_cases": "JMH-микробенчмарк меряет один метод и не заменяет full-stack тест; полную нагрузку без реального окружения не воспроизвести.",
                 "related": "[[performance-testing-interview#Q1]] что такое performance testing; [[performance-testing-interview#Q5]] load testing; [[performance-testing-interview#Q37]] интеграция в CI/CD."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Внутри performance testing нет иерархии — есть только один уровень full-stack нагрузочного теста.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Иерархия есть: micro-benchmark (`JMH`), component/service load (`k6`+`Testcontainers`), end-to-end на stage-окружении.",
+                "source_of_confusion": "Кажется, что «нагрузка» — это всегда полный прогон всей системы, отсюда вывод об одном уровне.",
+                "if_it_were_true": "Тогда нельзя было бы гонять быстрый smoke на PR — а именно component-уровень делают shift-left.",
+                "how_it_should_be": "Уровней три: micro-benchmark для hot-path, service-load на PR, full-stack перед релизом."
               },
               "order": 3,
               "label": "D"
@@ -249,29 +249,16 @@
           "question_text": "Что такое load testing и как его правильно спроектировать?",
           "options": [
             {
-              "text": "`Load testing` — проверка, что система выдерживает ожидаемую (а не максимальную) нагрузку с соблюдением SLA. Дизайн: определить целевой профиль (RPS, эндпоинты), зафиксировать SLO, спроектировать реалистичный user journey, сделать ramp-up 1-5 мин, затем steady state 15-60 мин и проверять SLO именно на steady state.",
-              "correct": true,
+              "text": "`Load testing` — это молотьба одного эндпоинта в бесконечном цикле без think time.",
+              "correct": false,
               "sections": {
-                "explanation": "Цель — не сломать систему, а подтвердить, что при типовом трафике p99, error rate и ресурсы в пределах норм.",
-                "example": "`Gatling`: `rampUsersPerSec(0).to(200).during(2 min)` затем `constantUsersPerSec(200).during(20 min)` с assertion `p95 < 300ms`.",
-                "when_to_apply": "Применяют для регулярной верификации SLA под нормальным трафиком и сравнения с baseline после изменений.",
-                "edge_cases": "SLO проверяют на steady state, а не на ramp-up: первые минуты кеши и пулы прогреваются, и метрики искажены.",
-                "related": "[[performance-testing-interview#Q6]] отличие от stress; [[performance-testing-interview#Q14]] SLO как цель теста; [[performance-testing-interview#Q34]] ramp-up и realistic workload."
+                "what_actually": "Реалистичный load — это user journey с распределением эндпоинтов и think time, а не цикл по одному URL.",
+                "source_of_confusion": "Молотить один эндпоинт проще писать, поэтому это выдают за «нагрузочный тест».",
+                "if_it_were_true": "Тогда тест не нашёл бы real-world bottleneck и не отразил бы реальный трафик.",
+                "how_it_should_be": "Нужен реалистичный сценарий с весами эндпоинтов и паузами между действиями."
               },
               "order": 0,
               "label": "A"
-            },
-            {
-              "text": "`Load testing` — это поиск точки, где система перестаёт отвечать и падает.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Поиск точки отказа — это `stress` testing; load подтверждает SLO при ожидаемой нагрузке, не доводя до падения.",
-                "source_of_confusion": "Оба создают нагрузку, поэтому цель load (норма) путают с целью stress (предел).",
-                "if_it_were_true": "Тогда load-тест всегда заканчивался бы отказом системы, но он работает в пределах нормы.",
-                "how_it_should_be": "Load отвечает «выполняется ли SLO при норме», а «где граница» — вопрос stress-теста."
-              },
-              "order": 1,
-              "label": "B"
             },
             {
               "text": "`Load testing` правильно запускать сразу на пиковую нагрузку без ramp-up — так быстрее.",
@@ -282,17 +269,30 @@
                 "if_it_were_true": "Тогда любой load-тест ловил бы стартовый всплеск, а не steady state, и SLO мерился бы на холодной системе.",
                 "how_it_should_be": "Нужен ramp-up 1-5 мин, затем steady state 15-60 мин, и SLO проверяется на полке."
               },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`Load testing` — проверка, что система выдерживает ожидаемую (а не максимальную) нагрузку с соблюдением SLA. Дизайн: определить целевой профиль (RPS, эндпоинты), зафиксировать SLO, спроектировать реалистичный user journey, сделать ramp-up 1-5 мин, затем steady state 15-60 мин и проверять SLO именно на steady state.",
+              "correct": true,
+              "sections": {
+                "explanation": "Цель — не сломать систему, а подтвердить, что при типовом трафике p99, error rate и ресурсы в пределах норм.",
+                "example": "`Gatling`: `rampUsersPerSec(0).to(200).during(2 min)` затем `constantUsersPerSec(200).during(20 min)` с assertion `p95 < 300ms`.",
+                "when_to_apply": "Применяют для регулярной верификации SLA под нормальным трафиком и сравнения с baseline после изменений.",
+                "edge_cases": "SLO проверяют на steady state, а не на ramp-up: первые минуты кеши и пулы прогреваются, и метрики искажены.",
+                "related": "[[performance-testing-interview#Q6]] отличие от stress; [[performance-testing-interview#Q14]] SLO как цель теста; [[performance-testing-interview#Q34]] ramp-up и realistic workload."
+              },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "`Load testing` — это молотьба одного эндпоинта в бесконечном цикле без think time.",
+              "text": "`Load testing` — это поиск точки, где система перестаёт отвечать и падает.",
               "correct": false,
               "sections": {
-                "what_actually": "Реалистичный load — это user journey с распределением эндпоинтов и think time, а не цикл по одному URL.",
-                "source_of_confusion": "Молотить один эндпоинт проще писать, поэтому это выдают за «нагрузочный тест».",
-                "if_it_were_true": "Тогда тест не нашёл бы real-world bottleneck и не отразил бы реальный трафик.",
-                "how_it_should_be": "Нужен реалистичный сценарий с весами эндпоинтов и паузами между действиями."
+                "what_actually": "Поиск точки отказа — это `stress` testing; load подтверждает SLO при ожидаемой нагрузке, не доводя до падения.",
+                "source_of_confusion": "Оба создают нагрузку, поэтому цель load (норма) путают с целью stress (предел).",
+                "if_it_were_true": "Тогда load-тест всегда заканчивался бы отказом системы, но он работает в пределах нормы.",
+                "how_it_should_be": "Load отвечает «выполняется ли SLO при норме», а «где граница» — вопрос stress-теста."
               },
               "order": 3,
               "label": "D"
@@ -321,6 +321,18 @@
               "label": "A"
             },
             {
+              "text": "Breaking point — это момент, когда CPU достигает ровно 100% при любой конфигурации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Breaking point — это потеря SLO или падение системы, и узким местом часто оказывается не CPU, а DB pool, GC или очередь.",
+                "source_of_confusion": "CPU 100% — самая заметная метрика, поэтому breaking point сводят только к ней.",
+                "if_it_were_true": "Тогда система с DB pool на 50 соединений никогда не «ломалась» бы при свободном CPU, но она ломается.",
+                "how_it_should_be": "Точку отказа определяет нарушение SLO; bottleneck может быть в БД, GC или очереди, а не в CPU."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
               "text": "`Stress testing` — постепенное увеличение нагрузки выше ожидаемой, чтобы найти breaking point: точку, где система перестаёт отвечать SLO или падает. Ищем максимальный стабильный RPS, первое ломающееся звено (CPU, GC, DB pool, очередь), характер отказа (graceful degradation vs cascading failure) и скорость восстановления.",
               "correct": true,
               "sections": {
@@ -330,8 +342,8 @@
                 "edge_cases": "Важно различать graceful degradation (плавный рост ошибок) и cascading failure (лавинообразный коллапс) — это разные сценарии отказа.",
                 "related": "[[performance-testing-interview#Q2]] типы тестов; [[performance-testing-interview#Q5]] отличие load от stress; [[performance-testing-interview#Q8]] spike как резкая перегрузка."
               },
-              "order": 1,
-              "label": "B"
+              "order": 2,
+              "label": "C"
             },
             {
               "text": "`Stress testing` — это длительная прогонка часами для поиска утечек памяти.",
@@ -341,18 +353,6 @@
                 "source_of_confusion": "Оба «нагружают сильнее обычного», поэтому endurance путают с поиском предела.",
                 "if_it_were_true": "Тогда stress длился бы сутки, но breaking point ищут ростом нагрузки, а не временем.",
                 "how_it_should_be": "Stress — рост нагрузки до отказа; поиск leak за часы — это soak testing."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
-              "text": "Breaking point — это момент, когда CPU достигает ровно 100% при любой конфигурации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Breaking point — это потеря SLO или падение системы, и узким местом часто оказывается не CPU, а DB pool, GC или очередь.",
-                "source_of_confusion": "CPU 100% — самая заметная метрика, поэтому breaking point сводят только к ней.",
-                "if_it_were_true": "Тогда система с DB pool на 50 соединений никогда не «ломалась» бы при свободном CPU, но она ломается.",
-                "how_it_should_be": "Точку отказа определяет нарушение SLO; bottleneck может быть в БД, GC или очереди, а не в CPU."
               },
               "order": 3,
               "label": "D"
@@ -369,6 +369,19 @@
           "question_text": "Что такое soak (endurance) testing и какие баги он ловит?",
           "options": [
             {
+              "text": "`Soak testing` (endurance) — длительная прогонка под целевой нагрузкой часами/сутками. Ловит то, что не видно за 15 минут: memory leaks (heap растёт → GC дольше → OOM), утечки нативной памяти (`Metaspace`, direct buffers), connection/file-descriptor leaks, накопление state в кешах без eviction и медленную деградацию latency.",
+              "correct": true,
+              "sections": {
+                "explanation": "Профиль — steady state на 60-80% максимума, минимум 4 часа (часто 24-72), с мониторингом heap, non-heap, пулов и thread count.",
+                "example": "Через 18 часов сервис ушёл в `OOMKilled`: heap стабильно рос, GC учащался, p99 latency ползла вверх — классический leak.",
+                "when_to_apply": "Применяют перед релизом долгоживущих сервисов и после изменений в кешах, пулах или работе с памятью.",
+                "edge_cases": "Полезно снимать `heap dump` в начале и конце теста для diff-анализа: что именно накопилось за прогон.",
+                "related": "[[performance-testing-interview#Q2]] типы тестов; [[performance-testing-interview#Q6]] отличие от stress; [[performance-testing-interview#Q15]] метрики ресурсов для мониторинга."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "`Soak testing` ловит проблемы, видимые сразу на первых секундах нагрузки, например неправильный URL.",
               "correct": false,
               "sections": {
@@ -377,8 +390,8 @@
                 "if_it_were_true": "Тогда soak длился бы секунды, но он идёт 4-72 часа именно ради накопительных эффектов.",
                 "how_it_should_be": "Soak ловит memory leak, connection leak и рост latency на 2ms/час; быстрые ошибки скрипта — это smoke."
               },
-              "order": 0,
-              "label": "A"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "`Soak testing` гоняют на максимально возможной нагрузке, выше ожидаемой, чтобы ускорить появление багов.",
@@ -388,19 +401,6 @@
                 "source_of_confusion": "Кажется, что «больше нагрузки = быстрее найдём проблему», отсюда максимальная нагрузка.",
                 "if_it_were_true": "Тогда soak совпал бы со stress, но его суть — длительность на реалистичной полке, а не предельная нагрузка.",
                 "how_it_should_be": "Профиль soak — целевая нагрузка надолго; превышение нормы до breaking point делает stress."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "`Soak testing` (endurance) — длительная прогонка под целевой нагрузкой часами/сутками. Ловит то, что не видно за 15 минут: memory leaks (heap растёт → GC дольше → OOM), утечки нативной памяти (`Metaspace`, direct buffers), connection/file-descriptor leaks, накопление state в кешах без eviction и медленную деградацию latency.",
-              "correct": true,
-              "sections": {
-                "explanation": "Профиль — steady state на 60-80% максимума, минимум 4 часа (часто 24-72), с мониторингом heap, non-heap, пулов и thread count.",
-                "example": "Через 18 часов сервис ушёл в `OOMKilled`: heap стабильно рос, GC учащался, p99 latency ползла вверх — классический leak.",
-                "when_to_apply": "Применяют перед релизом долгоживущих сервисов и после изменений в кешах, пулах или работе с памятью.",
-                "edge_cases": "Полезно снимать `heap dump` в начале и конце теста для diff-анализа: что именно накопилось за прогон.",
-                "related": "[[performance-testing-interview#Q2]] типы тестов; [[performance-testing-interview#Q6]] отличие от stress; [[performance-testing-interview#Q15]] метрики ресурсов для мониторинга."
               },
               "order": 2,
               "label": "C"
@@ -441,18 +441,6 @@
               "label": "A"
             },
             {
-              "text": "`Spike testing` нужен только для batch-обработки данных по ночам, где нагрузка стабильна.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Spike критичен там, где трафик внезапно растёт: e-commerce-распродажи, viral-события, push-рассылки, системы с autoscaling.",
-                "source_of_confusion": "Кажется, что внезапные всплески — редкость, поэтому область применения сужают до batch.",
-                "if_it_were_true": "Тогда Black Friday и вирусный пост нечем было бы протестировать, но именно для них spike и нужен.",
-                "how_it_should_be": "Spike проверяет flash-traffic: распродажи, push-уведомления, autoscaling — а не стабильный batch."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
               "text": "При spike testing главное — убедиться, что система держит всплеск, а восстановление после спада неважно.",
               "correct": false,
               "sections": {
@@ -460,6 +448,18 @@
                 "source_of_confusion": "Внимание приковано к пику, поэтому фазу recovery недооценивают.",
                 "if_it_were_true": "Тогда система могла бы навсегда зависнуть после всплеска и тест считался бы пройденным.",
                 "how_it_should_be": "Spike проверяет и пик, и recovery: успевает ли autoscaling и возвращается ли latency после отката."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`Spike testing` нужен только для batch-обработки данных по ночам, где нагрузка стабильна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spike критичен там, где трафик внезапно растёт: e-commerce-распродажи, viral-события, push-рассылки, системы с autoscaling.",
+                "source_of_confusion": "Кажется, что внезапные всплески — редкость, поэтому область применения сужают до batch.",
+                "if_it_were_true": "Тогда Black Friday и вирусный пост нечем было бы протестировать, но именно для них spike и нужен.",
+                "how_it_should_be": "Spike проверяет flash-traffic: распродажи, push-уведомления, autoscaling — а не стабильный batch."
               },
               "order": 2,
               "label": "C"
@@ -489,6 +489,18 @@
           "question_text": "Что такое volume и scalability testing?",
           "options": [
             {
+              "text": "`Scalability testing` — это один прогон на максимальной нагрузке на текущей конфигурации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Scalability — это серия тестов на разных конфигурациях (1/2/4/8 подов), чтобы построить кривую роста RPS.",
+                "source_of_confusion": "Кажется, что «проверить масштабируемость» = выжать максимум на текущем железе.",
+                "if_it_were_true": "Тогда нельзя было бы оценить линейность — для неё нужны минимум две точки ресурсов.",
+                "how_it_should_be": "Нужна серия прогонов с разным числом ресурсов и сравнение фактического роста с идеальным линейным."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "`Volume testing` — проверка работы с большим объёмом данных (миллионы записей в БД, большие payload'ы, огромные файлы) при нормальной нагрузке по пользователям; `scalability testing` — проверка, как растёт пропускная способность при добавлении ресурсов (серия тестов с разными конфигурациями). Это два разных теста, которые часто путают.",
               "correct": true,
               "sections": {
@@ -498,32 +510,8 @@
                 "edge_cases": "Если масштабирование не линейно — ищут bottleneck: общая БД, distributed lock, Kafka partition, кеш; нелинейность это сигнал, а не норма.",
                 "related": "[[performance-testing-interview#Q2]] типы тестов; [[performance-testing-interview#Q15]] метрики ресурсов; [[performance-testing-interview#Q35]] prod-like объём данных."
               },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "`Volume testing` — это проверка, как растёт throughput при добавлении новых подов и CPU.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Рост throughput при добавлении ресурсов — это `scalability` testing; volume — про большой объём данных при нормальной нагрузке.",
-                "source_of_confusion": "Оба про «большое», поэтому объём данных путают с масштабированием ресурсов.",
-                "if_it_were_true": "Тогда volume требовал бы серии конфигураций, но ему достаточно одной — с большой БД.",
-                "how_it_should_be": "Volume — про размер данных (100M записей, payload 50MB), а рост RPS от ресурсов — это scalability."
-              },
               "order": 1,
               "label": "B"
-            },
-            {
-              "text": "`Scalability testing` — это один прогон на максимальной нагрузке на текущей конфигурации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Scalability — это серия тестов на разных конфигурациях (1/2/4/8 подов), чтобы построить кривую роста RPS.",
-                "source_of_confusion": "Кажется, что «проверить масштабируемость» = выжать максимум на текущем железе.",
-                "if_it_were_true": "Тогда нельзя было бы оценить линейность — для неё нужны минимум две точки ресурсов.",
-                "how_it_should_be": "Нужна серия прогонов с разным числом ресурсов и сравнение фактического роста с идеальным линейным."
-              },
-              "order": 2,
-              "label": "C"
             },
             {
               "text": "При линейной масштабируемости каждый удвоенный pod даёт ровно ×2 RPS без потерь.",
@@ -533,6 +521,18 @@
                 "source_of_confusion": "Идеальная линейность — красивое допущение, поэтому её принимают за реальность.",
                 "if_it_were_true": "Тогда не было бы предела масштабированию, но общая БД или distributed lock этот предел задают.",
                 "how_it_should_be": "Реальный рост падает с числом подов; идеальная линейность недостижима из-за shared-ресурсов."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`Volume testing` — это проверка, как растёт throughput при добавлении новых подов и CPU.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рост throughput при добавлении ресурсов — это `scalability` testing; volume — про большой объём данных при нормальной нагрузке.",
+                "source_of_confusion": "Оба про «большое», поэтому объём данных путают с масштабированием ресурсов.",
+                "if_it_were_true": "Тогда volume требовал бы серии конфигураций, но ему достаточно одной — с большой БД.",
+                "how_it_should_be": "Volume — про размер данных (100M записей, payload 50MB), а рост RPS от ресурсов — это scalability."
               },
               "order": 3,
               "label": "D"
@@ -549,6 +549,30 @@
           "question_text": "Что такое smoke и recovery testing в контексте нагрузки?",
           "options": [
             {
+              "text": "`Recovery testing` — это проверка, что система отвечает на корректные запросы при нормальной нагрузке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Ответ при норме проверяет load/smoke; recovery — это возврат к работе после сбоя (рестарт, network partition, failover).",
+                "source_of_confusion": "Оба «проверяют, что система работает», поэтому штатный режим путают с восстановлением после отказа.",
+                "if_it_were_true": "Тогда recovery не требовал бы вносить сбой, но его суть — измерить восстановление именно после failure.",
+                "how_it_should_be": "Recovery вносит сбой и меряет время возврата SLO; ответ при норме — это обычный load."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`Smoke` и `recovery` — это одно и то же: быстрый прогон для проверки восстановления.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные вещи: smoke валидирует тестовый скрипт перед прогоном, recovery проверяет восстановление системы после сбоя.",
+                "source_of_confusion": "Оба короткие и «проверочные», поэтому их сливают в один тип.",
+                "if_it_were_true": "Тогда smoke вносил бы failure в систему, но он лишь убеждается, что скрипт и эндпоинты живы.",
+                "how_it_should_be": "Smoke — про корректность скрипта, recovery — про отказоустойчивость системы; это разные цели."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
               "text": "`Smoke test` в load testing — это полноценный прогон на 2000 VU в течение часа.",
               "correct": false,
               "sections": {
@@ -557,8 +581,8 @@
                 "if_it_were_true": "Тогда smoke съедал бы час перед каждым запуском, но его смысл — быстро проверить URL, авторизацию и ответ сервера.",
                 "how_it_should_be": "Smoke — это 1-10 VU на пару минут перед серьёзным тестом; нагрузка в 2000 VU — это load/stress."
               },
-              "order": 0,
-              "label": "A"
+              "order": 2,
+              "label": "C"
             },
             {
               "text": "`Smoke test` в load testing — минимальный прогон (1-10 VU, 1-5 мин), чтобы убедиться, что сам скрипт работает: URL правильные, авторизация не сломана, сервер отвечает; запускается перед любым серьёзным тестом. `Recovery testing` — проверка, что система восстанавливается после снятия нагрузки, перезапуска компонента, network partition или failover БД к реплике.",
@@ -569,30 +593,6 @@
                 "when_to_apply": "Smoke гоняют перед каждым тестом и на каждом PR; recovery — когда нужно проверить отказоустойчивость под нагрузкой.",
                 "edge_cases": "Recovery комбинируют с нагрузкой: добавляют failure (рестарт пода, разрыв сети) и измеряют время возврата SLO.",
                 "related": "[[performance-testing-interview#Q2]] типы тестов; [[performance-testing-interview#Q8]] spike recovery; [[performance-testing-interview#Q37]] smoke на каждом PR в CI."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "`Recovery testing` — это проверка, что система отвечает на корректные запросы при нормальной нагрузке.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Ответ при норме проверяет load/smoke; recovery — это возврат к работе после сбоя (рестарт, network partition, failover).",
-                "source_of_confusion": "Оба «проверяют, что система работает», поэтому штатный режим путают с восстановлением после отказа.",
-                "if_it_were_true": "Тогда recovery не требовал бы вносить сбой, но его суть — измерить восстановление именно после failure.",
-                "how_it_should_be": "Recovery вносит сбой и меряет время возврата SLO; ответ при норме — это обычный load."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
-              "text": "`Smoke` и `recovery` — это одно и то же: быстрый прогон для проверки восстановления.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это разные вещи: smoke валидирует тестовый скрипт перед прогоном, recovery проверяет восстановление системы после сбоя.",
-                "source_of_confusion": "Оба короткие и «проверочные», поэтому их сливают в один тип.",
-                "if_it_were_true": "Тогда smoke вносил бы failure в систему, но он лишь убеждается, что скрипт и эндпоинты живы.",
-                "how_it_should_be": "Smoke — про корректность скрипта, recovery — про отказоустойчивость системы; это разные цели."
               },
               "order": 3,
               "label": "D"
@@ -621,13 +621,13 @@
               "label": "A"
             },
             {
-              "text": "`Latency` и `response time` — это всегда одно и то же число для любого запроса.",
+              "text": "Закон Литтла `L = λ × W` связывает error rate с количеством потоков.",
               "correct": false,
               "sections": {
-                "what_actually": "Latency в `JMeter` = время до первого байта (TTFB), а response time = полное время до последнего байта; для тяжёлых ответов они различаются.",
-                "source_of_confusion": "Для лёгких API они почти совпадают, отсюда вывод об их равенстве всегда.",
-                "if_it_were_true": "Тогда не было бы отдельных метрик `Latency` и `Load time` в JMeter, но они есть и меряют разное.",
-                "how_it_should_be": "Latency — до первого байта, response time — до последнего; на больших ответах разница заметна."
+                "what_actually": "Закон Литтла связывает concurrency (L), throughput (λ) и время ответа (W); error rate в нём не участвует.",
+                "source_of_confusion": "Формула выглядит универсальной, поэтому в неё подставляют любые метрики, включая ошибки.",
+                "if_it_were_true": "Тогда из неё нельзя было бы вывести `500 RPS × 200ms = 100 concurrent`, но именно это она и даёт.",
+                "how_it_should_be": "L = λ × W — это concurrency = throughput × response time; error rate считается отдельно."
               },
               "order": 1,
               "label": "B"
@@ -646,13 +646,13 @@
               "label": "C"
             },
             {
-              "text": "Закон Литтла `L = λ × W` связывает error rate с количеством потоков.",
+              "text": "`Latency` и `response time` — это всегда одно и то же число для любого запроса.",
               "correct": false,
               "sections": {
-                "what_actually": "Закон Литтла связывает concurrency (L), throughput (λ) и время ответа (W); error rate в нём не участвует.",
-                "source_of_confusion": "Формула выглядит универсальной, поэтому в неё подставляют любые метрики, включая ошибки.",
-                "if_it_were_true": "Тогда из неё нельзя было бы вывести `500 RPS × 200ms = 100 concurrent`, но именно это она и даёт.",
-                "how_it_should_be": "L = λ × W — это concurrency = throughput × response time; error rate считается отдельно."
+                "what_actually": "Latency в `JMeter` = время до первого байта (TTFB), а response time = полное время до последнего байта; для тяжёлых ответов они различаются.",
+                "source_of_confusion": "Для лёгких API они почти совпадают, отсюда вывод об их равенстве всегда.",
+                "if_it_were_true": "Тогда не было бы отдельных метрик `Latency` и `Load time` в JMeter, но они есть и меряют разное.",
+                "how_it_should_be": "Latency — до первого байта, response time — до последнего; на больших ответах разница заметна."
               },
               "order": 3,
               "label": "D"
@@ -669,13 +669,14 @@
           "question_text": "Почему p99 важнее среднего и как читать percentile latency?",
           "options": [
             {
-              "text": "Среднее (mean) latency репрезентативнее процентилей, потому что суммирует все измерения и сглаживает единичные выбросы вроде разовой GC-паузы; p99 полезен лишь как вспомогательная метрика для отладки редких аномалий, но не для формулировки SLA.",
-              "correct": false,
+              "text": "Среднее скрывает проблемы: 990 запросов по 50ms и 10 по 5s дают average ~100ms, но 1% видит 5-секундный ответ. `pX` — значение, ниже которого X% измерений: p50 = медиана, p95, p99, p99.9, max. p99 критичен, потому что у пользователя за сессию 100+ запросов (он почти наверняка попадёт в 1%), агрегаторы делают fan-out по 10+ бэкендам (итог определяет худший), а SLA формулируются в процентилях.",
+              "correct": true,
               "sections": {
-                "what_actually": "Среднее скрывает хвосты: 990 запросов по 50ms и 10 по 5s дают average ~100ms, но 1% пользователей видит 5-секундный ответ.",
-                "source_of_confusion": "Среднее «учитывает всё», поэтому кажется самым честным числом.",
-                "if_it_were_true": "Тогда SLA формулировали бы в среднем, но их пишут в процентилях именно из-за выбросов.",
-                "how_it_should_be": "Надёжнее смотреть p95/p99 — среднее маскирует tail latency, которую видят реальные пользователи."
+                "explanation": "Причины tail latency: GC-паузы, lock contention, cache miss + медленный fetch из БД, network retry/timeout, переключение контекста и throttling.",
+                "example": "p50 = 80ms, p95 = 220ms, p99 = 480ms, p99.9 = 1200ms, max = 8500ms — хвост растёт нелинейно, и именно p99 попадает в SLO.",
+                "when_to_apply": "На p95/p99 ориентируются всегда, привязывая их к SLO: «p99 < 300ms для 99.9% месяца», а не на average.",
+                "edge_cases": "max часто шум (одиночные выбросы), но видеть его полезно; основное решение принимают по p95/p99, а не по max и не по среднему.",
+                "related": "[[performance-testing-interview#Q11]] throughput и latency; [[performance-testing-interview#Q13]] Apdex; [[performance-testing-interview#Q41]] coordinated omission искажает хвосты."
               },
               "order": 0,
               "label": "A"
@@ -705,14 +706,13 @@
               "label": "C"
             },
             {
-              "text": "Среднее скрывает проблемы: 990 запросов по 50ms и 10 по 5s дают average ~100ms, но 1% видит 5-секундный ответ. `pX` — значение, ниже которого X% измерений: p50 = медиана, p95, p99, p99.9, max. p99 критичен, потому что у пользователя за сессию 100+ запросов (он почти наверняка попадёт в 1%), агрегаторы делают fan-out по 10+ бэкендам (итог определяет худший), а SLA формулируются в процентилях.",
-              "correct": true,
+              "text": "Среднее (mean) latency репрезентативнее процентилей, потому что суммирует все измерения и сглаживает единичные выбросы вроде разовой GC-паузы; p99 полезен лишь как вспомогательная метрика для отладки редких аномалий, но не для формулировки SLA.",
+              "correct": false,
               "sections": {
-                "explanation": "Причины tail latency: GC-паузы, lock contention, cache miss + медленный fetch из БД, network retry/timeout, переключение контекста и throttling.",
-                "example": "p50 = 80ms, p95 = 220ms, p99 = 480ms, p99.9 = 1200ms, max = 8500ms — хвост растёт нелинейно, и именно p99 попадает в SLO.",
-                "when_to_apply": "На p95/p99 ориентируются всегда, привязывая их к SLO: «p99 < 300ms для 99.9% месяца», а не на average.",
-                "edge_cases": "max часто шум (одиночные выбросы), но видеть его полезно; основное решение принимают по p95/p99, а не по max и не по среднему.",
-                "related": "[[performance-testing-interview#Q11]] throughput и latency; [[performance-testing-interview#Q13]] Apdex; [[performance-testing-interview#Q41]] coordinated omission искажает хвосты."
+                "what_actually": "Среднее скрывает хвосты: 990 запросов по 50ms и 10 по 5s дают average ~100ms, но 1% пользователей видит 5-секундный ответ.",
+                "source_of_confusion": "Среднее «учитывает всё», поэтому кажется самым честным числом.",
+                "if_it_were_true": "Тогда SLA формулировали бы в среднем, но их пишут в процентилях именно из-за выбросов.",
+                "how_it_should_be": "Надёжнее смотреть p95/p99 — среднее маскирует tail latency, которую видят реальные пользователи."
               },
               "order": 3,
               "label": "D"
@@ -729,31 +729,6 @@
           "question_text": "Что такое Apdex и как он используется?",
           "options": [
             {
-              "text": "`Apdex` (Application Performance Index) — индустриальный стандарт оценки удовлетворённости пользователей через latency, сводящий распределение в одно число от 0 до 1: `Apdex = (Satisfied + Tolerating/2) / Total`, где Satisfied — latency ≤ T, Tolerating — T < latency ≤ 4T, Frustrated — latency > 4T (не в числителе), T — порог удовлетворённости.",
-              "correct": true,
-              "sections": {
-                "explanation": "Apdex удобен для executive-reporting и алертов, но скрывает причины и хвосты; на инженерном уровне лучше percentile latency + error rate отдельно.",
-                "example": "Для T=500ms: 850 satisfied + 100 tolerating + 50 frustrated → `(850 + 100/2)/1000 = 0.90` («Good»).",
-                "when_to_apply": "Применяют для дашбордов руководству и общих алертов, где нужно одно число, а не детальная картина.",
-                "edge_cases": "Шкала: 1.00-0.94 Excellent, 0.93-0.85 Good, 0.84-0.70 Fair, 0.69-0.50 Poor, < 0.50 Unacceptable; границы T выбирают под сервис.",
-                "related": "[[performance-testing-interview#Q11]] throughput и latency; [[performance-testing-interview#Q12]] percentile latency; [[performance-testing-interview#Q14]] SLI/SLO/SLA."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "`Apdex` считает только долю запросов с latency ≤ T и игнорирует промежуточную зону.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Apdex учитывает Tolerating-зону (T < latency ≤ 4T) с весом 1/2; это не просто доля Satisfied.",
-                "source_of_confusion": "Формула выглядит как «доля быстрых», отсюда упрощение до одного порога.",
-                "if_it_were_true": "Тогда для T=500ms ответ был бы 0.85, а не 0.90 — игнорирование Tolerating меняет число.",
-                "how_it_should_be": "Числитель = Satisfied + Tolerating/2, так что промежуточная зона тоже вносит вклад."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
               "text": "`Apdex` — это метрика error rate: доля запросов, завершившихся с HTTP-ошибкой.",
               "correct": false,
               "sections": {
@@ -762,8 +737,8 @@
                 "if_it_were_true": "Тогда Frustrated определялись бы по статусу 5xx, но они определяются порогом latency > 4T.",
                 "how_it_should_be": "Apdex — про время отклика и пороги T/4T, а доля ошибок считается отдельно."
               },
-              "order": 2,
-              "label": "C"
+              "order": 0,
+              "label": "A"
             },
             {
               "text": "Высокий `Apdex` (0.95) гарантирует отсутствие медленных запросов в системе.",
@@ -773,6 +748,31 @@
                 "source_of_confusion": "Близкое к 1 число воспринимается как «всё быстро», отсюда вывод о гарантии.",
                 "if_it_were_true": "Тогда p99 всегда был бы низким при высоком Apdex, но Apdex маскирует именно tail.",
                 "how_it_should_be": "Apdex — агрегат для отчётности; хвосты видны только в percentile latency, а не в одном числе."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`Apdex` (Application Performance Index) — индустриальный стандарт оценки удовлетворённости пользователей через latency, сводящий распределение в одно число от 0 до 1: `Apdex = (Satisfied + Tolerating/2) / Total`, где Satisfied — latency ≤ T, Tolerating — T < latency ≤ 4T, Frustrated — latency > 4T (не в числителе), T — порог удовлетворённости.",
+              "correct": true,
+              "sections": {
+                "explanation": "Apdex удобен для executive-reporting и алертов, но скрывает причины и хвосты; на инженерном уровне лучше percentile latency + error rate отдельно.",
+                "example": "Для T=500ms: 850 satisfied + 100 tolerating + 50 frustrated → `(850 + 100/2)/1000 = 0.90` («Good»).",
+                "when_to_apply": "Применяют для дашбордов руководству и общих алертов, где нужно одно число, а не детальная картина.",
+                "edge_cases": "Шкала: 1.00-0.94 Excellent, 0.93-0.85 Good, 0.84-0.70 Fair, 0.69-0.50 Poor, < 0.50 Unacceptable; границы T выбирают под сервис.",
+                "related": "[[performance-testing-interview#Q11]] throughput и latency; [[performance-testing-interview#Q12]] percentile latency; [[performance-testing-interview#Q14]] SLI/SLO/SLA."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`Apdex` считает только долю запросов с latency ≤ T и игнорирует промежуточную зону.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Apdex учитывает Tolerating-зону (T < latency ≤ 4T) с весом 1/2; это не просто доля Satisfied.",
+                "source_of_confusion": "Формула выглядит как «доля быстрых», отсюда упрощение до одного порога.",
+                "if_it_were_true": "Тогда для T=500ms ответ был бы 0.85, а не 0.90 — игнорирование Tolerating меняет число.",
+                "how_it_should_be": "Числитель = Satisfied + Tolerating/2, так что промежуточная зона тоже вносит вклад."
               },
               "order": 3,
               "label": "D"
@@ -789,16 +789,28 @@
           "question_text": "Что такое SLI, SLO, SLA и как они связаны с нагрузочным тестированием?",
           "options": [
             {
-              "text": "`SLI` — это контракт с клиентом с санкциями за нарушение доступности: именно на уровне SLI фиксируют обязательства перед заказчиком и штрафы, а измеряемые метрики называют SLO.",
+              "text": "`SLO` — это метрика, которую мы измеряем прямо сейчас, например p99 = 180ms: конкретное наблюдаемое значение и есть Service Level Objective, а целевой порог по нему задаёт SLA.",
               "correct": false,
               "sections": {
-                "what_actually": "Контракт с санкциями — это `SLA`; SLI (Service Level Indicator) — конкретная метрика, которую измеряем (p99, error rate).",
-                "source_of_confusion": "Аббревиатуры похожи, поэтому индикатор путают с контрактом.",
-                "if_it_were_true": "Тогда SLI содержал бы юридические обязательства, но он лишь показывает текущее значение метрики.",
-                "how_it_should_be": "SLI — что измеряем (метрика), SLA — контракт с санкциями; это разные уровни."
+                "what_actually": "Текущее измеренное значение — это `SLI`; SLO — это целевое значение, которое хотим держать (p99 < 300ms).",
+                "source_of_confusion": "Оба про одну метрику, поэтому факт (SLI) путают с целью (SLO).",
+                "if_it_were_true": "Тогда SLO менялся бы при каждом замере, но цель фиксирована, а меняется именно SLI.",
+                "how_it_should_be": "SLI — измеренное сейчас, SLO — цель на будущее; это разные роли одной метрики."
               },
               "order": 0,
               "label": "A"
+            },
+            {
+              "text": "`SLA`, `SLO` и `SLI` — по сути взаимозаменяемые термины одного требования: разница лишь в том, кто их произносит (инженеры, менеджеры, юристы), а смысл — целевой уровень сервиса — общий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это три разных уровня: SLI измеряет, SLO ставит цель, SLA фиксирует контракт с санкциями.",
+                "source_of_confusion": "Все три про «уровень сервиса», что создаёт иллюзию синонимичности.",
+                "if_it_were_true": "Тогда error budget = 100% − SLO не имел бы смысла, ведь budget считается именно от цели, а не от контракта.",
+                "how_it_should_be": "Каждый термин — свой уровень (метрика → цель → контракт); путать их нельзя."
+              },
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "`SLI` (Service Level Indicator) — что измеряем: конкретная метрика (p99 latency, error rate, availability). `SLO` (Service Level Objective) — цель: какое значение SLI держим (p99 < 300ms 99.9% времени). `SLA` (Service Level Agreement) — контракт с клиентом с санкциями за нарушение. Performance-тесты проектируются вокруг SLO, а thresholds в `k6` / assertions в `Gatling` — это кодирование SLO в тесте.",
@@ -810,29 +822,17 @@
                 "edge_cases": "SLA обычно мягче SLO: внутренняя цель строже контракта, чтобы оставался запас (error budget) до нарушения обязательств.",
                 "related": "[[performance-testing-interview#Q3]] baseline, benchmark, SLA; [[performance-testing-interview#Q12]] процентили в SLO; [[performance-testing-interview#Q29]] thresholds кодируют SLO."
               },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "`SLO` — это метрика, которую мы измеряем прямо сейчас, например p99 = 180ms: конкретное наблюдаемое значение и есть Service Level Objective, а целевой порог по нему задаёт SLA.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Текущее измеренное значение — это `SLI`; SLO — это целевое значение, которое хотим держать (p99 < 300ms).",
-                "source_of_confusion": "Оба про одну метрику, поэтому факт (SLI) путают с целью (SLO).",
-                "if_it_were_true": "Тогда SLO менялся бы при каждом замере, но цель фиксирована, а меняется именно SLI.",
-                "how_it_should_be": "SLI — измеренное сейчас, SLO — цель на будущее; это разные роли одной метрики."
-              },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "`SLA`, `SLO` и `SLI` — по сути взаимозаменяемые термины одного требования: разница лишь в том, кто их произносит (инженеры, менеджеры, юристы), а смысл — целевой уровень сервиса — общий.",
+              "text": "`SLI` — это контракт с клиентом с санкциями за нарушение доступности: именно на уровне SLI фиксируют обязательства перед заказчиком и штрафы, а измеряемые метрики называют SLO.",
               "correct": false,
               "sections": {
-                "what_actually": "Это три разных уровня: SLI измеряет, SLO ставит цель, SLA фиксирует контракт с санкциями.",
-                "source_of_confusion": "Все три про «уровень сервиса», что создаёт иллюзию синонимичности.",
-                "if_it_were_true": "Тогда error budget = 100% − SLO не имел бы смысла, ведь budget считается именно от цели, а не от контракта.",
-                "how_it_should_be": "Каждый термин — свой уровень (метрика → цель → контракт); путать их нельзя."
+                "what_actually": "Контракт с санкциями — это `SLA`; SLI (Service Level Indicator) — конкретная метрика, которую измеряем (p99, error rate).",
+                "source_of_confusion": "Аббревиатуры похожи, поэтому индикатор путают с контрактом.",
+                "if_it_were_true": "Тогда SLI содержал бы юридические обязательства, но он лишь показывает текущее значение метрики.",
+                "how_it_should_be": "SLI — что измеряем (метрика), SLA — контракт с санкциями; это разные уровни."
               },
               "order": 3,
               "label": "D"
@@ -849,18 +849,6 @@
           "question_text": "Какие метрики ресурсов обязательно мониторить во время теста?",
           "options": [
             {
-              "text": "Достаточно мониторить только latency — системные метрики во время теста не нужны.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Без CPU, GC, DB pool и очередей нельзя понять, почему latency растёт; latency без них — симптом без диагноза.",
-                "source_of_confusion": "Latency — главная пользовательская метрика, поэтому остальное кажется второстепенным.",
-                "if_it_were_true": "Тогда «p99 вырос» нельзя было бы привязать к Full GC или насыщению пула, но именно это даёт root cause.",
-                "how_it_should_be": "Нужны метрики приложения, JVM, CPU, памяти, сети, диска, БД и очередей параллельно с latency."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
               "text": "Метрики БД (connection pool, slow queries, replication lag) при нагрузочном тесте мониторить не нужно.",
               "correct": false,
               "sections": {
@@ -869,8 +857,32 @@
                 "if_it_were_true": "Тогда breaking point на DB pool из 50 соединений остался бы незамеченным, но именно он часто ломает систему.",
                 "how_it_should_be": "Connection pool saturation, slow queries и replication lag — обязательные метрики наряду с прикладными."
               },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Достаточно мониторить только latency — системные метрики во время теста не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без CPU, GC, DB pool и очередей нельзя понять, почему latency растёт; latency без них — симптом без диагноза.",
+                "source_of_confusion": "Latency — главная пользовательская метрика, поэтому остальное кажется второстепенным.",
+                "if_it_were_true": "Тогда «p99 вырос» нельзя было бы привязать к Full GC или насыщению пула, но именно это даёт root cause.",
+                "how_it_should_be": "Нужны метрики приложения, JVM, CPU, памяти, сети, диска, БД и очередей параллельно с latency."
+              },
               "order": 1,
               "label": "B"
+            },
+            {
+              "text": "Главная метрика теста — загрузка CPU клиента, генерирующего нагрузку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "CPU клиента важен, чтобы генератор не стал bottleneck, но цель — метрики системы под тестом, а не нагрузочной машины.",
+                "source_of_confusion": "Кажется, что «нагрузка = CPU», поэтому фокус смещается на машину-генератор.",
+                "if_it_were_true": "Тогда мы бы не увидели насыщения DB pool или GC сервиса, а именно они объясняют деградацию.",
+                "how_it_should_be": "Мониторят систему под нагрузкой (app, JVM, БД, очереди); CPU генератора лишь проверяют, что он не врёт."
+              },
+              "order": 2,
+              "label": "C"
             },
             {
               "text": "Мониторить нужно несколько категорий параллельно с latency: приложение (p50/p95/p99, RPS, error rate), JVM (heap used, GC pause p99, GC overhead, thread count), CPU (utilization, throttling в K8s), память (RSS, swap, page faults), сеть (bandwidth, retransmits), диск (IOPS, latency, %util), БД (connection pool saturation, slow queries, replication lag), очереди (consumer lag, queue depth).",
@@ -881,18 +893,6 @@
                 "when_to_apply": "Дашборды настраивают заранее, до теста: латентность, RPS+errors, CPU/Memory/GC, DB pool, Kafka lag в одном окне.",
                 "edge_cases": "Корреляция растущей latency с конкретной метрикой даёт диагноз: network retransmits → сетевая проблема, GC time → allocation rate.",
                 "related": "[[performance-testing-interview#Q11]] throughput и latency; [[performance-testing-interview#Q12]] percentile latency; [[performance-testing-interview#Q39]] связь с Grafana/Prometheus и APM."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
-              "text": "Главная метрика теста — загрузка CPU клиента, генерирующего нагрузку.",
-              "correct": false,
-              "sections": {
-                "what_actually": "CPU клиента важен, чтобы генератор не стал bottleneck, но цель — метрики системы под тестом, а не нагрузочной машины.",
-                "source_of_confusion": "Кажется, что «нагрузка = CPU», поэтому фокус смещается на машину-генератор.",
-                "if_it_were_true": "Тогда мы бы не увидели насыщения DB pool или GC сервиса, а именно они объясняют деградацию.",
-                "how_it_should_be": "Мониторят систему под нагрузкой (app, JVM, БД, очереди); CPU генератора лишь проверяют, что он не врёт."
               },
               "order": 3,
               "label": "D"
@@ -909,28 +909,17 @@
           "question_text": "Что такое Apache JMeter и как устроен его Test Plan?",
           "options": [
             {
-              "text": "`Apache JMeter` написан на Go и поддерживает только HTTP-протокол.",
-              "correct": false,
+              "text": "`Apache JMeter` — open-source инструмент нагрузочного тестирования на Java (с 1998), популярный в enterprise благодаря поддержке десятков протоколов (HTTP, FTP, JDBC, JMS, SOAP, LDAP, MQTT). Иерархия Test Plan: Thread Group (сколько пользователей и как) → Config Elements, Pre-Processors, Samplers (с Post-Processors), Assertions, Timers (think time), Listeners (сбор результатов).",
+              "correct": true,
               "sections": {
-                "what_actually": "JMeter написан на Java и поддерживает десятки протоколов: HTTP, FTP, JDBC, JMS, SOAP, LDAP, MQTT.",
-                "source_of_confusion": "На Go написан `k6`, отсюда перенос рантайма на JMeter.",
-                "if_it_were_true": "Тогда JMeter не смог бы тестировать БД через JDBC или очереди через JMS, но он умеет и то, и другое.",
-                "how_it_should_be": "JMeter — Java-инструмент с поддержкой множества протоколов, а не только HTTP."
+                "explanation": "Сильные стороны — GUI, огромная plugin-экосистема, много протоколов и distributed mode из коробки; слабые — thread-per-user (память при 10k+ VU), XML `.jmx` плохо ревьюится, GUI-ориентированность.",
+                "example": "В `.jmx`: ThreadGroup с `num_threads=100`, `ramp_time=60`, `duration=600` и вложенным HTTPSamplerProxy на `/api/orders`.",
+                "when_to_apply": "Выбирают JMeter для enterprise с legacy-протоколами (JDBC/JMS/SOAP) и QA-команд, которым нужен визуальный конструктор.",
+                "edge_cases": "Thread-per-user упирается в память при больших VU; для 10k+ нужен distributed mode или переход на `Gatling`/`k6`.",
+                "related": "[[performance-testing-interview#Q17]] Thread Group подробно; [[performance-testing-interview#Q18]] Samplers и Listeners; [[performance-testing-interview#Q22]] сравнение с Gatling."
               },
               "order": 0,
               "label": "A"
-            },
-            {
-              "text": "В `JMeter` Thread Group задаёт arrival rate (пользователей в секунду), как open model.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Стандартная Thread Group задаёт число threads (concurrent users), а arrivals/sec — это плагины (Arrivals/Concurrency Thread Group).",
-                "source_of_confusion": "Open model популярна, поэтому её ошибочно считают дефолтом JMeter.",
-                "if_it_were_true": "Тогда базовый JMeter избегал бы coordinated omission, но из коробки он thread-per-user (closed model).",
-                "how_it_should_be": "Стандартная Thread Group — concurrent users; open model в JMeter требует плагинов."
-              },
-              "order": 1,
-              "label": "B"
             },
             {
               "text": "Сильная сторона `JMeter` — Git-friendly текстовый формат тестов, удобный для code review.",
@@ -941,18 +930,29 @@
                 "if_it_were_true": "Тогда диффы JMeter-тестов читались бы как код, но XML-дерево ревьюить тяжело.",
                 "how_it_should_be": "JMeter силён GUI и протоколами, но XML `.jmx` — его слабость в git, а не преимущество."
               },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`Apache JMeter` написан на Go и поддерживает только HTTP-протокол.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JMeter написан на Java и поддерживает десятки протоколов: HTTP, FTP, JDBC, JMS, SOAP, LDAP, MQTT.",
+                "source_of_confusion": "На Go написан `k6`, отсюда перенос рантайма на JMeter.",
+                "if_it_were_true": "Тогда JMeter не смог бы тестировать БД через JDBC или очереди через JMS, но он умеет и то, и другое.",
+                "how_it_should_be": "JMeter — Java-инструмент с поддержкой множества протоколов, а не только HTTP."
+              },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "`Apache JMeter` — open-source инструмент нагрузочного тестирования на Java (с 1998), популярный в enterprise благодаря поддержке десятков протоколов (HTTP, FTP, JDBC, JMS, SOAP, LDAP, MQTT). Иерархия Test Plan: Thread Group (сколько пользователей и как) → Config Elements, Pre-Processors, Samplers (с Post-Processors), Assertions, Timers (think time), Listeners (сбор результатов).",
-              "correct": true,
+              "text": "В `JMeter` Thread Group задаёт arrival rate (пользователей в секунду), как open model.",
+              "correct": false,
               "sections": {
-                "explanation": "Сильные стороны — GUI, огромная plugin-экосистема, много протоколов и distributed mode из коробки; слабые — thread-per-user (память при 10k+ VU), XML `.jmx` плохо ревьюится, GUI-ориентированность.",
-                "example": "В `.jmx`: ThreadGroup с `num_threads=100`, `ramp_time=60`, `duration=600` и вложенным HTTPSamplerProxy на `/api/orders`.",
-                "when_to_apply": "Выбирают JMeter для enterprise с legacy-протоколами (JDBC/JMS/SOAP) и QA-команд, которым нужен визуальный конструктор.",
-                "edge_cases": "Thread-per-user упирается в память при больших VU; для 10k+ нужен distributed mode или переход на `Gatling`/`k6`.",
-                "related": "[[performance-testing-interview#Q17]] Thread Group подробно; [[performance-testing-interview#Q18]] Samplers и Listeners; [[performance-testing-interview#Q22]] сравнение с Gatling."
+                "what_actually": "Стандартная Thread Group задаёт число threads (concurrent users), а arrivals/sec — это плагины (Arrivals/Concurrency Thread Group).",
+                "source_of_confusion": "Open model популярна, поэтому её ошибочно считают дефолтом JMeter.",
+                "if_it_were_true": "Тогда базовый JMeter избегал бы coordinated omission, но из коробки он thread-per-user (closed model).",
+                "how_it_should_be": "Стандартная Thread Group — concurrent users; open model в JMeter требует плагинов."
               },
               "order": 3,
               "label": "D"
@@ -969,6 +969,18 @@
           "question_text": "Что такое Thread Group и какие варианты есть?",
           "options": [
             {
+              "text": "Ramp-up period задаёт, сколько итераций выполнит каждый виртуальный пользователь.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Число итераций задаёт Loop count/Duration; ramp-up — это время, за которое стартуют все потоки.",
+                "source_of_confusion": "Оба влияют на длительность теста, поэтому параметры путают.",
+                "if_it_were_true": "Тогда `60 sec ramp-up` означал бы 60 итераций, но это секунды разгона, а не повторы.",
+                "how_it_should_be": "Ramp-up — время выхода на полную нагрузку; количество повторов задаётся отдельно."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "`Thread Group` — корневой элемент нагрузки в `JMeter`: задаёт число виртуальных пользователей (threads), их ramp-up и длительность работы. Варианты: `Standard` (N юзеров, ramp-up, iterations), `setUp` (до основных — подготовка данных), `tearDown` (после — cleanup), плюс плагины `Ultimate`/`Stepping` (ступенчатый рост), `Arrivals`/`Concurrency` (open model: arrivals/sec вместо concurrent users).",
               "correct": true,
               "sections": {
@@ -978,32 +990,8 @@
                 "edge_cases": "Для realistic load обычно ramp-up 2-5 минут, затем steady state 15-60 минут; короткий ramp-up превращает тест в spike.",
                 "related": "[[performance-testing-interview#Q16]] JMeter Test Plan; [[performance-testing-interview#Q20]] запуск в non-GUI режиме; [[performance-testing-interview#Q34]] ramp-up подробно."
               },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "`setUp Thread Group` выполняется после основной нагрузки и делает cleanup данных.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Cleanup после теста делает `tearDown` Thread Group; `setUp` выполняется до основных и готовит данные.",
-                "source_of_confusion": "Названия setUp/tearDown похожи на тестовые хуки, и их порядок легко перепутать.",
-                "if_it_were_true": "Тогда подготовленные данные появлялись бы после прогона, что бессмысленно для основной нагрузки.",
-                "how_it_should_be": "setUp — подготовка до теста, tearDown — очистка после; их роли противоположны."
-              },
               "order": 1,
               "label": "B"
-            },
-            {
-              "text": "Ramp-up period задаёт, сколько итераций выполнит каждый виртуальный пользователь.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Число итераций задаёт Loop count/Duration; ramp-up — это время, за которое стартуют все потоки.",
-                "source_of_confusion": "Оба влияют на длительность теста, поэтому параметры путают.",
-                "if_it_were_true": "Тогда `60 sec ramp-up` означал бы 60 итераций, но это секунды разгона, а не повторы.",
-                "how_it_should_be": "Ramp-up — время выхода на полную нагрузку; количество повторов задаётся отдельно."
-              },
-              "order": 2,
-              "label": "C"
             },
             {
               "text": "`Concurrency Thread Group` — это базовый элемент JMeter, доступный без установки плагинов.",
@@ -1013,6 +1001,18 @@
                 "source_of_confusion": "Они так часто используются, что кажутся встроенными.",
                 "if_it_were_true": "Тогда open model был бы доступен из коробки, но для arrivals/sec нужен плагин.",
                 "how_it_should_be": "Базовая поставка — Standard/setUp/tearDown; продвинутые группы ставятся отдельно."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`setUp Thread Group` выполняется после основной нагрузки и делает cleanup данных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cleanup после теста делает `tearDown` Thread Group; `setUp` выполняется до основных и готовит данные.",
+                "source_of_confusion": "Названия setUp/tearDown похожи на тестовые хуки, и их порядок легко перепутать.",
+                "if_it_were_true": "Тогда подготовленные данные появлялись бы после прогона, что бессмысленно для основной нагрузки.",
+                "how_it_should_be": "setUp — подготовка до теста, tearDown — очистка после; их роли противоположны."
               },
               "order": 3,
               "label": "D"
@@ -1029,13 +1029,13 @@
           "question_text": "Какие Samplers и Listeners самые важные в JMeter?",
           "options": [
             {
-              "text": "`View Results Tree` логирует каждый запрос с полным телом ответа, поэтому его держат включённым на распределённом прогоне 1000+ RPS для точных перцентилей.",
+              "text": "`HTTP Request` Sampler умеет обращаться к базе по JDBC-пулу и выполнять SQL напрямую, если указать connection pool.",
               "correct": false,
               "sections": {
-                "what_actually": "`View Results Tree` тяжёл по памяти и нужен только для отладки; в prod-тесте его выключают.",
-                "source_of_confusion": "Он наглядный, поэтому хочется оставить его и в боевом прогоне.",
-                "if_it_were_true": "Тогда при 1000+ RPS он съел бы heap и исказил результаты, чего и стараются избежать.",
-                "how_it_should_be": "В CI-прогоне оставляют только `Simple Data Writer` + `Backend Listener`; GUI-листенеры выключают."
+                "what_actually": "SQL-запросы выполняет `JDBC Request` Sampler; `HTTP Request` шлёт только HTTP/HTTPS.",
+                "source_of_confusion": "Оба — Samplers, поэтому их назначения смешивают.",
+                "if_it_were_true": "Тогда не понадобился бы отдельный JDBC Request, но именно он работает с БД.",
+                "how_it_should_be": "HTTP Request — для REST/HTTP, JDBC Request — для SQL; это разные семплеры."
               },
               "order": 0,
               "label": "A"
@@ -1054,18 +1054,6 @@
               "label": "B"
             },
             {
-              "text": "`HTTP Request` Sampler умеет обращаться к базе по JDBC-пулу и выполнять SQL напрямую, если указать connection pool.",
-              "correct": false,
-              "sections": {
-                "what_actually": "SQL-запросы выполняет `JDBC Request` Sampler; `HTTP Request` шлёт только HTTP/HTTPS.",
-                "source_of_confusion": "Оба — Samplers, поэтому их назначения смешивают.",
-                "if_it_were_true": "Тогда не понадобился бы отдельный JDBC Request, но именно он работает с БД.",
-                "how_it_should_be": "HTTP Request — для REST/HTTP, JDBC Request — для SQL; это разные семплеры."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
               "text": "`Simple Data Writer` рисует перцентили на живом графике во время прогона, заменяя собой `Backend Listener`.",
               "correct": false,
               "sections": {
@@ -1073,6 +1061,18 @@
                 "source_of_confusion": "Слово «Writer» в названии не намекает на пассивность, отсюда ожидание визуализации.",
                 "if_it_were_true": "Тогда он грузил бы CPU на отрисовку, но его смысл — лёгкая запись без GUI-оверхеда.",
                 "how_it_should_be": "Simple Data Writer пишет файл результатов; визуализацию real-time дают Backend Listener + Grafana."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`View Results Tree` логирует каждый запрос с полным телом ответа, поэтому его держат включённым на распределённом прогоне 1000+ RPS для точных перцентилей.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`View Results Tree` тяжёл по памяти и нужен только для отладки; в prod-тесте его выключают.",
+                "source_of_confusion": "Он наглядный, поэтому хочется оставить его и в боевом прогоне.",
+                "if_it_were_true": "Тогда при 1000+ RPS он съел бы heap и исказил результаты, чего и стараются избежать.",
+                "how_it_should_be": "В CI-прогоне оставляют только `Simple Data Writer` + `Backend Listener`; GUI-листенеры выключают."
               },
               "order": 3,
               "label": "D"
@@ -1101,18 +1101,6 @@
               "label": "A"
             },
             {
-              "text": "`BeanShell` быстрее `Groovy`, потому что не требует компиляции скрипта.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Отсутствие компиляции и делает BeanShell медленным: он парсит скрипт заново при каждом запуске; Groovy кешит compiled script и быстрее в 10-100×.",
-                "source_of_confusion": "«Без компиляции = меньше накладных расходов» звучит логично, но для повторяющихся запусков всё наоборот.",
-                "if_it_were_true": "Тогда BeanShell не вытесняли бы из JMeter, но его именно поэтому считают устаревшим.",
-                "how_it_should_be": "Groovy с JIT-компиляцией в 10-100× быстрее BeanShell, который перечитывает скрипт каждый раз."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
               "text": "`JSR223 Sampler` — универсальный элемент JMeter для скриптов на любом JSR-223-совместимом языке (`Groovy` рекомендуется, JS через Nashorn, Python через Jython). Groovy предпочтителен из-за JIT-компиляции (кеш compiled script), скорости в 10-100× выше BeanShell и доступа ко всем Java-классам с кратким синтаксисом.",
               "correct": true,
               "sections": {
@@ -1121,6 +1109,18 @@
                 "when_to_apply": "Применяют JSR223 для произвольной логики: подготовка данных, кастомные подписи, обработка ответов — там, где стандартных элементов не хватает.",
                 "edge_cases": "Обязательно ставить галочку `Cache compiled script if available` — без неё Groovy теряет смысл и работает как медленный интерпретатор.",
                 "related": "[[performance-testing-interview#Q16]] JMeter Test Plan; [[performance-testing-interview#Q18]] Samplers и Listeners; [[performance-testing-interview#Q20]] production-запуск JMeter."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`BeanShell` быстрее `Groovy`, потому что не требует компиляции скрипта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отсутствие компиляции и делает BeanShell медленным: он парсит скрипт заново при каждом запуске; Groovy кешит compiled script и быстрее в 10-100×.",
+                "source_of_confusion": "«Без компиляции = меньше накладных расходов» звучит логично, но для повторяющихся запусков всё наоборот.",
+                "if_it_were_true": "Тогда BeanShell не вытесняли бы из JMeter, но его именно поэтому считают устаревшим.",
+                "how_it_should_be": "Groovy с JIT-компиляцией в 10-100× быстрее BeanShell, который перечитывает скрипт каждый раз."
               },
               "order": 2,
               "label": "C"
@@ -1149,13 +1149,14 @@
           "question_text": "Как правильно запускать JMeter в production-режиме (CLI, non-GUI)?",
           "options": [
             {
-              "text": "Load-тест в `JMeter` правильно запускать из GUI — так удобнее видеть результаты в реальном времени.",
-              "correct": false,
+              "text": "Load-тест запускают только в non-GUI CLI-режиме (GUI искажает результаты): `jmeter -n -t test-plan.jmx -l results.jtl -e -o report-dir -Jthreads=500 -Jduration=600`, где `-n` — non-GUI, `-t` — test plan, `-l` — файл результатов, `-e -o dir` — HTML-отчёт, `-Jkey=value` — property. В плане используют `__P()`: `${__P(threads,100)}`. JVM тюнят: `HEAP=\"-Xms4g -Xmx8g\"`.",
+              "correct": true,
               "sections": {
-                "what_actually": "GUI съедает CPU/RAM на отрисовку и искажает результаты; реальные тесты гоняют только в non-GUI CLI-режиме.",
-                "source_of_confusion": "GUI наглядный, поэтому кажется удобным и для боевого прогона.",
-                "if_it_were_true": "Тогда при больших VU результаты были бы достоверны, но GUI как раз их искажает.",
-                "how_it_should_be": "Для load-теста используют `jmeter -n` (non-GUI); GUI оставляют только для построения теста."
+                "explanation": "При нагрузке >5000 VU один мастер не справится — нужен distributed mode (master-slave по RMI).",
+                "example": "`-Jthreads=500 -Jduration=600` подставляются в план через `${__P(threads,100)}` и `${__P(duration,300)}` — нагрузка управляется из CI.",
+                "when_to_apply": "Применяют CLI-режим для всех серьёзных прогонов: локально, в CI и на нагрузочных машинах, отдельных от целевой системы.",
+                "edge_cases": "GUI оставляют только для разработки теста; в боевом прогоне он недопустим, так как тратит ресурсы на отрисовку.",
+                "related": "[[performance-testing-interview#Q16]] JMeter Test Plan; [[performance-testing-interview#Q18]] listeners для CI-прогона; [[performance-testing-interview#Q21]] distributed load testing."
               },
               "order": 0,
               "label": "A"
@@ -1185,14 +1186,13 @@
               "label": "C"
             },
             {
-              "text": "Load-тест запускают только в non-GUI CLI-режиме (GUI искажает результаты): `jmeter -n -t test-plan.jmx -l results.jtl -e -o report-dir -Jthreads=500 -Jduration=600`, где `-n` — non-GUI, `-t` — test plan, `-l` — файл результатов, `-e -o dir` — HTML-отчёт, `-Jkey=value` — property. В плане используют `__P()`: `${__P(threads,100)}`. JVM тюнят: `HEAP=\"-Xms4g -Xmx8g\"`.",
-              "correct": true,
+              "text": "Load-тест в `JMeter` правильно запускать из GUI — так удобнее видеть результаты в реальном времени.",
+              "correct": false,
               "sections": {
-                "explanation": "При нагрузке >5000 VU один мастер не справится — нужен distributed mode (master-slave по RMI).",
-                "example": "`-Jthreads=500 -Jduration=600` подставляются в план через `${__P(threads,100)}` и `${__P(duration,300)}` — нагрузка управляется из CI.",
-                "when_to_apply": "Применяют CLI-режим для всех серьёзных прогонов: локально, в CI и на нагрузочных машинах, отдельных от целевой системы.",
-                "edge_cases": "GUI оставляют только для разработки теста; в боевом прогоне он недопустим, так как тратит ресурсы на отрисовку.",
-                "related": "[[performance-testing-interview#Q16]] JMeter Test Plan; [[performance-testing-interview#Q18]] listeners для CI-прогона; [[performance-testing-interview#Q21]] distributed load testing."
+                "what_actually": "GUI съедает CPU/RAM на отрисовку и искажает результаты; реальные тесты гоняют только в non-GUI CLI-режиме.",
+                "source_of_confusion": "GUI наглядный, поэтому кажется удобным и для боевого прогона.",
+                "if_it_were_true": "Тогда при больших VU результаты были бы достоверны, но GUI как раз их искажает.",
+                "how_it_should_be": "Для load-теста используют `jmeter -n` (non-GUI); GUI оставляют только для построения теста."
               },
               "order": 3,
               "label": "D"
@@ -1209,17 +1209,28 @@
           "question_text": "Как организовать distributed load testing в JMeter?",
           "options": [
             {
-              "text": "`JMeter` поддерживает master-slave архитектуру: один master координирует N slave-нод по `RMI`, каждая генерирует часть нагрузки. На master в `jmeter.properties` указывают `remote_hosts=slave1:1099,...`; на каждой ноде запускают `jmeter-server`; запуск с master через `jmeter -n -t test.jmx -r -l results.jtl` (или `-R slave1,slave2`). Суммарная нагрузка = N × VU.",
-              "correct": true,
+              "text": "Каждый slave в JMeter выполняет свою уникальную часть test plan, разделённую master'ом.",
+              "correct": false,
               "sections": {
-                "explanation": "Все slaves получают копию test plan и выполняют её одновременно; master лишь раздаёт план и агрегирует результаты.",
-                "example": "3 slave по 1000 VU дают 3000 VU на target; master не нагружает систему, а собирает `.jtl` со всех нод.",
-                "when_to_apply": "Distributed mode нужен, когда один JMeter-мастер не тянет требуемые VU (обычно > 5000) из-за thread-per-user модели.",
-                "edge_cases": "CSV-данные нужно распределять между slaves (делить файл или общий ID через Redis), а файрволы RMI-портов — частая причина «slave не подключается».",
-                "related": "[[performance-testing-interview#Q16]] JMeter Test Plan; [[performance-testing-interview#Q20]] production-запуск JMeter; [[performance-testing-interview#Q22]] Gatling как альтернатива для больших VU."
+                "what_actually": "Все slaves получают одинаковую копию плана и выполняют её целиком; суммарная нагрузка складывается как N × VU.",
+                "source_of_confusion": "По аналогии с шардированием кажется, что план тоже делится между нодами.",
+                "if_it_were_true": "Тогда нельзя было бы предсказать суммарный VU как N × VU, но именно так он и считается.",
+                "how_it_should_be": "Slaves выполняют идентичный план; делить нужно тестовые данные (CSV), а не сам сценарий."
               },
               "order": 0,
               "label": "A"
+            },
+            {
+              "text": "`JMeter` distributed mode не требует сетевой настройки — RMI-порты открываются автоматически.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RMI-порты slaves надо открыть вручную; закрытые файрволом порты — типичная причина «slave не подключается».",
+                "source_of_confusion": "Хочется верить, что инструмент сам решает сетевые вопросы, отсюда упрощение.",
+                "if_it_were_true": "Тогда не было бы известной проблемы с подключением slave, но она встречается постоянно.",
+                "how_it_should_be": "Нужно явно настроить RMI-порты и hostname (`-Djava.rmi.server.hostname`); автоматически они не открываются."
+              },
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "В distributed `JMeter` master сам генерирует основную часть нагрузки, а slaves только агрегируют.",
@@ -1230,29 +1241,18 @@
                 "if_it_were_true": "Тогда master стал бы bottleneck и конкурировал бы за ресурсы, что и стараются избежать.",
                 "how_it_should_be": "Slaves создают нагрузку, master координирует и собирает метрики; нагрузку он не генерирует."
               },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "Каждый slave в JMeter выполняет свою уникальную часть test plan, разделённую master'ом.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Все slaves получают одинаковую копию плана и выполняют её целиком; суммарная нагрузка складывается как N × VU.",
-                "source_of_confusion": "По аналогии с шардированием кажется, что план тоже делится между нодами.",
-                "if_it_were_true": "Тогда нельзя было бы предсказать суммарный VU как N × VU, но именно так он и считается.",
-                "how_it_should_be": "Slaves выполняют идентичный план; делить нужно тестовые данные (CSV), а не сам сценарий."
-              },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "`JMeter` distributed mode не требует сетевой настройки — RMI-порты открываются автоматически.",
-              "correct": false,
+              "text": "`JMeter` поддерживает master-slave архитектуру: один master координирует N slave-нод по `RMI`, каждая генерирует часть нагрузки. На master в `jmeter.properties` указывают `remote_hosts=slave1:1099,...`; на каждой ноде запускают `jmeter-server`; запуск с master через `jmeter -n -t test.jmx -r -l results.jtl` (или `-R slave1,slave2`). Суммарная нагрузка = N × VU.",
+              "correct": true,
               "sections": {
-                "what_actually": "RMI-порты slaves надо открыть вручную; закрытые файрволом порты — типичная причина «slave не подключается».",
-                "source_of_confusion": "Хочется верить, что инструмент сам решает сетевые вопросы, отсюда упрощение.",
-                "if_it_were_true": "Тогда не было бы известной проблемы с подключением slave, но она встречается постоянно.",
-                "how_it_should_be": "Нужно явно настроить RMI-порты и hostname (`-Djava.rmi.server.hostname`); автоматически они не открываются."
+                "explanation": "Все slaves получают копию test plan и выполняют её одновременно; master лишь раздаёт план и агрегирует результаты.",
+                "example": "3 slave по 1000 VU дают 3000 VU на target; master не нагружает систему, а собирает `.jtl` со всех нод.",
+                "when_to_apply": "Distributed mode нужен, когда один JMeter-мастер не тянет требуемые VU (обычно > 5000) из-за thread-per-user модели.",
+                "edge_cases": "CSV-данные нужно распределять между slaves (делить файл или общий ID через Redis), а файрволы RMI-портов — частая причина «slave не подключается».",
+                "related": "[[performance-testing-interview#Q16]] JMeter Test Plan; [[performance-testing-interview#Q20]] production-запуск JMeter; [[performance-testing-interview#Q22]] Gatling как альтернатива для больших VU."
               },
               "order": 3,
               "label": "D"
@@ -1269,18 +1269,6 @@
           "question_text": "Что такое Gatling и чем он отличается от JMeter?",
           "options": [
             {
-              "text": "`Gatling` использует thread-per-user модель и держит примерно столько же VU на инстанс, сколько JMeter.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Gatling — async non-blocking (Akka) и держит 10 000+ VU на инстанс против ~1000-3000 у thread-per-user JMeter.",
-                "source_of_confusion": "Оба нагрузочные инструменты, поэтому модель потоков ошибочно считают одинаковой.",
-                "if_it_were_true": "Тогда не было бы смысла переходить на Gatling ради плотности нагрузки, но именно она его преимущество.",
-                "how_it_should_be": "Gatling async (Akka), JMeter thread-per-user; отсюда кратная разница в max VU на инстанс."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
               "text": "`Gatling` — современный инструмент на `Scala`/`Akka` (с 2023 поддерживает Java и Kotlin DSL), фокус на high performance per agent и code-first. Отличия от JMeter: async non-blocking вместо thread-per-user (10 000+ VU против ~1000-3000), код (Java/Scala/Kotlin DSL) вместо XML, отличная git-дружелюбность, богатые HTML-отчёты из коробки и IDE-поддержка.",
               "correct": true,
               "sections": {
@@ -1290,8 +1278,8 @@
                 "edge_cases": "У JMeter больше готовых протоколов (JDBC/SOAP/LDAP) и родной GUI для QA; Gatling выигрывает в производительности и git-workflow.",
                 "related": "[[performance-testing-interview#Q16]] что такое JMeter; [[performance-testing-interview#Q23]] Gatling Simulation на Java DSL; [[performance-testing-interview#Q24]] open vs closed injection model."
               },
-              "order": 1,
-              "label": "B"
+              "order": 0,
+              "label": "A"
             },
             {
               "text": "Тесты `Gatling` описываются в XML-формате, как и `.jmx` у JMeter.",
@@ -1302,8 +1290,8 @@
                 "if_it_were_true": "Тогда Gatling не был бы git-friendly преимуществом, но именно чистый код делает диффы читаемыми.",
                 "how_it_should_be": "Gatling — код (DSL), JMeter — XML `.jmx`; в этом одно из ключевых отличий."
               },
-              "order": 2,
-              "label": "C"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "`Gatling` не умеет генерировать отчёты — для них всегда нужен внешний инструмент.",
@@ -1313,6 +1301,18 @@
                 "source_of_confusion": "Code-first ассоциируется с «голым» выводом, отсюда вывод об отсутствии отчётов.",
                 "if_it_were_true": "Тогда не было бы смысла хвалить Gatling за reports, но именно встроенные отчёты — его сильная сторона.",
                 "how_it_should_be": "Gatling даёт богатый HTML-отчёт без плагинов; внешние инструменты нужны лишь для real-time стрима."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`Gatling` использует thread-per-user модель и держит примерно столько же VU на инстанс, сколько JMeter.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Gatling — async non-blocking (Akka) и держит 10 000+ VU на инстанс против ~1000-3000 у thread-per-user JMeter.",
+                "source_of_confusion": "Оба нагрузочные инструменты, поэтому модель потоков ошибочно считают одинаковой.",
+                "if_it_were_true": "Тогда не было бы смысла переходить на Gatling ради плотности нагрузки, но именно она его преимущество.",
+                "how_it_should_be": "Gatling async (Akka), JMeter thread-per-user; отсюда кратная разница в max VU на инстанс."
               },
               "order": 3,
               "label": "D"
@@ -1329,18 +1329,6 @@
           "question_text": "Как устроена Gatling Simulation на Java DSL?",
           "options": [
             {
-              "text": "`Gatling Simulation` — это XML-файл с описанием HTTP-запросов и нагрузки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Simulation — это Java-класс, наследник `Simulation`; XML — формат JMeter, а не Gatling.",
-                "source_of_confusion": "Привычка к JMeter переносит XML-описание и на Gatling.",
-                "if_it_were_true": "Тогда нельзя было бы писать `extends Simulation` и использовать IDE, но Gatling именно так и работает.",
-                "how_it_should_be": "Simulation — Java/Scala/Kotlin класс с HTTP-протоколом, сценарием и injection-профилем."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
               "text": "`Checks` в Gatling задают глобальный pass/fail всего теста для CI.",
               "correct": false,
               "sections": {
@@ -1348,6 +1336,18 @@
                 "source_of_confusion": "Оба — «проверки», поэтому их области действия путают.",
                 "if_it_were_true": "Тогда один проваленный check ронял бы весь CI, но он лишь помечает конкретный запрос как failed.",
                 "how_it_should_be": "Checks — на уровне запроса, assertions — на уровне всего теста; именно assertions решают судьбу CI."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`Gatling Simulation` — это XML-файл с описанием HTTP-запросов и нагрузки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Simulation — это Java-класс, наследник `Simulation`; XML — формат JMeter, а не Gatling.",
+                "source_of_confusion": "Привычка к JMeter переносит XML-описание и на Gatling.",
+                "if_it_were_true": "Тогда нельзя было бы писать `extends Simulation` и использовать IDE, но Gatling именно так и работает.",
+                "how_it_should_be": "Simulation — Java/Scala/Kotlin класс с HTTP-протоколом, сценарием и injection-профилем."
               },
               "order": 1,
               "label": "B"
@@ -1401,13 +1401,14 @@
               "label": "A"
             },
             {
-              "text": "`Open model` задаёт arrival rate, но при замедлении сервиса частота прихода автоматически снижается вслед за throughput, поэтому очередь необработанных запросов не растёт и нагрузка сама себя сдерживает.",
-              "correct": false,
+              "text": "`Closed model` задаёт число concurrent users: при замедлении сервиса новые юзеры не добавляются, фактический RPS падает (имитирует ограниченный пул сессий — банкоматы, desktop). `Open model` задаёт arrival rate (пользователей в секунду): новые юзеры приходят независимо от скорости сервиса, при замедлении очередь растёт (имитирует web/mobile). `injectClosed(constantConcurrentUsers(...))` vs `injectOpen(constantUsersPerSec(...))`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Web/mobile с независимым потоком — это open model; closed имитирует ограниченный пул сессий (банкоматы, desktop-клиенты).",
-                "source_of_confusion": "И closed, и open моделируют пользователей, поэтому область применения путают.",
-                "if_it_were_true": "Тогда closed model подходила бы для web, но для открытого потока правильна именно open.",
-                "how_it_should_be": "Closed — фиксированный парк клиентов (kiosk/desktop); web/mobile — это open model."
+                "explanation": "Best practice для web — open model: она вскрывает coordinated omission, тогда как closed маскирует деградацию (throughput просто падает).",
+                "example": "Closed: `constantConcurrentUsers(100)` держит 100 одновременных. Open: `constantUsersPerSec(50)` запускает 50 новых VU в секунду независимо от ответов.",
+                "when_to_apply": "Open применяют для web/mobile (открытый поток), closed — для систем с фиксированным числом клиентов (kiosk, desktop app).",
+                "edge_cases": "В closed model при зависании сервиса очередь не растёт, поэтому latency занижается — это и есть coordinated omission.",
+                "related": "[[performance-testing-interview#Q23]] Gatling Simulation; [[performance-testing-interview#Q30]] executors в k6 и open model; [[performance-testing-interview#Q41]] coordinated omission подробно."
               },
               "order": 1,
               "label": "B"
@@ -1425,14 +1426,13 @@
               "label": "C"
             },
             {
-              "text": "`Closed model` задаёт число concurrent users: при замедлении сервиса новые юзеры не добавляются, фактический RPS падает (имитирует ограниченный пул сессий — банкоматы, desktop). `Open model` задаёт arrival rate (пользователей в секунду): новые юзеры приходят независимо от скорости сервиса, при замедлении очередь растёт (имитирует web/mobile). `injectClosed(constantConcurrentUsers(...))` vs `injectOpen(constantUsersPerSec(...))`.",
-              "correct": true,
+              "text": "`Open model` задаёт arrival rate, но при замедлении сервиса частота прихода автоматически снижается вслед за throughput, поэтому очередь необработанных запросов не растёт и нагрузка сама себя сдерживает.",
+              "correct": false,
               "sections": {
-                "explanation": "Best practice для web — open model: она вскрывает coordinated omission, тогда как closed маскирует деградацию (throughput просто падает).",
-                "example": "Closed: `constantConcurrentUsers(100)` держит 100 одновременных. Open: `constantUsersPerSec(50)` запускает 50 новых VU в секунду независимо от ответов.",
-                "when_to_apply": "Open применяют для web/mobile (открытый поток), closed — для систем с фиксированным числом клиентов (kiosk, desktop app).",
-                "edge_cases": "В closed model при зависании сервиса очередь не растёт, поэтому latency занижается — это и есть coordinated omission.",
-                "related": "[[performance-testing-interview#Q23]] Gatling Simulation; [[performance-testing-interview#Q30]] executors в k6 и open model; [[performance-testing-interview#Q41]] coordinated omission подробно."
+                "what_actually": "Web/mobile с независимым потоком — это open model; closed имитирует ограниченный пул сессий (банкоматы, desktop-клиенты).",
+                "source_of_confusion": "И closed, и open моделируют пользователей, поэтому область применения путают.",
+                "if_it_were_true": "Тогда closed model подходила бы для web, но для открытого потока правильна именно open.",
+                "how_it_should_be": "Closed — фиксированный парк клиентов (kiosk/desktop); web/mobile — это open model."
               },
               "order": 3,
               "label": "D"
@@ -1449,29 +1449,16 @@
           "question_text": "Что такое Feeders и как подавать тестовые данные в Gatling?",
           "options": [
             {
-              "text": "`Feeder` в `Gatling` — поставщик данных в сценарий: каждый VU, проходя через `.feed(feeder)`, получает следующую запись. Источники: `csv(\"users.csv\")`, `jsonFile(...)`, `jdbcFeeder(url, user, pass, sql)`, программный inline-iterator. Стратегии чтения: `.queue()` (по порядку, падает при исчерпании), `.random()` (случайно с повторами), `.shuffle()` (без повторов), `.circular()` (по кругу).",
-              "correct": true,
+              "text": "Feeder в `Gatling` может читать данные только из CSV-файлов: для JSON, JDBC или программных источников нужен предварительный экспорт в CSV, других форматов API не поддерживает.",
+              "correct": false,
               "sections": {
-                "explanation": "Данные подставляются в запросы через `#{username}`: feeder отдаёт строку, а `StringBody` использует её в теле запроса.",
-                "example": "`csv(\"users.csv\").random()` раздаёт каждому VU случайную учётку, чтобы пользователи не сталкивались при login.",
-                "when_to_apply": "Feeders применяют для уникальных учёток, productId, токенов — везде, где нужны разнообразные входные данные.",
-                "edge_cases": "С `.queue()` при числе строк меньше VU тест упадёт с «feeder is empty»; для больших тестов берут `.circular()` или `.random()`.",
-                "related": "[[performance-testing-interview#Q23]] Gatling Simulation; [[performance-testing-interview#Q35]] подготовка тестовых данных; [[performance-testing-interview#Q36]] реалистичный user behavior."
+                "what_actually": "Источников много: CSV, JSON, JDBC (данные из БД) и программный inline-iterator — не только CSV.",
+                "source_of_confusion": "CSV — самый частый источник, отсюда сужение возможностей feeder.",
+                "if_it_were_true": "Тогда нельзя было бы подать данные из БД через `jdbcFeeder`, но это штатная возможность.",
+                "how_it_should_be": "Feeder поддерживает CSV, JSON, JDBC и inline-данные — CSV лишь один из вариантов."
               },
               "order": 0,
               "label": "A"
-            },
-            {
-              "text": "Стратегия `.queue()` читает данные по кругу бесконечно и никогда не заканчивается: дойдя до конца CSV, `Gatling` возвращается к первой строке, поэтому VU не могут исчерпать feeder.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По кругу бесконечно читает `.circular()`; `.queue()` идёт по порядку и падает при исчерпании данных.",
-                "source_of_confusion": "Обе про последовательное чтение, поэтому их поведение на исчерпании путают.",
-                "if_it_were_true": "Тогда `.queue()` не давал бы ошибку «feeder is empty», но именно она возникает при нехватке строк.",
-                "how_it_should_be": "`.queue()` — по порядку с падением при исчерпании; бесконечный цикл — это `.circular()`."
-              },
-              "order": 1,
-              "label": "B"
             },
             {
               "text": "Все VU в `Gatling` получают одну и ту же строку из feeder при `.feed(...)`: feeder отдаёт общий снапшот данных, а различать пользователей нужно вручную через сессионные переменные.",
@@ -1482,17 +1469,30 @@
                 "if_it_were_true": "Тогда не имело бы смысла иметь файл из тысяч строк, но именно разнообразие данных — цель feeder.",
                 "how_it_should_be": "Feeder раздаёт VU разные записи по выбранной стратегии, а не одну на всех."
               },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Стратегия `.queue()` читает данные по кругу бесконечно и никогда не заканчивается: дойдя до конца CSV, `Gatling` возвращается к первой строке, поэтому VU не могут исчерпать feeder.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По кругу бесконечно читает `.circular()`; `.queue()` идёт по порядку и падает при исчерпании данных.",
+                "source_of_confusion": "Обе про последовательное чтение, поэтому их поведение на исчерпании путают.",
+                "if_it_were_true": "Тогда `.queue()` не давал бы ошибку «feeder is empty», но именно она возникает при нехватке строк.",
+                "how_it_should_be": "`.queue()` — по порядку с падением при исчерпании; бесконечный цикл — это `.circular()`."
+              },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "Feeder в `Gatling` может читать данные только из CSV-файлов: для JSON, JDBC или программных источников нужен предварительный экспорт в CSV, других форматов API не поддерживает.",
-              "correct": false,
+              "text": "`Feeder` в `Gatling` — поставщик данных в сценарий: каждый VU, проходя через `.feed(feeder)`, получает следующую запись. Источники: `csv(\"users.csv\")`, `jsonFile(...)`, `jdbcFeeder(url, user, pass, sql)`, программный inline-iterator. Стратегии чтения: `.queue()` (по порядку, падает при исчерпании), `.random()` (случайно с повторами), `.shuffle()` (без повторов), `.circular()` (по кругу).",
+              "correct": true,
               "sections": {
-                "what_actually": "Источников много: CSV, JSON, JDBC (данные из БД) и программный inline-iterator — не только CSV.",
-                "source_of_confusion": "CSV — самый частый источник, отсюда сужение возможностей feeder.",
-                "if_it_were_true": "Тогда нельзя было бы подать данные из БД через `jdbcFeeder`, но это штатная возможность.",
-                "how_it_should_be": "Feeder поддерживает CSV, JSON, JDBC и inline-данные — CSV лишь один из вариантов."
+                "explanation": "Данные подставляются в запросы через `#{username}`: feeder отдаёт строку, а `StringBody` использует её в теле запроса.",
+                "example": "`csv(\"users.csv\").random()` раздаёт каждому VU случайную учётку, чтобы пользователи не сталкивались при login.",
+                "when_to_apply": "Feeders применяют для уникальных учёток, productId, токенов — везде, где нужны разнообразные входные данные.",
+                "edge_cases": "С `.queue()` при числе строк меньше VU тест упадёт с «feeder is empty»; для больших тестов берут `.circular()` или `.random()`.",
+                "related": "[[performance-testing-interview#Q23]] Gatling Simulation; [[performance-testing-interview#Q35]] подготовка тестовых данных; [[performance-testing-interview#Q36]] реалистичный user behavior."
               },
               "order": 3,
               "label": "D"
@@ -1509,18 +1509,6 @@
           "question_text": "Что такое Assertions и Checks в Gatling?",
           "options": [
             {
-              "text": "`Checks` проверяют результат всего теста и определяют, проходит ли он в CI: они агрегируют метрики по всему прогону (перцентили, доля успехов) и выносят финальный pass/fail.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Результат всего теста проверяют `assertions`; `checks` валидируют отдельный HTTP-запрос (KO при провале).",
-                "source_of_confusion": "Оба механизма проверок, поэтому их уровни путают.",
-                "if_it_were_true": "Тогда один проваленный check ронял бы весь CI, но это делают assertions.",
-                "how_it_should_be": "Checks — уровень одного запроса, assertions — уровень всего теста; CI решают assertions."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
               "text": "В `Gatling` два механизма проверок. `Checks` — на уровне одного HTTP-запроса: если check провалился, запрос помечается KO (`.check(status().is(200))`, `.check(jsonPath(\"$.status\").is(\"PAID\"))`, `.check(...saveAs(\"id\"))`). `Assertions` — глобальные проверки результата всего теста: `global().responseTime().percentile3().lt(300)`, `global().successfulRequests().percent().gt(99.5)`.",
               "correct": true,
               "sections": {
@@ -1530,20 +1518,20 @@
                 "edge_cases": "Checks влияют на статус запроса (OK/KO) и могут сохранять значения для следующих шагов; assertions лишь решают исход теста.",
                 "related": "[[performance-testing-interview#Q23]] Gatling Simulation; [[performance-testing-interview#Q24]] injection model; [[performance-testing-interview#Q29]] thresholds в k6 как аналог assertions."
               },
-              "order": 1,
-              "label": "B"
+              "order": 0,
+              "label": "A"
             },
             {
-              "text": "`Assertions` в `Gatling` проверяют тело каждого отдельного HTTP-ответа на лету: если assertion на статус или `jsonPath` не выполнился, конкретный запрос помечается KO.",
+              "text": "`Checks` проверяют результат всего теста и определяют, проходит ли он в CI: они агрегируют метрики по всему прогону (перцентили, доля успехов) и выносят финальный pass/fail.",
               "correct": false,
               "sections": {
-                "what_actually": "Тело каждого ответа проверяют `checks`; assertions агрегируют результат всего теста (percentiles, success rate).",
-                "source_of_confusion": "Оба — «проверки в Gatling», отсюда смешение уровней.",
-                "if_it_were_true": "Тогда assertion срабатывал бы на каждый запрос, но он оценивает только итоговые метрики прогона.",
-                "how_it_should_be": "Assertions — про агрегаты всего теста; per-response проверки делают checks."
+                "what_actually": "Результат всего теста проверяют `assertions`; `checks` валидируют отдельный HTTP-запрос (KO при провале).",
+                "source_of_confusion": "Оба механизма проверок, поэтому их уровни путают.",
+                "if_it_were_true": "Тогда один проваленный check ронял бы весь CI, но это делают assertions.",
+                "how_it_should_be": "Checks — уровень одного запроса, assertions — уровень всего теста; CI решают assertions."
               },
-              "order": 2,
-              "label": "C"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "Проваленный `check` в `Gatling` останавливает весь тест и роняет CI: первый же KO прерывает сценарий для всех VU, поэтому один плохой ответ обрушивает прогон целиком.",
@@ -1553,6 +1541,18 @@
                 "source_of_confusion": "Кажется, что любая ошибка должна валить весь прогон, отсюда вывод про остановку.",
                 "if_it_were_true": "Тогда нельзя было бы измерять success rate < 100% и сравнивать с assertion, но именно так и считают.",
                 "how_it_should_be": "Check метит запрос KO и идёт дальше; CI падает, когда не выполнена assertion."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`Assertions` в `Gatling` проверяют тело каждого отдельного HTTP-ответа на лету: если assertion на статус или `jsonPath` не выполнился, конкретный запрос помечается KO.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Тело каждого ответа проверяют `checks`; assertions агрегируют результат всего теста (percentiles, success rate).",
+                "source_of_confusion": "Оба — «проверки в Gatling», отсюда смешение уровней.",
+                "if_it_were_true": "Тогда assertion срабатывал бы на каждый запрос, но он оценивает только итоговые метрики прогона.",
+                "how_it_should_be": "Assertions — про агрегаты всего теста; per-response проверки делают checks."
               },
               "order": 3,
               "label": "D"
@@ -1569,6 +1569,18 @@
           "question_text": "Что такое k6 и в чём его сильные стороны?",
           "options": [
             {
+              "text": "В `k6` можно подключать npm-пакеты из `node_modules` как в обычном Node.js: рантайм совместим с Node, поэтому вся экосистема npm доступна без адаптации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "k6-runtime ограничен: полноценные node_modules недоступны, используется ограниченный набор API (и xk6-расширения).",
+                "source_of_confusion": "JS-сценарии создают иллюзию полноценного Node.js-окружения.",
+                "if_it_were_true": "Тогда любой npm-пакет работал бы в k6, но рантайм специально урезан ради производительности.",
+                "how_it_should_be": "k6 предоставляет свой ограниченный JS-runtime; для интеграций используют xk6, а не npm."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "`k6` написан на Java, а сценарии описывают на Scala DSL — как в Gatling: JVM-агент компилирует их в байткод, что и даёт высокую производительность на одной ноде.",
               "correct": false,
               "sections": {
@@ -1577,8 +1589,8 @@
                 "if_it_were_true": "Тогда k6 не был бы знаком frontend-разработчикам, но именно JS-сценарии — его фишка.",
                 "how_it_should_be": "k6 — Go runtime + JS/TS-сценарии; Scala/Java DSL — это Gatling."
               },
-              "order": 0,
-              "label": "A"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "Главная сила `k6` — родной графический интерфейс для non-technical QA, как у JMeter: тесты собираются мышью в GUI без написания кода, а CLI остаётся вторичным режимом.",
@@ -1589,8 +1601,8 @@
                 "if_it_were_true": "Тогда k6 не подходил бы для чистой CI-интеграции, но именно отсутствие GUI делает её удобной.",
                 "how_it_should_be": "k6 — CLI-first без GUI; визуальный конструктор для QA есть у JMeter."
               },
-              "order": 1,
-              "label": "B"
+              "order": 2,
+              "label": "C"
             },
             {
               "text": "`k6` — open-source инструмент от Grafana Labs, написан на Go, сценарии на JavaScript/TypeScript; единичный агент держит десятки тысяч VU. Сильные стороны: JS/TS-сценарии (знакомы frontend/backend), Go runtime (десятки тысяч VU на ноде), CLI-first (чистая CI-интеграция), декларативные thresholds (SLO pass/fail), Grafana Cloud, k6-operator для distributed в Kubernetes, xk6-расширения (Kafka, gRPC, Redis, SQL).",
@@ -1601,18 +1613,6 @@
                 "when_to_apply": "Применяют k6 для shift-left perf-тестов в CI и распределённой нагрузки в Kubernetes без своего GUI.",
                 "edge_cases": "Слабые стороны: ограниченный JS-runtime без node_modules, нет GUI для non-technical QA, для SOAP/JDBC нужны xk6-расширения.",
                 "related": "[[performance-testing-interview#Q22]] сравнение с Gatling; [[performance-testing-interview#Q28]] сценарий и options; [[performance-testing-interview#Q29]] thresholds как SLO."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
-              "text": "В `k6` можно подключать npm-пакеты из `node_modules` как в обычном Node.js: рантайм совместим с Node, поэтому вся экосистема npm доступна без адаптации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "k6-runtime ограничен: полноценные node_modules недоступны, используется ограниченный набор API (и xk6-расширения).",
-                "source_of_confusion": "JS-сценарии создают иллюзию полноценного Node.js-окружения.",
-                "if_it_were_true": "Тогда любой npm-пакет работал бы в k6, но рантайм специально урезан ради производительности.",
-                "how_it_should_be": "k6 предоставляет свой ограниченный JS-runtime; для интеграций используют xk6, а не npm."
               },
               "order": 3,
               "label": "D"
@@ -1629,6 +1629,18 @@
           "question_text": "Как написать сценарий на k6 и использовать options?",
           "options": [
             {
+              "text": "`check()` в `k6` при провале роняет прогон с non-zero exit code и прекращает оставшиеся итерации, поэтому именно `check()` определяет итоговый pass/fail всего теста.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Провал `check()` лишь инкрементит счётчик неуспешных проверок; CI падает от нарушенного `threshold`, а не от check.",
+                "source_of_confusion": "Кажется, что любая неуспешная проверка должна валить тест.",
+                "if_it_were_true": "Тогда не нужны были бы отдельные thresholds, но именно они, а не checks, определяют exit code.",
+                "how_it_should_be": "`check()` фиксирует результат проверки и идёт дальше; pass/fail для CI — это thresholds."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
               "text": "`setup()` в `k6` выполняется каждым VU на каждой итерации и возвращает данные в default-функцию, поэтому именно в нём получают свежий токен перед каждым запросом сценария.",
               "correct": false,
               "sections": {
@@ -1637,8 +1649,8 @@
                 "if_it_were_true": "Тогда токен получался бы тысячи раз вместо одного, но `setup()` зовётся однократно.",
                 "how_it_should_be": "default-функция — цикл каждого VU; `setup()` и `teardown()` — по одному разу на весь тест."
               },
-              "order": 0,
-              "label": "A"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "`options.stages` в `k6` задаёт thresholds вида `http_req_duration: p(95)<500`: при нарушении условия прогон помечается провалившимся, а профиль нагрузки описывают отдельным полем `vus`.",
@@ -1648,18 +1660,6 @@
                 "source_of_confusion": "Оба внутри `options`, поэтому их назначения путают.",
                 "if_it_were_true": "Тогда `stages` ронял бы CI при нарушении SLO, но это делают thresholds.",
                 "how_it_should_be": "`stages` — форма нагрузки во времени; SLO pass/fail задают thresholds."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "`check()` в `k6` при провале роняет прогон с non-zero exit code и прекращает оставшиеся итерации, поэтому именно `check()` определяет итоговый pass/fail всего теста.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Провал `check()` лишь инкрементит счётчик неуспешных проверок; CI падает от нарушенного `threshold`, а не от check.",
-                "source_of_confusion": "Кажется, что любая неуспешная проверка должна валить тест.",
-                "if_it_were_true": "Тогда не нужны были бы отдельные thresholds, но именно они, а не checks, определяют exit code.",
-                "how_it_should_be": "`check()` фиксирует результат проверки и идёт дальше; pass/fail для CI — это thresholds."
               },
               "order": 2,
               "label": "C"
@@ -1689,29 +1689,16 @@
           "question_text": "Что такое Thresholds в k6 и как они кодируют SLO?",
           "options": [
             {
-              "text": "`Thresholds` в `k6` — декларативные pass/fail критерии: если threshold нарушен, k6 завершается с non-zero exit code → CI падает. Это SLO в виде кода: `http_req_duration: ['p(95)<300', 'p(99)<800']`, `http_req_failed: ['rate<0.01']`, плюс tagged-метрики `'http_req_duration{name:create_order}': ['p(99)<500']` и custom-метрики `'orders_created': ['count>100']`.",
-              "correct": true,
+              "text": "`abortOnFail` в threshold останавливает тест мгновенно при первом же неудачном запросе.",
+              "correct": false,
               "sections": {
-                "explanation": "Соответствие прямое: SLO «p99 < 300ms для /api/orders, error rate < 0.1%» → threshold `p(99)<300` и `rate<0.001`.",
-                "example": "`abortOnFail: true` прерывает тест досрочно, если error rate превысил порог после первых 30 секунд (`delayAbortEval: '30s'`).",
-                "when_to_apply": "Thresholds применяют, чтобы проверять SLO на каждом PR (shift-left) и автоматически валить pipeline при регрессии.",
-                "edge_cases": "Tagged-метрики позволяют ставить разные пороги на разные эндпоинты или сценарии, не смешивая их в один общий p99.",
-                "related": "[[performance-testing-interview#Q14]] SLI/SLO/SLA; [[performance-testing-interview#Q28]] сценарий и options; [[performance-testing-interview#Q37]] интеграция в CI/CD."
+                "what_actually": "`abortOnFail` срабатывает с задержкой `delayAbortEval` (например 30s), а не от единичного запроса — нужна устойчивая деградация.",
+                "source_of_confusion": "«Abort» звучит как мгновенная остановка, отсюда упрощение.",
+                "if_it_were_true": "Тогда тест прерывался бы от случайного выброса, но `delayAbortEval` даёт окно стабилизации.",
+                "how_it_should_be": "abortOnFail прерывает по нарушению порога после окна оценки, а не от первого failed-запроса."
               },
               "order": 0,
               "label": "A"
-            },
-            {
-              "text": "Нарушенный `threshold` в `k6` лишь пишет предупреждение в лог, но не влияет на exit code.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Нарушенный threshold завершает k6 с non-zero exit code, из-за чего падает CI — это не просто предупреждение.",
-                "source_of_confusion": "Кажется, что метрики — информационные, отсюда вывод об отсутствии влияния на CI.",
-                "if_it_were_true": "Тогда thresholds нельзя было бы использовать как gate в pipeline, но именно для этого они и нужны.",
-                "how_it_should_be": "Threshold-нарушение даёт non-zero exit → CI падает; это pass/fail-механизм, а не лог."
-              },
-              "order": 1,
-              "label": "B"
             },
             {
               "text": "`Thresholds` в `k6` можно задавать только на встроенные метрики, custom-метрики не поддерживаются.",
@@ -1722,17 +1709,30 @@
                 "if_it_were_true": "Тогда нельзя было бы кодировать бизнес-SLO вроде «создано > 100 заказов», но это поддерживается.",
                 "how_it_should_be": "Пороги ставят на встроенные, tagged и custom-метрики — набор шире, чем `http_req_*`."
               },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Нарушенный `threshold` в `k6` лишь пишет предупреждение в лог, но не влияет на exit code.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нарушенный threshold завершает k6 с non-zero exit code, из-за чего падает CI — это не просто предупреждение.",
+                "source_of_confusion": "Кажется, что метрики — информационные, отсюда вывод об отсутствии влияния на CI.",
+                "if_it_were_true": "Тогда thresholds нельзя было бы использовать как gate в pipeline, но именно для этого они и нужны.",
+                "how_it_should_be": "Threshold-нарушение даёт non-zero exit → CI падает; это pass/fail-механизм, а не лог."
+              },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "`abortOnFail` в threshold останавливает тест мгновенно при первом же неудачном запросе.",
-              "correct": false,
+              "text": "`Thresholds` в `k6` — декларативные pass/fail критерии: если threshold нарушен, k6 завершается с non-zero exit code → CI падает. Это SLO в виде кода: `http_req_duration: ['p(95)<300', 'p(99)<800']`, `http_req_failed: ['rate<0.01']`, плюс tagged-метрики `'http_req_duration{name:create_order}': ['p(99)<500']` и custom-метрики `'orders_created': ['count>100']`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`abortOnFail` срабатывает с задержкой `delayAbortEval` (например 30s), а не от единичного запроса — нужна устойчивая деградация.",
-                "source_of_confusion": "«Abort» звучит как мгновенная остановка, отсюда упрощение.",
-                "if_it_were_true": "Тогда тест прерывался бы от случайного выброса, но `delayAbortEval` даёт окно стабилизации.",
-                "how_it_should_be": "abortOnFail прерывает по нарушению порога после окна оценки, а не от первого failed-запроса."
+                "explanation": "Соответствие прямое: SLO «p99 < 300ms для /api/orders, error rate < 0.1%» → threshold `p(99)<300` и `rate<0.001`.",
+                "example": "`abortOnFail: true` прерывает тест досрочно, если error rate превысил порог после первых 30 секунд (`delayAbortEval: '30s'`).",
+                "when_to_apply": "Thresholds применяют, чтобы проверять SLO на каждом PR (shift-left) и автоматически валить pipeline при регрессии.",
+                "edge_cases": "Tagged-метрики позволяют ставить разные пороги на разные эндпоинты или сценарии, не смешивая их в один общий p99.",
+                "related": "[[performance-testing-interview#Q14]] SLI/SLO/SLA; [[performance-testing-interview#Q28]] сценарий и options; [[performance-testing-interview#Q37]] интеграция в CI/CD."
               },
               "order": 3,
               "label": "D"
@@ -1749,18 +1749,6 @@
           "question_text": "Какие Scenarios и Executors есть в k6?",
           "options": [
             {
-              "text": "`Scenarios` в `k6` позволяют запустить только один нагрузочный профиль на весь тест.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Scenarios как раз позволяют запускать несколько разных профилей одновременно (как несколько Thread Group в JMeter).",
-                "source_of_confusion": "Слово «scenario» в единственном числе создаёт ощущение единственного профиля.",
-                "if_it_were_true": "Тогда нельзя было бы гонять anonymous_browsing и checkout_flow параллельно, но это их основная цель.",
-                "how_it_should_be": "Scenarios запускают несколько профилей сразу, каждый со своим executor и `exec`-функцией."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
               "text": "`Scenarios` в `k6` позволяют одновременно запускать несколько разных нагрузочных профилей в одном тесте (аналог нескольких Thread Group). Каждый scenario указывает `executor` и `exec` (свою функцию). Executors: `shared-iterations`, `per-vu-iterations`, `constant-vus`, `ramping-vus`, `constant-arrival-rate` (open model, рекомендуется), `ramping-arrival-rate`, `externally-controlled`.",
               "correct": true,
               "sections": {
@@ -1770,20 +1758,20 @@
                 "edge_cases": "`constant-vus`/`ramping-vus` — closed model (concurrency), а `*-arrival-rate` — open model (RPS); выбор зависит от типа трафика.",
                 "related": "[[performance-testing-interview#Q24]] open vs closed model; [[performance-testing-interview#Q28]] options в k6; [[performance-testing-interview#Q41]] coordinated omission и open model."
               },
-              "order": 1,
-              "label": "B"
+              "order": 0,
+              "label": "A"
             },
             {
-              "text": "Executor `constant-vus` реализует open model и задаёт постоянный arrival rate (RPS).",
+              "text": "`Scenarios` в `k6` позволяют запустить только один нагрузочный профиль на весь тест.",
               "correct": false,
               "sections": {
-                "what_actually": "`constant-vus` — это closed model (постоянное число VU); постоянный RPS даёт `constant-arrival-rate`.",
-                "source_of_confusion": "Оба «constant», поэтому VU-модель путают с arrival-rate-моделью.",
-                "if_it_were_true": "Тогда `constant-vus` избегал бы coordinated omission, но open model — это именно `*-arrival-rate`.",
-                "how_it_should_be": "`constant-vus` фиксирует concurrency (closed); постоянный RPS — это `constant-arrival-rate` (open)."
+                "what_actually": "Scenarios как раз позволяют запускать несколько разных профилей одновременно (как несколько Thread Group в JMeter).",
+                "source_of_confusion": "Слово «scenario» в единственном числе создаёт ощущение единственного профиля.",
+                "if_it_were_true": "Тогда нельзя было бы гонять anonymous_browsing и checkout_flow параллельно, но это их основная цель.",
+                "how_it_should_be": "Scenarios запускают несколько профилей сразу, каждый со своим executor и `exec`-функцией."
               },
-              "order": 2,
-              "label": "C"
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "Все executors в `k6` работают по open model и не поддерживают фиксированное число VU.",
@@ -1793,6 +1781,18 @@
                 "source_of_confusion": "Рекомендация использовать open model создаёт впечатление, что других нет.",
                 "if_it_were_true": "Тогда нельзя было бы смоделировать ограниченный пул сессий, но `constant-vus` именно для этого.",
                 "how_it_should_be": "Есть и closed-executors (`constant-vus`), и open-executors (`*-arrival-rate`); k6 поддерживает обе модели."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Executor `constant-vus` реализует open model и задаёт постоянный arrival rate (RPS).",
+              "correct": false,
+              "sections": {
+                "what_actually": "`constant-vus` — это closed model (постоянное число VU); постоянный RPS даёт `constant-arrival-rate`.",
+                "source_of_confusion": "Оба «constant», поэтому VU-модель путают с arrival-rate-моделью.",
+                "if_it_were_true": "Тогда `constant-vus` избегал бы coordinated omission, но open model — это именно `*-arrival-rate`.",
+                "how_it_should_be": "`constant-vus` фиксирует concurrency (closed); постоянный RPS — это `constant-arrival-rate` (open)."
               },
               "order": 3,
               "label": "D"
@@ -1809,28 +1809,16 @@
           "question_text": "Как запускать k6 в Kubernetes через k6-operator?",
           "options": [
             {
-              "text": "`k6-operator` запускает весь тест в одном поде независимо от параметра parallelism.",
+              "text": "`k6-operator` требует, чтобы скрипт был встроен прямо в YAML манифеста K6.",
               "correct": false,
               "sections": {
-                "what_actually": "Оператор разворачивает `parallelism: N` подов, каждый — отдельный k6-агент, и делит VU/iterations между ними.",
-                "source_of_confusion": "«Оператор» ассоциируется с единым управляющим процессом, отсюда вывод про один под.",
-                "if_it_were_true": "Тогда `parallelism: 10` не имел бы смысла, но он создаёт именно 10 параллельных агентов.",
-                "how_it_should_be": "k6-operator поднимает N подов-агентов и распределяет нагрузку, а не гоняет всё в одном."
+                "what_actually": "Скрипт подаётся через ConfigMap (`script.configMap.name/file`), а не инлайном в YAML.",
+                "source_of_confusion": "Inline-конфиги распространены в K8s, отсюда ожидание встроенного скрипта.",
+                "if_it_were_true": "Тогда большой JS-сценарий раздувал бы манифест, но его выносят в ConfigMap.",
+                "how_it_should_be": "Скрипт хранят в ConfigMap и ссылаются на него из CRD; инлайн в YAML не используют."
               },
               "order": 0,
               "label": "A"
-            },
-            {
-              "text": "`k6-operator` не делит VU между подами — каждый под выполняет полный объём `vus` целиком.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Оператор автоматически делит VU/iterations: при `parallelism: 10` и `vus: 1000` каждому поду достаётся 100.",
-                "source_of_confusion": "По аналогии с JMeter slaves (копия плана) кажется, что и тут каждый под берёт всё.",
-                "if_it_were_true": "Тогда суммарная нагрузка была бы N×1000 вместо 1000, что исказило бы тест.",
-                "how_it_should_be": "k6-operator равномерно распределяет VU по подам; полный объём на каждый под — это модель JMeter, не k6."
-              },
-              "order": 1,
-              "label": "B"
             },
             {
               "text": "`k6-operator` — Kubernetes-оператор, разворачивающий distributed load test как набор Pod'ов: каждый Pod = один k6-агент, оператор координирует и агрегирует. В CRD `kind: K6` задают `parallelism: 10` (10 подов), `script.configMap` со скриптом, `arguments` (например `--out influxdb=...`) и ресурсы runner'а. Запуск: `kubectl apply -f test-run.yaml`.",
@@ -1842,17 +1830,29 @@
                 "edge_cases": "Для облачного запуска без своего кластера используют Grafana Cloud k6 (managed) — альтернатива self-hosted оператору.",
                 "related": "[[performance-testing-interview#Q27]] что такое k6; [[performance-testing-interview#Q28]] options в k6; [[performance-testing-interview#Q39]] стрим метрик в Grafana/Prometheus."
               },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`k6-operator` запускает весь тест в одном поде независимо от параметра parallelism.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оператор разворачивает `parallelism: N` подов, каждый — отдельный k6-агент, и делит VU/iterations между ними.",
+                "source_of_confusion": "«Оператор» ассоциируется с единым управляющим процессом, отсюда вывод про один под.",
+                "if_it_were_true": "Тогда `parallelism: 10` не имел бы смысла, но он создаёт именно 10 параллельных агентов.",
+                "how_it_should_be": "k6-operator поднимает N подов-агентов и распределяет нагрузку, а не гоняет всё в одном."
+              },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "`k6-operator` требует, чтобы скрипт был встроен прямо в YAML манифеста K6.",
+              "text": "`k6-operator` не делит VU между подами — каждый под выполняет полный объём `vus` целиком.",
               "correct": false,
               "sections": {
-                "what_actually": "Скрипт подаётся через ConfigMap (`script.configMap.name/file`), а не инлайном в YAML.",
-                "source_of_confusion": "Inline-конфиги распространены в K8s, отсюда ожидание встроенного скрипта.",
-                "if_it_were_true": "Тогда большой JS-сценарий раздувал бы манифест, но его выносят в ConfigMap.",
-                "how_it_should_be": "Скрипт хранят в ConfigMap и ссылаются на него из CRD; инлайн в YAML не используют."
+                "what_actually": "Оператор автоматически делит VU/iterations: при `parallelism: 10` и `vus: 1000` каждому поду достаётся 100.",
+                "source_of_confusion": "По аналогии с JMeter slaves (копия плана) кажется, что и тут каждый под берёт всё.",
+                "if_it_were_true": "Тогда суммарная нагрузка была бы N×1000 вместо 1000, что исказило бы тест.",
+                "how_it_should_be": "k6-operator равномерно распределяет VU по подам; полный объём на каждый под — это модель JMeter, не k6."
               },
               "order": 3,
               "label": "D"
@@ -1893,18 +1893,6 @@
               "label": "B"
             },
             {
-              "text": "`Locust` не поддерживает распределённый запуск и работает только на одной машине: для роста нагрузки поднимают несколько независимых инстансов и вручную суммируют результаты.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Locust поддерживает distributed: `--master` на координаторе и `--worker --master-host=...` на воркер-нодах.",
-                "source_of_confusion": "Из-за single-threaded ядра кажется, что и масштабирования нет.",
-                "if_it_were_true": "Тогда Locust не годился бы для серьёзной нагрузки, но distributed-режим эту проблему решает.",
-                "how_it_should_be": "Locust масштабируется через master-worker; одной машиной он не ограничен."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
               "text": "`Locust` — load testing на Python, event-driven (на gevent); фокус — «пишешь тесты как обычный Python-код», UI показывает real-time график. Сценарий — класс `HttpUser` с `wait_time = between(1, 3)` (think time), `on_start` (инициализация VU) и методами `@task(weight)` (вес задаёт частоту). Запуск: с UI (`locust -f ... --host=...`), headless (`--headless -u 1000 -r 50`), distributed (`--master` / `--worker`).",
               "correct": true,
               "sections": {
@@ -1913,6 +1901,18 @@
                 "when_to_apply": "Применяют Locust, когда команда живёт в Python-экосистеме и pytest-стиль тестов ближе декларативного DSL.",
                 "edge_cases": "Слабые стороны: single-threaded Python (нужен distributed для масштаба), меньше протоколов из коробки и меньше готовых отчётов, чем у Gatling.",
                 "related": "[[performance-testing-interview#Q22]] Gatling vs JMeter; [[performance-testing-interview#Q27]] что такое k6; [[performance-testing-interview#Q33]] сравнительная таблица инструментов."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`Locust` не поддерживает распределённый запуск и работает только на одной машине: для роста нагрузки поднимают несколько независимых инстансов и вручную суммируют результаты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Locust поддерживает distributed: `--master` на координаторе и `--worker --master-host=...` на воркер-нодах.",
+                "source_of_confusion": "Из-за single-threaded ядра кажется, что и масштабирования нет.",
+                "if_it_were_true": "Тогда Locust не годился бы для серьёзной нагрузки, но distributed-режим эту проблему решает.",
+                "how_it_should_be": "Locust масштабируется через master-worker; одной машиной он не ограничен."
               },
               "order": 3,
               "label": "D"
@@ -1929,14 +1929,13 @@
           "question_text": "JMeter vs Gatling vs k6 vs Locust — как выбрать инструмент?",
           "options": [
             {
-              "text": "Выбор по команде и протоколам: `Gatling` (Java/Scala/Kotlin, async Akka, ~10k VU) — для Java/JVM-команд; `k6` (JS/TS, Go, ~30k+ VU, native CI) — для CI-heavy сред и Grafana-стека; `JMeter` (XML/GUI/Groovy, thread-per-user, десятки протоколов) — для enterprise с legacy-протоколами (JDBC/JMS/SOAP); `Locust` (Python, gevent) — для Python-команд с real-time UI.",
-              "correct": true,
+              "text": "Правильный выбор — всегда один инструмент на весь цикл; комбинировать k6 и Gatling нельзя.",
+              "correct": false,
               "sections": {
-                "explanation": "Часто в корпоративных проектах комбинируют: `k6` для регрессии в CI + `Gatling`/`JMeter` для больших end-of-cycle прогонов.",
-                "example": "JS/DevOps-команда берёт `k6`, Java-команда — `Gatling`, QA без программирования — GUI `JMeter`, Python/DS — `Locust`.",
-                "when_to_apply": "Критерии выбора: язык команды, нужные протоколы, max VU на ноду, git-дружелюбность, способ distributed и стоимость prod-scale.",
-                "edge_cases": "По max VU/нода: `JMeter` ~1-3k, `Gatling` ~10k, `k6` ~30k+, `Locust` ~5-10k; по лицензии k6 — AGPL v3, остальные мягче.",
-                "related": "[[performance-testing-interview#Q16]] JMeter; [[performance-testing-interview#Q22]] Gatling; [[performance-testing-interview#Q27]] k6."
+                "what_actually": "На практике комбинируют: `k6` для smoke/регрессии в CI + `Gatling`/`JMeter` для больших прогонов перед релизом.",
+                "source_of_confusion": "Желание унификации подталкивает к «одному инструменту на всё».",
+                "if_it_were_true": "Тогда нельзя было бы получить и быстрый CI-gate, и тяжёлый end-of-cycle прогон, но их сочетают.",
+                "how_it_should_be": "Связка инструментов нормальна: лёгкий в CI, тяжёлый для full-load — это стандартная практика."
               },
               "order": 0,
               "label": "A"
@@ -1954,6 +1953,19 @@
               "label": "B"
             },
             {
+              "text": "Выбор по команде и протоколам: `Gatling` (Java/Scala/Kotlin, async Akka, ~10k VU) — для Java/JVM-команд; `k6` (JS/TS, Go, ~30k+ VU, native CI) — для CI-heavy сред и Grafana-стека; `JMeter` (XML/GUI/Groovy, thread-per-user, десятки протоколов) — для enterprise с legacy-протоколами (JDBC/JMS/SOAP); `Locust` (Python, gevent) — для Python-команд с real-time UI.",
+              "correct": true,
+              "sections": {
+                "explanation": "Часто в корпоративных проектах комбинируют: `k6` для регрессии в CI + `Gatling`/`JMeter` для больших end-of-cycle прогонов.",
+                "example": "JS/DevOps-команда берёт `k6`, Java-команда — `Gatling`, QA без программирования — GUI `JMeter`, Python/DS — `Locust`.",
+                "when_to_apply": "Критерии выбора: язык команды, нужные протоколы, max VU на ноду, git-дружелюбность, способ distributed и стоимость prod-scale.",
+                "edge_cases": "По max VU/нода: `JMeter` ~1-3k, `Gatling` ~10k, `k6` ~30k+, `Locust` ~5-10k; по лицензии k6 — AGPL v3, остальные мягче.",
+                "related": "[[performance-testing-interview#Q16]] JMeter; [[performance-testing-interview#Q22]] Gatling; [[performance-testing-interview#Q27]] k6."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
               "text": "`Locust` поддерживает больше протоколов из коробки, чем `JMeter`.",
               "correct": false,
               "sections": {
@@ -1961,18 +1973,6 @@
                 "source_of_confusion": "Гибкость Python создаёт впечатление широкой протокольной поддержки.",
                 "if_it_were_true": "Тогда Locust заменял бы JMeter для JDBC/JMS, но для них как раз берут JMeter.",
                 "how_it_should_be": "Богатый набор протоколов — у JMeter; Locust ограничен HTTP (+ сторонние библиотеки)."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
-              "text": "Правильный выбор — всегда один инструмент на весь цикл; комбинировать k6 и Gatling нельзя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "На практике комбинируют: `k6` для smoke/регрессии в CI + `Gatling`/`JMeter` для больших прогонов перед релизом.",
-                "source_of_confusion": "Желание унификации подталкивает к «одному инструменту на всё».",
-                "if_it_were_true": "Тогда нельзя было бы получить и быстрый CI-gate, и тяжёлый end-of-cycle прогон, но их сочетают.",
-                "how_it_should_be": "Связка инструментов нормальна: лёгкий в CI, тяжёлый для full-load — это стандартная практика."
               },
               "order": 3,
               "label": "D"
@@ -1989,13 +1989,13 @@
           "question_text": "Что такое ramp-up, think time и realistic workload?",
           "options": [
             {
-              "text": "`Ramp-up` — пауза между отдельными действиями одного виртуального пользователя, имитирующая чтение страницы.",
+              "text": "`Think time` задаётся единым значением для всех сценариев, обычно около секунды, независимо от типа действия.",
               "correct": false,
               "sections": {
-                "what_actually": "Пауза между действиями одного VU — это think time; ramp-up — период выхода нагрузки с 0 до целевой.",
-                "source_of_confusion": "Оба — «задержки во времени», поэтому понятия путают.",
-                "if_it_were_true": "Тогда без ramp-up не возникал бы стартовый spike, но именно отсутствие ramp-up его и даёт.",
-                "how_it_should_be": "Ramp-up — разгон всей нагрузки; пауза внутри сценария одного юзера — это think time."
+                "what_actually": "Think time зависит от действия: карточка 3-15 сек, форма 10-60 сек, API consumer 0-1 сек — единого значения нет.",
+                "source_of_confusion": "Фиксированная пауза проще в коде, отсюда соблазн поставить одну на всех.",
+                "if_it_were_true": "Тогда заполнение формы и клик между страницами имели бы одинаковую паузу, что нереалистично.",
+                "how_it_should_be": "Think time варьируют по типу действия и часто рандомизируют (например 2-5 сек), а не фиксируют на 1 сек."
               },
               "order": 0,
               "label": "A"
@@ -2014,6 +2014,18 @@
               "label": "B"
             },
             {
+              "text": "`Ramp-up` — пауза между отдельными действиями одного виртуального пользователя, имитирующая чтение страницы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пауза между действиями одного VU — это think time; ramp-up — период выхода нагрузки с 0 до целевой.",
+                "source_of_confusion": "Оба — «задержки во времени», поэтому понятия путают.",
+                "if_it_were_true": "Тогда без ramp-up не возникал бы стартовый spike, но именно отсутствие ramp-up его и даёт.",
+                "how_it_should_be": "Ramp-up — разгон всей нагрузки; пауза внутри сценария одного юзера — это think time."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
               "text": "`Realistic workload` — когда все виртуальные пользователи одновременно бьют в самый тяжёлый эндпоинт, чтобы быстрее нащупать узкое место.",
               "correct": false,
               "sections": {
@@ -2021,18 +2033,6 @@
                 "source_of_confusion": "Один эндпоинт проще нагружать, отсюда подмена реализма «максимальной нагрузкой на узкое место».",
                 "if_it_were_true": "Тогда тест не нашёл бы real-world bottleneck и не отразил бы реальный трафик.",
                 "how_it_should_be": "Нужно взвешенное распределение по эндпоинтам из analytics, а не 100% на один."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
-              "text": "`Think time` задаётся единым значением для всех сценариев, обычно около секунды, независимо от типа действия.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Think time зависит от действия: карточка 3-15 сек, форма 10-60 сек, API consumer 0-1 сек — единого значения нет.",
-                "source_of_confusion": "Фиксированная пауза проще в коде, отсюда соблазн поставить одну на всех.",
-                "if_it_were_true": "Тогда заполнение формы и клик между страницами имели бы одинаковую паузу, что нереалистично.",
-                "how_it_should_be": "Think time варьируют по типу действия и часто рандомизируют (например 2-5 сек), а не фиксируют на 1 сек."
               },
               "order": 3,
               "label": "D"
@@ -2049,18 +2049,6 @@
           "question_text": "Как подготовить тестовые данные и окружение?",
           "options": [
             {
-              "text": "Тест на пустой БД даёт самые честные результаты, потому что ничто не мешает запросам.",
-              "correct": false,
-              "sections": {
-                "what_actually": "На пустой БД запросы быстрые и индексы не используются, а планировщик выбирает другие планы — результаты искажены.",
-                "source_of_confusion": "Пустая база кажется «чистым» стендом без помех.",
-                "if_it_were_true": "Тогда prod с миллионами строк вёл бы себя как тест, но планы и latency на больших данных другие.",
-                "how_it_should_be": "Нужна prod-like БД (или 10-30% от prod) с актуальной статистикой (`ANALYZE`), а не пустая."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
               "text": "SLO нужно измерять на первых 30 секундах теста, пока система ещё «свежая».",
               "correct": false,
               "sections": {
@@ -2069,8 +2057,8 @@
                 "if_it_were_true": "Тогда warm-cache latency игнорировалась бы, но именно она отражает рабочий режим.",
                 "how_it_should_be": "SLO меряют на прогретой системе (steady state), а не на cold cache в первые секунды."
               },
-              "order": 1,
-              "label": "B"
+              "order": 0,
+              "label": "A"
             },
             {
               "text": "Реалистичный тест требует реалистичных данных: БД размером с prod (или 10-30%), генерируемая через `pg_bench`/скрипт с последующим `ANALYZE` для обновления статистики планировщика; уникальные учётки в `users.csv`, чтобы VU не сталкивались при login. Окружение — отдельный stage/perf-cluster (не shared с dev), конфигурация ресурсов близкая к prod, заранее настроенный мониторинг.",
@@ -2081,6 +2069,18 @@
                 "when_to_apply": "Подготовку данных и окружения делают перед любым нагрузочным тестом, особенно volume и soak, где данные критичны.",
                 "edge_cases": "Без `ANALYZE` планировщик использует устаревшую статистику и выбирает неоптимальные планы — latency окажется нерепрезентативной.",
                 "related": "[[performance-testing-interview#Q9]] volume testing и объём данных; [[performance-testing-interview#Q25]] Feeders для подачи данных; [[performance-testing-interview#Q36]] реалистичный user behavior."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Тест на пустой БД даёт самые честные результаты, потому что ничто не мешает запросам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На пустой БД запросы быстрые и индексы не используются, а планировщик выбирает другие планы — результаты искажены.",
+                "source_of_confusion": "Пустая база кажется «чистым» стендом без помех.",
+                "if_it_were_true": "Тогда prod с миллионами строк вёл бы себя как тест, но планы и latency на больших данных другие.",
+                "how_it_should_be": "Нужна prod-like БД (или 10-30% от prod) с актуальной статистикой (`ANALYZE`), а не пустая."
               },
               "order": 2,
               "label": "C"
@@ -2109,18 +2109,6 @@
           "question_text": "Как моделировать реалистичный user behavior?",
           "options": [
             {
-              "text": "Задают несколько профилей — shopper, browser, buyer, — но с равными весами по 33%, поскольку в нагрузочном тесте важно одинаково прогрузить все пути, а не воспроизводить реальные доли трафика.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Реальный пользователь — это сценарий (путь search → product → cart → checkout), а не цикл по одному эндпоинту.",
-                "source_of_confusion": "Цикл по одному URL проще писать, отсюда подмена сценария.",
-                "if_it_were_true": "Тогда тест не отразил бы реальные переходы и не нашёл бы bottleneck на стыке шагов.",
-                "how_it_should_be": "Моделируют путь пользователя с несколькими шагами и весами, а не одиночный запрос в цикле."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
               "text": "Пользователя моделируют как фиксированную последовательность всех эндпоинтов подряд без пауз между шагами, чтобы за короткий прогон успеть покрыть каждый переход максимальное число раз.",
               "correct": false,
               "sections": {
@@ -2129,8 +2117,8 @@
                 "if_it_were_true": "Тогда нагрузка не повторяла бы распределение реальных пользователей из analytics.",
                 "how_it_should_be": "Нужно несколько типов пользователей с разными сценариями и долями, а не один на всех."
               },
-              "order": 1,
-              "label": "B"
+              "order": 0,
+              "label": "A"
             },
             {
               "text": "Профили и пути задают реалистично, но все виртуальные пользователи ходят под одним тестовым аккаунтом и с одним и тем же product id, потому что конкретные идентификаторы данных на профиль нагрузки не влияют.",
@@ -2140,6 +2128,18 @@
                 "source_of_confusion": "Happy path проще, поэтому ошибочные сценарии часто опускают.",
                 "if_it_were_true": "Тогда тест пропустил бы нагрузку от валидаций и rollback'ов, которая есть в проде.",
                 "how_it_should_be": "Учитывают error paths, брошенные корзины и cache-busting наряду с happy path."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Задают несколько профилей — shopper, browser, buyer, — но с равными весами по 33%, поскольку в нагрузочном тесте важно одинаково прогрузить все пути, а не воспроизводить реальные доли трафика.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Реальный пользователь — это сценарий (путь search → product → cart → checkout), а не цикл по одному эндпоинту.",
+                "source_of_confusion": "Цикл по одному URL проще писать, отсюда подмена сценария.",
+                "if_it_were_true": "Тогда тест не отразил бы реальные переходы и не нашёл бы bottleneck на стыке шагов.",
+                "how_it_should_be": "Моделируют путь пользователя с несколькими шагами и весами, а не одиночный запрос в цикле."
               },
               "order": 2,
               "label": "C"
@@ -2254,18 +2254,6 @@
               "label": "B"
             },
             {
-              "text": "Двугорбое (bimodal) распределение latency указывает на ошибку в тестовом скрипте — например неверную correlation токена — и устраняется правкой сценария, а не разбором системных метрик.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Двугорбое распределение обычно говорит о hot/cold code path или cache hit/miss в системе, а не о баге скрипта.",
-                "source_of_confusion": "Аномальная форма интуитивно списывается на ошибку инструмента.",
-                "if_it_were_true": "Тогда исправление скрипта убирало бы второй горб, но он отражает реальное поведение системы.",
-                "how_it_should_be": "Два горба — это hot/cold path или cache hit/miss; скрипт тут обычно ни при чём."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
               "text": "Метрики теста (latency, error rate) и системные метрики (CPU, GC, DB) анализируют раздельно и не накладывают на общую шкалу времени, поскольку их источники и частота сбора различаются.",
               "correct": false,
               "sections": {
@@ -2273,6 +2261,18 @@
                 "source_of_confusion": "Раздельные дашборды привычны, отсюда вывод об изоляции метрик.",
                 "if_it_were_true": "Тогда «p99 вырос» нельзя было бы привязать к Full GC, но именно совмещение это позволяет.",
                 "how_it_should_be": "Метрики теста и системы накладывают на одну ось времени; именно связь объясняет причину."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Двугорбое (bimodal) распределение latency указывает на ошибку в тестовом скрипте — например неверную correlation токена — и устраняется правкой сценария, а не разбором системных метрик.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Двугорбое распределение обычно говорит о hot/cold code path или cache hit/miss в системе, а не о баге скрипта.",
+                "source_of_confusion": "Аномальная форма интуитивно списывается на ошибку инструмента.",
+                "if_it_were_true": "Тогда исправление скрипта убирало бы второй горб, но он отражает реальное поведение системы.",
+                "how_it_should_be": "Два горба — это hot/cold path или cache hit/miss; скрипт тут обычно ни при чём."
               },
               "order": 3,
               "label": "D"
@@ -2289,30 +2289,6 @@
           "question_text": "Как связать load testing с Grafana/Prometheus и APM?",
           "options": [
             {
-              "text": "График latency сам по себе указывает на root cause деградации, поэтому метрики сервиса, кластера и APM-трейсы избыточны.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Только latency не покажет причину; нужны метрики теста + сервиса (actuator) + инфраструктуры (node_exporter) + APM-трейсы.",
-                "source_of_confusion": "Latency — пользовательский симптом, отсюда вера, что он же объясняет причину.",
-                "if_it_were_true": "Тогда не понадобились бы Prometheus, APM и node_exporter, но именно они дают root cause.",
-                "how_it_should_be": "Полная картина — нагрузка + наблюдение: метрики app, infra и APM-трейсы вместе с latency."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "`k6` пишет метрики в InfluxDB нативным output-ом, а в Prometheus они попадают через периодический scrape встроенного REST-эндпоинта.",
-              "correct": false,
-              "sections": {
-                "what_actually": "k6 поддерживает Prometheus remote write: `--out experimental-prometheus-rw` или `K6_PROMETHEUS_RW_SERVER_URL`.",
-                "source_of_confusion": "InfluxDB исторически первый бэкенд k6, отсюда вывод об эксклюзивности.",
-                "if_it_were_true": "Тогда нельзя было бы строить дашборды k6 в Prometheus-стеке, но это штатно поддерживается.",
-                "how_it_should_be": "k6 стримит и в InfluxDB, и в Prometheus (remote write), и в Datadog — выбор шире."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
               "text": "Полноценный perf-test = нагрузка + наблюдение: только latency-график не покажет root cause. Метрики теста (k6/Gatling/JMeter), сервиса (actuator/metrics), кластера (node_exporter/cAdvisor) и APM-трейсы (Datadog/Elastic) собирают в Prometheus/InfluxDB → Grafana. `k6 run --out experimental-prometheus-rw`, Gatling → InfluxDB через graphite-writer, JMeter → InfluxDB через Backend Listener (`InfluxdbBackendListenerClient`).",
               "correct": true,
               "sections": {
@@ -2322,8 +2298,20 @@
                 "edge_cases": "Без APM-трейсов виден симптом (p99 вырос), но не span-breakdown; APM показывает, какой именно вызов медленный внутри запроса.",
                 "related": "[[performance-testing-interview#Q15]] метрики ресурсов; [[performance-testing-interview#Q38]] анализ результатов; [[performance-testing-interview#Q37]] пуш метрик в CI."
               },
-              "order": 2,
-              "label": "C"
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "График latency сам по себе указывает на root cause деградации, поэтому метрики сервиса, кластера и APM-трейсы избыточны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Только latency не покажет причину; нужны метрики теста + сервиса (actuator) + инфраструктуры (node_exporter) + APM-трейсы.",
+                "source_of_confusion": "Latency — пользовательский симптом, отсюда вера, что он же объясняет причину.",
+                "if_it_were_true": "Тогда не понадобились бы Prometheus, APM и node_exporter, но именно они дают root cause.",
+                "how_it_should_be": "Полная картина — нагрузка + наблюдение: метрики app, infra и APM-трейсы вместе с latency."
+              },
+              "order": 1,
+              "label": "B"
             },
             {
               "text": "`Gatling` отдаёт данные в дашборды после прогона, выгружая `simulation.log` в InfluxDB одним batch-импортом.",
@@ -2333,6 +2321,18 @@
                 "source_of_confusion": "Богатый HTML-отчёт Gatling заметнее, отсюда вывод об отсутствии real-time.",
                 "if_it_were_true": "Тогда нельзя было бы смотреть прогон Gatling в Grafana вживую, но graphite-writer это даёт.",
                 "how_it_should_be": "Gatling умеет и финальный HTML, и real-time стрим в InfluxDB/Grafana через graphite."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`k6` пишет метрики в InfluxDB нативным output-ом, а в Prometheus они попадают через периодический scrape встроенного REST-эндпоинта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "k6 поддерживает Prometheus remote write: `--out experimental-prometheus-rw` или `K6_PROMETHEUS_RW_SERVER_URL`.",
+                "source_of_confusion": "InfluxDB исторически первый бэкенд k6, отсюда вывод об эксклюзивности.",
+                "if_it_were_true": "Тогда нельзя было бы строить дашборды k6 в Prometheus-стеке, но это штатно поддерживается.",
+                "how_it_should_be": "k6 стримит и в InfluxDB, и в Prometheus (remote write), и в Datadog — выбор шире."
               },
               "order": 3,
               "label": "D"
@@ -2349,18 +2349,6 @@
           "question_text": "Какие anti-patterns и типичные ошибки в нагрузочном тестировании?",
           "options": [
             {
-              "text": "Гонять нагрузочный тест из GUI JMeter — норма: графический режим потребляет столько же ресурсов, сколько non-GUI прогон.",
-              "correct": false,
-              "sections": {
-                "what_actually": "GUI съедает CPU/RAM на отрисовку и искажает результаты — это классический anti-pattern; нужен CLI non-GUI режим.",
-                "source_of_confusion": "GUI наглядный, отсюда вера, что он подходит и для боевого прогона.",
-                "if_it_were_true": "Тогда результаты GUI-прогона были бы достоверны, но они искажены оверхедом отрисовки.",
-                "how_it_should_be": "Боевой тест гоняют только в non-GUI режиме; GUI — это anti-pattern для нагрузки."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
               "text": "Измерять среднюю latency вместо перцентилей оправдано: среднее устойчивее к выбросам и вернее отражает пользовательский опыт.",
               "correct": false,
               "sections": {
@@ -2368,6 +2356,19 @@
                 "source_of_confusion": "Среднее кажется «сглаженной» репрезентативной метрикой, отсюда его выбор.",
                 "if_it_were_true": "Тогда tail latency не влияла бы на SLO, но SLA формулируются именно в процентилях.",
                 "how_it_should_be": "Меряют percentiles (p95/p99), а не среднее: average маскирует хвосты, а не шум."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Типичные anti-patterns: тест из GUI JMeter в prod, молотьба одного эндпоинта без realistic journey, отсутствие ramp-up (стартовый spike ломает кеши), отсутствие think time, одни и те же данные (cache hit 100%), closed model при web-трафике (coordinated omission), тест на пустой БД (другие планы), отсутствие мониторинга сервиса, измерение average вместо процентилей, клиент и сервер на одной машине, отсутствие baseline, запуск раз в квартал.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ошибки интерпретации: «p99=500ms при average 50ms — всё ок» (нет, 1% ждёт полсекунды); «load прошёл → prod выдержит» (нет, если окружение не совпадает).",
+                "example": "Например тест на пустой БД: планировщик выбирает другие планы, latency нерепрезентативна — правильно prod-like volume.",
+                "when_to_apply": "Эти anti-patterns проверяют при ревью тестового сценария и pipeline, чтобы результаты были достоверными.",
+                "edge_cases": "Клиент и сервер на одной машине конкурируют за CPU/сеть и искажают latency; их разносят по разным хостам (anti-affinity).",
+                "related": "[[performance-testing-interview#Q34]] ramp-up и think time; [[performance-testing-interview#Q35]] prod-like данные; [[performance-testing-interview#Q41]] coordinated omission."
               },
               "order": 1,
               "label": "B"
@@ -2385,14 +2386,13 @@
               "label": "C"
             },
             {
-              "text": "Типичные anti-patterns: тест из GUI JMeter в prod, молотьба одного эндпоинта без realistic journey, отсутствие ramp-up (стартовый spike ломает кеши), отсутствие think time, одни и те же данные (cache hit 100%), closed model при web-трафике (coordinated omission), тест на пустой БД (другие планы), отсутствие мониторинга сервиса, измерение average вместо процентилей, клиент и сервер на одной машине, отсутствие baseline, запуск раз в квартал.",
-              "correct": true,
+              "text": "Гонять нагрузочный тест из GUI JMeter — норма: графический режим потребляет столько же ресурсов, сколько non-GUI прогон.",
+              "correct": false,
               "sections": {
-                "explanation": "Ошибки интерпретации: «p99=500ms при average 50ms — всё ок» (нет, 1% ждёт полсекунды); «load прошёл → prod выдержит» (нет, если окружение не совпадает).",
-                "example": "Например тест на пустой БД: планировщик выбирает другие планы, latency нерепрезентативна — правильно prod-like volume.",
-                "when_to_apply": "Эти anti-patterns проверяют при ревью тестового сценария и pipeline, чтобы результаты были достоверными.",
-                "edge_cases": "Клиент и сервер на одной машине конкурируют за CPU/сеть и искажают latency; их разносят по разным хостам (anti-affinity).",
-                "related": "[[performance-testing-interview#Q34]] ramp-up и think time; [[performance-testing-interview#Q35]] prod-like данные; [[performance-testing-interview#Q41]] coordinated omission."
+                "what_actually": "GUI съедает CPU/RAM на отрисовку и искажает результаты — это классический anti-pattern; нужен CLI non-GUI режим.",
+                "source_of_confusion": "GUI наглядный, отсюда вера, что он подходит и для боевого прогона.",
+                "if_it_were_true": "Тогда результаты GUI-прогона были бы достоверны, но они искажены оверхедом отрисовки.",
+                "how_it_should_be": "Боевой тест гоняют только в non-GUI режиме; GUI — это anti-pattern для нагрузки."
               },
               "order": 3,
               "label": "D"
@@ -2409,29 +2409,16 @@
           "question_text": "Что такое coordinated omission и почему многие инструменты врут?",
           "options": [
             {
-              "text": "`Coordinated omission` — систематическое занижение latency в инструментах с closed model (термин Gil Tene, автора HdrHistogram). В closed model VU ждёт ответа перед следующим запросом: если сервис завис на 10 секунд, вместо ~100 ожидаемых запросов прошёл 1 (с latency «всего» 10s), а 99 «пропущенных» не засчитались нигде — percentile считается как «99 нормальных + 1 плохой» вместо «99 пропущенных + 1 плохой».",
-              "correct": true,
+              "text": "При coordinated omission замеренная latency завышается, из-за чего система выглядит медленнее, чем работает на самом деле.",
+              "correct": false,
               "sections": {
-                "explanation": "Последствие: p99 выглядит нормальным, хотя реально была 10-секундная деградация — метрики лгут в выгодную сторону, и решения принимаются на плохих данных.",
-                "example": "Избежать: open model (arrival rate) — `Gatling injectOpen + constantUsersPerSec`, `k6 constant-arrival-rate`, JMeter `Throughput Shaping Timer`; плюс HdrHistogram и коррекция от intended start time.",
-                "when_to_apply": "Учитывают coordinated omission при выборе модели нагрузки для web и при анализе latency под перегрузкой.",
-                "edge_cases": "В open model arrivals независимы от ответов: при замедлении очередь растёт и latency остаётся честной, показывая реальную деградацию.",
-                "related": "[[performance-testing-interview#Q24]] open vs closed model; [[performance-testing-interview#Q30]] constant-arrival-rate в k6; [[performance-testing-interview#Q40]] closed model как anti-pattern."
+                "what_actually": "Latency занижается, а не завышается: «зависшие» запросы не учитываются, и p99 выглядит лучше реального.",
+                "source_of_confusion": "«Врут инструменты» интуитивно читается как «преувеличивают проблему».",
+                "if_it_were_true": "Тогда coordinated omission делал бы тесты пессимистичными, но он маскирует деградацию.",
+                "how_it_should_be": "Эффект — заниженная latency (оптимистичная картина), поэтому деградация остаётся незамеченной."
               },
               "order": 0,
               "label": "A"
-            },
-            {
-              "text": "`Coordinated omission` — потеря пакетов на сетевом пути между генератором нагрузки и сервером, из-за которой часть замеров latency пропадает.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это не сетевые потери, а статистическое занижение latency в closed-model инструментах из-за «пропущенных» запросов при замедлении.",
-                "source_of_confusion": "Слово «omission» (пропуск) ассоциируется с потерей пакетов.",
-                "if_it_were_true": "Тогда проблему решал бы надёжный транспорт, но её решает смена на open model.",
-                "how_it_should_be": "Coordinated omission — методологическая ошибка измерения latency, а не сетевой drop."
-              },
-              "order": 1,
-              "label": "B"
             },
             {
               "text": "`Coordinated omission` проявляется в open model с расписанием заявок и лечится переходом на closed model с ожиданием ответа.",
@@ -2442,17 +2429,30 @@
                 "if_it_were_true": "Тогда open model занижала бы latency, но она как раз даёт честную картину.",
                 "how_it_should_be": "Coordinated omission — болезнь closed model; лечит её именно open model."
               },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`Coordinated omission` — систематическое занижение latency в инструментах с closed model (термин Gil Tene, автора HdrHistogram). В closed model VU ждёт ответа перед следующим запросом: если сервис завис на 10 секунд, вместо ~100 ожидаемых запросов прошёл 1 (с latency «всего» 10s), а 99 «пропущенных» не засчитались нигде — percentile считается как «99 нормальных + 1 плохой» вместо «99 пропущенных + 1 плохой».",
+              "correct": true,
+              "sections": {
+                "explanation": "Последствие: p99 выглядит нормальным, хотя реально была 10-секундная деградация — метрики лгут в выгодную сторону, и решения принимаются на плохих данных.",
+                "example": "Избежать: open model (arrival rate) — `Gatling injectOpen + constantUsersPerSec`, `k6 constant-arrival-rate`, JMeter `Throughput Shaping Timer`; плюс HdrHistogram и коррекция от intended start time.",
+                "when_to_apply": "Учитывают coordinated omission при выборе модели нагрузки для web и при анализе latency под перегрузкой.",
+                "edge_cases": "В open model arrivals независимы от ответов: при замедлении очередь растёт и latency остаётся честной, показывая реальную деградацию.",
+                "related": "[[performance-testing-interview#Q24]] open vs closed model; [[performance-testing-interview#Q30]] constant-arrival-rate в k6; [[performance-testing-interview#Q40]] closed model как anti-pattern."
+              },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "При coordinated omission замеренная latency завышается, из-за чего система выглядит медленнее, чем работает на самом деле.",
+              "text": "`Coordinated omission` — потеря пакетов на сетевом пути между генератором нагрузки и сервером, из-за которой часть замеров latency пропадает.",
               "correct": false,
               "sections": {
-                "what_actually": "Latency занижается, а не завышается: «зависшие» запросы не учитываются, и p99 выглядит лучше реального.",
-                "source_of_confusion": "«Врут инструменты» интуитивно читается как «преувеличивают проблему».",
-                "if_it_were_true": "Тогда coordinated omission делал бы тесты пессимистичными, но он маскирует деградацию.",
-                "how_it_should_be": "Эффект — заниженная latency (оптимистичная картина), поэтому деградация остаётся незамеченной."
+                "what_actually": "Это не сетевые потери, а статистическое занижение latency в closed-model инструментах из-за «пропущенных» запросов при замедлении.",
+                "source_of_confusion": "Слово «omission» (пропуск) ассоциируется с потерей пакетов.",
+                "if_it_were_true": "Тогда проблему решал бы надёжный транспорт, но её решает смена на open model.",
+                "how_it_should_be": "Coordinated omission — методологическая ошибка измерения latency, а не сетевой drop."
               },
               "order": 3,
               "label": "D"
@@ -2469,18 +2469,6 @@
           "question_text": "Как дать сильный ответ про performance testing за 60 секунд?",
           "options": [
             {
-              "text": "Сильный ответ — назвать инструмент (JMeter), сказать «гоняем HTTP-запросы под нагрузкой» и привести среднюю latency как итоговую метрику.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это как раз слабый ответ: нет привязки к SLO, «среднее» скрывает tail latency, нет слов о реалистичности, CI, baseline и observability.",
-                "source_of_confusion": "Назвать инструмент и метрику кажется достаточным для ответа.",
-                "if_it_were_true": "Тогда интервьюер услышал бы про инженерную дисциплину, но в этом ответе её нет.",
-                "how_it_should_be": "Сильный ответ строят по структуре Context → Scope → Approach → Tools → Result с цифрами и SLO."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
               "text": "Сильный ответ — по структуре CSAT-R (Context → Scope → Approach → Tools → Result): контекст (e-commerce API, SLO p99<300ms при 2000 RPS), scope (load для SLO, stress для breaking point, soak 24h на утечки, spike для Black Friday), подход (open model, realistic workload из 4 сценариев, ramp-up 2 мин + steady 30 мин, snapshot prod-БД), инструменты (k6 smoke на каждом PR, Gatling nightly, метрики в Prometheus, APM Elastic, Grafana), результат (baseline p99=180ms, breaking point 2800 RPS из-за DB pool, SLO 99.9%, HPA масштабируется за 45 сек).",
               "correct": true,
               "sections": {
@@ -2490,8 +2478,8 @@
                 "edge_cases": "Антипаттерн — «JMeter, HTTP-запросы, средняя latency»: нет SLO, среднее прячет хвосты, нет CI/baseline/observability.",
                 "related": "[[performance-testing-interview#Q1]] что такое performance testing; [[performance-testing-interview#Q2]] типы тестов; [[performance-testing-interview#Q41]] coordinated omission и open model."
               },
-              "order": 1,
-              "label": "B"
+              "order": 0,
+              "label": "A"
             },
             {
               "text": "В 60-секундном ответе главное — исчерпывающе перечислить весь инструментарий (k6, Gatling, JMeter, Grafana), а SLO и итоговые цифры оставить за скобками.",
@@ -2501,6 +2489,18 @@
                 "source_of_confusion": "Список тулов выглядит как демонстрация эрудиции, отсюда фокус на нём.",
                 "if_it_were_true": "Тогда ответ не показал бы инженерную дисциплину и измеримый итог, которые и ценят интервьюеры.",
                 "how_it_should_be": "Нужны и SLO, и реалистичность, и результат с числами, а не только названия инструментов."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Сильный ответ — назвать инструмент (JMeter), сказать «гоняем HTTP-запросы под нагрузкой» и привести среднюю latency как итоговую метрику.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это как раз слабый ответ: нет привязки к SLO, «среднее» скрывает tail latency, нет слов о реалистичности, CI, baseline и observability.",
+                "source_of_confusion": "Назвать инструмент и метрику кажется достаточным для ответа.",
+                "if_it_were_true": "Тогда интервьюер услышал бы про инженерную дисциплину, но в этом ответе её нет.",
+                "how_it_should_be": "Сильный ответ строят по структуре Context → Scope → Approach → Tools → Result с цифрами и SLO."
               },
               "order": 2,
               "label": "C"
