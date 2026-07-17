@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.cheatsheet.quiz.persistence.AnswerOptionRepository;
 import com.cheatsheet.quiz.persistence.FullTextSearchRepository;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
+import com.cheatsheet.quiz.persistence.QuestionRevisionRepository;
 import com.cheatsheet.quiz.persistence.ReviewStateRepository;
 import com.cheatsheet.quiz.service.cache.OptionCache;
 import lombok.experimental.FieldDefaults;
@@ -48,6 +49,7 @@ public class QuestionImportService {
     private final QuestionRepository questionRepository;
     private final AnswerOptionRepository answerOptionRepository;
     private final ReviewStateRepository reviewStateRepository;
+    private final QuestionRevisionRepository questionRevisionRepository;
     private final FullTextSearchRepository fullTextSearchRepository;
     private final OptionCache optionCache;
     private final Clock clock;
@@ -207,6 +209,7 @@ public class QuestionImportService {
                     parsed.questionType(), parsed.codeSnippet());
             long id = questionRepository.insert(question);
             reviewStateRepository.insertIfAbsent(id, clock.instant().getEpochSecond());
+            questionRevisionRepository.append(id, sourceHash, clock.instant().getEpochSecond());
             fullTextSearchRepository.upsert(id, question.questionText(), question.answerMarkdown());
             return UpsertOutcome.INSERT;
         }
@@ -220,6 +223,7 @@ public class QuestionImportService {
             answerOptionRepository.deleteByQuestionId(current.id());
             optionCache.invalidate(current.id());
             reviewStateRepository.reset(current.id(), clock.instant().getEpochSecond());
+            questionRevisionRepository.append(current.id(), sourceHash, clock.instant().getEpochSecond());
             fullTextSearchRepository.upsert(current.id(), updatedQuestion.questionText(), updatedQuestion.answerMarkdown());
             return UpsertOutcome.UPDATE;
         }

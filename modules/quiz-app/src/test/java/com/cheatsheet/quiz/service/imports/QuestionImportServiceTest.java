@@ -12,6 +12,7 @@ import com.cheatsheet.quiz.domain.QuestionType;
 import com.cheatsheet.quiz.persistence.AnswerOptionRepository;
 import com.cheatsheet.quiz.persistence.FullTextSearchRepository;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
+import com.cheatsheet.quiz.persistence.QuestionRevisionRepository;
 import com.cheatsheet.quiz.persistence.ReviewStateRepository;
 import com.cheatsheet.quiz.service.cache.OptionCache;
 import com.cheatsheet.quiz.common.util.InterviewPathResolver;
@@ -42,6 +43,8 @@ class QuestionImportServiceTest {
     @Mock
     ReviewStateRepository reviewStateRepository;
     @Mock
+    QuestionRevisionRepository questionRevisionRepository;
+    @Mock
     FullTextSearchRepository fullTextSearchRepository;
     @Mock
     OptionCache optionCache;
@@ -60,6 +63,7 @@ class QuestionImportServiceTest {
                 questionRepository,
                 answerOptionRepository,
                 reviewStateRepository,
+                questionRevisionRepository,
                 fullTextSearchRepository,
                 optionCache,
                 clock,
@@ -110,6 +114,51 @@ class QuestionImportServiceTest {
         assertThat(inserted.questionText()).isEqualTo(parsed.questionText());
         assertThat(inserted.answerMarkdown()).isEqualTo(parsed.answerMarkdown());
         assertThat(inserted.questionType()).isEqualTo(QuestionType.TEXT);
+        // Фаза 2: на INSERT нового вопроса создаётся первая ревизия контента.
+        verify(questionRevisionRepository)
+                .append(42L, "hash", Instant.parse("2026-02-28T00:00:00Z").getEpochSecond());
+    }
+
+    @Test
+    void importAllAppendsRevisionWhenContentHashChanges() throws Exception {
+        Path root = Files.createTempDirectory("question-import-update");
+        Path file = Files.createDirectories(root.resolve("topic")).resolve("sample.md");
+        Files.writeString(file, "stub");
+
+        MarkdownQuestionParser.ParsedQuestion parsed = MarkdownQuestionParser.ParsedQuestion.builder()
+                .questionNumber("1")
+                .questionText("Изменённый вопрос?")
+                .answerMarkdown("Изменённый ответ.")
+                .rawAnswer("Изменённый ответ.")
+                .important(false)
+                .questionType(QuestionType.TEXT)
+                .codeSnippet(null)
+                .build();
+
+        Question existing = Question.forImport("topic/sample.md#Q1", "topic/sample.md", "topic/sample",
+                "Старый вопрос?", "Старый ответ.", false, "old-hash", QuestionType.TEXT, null)
+                .toBuilder().id(7L).build();
+
+        when(interviewPathResolver.getBasePath()).thenReturn(root);
+        when(parser.parse(file)).thenReturn(List.of(parsed));
+        when(hashingService.sha256(any())).thenReturn("new-hash");
+        when(questionRepository.findBySlug(any())).thenReturn(Optional.of(existing));
+        when(questionRepository.findAllFilePaths()).thenReturn(List.of("topic/sample.md"));
+        when(questionRepository.countAll()).thenReturn(1L);
+        when(transactionTemplate.execute(any())).thenAnswer(invocation -> {
+            TransactionCallback<?> callback = invocation.getArgument(0);
+            return callback.doInTransaction(null);
+        });
+        lenient().when(mcqJsonLoader.loadForTopic(any(), any())).thenReturn(McqLoadResult.notFound());
+
+        Clock clock = Clock.fixed(Instant.parse("2026-03-10T00:00:00Z"), ZoneOffset.UTC);
+        QuestionImportService service = newService(clock);
+
+        service.importAll();
+
+        // Контент изменился (old-hash → new-hash) → новая ревизия с новым checksum.
+        verify(questionRevisionRepository)
+                .append(7L, "new-hash", Instant.parse("2026-03-10T00:00:00Z").getEpochSecond());
     }
 
     @Test
