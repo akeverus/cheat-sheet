@@ -1,7 +1,7 @@
 {
   "topic_slug": "cassandra-interview",
   "round": 8,
-  "status": "WIP c1 — §1 факт-скан 44/44 + 2 version-fix (Q6 num_tokens, Q13 SAI) + correct-trim 41ср→24.8ср слов + freshness sidecar. Дистрактор-enrich/flip/skel/blind — следующие фаеры.",
+  "status": "WIP c2 — все 12 parity-гейтов PASS (enrich 75 дистракторов + OPTION_LENGTH-подгонка + flip-проход DETAIL/STYLE). skel-harmonize (58 real tells: semicolon/dash) + BATCHED blind — следующий фаер.",
   "blocks_total": 44,
   "profile": "EXTREME STRONG-raw — correct изначально энциклопедии 41 слово ср (max 55), code-rich, самый длинный/детальный в 42/44; дистракторы-заглушки ~16 слов; sections богатые (avg 716ch, ключи explanation/example/when_to_apply/edge_cases/related). Крупнейший файл ROUND-8 (44 блока, вместе с elasticsearch).",
   "baseline_gates_raw": {
@@ -18,6 +18,8 @@
   "c1_note": "POS pattern-free (seq=3/dist=1.0 PASS). Correct seq ACDDCCAADADBCCACDADBADBCACCDCBBABBABBDACDDBB.",
   "c1_s1_scan": "§1 факт-скан всех 44 correct: факт-корректны/single-defensible/актуальны для Cassandra 4.x/5.0, КРОМЕ 2 version-imprecision, исправленных в c1: Q6 correct[D] 'num_tokens=256' → отражён дефолт 16 в Cassandra 4.0+; Q13 correct[C] 'SAI (Cassandra 4.0+)' → SAI = Cassandra 5.0 (в 4.0 был SASI). Version-sensitive заметки Q3/Q5/Q6/Q13/Q19/Q24/Q26/Q28/Q42 в freshness sidecar.",
   "c1_done": "Correct обрезаны 41ср→24.8ср слов (max 55→30) fact-preserving (каталоги/детали дублируются в rich sections). Q21 переписан без сокращений-с-точками (макс./мин.) → SENTENCE 3→1. Freshness sidecar создан → SOURCE_COVERAGE ok. Gates после c1: SENTENCE/ABSOLUTE/POS(dist+seq)/DUPLICATE/SOURCE — PASS; CORRECT_LONGEST 0.636 / OPTION_LENGTH 7.0 / CORRECT_WRONG 1.506 / DETAIL 0.75 / STYLE 0.803 — остаточные рычаги дистрактор-enrich.",
-  "next_fires": "c2 band-A+B enrich 132 дистрактора 16сл→parity (реальные Cassandra-термы в ложной рамке, distinct mental models) → flip pass (code/paren-tie) → skel-harmonize → BATCHED blind (2 корректность + form-adversary, ≤3 concurrent) → §1-фиксы если найдёт → FINAL. Цель — сжать в меньшее число фаеров (прецедент elasticsearch c3c+blind+FINAL в один фаер).",
-  "commits": "<c1 WIP>"
+  "c2_done": "Смешанный профиль raw: ~19 блоков уже с длинными дистракторами (Q4/21/23/25/26/28/32-42), ~25 — короткие карикатуры-заглушки 9-13сл. Enrich 75 коротких дистракторов → реальные Cassandra-термы в ложной рамке, сохранена исходная misconception, де-карикатура, ~длина correct. OPTION_LENGTH-подгонка (plain-words; code-span=0 в words() → длину ровняем plain-словами). Flip-проход: скобочные пояснения (term) + code-термы дистракторам в ~40 блоках → DETAIL 0.909→0.386, STYLE 0.955→0.356 (len 0.30/code 0.36), CORRECT_LONGEST→0.227, CORRECT_WRONG→1.009. Все 12 parity PASS + schema OK. correct/label/order неизменны.",
+  "c2_gates": "CORRECT_LONGEST 0.227, OPTION_LENGTH 1.33, CORRECT_WRONG 1.009, SENTENCE 1, DETAIL 0.386, ABSOLUTE 0.144, POS dist 1.0/seq 3, DUPLICATE 0, SOURCE ok, STYLE 0.356 — все PASS.",
+  "next_fires": "skel-harmonize (58 real separability tells, correct-unique: ~23 semicolon + ~15 dash + colon/paren — править ТОЛЬКО дистракторы, добавить `;`/`—`/(...) в одну опцию/блок) → BATCHED blind (2 корректность + form-adversary, ≤3 concurrent) → §1-фиксы если найдёт → FINAL. Intrinsic-code-residual STYLE 0.36 принят как в elasticsearch.",
+  "commits": "de215812 (c1) → <c2 WIP>"
 }
