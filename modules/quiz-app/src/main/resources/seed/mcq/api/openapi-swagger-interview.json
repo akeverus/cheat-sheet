@@ -9,6 +9,18 @@
           "question_text": "Что такое OpenAPI Specification (OAS)?",
           "options": [
             {
+              "text": "OAS — это исполняемый язык программирования для написания серверной логики REST API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "OAS — декларативный формат описания, а не язык программирования; логику пишут на Java, Go и т.п.",
+                "source_of_confusion": "Слово `Specification` ассоциируется с исполняемыми спецификациями вроде BDD-сценариев.",
+                "if_it_were_true": "Если бы OAS исполнялся, не нужны были бы фреймворки вроде Spring для реализации эндпоинтов.",
+                "how_it_should_be": "OAS лишь описывает контракт API в `YAML`/`JSON`, а реализацию выполняет отдельный код."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "OAS — стандарт описания REST API в машиночитаемом формате `YAML` или `JSON`: эндпоинты, параметры, тела запросов и ответов, схемы данных и аутентификация, независимо от языка реализации.",
               "correct": true,
               "sections": {
@@ -17,18 +29,6 @@
                 "when_to_apply": "Применять когда нужен формальный контракт API: публичные интеграции, несколько команд-потребителей, автоматическая валидация запросов и ответов.",
                 "edge_cases": "Спецификация без валидации в CI быстро расходится с реальным поведением сервиса, превращаясь в устаревшую документацию, которой нельзя доверять.",
                 "related": "[[openapi-swagger-interview#Q2]] версии OAS; [[openapi-swagger-interview#Q3]] разница Swagger и OpenAPI; [[openapi-swagger-interview#Q4]] структура документа."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "OAS — это исполняемый язык программирования для написания серверной логики REST API.",
-              "correct": false,
-              "sections": {
-                "what_actually": "OAS — декларативный формат описания, а не язык программирования; логику пишут на Java, Go и т.п.",
-                "source_of_confusion": "Слово `Specification` ассоциируется с исполняемыми спецификациями вроде BDD-сценариев.",
-                "if_it_were_true": "Если бы OAS исполнялся, не нужны были бы фреймворки вроде Spring для реализации эндпоинтов.",
-                "how_it_should_be": "OAS лишь описывает контракт API в `YAML`/`JSON`, а реализацию выполняет отдельный код."
               },
               "label": "B",
               "order": 1
@@ -69,18 +69,6 @@
           "question_text": "Версии OAS: 2.0 vs 3.0 vs 3.1 — ключевые отличия?",
           "options": [
             {
-              "text": "Между версиями 2.0, 3.0 и 3.1 нет смысловых отличий — меняется только номер в поле `openapi`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Отличия существенны: структура `requestBody`, `components`, `servers`, `webhooks` менялась между версиями.",
-                "source_of_confusion": "Минорный вид номера версии создаёт впечатление косметических правок.",
-                "if_it_were_true": "Если бы менялся только номер, инструменты не делились бы на поддерживающие 2.0 и 3.x.",
-                "how_it_should_be": "Каждая мажорная версия принесла структурные изменения, ломающие совместимость документов."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Главные сдвиги: тело запроса вынесено в `requestBody` (вместо `body`/`formData`), переиспользуемое собрано в `components`, добавлены `servers`, `links`, а в 3.1 — секция `webhooks` и полная совместимость с JSON Schema 2020-12.",
               "correct": true,
               "sections": {
@@ -89,6 +77,18 @@
                 "when_to_apply": "Знать различия нужно при миграции спецификации, выборе генератора и интеграции с инструментами, которые поддерживают конкретную версию OAS.",
                 "edge_cases": "Не все инструменты поддерживают 3.1: старые валидаторы и генераторы понимают только 3.0, поэтому переход требует проверки совместимости тулчейна.",
                 "related": "[[openapi-swagger-interview#Q1]] что такое OAS; [[openapi-swagger-interview#Q34]] webhooks в 3.1; [[openapi-swagger-interview#Q27]] полиморфизм схем."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В OAS 2.0 уже была секция `webhooks` для описания входящих событий, в 3.x её удалили.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Секция `webhooks` появилась только в OAS 3.1; в 2.0 и 3.0 её не было.",
+                "source_of_confusion": "Похожий механизм `callbacks` в 3.0 создаёт впечатление, что webhooks были раньше.",
+                "if_it_were_true": "Если бы `webhooks` были в 2.0, не требовалось бы выделять их как новинку 3.1.",
+                "how_it_should_be": "`webhooks` — нововведение 3.1 для запросов, инициируемых сервером вне контекста операции."
               },
               "label": "B",
               "order": 1
@@ -106,13 +106,13 @@
               "order": 2
             },
             {
-              "text": "В OAS 2.0 уже была секция `webhooks` для описания входящих событий, в 3.x её удалили.",
+              "text": "Между версиями 2.0, 3.0 и 3.1 нет смысловых отличий — меняется только номер в поле `openapi`.",
               "correct": false,
               "sections": {
-                "what_actually": "Секция `webhooks` появилась только в OAS 3.1; в 2.0 и 3.0 её не было.",
-                "source_of_confusion": "Похожий механизм `callbacks` в 3.0 создаёт впечатление, что webhooks были раньше.",
-                "if_it_were_true": "Если бы `webhooks` были в 2.0, не требовалось бы выделять их как новинку 3.1.",
-                "how_it_should_be": "`webhooks` — нововведение 3.1 для запросов, инициируемых сервером вне контекста операции."
+                "what_actually": "Отличия существенны: структура `requestBody`, `components`, `servers`, `webhooks` менялась между версиями.",
+                "source_of_confusion": "Минорный вид номера версии создаёт впечатление косметических правок.",
+                "if_it_were_true": "Если бы менялся только номер, инструменты не делились бы на поддерживающие 2.0 и 3.x.",
+                "how_it_should_be": "Каждая мажорная версия принесла структурные изменения, ломающие совместимость документов."
               },
               "label": "D",
               "order": 3
@@ -129,18 +129,6 @@
           "question_text": "Swagger vs OpenAPI — в чём разница терминологии?",
           "options": [
             {
-              "text": "`Swagger` и `OpenAPI` — это два конкурирующих несовместимых стандарта описания API от разных организаций.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это не конкуренты: OpenAPI — прямой наследник Swagger Specification, переименованный после передачи в OAI.",
-                "source_of_confusion": "Параллельное существование бренда Swagger и стандарта OpenAPI выглядит как соперничество.",
-                "if_it_were_true": "Если бы они конкурировали, инструменты Swagger не работали бы с документами OpenAPI 3.x.",
-                "how_it_should_be": "OpenAPI — это эволюция Swagger Specification, а не отдельный конкурирующий формат."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`OpenAPI` — это название инструмента для просмотра документации, а `Swagger` — название стандарта спецификации.",
               "correct": false,
               "sections": {
@@ -149,8 +137,32 @@
                 "if_it_were_true": "Если бы OpenAPI был инструментом, не было бы консорциума OpenAPI Initiative, ведущего стандарт.",
                 "how_it_should_be": "Стандарт называется OpenAPI Specification, а инструменты носят имя Swagger."
               },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`Swagger` и `OpenAPI` — это два конкурирующих несовместимых стандарта описания API от разных организаций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это не конкуренты: OpenAPI — прямой наследник Swagger Specification, переименованный после передачи в OAI.",
+                "source_of_confusion": "Параллельное существование бренда Swagger и стандарта OpenAPI выглядит как соперничество.",
+                "if_it_were_true": "Если бы они конкурировали, инструменты Swagger не работали бы с документами OpenAPI 3.x.",
+                "how_it_should_be": "OpenAPI — это эволюция Swagger Specification, а не отдельный конкурирующий формат."
+              },
               "label": "B",
               "order": 1
+            },
+            {
+              "text": "`Swagger` полностью прекратил существование в 2016 году и больше не используется ни в каком виде.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бренд Swagger жив: `Swagger UI`, `Swagger Editor`, `Swagger Codegen` активно используются.",
+                "source_of_confusion": "Передача спецификации в OAI создаёт впечатление полного исчезновения Swagger.",
+                "if_it_were_true": "Если бы Swagger исчез, разработчики не открывали бы `swagger-ui.html` каждый день.",
+                "how_it_should_be": "Передана была только спецификация; инструменты Swagger продолжают развиваться."
+              },
+              "label": "C",
+              "order": 2
             },
             {
               "text": "`OpenAPI` — это сама спецификация (стандарт) начиная с версии 3.0; `Swagger` — историческое название формата 2.0 и бренд набора инструментов (`Swagger UI`, `Codegen`, `Editor`).",
@@ -161,18 +173,6 @@
                 "when_to_apply": "Различать термины важно на собеседовании и в документации, чтобы не путать стандарт (OpenAPI) с инструментами (Swagger) и версиями.",
                 "edge_cases": "В обиходе «Swagger» по инерции называют любую спецификацию, включая OAS 3.x, что технически неточно, но повсеместно встречается.",
                 "related": "[[openapi-swagger-interview#Q1]] что такое OAS; [[openapi-swagger-interview#Q7]] Swagger UI; [[openapi-swagger-interview#Q2]] версии спецификации."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`Swagger` полностью прекратил существование в 2016 году и больше не используется ни в каком виде.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Бренд Swagger жив: `Swagger UI`, `Swagger Editor`, `Swagger Codegen` активно используются.",
-                "source_of_confusion": "Передача спецификации в OAI создаёт впечатление полного исчезновения Swagger.",
-                "if_it_were_true": "Если бы Swagger исчез, разработчики не открывали бы `swagger-ui.html` каждый день.",
-                "how_it_should_be": "Передана была только спецификация; инструменты Swagger продолжают развиваться."
               },
               "label": "D",
               "order": 3
@@ -201,18 +201,6 @@
               "order": 0
             },
             {
-              "text": "Все эндпоинты описываются в секции `components`, а `paths` хранит только метаданные API.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Эндпоинты живут в `paths`; `components` хранит переиспользуемые объекты (схемы, ответы, параметры).",
-                "source_of_confusion": "Обе секции связаны через `$ref`, что размывает их роли в восприятии.",
-                "if_it_were_true": "Если бы операции были в `components`, не существовало бы синтаксиса `paths./users.get`.",
-                "how_it_should_be": "`paths` описывает операции, а `components` лишь поставляет переиспользуемые фрагменты для них."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Метаданные `title` и `version` указываются в секции `paths` рядом с каждым эндпоинтом.",
               "correct": false,
               "sections": {
@@ -221,8 +209,8 @@
                 "if_it_were_true": "Если бы `version` была у каждого пути, у API не было бы единой версии документа.",
                 "how_it_should_be": "Глобальные метаданные API задаются один раз в `info`, отдельно от описания эндпоинтов."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Документ содержит `openapi` (версия), `info` (метаданные), `paths` (эндпоинты), `components` (переиспользуемое), `servers`, `tags`, `security`, а в 3.1 — `webhooks`; обязательны только `openapi`, `info`, `paths`.",
@@ -233,6 +221,18 @@
                 "when_to_apply": "Знать секции нужно при ручном написании спецификации, ревью и отладке, когда инструмент жалуется на отсутствие обязательного поля.",
                 "edge_cases": "Пропуск обязательного `info.version` или `paths` делает документ невалидным; многие генераторы при этом падают с неинформативной ошибкой.",
                 "related": "[[openapi-swagger-interview#Q5]] секция paths; [[openapi-swagger-interview#Q6]] секция components; [[openapi-swagger-interview#Q1]] что такое OAS."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Все эндпоинты описываются в секции `components`, а `paths` хранит только метаданные API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эндпоинты живут в `paths`; `components` хранит переиспользуемые объекты (схемы, ответы, параметры).",
+                "source_of_confusion": "Обе секции связаны через `$ref`, что размывает их роли в восприятии.",
+                "if_it_were_true": "Если бы операции были в `components`, не существовало бы синтаксиса `paths./users.get`.",
+                "how_it_should_be": "`paths` описывает операции, а `components` лишь поставляет переиспользуемые фрагменты для них."
               },
               "label": "D",
               "order": 3
@@ -249,29 +249,16 @@
           "question_text": "Секция paths: как описывается эндпоинт?",
           "options": [
             {
-              "text": "Под путём (`/users/{id}`) перечисляются HTTP-методы (`get`, `post`...), каждый с `summary`, `operationId`, `parameters`, `requestBody` и `responses` с кодами статуса и схемами через `$ref`.",
-              "correct": true,
+              "text": "Параметр пути указывается через секцию `requestBody`, а не через `parameters` с `in: path`.",
+              "correct": false,
               "sections": {
-                "explanation": "`operationId` уникален и становится именем метода при генерации клиента; `parameters` задают `in: path|query|header|cookie`, а ответы ссылаются на `components` через `$ref`.",
-                "example": "Для `GET /users/{id}` описывают path-параметр `id` (`required: true`), ответ `200` со схемой `User` и `404` через `$ref` на общий ответ `NotFound`.",
-                "when_to_apply": "Эту структуру пишут при contract-first дизайне и читают при отладке, когда нужно понять, какие коды и схемы возвращает операция.",
-                "edge_cases": "Забытый или неуникальный `operationId` ломает генерацию клиентов: методы получают сгенерированные имена вроде `usersIdGet`, теряя читаемость.",
-                "related": "[[openapi-swagger-interview#Q4]] структура документа; [[openapi-swagger-interview#Q28]] переиспользование через $ref; [[openapi-swagger-interview#Q12]] описание ответов."
+                "what_actually": "Path-параметры описываются в `parameters` с `in: path`; `requestBody` — для тела запроса.",
+                "source_of_confusion": "И параметры, и тело относятся ко входу операции, отсюда смешение.",
+                "if_it_were_true": "Если бы `id` шёл через `requestBody`, GET-запрос без тела не смог бы его передать.",
+                "how_it_should_be": "`{id}` в пути всегда описывается как `parameter` с `in: path` и `required: true`."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Каждый эндпоинт описывается одной строкой `path: method`, без возможности указать параметры или коды ответов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Под путём описывается полный объект операции с `parameters`, `requestBody` и `responses`.",
-                "source_of_confusion": "Краткость роутинга в коде создаёт впечатление, что в OAS тоже всё в одну строку.",
-                "if_it_were_true": "Если бы нельзя было описать `responses`, спецификация не годилась бы для генерации клиентов.",
-                "how_it_should_be": "Операция в `paths` — развёрнутый объект со всеми деталями запроса и ответов."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "`operationId` обязан совпадать у всех операций, чтобы инструменты группировали их вместе.",
@@ -282,17 +269,30 @@
                 "if_it_were_true": "Если бы id совпадали, генератор не смог бы дать методам разные имена.",
                 "how_it_should_be": "Уникальный `operationId` нужен именно для однозначного именования операций."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Под путём (`/users/{id}`) перечисляются HTTP-методы (`get`, `post`...), каждый с `summary`, `operationId`, `parameters`, `requestBody` и `responses` с кодами статуса и схемами через `$ref`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`operationId` уникален и становится именем метода при генерации клиента; `parameters` задают `in: path|query|header|cookie`, а ответы ссылаются на `components` через `$ref`.",
+                "example": "Для `GET /users/{id}` описывают path-параметр `id` (`required: true`), ответ `200` со схемой `User` и `404` через `$ref` на общий ответ `NotFound`.",
+                "when_to_apply": "Эту структуру пишут при contract-first дизайне и читают при отладке, когда нужно понять, какие коды и схемы возвращает операция.",
+                "edge_cases": "Забытый или неуникальный `operationId` ломает генерацию клиентов: методы получают сгенерированные имена вроде `usersIdGet`, теряя читаемость.",
+                "related": "[[openapi-swagger-interview#Q4]] структура документа; [[openapi-swagger-interview#Q28]] переиспользование через $ref; [[openapi-swagger-interview#Q12]] описание ответов."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Параметр пути указывается через секцию `requestBody`, а не через `parameters` с `in: path`.",
+              "text": "Каждый эндпоинт описывается одной строкой `path: method`, без возможности указать параметры или коды ответов.",
               "correct": false,
               "sections": {
-                "what_actually": "Path-параметры описываются в `parameters` с `in: path`; `requestBody` — для тела запроса.",
-                "source_of_confusion": "И параметры, и тело относятся ко входу операции, отсюда смешение.",
-                "if_it_were_true": "Если бы `id` шёл через `requestBody`, GET-запрос без тела не смог бы его передать.",
-                "how_it_should_be": "`{id}` в пути всегда описывается как `parameter` с `in: path` и `required: true`."
+                "what_actually": "Под путём описывается полный объект операции с `parameters`, `requestBody` и `responses`.",
+                "source_of_confusion": "Краткость роутинга в коде создаёт впечатление, что в OAS тоже всё в одну строку.",
+                "if_it_were_true": "Если бы нельзя было описать `responses`, спецификация не годилась бы для генерации клиентов.",
+                "how_it_should_be": "Операция в `paths` — развёрнутый объект со всеми деталями запроса и ответов."
               },
               "label": "D",
               "order": 3
@@ -321,6 +321,18 @@
               "order": 0
             },
             {
+              "text": "В `components` можно хранить только схемы данных (`schemas`); параметры и ответы там не поддерживаются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`components` поддерживает `parameters`, `responses`, `headers`, `examples` и другие типы, не только `schemas`.",
+                "source_of_confusion": "`schemas` — самая частая подсекция, отсюда впечатление, что она единственная.",
+                "if_it_were_true": "Если бы там были только схемы, нельзя было бы переиспользовать общий ответ `NotFound`.",
+                "how_it_should_be": "`components` содержит множество подсекций для разных переиспользуемых объектов."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "`components` хранит переиспользуемые объекты — `schemas`, `parameters`, `responses`, `requestBodies`, `headers`, `securitySchemes`, `examples`, `links`, `callbacks` — на которые ссылаются через `$ref`, избегая дублирования.",
               "correct": true,
               "sections": {
@@ -330,8 +342,8 @@
                 "edge_cases": "Циклические `$ref` внутри `components` допустимы для рекурсивных моделей, но некоторые генераторы кода обрабатывают их некорректно.",
                 "related": "[[openapi-swagger-interview#Q28]] механизм $ref; [[openapi-swagger-interview#Q5]] ссылки из paths; [[openapi-swagger-interview#Q39]] переиспользуемые примеры."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Объекты в `components` подключаются копированием их содержимого в каждую операцию вручную.",
@@ -341,18 +353,6 @@
                 "source_of_confusion": "Раскрытие `$ref` инструментами в плоский вид выглядит как копирование.",
                 "if_it_were_true": "Если бы нужно было копировать, `components` не давал бы преимущества над дублированием.",
                 "how_it_should_be": "Ссылка `$ref` указывает на компонент по пути, без физического копирования текста."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "В `components` можно хранить только схемы данных (`schemas`); параметры и ответы там не поддерживаются.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`components` поддерживает `parameters`, `responses`, `headers`, `examples` и другие типы, не только `schemas`.",
-                "source_of_confusion": "`schemas` — самая частая подсекция, отсюда впечатление, что она единственная.",
-                "if_it_were_true": "Если бы там были только схемы, нельзя было бы переиспользовать общий ответ `NotFound`.",
-                "how_it_should_be": "`components` содержит множество подсекций для разных переиспользуемых объектов."
               },
               "label": "D",
               "order": 3
@@ -369,6 +369,19 @@
           "question_text": "Что такое Swagger UI и как он работает?",
           "options": [
             {
+              "text": "`Swagger UI` — веб-приложение, которое загружает OpenAPI-документ (например, с `/v3/api-docs`), парсит его и строит интерактивную страницу с эндпоинтами и кнопкой `Try it out` для живых запросов.",
+              "correct": true,
+              "sections": {
+                "explanation": "UI читает `JSON`/`YAML`, рендерит операции, схемы и примеры; `Try it out` шлёт HTTP-запросы напрямую к API из браузера, поддерживая Bearer, OAuth2 и Basic-аутентификацию.",
+                "example": "В `springdoc` документация доступна на `GET /v3/api-docs`, а UI на `/swagger-ui.html`, который редиректит на `/swagger-ui/index.html`.",
+                "when_to_apply": "Применять для ручного исследования и тестирования API в dev/test; на проде Swagger UI обычно отключают или закрывают доступом.",
+                "edge_cases": "Запросы из `Try it out` идут напрямую к API, поэтому при неверной CORS-настройке или разных доменах они блокируются браузером.",
+                "related": "[[openapi-swagger-interview#Q3]] Swagger vs OpenAPI; [[openapi-swagger-interview#Q8]] springdoc и автоконфигурация; [[openapi-swagger-interview#Q15]] доступ к UI через Security."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "`Swagger UI` сам генерирует серверный код API на основе нарисованных пользователем форм.",
               "correct": false,
               "sections": {
@@ -377,8 +390,8 @@
                 "if_it_were_true": "Если бы UI генерировал сервер, не нужны были бы отдельные генераторы стабов.",
                 "how_it_should_be": "Swagger UI — только визуализация и тестирование, без генерации серверного кода."
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`Swagger UI` работает только с локальным файлом и не умеет загружать спецификацию по URL.",
@@ -388,19 +401,6 @@
                 "source_of_confusion": "Возможность открыть локальный файл в Swagger Editor смешивают с UI.",
                 "if_it_were_true": "Если бы UI не читал URL, он не показывал бы документацию работающего сервиса.",
                 "how_it_should_be": "Swagger UI получает спецификацию по сетевому адресу и строит UI динамически."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`Swagger UI` — веб-приложение, которое загружает OpenAPI-документ (например, с `/v3/api-docs`), парсит его и строит интерактивную страницу с эндпоинтами и кнопкой `Try it out` для живых запросов.",
-              "correct": true,
-              "sections": {
-                "explanation": "UI читает `JSON`/`YAML`, рендерит операции, схемы и примеры; `Try it out` шлёт HTTP-запросы напрямую к API из браузера, поддерживая Bearer, OAuth2 и Basic-аутентификацию.",
-                "example": "В `springdoc` документация доступна на `GET /v3/api-docs`, а UI на `/swagger-ui.html`, который редиректит на `/swagger-ui/index.html`.",
-                "when_to_apply": "Применять для ручного исследования и тестирования API в dev/test; на проде Swagger UI обычно отключают или закрывают доступом.",
-                "edge_cases": "Запросы из `Try it out` идут напрямую к API, поэтому при неверной CORS-настройке или разных доменах они блокируются браузером.",
-                "related": "[[openapi-swagger-interview#Q3]] Swagger vs OpenAPI; [[openapi-swagger-interview#Q8]] springdoc и автоконфигурация; [[openapi-swagger-interview#Q15]] доступ к UI через Security."
               },
               "label": "C",
               "order": 2
@@ -441,18 +441,6 @@
               "order": 0
             },
             {
-              "text": "Для работы springdoc нужно вручную реализовать эндпоинт `/v3/api-docs` в своём контроллере.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Эндпоинт `/v3/api-docs` создаётся автоконфигурацией springdoc автоматически.",
-                "source_of_confusion": "Привычка писать контроллеры руками создаёт впечатление, что и этот нужно писать.",
-                "if_it_were_true": "Если бы его писали вручную, терялся бы смысл автоконфигурации библиотеки.",
-                "how_it_should_be": "Стартер springdoc сам регистрирует эндпоинты документации при старте приложения."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "springdoc 1.x и springdoc 2.x взаимозаменяемы и работают на любой версии Spring Boot.",
               "correct": false,
               "sections": {
@@ -460,6 +448,18 @@
                 "source_of_confusion": "Общее имя библиотеки создаёт иллюзию свободной совместимости версий.",
                 "if_it_were_true": "Если бы они были взаимозаменяемы, миграция Boot 2→3 не требовала смены springdoc.",
                 "how_it_should_be": "Под каждую мажорную версию Spring Boot нужна соответствующая мажорная версия springdoc."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Для работы springdoc нужно вручную реализовать эндпоинт `/v3/api-docs` в своём контроллере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эндпоинт `/v3/api-docs` создаётся автоконфигурацией springdoc автоматически.",
+                "source_of_confusion": "Привычка писать контроллеры руками создаёт впечатление, что и этот нужно писать.",
+                "if_it_were_true": "Если бы его писали вручную, терялся бы смысл автоконфигурации библиотеки.",
+                "how_it_should_be": "Стартер springdoc сам регистрирует эндпоинты документации при старте приложения."
               },
               "label": "C",
               "order": 2
@@ -489,6 +489,18 @@
           "question_text": "Как подключить springdoc-openapi к Spring Boot проекту?",
           "options": [
             {
+              "text": "Настройки `springdoc.*` в `application.yml` игнорируются — конфигурировать можно только Java-кодом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "springdoc читает богатый набор свойств `springdoc.*` из `application.yml`.",
+                "source_of_confusion": "Привычка к Java-конфигурации создаёт впечатление, что YAML не поддерживается.",
+                "if_it_were_true": "Если бы YAML игнорировался, не существовало бы свойств вроде `springdoc.api-docs.path`.",
+                "how_it_should_be": "Многие параметры (`packages-to-scan`, `swagger-ui.enabled`) задаются именно через YAML."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Добавить зависимость стартера, опционально описать метаданные через бин `OpenAPI` (`Info`, `Contact`) и настроить поведение через `springdoc.*` в `application.yml` (`packages-to-scan`, `paths-to-match`, `swagger-ui`).",
               "correct": true,
               "sections": {
@@ -498,32 +510,8 @@
                 "edge_cases": "Без `paths-to-match`/`packages-to-scan` springdoc документирует все контроллеры, включая служебные и actuator, если включён `show-actuator`.",
                 "related": "[[openapi-swagger-interview#Q8]] зависимость springdoc; [[openapi-swagger-interview#Q23]] GroupedOpenApi для групп; [[openapi-swagger-interview#Q22]] кастомизация через OpenApiCustomizer."
               },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Подключение требует обязательного написания бина `OpenAPI` — без него документация не сгенерируется.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Бин `OpenAPI` опционален: без него springdoc сгенерирует документацию с дефолтными метаданными.",
-                "source_of_confusion": "Примеры с кастомным бином создают впечатление его обязательности.",
-                "if_it_were_true": "Если бы бин был обязателен, базовая автоконфигурация одной зависимостью не работала бы.",
-                "how_it_should_be": "Достаточно добавить зависимость; бин `OpenAPI` нужен лишь для кастомных метаданных."
-              },
               "label": "B",
               "order": 1
-            },
-            {
-              "text": "Настройки `springdoc.*` в `application.yml` игнорируются — конфигурировать можно только Java-кодом.",
-              "correct": false,
-              "sections": {
-                "what_actually": "springdoc читает богатый набор свойств `springdoc.*` из `application.yml`.",
-                "source_of_confusion": "Привычка к Java-конфигурации создаёт впечатление, что YAML не поддерживается.",
-                "if_it_were_true": "Если бы YAML игнорировался, не существовало бы свойств вроде `springdoc.api-docs.path`.",
-                "how_it_should_be": "Многие параметры (`packages-to-scan`, `swagger-ui.enabled`) задаются именно через YAML."
-              },
-              "label": "C",
-              "order": 2
             },
             {
               "text": "`packages-to-scan` указывает springdoc, какие зависимости Maven подключить к проекту.",
@@ -533,6 +521,18 @@
                 "source_of_confusion": "Слово `packages` ассоциируется с пакетами артефактов.",
                 "if_it_were_true": "Если бы это были Maven-зависимости, свойство дублировало бы `pom.xml`.",
                 "how_it_should_be": "`packages-to-scan` сужает область поиска `@RestController` определёнными пакетами кода."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Подключение требует обязательного написания бина `OpenAPI` — без него документация не сгенерируется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бин `OpenAPI` опционален: без него springdoc сгенерирует документацию с дефолтными метаданными.",
+                "source_of_confusion": "Примеры с кастомным бином создают впечатление его обязательности.",
+                "if_it_were_true": "Если бы бин был обязателен, базовая автоконфигурация одной зависимостью не работала бы.",
+                "how_it_should_be": "Достаточно добавить зависимость; бин `OpenAPI` нужен лишь для кастомных метаданных."
               },
               "label": "D",
               "order": 3
@@ -549,6 +549,30 @@
           "question_text": "Аннотация @Operation: назначение и параметры?",
           "options": [
             {
+              "text": "Параметр `operationId` в `@Operation` влияет только на цвет кнопки в Swagger UI.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`operationId` задаёт уникальный идентификатор операции и имя метода при генерации клиента.",
+                "source_of_confusion": "Косметические настройки UI смешивают с семантикой `operationId`.",
+                "if_it_were_true": "Если бы он влиял лишь на цвет, его уникальность не была бы обязательной.",
+                "how_it_should_be": "`operationId` — функциональное поле, критичное для codegen и ссылок `links`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`description` в `@Operation` поддерживает только plain-text, любые символы Markdown экранируются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`description` поддерживает Markdown, который Swagger UI рендерит как форматированный текст.",
+                "source_of_confusion": "Plain-text вид в исходнике создаёт впечатление отсутствия форматирования.",
+                "if_it_were_true": "Если бы Markdown экранировался, нельзя было бы делать списки и ссылки в описании.",
+                "how_it_should_be": "Поле `description` рендерится как Markdown в Swagger UI и Redoc."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "`@Operation` навешивается на класс контроллера и описывает сразу все его методы одинаково.",
               "correct": false,
               "sections": {
@@ -557,8 +581,8 @@
                 "if_it_were_true": "Если бы она описывала все методы, нельзя было бы задать разный `summary` каждому.",
                 "how_it_should_be": "`@Operation` применяется к конкретному методу-эндпоинту, а не к контроллеру целиком."
               },
-              "label": "A",
-              "order": 0
+              "label": "C",
+              "order": 2
             },
             {
               "text": "`@Operation` описывает одну HTTP-операцию: `summary`, `description` (с Markdown), `operationId`, `tags`, `responses`, `deprecated` и `hidden`, обогащая автоматически выведенные springdoc данные.",
@@ -569,30 +593,6 @@
                 "when_to_apply": "Применять, когда автогенерируемых имени и описания недостаточно: нужен человекочитаемый текст, явный `operationId` или скрытие операции.",
                 "edge_cases": "Если `operationId` в `@Operation` дублирует чужой, спецификация становится невалидной, а генератор клиента падает или переименовывает методы.",
                 "related": "[[openapi-swagger-interview#Q11]] @Parameter и @Schema; [[openapi-swagger-interview#Q12]] @ApiResponse; [[openapi-swagger-interview#Q40]] скрытие через hidden."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Параметр `operationId` в `@Operation` влияет только на цвет кнопки в Swagger UI.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`operationId` задаёт уникальный идентификатор операции и имя метода при генерации клиента.",
-                "source_of_confusion": "Косметические настройки UI смешивают с семантикой `operationId`.",
-                "if_it_were_true": "Если бы он влиял лишь на цвет, его уникальность не была бы обязательной.",
-                "how_it_should_be": "`operationId` — функциональное поле, критичное для codegen и ссылок `links`."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`description` в `@Operation` поддерживает только plain-text, любые символы Markdown экранируются.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`description` поддерживает Markdown, который Swagger UI рендерит как форматированный текст.",
-                "source_of_confusion": "Plain-text вид в исходнике создаёт впечатление отсутствия форматирования.",
-                "if_it_were_true": "Если бы Markdown экранировался, нельзя было бы делать списки и ссылки в описании.",
-                "how_it_should_be": "Поле `description` рендерится как Markdown в Swagger UI и Redoc."
               },
               "label": "D",
               "order": 3
@@ -621,13 +621,13 @@
               "order": 0
             },
             {
-              "text": "`@Parameter(hidden = true)` физически удаляет параметр из сигнатуры метода контроллера.",
+              "text": "`@Schema(format = \"email\")` автоматически валидирует входящий email и отклоняет невалидный.",
               "correct": false,
               "sections": {
-                "what_actually": "`hidden = true` скрывает параметр только из документации; в коде он остаётся рабочим.",
-                "source_of_confusion": "Слово `hidden` создаёт впечатление удаления из обработки.",
-                "if_it_were_true": "Если бы параметр удалялся, `@AuthenticationPrincipal` перестал бы инжектиться.",
-                "how_it_should_be": "Параметр продолжает приниматься контроллером, но не показывается в Swagger UI."
+                "what_actually": "`format` влияет только на документацию; валидацию выполняют `@Email` из Bean Validation.",
+                "source_of_confusion": "Близость документации и валидации создаёт ложное ощущение проверки `format`.",
+                "if_it_were_true": "Если бы `format` валидировал, не нужны были бы аннотации `jakarta.validation`.",
+                "how_it_should_be": "За реальную проверку отвечает `@Email`/`@Pattern`, а `@Schema(format)` лишь описывает."
               },
               "label": "B",
               "order": 1
@@ -646,13 +646,13 @@
               "order": 2
             },
             {
-              "text": "`@Schema(format = \"email\")` автоматически валидирует входящий email и отклоняет невалидный.",
+              "text": "`@Parameter(hidden = true)` физически удаляет параметр из сигнатуры метода контроллера.",
               "correct": false,
               "sections": {
-                "what_actually": "`format` влияет только на документацию; валидацию выполняют `@Email` из Bean Validation.",
-                "source_of_confusion": "Близость документации и валидации создаёт ложное ощущение проверки `format`.",
-                "if_it_were_true": "Если бы `format` валидировал, не нужны были бы аннотации `jakarta.validation`.",
-                "how_it_should_be": "За реальную проверку отвечает `@Email`/`@Pattern`, а `@Schema(format)` лишь описывает."
+                "what_actually": "`hidden = true` скрывает параметр только из документации; в коде он остаётся рабочим.",
+                "source_of_confusion": "Слово `hidden` создаёт впечатление удаления из обработки.",
+                "if_it_were_true": "Если бы параметр удалялся, `@AuthenticationPrincipal` перестал бы инжектиться.",
+                "how_it_should_be": "Параметр продолжает приниматься контроллером, но не показывается в Swagger UI."
               },
               "label": "D",
               "order": 3
@@ -669,13 +669,14 @@
           "question_text": "Аннотация @ApiResponse и @ApiResponses?",
           "options": [
             {
-              "text": "`@ApiResponse` можно указать только один раз на операцию — описать несколько кодов статуса нельзя.",
-              "correct": false,
+              "text": "`@ApiResponse` описывает один возможный HTTP-ответ (`responseCode`, `description`, `content` со схемой и примерами, `headers`), а `@ApiResponses` группирует несколько таких ответов для одной операции.",
+              "correct": true,
               "sections": {
-                "what_actually": "Несколько `@ApiResponse` оборачивают в `@ApiResponses` или повторяют для разных кодов.",
-                "source_of_confusion": "Единственное число в имени аннотации создаёт впечатление лимита в один ответ.",
-                "if_it_were_true": "Если бы ответ был один, нельзя было бы задокументировать `200` и `404` сразу.",
-                "how_it_should_be": "Для нескольких кодов используют контейнер `@ApiResponses` со списком ответов."
+                "explanation": "Внутри `@ApiResponse` через `@Content(schema = @Schema(implementation = UserDto.class))` указывают тип тела, через `@ExampleObject` — пример, через `@Header` — заголовок вроде `Location`.",
+                "example": "Для `POST /users` описывают `201` с `UserDto` и заголовком `Location`, `400` со схемой `ProblemDetail` и `409` для занятого email.",
+                "when_to_apply": "Применять, когда нужно документировать ошибочные коды и форматы ответов, которые springdoc не выводит из сигнатуры метода.",
+                "edge_cases": "springdoc по умолчанию выводит только `200`-ответ из типа возврата; коды ошибок (`400`, `404`) приходится описывать `@ApiResponse` явно.",
+                "related": "[[openapi-swagger-interview#Q10]] @Operation; [[openapi-swagger-interview#Q31]] документирование ошибок ProblemDetail; [[openapi-swagger-interview#Q39]] множественные примеры."
               },
               "label": "A",
               "order": 0
@@ -705,14 +706,13 @@
               "order": 2
             },
             {
-              "text": "`@ApiResponse` описывает один возможный HTTP-ответ (`responseCode`, `description`, `content` со схемой и примерами, `headers`), а `@ApiResponses` группирует несколько таких ответов для одной операции.",
-              "correct": true,
+              "text": "`@ApiResponse` можно указать только один раз на операцию — описать несколько кодов статуса нельзя.",
+              "correct": false,
               "sections": {
-                "explanation": "Внутри `@ApiResponse` через `@Content(schema = @Schema(implementation = UserDto.class))` указывают тип тела, через `@ExampleObject` — пример, через `@Header` — заголовок вроде `Location`.",
-                "example": "Для `POST /users` описывают `201` с `UserDto` и заголовком `Location`, `400` со схемой `ProblemDetail` и `409` для занятого email.",
-                "when_to_apply": "Применять, когда нужно документировать ошибочные коды и форматы ответов, которые springdoc не выводит из сигнатуры метода.",
-                "edge_cases": "springdoc по умолчанию выводит только `200`-ответ из типа возврата; коды ошибок (`400`, `404`) приходится описывать `@ApiResponse` явно.",
-                "related": "[[openapi-swagger-interview#Q10]] @Operation; [[openapi-swagger-interview#Q31]] документирование ошибок ProblemDetail; [[openapi-swagger-interview#Q39]] множественные примеры."
+                "what_actually": "Несколько `@ApiResponse` оборачивают в `@ApiResponses` или повторяют для разных кодов.",
+                "source_of_confusion": "Единственное число в имени аннотации создаёт впечатление лимита в один ответ.",
+                "if_it_were_true": "Если бы ответ был один, нельзя было бы задокументировать `200` и `404` сразу.",
+                "how_it_should_be": "Для нескольких кодов используют контейнер `@ApiResponses` со списком ответов."
               },
               "label": "D",
               "order": 3
@@ -729,31 +729,6 @@
           "question_text": "Аннотации @Tag и @Tags для группировки?",
           "options": [
             {
-              "text": "`@Tag` группирует операции в Swagger UI по имени; на уровне контроллера задаёт группу всем методам, на уровне метода переопределяет, а глобальные теги в бине `OpenAPI` задают описание и порядок групп.",
-              "correct": true,
-              "sections": {
-                "explanation": "`@Tag(name = \"Users\")` над контроллером собирает его операции в раздел Users; `@Operation(tags = {\"Users\", \"Admin\"})` помещает метод сразу в две группы.",
-                "example": "Над `UserController` ставят `@Tag(name = \"Users\", description = \"Операции с пользователями\")`, а порядок задают `addTagsItem` в бине `OpenAPI`.",
-                "when_to_apply": "Применять для логической организации крупного API: десятки операций группируют в читаемые разделы по доменам.",
-                "edge_cases": "Если имя тега в `@Tag` и в `@Operation(tags=...)` не совпадает по регистру, springdoc создаёт два разных раздела вместо одного.",
-                "related": "[[openapi-swagger-interview#Q10]] @Operation; [[openapi-swagger-interview#Q23]] GroupedOpenApi vs теги; [[openapi-swagger-interview#Q9]] глобальная конфигурация OpenAPI."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`@Tag` физически разбивает API на отдельные микросервисы по группам операций.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@Tag` — только визуальная группировка в документации; на деплой и сервисы не влияет.",
-                "source_of_confusion": "Слово «группировка» вызывает ассоциацию с разбиением на сервисы.",
-                "if_it_were_true": "Если бы `@Tag` делил на микросервисы, одно приложение не имело бы несколько тегов.",
-                "how_it_should_be": "Теги организуют отображение операций внутри одного приложения и одной спецификации."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Имя тега в `@Tag` обязано совпадать с именем Java-класса контроллера, иначе springdoc упадёт.",
               "correct": false,
               "sections": {
@@ -762,8 +737,8 @@
                 "if_it_were_true": "Если бы совпадение требовалось, нельзя было бы дать группе человекочитаемое имя.",
                 "how_it_should_be": "`name` в `@Tag` — свободная строка, выбираемая ради читаемости документации."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Порядок групп в Swagger UI задаётся алфавитом и не поддаётся настройке.",
@@ -773,6 +748,31 @@
                 "source_of_confusion": "Дефолтная алфавитная сортировка создаёт впечатление жёсткого порядка.",
                 "if_it_were_true": "Если бы порядок не настраивался, не было бы смысла объявлять глобальные теги.",
                 "how_it_should_be": "Объявление тегов в бине `OpenAPI` задаёт желаемую последовательность разделов."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`@Tag` группирует операции в Swagger UI по имени; на уровне контроллера задаёт группу всем методам, на уровне метода переопределяет, а глобальные теги в бине `OpenAPI` задают описание и порядок групп.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@Tag(name = \"Users\")` над контроллером собирает его операции в раздел Users; `@Operation(tags = {\"Users\", \"Admin\"})` помещает метод сразу в две группы.",
+                "example": "Над `UserController` ставят `@Tag(name = \"Users\", description = \"Операции с пользователями\")`, а порядок задают `addTagsItem` в бине `OpenAPI`.",
+                "when_to_apply": "Применять для логической организации крупного API: десятки операций группируют в читаемые разделы по доменам.",
+                "edge_cases": "Если имя тега в `@Tag` и в `@Operation(tags=...)` не совпадает по регистру, springdoc создаёт два разных раздела вместо одного.",
+                "related": "[[openapi-swagger-interview#Q10]] @Operation; [[openapi-swagger-interview#Q23]] GroupedOpenApi vs теги; [[openapi-swagger-interview#Q9]] глобальная конфигурация OpenAPI."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`@Tag` физически разбивает API на отдельные микросервисы по группам операций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Tag` — только визуальная группировка в документации; на деплой и сервисы не влияет.",
+                "source_of_confusion": "Слово «группировка» вызывает ассоциацию с разбиением на сервисы.",
+                "if_it_were_true": "Если бы `@Tag` делил на микросервисы, одно приложение не имело бы несколько тегов.",
+                "how_it_should_be": "Теги организуют отображение операций внутри одного приложения и одной спецификации."
               },
               "label": "D",
               "order": 3
@@ -789,16 +789,28 @@
           "question_text": "@SecurityScheme и @SecurityRequirement?",
           "options": [
             {
-              "text": "`@SecurityRequirement` сам реализует проверку JWT-токена и отклоняет неавторизованные запросы.",
+              "text": "`@SecurityScheme` можно объявить только в файле `openapi.yaml`, в Java-аннотациях её нет.",
               "correct": false,
               "sections": {
-                "what_actually": "Проверку токена делает Spring Security; `@SecurityRequirement` лишь документирует требование.",
-                "source_of_confusion": "Имя со словом `Requirement` создаёт впечатление принудительной проверки.",
-                "if_it_were_true": "Если бы он проверял токен, не нужна была бы конфигурация `SecurityFilterChain`.",
-                "how_it_should_be": "Аннотация описывает ожидаемую аутентификацию для документации, без рантайм-проверки."
+                "what_actually": "`@SecurityScheme` — реальная Java-аннотация springdoc, применяемая к конфигурации.",
+                "source_of_confusion": "Возможность описать схему в YAML смешивают с code-first-аннотацией.",
+                "if_it_were_true": "Если бы её не было в Java, code-first проекты не смогли бы документировать auth.",
+                "how_it_should_be": "springdoc предоставляет `@SecurityScheme` как аннотацию для объявления схемы из кода."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "Схема безопасности применяется глобально автоматически, как только объявлен `@SecurityScheme`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Объявление схемы не применяет её: нужно `@SecurityRequirement` или глобальный `security`.",
+                "source_of_confusion": "Объявление и применение кажутся одним шагом.",
+                "if_it_were_true": "Если бы применялось автоматически, публичные эндпоинты требовали бы токен по ошибке.",
+                "how_it_should_be": "После `@SecurityScheme` требование включают явно на операции или глобально."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`@SecurityScheme` объявляет схему аутентификации (HTTP Bearer, OAuth2, API key) на уровне приложения, а `@SecurityRequirement` применяет её к операции или классу; глобально требование задаётся через `OpenAPI.security(...)`.",
@@ -810,29 +822,17 @@
                 "edge_cases": "`@SecurityScheme`/`@SecurityRequirement` только документируют требования: реальную проверку токена выполняет Spring Security, а не springdoc.",
                 "related": "[[openapi-swagger-interview#Q15]] springdoc и Spring Security; [[openapi-swagger-interview#Q32]] OAuth2 в Swagger UI; [[openapi-swagger-interview#Q31]] ответы об ошибках."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`@SecurityScheme` можно объявить только в файле `openapi.yaml`, в Java-аннотациях её нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@SecurityScheme` — реальная Java-аннотация springdoc, применяемая к конфигурации.",
-                "source_of_confusion": "Возможность описать схему в YAML смешивают с code-first-аннотацией.",
-                "if_it_were_true": "Если бы её не было в Java, code-first проекты не смогли бы документировать auth.",
-                "how_it_should_be": "springdoc предоставляет `@SecurityScheme` как аннотацию для объявления схемы из кода."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Схема безопасности применяется глобально автоматически, как только объявлен `@SecurityScheme`.",
+              "text": "`@SecurityRequirement` сам реализует проверку JWT-токена и отклоняет неавторизованные запросы.",
               "correct": false,
               "sections": {
-                "what_actually": "Объявление схемы не применяет её: нужно `@SecurityRequirement` или глобальный `security`.",
-                "source_of_confusion": "Объявление и применение кажутся одним шагом.",
-                "if_it_were_true": "Если бы применялось автоматически, публичные эндпоинты требовали бы токен по ошибке.",
-                "how_it_should_be": "После `@SecurityScheme` требование включают явно на операции или глобально."
+                "what_actually": "Проверку токена делает Spring Security; `@SecurityRequirement` лишь документирует требование.",
+                "source_of_confusion": "Имя со словом `Requirement` создаёт впечатление принудительной проверки.",
+                "if_it_were_true": "Если бы он проверял токен, не нужна была бы конфигурация `SecurityFilterChain`.",
+                "how_it_should_be": "Аннотация описывает ожидаемую аутентификацию для документации, без рантайм-проверки."
               },
               "label": "D",
               "order": 3
@@ -849,18 +849,6 @@
           "question_text": "springdoc + Spring Security: как настроить доступ к документации?",
           "options": [
             {
-              "text": "springdoc автоматически отключает Spring Security для своих путей без всякой настройки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "springdoc не управляет Security; пути документации нужно открывать вручную в `SecurityFilterChain`.",
-                "source_of_confusion": "Удобство автоконфигурации springdoc создаёт впечатление, что он трогает Security.",
-                "if_it_were_true": "Если бы он отключал Security, документация была бы открыта даже когда это нежелательно.",
-                "how_it_should_be": "Доступ к `/v3/api-docs` и `/swagger-ui` настраивает разработчик через `permitAll`."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "На проде Swagger UI безопасен по умолчанию и его никогда не нужно отключать.",
               "correct": false,
               "sections": {
@@ -869,8 +857,32 @@
                 "if_it_were_true": "Если бы он был безопасен, не существовало бы профиля `prod` с `enabled: false`.",
                 "how_it_should_be": "Рекомендуется выключать документацию на проде или ограничивать доступ по IP/auth."
               },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "springdoc автоматически отключает Spring Security для своих путей без всякой настройки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "springdoc не управляет Security; пути документации нужно открывать вручную в `SecurityFilterChain`.",
+                "source_of_confusion": "Удобство автоконфигурации springdoc создаёт впечатление, что он трогает Security.",
+                "if_it_were_true": "Если бы он отключал Security, документация была бы открыта даже когда это нежелательно.",
+                "how_it_should_be": "Доступ к `/v3/api-docs` и `/swagger-ui` настраивает разработчик через `permitAll`."
+              },
               "label": "B",
               "order": 1
+            },
+            {
+              "text": "Открыть нужно только `/swagger-ui.html`; путь `/v3/api-docs` Security пропускает сам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужно открыть и `/v3/api-docs/**`: без спецификации UI загрузится, но останется пустым.",
+                "source_of_confusion": "Видимость только HTML-страницы создаёт впечатление, что данные грузятся свободно.",
+                "if_it_were_true": "Если бы `/v3/api-docs` был открыт сам, UI не падал бы с 401 при попытке загрузки.",
+                "how_it_should_be": "Открывать надо оба пути — и UI, и эндпоинт спецификации `/v3/api-docs/**`."
+              },
+              "label": "C",
+              "order": 2
             },
             {
               "text": "По умолчанию Security блокирует пути `/v3/api-docs` и `/swagger-ui`; их открывают через `permitAll()` в `SecurityFilterChain`, а на проде документацию обычно отключают (`springdoc.api-docs.enabled: false`) или ограничивают по IP.",
@@ -881,18 +893,6 @@
                 "when_to_apply": "Применять в любом проекте со Spring Security, иначе после старта Swagger UI вернёт 401/403 и не загрузит спецификацию.",
                 "edge_cases": "Группировка через `GroupedOpenApi` добавляет пути вида `/v3/api-docs/public` — их тоже нужно включить в `permitAll`, иначе группы не откроются.",
                 "related": "[[openapi-swagger-interview#Q7]] как работает Swagger UI; [[openapi-swagger-interview#Q14]] схемы безопасности; [[openapi-swagger-interview#Q32]] OAuth2 в UI."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Открыть нужно только `/swagger-ui.html`; путь `/v3/api-docs` Security пропускает сам.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Нужно открыть и `/v3/api-docs/**`: без спецификации UI загрузится, но останется пустым.",
-                "source_of_confusion": "Видимость только HTML-страницы создаёт впечатление, что данные грузятся свободно.",
-                "if_it_were_true": "Если бы `/v3/api-docs` был открыт сам, UI не падал бы с 401 при попытке загрузки.",
-                "how_it_should_be": "Открывать надо оба пути — и UI, и эндпоинт спецификации `/v3/api-docs/**`."
               },
               "label": "D",
               "order": 3
@@ -909,28 +909,17 @@
           "question_text": "Contract-first подход: определение и преимущества?",
           "options": [
             {
-              "text": "Contract-first означает, что сначала пишут код контроллеров, а спецификация генерируется из него.",
-              "correct": false,
+              "text": "Contract-first (API-first) — сначала пишут `openapi.yaml`, затем генерируют серверные интерфейсы и клиентские SDK; спецификация служит единым источником правды и согласуется командами до написания кода.",
+              "correct": true,
               "sections": {
-                "what_actually": "Это описание code-first; в contract-first спецификация первична, а код вторичен.",
-                "source_of_confusion": "Похожесть названий contract-first и code-first провоцирует перепутать порядок.",
-                "if_it_were_true": "Если бы код был первым, не было бы параллельной разработки по согласованному контракту.",
-                "how_it_should_be": "В contract-first сначала пишут `openapi.yaml`, и только затем генерируют код."
+                "explanation": "Из согласованного контракта генератор создаёт интерфейсы, которые реализует backend, и SDK для потребителей, что даёт параллельную разработку frontend и backend.",
+                "example": "Команды утверждают `openapi.yaml`, `openapi-generator-maven-plugin` создаёт `UsersApi`, разработчик реализует его, а фронтенд параллельно генерирует TypeScript-клиент.",
+                "when_to_apply": "Применять для публичных API и систем с несколькими потребителями, где стабильность и осознанный дизайн контракта важнее скорости старта.",
+                "edge_cases": "Дисциплина страдает, если разработчики правят сгенерированный код вручную вместо спецификации — тогда контракт перестаёт быть источником правды.",
+                "related": "[[openapi-swagger-interview#Q17]] code-first подход; [[openapi-swagger-interview#Q18]] выбор между подходами; [[openapi-swagger-interview#Q35]] API-first пайплайн."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Главное преимущество contract-first — отсутствие необходимости писать YAML-спецификацию.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот, contract-first требует ручного написания и согласования `openapi.yaml`.",
-                "source_of_confusion": "Желание избежать YAML смешивают с преимуществами подхода.",
-                "if_it_were_true": "Если бы YAML не писали, не существовало бы единого источника правды для генерации.",
-                "how_it_should_be": "Преимущество подхода — стабильный контракт и параллельная разработка, ценой написания YAML."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Contract-first исключает использование `openapi-generator`, требуя ручной реализации клиентов.",
@@ -941,18 +930,29 @@
                 "if_it_were_true": "Если бы генератор исключался, терялась бы главная выгода — автогенерация из контракта.",
                 "how_it_should_be": "Генерация серверных интерфейсов и клиентов — ключевой шаг contract-first пайплайна."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Contract-first означает, что сначала пишут код контроллеров, а спецификация генерируется из него.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание code-first; в contract-first спецификация первична, а код вторичен.",
+                "source_of_confusion": "Похожесть названий contract-first и code-first провоцирует перепутать порядок.",
+                "if_it_were_true": "Если бы код был первым, не было бы параллельной разработки по согласованному контракту.",
+                "how_it_should_be": "В contract-first сначала пишут `openapi.yaml`, и только затем генерируют код."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Contract-first (API-first) — сначала пишут `openapi.yaml`, затем генерируют серверные интерфейсы и клиентские SDK; спецификация служит единым источником правды и согласуется командами до написания кода.",
-              "correct": true,
+              "text": "Главное преимущество contract-first — отсутствие необходимости писать YAML-спецификацию.",
+              "correct": false,
               "sections": {
-                "explanation": "Из согласованного контракта генератор создаёт интерфейсы, которые реализует backend, и SDK для потребителей, что даёт параллельную разработку frontend и backend.",
-                "example": "Команды утверждают `openapi.yaml`, `openapi-generator-maven-plugin` создаёт `UsersApi`, разработчик реализует его, а фронтенд параллельно генерирует TypeScript-клиент.",
-                "when_to_apply": "Применять для публичных API и систем с несколькими потребителями, где стабильность и осознанный дизайн контракта важнее скорости старта.",
-                "edge_cases": "Дисциплина страдает, если разработчики правят сгенерированный код вручную вместо спецификации — тогда контракт перестаёт быть источником правды.",
-                "related": "[[openapi-swagger-interview#Q17]] code-first подход; [[openapi-swagger-interview#Q18]] выбор между подходами; [[openapi-swagger-interview#Q35]] API-first пайплайн."
+                "what_actually": "Наоборот, contract-first требует ручного написания и согласования `openapi.yaml`.",
+                "source_of_confusion": "Желание избежать YAML смешивают с преимуществами подхода.",
+                "if_it_were_true": "Если бы YAML не писали, не существовало бы единого источника правды для генерации.",
+                "how_it_should_be": "Преимущество подхода — стабильный контракт и параллельная разработка, ценой написания YAML."
               },
               "label": "D",
               "order": 3
@@ -969,6 +969,18 @@
           "question_text": "Code-first подход: определение и компромиссы?",
           "options": [
             {
+              "text": "Главный недостаток code-first — документация постоянно отстаёт от реального кода.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот, документация всегда синхронна с кодом, так как генерируется из него.",
+                "source_of_confusion": "Проблема устаревания контракта в contract-first переносится на code-first ошибочно.",
+                "if_it_were_true": "Если бы документация отставала, не было бы преимущества автогенерации из кода.",
+                "how_it_should_be": "В code-first документация актуальна по определению; недостаток — дизайн диктует реализация."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Code-first — пишут код контроллеров, а документация генерируется автоматически через `springdoc-openapi`; быстрый старт и всегда актуальная документация, но дизайн API диктуется реализацией.",
               "correct": true,
               "sections": {
@@ -978,32 +990,8 @@
                 "edge_cases": "Меняя код, легко незаметно сломать контракт для потребителей; без backward-compat-проверок изменение сигнатуры мгновенно ломает клиентов.",
                 "related": "[[openapi-swagger-interview#Q16]] contract-first подход; [[openapi-swagger-interview#Q18]] выбор между подходами; [[openapi-swagger-interview#Q8]] springdoc автоконфигурация."
               },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Code-first требует сначала согласовать спецификацию, и только потом писать контроллеры.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это contract-first; в code-first код пишут первым, а спецификация генерируется из него.",
-                "source_of_confusion": "Похожие названия подходов провоцируют перепутать их порядок.",
-                "if_it_were_true": "Если бы спецификацию согласовывали первой, исчезло бы преимущество быстрого старта.",
-                "how_it_should_be": "В code-first контроллеры пишут сразу, а документация выводится автоматически."
-              },
               "label": "B",
               "order": 1
-            },
-            {
-              "text": "Главный недостаток code-first — документация постоянно отстаёт от реального кода.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот, документация всегда синхронна с кодом, так как генерируется из него.",
-                "source_of_confusion": "Проблема устаревания контракта в contract-first переносится на code-first ошибочно.",
-                "if_it_were_true": "Если бы документация отставала, не было бы преимущества автогенерации из кода.",
-                "how_it_should_be": "В code-first документация актуальна по определению; недостаток — дизайн диктует реализация."
-              },
-              "label": "C",
-              "order": 2
             },
             {
               "text": "Code-first полностью исключает возможность параллельной работы frontend и backend.",
@@ -1013,6 +1001,18 @@
                 "source_of_confusion": "Отсутствие заранее зафиксированного контракта преувеличивают до полного запрета.",
                 "if_it_were_true": "Если бы параллельность была невозможна вовсе, code-first не применяли бы в командах.",
                 "how_it_should_be": "Code-first затрудняет, но не делает невозможной совместную работу при наличии раннего API."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Code-first требует сначала согласовать спецификацию, и только потом писать контроллеры.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это contract-first; в code-first код пишут первым, а спецификация генерируется из него.",
+                "source_of_confusion": "Похожие названия подходов провоцируют перепутать их порядок.",
+                "if_it_were_true": "Если бы спецификацию согласовывали первой, исчезло бы преимущество быстрого старта.",
+                "how_it_should_be": "В code-first контроллеры пишут сразу, а документация выводится автоматически."
               },
               "label": "D",
               "order": 3
@@ -1029,13 +1029,13 @@
           "question_text": "Contract-first vs Code-first: когда что выбирать?",
           "options": [
             {
-              "text": "Code-first всегда предпочтительнее contract-first, потому что не требует написания YAML.",
+              "text": "Contract-first подходит только для монолитов, а code-first — только для микросервисов.",
               "correct": false,
               "sections": {
-                "what_actually": "Для публичных API с многими потребителями contract-first выигрывает, несмотря на YAML.",
-                "source_of_confusion": "Удобство быстрого старта возводят в абсолютное правило.",
-                "if_it_were_true": "Если бы code-first всегда побеждал, публичные API не строили бы contract-first.",
-                "how_it_should_be": "Выбор зависит от контекста: аудитории, числа потребителей и размера команды."
+                "what_actually": "Оба подхода применимы и в монолитах, и в микросервисах; критерий — не стиль архитектуры.",
+                "source_of_confusion": "Связь подходов с типом архитектуры выдумана.",
+                "if_it_were_true": "Если бы это было так, нельзя было бы делать contract-first для отдельного микросервиса.",
+                "how_it_should_be": "Выбор определяется аудиторией и зрелостью команды, а не монолит это или микросервисы."
               },
               "label": "A",
               "order": 0
@@ -1054,18 +1054,6 @@
               "order": 1
             },
             {
-              "text": "Contract-first подходит только для монолитов, а code-first — только для микросервисов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Оба подхода применимы и в монолитах, и в микросервисах; критерий — не стиль архитектуры.",
-                "source_of_confusion": "Связь подходов с типом архитектуры выдумана.",
-                "if_it_were_true": "Если бы это было так, нельзя было бы делать contract-first для отдельного микросервиса.",
-                "how_it_should_be": "Выбор определяется аудиторией и зрелостью команды, а не монолит это или микросервисы."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "Гибридный путь невозможен: проект обязан с самого старта зафиксировать один подход навсегда.",
               "correct": false,
               "sections": {
@@ -1073,6 +1061,18 @@
                 "source_of_confusion": "Кажущаяся несовместимость подходов создаёт впечатление жёсткого выбора.",
                 "if_it_were_true": "Если бы гибрид был невозможен, нельзя было бы эволюционировать прототип в стабильный API.",
                 "how_it_should_be": "Переход между подходами по мере взросления API — нормальная и частая практика."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Code-first всегда предпочтительнее contract-first, потому что не требует написания YAML.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для публичных API с многими потребителями contract-first выигрывает, несмотря на YAML.",
+                "source_of_confusion": "Удобство быстрого старта возводят в абсолютное правило.",
+                "if_it_were_true": "Если бы code-first всегда побеждал, публичные API не строили бы contract-first.",
+                "how_it_should_be": "Выбор зависит от контекста: аудитории, числа потребителей и размера команды."
               },
               "label": "D",
               "order": 3
@@ -1101,18 +1101,6 @@
               "order": 0
             },
             {
-              "text": "`openapi-generator` запускается только вручную из IDE и не интегрируется в сборку Maven/Gradle.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Существуют официальные Maven- и Gradle-плагины, встраивающие генерацию в сборку.",
-                "source_of_confusion": "CLI-запуск как самый наглядный способ создаёт впечатление отсутствия интеграции.",
-                "if_it_were_true": "Если бы плагинов не было, нельзя было бы регенерировать код на каждой сборке.",
-                "how_it_should_be": "`openapi-generator-maven-plugin` запускает генерацию автоматически на `generate-sources`."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`openapi-generator` — инструмент генерации кода (клиентов и серверов) из OpenAPI-спецификации для 50+ языков; запускается через CLI, Maven/Gradle-плагин с указанием генератора (`-g`), входа (`-i`) и выхода (`-o`).",
               "correct": true,
               "sections": {
@@ -1121,6 +1109,18 @@
                 "when_to_apply": "Применять в contract-first/API-first пайплайнах, чтобы из единого контракта получать согласованные клиенты и серверные стабы автоматически.",
                 "edge_cases": "Разные версии генератора дают разный код при том же контракте; обновление версии без фиксации может сломать сборку из-за изменившихся шаблонов.",
                 "related": "[[openapi-swagger-interview#Q20]] серверные стабы; [[openapi-swagger-interview#Q36]] delegate pattern; [[openapi-swagger-interview#Q37]] кастомизация шаблонов."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`openapi-generator` запускается только вручную из IDE и не интегрируется в сборку Maven/Gradle.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Существуют официальные Maven- и Gradle-плагины, встраивающие генерацию в сборку.",
+                "source_of_confusion": "CLI-запуск как самый наглядный способ создаёт впечатление отсутствия интеграции.",
+                "if_it_were_true": "Если бы плагинов не было, нельзя было бы регенерировать код на каждой сборке.",
+                "how_it_should_be": "`openapi-generator-maven-plugin` запускает генерацию автоматически на `generate-sources`."
               },
               "label": "C",
               "order": 2
@@ -1149,13 +1149,14 @@
           "question_text": "Генерация серверных стабов через openapi-generator?",
           "options": [
             {
-              "text": "Генератор `spring` создаёт полностью готовый сервис с бизнес-логикой, реализовывать ничего не нужно.",
-              "correct": false,
+              "text": "Генератор `spring` с `interfaceOnly=true` создаёт интерфейсы (`UsersApi`) с аннотациями, которые разработчик реализует в `@RestController`; при изменении спецификации регенерация и компилятор укажут на несоответствия.",
+              "correct": true,
               "sections": {
-                "what_actually": "Генератор создаёт интерфейсы/стабы; бизнес-логику разработчик пишет сам в реализации.",
-                "source_of_confusion": "Слово «стаб» создаёт впечатление готового рабочего кода.",
-                "if_it_were_true": "Если бы логика генерировалась, не нужны были бы методы `implements UsersApi`.",
-                "how_it_should_be": "Стабы задают контракт методов, а их тело реализует разработчик."
+                "explanation": "`--additional-properties interfaceOnly=true,useSpringBoot3=true` даёт чистые интерфейсы без реализации; контроллер `implements UsersApi` и переопределяет методы своей логикой.",
+                "example": "После `generate -g spring` появляется `UsersApi` с `getUserById(Long id)`; контроллер реализует его, возвращая `ResponseEntity.ok(...)`.",
+                "when_to_apply": "Применять в contract-first для гарантии соответствия контроллеров контракту: компилятор валит сборку при расхождении сигнатур.",
+                "edge_cases": "При прямой реализации интерфейса повторная генерация может конфликтовать с ручными правками; для регулярной регенерации лучше delegate pattern.",
+                "related": "[[openapi-swagger-interview#Q19]] openapi-generator в целом; [[openapi-swagger-interview#Q36]] delegate pattern; [[openapi-swagger-interview#Q16]] contract-first подход."
               },
               "label": "A",
               "order": 0
@@ -1185,14 +1186,13 @@
               "order": 2
             },
             {
-              "text": "Генератор `spring` с `interfaceOnly=true` создаёт интерфейсы (`UsersApi`) с аннотациями, которые разработчик реализует в `@RestController`; при изменении спецификации регенерация и компилятор укажут на несоответствия.",
-              "correct": true,
+              "text": "Генератор `spring` создаёт полностью готовый сервис с бизнес-логикой, реализовывать ничего не нужно.",
+              "correct": false,
               "sections": {
-                "explanation": "`--additional-properties interfaceOnly=true,useSpringBoot3=true` даёт чистые интерфейсы без реализации; контроллер `implements UsersApi` и переопределяет методы своей логикой.",
-                "example": "После `generate -g spring` появляется `UsersApi` с `getUserById(Long id)`; контроллер реализует его, возвращая `ResponseEntity.ok(...)`.",
-                "when_to_apply": "Применять в contract-first для гарантии соответствия контроллеров контракту: компилятор валит сборку при расхождении сигнатур.",
-                "edge_cases": "При прямой реализации интерфейса повторная генерация может конфликтовать с ручными правками; для регулярной регенерации лучше delegate pattern.",
-                "related": "[[openapi-swagger-interview#Q19]] openapi-generator в целом; [[openapi-swagger-interview#Q36]] delegate pattern; [[openapi-swagger-interview#Q16]] contract-first подход."
+                "what_actually": "Генератор создаёт интерфейсы/стабы; бизнес-логику разработчик пишет сам в реализации.",
+                "source_of_confusion": "Слово «стаб» создаёт впечатление готового рабочего кода.",
+                "if_it_were_true": "Если бы логика генерировалась, не нужны были бы методы `implements UsersApi`.",
+                "how_it_should_be": "Стабы задают контракт методов, а их тело реализует разработчик."
               },
               "label": "D",
               "order": 3
@@ -1209,17 +1209,28 @@
           "question_text": "springdoc с Spring WebFlux / реактивным API?",
           "options": [
             {
-              "text": "Для реактивного стека используют стартер `springdoc-openapi-starter-webflux-ui`; реактивные типы распознаются автоматически (`Mono<T>` → объект, `Flux<T>` → массив), а functional endpoints требуют `@RouterOperation`.",
-              "correct": true,
+              "text": "springdoc документирует `Mono<UserDto>` как тип-обёртку `Mono`, а не как `UserDto`.",
+              "correct": false,
               "sections": {
-                "explanation": "springdoc разворачивает `Mono<T>` в обычный объект, `Flux<T>` в массив, `ServerSentEvent<T>` в `text/event-stream`; для Router Functions операции описывают аннотацией `@RouterOperation`.",
-                "example": "Подключают `...-webflux-ui:2.7.0`; метод `Mono<UserDto> getUser()` документируется как возвращающий `UserDto`, а роуты — через `@RouterOperations`.",
-                "when_to_apply": "Применять в реактивных Spring-приложениях на WebFlux, где обычный webmvc-стартер не работает корректно.",
-                "edge_cases": "Functional endpoints не сканируются автоматически как аннотированные контроллеры: без `@RouterOperation` они не попадут в документацию.",
-                "related": "[[openapi-swagger-interview#Q8]] зависимость springdoc; [[openapi-swagger-interview#Q22]] OpenApiCustomizer; [[openapi-swagger-interview#Q9]] подключение к проекту."
+                "what_actually": "springdoc разворачивает `Mono<T>` и показывает `UserDto`, скрывая реактивную обёртку.",
+                "source_of_confusion": "Видимость типа `Mono` в сигнатуре создаёт впечатление, что он попадёт в схему.",
+                "if_it_were_true": "Если бы `Mono` попадал в документацию, схемы были бы засорены реактивными типами.",
+                "how_it_should_be": "Реактивные обёртки разворачиваются: `Mono<T>` → `T`, `Flux<T>` → массив `T`."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "Functional endpoints (Router Functions) документируются springdoc автоматически без аннотаций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Router Functions требуют явных `@RouterOperation`/`@RouterOperations` для документирования.",
+                "source_of_confusion": "Автосканирование аннотированных контроллеров переносят на функциональные роуты.",
+                "if_it_were_true": "Если бы они сканировались сами, не нужна была бы аннотация `@RouterOperation`.",
+                "how_it_should_be": "Functional endpoints описывают вручную через `@RouterOperation`, иначе они не видны в UI."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Для WebFlux используется тот же стартер `...-webmvc-ui`, что и для обычного Spring MVC.",
@@ -1230,29 +1241,18 @@
                 "if_it_were_true": "Если бы webmvc-стартер подходил, не существовало бы webflux-варианта.",
                 "how_it_should_be": "WebFlux требует `springdoc-openapi-starter-webflux-ui` под реактивный рантайм."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "springdoc документирует `Mono<UserDto>` как тип-обёртку `Mono`, а не как `UserDto`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "springdoc разворачивает `Mono<T>` и показывает `UserDto`, скрывая реактивную обёртку.",
-                "source_of_confusion": "Видимость типа `Mono` в сигнатуре создаёт впечатление, что он попадёт в схему.",
-                "if_it_were_true": "Если бы `Mono` попадал в документацию, схемы были бы засорены реактивными типами.",
-                "how_it_should_be": "Реактивные обёртки разворачиваются: `Mono<T>` → `T`, `Flux<T>` → массив `T`."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Functional endpoints (Router Functions) документируются springdoc автоматически без аннотаций.",
-              "correct": false,
+              "text": "Для реактивного стека используют стартер `springdoc-openapi-starter-webflux-ui`; реактивные типы распознаются автоматически (`Mono<T>` → объект, `Flux<T>` → массив), а functional endpoints требуют `@RouterOperation`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Router Functions требуют явных `@RouterOperation`/`@RouterOperations` для документирования.",
-                "source_of_confusion": "Автосканирование аннотированных контроллеров переносят на функциональные роуты.",
-                "if_it_were_true": "Если бы они сканировались сами, не нужна была бы аннотация `@RouterOperation`.",
-                "how_it_should_be": "Functional endpoints описывают вручную через `@RouterOperation`, иначе они не видны в UI."
+                "explanation": "springdoc разворачивает `Mono<T>` в обычный объект, `Flux<T>` в массив, `ServerSentEvent<T>` в `text/event-stream`; для Router Functions операции описывают аннотацией `@RouterOperation`.",
+                "example": "Подключают `...-webflux-ui:2.7.0`; метод `Mono<UserDto> getUser()` документируется как возвращающий `UserDto`, а роуты — через `@RouterOperations`.",
+                "when_to_apply": "Применять в реактивных Spring-приложениях на WebFlux, где обычный webmvc-стартер не работает корректно.",
+                "edge_cases": "Functional endpoints не сканируются автоматически как аннотированные контроллеры: без `@RouterOperation` они не попадут в документацию.",
+                "related": "[[openapi-swagger-interview#Q8]] зависимость springdoc; [[openapi-swagger-interview#Q22]] OpenApiCustomizer; [[openapi-swagger-interview#Q9]] подключение к проекту."
               },
               "label": "D",
               "order": 3
@@ -1269,18 +1269,6 @@
           "question_text": "Кастомизация springdoc: OpenApiCustomizer?",
           "options": [
             {
-              "text": "`OpenApiCustomizer` правит исходный код контроллеров, добавляя в них аннотации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Кастомайзер модифицирует уже построенный объект `OpenAPI` в рантайме, а не исходники.",
-                "source_of_confusion": "Эффект «добавления параметров» создаёт впечатление правки кода.",
-                "if_it_were_true": "Если бы он менял код, изменения сохранялись бы в файлах после остановки приложения.",
-                "how_it_should_be": "`OpenApiCustomizer` трансформирует модель спецификации в памяти, не трогая Java-файлы."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`OpenApiCustomizer` — интерфейс для программной модификации сгенерированного объекта `OpenAPI`: добавить глобальный заголовок ко всем операциям, отсортировать теги, дописать метаданные перед отдачей спецификации.",
               "correct": true,
               "sections": {
@@ -1290,8 +1278,8 @@
                 "edge_cases": "Кастомайзер выполняется после автогенерации, поэтому его правки могут конфликтовать с аннотациями, если оба меняют одну и ту же операцию.",
                 "related": "[[openapi-swagger-interview#Q9]] подключение springdoc; [[openapi-swagger-interview#Q23]] GroupedOpenApi; [[openapi-swagger-interview#Q13]] сортировка тегов."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`OpenApiCustomizer` применяется до генерации спецификации и определяет, какие контроллеры сканировать.",
@@ -1302,8 +1290,8 @@
                 "if_it_were_true": "Если бы он шёл до генерации, ему нечего было бы модифицировать.",
                 "how_it_should_be": "`OpenApiCustomizer` пост-обрабатывает уже собранную спецификацию."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Через `OpenApiCustomizer` нельзя добавить параметры к операциям — только изменить заголовок API.",
@@ -1313,6 +1301,18 @@
                 "source_of_confusion": "Простейший пример с `info` создаёт впечатление ограниченности.",
                 "if_it_were_true": "Если бы он менял только `info`, типичный пример с `X-Request-ID` был бы невозможен.",
                 "how_it_should_be": "`OpenApiCustomizer` даёт полный доступ к модели: `paths`, `operations`, `parameters`, `tags`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`OpenApiCustomizer` правит исходный код контроллеров, добавляя в них аннотации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кастомайзер модифицирует уже построенный объект `OpenAPI` в рантайме, а не исходники.",
+                "source_of_confusion": "Эффект «добавления параметров» создаёт впечатление правки кода.",
+                "if_it_were_true": "Если бы он менял код, изменения сохранялись бы в файлах после остановки приложения.",
+                "how_it_should_be": "`OpenApiCustomizer` трансформирует модель спецификации в памяти, не трогая Java-файлы."
               },
               "label": "D",
               "order": 3
@@ -1329,18 +1329,6 @@
           "question_text": "GroupedOpenApi: разбивка документации на группы?",
           "options": [
             {
-              "text": "`GroupedOpenApi` создаёт отдельные запущенные приложения для каждой группы операций.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Группы — это разделы одной спецификации в одном приложении, а не отдельные сервисы.",
-                "source_of_confusion": "Слово «группа» вызывает ассоциацию с разными деплоями.",
-                "if_it_were_true": "Если бы каждая группа была приложением, они не делили бы один Swagger UI.",
-                "how_it_should_be": "`GroupedOpenApi` лишь делит документацию одного приложения на логические разделы."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Все группы `GroupedOpenApi` доступны по одному общему URL `/v3/api-docs` без различения.",
               "correct": false,
               "sections": {
@@ -1348,6 +1336,18 @@
                 "source_of_confusion": "Единый базовый путь создаёт впечатление одного общего эндпоинта.",
                 "if_it_were_true": "Если бы URL был один, выпадающий список групп в UI был бы невозможен.",
                 "how_it_should_be": "Группы публикуются по отдельным адресам с суффиксом имени группы."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`GroupedOpenApi` создаёт отдельные запущенные приложения для каждой группы операций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Группы — это разделы одной спецификации в одном приложении, а не отдельные сервисы.",
+                "source_of_confusion": "Слово «группа» вызывает ассоциацию с разными деплоями.",
+                "if_it_were_true": "Если бы каждая группа была приложением, они не делили бы один Swagger UI.",
+                "how_it_should_be": "`GroupedOpenApi` лишь делит документацию одного приложения на логические разделы."
               },
               "label": "B",
               "order": 1
@@ -1401,13 +1401,14 @@
               "order": 0
             },
             {
-              "text": "springdoc игнорирует аннотации Bean Validation и не переносит их в OpenAPI-схему.",
-              "correct": false,
+              "text": "Bean Validation (`@NotBlank`, `@Size`, `@Email`, `@Min`) на полях DTO в связке с `@Valid` на параметре контроллера проверяет запрос; springdoc автоматически переносит эти ограничения в OpenAPI-схему.",
+              "correct": true,
               "sections": {
-                "what_actually": "springdoc как раз читает `@NotNull`, `@Size`, `@Min` и отражает их в схеме как ограничения.",
-                "source_of_confusion": "Разделение задач валидации и документации создаёт впечатление их независимости.",
-                "if_it_were_true": "Если бы он игнорировал их, в схеме не появлялись бы `minLength`/`maximum`.",
-                "how_it_should_be": "Ограничения валидации автоматически переносятся в `minLength`, `maximum`, `pattern` схемы."
+                "explanation": "`@Valid CreateUserRequest` запускает проверку аннотаций валидации; springdoc читает `@NotNull`, `@Size`, `@Min`, `@Max`, `@Pattern` и отражает их как `minLength`, `maximum` в схеме.",
+                "example": "Поле с `@Size(min=2,max=100)` и `@Schema(minLength=2)` валидируется при `@Valid` и одновременно документируется как ограничение длины.",
+                "when_to_apply": "Применять для входной валидации API: одна аннотация валидирует запрос и попадает в документацию, избегая дублирования правил.",
+                "edge_cases": "Без зависимости `spring-boot-starter-validation` аннотации игнорируются молча — запрос не проверяется, хотя в схеме ограничения видны.",
+                "related": "[[openapi-swagger-interview#Q11]] @Schema и ограничения; [[openapi-swagger-interview#Q31]] ответ об ошибке валидации; [[openapi-swagger-interview#Q5]] описание параметров."
               },
               "label": "B",
               "order": 1
@@ -1425,14 +1426,13 @@
               "order": 2
             },
             {
-              "text": "Bean Validation (`@NotBlank`, `@Size`, `@Email`, `@Min`) на полях DTO в связке с `@Valid` на параметре контроллера проверяет запрос; springdoc автоматически переносит эти ограничения в OpenAPI-схему.",
-              "correct": true,
+              "text": "springdoc игнорирует аннотации Bean Validation и не переносит их в OpenAPI-схему.",
+              "correct": false,
               "sections": {
-                "explanation": "`@Valid CreateUserRequest` запускает проверку аннотаций валидации; springdoc читает `@NotNull`, `@Size`, `@Min`, `@Max`, `@Pattern` и отражает их как `minLength`, `maximum` в схеме.",
-                "example": "Поле с `@Size(min=2,max=100)` и `@Schema(minLength=2)` валидируется при `@Valid` и одновременно документируется как ограничение длины.",
-                "when_to_apply": "Применять для входной валидации API: одна аннотация валидирует запрос и попадает в документацию, избегая дублирования правил.",
-                "edge_cases": "Без зависимости `spring-boot-starter-validation` аннотации игнорируются молча — запрос не проверяется, хотя в схеме ограничения видны.",
-                "related": "[[openapi-swagger-interview#Q11]] @Schema и ограничения; [[openapi-swagger-interview#Q31]] ответ об ошибке валидации; [[openapi-swagger-interview#Q5]] описание параметров."
+                "what_actually": "springdoc как раз читает `@NotNull`, `@Size`, `@Min` и отражает их в схеме как ограничения.",
+                "source_of_confusion": "Разделение задач валидации и документации создаёт впечатление их независимости.",
+                "if_it_were_true": "Если бы он игнорировал их, в схеме не появлялись бы `minLength`/`maximum`.",
+                "how_it_should_be": "Ограничения валидации автоматически переносятся в `minLength`, `maximum`, `pattern` схемы."
               },
               "label": "D",
               "order": 3
@@ -1449,29 +1449,16 @@
           "question_text": "Spectral: линтинг OpenAPI-спецификаций?",
           "options": [
             {
-              "text": "`Spectral` — линтер OpenAPI и AsyncAPI от Stoplight: проверяет спецификацию по встроенным (`spectral:oas`) и кастомным правилам, интегрируется в CI и валит сборку при нарушениях.",
-              "correct": true,
+              "text": "`Spectral` нельзя запустить в CI — он работает только как плагин редактора.",
+              "correct": false,
               "sections": {
-                "explanation": "Правила в `.spectral.yml` описывают `given` (JSONPath), `then` (функция вроде `truthy`) и `severity`; `extends: spectral:oas` подключает стандартный набор проверок OAS.",
-                "example": "`spectral lint openapi.yaml --ruleset .spectral.yml` проверяет наличие `summary` у операций, запрет `x-internal` и другие правила стиля.",
-                "when_to_apply": "Применять для контроля качества спецификаций в команде: единый стиль, обязательные поля, запрет антипаттернов на этапе PR.",
-                "edge_cases": "Слишком строгий набор правил с `severity: error` может блокировать легитимные спецификации; правила настраивают под команду постепенно.",
-                "related": "[[openapi-swagger-interview#Q29]] OpenAPI в CI/CD; [[openapi-swagger-interview#Q33]] лучшие практики; [[openapi-swagger-interview#Q38]] проверка совместимости."
+                "what_actually": "Spectral имеет CLI (`spectral lint`) и легко встраивается в GitHub Actions и другие CI.",
+                "source_of_confusion": "Наличие IDE-интеграции создаёт впечатление, что им и ограничивается.",
+                "if_it_were_true": "Если бы CI был невозможен, не было бы флага `--fail-severity`.",
+                "how_it_should_be": "CLI Spectral предназначен в том числе для запуска линтинга в пайплайне."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "`Spectral` — это генератор клиентского кода из OpenAPI, аналог `openapi-generator`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Spectral — линтер для проверки спецификаций, а не генератор кода.",
-                "source_of_confusion": "Принадлежность обоих к OpenAPI-экосистеме создаёт путаницу ролей.",
-                "if_it_were_true": "Если бы он генерировал код, у него были бы флаги выбора языка вроде `-g`.",
-                "how_it_should_be": "Spectral анализирует и валидирует спецификацию, ничего не генерируя."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "`Spectral` проверяет только синтаксис YAML и не умеет применять кастомные правила.",
@@ -1482,17 +1469,30 @@
                 "if_it_were_true": "Если бы кастомных правил не было, не существовало бы параметра `--ruleset`.",
                 "how_it_should_be": "Линтер настраивается под команду через собственные правила с `given`/`then`."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Spectral` — это генератор клиентского кода из OpenAPI, аналог `openapi-generator`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spectral — линтер для проверки спецификаций, а не генератор кода.",
+                "source_of_confusion": "Принадлежность обоих к OpenAPI-экосистеме создаёт путаницу ролей.",
+                "if_it_were_true": "Если бы он генерировал код, у него были бы флаги выбора языка вроде `-g`.",
+                "how_it_should_be": "Spectral анализирует и валидирует спецификацию, ничего не генерируя."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`Spectral` нельзя запустить в CI — он работает только как плагин редактора.",
-              "correct": false,
+              "text": "`Spectral` — линтер OpenAPI и AsyncAPI от Stoplight: проверяет спецификацию по встроенным (`spectral:oas`) и кастомным правилам, интегрируется в CI и валит сборку при нарушениях.",
+              "correct": true,
               "sections": {
-                "what_actually": "Spectral имеет CLI (`spectral lint`) и легко встраивается в GitHub Actions и другие CI.",
-                "source_of_confusion": "Наличие IDE-интеграции создаёт впечатление, что им и ограничивается.",
-                "if_it_were_true": "Если бы CI был невозможен, не было бы флага `--fail-severity`.",
-                "how_it_should_be": "CLI Spectral предназначен в том числе для запуска линтинга в пайплайне."
+                "explanation": "Правила в `.spectral.yml` описывают `given` (JSONPath), `then` (функция вроде `truthy`) и `severity`; `extends: spectral:oas` подключает стандартный набор проверок OAS.",
+                "example": "`spectral lint openapi.yaml --ruleset .spectral.yml` проверяет наличие `summary` у операций, запрет `x-internal` и другие правила стиля.",
+                "when_to_apply": "Применять для контроля качества спецификаций в команде: единый стиль, обязательные поля, запрет антипаттернов на этапе PR.",
+                "edge_cases": "Слишком строгий набор правил с `severity: error` может блокировать легитимные спецификации; правила настраивают под команду постепенно.",
+                "related": "[[openapi-swagger-interview#Q29]] OpenAPI в CI/CD; [[openapi-swagger-interview#Q33]] лучшие практики; [[openapi-swagger-interview#Q38]] проверка совместимости."
               },
               "label": "D",
               "order": 3
@@ -1509,18 +1509,6 @@
           "question_text": "Версионирование API: /v1/ vs заголовки?",
           "options": [
             {
-              "text": "Единственный допустимый способ версионирования REST API — query-параметр `?version=2`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Query-параметр как раз наименее рекомендуемый способ; чаще используют URI Path.",
-                "source_of_confusion": "Простота query-параметра создаёт впечатление его предпочтительности.",
-                "if_it_were_true": "Если бы он был единственным, не существовало бы `/v1/`-путей в публичных API.",
-                "how_it_should_be": "Основные стратегии — URI Path, заголовок и Media Type, а query не рекомендуется."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Подходы: URI Path (`/api/v1/users`) — просто и кэшируемо; заголовок (`Accept-Version`) — чистые URL; Media Type (`Accept: ...v2+json`) — RESTful; Query (`?version=2`) — не рекомендуется. Для публичных API чаще URI Path.",
               "correct": true,
               "sections": {
@@ -1530,20 +1518,20 @@
                 "edge_cases": "Версионирование через заголовок/Media Type ломает простое кэширование по URL и хуже отображается в Swagger UI как отдельные версии.",
                 "related": "[[openapi-swagger-interview#Q23]] GroupedOpenApi для версий; [[openapi-swagger-interview#Q33]] лучшие практики; [[openapi-swagger-interview#Q38]] обратная совместимость."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
-              "text": "Версионирование через URI Path невозможно задокументировать в springdoc.",
+              "text": "Единственный допустимый способ версионирования REST API — query-параметр `?version=2`.",
               "correct": false,
               "sections": {
-                "what_actually": "URI Path отлично документируется через `GroupedOpenApi` с `pathsToMatch`.",
-                "source_of_confusion": "Кажущаяся сложность групп создаёт впечатление невозможности.",
-                "if_it_were_true": "Если бы документирование было невозможно, не было бы примеров с `v1Api()`/`v2Api()`.",
-                "how_it_should_be": "Каждую версию выделяют отдельной группой документации по префиксу пути."
+                "what_actually": "Query-параметр как раз наименее рекомендуемый способ; чаще используют URI Path.",
+                "source_of_confusion": "Простота query-параметра создаёт впечатление его предпочтительности.",
+                "if_it_were_true": "Если бы он был единственным, не существовало бы `/v1/`-путей в публичных API.",
+                "how_it_should_be": "Основные стратегии — URI Path, заголовок и Media Type, а query не рекомендуется."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Версионирование через заголовок запроса делает URL уникальным для каждой версии.",
@@ -1553,6 +1541,18 @@
                 "source_of_confusion": "Стремление к уникальности версий смешивают с механизмом заголовков.",
                 "if_it_were_true": "Если бы URL различался, это был бы URI Path, а не заголовочный подход.",
                 "how_it_should_be": "Заголовочное версионирование сохраняет один URL, меняя лишь `Accept-Version`."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Версионирование через URI Path невозможно задокументировать в springdoc.",
+              "correct": false,
+              "sections": {
+                "what_actually": "URI Path отлично документируется через `GroupedOpenApi` с `pathsToMatch`.",
+                "source_of_confusion": "Кажущаяся сложность групп создаёт впечатление невозможности.",
+                "if_it_were_true": "Если бы документирование было невозможно, не было бы примеров с `v1Api()`/`v2Api()`.",
+                "how_it_should_be": "Каждую версию выделяют отдельной группой документации по префиксу пути."
               },
               "label": "D",
               "order": 3
@@ -1569,6 +1569,18 @@
           "question_text": "discriminator и полиморфизм: oneOf / anyOf / allOf?",
           "options": [
             {
+              "text": "`oneOf` и `anyOf` полностью эквивалентны и взаимозаменяемы в любой ситуации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`oneOf` требует совпадения ровно с одной схемой, `anyOf` — с одной или несколькими.",
+                "source_of_confusion": "Похожий синтаксис создаёт впечатление эквивалентности.",
+                "if_it_were_true": "Если бы они были равны, спецификация не вводила бы оба ключевых слова.",
+                "how_it_should_be": "Семантика различна: `oneOf` — исключающий выбор, `anyOf` — допускает несколько совпадений."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "`allOf` означает выбор ровно одной из перечисленных схем, как взаимоисключающие варианты.",
               "correct": false,
               "sections": {
@@ -1577,8 +1589,8 @@
                 "if_it_were_true": "Если бы `allOf` был выбором одной, нельзя было бы расширять базовую схему полями.",
                 "how_it_should_be": "`allOf` комбинирует все указанные схемы, моделируя наследование и расширение."
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`discriminator` — это обязательное поле верхнего уровня документа, задающее версию OAS.",
@@ -1589,8 +1601,8 @@
                 "if_it_were_true": "Если бы он задавал версию, его не помещали бы внутрь `oneOf`/`anyOf`.",
                 "how_it_should_be": "`discriminator` живёт внутри схемы и указывает поле, определяющее конкретный подтип."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "OpenAPI описывает полиморфизм композицией схем: `allOf` — наследование/расширение, `oneOf` — ровно одна из схем, `anyOf` — одна или несколько; `discriminator` указывает поле-дискриминатор для выбора типа.",
@@ -1601,18 +1613,6 @@
                 "when_to_apply": "Применять для моделей с вариативным телом: разные типы платежей, событий или уведомлений в одном поле ответа.",
                 "edge_cases": "Без `discriminator` клиент при `oneOf` вынужден угадывать тип перебором схем; неоднозначные схемы дают ошибки десериализации.",
                 "related": "[[openapi-swagger-interview#Q6]] секция components; [[openapi-swagger-interview#Q28]] переиспользование через $ref; [[openapi-swagger-interview#Q2]] возможности версий OAS."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`oneOf` и `anyOf` полностью эквивалентны и взаимозаменяемы в любой ситуации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`oneOf` требует совпадения ровно с одной схемой, `anyOf` — с одной или несколькими.",
-                "source_of_confusion": "Похожий синтаксис создаёт впечатление эквивалентности.",
-                "if_it_were_true": "Если бы они были равны, спецификация не вводила бы оба ключевых слова.",
-                "how_it_should_be": "Семантика различна: `oneOf` — исключающий выбор, `anyOf` — допускает несколько совпадений."
               },
               "label": "D",
               "order": 3
@@ -1629,6 +1629,18 @@
           "question_text": "$ref: переиспользование компонентов спецификации?",
           "options": [
             {
+              "text": "`$ref` физически копирует содержимое компонента в каждое место использования при сборке.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`$ref` — это ссылка по пути; инструменты разрешают её, но в исходнике дублирования нет.",
+                "source_of_confusion": "Раскрытие `$ref` валидаторами в плоский вид выглядит как копирование.",
+                "if_it_were_true": "Если бы текст копировался, исчезла бы выгода единого источника правды.",
+                "how_it_should_be": "`$ref` указывает на компонент, оставляя его описание в одном месте."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "`$ref` умеет ссылаться только на схемы внутри секции `components/schemas`, не на параметры или ответы.",
               "correct": false,
               "sections": {
@@ -1637,8 +1649,8 @@
                 "if_it_were_true": "Если бы ссылались только на схемы, нельзя было бы переиспользовать общий ответ `NotFound`.",
                 "how_it_should_be": "`$ref` подключает любой переиспользуемый объект из `components` или внешнего файла."
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`$ref` работает только внутри одного файла и не поддерживает ссылки на внешние файлы или URL.",
@@ -1648,18 +1660,6 @@
                 "source_of_confusion": "Самый частый локальный вид создаёт впечатление невозможности внешних ссылок.",
                 "if_it_were_true": "Если бы внешних ссылок не было, нельзя было бы разбивать спецификацию на файлы.",
                 "how_it_should_be": "Ссылки бывают локальными, на внешний файл и на удалённый URL."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`$ref` физически копирует содержимое компонента в каждое место использования при сборке.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`$ref` — это ссылка по пути; инструменты разрешают её, но в исходнике дублирования нет.",
-                "source_of_confusion": "Раскрытие `$ref` валидаторами в плоский вид выглядит как копирование.",
-                "if_it_were_true": "Если бы текст копировался, исчезла бы выгода единого источника правды.",
-                "how_it_should_be": "`$ref` указывает на компонент, оставляя его описание в одном месте."
               },
               "label": "C",
               "order": 2
@@ -1689,29 +1689,16 @@
           "question_text": "OpenAPI в CI/CD: generate-and-compare, contract testing?",
           "options": [
             {
-              "text": "Стратегии: generate-and-compare (сгенерировать спецификацию из кода и сравнить с эталоном), backward-compat через `openapi-diff`, линтинг Spectral в PR, генерация клиентов при изменении спецификации.",
-              "correct": true,
+              "text": "Линтинг Spectral в CI заменяет проверку обратной совместимости спецификации.",
+              "correct": false,
               "sections": {
-                "explanation": "Генерируют `current.json` из `/v3/api-docs`, сравнивают с зафиксированным `expected-openapi.json`; расхождение валит сборку, защищая контракт от незаметного дрейфа.",
-                "example": "Шаг CI делает `curl .../v3/api-docs > current.json` и `diff expected current`; параллельно `openapi-diff` ищет ломающие изменения, а Spectral линтует стиль.",
-                "when_to_apply": "Применять для команд с контрактом-источником правды: автоматический гейт не даёт спецификации разойтись с кодом или сломать клиентов.",
-                "edge_cases": "Generate-and-compare даёт ложные срабатывания при недетерминированной генерации (порядок полей); эталон нужно нормализовать перед сравнением.",
-                "related": "[[openapi-swagger-interview#Q25]] линтинг Spectral; [[openapi-swagger-interview#Q30]] contract testing с Pact; [[openapi-swagger-interview#Q38]] openapi-diff и oasdiff."
+                "what_actually": "Spectral проверяет стиль и правила, а совместимость — отдельная задача `openapi-diff`.",
+                "source_of_confusion": "Принадлежность обоих к CI-проверкам создаёт впечатление взаимозаменяемости.",
+                "if_it_were_true": "Если бы Spectral проверял совместимость, не нужен был бы `openapi-diff`.",
+                "how_it_should_be": "Линтинг и backward-compat — разные гейты: качество стиля против ломающих изменений."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Generate-and-compare означает генерацию клиентского кода и сравнение его с прошлой версией клиента.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Сравнивают саму спецификацию (`api-docs`) с эталоном, а не сгенерированный клиентский код.",
-                "source_of_confusion": "Слово «generate» создаёт ассоциацию с генерацией клиента.",
-                "if_it_were_true": "Если бы сравнивали клиентов, нельзя было бы поймать дрейф контракта в коде сервера.",
-                "how_it_should_be": "Сравнивается актуальная спецификация из кода с зафиксированным эталоном в репозитории."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Проверка обратной совместимости в CI невозможна — её делают только вручную при ревью.",
@@ -1722,17 +1709,30 @@
                 "if_it_were_true": "Если бы её делали только вручную, не было бы флага `--fail-on-incompatible`.",
                 "how_it_should_be": "Backward-compat проверяют автоматически инструментами сравнения спецификаций."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Generate-and-compare означает генерацию клиентского кода и сравнение его с прошлой версией клиента.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сравнивают саму спецификацию (`api-docs`) с эталоном, а не сгенерированный клиентский код.",
+                "source_of_confusion": "Слово «generate» создаёт ассоциацию с генерацией клиента.",
+                "if_it_were_true": "Если бы сравнивали клиентов, нельзя было бы поймать дрейф контракта в коде сервера.",
+                "how_it_should_be": "Сравнивается актуальная спецификация из кода с зафиксированным эталоном в репозитории."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Линтинг Spectral в CI заменяет проверку обратной совместимости спецификации.",
-              "correct": false,
+              "text": "Стратегии: generate-and-compare (сгенерировать спецификацию из кода и сравнить с эталоном), backward-compat через `openapi-diff`, линтинг Spectral в PR, генерация клиентов при изменении спецификации.",
+              "correct": true,
               "sections": {
-                "what_actually": "Spectral проверяет стиль и правила, а совместимость — отдельная задача `openapi-diff`.",
-                "source_of_confusion": "Принадлежность обоих к CI-проверкам создаёт впечатление взаимозаменяемости.",
-                "if_it_were_true": "Если бы Spectral проверял совместимость, не нужен был бы `openapi-diff`.",
-                "how_it_should_be": "Линтинг и backward-compat — разные гейты: качество стиля против ломающих изменений."
+                "explanation": "Генерируют `current.json` из `/v3/api-docs`, сравнивают с зафиксированным `expected-openapi.json`; расхождение валит сборку, защищая контракт от незаметного дрейфа.",
+                "example": "Шаг CI делает `curl .../v3/api-docs > current.json` и `diff expected current`; параллельно `openapi-diff` ищет ломающие изменения, а Spectral линтует стиль.",
+                "when_to_apply": "Применять для команд с контрактом-источником правды: автоматический гейт не даёт спецификации разойтись с кодом или сломать клиентов.",
+                "edge_cases": "Generate-and-compare даёт ложные срабатывания при недетерминированной генерации (порядок полей); эталон нужно нормализовать перед сравнением.",
+                "related": "[[openapi-swagger-interview#Q25]] линтинг Spectral; [[openapi-swagger-interview#Q30]] contract testing с Pact; [[openapi-swagger-interview#Q38]] openapi-diff и oasdiff."
               },
               "label": "D",
               "order": 3
@@ -1749,18 +1749,6 @@
           "question_text": "Contract testing с Pact: как соотносится с OpenAPI?",
           "options": [
             {
-              "text": "Pact и OpenAPI — взаимоисключающие инструменты: применяют либо один, либо другой.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Они дополняют друг друга: OpenAPI — документация контракта, Pact — гарантия совместимости пар.",
-                "source_of_confusion": "Оба касаются контрактов, отсюда впечатление конкуренции.",
-                "if_it_were_true": "Если бы они исключали друг друга, их не интегрировали бы через `pact` + `openapi`.",
-                "how_it_should_be": "OpenAPI описывает все возможности API, Pact — реальные взаимодействия; вместе они усиливают надёжность."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Pact — фреймворк consumer-driven contract testing: проверяет фактические взаимодействия между конкретным потребителем и поставщиком. OpenAPI описывает все возможные запросы, Pact — реально используемые; они дополняют друг друга.",
               "correct": true,
               "sections": {
@@ -1770,20 +1758,20 @@
                 "edge_cases": "Pact покрывает только фактически вызываемые взаимодействия: не использованные потребителем поля контракта остаются непроверенными.",
                 "related": "[[openapi-swagger-interview#Q29]] OpenAPI в CI/CD; [[openapi-swagger-interview#Q16]] contract-first подход; [[openapi-swagger-interview#Q38]] обратная совместимость."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
-              "text": "Pact описывает все возможные запросы и ответы API, как и OpenAPI-спецификация.",
+              "text": "Pact и OpenAPI — взаимоисключающие инструменты: применяют либо один, либо другой.",
               "correct": false,
               "sections": {
-                "what_actually": "Pact фиксирует только фактически используемые взаимодействия, а не все возможные.",
-                "source_of_confusion": "Сходство формата контракта создаёт впечатление полного описания API.",
-                "if_it_were_true": "Если бы Pact описывал всё, он дублировал бы OpenAPI без своей ниши.",
-                "how_it_should_be": "Pact покрывает реально вызываемые consumer-ом запросы, в отличие от исчерпывающего OpenAPI."
+                "what_actually": "Они дополняют друг друга: OpenAPI — документация контракта, Pact — гарантия совместимости пар.",
+                "source_of_confusion": "Оба касаются контрактов, отсюда впечатление конкуренции.",
+                "if_it_were_true": "Если бы они исключали друг друга, их не интегрировали бы через `pact` + `openapi`.",
+                "how_it_should_be": "OpenAPI описывает все возможности API, Pact — реальные взаимодействия; вместе они усиливают надёжность."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "В Pact контракт пишет provider, а consumer обязан слепо ему следовать.",
@@ -1793,6 +1781,18 @@
                 "source_of_confusion": "Привычная для contract-first роль provider-а переносится на Pact ошибочно.",
                 "if_it_were_true": "Если бы контракт писал provider, подход не назывался бы consumer-driven.",
                 "how_it_should_be": "Ожидания задаёт потребитель, и provider проверяет, что удовлетворяет им."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Pact описывает все возможные запросы и ответы API, как и OpenAPI-спецификация.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pact фиксирует только фактически используемые взаимодействия, а не все возможные.",
+                "source_of_confusion": "Сходство формата контракта создаёт впечатление полного описания API.",
+                "if_it_were_true": "Если бы Pact описывал всё, он дублировал бы OpenAPI без своей ниши.",
+                "how_it_should_be": "Pact покрывает реально вызываемые consumer-ом запросы, в отличие от исчерпывающего OpenAPI."
               },
               "label": "D",
               "order": 3
@@ -1809,28 +1809,16 @@
           "question_text": "Документирование ошибок: ProblemDetail (RFC 7807)?",
           "options": [
             {
-              "text": "RFC 7807 требует возвращать ошибки в формате XML с обязательной схемой XSD.",
+              "text": "Поле `status` в `ProblemDetail` не обязано совпадать с HTTP-статусом ответа.",
               "correct": false,
               "sections": {
-                "what_actually": "RFC 7807 определяет JSON-формат `application/problem+json`, а не XML/XSD.",
-                "source_of_confusion": "Ассоциация стандартов с XML-схемами создаёт путаницу формата.",
-                "if_it_were_true": "Если бы требовался XML, Spring не отдавал бы `ProblemDetail` как JSON по умолчанию.",
-                "how_it_should_be": "Problem Details — это JSON-объект с полями `type`, `title`, `status`, `detail`."
+                "what_actually": "По RFC 7807 поле `status` дублирует и должно совпадать с реальным HTTP-статусом ответа.",
+                "source_of_confusion": "Возможность задать `status` вручную создаёт впечатление независимости.",
+                "if_it_were_true": "Если бы они расходились, клиенты получали бы противоречивую информацию об ошибке.",
+                "how_it_should_be": "`status` в теле и HTTP-статус ответа обязаны быть согласованными."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "`ProblemDetail` в Spring Boot 3 нужно писать вручную как самописный класс — нативной поддержки нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Spring Boot 3 поддерживает `ProblemDetail` нативно через одноимённый класс и `problemdetails.enabled`.",
-                "source_of_confusion": "Привычка к самописным error-DTO создаёт впечатление отсутствия встроенной поддержки.",
-                "if_it_were_true": "Если бы поддержки не было, не существовало бы `ProblemDetail.forStatusAndDetail`.",
-                "how_it_should_be": "`org.springframework.http.ProblemDetail` — встроенный класс Spring Boot 3."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "RFC 7807 (Problem Details, обновлён RFC 9457) — стандарт описания ошибок REST API: поля `type`, `title`, `status`, `detail`, `instance`. Spring Boot 3 поддерживает нативно через `ProblemDetail`, отдаваемый из `@ControllerAdvice`.",
@@ -1842,17 +1830,29 @@
                 "edge_cases": "`ProblemDetail` расширяется кастомными полями через `setProperty`, но они не типизированы в схеме и могут потеряться у строгих клиентов.",
                 "related": "[[openapi-swagger-interview#Q12]] @ApiResponse для ошибок; [[openapi-swagger-interview#Q24]] валидация запросов; [[openapi-swagger-interview#Q33]] лучшие практики."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "RFC 7807 требует возвращать ошибки в формате XML с обязательной схемой XSD.",
+              "correct": false,
+              "sections": {
+                "what_actually": "RFC 7807 определяет JSON-формат `application/problem+json`, а не XML/XSD.",
+                "source_of_confusion": "Ассоциация стандартов с XML-схемами создаёт путаницу формата.",
+                "if_it_were_true": "Если бы требовался XML, Spring не отдавал бы `ProblemDetail` как JSON по умолчанию.",
+                "how_it_should_be": "Problem Details — это JSON-объект с полями `type`, `title`, `status`, `detail`."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Поле `status` в `ProblemDetail` не обязано совпадать с HTTP-статусом ответа.",
+              "text": "`ProblemDetail` в Spring Boot 3 нужно писать вручную как самописный класс — нативной поддержки нет.",
               "correct": false,
               "sections": {
-                "what_actually": "По RFC 7807 поле `status` дублирует и должно совпадать с реальным HTTP-статусом ответа.",
-                "source_of_confusion": "Возможность задать `status` вручную создаёт впечатление независимости.",
-                "if_it_were_true": "Если бы они расходились, клиенты получали бы противоречивую информацию об ошибке.",
-                "how_it_should_be": "`status` в теле и HTTP-статус ответа обязаны быть согласованными."
+                "what_actually": "Spring Boot 3 поддерживает `ProblemDetail` нативно через одноимённый класс и `problemdetails.enabled`.",
+                "source_of_confusion": "Привычка к самописным error-DTO создаёт впечатление отсутствия встроенной поддержки.",
+                "if_it_were_true": "Если бы поддержки не было, не существовало бы `ProblemDetail.forStatusAndDetail`.",
+                "how_it_should_be": "`org.springframework.http.ProblemDetail` — встроенный класс Spring Boot 3."
               },
               "label": "D",
               "order": 3
@@ -1893,18 +1893,6 @@
               "order": 1
             },
             {
-              "text": "Объявление `SecurityScheme` типа OAUTH2 само по себе включает реальную проверку токенов на сервере.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Схема лишь документирует и настраивает UI; проверку токенов делает Spring Security.",
-                "source_of_confusion": "Слово security в имени схемы создаёт впечатление включённой защиты.",
-                "if_it_were_true": "Если бы схема защищала, не нужна была бы конфигурация resource server.",
-                "how_it_should_be": "`SecurityScheme` описывает аутентификацию для UI, не выполняя её в рантайме."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "В бине `OpenAPI` объявляют `SecurityScheme` типа `OAUTH2` с `OAuthFlows` (authorizationUrl, tokenUrl, scopes) или `HTTP` bearer; Swagger UI показывает кнопку Authorize и получает токен прямо из браузера.",
               "correct": true,
               "sections": {
@@ -1913,6 +1901,18 @@
                 "when_to_apply": "Применять, чтобы тестировать защищённые эндпоинты из Swagger UI без копирования токена вручную из внешнего инструмента.",
                 "edge_cases": "Если `oauth2-redirect-url` не зарегистрирован на стороне auth-сервера, авторизация из UI завершится ошибкой `redirect_uri_mismatch`.",
                 "related": "[[openapi-swagger-interview#Q14]] @SecurityScheme; [[openapi-swagger-interview#Q15]] доступ к документации; [[openapi-swagger-interview#Q7]] как работает Swagger UI."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Объявление `SecurityScheme` типа OAUTH2 само по себе включает реальную проверку токенов на сервере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Схема лишь документирует и настраивает UI; проверку токенов делает Spring Security.",
+                "source_of_confusion": "Слово security в имени схемы создаёт впечатление включённой защиты.",
+                "if_it_were_true": "Если бы схема защищала, не нужна была бы конфигурация resource server.",
+                "how_it_should_be": "`SecurityScheme` описывает аутентификацию для UI, не выполняя её в рантайме."
               },
               "label": "D",
               "order": 3
@@ -1929,14 +1929,13 @@
           "question_text": "Лучшие практики написания OpenAPI-спецификаций?",
           "options": [
             {
-              "text": "Выносить переиспользуемое в `components` и ссылаться через `$ref`; давать `summary`/`description` и `example` каждой операции и полю; указывать `format`, документировать все коды ответов и схемы безопасности; линтить и проверять совместимость в CI.",
-              "correct": true,
+              "text": "Документировать нужно только успешные ответы `2xx`; коды ошибок описывать не принято.",
+              "correct": false,
               "sections": {
-                "explanation": "Обязательны уникальные `operationId` в camelCase, явные `format` (`email`, `uuid`, `date-time`), `readOnly` для серверных полей и документирование ошибок наряду с успешными ответами.",
-                "example": "Общую модель `User` выносят в `components/schemas` и ссылаются `$ref`; security указывают и глобально, и на операциях, помечая публичные эндпоинты пустым `[]`.",
-                "when_to_apply": "Применять при проектировании и ревью спецификаций, чтобы получить читаемый, переиспользуемый и совместимый контракт.",
-                "edge_cases": "Чрезмерная декомпозиция на файлы и `$ref` усложняет навигацию; баланс между DRY и читаемостью подбирают под размер API.",
-                "related": "[[openapi-swagger-interview#Q6]] секция components; [[openapi-swagger-interview#Q28]] переиспользование через $ref; [[openapi-swagger-interview#Q25]] линтинг Spectral."
+                "what_actually": "Практика требует документировать все коды, включая ошибки `4xx`/`5xx`, для полноты контракта.",
+                "source_of_confusion": "Фокус на счастливом пути создаёт впечатление достаточности `2xx`.",
+                "if_it_were_true": "Если бы ошибки не описывали, клиенты не знали бы формат тела при сбое.",
+                "how_it_should_be": "Полная спецификация описывает и успешные, и ошибочные ответы со схемами."
               },
               "label": "A",
               "order": 0
@@ -1954,6 +1953,19 @@
               "order": 1
             },
             {
+              "text": "Выносить переиспользуемое в `components` и ссылаться через `$ref`; давать `summary`/`description` и `example` каждой операции и полю; указывать `format`, документировать все коды ответов и схемы безопасности; линтить и проверять совместимость в CI.",
+              "correct": true,
+              "sections": {
+                "explanation": "Обязательны уникальные `operationId` в camelCase, явные `format` (`email`, `uuid`, `date-time`), `readOnly` для серверных полей и документирование ошибок наряду с успешными ответами.",
+                "example": "Общую модель `User` выносят в `components/schemas` и ссылаются `$ref`; security указывают и глобально, и на операциях, помечая публичные эндпоинты пустым `[]`.",
+                "when_to_apply": "Применять при проектировании и ревью спецификаций, чтобы получить читаемый, переиспользуемый и совместимый контракт.",
+                "edge_cases": "Чрезмерная декомпозиция на файлы и `$ref` усложняет навигацию; баланс между DRY и читаемостью подбирают под размер API.",
+                "related": "[[openapi-swagger-interview#Q6]] секция components; [[openapi-swagger-interview#Q28]] переиспользование через $ref; [[openapi-swagger-interview#Q25]] линтинг Spectral."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
               "text": "`operationId` указывать не обязательно — он не влияет ни на что и его можно опускать.",
               "correct": false,
               "sections": {
@@ -1961,18 +1973,6 @@
                 "source_of_confusion": "Опциональность поля в спецификации создаёт впечатление его ненужности.",
                 "if_it_were_true": "Если бы он ни на что не влиял, генераторы не давали бы методам осмысленных имён.",
                 "how_it_should_be": "Уникальный `operationId` — обязательная практика для качественной генерации клиентов."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Документировать нужно только успешные ответы `2xx`; коды ошибок описывать не принято.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Практика требует документировать все коды, включая ошибки `4xx`/`5xx`, для полноты контракта.",
-                "source_of_confusion": "Фокус на счастливом пути создаёт впечатление достаточности `2xx`.",
-                "if_it_were_true": "Если бы ошибки не описывали, клиенты не знали бы формат тела при сбое.",
-                "how_it_should_be": "Полная спецификация описывает и успешные, и ошибочные ответы со схемами."
               },
               "label": "D",
               "order": 3
@@ -1989,13 +1989,13 @@
           "question_text": "Callbacks vs Webhooks в OpenAPI 3.1?",
           "options": [
             {
-              "text": "`callbacks` и `webhooks` описывают входящие запросы от клиента к серверу, как обычные эндпоинты.",
+              "text": "`callbacks` описываются как секция верхнего уровня документа, независимо от операций.",
               "correct": false,
               "sections": {
-                "what_actually": "Оба описывают запросы, инициируемые сервером наружу, а не входящие клиентские вызовы.",
-                "source_of_confusion": "Привычка описывать в OpenAPI входящие эндпоинты переносится на эти секции.",
-                "if_it_were_true": "Если бы это были обычные эндпоинты, они жили бы в `paths`, а не отдельно.",
-                "how_it_should_be": "`callbacks`/`webhooks` моделируют исходящие, server-initiated запросы."
+                "what_actually": "`callbacks` объявляются внутри операции и привязаны к ней; верхнего уровня — `webhooks`.",
+                "source_of_confusion": "Схожесть назначения секций создаёт путаницу их расположения.",
+                "if_it_were_true": "Если бы `callbacks` были глобальными, в них нельзя было бы использовать `{$request...}`.",
+                "how_it_should_be": "`callbacks` живут внутри операции и зависят от её запроса через runtime-выражения."
               },
               "label": "A",
               "order": 0
@@ -2014,6 +2014,18 @@
               "order": 1
             },
             {
+              "text": "`callbacks` и `webhooks` описывают входящие запросы от клиента к серверу, как обычные эндпоинты.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба описывают запросы, инициируемые сервером наружу, а не входящие клиентские вызовы.",
+                "source_of_confusion": "Привычка описывать в OpenAPI входящие эндпоинты переносится на эти секции.",
+                "if_it_were_true": "Если бы это были обычные эндпоинты, они жили бы в `paths`, а не отдельно.",
+                "how_it_should_be": "`callbacks`/`webhooks` моделируют исходящие, server-initiated запросы."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
               "text": "`webhooks` существовали уже в OpenAPI 3.0 и были удалены в 3.1 в пользу `callbacks`.",
               "correct": false,
               "sections": {
@@ -2021,18 +2033,6 @@
                 "source_of_confusion": "Наличие `callbacks` в 3.0 создаёт впечатление более ранних webhooks.",
                 "if_it_were_true": "Если бы webhooks были в 3.0, их не выделяли бы как новинку 3.1.",
                 "how_it_should_be": "`webhooks` — нововведение OAS 3.1, дополняющее, а не заменяющее `callbacks`."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`callbacks` описываются как секция верхнего уровня документа, независимо от операций.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`callbacks` объявляются внутри операции и привязаны к ней; верхнего уровня — `webhooks`.",
-                "source_of_confusion": "Схожесть назначения секций создаёт путаницу их расположения.",
-                "if_it_were_true": "Если бы `callbacks` были глобальными, в них нельзя было бы использовать `{$request...}`.",
-                "how_it_should_be": "`callbacks` живут внутри операции и зависят от её запроса через runtime-выражения."
               },
               "label": "D",
               "order": 3
@@ -2049,18 +2049,6 @@
           "question_text": "API-first workflow: практический пайплайн с openapi-generator?",
           "options": [
             {
-              "text": "API-first означает, что спецификация генерируется из готового кода после реализации сервиса.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это code-first; в API-first спецификация первична, а код генерируется из неё.",
-                "source_of_confusion": "Похожесть терминов провоцирует перепутать порядок шагов.",
-                "if_it_were_true": "Если бы код был первым, не было бы параллельной разработки по контракту.",
-                "how_it_should_be": "В API-first сначала пишут и согласуют `openapi.yaml`, затем генерируют код."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "В API-first пайплайне линтинг и проверка совместимости не нужны — достаточно генерации.",
               "correct": false,
               "sections": {
@@ -2069,8 +2057,8 @@
                 "if_it_were_true": "Если бы они были не нужны, контракт деградировал бы без контроля качества.",
                 "how_it_should_be": "Полноценный API-first включает линтинг и проверку совместимости в CI."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Спецификация `openapi.yaml` — источник правды в репозитории: дизайн в PR, линтинг Spectral, проверка совместимости `oasdiff`, генерация серверных интерфейсов и SDK, затем реализация интерфейсов; компилятор гарантирует соответствие контракту.",
@@ -2081,6 +2069,18 @@
                 "when_to_apply": "Применять для публичных и кросс-командных API, где контракт первичен и важно, чтобы код не расходился со спецификацией.",
                 "edge_cases": "Без backward-compat-гейта (`oasdiff`) API-first не защищает от ломающих изменений: правка контракта может незаметно сломать клиентов.",
                 "related": "[[openapi-swagger-interview#Q16]] contract-first подход; [[openapi-swagger-interview#Q19]] openapi-generator; [[openapi-swagger-interview#Q38]] проверка совместимости."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "API-first означает, что спецификация генерируется из готового кода после реализации сервиса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это code-first; в API-first спецификация первична, а код генерируется из неё.",
+                "source_of_confusion": "Похожесть терминов провоцирует перепутать порядок шагов.",
+                "if_it_were_true": "Если бы код был первым, не было бы параллельной разработки по контракту.",
+                "how_it_should_be": "В API-first сначала пишут и согласуют `openapi.yaml`, затем генерируют код."
               },
               "label": "C",
               "order": 2
@@ -2109,18 +2109,6 @@
           "question_text": "Delegate pattern в openapi-generator: когда применять?",
           "options": [
             {
-              "text": "Delegate pattern генерирует готовую бизнес-логику делегатов, реализовывать ничего не нужно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Генерируется лишь интерфейс `XxxApiDelegate`; его реализацию пишет разработчик.",
-                "source_of_confusion": "Слово «делегат» создаёт впечатление готового делегирующего кода с логикой.",
-                "if_it_were_true": "Если бы логика генерировалась, не было бы класса `*DelegateImpl`.",
-                "how_it_should_be": "Delegate даёт интерфейс без аннотаций, а тело методов реализует разработчик."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Delegate pattern полезен только при однократной генерации и вреден при регулярной регенерации.",
               "correct": false,
               "sections": {
@@ -2129,8 +2117,8 @@
                 "if_it_were_true": "Если бы он мешал регенерации, его не рекомендовали бы для API-first пайплайнов.",
                 "how_it_should_be": "Delegate раскрывается при повторяющейся генерации; для разовой проще `interfaceOnly`."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "При delegate pattern Spring-аннотации (`@RequestMapping`) разработчик пишет в своём `*DelegateImpl`.",
@@ -2140,6 +2128,18 @@
                 "source_of_confusion": "Привычка аннотировать контроллеры переносится на делегат.",
                 "if_it_were_true": "Если бы аннотации были в делегате, терялась бы независимость логики от Spring.",
                 "how_it_should_be": "`XxxApiDelegate` намеренно не содержит Spring-аннотаций — они в сгенерированном контроллере."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Delegate pattern генерирует готовую бизнес-логику делегатов, реализовывать ничего не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Генерируется лишь интерфейс `XxxApiDelegate`; его реализацию пишет разработчик.",
+                "source_of_confusion": "Слово «делегат» создаёт впечатление готового делегирующего кода с логикой.",
+                "if_it_were_true": "Если бы логика генерировалась, не было бы класса `*DelegateImpl`.",
+                "how_it_should_be": "Delegate даёт интерфейс без аннотаций, а тело методов реализует разработчик."
               },
               "label": "C",
               "order": 2
@@ -2254,18 +2254,6 @@
               "order": 1
             },
             {
-              "text": "`openapi-diff` и `oasdiff` сравнивают код сервиса, а не файлы спецификаций.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Инструменты сравнивают две спецификации (старую и новую), а не исходный код.",
-                "source_of_confusion": "Связь с CI кода создаёт впечатление анализа исходников.",
-                "if_it_were_true": "Если бы они сравнивали код, нельзя было бы проверять contract-first YAML до реализации.",
-                "how_it_should_be": "Вход обоих — пара OpenAPI-документов для diff-анализа совместимости."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "Проверку обратной совместимости нельзя автоматизировать — её делают вручную на код-ревью.",
               "correct": false,
               "sections": {
@@ -2273,6 +2261,18 @@
                 "source_of_confusion": "Сложность анализа изменений создаёт впечатление ручной работы.",
                 "if_it_were_true": "Если бы автоматизация была невозможна, не существовало бы CLI с кодами выхода.",
                 "how_it_should_be": "Backward-compat проверяют автоматически в пайплайне, а не только глазами."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`openapi-diff` и `oasdiff` сравнивают код сервиса, а не файлы спецификаций.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Инструменты сравнивают две спецификации (старую и новую), а не исходный код.",
+                "source_of_confusion": "Связь с CI кода создаёт впечатление анализа исходников.",
+                "if_it_were_true": "Если бы они сравнивали код, нельзя было бы проверять contract-first YAML до реализации.",
+                "how_it_should_be": "Вход обоих — пара OpenAPI-документов для diff-анализа совместимости."
               },
               "label": "D",
               "order": 3
@@ -2289,30 +2289,6 @@
           "question_text": "Множественные примеры: examples vs example, переиспользуемые примеры?",
           "options": [
             {
-              "text": "`example` и `examples` — это одно и то же поле, написание во множественном числе опечатка.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это два разных поля: `example` — один пример, `examples` — карта именованных примеров.",
-                "source_of_confusion": "Похожесть написания создаёт впечатление опечатки.",
-                "if_it_were_true": "Если бы они были одним полем, нельзя было бы получить выпадающий список вариантов.",
-                "how_it_should_be": "`example` и `examples` различаются по структуре и месту применения."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`examples` можно указывать прямо внутри объекта `schema`, как и `example`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`examples` доступно на media type, параметре, заголовке, но не внутри `schema`.",
-                "source_of_confusion": "Возможность класть `example` в схему создаёт впечатление симметрии.",
-                "if_it_were_true": "Если бы `examples` работал в схеме, не было бы ограничения на уровне media type.",
-                "how_it_should_be": "Внутри `schema` допустим только `example`; `examples` — уровнем выше."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`example` (ед. ч.) — один пример в `schema`/media type; `examples` (мн. ч.) — карта именованных примеров с выпадающим списком в UI, доступна на media type/параметре/заголовке (не в `schema`). Общие примеры выносят в `components/examples`.",
               "correct": true,
               "sections": {
@@ -2322,8 +2298,20 @@
                 "edge_cases": "`example` и `examples` взаимоисключающи в одном месте: указание обоих — ошибка; `examples` нельзя положить внутрь `schema`, только на уровень media type.",
                 "related": "[[openapi-swagger-interview#Q6]] секция components; [[openapi-swagger-interview#Q28]] переиспользование через $ref; [[openapi-swagger-interview#Q12]] примеры в @ApiResponse."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`example` и `examples` — это одно и то же поле, написание во множественном числе опечатка.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это два разных поля: `example` — один пример, `examples` — карта именованных примеров.",
+                "source_of_confusion": "Похожесть написания создаёт впечатление опечатки.",
+                "if_it_were_true": "Если бы они были одним полем, нельзя было бы получить выпадающий список вариантов.",
+                "how_it_should_be": "`example` и `examples` различаются по структуре и месту применения."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`example` и `examples` можно указать одновременно в одном месте для большей наглядности.",
@@ -2333,6 +2321,18 @@
                 "source_of_confusion": "Желание дать больше примеров провоцирует совмещение полей.",
                 "if_it_were_true": "Если бы их разрешалось совмещать, инструменты не выдавали бы ошибку валидации.",
                 "how_it_should_be": "В одном месте выбирают либо `example`, либо `examples`, но не оба сразу."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`examples` можно указывать прямо внутри объекта `schema`, как и `example`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`examples` доступно на media type, параметре, заголовке, но не внутри `schema`.",
+                "source_of_confusion": "Возможность класть `example` в схему создаёт впечатление симметрии.",
+                "if_it_were_true": "Если бы `examples` работал в схеме, не было бы ограничения на уровне media type.",
+                "how_it_should_be": "Внутри `schema` допустим только `example`; `examples` — уровнем выше."
               },
               "label": "D",
               "order": 3
@@ -2349,18 +2349,6 @@
           "question_text": "@Hidden и скрытие операций из документации?",
           "options": [
             {
-              "text": "`@Hidden` делает эндпоинт недоступным по HTTP, физически блокируя обращения к нему.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@Hidden` скрывает эндпоинт только из документации; по HTTP он остаётся доступным.",
-                "source_of_confusion": "Слово «hidden» создаёт впечатление блокировки доступа.",
-                "if_it_were_true": "Если бы он блокировал HTTP, не нужен был бы Spring Security для защиты.",
-                "how_it_should_be": "Для реального запрета доступа применяют Security, а `@Hidden` лишь убирает из UI."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`@Hidden` применима только к целым контроллерам и не работает на отдельных методах или полях.",
               "correct": false,
               "sections": {
@@ -2368,6 +2356,19 @@
                 "source_of_confusion": "Класс-уровневое использование создаёт впечатление ограничения областью класса.",
                 "if_it_were_true": "Если бы она работала только на классах, нельзя было бы скрыть одно поле модели.",
                 "how_it_should_be": "Скрывать можно контроллер, операцию, параметр и поле схемы разными аннотациями."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`@Hidden` (`io.swagger.v3.oas.annotations.Hidden`) скрывает контроллер, метод или поле из спецификации; точечно — `@Operation(hidden=true)`, `@Parameter(hidden=true)`, `@Schema(hidden=true)`, на уровне конфигурации — `paths-to-exclude`/`packages-to-exclude`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@Hidden` над методом убирает его из документации, но сам эндпоинт остаётся доступным по HTTP; для реального ограничения доступа нужен Spring Security, а не скрытие.",
+                "example": "Служебный `GET /internal/metrics` помечают `@Hidden`, а внутренние пакеты исключают через `springdoc.packages-to-exclude: com.example.internal`.",
+                "when_to_apply": "Применять для технических, внутренних и legacy-эндпоинтов, которые не должны попадать в публичную спецификацию.",
+                "edge_cases": "`@Hidden` влияет только на документацию: скрытый эндпоинт по-прежнему отвечает на запросы, создавая ложное чувство защищённости.",
+                "related": "[[openapi-swagger-interview#Q10]] @Operation и hidden; [[openapi-swagger-interview#Q11]] скрытие параметров; [[openapi-swagger-interview#Q15]] реальная защита через Security."
               },
               "label": "B",
               "order": 1
@@ -2385,14 +2386,13 @@
               "order": 2
             },
             {
-              "text": "`@Hidden` (`io.swagger.v3.oas.annotations.Hidden`) скрывает контроллер, метод или поле из спецификации; точечно — `@Operation(hidden=true)`, `@Parameter(hidden=true)`, `@Schema(hidden=true)`, на уровне конфигурации — `paths-to-exclude`/`packages-to-exclude`.",
-              "correct": true,
+              "text": "`@Hidden` делает эндпоинт недоступным по HTTP, физически блокируя обращения к нему.",
+              "correct": false,
               "sections": {
-                "explanation": "`@Hidden` над методом убирает его из документации, но сам эндпоинт остаётся доступным по HTTP; для реального ограничения доступа нужен Spring Security, а не скрытие.",
-                "example": "Служебный `GET /internal/metrics` помечают `@Hidden`, а внутренние пакеты исключают через `springdoc.packages-to-exclude: com.example.internal`.",
-                "when_to_apply": "Применять для технических, внутренних и legacy-эндпоинтов, которые не должны попадать в публичную спецификацию.",
-                "edge_cases": "`@Hidden` влияет только на документацию: скрытый эндпоинт по-прежнему отвечает на запросы, создавая ложное чувство защищённости.",
-                "related": "[[openapi-swagger-interview#Q10]] @Operation и hidden; [[openapi-swagger-interview#Q11]] скрытие параметров; [[openapi-swagger-interview#Q15]] реальная защита через Security."
+                "what_actually": "`@Hidden` скрывает эндпоинт только из документации; по HTTP он остаётся доступным.",
+                "source_of_confusion": "Слово «hidden» создаёт впечатление блокировки доступа.",
+                "if_it_were_true": "Если бы он блокировал HTTP, не нужен был бы Spring Security для защиты.",
+                "how_it_should_be": "Для реального запрета доступа применяют Security, а `@Hidden` лишь убирает из UI."
               },
               "label": "D",
               "order": 3
@@ -2409,29 +2409,16 @@
           "question_text": "Пагинация в OpenAPI: query параметры, cursor, Link header?",
           "options": [
             {
-              "text": "Стили: offset/limit (`page`/`size`) с обёрткой-метаданными — просто, но дорог `OFFSET`; cursor-based (keyset) — стабилен и быстр на больших данных, но без прыжков на страницу; Link header (RFC 8288) — навигация в заголовке ответа.",
-              "correct": true,
+              "text": "Link header для пагинации описывается как query-параметр запроса, а не как заголовок ответа.",
+              "correct": false,
               "sections": {
-                "explanation": "Offset описывают параметрами `page`/`size`, cursor — непрозрачным `cursor` из предыдущего ответа, а Link — заголовком ответа с `rel=\"next\"/\"prev\"`; выбор зависит от объёма данных.",
-                "example": "Для ленты задают `cursor` и `limit`; для админки — `page`/`size` со Spring Data `Page`; для GitHub-стиля — заголовок `Link` с навигационными ссылками.",
-                "when_to_apply": "Применять offset для небольших списков, cursor для больших таблиц и лент, Link — для RESTful-навигации без обёртки в теле.",
-                "edge_cases": "Offset нестабилен при вставках (сдвиг страниц) и дорог на больших таблицах; cursor не позволяет перейти на произвольную страницу.",
-                "related": "[[openapi-swagger-interview#Q5]] описание query-параметров; [[openapi-swagger-interview#Q12]] заголовки в ответах; [[openapi-swagger-interview#Q33]] лучшие практики."
+                "what_actually": "`Link` — это заголовок ответа (RFC 8288), описываемый в `responses.headers`.",
+                "source_of_confusion": "Связь с навигацией создаёт ассоциацию с параметрами запроса.",
+                "if_it_were_true": "Если бы это был query-параметр, навигационные ссылки не возвращались бы сервером.",
+                "how_it_should_be": "`Link` задаётся в заголовках ответа и содержит ссылки `next`/`prev`/`first`/`last`."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Cursor-based пагинация позволяет мгновенно перейти на любую произвольную страницу по её номеру.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Cursor движется последовательно от предыдущего ответа; прыжок на произвольную страницу невозможен.",
-                "source_of_confusion": "Привычка к нумерованным страницам переносится на cursor.",
-                "if_it_were_true": "Если бы прыжки были возможны, cursor не отличался бы от offset по навигации.",
-                "how_it_should_be": "Cursor даёт стабильность и скорость ценой отказа от произвольного перехода на страницу."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Offset/limit пагинация полностью стабильна при вставках и не дороже cursor на больших таблицах.",
@@ -2442,17 +2429,30 @@
                 "if_it_were_true": "Если бы он был стабилен и дёшев, cursor-пагинация не понадобилась бы.",
                 "how_it_should_be": "Offset проще, но проигрывает cursor по стабильности и производительности на объёме."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Стили: offset/limit (`page`/`size`) с обёрткой-метаданными — просто, но дорог `OFFSET`; cursor-based (keyset) — стабилен и быстр на больших данных, но без прыжков на страницу; Link header (RFC 8288) — навигация в заголовке ответа.",
+              "correct": true,
+              "sections": {
+                "explanation": "Offset описывают параметрами `page`/`size`, cursor — непрозрачным `cursor` из предыдущего ответа, а Link — заголовком ответа с `rel=\"next\"/\"prev\"`; выбор зависит от объёма данных.",
+                "example": "Для ленты задают `cursor` и `limit`; для админки — `page`/`size` со Spring Data `Page`; для GitHub-стиля — заголовок `Link` с навигационными ссылками.",
+                "when_to_apply": "Применять offset для небольших списков, cursor для больших таблиц и лент, Link — для RESTful-навигации без обёртки в теле.",
+                "edge_cases": "Offset нестабилен при вставках (сдвиг страниц) и дорог на больших таблицах; cursor не позволяет перейти на произвольную страницу.",
+                "related": "[[openapi-swagger-interview#Q5]] описание query-параметров; [[openapi-swagger-interview#Q12]] заголовки в ответах; [[openapi-swagger-interview#Q33]] лучшие практики."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Link header для пагинации описывается как query-параметр запроса, а не как заголовок ответа.",
+              "text": "Cursor-based пагинация позволяет мгновенно перейти на любую произвольную страницу по её номеру.",
               "correct": false,
               "sections": {
-                "what_actually": "`Link` — это заголовок ответа (RFC 8288), описываемый в `responses.headers`.",
-                "source_of_confusion": "Связь с навигацией создаёт ассоциацию с параметрами запроса.",
-                "if_it_were_true": "Если бы это был query-параметр, навигационные ссылки не возвращались бы сервером.",
-                "how_it_should_be": "`Link` задаётся в заголовках ответа и содержит ссылки `next`/`prev`/`first`/`last`."
+                "what_actually": "Cursor движется последовательно от предыдущего ответа; прыжок на произвольную страницу невозможен.",
+                "source_of_confusion": "Привычка к нумерованным страницам переносится на cursor.",
+                "if_it_were_true": "Если бы прыжки были возможны, cursor не отличался бы от offset по навигации.",
+                "how_it_should_be": "Cursor даёт стабильность и скорость ценой отказа от произвольного перехода на страницу."
               },
               "label": "D",
               "order": 3
@@ -2469,18 +2469,6 @@
           "question_text": "multipart/form-data и загрузка файлов в OpenAPI?",
           "options": [
             {
-              "text": "Файлы в OpenAPI описывают через `application/json` с полем `type: file`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Файлы передают через `multipart/form-data` с `type: string, format: binary`; типа `file` в OAS 3.x нет.",
-                "source_of_confusion": "Тип `file` из Swagger 2.0 создаёт впечатление его актуальности.",
-                "if_it_were_true": "Если бы использовался `application/json`, бинарные данные пришлось бы кодировать base64.",
-                "how_it_should_be": "Для загрузки применяют `multipart/form-data` и `format: binary`, а не JSON с `type: file`."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Загрузку файлов описывают через `requestBody` с `multipart/form-data`; бинарное поле — `type: string, format: binary`, массив файлов — `type: array` таких элементов; секция `encoding` уточняет `contentType` частей.",
               "correct": true,
               "sections": {
@@ -2490,8 +2478,8 @@
                 "edge_cases": "В OAS 3.1 для бинарных данных предпочтительны `contentMediaType`/`contentEncoding` из JSON Schema 2020-12, хотя `format: binary` остаётся совместимым.",
                 "related": "[[openapi-swagger-interview#Q5]] описание requestBody; [[openapi-swagger-interview#Q11]] @Schema и format; [[openapi-swagger-interview#Q2]] возможности OAS 3.1."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Массив файлов в OpenAPI описать нельзя — поддерживается только один файл на запрос.",
@@ -2501,6 +2489,18 @@
                 "source_of_confusion": "Простейший случай одного файла создаёт впечатление лимита.",
                 "if_it_were_true": "Если бы массив был невозможен, нельзя было бы загрузить несколько вложений за раз.",
                 "how_it_should_be": "Множественную загрузку моделируют массивом бинарных элементов в схеме формы."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Файлы в OpenAPI описывают через `application/json` с полем `type: file`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Файлы передают через `multipart/form-data` с `type: string, format: binary`; типа `file` в OAS 3.x нет.",
+                "source_of_confusion": "Тип `file` из Swagger 2.0 создаёт впечатление его актуальности.",
+                "if_it_were_true": "Если бы использовался `application/json`, бинарные данные пришлось бы кодировать base64.",
+                "how_it_should_be": "Для загрузки применяют `multipart/form-data` и `format: binary`, а не JSON с `type: file`."
               },
               "label": "C",
               "order": 2

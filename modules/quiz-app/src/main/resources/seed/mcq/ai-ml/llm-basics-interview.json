@@ -11,14 +11,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`LLM` — большая нейросеть (обычно decoder-only Transformer), обученная предсказывать следующий токен на огромном корпусе текста; из next-token prediction emergent появляются reasoning, code-gen и instruction following.",
-              "correct": true,
+              "text": "`LLM` — это rule-based система с regex и словарями для парсинга текста.",
+              "correct": false,
               "sections": {
-                "explanation": "Цель обучения — autoregressive language modeling: на каждом шаге модель получает контекст из N токенов и выдаёт распределение `P(token_{N+1} | token_1..N)`. Семплируя токен и сдвигая окно, получаем генерацию текста.",
-                "example": "`GPT-4o`, `Claude`, `Llama`, `Gemini` построены по этому принципу; после `SFT`+`RLHF` к next-token prediction добавляются способности отвечать, а не просто продолжать текст.",
-                "when_to_apply": "Применяют в продукте для chatbots, code assistants, генерации контента, классификации, извлечения данных и автономных агентов.",
-                "edge_cases": "На редких или ambiguous фактах модель «заполняет пробел» правдоподобным текстом — отсюда галлюцинации; она статистический генератор, а не база знаний.",
-                "related": "[[llm-basics-interview#Q2]] архитектура Transformer; [[llm-basics-interview#Q5]] что такое token; [[llm-basics-interview#Q21]] почему модель галлюцинирует."
+                "what_actually": "Regex и словари — это NLP до эпохи нейросетей (`NLTK`, `spaCy` без ML); `LLM` именно обходят правила, обучаясь на данных и обобщая на любой текст.",
+                "source_of_confusion": "И rule-based парсер, и `LLM` «работают с текстом», поэтому их смешивают.",
+                "if_it_were_true": "Тогда модель ломалась бы на любой формулировке вне правил, а `GPT` работает с произвольным вводом.",
+                "how_it_should_be": "Это символьный NLP; `LLM` — обученная на корпусе нейросеть, а не набор regex-правил."
               }
             },
             {
@@ -36,13 +35,14 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`LLM` — это rule-based система с regex и словарями для парсинга текста.",
-              "correct": false,
+              "text": "`LLM` — большая нейросеть (обычно decoder-only Transformer), обученная предсказывать следующий токен на огромном корпусе текста; из next-token prediction emergent появляются reasoning, code-gen и instruction following.",
+              "correct": true,
               "sections": {
-                "what_actually": "Regex и словари — это NLP до эпохи нейросетей (`NLTK`, `spaCy` без ML); `LLM` именно обходят правила, обучаясь на данных и обобщая на любой текст.",
-                "source_of_confusion": "И rule-based парсер, и `LLM` «работают с текстом», поэтому их смешивают.",
-                "if_it_were_true": "Тогда модель ломалась бы на любой формулировке вне правил, а `GPT` работает с произвольным вводом.",
-                "how_it_should_be": "Это символьный NLP; `LLM` — обученная на корпусе нейросеть, а не набор regex-правил."
+                "explanation": "Цель обучения — autoregressive language modeling: на каждом шаге модель получает контекст из N токенов и выдаёт распределение `P(token_{N+1} | token_1..N)`. Семплируя токен и сдвигая окно, получаем генерацию текста.",
+                "example": "`GPT-4o`, `Claude`, `Llama`, `Gemini` построены по этому принципу; после `SFT`+`RLHF` к next-token prediction добавляются способности отвечать, а не просто продолжать текст.",
+                "when_to_apply": "Применяют в продукте для chatbots, code assistants, генерации контента, классификации, извлечения данных и автономных агентов.",
+                "edge_cases": "На редких или ambiguous фактах модель «заполняет пробел» правдоподобным текстом — отсюда галлюцинации; она статистический генератор, а не база знаний.",
+                "related": "[[llm-basics-interview#Q2]] архитектура Transformer; [[llm-basics-interview#Q5]] что такое token; [[llm-basics-interview#Q21]] почему модель галлюцинирует."
               }
             },
             {
@@ -83,14 +83,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Transformer` — архитектура из статьи «Attention Is All You Need» (2017) на основе self-attention, обрабатывающая всю последовательность параллельно; основа всех современных `LLM`.",
-              "correct": true,
+              "text": "`Transformer` — это графовая нейросеть (GNN), работающая на дереве синтаксического разбора предложения.",
+              "correct": false,
               "sections": {
-                "explanation": "Vaswani et al. отказались от рекуррентности и свёрток, оставив только attention. Ключевые блоки: embedding + positional encoding, multi-head self-attention, feed-forward network, layer norm и residual connections, стек из N блоков.",
-                "example": "На этой архитектуре построены `GPT-4o`, `Claude 4`, `Gemini`, `Llama`, `Mistral`, `DeepSeek`; стек блоков растёт от 12 у `BERT-base` до 96+ у крупных `LLM`.",
-                "when_to_apply": "Применяют, когда нужен параллелизм на GPU/TPU и длинный effective context — через attention, а не цепочку hidden states, как в RNN.",
-                "edge_cases": "Self-attention имеет сложность `O(n²)` по длине, поэтому для длинных контекстов добавляют `Flash Attention`, sliding window и sparse attention.",
-                "related": "[[llm-basics-interview#Q1]] что такое LLM; [[llm-basics-interview#Q3]] self-attention; [[llm-basics-interview#Q4]] encoder vs decoder архитектуры."
+                "what_actually": "GNN/Tree-LSTM требуют parsing tree, что хрупко и плохо обобщается, а `Transformer` сам выучивает связи через attention weights без явной структуры.",
+                "source_of_confusion": "Attention строит «связи между токенами», что напоминает рёбра графа, отсюда путаница.",
+                "if_it_were_true": "Тогда для каждого языка нужен был бы отдельный парсер синтаксиса перед инференсом.",
+                "how_it_should_be": "`Transformer` не нуждается в дереве разбора — структуру он выучивает сам через self-attention."
               }
             },
             {
@@ -108,13 +107,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Transformer` — это графовая нейросеть (GNN), работающая на дереве синтаксического разбора предложения.",
-              "correct": false,
+              "text": "`Transformer` — архитектура из статьи «Attention Is All You Need» (2017) на основе self-attention, обрабатывающая всю последовательность параллельно; основа всех современных `LLM`.",
+              "correct": true,
               "sections": {
-                "what_actually": "GNN/Tree-LSTM требуют parsing tree, что хрупко и плохо обобщается, а `Transformer` сам выучивает связи через attention weights без явной структуры.",
-                "source_of_confusion": "Attention строит «связи между токенами», что напоминает рёбра графа, отсюда путаница.",
-                "if_it_were_true": "Тогда для каждого языка нужен был бы отдельный парсер синтаксиса перед инференсом.",
-                "how_it_should_be": "`Transformer` не нуждается в дереве разбора — структуру он выучивает сам через self-attention."
+                "explanation": "Vaswani et al. отказались от рекуррентности и свёрток, оставив только attention. Ключевые блоки: embedding + positional encoding, multi-head self-attention, feed-forward network, layer norm и residual connections, стек из N блоков.",
+                "example": "На этой архитектуре построены `GPT-4o`, `Claude 4`, `Gemini`, `Llama`, `Mistral`, `DeepSeek`; стек блоков растёт от 12 у `BERT-base` до 96+ у крупных `LLM`.",
+                "when_to_apply": "Применяют, когда нужен параллелизм на GPU/TPU и длинный effective context — через attention, а не цепочку hidden states, как в RNN.",
+                "edge_cases": "Self-attention имеет сложность `O(n²)` по длине, поэтому для длинных контекстов добавляют `Flash Attention`, sliding window и sparse attention.",
+                "related": "[[llm-basics-interview#Q1]] что такое LLM; [[llm-basics-interview#Q3]] self-attention; [[llm-basics-interview#Q4]] encoder vs decoder архитектуры."
               }
             }
           ]
@@ -131,18 +131,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Self-attention — это механизм, где каждый токен видит только предыдущий токен в последовательности, как в RNN.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Видеть только `h_{t-1}` — это и есть рекуррентность RNN/LSTM с проблемой vanishing gradients, а self-attention смотрит на всю последовательность сразу.",
-                "source_of_confusion": "Causal masking в decoder-моделях прячет будущие токены, что путают с «видит только предыдущий».",
-                "if_it_were_true": "Тогда исчезло бы главное преимущество — глобальный контекст и параллелизм по всей длине.",
-                "how_it_should_be": "Self-attention даёт каждому токену взвешенный доступ ко всем (или всем предыдущим) токенам, а не только к одному соседу."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Self-attention — это cross-attention между encoder и decoder в encoder-decoder архитектурах (`T5`, `BART`).",
               "correct": false,
               "sections": {
@@ -153,8 +141,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Self-attention — механизм, где каждый токен через Q/K/V «обращает внимание» на все остальные токены той же последовательности по формуле `softmax(QK^T/√d_k)·V`.",
               "correct": true,
               "sections": {
@@ -163,6 +151,18 @@
                 "when_to_apply": "Применяют как ядро каждого блока `Transformer` для контекстуализации токенов — это и даёт понимание контекста в `LLM`.",
                 "edge_cases": "Сложность `O(n²·d)` по длине делает длинные контексты дорогими, отсюда `Flash Attention`, sliding и sparse attention.",
                 "related": "[[llm-basics-interview#Q2]] архитектура Transformer; [[llm-basics-interview#Q4]] encoder vs decoder; [[llm-basics-interview#Q9]] почему контекст ограничен."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Self-attention — это механизм, где каждый токен видит только предыдущий токен в последовательности, как в RNN.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Видеть только `h_{t-1}` — это и есть рекуррентность RNN/LSTM с проблемой vanishing gradients, а self-attention смотрит на всю последовательность сразу.",
+                "source_of_confusion": "Causal masking в decoder-моделях прячет будущие токены, что путают с «видит только предыдущий».",
+                "if_it_were_true": "Тогда исчезло бы главное преимущество — глобальный контекст и параллелизм по всей длине.",
+                "how_it_should_be": "Self-attention даёт каждому токену взвешенный доступ ко всем (или всем предыдущим) токенам, а не только к одному соседу."
               }
             },
             {
@@ -191,18 +191,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Доминирует encoder-only, потому что `BERT` доказал эффективность bidirectional attention для понимания контекста.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Encoder-only (`BERT`, `RoBERTa`) выдаёт embeddings или классификацию, но не последовательность токенов; `GPT`/`Claude` — decoder-only под autoregressive генерацию.",
-                "source_of_confusion": "`BERT` был прорывом 2018-2019, и «успех BERT» путают с «BERT — основа всех LLM».",
-                "if_it_were_true": "Тогда `ChatGPT` не выдавал бы связный текст token-by-token — encoder-only даёт фиксированный вектор, а не поток.",
-                "how_it_should_be": "Современные чат-модели decoder-only; encoder-only остался для embeddings и классификации."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Доминирует encoder-decoder, потому что эта архитектура самая универсальная и используется в оригинальном `Transformer`.",
               "correct": false,
               "sections": {
@@ -213,8 +201,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Доминирует гибридная encoder-decoder с shared weights — компромисс между пониманием и генерацией.",
               "correct": false,
               "sections": {
@@ -225,8 +213,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Среди `GPT`, `Claude`, `Llama` доминирует decoder-only: causal-masked self-attention, autoregressive генерация, простая архитектура, отлично масштабируется.",
               "correct": true,
               "sections": {
@@ -235,6 +223,18 @@
                 "when_to_apply": "Применяют для любой генерации текста: чат, code completion, summarization in-context, instruction-following; для embeddings/classification лучше encoder-only (`BERT`, `E5`).",
                 "edge_cases": "Causal mask не даёт «посмотреть вперёд» — fill-in-the-middle требует специального обучения, а bidirectional понимание как у `BERT` недоступно из коробки.",
                 "related": "[[llm-basics-interview#Q1]] что такое LLM; [[llm-basics-interview#Q2]] архитектура Transformer; [[llm-basics-interview#Q3]] self-attention."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Доминирует encoder-only, потому что `BERT` доказал эффективность bidirectional attention для понимания контекста.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Encoder-only (`BERT`, `RoBERTa`) выдаёт embeddings или классификацию, но не последовательность токенов; `GPT`/`Claude` — decoder-only под autoregressive генерацию.",
+                "source_of_confusion": "`BERT` был прорывом 2018-2019, и «успех BERT» путают с «BERT — основа всех LLM».",
+                "if_it_were_true": "Тогда `ChatGPT` не выдавал бы связный текст token-by-token — encoder-only даёт фиксированный вектор, а не поток.",
+                "how_it_should_be": "Современные чат-модели decoder-only; encoder-only остался для embeddings и классификации."
               }
             }
           ]
@@ -251,19 +251,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Token — атомарная единица текста для модели, кусок символов (subword), не обязательно совпадающий со словом; частые слова — один токен, редкие разбиваются на несколько.",
-              "correct": true,
-              "sections": {
-                "explanation": "Tokenizer режет текст на subword-фрагменты по статистике корпуса. «unbelievable» → «un», «bel», «iev», «able». Модель оперирует ID токенов, превращая их в embeddings; все цены API и context limits меряются в токенах.",
-                "example": "«Hello, world!» → 4 токена, «Привет, мир!» → 5 токенов; русский в среднем требует в 2-3 раза больше токенов, чем английский, что прямо влияет на стоимость.",
-                "when_to_apply": "Понимание токенизации нужно для оценки стоимости вызовов, выбора context window и оптимизации промптов (английский дешевле русского).",
-                "edge_cases": "Один текст токенизируется по-разному в разных моделях (`GPT-4` vs `Claude` vs `Llama`); считать токены «по словам» ошибочно, особенно для не-английского и кода.",
-                "related": "[[llm-basics-interview#Q6]] сколько символов в token; [[llm-basics-interview#Q7]] BPE/WordPiece/SentencePiece; [[llm-basics-interview#Q8]] как посчитать токены до отправки."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Один токен = одно слово, разделённое пробелами, как при простом split по whitespace.",
               "correct": false,
               "sections": {
@@ -274,8 +261,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Token — это всегда ровно 4 символа английского текста, фиксированная длина.",
               "correct": false,
               "sections": {
@@ -286,8 +273,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Token — это байт UTF-8 представления текста, всегда соответствует одному байту.",
               "correct": false,
               "sections": {
@@ -295,6 +282,19 @@
                 "source_of_confusion": "Byte-level `BPE` гарантирует кодирование любого Unicode без UNK, поэтому ассоциируется с «байтами как токенами».",
                 "if_it_were_true": "Тогда текст в 1000 байт всегда давал бы 1000 токенов, но `GPT-4` кодирует «hello world» (11 байт) в 2 токена.",
                 "how_it_should_be": "Байтовость — про robustness кодирования, а не про размер; токены всё равно subword, а не одиночные байты."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Token — атомарная единица текста для модели, кусок символов (subword), не обязательно совпадающий со словом; частые слова — один токен, редкие разбиваются на несколько.",
+              "correct": true,
+              "sections": {
+                "explanation": "Tokenizer режет текст на subword-фрагменты по статистике корпуса. «unbelievable» → «un», «bel», «iev», «able». Модель оперирует ID токенов, превращая их в embeddings; все цены API и context limits меряются в токенах.",
+                "example": "«Hello, world!» → 4 токена, «Привет, мир!» → 5 токенов; русский в среднем требует в 2-3 раза больше токенов, чем английский, что прямо влияет на стоимость.",
+                "when_to_apply": "Понимание токенизации нужно для оценки стоимости вызовов, выбора context window и оптимизации промптов (английский дешевле русского).",
+                "edge_cases": "Один текст токенизируется по-разному в разных моделях (`GPT-4` vs `Claude` vs `Llama`); считать токены «по словам» ошибочно, особенно для не-английского и кода.",
+                "related": "[[llm-basics-interview#Q6]] сколько символов в token; [[llm-basics-interview#Q7]] BPE/WordPiece/SentencePiece; [[llm-basics-interview#Q8]] как посчитать токены до отправки."
               }
             }
           ]
@@ -311,6 +311,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Соотношение символов к токенам зависит только от модели, а не от языка — у `GPT-4` фиксированные 5 chars/token для всех языков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Tokenizer привязан к модели, но соотношение chars/token сильно зависит от языка из-за того, какой корпус видел tokenizer; фиксированных значений нет.",
+                "source_of_confusion": "У каждой модели действительно свой tokenizer (`cl100k_base` для `GPT-4`), и это переносят на «фиксированное число для всех языков».",
+                "if_it_were_true": "Тогда любой текст одинаковой символьной длины давал бы одинаковое число токенов на любом языке, но en/ru различаются в 2-3 раза.",
+                "how_it_should_be": "Соотношение зависит и от модели, и от языка; для русского оно хуже из-за состава обучающего корпуса."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Английский и русский имеют одинаковую плотность — ~4 символа на токен в обоих языках.",
               "correct": false,
               "sections": {
@@ -318,19 +330,6 @@
                 "source_of_confusion": "«1 token = 4 chars» цитируют как универсальное правило, без оговорки про язык.",
                 "if_it_were_true": "Тогда стоимость API на русском равнялась бы английской, но русский стоит в 2-3 раза дороже за тот же смысл.",
                 "how_it_should_be": "Плотность сильно зависит от языка; русский даёт вдвое-втрое меньше символов на токен."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Английский — ~4 символа/token, русский — ~2-3 символа/token; русский «дороже» из-за bias токенизатора к англоязычному корпусу обучения.",
-              "correct": true,
-              "sections": {
-                "explanation": "Tokenizer'ы (`BPE`, `tiktoken`) обучались на корпусах с доминированием английского, поэтому частые английские слова — один токен, а русские часто бьются на subword'ы; китайский 1-2 символа/token, код ~3-4.",
-                "example": "Промпт «Translate to French: Hello world» ≈ 7 токенов; тот же смысл «Переведи на французский: Привет мир» ≈ 15-18 токенов — при `$2/1M` input разница в 2.5× это реальные деньги при масштабе.",
-                "when_to_apply": "При оценке стоимости русскоязычного трафика умножать наивный budget на 2-3×; system prompt предпочтительно держать на английском даже при русском вводе.",
-                "edge_cases": "Токенизаторы `Claude` и `Llama 3` чуть лучше для русского, `GPT-4o` снизил overhead для не-английского ~20%, но паритета с английским нет.",
-                "related": "[[llm-basics-interview#Q5]] что такое token; [[llm-basics-interview#Q7]] BPE/WordPiece/SentencePiece; [[llm-basics-interview#Q8]] как посчитать токены."
               }
             },
             {
@@ -348,13 +347,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Соотношение символов к токенам зависит только от модели, а не от языка — у `GPT-4` фиксированные 5 chars/token для всех языков.",
-              "correct": false,
+              "text": "Английский — ~4 символа/token, русский — ~2-3 символа/token; русский «дороже» из-за bias токенизатора к англоязычному корпусу обучения.",
+              "correct": true,
               "sections": {
-                "what_actually": "Tokenizer привязан к модели, но соотношение chars/token сильно зависит от языка из-за того, какой корпус видел tokenizer; фиксированных значений нет.",
-                "source_of_confusion": "У каждой модели действительно свой tokenizer (`cl100k_base` для `GPT-4`), и это переносят на «фиксированное число для всех языков».",
-                "if_it_were_true": "Тогда любой текст одинаковой символьной длины давал бы одинаковое число токенов на любом языке, но en/ru различаются в 2-3 раза.",
-                "how_it_should_be": "Соотношение зависит и от модели, и от языка; для русского оно хуже из-за состава обучающего корпуса."
+                "explanation": "Tokenizer'ы (`BPE`, `tiktoken`) обучались на корпусах с доминированием английского, поэтому частые английские слова — один токен, а русские часто бьются на subword'ы; китайский 1-2 символа/token, код ~3-4.",
+                "example": "Промпт «Translate to French: Hello world» ≈ 7 токенов; тот же смысл «Переведи на французский: Привет мир» ≈ 15-18 токенов — при `$2/1M` input разница в 2.5× это реальные деньги при масштабе.",
+                "when_to_apply": "При оценке стоимости русскоязычного трафика умножать наивный budget на 2-3×; system prompt предпочтительно держать на английском даже при русском вводе.",
+                "edge_cases": "Токенизаторы `Claude` и `Llama 3` чуть лучше для русского, `GPT-4o` снизил overhead для не-английского ~20%, но паритета с английским нет.",
+                "related": "[[llm-basics-interview#Q5]] что такое token; [[llm-basics-interview#Q7]] BPE/WordPiece/SentencePiece; [[llm-basics-interview#Q8]] как посчитать токены."
               }
             }
           ]
@@ -371,30 +371,18 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`BPE` и `WordPiece` — это одно и то же название, разные библиотеки реализуют один алгоритм для `GPT` и `BERT`.",
+              "text": "Размер словаря у современных LLM-токенизаторов — 500-1000 токенов, чтобы покрыть алфавит и базовые морфемы.",
               "correct": false,
               "sections": {
-                "what_actually": "`BPE` выбирает пару с максимальной частотой co-occurrence, `WordPiece` — пару с максимальным приростом likelihood языковой модели; это разные критерии.",
-                "source_of_confusion": "Оба основаны на итеративном merge подслов и дают похожие subword-токены, поэтому кажутся синонимами.",
-                "if_it_were_true": "Тогда не было бы смысла в отдельных названиях и реализациях в HF `tokenizers`.",
-                "how_it_should_be": "Это разные алгоритмы выбора пары для merge, хоть и из одного семейства subword-токенизаторов."
+                "what_actually": "Vocab size у production-`LLM` — 30K-100K (`GPT-4` ~100K, `Llama 3` 128K, `BERT` ~30K); 500-1000 — это уровень символьных моделей, не subword.",
+                "source_of_confusion": "В учебных примерах `BPE` часто показывают на vocab=500 для наглядности.",
+                "if_it_were_true": "Тогда каждое слово билось бы на десяток токенов, а контекст и стоимость inference выросли бы катастрофически.",
+                "how_it_should_be": "Реальный vocab subword-токенизаторов — десятки тысяч токенов, а не сотни."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`SentencePiece` требует обязательной pre-tokenization по пробелам, поэтому не работает для китайского без отдельного word-splitter.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Ровно наоборот: `SentencePiece` работает на raw bytes/Unicode без pre-tokenization и потому идеален для языков без пробелов (китайский, японский, тайский).",
-                "source_of_confusion": "`BPE` и `WordPiece` действительно требуют pre-tokenization по пробелам, и это ошибочно переносят на `SentencePiece`.",
-                "if_it_were_true": "Тогда `T5` и `Llama` не могли бы корректно работать с мультиязычными корпусами.",
-                "how_it_should_be": "`SentencePiece` как раз обходится без pre-tokenization, работая прямо на байтах."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`BPE` итеративно мерджит самые частые пары символов, `WordPiece` выбирает пары с максимальным приростом likelihood, `SentencePiece` работает на raw bytes без pre-tokenization.",
               "correct": true,
               "sections": {
@@ -406,15 +394,27 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Размер словаря у современных LLM-токенизаторов — 500-1000 токенов, чтобы покрыть алфавит и базовые морфемы.",
+              "order": 2,
+              "label": "C",
+              "text": "`SentencePiece` требует обязательной pre-tokenization по пробелам, поэтому не работает для китайского без отдельного word-splitter.",
               "correct": false,
               "sections": {
-                "what_actually": "Vocab size у production-`LLM` — 30K-100K (`GPT-4` ~100K, `Llama 3` 128K, `BERT` ~30K); 500-1000 — это уровень символьных моделей, не subword.",
-                "source_of_confusion": "В учебных примерах `BPE` часто показывают на vocab=500 для наглядности.",
-                "if_it_were_true": "Тогда каждое слово билось бы на десяток токенов, а контекст и стоимость inference выросли бы катастрофически.",
-                "how_it_should_be": "Реальный vocab subword-токенизаторов — десятки тысяч токенов, а не сотни."
+                "what_actually": "Ровно наоборот: `SentencePiece` работает на raw bytes/Unicode без pre-tokenization и потому идеален для языков без пробелов (китайский, японский, тайский).",
+                "source_of_confusion": "`BPE` и `WordPiece` действительно требуют pre-tokenization по пробелам, и это ошибочно переносят на `SentencePiece`.",
+                "if_it_were_true": "Тогда `T5` и `Llama` не могли бы корректно работать с мультиязычными корпусами.",
+                "how_it_should_be": "`SentencePiece` как раз обходится без pre-tokenization, работая прямо на байтах."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`BPE` и `WordPiece` — это одно и то же название, разные библиотеки реализуют один алгоритм для `GPT` и `BERT`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`BPE` выбирает пару с максимальной частотой co-occurrence, `WordPiece` — пару с максимальным приростом likelihood языковой модели; это разные критерии.",
+                "source_of_confusion": "Оба основаны на итеративном merge подслов и дают похожие subword-токены, поэтому кажутся синонимами.",
+                "if_it_were_true": "Тогда не было бы смысла в отдельных названиях и реализациях в HF `tokenizers`.",
+                "how_it_should_be": "Это разные алгоритмы выбора пары для merge, хоть и из одного семейства subword-токенизаторов."
               }
             }
           ]
@@ -431,13 +431,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Разделить длину строки в символах на 4 и получить точное число токенов — это официальная формула `OpenAI` и `Anthropic`.",
-              "correct": false,
+              "text": "Использовать tokenizer той же модели: `tiktoken.encoding_for_model(\"gpt-4o\")` для `OpenAI`, `client.beta.messages.count_tokens` для `Claude` — это даёт точный счёт ДО отправки.",
+              "correct": true,
               "sections": {
-                "what_actually": "«1 token ≈ 4 символа английского» — лишь грубая эвристика; реальный счёт зависит от языка (кириллица ≈ 2-3 токена/символ), кода, эмодзи и конкретного токенизатора.",
-                "source_of_confusion": "`OpenAI` приводит эту эвристику как rule-of-thumb для прикидки, и её принимают за «официальную формулу».",
-                "if_it_were_true": "Тогда функция `tiktoken.encode()` была бы не нужна — все писали бы `len(text) // 4`.",
-                "how_it_should_be": "Это лишь приблизительная оценка; для точного счёта нужен реальный токенизатор модели."
+                "explanation": "У каждой модели свой токенизатор, поэтому prompt прогоняют через ровно тот encoding, что использует модель. `OpenAI` публикует его через `tiktoken`, `Anthropic` — через REST endpoint `count_tokens`.",
+                "example": "`tiktoken.encoding_for_model(\"gpt-4o\").encode(\"Hello, world!\")` вернёт `[13225, 11, 1917, 0]` — 4 токена; для `Claude` — `client.beta.messages.count_tokens(model=..., messages=[...])`.",
+                "when_to_apply": "Применяют перед отправкой больших промптов в production (RAG, summarization), для precommit-проверок длины system prompt и оценки стоимости batch-инференса.",
+                "edge_cases": "`tiktoken` для `Claude` НЕ работает — токенизация другая; system prompt и tool definitions тоже считаются, а у chat-API есть фиксированный overhead на каждое сообщение.",
+                "related": "[[llm-basics-interview#Q5]] что такое token; [[llm-basics-interview#Q7]] BPE/WordPiece; [[llm-basics-interview#Q9]] что такое context window."
               }
             },
             {
@@ -467,14 +468,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Использовать tokenizer той же модели: `tiktoken.encoding_for_model(\"gpt-4o\")` для `OpenAI`, `client.beta.messages.count_tokens` для `Claude` — это даёт точный счёт ДО отправки.",
-              "correct": true,
+              "text": "Разделить длину строки в символах на 4 и получить точное число токенов — это официальная формула `OpenAI` и `Anthropic`.",
+              "correct": false,
               "sections": {
-                "explanation": "У каждой модели свой токенизатор, поэтому prompt прогоняют через ровно тот encoding, что использует модель. `OpenAI` публикует его через `tiktoken`, `Anthropic` — через REST endpoint `count_tokens`.",
-                "example": "`tiktoken.encoding_for_model(\"gpt-4o\").encode(\"Hello, world!\")` вернёт `[13225, 11, 1917, 0]` — 4 токена; для `Claude` — `client.beta.messages.count_tokens(model=..., messages=[...])`.",
-                "when_to_apply": "Применяют перед отправкой больших промптов в production (RAG, summarization), для precommit-проверок длины system prompt и оценки стоимости batch-инференса.",
-                "edge_cases": "`tiktoken` для `Claude` НЕ работает — токенизация другая; system prompt и tool definitions тоже считаются, а у chat-API есть фиксированный overhead на каждое сообщение.",
-                "related": "[[llm-basics-interview#Q5]] что такое token; [[llm-basics-interview#Q7]] BPE/WordPiece; [[llm-basics-interview#Q9]] что такое context window."
+                "what_actually": "«1 token ≈ 4 символа английского» — лишь грубая эвристика; реальный счёт зависит от языка (кириллица ≈ 2-3 токена/символ), кода, эмодзи и конкретного токенизатора.",
+                "source_of_confusion": "`OpenAI` приводит эту эвристику как rule-of-thumb для прикидки, и её принимают за «официальную формулу».",
+                "if_it_were_true": "Тогда функция `tiktoken.encode()` была бы не нужна — все писали бы `len(text) // 4`.",
+                "how_it_should_be": "Это лишь приблизительная оценка; для точного счёта нужен реальный токенизатор модели."
               }
             }
           ]
@@ -491,6 +491,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Context window относится только к input prompt — output модели не учитывается и может быть любой длины при наличии `max_tokens`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В большинстве API лимит общий: `prompt_tokens + completion_tokens ≤ context_window`, поэтому `max_tokens` подбирают так, чтобы остался запас на ответ.",
+                "source_of_confusion": "Исторически у `OpenAI` были отдельные лимиты на prompt и completion, и это переносят на современные модели.",
+                "if_it_were_true": "Тогда при context=200K и prompt=199K модель сгенерировала бы ещё 200K output, что нарушает квадратичную сложность attention.",
+                "how_it_should_be": "Лимит покрывает и input, и output вместе; output ест тот же бюджет, что и prompt."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Context window — максимум токенов, которые модель обрабатывает за один запрос: system prompt + chat history + user message + ответ модели вместе должны уложиться в этот лимит.",
               "correct": true,
               "sections": {
@@ -502,8 +514,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "Context window — это размер тренировочного датасета модели в токенах; чем он больше, тем больше текстов модель видела при обучении.",
               "correct": false,
               "sections": {
@@ -511,18 +523,6 @@
                 "source_of_confusion": "Обе характеристики измеряются в токенах, поэтому термины смешивают.",
                 "if_it_were_true": "Тогда `Claude` с context 200K «видел» бы при обучении меньше данных, чем модели с 128K, что абсурдно.",
                 "how_it_should_be": "Это лимит на обработку за запрос; размер обучающего корпуса — отдельная независимая величина."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Context window относится только к input prompt — output модели не учитывается и может быть любой длины при наличии `max_tokens`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В большинстве API лимит общий: `prompt_tokens + completion_tokens ≤ context_window`, поэтому `max_tokens` подбирают так, чтобы остался запас на ответ.",
-                "source_of_confusion": "Исторически у `OpenAI` были отдельные лимиты на prompt и completion, и это переносят на современные модели.",
-                "if_it_were_true": "Тогда при context=200K и prompt=199K модель сгенерировала бы ещё 200K output, что нарушает квадратичную сложность attention.",
-                "how_it_should_be": "Лимит покрывает и input, и output вместе; output ест тот же бюджет, что и prompt."
               }
             },
             {
@@ -551,13 +551,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Context увеличивается строго пропорционально числу параметров: `GPT-3` имел 2K из-за 175B параметров, а `GPT-4` получил 32K только после роста весов в 4 раза.",
+              "text": "1M токенов — это примерно 100 страниц A4, поэтому 1M context эквивалентен одной книге среднего объёма.",
               "correct": false,
               "sections": {
-                "what_actually": "Размер context определяется архитектурой attention и инженерными решениями (positional encoding, `KV-cache`, оптимизации памяти), а не числом параметров.",
-                "source_of_confusion": "И параметры, и context — «большие числа модели», поэтому их связывают причинно.",
-                "if_it_were_true": "Тогда нельзя было бы дать длинный context маленькой модели, но `Gemini Flash` с миллионами context это опровергает.",
-                "how_it_should_be": "Context и число параметров — независимые оси; рост окна — про attention и память, а не про веса."
+                "what_actually": "1M токенов ≈ ~750K английских слов ≈ ~2000 страниц A4 — это объём нескольких книг, а не одной средней.",
+                "source_of_confusion": "Интуитивно «миллион» кажется небольшим в страницах, отсюда заниженная оценка.",
+                "if_it_were_true": "Тогда при capacity planning недооценивался бы реальный объём данных в окне и ставились бы лишние ограничения на размер документов.",
+                "how_it_should_be": "1M токенов вмещает ~2000 страниц; это несколько книг, а не одна средняя."
               }
             },
             {
@@ -576,6 +576,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "Context увеличивается строго пропорционально числу параметров: `GPT-3` имел 2K из-за 175B параметров, а `GPT-4` получил 32K только после роста весов в 4 раза.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Размер context определяется архитектурой attention и инженерными решениями (positional encoding, `KV-cache`, оптимизации памяти), а не числом параметров.",
+                "source_of_confusion": "И параметры, и context — «большие числа модели», поэтому их связывают причинно.",
+                "if_it_were_true": "Тогда нельзя было бы дать длинный context маленькой модели, но `Gemini Flash` с миллионами context это опровергает.",
+                "how_it_should_be": "Context и число параметров — независимые оси; рост окна — про attention и память, а не про веса."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Все современные `LLM` с context ≥ 200K одинаково хорошо используют любую позицию во входе — эффекта потери качества в середине нет.",
               "correct": false,
               "sections": {
@@ -583,18 +595,6 @@
                 "source_of_confusion": "Заявленный лимит 1M звучит как «модель идеально помнит всё», отсюда вера в равномерное качество.",
                 "if_it_were_true": "Тогда можно было бы класть ключевые правила в середину длинного документа без риска, но на практике это даёт silent quality drop.",
                 "how_it_should_be": "Качество зависит от позиции; критичную информацию держат в начале и конце, а не в середине."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "1M токенов — это примерно 100 страниц A4, поэтому 1M context эквивалентен одной книге среднего объёма.",
-              "correct": false,
-              "sections": {
-                "what_actually": "1M токенов ≈ ~750K английских слов ≈ ~2000 страниц A4 — это объём нескольких книг, а не одной средней.",
-                "source_of_confusion": "Интуитивно «миллион» кажется небольшим в страницах, отсюда заниженная оценка.",
-                "if_it_were_true": "Тогда при capacity planning недооценивался бы реальный объём данных в окне и ставились бы лишние ограничения на размер документов.",
-                "how_it_should_be": "1M токенов вмещает ~2000 страниц; это несколько книг, а не одна средняя."
               }
             }
           ]
@@ -611,30 +611,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Если контекст переполняется, единственный корректный путь — обрезать вход с начала (truncation from the head), только так сохраняется смысл последнего сообщения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Truncation — лишь одна и часто плохая стратегия (теряются system prompt и ранние факты); есть summarization, RAG, sliding window, hierarchical processing.",
-                "source_of_confusion": "Truncation проще всего реализовать, поэтому его принимают за единственный способ.",
-                "if_it_were_true": "Тогда первый же длинный диалог удалял бы system prompt с критичными правилами, и модель работала бы вне ограничений.",
-                "how_it_should_be": "Применяют комбинацию стратегий; head-truncation — частный случай, который без осторожности теряет system prompt."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Никакого выбора нет: если данные не влезают, надо просто ждать релиза модели с бо́льшим context window — программные стратегии неэффективны.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Индустрия активно использует RAG, summarization, sliding window и hierarchical processing именно потому, что бо́льший context не всегда доступен, дорог и подвержен «lost in the middle».",
-                "source_of_confusion": "Кажется, что «больше окно» решает всё, поэтому ждут нового релиза вендора.",
-                "if_it_were_true": "Тогда продукт зависал бы в ожидании релиза, упуская дешёвое инженерное решение и раздувая costs длинными промптами.",
-                "how_it_should_be": "Лимит обходят программно (RAG/summarization/sliding window); бо́льшая модель — лишь один из вариантов."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Комбинировать стратегии: truncation устаревших сообщений, summarization старой истории, RAG для релевантных чанков, sliding window последних N сообщений, hierarchical processing для больших корпусов и переход на модель с большим context как крайний вариант.",
               "correct": true,
               "sections": {
@@ -646,8 +622,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "RAG неприменим к чатам: он работает только с документами, а историю сообщений можно ужимать исключительно truncation или summarization.",
               "correct": false,
               "sections": {
@@ -655,6 +631,30 @@
                 "source_of_confusion": "RAG обычно показывают на статичных документах, отсюда вывод, что для чата он не годится.",
                 "if_it_were_true": "Тогда команда теряла бы важные ранние факты диалога, хотя RAG-стек уже есть в проекте.",
                 "how_it_should_be": "RAG применим и к истории чата через retrieval по embeddings прошлых сообщений."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Если контекст переполняется, единственный корректный путь — обрезать вход с начала (truncation from the head), только так сохраняется смысл последнего сообщения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Truncation — лишь одна и часто плохая стратегия (теряются system prompt и ранние факты); есть summarization, RAG, sliding window, hierarchical processing.",
+                "source_of_confusion": "Truncation проще всего реализовать, поэтому его принимают за единственный способ.",
+                "if_it_were_true": "Тогда первый же длинный диалог удалял бы system prompt с критичными правилами, и модель работала бы вне ограничений.",
+                "how_it_should_be": "Применяют комбинацию стратегий; head-truncation — частный случай, который без осторожности теряет system prompt."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Никакого выбора нет: если данные не влезают, надо просто ждать релиза модели с бо́льшим context window — программные стратегии неэффективны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Индустрия активно использует RAG, summarization, sliding window и hierarchical processing именно потому, что бо́льший context не всегда доступен, дорог и подвержен «lost in the middle».",
+                "source_of_confusion": "Кажется, что «больше окно» решает всё, поэтому ждут нового релиза вендора.",
+                "if_it_were_true": "Тогда продукт зависал бы в ожидании релиза, упуская дешёвое инженерное решение и раздувая costs длинными промптами.",
+                "how_it_should_be": "Лимит обходят программно (RAG/summarization/sliding window); бо́льшая модель — лишь один из вариантов."
               }
             }
           ]
@@ -671,18 +671,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Temperature — это параметр обучения модели, задаётся один раз при тренировке и не меняется в inference API.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Temperature — параметр sampling на этапе inference; меняется per-request через API без переобучения модели.",
-                "source_of_confusion": "Слово «параметр» ассоциируется с весами модели, отсюда вывод про этап обучения.",
-                "if_it_were_true": "Тогда для «творческих» ответов нужен был бы fine-tuning, и бесплатный рычаг в API оставался бы неиспользованным.",
-                "how_it_should_be": "Это inference-параметр; его меняют в каждом запросе без какого-либо переобучения."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "При `temperature = 0` модель использует случайный sampling по uniform distribution, поэтому ответы максимально разнообразны.",
               "correct": false,
               "sections": {
@@ -690,6 +678,19 @@
                 "source_of_confusion": "Ноль интуитивно ассоциируют с «нет настройки → случайность», что переворачивает смысл.",
                 "if_it_were_true": "Тогда для extraction/JSON ставили бы `T=0`, ожидая разнообразия, и путались бы при дебаге стабильного ответа.",
                 "how_it_should_be": "`T=0` даёт детерминированный greedy-выбор; разнообразие растёт с увеличением temperature."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Temperature — параметр sampling, делящий логиты перед softmax (`softmax(logits / T)`): при `T=0` всегда самый вероятный токен (greedy), `T≈0.3` — consistent для facts/code, `T≈0.7` — баланс по умолчанию, `T≥1.0` — creative, ближе к uniform.",
+              "correct": true,
+              "sections": {
+                "explanation": "Формула `softmax(logits / T)` — стандартное определение temperature; деление на `T<1` «обостряет» распределение, на `T>1` «сглаживает», при `T→0` это эквивалентно argmax.",
+                "example": "Для extraction/structured outputs/code — `T=0–0.3`; чат-ассистент — `T=0.7`; creative writing и brainstorming — `T=1.0+`.",
+                "when_to_apply": "Применяют per-request через API (`{\"temperature\": 0.7}`), подбирая под тип задачи: низкая для фактов, высокая для творчества.",
+                "edge_cases": "Даже при `T=0` полная детерминированность не гарантируется на провайдере (batching, floating-point), а слишком высокая `T>1.5` часто даёт несвязный output.",
+                "related": "[[llm-basics-interview#Q13]] top_p и top_k; [[llm-basics-interview#Q15]] presence/frequency penalty; [[llm-basics-interview#Q21]] связь с галлюцинациями."
               }
             },
             {
@@ -707,14 +708,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Temperature — параметр sampling, делящий логиты перед softmax (`softmax(logits / T)`): при `T=0` всегда самый вероятный токен (greedy), `T≈0.3` — consistent для facts/code, `T≈0.7` — баланс по умолчанию, `T≥1.0` — creative, ближе к uniform.",
-              "correct": true,
+              "text": "Temperature — это параметр обучения модели, задаётся один раз при тренировке и не меняется в inference API.",
+              "correct": false,
               "sections": {
-                "explanation": "Формула `softmax(logits / T)` — стандартное определение temperature; деление на `T<1` «обостряет» распределение, на `T>1` «сглаживает», при `T→0` это эквивалентно argmax.",
-                "example": "Для extraction/structured outputs/code — `T=0–0.3`; чат-ассистент — `T=0.7`; creative writing и brainstorming — `T=1.0+`.",
-                "when_to_apply": "Применяют per-request через API (`{\"temperature\": 0.7}`), подбирая под тип задачи: низкая для фактов, высокая для творчества.",
-                "edge_cases": "Даже при `T=0` полная детерминированность не гарантируется на провайдере (batching, floating-point), а слишком высокая `T>1.5` часто даёт несвязный output.",
-                "related": "[[llm-basics-interview#Q13]] top_p и top_k; [[llm-basics-interview#Q15]] presence/frequency penalty; [[llm-basics-interview#Q21]] связь с галлюцинациями."
+                "what_actually": "Temperature — параметр sampling на этапе inference; меняется per-request через API без переобучения модели.",
+                "source_of_confusion": "Слово «параметр» ассоциируется с весами модели, отсюда вывод про этап обучения.",
+                "if_it_were_true": "Тогда для «творческих» ответов нужен был бы fine-tuning, и бесплатный рычаг в API оставался бы неиспользованным.",
+                "how_it_should_be": "Это inference-параметр; его меняют в каждом запросе без какого-либо переобучения."
               }
             }
           ]
@@ -731,19 +731,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`top_k` оставляет фиксированное число K самых вероятных токенов; `top_p` берёт минимальное множество top-токенов, чья суммарная вероятность ≥ p — размер этого множества адаптивный.",
-              "correct": true,
-              "sections": {
-                "explanation": "`top_k` — жёсткий cutoff по позиции в отсортированном списке; `top_p` — динамический cutoff по накопленной массе: в «уверенных» позициях множество маленькое, в «неуверенных» — большое.",
-                "example": "При логировании sampling видно, что размер nucleus меняется по шагам (10..200 токенов) при стабильном `top_p`, тогда как `top_k` всегда оставляет ровно K.",
-                "when_to_apply": "`top_p ≈ 0.9` + `temperature ≈ 0.7` для creative-задач с контролем хвоста; `top_k` редко нужен отдельно, обычно в комбинации или как safety-cap.",
-                "edge_cases": "Оба применяются после softmax к probabilities; не задавать одновременно `top_p` и `top_k` без необходимости — взаимодействие фильтров усложняет тюнинг.",
-                "related": "[[llm-basics-interview#Q12]] temperature; [[llm-basics-interview#Q14]] max_tokens и stop; [[llm-basics-interview#Q15]] presence/frequency penalty."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`top_p = 0.9` означает «выбирать ровно top-9 токенов по вероятности», а `top_k = 50` — «отбросить 50 самых маловероятных токенов перед softmax».",
               "correct": false,
               "sections": {
@@ -754,8 +741,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "`top_p` и `top_k` — синонимы; оба ограничивают вероятностный хвост, разница только в имени параметра у разных провайдеров (`OpenAI` vs `Anthropic`).",
               "correct": false,
               "sections": {
@@ -766,8 +753,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "`top_p` применяется до softmax (к логитам), `top_k` после softmax (к probabilities) — оба статичны и не зависят от distribution на шаге.",
               "correct": false,
               "sections": {
@@ -775,6 +762,19 @@
                 "source_of_confusion": "Аналогия с temperature (которая делит логиты) переносится на `top_p`/`top_k` ошибочно.",
                 "if_it_were_true": "Тогда при custom-sampler фильтры стояли бы не на той стадии pipeline, ломая нормировку.",
                 "how_it_should_be": "Оба фильтра работают по probabilities после softmax; `top_p` динамичен, а не статичен."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`top_k` оставляет фиксированное число K самых вероятных токенов; `top_p` берёт минимальное множество top-токенов, чья суммарная вероятность ≥ p — размер этого множества адаптивный.",
+              "correct": true,
+              "sections": {
+                "explanation": "`top_k` — жёсткий cutoff по позиции в отсортированном списке; `top_p` — динамический cutoff по накопленной массе: в «уверенных» позициях множество маленькое, в «неуверенных» — большое.",
+                "example": "При логировании sampling видно, что размер nucleus меняется по шагам (10..200 токенов) при стабильном `top_p`, тогда как `top_k` всегда оставляет ровно K.",
+                "when_to_apply": "`top_p ≈ 0.9` + `temperature ≈ 0.7` для creative-задач с контролем хвоста; `top_k` редко нужен отдельно, обычно в комбинации или как safety-cap.",
+                "edge_cases": "Оба применяются после softmax к probabilities; не задавать одновременно `top_p` и `top_k` без необходимости — взаимодействие фильтров усложняет тюнинг.",
+                "related": "[[llm-basics-interview#Q12]] temperature; [[llm-basics-interview#Q14]] max_tokens и stop; [[llm-basics-interview#Q15]] presence/frequency penalty."
               }
             }
           ]
@@ -791,18 +791,30 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`max_tokens` ограничивает суммарное число токенов в prompt + completion; `stop` — это regex-паттерны, проверяемые post-factum по уже сгенерированному тексту.",
+              "text": "`stop` поддерживает максимум 1 строку, а `max_tokens` должен быть `>= prompt_tokens`, иначе API вернёт ошибку 400.",
               "correct": false,
               "sections": {
-                "what_actually": "`max_tokens` ограничивает только completion (output), отдельно от context window; `stop` — строковые литералы, проверяемые во время генерации, а не regex и не post-processing.",
-                "source_of_confusion": "И `max_tokens`, и context window про «токены», поэтому их смешивают в один budget.",
-                "if_it_were_true": "Тогда `max_tokens = 4096` считали бы всем бюджетом и упирались бы в `context_length_exceeded` на больших prompts.",
-                "how_it_should_be": "`max_tokens` лимитирует только output; `stop` — это строки, детектируемые на лету."
+                "what_actually": "`OpenAI` поддерживает до 4 stop-строк в массиве; `max_tokens` сравнивается с context-window (`prompt + max_tokens ≤ window`), а не с prompt_tokens напрямую.",
+                "source_of_confusion": "Кажется логичным, что output должен быть «не меньше» prompt, отсюда ложное ограничение.",
+                "if_it_were_true": "Тогда несколько stop-маркеров (`[\"\\n\\n\", \"###\", \"END\"]`) были бы невозможны, и фичей не пользовались бы.",
+                "how_it_should_be": "Можно задать до 4 stop-строк, а `max_tokens` не обязан превышать prompt_tokens."
               }
             },
             {
               "order": 1,
               "label": "B",
+              "text": "`max_tokens` — это soft-hint «постарайся уложиться», модель может его игнорировать; `stop` гарантирует остановку только если строка встречается в начале строки текста.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`max_tokens` — жёсткий cap на стороне API, который принудительно прерывает генерацию (`finish_reason = \"length\"`); `stop`-строка детектируется в любой позиции output.",
+                "source_of_confusion": "Слово «hint» ассоциируется с рекомендацией, а не с жёстким лимитом.",
+                "if_it_were_true": "Тогда не обрабатывали бы `finish_reason = \"length\"`, и обрезанный незакрытый JSON ломал бы downstream-парсинг.",
+                "how_it_should_be": "`max_tokens` — жёсткий cap, а `stop` срабатывает в любой позиции, не только в начале строки."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`max_tokens` — жёсткий верхний предел токенов в completion (при достижении генерация прерывается с `finish_reason = \"length\"`); `stop` — список строк, при появлении любой генерация останавливается, а сама stop-строка в output не включается.",
               "correct": true,
               "sections": {
@@ -814,27 +826,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`max_tokens` — это soft-hint «постарайся уложиться», модель может его игнорировать; `stop` гарантирует остановку только если строка встречается в начале строки текста.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`max_tokens` — жёсткий cap на стороне API, который принудительно прерывает генерацию (`finish_reason = \"length\"`); `stop`-строка детектируется в любой позиции output.",
-                "source_of_confusion": "Слово «hint» ассоциируется с рекомендацией, а не с жёстким лимитом.",
-                "if_it_were_true": "Тогда не обрабатывали бы `finish_reason = \"length\"`, и обрезанный незакрытый JSON ломал бы downstream-парсинг.",
-                "how_it_should_be": "`max_tokens` — жёсткий cap, а `stop` срабатывает в любой позиции, не только в начале строки."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "`stop` поддерживает максимум 1 строку, а `max_tokens` должен быть `>= prompt_tokens`, иначе API вернёт ошибку 400.",
+              "text": "`max_tokens` ограничивает суммарное число токенов в prompt + completion; `stop` — это regex-паттерны, проверяемые post-factum по уже сгенерированному тексту.",
               "correct": false,
               "sections": {
-                "what_actually": "`OpenAI` поддерживает до 4 stop-строк в массиве; `max_tokens` сравнивается с context-window (`prompt + max_tokens ≤ window`), а не с prompt_tokens напрямую.",
-                "source_of_confusion": "Кажется логичным, что output должен быть «не меньше» prompt, отсюда ложное ограничение.",
-                "if_it_were_true": "Тогда несколько stop-маркеров (`[\"\\n\\n\", \"###\", \"END\"]`) были бы невозможны, и фичей не пользовались бы.",
-                "how_it_should_be": "Можно задать до 4 stop-строк, а `max_tokens` не обязан превышать prompt_tokens."
+                "what_actually": "`max_tokens` ограничивает только completion (output), отдельно от context window; `stop` — строковые литералы, проверяемые во время генерации, а не regex и не post-processing.",
+                "source_of_confusion": "И `max_tokens`, и context window про «токены», поэтому их смешивают в один budget.",
+                "if_it_were_true": "Тогда `max_tokens = 4096` считали бы всем бюджетом и упирались бы в `context_length_exceeded` на больших prompts.",
+                "how_it_should_be": "`max_tokens` лимитирует только output; `stop` — это строки, детектируемые на лету."
               }
             }
           ]
@@ -851,13 +851,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`presence_penalty` уменьшает вероятность редких токенов, `frequency_penalty` — частых; оба считаются по global token-frequency из training corpus.",
-              "correct": false,
+              "text": "`presence_penalty` — бинарный штраф за сам факт появления токена в текущем completion (одинаковый, был ли он 1 или 10 раз); `frequency_penalty` — штраф пропорционально числу уже сгенерированных вхождений токена.",
+              "correct": true,
               "sections": {
-                "what_actually": "Оба penalty работают только в рамках текущего completion (а не по training corpus): штраф вычитается из логитов токенов, появившихся в этом ответе.",
-                "source_of_confusion": "Слова «presence» и «frequency» звучат как свойства языка вообще, а не текущего ответа.",
-                "if_it_were_true": "Тогда параметры «прокачивали бы редкие слова из словаря», но vocabulary-discovery эффекта они не дают.",
-                "how_it_should_be": "Оба штрафа считаются по текущему completion, а не по частоте в обучающем корпусе."
+                "explanation": "Формально `logit_new = logit_old − presence_penalty·1[token_seen] − frequency_penalty·count(token_in_completion)`: первый — бинарный indicator, второй — линейный counter.",
+                "example": "`presence_penalty ≈ 0.5..1.0` для разнообразия vocabulary (модель чаще вводит новые понятия); `frequency_penalty ≈ 0.3..0.7` для подавления literal repetitions и loop'ов.",
+                "when_to_apply": "Применяют в long-form generation, чтобы устранить бесконечный повтор фразы или «зацикливание» на слове без разрушения coherence.",
+                "edge_cases": "Оба в диапазоне `[-2.0, 2.0]`; отрицательные значения поощряют повторения (рефрены/код), а `>1.5` часто роняет coherence — проверяют A/B-тестом на distinct-n.",
+                "related": "[[llm-basics-interview#Q12]] temperature; [[llm-basics-interview#Q13]] top_p и top_k; [[llm-basics-interview#Q17]] у Claude этих параметров нет."
               }
             },
             {
@@ -875,14 +876,13 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`presence_penalty` — бинарный штраф за сам факт появления токена в текущем completion (одинаковый, был ли он 1 или 10 раз); `frequency_penalty` — штраф пропорционально числу уже сгенерированных вхождений токена.",
-              "correct": true,
+              "text": "`presence_penalty` уменьшает вероятность редких токенов, `frequency_penalty` — частых; оба считаются по global token-frequency из training corpus.",
+              "correct": false,
               "sections": {
-                "explanation": "Формально `logit_new = logit_old − presence_penalty·1[token_seen] − frequency_penalty·count(token_in_completion)`: первый — бинарный indicator, второй — линейный counter.",
-                "example": "`presence_penalty ≈ 0.5..1.0` для разнообразия vocabulary (модель чаще вводит новые понятия); `frequency_penalty ≈ 0.3..0.7` для подавления literal repetitions и loop'ов.",
-                "when_to_apply": "Применяют в long-form generation, чтобы устранить бесконечный повтор фразы или «зацикливание» на слове без разрушения coherence.",
-                "edge_cases": "Оба в диапазоне `[-2.0, 2.0]`; отрицательные значения поощряют повторения (рефрены/код), а `>1.5` часто роняет coherence — проверяют A/B-тестом на distinct-n.",
-                "related": "[[llm-basics-interview#Q12]] temperature; [[llm-basics-interview#Q13]] top_p и top_k; [[llm-basics-interview#Q17]] у Claude этих параметров нет."
+                "what_actually": "Оба penalty работают только в рамках текущего completion (а не по training corpus): штраф вычитается из логитов токенов, появившихся в этом ответе.",
+                "source_of_confusion": "Слова «presence» и «frequency» звучат как свойства языка вообще, а не текущего ответа.",
+                "if_it_were_true": "Тогда параметры «прокачивали бы редкие слова из словаря», но vocabulary-discovery эффекта они не дают.",
+                "how_it_should_be": "Оба штрафа считаются по текущему completion, а не по частоте в обучающем корпусе."
               }
             },
             {
@@ -911,6 +911,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`o1`/`o3` — reasoning-модель: перед финальным ответом генерирует невидимые reasoning tokens (chain-of-thought), за которые платишь, но получаешь существенно более высокое качество на math/code/science.",
+              "correct": true,
+              "sections": {
+                "explanation": "Модель обучена RL'ом «думать» внутри `<thinking>`-блока, тратя десятки тысяч токенов на самопроверку и backtracking перед коротким ответом пользователю.",
+                "example": "Задачи многошаговой логики: олимпиадная математика, сложный refactor, научные доказательства, юридический анализ.",
+                "when_to_apply": "Выбирают, когда нужна глубина рассуждения, а не скорость; для простого чата reasoning-модель избыточна.",
+                "edge_cases": "Стоимость запроса в 5-20× выше `GPT-4o`, но pass@1 на AIME и Codeforces выше в разы — для batch-задач это окупается.",
+                "related": "[[llm-basics-interview#Q1]] что такое LLM; [[llm-basics-interview#Q12]] почему reasoning-модели игнорируют часть sampling-параметров; [[llm-basics-interview#Q22]] reasoning против галлюцинаций."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`o1`/`o3` и `GPT-4o` — это один и тот же продукт под двумя названиями, разница только в маркетинге.",
               "correct": false,
               "sections": {
@@ -918,18 +931,6 @@
                 "source_of_confusion": "Оба бренда `OpenAI` выходят рядом, поэтому их принимают за ребрендинг одной модели.",
                 "if_it_were_true": "Тогда `temperature=0` давал бы детерминизм у `o1` так же, как у `4o`, но reasoning-модели игнорируют часть sampling-параметров и ведут себя иначе.",
                 "how_it_should_be": "Это две разные модели с разным обучением и поведением, а не одна под двумя именами."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`o1` — это просто более быстрая и дешёвая версия `GPT-4o`, оптимизированная под streaming-чат.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`o1` наоборот медленнее и дороже `GPT-4o` из-за reasoning tokens; для лёгких задач он избыточен.",
-                "source_of_confusion": "Оба от `OpenAI` и решают «умные» задачи, поэтому `o1` принимают за ускоренный `GPT-4o`.",
-                "if_it_were_true": "Тогда `o1` как «default чат» снижал бы счёт, но на деле для answer-only задач он раздувает его в 10×.",
-                "how_it_should_be": "`o1` — отдельная reasoning-модель, медленнее и дороже, а не ускоренная версия `GPT-4o`."
               }
             },
             {
@@ -947,14 +948,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`o1`/`o3` — reasoning-модель: перед финальным ответом генерирует невидимые reasoning tokens (chain-of-thought), за которые платишь, но получаешь существенно более высокое качество на math/code/science.",
-              "correct": true,
+              "text": "`o1` — это просто более быстрая и дешёвая версия `GPT-4o`, оптимизированная под streaming-чат.",
+              "correct": false,
               "sections": {
-                "explanation": "Модель обучена RL'ом «думать» внутри `<thinking>`-блока, тратя десятки тысяч токенов на самопроверку и backtracking перед коротким ответом пользователю.",
-                "example": "Задачи многошаговой логики: олимпиадная математика, сложный refactor, научные доказательства, юридический анализ.",
-                "when_to_apply": "Выбирают, когда нужна глубина рассуждения, а не скорость; для простого чата reasoning-модель избыточна.",
-                "edge_cases": "Стоимость запроса в 5-20× выше `GPT-4o`, но pass@1 на AIME и Codeforces выше в разы — для batch-задач это окупается.",
-                "related": "[[llm-basics-interview#Q1]] что такое LLM; [[llm-basics-interview#Q12]] почему reasoning-модели игнорируют часть sampling-параметров; [[llm-basics-interview#Q22]] reasoning против галлюцинаций."
+                "what_actually": "`o1` наоборот медленнее и дороже `GPT-4o` из-за reasoning tokens; для лёгких задач он избыточен.",
+                "source_of_confusion": "Оба от `OpenAI` и решают «умные» задачи, поэтому `o1` принимают за ускоренный `GPT-4o`.",
+                "if_it_were_true": "Тогда `o1` как «default чат» снижал бы счёт, но на деле для answer-only задач он раздувает его в 10×.",
+                "how_it_should_be": "`o1` — отдельная reasoning-модель, медленнее и дороже, а не ускоренная версия `GPT-4o`."
               }
             }
           ]
@@ -971,6 +971,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`Claude` — это open-source модель, которую можно self-host'ить так же, как `Llama`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Claude` — закрытая проприетарная модель, доступная только через Anthropic API / AWS Bedrock / Vertex AI; self-host невозможен.",
+                "source_of_confusion": "`Anthropic` публикует много research, что создаёт впечатление открытости весов.",
+                "if_it_were_true": "Тогда можно было бы развернуть `Claude` в собственном k8s ради compliance, но веса не выдаются.",
+                "how_it_should_be": "`Claude` проприетарен и доступен только через API; self-host доступен у `Llama`/`Mistral`, а не у `Claude`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Claude` быстрее всех frontier-моделей, потому что использует только 7B параметров под капотом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Anthropic` не раскрывает размер, но `Opus` заведомо не 7B — это большая модель; «маленький и быстрый» сегмент закрывает `Haiku`.",
+                "source_of_confusion": "Скорость `Haiku` приписывают всему семейству `Claude`, отсюда миф про 7B.",
+                "if_it_were_true": "Тогда `Sonnet 4` для high-throughput batch не упирался бы в rate limits и latency, но на деле упирается.",
+                "how_it_should_be": "Размер не раскрыт, но `Opus` большой; быстрый сегмент — это `Haiku`, а не весь `Claude`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Claude` исторически лидирует по длине контекста (200K у 3.x, до 1M у 4.7) и качеству на code/long-form, плюс уникальные фичи — Artifacts, Computer use и MCP как стандарт интеграции инструментов.",
               "correct": true,
               "sections": {
@@ -982,8 +1006,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "`Claude` — единственная модель, которая умеет вызывать функции (function calling); у `GPT` и `Gemini` такой возможности нет.",
               "correct": false,
               "sections": {
@@ -991,30 +1015,6 @@
                 "source_of_confusion": "`Claude` активно продвигает MCP, и это путают с «единственный, кто умеет tools».",
                 "if_it_were_true": "Тогда миграция с `GPT` на `Claude` «ради tool use» давала бы выигрыш, но реального профита тут нет.",
                 "how_it_should_be": "Tool calling умеют все frontier-модели; преимущества `Claude` — контекст, MCP и computer use."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`Claude` быстрее всех frontier-моделей, потому что использует только 7B параметров под капотом.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Anthropic` не раскрывает размер, но `Opus` заведомо не 7B — это большая модель; «маленький и быстрый» сегмент закрывает `Haiku`.",
-                "source_of_confusion": "Скорость `Haiku` приписывают всему семейству `Claude`, отсюда миф про 7B.",
-                "if_it_were_true": "Тогда `Sonnet 4` для high-throughput batch не упирался бы в rate limits и latency, но на деле упирается.",
-                "how_it_should_be": "Размер не раскрыт, но `Opus` большой; быстрый сегмент — это `Haiku`, а не весь `Claude`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Claude` — это open-source модель, которую можно self-host'ить так же, как `Llama`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Claude` — закрытая проприетарная модель, доступная только через Anthropic API / AWS Bedrock / Vertex AI; self-host невозможен.",
-                "source_of_confusion": "`Anthropic` публикует много research, что создаёт впечатление открытости весов.",
-                "if_it_were_true": "Тогда можно было бы развернуть `Claude` в собственном k8s ради compliance, но веса не выдаются.",
-                "how_it_should_be": "`Claude` проприетарен и доступен только через API; self-host доступен у `Llama`/`Mistral`, а не у `Claude`."
               }
             }
           ]
@@ -1043,6 +1043,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Использовать `DeepSeek` через их публичный API — он бесплатный и open-source одновременно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DeepSeek` публикует open weights, но публичный API хостится в Китае — для банка с data residency это запрещено; «бесплатный» относится к весам, не к API.",
+                "source_of_confusion": "Понятия «open-source модель» и «бесплатный API» смешивают в одно.",
+                "if_it_were_true": "Тогда китайский endpoint в продакшн-флоу был бы допустим, но комплаенс блокирует деплой и инициирует security incident.",
+                "how_it_should_be": "Open weights `DeepSeek` можно развернуть on-premise, но публичный китайский API для банка недопустим."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Развернуть `Llama 3/4` (или `Mistral`/`Qwen`) on-premise: open weights позволяют air-gapped deployment, LoRA/QLoRA fine-tuning под domain, а собственный GPU-парк снимает per-token costs.",
               "correct": true,
               "sections": {
@@ -1054,8 +1066,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Взять `GPT-4o` через Azure OpenAI и положиться на их compliance-сертификаты.",
               "correct": false,
               "sections": {
@@ -1063,18 +1075,6 @@
                 "source_of_confusion": "Сертификаты `Azure` принимают за «полную изоляцию», но endpoint всё равно облачный.",
                 "if_it_were_true": "Тогда при аудите не выяснялось бы, что inference ходит наружу, но банковский security committee требует on-prem.",
                 "how_it_should_be": "Нужен on-premise self-host open-weights модели; `Azure OpenAI` не даёт air-gapped развёртывание."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Использовать `DeepSeek` через их публичный API — он бесплатный и open-source одновременно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`DeepSeek` публикует open weights, но публичный API хостится в Китае — для банка с data residency это запрещено; «бесплатный» относится к весам, не к API.",
-                "source_of_confusion": "Понятия «open-source модель» и «бесплатный API» смешивают в одно.",
-                "if_it_were_true": "Тогда китайский endpoint в продакшн-флоу был бы допустим, но комплаенс блокирует деплой и инициирует security incident.",
-                "how_it_should_be": "Open weights `DeepSeek` можно развернуть on-premise, но публичный китайский API для банка недопустим."
               }
             }
           ]
@@ -1163,13 +1163,14 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Использовать только маленькие модели — они быстрее и дешевле.",
-              "correct": false,
+              "text": "Каскад: начать с маленькой модели, эскалировать на большую только при недостаточном качестве.",
+              "correct": true,
               "sections": {
-                "what_actually": "На сложных reasoning-задачах маленькие модели галлюцинируют: для сложного SQL по схеме или диагностики кода `Haiku` заметно хуже `Opus`.",
-                "source_of_confusion": "Скорость и цена tiny-моделей заслоняют их потолок по reasoning.",
-                "if_it_were_true": "Тогда эскалация на большую модель была бы не нужна, но качество там, где tiny не справляется, требует её.",
-                "how_it_should_be": "Маленькие хороши для простого; для сложного reasoning нужна эскалация на большую модель."
+                "explanation": "Простые задачи (классификация intent, summary короткого текста, extraction полей) → tiny/small (`Haiku`, `4o-mini`, `Llama 8B`); сложные (multi-step reasoning, code-gen, long-context) → `Opus`, `GPT-4`, `o1`.",
+                "example": "Запросить маленькую модель → если confidence низкий или ответ не прошёл валидацию (JSON schema, business rules) → fallback на большую; router-паттерн выбирает модель по сложности запроса.",
+                "when_to_apply": "Применяют в production, где большинство трафика — простые запросы, а сложные редки, что и даёт экономию.",
+                "edge_cases": "Каскад экономит 70-90% costs, так как простые запросы преобладают; для них большая модель избыточна.",
+                "related": "[[llm-basics-interview#Q16]] reasoning-модели для сложного; [[llm-basics-interview#Q19]] open-source vs proprietary; [[llm-basics-interview#Q24]] стоимость по токенам."
               }
             },
             {
@@ -1187,14 +1188,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Каскад: начать с маленькой модели, эскалировать на большую только при недостаточном качестве.",
-              "correct": true,
+              "text": "Использовать только маленькие модели — они быстрее и дешевле.",
+              "correct": false,
               "sections": {
-                "explanation": "Простые задачи (классификация intent, summary короткого текста, extraction полей) → tiny/small (`Haiku`, `4o-mini`, `Llama 8B`); сложные (multi-step reasoning, code-gen, long-context) → `Opus`, `GPT-4`, `o1`.",
-                "example": "Запросить маленькую модель → если confidence низкий или ответ не прошёл валидацию (JSON schema, business rules) → fallback на большую; router-паттерн выбирает модель по сложности запроса.",
-                "when_to_apply": "Применяют в production, где большинство трафика — простые запросы, а сложные редки, что и даёт экономию.",
-                "edge_cases": "Каскад экономит 70-90% costs, так как простые запросы преобладают; для них большая модель избыточна.",
-                "related": "[[llm-basics-interview#Q16]] reasoning-модели для сложного; [[llm-basics-interview#Q19]] open-source vs proprietary; [[llm-basics-interview#Q24]] стоимость по токенам."
+                "what_actually": "На сложных reasoning-задачах маленькие модели галлюцинируют: для сложного SQL по схеме или диагностики кода `Haiku` заметно хуже `Opus`.",
+                "source_of_confusion": "Скорость и цена tiny-моделей заслоняют их потолок по reasoning.",
+                "if_it_were_true": "Тогда эскалация на большую модель была бы не нужна, но качество там, где tiny не справляется, требует её.",
+                "how_it_should_be": "Маленькие хороши для простого; для сложного reasoning нужна эскалация на большую модель."
               }
             }
           ]
@@ -1224,18 +1224,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Модель намеренно лжёт, когда не хочет отвечать на чувствительную тему.",
-              "correct": false,
-              "sections": {
-                "what_actually": "У `LLM` нет намерений — она не «лжёт» и не «уклоняется»; hallucination это побочный эффект probabilistic generation, а refusal по safety alignment — отдельная вещь.",
-                "source_of_confusion": "Антропоморфизация: уверенный неверный ответ воспринимают как осознанную ложь.",
-                "if_it_were_true": "Тогда хватило бы «попросить модель быть честной», но галлюцинации возникают и без чувствительных тем.",
-                "how_it_should_be": "Это статистический сбой генерации без намерений, а не сознательная ложь."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Hallucination — это баг в коде токенизатора, который ломает входной текст.",
               "correct": false,
               "sections": {
@@ -1246,8 +1234,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Hallucination — это сбой инфраструктуры, GPU отдала битые числа.",
               "correct": false,
               "sections": {
@@ -1255,6 +1243,18 @@
                 "source_of_confusion": "«Неправильный вывод» интуитивно списывают на железо.",
                 "if_it_were_true": "Тогда смена GPU убирала бы проблему, но галлюцинация воспроизводится везде.",
                 "how_it_should_be": "Это системное свойство генеративных LM, а не аппаратный сбой."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Модель намеренно лжёт, когда не хочет отвечать на чувствительную тему.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У `LLM` нет намерений — она не «лжёт» и не «уклоняется»; hallucination это побочный эффект probabilistic generation, а refusal по safety alignment — отдельная вещь.",
+                "source_of_confusion": "Антропоморфизация: уверенный неверный ответ воспринимают как осознанную ложь.",
+                "if_it_were_true": "Тогда хватило бы «попросить модель быть честной», но галлюцинации возникают и без чувствительных тем.",
+                "how_it_should_be": "Это статистический сбой генерации без намерений, а не сознательная ложь."
               }
             }
           ]
@@ -1271,31 +1271,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Дать модели как можно больший context window и засыпать всем интернетом.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Просто увеличить context не помогает и иногда вредит: «lost in the middle», шум в середине окна, рост latency и cost; важно отобрать релевантные документы, а не свалить всё.",
-                "source_of_confusion": "Кажется, что «больше данных в контексте → меньше выдумок», но без отбора это шум.",
-                "if_it_were_true": "Тогда RAG с retrieval был бы не нужен, но именно отбор релевантного снижает галлюцинации.",
-                "how_it_should_be": "Нужен retrieval релевантных чанков (RAG), а не максимальный context со всем подряд."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Комбинация: RAG (релевантные документы в context) + low temperature + structured output + просьба ссылаться или признать незнание.",
-              "correct": true,
-              "sections": {
-                "explanation": "Многоуровневая защита: RAG даёт свежие факты и инструкцию «отвечай только из них», low temperature (0-0.3) снижает редкое сэмплирование, structured output ограничивает свободу выдумки, verification ловит остатки, citations привязывают факт к источнику.",
-                "example": "Для factual-задачи: подать top-k документов из vector store, выставить `temperature=0.2`, потребовать JSON со ссылками и фразу «если факта нет — say I don't know».",
-                "when_to_apply": "Применяют в RAG-системах и любых фактологических фичах, где цена ошибки высока (support, поиск, аналитика).",
-                "edge_cases": "Ни один способ не даёт 100% — для high-stakes добавляют UX-предупреждения и human review.",
-                "related": "[[llm-basics-interview#Q21]] что такое hallucination; [[llm-basics-interview#Q12]] роль temperature; [[llm-basics-interview#Q28]] RAG vs fine-tuning."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Повысить temperature до 1.5+, чтобы модель давала больше разнообразных ответов.",
               "correct": false,
               "sections": {
@@ -1306,8 +1281,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Запретить модели генерировать любой текст — отвечать только заготовленными шаблонами.",
               "correct": false,
               "sections": {
@@ -1315,6 +1290,31 @@
                 "source_of_confusion": "Жёсткие шаблоны кажутся гарантией от выдумок.",
                 "if_it_were_true": "Тогда любой запрос вне шаблонов оставался бы без ответа, теряя главное преимущество `LLM`.",
                 "how_it_should_be": "Hybrid (intent → шаблон или LLM) бывает полезен, но полный запрет генерации — отказ от технологии."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Дать модели как можно больший context window и засыпать всем интернетом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Просто увеличить context не помогает и иногда вредит: «lost in the middle», шум в середине окна, рост latency и cost; важно отобрать релевантные документы, а не свалить всё.",
+                "source_of_confusion": "Кажется, что «больше данных в контексте → меньше выдумок», но без отбора это шум.",
+                "if_it_were_true": "Тогда RAG с retrieval был бы не нужен, но именно отбор релевантного снижает галлюцинации.",
+                "how_it_should_be": "Нужен retrieval релевантных чанков (RAG), а не максимальный context со всем подряд."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Комбинация: RAG (релевантные документы в context) + low temperature + structured output + просьба ссылаться или признать незнание.",
+              "correct": true,
+              "sections": {
+                "explanation": "Многоуровневая защита: RAG даёт свежие факты и инструкцию «отвечай только из них», low temperature (0-0.3) снижает редкое сэмплирование, structured output ограничивает свободу выдумки, verification ловит остатки, citations привязывают факт к источнику.",
+                "example": "Для factual-задачи: подать top-k документов из vector store, выставить `temperature=0.2`, потребовать JSON со ссылками и фразу «если факта нет — say I don't know».",
+                "when_to_apply": "Применяют в RAG-системах и любых фактологических фичах, где цена ошибки высока (support, поиск, аналитика).",
+                "edge_cases": "Ни один способ не даёт 100% — для high-stakes добавляют UX-предупреждения и human review.",
+                "related": "[[llm-basics-interview#Q21]] что такое hallucination; [[llm-basics-interview#Q12]] роль temperature; [[llm-basics-interview#Q28]] RAG vs fine-tuning."
               }
             }
           ]
@@ -1343,18 +1343,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Streaming можно использовать только с `GPT`-моделями, у `Claude` этого нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Streaming поддерживают все основные провайдеры (`OpenAI`, `Anthropic`, `Google`, локальные `vLLM`/`Ollama`/`TGI`) — это базовая фича transport-протокола (SSE), а не свойство модели.",
-                "source_of_confusion": "Знакомство со streaming начинают с `OpenAI`, и фичу приписывают только ему.",
-                "if_it_were_true": "Тогда чат-UI на `Claude` не мог бы стримить токены, но он стримит так же.",
-                "how_it_should_be": "Streaming доступен у всех основных провайдеров через SSE/chunked HTTP."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Streaming = токены приходят инкрементально через SSE → лучше UX и TTFT; non-streaming = ждёшь полный ответ → проще для batch и парсинга.",
               "correct": true,
               "sections": {
@@ -1366,8 +1354,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Non-streaming дешевле по токенам — провайдер берёт меньше денег.",
               "correct": false,
               "sections": {
@@ -1375,6 +1363,18 @@
                 "source_of_confusion": "Кажется, что «единый ответ» обрабатывается экономнее, чем поток.",
                 "if_it_were_true": "Тогда выбор режима менял бы счёт, но он влияет только на UX и сложность обработки.",
                 "how_it_should_be": "Стоимость зависит от числа токенов, а не от streaming vs non-streaming."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Streaming можно использовать только с `GPT`-моделями, у `Claude` этого нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Streaming поддерживают все основные провайдеры (`OpenAI`, `Anthropic`, `Google`, локальные `vLLM`/`Ollama`/`TGI`) — это базовая фича transport-протокола (SSE), а не свойство модели.",
+                "source_of_confusion": "Знакомство со streaming начинают с `OpenAI`, и фичу приписывают только ему.",
+                "if_it_were_true": "Тогда чат-UI на `Claude` не мог бы стримить токены, но он стримит так же.",
+                "how_it_should_be": "Streaming доступен у всех основных провайдеров через SSE/chunked HTTP."
               }
             }
           ]
@@ -1391,13 +1391,14 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Платишь только за запрос — один запрос фиксированная цена.",
-              "correct": false,
+              "text": "Per-token: input tokens × input-цена + output tokens × output-цена; output обычно в 3-5× дороже input.",
+              "correct": true,
               "sections": {
-                "what_actually": "Это flat-fee модель (SaaS-подписки, ChatGPT Plus); API `LLM` работают per-token: длинный prompt + длинный output → выше счёт, даже если запросов меньше.",
-                "source_of_confusion": "Опыт подписок переносят на API-биллинг.",
-                "if_it_were_true": "Тогда один тяжёлый запрос на 100K input стоил бы как короткий, но он дороже сотни мелких.",
-                "how_it_should_be": "Биллинг per-token, а не фиксированная цена за запрос."
+                "explanation": "Биллинг по подсчёту токенов в обе стороны: `GPT-4o` — $2.50/1M input + $10/1M output; `Claude Opus` — $15 + $75; `Haiku` — $0.25 + $1.25.",
+                "example": "Output дороже, потому что генерация делает по forward-pass на каждый токен, а input проходит одним батчем с `KV-cache` — output GPU-затратнее в разы.",
+                "when_to_apply": "Считают при планировании costs: меряют `$/request` и `$/active user`, чтобы видеть отдачу фичи.",
+                "edge_cases": "Cost optimization: prompt caching (повтор префикса ~10% цены), smaller models в каскаде, batch API (-50%), truncate context, structured output для сокращения длины.",
+                "related": "[[llm-basics-interview#Q5]] что такое token; [[llm-basics-interview#Q20]] каскад моделей для экономии; [[llm-basics-interview#Q26]] кеширование ответов."
               }
             },
             {
@@ -1427,14 +1428,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Per-token: input tokens × input-цена + output tokens × output-цена; output обычно в 3-5× дороже input.",
-              "correct": true,
+              "text": "Платишь только за запрос — один запрос фиксированная цена.",
+              "correct": false,
               "sections": {
-                "explanation": "Биллинг по подсчёту токенов в обе стороны: `GPT-4o` — $2.50/1M input + $10/1M output; `Claude Opus` — $15 + $75; `Haiku` — $0.25 + $1.25.",
-                "example": "Output дороже, потому что генерация делает по forward-pass на каждый токен, а input проходит одним батчем с `KV-cache` — output GPU-затратнее в разы.",
-                "when_to_apply": "Считают при планировании costs: меряют `$/request` и `$/active user`, чтобы видеть отдачу фичи.",
-                "edge_cases": "Cost optimization: prompt caching (повтор префикса ~10% цены), smaller models в каскаде, batch API (-50%), truncate context, structured output для сокращения длины.",
-                "related": "[[llm-basics-interview#Q5]] что такое token; [[llm-basics-interview#Q20]] каскад моделей для экономии; [[llm-basics-interview#Q26]] кеширование ответов."
+                "what_actually": "Это flat-fee модель (SaaS-подписки, ChatGPT Plus); API `LLM` работают per-token: длинный prompt + длинный output → выше счёт, даже если запросов меньше.",
+                "source_of_confusion": "Опыт подписок переносят на API-биллинг.",
+                "if_it_were_true": "Тогда один тяжёлый запрос на 100K input стоил бы как короткий, но он дороже сотни мелких.",
+                "how_it_should_be": "Биллинг per-token, а не фиксированная цена за запрос."
               }
             }
           ]
@@ -1451,31 +1451,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Exponential backoff с jitter + token bucket на клиенте + provider redundancy + кеширование популярных запросов.",
-              "correct": true,
-              "sections": {
-                "explanation": "Production-стандарт обработки RPM (requests/min), TPM (tokens/min) и TPD (tokens/day): при 429 ждать 1s → 2s → 4s → 8s (+jitter), макс ~5 попыток; локальный token bucket не даёт превысить лимит до отправки.",
-                "example": "Backoff реализуют через `tenacity`/`resilience4j`/Spring Retry; provider redundancy — при стойком 429 на `GPT` fallback на `Claude`/`Gemini` через адаптер с тем же промптом.",
-                "when_to_apply": "Применяют в любом production-клиенте `LLM`, где трафик может упираться в лимиты вендора, особенно batch и пиковые нагрузки.",
-                "edge_cases": "Для batch-задач — внутренняя очередь (Kafka/Redis) с регулируемым drain rate под TPM; при стабильном упоре — запросить tier upgrade у вендора.",
-                "related": "[[llm-basics-interview#Q24]] стоимость по токенам; [[llm-basics-interview#Q26]] кеширование ответов; [[llm-basics-interview#Q30]] reliability как риск."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "При 429 нужно сразу падать с ошибкой 5xx наружу пользователю.",
-              "correct": false,
-              "sections": {
-                "what_actually": "429 — временная ошибка, должна обрабатываться внутри клиента (retry с backoff), а не пробрасываться как 5xx; пользователь не должен видеть rate-limit вендора.",
-                "source_of_confusion": "Проще «пробросить ошибку», чем реализовать retry-логику.",
-                "if_it_were_true": "Тогда временный лимит превращался бы в видимый сбой продукта при каждом всплеске трафика.",
-                "how_it_should_be": "429 обрабатывают внутри (backoff + redundancy), а не пробрасывают пользователю как 5xx."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Сразу повторять запрос в while-цикле без задержки до успеха.",
               "correct": false,
               "sections": {
@@ -1486,8 +1461,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 1,
+              "label": "B",
               "text": "Игнорировать 429 и считать запрос успешным.",
               "correct": false,
               "sections": {
@@ -1495,6 +1470,31 @@
                 "source_of_confusion": "Код 4xx иногда «глотают» как незначимый, но 429 означает невыполненный запрос.",
                 "if_it_were_true": "Тогда в БД и пользователю уходили бы пустые ответы при каждом превышении лимита.",
                 "how_it_should_be": "429 нельзя «глотать» — запрос надо повторить с backoff, иначе результат теряется."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "При 429 нужно сразу падать с ошибкой 5xx наружу пользователю.",
+              "correct": false,
+              "sections": {
+                "what_actually": "429 — временная ошибка, должна обрабатываться внутри клиента (retry с backoff), а не пробрасываться как 5xx; пользователь не должен видеть rate-limit вендора.",
+                "source_of_confusion": "Проще «пробросить ошибку», чем реализовать retry-логику.",
+                "if_it_were_true": "Тогда временный лимит превращался бы в видимый сбой продукта при каждом всплеске трафика.",
+                "how_it_should_be": "429 обрабатывают внутри (backoff + redundancy), а не пробрасывают пользователю как 5xx."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Exponential backoff с jitter + token bucket на клиенте + provider redundancy + кеширование популярных запросов.",
+              "correct": true,
+              "sections": {
+                "explanation": "Production-стандарт обработки RPM (requests/min), TPM (tokens/min) и TPD (tokens/day): при 429 ждать 1s → 2s → 4s → 8s (+jitter), макс ~5 попыток; локальный token bucket не даёт превысить лимит до отправки.",
+                "example": "Backoff реализуют через `tenacity`/`resilience4j`/Spring Retry; provider redundancy — при стойком 429 на `GPT` fallback на `Claude`/`Gemini` через адаптер с тем же промптом.",
+                "when_to_apply": "Применяют в любом production-клиенте `LLM`, где трафик может упираться в лимиты вендора, особенно batch и пиковые нагрузки.",
+                "edge_cases": "Для batch-задач — внутренняя очередь (Kafka/Redis) с регулируемым drain rate под TPM; при стабильном упоре — запросить tier upgrade у вендора.",
+                "related": "[[llm-basics-interview#Q24]] стоимость по токенам; [[llm-basics-interview#Q26]] кеширование ответов; [[llm-basics-interview#Q30]] reliability как риск."
               }
             }
           ]
@@ -1511,18 +1511,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Кешировать только ответ целиком в HTTP-кеше через Cache-Control headers.",
-              "correct": false,
-              "sections": {
-                "what_actually": "HTTP-кеш не учитывает специфику: одинаковый текст prompt даёт разные ответы при `temperature > 0`, chat history меняет контекст; нужен content-based ключ (hash полного payload) вне HTTP-уровня.",
-                "source_of_confusion": "Кеширование ответов ассоциируют со стандартным веб-кешем.",
-                "if_it_were_true": "Тогда streaming-ответы кешировались бы заголовками, но HTTP-кеш для них бесполезен.",
-                "how_it_should_be": "Нужен content-based кеш в Redis/Memcached по hash payload, а не HTTP Cache-Control."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Два уровня: application-cache (Redis по hash prompt) для одинаковых запросов + provider prompt caching (Anthropic/OpenAI) для повторяющегося system+history.",
               "correct": true,
               "sections": {
@@ -1534,8 +1522,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Включить server-side кеш можно одной настройкой в OpenAI dashboard.",
               "correct": false,
               "sections": {
@@ -1546,8 +1534,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Кешировать нельзя — каждый ответ должен быть уникальным.",
               "correct": false,
               "sections": {
@@ -1555,6 +1543,18 @@
                 "source_of_confusion": "Творческие сценарии обобщают на все задачи `LLM`.",
                 "if_it_were_true": "Тогда повторяющиеся FAQ-запросы каждый раз били бы по API, теряя огромную экономию.",
                 "how_it_should_be": "При `temperature 0` детерминированные ответы безопасно кешировать; уникальность нужна лишь в creative-режиме."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Кешировать только ответ целиком в HTTP-кеше через Cache-Control headers.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HTTP-кеш не учитывает специфику: одинаковый текст prompt даёт разные ответы при `temperature > 0`, chat history меняет контекст; нужен content-based ключ (hash полного payload) вне HTTP-уровня.",
+                "source_of_confusion": "Кеширование ответов ассоциируют со стандартным веб-кешем.",
+                "if_it_were_true": "Тогда streaming-ответы кешировались бы заголовками, но HTTP-кеш для них бесполезен.",
+                "how_it_should_be": "Нужен content-based кеш в Redis/Memcached по hash payload, а не HTTP Cache-Control."
               }
             }
           ]
@@ -1571,18 +1571,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Все три этапа делает каждая команда, разрабатывающая свой продукт.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Pre-training — удел нескольких лабораторий (`OpenAI`, `Anthropic`, `Google`, `Meta`, `Mistral`); стоит миллионы $ и требует тысячи GPU на месяцы, обычная команда берёт готовую base/instruct модель.",
-                "source_of_confusion": "Все три «этапа обучения» кажутся доступными любой команде.",
-                "if_it_were_true": "Тогда стартап мог бы pre-train'ить свою base-модель, но это экономически нереально.",
-                "how_it_should_be": "Pre-training делают единицы лабораторий; продуктовые команды лишь fine-tune'ят готовые модели."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "RLHF — это и есть fine-tuning, просто другое название.",
               "correct": false,
               "sections": {
@@ -1593,8 +1581,32 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Все три этапа делает каждая команда, разрабатывающая свой продукт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Pre-training — удел нескольких лабораторий (`OpenAI`, `Anthropic`, `Google`, `Meta`, `Mistral`); стоит миллионы $ и требует тысячи GPU на месяцы, обычная команда берёт готовую base/instruct модель.",
+                "source_of_confusion": "Все три «этапа обучения» кажутся доступными любой команде.",
+                "if_it_were_true": "Тогда стартап мог бы pre-train'ить свою base-модель, но это экономически нереально.",
+                "how_it_should_be": "Pre-training делают единицы лабораторий; продуктовые команды лишь fine-tune'ят готовые модели."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
+              "text": "Pre-training делается на pre-labeled датасете с правильными ответами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание supervised learning / SFT; pre-training — self-supervised на сырых терабайтах текста, где label это следующий токен в самом тексте.",
+                "source_of_confusion": "Слово «обучение» ассоциируют с размеченными данными.",
+                "if_it_were_true": "Тогда pre-training требовал бы ручной разметки терабайтов, что невозможно по масштабу.",
+                "how_it_should_be": "Pre-training self-supervised (next token как label); разметка — это про SFT, а не pre-training."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "Pre-training: next-token prediction на огромном корпусе (месяцы, миллионы $) → Fine-tuning: adapt под task/domain (часы-дни, тысячи $) → RLHF: alignment с human preferences для chat-моделей.",
               "correct": true,
               "sections": {
@@ -1603,18 +1615,6 @@
                 "when_to_apply": "Различают этапы при выборе подхода: нужен новый стиль → SFT (LoRA/QLoRA дёшево); нужен alignment поведения → RLHF; знания → отдельно RAG.",
                 "edge_cases": "`DPO` — modern alternative к PPO, проще и стабильнее; Constitutional AI (`Anthropic`) — RLHF без human labelers, через AI-критика по конституции.",
                 "related": "[[llm-basics-interview#Q1]] что такое LLM; [[llm-basics-interview#Q28]] fine-tuning vs RAG vs prompt engineering; [[llm-basics-interview#Q17]] constitutional AI у Claude."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Pre-training делается на pre-labeled датасете с правильными ответами.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это описание supervised learning / SFT; pre-training — self-supervised на сырых терабайтах текста, где label это следующий токен в самом тексте.",
-                "source_of_confusion": "Слово «обучение» ассоциируют с размеченными данными.",
-                "if_it_were_true": "Тогда pre-training требовал бы ручной разметки терабайтов, что невозможно по масштабу.",
-                "how_it_should_be": "Pre-training self-supervised (next token как label); разметка — это про SFT, а не pre-training."
               }
             }
           ]
@@ -1631,30 +1631,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Всегда начинать с fine-tuning — это даёт лучшее качество.",
-              "correct": false,
+              "text": "Решение в порядке сложности: prompt engineering → RAG → fine-tuning; каждый следующий — когда предыдущий не справился.",
+              "correct": true,
               "sections": {
-                "what_actually": "Fine-tuning дороже, дольше и сложнее в поддержке (датасет, eval, версионирование, deployment); часто 80% задач решаются prompt engineering + RAG бесплатно и за пару дней.",
-                "source_of_confusion": "«Дообученная модель = лучшее качество» обобщают на все задачи.",
-                "if_it_were_true": "Тогда каждый проект начинался бы с дорогого fine-tuning, что overengineering для большинства.",
-                "how_it_should_be": "Начинают с prompt engineering и RAG; fine-tuning — крайняя мера, когда они не справились."
+                "explanation": "Standard decision tree для product-команд: prompt engineering (default) решает 60-70% задач; RAG добавляют, когда нужны новые знания (внутренняя документация, обновляемая база); fine-tuning — для consistent output и спец-задач.",
+                "example": "Prompt engineering: описать задачу + few-shot + structured output; RAG: embeddings → vector store → retrieve top-k → в context; fine-tuning: distillation, специфический формат, снижение latency/cost.",
+                "when_to_apply": "Идут по нарастанию сложности: сначала дешёвое и быстрое, fine-tuning только когда eval показал упор в потолок.",
+                "edge_cases": "90% задач решаются prompt eng + RAG; fine-tuning — для оставшихся 10% с доказанной (по eval) недостаточностью остальных.",
+                "related": "[[llm-basics-interview#Q11]] стратегии при нехватке context; [[llm-basics-interview#Q22]] RAG против галлюцинаций; [[llm-basics-interview#Q27]] fine-tuning vs RLHF."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "RAG нужен только для веб-поиска.",
-              "correct": false,
-              "sections": {
-                "what_actually": "RAG — общий паттерн: достать релевантные документы из любого источника (внутренняя wiki, БД, S3, vector store) и положить в context; веб-поиск лишь один источник.",
-                "source_of_confusion": "Демо RAG часто показывают на поиске, отсюда сужение до веба.",
-                "if_it_were_true": "Тогда RAG по внутренней документации был бы невозможен, но это его основной use-case.",
-                "how_it_should_be": "RAG работает с любым источником знаний, а не только с веб-поиском."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Эти три подхода взаимоисключающие — нужно выбрать один.",
               "correct": false,
               "sections": {
@@ -1665,16 +1654,27 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "Всегда начинать с fine-tuning — это даёт лучшее качество.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fine-tuning дороже, дольше и сложнее в поддержке (датасет, eval, версионирование, deployment); часто 80% задач решаются prompt engineering + RAG бесплатно и за пару дней.",
+                "source_of_confusion": "«Дообученная модель = лучшее качество» обобщают на все задачи.",
+                "if_it_were_true": "Тогда каждый проект начинался бы с дорогого fine-tuning, что overengineering для большинства.",
+                "how_it_should_be": "Начинают с prompt engineering и RAG; fine-tuning — крайняя мера, когда они не справились."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "Решение в порядке сложности: prompt engineering → RAG → fine-tuning; каждый следующий — когда предыдущий не справился.",
-              "correct": true,
+              "text": "RAG нужен только для веб-поиска.",
+              "correct": false,
               "sections": {
-                "explanation": "Standard decision tree для product-команд: prompt engineering (default) решает 60-70% задач; RAG добавляют, когда нужны новые знания (внутренняя документация, обновляемая база); fine-tuning — для consistent output и спец-задач.",
-                "example": "Prompt engineering: описать задачу + few-shot + structured output; RAG: embeddings → vector store → retrieve top-k → в context; fine-tuning: distillation, специфический формат, снижение latency/cost.",
-                "when_to_apply": "Идут по нарастанию сложности: сначала дешёвое и быстрое, fine-tuning только когда eval показал упор в потолок.",
-                "edge_cases": "90% задач решаются prompt eng + RAG; fine-tuning — для оставшихся 10% с доказанной (по eval) недостаточностью остальных.",
-                "related": "[[llm-basics-interview#Q11]] стратегии при нехватке context; [[llm-basics-interview#Q22]] RAG против галлюцинаций; [[llm-basics-interview#Q27]] fine-tuning vs RLHF."
+                "what_actually": "RAG — общий паттерн: достать релевантные документы из любого источника (внутренняя wiki, БД, S3, vector store) и положить в context; веб-поиск лишь один источник.",
+                "source_of_confusion": "Демо RAG часто показывают на поиске, отсюда сужение до веба.",
+                "if_it_were_true": "Тогда RAG по внутренней документации был бы невозможен, но это его основной use-case.",
+                "how_it_should_be": "RAG работает с любым источником знаний, а не только с веб-поиском."
               }
             }
           ]
@@ -1691,6 +1691,30 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Это ошибка модели, при которой она генерирует случайный текст вместо ответа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это описание hallucination или генерационного сбоя; injection — намеренная атака через input, а не баг качества модели.",
+                "source_of_confusion": "И то, и другое даёт «неожиданный вывод», поэтому путают.",
+                "if_it_were_true": "Тогда improvement качества модели убирал бы injection, но это вектор атаки, а не дефект.",
+                "how_it_should_be": "Prompt injection — целенаправленная атака через input, а не случайный сбой генерации."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Это перегрузка контекстного окна — слишком длинный prompt.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это context overflow (вопросы про context window), решается truncation/RAG/summarization; к injection отношения нет.",
+                "source_of_confusion": "Оба про «проблему с входным текстом», отсюда смешение.",
+                "if_it_were_true": "Тогда увеличение context window защищало бы от injection, но это технический лимит, а не атака.",
+                "how_it_should_be": "Overflow — про лимит длины; injection — про вредоносное содержание ввода."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "Атака, при которой вредоносный текст в input заставляет модель игнорировать system prompt — напрямую (user) или косвенно (через документы/веб-страницы в context).",
               "correct": true,
               "sections": {
@@ -1702,8 +1726,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 3,
+              "label": "D",
               "text": "Это SQL-инъекция в формулировке запроса к `LLM`.",
               "correct": false,
               "sections": {
@@ -1711,30 +1735,6 @@
                 "source_of_confusion": "Оба — «инъекция через untrusted input» (confused deputy), отсюда отождествление.",
                 "if_it_were_true": "Тогда parameterized queries защищали бы от prompt injection, но они тут неприменимы.",
                 "how_it_should_be": "Концептуальная параллель есть, но это разные классы атак с разными защитами."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Это ошибка модели, при которой она генерирует случайный текст вместо ответа.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это описание hallucination или генерационного сбоя; injection — намеренная атака через input, а не баг качества модели.",
-                "source_of_confusion": "И то, и другое даёт «неожиданный вывод», поэтому путают.",
-                "if_it_were_true": "Тогда improvement качества модели убирал бы injection, но это вектор атаки, а не дефект.",
-                "how_it_should_be": "Prompt injection — целенаправленная атака через input, а не случайный сбой генерации."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Это перегрузка контекстного окна — слишком длинный prompt.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это context overflow (вопросы про context window), решается truncation/RAG/summarization; к injection отношения нет.",
-                "source_of_confusion": "Оба про «проблему с входным текстом», отсюда смешение.",
-                "if_it_were_true": "Тогда увеличение context window защищало бы от injection, но это технический лимит, а не атака.",
-                "how_it_should_be": "Overflow — про лимит длины; injection — про вредоносное содержание ввода."
               }
             }
           ]
@@ -1751,13 +1751,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Единственный реальный риск — это стоимость API.",
+              "text": "`LLM` в продукте не несут никаких рисков, если использовать API проверенного вендора.",
               "correct": false,
               "sections": {
-                "what_actually": "Cost — лишь один из десяти рисков; игнорировать prompt injection, hallucinations, data leakage и compliance в production — путь к инциденту безопасности или штрафу регулятора.",
-                "source_of_confusion": "Cost виден первым (приходит счёт), поэтому кажется главным.",
-                "if_it_were_true": "Тогда хватило бы лимита бюджета, но prompt injection и data leakage этим не закрываются.",
-                "how_it_should_be": "Cost — один из многих рисков; security и compliance не менее критичны."
+                "what_actually": "Вендор не защищает от prompt injection (property модели), hallucinations (probabilistic generation), cost runaway (биллинг на вашей стороне) и quality drift (вендор может обновить модель).",
+                "source_of_confusion": "Доверие к бренду вендора принимают за гарантию безопасности приложения.",
+                "if_it_were_true": "Тогда выбор «проверенного» вендора снимал бы ответственность, но compliance и lock-in целиком на вас.",
+                "how_it_should_be": "Многие риски лежат на стороне приложения; вендор их не закрывает."
               }
             },
             {
@@ -1776,18 +1776,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`LLM` в продукте не несут никаких рисков, если использовать API проверенного вендора.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Вендор не защищает от prompt injection (property модели), hallucinations (probabilistic generation), cost runaway (биллинг на вашей стороне) и quality drift (вендор может обновить модель).",
-                "source_of_confusion": "Доверие к бренду вендора принимают за гарантию безопасности приложения.",
-                "if_it_were_true": "Тогда выбор «проверенного» вендора снимал бы ответственность, но compliance и lock-in целиком на вас.",
-                "how_it_should_be": "Многие риски лежат на стороне приложения; вендор их не закрывает."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Достаточно поставить try/catch вокруг API-вызова — это снимет все риски.",
               "correct": false,
               "sections": {
@@ -1795,6 +1783,18 @@
                 "source_of_confusion": "Обработка исключений ассоциируется с «обработкой всех проблем».",
                 "if_it_were_true": "Тогда один try/catch закрывал бы безопасность и compliance, но эти риски проходят как успешный ответ.",
                 "how_it_should_be": "try/catch необходим, но катастрофически недостаточен против behavioral и cost-рисков."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Единственный реальный риск — это стоимость API.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cost — лишь один из десяти рисков; игнорировать prompt injection, hallucinations, data leakage и compliance в production — путь к инциденту безопасности или штрафу регулятора.",
+                "source_of_confusion": "Cost виден первым (приходит счёт), поэтому кажется главным.",
+                "if_it_were_true": "Тогда хватило бы лимита бюджета, но prompt injection и data leakage этим не закрываются.",
+                "how_it_should_be": "Cost — один из многих рисков; security и compliance не менее критичны."
               }
             }
           ]

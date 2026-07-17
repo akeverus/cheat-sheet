@@ -9,19 +9,6 @@
           "question_text": "Что такое `MLOps`?",
           "options": [
             {
-              "correct": true,
-              "text": "`MLOps (Machine Learning Operations)` — набор практик для управления жизненным циклом ML/AI-систем в production: версионирование данных, кода и моделей, experiment tracking, воспроизводимость, автоматизация деплоя, мониторинг дрейфа и переобучение. Цель — относиться к ML как к надёжному ПО, а не к одноразовым артефактам.",
-              "sections": {
-                "explanation": "`MLOps` родился из осознания, что ~80% моделей либо никогда не доходят до production, либо быстро деградируют; дисциплина переносит инженерные практики `DevOps` на ML с учётом данных и моделей.",
-                "example": "Команда оборачивает обучение в `MLflow`-трекинг, регистрирует модель в registry со стадией `Production`, навешивает мониторинг дрейфа через `Evidently` и триггерит переобучение по падению accuracy.",
-                "when_to_apply": "Применяют, когда модель должна жить в production месяцами: нужны воспроизводимость, аудит, контролируемый деплой и автоматическая реакция на деградацию качества.",
-                "edge_cases": "`MLOps` — это journey, а не разовый проект: на ранней стадии хватает ручного трекинга, но без governance модель тихо деградирует, и виновника инцидента потом не найти.",
-                "related": "[[mlops-interview#Q2]] этапы ML lifecycle; [[mlops-interview#Q3]] чем MLOps отличается от DevOps; [[mlops-interview#Q27]] уровни maturity."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "correct": false,
               "text": "`MLOps` — это исключительно про автоматический подбор гиперпараметров (`AutoML`) и поиск лучшей архитектуры нейросети.",
               "sections": {
@@ -30,8 +17,8 @@
                 "if_it_were_true": "Если бы это было так, после подбора гиперпараметров работа `MLOps` заканчивалась бы, но именно деплой и мониторинг в production — самая трудная часть.",
                 "how_it_should_be": "`AutoML` — опциональный инструмент внутри стадии обучения; `MLOps` — про надёжную эксплуатацию всей системы в production."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "correct": false,
@@ -41,6 +28,19 @@
                 "source_of_confusion": "`MLOps` действительно наследует практики `DevOps`, поэтому кажется, что это полный синоним без добавленной специфики.",
                 "if_it_were_true": "Если бы отличий не было, не нужны были бы feature store, model registry и drift detection, но именно они и составляют ядро `MLOps`.",
                 "how_it_should_be": "`MLOps` расширяет `DevOps` тремя сущностями (данные, модель, дрейф) и циклом переобучения, которого в обычном `DevOps` нет."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "correct": true,
+              "text": "`MLOps (Machine Learning Operations)` — набор практик для управления жизненным циклом ML/AI-систем в production: версионирование данных, кода и моделей, experiment tracking, воспроизводимость, автоматизация деплоя, мониторинг дрейфа и переобучение. Цель — относиться к ML как к надёжному ПО, а не к одноразовым артефактам.",
+              "sections": {
+                "explanation": "`MLOps` родился из осознания, что ~80% моделей либо никогда не доходят до production, либо быстро деградируют; дисциплина переносит инженерные практики `DevOps` на ML с учётом данных и моделей.",
+                "example": "Команда оборачивает обучение в `MLflow`-трекинг, регистрирует модель в registry со стадией `Production`, навешивает мониторинг дрейфа через `Evidently` и триггерит переобучение по падению accuracy.",
+                "when_to_apply": "Применяют, когда модель должна жить в production месяцами: нужны воспроизводимость, аудит, контролируемый деплой и автоматическая реакция на деградацию качества.",
+                "edge_cases": "`MLOps` — это journey, а не разовый проект: на ранней стадии хватает ручного трекинга, но без governance модель тихо деградирует, и виновника инцидента потом не найти.",
+                "related": "[[mlops-interview#Q2]] этапы ML lifecycle; [[mlops-interview#Q3]] чем MLOps отличается от DevOps; [[mlops-interview#Q27]] уровни maturity."
               },
               "label": "C",
               "order": 2
@@ -70,15 +70,27 @@
           "options": [
             {
               "correct": false,
-              "text": "ML lifecycle — это строго линейный процесс, который заканчивается деплоем модели в production и больше к ней не возвращается.",
+              "text": "ML lifecycle — это только про мониторинг уже работающей модели; обучение и подготовка данных в него не входят.",
               "sections": {
-                "what_actually": "После деплоя начинается мониторинг, и при деградации цикл возвращается к переобучению — процесс цикличный, а не одноразовый.",
-                "source_of_confusion": "В классической разработке релиз часто финальная точка, и эту линейность ошибочно переносят на ML.",
-                "if_it_were_true": "Если бы цикл был линейным, дрейф данных оставался бы незамеченным и модель деградировала бы без реакции.",
-                "how_it_should_be": "ML lifecycle замкнут: мониторинг production-метрик триггерит новый виток обучения на свежих данных."
+                "what_actually": "Мониторинг — лишь последняя стадия; lifecycle начинается со сбора и подготовки данных и обучения модели.",
+                "source_of_confusion": "Мониторинг — самая видимая в production часть, поэтому его принимают за весь цикл.",
+                "if_it_were_true": "Если бы цикл состоял только из мониторинга, было бы нечего деплоить и не на чём строить предсказания.",
+                "how_it_should_be": "Мониторинг замыкает цикл, но ему предшествуют сбор данных, feature engineering, обучение, оценка и деплой."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "correct": false,
+              "text": "ML lifecycle сводится к двум этапам: обучить модель и выложить её — feature engineering и оценка не нужны.",
+              "sections": {
+                "what_actually": "Между сбором данных и деплоем обязательны подготовка, feature engineering, обучение и оценка на test set; пропуск любого ломает качество.",
+                "source_of_confusion": "Демо-ноутбук `model.fit()` + `model.predict()` создаёт иллюзию, что между ними ничего нет.",
+                "if_it_were_true": "Если бы хватало двух шагов, не возникало бы training-serving skew и непроверенные модели уходили бы в prod.",
+                "how_it_should_be": "Полный цикл включает данные, feature engineering, обучение, оценку, registry, деплой и мониторинг — минимум семь стадий."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "correct": true,
@@ -90,29 +102,17 @@
                 "edge_cases": "Цикличность ключевая: модель не «закончена» после деплоя — мониторинг ловит деградацию и возвращает на переобучение, иначе качество тихо падает.",
                 "related": "[[mlops-interview#Q1]] что такое MLOps; [[mlops-interview#Q11]] model registry в цикле; [[mlops-interview#Q18]] дрейф как триггер переобучения."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "correct": false,
-              "text": "ML lifecycle сводится к двум этапам: обучить модель и выложить её — feature engineering и оценка не нужны.",
-              "sections": {
-                "what_actually": "Между сбором данных и деплоем обязательны подготовка, feature engineering, обучение и оценка на test set; пропуск любого ломает качество.",
-                "source_of_confusion": "Демо-ноутбук `model.fit()` + `model.predict()` создаёт иллюзию, что между ними ничего нет.",
-                "if_it_were_true": "Если бы хватало двух шагов, не возникало бы training-serving skew и непроверенные модели уходили бы в prod.",
-                "how_it_should_be": "Полный цикл включает данные, feature engineering, обучение, оценку, registry, деплой и мониторинг — минимум семь стадий."
-              },
               "label": "C",
               "order": 2
             },
             {
               "correct": false,
-              "text": "ML lifecycle — это только про мониторинг уже работающей модели; обучение и подготовка данных в него не входят.",
+              "text": "ML lifecycle — это строго линейный процесс, который заканчивается деплоем модели в production и больше к ней не возвращается.",
               "sections": {
-                "what_actually": "Мониторинг — лишь последняя стадия; lifecycle начинается со сбора и подготовки данных и обучения модели.",
-                "source_of_confusion": "Мониторинг — самая видимая в production часть, поэтому его принимают за весь цикл.",
-                "if_it_were_true": "Если бы цикл состоял только из мониторинга, было бы нечего деплоить и не на чём строить предсказания.",
-                "how_it_should_be": "Мониторинг замыкает цикл, но ему предшествуют сбор данных, feature engineering, обучение, оценка и деплой."
+                "what_actually": "После деплоя начинается мониторинг, и при деградации цикл возвращается к переобучению — процесс цикличный, а не одноразовый.",
+                "source_of_confusion": "В классической разработке релиз часто финальная точка, и эту линейность ошибочно переносят на ML.",
+                "if_it_were_true": "Если бы цикл был линейным, дрейф данных оставался бы незамеченным и модель деградировала бы без реакции.",
+                "how_it_should_be": "ML lifecycle замкнут: мониторинг production-метрик триггерит новый виток обучения на свежих данных."
               },
               "label": "D",
               "order": 3
@@ -130,18 +130,6 @@
           "options": [
             {
               "correct": false,
-              "text": "Отличий по сути нет: и в `DevOps`, и в `MLOps` единственный версионируемый артефакт — это исходный код в `Git`.",
-              "sections": {
-                "what_actually": "В `MLOps` версионируются ещё данные (`DVC`) и сами модели (registry); один `Git` не воспроизведёт обучение без снапшота датасета.",
-                "source_of_confusion": "Оба используют `Git` как основу, поэтому кажется, что версионирование одинаковое.",
-                "if_it_were_true": "Если бы хватало `Git`, не появились бы `DVC` и model registry именно из-за неповторимости результата.",
-                "how_it_should_be": "В `MLOps` версионируется триада код+данные+модель, а не только код."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "correct": false,
               "text": "Главное отличие в том, что `MLOps` не использует `CI/CD` и контейнеры, а полагается только на ручной запуск ноутбуков.",
               "sections": {
                 "what_actually": "`MLOps` как раз строит `CI/CD` (плюс CT — continuous training); ручные ноутбуки в prod — это антипаттерн, а не норма.",
@@ -149,8 +137,8 @@
                 "if_it_were_true": "Если бы `CI/CD` отсутствовал, не было бы автоматических pipeline обучения и canary-деплоя моделей.",
                 "how_it_should_be": "Зрелый `MLOps` автоматизирует `CI/CD/CT/CM`; ручной ноутбук — признак низкой зрелости, а не отличие дисциплины."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "correct": true,
@@ -161,6 +149,18 @@
                 "when_to_apply": "Сравнение полезно объяснять команде `DevOps`, которая впервые берёт ML: оно показывает, почему привычного `CI/CD` недостаточно и зачем нужны feature store и drift detection.",
                 "edge_cases": "Тонкость: модель может пройти все unit-тесты и при этом деградировать в production из-за concept drift — обычный `DevOps`-мониторинг health и ошибок такого не ловит.",
                 "related": "[[mlops-interview#Q1]] что такое MLOps; [[mlops-interview#Q18]] data drift; [[mlops-interview#Q19]] concept drift."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "correct": false,
+              "text": "Отличий по сути нет: и в `DevOps`, и в `MLOps` единственный версионируемый артефакт — это исходный код в `Git`.",
+              "sections": {
+                "what_actually": "В `MLOps` версионируются ещё данные (`DVC`) и сами модели (registry); один `Git` не воспроизведёт обучение без снапшота датасета.",
+                "source_of_confusion": "Оба используют `Git` как основу, поэтому кажется, что версионирование одинаковое.",
+                "if_it_were_true": "Если бы хватало `Git`, не появились бы `DVC` и model registry именно из-за неповторимости результата.",
+                "how_it_should_be": "В `MLOps` версионируется триада код+данные+модель, а не только код."
               },
               "label": "C",
               "order": 2
@@ -202,24 +202,24 @@
             },
             {
               "correct": false,
-              "text": "Experiment tracking нужен только в академических исследованиях; в production-ML он бесполезен.",
-              "sections": {
-                "what_actually": "В production трекинг критичен для аудита: какой run и данные породили модель, отвечающую сейчас на запросы.",
-                "source_of_confusion": "Слово «эксперимент» ассоциируется с наукой, отсюда вывод о ненужности в проде.",
-                "if_it_were_true": "Если бы трекинг был не нужен в проде, нельзя было бы провести аудит происхождения боевой модели.",
-                "how_it_should_be": "Трекинг одинаково важен и в research, и в production — там он обеспечивает lineage и compliance."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "correct": false,
               "text": "Experiment tracking — это то же самое, что мониторинг production-модели: дрейф и латентность в реальном времени.",
               "sections": {
                 "what_actually": "Трекинг фиксирует офлайн-прогоны обучения; мониторинг следит за уже задеплоенной моделью в проде — это разные стадии.",
                 "source_of_confusion": "Оба собирают метрики, поэтому их путают.",
                 "if_it_were_true": "Если бы это было одно и то же, drift detection заменял бы сравнение training-прогонов, чего он не делает.",
                 "how_it_should_be": "Tracking — про обучение и сравнение runs; monitoring — про поведение модели в production."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "correct": false,
+              "text": "Experiment tracking нужен только в академических исследованиях; в production-ML он бесполезен.",
+              "sections": {
+                "what_actually": "В production трекинг критичен для аудита: какой run и данные породили модель, отвечающую сейчас на запросы.",
+                "source_of_confusion": "Слово «эксперимент» ассоциируется с наукой, отсюда вывод о ненужности в проде.",
+                "if_it_were_true": "Если бы трекинг был не нужен в проде, нельзя было бы провести аудит происхождения боевой модели.",
+                "how_it_should_be": "Трекинг одинаково важен и в research, и в production — там он обеспечивает lineage и compliance."
               },
               "label": "C",
               "order": 2
@@ -263,24 +263,24 @@
             },
             {
               "correct": false,
-              "text": "`MLflow` — это проприетарный `SaaS`-сервис, который нельзя развернуть локально и который доступен только в облаке `Databricks`.",
-              "sections": {
-                "what_actually": "`MLflow` open-source и спокойно поднимается self-hosted; managed-вариант на `Databricks` лишь опция, а не единственный путь.",
-                "source_of_confusion": "`MLflow` создан в `Databricks`, поэтому его путают с проприетарным облаком этой компании.",
-                "if_it_were_true": "Если бы его нельзя было развернуть локально, команда `MLflow run` на собственном сервере не работала бы, но она работает.",
-                "how_it_should_be": "`MLflow` — open-source с локальным запуском; `Databricks` предлагает лишь managed-обёртку."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "correct": false,
               "text": "`MLflow` умеет только логировать метрики и не имеет model registry — версионирование моделей делается отдельным инструментом.",
               "sections": {
                 "what_actually": "Model Registry — штатный компонент `MLflow`: `register_model` и `transition_model_version_stage` со стадиями `Staging`/`Production`.",
                 "source_of_confusion": "Многие используют только Tracking, отсюда миф об отсутствии registry.",
                 "if_it_were_true": "Если бы registry не было, нельзя было бы перевести модель в стадию `Production` внутри `MLflow`, но это штатная операция.",
                 "how_it_should_be": "`MLflow` включает и Tracking, и Model Registry, и Projects, и Models — это единый набор компонентов."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "correct": false,
+              "text": "`MLflow` — это проприетарный `SaaS`-сервис, который нельзя развернуть локально и который доступен только в облаке `Databricks`.",
+              "sections": {
+                "what_actually": "`MLflow` open-source и спокойно поднимается self-hosted; managed-вариант на `Databricks` лишь опция, а не единственный путь.",
+                "source_of_confusion": "`MLflow` создан в `Databricks`, поэтому его путают с проприетарным облаком этой компании.",
+                "if_it_were_true": "Если бы его нельзя было развернуть локально, команда `MLflow run` на собственном сервере не работала бы, но она работает.",
+                "how_it_should_be": "`MLflow` — open-source с локальным запуском; `Databricks` предлагает лишь managed-обёртку."
               },
               "label": "C",
               "order": 2
@@ -310,15 +310,27 @@
           "options": [
             {
               "correct": false,
-              "text": "`W&B` — это open-source библиотека, которую обязательно разворачивать на своих серверах, без всякого облачного сервиса.",
+              "text": "Единственное отличие `W&B` от `MLflow` — это другое название; функционально и по модели лицензирования они идентичны.",
               "sections": {
-                "what_actually": "`W&B` — проприетарный `SaaS` с облачным бэкендом и free tier; полноценного self-host open-source-варианта у него нет.",
-                "source_of_confusion": "`MLflow` open-source, и эту черту по инерции переносят на `W&B`.",
-                "if_it_were_true": "Если бы `W&B` был open-source self-hosted, не возникало бы вопроса о vendor lock-in, который ему как раз приписывают.",
-                "how_it_should_be": "`W&B` — облачный проприетарный сервис; open-source self-host — это про `MLflow`."
+                "what_actually": "Отличия существенны: лицензия (проприетарный SaaS vs open-source), хостинг и сильные стороны UI/Sweeps против открытости.",
+                "source_of_confusion": "Оба про experiment tracking, поэтому кажутся взаимозаменяемыми.",
+                "if_it_were_true": "Если бы они были идентичны, не стоял бы вопрос vendor lock-in и приватности данных, специфичный для `W&B`.",
+                "how_it_should_be": "`W&B` и `MLflow` различаются лицензией, хостингом и фокусом; это не просто разные имена."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "correct": false,
+              "text": "`W&B` не умеет тюнинг гиперпараметров и сравнение прогонов — он только хранит финальные веса моделей.",
+              "sections": {
+                "what_actually": "Sweeps в `W&B` как раз делают hyperparameter tuning, а UI силён именно в сравнении множества runs.",
+                "source_of_confusion": "Хранение артефактов заметно, и про Sweeps забывают.",
+                "if_it_were_true": "Если бы Sweeps не было, `W&B` не считался бы сильным в research, где перебор гиперпараметров критичен.",
+                "how_it_should_be": "`W&B` включает Sweeps для тюнинга и богатое сравнение прогонов, а не только хранение весов."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "correct": true,
@@ -330,29 +342,17 @@
                 "edge_cases": "Тонкость: free tier есть, но данные уходят в облако вендора; для строгих требований приватности это блокер, и тогда предпочитают self-hosted `MLflow`.",
                 "related": "[[mlops-interview#Q5]] MLflow как альтернатива; [[mlops-interview#Q4]] experiment tracking в целом; [[mlops-interview#Q11]] artifacts и registry."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "correct": false,
-              "text": "Единственное отличие `W&B` от `MLflow` — это другое название; функционально и по модели лицензирования они идентичны.",
-              "sections": {
-                "what_actually": "Отличия существенны: лицензия (проприетарный SaaS vs open-source), хостинг и сильные стороны UI/Sweeps против открытости.",
-                "source_of_confusion": "Оба про experiment tracking, поэтому кажутся взаимозаменяемыми.",
-                "if_it_were_true": "Если бы они были идентичны, не стоял бы вопрос vendor lock-in и приватности данных, специфичный для `W&B`.",
-                "how_it_should_be": "`W&B` и `MLflow` различаются лицензией, хостингом и фокусом; это не просто разные имена."
-              },
               "label": "C",
               "order": 2
             },
             {
               "correct": false,
-              "text": "`W&B` не умеет тюнинг гиперпараметров и сравнение прогонов — он только хранит финальные веса моделей.",
+              "text": "`W&B` — это open-source библиотека, которую обязательно разворачивать на своих серверах, без всякого облачного сервиса.",
               "sections": {
-                "what_actually": "Sweeps в `W&B` как раз делают hyperparameter tuning, а UI силён именно в сравнении множества runs.",
-                "source_of_confusion": "Хранение артефактов заметно, и про Sweeps забывают.",
-                "if_it_were_true": "Если бы Sweeps не было, `W&B` не считался бы сильным в research, где перебор гиперпараметров критичен.",
-                "how_it_should_be": "`W&B` включает Sweeps для тюнинга и богатое сравнение прогонов, а не только хранение весов."
+                "what_actually": "`W&B` — проприетарный `SaaS` с облачным бэкендом и free tier; полноценного self-host open-source-варианта у него нет.",
+                "source_of_confusion": "`MLflow` open-source, и эту черту по инерции переносят на `W&B`.",
+                "if_it_were_true": "Если бы `W&B` был open-source self-hosted, не возникало бы вопроса о vendor lock-in, который ему как раз приписывают.",
+                "how_it_should_be": "`W&B` — облачный проприетарный сервис; open-source self-host — это про `MLflow`."
               },
               "label": "D",
               "order": 3
@@ -381,18 +381,6 @@
               "order": 0
             },
             {
-              "correct": false,
-              "text": "Feature store — это низколатентное online-хранилище, раздающее признаки только на этапе inference; training pipeline при этом читает данные напрямую из data warehouse, а не из feature store.",
-              "sections": {
-                "what_actually": "Из feature store читают и training pipeline (offline-фичи), и inference service (online-фичи) — он обслуживает оба этапа.",
-                "source_of_confusion": "Латентность online-чтения заметна в проде, поэтому store ассоциируют только с инференсом.",
-                "if_it_were_true": "Если бы обучение его не использовало, определения features в train и serve разошлись бы — ровно то, что store устраняет.",
-                "how_it_should_be": "Feature store — общий источник и для обучения, и для инференса, что и убирает skew."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "correct": true,
               "text": "Feature store — централизованное хранилище features для ML, в которое feature engineering пишет рассчитанные признаки, а training pipeline и inference service их читают. Решает проблемы: training-serving skew (одни и те же определения features для обучения и инференса), reuse (несколько моделей берут те же features), discoverability (каталог features) и monitoring (детект дрейфа признаков). Инструменты: `Feast` (open-source), `Tecton` (managed), `Hopsworks`, `Vertex AI`/`SageMaker Feature Store`.",
               "sections": {
@@ -401,6 +389,18 @@
                 "when_to_apply": "Внедряют, когда несколько моделей переиспользуют общие признаки или когда training-serving skew уже бьёт по точности и нужен единый источник истины для features.",
                 "edge_cases": "Тонкость: feature store сам по себе не убирает skew, если рассинхронизированы offline- и online-копии; нужна корректная синхронизация (часто scheduled jobs).",
                 "related": "[[mlops-interview#Q8]] online vs offline features; [[mlops-interview#Q9]] Feast vs Tecton; [[mlops-interview#Q10]] training-serving skew."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "correct": false,
+              "text": "Feature store — это низколатентное online-хранилище, раздающее признаки только на этапе inference; training pipeline при этом читает данные напрямую из data warehouse, а не из feature store.",
+              "sections": {
+                "what_actually": "Из feature store читают и training pipeline (offline-фичи), и inference service (online-фичи) — он обслуживает оба этапа.",
+                "source_of_confusion": "Латентность online-чтения заметна в проде, поэтому store ассоциируют только с инференсом.",
+                "if_it_were_true": "Если бы обучение его не использовало, определения features в train и serve разошлись бы — ровно то, что store устраняет.",
+                "how_it_should_be": "Feature store — общий источник и для обучения, и для инференса, что и убирает skew."
               },
               "label": "C",
               "order": 2
@@ -429,28 +429,17 @@
           "question_text": "Чем online-features отличаются от offline-features?",
           "options": [
             {
-              "correct": false,
-              "text": "Online- и offline-features различаются только названием: и те и другие читаются за секунды из `S3` и используются в обучении.",
+              "correct": true,
+              "text": "Offline features — для обучения: большой объём, batch-вычисление, сложные агрегации (сумма за 30 дней), хранилища `S3`/`BigQuery`/`Hive`, латентность чтения в секундах. Online features — для realtime-инференса: латентность чтения <100ms, хранилища `Redis`/`DynamoDB`/`Cassandra`, значения предрассчитываются офлайн и загружаются в online-store. Feature store управляет синхронизацией offline ↔ online, часто через scheduled jobs.",
               "sections": {
-                "what_actually": "Online-features читаются за <100ms из `Redis`/`DynamoDB` для realtime-инференса, а offline — за секунды из `S3`/`BigQuery` для обучения; назначение и латентность разные.",
-                "source_of_confusion": "Оба — про один и тот же признак, поэтому кажется, что разница чисто номинальная.",
-                "if_it_were_true": "Если бы online читались из `S3` за секунды, realtime-инференс с бюджетом <100ms был бы невозможен.",
-                "how_it_should_be": "Online-слой — низколатентное хранилище для инференса; offline-слой — объёмное для обучения."
+                "explanation": "Это два слоя одного признака: тяжёлые расчёты делаются батчем офлайн, а результат материализуется в быстрое online-хранилище для отдачи по запросу за миллисекунды.",
+                "example": "Признак `avg_purchase_30d` считается ночным `Spark`-джобом по `BigQuery` (offline) и заливается в `Redis` (online), откуда inference-сервис достаёт его за единицы миллисекунд.",
+                "when_to_apply": "Разделение применяют, когда инференс realtime и требует <100ms: считать сложную агрегацию на лету нельзя, поэтому её предрассчитывают офлайн и кладут в online-store.",
+                "edge_cases": "Тонкость: если scheduled-синхронизация отстаёт, online-значение устаревает относительно offline — это источник skew и деградации точности в проде.",
+                "related": "[[mlops-interview#Q7]] что такое feature store; [[mlops-interview#Q10]] training-serving skew; [[mlops-interview#Q13]] batch vs online inference."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "correct": false,
-              "text": "Offline-features предназначены для realtime-инференса, а online-features — для batch-обучения на исторических данных.",
-              "sections": {
-                "what_actually": "Наоборот: offline — для batch-обучения по истории, online — для realtime-инференса с низкой латентностью.",
-                "source_of_confusion": "Слова «online/offline» легко перепутать местами, не связав их с инференсом и обучением.",
-                "if_it_were_true": "Если бы offline отдавал realtime-инференс, агрегации за 30 дней пришлось бы считать на лету в каждом запросе.",
-                "how_it_should_be": "Offline обслуживает обучение, online — realtime-инференс; роли строго противоположны описанному."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "correct": false,
@@ -461,18 +450,29 @@
                 "if_it_were_true": "Если бы стороны считали по разным формулам, признак в обучении и инференсе отличался бы — это и есть skew.",
                 "how_it_should_be": "Feature store синхронизирует offline → online (часто scheduled jobs), чтобы определения совпадали."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "correct": false,
+              "text": "Online- и offline-features различаются только названием: и те и другие читаются за секунды из `S3` и используются в обучении.",
+              "sections": {
+                "what_actually": "Online-features читаются за <100ms из `Redis`/`DynamoDB` для realtime-инференса, а offline — за секунды из `S3`/`BigQuery` для обучения; назначение и латентность разные.",
+                "source_of_confusion": "Оба — про один и тот же признак, поэтому кажется, что разница чисто номинальная.",
+                "if_it_were_true": "Если бы online читались из `S3` за секунды, realtime-инференс с бюджетом <100ms был бы невозможен.",
+                "how_it_should_be": "Online-слой — низколатентное хранилище для инференса; offline-слой — объёмное для обучения."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "correct": true,
-              "text": "Offline features — для обучения: большой объём, batch-вычисление, сложные агрегации (сумма за 30 дней), хранилища `S3`/`BigQuery`/`Hive`, латентность чтения в секундах. Online features — для realtime-инференса: латентность чтения <100ms, хранилища `Redis`/`DynamoDB`/`Cassandra`, значения предрассчитываются офлайн и загружаются в online-store. Feature store управляет синхронизацией offline ↔ online, часто через scheduled jobs.",
+              "correct": false,
+              "text": "Offline-features предназначены для realtime-инференса, а online-features — для batch-обучения на исторических данных.",
               "sections": {
-                "explanation": "Это два слоя одного признака: тяжёлые расчёты делаются батчем офлайн, а результат материализуется в быстрое online-хранилище для отдачи по запросу за миллисекунды.",
-                "example": "Признак `avg_purchase_30d` считается ночным `Spark`-джобом по `BigQuery` (offline) и заливается в `Redis` (online), откуда inference-сервис достаёт его за единицы миллисекунд.",
-                "when_to_apply": "Разделение применяют, когда инференс realtime и требует <100ms: считать сложную агрегацию на лету нельзя, поэтому её предрассчитывают офлайн и кладут в online-store.",
-                "edge_cases": "Тонкость: если scheduled-синхронизация отстаёт, online-значение устаревает относительно offline — это источник skew и деградации точности в проде.",
-                "related": "[[mlops-interview#Q7]] что такое feature store; [[mlops-interview#Q10]] training-serving skew; [[mlops-interview#Q13]] batch vs online inference."
+                "what_actually": "Наоборот: offline — для batch-обучения по истории, online — для realtime-инференса с низкой латентностью.",
+                "source_of_confusion": "Слова «online/offline» легко перепутать местами, не связав их с инференсом и обучением.",
+                "if_it_were_true": "Если бы offline отдавал realtime-инференс, агрегации за 30 дней пришлось бы считать на лету в каждом запросе.",
+                "how_it_should_be": "Offline обслуживает обучение, online — realtime-инференс; роли строго противоположны описанному."
               },
               "label": "D",
               "order": 3
@@ -489,29 +489,16 @@
           "question_text": "Чем `Feast` отличается от `Tecton`?",
           "options": [
             {
-              "correct": true,
-              "text": "`Feast` — open-source, self-host, online-store на `Redis`/`DynamoDB`, ограниченная поддержка streaming-features, бесплатен (платишь только за инфраструктуру), maturity растущая. `Tecton` — проприетарный managed-SaaS, встроенный online-store, полноценные streaming-features (`Spark`, `Flink`), дорогой ($$$), production-grade. `Feast` — для стартапов и небольших команд; `Tecton` — для enterprise (основан ex-командой `Uber Michelangelo`).",
+              "correct": false,
+              "text": "Оба инструмента одинаково хорошо поддерживают streaming-features из коробки, разницы в потоковой обработке нет.",
               "sections": {
-                "explanation": "Выбор сводится к «бесплатный self-host с ручной эксплуатацией против дорогого managed с готовым streaming»: `Feast` экономит деньги, `Tecton` экономит инженерное время.",
-                "example": "Стартап на 5 человек берёт `Feast` поверх своего `Redis`; крупный банк со стримингом транзакций через `Flink` выбирает `Tecton` ради встроенной потоковой обработки и SLA.",
-                "when_to_apply": "Применяют `Feast`, когда бюджет ограничен и хватает batch-features; `Tecton` — когда нужны production-grade streaming-features и не хочется самим держать инфраструктуру.",
-                "edge_cases": "Тонкость: «бесплатность» `Feast` обманчива — вы платите инженерным временем за эксплуатацию online-store и синхронизацию, тогда как `Tecton` берёт это на себя за деньги.",
-                "related": "[[mlops-interview#Q7]] что такое feature store; [[mlops-interview#Q8]] online vs offline features; [[mlops-interview#Q10]] training-serving skew."
+                "what_actually": "У `Feast` поддержка streaming ограничена, тогда как `Tecton` даёт полноценные streaming-features на `Spark`/`Flink`.",
+                "source_of_confusion": "Слово «feature store» подразумевает любые источники, отсюда мысль о равной поддержке стриминга.",
+                "if_it_were_true": "Если бы streaming был равноценен, enterprise со стримингом транзакций не выбирали бы `Tecton` именно ради него.",
+                "how_it_should_be": "`Tecton` силён во встроенном streaming; в `Feast` потоковые features — слабое место."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "correct": false,
-              "text": "`Feast` — проприетарный managed-SaaS с полноценным streaming, а `Tecton` — бесплатный open-source для self-host.",
-              "sections": {
-                "what_actually": "Всё наоборот: `Feast` open-source self-host, а `Tecton` — проприетарный managed-SaaS со streaming.",
-                "source_of_confusion": "Названия легко перепутать местами, не привязав к лицензии и модели хостинга.",
-                "if_it_were_true": "Если бы `Feast` был managed-SaaS, не стоял бы вопрос самостоятельной эксплуатации online-store, который для него характерен.",
-                "how_it_should_be": "`Feast` — open-source self-host; `Tecton` — managed-SaaS; характеристики ровно противоположны описанному."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "correct": false,
@@ -522,17 +509,30 @@
                 "if_it_were_true": "Если бы `Tecton` был бесплатным open-source, у `Feast` не было бы ниши «дешёвой» альтернативы.",
                 "how_it_should_be": "`Feast` бесплатен и открыт, `Tecton` платный и проприетарный — это ключевое различие."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "correct": true,
+              "text": "`Feast` — open-source, self-host, online-store на `Redis`/`DynamoDB`, ограниченная поддержка streaming-features, бесплатен (платишь только за инфраструктуру), maturity растущая. `Tecton` — проприетарный managed-SaaS, встроенный online-store, полноценные streaming-features (`Spark`, `Flink`), дорогой ($$$), production-grade. `Feast` — для стартапов и небольших команд; `Tecton` — для enterprise (основан ex-командой `Uber Michelangelo`).",
+              "sections": {
+                "explanation": "Выбор сводится к «бесплатный self-host с ручной эксплуатацией против дорогого managed с готовым streaming»: `Feast` экономит деньги, `Tecton` экономит инженерное время.",
+                "example": "Стартап на 5 человек берёт `Feast` поверх своего `Redis`; крупный банк со стримингом транзакций через `Flink` выбирает `Tecton` ради встроенной потоковой обработки и SLA.",
+                "when_to_apply": "Применяют `Feast`, когда бюджет ограничен и хватает batch-features; `Tecton` — когда нужны production-grade streaming-features и не хочется самим держать инфраструктуру.",
+                "edge_cases": "Тонкость: «бесплатность» `Feast` обманчива — вы платите инженерным временем за эксплуатацию online-store и синхронизацию, тогда как `Tecton` берёт это на себя за деньги.",
+                "related": "[[mlops-interview#Q7]] что такое feature store; [[mlops-interview#Q8]] online vs offline features; [[mlops-interview#Q10]] training-serving skew."
+              },
               "label": "C",
               "order": 2
             },
             {
               "correct": false,
-              "text": "Оба инструмента одинаково хорошо поддерживают streaming-features из коробки, разницы в потоковой обработке нет.",
+              "text": "`Feast` — проприетарный managed-SaaS с полноценным streaming, а `Tecton` — бесплатный open-source для self-host.",
               "sections": {
-                "what_actually": "У `Feast` поддержка streaming ограничена, тогда как `Tecton` даёт полноценные streaming-features на `Spark`/`Flink`.",
-                "source_of_confusion": "Слово «feature store» подразумевает любые источники, отсюда мысль о равной поддержке стриминга.",
-                "if_it_were_true": "Если бы streaming был равноценен, enterprise со стримингом транзакций не выбирали бы `Tecton` именно ради него.",
-                "how_it_should_be": "`Tecton` силён во встроенном streaming; в `Feast` потоковые features — слабое место."
+                "what_actually": "Всё наоборот: `Feast` open-source self-host, а `Tecton` — проприетарный managed-SaaS со streaming.",
+                "source_of_confusion": "Названия легко перепутать местами, не привязав к лицензии и модели хостинга.",
+                "if_it_were_true": "Если бы `Feast` был managed-SaaS, не стоял бы вопрос самостоятельной эксплуатации online-store, который для него характерен.",
+                "how_it_should_be": "`Feast` — open-source self-host; `Tecton` — managed-SaaS; характеристики ровно противоположны описанному."
               },
               "label": "D",
               "order": 3
@@ -550,15 +550,27 @@
           "options": [
             {
               "correct": false,
-              "text": "Training-serving skew — это когда модель обучается на одном языке программирования, а инференс запускается на другом.",
+              "text": "Training-serving skew — это нормальное и желательное явление, повышающее обобщающую способность модели.",
               "sections": {
-                "what_actually": "Skew — про расхождение в вычислении features между train и serve, а не про языки реализации сервиса.",
-                "source_of_confusion": "И то и другое — про различие между обучением и инференсом, отсюда подмена сути.",
-                "if_it_were_true": "Если бы дело было в языке, перенос модели в `ONNX` устранял бы проблему, но он не трогает рассинхрон фич.",
-                "how_it_should_be": "Skew — это разные определения/значения признаков в обучении и инференсе, независимо от языка сервиса."
+                "what_actually": "Skew вреден: он роняет точность в production, хотя на test метрики выглядят отлично — это дефект, а не польза.",
+                "source_of_confusion": "Слово напоминает регуляризацию/аугментацию, которые действительно полезны, отсюда ложная позитивность.",
+                "if_it_were_true": "Если бы skew был полезен, его не пытались бы устранять feature store и единым извлечением данных.",
+                "how_it_should_be": "Skew — это деградация из-за рассинхрона фич; от него избавляются, а не культивируют его."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "correct": false,
+              "text": "Training-serving skew устраняется тем, что модель обучают прямо в production на боевом трафике в реальном времени.",
+              "sections": {
+                "what_actually": "Решение — единое определение features (feature store) и извлечение train-данных как в инференсе, а не онлайн-обучение на трафике.",
+                "source_of_confusion": "Онлайн-обучение звучит как способ «сблизить» train и serve, отсюда заблуждение.",
+                "if_it_were_true": "Если бы онлайн-обучение убирало skew, оно не порождало бы своих рисков (нестабильность, отравление данными).",
+                "how_it_should_be": "Skew лечат общим источником features и согласованным извлечением данных, а не обучением на проде."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "correct": true,
@@ -570,29 +582,17 @@
                 "edge_cases": "Тонкость: skew часто не виден на test (там используется train-путь) и проявляется только в production — поэтому нужен мониторинг расхождения распределений, а не только офлайн-метрики.",
                 "related": "[[mlops-interview#Q7]] feature store как решение; [[mlops-interview#Q8]] online vs offline features; [[mlops-interview#Q18]] data drift как смежное явление."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "correct": false,
-              "text": "Training-serving skew — это нормальное и желательное явление, повышающее обобщающую способность модели.",
-              "sections": {
-                "what_actually": "Skew вреден: он роняет точность в production, хотя на test метрики выглядят отлично — это дефект, а не польза.",
-                "source_of_confusion": "Слово напоминает регуляризацию/аугментацию, которые действительно полезны, отсюда ложная позитивность.",
-                "if_it_were_true": "Если бы skew был полезен, его не пытались бы устранять feature store и единым извлечением данных.",
-                "how_it_should_be": "Skew — это деградация из-за рассинхрона фич; от него избавляются, а не культивируют его."
-              },
               "label": "C",
               "order": 2
             },
             {
               "correct": false,
-              "text": "Training-serving skew устраняется тем, что модель обучают прямо в production на боевом трафике в реальном времени.",
+              "text": "Training-serving skew — это когда модель обучается на одном языке программирования, а инференс запускается на другом.",
               "sections": {
-                "what_actually": "Решение — единое определение features (feature store) и извлечение train-данных как в инференсе, а не онлайн-обучение на трафике.",
-                "source_of_confusion": "Онлайн-обучение звучит как способ «сблизить» train и serve, отсюда заблуждение.",
-                "if_it_were_true": "Если бы онлайн-обучение убирало skew, оно не порождало бы своих рисков (нестабильность, отравление данными).",
-                "how_it_should_be": "Skew лечат общим источником features и согласованным извлечением данных, а не обучением на проде."
+                "what_actually": "Skew — про расхождение в вычислении features между train и serve, а не про языки реализации сервиса.",
+                "source_of_confusion": "И то и другое — про различие между обучением и инференсом, отсюда подмена сути.",
+                "if_it_were_true": "Если бы дело было в языке, перенос модели в `ONNX` устранял бы проблему, но он не трогает рассинхрон фич.",
+                "how_it_should_be": "Skew — это разные определения/значения признаков в обучении и инференсе, независимо от языка сервиса."
               },
               "label": "D",
               "order": 3
@@ -610,18 +610,6 @@
           "options": [
             {
               "correct": false,
-              "text": "Model registry — это трекер экспериментов: он логирует гиперпараметры и метрики каждого training-run'а для их сравнения, а версии моделей и алиасы остаются вне его зоны ответственности.",
-              "sections": {
-                "what_actually": "Registry хранит именно модели с версиями и стадиями (`Staging`/`Production`); датасеты — забота `DVC`/data-хранилищ.",
-                "source_of_confusion": "И registry, и data-стор — про хранение в `MLOps`, отсюда смешение.",
-                "if_it_were_true": "Если бы registry хранил датасеты, перевод версии модели в `Production` был бы невозможен, но это его базовая операция.",
-                "how_it_should_be": "Model registry управляет моделями и их стадиями, а данные версионируют отдельными инструментами."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "correct": false,
               "text": "Model registry хранит сами версии моделей, но связь с породившими их данными и кодом (lineage) не фиксирует — её приходится вести отдельно в системе версионирования датасетов.",
               "sections": {
                 "what_actually": "Rollback — одна из ключевых функций registry: предыдущая версия остаётся, и её быстро возвращают в `Production`.",
@@ -629,8 +617,8 @@
                 "if_it_were_true": "Если бы rollback был невозможен, registry не давал бы преимущества над хранением весов в папке.",
                 "how_it_should_be": "Registry хранит все версии и позволяет мгновенно откатиться на стабильную, переведя её в `Production`."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "correct": true,
@@ -641,6 +629,18 @@
                 "when_to_apply": "Внедряют, когда в проде живёт больше одной модели или нужен контролируемый promotion с approval и быстрый rollback — без registry это превращается в ручной хаос с файлами весов.",
                 "edge_cases": "Тонкость: registry хранит модели, алиасы и теги, но lineage полезен только если в run залогированы версия данных и кода; иначе «откуда модель» не восстановить даже из registry.",
                 "related": "[[mlops-interview#Q5]] MLflow Registry; [[mlops-interview#Q12]] стратегии versioning; [[mlops-interview#Q14]] A/B-тесты нескольких моделей."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "correct": false,
+              "text": "Model registry — это трекер экспериментов: он логирует гиперпараметры и метрики каждого training-run'а для их сравнения, а версии моделей и алиасы остаются вне его зоны ответственности.",
+              "sections": {
+                "what_actually": "Registry хранит именно модели с версиями и стадиями (`Staging`/`Production`); датасеты — забота `DVC`/data-хранилищ.",
+                "source_of_confusion": "И registry, и data-стор — про хранение в `MLOps`, отсюда смешение.",
+                "if_it_were_true": "Если бы registry хранил датасеты, перевод версии модели в `Production` был бы невозможен, но это его базовая операция.",
+                "how_it_should_be": "Model registry управляет моделями и их стадиями, а данные версионируют отдельными инструментами."
               },
               "label": "C",
               "order": 2
@@ -670,30 +670,6 @@
           "options": [
             {
               "correct": false,
-              "text": "Единственно правильная стратегия — нумеровать модели вручную числами по порядку, без привязки к коду или дате.",
-              "sections": {
-                "what_actually": "Голый ручной инкремент — лишь один из вариантов; best practice комбинирует номер, commit hash и дату для воспроизводимости.",
-                "source_of_confusion": "Auto-increment — дефолт `MLflow`, поэтому его принимают за единственно верный.",
-                "if_it_were_true": "Если бы хватало одного номера, не появилась бы практика добавлять commit hash ради привязки к коду.",
-                "how_it_should_be": "Рекомендуется комбинированная схема (`model_v3_abc123_20250419`), а не просто порядковый номер."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "correct": false,
-              "text": "Привязывать версию модели к `git commit hash` бессмысленно, потому что код не влияет на обученную модель.",
-              "sections": {
-                "what_actually": "Код напрямую влияет на модель (препроцессинг, архитектура, фичи), поэтому commit hash и нужен для воспроизводимости.",
-                "source_of_confusion": "Кажется, что результат определяют только данные, отсюда недооценка роли кода.",
-                "if_it_were_true": "Если бы код не влиял, изменение feature engineering не меняло бы модель, что очевидно неверно.",
-                "how_it_should_be": "Commit hash в версии фиксирует код обучения и помогает воспроизвести и откатить модель."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "correct": false,
               "text": "Date-based-версионирование (`2025-04-19`) запрещено в `MLOps`, так как даты не гарантируют уникальность.",
               "sections": {
                 "what_actually": "Date-based — валидная и популярная схема для часто обновляемых моделей; при коллизиях её дополняют номером или хешем.",
@@ -701,8 +677,8 @@
                 "if_it_were_true": "Если бы даты были запрещены, их не упоминали бы среди стандартных подходов к версионированию.",
                 "how_it_should_be": "Date-based допустима, особенно для ежедневного переобучения; уникальность добивают commit hash или счётчиком."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "correct": true,
@@ -713,6 +689,30 @@
                 "when_to_apply": "Выбирают схему под частоту обновлений: для редких релизов хватает semver, для ежедневного переобучения удобнее date-based, а для воспроизводимости добавляют commit hash.",
                 "edge_cases": "Тонкость: голый auto-increment (`v1`,`v2`) не говорит ни о коде, ни о данных — без commit hash воспроизвести именно эту модель будет нечем.",
                 "related": "[[mlops-interview#Q11]] model registry; [[mlops-interview#Q4]] версия кода в experiment tracking; [[mlops-interview#Q22]] версии при continuous training."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "correct": false,
+              "text": "Единственно правильная стратегия — нумеровать модели вручную числами по порядку, без привязки к коду или дате.",
+              "sections": {
+                "what_actually": "Голый ручной инкремент — лишь один из вариантов; best practice комбинирует номер, commit hash и дату для воспроизводимости.",
+                "source_of_confusion": "Auto-increment — дефолт `MLflow`, поэтому его принимают за единственно верный.",
+                "if_it_were_true": "Если бы хватало одного номера, не появилась бы практика добавлять commit hash ради привязки к коду.",
+                "how_it_should_be": "Рекомендуется комбинированная схема (`model_v3_abc123_20250419`), а не просто порядковый номер."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "correct": false,
+              "text": "Привязывать версию модели к `git commit hash` бессмысленно, потому что код не влияет на обученную модель.",
+              "sections": {
+                "what_actually": "Код напрямую влияет на модель (препроцессинг, архитектура, фичи), поэтому commit hash и нужен для воспроизводимости.",
+                "source_of_confusion": "Кажется, что результат определяют только данные, отсюда недооценка роли кода.",
+                "if_it_were_true": "Если бы код не влиял, изменение feature engineering не меняло бы модель, что очевидно неверно.",
+                "how_it_should_be": "Commit hash в версии фиксирует код обучения и помогает воспроизвести и откатить модель."
               },
               "label": "D",
               "order": 3
@@ -729,14 +729,13 @@
           "question_text": "Чем batch-инференс отличается от online-инференса?",
           "options": [
             {
-              "correct": true,
-              "text": "Batch-инференс: триггер — расписание (daily/hourly), латентность минуты-часы, очень высокий throughput, кейсы — предрасчёт рекомендаций, churn-скоринг, инфраструктура `Spark`/`Airflow`, низкая стоимость на предсказание. Online-инференс: триггер — на каждый запрос, латентность <100ms, throughput зависит от нагрузки, кейсы — fraud detection, поиск, чат-бот, инфраструктура API-сервиса (`FastAPI`, `Triton`), выше стоимость (всегда работает). Hybrid: часть предсказаний предрассчитывается батчем и кешируется для быстрого online-lookup.",
+              "correct": false,
+              "text": "Hybrid-подход — это выбор между batch и online в рантайме по текущей нагрузке; предрассчитать предсказания батчем и отдавать их online как быстрый кеш-lookup он не предполагает.",
               "sections": {
-                "explanation": "Выбор между ними — это компромисс латентности и стоимости: батч дёшев, но отвечает с задержкой; online мгновенный, но дороже, потому что сервис всегда поднят.",
-                "example": "Рекомендации в e-commerce считают ночным `Spark`-джобом и кладут в кеш (batch), а скоринг транзакции на фрод делают синхронно через `FastAPI` за десятки миллисекунд (online).",
-                "when_to_apply": "Batch выбирают, когда предсказания не нужны мгновенно и можно посчитать заранее; online — когда ответ нужен на лету (поиск, фрод, чат).",
-                "edge_cases": "Тонкость: hybrid стирает границу — предрассчитанные батчем предсказания кешируются и отдаются как быстрый online-lookup, сочетая дешевизну и низкую латентность.",
-                "related": "[[mlops-interview#Q8]] online vs offline features; [[mlops-interview#Q17]] что мониторить в проде; [[mlops-interview#Q16]] canary при выкатке online-модели."
+                "what_actually": "Hybrid как раз штатный паттерн: часть предсказаний считается батчем, кешируется и отдаётся online-lookup'ом за миллисекунды.",
+                "source_of_confusion": "Batch и online кажутся взаимоисключающими, отсюда отрицание гибрида.",
+                "if_it_were_true": "Если бы hybrid был невозможен, рекомендации не предрассчитывали бы заранее и не кешировали бы.",
+                "how_it_should_be": "Hybrid сочетает дешёвый batch-предрасчёт с быстрым online-чтением из кеша."
               },
               "label": "A",
               "order": 0
@@ -766,13 +765,14 @@
               "order": 2
             },
             {
-              "correct": false,
-              "text": "Hybrid-подход — это выбор между batch и online в рантайме по текущей нагрузке; предрассчитать предсказания батчем и отдавать их online как быстрый кеш-lookup он не предполагает.",
+              "correct": true,
+              "text": "Batch-инференс: триггер — расписание (daily/hourly), латентность минуты-часы, очень высокий throughput, кейсы — предрасчёт рекомендаций, churn-скоринг, инфраструктура `Spark`/`Airflow`, низкая стоимость на предсказание. Online-инференс: триггер — на каждый запрос, латентность <100ms, throughput зависит от нагрузки, кейсы — fraud detection, поиск, чат-бот, инфраструктура API-сервиса (`FastAPI`, `Triton`), выше стоимость (всегда работает). Hybrid: часть предсказаний предрассчитывается батчем и кешируется для быстрого online-lookup.",
               "sections": {
-                "what_actually": "Hybrid как раз штатный паттерн: часть предсказаний считается батчем, кешируется и отдаётся online-lookup'ом за миллисекунды.",
-                "source_of_confusion": "Batch и online кажутся взаимоисключающими, отсюда отрицание гибрида.",
-                "if_it_were_true": "Если бы hybrid был невозможен, рекомендации не предрассчитывали бы заранее и не кешировали бы.",
-                "how_it_should_be": "Hybrid сочетает дешёвый batch-предрасчёт с быстрым online-чтением из кеша."
+                "explanation": "Выбор между ними — это компромисс латентности и стоимости: батч дёшев, но отвечает с задержкой; online мгновенный, но дороже, потому что сервис всегда поднят.",
+                "example": "Рекомендации в e-commerce считают ночным `Spark`-джобом и кладут в кеш (batch), а скоринг транзакции на фрод делают синхронно через `FastAPI` за десятки миллисекунд (online).",
+                "when_to_apply": "Batch выбирают, когда предсказания не нужны мгновенно и можно посчитать заранее; online — когда ответ нужен на лету (поиск, фрод, чат).",
+                "edge_cases": "Тонкость: hybrid стирает границу — предрассчитанные батчем предсказания кешируются и отдаются как быстрый online-lookup, сочетая дешевизну и низкую латентность.",
+                "related": "[[mlops-interview#Q8]] online vs offline features; [[mlops-interview#Q17]] что мониторить в проде; [[mlops-interview#Q16]] canary при выкатке online-модели."
               },
               "label": "D",
               "order": 3
@@ -789,18 +789,6 @@
           "question_text": "Как устроено A/B-тестирование моделей?",
           "options": [
             {
-              "correct": false,
-              "text": "A/B-тест моделей — это сравнение их accuracy на статичном test set, без какого-либо живого трафика.",
-              "sections": {
-                "what_actually": "A/B-тест идёт на живом production-трафике и сравнивает online-метрики (CTR, revenue), а не офлайн-accuracy на фикс-датасете.",
-                "source_of_confusion": "Офлайн-сравнение моделей тоже называют «тестом», отсюда подмена.",
-                "if_it_were_true": "Если бы хватало test set, не нужны были бы holdout-группы и проверка статзначимости на проде.",
-                "how_it_should_be": "A/B-тест делит реальный трафик между моделями и меряет бизнес-метрики, а не офлайн-точность."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "correct": true,
               "text": "A/B-тестирование: процент трафика идёт на модель A, процент — на модель B, и сравниваются метрики. Например, `model_choice = 'B' if hash(user_id) % 100 < 10 else 'A'` отправляет 10% на B; каждое предсказание логируется с пометкой модели. Сравнивают online-метрики (CTR, conversion, revenue), латентность и error rate, удовлетворённость. Сложнее, чем кажется: нужны статистическая значимость, учёт novelty-эффектов и holdout-групп.",
               "sections": {
@@ -810,8 +798,8 @@
                 "edge_cases": "Тонкость: разница в офлайн-accuracy не гарантирует выигрыш в проде — мешают novelty-эффект и недостаточная статзначимость, поэтому нужны holdout-группы и корректный размер выборки.",
                 "related": "[[mlops-interview#Q15]] shadow deployment перед A/B; [[mlops-interview#Q16]] canary deployment; [[mlops-interview#Q11]] несколько моделей в проде через registry."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "correct": false,
@@ -822,8 +810,8 @@
                 "if_it_were_true": "Если бы группа менялась на каждом запросе, novelty- и consistency-эффекты исказили бы сравнение до бесполезности.",
                 "how_it_should_be": "Пользователь стабильно закреплён за группой через детерминированный hash, что и даёт чистое сравнение."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "correct": false,
@@ -833,6 +821,18 @@
                 "source_of_confusion": "Код роутинга осязаем, а статистика абстрактна, отсюда смещение фокуса.",
                 "if_it_were_true": "Если бы значимость не играла роли, можно было бы делать выводы по случайному шуму за пару часов.",
                 "how_it_should_be": "Корректность A/B держится на статистике (значимость, размер выборки, holdout), а не только на роутинге."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "correct": false,
+              "text": "A/B-тест моделей — это сравнение их accuracy на статичном test set, без какого-либо живого трафика.",
+              "sections": {
+                "what_actually": "A/B-тест идёт на живом production-трафике и сравнивает online-метрики (CTR, revenue), а не офлайн-accuracy на фикс-датасете.",
+                "source_of_confusion": "Офлайн-сравнение моделей тоже называют «тестом», отсюда подмена.",
+                "if_it_were_true": "Если бы хватало test set, не нужны были бы holdout-группы и проверка статзначимости на проде.",
+                "how_it_should_be": "A/B-тест делит реальный трафик между моделями и меряет бизнес-метрики, а не офлайн-точность."
               },
               "label": "D",
               "order": 3
@@ -909,28 +909,17 @@
           "question_text": "Что такое canary deployment для моделей?",
           "options": [
             {
-              "correct": false,
-              "text": "Canary deployment — это когда новую модель сразу выкатывают на 100% трафика, а старую держат как резерв.",
+              "correct": true,
+              "text": "Canary deployment: постепенно увеличиваем долю трафика на новую модель — например день 1: 1%, день 2: 5%, день 3: 25%, день 4: 50%, день 5: 100%. При обнаружении проблем (рост error rate, дрейф) делаем rollback. Это аналог DevOps canary deployment, но с ML-метриками: следим не только за ошибками сервиса, но и за качеством предсказаний.",
               "sections": {
-                "what_actually": "Canary именно постепенный: трафик растёт от 1% к 100%, что и ограничивает радиус поражения при проблемах.",
-                "source_of_confusion": "Наличие старой модели как резерва путают с сутью canary — постепенностью.",
-                "if_it_were_true": "Если бы сразу шли 100%, при дефекте пострадали бы все пользователи, что canary как раз предотвращает.",
-                "how_it_should_be": "Canary поднимает долю трафика поэтапно (1%→5%→...→100%), а не выкатывает всё разом."
+                "explanation": "Идея в управлении риском через малую долю: новая модель сначала обслуживает крошечный процент пользователей, и при первых же признаках деградации откат затрагивает минимум людей.",
+                "example": "Новую recommendation-модель катят на 1% трафика; убедившись по ML-метрикам и error rate, что всё стабильно, постепенно поднимают до 5%, 25% и далее до 100%.",
+                "when_to_apply": "Применяют, когда нужна безопасная постепенная выкатка модели с возможностью быстрого отката, особенно для online-инференса с большим трафиком.",
+                "edge_cases": "Тонкость: в отличие от обычного DevOps canary, здесь триггером отката служат и ML-метрики (drift score, падение accuracy), а не только error rate и латентность.",
+                "related": "[[mlops-interview#Q15]] shadow deployment до canary; [[mlops-interview#Q14]] A/B-тест; [[mlops-interview#Q18]] drift как триггер rollback."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "correct": false,
-              "text": "При canary решение об откате принимается только по error rate сервиса; ML-метрики при этом не учитываются.",
-              "sections": {
-                "what_actually": "В ML-canary триггерами отката служат и ML-метрики (drift score, падение accuracy), а не только error rate.",
-                "source_of_confusion": "Это калька с DevOps-canary, где смотрят в основном на ошибки и латентность.",
-                "if_it_were_true": "Если бы ML-метрики игнорировались, тихая деградация качества при стабильном error rate осталась бы незамеченной.",
-                "how_it_should_be": "ML-canary откатывает и по качеству предсказаний, и по дрейфу, а не только по ошибкам сервиса."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "correct": false,
@@ -941,18 +930,29 @@
                 "if_it_were_true": "Если бы предсказания не отдавались, нельзя было бы измерить реальный эффект на растущей доле трафика.",
                 "how_it_should_be": "В canary доля пользователей реально получает ответы новой модели; «вхолостую» — это shadow."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "correct": false,
+              "text": "При canary решение об откате принимается только по error rate сервиса; ML-метрики при этом не учитываются.",
+              "sections": {
+                "what_actually": "В ML-canary триггерами отката служат и ML-метрики (drift score, падение accuracy), а не только error rate.",
+                "source_of_confusion": "Это калька с DevOps-canary, где смотрят в основном на ошибки и латентность.",
+                "if_it_were_true": "Если бы ML-метрики игнорировались, тихая деградация качества при стабильном error rate осталась бы незамеченной.",
+                "how_it_should_be": "ML-canary откатывает и по качеству предсказаний, и по дрейфу, а не только по ошибкам сервиса."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "correct": true,
-              "text": "Canary deployment: постепенно увеличиваем долю трафика на новую модель — например день 1: 1%, день 2: 5%, день 3: 25%, день 4: 50%, день 5: 100%. При обнаружении проблем (рост error rate, дрейф) делаем rollback. Это аналог DevOps canary deployment, но с ML-метриками: следим не только за ошибками сервиса, но и за качеством предсказаний.",
+              "correct": false,
+              "text": "Canary deployment — это когда новую модель сразу выкатывают на 100% трафика, а старую держат как резерв.",
               "sections": {
-                "explanation": "Идея в управлении риском через малую долю: новая модель сначала обслуживает крошечный процент пользователей, и при первых же признаках деградации откат затрагивает минимум людей.",
-                "example": "Новую recommendation-модель катят на 1% трафика; убедившись по ML-метрикам и error rate, что всё стабильно, постепенно поднимают до 5%, 25% и далее до 100%.",
-                "when_to_apply": "Применяют, когда нужна безопасная постепенная выкатка модели с возможностью быстрого отката, особенно для online-инференса с большим трафиком.",
-                "edge_cases": "Тонкость: в отличие от обычного DevOps canary, здесь триггером отката служат и ML-метрики (drift score, падение accuracy), а не только error rate и латентность.",
-                "related": "[[mlops-interview#Q15]] shadow deployment до canary; [[mlops-interview#Q14]] A/B-тест; [[mlops-interview#Q18]] drift как триггер rollback."
+                "what_actually": "Canary именно постепенный: трафик растёт от 1% к 100%, что и ограничивает радиус поражения при проблемах.",
+                "source_of_confusion": "Наличие старой модели как резерва путают с сутью canary — постепенностью.",
+                "if_it_were_true": "Если бы сразу шли 100%, при дефекте пострадали бы все пользователи, что canary как раз предотвращает.",
+                "how_it_should_be": "Canary поднимает долю трафика поэтапно (1%→5%→...→100%), а не выкатывает всё разом."
               },
               "label": "D",
               "order": 3
@@ -969,14 +969,13 @@
           "question_text": "Что нужно мониторить в production ML?",
           "options": [
             {
-              "correct": true,
-              "text": "Мониторят две группы. Operational: латентность (p50, p99), throughput/RPS, error rate, утилизация CPU/memory/GPU. ML-specific: распределение предсказаний (дрейф?), распределение входных features (дрейф?), accuracy модели (если есть ground truth), feature importance, распределение confidence предсказаний, business-метрики (conversion, revenue). Alerts настраивают на пороги: латентность >200ms, error rate >1%, drift score выше порога, падение accuracy >5%.",
+              "correct": false,
+              "text": "Accuracy модели в production можно измерять всегда и мгновенно, ground truth для этого не требуется.",
               "sections": {
-                "explanation": "Ключевое отличие от обычного приложения — помимо health и ошибок нужно следить за качеством модели и распределениями данных, потому что модель деградирует тихо, без падений сервиса.",
-                "example": "Дашборд для fraud-модели показывает p99-латентность и error rate (operational) рядом с PSI входных features и долей высоко-confidence предсказаний (ML-specific); алерт срабатывает при drift score выше порога.",
-                "when_to_apply": "Полный набор метрик заводят с первого дня production: операционные ловят отказы сервиса, ML-метрики — деградацию качества, которую операционные не видят.",
-                "edge_cases": "Тонкость: accuracy в проде доступна только при наличии ground truth, который часто приходит с задержкой; когда меток нет, опираются на дрейф входов и предсказаний как прокси деградации.",
-                "related": "[[mlops-interview#Q18]] data drift; [[mlops-interview#Q19]] concept drift; [[mlops-interview#Q20]] инструменты мониторинга."
+                "what_actually": "Для accuracy нужны истинные метки, которые часто приходят с задержкой или вовсе недоступны; тогда опираются на дрейф как прокси.",
+                "source_of_confusion": "На test set метки есть всегда, и это ожидание переносят на прод.",
+                "if_it_were_true": "Если бы ground truth был всегда мгновенно, не понадобились бы drift-метрики как косвенный сигнал деградации.",
+                "how_it_should_be": "Accuracy считается только при наличии меток; без них следят за дрейфом входов и предсказаний."
               },
               "label": "A",
               "order": 0
@@ -994,13 +993,14 @@
               "order": 1
             },
             {
-              "correct": false,
-              "text": "Accuracy модели в production можно измерять всегда и мгновенно, ground truth для этого не требуется.",
+              "correct": true,
+              "text": "Мониторят две группы. Operational: латентность (p50, p99), throughput/RPS, error rate, утилизация CPU/memory/GPU. ML-specific: распределение предсказаний (дрейф?), распределение входных features (дрейф?), accuracy модели (если есть ground truth), feature importance, распределение confidence предсказаний, business-метрики (conversion, revenue). Alerts настраивают на пороги: латентность >200ms, error rate >1%, drift score выше порога, падение accuracy >5%.",
               "sections": {
-                "what_actually": "Для accuracy нужны истинные метки, которые часто приходят с задержкой или вовсе недоступны; тогда опираются на дрейф как прокси.",
-                "source_of_confusion": "На test set метки есть всегда, и это ожидание переносят на прод.",
-                "if_it_were_true": "Если бы ground truth был всегда мгновенно, не понадобились бы drift-метрики как косвенный сигнал деградации.",
-                "how_it_should_be": "Accuracy считается только при наличии меток; без них следят за дрейфом входов и предсказаний."
+                "explanation": "Ключевое отличие от обычного приложения — помимо health и ошибок нужно следить за качеством модели и распределениями данных, потому что модель деградирует тихо, без падений сервиса.",
+                "example": "Дашборд для fraud-модели показывает p99-латентность и error rate (operational) рядом с PSI входных features и долей высоко-confidence предсказаний (ML-specific); алерт срабатывает при drift score выше порога.",
+                "when_to_apply": "Полный набор метрик заводят с первого дня production: операционные ловят отказы сервиса, ML-метрики — деградацию качества, которую операционные не видят.",
+                "edge_cases": "Тонкость: accuracy в проде доступна только при наличии ground truth, который часто приходит с задержкой; когда меток нет, опираются на дрейф входов и предсказаний как прокси деградации.",
+                "related": "[[mlops-interview#Q18]] data drift; [[mlops-interview#Q19]] concept drift; [[mlops-interview#Q20]] инструменты мониторинга."
               },
               "label": "C",
               "order": 2
@@ -1041,14 +1041,13 @@
               "order": 0
             },
             {
-              "correct": true,
-              "text": "Data drift — это когда распределение входных features меняется со временем (например, в обучении средний `user_age` = 35, а в production = 28, пришла более молодая аудитория). Виды: covariate shift (меняется распределение X, P(Y|X) тот же), label shift (меняется P(Y)), concept drift (меняется P(Y|X), см. Q19). Детектируют через KL-дивергенцию между train и prod распределениями, PSI (Population Stability Index), KS-тест для числовых features, chi-square для категориальных. Инструменты: `Evidently AI`, `NannyML`, `Arize`, `WhyLabs`.",
+              "correct": false,
+              "text": "Data drift и concept drift — это одно и то же явление: оба описывают изменение условной зависимости P(Y|X) при неизменном распределении входов X.",
               "sections": {
-                "explanation": "Суть в том, что входные данные «уплывают» от тех, на которых обучались: модель видит другое распределение признаков, и её предсказания теряют точность, даже если сама зависимость X→Y не менялась.",
-                "example": "PSI по фиче `user_age` сравнивает гистограммы train и текущего трафика; значение PSI > 0.2 сигналит о существенном дрейфе и обычно служит триггером расследования или переобучения.",
-                "when_to_apply": "Мониторят постоянно в проде, особенно когда ground truth приходит с задержкой: дрейф входов — ранний сигнал деградации до того, как упадёт измеримая accuracy.",
-                "edge_cases": "Тонкость: важно отличать covariate shift (сдвиг X) от concept drift (сдвиг P(Y|X)) — первый часто лечится переобучением на свежих данных, второй требует пересмотра самой постановки задачи.",
-                "related": "[[mlops-interview#Q19]] concept drift; [[mlops-interview#Q17]] что мониторить в проде; [[mlops-interview#Q20]] инструменты детекта дрейфа."
+                "what_actually": "Изменение P(Y|X) — это concept drift; data drift в узком смысле — сдвиг распределения X (covariate shift) при той же зависимости.",
+                "source_of_confusion": "Оба называются «drift», отсюда отождествление.",
+                "if_it_were_true": "Если бы это было одно и то же, не выделяли бы covariate/label/concept как разные виды.",
+                "how_it_should_be": "Data drift — про сдвиг X; concept drift — про сдвиг самой связи X→Y; это разные явления."
               },
               "label": "B",
               "order": 1
@@ -1066,13 +1065,14 @@
               "order": 2
             },
             {
-              "correct": false,
-              "text": "Data drift и concept drift — это одно и то же явление: оба описывают изменение условной зависимости P(Y|X) при неизменном распределении входов X.",
+              "correct": true,
+              "text": "Data drift — это когда распределение входных features меняется со временем (например, в обучении средний `user_age` = 35, а в production = 28, пришла более молодая аудитория). Виды: covariate shift (меняется распределение X, P(Y|X) тот же), label shift (меняется P(Y)), concept drift (меняется P(Y|X), см. Q19). Детектируют через KL-дивергенцию между train и prod распределениями, PSI (Population Stability Index), KS-тест для числовых features, chi-square для категориальных. Инструменты: `Evidently AI`, `NannyML`, `Arize`, `WhyLabs`.",
               "sections": {
-                "what_actually": "Изменение P(Y|X) — это concept drift; data drift в узком смысле — сдвиг распределения X (covariate shift) при той же зависимости.",
-                "source_of_confusion": "Оба называются «drift», отсюда отождествление.",
-                "if_it_were_true": "Если бы это было одно и то же, не выделяли бы covariate/label/concept как разные виды.",
-                "how_it_should_be": "Data drift — про сдвиг X; concept drift — про сдвиг самой связи X→Y; это разные явления."
+                "explanation": "Суть в том, что входные данные «уплывают» от тех, на которых обучались: модель видит другое распределение признаков, и её предсказания теряют точность, даже если сама зависимость X→Y не менялась.",
+                "example": "PSI по фиче `user_age` сравнивает гистограммы train и текущего трафика; значение PSI > 0.2 сигналит о существенном дрейфе и обычно служит триггером расследования или переобучения.",
+                "when_to_apply": "Мониторят постоянно в проде, особенно когда ground truth приходит с задержкой: дрейф входов — ранний сигнал деградации до того, как упадёт измеримая accuracy.",
+                "edge_cases": "Тонкость: важно отличать covariate shift (сдвиг X) от concept drift (сдвиг P(Y|X)) — первый часто лечится переобучением на свежих данных, второй требует пересмотра самой постановки задачи.",
+                "related": "[[mlops-interview#Q19]] concept drift; [[mlops-interview#Q17]] что мониторить в проде; [[mlops-interview#Q20]] инструменты детекта дрейфа."
               },
               "label": "D",
               "order": 3
@@ -1090,12 +1090,12 @@
           "options": [
             {
               "correct": false,
-              "text": "Concept drift — это сдвиг распределения входных features X (covariate shift) при неизменной связи X → Y: меняются сами данные, а правило X → Y остаётся прежним.",
+              "text": "Concept drift устраняют, увеличивая объём исходной обучающей выборки и усложняя модель (больше параметров), а не переобучая её на свежих размеченных данных.",
               "sections": {
-                "what_actually": "Сдвиг X при той же связи — это covariate shift (data drift); concept drift — это изменение самой связи P(Y|X).",
-                "source_of_confusion": "Оба «drift», и определения легко перепутать местами.",
-                "if_it_were_true": "Если бы concept drift был про сдвиг X, его детектировали бы PSI по входам, а не падением accuracy.",
-                "how_it_should_be": "Concept drift меняет правило X→Y; сдвиг распределения X — это другой вид дрейфа."
+                "what_actually": "Mitigation — это continuous retraining на свежих данных; заморозка лишь усугубит деградацию.",
+                "source_of_confusion": "Стабильность звучит безопасно, отсюда идея «не трогать».",
+                "if_it_were_true": "Если бы заморозка помогала, spam-фильтр не приходилось бы постоянно переобучать против новых тактик.",
+                "how_it_should_be": "Concept drift купируется регулярным переобучением на актуальных метках, а не заморозкой модели."
               },
               "label": "A",
               "order": 0
@@ -1113,6 +1113,18 @@
               "order": 1
             },
             {
+              "correct": false,
+              "text": "Concept drift — это сдвиг распределения входных features X (covariate shift) при неизменной связи X → Y: меняются сами данные, а правило X → Y остаётся прежним.",
+              "sections": {
+                "what_actually": "Сдвиг X при той же связи — это covariate shift (data drift); concept drift — это изменение самой связи P(Y|X).",
+                "source_of_confusion": "Оба «drift», и определения легко перепутать местами.",
+                "if_it_were_true": "Если бы concept drift был про сдвиг X, его детектировали бы PSI по входам, а не падением accuracy.",
+                "how_it_should_be": "Concept drift меняет правило X→Y; сдвиг распределения X — это другой вид дрейфа."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
               "correct": true,
               "text": "Concept drift — это когда меняется сама связь X → Y: те же features дают другой label. Пример: spam detection — спам эволюционирует, успешные тактики меняются. Виды: sudden (резкое — COVID, скачок цен), gradual (постепенное — смена предпочтений), recurring (сезонное — зима ↔ лето). Детект — деградация accuracy модели (если есть ground truth). Mitigation — continuous retraining на новых данных.",
               "sections": {
@@ -1121,18 +1133,6 @@
                 "when_to_apply": "Учитывают в задачах, где правила среды эволюционируют: мошенничество, цены, поведение пользователей — там concept drift неизбежен и требует регулярного переобучения.",
                 "edge_cases": "Тонкость: concept drift детектируется в основном по падению accuracy, а значит требует ground truth; без меток его трудно отличить от обычного covariate shift по одним лишь входам.",
                 "related": "[[mlops-interview#Q18]] data drift и его отличие; [[mlops-interview#Q22]] continuous training как mitigation; [[mlops-interview#Q17]] мониторинг accuracy."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "correct": false,
-              "text": "Concept drift устраняют, увеличивая объём исходной обучающей выборки и усложняя модель (больше параметров), а не переобучая её на свежих размеченных данных.",
-              "sections": {
-                "what_actually": "Mitigation — это continuous retraining на свежих данных; заморозка лишь усугубит деградацию.",
-                "source_of_confusion": "Стабильность звучит безопасно, отсюда идея «не трогать».",
-                "if_it_were_true": "Если бы заморозка помогала, spam-фильтр не приходилось бы постоянно переобучать против новых тактик.",
-                "how_it_should_be": "Concept drift купируется регулярным переобучением на актуальных метках, а не заморозкой модели."
               },
               "label": "D",
               "order": 3
@@ -1161,13 +1161,14 @@
               "order": 0
             },
             {
-              "correct": false,
-              "text": "Эти инструменты следят только за операционными метриками (латентность, RPS) и не умеют детектировать дрейф.",
+              "correct": true,
+              "text": "`Evidently AI` (open-source) — data drift, target drift, отчёты и дашборды, лёгкая интеграция. `Arize AI` (SaaS) — ML observability: дрейф, performance, fairness, плюс LLM-observability. `WhyLabs` (SaaS) — на основе open-source `whylogs`, статистическое профилирование, anomaly detection. Для простых случаев берут custom: метрики в `Prometheus` плюс дашборды в `Grafana`.",
               "sections": {
-                "what_actually": "Их основная функция — как раз детект дрейфа данных/таргета, профилирование и performance, а не операционные метрики сервиса.",
-                "source_of_confusion": "Любой «мониторинг» ассоциируется с латентностью и RPS, отсюда подмена назначения.",
-                "if_it_were_true": "Если бы они не ловили дрейф, их не относили бы к ML-observability и drift detection.",
-                "how_it_should_be": "`Evidently`/`Arize`/`WhyLabs` специализируются на дрейфе и качестве модели; латентность — забота `Prometheus`/`Grafana`."
+                "explanation": "Выбор зависит от зрелости и бюджета: open-source `Evidently` для старта и отчётов, managed `Arize`/`WhyLabs` для полноценной observability, `Prometheus`+`Grafana` — для простых кастомных проверок.",
+                "example": "Команда подключает `Evidently` для еженедельного drift-отчёта по фичам, а крупный продукт ставит `Arize` ради единой observability моделей и LLM с алертингом по дрейфу и fairness.",
+                "when_to_apply": "Инструмент подбирают под задачу: нужен быстрый open-source-отчёт — `Evidently`; нужна managed-платформа с fairness и LLM — `Arize`; нужно профилирование больших потоков — `WhyLabs`/`whylogs`.",
+                "edge_cases": "Тонкость: для простых кейсов специализированная платформа избыточна — пары метрик в `Prometheus`/`Grafana` часто достаточно, и тащить тяжёлый SaaS не нужно.",
+                "related": "[[mlops-interview#Q18]] data drift, который ловят эти инструменты; [[mlops-interview#Q17]] что мониторить; [[mlops-interview#Q26]] LLM-evaluation и observability."
               },
               "label": "B",
               "order": 1
@@ -1185,14 +1186,13 @@
               "order": 2
             },
             {
-              "correct": true,
-              "text": "`Evidently AI` (open-source) — data drift, target drift, отчёты и дашборды, лёгкая интеграция. `Arize AI` (SaaS) — ML observability: дрейф, performance, fairness, плюс LLM-observability. `WhyLabs` (SaaS) — на основе open-source `whylogs`, статистическое профилирование, anomaly detection. Для простых случаев берут custom: метрики в `Prometheus` плюс дашборды в `Grafana`.",
+              "correct": false,
+              "text": "Эти инструменты следят только за операционными метриками (латентность, RPS) и не умеют детектировать дрейф.",
               "sections": {
-                "explanation": "Выбор зависит от зрелости и бюджета: open-source `Evidently` для старта и отчётов, managed `Arize`/`WhyLabs` для полноценной observability, `Prometheus`+`Grafana` — для простых кастомных проверок.",
-                "example": "Команда подключает `Evidently` для еженедельного drift-отчёта по фичам, а крупный продукт ставит `Arize` ради единой observability моделей и LLM с алертингом по дрейфу и fairness.",
-                "when_to_apply": "Инструмент подбирают под задачу: нужен быстрый open-source-отчёт — `Evidently`; нужна managed-платформа с fairness и LLM — `Arize`; нужно профилирование больших потоков — `WhyLabs`/`whylogs`.",
-                "edge_cases": "Тонкость: для простых кейсов специализированная платформа избыточна — пары метрик в `Prometheus`/`Grafana` часто достаточно, и тащить тяжёлый SaaS не нужно.",
-                "related": "[[mlops-interview#Q18]] data drift, который ловят эти инструменты; [[mlops-interview#Q17]] что мониторить; [[mlops-interview#Q26]] LLM-evaluation и observability."
+                "what_actually": "Их основная функция — как раз детект дрейфа данных/таргета, профилирование и performance, а не операционные метрики сервиса.",
+                "source_of_confusion": "Любой «мониторинг» ассоциируется с латентностью и RPS, отсюда подмена назначения.",
+                "if_it_were_true": "Если бы они не ловили дрейф, их не относили бы к ML-observability и drift detection.",
+                "how_it_should_be": "`Evidently`/`Arize`/`WhyLabs` специализируются на дрейфе и качестве модели; латентность — забота `Prometheus`/`Grafana`."
               },
               "label": "D",
               "order": 3
@@ -1209,19 +1209,6 @@
           "question_text": "Что такое `CI/CD` для ML?",
           "options": [
             {
-              "correct": true,
-              "text": "CI (Continuous Integration) для ML: тесты на каждый PR, data validation tests, model unit tests (нет NaN, предсказания в допустимом диапазоне), интеграционные тесты. CD (Continuous Deployment): авто-деплой после merge, canary deployment, авто-rollback при регрессиях. Дополнительно появляются CT (Continuous Training) — авто-переобучение на новых данных и CM (Continuous Monitoring) — постоянный watch за performance. Пример pipeline: `data_validation` → `feature_engineering` → `train` → `eval` → `register_model` → `deploy_canary` → `monitor`.",
-              "sections": {
-                "explanation": "Отличие от обычного `CI/CD` — добавляются проверки данных и модели и два новых процесса (CT и CM), потому что в ML меняются не только код, но и данные с моделью.",
-                "example": "В pipeline на каждый PR гоняются data validation (схема, диапазоны) и model unit tests (нет NaN в предсказаниях), затем модель обучается, регистрируется и катится canary с авто-rollback при регрессии.",
-                "when_to_apply": "Строят, когда модель регулярно обновляется и нужен автоматический безопасный путь от кода/данных до production без ручных шагов и с откатом при деградации.",
-                "edge_cases": "Тонкость: к привычным CI и CD в ML добавляются CT и CM — без continuous training и continuous monitoring pipeline не реагирует на дрейф и деградацию, оставаясь лишь деплой-конвейером.",
-                "related": "[[mlops-interview#Q22]] continuous training; [[mlops-interview#Q16]] canary в CD; [[mlops-interview#Q17]] continuous monitoring."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "correct": false,
               "text": "`CI/CD` для ML — это стандартный CI/CD кода: unit-тесты и линтеры на каждый PR плюс авто-деплой после merge; специфичных для ML этапов вроде data validation и model tests он не добавляет.",
               "sections": {
@@ -1230,8 +1217,8 @@
                 "if_it_were_true": "Если бы специфики не было, не появились бы стадии `data_validation` и `register_model` в ML-pipeline.",
                 "how_it_should_be": "ML-CI/CD расширяется проверками данных/модели и добавляет continuous training и monitoring."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "correct": false,
@@ -1242,8 +1229,8 @@
                 "if_it_were_true": "Если бы CT был про unit-тесты, он не триггерился бы по drift detection и появлению новых данных.",
                 "how_it_should_be": "CT — непрерывное переобучение по триггерам (данные, дрейф), а не тестирование кода."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "correct": false,
@@ -1253,6 +1240,19 @@
                 "source_of_confusion": "Кажется, что раз модель задеплоена, откат — это лишняя сложность.",
                 "if_it_were_true": "Если бы rollback был не нужен, регрессия качества оставалась бы в проде, что недопустимо.",
                 "how_it_should_be": "CD для ML включает авто-rollback по регрессиям и canary, а не безусловное удержание новой модели."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "correct": true,
+              "text": "CI (Continuous Integration) для ML: тесты на каждый PR, data validation tests, model unit tests (нет NaN, предсказания в допустимом диапазоне), интеграционные тесты. CD (Continuous Deployment): авто-деплой после merge, canary deployment, авто-rollback при регрессиях. Дополнительно появляются CT (Continuous Training) — авто-переобучение на новых данных и CM (Continuous Monitoring) — постоянный watch за performance. Пример pipeline: `data_validation` → `feature_engineering` → `train` → `eval` → `register_model` → `deploy_canary` → `monitor`.",
+              "sections": {
+                "explanation": "Отличие от обычного `CI/CD` — добавляются проверки данных и модели и два новых процесса (CT и CM), потому что в ML меняются не только код, но и данные с моделью.",
+                "example": "В pipeline на каждый PR гоняются data validation (схема, диапазоны) и model unit tests (нет NaN в предсказаниях), затем модель обучается, регистрируется и катится canary с авто-rollback при регрессии.",
+                "when_to_apply": "Строят, когда модель регулярно обновляется и нужен автоматический безопасный путь от кода/данных до production без ручных шагов и с откатом при деградации.",
+                "edge_cases": "Тонкость: к привычным CI и CD в ML добавляются CT и CM — без continuous training и continuous monitoring pipeline не реагирует на дрейф и деградацию, оставаясь лишь деплой-конвейером.",
+                "related": "[[mlops-interview#Q22]] continuous training; [[mlops-interview#Q16]] canary в CD; [[mlops-interview#Q17]] continuous monitoring."
               },
               "label": "D",
               "order": 3
@@ -1269,18 +1269,6 @@
           "question_text": "Что такое Continuous Training (CT)?",
           "options": [
             {
-              "correct": false,
-              "text": "Continuous Training означает, что любая переобученная модель автоматически выкатывается в production без проверки метрик.",
-              "sections": {
-                "what_actually": "Авто-деплой гейтится сравнением метрик: новую модель катят, только если она лучше текущей на holdout, иначе уведомляют команду.",
-                "source_of_confusion": "«Continuous» понимают как «всегда и сразу», теряя шаг валидации.",
-                "if_it_were_true": "Если бы деплой был безусловным, плохие новые данные тихо ухудшили бы production-модель.",
-                "how_it_should_be": "CT деплоит результат переобучения только при улучшении метрик; иначе модель отклоняется."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "correct": true,
               "text": "CT (Continuous Training) — автоматический pipeline переобучения, запускаемый по триггерам: расписание (each week), drift detection, деградация performance, появление новых данных. Подвох: переобучение может ухудшить модель (плохие новые данные, label drift), поэтому авто-деплой делают только если метрики улучшились. Пример (Airflow): извлечь новые данные → обучить → оценить на holdout → если accuracy выше production, зарегистрировать и задеплоить, иначе уведомить команду.",
               "sections": {
@@ -1290,20 +1278,20 @@
                 "edge_cases": "Тонкость: главный риск — слепой авто-деплой результата переобучения; плохие или сдвинутые данные ухудшат модель, поэтому деплой гейтится сравнением метрик с текущей production-моделью.",
                 "related": "[[mlops-interview#Q21]] CT внутри CI/CD; [[mlops-interview#Q19]] concept drift как триггер; [[mlops-interview#Q12]] версионирование переобученных моделей."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "correct": false,
-              "text": "CT запускается исключительно по жёсткому расписанию и не может триггериться дрейфом или новыми данными.",
+              "text": "Continuous Training означает, что любая переобученная модель автоматически выкатывается в production без проверки метрик.",
               "sections": {
-                "what_actually": "Триггеры CT включают drift detection, деградацию performance и появление новых данных, не только расписание.",
-                "source_of_confusion": "Расписание — самый наглядный триггер, отсюда сужение.",
-                "if_it_were_true": "Если бы был только cron, модель не реагировала бы на внезапный дрейф между запланированными прогонами.",
-                "how_it_should_be": "CT триггерится по расписанию, дрейфу, деградации и новым данным — это несколько источников."
+                "what_actually": "Авто-деплой гейтится сравнением метрик: новую модель катят, только если она лучше текущей на holdout, иначе уведомляют команду.",
+                "source_of_confusion": "«Continuous» понимают как «всегда и сразу», теряя шаг валидации.",
+                "if_it_were_true": "Если бы деплой был безусловным, плохие новые данные тихо ухудшили бы production-модель.",
+                "how_it_should_be": "CT деплоит результат переобучения только при улучшении метрик; иначе модель отклоняется."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "correct": false,
@@ -1313,6 +1301,18 @@
                 "source_of_confusion": "Интуиция «больше данных = лучше» переоценивает их качество.",
                 "if_it_were_true": "Если бы новая модель всегда была лучше, не требовалось бы сравнивать accuracy перед деплоем.",
                 "how_it_should_be": "CT не гарантирует улучшения; качество защищается сравнением метрик и отклонением худших моделей."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "correct": false,
+              "text": "CT запускается исключительно по жёсткому расписанию и не может триггериться дрейфом или новыми данными.",
+              "sections": {
+                "what_actually": "Триггеры CT включают drift detection, деградацию performance и появление новых данных, не только расписание.",
+                "source_of_confusion": "Расписание — самый наглядный триггер, отсюда сужение.",
+                "if_it_were_true": "Если бы был только cron, модель не реагировала бы на внезапный дрейф между запланированными прогонами.",
+                "how_it_should_be": "CT триггерится по расписанию, дрейфу, деградации и новым данным — это несколько источников."
               },
               "label": "D",
               "order": 3
@@ -1330,18 +1330,6 @@
           "options": [
             {
               "correct": false,
-              "text": "`LLMOps` — это дисциплина обучения фундаментальных LLM с нуля на собственных данных; работа через third-party API (`OpenAI`, `Anthropic`) относится к обычному backend-инжинирингу, а не к `LLMOps`.",
-              "sections": {
-                "what_actually": "Чаще всего модели не обучают, а используют third-party API или fine-tuned; обучение с нуля — редкость, а не суть `LLMOps`.",
-                "source_of_confusion": "Слово «LLM» ассоциируется с гигантским обучением, отсюда ошибка.",
-                "if_it_were_true": "Если бы требовалось обучение с нуля, стек вокруг prompt management и cost tracking был бы не нужен.",
-                "how_it_should_be": "`LLMOps` обычно строится вокруг внешних/fine-tuned моделей; центр — промпты и эксплуатация, а не обучение с нуля."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "correct": false,
               "text": "Центральный версионируемый артефакт в `LLMOps`, как и в классическом `MLOps`, — это обученные веса модели; промпты хранят рядом как обычные конфиги и отдельно не версионируют.",
               "sections": {
                 "what_actually": "Главный артефакт `LLMOps` — именно prompts (версионируются как код); веса часто вообще не наши (внешний API).",
@@ -1349,8 +1337,32 @@
                 "if_it_were_true": "Если бы центром были веса, не появились бы prompt management и prompt versioning как ядро стека.",
                 "how_it_should_be": "В `LLMOps` ключевой артефакт — промпты; веса модели часто вне нашего контроля."
               },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "correct": false,
+              "text": "Мониторинг стоимости в `LLMOps` устроен как в `MLOps`: считают только затраты на `GPU` при обучении, а per-token оплата inference-вызовов на бюджет почти не влияет.",
+              "sections": {
+                "what_actually": "Cost monitoring критичен: per-token pricing на больших объёмах даёт значимые счета, поэтому затраты отслеживают (`Helicone`, `Portkey`).",
+                "source_of_confusion": "Один вызов дёшев, и это ошибочно масштабируют на весь трафик.",
+                "if_it_were_true": "Если бы вызовы были бесплатны, инструменты cost tracking не входили бы в стек `LLMOps`.",
+                "how_it_should_be": "Per-token-стоимость — важная метрика `LLMOps`; её специально мониторят, чтобы не словить cost runaway."
+              },
               "label": "B",
               "order": 1
+            },
+            {
+              "correct": false,
+              "text": "`LLMOps` — это дисциплина обучения фундаментальных LLM с нуля на собственных данных; работа через third-party API (`OpenAI`, `Anthropic`) относится к обычному backend-инжинирингу, а не к `LLMOps`.",
+              "sections": {
+                "what_actually": "Чаще всего модели не обучают, а используют third-party API или fine-tuned; обучение с нуля — редкость, а не суть `LLMOps`.",
+                "source_of_confusion": "Слово «LLM» ассоциируется с гигантским обучением, отсюда ошибка.",
+                "if_it_were_true": "Если бы требовалось обучение с нуля, стек вокруг prompt management и cost tracking был бы не нужен.",
+                "how_it_should_be": "`LLMOps` обычно строится вокруг внешних/fine-tuned моделей; центр — промпты и эксплуатация, а не обучение с нуля."
+              },
+              "label": "C",
+              "order": 2
             },
             {
               "correct": true,
@@ -1361,18 +1373,6 @@
                 "when_to_apply": "Применяют, когда продукт построен на LLM (RAG, агент, чат): классический `MLOps` не покрывает промпт-версионирование, per-token-затраты и детект галлюцинаций.",
                 "edge_cases": "Тонкость: даже без собственного обучения у LLM-приложения остаётся жизненный цикл — промпты меняются, внешняя модель обновляется вендором, и это требует версионирования и регресс-тестов, как код.",
                 "related": "[[mlops-interview#Q24]] отличия LLMOps от MLOps; [[mlops-interview#Q25]] prompt versioning; [[mlops-interview#Q26]] LLM evaluation в проде."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "correct": false,
-              "text": "Мониторинг стоимости в `LLMOps` устроен как в `MLOps`: считают только затраты на `GPU` при обучении, а per-token оплата inference-вызовов на бюджет почти не влияет.",
-              "sections": {
-                "what_actually": "Cost monitoring критичен: per-token pricing на больших объёмах даёт значимые счета, поэтому затраты отслеживают (`Helicone`, `Portkey`).",
-                "source_of_confusion": "Один вызов дёшев, и это ошибочно масштабируют на весь трафик.",
-                "if_it_were_true": "Если бы вызовы были бесплатны, инструменты cost tracking не входили бы в стек `LLMOps`.",
-                "how_it_should_be": "Per-token-стоимость — важная метрика `LLMOps`; её специально мониторят, чтобы не словить cost runaway."
               },
               "label": "D",
               "order": 3
@@ -1389,13 +1389,14 @@
           "question_text": "Чем `LLMOps` отличается от классического `MLOps`?",
           "options": [
             {
-              "correct": false,
-              "text": "Дрейф в `LLMOps` и `MLOps` — одно и то же: в обоих случаях это `data drift` во входных признаках, а обновления модели вендором на поведение приложения не влияют.",
+              "correct": true,
+              "text": "Ключевые отличия по таблице: главный артефакт — trained model vs prompts + LLM API; обучение — часы-дни vs часто отсутствует (используем API); версионирование — веса модели vs промпты + версия модели; evaluation — accuracy/F1 vs faithfulness/helpfulness (субъективные); дрейф — data drift vs prompt regressions и обновления модели вендором; деплой — model server vs обновление prompt template; стоимость — compute (GPU) vs API per-token; мониторинг — predictions/latency vs плюс token usage, cost, hallucinations; безопасность — data privacy vs плюс prompt injection.",
               "sections": {
-                "what_actually": "Наоборот: в `LLMOps` обучения часто нет вовсе (используется API), тогда как в `MLOps` обучение занимает часы-дни.",
-                "source_of_confusion": "Размер LLM создаёт впечатление, что и в `LLMOps` обучают долго своими силами.",
-                "if_it_were_true": "Если бы обучение было длиннее, не выделяли бы prompts как главный артефакт вместо весов.",
-                "how_it_should_be": "В `LLMOps` обучение обычно отсутствует или короткое (fine-tune); долгого обучения своими силами тут как раз меньше."
+                "explanation": "По сути `LLMOps` переносит акцент с весов и обучения на промпты, субъективную оценку качества, per-token-стоимость и новые угрозы вроде prompt injection и обновлений модели вендором.",
+                "example": "Если в `MLOps` деплой — это выкатка нового model server, то в `LLMOps` «релиз» часто сводится к обновлению prompt template, а «дрейф» — к тому, что вендор молча обновил модель за API.",
+                "when_to_apply": "Различие учитывают при выборе инструментов и процессов: для LLM-продукта нужны prompt-registry, faithfulness-eval и cost/hallucination-мониторинг, которых нет в классическом стеке.",
+                "edge_cases": "Тонкость: дрейф в `LLMOps` может прийти извне — провайдер обновил модель за тем же API-эндпоинтом, и поведение изменилось без единой правки с вашей стороны; нужны регресс-тесты промптов.",
+                "related": "[[mlops-interview#Q23]] что такое LLMOps; [[mlops-interview#Q25]] prompt versioning; [[mlops-interview#Q26]] evaluation faithfulness в проде."
               },
               "label": "A",
               "order": 0
@@ -1425,14 +1426,13 @@
               "order": 2
             },
             {
-              "correct": true,
-              "text": "Ключевые отличия по таблице: главный артефакт — trained model vs prompts + LLM API; обучение — часы-дни vs часто отсутствует (используем API); версионирование — веса модели vs промпты + версия модели; evaluation — accuracy/F1 vs faithfulness/helpfulness (субъективные); дрейф — data drift vs prompt regressions и обновления модели вендором; деплой — model server vs обновление prompt template; стоимость — compute (GPU) vs API per-token; мониторинг — predictions/latency vs плюс token usage, cost, hallucinations; безопасность — data privacy vs плюс prompt injection.",
+              "correct": false,
+              "text": "Дрейф в `LLMOps` и `MLOps` — одно и то же: в обоих случаях это `data drift` во входных признаках, а обновления модели вендором на поведение приложения не влияют.",
               "sections": {
-                "explanation": "По сути `LLMOps` переносит акцент с весов и обучения на промпты, субъективную оценку качества, per-token-стоимость и новые угрозы вроде prompt injection и обновлений модели вендором.",
-                "example": "Если в `MLOps` деплой — это выкатка нового model server, то в `LLMOps` «релиз» часто сводится к обновлению prompt template, а «дрейф» — к тому, что вендор молча обновил модель за API.",
-                "when_to_apply": "Различие учитывают при выборе инструментов и процессов: для LLM-продукта нужны prompt-registry, faithfulness-eval и cost/hallucination-мониторинг, которых нет в классическом стеке.",
-                "edge_cases": "Тонкость: дрейф в `LLMOps` может прийти извне — провайдер обновил модель за тем же API-эндпоинтом, и поведение изменилось без единой правки с вашей стороны; нужны регресс-тесты промптов.",
-                "related": "[[mlops-interview#Q23]] что такое LLMOps; [[mlops-interview#Q25]] prompt versioning; [[mlops-interview#Q26]] evaluation faithfulness в проде."
+                "what_actually": "Наоборот: в `LLMOps` обучения часто нет вовсе (используется API), тогда как в `MLOps` обучение занимает часы-дни.",
+                "source_of_confusion": "Размер LLM создаёт впечатление, что и в `LLMOps` обучают долго своими силами.",
+                "if_it_were_true": "Если бы обучение было длиннее, не выделяли бы prompts как главный артефакт вместо весов.",
+                "how_it_should_be": "В `LLMOps` обучение обычно отсутствует или короткое (fine-tune); долгого обучения своими силами тут как раз меньше."
               },
               "label": "D",
               "order": 3
@@ -1449,19 +1449,6 @@
           "question_text": "Что такое prompt versioning и зачем он нужен?",
           "options": [
             {
-              "correct": true,
-              "text": "Prompt versioning — версионирование промптов как кода в prompt registry (`LangSmith`, `Langfuse` или custom DB). Например, `prompt = registry.get('customer_support', version='v3')`, затем `response = llm(prompt.format(question=question))`. Зачем: track changes (какая версия использовалась когда), A/B-тесты (сравнить v3 vs v4), rollback (вернуть старую версию, если новая сломалась), audit (compliance). Промпты = код, версионируются в `Git` или специализированных инструментах.",
-              "sections": {
-                "explanation": "Промпт напрямую определяет поведение LLM-приложения, поэтому к нему применяют те же дисциплины, что и к коду: история изменений, сравнение версий, откат и аудит.",
-                "example": "Через `registry.get('customer_support', version='v3')` приложение тянет конкретную версию промпта; при регрессии качества откатываются на `v2` одной сменой версии, без передеплоя кода.",
-                "when_to_apply": "Внедряют, как только промпты меняются в проде: без версий невозможно понять, какая формулировка дала плохой ответ, и нечем откатиться при регрессии.",
-                "edge_cases": "Тонкость: одна и та же версия промпта может вести себя иначе после того, как вендор обновил модель за API — поэтому версионируют не только промпт, но и связку «промпт + версия модели».",
-                "related": "[[mlops-interview#Q23]] LLMOps и роль промптов; [[mlops-interview#Q24]] промпты как главный артефакт; [[mlops-interview#Q26]] eval промптов в проде."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "correct": false,
               "text": "Prompt versioning не нужен: промпт — это просто текст, который можно менять прямо в production без истории и отката.",
               "sections": {
@@ -1469,6 +1456,18 @@
                 "source_of_confusion": "Текстовая природа промпта создаёт иллюзию, что это не код и версии излишни.",
                 "if_it_were_true": "Если бы версии были не нужны, нельзя было бы откатить сломавшую прод формулировку на стабильную.",
                 "how_it_should_be": "Промпты версионируют как код (`Git`/registry) ради отката, A/B и аудита изменений."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "correct": false,
+              "text": "Версионировать достаточно только промпт; версия используемой LLM на результат не влияет, её фиксировать не нужно.",
+              "sections": {
+                "what_actually": "Та же версия промпта на обновлённой вендором модели даёт другое поведение, поэтому версионируют связку «промпт + версия модели».",
+                "source_of_confusion": "Промпт под нашим контролем, и про внешнюю модель забывают.",
+                "if_it_were_true": "Если бы версия модели не влияла, обновление модели вендором не вызывало бы prompt regressions, но оно вызывает.",
+                "how_it_should_be": "Фиксируют и промпт, и версию модели — иначе воспроизводимость поведения теряется при апдейте провайдера."
               },
               "label": "B",
               "order": 1
@@ -1486,13 +1485,14 @@
               "order": 2
             },
             {
-              "correct": false,
-              "text": "Версионировать достаточно только промпт; версия используемой LLM на результат не влияет, её фиксировать не нужно.",
+              "correct": true,
+              "text": "Prompt versioning — версионирование промптов как кода в prompt registry (`LangSmith`, `Langfuse` или custom DB). Например, `prompt = registry.get('customer_support', version='v3')`, затем `response = llm(prompt.format(question=question))`. Зачем: track changes (какая версия использовалась когда), A/B-тесты (сравнить v3 vs v4), rollback (вернуть старую версию, если новая сломалась), audit (compliance). Промпты = код, версионируются в `Git` или специализированных инструментах.",
               "sections": {
-                "what_actually": "Та же версия промпта на обновлённой вендором модели даёт другое поведение, поэтому версионируют связку «промпт + версия модели».",
-                "source_of_confusion": "Промпт под нашим контролем, и про внешнюю модель забывают.",
-                "if_it_were_true": "Если бы версия модели не влияла, обновление модели вендором не вызывало бы prompt regressions, но оно вызывает.",
-                "how_it_should_be": "Фиксируют и промпт, и версию модели — иначе воспроизводимость поведения теряется при апдейте провайдера."
+                "explanation": "Промпт напрямую определяет поведение LLM-приложения, поэтому к нему применяют те же дисциплины, что и к коду: история изменений, сравнение версий, откат и аудит.",
+                "example": "Через `registry.get('customer_support', version='v3')` приложение тянет конкретную версию промпта; при регрессии качества откатываются на `v2` одной сменой версии, без передеплоя кода.",
+                "when_to_apply": "Внедряют, как только промпты меняются в проде: без версий невозможно понять, какая формулировка дала плохой ответ, и нечем откатиться при регрессии.",
+                "edge_cases": "Тонкость: одна и та же версия промпта может вести себя иначе после того, как вендор обновил модель за API — поэтому версионируют не только промпт, но и связку «промпт + версия модели».",
+                "related": "[[mlops-interview#Q23]] LLMOps и роль промптов; [[mlops-interview#Q24]] промпты как главный артефакт; [[mlops-interview#Q26]] eval промптов в проде."
               },
               "label": "D",
               "order": 3
@@ -1510,12 +1510,12 @@
           "options": [
             {
               "correct": false,
-              "text": "LLM в production оценивают так же, как классификатор: одной агрегированной метрикой accuracy на заранее размеченном test set с фиксированными эталонными ответами.",
+              "text": "LLM-as-judge полностью заменяет человеческую разметку: раз другая LLM оценивает ответы по рубрике, golden dataset и человеческий фидбек уже не нужны.",
               "sections": {
-                "what_actually": "У LLM часто нет чёткого ground truth; качество меряют faithfulness, LLM-as-judge, фидбеком и task completion, а не одной accuracy.",
-                "source_of_confusion": "Привычка к accuracy из классического ML переносится на генеративные модели.",
-                "if_it_were_true": "Если бы хватало accuracy, не вводили бы faithfulness и LLM-as-judge для субъективной оценки.",
-                "how_it_should_be": "LLM-eval опирается на набор косвенных сигналов и judge-модели, а не на единственную accuracy."
+                "what_actually": "LLM-as-judge подвержен шуму и bias, поэтому его комбинируют с человеческим фидбеком и golden dataset, а не используют как единственный критерий.",
+                "source_of_confusion": "Автоматизация оценки выглядит объективной, отсюда излишнее доверие.",
+                "if_it_were_true": "Если бы judge был безупречен, не нужны были бы thumbs up/down и эталонный golden dataset.",
+                "how_it_should_be": "LLM-as-judge — лишь один из сигналов; его валидируют человеческим фидбеком и эталонами."
               },
               "label": "A",
               "order": 0
@@ -1535,24 +1535,24 @@
             },
             {
               "correct": false,
-              "text": "LLM-as-judge полностью заменяет человеческую разметку: раз другая LLM оценивает ответы по рубрике, golden dataset и человеческий фидбек уже не нужны.",
-              "sections": {
-                "what_actually": "LLM-as-judge подвержен шуму и bias, поэтому его комбинируют с человеческим фидбеком и golden dataset, а не используют как единственный критерий.",
-                "source_of_confusion": "Автоматизация оценки выглядит объективной, отсюда излишнее доверие.",
-                "if_it_were_true": "Если бы judge был безупречен, не нужны были бы thumbs up/down и эталонный golden dataset.",
-                "how_it_should_be": "LLM-as-judge — лишь один из сигналов; его валидируют человеческим фидбеком и эталонами."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "correct": false,
               "text": "Faithfulness для RAG измеряет беглость и грамматическую корректность сгенерированного ответа, а не то, опираются ли его факты на retrieved-документы.",
               "sections": {
                 "what_actually": "Faithfulness измеряет, что все факты ответа подкреплены retrieved-документами, то есть отсутствие галлюцинаций, а не грамматику.",
                 "source_of_confusion": "Слово «faithful» иногда трактуют как «гладкий/корректный текст».",
                 "if_it_were_true": "Если бы это была грамматика, метрика не относилась бы именно к RAG и retrieved-контексту.",
                 "how_it_should_be": "Faithfulness — про привязку утверждений ответа к источникам, ключевая анти-галлюцинационная метрика RAG."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "correct": false,
+              "text": "LLM в production оценивают так же, как классификатор: одной агрегированной метрикой accuracy на заранее размеченном test set с фиксированными эталонными ответами.",
+              "sections": {
+                "what_actually": "У LLM часто нет чёткого ground truth; качество меряют faithfulness, LLM-as-judge, фидбеком и task completion, а не одной accuracy.",
+                "source_of_confusion": "Привычка к accuracy из классического ML переносится на генеративные модели.",
+                "if_it_were_true": "Если бы хватало accuracy, не вводили бы faithfulness и LLM-as-judge для субъективной оценки.",
+                "how_it_should_be": "LLM-eval опирается на набор косвенных сигналов и judge-модели, а не на единственную accuracy."
               },
               "label": "D",
               "order": 3
@@ -1569,13 +1569,14 @@
           "question_text": "Какие бывают уровни `MLOps` maturity?",
           "options": [
             {
-              "correct": false,
-              "text": "На Level 0 (Manual) уже есть автоматический CI/CD-пайплайн, feature store и drift detection, а вручную выполняется лишь финальный деплой в production.",
+              "correct": true,
+              "text": "Модель зрелости Google. Level 0 — Manual: ручное обучение и деплой, one-off модели, нет трекинга. Level 1 — ML pipeline automation: автоматический training pipeline, continuous training по триггерам, model registry. Level 2 — Full automation: автоматический CI/CD, continuous monitoring, автоматическое переобучение и деплой, feature store, drift detection. Большинство компаний — Level 0-1; Level 2 — крупные tech (Uber, Netflix, FAANG). В 2025 большинство стартапов — Level 1 для critical ML, Level 0 для экспериментов.",
               "sections": {
-                "what_actually": "Level 0 — это ручное обучение и деплой без трекинга; CI/CD, feature store и drift detection появляются только на Level 2.",
-                "source_of_confusion": "Хочется приписать продвинутые практики и начальному уровню, отсюда путаница границ.",
-                "if_it_were_true": "Если бы на Level 0 был полный CI/CD, не было бы смысла выделять Level 1 и Level 2.",
-                "how_it_should_be": "Level 0 ручной и без автоматики; CI/CD и feature store — атрибуты высшего уровня зрелости."
+                "explanation": "Шкала описывает, насколько автоматизирован путь от данных до production: от полностью ручного процесса (0) через автоматический pipeline обучения (1) к полной автоматике с CI/CD, мониторингом и feature store (2).",
+                "example": "Стартап вручную обучает модель в ноутбуке и копирует файл на сервер (Level 0); с появлением `Airflow`-pipeline и `MLflow`-registry он переходит на Level 1; полный CI/CD с feature store и drift detection — это уже Level 2.",
+                "when_to_apply": "Модель используют для оценки текущего состояния платформы и планирования: понять, какой автоматизации не хватает, и какой следующий разумный шаг по зрелости.",
+                "edge_cases": "Тонкость: цель — не «дорасти до Level 2» любой ценой; для экспериментов Level 0 нормален, а Level 2 оправдан там, где цена ручных ошибок и простоя высока.",
+                "related": "[[mlops-interview#Q21]] CI/CD как признак Level 2; [[mlops-interview#Q22]] continuous training на Level 1+; [[mlops-interview#Q28]] частые проблемы при низкой зрелости."
               },
               "label": "A",
               "order": 0
@@ -1593,19 +1594,6 @@
               "order": 1
             },
             {
-              "correct": true,
-              "text": "Модель зрелости Google. Level 0 — Manual: ручное обучение и деплой, one-off модели, нет трекинга. Level 1 — ML pipeline automation: автоматический training pipeline, continuous training по триггерам, model registry. Level 2 — Full automation: автоматический CI/CD, continuous monitoring, автоматическое переобучение и деплой, feature store, drift detection. Большинство компаний — Level 0-1; Level 2 — крупные tech (Uber, Netflix, FAANG). В 2025 большинство стартапов — Level 1 для critical ML, Level 0 для экспериментов.",
-              "sections": {
-                "explanation": "Шкала описывает, насколько автоматизирован путь от данных до production: от полностью ручного процесса (0) через автоматический pipeline обучения (1) к полной автоматике с CI/CD, мониторингом и feature store (2).",
-                "example": "Стартап вручную обучает модель в ноутбуке и копирует файл на сервер (Level 0); с появлением `Airflow`-pipeline и `MLflow`-registry он переходит на Level 1; полный CI/CD с feature store и drift detection — это уже Level 2.",
-                "when_to_apply": "Модель используют для оценки текущего состояния платформы и планирования: понять, какой автоматизации не хватает, и какой следующий разумный шаг по зрелости.",
-                "edge_cases": "Тонкость: цель — не «дорасти до Level 2» любой ценой; для экспериментов Level 0 нормален, а Level 2 оправдан там, где цена ручных ошибок и простоя высока.",
-                "related": "[[mlops-interview#Q21]] CI/CD как признак Level 2; [[mlops-interview#Q22]] continuous training на Level 1+; [[mlops-interview#Q28]] частые проблемы при низкой зрелости."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "correct": false,
               "text": "Уровни maturity — это обязательный gate: ML-систему нельзя выводить в production, пока команда не построит Level 2 с полной автоматизацией и continuous training.",
               "sections": {
@@ -1613,6 +1601,18 @@
                 "source_of_confusion": "Слово «maturity» наводит на мысль, что высший уровень обязателен для всех.",
                 "if_it_were_true": "Если бы Level 2 был обязателен, большинство production-ML-систем (на Level 0-1) не существовало бы.",
                 "how_it_should_be": "Maturity — это journey под контекст; production возможен и на Level 0-1, а Level 2 нужен не всем."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "correct": false,
+              "text": "На Level 0 (Manual) уже есть автоматический CI/CD-пайплайн, feature store и drift detection, а вручную выполняется лишь финальный деплой в production.",
+              "sections": {
+                "what_actually": "Level 0 — это ручное обучение и деплой без трекинга; CI/CD, feature store и drift detection появляются только на Level 2.",
+                "source_of_confusion": "Хочется приписать продвинутые практики и начальному уровню, отсюда путаница границ.",
+                "if_it_were_true": "Если бы на Level 0 был полный CI/CD, не было бы смысла выделять Level 1 и Level 2.",
+                "how_it_should_be": "Level 0 ручной и без автоматики; CI/CD и feature store — атрибуты высшего уровня зрелости."
               },
               "label": "D",
               "order": 3
@@ -1630,24 +1630,25 @@
           "options": [
             {
               "correct": false,
-              "text": "Training-serving skew в `MLOps` не встречается: раз модель обучена на тех же данных, определения фич при обучении и в проде совпадают автоматически.",
-              "sections": {
-                "what_actually": "Изоляция ML-команды и `Jupyter`-ноутбуки в проде — это организационный и инженерный долг, явно входящий в список проблем.",
-                "source_of_confusion": "Слово `Ops` ассоциируется только с инструментами, отсюда сведение к технике.",
-                "if_it_were_true": "Если бы проблемы были только техническими, их решал бы один инструмент, но изоляция команд так не чинится.",
-                "how_it_should_be": "Среди проблем есть и организационные (изоляция, tech debt), не только чисто технические."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "correct": false,
               "text": "Воспроизводимость в `MLOps` гарантируется автоматически: достаточно закоммитить код модели в git, и любой эксперимент точно повторится.",
               "sections": {
                 "what_actually": "Воспроизводимость — одна из главных болей: без версий данных, кода и seed повторить прогон часто невозможно.",
                 "source_of_confusion": "В обычной разработке код детерминирован, и это ожидание переносят на ML.",
                 "if_it_were_true": "Если бы всё воспроизводилось само, не нужны были бы `DVC`, фиксация seed и experiment tracking.",
                 "how_it_should_be": "Воспроизводимость остаётся частой проблемой и требует версионирования данных, кода и окружения."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "correct": true,
+              "text": "Типичные проблемы: воспроизводимость (часто нельзя повторить эксперимент), training-serving skew (разные определения features), необнаруженный data drift (модель тихо деградирует), ручной деплой (медленно и с ошибками), отсутствие model lineage (непонятно, откуда модель в проде), трудный rollback, cost runaway (много моделей крутится, никто не считает затраты), stale data (фичи посчитаны месяцы назад), tech debt (Jupyter-ноутбуки в проде), изоляция ML-команды от product-инженеров. Вывод: MLOps maturity — это journey, постоянное улучшение, а не конечная точка.",
+              "sections": {
+                "explanation": "Большинство проблем сводятся к нехватке автоматизации и дисциплины версионирования: без трекинга, registry и мониторинга система деградирует тихо и без следов происхождения.",
+                "example": "Классический кейс: модель в проде месяцами, никто не помнит, на каких данных и коде она обучена (нет lineage), фичи устарели (stale data), а дрейф никто не мониторит — точность падает незаметно.",
+                "when_to_apply": "Этот список используют как чек-лист аудита платформы: каждая проблема указывает на недостающую практику (трекинг, feature store, drift detection, registry, cost tracking).",
+                "edge_cases": "Тонкость: проблемы не только технические — изоляция ML-команды от product-инженеров и `Jupyter`-ноутбуки в проде это организационный и инженерный долг, который не чинится одним инструментом.",
+                "related": "[[mlops-interview#Q27]] уровни maturity как лекарство; [[mlops-interview#Q10]] training-serving skew; [[mlops-interview#Q18]] необнаруженный data drift."
               },
               "label": "B",
               "order": 1
@@ -1665,14 +1666,13 @@
               "order": 2
             },
             {
-              "correct": true,
-              "text": "Типичные проблемы: воспроизводимость (часто нельзя повторить эксперимент), training-serving skew (разные определения features), необнаруженный data drift (модель тихо деградирует), ручной деплой (медленно и с ошибками), отсутствие model lineage (непонятно, откуда модель в проде), трудный rollback, cost runaway (много моделей крутится, никто не считает затраты), stale data (фичи посчитаны месяцы назад), tech debt (Jupyter-ноутбуки в проде), изоляция ML-команды от product-инженеров. Вывод: MLOps maturity — это journey, постоянное улучшение, а не конечная точка.",
+              "correct": false,
+              "text": "Training-serving skew в `MLOps` не встречается: раз модель обучена на тех же данных, определения фич при обучении и в проде совпадают автоматически.",
               "sections": {
-                "explanation": "Большинство проблем сводятся к нехватке автоматизации и дисциплины версионирования: без трекинга, registry и мониторинга система деградирует тихо и без следов происхождения.",
-                "example": "Классический кейс: модель в проде месяцами, никто не помнит, на каких данных и коде она обучена (нет lineage), фичи устарели (stale data), а дрейф никто не мониторит — точность падает незаметно.",
-                "when_to_apply": "Этот список используют как чек-лист аудита платформы: каждая проблема указывает на недостающую практику (трекинг, feature store, drift detection, registry, cost tracking).",
-                "edge_cases": "Тонкость: проблемы не только технические — изоляция ML-команды от product-инженеров и `Jupyter`-ноутбуки в проде это организационный и инженерный долг, который не чинится одним инструментом.",
-                "related": "[[mlops-interview#Q27]] уровни maturity как лекарство; [[mlops-interview#Q10]] training-serving skew; [[mlops-interview#Q18]] необнаруженный data drift."
+                "what_actually": "Изоляция ML-команды и `Jupyter`-ноутбуки в проде — это организационный и инженерный долг, явно входящий в список проблем.",
+                "source_of_confusion": "Слово `Ops` ассоциируется только с инструментами, отсюда сведение к технике.",
+                "if_it_were_true": "Если бы проблемы были только техническими, их решал бы один инструмент, но изоляция команд так не чинится.",
+                "how_it_should_be": "Среди проблем есть и организационные (изоляция, tech debt), не только чисто технические."
               },
               "label": "D",
               "order": 3

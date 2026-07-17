@@ -9,14 +9,13 @@
           "question_text": "Что такое function calling / tool use в LLM?",
           "options": [
             {
-              "text": "`Function calling` — режим, в котором LLM вместо текста возвращает structured JSON: имя функции и аргументы по схеме; сам вызов делает приложение.",
-              "correct": true,
+              "text": "`Function calling` — это всего лишь промпт-инструкция «ответь строго в JSON», без каких-либо гарантий формата со стороны API.",
+              "correct": false,
               "sections": {
-                "explanation": "Модель не исполняет код: она получает описания tools, решает что нужен вызов, и отдаёт клиенту `tool_call get_weather(city=\"Moscow\")`. Аргументы она заполняет по JSON Schema, а сам вызов, безопасность, retry и RBAC остаются на стороне приложения. Приложение кладёт результат обратно в `messages` и просит модель сформулировать финальный ответ.",
-                "example": "На вопрос «какая погода в Москве?» модель возвращает `get_weather(city=\"Moscow\")`; приложение вызывает API, получает `{\"temp\": -3}` и отдаёт это в `tool_result`, после чего модель пишет «В Москве -3°C».",
-                "when_to_apply": "Применяют для доступа к актуальным данным (модель знает мир до cutoff), к действиям (запись в БД, отправка письма) и для фиксации формата ответа даже без внешней функции.",
-                "edge_cases": "Безопасность, retry, RBAC и валидация — всё на стороне приложения: LLM может предложить вызвать опасный tool, поэтому исполнение нельзя доверять модели вслепую.",
-                "related": "[[function-calling-interview#Q2]] отличие от prompt-engineering под JSON; [[function-calling-interview#Q4]] multi-turn loop; [[function-calling-interview#Q5]] структура OpenAI Tools."
+                "what_actually": "Это отдельный API-механизм с tool definitions и constrained decoding, а не просто текст в системном промпте.",
+                "source_of_confusion": "И тот и другой подход дают JSON на выходе, поэтому их путают; разница в гарантиях формата.",
+                "if_it_were_true": "Тогда брак формата был бы 5-10%, как при чистом промпте, но structured function calling даёт почти 0%.",
+                "how_it_should_be": "Function calling — это API-контракт с JSON Schema и санкционированными вызовами, а не свободный промпт."
               },
               "label": "A",
               "order": 0
@@ -34,13 +33,14 @@
               "order": 1
             },
             {
-              "text": "`Function calling` — это всего лишь промпт-инструкция «ответь строго в JSON», без каких-либо гарантий формата со стороны API.",
-              "correct": false,
+              "text": "`Function calling` — режим, в котором LLM вместо текста возвращает structured JSON: имя функции и аргументы по схеме; сам вызов делает приложение.",
+              "correct": true,
               "sections": {
-                "what_actually": "Это отдельный API-механизм с tool definitions и constrained decoding, а не просто текст в системном промпте.",
-                "source_of_confusion": "И тот и другой подход дают JSON на выходе, поэтому их путают; разница в гарантиях формата.",
-                "if_it_were_true": "Тогда брак формата был бы 5-10%, как при чистом промпте, но structured function calling даёт почти 0%.",
-                "how_it_should_be": "Function calling — это API-контракт с JSON Schema и санкционированными вызовами, а не свободный промпт."
+                "explanation": "Модель не исполняет код: она получает описания tools, решает что нужен вызов, и отдаёт клиенту `tool_call get_weather(city=\"Moscow\")`. Аргументы она заполняет по JSON Schema, а сам вызов, безопасность, retry и RBAC остаются на стороне приложения. Приложение кладёт результат обратно в `messages` и просит модель сформулировать финальный ответ.",
+                "example": "На вопрос «какая погода в Москве?» модель возвращает `get_weather(city=\"Moscow\")`; приложение вызывает API, получает `{\"temp\": -3}` и отдаёт это в `tool_result`, после чего модель пишет «В Москве -3°C».",
+                "when_to_apply": "Применяют для доступа к актуальным данным (модель знает мир до cutoff), к действиям (запись в БД, отправка письма) и для фиксации формата ответа даже без внешней функции.",
+                "edge_cases": "Безопасность, retry, RBAC и валидация — всё на стороне приложения: LLM может предложить вызвать опасный tool, поэтому исполнение нельзя доверять модели вслепую.",
+                "related": "[[function-calling-interview#Q2]] отличие от prompt-engineering под JSON; [[function-calling-interview#Q4]] multi-turn loop; [[function-calling-interview#Q5]] структура OpenAI Tools."
               },
               "label": "C",
               "order": 2
@@ -81,14 +81,13 @@
               "order": 0
             },
             {
-              "text": "Промпт «Ответь JSON» не даёт гарантий — модель может уйти в текст; function calling / Structured Output дают JSON по schema через constrained decoding.",
-              "correct": true,
+              "text": "JSON mode (`response_format: json_object`) гарантирует не только валидный JSON, но и точное соответствие нужной вам схеме полей.",
+              "correct": false,
               "sections": {
-                "explanation": "Под капотом сэмплер на каждом шаге отсекает токены, ведущие к невалидному JSON, ценой токенов на tool definitions в каждом запросе. Поэтому retry на «модель ответила HTML вместо JSON» не нужен — формат гарантирован грамматикой схемы.",
-                "example": "Извлечь `{name, email, phone}` из письма: через промпт «ответь JSON» брак 5-10% (модель уходит в текст), а через Structured Output / function — практически 0% за счёт constrained decoding.",
-                "when_to_apply": "Чистый промпт годится для дешёвого прототипа; function calling / Structured Output берут в продакшен, где формат критичен и брак недопустим.",
-                "edge_cases": "JSON mode (`response_format: json_object`) — промежуточный вариант: валидный JSON, но схему не гарантирует; подходит, когда схема простая или вы валидируете её сами.",
-                "related": "[[function-calling-interview#Q1]] что такое function calling; [[function-calling-interview#Q10]] Structured Output vs JSON mode; [[function-calling-interview#Q11]] strict mode у OpenAI."
+                "what_actually": "JSON mode гарантирует только синтаксис; модель может вернуть `{\"answer\": ...}` вместо ожидаемых `{name, email}`.",
+                "source_of_confusion": "Слово «JSON mode» звучит строго, поэтому ему приписывают гарантию схемы.",
+                "if_it_were_true": "Тогда Structured Output был бы не нужен, но он добавлен именно ради гарантии схемы поверх JSON mode.",
+                "how_it_should_be": "Схему гарантирует только Structured Output / function calling, а JSON mode — лишь валидный синтаксис."
               },
               "label": "B",
               "order": 1
@@ -106,13 +105,14 @@
               "order": 2
             },
             {
-              "text": "JSON mode (`response_format: json_object`) гарантирует не только валидный JSON, но и точное соответствие нужной вам схеме полей.",
-              "correct": false,
+              "text": "Промпт «Ответь JSON» не даёт гарантий — модель может уйти в текст; function calling / Structured Output дают JSON по schema через constrained decoding.",
+              "correct": true,
               "sections": {
-                "what_actually": "JSON mode гарантирует только синтаксис; модель может вернуть `{\"answer\": ...}` вместо ожидаемых `{name, email}`.",
-                "source_of_confusion": "Слово «JSON mode» звучит строго, поэтому ему приписывают гарантию схемы.",
-                "if_it_were_true": "Тогда Structured Output был бы не нужен, но он добавлен именно ради гарантии схемы поверх JSON mode.",
-                "how_it_should_be": "Схему гарантирует только Structured Output / function calling, а JSON mode — лишь валидный синтаксис."
+                "explanation": "Под капотом сэмплер на каждом шаге отсекает токены, ведущие к невалидному JSON, ценой токенов на tool definitions в каждом запросе. Поэтому retry на «модель ответила HTML вместо JSON» не нужен — формат гарантирован грамматикой схемы.",
+                "example": "Извлечь `{name, email, phone}` из письма: через промпт «ответь JSON» брак 5-10% (модель уходит в текст), а через Structured Output / function — практически 0% за счёт constrained decoding.",
+                "when_to_apply": "Чистый промпт годится для дешёвого прототипа; function calling / Structured Output берут в продакшен, где формат критичен и брак недопустим.",
+                "edge_cases": "JSON mode (`response_format: json_object`) — промежуточный вариант: валидный JSON, но схему не гарантирует; подходит, когда схема простая или вы валидируете её сами.",
+                "related": "[[function-calling-interview#Q1]] что такое function calling; [[function-calling-interview#Q10]] Structured Output vs JSON mode; [[function-calling-interview#Q11]] strict mode у OpenAI."
               },
               "label": "D",
               "order": 3
@@ -129,18 +129,6 @@
           "question_text": "Как эволюционировал function calling в индустрии?",
           "options": [
             {
-              "text": "Function calling появился у всех провайдеров одновременно в 2024 году как заранее согласованный единый отраслевой стандарт с общей спецификацией.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Первым был OpenAI в июне 2023 (`functions`), Anthropic и Gemini подключились позже, в 2024; единого старта не было.",
-                "source_of_confusion": "Сейчас механизм есть у всех, поэтому кажется, что он и возник одновременно.",
-                "if_it_were_true": "Тогда не было бы переименования `functions` → `tools` в ноябре 2023, но именно OpenAI проходил эту эволюцию первым.",
-                "how_it_should_be": "OpenAI запустил функции в 2023, остальные провайдеры догоняли в 2024 — старт был разнесён во времени."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`MCP` появился раньше function calling и был исходным механизмом, из которого провайдеры потом сделали `tools`.",
               "correct": false,
               "sections": {
@@ -149,8 +137,8 @@
                 "if_it_were_true": "Тогда `OpenAI Functions` 2023 года строились бы на `MCP`, но `MCP` тогда ещё не существовал.",
                 "how_it_should_be": "Function calling появился в 2023, `MCP` — в конце 2024 как слой стандартизации поверх него."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Путь: `OpenAI Functions` (2023, одна функция) → `OpenAI Tools` (multi-tool + parallel) → `Anthropic Tool Use` и `Gemini` (2024) → `Structured Outputs` → `MCP` (2024).",
@@ -161,6 +149,18 @@
                 "when_to_apply": "Эта хронология помогает на собеседовании объяснить, почему `functions` устарели в пользу `tools`, и откуда взялась стандартизация через `MCP`.",
                 "edge_cases": "В 2025 `MCP` стал отраслевым стандартом, native в `Claude`/`Cursor`/`Windsurf`; при этом raw function calling никуда не делся — `MCP` просто конвертируется в него.",
                 "related": "[[function-calling-interview#Q1]] что такое function calling; [[function-calling-interview#Q20]] связь MCP и function calling; [[function-calling-interview#Q8]] сравнение API провайдеров."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Function calling появился у всех провайдеров одновременно в 2024 году как заранее согласованный единый отраслевой стандарт с общей спецификацией.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Первым был OpenAI в июне 2023 (`functions`), Anthropic и Gemini подключились позже, в 2024; единого старта не было.",
+                "source_of_confusion": "Сейчас механизм есть у всех, поэтому кажется, что он и возник одновременно.",
+                "if_it_were_true": "Тогда не было бы переименования `functions` → `tools` в ноябре 2023, но именно OpenAI проходил эту эволюцию первым.",
+                "how_it_should_be": "OpenAI запустил функции в 2023, остальные провайдеры догоняли в 2024 — старт был разнесён во времени."
               },
               "label": "C",
               "order": 2
@@ -189,18 +189,6 @@
           "question_text": "Как выглядит multi-turn loop при tool use?",
           "options": [
             {
-              "text": "Multi-turn loop — это всегда ровно два запроса: первый по `tool_choice: required` возвращает tool_call, второй с результатом даёт финальный ответ, больше итераций не бывает.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Итераций может быть много: модель способна запросить следующий tool после каждого результата, пока задача не решена.",
-                "source_of_confusion": "Простейший пример «один tool — один ответ» создаёт впечатление фиксированных двух шагов.",
-                "if_it_were_true": "Тогда не нужен был бы `max_iterations`, но его держат именно потому, что шагов может быть произвольно много.",
-                "how_it_should_be": "Цикл идёт до `stop_reason != tool_use`, и шагов может быть сколько угодно, а не строго два."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "В цикле tool_result можно не возвращать модели — она сама помнит результаты предыдущих вызовов между запросами.",
               "correct": false,
               "sections": {
@@ -209,8 +197,8 @@
                 "if_it_were_true": "Тогда можно было бы пропускать `tool_result`, но API требует его для каждого `tool_use` с тем же id.",
                 "how_it_should_be": "Каждый результат обязан вернуться в `messages` как `tool_result`, иначе модель его не увидит."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Решение продолжать цикл принимает приложение по таймеру, а не по `stop_reason` ответа модели.",
@@ -221,8 +209,8 @@
                 "if_it_were_true": "Тогда модель не могла бы сама сигнализировать о завершении, но `stop_reason: end_turn` — это её сигнал «готово».",
                 "how_it_should_be": "Цикл управляется `stop_reason` ответа; таймер — лишь дополнительная страховка от зацикливания."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Это не «запрос-ответ», а цикл: зовём LLM с tools, смотрим `stop_reason`; при `tool_use`/`tool_calls` исполняем функции, добавляем `tool_result` в `messages` и повторяем до `stop`.",
@@ -233,6 +221,18 @@
                 "when_to_apply": "Применяют всегда, когда задача может требовать нескольких последовательных tool-вызовов: агент, RAG-роутер, multi-step extraction.",
                 "edge_cases": "Обязательно держать лимит итераций, иначе модель может зациклиться, прося один и тот же tool после каждого `tool_result`.",
                 "related": "[[function-calling-interview#Q1]] базовая идея цикла; [[function-calling-interview#Q13]] parallel calls внутри одного шага; [[function-calling-interview#Q27]] защита от infinite loop."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Multi-turn loop — это всегда ровно два запроса: первый по `tool_choice: required` возвращает tool_call, второй с результатом даёт финальный ответ, больше итераций не бывает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Итераций может быть много: модель способна запросить следующий tool после каждого результата, пока задача не решена.",
+                "source_of_confusion": "Простейший пример «один tool — один ответ» создаёт впечатление фиксированных двух шагов.",
+                "if_it_were_true": "Тогда не нужен был бы `max_iterations`, но его держат именно потому, что шагов может быть произвольно много.",
+                "how_it_should_be": "Цикл идёт до `stop_reason != tool_use`, и шагов может быть сколько угодно, а не строго два."
               },
               "label": "D",
               "order": 3
@@ -249,19 +249,6 @@
           "question_text": "Как устроена структура запроса и ответа в OpenAI Tools API?",
           "options": [
             {
-              "text": "Tool — это `{type:\"function\", function:{name, description, parameters, strict}}`; в ответе `finish_reason:\"tool_calls\"`, а `arguments` — строка JSON (нужен `json.loads`).",
-              "correct": true,
-              "sections": {
-                "explanation": "В запросе передаются `tools`, `tool_choice` и `parallel_tool_calls`. Каждый вызов в `tool_calls` имеет свой `id` (`call_abc123`); этот id обязателен в ответном сообщении, чтобы провайдер сопоставил результат с конкретным вызовом.",
-                "example": "Reply от приложения добавляется как `{role: \"tool\", tool_call_id: \"call_abc123\", content: \"{\\\"temp\\\": -3}\"}` — с тем же `tool_call_id`, что пришёл в `tool_calls`.",
-                "when_to_apply": "Эта форма — база для любого OpenAI-агента; знать её нужно, чтобы корректно парсить `arguments` и отправлять результат обратно.",
-                "edge_cases": "При `strict: True` OpenAI гарантирует соответствие аргументов схеме; без strict схема обычно соблюдается, но не на всех edge-cases.",
-                "related": "[[function-calling-interview#Q6]] Anthropic Tool Use API; [[function-calling-interview#Q8]] сравнение shape провайдеров; [[function-calling-interview#Q11]] что гарантирует strict mode."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "В ответе OpenAI поле `arguments` приходит как готовый dict с уже приведёнными типами полей, поэтому `json.loads` вызывать не нужно и парсинг строки лишний.",
               "correct": false,
               "sections": {
@@ -270,8 +257,8 @@
                 "if_it_were_true": "Тогда не было бы классического бага миграции `TypeError` после переноса кода с Anthropic, но он есть именно из-за строки.",
                 "how_it_should_be": "У OpenAI `arguments` — строка, требующая `json.loads`; это типичный источник ошибок при миграции."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Tool у OpenAI описывается через поле `input_schema` с вложенным `type:\"object\"` и `required`, ровно как в Anthropic, поэтому схему можно переносить между ними без правок.",
@@ -282,8 +269,8 @@
                 "if_it_were_true": "Тогда код для OpenAI и Anthropic был бы взаимозаменяем без правок, но поля schema у них разные.",
                 "how_it_should_be": "У OpenAI схема лежит в `function.parameters`, а `input_schema` — это Anthropic-форма."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Результат tool у OpenAI возвращается в `role: \"user\"` как content-блок `tool_result`.",
@@ -293,6 +280,19 @@
                 "source_of_confusion": "Anthropic-схема reply широко известна, и её ошибочно применяют к OpenAI.",
                 "if_it_were_true": "Тогда OpenAI-API принимал бы `tool_result` внутри user-сообщения, но он ждёт отдельную роль `tool`.",
                 "how_it_should_be": "У OpenAI ответ tool — это `role: \"tool\"` + `tool_call_id`, а не content-блок в user-сообщении."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Tool — это `{type:\"function\", function:{name, description, parameters, strict}}`; в ответе `finish_reason:\"tool_calls\"`, а `arguments` — строка JSON (нужен `json.loads`).",
+              "correct": true,
+              "sections": {
+                "explanation": "В запросе передаются `tools`, `tool_choice` и `parallel_tool_calls`. Каждый вызов в `tool_calls` имеет свой `id` (`call_abc123`); этот id обязателен в ответном сообщении, чтобы провайдер сопоставил результат с конкретным вызовом.",
+                "example": "Reply от приложения добавляется как `{role: \"tool\", tool_call_id: \"call_abc123\", content: \"{\\\"temp\\\": -3}\"}` — с тем же `tool_call_id`, что пришёл в `tool_calls`.",
+                "when_to_apply": "Эта форма — база для любого OpenAI-агента; знать её нужно, чтобы корректно парсить `arguments` и отправлять результат обратно.",
+                "edge_cases": "При `strict: True` OpenAI гарантирует соответствие аргументов схеме; без strict схема обычно соблюдается, но не на всех edge-cases.",
+                "related": "[[function-calling-interview#Q6]] Anthropic Tool Use API; [[function-calling-interview#Q8]] сравнение shape провайдеров; [[function-calling-interview#Q11]] что гарантирует strict mode."
               },
               "label": "D",
               "order": 3
@@ -309,6 +309,18 @@
           "question_text": "Как устроен Anthropic Tool Use API?",
           "options": [
             {
+              "text": "Результат tool у Anthropic возвращается отдельной ролью `role:\"tool\"` с `tool_call_id`, как в OpenAI, а блок `tool_result` внутри user-сообщения он не принимает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У Anthropic результат идёт в `role: \"user\"` как content-блок `tool_result` с `tool_use_id`; роли `tool` у него нет.",
+                "source_of_confusion": "Схема reply OpenAI с `role: \"tool\"` хорошо известна и переносится на Anthropic.",
+                "if_it_were_true": "Тогда Anthropic принимал бы сообщение с `role: \"tool\"`, но валидной у него является только пара user/assistant.",
+                "how_it_should_be": "У Anthropic результат — это content-блок `tool_result` внутри `role: \"user\"`, а не отдельная роль."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "У Anthropic схема tool описывается полем `parameters` с вложенным `type:\"object\"`, точно как у OpenAI, поэтому tool definitions переносимы между ними без правок.",
               "correct": false,
               "sections": {
@@ -316,19 +328,6 @@
                 "source_of_confusion": "Большинство примеров в интернете на OpenAI, и `parameters` переносят на Anthropic по привычке.",
                 "if_it_were_true": "Тогда Anthropic-API принимал бы `parameters`, но он ждёт именно `input_schema` и иначе вернёт ошибку.",
                 "how_it_should_be": "У Anthropic схема — это `input_schema`, а `parameters` относится к другим провайдерам."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "У Anthropic единый messages-API: схема в `input_schema` (не `parameters`), в ответе `stop_reason:\"tool_use\"`, а `input` приходит уже dict-ом.",
-              "correct": true,
-              "sections": {
-                "explanation": "Ответ Claude на `get_weather` приходит как content-блок `{type: \"tool_use\", id: \"toolu_01abc\", name: \"get_weather\", input: {\"city\": \"Moscow\"}}` — `input` уже dict, парсить строку не надо. Результат возвращается в `role: \"user\"` content-блоком `tool_result` с `tool_use_id`, а не отдельной ролью `tool`.",
-                "example": "Reply выглядит так: `messages.append({role:'assistant', content: resp.content})` затем `messages.append({role:'user', content:[{type:'tool_result', tool_use_id:'toolu_01abc', content: json.dumps({'temp':-3})}]})`.",
-                "when_to_apply": "Знать эти отличия нужно при переносе кода с OpenAI: `input_schema` вместо `parameters`, dict вместо string, `tool_use` вместо `tool_calls`.",
-                "edge_cases": "`tool_use`-блок может соседствовать с текстовым блоком в одном ответе (например, «Сейчас уточню» + сам вызов), поэтому content всегда массив блоков.",
-                "related": "[[function-calling-interview#Q5]] OpenAI Tools API; [[function-calling-interview#Q8]] сравнение shape провайдеров; [[function-calling-interview#Q12]] structured output через single-tool у Anthropic."
               },
               "label": "B",
               "order": 1
@@ -346,13 +345,14 @@
               "order": 2
             },
             {
-              "text": "Результат tool у Anthropic возвращается отдельной ролью `role:\"tool\"` с `tool_call_id`, как в OpenAI, а блок `tool_result` внутри user-сообщения он не принимает.",
-              "correct": false,
+              "text": "У Anthropic единый messages-API: схема в `input_schema` (не `parameters`), в ответе `stop_reason:\"tool_use\"`, а `input` приходит уже dict-ом.",
+              "correct": true,
               "sections": {
-                "what_actually": "У Anthropic результат идёт в `role: \"user\"` как content-блок `tool_result` с `tool_use_id`; роли `tool` у него нет.",
-                "source_of_confusion": "Схема reply OpenAI с `role: \"tool\"` хорошо известна и переносится на Anthropic.",
-                "if_it_were_true": "Тогда Anthropic принимал бы сообщение с `role: \"tool\"`, но валидной у него является только пара user/assistant.",
-                "how_it_should_be": "У Anthropic результат — это content-блок `tool_result` внутри `role: \"user\"`, а не отдельная роль."
+                "explanation": "Ответ Claude на `get_weather` приходит как content-блок `{type: \"tool_use\", id: \"toolu_01abc\", name: \"get_weather\", input: {\"city\": \"Moscow\"}}` — `input` уже dict, парсить строку не надо. Результат возвращается в `role: \"user\"` content-блоком `tool_result` с `tool_use_id`, а не отдельной ролью `tool`.",
+                "example": "Reply выглядит так: `messages.append({role:'assistant', content: resp.content})` затем `messages.append({role:'user', content:[{type:'tool_result', tool_use_id:'toolu_01abc', content: json.dumps({'temp':-3})}]})`.",
+                "when_to_apply": "Знать эти отличия нужно при переносе кода с OpenAI: `input_schema` вместо `parameters`, dict вместо string, `tool_use` вместо `tool_calls`.",
+                "edge_cases": "`tool_use`-блок может соседствовать с текстовым блоком в одном ответе (например, «Сейчас уточню» + сам вызов), поэтому content всегда массив блоков.",
+                "related": "[[function-calling-interview#Q5]] OpenAI Tools API; [[function-calling-interview#Q8]] сравнение shape провайдеров; [[function-calling-interview#Q12]] structured output через single-tool у Anthropic."
               },
               "label": "D",
               "order": 3
@@ -369,28 +369,16 @@
           "question_text": "Как устроен Gemini Function Calling API?",
           "options": [
             {
-              "text": "В Gemini функции описываются плоским списком `tools: [{name, description, parameters}]` без обёртки `function_declarations` и без вложенности, ровно как у Anthropic.",
+              "text": "В Python SDK Gemini нет автоматического function calling — loop всегда пишется руками.",
               "correct": false,
               "sections": {
-                "what_actually": "У Gemini нужна двойная вложенность: `tools: [{function_declarations: [...]}]`, плоский список — это не его форма.",
-                "source_of_confusion": "У Anthropic список tools действительно плоский, и это переносят на Gemini.",
-                "if_it_were_true": "Тогда Gemini принимал бы декларации напрямую, но без обёртки `function_declarations` он их не распознает.",
-                "how_it_should_be": "У Gemini объявления оборачиваются в `Tool(function_declarations=[...])` — два уровня вложенности."
+                "what_actually": "В Python SDK Gemini как раз есть automatic function calling: передаёшь функцию напрямую и SDK сам гонит цикл.",
+                "source_of_confusion": "Raw-режим с ручным dispatch встречается чаще в примерах, отсюда вывод об отсутствии авто-режима.",
+                "if_it_were_true": "Тогда нельзя было бы просто передать Python-функцию в `tools`, но SDK это поддерживает и сам исполняет её.",
+                "how_it_should_be": "Python SDK Gemini поддерживает automatic function calling, выполняя loop за разработчика."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Вызов функции в Gemini возвращается как `tool_use`-блок, аналогично Anthropic.",
-              "correct": false,
-              "sections": {
-                "what_actually": "У Gemini это `function_call` part, а `tool_use` — терминология Anthropic; имена частей разные.",
-                "source_of_confusion": "Все три провайдера про «tools», поэтому термины смешивают.",
-                "if_it_were_true": "Тогда парсинг ответа Gemini искал бы `tool_use`, но там лежит `part.function_call`.",
-                "how_it_should_be": "В Gemini вызов — это `function_call` part, а результат — `function_response` part."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Gemini ближе к OpenAI, но имена другие: функция — `types.FunctionDeclaration(...)` в обёртке `types.Tool(function_declarations=[...])`; вызов и результат идут как parts.",
@@ -402,17 +390,29 @@
                 "edge_cases": "Двойная вложенность `tools: [{function_declarations: [...]}]` — частый источник ошибок: легко забыть внешний `Tool`-уровень и передать декларации напрямую.",
                 "related": "[[function-calling-interview#Q5]] OpenAI Tools API; [[function-calling-interview#Q8]] сравнение shape провайдеров; [[function-calling-interview#Q6]] Anthropic Tool Use."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Вызов функции в Gemini возвращается как `tool_use`-блок, аналогично Anthropic.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У Gemini это `function_call` part, а `tool_use` — терминология Anthropic; имена частей разные.",
+                "source_of_confusion": "Все три провайдера про «tools», поэтому термины смешивают.",
+                "if_it_were_true": "Тогда парсинг ответа Gemini искал бы `tool_use`, но там лежит `part.function_call`.",
+                "how_it_should_be": "В Gemini вызов — это `function_call` part, а результат — `function_response` part."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "В Python SDK Gemini нет автоматического function calling — loop всегда пишется руками.",
+              "text": "В Gemini функции описываются плоским списком `tools: [{name, description, parameters}]` без обёртки `function_declarations` и без вложенности, ровно как у Anthropic.",
               "correct": false,
               "sections": {
-                "what_actually": "В Python SDK Gemini как раз есть automatic function calling: передаёшь функцию напрямую и SDK сам гонит цикл.",
-                "source_of_confusion": "Raw-режим с ручным dispatch встречается чаще в примерах, отсюда вывод об отсутствии авто-режима.",
-                "if_it_were_true": "Тогда нельзя было бы просто передать Python-функцию в `tools`, но SDK это поддерживает и сам исполняет её.",
-                "how_it_should_be": "Python SDK Gemini поддерживает automatic function calling, выполняя loop за разработчика."
+                "what_actually": "У Gemini нужна двойная вложенность: `tools: [{function_declarations: [...]}]`, плоский список — это не его форма.",
+                "source_of_confusion": "У Anthropic список tools действительно плоский, и это переносят на Gemini.",
+                "if_it_were_true": "Тогда Gemini принимал бы декларации напрямую, но без обёртки `function_declarations` он их не распознает.",
+                "how_it_should_be": "У Gemini объявления оборачиваются в `Tool(function_declarations=[...])` — два уровня вложенности."
               },
               "label": "D",
               "order": 3
@@ -429,13 +429,14 @@
           "question_text": "В чём разница API shape у OpenAI, Anthropic и Gemini для tool use?",
           "options": [
             {
-              "text": "У всех трёх провайдеров аргументы вызова приходят строкой JSON и требуют `json.loads`, поэтому один и тот же код парсинга подходит для OpenAI, Anthropic и Gemini.",
-              "correct": false,
+              "text": "Поле схемы: OpenAI — `function.parameters`, Anthropic — `input_schema`, Gemini — `parameters`. Главное практическое отличие — аргументы у OpenAI это строка, у Anthropic и Gemini уже dict.",
+              "correct": true,
               "sections": {
-                "what_actually": "Строка — только у OpenAI (`arguments`); у Anthropic (`input`) и Gemini (`args`) это уже dict.",
-                "source_of_confusion": "OpenAI — самый популярный API, его поведение принимают за общее правило.",
-                "if_it_were_true": "Тогда `json.loads(input)` для Anthropic работал бы, но он упадёт — там dict, а не строка.",
-                "how_it_should_be": "Строкой аргументы отдаёт только OpenAI; у Anthropic и Gemini это dict."
+                "explanation": "Reply тоже различается: OpenAI — `role: \"tool\"` + `tool_call_id`, Anthropic — `role: \"user\"` + `tool_result`, Gemini — `function_response` part. При переносе кода с OpenAI на Anthropic строка `json.loads(call.function.arguments)` ломается: у Anthropic нужно читать `block.input` как готовый dict, без парсинга.",
+                "example": "Forced tool: OpenAI — `tool_choice: {type:\"function\", function:{name}}`, Anthropic — `{type:\"tool\", name}`, Gemini — `tool_config: {mode:\"ANY\"}`. Strict-схема: OpenAI — `strict:true`, Gemini — `response_schema`, Anthropic — через структуру и `tool_choice`.",
+                "when_to_apply": "Это сравнение нужно, когда пишешь провайдеро-агностичный слой или мигрируешь код между OpenAI, Anthropic и Gemini.",
+                "edge_cases": "Самый частый баг переноса — `arguments` (строка) у OpenAI против `input`/`args` (dict) у остальных: код, написанный под один, падает с `TypeError` на другом.",
+                "related": "[[function-calling-interview#Q5]] детали OpenAI; [[function-calling-interview#Q6]] детали Anthropic; [[function-calling-interview#Q7]] детали Gemini."
               },
               "label": "A",
               "order": 0
@@ -465,14 +466,13 @@
               "order": 2
             },
             {
-              "text": "Поле схемы: OpenAI — `function.parameters`, Anthropic — `input_schema`, Gemini — `parameters`. Главное практическое отличие — аргументы у OpenAI это строка, у Anthropic и Gemini уже dict.",
-              "correct": true,
+              "text": "У всех трёх провайдеров аргументы вызова приходят строкой JSON и требуют `json.loads`, поэтому один и тот же код парсинга подходит для OpenAI, Anthropic и Gemini.",
+              "correct": false,
               "sections": {
-                "explanation": "Reply тоже различается: OpenAI — `role: \"tool\"` + `tool_call_id`, Anthropic — `role: \"user\"` + `tool_result`, Gemini — `function_response` part. При переносе кода с OpenAI на Anthropic строка `json.loads(call.function.arguments)` ломается: у Anthropic нужно читать `block.input` как готовый dict, без парсинга.",
-                "example": "Forced tool: OpenAI — `tool_choice: {type:\"function\", function:{name}}`, Anthropic — `{type:\"tool\", name}`, Gemini — `tool_config: {mode:\"ANY\"}`. Strict-схема: OpenAI — `strict:true`, Gemini — `response_schema`, Anthropic — через структуру и `tool_choice`.",
-                "when_to_apply": "Это сравнение нужно, когда пишешь провайдеро-агностичный слой или мигрируешь код между OpenAI, Anthropic и Gemini.",
-                "edge_cases": "Самый частый баг переноса — `arguments` (строка) у OpenAI против `input`/`args` (dict) у остальных: код, написанный под один, падает с `TypeError` на другом.",
-                "related": "[[function-calling-interview#Q5]] детали OpenAI; [[function-calling-interview#Q6]] детали Anthropic; [[function-calling-interview#Q7]] детали Gemini."
+                "what_actually": "Строка — только у OpenAI (`arguments`); у Anthropic (`input`) и Gemini (`args`) это уже dict.",
+                "source_of_confusion": "OpenAI — самый популярный API, его поведение принимают за общее правило.",
+                "if_it_were_true": "Тогда `json.loads(input)` для Anthropic работал бы, но он упадёт — там dict, а не строка.",
+                "how_it_should_be": "Строкой аргументы отдаёт только OpenAI; у Anthropic и Gemini это dict."
               },
               "label": "D",
               "order": 3
@@ -489,6 +489,18 @@
           "question_text": "Как описывается tool через JSON Schema?",
           "options": [
             {
+              "text": "`enum` в JSON Schema — лишь подсказка; модель свободно возвращает значения вне списка, поэтому полагаться на него нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`enum` сужает грамматику: модель почти никогда не промахивается мимо списка, а в strict mode выход за `enum` исключён.",
+                "source_of_confusion": "Свобода LLM в free-form тексте переносится на поля с enum.",
+                "if_it_were_true": "Тогда `enum` не давал бы выигрыша в надёжности, но он как раз резко снижает брак значений.",
+                "how_it_should_be": "`enum` — закрытый список, который модель почти всегда соблюдает, особенно при strict mode."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Tool описывается JSON Schema: минимум — `type:\"object\"` + `properties` + `required`; сверху добавляют `enum`, `description` на полях и `additionalProperties: false`.",
               "correct": true,
               "sections": {
@@ -498,8 +510,8 @@
                 "edge_cases": "Плохо работают `$ref`, рекурсивные схемы и циклические зависимости — у OpenAI strict mode часть из них запрещена явно; для опциональных полей в strict делают `[\"string\", \"null\"]`.",
                 "related": "[[function-calling-interview#Q11]] ограничения strict mode; [[function-calling-interview#Q19]] Pydantic/Zod как источник схемы; [[function-calling-interview#Q25]] дизайн tool definitions."
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`additionalProperties` по умолчанию запрещает лишние поля, поэтому указывать `additionalProperties: false` нет смысла.",
@@ -509,18 +521,6 @@
                 "source_of_confusion": "Кажется логичным, что схема и так строгая, раз перечислены все нужные properties.",
                 "if_it_were_true": "Тогда модель не могла бы добавить «лишнее» поле без явного запрета, но без `false` она это сделать может.",
                 "how_it_should_be": "Чтобы запретить лишние поля, `additionalProperties: false` нужно прописывать явно."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "`enum` в JSON Schema — лишь подсказка; модель свободно возвращает значения вне списка, поэтому полагаться на него нельзя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`enum` сужает грамматику: модель почти никогда не промахивается мимо списка, а в strict mode выход за `enum` исключён.",
-                "source_of_confusion": "Свобода LLM в free-form тексте переносится на поля с enum.",
-                "if_it_were_true": "Тогда `enum` не давал бы выигрыша в надёжности, но он как раз резко снижает брак значений.",
-                "how_it_should_be": "`enum` — закрытый список, который модель почти всегда соблюдает, особенно при strict mode."
               },
               "label": "C",
               "order": 2
@@ -549,13 +549,13 @@
           "question_text": "Что такое Structured Output и чем он отличается от JSON mode?",
           "options": [
             {
-              "text": "JSON mode и Structured Output — синонимы: оба через `response_format` гарантируют и валидный JSON, и точное соответствие вашей схеме полей, их типов и обязательности.",
+              "text": "Plain prompt «Ответь JSON» в системе даёт ту же гарантию формата, что и Structured Output, просто без лишнего синтаксиса.",
               "correct": false,
               "sections": {
-                "what_actually": "JSON mode гарантирует только синтаксис; соответствие схеме даёт лишь Structured Output через constrained decoding.",
-                "source_of_confusion": "Оба используют `response_format`, поэтому их считают одним и тем же.",
-                "if_it_were_true": "Тогда не было бы отдельного `type: \"json_schema\"`, но он добавлен именно ради гарантии схемы.",
-                "how_it_should_be": "JSON mode — валидный JSON без схемы; Structured Output — JSON по схеме; это разные уровни гарантий."
+                "what_actually": "Plain prompt не гарантирует ничего: модель может уйти в текст или сломать схему, давая 5-10% брака.",
+                "source_of_confusion": "На простых кейсах промпт часто срабатывает, создавая иллюзию надёжности.",
+                "if_it_were_true": "Тогда не было бы смысла в `json_schema`, но его ввели именно из-за ненадёжности голого промпта.",
+                "how_it_should_be": "Гарантию даёт только Structured Output; plain prompt — это best-effort без гарантий."
               },
               "label": "A",
               "order": 0
@@ -574,6 +574,18 @@
               "order": 1
             },
             {
+              "text": "JSON mode и Structured Output — синонимы: оба через `response_format` гарантируют и валидный JSON, и точное соответствие вашей схеме полей, их типов и обязательности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "JSON mode гарантирует только синтаксис; соответствие схеме даёт лишь Structured Output через constrained decoding.",
+                "source_of_confusion": "Оба используют `response_format`, поэтому их считают одним и тем же.",
+                "if_it_were_true": "Тогда не было бы отдельного `type: \"json_schema\"`, но он добавлен именно ради гарантии схемы.",
+                "how_it_should_be": "JSON mode — валидный JSON без схемы; Structured Output — JSON по схеме; это разные уровни гарантий."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
               "text": "Structured Output работает за счёт автоматического retry: при невалидном JSON API просто перегенерирует ответ.",
               "correct": false,
               "sections": {
@@ -581,18 +593,6 @@
                 "source_of_confusion": "Retry-обвязка вокруг LLM распространена, и её приписывают самому Structured Output.",
                 "if_it_were_true": "Тогда были бы видимые лишние генерации и задержки, но constrained decoding гарантирует формат с первого раза.",
                 "how_it_should_be": "Structured Output гарантирует формат грамматикой схемы (constrained decoding), а не повторными попытками."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Plain prompt «Ответь JSON» в системе даёт ту же гарантию формата, что и Structured Output, просто без лишнего синтаксиса.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Plain prompt не гарантирует ничего: модель может уйти в текст или сломать схему, давая 5-10% брака.",
-                "source_of_confusion": "На простых кейсах промпт часто срабатывает, создавая иллюзию надёжности.",
-                "if_it_were_true": "Тогда не было бы смысла в `json_schema`, но его ввели именно из-за ненадёжности голого промпта.",
-                "how_it_should_be": "Гарантию даёт только Structured Output; plain prompt — это best-effort без гарантий."
               },
               "label": "D",
               "order": 3
@@ -609,30 +609,6 @@
           "question_text": "Что гарантирует strict mode у OpenAI?",
           "options": [
             {
-              "text": "Strict mode гарантирует только валидность JSON-синтаксиса, но не соответствие типам и enums вашей схемы.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Strict как раз гарантирует и типы, и enums, и обязательные ключи — это полное соответствие схеме, а не только синтаксис.",
-                "source_of_confusion": "JSON mode даёт только синтаксис, и его свойства переносят на strict.",
-                "if_it_were_true": "Тогда strict ничем не отличался бы от JSON mode, но он добавлен именно ради гарантии схемы.",
-                "how_it_should_be": "Strict гарантирует структуру: ключи, типы, enums и отсутствие лишних полей."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "В strict mode опциональные поля можно не включать в `required` и не дублировать nullable-типом — компилятор грамматики достроит опциональность сам по умолчанию.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В strict схема должна быть полной: все properties в `required`, а опциональность выражается через nullable `[\"string\", \"null\"]`.",
-                "source_of_confusion": "В обычной JSON Schema опциональность — это отсутствие в `required`, что переносят на strict.",
-                "if_it_were_true": "Тогда частичная схема компилировалась бы в strict, но он требует все поля в `required`.",
-                "how_it_should_be": "Опциональность в strict делают через nullable-тип, а не через исключение поля из `required`."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`strict: true` включает constrained decoding по грамматике из вашей JSON Schema: гарантированы обязательные ключи, типы, enums и отсутствие лишних полей, а отказ модели приходит как `refusal`.",
               "correct": true,
               "sections": {
@@ -642,8 +618,8 @@
                 "edge_cases": "Ограничения: схема должна быть полной (все properties в `required`, опциональность через `[\"string\", \"null\"]`), поддерживается только ограниченное подмножество JSON Schema (без `oneOf`/`allOf` и внешних `$ref`), а первый запрос с новой схемой медленнее из-за компиляции грамматики.",
                 "related": "[[function-calling-interview#Q9]] JSON Schema для tool; [[function-calling-interview#Q10]] Structured Output vs JSON mode; [[function-calling-interview#Q24]] частые ошибки и лечение через strict."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Strict mode не накладывает ограничений на схему: `oneOf` на root, рекурсия и self-`$ref` работают свободно.",
@@ -653,6 +629,30 @@
                 "source_of_confusion": "Полная JSON Schema поддерживает эти конструкции, и это ожидают и в strict.",
                 "if_it_were_true": "Тогда компиляция грамматики приняла бы любую схему, но часть конструкций она явно отклоняет.",
                 "how_it_should_be": "Strict требует полную схему: все поля в `required`, `additionalProperties: false` и только поддерживаемое подмножество ключевых слов JSON Schema; рекурсия и self-`$ref` при этом не запрещены."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Strict mode гарантирует только валидность JSON-синтаксиса, но не соответствие типам и enums вашей схемы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Strict как раз гарантирует и типы, и enums, и обязательные ключи — это полное соответствие схеме, а не только синтаксис.",
+                "source_of_confusion": "JSON mode даёт только синтаксис, и его свойства переносят на strict.",
+                "if_it_were_true": "Тогда strict ничем не отличался бы от JSON mode, но он добавлен именно ради гарантии схемы.",
+                "how_it_should_be": "Strict гарантирует структуру: ключи, типы, enums и отсутствие лишних полей."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "В strict mode опциональные поля можно не включать в `required` и не дублировать nullable-типом — компилятор грамматики достроит опциональность сам по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В strict схема должна быть полной: все properties в `required`, а опциональность выражается через nullable `[\"string\", \"null\"]`.",
+                "source_of_confusion": "В обычной JSON Schema опциональность — это отсутствие в `required`, что переносят на strict.",
+                "if_it_were_true": "Тогда частичная схема компилировалась бы в strict, но он требует все поля в `required`.",
+                "how_it_should_be": "Опциональность в strict делают через nullable-тип, а не через исключение поля из `required`."
               },
               "label": "D",
               "order": 3
@@ -669,18 +669,6 @@
           "question_text": "Как получить structured output без `response_format` (Anthropic-way)?",
           "options": [
             {
-              "text": "У Anthropic есть прямой `response_format: {type: \"json_schema\"}`, как у OpenAI, поэтому никаких трюков не нужно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "У Anthropic такого поля нет; structured output получают через single-tool trick с форсированным `tool_choice`.",
-                "source_of_confusion": "OpenAI-фича `response_format` хорошо известна, и её ошибочно ждут и у Anthropic.",
-                "if_it_were_true": "Тогда не было бы single-tool обходного приёма, но он существует именно из-за отсутствия `response_format`.",
-                "how_it_should_be": "У Anthropic JSON по схеме получают через обязательный tool, а не через `response_format`."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Чтобы получить JSON через tool у Anthropic, его результат нужно сначала достать из `resp.content[0].input` как строку, а потом распарсить через `json.loads`, иначе поля придут плоским текстом.",
               "correct": false,
               "sections": {
@@ -688,6 +676,19 @@
                 "source_of_confusion": "У OpenAI аргументы строка, и эту деталь переносят на Anthropic.",
                 "if_it_were_true": "Тогда `json.loads` был бы обязателен, но он упадёт — `input` уже готовый dict.",
                 "how_it_should_be": "У Anthropic `input` возвращается dict-ом, готовым к использованию без парсинга."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Прямого `response_format: json_schema` у Anthropic нет, но работает трюк: объяви один обязательный tool и форсируй его через `tool_choice`. Модель обязана его вызвать, а `resp.content[0].input` — готовый dict по схеме.",
+              "correct": true,
+              "sections": {
+                "explanation": "Трюк работает потому, что `input_schema` tool-а фактически играет роль схемы ответа: форс через `tool_choice: {type: \"tool\", name: \"extract_customer\"}` делает вызов этого tool единственным допустимым выходом модели, и заполнение его аргументов и есть генерация нужного JSON. Сам tool исполнять не нужно — данные забирают прямо из `tool_use`-блока первого ответа, без multi-turn цикла.",
+                "example": "Например, tool `extract_customer` с `input_schema` `{name, email, required:[name,email]}` + форс через `tool_choice` гарантированно даёт `{name, email}` без отдельного structured-output API.",
+                "when_to_apply": "Этот паттерн применяют, когда нужен гарантированный JSON по схеме у Anthropic — extraction, классификация, заполнение полей.",
+                "edge_cases": "Подвох форс-режима: если у форсируемого tool все аргументы опциональны и есть enum, модель может выбрать «случайный» enum-вариант лишь бы заполнить — форсить стоит только осмысленные tools.",
+                "related": "[[function-calling-interview#Q6]] Anthropic Tool Use API; [[function-calling-interview#Q10]] Structured Output у OpenAI; [[function-calling-interview#Q14]] режимы tool_choice."
               },
               "label": "B",
               "order": 1
@@ -705,14 +706,13 @@
               "order": 2
             },
             {
-              "text": "Прямого `response_format: json_schema` у Anthropic нет, но работает трюк: объяви один обязательный tool и форсируй его через `tool_choice`. Модель обязана его вызвать, а `resp.content[0].input` — готовый dict по схеме.",
-              "correct": true,
+              "text": "У Anthropic есть прямой `response_format: {type: \"json_schema\"}`, как у OpenAI, поэтому никаких трюков не нужно.",
+              "correct": false,
               "sections": {
-                "explanation": "Трюк работает потому, что `input_schema` tool-а фактически играет роль схемы ответа: форс через `tool_choice: {type: \"tool\", name: \"extract_customer\"}` делает вызов этого tool единственным допустимым выходом модели, и заполнение его аргументов и есть генерация нужного JSON. Сам tool исполнять не нужно — данные забирают прямо из `tool_use`-блока первого ответа, без multi-turn цикла.",
-                "example": "Например, tool `extract_customer` с `input_schema` `{name, email, required:[name,email]}` + форс через `tool_choice` гарантированно даёт `{name, email}` без отдельного structured-output API.",
-                "when_to_apply": "Этот паттерн применяют, когда нужен гарантированный JSON по схеме у Anthropic — extraction, классификация, заполнение полей.",
-                "edge_cases": "Подвох форс-режима: если у форсируемого tool все аргументы опциональны и есть enum, модель может выбрать «случайный» enum-вариант лишь бы заполнить — форсить стоит только осмысленные tools.",
-                "related": "[[function-calling-interview#Q6]] Anthropic Tool Use API; [[function-calling-interview#Q10]] Structured Output у OpenAI; [[function-calling-interview#Q14]] режимы tool_choice."
+                "what_actually": "У Anthropic такого поля нет; structured output получают через single-tool trick с форсированным `tool_choice`.",
+                "source_of_confusion": "OpenAI-фича `response_format` хорошо известна, и её ошибочно ждут и у Anthropic.",
+                "if_it_were_true": "Тогда не было бы single-tool обходного приёма, но он существует именно из-за отсутствия `response_format`.",
+                "how_it_should_be": "У Anthropic JSON по схеме получают через обязательный tool, а не через `response_format`."
               },
               "label": "D",
               "order": 3
@@ -729,19 +729,6 @@
           "question_text": "Что такое parallel function calling?",
           "options": [
             {
-              "text": "LLM может в одном ответе вернуть сразу несколько `tool_calls`, если подзадачи независимы — например, погода в Москве и СПб даёт два вызова `get_weather` в одном ответе.",
-              "correct": true,
-              "sections": {
-                "explanation": "Модель сама замечает, что подзадачи независимы, и батчит вызовы в один ответ — это экономит целые round-trip-ы к LLM. Но выигрыш по latency случится, только если приложение реально исполнит вызовы конкурентно; при последовательном исполнении время останется суммой. У OpenAI эта возможность появилась вместе с переходом на `tools` в ноябре 2023.",
-                "example": "На «Какая погода в Москве и СПб?» модель отдаёт `tool_calls: [c1 city=Moscow, c2 city=SPb]`; приложение исполняет их параллельно (`asyncio.gather`) и возвращает оба `tool_result` за один следующий вызов.",
-                "when_to_apply": "Параллельность применяют, когда вызовы независимы; чтобы реально выиграть по времени, функции нужно запускать конкурентно, а не последовательно.",
-                "edge_cases": "Важно вернуть все `tool_result` в том же порядке id; у OpenAI можно выключить `parallel_tool_calls: false` для предсказуемости, у Anthropic это несколько `tool_use`-блоков из коробки.",
-                "related": "[[function-calling-interview#Q4]] multi-turn loop; [[function-calling-interview#Q14]] режимы tool_choice; [[function-calling-interview#Q30]] параллельный dispatch через asyncio.gather."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Parallel function calling означает, что один tool автоматически разбивается провайдером на несколько параллельных HTTP-запросов внутри одного вызова и склеивается обратно прозрачно для приложения.",
               "correct": false,
               "sections": {
@@ -750,8 +737,8 @@
                 "if_it_were_true": "Тогда разработчику не нужно было бы самому исполнять несколько функций, но он получает массив вызовов и гонит их сам.",
                 "how_it_should_be": "Parallel calls — это набор независимых вызовов в одном ответе, исполняемых приложением конкурентно."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "При параллельных вызовах достаточно вернуть только один `tool_result`, остальные модель достроит сама.",
@@ -762,8 +749,8 @@
                 "if_it_were_true": "Тогда можно было бы экономить на ответах, но API требует результат для каждого `tool_call`.",
                 "how_it_should_be": "Каждому из параллельных вызовов нужен свой `tool_result`, возвращённый за один следующий шаг."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Параллельные вызовы нельзя отключить — провайдер всегда исполняет их одновременно, если их несколько.",
@@ -773,6 +760,19 @@
                 "source_of_confusion": "Кажется, что параллельность — встроенное неотключаемое поведение модели.",
                 "if_it_were_true": "Тогда нельзя было бы добиться строго последовательного агента, но флаг `parallel_tool_calls: false` это позволяет.",
                 "how_it_should_be": "Параллельность управляема: `parallel_tool_calls: false` у OpenAI заставляет вызывать tools по одному."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "LLM может в одном ответе вернуть сразу несколько `tool_calls`, если подзадачи независимы — например, погода в Москве и СПб даёт два вызова `get_weather` в одном ответе.",
+              "correct": true,
+              "sections": {
+                "explanation": "Модель сама замечает, что подзадачи независимы, и батчит вызовы в один ответ — это экономит целые round-trip-ы к LLM. Но выигрыш по latency случится, только если приложение реально исполнит вызовы конкурентно; при последовательном исполнении время останется суммой. У OpenAI эта возможность появилась вместе с переходом на `tools` в ноябре 2023.",
+                "example": "На «Какая погода в Москве и СПб?» модель отдаёт `tool_calls: [c1 city=Moscow, c2 city=SPb]`; приложение исполняет их параллельно (`asyncio.gather`) и возвращает оба `tool_result` за один следующий вызов.",
+                "when_to_apply": "Параллельность применяют, когда вызовы независимы; чтобы реально выиграть по времени, функции нужно запускать конкурентно, а не последовательно.",
+                "edge_cases": "Важно вернуть все `tool_result` в том же порядке id; у OpenAI можно выключить `parallel_tool_calls: false` для предсказуемости, у Anthropic это несколько `tool_use`-блоков из коробки.",
+                "related": "[[function-calling-interview#Q4]] multi-turn loop; [[function-calling-interview#Q14]] режимы tool_choice; [[function-calling-interview#Q30]] параллельный dispatch через asyncio.gather."
               },
               "label": "D",
               "order": 3
@@ -789,16 +789,28 @@
           "question_text": "Какие режимы `tool_choice` существуют и зачем они?",
           "options": [
             {
-              "text": "`tool_choice: \"auto\"` гарантирует, что модель обязательно вызовет какой-нибудь tool в каждом ответе, а свободным текстом отвечает только тогда, когда список переданных tools полностью пуст.",
+              "text": "Режим `none` означает, что модель решит сама, нужны ли tools, как и `auto`.",
               "correct": false,
               "sections": {
-                "what_actually": "`auto` лишь разрешает модели решать; она может вообще не вызвать tool и ответить текстом — гарантию даёт `required`.",
-                "source_of_confusion": "Слово «auto» воспринимается как «автоматически вызовет tool».",
-                "if_it_were_true": "Тогда не было бы отдельного `required`, но его ввели именно потому, что `auto` вызов не гарантирует.",
-                "how_it_should_be": "Гарантированный вызов даёт `required`/`any`, а `auto` оставляет решение модели."
+                "what_actually": "`none` жёстко запрещает вызовы — модель обязана ответить текстом; решает сама она при `auto`.",
+                "source_of_confusion": "`auto` и `none` оба про «выбор», поэтому их смешивают.",
+                "if_it_were_true": "Тогда `none` и `auto` были бы эквивалентны, но `none` нужен именно чтобы запретить tools на финальном шаге.",
+                "how_it_should_be": "`none` запрещает любые вызовы, а свободу выбора даёт `auto` — это противоположные режимы."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "Форсировать конкретный tool можно только у OpenAI; у Anthropic такого режима нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У Anthropic тоже есть форс конкретного tool — `tool_choice: {type: \"tool\", name}`; режим есть у обоих провайдеров.",
+                "source_of_confusion": "Синтаксис отличается, и из-за этого кажется, что у Anthropic фичи нет.",
+                "if_it_were_true": "Тогда single-tool structured output у Anthropic был бы невозможен, но он строится именно на этом форсе.",
+                "how_it_should_be": "Форс конкретного tool есть и у Anthropic (`{type: \"tool\", name}`), и у OpenAI — отличается лишь синтаксис."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`tool_choice` контролирует, использует ли модель tools: `auto` — решает сама (default), `none` — никогда, `required`/`any` — обязательно хоть что-то, конкретный tool — форс именно его.",
@@ -810,29 +822,17 @@
                 "edge_cases": "Главная боль `auto`: модель может ответить текстом «я не знаю» вместо вызова tool; `required` форсит хотя бы один вызов, конкретный tool даёт гарантированный JSON.",
                 "related": "[[function-calling-interview#Q12]] structured output через форс tool; [[function-calling-interview#Q15]] forced tool call; [[function-calling-interview#Q13]] parallel function calling."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Форсировать конкретный tool можно только у OpenAI; у Anthropic такого режима нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "У Anthropic тоже есть форс конкретного tool — `tool_choice: {type: \"tool\", name}`; режим есть у обоих провайдеров.",
-                "source_of_confusion": "Синтаксис отличается, и из-за этого кажется, что у Anthropic фичи нет.",
-                "if_it_were_true": "Тогда single-tool structured output у Anthropic был бы невозможен, но он строится именно на этом форсе.",
-                "how_it_should_be": "Форс конкретного tool есть и у Anthropic (`{type: \"tool\", name}`), и у OpenAI — отличается лишь синтаксис."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Режим `none` означает, что модель решит сама, нужны ли tools, как и `auto`.",
+              "text": "`tool_choice: \"auto\"` гарантирует, что модель обязательно вызовет какой-нибудь tool в каждом ответе, а свободным текстом отвечает только тогда, когда список переданных tools полностью пуст.",
               "correct": false,
               "sections": {
-                "what_actually": "`none` жёстко запрещает вызовы — модель обязана ответить текстом; решает сама она при `auto`.",
-                "source_of_confusion": "`auto` и `none` оба про «выбор», поэтому их смешивают.",
-                "if_it_were_true": "Тогда `none` и `auto` были бы эквивалентны, но `none` нужен именно чтобы запретить tools на финальном шаге.",
-                "how_it_should_be": "`none` запрещает любые вызовы, а свободу выбора даёт `auto` — это противоположные режимы."
+                "what_actually": "`auto` лишь разрешает модели решать; она может вообще не вызвать tool и ответить текстом — гарантию даёт `required`.",
+                "source_of_confusion": "Слово «auto» воспринимается как «автоматически вызовет tool».",
+                "if_it_were_true": "Тогда не было бы отдельного `required`, но его ввели именно потому, что `auto` вызов не гарантирует.",
+                "how_it_should_be": "Гарантированный вызов даёт `required`/`any`, а `auto` оставляет решение модели."
               },
               "label": "D",
               "order": 3
@@ -849,13 +849,14 @@
           "question_text": "Как и когда применять forced tool call?",
           "options": [
             {
-              "text": "Форсировать tool безопасно всегда: модель просто заполнит аргументы корректными значениями независимо от контекста, потому что форс отключает свободную генерацию и включает строгую валидацию полей.",
-              "correct": false,
+              "text": "Форс tool нужен для structured extraction (единственный обязательный tool), для router-агента (первый шаг обязан выбрать категорию через `required`) и для отладки конкретного tool.",
+              "correct": true,
               "sections": {
-                "what_actually": "Если у форсируемого tool аргументы опциональны и есть enum, модель может выбрать случайный enum лишь бы заполнить — это риск.",
-                "source_of_confusion": "Кажется, что форс гарантирует не только вызов, но и осмысленность аргументов.",
-                "if_it_were_true": "Тогда не было бы предупреждения «форсить только осмысленные tools», но именно из-за случайных enum-значений оно есть.",
-                "how_it_should_be": "Форс гарантирует вызов, но не качество аргументов; при бедном контексте модель может заполнить enum наугад."
+                "explanation": "Общее у этих кейсов то, что вызов tool здесь — часть контракта пайплайна, а не опция: форс убирает целый класс сбоев «модель ответила свободным текстом мимо обработчика». Structured extraction строится на единственном обязательном tool (см. Q12), а в роутере ставят `tool_choice: required`, чтобы модель гарантированно выбрала ветку. При этом гарантируется только сам факт вызова, но не качество аргументов, поэтому форс осмыслен лишь там, где модель видит достаточно контекста для их заполнения.",
+                "example": "Например, в роутере ставят `tool_choice: required`, чтобы модель гарантированно выбрала ветку обработки, а не ответила свободным текстом мимо пайплайна.",
+                "when_to_apply": "Форсирование применяют там, где tool-вызов обязателен по дизайну: extraction, классификация, первый шаг агента, отладка конкретной функции.",
+                "edge_cases": "Подводный камень: если форсить tool, у которого все аргументы опциональны и есть enum, модель может выбрать «случайный» enum-вариант лишь бы заполнить — форсить стоит только осмысленные tools с достаточным контекстом.",
+                "related": "[[function-calling-interview#Q14]] режимы tool_choice; [[function-calling-interview#Q12]] structured output через форс; [[function-calling-interview#Q25]] дизайн tool definitions."
               },
               "label": "A",
               "order": 0
@@ -873,14 +874,13 @@
               "order": 1
             },
             {
-              "text": "Форс tool нужен для structured extraction (единственный обязательный tool), для router-агента (первый шаг обязан выбрать категорию через `required`) и для отладки конкретного tool.",
-              "correct": true,
+              "text": "Форсировать tool безопасно всегда: модель просто заполнит аргументы корректными значениями независимо от контекста, потому что форс отключает свободную генерацию и включает строгую валидацию полей.",
+              "correct": false,
               "sections": {
-                "explanation": "Общее у этих кейсов то, что вызов tool здесь — часть контракта пайплайна, а не опция: форс убирает целый класс сбоев «модель ответила свободным текстом мимо обработчика». Structured extraction строится на единственном обязательном tool (см. Q12), а в роутере ставят `tool_choice: required`, чтобы модель гарантированно выбрала ветку. При этом гарантируется только сам факт вызова, но не качество аргументов, поэтому форс осмыслен лишь там, где модель видит достаточно контекста для их заполнения.",
-                "example": "Например, в роутере ставят `tool_choice: required`, чтобы модель гарантированно выбрала ветку обработки, а не ответила свободным текстом мимо пайплайна.",
-                "when_to_apply": "Форсирование применяют там, где tool-вызов обязателен по дизайну: extraction, классификация, первый шаг агента, отладка конкретной функции.",
-                "edge_cases": "Подводный камень: если форсить tool, у которого все аргументы опциональны и есть enum, модель может выбрать «случайный» enum-вариант лишь бы заполнить — форсить стоит только осмысленные tools с достаточным контекстом.",
-                "related": "[[function-calling-interview#Q14]] режимы tool_choice; [[function-calling-interview#Q12]] structured output через форс; [[function-calling-interview#Q25]] дизайн tool definitions."
+                "what_actually": "Если у форсируемого tool аргументы опциональны и есть enum, модель может выбрать случайный enum лишь бы заполнить — это риск.",
+                "source_of_confusion": "Кажется, что форс гарантирует не только вызов, но и осмысленность аргументов.",
+                "if_it_were_true": "Тогда не было бы предупреждения «форсить только осмысленные tools», но именно из-за случайных enum-значений оно есть.",
+                "how_it_should_be": "Форс гарантирует вызов, но не качество аргументов; при бедном контексте модель может заполнить enum наугад."
               },
               "label": "C",
               "order": 2
@@ -909,6 +909,19 @@
           "question_text": "Что делает LangChain `bind_tools()` под капотом?",
           "options": [
             {
+              "text": "`bind_tools` берёт docstring как `description`, type hints + Pydantic как `parameters`, передаёт правильный shape нужному провайдеру и парсит ответ в единый формат `tool_calls: [{name, args, id}]`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Под капотом `bind_tools` генерирует JSON Schema из сигнатуры: docstring становится `description`, а type hints и Pydantic-модели — `parameters`. Важное следствие: docstring перестаёт быть «комментарием для людей» — именно его модель читает, решая, когда вызывать функцию, поэтому он обязан быть информативным. Shape под OpenAI/Anthropic/Gemini абстрагирован, а ответ нормализуется в единый `tool_calls: [{name, args, id}]` независимо от провайдера. Сам цикл вызовов `bind_tools` не крутит: исполнение дают `ToolNode` (LangGraph), `AgentExecutor`, `create_react_agent` или ручной dispatch.",
+                "example": "Например, для `@tool def get_weather(city: str, units: str = \"metric\")` с docstring «Returns current weather» `bind_tools([get_weather])` соберёт схему сам, а `resp.tool_calls` придёт уже распарсенным списком.",
+                "when_to_apply": "Эту абстракцию используют, чтобы не писать JSON Schema руками и не дублировать код под разных провайдеров — дальше комбинируют с `ToolNode`/`create_react_agent`.",
+                "edge_cases": "Источник схемы — сигнатура и docstring: если у функции нет type hints или docstring, схема выйдет бедной, и модель будет хуже понимать tool.",
+                "related": "[[function-calling-interview#Q17]] LlamaIndex FunctionTool; [[function-calling-interview#Q18]] Vercel AI tool(); [[function-calling-interview#Q19]] Pydantic/Zod для схем."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "`bind_tools` сам исполняет функции и возвращает их результат — разработчику не нужен dispatch или loop.",
               "correct": false,
               "sections": {
@@ -916,18 +929,6 @@
                 "source_of_confusion": "В Vercel AI `execute` встроен в tool, и это поведение переносят на LangChain.",
                 "if_it_were_true": "Тогда `resp.tool_calls` уже содержал бы результаты, но он содержит лишь предложенные вызовы.",
                 "how_it_should_be": "`bind_tools` готовит и парсит вызовы; исполнение остаётся за отдельным циклом или dispatch."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`bind_tools` требует, чтобы вы вручную написали JSON Schema, и просто прокидывает её провайдеру без изменений.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`bind_tools` генерирует JSON Schema автоматически из type hints + Pydantic; руками её писать не нужно.",
-                "source_of_confusion": "Raw-API требует ручную схему, и это ожидание переносят на абстракцию LangChain.",
-                "if_it_were_true": "Тогда смысл `bind_tools` терялся бы, но его ценность как раз в авто-генерации схемы из сигнатуры.",
-                "how_it_should_be": "Схему `bind_tools` строит из type hints и docstring сам, освобождая от ручного JSON Schema."
               },
               "label": "B",
               "order": 1
@@ -945,14 +946,13 @@
               "order": 2
             },
             {
-              "text": "`bind_tools` берёт docstring как `description`, type hints + Pydantic как `parameters`, передаёт правильный shape нужному провайдеру и парсит ответ в единый формат `tool_calls: [{name, args, id}]`.",
-              "correct": true,
+              "text": "`bind_tools` требует, чтобы вы вручную написали JSON Schema, и просто прокидывает её провайдеру без изменений.",
+              "correct": false,
               "sections": {
-                "explanation": "Под капотом `bind_tools` генерирует JSON Schema из сигнатуры: docstring становится `description`, а type hints и Pydantic-модели — `parameters`. Важное следствие: docstring перестаёт быть «комментарием для людей» — именно его модель читает, решая, когда вызывать функцию, поэтому он обязан быть информативным. Shape под OpenAI/Anthropic/Gemini абстрагирован, а ответ нормализуется в единый `tool_calls: [{name, args, id}]` независимо от провайдера. Сам цикл вызовов `bind_tools` не крутит: исполнение дают `ToolNode` (LangGraph), `AgentExecutor`, `create_react_agent` или ручной dispatch.",
-                "example": "Например, для `@tool def get_weather(city: str, units: str = \"metric\")` с docstring «Returns current weather» `bind_tools([get_weather])` соберёт схему сам, а `resp.tool_calls` придёт уже распарсенным списком.",
-                "when_to_apply": "Эту абстракцию используют, чтобы не писать JSON Schema руками и не дублировать код под разных провайдеров — дальше комбинируют с `ToolNode`/`create_react_agent`.",
-                "edge_cases": "Источник схемы — сигнатура и docstring: если у функции нет type hints или docstring, схема выйдет бедной, и модель будет хуже понимать tool.",
-                "related": "[[function-calling-interview#Q17]] LlamaIndex FunctionTool; [[function-calling-interview#Q18]] Vercel AI tool(); [[function-calling-interview#Q19]] Pydantic/Zod для схем."
+                "what_actually": "`bind_tools` генерирует JSON Schema автоматически из type hints + Pydantic; руками её писать не нужно.",
+                "source_of_confusion": "Raw-API требует ручную схему, и это ожидание переносят на абстракцию LangChain.",
+                "if_it_were_true": "Тогда смысл `bind_tools` терялся бы, но его ценность как раз в авто-генерации схемы из сигнатуры.",
+                "how_it_should_be": "Схему `bind_tools` строит из type hints и docstring сам, освобождая от ручного JSON Schema."
               },
               "label": "D",
               "order": 3
@@ -969,29 +969,16 @@
           "question_text": "Что такое LlamaIndex `FunctionTool` и для чего он?",
           "options": [
             {
-              "text": "`FunctionTool` — базовый примитив LlamaIndex для агентов: оборачивает Python-функцию, генерирует schema из её сигнатуры (или из явной Pydantic-модели) и поддерживает sync/async.",
-              "correct": true,
+              "text": "`FunctionTool` поддерживает только синхронные функции, async-функции с ним использовать нельзя.",
+              "correct": false,
               "sections": {
-                "explanation": "Это аналог LangChain `bind_tools` в экосистеме LlamaIndex: та же идея «функция → схема из сигнатуры», но сам фреймворк заточен под RAG, поэтому tools здесь часто соседствуют с retrieval-движком. Схема генерируется автоматически из сигнатуры функции, а явную Pydantic-модель передают опционально, когда типов недостаточно. Обёрнутый tool отдают готовым агентам вроде `ReActAgent`, который сам крутит loop: `agent.chat(...)` проходит весь цикл «вызов → результат → финальный ответ» без ручного dispatch.",
-                "example": "Например, `tool = FunctionTool.from_defaults(fn=get_weather)` затем `agent = ReActAgent.from_tools([tool], llm=OpenAI(...))` — и `agent.chat(\"Погода в Москве?\")` сам гонит ReAct-цикл с этим tool.",
-                "when_to_apply": "Используют, когда строят агента в экосистеме LlamaIndex, которая сильнее заточена под RAG, но `FunctionTool` — её базовый строительный блок для tool use.",
-                "edge_cases": "Схема выводится из сигнатуры: если типы неполные, лучше передать явную Pydantic-модель, иначе модель получит недостаточно подсказок об аргументах.",
-                "related": "[[function-calling-interview#Q16]] LangChain bind_tools; [[function-calling-interview#Q18]] Vercel AI tool(); [[function-calling-interview#Q19]] Pydantic для схем."
+                "what_actually": "`FunctionTool` поддерживает и sync, и async — это часть его базовых возможностей.",
+                "source_of_confusion": "Простые примеры обычно синхронные, отсюда вывод об отсутствии async.",
+                "if_it_were_true": "Тогда async-tools в LlamaIndex-агенте были бы невозможны, но они поддерживаются.",
+                "how_it_should_be": "`FunctionTool` работает и с sync, и с async функциями."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "`FunctionTool` — это компонент только для RAG-поиска по документам через retrieval-индекс; обычные Python-функции вроде `get_weather` он оборачивать и исполнять не умеет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`FunctionTool` оборачивает произвольную Python-функцию для tool use; RAG — отдельная сильная сторона LlamaIndex, но не суть `FunctionTool`.",
-                "source_of_confusion": "LlamaIndex ассоциируется с RAG, поэтому все её примитивы кажутся про поиск.",
-                "if_it_were_true": "Тогда нельзя было бы дать агенту `get_weather`, но `FunctionTool.from_defaults(fn=...)` именно для этого.",
-                "how_it_should_be": "`FunctionTool` — это обёртка над любой функцией для агента, а не RAG-специфичный компонент."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "`FunctionTool` всегда требует явную Pydantic-модель и не умеет выводить схему из сигнатуры функции.",
@@ -1002,17 +989,30 @@
                 "if_it_were_true": "Тогда `from_defaults(fn=get_weather)` без модели не работал бы, но он строит схему из типов сам.",
                 "how_it_should_be": "Схема выводится из сигнатуры автоматически; явная Pydantic-модель опциональна."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`FunctionTool` — базовый примитив LlamaIndex для агентов: оборачивает Python-функцию, генерирует schema из её сигнатуры (или из явной Pydantic-модели) и поддерживает sync/async.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это аналог LangChain `bind_tools` в экосистеме LlamaIndex: та же идея «функция → схема из сигнатуры», но сам фреймворк заточен под RAG, поэтому tools здесь часто соседствуют с retrieval-движком. Схема генерируется автоматически из сигнатуры функции, а явную Pydantic-модель передают опционально, когда типов недостаточно. Обёрнутый tool отдают готовым агентам вроде `ReActAgent`, который сам крутит loop: `agent.chat(...)` проходит весь цикл «вызов → результат → финальный ответ» без ручного dispatch.",
+                "example": "Например, `tool = FunctionTool.from_defaults(fn=get_weather)` затем `agent = ReActAgent.from_tools([tool], llm=OpenAI(...))` — и `agent.chat(\"Погода в Москве?\")` сам гонит ReAct-цикл с этим tool.",
+                "when_to_apply": "Используют, когда строят агента в экосистеме LlamaIndex, которая сильнее заточена под RAG, но `FunctionTool` — её базовый строительный блок для tool use.",
+                "edge_cases": "Схема выводится из сигнатуры: если типы неполные, лучше передать явную Pydantic-модель, иначе модель получит недостаточно подсказок об аргументах.",
+                "related": "[[function-calling-interview#Q16]] LangChain bind_tools; [[function-calling-interview#Q18]] Vercel AI tool(); [[function-calling-interview#Q19]] Pydantic для схем."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`FunctionTool` поддерживает только синхронные функции, async-функции с ним использовать нельзя.",
+              "text": "`FunctionTool` — это компонент только для RAG-поиска по документам через retrieval-индекс; обычные Python-функции вроде `get_weather` он оборачивать и исполнять не умеет.",
               "correct": false,
               "sections": {
-                "what_actually": "`FunctionTool` поддерживает и sync, и async — это часть его базовых возможностей.",
-                "source_of_confusion": "Простые примеры обычно синхронные, отсюда вывод об отсутствии async.",
-                "if_it_were_true": "Тогда async-tools в LlamaIndex-агенте были бы невозможны, но они поддерживаются.",
-                "how_it_should_be": "`FunctionTool` работает и с sync, и с async функциями."
+                "what_actually": "`FunctionTool` оборачивает произвольную Python-функцию для tool use; RAG — отдельная сильная сторона LlamaIndex, но не суть `FunctionTool`.",
+                "source_of_confusion": "LlamaIndex ассоциируется с RAG, поэтому все её примитивы кажутся про поиск.",
+                "if_it_were_true": "Тогда нельзя было бы дать агенту `get_weather`, но `FunctionTool.from_defaults(fn=...)` именно для этого.",
+                "how_it_should_be": "`FunctionTool` — это обёртка над любой функцией для агента, а не RAG-специфичный компонент."
               },
               "label": "D",
               "order": 3
@@ -1041,6 +1041,18 @@
               "order": 0
             },
             {
+              "text": "В Vercel AI SDK нет встроенной защиты от бесконечного цикла — лимит шагов нужно писать вручную.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Защита встроена: `maxSteps` ограничивает число шагов loop прямо в вызове `generateText`.",
+                "source_of_confusion": "Во многих ручных циклах лимит пишут сами, отсюда вывод об отсутствии встроенного.",
+                "if_it_were_true": "Тогда агент на Vercel AI мог бы зациклиться по умолчанию, но `maxSteps` это предотвращает.",
+                "how_it_should_be": "`maxSteps` — встроенный параметр защиты от infinite loop в Vercel AI SDK."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "В Vercel AI SDK `execute` встроен прямо в tool, схема описывается через Zod (`z.object({...})`), а SDK сам гонит loop с защитой `maxSteps` — это убирает ручной dispatch.",
               "correct": true,
               "sections": {
@@ -1050,8 +1062,8 @@
                 "edge_cases": "Минус — привязка к стилю Vercel AI SDK (хотя сам SDK работает где угодно); плюс — `execute` и схема живут рядом, source of truth не расползается.",
                 "related": "[[function-calling-interview#Q16]] LangChain bind_tools; [[function-calling-interview#Q19]] Zod/Pydantic для схем; [[function-calling-interview#Q27]] maxSteps против infinite loop."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Схема параметров в Vercel AI описывается сырым JSON Schema, а не через Zod.",
@@ -1061,18 +1073,6 @@
                 "source_of_confusion": "Raw JSON Schema привычен по OpenAI-примерам, и его ожидают везде.",
                 "if_it_were_true": "Тогда не было бы IDE-completion на `({city, units})`, но именно Zod его обеспечивает.",
                 "how_it_should_be": "Параметры описывают через Zod-схему, дающую и валидацию, и типы."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "В Vercel AI SDK нет встроенной защиты от бесконечного цикла — лимит шагов нужно писать вручную.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Защита встроена: `maxSteps` ограничивает число шагов loop прямо в вызове `generateText`.",
-                "source_of_confusion": "Во многих ручных циклах лимит пишут сами, отсюда вывод об отсутствии встроенного.",
-                "if_it_were_true": "Тогда агент на Vercel AI мог бы зациклиться по умолчанию, но `maxSteps` это предотвращает.",
-                "how_it_should_be": "`maxSteps` — встроенный параметр защиты от infinite loop в Vercel AI SDK."
               },
               "label": "D",
               "order": 3
@@ -1161,13 +1161,14 @@
               "order": 0
             },
             {
-              "text": "`MCP` — это формат внутри одной LLM-сессии, а function calling — протокол между приложением и внешним сервером.",
-              "correct": false,
+              "text": "`MCP` (Model Context Protocol, Anthropic, ноябрь 2024) — стандарт переносимого описания tools. Function calling — LLM-side контракт внутри сессии; MCP — app-side коннектор между клиентом-агентом и MCP-сервером.",
+              "correct": true,
               "sections": {
-                "what_actually": "Всё наоборот: function calling — LLM-side контракт сессии, а MCP — app-side протокол между агентом и сервером.",
-                "source_of_confusion": "Оба про «tools», и роли легко перепутать местами.",
-                "if_it_were_true": "Тогда MCP-сервер жил бы внутри запроса к модели, но он отдельный процесс, к которому ходит host.",
-                "how_it_should_be": "Function calling — контракт сессии; MCP — внешний протокол клиент-сервер поверх него."
+                "explanation": "MCP описывает не только tools, но и resources/prompts. Разделение ролей здесь принципиально: function calling отвечает на вопрос «как модель просит вызов» внутри сессии конкретного провайдера, а MCP — «откуда агент берёт tools и как до них достучаться». До MCP каждая интеграция писалась под формат конкретного агента; стандарт сделал tools переносимыми, как плагины — сервер пишется один раз и подключается к любому MCP-клиенту.",
+                "example": "Поток: host подключается к MCP-серверам, получает их `list_tools`, конвертирует в формат function calling провайдера; когда LLM вернула `tool_use`, host через MCP зовёт `tools/call` на нужном сервере и возвращает результат как `tool_result`.",
+                "when_to_apply": "MCP применяют, чтобы один сервер (filesystem, github, postgres) работал сразу в `Claude Desktop`, `Cursor`, `Windsurf` — все они конвертируют `list_tools` в нативный function calling.",
+                "edge_cases": "Ключевое разделение: function calling — транспорт внутри LLM-сессии, MCP — протокол между агентом и сервером; MCP не заменяет function calling, а стоит слоем над ним.",
+                "related": "[[function-calling-interview#Q3]] эволюция и появление MCP; [[function-calling-interview#Q21]] Assistants tools vs raw; [[function-calling-interview#Q1]] что такое function calling."
               },
               "label": "B",
               "order": 1
@@ -1185,14 +1186,13 @@
               "order": 2
             },
             {
-              "text": "`MCP` (Model Context Protocol, Anthropic, ноябрь 2024) — стандарт переносимого описания tools. Function calling — LLM-side контракт внутри сессии; MCP — app-side коннектор между клиентом-агентом и MCP-сервером.",
-              "correct": true,
+              "text": "`MCP` — это формат внутри одной LLM-сессии, а function calling — протокол между приложением и внешним сервером.",
+              "correct": false,
               "sections": {
-                "explanation": "MCP описывает не только tools, но и resources/prompts. Разделение ролей здесь принципиально: function calling отвечает на вопрос «как модель просит вызов» внутри сессии конкретного провайдера, а MCP — «откуда агент берёт tools и как до них достучаться». До MCP каждая интеграция писалась под формат конкретного агента; стандарт сделал tools переносимыми, как плагины — сервер пишется один раз и подключается к любому MCP-клиенту.",
-                "example": "Поток: host подключается к MCP-серверам, получает их `list_tools`, конвертирует в формат function calling провайдера; когда LLM вернула `tool_use`, host через MCP зовёт `tools/call` на нужном сервере и возвращает результат как `tool_result`.",
-                "when_to_apply": "MCP применяют, чтобы один сервер (filesystem, github, postgres) работал сразу в `Claude Desktop`, `Cursor`, `Windsurf` — все они конвертируют `list_tools` в нативный function calling.",
-                "edge_cases": "Ключевое разделение: function calling — транспорт внутри LLM-сессии, MCP — протокол между агентом и сервером; MCP не заменяет function calling, а стоит слоем над ним.",
-                "related": "[[function-calling-interview#Q3]] эволюция и появление MCP; [[function-calling-interview#Q21]] Assistants tools vs raw; [[function-calling-interview#Q1]] что такое function calling."
+                "what_actually": "Всё наоборот: function calling — LLM-side контракт сессии, а MCP — app-side протокол между агентом и сервером.",
+                "source_of_confusion": "Оба про «tools», и роли легко перепутать местами.",
+                "if_it_were_true": "Тогда MCP-сервер жил бы внутри запроса к модели, но он отдельный процесс, к которому ходит host.",
+                "how_it_should_be": "Function calling — контракт сессии; MCP — внешний протокол клиент-сервер поверх него."
               },
               "label": "D",
               "order": 3
@@ -1222,18 +1222,6 @@
               "order": 0
             },
             {
-              "text": "Assistants tools и raw function calling идентичны: разница только в имени эндпоинта и URL, набор built-in tools и возможностей у обоих ровно одинаков.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Assistants добавляет server-side tools (`code_interpreter`, `file_search`) и thread state, которых в raw Chat Completions нет.",
-                "source_of_confusion": "Оба про tools у OpenAI, поэтому кажутся одним и тем же с другим URL.",
-                "if_it_were_true": "Тогда `code_interpreter` работал бы и в raw Chat Completions, но он доступен только в Assistants/Responses.",
-                "how_it_should_be": "Assistants даёт built-in server-side tools и хранение thread, чего raw function calling не имеет."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`code_interpreter` в Assistants — это просто описание функции, которую исполняет ваше приложение, как любой обычный tool.",
               "correct": false,
               "sections": {
@@ -1242,8 +1230,8 @@
                 "if_it_were_true": "Тогда вам пришлось бы поднимать sandbox самому, но в Assistants его предоставляет OpenAI.",
                 "how_it_should_be": "`code_interpreter` — server-side: OpenAI сама исполняет Python, в отличие от вашего обычного function-tool."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "У Anthropic есть прямой встроенный аналог `code_interpreter` и `file_search`, идентичный Assistants.",
@@ -1253,6 +1241,18 @@
                 "source_of_confusion": "Anthropic тоже предлагает мощные tools, отсюда вывод о полном паритете.",
                 "if_it_were_true": "Тогда RAG и исполнение кода у Anthropic шли бы из коробки как у OpenAI, но их обычно поднимают сами.",
                 "how_it_should_be": "Прямого аналога `code_interpreter`/`file_search` у Anthropic нет; его tools другие и более клиент-контролируемые."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Assistants tools и raw function calling идентичны: разница только в имени эндпоинта и URL, набор built-in tools и возможностей у обоих ровно одинаков.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Assistants добавляет server-side tools (`code_interpreter`, `file_search`) и thread state, которых в raw Chat Completions нет.",
+                "source_of_confusion": "Оба про tools у OpenAI, поэтому кажутся одним и тем же с другим URL.",
+                "if_it_were_true": "Тогда `code_interpreter` работал бы и в raw Chat Completions, но он доступен только в Assistants/Responses.",
+                "how_it_should_be": "Assistants даёт built-in server-side tools и хранение thread, чего raw function calling не имеет."
               },
               "label": "D",
               "order": 3
@@ -1269,6 +1269,30 @@
           "question_text": "Как оптимизировать token cost от tool definitions?",
           "options": [
             {
+              "text": "Самый надёжный способ сократить токены — передавать все доступные tools сразу, чтобы модель точно выбрала нужный.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: передавать все tools раздувает контекст; правильнее фильтровать по релевантности через router-агент.",
+                "source_of_confusion": "Кажется, что чем больше выбор, тем выше точность и меньше повторных запросов.",
+                "if_it_were_true": "Тогда 30+ tools на запрос были бы оптимальны, но они и есть anti-pattern по токенам и точности.",
+                "how_it_should_be": "Токены экономят фильтрацией tools по контексту, а не передачей всего набора сразу."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Динамически меняющиеся descriptions помогают экономить токены, потому что под каждый запрос остаётся только нужный текст.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Динамические descriptions ломают prompt caching: меняющийся префикс не попадает в кэш, и токены не экономятся.",
+                "source_of_confusion": "Кажется, что «адаптивный» текст короче и потому дешевле.",
+                "if_it_were_true": "Тогда кэш работал бы при каждом изменении, но он строится на стабильном префиксе и тут промахивается.",
+                "how_it_should_be": "Для кэша descriptions держат статическими; динамика как раз убивает экономию."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "Tool definitions передаются провайдеру один раз при инициализации сессии, регистрируются на его стороне и не учитываются в токенах последующих запросов loop.",
               "correct": false,
               "sections": {
@@ -1277,8 +1301,8 @@
                 "if_it_were_true": "Тогда не было бы смысла кэшировать tool definitions, но кэш нужен именно потому, что они летят каждый раз.",
                 "how_it_should_be": "Tool definitions входят в контекст каждого запроса и стоят токенов на каждом шаге."
               },
-              "label": "A",
-              "order": 0
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Tool definitions летят в каждый запрос как системный контекст и легко съедают 2-5k токенов; режут их фильтрацией tools по контексту, кэшем и удалением мёртвых.",
@@ -1289,30 +1313,6 @@
                 "when_to_apply": "Оптимизацию применяют в production-агентах с длинными циклами, где tool-набор большой и повторяется на каждой итерации loop.",
                 "edge_cases": "Кэширование различается: OpenAI кэширует префикс автоматически (если повторяется ≥1024 токенов), Anthropic — явным `cache_control`; динамические descriptions ломают кэш, поэтому их держат статическими.",
                 "related": "[[function-calling-interview#Q23]] Anthropic prompt caching + tools; [[function-calling-interview#Q25]] дизайн tool definitions; [[function-calling-interview#Q28]] anti-pattern «слишком много tools»."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Самый надёжный способ сократить токены — передавать все доступные tools сразу, чтобы модель точно выбрала нужный.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: передавать все tools раздувает контекст; правильнее фильтровать по релевантности через router-агент.",
-                "source_of_confusion": "Кажется, что чем больше выбор, тем выше точность и меньше повторных запросов.",
-                "if_it_were_true": "Тогда 30+ tools на запрос были бы оптимальны, но они и есть anti-pattern по токенам и точности.",
-                "how_it_should_be": "Токены экономят фильтрацией tools по контексту, а не передачей всего набора сразу."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Динамически меняющиеся descriptions помогают экономить токены, потому что под каждый запрос остаётся только нужный текст.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Динамические descriptions ломают prompt caching: меняющийся префикс не попадает в кэш, и токены не экономятся.",
-                "source_of_confusion": "Кажется, что «адаптивный» текст короче и потому дешевле.",
-                "if_it_were_true": "Тогда кэш работал бы при каждом изменении, но он строится на стабильном префиксе и тут промахивается.",
-                "how_it_should_be": "Для кэша descriptions держат статическими; динамика как раз убивает экономию."
               },
               "label": "D",
               "order": 3
@@ -1341,18 +1341,6 @@
               "order": 0
             },
             {
-              "text": "Cached tokens у Anthropic стоят столько же, сколько обычные input-токены, экономия идёт только на латентности.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Cached input-токены стоят ~10% от обычных — экономия в первую очередь денежная, а не только по времени.",
-                "source_of_confusion": "Кажется, что кэш ускоряет, но цену не меняет.",
-                "if_it_were_true": "Тогда не было бы смысла считать экономию 5-10x на токенах, но именно цена cached-токенов её даёт.",
-                "how_it_should_be": "Cached tokens дешевле (~10%), поэтому кэш экономит и деньги, и время."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Anthropic кэширует tool definitions и system prompts явно, через `cache_control: {type: \"ephemeral\"}`; cached tokens в окне стоят ~10% от обычных input-токенов.",
               "correct": true,
               "sections": {
@@ -1362,8 +1350,8 @@
                 "edge_cases": "Правило: `cache_control` ставится на последний элемент кэшируемого блока (например, последний tool в массиве) — кэш строится префиксом, охватывая всё до и включая отмеченный элемент.",
                 "related": "[[function-calling-interview#Q22]] оптимизация token cost; [[function-calling-interview#Q6]] Anthropic Tool Use API; [[function-calling-interview#Q28]] контроль стоимости агента."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`cache_control` ставится на первый элемент кэшируемого блока, и кэшируется всё, что идёт после него.",
@@ -1373,6 +1361,18 @@
                 "source_of_confusion": "Интуитивно кажется, что маркер в начале «открывает» кэш для последующего.",
                 "if_it_were_true": "Тогда отметив первый tool, вы закэшировали бы хвост массива, но кэшируется именно префикс до маркера.",
                 "how_it_should_be": "Маркер ставится на последний элемент кэшируемого префикса, а не на первый."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Cached tokens у Anthropic стоят столько же, сколько обычные input-токены, экономия идёт только на латентности.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Cached input-токены стоят ~10% от обычных — экономия в первую очередь денежная, а не только по времени.",
+                "source_of_confusion": "Кажется, что кэш ускоряет, но цену не меняет.",
+                "if_it_were_true": "Тогда не было бы смысла считать экономию 5-10x на токенах, но именно цена cached-токенов её даёт.",
+                "how_it_should_be": "Cached tokens дешевле (~10%), поэтому кэш экономит и деньги, и время."
               },
               "label": "D",
               "order": 3
@@ -1389,13 +1389,14 @@
           "question_text": "Какие распространённые ошибки бывают (hallucinated functions, wrong types, missing tool_result)?",
           "options": [
             {
-              "text": "Hallucinated function name — это когда tool отработал и вернул синтаксически верный JSON, но с неверными данными внутри; лечится повтором запроса к той же функции.",
-              "correct": false,
+              "text": "Типичные: hallucinated function name (`getWeather` вместо `get_weather`), wrong arg types (`\"100\"` вместо `100`) и missing tool_result для какого-то `tool_use`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Hallucinated function name — это вызов несуществующего имени (`getWeather` вместо `get_weather`), а не неверные данные tool.",
-                "source_of_confusion": "Слово «hallucinated» ассоциируется с неверным контентом ответа.",
-                "if_it_were_true": "Тогда лечением был бы retry результата, но реально нужен `strict` и проверка по белому списку имён.",
-                "how_it_should_be": "Это вызов несуществующей функции; лечится строгими именами, `strict` и валидацией по списку tools."
+                "explanation": "Полезно держать классификацию: модель «придумала» вызов (не то имя или тип аргумента), приложение сломало контракт истории (потерян `tool_result` или сгенерирован новый id вместо копии), либо код не учёл различия провайдеров (string vs dict). Лечение по симптому: hallucinated name лечат `strict:true` и белым списком имён; wrong arg types — strict плюс Pydantic/Zod; missing tool_result — для каждого `tool_use` обязан быть `tool_result` с тем же id, иначе API-ошибка или галлюцинация. Карта «симптом → лечение» ускоряет отладку: по симптому сразу видно, на чьей стороне дефект — модели, приложения или интеграции.",
+                "example": "Например, после миграции с Anthropic на OpenAI ловят `TypeError`, потому что забыли: у OpenAI `arguments` — строка, а у Anthropic `input` — dict; а enum case-sensitive даёт `\"Damaged\"` вместо `\"damaged\"`.",
+                "when_to_apply": "Этот чек-лист применяют при отладке tool-пайплайна: большинство багов — это id-несоответствие, тип аргумента или забытый результат.",
+                "edge_cases": "Edge-cases: `tool_use_id not found` при генерации нового id вместо копирования; `email = None` в downstream, если в strict не объявить nullable `[\"string\", \"null\"]`; модель «забыла» про tools и ответила текстом — лечится `tool_choice: required`.",
+                "related": "[[function-calling-interview#Q11]] strict mode против ошибок; [[function-calling-interview#Q26]] error handling в tool_result; [[function-calling-interview#Q8]] string vs dict при миграции."
               },
               "label": "A",
               "order": 0
@@ -1425,14 +1426,13 @@
               "order": 2
             },
             {
-              "text": "Типичные: hallucinated function name (`getWeather` вместо `get_weather`), wrong arg types (`\"100\"` вместо `100`) и missing tool_result для какого-то `tool_use`.",
-              "correct": true,
+              "text": "Hallucinated function name — это когда tool отработал и вернул синтаксически верный JSON, но с неверными данными внутри; лечится повтором запроса к той же функции.",
+              "correct": false,
               "sections": {
-                "explanation": "Полезно держать классификацию: модель «придумала» вызов (не то имя или тип аргумента), приложение сломало контракт истории (потерян `tool_result` или сгенерирован новый id вместо копии), либо код не учёл различия провайдеров (string vs dict). Лечение по симптому: hallucinated name лечат `strict:true` и белым списком имён; wrong arg types — strict плюс Pydantic/Zod; missing tool_result — для каждого `tool_use` обязан быть `tool_result` с тем же id, иначе API-ошибка или галлюцинация. Карта «симптом → лечение» ускоряет отладку: по симптому сразу видно, на чьей стороне дефект — модели, приложения или интеграции.",
-                "example": "Например, после миграции с Anthropic на OpenAI ловят `TypeError`, потому что забыли: у OpenAI `arguments` — строка, а у Anthropic `input` — dict; а enum case-sensitive даёт `\"Damaged\"` вместо `\"damaged\"`.",
-                "when_to_apply": "Этот чек-лист применяют при отладке tool-пайплайна: большинство багов — это id-несоответствие, тип аргумента или забытый результат.",
-                "edge_cases": "Edge-cases: `tool_use_id not found` при генерации нового id вместо копирования; `email = None` в downstream, если в strict не объявить nullable `[\"string\", \"null\"]`; модель «забыла» про tools и ответила текстом — лечится `tool_choice: required`.",
-                "related": "[[function-calling-interview#Q11]] strict mode против ошибок; [[function-calling-interview#Q26]] error handling в tool_result; [[function-calling-interview#Q8]] string vs dict при миграции."
+                "what_actually": "Hallucinated function name — это вызов несуществующего имени (`getWeather` вместо `get_weather`), а не неверные данные tool.",
+                "source_of_confusion": "Слово «hallucinated» ассоциируется с неверным контентом ответа.",
+                "if_it_were_true": "Тогда лечением был бы retry результата, но реально нужен `strict` и проверка по белому списку имён.",
+                "how_it_should_be": "Это вызов несуществующей функции; лечится строгими именами, `strict` и валидацией по списку tools."
               },
               "label": "D",
               "order": 3
@@ -1449,17 +1449,28 @@
           "question_text": "Как правильно проектировать tool definitions (description, enums, naming)?",
           "options": [
             {
-              "text": "Хороший tool — это маленькая документация для LLM: имя `snake_case` (глагол + объект), описание с границами применения и не больше 5-7 параметров.",
-              "correct": true,
+              "text": "Для полей с конечным списком значений лучше использовать free-form string, чтобы не ограничивать модель.",
+              "correct": false,
               "sections": {
-                "explanation": "Модель выбирает tool и заполняет аргументы, опираясь только на имя и описания — других источников знания о вашем API у неё нет, поэтому качество описания напрямую конвертируется в точность вызовов. Конкретные приёмы: имя вида `refund_order`, в description — когда использовать, когда НЕ использовать и edge-cases, description у каждого property с примером, `enum` вместо free-form там, где список конечен. Сильнее всего работает явное «когда НЕ использовать»: именно оно разводит похожие tools. Пустое description у property означает угадывание значения, а лимит 5-7 параметров держит схему обозримой для модели.",
-                "example": "Хорошо: `refund_order` с description «Issues a refund for a DELIVERED order. Do NOT use for pending orders — use cancel_order instead» и `reason` с `enum: [\"damaged\",\"wrong_item\",\"expired\"]`. Плохо: имя `refund`, description «Refund.», поля `id`/`type` без описаний.",
-                "when_to_apply": "Эти правила применяют при описании любого production-tool, чтобы модель надёжно выбирала нужную функцию и заполняла аргументы.",
-                "edge_cases": "Если у tool больше 5-7 параметров, его дробят на несколько; разграничение «когда использовать / когда нет» в description критично, иначе модель путает похожие tools вроде `refund_order` и `cancel_order`.",
-                "related": "[[function-calling-interview#Q9]] JSON Schema и enums; [[function-calling-interview#Q22]] короткие descriptions ради токенов; [[function-calling-interview#Q28]] anti-pattern «один tool на всё»."
+                "what_actually": "Для конечных списков нужен `enum`: он резко снижает промахи, тогда как free-form даёт разнобой значений.",
+                "source_of_confusion": "Кажется, что свобода формата делает tool гибче.",
+                "if_it_were_true": "Тогда `reason` принимал бы любые строки, но `enum: [\"damaged\", ...]` как раз стабилизирует выбор.",
+                "how_it_should_be": "Конечные наборы значений описывают через `enum`, а не free-form string."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "Имя tool лучше делать существительным без глагола (`weather`, `invoice`) — так короче и понятнее.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендуется глагол + объект в `snake_case` (`get_weather`, `create_invoice`) — это яснее выражает действие.",
+                "source_of_confusion": "Короткие существительные кажутся лаконичнее.",
+                "if_it_were_true": "Тогда модель хуже различала бы чтение и создание, но `get_`/`create_`-префиксы как раз задают намерение.",
+                "how_it_should_be": "Имя — глагол + объект (`get_weather`), а не голое существительное."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Description у tool лучше делать максимально коротким (`\"Refund.\"`) и без сценариев — модель и так всё поймёт по имени функции и по списку её параметров.",
@@ -1470,29 +1481,18 @@
                 "if_it_were_true": "Тогда `refund` с «Refund.» работал бы так же надёжно, но модель будет путать его с отменой заказа.",
                 "how_it_should_be": "Description должен пояснять сценарии использования и границы, а не сводиться к одному слову."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Для полей с конечным списком значений лучше использовать free-form string, чтобы не ограничивать модель.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для конечных списков нужен `enum`: он резко снижает промахи, тогда как free-form даёт разнобой значений.",
-                "source_of_confusion": "Кажется, что свобода формата делает tool гибче.",
-                "if_it_were_true": "Тогда `reason` принимал бы любые строки, но `enum: [\"damaged\", ...]` как раз стабилизирует выбор.",
-                "how_it_should_be": "Конечные наборы значений описывают через `enum`, а не free-form string."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Имя tool лучше делать существительным без глагола (`weather`, `invoice`) — так короче и понятнее.",
-              "correct": false,
+              "text": "Хороший tool — это маленькая документация для LLM: имя `snake_case` (глагол + объект), описание с границами применения и не больше 5-7 параметров.",
+              "correct": true,
               "sections": {
-                "what_actually": "Рекомендуется глагол + объект в `snake_case` (`get_weather`, `create_invoice`) — это яснее выражает действие.",
-                "source_of_confusion": "Короткие существительные кажутся лаконичнее.",
-                "if_it_were_true": "Тогда модель хуже различала бы чтение и создание, но `get_`/`create_`-префиксы как раз задают намерение.",
-                "how_it_should_be": "Имя — глагол + объект (`get_weather`), а не голое существительное."
+                "explanation": "Модель выбирает tool и заполняет аргументы, опираясь только на имя и описания — других источников знания о вашем API у неё нет, поэтому качество описания напрямую конвертируется в точность вызовов. Конкретные приёмы: имя вида `refund_order`, в description — когда использовать, когда НЕ использовать и edge-cases, description у каждого property с примером, `enum` вместо free-form там, где список конечен. Сильнее всего работает явное «когда НЕ использовать»: именно оно разводит похожие tools. Пустое description у property означает угадывание значения, а лимит 5-7 параметров держит схему обозримой для модели.",
+                "example": "Хорошо: `refund_order` с description «Issues a refund for a DELIVERED order. Do NOT use for pending orders — use cancel_order instead» и `reason` с `enum: [\"damaged\",\"wrong_item\",\"expired\"]`. Плохо: имя `refund`, description «Refund.», поля `id`/`type` без описаний.",
+                "when_to_apply": "Эти правила применяют при описании любого production-tool, чтобы модель надёжно выбирала нужную функцию и заполняла аргументы.",
+                "edge_cases": "Если у tool больше 5-7 параметров, его дробят на несколько; разграничение «когда использовать / когда нет» в description критично, иначе модель путает похожие tools вроде `refund_order` и `cancel_order`.",
+                "related": "[[function-calling-interview#Q9]] JSON Schema и enums; [[function-calling-interview#Q22]] короткие descriptions ради токенов; [[function-calling-interview#Q28]] anti-pattern «один tool на всё»."
               },
               "label": "D",
               "order": 3
@@ -1509,18 +1509,6 @@
           "question_text": "Что возвращать в `tool_result` при exception в tool?",
           "options": [
             {
-              "text": "При ошибке tool правильнее всего пробросить exception наружу через весь loop вплоть до обработчика верхнего уровня, чтобы не накапливать мусорный контекст.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Проброс exception обрывает loop, и модель не узнает о проблеме; ошибку возвращают структурно в `tool_result`.",
-                "source_of_confusion": "В обычном коде exception принято пробрасывать вверх, и это переносят на tool-loop.",
-                "if_it_were_true": "Тогда модель не смогла бы переформулировать вызов, но именно структурированная ошибка даёт ей этот шанс.",
-                "how_it_should_be": "Ошибку кладут в `tool_result` структурно, а не пробрасывают exception, обрывая цикл."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "При ошибке возвращают структурированную ошибку прямо в `tool_result` как обычный результат — модель часто умеет её обработать и переформулировать вызов.",
               "correct": true,
               "sections": {
@@ -1530,8 +1518,8 @@
                 "edge_cases": "Чего не делать: кидать exception дальше и обрывать loop (модель не узнает причину), возвращать полный stack trace (мусор и утечка путей/секретов) или `null` (модель решит, что всё хорошо).",
                 "related": "[[function-calling-interview#Q24]] частые ошибки tool use; [[function-calling-interview#Q27]] защита от infinite loop; [[function-calling-interview#Q29]] retries и таймауты в проде."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "В `tool_result` при ошибке стоит вернуть полный stack trace — модель использует его для диагностики проблемы.",
@@ -1542,8 +1530,8 @@
                 "if_it_were_true": "Тогда контекст был бы чище от подробного трейса, но он только раздувает токены и протекает наружу.",
                 "how_it_should_be": "Возвращают компактный `{error, message}`, а не сырой stack trace."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "При ошибке tool безопаснее всего вернуть `null` в `tool_result` — модель сама поймёт, что что-то пошло не так.",
@@ -1553,6 +1541,18 @@
                 "source_of_confusion": "`null` кажется нейтральным сигналом «нет результата».",
                 "if_it_were_true": "Тогда модель корректно реагировала бы на пустоту, но она просто продолжит, будто ошибки не было.",
                 "how_it_should_be": "Возвращают явную ошибку (`{\"error\": ...}`), а не `null`, иначе модель не распознает сбой."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "При ошибке tool правильнее всего пробросить exception наружу через весь loop вплоть до обработчика верхнего уровня, чтобы не накапливать мусорный контекст.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Проброс exception обрывает loop, и модель не узнает о проблеме; ошибку возвращают структурно в `tool_result`.",
+                "source_of_confusion": "В обычном коде exception принято пробрасывать вверх, и это переносят на tool-loop.",
+                "if_it_were_true": "Тогда модель не смогла бы переформулировать вызов, но именно структурированная ошибка даёт ей этот шанс.",
+                "how_it_should_be": "Ошибку кладут в `tool_result` структурно, а не пробрасывают exception, обрывая цикл."
               },
               "label": "D",
               "order": 3
@@ -1569,18 +1569,6 @@
           "question_text": "Как защититься от infinite loop при recursive tool calls?",
           "options": [
             {
-              "text": "Достаточно положиться на провайдера: модель сама останавливается после разумного числа вызовов и сама детектит свои повторы, так что явный лимит не нужен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Провайдер не гарантирует остановку; без `max_iterations` модель может зацикливаться, прося тот же tool бесконечно.",
-                "source_of_confusion": "Кажется, что «умная» модель не станет повторяться без конца.",
-                "if_it_were_true": "Тогда не было бы `recursion_limit`/`maxSteps`, но их ввели именно потому, что модель зацикливается.",
-                "how_it_should_be": "Лимит итераций задают явно — на провайдера в вопросе остановки не полагаются."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Wall-clock timeout полностью заменяет `max_iterations`: если цикл укладывается во время, число шагов неважно.",
               "correct": false,
               "sections": {
@@ -1589,8 +1577,32 @@
                 "if_it_were_true": "Тогда быстрый, но бесконечно повторяющийся цикл прошёл бы под таймаутом, спалив токены за секунды.",
                 "how_it_should_be": "Таймаут дополняет, но не заменяет лимит итераций и token-budget."
               },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Достаточно положиться на провайдера: модель сама останавливается после разумного числа вызовов и сама детектит свои повторы, так что явный лимит не нужен.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Провайдер не гарантирует остановку; без `max_iterations` модель может зацикливаться, прося тот же tool бесконечно.",
+                "source_of_confusion": "Кажется, что «умная» модель не станет повторяться без конца.",
+                "if_it_were_true": "Тогда не было бы `recursion_limit`/`maxSteps`, но их ввели именно потому, что модель зацикливается.",
+                "how_it_should_be": "Лимит итераций задают явно — на провайдера в вопросе остановки не полагаются."
+              },
               "label": "B",
               "order": 1
+            },
+            {
+              "text": "Детект повторяющихся вызовов вреден: он мешает легитимным retry одного и того же tool с теми же аргументами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Повтор `(tool_name, arguments)` 2+ раза подряд — почти всегда зацикливание; детект как раз отличает его от полезного шага.",
+                "source_of_confusion": "Кажется, что повторный вызов — это нормальный retry, который не стоит прерывать.",
+                "if_it_were_true": "Тогда защита резала бы полезные вызовы, но идентичный повтор подряд обычно и есть петля.",
+                "how_it_should_be": "Детект идентичных подряд вызовов — валидная защита; легитимный retry обычно меняет аргументы или контекст."
+              },
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Защита многоуровневая: `max_iterations`, детект повторяющихся вызовов, wall-clock timeout, token budget и reflection-step с подсказкой дать финальный ответ.",
@@ -1601,18 +1613,6 @@
                 "when_to_apply": "Эти лимиты ставят в любом своём агентском цикле; готовые фреймворки дают `recursion_limit` (LangGraph) и `maxSteps` (Vercel AI), но в самописном loop ограничивают явно.",
                 "edge_cases": "Зацикливание вызывают плохой prompt, противоречивый результат tool или баг в самом tool; одного `max_iterations` мало — добавляют детект повторов и token-budget, чтобы не сжечь деньги.",
                 "related": "[[function-calling-interview#Q4]] multi-turn loop и лимит итераций; [[function-calling-interview#Q18]] maxSteps в Vercel AI; [[function-calling-interview#Q28]] контроль стоимости агента."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Детект повторяющихся вызовов вреден: он мешает легитимным retry одного и того же tool с теми же аргументами.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Повтор `(tool_name, arguments)` 2+ раза подряд — почти всегда зацикливание; детект как раз отличает его от полезного шага.",
-                "source_of_confusion": "Кажется, что повторный вызов — это нормальный retry, который не стоит прерывать.",
-                "if_it_were_true": "Тогда защита резала бы полезные вызовы, но идентичный повтор подряд обычно и есть петля.",
-                "how_it_should_be": "Детект идентичных подряд вызовов — валидная защита; легитимный retry обычно меняет аргументы или контекст."
               },
               "label": "D",
               "order": 3
@@ -1629,28 +1629,17 @@
           "question_text": "Какие anti-patterns бывают (слишком много tools, sensitive params, неконтролируемая стоимость)?",
           "options": [
             {
-              "text": "Передавать 30+ tools одновременно — хорошая практика: больше выбор у модели, выше покрытие сценариев и меньше шанс, что нужного tool вдруг не окажется в наборе.",
-              "correct": false,
+              "text": "Anti-patterns: >30 tools одновременно, sensitive params в args, tool без идемпотентности, destructive без подтверждения, гигантский JSON в ответе и бесконтрольная цена.",
+              "correct": true,
               "sections": {
-                "what_actually": ">30 tools — anti-pattern: модель путается, выбирает не то, а токены растут линейно; tools фильтруют по контексту.",
-                "source_of_confusion": "Кажется, что широкий выбор повышает покрытие сценариев.",
-                "if_it_were_true": "Тогда router-агент и namespace были бы лишними, но их вводят именно из-за деградации на большом наборе.",
-                "how_it_should_be": "Большой одновременный набор tools вреден; его сужают router-агентом или namespace."
+                "explanation": "Эти анти-паттерны раскладываются по трём осям, и ось подсказывает класс решения. Точность: при >30 tools модель путается и токены растут — лечат router-агентом и namespace. Безопасность: sensitive params (`api_key`, `password`) держат server-side; tool без идемпотентности получает `idempotency_key`; destructive-вызов закрывают confirmation/RBAC, иначе hallucination сносит прод-данные. Стоимость: гигантский JSON сокращают до summary + `details_url`, а loop без лимитов ограничивают hard token-budget и `max_iterations`.",
+                "example": "Например, `do_anything(query)` — один tool на всё — теряет JSON Schema-валидацию, и модель придумывает что угодно; вместо этого дробят на маленькие tools с чёткой ответственностью.",
+                "when_to_apply": "Эти анти-паттерны разбирают на ревью tool-дизайна и production-агентов, где цена ошибки — дубликаты заказов, утечки или десятки долларов за сессию.",
+                "edge_cases": "Edge-cases: динамические descriptions ломают кэш (держать статическими); retry неидемпотентного tool создаёт дубли заказов; hallucination на destructive tool без confirmation = удалённая БД.",
+                "related": "[[function-calling-interview#Q22]] token cost от tool definitions; [[function-calling-interview#Q25]] дизайн tool definitions; [[function-calling-interview#Q29]] production checklist (RBAC, rate limit)."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Передавать `api_key` и `password` в аргументах tool безопасно, ведь они нужны для вызова внешнего API.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Sensitive params в args попадают в логи, tracing и потенциально в обучение; secrets держат server-side, в args — только `account_id`.",
-                "source_of_confusion": "Аргументы кажутся «внутренними», поэтому секреты в них выглядят безопасно.",
-                "if_it_were_true": "Тогда не было бы требования PII/secret-redaction, но оно есть именно из-за утечки таких полей.",
-                "how_it_should_be": "Секреты не кладут в args; их хранят server-side, а в аргументах передают только идентификаторы."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Возврат гигантского JSON в `tool_result` — нормальная практика: модель сама выберет нужные данные из большого ответа.",
@@ -1661,18 +1650,29 @@
                 "if_it_were_true": "Тогда не было бы рекомендации summary + ссылка, но её дают именно из-за раздувания контекста.",
                 "how_it_should_be": "Большие результаты сокращают до summary с опциональной ссылкой на детали, а не шлют целиком."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Передавать 30+ tools одновременно — хорошая практика: больше выбор у модели, выше покрытие сценариев и меньше шанс, что нужного tool вдруг не окажется в наборе.",
+              "correct": false,
+              "sections": {
+                "what_actually": ">30 tools — anti-pattern: модель путается, выбирает не то, а токены растут линейно; tools фильтруют по контексту.",
+                "source_of_confusion": "Кажется, что широкий выбор повышает покрытие сценариев.",
+                "if_it_were_true": "Тогда router-агент и namespace были бы лишними, но их вводят именно из-за деградации на большом наборе.",
+                "how_it_should_be": "Большой одновременный набор tools вреден; его сужают router-агентом или namespace."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Anti-patterns: >30 tools одновременно, sensitive params в args, tool без идемпотентности, destructive без подтверждения, гигантский JSON в ответе и бесконтрольная цена.",
-              "correct": true,
+              "text": "Передавать `api_key` и `password` в аргументах tool безопасно, ведь они нужны для вызова внешнего API.",
+              "correct": false,
               "sections": {
-                "explanation": "Эти анти-паттерны раскладываются по трём осям, и ось подсказывает класс решения. Точность: при >30 tools модель путается и токены растут — лечат router-агентом и namespace. Безопасность: sensitive params (`api_key`, `password`) держат server-side; tool без идемпотентности получает `idempotency_key`; destructive-вызов закрывают confirmation/RBAC, иначе hallucination сносит прод-данные. Стоимость: гигантский JSON сокращают до summary + `details_url`, а loop без лимитов ограничивают hard token-budget и `max_iterations`.",
-                "example": "Например, `do_anything(query)` — один tool на всё — теряет JSON Schema-валидацию, и модель придумывает что угодно; вместо этого дробят на маленькие tools с чёткой ответственностью.",
-                "when_to_apply": "Эти анти-паттерны разбирают на ревью tool-дизайна и production-агентов, где цена ошибки — дубликаты заказов, утечки или десятки долларов за сессию.",
-                "edge_cases": "Edge-cases: динамические descriptions ломают кэш (держать статическими); retry неидемпотентного tool создаёт дубли заказов; hallucination на destructive tool без confirmation = удалённая БД.",
-                "related": "[[function-calling-interview#Q22]] token cost от tool definitions; [[function-calling-interview#Q25]] дизайн tool definitions; [[function-calling-interview#Q29]] production checklist (RBAC, rate limit)."
+                "what_actually": "Sensitive params в args попадают в логи, tracing и потенциально в обучение; secrets держат server-side, в args — только `account_id`.",
+                "source_of_confusion": "Аргументы кажутся «внутренними», поэтому секреты в них выглядят безопасно.",
+                "if_it_were_true": "Тогда не было бы требования PII/secret-redaction, но оно есть именно из-за утечки таких полей.",
+                "how_it_should_be": "Секреты не кладут в args; их хранят server-side, а в аргументах передают только идентификаторы."
               },
               "label": "D",
               "order": 3
@@ -1689,31 +1689,6 @@
           "question_text": "Что входит в production checklist для tool-runtime (rate limit, timeout, audit, RBAC)?",
           "options": [
             {
-              "text": "В prod tool-runtime: rate limit per tool/user, timeout per call, retries with backoff только для transient, audit log, RBAC, sandboxing, PII-redaction и confirmation для destructive.",
-              "correct": true,
-              "sections": {
-                "explanation": "Рамка для запоминания: tool-runtime — это шлюз, через который LLM дёргает ваш реальный код, поэтому к нему применимы все требования к публичному API. Конкретно: rate limit per tool/user (Redis-bucket), timeout per call (5-30 сек), retries with backoff только для transient (5xx/429, не 4xx), audit log `(user_id, session_id, tool_name, args_redacted, result_status, latency, cost_tokens)`, RBAC на доступ к tools, sandboxing для code-execution, PII-redaction, cost tracking и observability. LLM-специфика добавляет два пункта: схему валидируют на входе и выходе даже со strict-моделью (ей не доверяют), а для destructive-действий вводят human-in-the-loop подтверждение, которого у обычных API нет.",
-                "example": "Например, `send_email` ограничивают 10/min/user, на каждый вызов ставят 5-30 сек timeout, а `refund_order` доступен не каждому пользователю — это решает RBAC.",
-                "when_to_apply": "Этот чек-лист применяют при выводе агента в продакшен: без него один зависший tool блокирует loop, а hallucination на destructive-вызове ломает данные.",
-                "edge_cases": "Edge-cases: retry на 4xx бессмыслен (ошибка не transient); без таймаута один tool вешает весь цикл; смена schema требует версии в имени (`get_weather_v2`), иначе ломаются старые клиенты.",
-                "related": "[[function-calling-interview#Q26]] error handling и retries; [[function-calling-interview#Q28]] anti-patterns (secrets, стоимость); [[function-calling-interview#Q27]] лимиты против infinite loop."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Retry с backoff нужно применять ко всем ошибкам tool, включая 4xx с неверными аргументами, чтобы повысить надёжность и не терять вызовы из-за случайных сбоев.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Retry имеет смысл только для transient (5xx/429); 4xx — постоянная ошибка (неверные аргументы), повтор её не исправит.",
-                "source_of_confusion": "«Retry всё» кажется универсальным повышением устойчивости.",
-                "if_it_were_true": "Тогда `400 Bad Request` бесконечно повторялся бы, но это лишь жжёт ресурсы — ошибка не пройдёт.",
-                "how_it_should_be": "Retry — только для transient-ошибок; 4xx не ретраят, их чинят на стороне аргументов."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Timeout на вызов tool не обязателен: если внешний API завис, провайдер LLM сам прервёт ожидание.",
               "correct": false,
               "sections": {
@@ -1722,8 +1697,8 @@
                 "if_it_were_true": "Тогда чек-лист не требовал бы timeout per call, но он обязателен именно из-за блокировки цикла.",
                 "how_it_should_be": "Каждому вызову задают timeout (5-30 сек), иначе зависший tool вешает loop."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "RBAC в tool-runtime избыточен: раз tool описан в схеме, любой пользователь может его вызывать безопасно.",
@@ -1733,6 +1708,31 @@
                 "source_of_confusion": "Кажется, что наличие tool в наборе уже подразумевает право его звать.",
                 "if_it_were_true": "Тогда любой пользователь мог бы инициировать возврат средств, но RBAC как раз это запрещает.",
                 "how_it_should_be": "Доступ к чувствительным tools ограничивают через RBAC, а не открывают всем подряд."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "В prod tool-runtime: rate limit per tool/user, timeout per call, retries with backoff только для transient, audit log, RBAC, sandboxing, PII-redaction и confirmation для destructive.",
+              "correct": true,
+              "sections": {
+                "explanation": "Рамка для запоминания: tool-runtime — это шлюз, через который LLM дёргает ваш реальный код, поэтому к нему применимы все требования к публичному API. Конкретно: rate limit per tool/user (Redis-bucket), timeout per call (5-30 сек), retries with backoff только для transient (5xx/429, не 4xx), audit log `(user_id, session_id, tool_name, args_redacted, result_status, latency, cost_tokens)`, RBAC на доступ к tools, sandboxing для code-execution, PII-redaction, cost tracking и observability. LLM-специфика добавляет два пункта: схему валидируют на входе и выходе даже со strict-моделью (ей не доверяют), а для destructive-действий вводят human-in-the-loop подтверждение, которого у обычных API нет.",
+                "example": "Например, `send_email` ограничивают 10/min/user, на каждый вызов ставят 5-30 сек timeout, а `refund_order` доступен не каждому пользователю — это решает RBAC.",
+                "when_to_apply": "Этот чек-лист применяют при выводе агента в продакшен: без него один зависший tool блокирует loop, а hallucination на destructive-вызове ломает данные.",
+                "edge_cases": "Edge-cases: retry на 4xx бессмыслен (ошибка не transient); без таймаута один tool вешает весь цикл; смена schema требует версии в имени (`get_weather_v2`), иначе ломаются старые клиенты.",
+                "related": "[[function-calling-interview#Q26]] error handling и retries; [[function-calling-interview#Q28]] anti-patterns (secrets, стоимость); [[function-calling-interview#Q27]] лимиты против infinite loop."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Retry с backoff нужно применять ко всем ошибкам tool, включая 4xx с неверными аргументами, чтобы повысить надёжность и не терять вызовы из-за случайных сбоев.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Retry имеет смысл только для transient (5xx/429); 4xx — постоянная ошибка (неверные аргументы), повтор её не исправит.",
+                "source_of_confusion": "«Retry всё» кажется универсальным повышением устойчивости.",
+                "if_it_were_true": "Тогда `400 Bad Request` бесконечно повторялся бы, но это лишь жжёт ресурсы — ошибка не пройдёт.",
+                "how_it_should_be": "Retry — только для transient-ошибок; 4xx не ретраят, их чинят на стороне аргументов."
               },
               "label": "D",
               "order": 3
@@ -1749,13 +1749,13 @@
           "question_text": "Как связывать tools с реальным кодом (Python dispatch / TS Zod)?",
           "options": [
             {
-              "text": "Аргументы от LLM можно передавать в функцию напрямую без валидации — модель в strict mode гарантирует корректность.",
+              "text": "Лучше не вести единый registry, а в `dispatch` через цепочку `if/elif` по имени напрямую звать нужную функцию — так маршрутизация нагляднее и без лишней абстракции.",
               "correct": false,
               "sections": {
-                "what_actually": "Аргументы всегда валидируют до вызова (Pydantic/Zod): даже строгая модель ошибается на edge-cases, и мусор нельзя пускать в прод-код.",
-                "source_of_confusion": "Strict mode даёт ложное чувство, что валидация на стороне dispatch не нужна.",
-                "if_it_were_true": "Тогда `ValidationError`-ветка была бы лишней, но её держат именно для мусорных аргументов.",
-                "how_it_should_be": "Перед вызовом аргументы валидируют через Pydantic/Zod — модели не доверяют вслепую."
+                "what_actually": "Registry-подход (один dict/object) — рекомендуемый source of truth: его проще расширять и валидировать, чем россыпь `if/elif`.",
+                "source_of_confusion": "Цепочка `if/elif` кажется проще для пары tools.",
+                "if_it_were_true": "Тогда добавление tool правило бы код в нескольких местах, но registry централизует маршрутизацию в одном месте.",
+                "how_it_should_be": "Маршрутизацию держат в едином registry, а не в разрастающемся `if/elif`."
               },
               "label": "A",
               "order": 0
@@ -1774,18 +1774,6 @@
               "order": 1
             },
             {
-              "text": "Лучше не вести единый registry, а в `dispatch` через цепочку `if/elif` по имени напрямую звать нужную функцию — так маршрутизация нагляднее и без лишней абстракции.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Registry-подход (один dict/object) — рекомендуемый source of truth: его проще расширять и валидировать, чем россыпь `if/elif`.",
-                "source_of_confusion": "Цепочка `if/elif` кажется проще для пары tools.",
-                "if_it_were_true": "Тогда добавление tool правило бы код в нескольких местах, но registry централизует маршрутизацию в одном месте.",
-                "how_it_should_be": "Маршрутизацию держат в едином registry, а не в разрастающемся `if/elif`."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "Параллельные tool_calls в dispatch исполняют строго последовательно — конкурентный запуск ломает порядок результатов.",
               "correct": false,
               "sections": {
@@ -1793,6 +1781,18 @@
                 "source_of_confusion": "Кажется, что последовательность нужна, чтобы не перепутать результаты.",
                 "if_it_were_true": "Тогда параллельность из Q13 не давала бы выигрыша, но `gather` как раз ускоряет независимые вызовы.",
                 "how_it_should_be": "Независимые вызовы исполняют параллельно, сопоставляя результаты по id, а не последовательно."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Аргументы от LLM можно передавать в функцию напрямую без валидации — модель в strict mode гарантирует корректность.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аргументы всегда валидируют до вызова (Pydantic/Zod): даже строгая модель ошибается на edge-cases, и мусор нельзя пускать в прод-код.",
+                "source_of_confusion": "Strict mode даёт ложное чувство, что валидация на стороне dispatch не нужна.",
+                "if_it_were_true": "Тогда `ValidationError`-ветка была бы лишней, но её держат именно для мусорных аргументов.",
+                "how_it_should_be": "Перед вызовом аргументы валидируют через Pydantic/Zod — модели не доверяют вслепую."
               },
               "label": "D",
               "order": 3

@@ -22,6 +22,18 @@
               "order": 0
             },
             {
+              "text": "`gRPC` построен на UDP-датаграммах с `MessagePack`-сериализацией ради минимальной задержки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "gRPC требует надёжной упорядоченной доставки и flow control, которые даёт TCP/`HTTP/2`, а сериализует через protobuf, а не `MessagePack`.",
+                "source_of_confusion": "UDP ассоциируется с «минимальной задержкой», а `MessagePack` — известный конкурент protobuf, поэтому их легко приписать gRPC.",
+                "if_it_were_true": "Тогда при потере датаграмм RPC молча падал бы или дублировался, а надёжность поверх UDP пришлось бы реализовывать руками целый квартал.",
+                "how_it_should_be": "gRPC по спецификации завязан на `HTTP/2` поверх TCP и protobuf; UDP появляется только в `HTTP/3` (QUIC), которого здесь нет."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "`gRPC` — это REST поверх `HTTP/1.1` с JSON-телом и кастомными заголовками для типизации, просто с автогенерацией клиентов.",
               "correct": false,
               "sections": {
@@ -30,8 +42,8 @@
                 "if_it_were_true": "Тогда gRPC страдал бы от head-of-line blocking HTTP/1.1 и тяжёлого JSON-парсинга, а типизация держалась бы на самописных заголовках без валидации.",
                 "how_it_should_be": "gRPC стоит на трёх китах — `HTTP/2`, `Protocol Buffers` и контракт-first `.proto` с генерацией стабов, а не на HTTP/1.1 с JSON."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "`gRPC` — это WebSocket-туннель поверх TCP с XML-сериализацией в стиле SOAP для двунаправленного обмена.",
@@ -41,18 +53,6 @@
                 "source_of_confusion": "WebSocket тоже даёт двунаправленный канал, и его легко спутать с bidirectional streaming gRPC, отсюда ложная ассоциация.",
                 "if_it_were_true": "Тогда команде пришлось бы писать поверх WS свой framing, error codes и retry, без автогенерации клиентов и без compile-time проверки схемы.",
                 "how_it_should_be": "Bidirectional streaming gRPC работает поверх полнодуплексного `HTTP/2` stream, а сериализация — protobuf, а не XML/SOAP."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "`gRPC` построен на UDP-датаграммах с `MessagePack`-сериализацией ради минимальной задержки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "gRPC требует надёжной упорядоченной доставки и flow control, которые даёт TCP/`HTTP/2`, а сериализует через protobuf, а не `MessagePack`.",
-                "source_of_confusion": "UDP ассоциируется с «минимальной задержкой», а `MessagePack` — известный конкурент protobuf, поэтому их легко приписать gRPC.",
-                "if_it_were_true": "Тогда при потере датаграмм RPC молча падал бы или дублировался, а надёжность поверх UDP пришлось бы реализовывать руками целый квартал.",
-                "how_it_should_be": "gRPC по спецификации завязан на `HTTP/2` поверх TCP и protobuf; UDP появляется только в `HTTP/3` (QUIC), которого здесь нет."
               },
               "label": "D",
               "order": 3
@@ -69,18 +69,6 @@
           "question_text": "Что такое `Protocol Buffers` и зачем они нужны в gRPC?",
           "options": [
             {
-              "text": "Имена полей сериализуются вместе со значениями, просто в сокращённой форме (например, первые 3 символа имени).",
-              "correct": false,
-              "sections": {
-                "what_actually": "protobuf вообще не пишет имена полей в бинарный wire-формат — имена существуют только в `.proto`-исходнике и в сгенерированном коде, на проводе их нет.",
-                "source_of_confusion": "В JSON имена ключей действительно идут вместе с данными, и эту модель ошибочно переносят на protobuf.",
-                "if_it_were_true": "Тогда переименование поля ломало бы совместимость, и пришлось бы закладывать миграцию, хотя на деле переименование безопасно, а смена номера — нет.",
-                "how_it_should_be": "В бинаре едет только номер поля и wire-type; имя нужно лишь в исходнике, поэтому поле можно безопасно переименовывать."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`Protocol Buffers` (protobuf) — language-neutral механизм сериализации и IDL для gRPC: каждое поле кодируется по уникальному номеру (`(field_number << 3) | wire_type`), а имя нужно только в исходнике, что даёт компактность и обратную совместимость.",
               "correct": true,
               "sections": {
@@ -90,8 +78,8 @@
                 "edge_cases": "Переименовать поле можно (номер тот же), но менять номер существующего поля нельзя — старые клиенты с тем же tag начнут читать чужие данные.",
                 "related": "[[grpc-interview#Q1]] что такое gRPC; [[grpc-interview#Q29]] обратная совместимость; [[grpc-interview#Q36]] правила эволюции схемы."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Номер поля используется только для сортировки полей в бинарном выводе, а сами имена при этом тоже сериализуются.",
@@ -102,8 +90,8 @@
                 "if_it_were_true": "Тогда тесты, сравнивающие байты сериализации эквивалентных сообщений, были бы стабильны, но на деле они флапают между версиями `protoc`/JVM.",
                 "how_it_should_be": "Номер — это идентификатор поля при парсинге, а не сортировочный ключ; порядок байт не часть контракта, и имена не сериализуются."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "И номер, и имя поля одинаково важны и оба попадают в бинарь — это нужно для отказоустойчивости при чтении.",
@@ -113,6 +101,18 @@
                 "source_of_confusion": "Интуитивно «больше метаданных = надёжнее», поэтому кажется, что дублирование имени и номера повышает устойчивость.",
                 "if_it_were_true": "Тогда формат раздулся бы почти до размера JSON и потерял бы своё ключевое преимущество над текстовыми форматами.",
                 "how_it_should_be": "Достаточно номера: он и идентифицирует поле, и обеспечивает совместимость; имя живёт только в `.proto` и кодогенерации."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Имена полей сериализуются вместе со значениями, просто в сокращённой форме (например, первые 3 символа имени).",
+              "correct": false,
+              "sections": {
+                "what_actually": "protobuf вообще не пишет имена полей в бинарный wire-формат — имена существуют только в `.proto`-исходнике и в сгенерированном коде, на проводе их нет.",
+                "source_of_confusion": "В JSON имена ключей действительно идут вместе с данными, и эту модель ошибочно переносят на protobuf.",
+                "if_it_were_true": "Тогда переименование поля ломало бы совместимость, и пришлось бы закладывать миграцию, хотя на деле переименование безопасно, а смена номера — нет.",
+                "how_it_should_be": "В бинаре едет только номер поля и wire-type; имя нужно лишь в исходнике, поэтому поле можно безопасно переименовывать."
               },
               "label": "D",
               "order": 3
@@ -189,13 +189,13 @@
           "question_text": "Как происходит генерация кода из `.proto`-файлов в Java и что именно генерируется?",
           "options": [
             {
-              "text": "Генерируются только POJO-классы для message без gRPC-стабов — стабы пишутся руками.",
+              "text": "Генерируются mutable POJO-классы с setter-ами без builder-паттерна.",
               "correct": false,
               "sections": {
-                "what_actually": "Плагин `protoc-gen-grpc-java` генерирует и message-классы, и абстрактные service-стабы (`ServiceImplBase`), и клиентские (`BlockingStub`, `Stub`, `FutureStub`).",
-                "source_of_confusion": "Без gRPC-плагина чистый `protoc` действительно даёт только message-классы — это путь Protocol Buffers без gRPC.",
-                "if_it_were_true": "Тогда gRPC терял бы главное преимущество — автогенерацию транспортного слоя, и без ручного boilerplate его нельзя было бы использовать.",
-                "how_it_should_be": "Подключённый `protoc-gen-grpc-java` производит и message-классы, и стабы, и descriptor-ы за одну сборку."
+                "what_actually": "Message-классы immutable и создаются через builder: `User.newBuilder().setId(1L).build()`; готовый объект менять нельзя.",
+                "source_of_confusion": "JavaBeans-конвенция приучила к mutable-объектам с setter-ами, и эту модель ждут от protobuf.",
+                "if_it_were_true": "Тогда message-объекты нельзя было бы безопасно шарить между потоками, и thread-safety пришлось бы обеспечивать вручную.",
+                "how_it_should_be": "Билдер конструирует immutable-сообщение; после `build()` объект потокобезопасен и неизменяем."
               },
               "label": "A",
               "order": 0
@@ -213,13 +213,13 @@
               "order": 1
             },
             {
-              "text": "Генерируются mutable POJO-классы с setter-ами без builder-паттерна.",
+              "text": "Генерируются только POJO-классы для message без gRPC-стабов — стабы пишутся руками.",
               "correct": false,
               "sections": {
-                "what_actually": "Message-классы immutable и создаются через builder: `User.newBuilder().setId(1L).build()`; готовый объект менять нельзя.",
-                "source_of_confusion": "JavaBeans-конвенция приучила к mutable-объектам с setter-ами, и эту модель ждут от protobuf.",
-                "if_it_were_true": "Тогда message-объекты нельзя было бы безопасно шарить между потоками, и thread-safety пришлось бы обеспечивать вручную.",
-                "how_it_should_be": "Билдер конструирует immutable-сообщение; после `build()` объект потокобезопасен и неизменяем."
+                "what_actually": "Плагин `protoc-gen-grpc-java` генерирует и message-классы, и абстрактные service-стабы (`ServiceImplBase`), и клиентские (`BlockingStub`, `Stub`, `FutureStub`).",
+                "source_of_confusion": "Без gRPC-плагина чистый `protoc` действительно даёт только message-классы — это путь Protocol Buffers без gRPC.",
+                "if_it_were_true": "Тогда gRPC терял бы главное преимущество — автогенерацию транспортного слоя, и без ручного boilerplate его нельзя было бы использовать.",
+                "how_it_should_be": "Подключённый `protoc-gen-grpc-java` производит и message-классы, и стабы, и descriptor-ы за одну сборку."
               },
               "label": "C",
               "order": 2
@@ -262,18 +262,6 @@
               "order": 0
             },
             {
-              "text": "`Channel` — это сгенерированный клиент, а `Stub` — это соединение с сервером.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Всё ровно наоборот: `Channel` — это соединение и пул подключений, а `Stub` — сгенерированный типизированный клиент поверх него.",
-                "source_of_confusion": "Терминология кажется обратной, если ассоциировать «канал» с интерфейсом, а «стаб» с реализацией соединения.",
-                "if_it_were_true": "Тогда `Stub` пришлось бы создавать один раз и нельзя было бы менять deadline/metadata per-call, что сломало бы идиоматичный gRPC.",
-                "how_it_should_be": "`Channel` инкапсулирует транспорт, `Stub` — типизированный API; именно стаб дешёв и настраивается на каждый вызов."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`Channel` и `Stub` — синонимы, разные названия одного и того же объекта.",
               "correct": false,
               "sections": {
@@ -281,6 +269,18 @@
                 "source_of_confusion": "В простых примерах они встречаются вместе, и разделение кажется искусственным.",
                 "if_it_were_true": "Тогда нельзя было бы иметь несколько типов стабов (`Blocking`/`Async`/`Future`) над одним каналом, и API был бы существенно беднее.",
                 "how_it_should_be": "Над одним `Channel` создают разные стабы под разные стили вызова — это две независимые сущности."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "`Channel` — это сгенерированный клиент, а `Stub` — это соединение с сервером.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё ровно наоборот: `Channel` — это соединение и пул подключений, а `Stub` — сгенерированный типизированный клиент поверх него.",
+                "source_of_confusion": "Терминология кажется обратной, если ассоциировать «канал» с интерфейсом, а «стаб» с реализацией соединения.",
+                "if_it_were_true": "Тогда `Stub` пришлось бы создавать один раз и нельзя было бы менять deadline/metadata per-call, что сломало бы идиоматичный gRPC.",
+                "how_it_should_be": "`Channel` инкапсулирует транспорт, `Stub` — типизированный API; именно стаб дешёв и настраивается на каждый вызов."
               },
               "label": "C",
               "order": 2
@@ -321,6 +321,18 @@
               "order": 0
             },
             {
+              "text": "Поддерживаются только Unary и Bidirectional — server/client streaming эмулируются несколькими Unary-вызовами.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Server и Client Streaming — первоклассные типы RPC с одним открытым stream, а не серия Unary-вызовов.",
+                "source_of_confusion": "В REST действительно эмулируют streaming через polling несколькими запросами, и эту модель переносят на gRPC.",
+                "if_it_were_true": "Тогда терялась бы эффективность `HTTP/2` multiplexing на одном stream, латентность росла бы из-за per-call overhead, и не было бы семантики «поток данных».",
+                "how_it_should_be": "Каждый из четырёх типов — самостоятельный RPC; server/client streaming работают по одному непрерывному stream, не по серии unary."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "gRPC поддерживает Unary, Server Streaming, Client Streaming и Bidirectional Streaming; streaming возможен благодаря `HTTP/2`: одно TCP-соединение мультиплексирует несколько streams, каждый stream — последовательность `DATA`-фреймов.",
               "correct": true,
               "sections": {
@@ -330,8 +342,8 @@
                 "edge_cases": "`BlockingStub` умеет только Unary и Server Streaming (через `Iterator`); забытый `onCompleted()` оставляет stream открытым; flow control `HTTP/2` даёт backpressure; long-lived bidi требует keepalive.",
                 "related": "[[grpc-interview#Q5]] Channel и Stub; [[grpc-interview#Q7]] реализация Server Streaming; [[grpc-interview#Q10]] почему HTTP/2."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Все четыре типа есть, но streaming реализован через WebSocket поверх `HTTP/1.1`.",
@@ -341,18 +353,6 @@
                 "source_of_confusion": "WebSocket — известная технология двусторонней связи, и её механизмы легко спутать со streaming gRPC.",
                 "if_it_were_true": "Тогда пропали бы преимущества `HTTP/2` (HPACK, flow control), а инфраструктура прокси и балансировщиков стала бы сложнее.",
                 "how_it_should_be": "Streaming идёт через `HTTP/2` streams и `DATA`-фреймы в рамках одного соединения, без WebSocket."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Поддерживаются только Unary и Bidirectional — server/client streaming эмулируются несколькими Unary-вызовами.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Server и Client Streaming — первоклассные типы RPC с одним открытым stream, а не серия Unary-вызовов.",
-                "source_of_confusion": "В REST действительно эмулируют streaming через polling несколькими запросами, и эту модель переносят на gRPC.",
-                "if_it_were_true": "Тогда терялась бы эффективность `HTTP/2` multiplexing на одном stream, латентность росла бы из-за per-call overhead, и не было бы семантики «поток данных».",
-                "how_it_should_be": "Каждый из четырёх типов — самостоятельный RPC; server/client streaming работают по одному непрерывному stream, не по серии unary."
               },
               "label": "D",
               "order": 3
@@ -369,28 +369,16 @@
           "question_text": "Что характерно для реализации Server Streaming RPC на сервере (Java)?",
           "options": [
             {
-              "text": "Сервер возвращает `List<StockPrice>` из метода, и фреймворк сам сериализует список как поток.",
+              "text": "Server Streaming требует включения `HTTP/2 Server Push` — без `PUSH_PROMISE`-фреймов сервер не может инициативно слать данные.",
               "correct": false,
               "sections": {
-                "what_actually": "Контракт streaming-метода — `void watchStock(Request, StreamObserver<Response>)`; сервер сам решает, когда и сколько раз вызвать `onNext()`.",
-                "source_of_confusion": "В unary-методах действительно возвращается значение, и эту модель ошибочно переносят на streaming.",
-                "if_it_were_true": "Тогда терялось бы главное преимущество streaming — постепенная отправка по мере появления данных, а весь `List` держался бы в памяти до конца генерации.",
-                "how_it_should_be": "Сервер пишет элементы через `responseObserver.onNext(...)` многократно и закрывает поток `onCompleted()`, а не возвращает список."
+                "what_actually": "Server streaming работает поверх обычных `DATA`-фреймов в рамках одного stream, инициированного клиентом; `HTTP/2 Server Push` (`PUSH_PROMISE`) — отдельный механизм, который gRPC не использует.",
+                "source_of_confusion": "И то и другое связано с «сервер сам отправляет данные», но Server Push задумывался для пушинга связанных ресурсов (CSS вместе с HTML).",
+                "if_it_were_true": "Тогда gRPC не работал бы за прокси и балансировщиками, которые часто отключают Server Push (а сейчас он ещё и deprecated в Chrome).",
+                "how_it_should_be": "Сервер шлёт поток через `onNext()` по уже открытому клиентом stream; `PUSH_PROMISE` тут ни при чём."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Для каждого нового сообщения нужно создавать новый `HTTP/2` stream, иначе клиент не получит данные в реальном времени.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Весь поток сообщений идёт по одному `HTTP/2` stream от вызова RPC до `onCompleted()` — это и есть суть Server Streaming.",
-                "source_of_confusion": "Смешение с REST polling, где каждый запрос — отдельное соединение/stream.",
-                "if_it_were_true": "Тогда сводился бы на нет выигрыш `HTTP/2` multiplexing, и каждое сообщение несло бы overhead на новый stream (HEADERS-фрейм, flow control window).",
-                "how_it_should_be": "Один stream живёт всю передачу; новые сообщения — это `DATA`-фреймы в нём, а не новые streams."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "Сервер многократно вызывает `responseObserver.onNext(message)` для отправки элементов и завершает поток `responseObserver.onCompleted()`; клиент получает данные через `Iterator` (blocking) или `StreamObserver` (async).",
@@ -402,17 +390,29 @@
                 "edge_cases": "При отмене клиентом сервер должен остановить генерацию (через `Context.current().addListener()` или проверку `isCancelled()`), иначе запись в закрытый stream даст `StatusRuntimeException`.",
                 "related": "[[grpc-interview#Q6]] типы RPC; [[grpc-interview#Q8]] Client Streaming; [[grpc-interview#Q9]] Bidirectional Streaming."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Для каждого нового сообщения нужно создавать новый `HTTP/2` stream, иначе клиент не получит данные в реальном времени.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Весь поток сообщений идёт по одному `HTTP/2` stream от вызова RPC до `onCompleted()` — это и есть суть Server Streaming.",
+                "source_of_confusion": "Смешение с REST polling, где каждый запрос — отдельное соединение/stream.",
+                "if_it_were_true": "Тогда сводился бы на нет выигрыш `HTTP/2` multiplexing, и каждое сообщение несло бы overhead на новый stream (HEADERS-фрейм, flow control window).",
+                "how_it_should_be": "Один stream живёт всю передачу; новые сообщения — это `DATA`-фреймы в нём, а не новые streams."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Server Streaming требует включения `HTTP/2 Server Push` — без `PUSH_PROMISE`-фреймов сервер не может инициативно слать данные.",
+              "text": "Сервер возвращает `List<StockPrice>` из метода, и фреймворк сам сериализует список как поток.",
               "correct": false,
               "sections": {
-                "what_actually": "Server streaming работает поверх обычных `DATA`-фреймов в рамках одного stream, инициированного клиентом; `HTTP/2 Server Push` (`PUSH_PROMISE`) — отдельный механизм, который gRPC не использует.",
-                "source_of_confusion": "И то и другое связано с «сервер сам отправляет данные», но Server Push задумывался для пушинга связанных ресурсов (CSS вместе с HTML).",
-                "if_it_were_true": "Тогда gRPC не работал бы за прокси и балансировщиками, которые часто отключают Server Push (а сейчас он ещё и deprecated в Chrome).",
-                "how_it_should_be": "Сервер шлёт поток через `onNext()` по уже открытому клиентом stream; `PUSH_PROMISE` тут ни при чём."
+                "what_actually": "Контракт streaming-метода — `void watchStock(Request, StreamObserver<Response>)`; сервер сам решает, когда и сколько раз вызвать `onNext()`.",
+                "source_of_confusion": "В unary-методах действительно возвращается значение, и эту модель ошибочно переносят на streaming.",
+                "if_it_were_true": "Тогда терялось бы главное преимущество streaming — постепенная отправка по мере появления данных, а весь `List` держался бы в памяти до конца генерации.",
+                "how_it_should_be": "Сервер пишет элементы через `responseObserver.onNext(...)` многократно и закрывает поток `onCompleted()`, а не возвращает список."
               },
               "label": "D",
               "order": 3
@@ -441,18 +441,6 @@
               "order": 0
             },
             {
-              "text": "Сервер обязан вызывать `responseObserver.onNext()` после каждого полученного `FileChunk`, иначе клиент заблокируется.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Сервер сам решает, когда отправить единственный ответ; обычно `onNext()` + `onCompleted()` вызываются внутри клиентского `onCompleted()`, и клиент не блокируется промежуточными ответами.",
-                "source_of_confusion": "По аналогии с request-response кажется, что на каждый кусок данных нужен «ack».",
-                "if_it_were_true": "Тогда пропадал бы смысл client streaming как способа одним ответом подтвердить весь batch, и сервер был бы вынужден реализовывать bidi-семантику.",
-                "how_it_should_be": "Сервер отвечает один раз, когда весь входной поток получен; промежуточные ack не требуются."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Метод сервиса возвращает `void`, а число ответных сообщений равно числу полученных от клиента — один к одному.",
               "correct": false,
               "sections": {
@@ -460,6 +448,18 @@
                 "source_of_confusion": "Смешение Client Streaming и Bidirectional Streaming.",
                 "if_it_were_true": "Тогда нельзя было бы агрегировать результат (один статус загрузки на N чанков), а это основной use-case.",
                 "how_it_should_be": "Серверный метод возвращает `StreamObserver` для приёма потока, а отвечает одним сообщением из своего `onCompleted()`."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Сервер обязан вызывать `responseObserver.onNext()` после каждого полученного `FileChunk`, иначе клиент заблокируется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сервер сам решает, когда отправить единственный ответ; обычно `onNext()` + `onCompleted()` вызываются внутри клиентского `onCompleted()`, и клиент не блокируется промежуточными ответами.",
+                "source_of_confusion": "По аналогии с request-response кажется, что на каждый кусок данных нужен «ack».",
+                "if_it_were_true": "Тогда пропадал бы смысл client streaming как способа одним ответом подтвердить весь batch, и сервер был бы вынужден реализовывать bidi-семантику.",
+                "how_it_should_be": "Сервер отвечает один раз, когда весь входной поток получен; промежуточные ack не требуются."
               },
               "label": "C",
               "order": 2
@@ -489,19 +489,6 @@
           "question_text": "В чём принципиальное отличие Bidirectional Streaming от двух параллельных Server и Client Streaming-вызовов?",
           "options": [
             {
-              "text": "Bidi использует один `HTTP/2` stream, по которому обе стороны читают и пишут независимо и в произвольном порядке: нет правила «один запрос → один ответ», сервер может прислать 5 сообщений на 1 клиентское.",
-              "correct": true,
-              "sections": {
-                "explanation": "Клиент открывает один stream через `asyncStub.chat(responseObserver)` и получает `requestObserver`; дальше обе стороны вызывают `onNext()` независимо, потому что `HTTP/2` stream полнодуплексный — `DATA`-фреймы идут в обе стороны до `END_STREAM` каждой.",
-                "example": "Чат, совместное редактирование документа, multiplayer-игры, push-уведомления с подтверждениями — любые real-time сценарии, где обе стороны инициируют сообщения.",
-                "when_to_apply": "Каждая сторона завершает свой поток независимо через `onCompleted()`; если клиент закрыл write-side, сервер всё ещё может писать (half-closed). При высоком throughput следят за flow control.",
-                "edge_cases": "HTTP/2 stream states (open / half-closed / closed), flow control window, пара `StreamObserver`, `Context` для отмены — половинно закрытое состояние штатно, а не ошибка.",
-                "related": "[[grpc-interview#Q7]] Server Streaming; [[grpc-interview#Q8]] Client Streaming; [[grpc-interview#Q11]] мультиплексирование HTTP/2."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Bidi — это синтаксический сахар над двумя `HTTP/2` stream-ами (клиент→сервер и сервер→клиент), согласованными по ID и обрабатываемыми одним RPC-методом.",
               "correct": false,
               "sections": {
@@ -510,8 +497,8 @@
                 "if_it_were_true": "Тогда пропадали бы гарантии порядка относительно начала RPC, нельзя было бы атомарно отменить обе стороны через `Context.cancel()`, и удвоился бы flow control bookkeeping.",
                 "how_it_should_be": "Bidi — это один полнодуплексный stream с двумя независимыми направлениями записи, а не пара согласованных streams."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "В bidi сервер обязан отвечать на каждое сообщение клиента ровно одним сообщением (1:1), иначе нарушается контракт `StreamObserver`.",
@@ -521,6 +508,19 @@
                 "source_of_confusion": "Request/response-мышление из REST переносят на streaming.",
                 "if_it_were_true": "Тогда нельзя было бы реализовать push-уведомления (клиент шлёт редко, сервер часто) или агрегацию (клиент шлёт N, сервер отвечает одним сводным).",
                 "how_it_should_be": "Соотношение сообщений в bidi произвольное; стороны шлют столько, сколько нужно бизнес-логике."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Bidi использует один `HTTP/2` stream, по которому обе стороны читают и пишут независимо и в произвольном порядке: нет правила «один запрос → один ответ», сервер может прислать 5 сообщений на 1 клиентское.",
+              "correct": true,
+              "sections": {
+                "explanation": "Клиент открывает один stream через `asyncStub.chat(responseObserver)` и получает `requestObserver`; дальше обе стороны вызывают `onNext()` независимо, потому что `HTTP/2` stream полнодуплексный — `DATA`-фреймы идут в обе стороны до `END_STREAM` каждой.",
+                "example": "Чат, совместное редактирование документа, multiplayer-игры, push-уведомления с подтверждениями — любые real-time сценарии, где обе стороны инициируют сообщения.",
+                "when_to_apply": "Каждая сторона завершает свой поток независимо через `onCompleted()`; если клиент закрыл write-side, сервер всё ещё может писать (half-closed). При высоком throughput следят за flow control.",
+                "edge_cases": "HTTP/2 stream states (open / half-closed / closed), flow control window, пара `StreamObserver`, `Context` для отмены — половинно закрытое состояние штатно, а не ошибка.",
+                "related": "[[grpc-interview#Q7]] Server Streaming; [[grpc-interview#Q8]] Client Streaming; [[grpc-interview#Q11]] мультиплексирование HTTP/2."
               },
               "label": "C",
               "order": 2
@@ -561,6 +561,18 @@
               "order": 0
             },
             {
+              "text": "HPACK заменяет TCP-соединения short-lived UDP-пакетами для быстрого handshake.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HPACK — это сжатие `HTTP`-заголовков, работает поверх TCP и не меняет транспорт; UDP появляется только в `HTTP/3` (QUIC).",
+                "source_of_confusion": "«Сжатие + быстро» ассоциируется с UDP-скоростью, отсюда путаница уровней.",
+                "if_it_were_true": "Тогда от `HTTP/2` ждали бы «UDP-скорости», что привело бы к неверным сетевым моделям и ошибкам в capacity planning.",
+                "how_it_should_be": "HPACK лишь сжимает заголовки поверх TCP; основной выигрыш по latency — мультиплексирование, а не смена транспорта на UDP."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "Мультиплексирование stream-ов в одном TCP-соединении: параллельные RPC не ждут друг друга на уровне `HTTP`, потому что каждый RPC — отдельный stream, и медленный ответ не блокирует остальные (нет HTTP-уровневого head-of-line blocking, как в `HTTP/1.1`).",
               "correct": true,
               "sections": {
@@ -570,8 +582,8 @@
                 "edge_cases": "Head-of-line blocking остаётся на уровне TCP: при потере пакета все streams в соединении ждут ретрансмиссии — это уже ограничение TCP, а не `HTTP/2`.",
                 "related": "[[grpc-interview#Q1]] что такое gRPC; [[grpc-interview#Q11]] мультиплексирование HTTP/2; [[grpc-interview#Q28]] gRPC vs REST."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Бинарный фрейминг полностью устраняет накладные расходы на сериализацию payload.",
@@ -581,18 +593,6 @@
                 "source_of_confusion": "Оба механизма про «бинарность», и их легко слить в один.",
                 "if_it_were_true": "Тогда не нужен был бы protobuf, но именно он отвечает за компактность payload, а фрейминг — за транспорт.",
                 "how_it_should_be": "Latency-выигрыш по сети даёт мультиплексирование; компактность payload — отдельная заслуга protobuf-сериализации."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "HPACK заменяет TCP-соединения short-lived UDP-пакетами для быстрого handshake.",
-              "correct": false,
-              "sections": {
-                "what_actually": "HPACK — это сжатие `HTTP`-заголовков, работает поверх TCP и не меняет транспорт; UDP появляется только в `HTTP/3` (QUIC).",
-                "source_of_confusion": "«Сжатие + быстро» ассоциируется с UDP-скоростью, отсюда путаница уровней.",
-                "if_it_were_true": "Тогда от `HTTP/2` ждали бы «UDP-скорости», что привело бы к неверным сетевым моделям и ошибкам в capacity planning.",
-                "how_it_should_be": "HPACK лишь сжимает заголовки поверх TCP; основной выигрыш по latency — мультиплексирование, а не смена транспорта на UDP."
               },
               "label": "D",
               "order": 3
@@ -609,18 +609,6 @@
           "question_text": "При тысячах параллельных RPC через один `ManagedChannel` — что остаётся узким местом и почему `HTTP/2` это не устраняет полностью?",
           "options": [
             {
-              "text": "Сжатие protobuf-сообщений становится bottleneck, потому что HPACK не сжимает payload.",
-              "correct": false,
-              "sections": {
-                "what_actually": "HPACK сжимает только заголовки, но protobuf — компактный бинарь, и per-message сжатие обычно не доминирующий bottleneck для тысяч мелких RPC; это путает уровни.",
-                "source_of_confusion": "HPACK действительно не трогает payload, и отсюда вывод, что «сжатие тела тормозит».",
-                "if_it_were_true": "Тогда оптимизировать compression стоило бы в первую очередь, но это отвлечение от настоящей причины — TCP-уровня.",
-                "how_it_should_be": "Реальное узкое место — TCP head-of-line blocking; сжатие payload тут вторично."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Stream-id заканчиваются после 2^31 вызовов, и канал блокируется до переподключения.",
               "correct": false,
               "sections": {
@@ -629,8 +617,8 @@
                 "if_it_were_true": "Тогда деградация наступала бы от исчерпания id, но это экзотический edge-case, а не реальная причина.",
                 "how_it_should_be": "Узкое место — TCP head-of-line blocking; исчерпание stream-id решается автоматическим переподключением."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "TCP head-of-line blocking: при потере пакета все streams ждут ретрансмиссии, потому что `HTTP/2` живёт поверх одного TCP-соединения, а TCP гарантирует упорядоченную доставку.",
@@ -642,8 +630,8 @@
                 "edge_cases": "Лечится только сменой транспорта (`HTTP/3`/QUIC); тюнинг keepalive или сжатия проблему не убирает, потому что она на уровне TCP.",
                 "related": "[[grpc-interview#Q10]] почему HTTP/2; [[grpc-interview#Q1]] что такое gRPC; [[grpc-interview#Q5]] Channel и Stub."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`keepAliveTime` слишком короткий и разрывает соединение, заставляя пересоздавать streams.",
@@ -653,6 +641,18 @@
                 "source_of_confusion": "Смешивают операционный тюнинг (keepalive) с архитектурным ограничением транспорта.",
                 "if_it_were_true": "Тогда причиной деградации был бы keepalive, но реальный предел — TCP head-of-line blocking.",
                 "how_it_should_be": "Keepalive держит соединение тёплым; узкое место — упорядоченная доставка TCP при потере пакетов."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Сжатие protobuf-сообщений становится bottleneck, потому что HPACK не сжимает payload.",
+              "correct": false,
+              "sections": {
+                "what_actually": "HPACK сжимает только заголовки, но protobuf — компактный бинарь, и per-message сжатие обычно не доминирующий bottleneck для тысяч мелких RPC; это путает уровни.",
+                "source_of_confusion": "HPACK действительно не трогает payload, и отсюда вывод, что «сжатие тела тормозит».",
+                "if_it_were_true": "Тогда оптимизировать compression стоило бы в первую очередь, но это отвлечение от настоящей причины — TCP-уровня.",
+                "how_it_should_be": "Реальное узкое место — TCP head-of-line blocking; сжатие payload тут вторично."
               },
               "label": "D",
               "order": 3
@@ -669,18 +669,6 @@
           "question_text": "В архитектуре gRPC куда правильнее всего поместить аутентификацию по JWT-токену, чтобы не дублировать логику в каждом сервисе?",
           "options": [
             {
-              "text": "Внутри каждого Service Implementation в начале метода — явная проверка токена перед бизнес-логикой.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Дублирование cross-cutting concern в каждом методе нарушает DRY, делает рефакторинг дорогим и рискованным, и проверку легко забыть в новом методе.",
-                "source_of_confusion": "Кажется надёжным «проверять прямо там, где работает бизнес-логика».",
-                "if_it_were_true": "Тогда один пропущенный вызов проверки = unauthorized доступ в production — типичный security-bug.",
-                "how_it_should_be": "Auth выносят в `ServerInterceptor`, который применяется единообразно ко всем RPC до бизнес-логики."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "В `.proto`-файле через кастомные опции `option (auth.required) = true;`.",
               "correct": false,
               "sections": {
@@ -689,8 +677,8 @@
                 "if_it_were_true": "Тогда возникает ложное чувство безопасности — опция в `.proto` есть, а реальной проверки нет.",
                 "how_it_should_be": "Реальную проверку токена делает `ServerInterceptor` в рантайме; опции `.proto` максимум могут управлять генерацией такого кода."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "В `StreamObserver.onNext`-колбэке — там, где приходит первый запрос.",
@@ -701,8 +689,8 @@
                 "if_it_were_true": "Тогда токен из metadata прочитать не получится, и смешаются уровни ответственности (security в бизнес-колбэке).",
                 "how_it_should_be": "Токен читают из `Metadata` в `ServerInterceptor` до старта обработки, а не в `onNext` бизнес-логики."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "В `ServerInterceptor` — middleware, который перехватывает все RPC до Service Implementation и читает токен из `Metadata`; это идиоматичное место для cross-cutting concerns (auth, logging, tracing, rate limiting).",
@@ -713,6 +701,18 @@
                 "when_to_apply": "Любая cross-cutting логика, применяемая единообразно ко всем или к группе RPC — регистрируется через `ServerInterceptors.intercept(service, authInterceptor, loggingInterceptor)`.",
                 "edge_cases": "Interceptor не должен блокировать I/O-поток и обязан корректно проксировать callback'и; per-service нюансы решают отдельными interceptor-ами или проверкой имени метода.",
                 "related": "[[grpc-interview#Q13]] что такое Interceptors; [[grpc-interview#Q14]] Metadata; [[grpc-interview#Q22]] аутентификация в gRPC."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Внутри каждого Service Implementation в начале метода — явная проверка токена перед бизнес-логикой.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Дублирование cross-cutting concern в каждом методе нарушает DRY, делает рефакторинг дорогим и рискованным, и проверку легко забыть в новом методе.",
+                "source_of_confusion": "Кажется надёжным «проверять прямо там, где работает бизнес-логика».",
+                "if_it_were_true": "Тогда один пропущенный вызов проверки = unauthorized доступ в production — типичный security-bug.",
+                "how_it_should_be": "Auth выносят в `ServerInterceptor`, который применяется единообразно ко всем RPC до бизнес-логики."
               },
               "label": "D",
               "order": 3
@@ -729,19 +729,6 @@
           "question_text": "Что представляют собой Interceptors в gRPC и где их применяют?",
           "options": [
             {
-              "text": "Interceptors — middleware-компоненты, перехватывающие RPC-вызовы для cross-cutting логики (логирование, auth, метрики): `ServerInterceptor` оборачивает входящие вызовы, `ClientInterceptor` — исходящие, оба регистрируются через `ServerBuilder`/`ManagedChannelBuilder`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Реализация `interceptCall(...)` вызывает `next.startCall(...)`/`next.newCall(...)` и оборачивает `ServerCall.Listener`/`ClientCall` через `ForwardingServer/ClientCallListener`; это аналог `Servlet Filter`, но на уровне gRPC-вызовов.",
-                "example": "Единая точка для трассировки (trace-id из `Metadata`), `JWT`-валидации, rate limiting и измерения latency — без правки бизнес-логики каждого сервиса.",
-                "when_to_apply": "Применяют для любых cross-cutting concerns; регистрируют глобально (`@GrpcGlobalServerInterceptor`) или точечно через `ServerInterceptors.intercept(service, ...)`.",
-                "edge_cases": "Interceptor не должен блокировать I/O-поток и обязан корректно проксировать все callback'и (`onMessage`, `onHalfClose`, `onCancel`, `onComplete`), иначе теряются сообщения или ломается отмена.",
-                "related": "[[grpc-interview#Q12]] куда поместить auth; [[grpc-interview#Q14]] Metadata; [[grpc-interview#Q33]] observability через interceptors."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Interceptors — это утилиты для парсинга `.proto`-файлов и генерации стабов на стадии сборки.",
               "correct": false,
               "sections": {
@@ -750,20 +737,8 @@
                 "if_it_were_true": "Тогда «перехватить» вызов пытались бы через generated-код, но стабы immutable и hook-точек не имеют.",
                 "how_it_should_be": "Interceptors — это runtime-middleware вокруг RPC; генерацию кода делает `protoc` отдельно."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Interceptors — это конфигурация TLS-шифрования и mTLS-аутентификации на уровне канала.",
-              "correct": false,
-              "sections": {
-                "what_actually": "TLS настраивается через `ManagedChannelBuilder.useTransportSecurity()` и `SslContextBuilder` — это transport-layer, а interceptor работает на application-layer.",
-                "source_of_confusion": "И interceptor, и TLS связаны с безопасностью, отсюда смешение слоёв.",
-                "if_it_were_true": "Тогда через interceptor пытались бы «включить TLS», получая runtime-ошибки — у него нет доступа к socket.",
-                "how_it_should_be": "Шифрование канала — это transport security; interceptor читает уже расшифрованные `Metadata`/payload на уровне приложения."
-              },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Interceptors — это механизм health checking для load balancer'а через сервис `grpc.health.v1.Health`.",
@@ -773,6 +748,31 @@
                 "source_of_confusion": "И health-check, и interceptor — «инфраструктурные» сущности, и их легко спутать.",
                 "if_it_were_true": "Тогда health-логику клали бы внутрь interceptor и ломали бы контракт LB, который ждёт RPC `Check`/`Watch` к health-сервису.",
                 "how_it_should_be": "Health-check — это сервис `grpc.health.v1.Health`; interceptor — это middleware вокруг любых RPC."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Interceptors — middleware-компоненты, перехватывающие RPC-вызовы для cross-cutting логики (логирование, auth, метрики): `ServerInterceptor` оборачивает входящие вызовы, `ClientInterceptor` — исходящие, оба регистрируются через `ServerBuilder`/`ManagedChannelBuilder`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Реализация `interceptCall(...)` вызывает `next.startCall(...)`/`next.newCall(...)` и оборачивает `ServerCall.Listener`/`ClientCall` через `ForwardingServer/ClientCallListener`; это аналог `Servlet Filter`, но на уровне gRPC-вызовов.",
+                "example": "Единая точка для трассировки (trace-id из `Metadata`), `JWT`-валидации, rate limiting и измерения latency — без правки бизнес-логики каждого сервиса.",
+                "when_to_apply": "Применяют для любых cross-cutting concerns; регистрируют глобально (`@GrpcGlobalServerInterceptor`) или точечно через `ServerInterceptors.intercept(service, ...)`.",
+                "edge_cases": "Interceptor не должен блокировать I/O-поток и обязан корректно проксировать все callback'и (`onMessage`, `onHalfClose`, `onCancel`, `onComplete`), иначе теряются сообщения или ломается отмена.",
+                "related": "[[grpc-interview#Q12]] куда поместить auth; [[grpc-interview#Q14]] Metadata; [[grpc-interview#Q33]] observability через interceptors."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Interceptors — это конфигурация TLS-шифрования и mTLS-аутентификации на уровне канала.",
+              "correct": false,
+              "sections": {
+                "what_actually": "TLS настраивается через `ManagedChannelBuilder.useTransportSecurity()` и `SslContextBuilder` — это transport-layer, а interceptor работает на application-layer.",
+                "source_of_confusion": "И interceptor, и TLS связаны с безопасностью, отсюда смешение слоёв.",
+                "if_it_were_true": "Тогда через interceptor пытались бы «включить TLS», получая runtime-ошибки — у него нет доступа к socket.",
+                "how_it_should_be": "Шифрование канала — это transport security; interceptor читает уже расшифрованные `Metadata`/payload на уровне приложения."
               },
               "label": "D",
               "order": 3
@@ -789,18 +789,6 @@
           "question_text": "Чем `Metadata` в gRPC отличается от тела сообщения и как её передают?",
           "options": [
             {
-              "text": "Это часть protobuf-сообщения, объявляемая в `.proto` через специальное поле `metadata`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В `.proto` нет встроенного `metadata`-типа: пользовательские метаданные либо описывают обычными полями (но это уже payload), либо передают через транспортные `Metadata`, не в `.proto`.",
-                "source_of_confusion": "Кажется, что раз gRPC «про схему», то и метаданные должны жить в `.proto`.",
-                "if_it_were_true": "Тогда trace-id/auth попадали бы в payload, смешивая cross-cutting логику с бизнес-моделью и ломая совместимость при эволюции схемы.",
-                "how_it_should_be": "`Metadata` — это транспортные ключ-значение пары поверх `HTTP/2` headers, отдельные от protobuf-тела."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`Metadata` — транспортные ключ-значение пары поверх `HTTP/2` headers, передаваемые отдельно от payload через initial/trailing frames; `Metadata.Key<T>` задаёт имя и `Marshaller` (`ASCII_STRING_MARSHALLER` или `BINARY_BYTE_MARSHALLER` для `-bin`-суффикса).",
               "correct": true,
               "sections": {
@@ -810,8 +798,8 @@
                 "edge_cases": "Ключи — lowercase ASCII; бинарные значения только в `-bin`-ключах; суммарный размер ограничен `maxInboundMetadataSize` (по умолчанию 8 KB); прикладной код в сервисе по умолчанию `Metadata` не видит.",
                 "related": "[[grpc-interview#Q13]] Interceptors; [[grpc-interview#Q15]] обработка ошибок и trailers; [[grpc-interview#Q22]] аутентификация."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`Metadata` — это информация о схеме `.proto`-файлов, передаваемая через gRPC reflection API.",
@@ -822,8 +810,8 @@
                 "if_it_were_true": "Тогда через reflection пытались бы передавать auth/tracing, хотя reflection обычно отключают в production.",
                 "how_it_should_be": "`Metadata` — это per-call заголовки запроса/ответа; описание схемы — это reflection, совершенно другой механизм."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`Metadata` — это конфигурация канала: keepalive, max message size, compression, задаваемая через `ChannelOption`.",
@@ -833,6 +821,18 @@
                 "source_of_confusion": "И настройки канала, и metadata — «параметры», поэтому их путают.",
                 "if_it_were_true": "Тогда нельзя было бы динамически прокидывать per-request данные — channel-options нельзя менять на лету для одного вызова.",
                 "how_it_should_be": "`Metadata` передаётся per-call как `HTTP/2` headers; keepalive и размеры сообщений — статическая конфигурация канала."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Это часть protobuf-сообщения, объявляемая в `.proto` через специальное поле `metadata`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В `.proto` нет встроенного `metadata`-типа: пользовательские метаданные либо описывают обычными полями (но это уже payload), либо передают через транспортные `Metadata`, не в `.proto`.",
+                "source_of_confusion": "Кажется, что раз gRPC «про схему», то и метаданные должны жить в `.proto`.",
+                "if_it_were_true": "Тогда trace-id/auth попадали бы в payload, смешивая cross-cutting логику с бизнес-моделью и ломая совместимость при эволюции схемы.",
+                "how_it_should_be": "`Metadata` — это транспортные ключ-значение пары поверх `HTTP/2` headers, отдельные от protobuf-тела."
               },
               "label": "D",
               "order": 3
@@ -849,18 +849,6 @@
           "question_text": "Как gRPC возвращает ошибки клиенту и чем это отличается от HTTP REST?",
           "options": [
             {
-              "text": "Через `HTTP` status codes (4xx/5xx) — клиент читает их из ответа, как в обычном REST.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`HTTP/2` для всех успешных и неуспешных gRPC-вызовов возвращает `200 OK`; реальный gRPC-статус приходит в trailer'е `grpc-status`.",
-                "source_of_confusion": "В REST статус — это HTTP-код, и эту привычку переносят на gRPC.",
-                "if_it_were_true": "Тогда middleware/proxy считал бы все gRPC-ошибки успешными ответами — метрики 5xx были бы нулевыми, алерты сломались бы.",
-                "how_it_should_be": "gRPC возвращает ошибку через объект `Status` в trailer'е `grpc-status`, а не через HTTP-код."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Через выброс checked-exception в generated stub, которое клиент обязан перехватить компилятором.",
               "correct": false,
               "sections": {
@@ -869,8 +857,8 @@
                 "if_it_were_true": "Тогда разработчик мог бы не обернуть вызов в `try/catch` и при `UNAVAILABLE` приложение падало бы по unhandled-exception.",
                 "how_it_should_be": "Клиент сам ловит unchecked `StatusRuntimeException` и разбирает `e.getStatus().getCode()`."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Через объект `Status` с кодом из 17 стандартных значений (`NOT_FOUND`, `UNAVAILABLE`, …), описанием и опциональными деталями в trailer'ах (`grpc-status`, `grpc-message`, `grpc-status-details-bin`).",
@@ -882,8 +870,8 @@
                 "edge_cases": "Status передаётся out-of-band в trailers, отдельно от payload; deadline и status автоматически прокидываются через interceptor'ы по цепочке микросервисов.",
                 "related": "[[grpc-interview#Q16]] стандартные Status Codes; [[grpc-interview#Q17]] deadlines; [[grpc-interview#Q18]] какие коды ретраить."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Через специальное поле `error` в каждом `.proto`-сообщении ответа — клиент проверяет его вручную.",
@@ -893,6 +881,18 @@
                 "source_of_confusion": "В REST/GraphQL действительно часто кладут `error` в тело ответа, и это переносят на gRPC.",
                 "if_it_were_true": "Тогда `error`-поле в каждом response дублировало бы `grpc-status`, усложняло схему и ломало retry-логику middleware (она смотрит на `grpc-status`).",
                 "how_it_should_be": "Ошибка едет в trailers как `grpc-status`, а не в поле тела сообщения."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Через `HTTP` status codes (4xx/5xx) — клиент читает их из ответа, как в обычном REST.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`HTTP/2` для всех успешных и неуспешных gRPC-вызовов возвращает `200 OK`; реальный gRPC-статус приходит в trailer'е `grpc-status`.",
+                "source_of_confusion": "В REST статус — это HTTP-код, и эту привычку переносят на gRPC.",
+                "if_it_were_true": "Тогда middleware/proxy считал бы все gRPC-ошибки успешными ответами — метрики 5xx были бы нулевыми, алерты сломались бы.",
+                "how_it_should_be": "gRPC возвращает ошибку через объект `Status` в trailer'е `grpc-status`, а не через HTTP-код."
               },
               "label": "D",
               "order": 3
@@ -909,18 +909,6 @@
           "question_text": "Чем различаются `UNAUTHENTICATED` и `PERMISSION_DENIED` в gRPC и когда сервер обязан вернуть именно `PERMISSION_DENIED`?",
           "options": [
             {
-              "text": "`UNAUTHENTICATED` возвращается, если у пользователя нет роли для метода, а `PERMISSION_DENIED` — если токен просрочен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Семантика обратная: `UNAUTHENTICATED` (16) — «кто ты неизвестно» (нет/невалиден/просрочен токен), `PERMISSION_DENIED` (7) — «кто ты знаю, но прав на операцию нет».",
-                "source_of_confusion": "Оба кода связаны с auth и часто путаются в логах, как и HTTP-пара 401/403.",
-                "if_it_were_true": "Тогда после refresh токена клиент попадал бы в бесконечный цикл: обновил токен → снова `UNAUTHENTICATED` → снова refresh.",
-                "how_it_should_be": "`UNAUTHENTICATED` — про идентичность (нет/невалиден токен), `PERMISSION_DENIED` — про права уже опознанного пользователя."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`PERMISSION_DENIED` всегда означает, что токен повреждён или его подпись не прошла проверку.",
               "correct": false,
               "sections": {
@@ -928,6 +916,19 @@
                 "source_of_confusion": "И тот, и другой код «про доступ», поэтому проверку подписи приписывают `PERMISSION_DENIED`.",
                 "if_it_were_true": "Тогда при отказе RBAC клиент решал бы, что токен сломан, и зря запускал бы refresh вместо запроса прав.",
                 "how_it_should_be": "`PERMISSION_DENIED` — это валидный токен без нужных прав; проблемы с подписью токена дают `UNAUTHENTICATED`."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "`PERMISSION_DENIED` (код 7, HTTP-аналог 403): токен валиден и аутентификация прошла, но у пользователя нет прав на конкретную операцию (например, читать чужой профиль); запрос с тем же контекстом повторять бессмысленно.",
+              "correct": true,
+              "sections": {
+                "explanation": "Identity установлена корректно (подпись проверена, claims извлечены), но проверка ACL/RBAC/ABAC отказала — это не временная ошибка, и retry/refresh не помогут.",
+                "example": "`if (!authService.canAccess(currentUser, request.getUserId())) responseObserver.onError(Status.PERMISSION_DENIED.withDescription(\"Cannot access foreign profile\").asRuntimeException());` — после валидного JWT бизнес-логика отказывает в доступе к чужому ресурсу.",
+                "when_to_apply": "Row-level security (чтение чужих данных), tenant isolation (tenant A → tenant B), admin-only методы, квоты на конкретный ресурс.",
+                "edge_cases": "Не путать с `UNAUTHENTICATED` (нет/невалиден токен — иначе сломается refresh-логика), с `RESOURCE_EXHAUSTED` (глобальная квота, можно retry) и `FAILED_PRECONDITION` (состояние ресурса).",
+                "related": "[[grpc-interview#Q15]] обработка ошибок и Status; [[grpc-interview#Q18]] какие коды ретраить; [[grpc-interview#Q22]] аутентификация."
               },
               "label": "B",
               "order": 1
@@ -945,14 +946,13 @@
               "order": 2
             },
             {
-              "text": "`PERMISSION_DENIED` (код 7, HTTP-аналог 403): токен валиден и аутентификация прошла, но у пользователя нет прав на конкретную операцию (например, читать чужой профиль); запрос с тем же контекстом повторять бессмысленно.",
-              "correct": true,
+              "text": "`UNAUTHENTICATED` возвращается, если у пользователя нет роли для метода, а `PERMISSION_DENIED` — если токен просрочен.",
+              "correct": false,
               "sections": {
-                "explanation": "Identity установлена корректно (подпись проверена, claims извлечены), но проверка ACL/RBAC/ABAC отказала — это не временная ошибка, и retry/refresh не помогут.",
-                "example": "`if (!authService.canAccess(currentUser, request.getUserId())) responseObserver.onError(Status.PERMISSION_DENIED.withDescription(\"Cannot access foreign profile\").asRuntimeException());` — после валидного JWT бизнес-логика отказывает в доступе к чужому ресурсу.",
-                "when_to_apply": "Row-level security (чтение чужих данных), tenant isolation (tenant A → tenant B), admin-only методы, квоты на конкретный ресурс.",
-                "edge_cases": "Не путать с `UNAUTHENTICATED` (нет/невалиден токен — иначе сломается refresh-логика), с `RESOURCE_EXHAUSTED` (глобальная квота, можно retry) и `FAILED_PRECONDITION` (состояние ресурса).",
-                "related": "[[grpc-interview#Q15]] обработка ошибок и Status; [[grpc-interview#Q18]] какие коды ретраить; [[grpc-interview#Q22]] аутентификация."
+                "what_actually": "Семантика обратная: `UNAUTHENTICATED` (16) — «кто ты неизвестно» (нет/невалиден/просрочен токен), `PERMISSION_DENIED` (7) — «кто ты знаю, но прав на операцию нет».",
+                "source_of_confusion": "Оба кода связаны с auth и часто путаются в логах, как и HTTP-пара 401/403.",
+                "if_it_were_true": "Тогда после refresh токена клиент попадал бы в бесконечный цикл: обновил токен → снова `UNAUTHENTICATED` → снова refresh.",
+                "how_it_should_be": "`UNAUTHENTICATED` — про идентичность (нет/невалиден токен), `PERMISSION_DENIED` — про права уже опознанного пользователя."
               },
               "label": "D",
               "order": 3
@@ -969,14 +969,13 @@
           "question_text": "Чем `Deadline` в gRPC принципиально отличается от обычного клиентского timeout и почему это критично для цепочки микросервисов?",
           "options": [
             {
-              "text": "`Deadline` — абсолютная точка во времени, которая автоматически пропагируется через все downstream-вызовы в одном logical request: gRPC сохраняет момент `T+5s` в `Context.current().getDeadline()` и шлёт downstream в metadata `grpc-timeout`, равный остатку.",
-              "correct": true,
+              "text": "`Deadline` проверяется только в момент отправки запроса; после установления соединения вызов прервать нельзя.",
+              "correct": false,
               "sections": {
-                "explanation": "`stub.withDeadlineAfter(5, SECONDS)` фиксирует абсолютный дедлайн; при вызове ServiceB через тот же `Context` B получает уже урезанный deadline (например `4500m`), что даёт строгую гарантию: суммарное время цепочки A→B→C не превысит исходный дедлайн клиента.",
-                "example": "Клиент → ServiceA (deadline 5s) → A зовёт B после 0.2s (B получит ≈4.8s) → B зовёт C после 0.3s (C получит ≈4.5s); если C зависнет, он сам прервётся с `DEADLINE_EXCEEDED` — гарантия E2E SLO.",
-                "when_to_apply": "Всегда ставить deadline на edge-сервисе (API gateway), пропагировать через `Context`, а в долгих server-side операциях периодически проверять `isCancelled()`.",
-                "edge_cases": "Deadline пропагируется только в том же `Context`: в async-коде его надо явно сохранять/восстанавливать, иначе через новый `Executor` без `Context.currentContextExecutor` он теряется; без буфера на retry повторов не будет.",
-                "related": "[[grpc-interview#Q15]] обработка ошибок (DEADLINE_EXCEEDED); [[grpc-interview#Q18]] retry и deadline; [[grpc-interview#Q13]] interceptors для тайминга."
+                "what_actually": "Deadline проверяется и на сервере через `Context.current().getDeadline().isExpired()`, и транспорт gRPC сам отменяет stream при истечении (шлёт `RST_STREAM` с `grpc-status=DEADLINE_EXCEEDED`).",
+                "source_of_confusion": "В наивных синхронных API timeout действительно проверяется только при connect/read.",
+                "if_it_were_true": "Тогда долгие server-side операции занимали бы ресурсы ещё долго после того, как клиент уже отключился.",
+                "how_it_should_be": "Deadline активен всю жизнь RPC: и транспорт, и серверный код могут прервать вызов при истечении."
               },
               "label": "A",
               "order": 0
@@ -994,18 +993,6 @@
               "order": 1
             },
             {
-              "text": "`Deadline` проверяется только в момент отправки запроса; после установления соединения вызов прервать нельзя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Deadline проверяется и на сервере через `Context.current().getDeadline().isExpired()`, и транспорт gRPC сам отменяет stream при истечении (шлёт `RST_STREAM` с `grpc-status=DEADLINE_EXCEEDED`).",
-                "source_of_confusion": "В наивных синхронных API timeout действительно проверяется только при connect/read.",
-                "if_it_were_true": "Тогда долгие server-side операции занимали бы ресурсы ещё долго после того, как клиент уже отключился.",
-                "how_it_should_be": "Deadline активен всю жизнь RPC: и транспорт, и серверный код могут прервать вызов при истечении."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "`Deadline` применим только к unary RPC; для streaming используется отдельный keep-alive.",
               "correct": false,
               "sections": {
@@ -1013,6 +1000,19 @@
                 "source_of_confusion": "У длинных streaming RPC кажется, что deadline неприменим, ведь они могут идти часами.",
                 "if_it_were_true": "Тогда long-lived stream стал бы DoS-вектором: клиент открыл бы stream и забыл его, удерживая ресурсы без ограничения по времени.",
                 "how_it_should_be": "Deadline ограничивает любой RPC, включая streaming; keep-alive решает другую задачу — детект разорванных соединений."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`Deadline` — абсолютная точка во времени, которая автоматически пропагируется через все downstream-вызовы в одном logical request: gRPC сохраняет момент `T+5s` в `Context.current().getDeadline()` и шлёт downstream в metadata `grpc-timeout`, равный остатку.",
+              "correct": true,
+              "sections": {
+                "explanation": "`stub.withDeadlineAfter(5, SECONDS)` фиксирует абсолютный дедлайн; при вызове ServiceB через тот же `Context` B получает уже урезанный deadline (например `4500m`), что даёт строгую гарантию: суммарное время цепочки A→B→C не превысит исходный дедлайн клиента.",
+                "example": "Клиент → ServiceA (deadline 5s) → A зовёт B после 0.2s (B получит ≈4.8s) → B зовёт C после 0.3s (C получит ≈4.5s); если C зависнет, он сам прервётся с `DEADLINE_EXCEEDED` — гарантия E2E SLO.",
+                "when_to_apply": "Всегда ставить deadline на edge-сервисе (API gateway), пропагировать через `Context`, а в долгих server-side операциях периодически проверять `isCancelled()`.",
+                "edge_cases": "Deadline пропагируется только в том же `Context`: в async-коде его надо явно сохранять/восстанавливать, иначе через новый `Executor` без `Context.currentContextExecutor` он теряется; без буфера на retry повторов не будет.",
+                "related": "[[grpc-interview#Q15]] обработка ошибок (DEADLINE_EXCEEDED); [[grpc-interview#Q18]] retry и deadline; [[grpc-interview#Q13]] interceptors для тайминга."
               },
               "label": "D",
               "order": 3
@@ -1029,6 +1029,18 @@
           "question_text": "Какие гарантии и ограничения накладывает встроенный retry-механизм gRPC и почему `INVALID_ARGUMENT` нельзя добавлять в `retryableStatusCodes`?",
           "options": [
             {
+              "text": "Hedging и retry — синонимы, разница только в имени конфигурационного поля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Retry отправляет повтор после получения ошибки (последовательно), а hedging шлёт несколько копий параллельно и берёт первый успешный — разные стратегии под разные профили latency.",
+                "source_of_confusion": "Обе стратегии увеличивают надёжность через повторные вызовы и часто упоминаются вместе.",
+                "if_it_were_true": "Тогда hedging применяли бы к non-idempotent операциям (`CreateOrder`), и параллельные запросы создавали бы дубликаты заказов в БД.",
+                "how_it_should_be": "Retry — последовательный повтор после ошибки; hedging — параллельная отправка копий, безопасная только для идемпотентных операций."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Ретрай в gRPC безопасно повторяет любой код ошибки — клиент сам решает, когда остановиться, опираясь на `maxAttempts`.",
               "correct": false,
               "sections": {
@@ -1036,19 +1048,6 @@
                 "source_of_confusion": "`maxAttempts` ограничивает число попыток, и кажется, что этого достаточно для безопасности.",
                 "if_it_were_true": "Тогда при невалидном email клиент повторял бы запрос 3 раза, тратя ресурсы и съедая deadline на гарантированно безрезультатных попытках.",
                 "how_it_should_be": "Ретраят только transient-коды; детерминированные бизнес-ошибки повторять запрещено, даже с лимитом `maxAttempts`."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Ретраю подлежат только transient-статусы (`UNAVAILABLE`, иногда `DEADLINE_EXCEEDED` для идемпотентных операций); deterministic errors `INVALID_ARGUMENT`/`NOT_FOUND`/`ALREADY_EXISTS` ретраить запрещено, иначе теряются latency и SLO.",
-              "correct": true,
-              "sections": {
-                "explanation": "Retry-policy — это state machine с `maxAttempts`, экспоненциальным backoff (`initialBackoff * backoffMultiplier^n` до `maxBackoff`) и whitelist'ом `retryableStatusCodes`; `INVALID_ARGUMENT` значит «запрос не пройдёт проверку никогда».",
-                "example": "`retryPolicy.put(\"retryableStatusCodes\", List.of(\"UNAVAILABLE\", \"DEADLINE_EXCEEDED\"));` корректно для read-методов; добавление `INVALID_ARGUMENT` заставит слать заведомо невалидный запрос 3 раза и поднимет p99 этого клиента в ~5 раз.",
-                "when_to_apply": "Read-методы (`GetUser`, `ListOrders`) — `UNAVAILABLE` + `DEADLINE_EXCEEDED`; идемпотентные write (есть idempotency-key) — те же коды; non-idempotent write — только `UNAVAILABLE` с малым `maxAttempts`.",
-                "edge_cases": "Retry умножает фактический QPS сервера на `maxAttempts` при сбое (retry storm); комбинация с истекающим deadline может отменить попытку сразу; нужен backoff + jitter, иначе клиенты повторно атакуют синхронно.",
-                "related": "[[grpc-interview#Q15]] какие статусы возвращает сервер; [[grpc-interview#Q16]] семантика кодов; [[grpc-interview#Q38]] retry через ServiceConfig."
               },
               "label": "B",
               "order": 1
@@ -1066,13 +1065,14 @@
               "order": 2
             },
             {
-              "text": "Hedging и retry — синонимы, разница только в имени конфигурационного поля.",
-              "correct": false,
+              "text": "Ретраю подлежат только transient-статусы (`UNAVAILABLE`, иногда `DEADLINE_EXCEEDED` для идемпотентных операций); deterministic errors `INVALID_ARGUMENT`/`NOT_FOUND`/`ALREADY_EXISTS` ретраить запрещено, иначе теряются latency и SLO.",
+              "correct": true,
               "sections": {
-                "what_actually": "Retry отправляет повтор после получения ошибки (последовательно), а hedging шлёт несколько копий параллельно и берёт первый успешный — разные стратегии под разные профили latency.",
-                "source_of_confusion": "Обе стратегии увеличивают надёжность через повторные вызовы и часто упоминаются вместе.",
-                "if_it_were_true": "Тогда hedging применяли бы к non-idempotent операциям (`CreateOrder`), и параллельные запросы создавали бы дубликаты заказов в БД.",
-                "how_it_should_be": "Retry — последовательный повтор после ошибки; hedging — параллельная отправка копий, безопасная только для идемпотентных операций."
+                "explanation": "Retry-policy — это state machine с `maxAttempts`, экспоненциальным backoff (`initialBackoff * backoffMultiplier^n` до `maxBackoff`) и whitelist'ом `retryableStatusCodes`; `INVALID_ARGUMENT` значит «запрос не пройдёт проверку никогда».",
+                "example": "`retryPolicy.put(\"retryableStatusCodes\", List.of(\"UNAVAILABLE\", \"DEADLINE_EXCEEDED\"));` корректно для read-методов; добавление `INVALID_ARGUMENT` заставит слать заведомо невалидный запрос 3 раза и поднимет p99 этого клиента в ~5 раз.",
+                "when_to_apply": "Read-методы (`GetUser`, `ListOrders`) — `UNAVAILABLE` + `DEADLINE_EXCEEDED`; идемпотентные write (есть idempotency-key) — те же коды; non-idempotent write — только `UNAVAILABLE` с малым `maxAttempts`.",
+                "edge_cases": "Retry умножает фактический QPS сервера на `maxAttempts` при сбое (retry storm); комбинация с истекающим deadline может отменить попытку сразу; нужен backoff + jitter, иначе клиенты повторно атакуют синхронно.",
+                "related": "[[grpc-interview#Q15]] какие статусы возвращает сервер; [[grpc-interview#Q16]] семантика кодов; [[grpc-interview#Q38]] retry через ServiceConfig."
               },
               "label": "D",
               "order": 3
@@ -1089,18 +1089,6 @@
           "question_text": "Почему обычный TCP/L4-балансировщик плохо работает с gRPC и как это лечится?",
           "options": [
             {
-              "text": "Достаточно поставить любой Kubernetes `ClusterIP`-Service перед gRPC-подами — kube-proxy сделает L7-роутинг, и каждый RPC попадёт на разный backend.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`ClusterIP` работает на L4 (iptables/IPVS): балансирует TCP-соединения, а не `HTTP/2` streams; долгоживущий gRPC-channel приклеится к одному pod до пересоздания соединения.",
-                "source_of_confusion": "Для `HTTP/1.1` короткоживущих запросов `ClusterIP` нормально балансирует (каждый запрос = новое соединение), и эту модель переносят на gRPC.",
-                "if_it_were_true": "Тогда нагрузка распределялась бы равномерно, но на практике видно «горячие» поды с 100% CPU и «холодные» простаивающие.",
-                "how_it_should_be": "Нужен L7-балансировщик (Envoy/Istio) или client-side балансировка через headless service + `round_robin`, а не L4 `ClusterIP`."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Достаточно `ManagedChannelBuilder.usePlaintext()` без `defaultLoadBalancingPolicy` — gRPC сам выберет `round_robin` при нескольких A-записях DNS.",
               "correct": false,
               "sections": {
@@ -1109,8 +1097,8 @@
                 "if_it_were_true": "Тогда не существовало бы политики `round_robin` и xDS — а они есть именно потому, что дефолт другой.",
                 "how_it_should_be": "Нужно явно задать `defaultLoadBalancingPolicy(\"round_robin\")` и headless service, иначе `pick_first` зафиксируется на одном backend."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "gRPC мультиплексирует все RPC в одном долгоживущем `HTTP/2`-соединении, а L4 распределяет соединения, а не вызовы — поэтому нужен L7-балансировщик (Envoy, Istio) либо client-side балансировка с `round_robin` поверх `NameResolver`.",
@@ -1122,8 +1110,8 @@
                 "edge_cases": "DNS-резолвер кэширует адреса — после scale-up новые поды появятся не сразу; `pick_first` не балансирует вообще; обычный `ClusterIP` — L4, нужен headless (`clusterIP: None`).",
                 "related": "[[grpc-interview#Q20]] Name Resolver; [[grpc-interview#Q11]] мультиплексирование HTTP/2; [[grpc-interview#Q37]] load balancing в Kubernetes."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Поставить L4-TCP-балансировщик (HAProxy в `mode tcp`, AWS NLB) и включить sticky sessions по client IP — это даст равномерное распределение RPC.",
@@ -1133,6 +1121,18 @@
                 "source_of_confusion": "Sticky sessions полезны для stateful WebSocket/SSE, и кажется, что для long-lived gRPC-channel тоже подойдут.",
                 "if_it_were_true": "Тогда AWS ALB (L7) не предлагал бы отдельную поддержку gRPC, а сразу советовал NLB — но для gRPC нужен именно ALB или Envoy.",
                 "how_it_should_be": "Для gRPC нужен L7-роутинг каждого вызова (или client-side LB), а не sticky-закрепление за одним backend."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Достаточно поставить любой Kubernetes `ClusterIP`-Service перед gRPC-подами — kube-proxy сделает L7-роутинг, и каждый RPC попадёт на разный backend.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ClusterIP` работает на L4 (iptables/IPVS): балансирует TCP-соединения, а не `HTTP/2` streams; долгоживущий gRPC-channel приклеится к одному pod до пересоздания соединения.",
+                "source_of_confusion": "Для `HTTP/1.1` короткоживущих запросов `ClusterIP` нормально балансирует (каждый запрос = новое соединение), и эту модель переносят на gRPC.",
+                "if_it_were_true": "Тогда нагрузка распределялась бы равномерно, но на практике видно «горячие» поды с 100% CPU и «холодные» простаивающие.",
+                "how_it_should_be": "Нужен L7-балансировщик (Envoy/Istio) или client-side балансировка через headless service + `round_robin`, а не L4 `ClusterIP`."
               },
               "label": "D",
               "order": 3
@@ -1149,18 +1149,6 @@
           "question_text": "Зачем нужен `NameResolver` в gRPC и что он реально делает?",
           "options": [
             {
-              "text": "`NameResolver` — это HTTP-клиент внутри gRPC, который шлёт запросы по logical-имени сервиса и сам ретраит сетевые ошибки.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`NameResolver` не отправляет запросы и ничего не ретраит: его задача — преобразовать логическое имя в список адресов (IP:port) и подписать `LoadBalancer` на обновления; RPC выполняет канал, retry — отдельная политика.",
-                "source_of_confusion": "Слово «resolver» ассоциируется с любым клиентским кодом, делающим запросы по URL.",
-                "if_it_were_true": "Тогда не нужны были бы отдельные `LoadBalancer`, `ManagedChannel`, `Stub` — всё лежало бы в одном «resolver».",
-                "how_it_should_be": "`NameResolver` — это компонент service discovery: маппит имя в адреса и нотифицирует балансировщик, а не шлёт RPC."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`NameResolver` — это интерсептор, который по правилам из `.proto` добавляет заголовки `:authority` и `user-agent` к каждому RPC.",
               "correct": false,
               "sections": {
@@ -1169,8 +1157,8 @@
                 "if_it_were_true": "Тогда не существовало бы отдельных концепций `Metadata` и `Interceptor` — а они описаны как независимые механизмы.",
                 "how_it_should_be": "`NameResolver` занимается service discovery (имя → адреса), а заголовки — задача interceptor'ов и credentials."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "`NameResolver` — это серверный компонент, который выбирает, какой `@GrpcService` обслуживает входящий RPC по имени метода в path.",
@@ -1181,8 +1169,8 @@
                 "if_it_were_true": "Тогда API `NameResolver` лежал бы в серверном `io.grpc.ServerBuilder`, а он в клиентском `io.grpc.NameResolver` и используется `ManagedChannelBuilder`.",
                 "how_it_should_be": "`NameResolver` — клиентский компонент service discovery; серверная маршрутизация по path — это `HandlerRegistry`."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`NameResolver` — компонент service discovery: маппит логическое имя сервиса в список физических адресов (IP:port) и нотифицирует канал/балансировщик при изменении списка; точка интеграции с Consul, Eureka, xDS, DNS.",
@@ -1193,6 +1181,18 @@
                 "when_to_apply": "Интеграция со своим service discovery (Consul, ZooKeeper, Eureka), кастомное шардирование по подмножеству backend-ов, динамическое обновление endpoints при scale-up без рестарта.",
                 "edge_cases": "Дефолтный DNS-резолвер кэширует ответы (`networkaddress.cache.ttl`) — может видеть «старые» поды после rolling-deploy; кастомный резолвер должен корректно реализовать `refresh()`/`shutdown()`, иначе утечки потоков.",
                 "related": "[[grpc-interview#Q19]] модели балансировки; [[grpc-interview#Q21]] безопасность соединений; [[grpc-interview#Q37]] load balancing в Kubernetes."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`NameResolver` — это HTTP-клиент внутри gRPC, который шлёт запросы по logical-имени сервиса и сам ретраит сетевые ошибки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`NameResolver` не отправляет запросы и ничего не ретраит: его задача — преобразовать логическое имя в список адресов (IP:port) и подписать `LoadBalancer` на обновления; RPC выполняет канал, retry — отдельная политика.",
+                "source_of_confusion": "Слово «resolver» ассоциируется с любым клиентским кодом, делающим запросы по URL.",
+                "if_it_were_true": "Тогда не нужны были бы отдельные `LoadBalancer`, `ManagedChannel`, `Stub` — всё лежало бы в одном «resolver».",
+                "how_it_should_be": "`NameResolver` — это компонент service discovery: маппит имя в адреса и нотифицирует балансировщик, а не шлёт RPC."
               },
               "label": "D",
               "order": 3
@@ -1209,19 +1209,6 @@
           "question_text": "Что значит «безопасное gRPC-соединение» в production и какой минимум обязателен?",
           "options": [
             {
-              "text": "Включить TLS на обеих сторонах канала (`ServerBuilder.useTransportSecurity` + клиент с валидным trust manager); для inter-service в zero-trust — mTLS с проверкой клиентского сертификата; `usePlaintext()` оставлять только для local-dev.",
-              "correct": true,
-              "sections": {
-                "explanation": "Базовый minimum — серверный TLS (сервер предъявляет сертификат, клиент валидирует по цепочке доверия), а для inter-service добавляется mTLS: клиент тоже предъявляет сертификат, сервер идентифицирует caller — основа authZ по идентичности сервиса.",
-                "example": "`ServerBuilder.forPort(443).useTransportSecurity(new File(\"server.crt\"), new File(\"server.key\"))` + `NettyChannelBuilder.sslContext(GrpcSslContexts.forClient().trustManager(caCert).keyManager(clientCert, clientKey).build())`.",
-                "when_to_apply": "Любой production gRPC поверх публичной сети — обязательно TLS; inter-service без service mesh — mTLS вручную; в service mesh (Istio, Linkerd) mTLS включается прозрачно sidecar-ами.",
-                "edge_cases": "Ротация сертификатов ломает самописный mTLS, когда cert истёк — в k8s используют cert-manager + SPIFFE/SPIRE; `usePlaintext()` иногда попадает в prod через копипасту, его надо банить линтером.",
-                "related": "[[grpc-interview#Q22]] аутентификация в gRPC; [[grpc-interview#Q20]] Name Resolver; [[grpc-interview#Q15]] обработка ошибок."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Достаточно положить gRPC за HTTPS-reverse-proxy (nginx с `proxy_pass`) и использовать `usePlaintext()` между сервисами внутри кластера — внутренний трафик не требует TLS.",
               "correct": false,
               "sections": {
@@ -1230,8 +1217,8 @@
                 "if_it_were_true": "Тогда Istio/Linkerd не делали бы автоматический mTLS между подами по умолчанию — а это их главная фича.",
                 "how_it_should_be": "TLS нужен на обеих сторонах канала, а для inter-service — mTLS; внутренний трафик не считается доверенным по умолчанию."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Включить TLS только на клиенте (`NettyChannelBuilder.sslContext(...)`) — сервер сам подцепит сертификаты из JDK keystore и установит шифрованное соединение.",
@@ -1242,8 +1229,8 @@
                 "if_it_were_true": "Тогда не существовало бы `ServerBuilder.useTransportSecurity(certChain, privateKey)` — а это базовый API серверного TLS.",
                 "how_it_should_be": "TLS настраивают и на сервере (`useTransportSecurity`), и на клиенте (trust manager); одной стороны недостаточно."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "gRPC over plaintext + JWT в `authorization` через `CallCredentials` достаточно — JWT подписан, его нельзя подделать, поэтому шифрование канала не нужно.",
@@ -1253,6 +1240,19 @@
                 "source_of_confusion": "«JWT signed → secure» — частое упрощение: подпись защищает от модификации, но не от перехвата и replay.",
                 "if_it_were_true": "Тогда OAuth2/OIDC-спеки не требовали бы HTTPS для всех endpoint-ов с токенами — а они требуют явно (RFC 6749 §3.1).",
                 "how_it_should_be": "JWT решает «кто это», но канал всё равно нужно шифровать TLS, иначе токен утекает и переигрывается."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Включить TLS на обеих сторонах канала (`ServerBuilder.useTransportSecurity` + клиент с валидным trust manager); для inter-service в zero-trust — mTLS с проверкой клиентского сертификата; `usePlaintext()` оставлять только для local-dev.",
+              "correct": true,
+              "sections": {
+                "explanation": "Базовый minimum — серверный TLS (сервер предъявляет сертификат, клиент валидирует по цепочке доверия), а для inter-service добавляется mTLS: клиент тоже предъявляет сертификат, сервер идентифицирует caller — основа authZ по идентичности сервиса.",
+                "example": "`ServerBuilder.forPort(443).useTransportSecurity(new File(\"server.crt\"), new File(\"server.key\"))` + `NettyChannelBuilder.sslContext(GrpcSslContexts.forClient().trustManager(caCert).keyManager(clientCert, clientKey).build())`.",
+                "when_to_apply": "Любой production gRPC поверх публичной сети — обязательно TLS; inter-service без service mesh — mTLS вручную; в service mesh (Istio, Linkerd) mTLS включается прозрачно sidecar-ами.",
+                "edge_cases": "Ротация сертификатов ломает самописный mTLS, когда cert истёк — в k8s используют cert-manager + SPIFFE/SPIRE; `usePlaintext()` иногда попадает в prod через копипасту, его надо банить линтером.",
+                "related": "[[grpc-interview#Q22]] аутентификация в gRPC; [[grpc-interview#Q20]] Name Resolver; [[grpc-interview#Q15]] обработка ошибок."
               },
               "label": "D",
               "order": 3
@@ -1269,18 +1269,6 @@
           "question_text": "Какой механизм gRPC корректно передаёт JWT-токен от клиента к серверу для аутентификации?",
           "options": [
             {
-              "text": "Сериализовать JWT внутрь protobuf-поля `auth_token` каждого запроса.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Токен попадёт в payload сообщения, и его придётся повторять в каждом `.proto`-методе, смешивая бизнес-данные с infrastructure-метаданными.",
-                "source_of_confusion": "В REST иногда так делают для form-based аутентификации, но gRPC специально вынес метаданные в отдельный канал.",
-                "if_it_were_true": "Тогда смена схемы аутентификации (rotate, новый формат) требовала бы перегенерировать стабы и обновлять каждый RPC — нарушение separation of concerns.",
-                "how_it_should_be": "Токен передают через `Metadata` (заголовок `authorization`), а не как поле protobuf-сообщения."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Реализовать `CallCredentials` на клиенте, который добавляет `authorization: Bearer <token>` в `Metadata`, и `ServerInterceptor` для валидации; gRPC отделяет метаданные от тела сообщения, как HTTP-заголовки.",
               "correct": true,
               "sections": {
@@ -1290,8 +1278,8 @@
                 "edge_cases": "`CallCredentials` требует включённого TLS (gRPC по умолчанию отклоняет credentials через незащищённый канал); при streaming токен валидируется один раз на установление потока — refresh-логику строят аккуратно.",
                 "related": "[[grpc-interview#Q21]] безопасность соединений; [[grpc-interview#Q14]] Metadata; [[grpc-interview#Q23]] интеграция со Spring Boot."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Положить токен в `HTTP/2` path или query string при создании канала.",
@@ -1302,8 +1290,8 @@
                 "if_it_were_true": "Тогда токен светился бы в access-логах балансировщиков и нарушал бы спецификацию gRPC wire-format.",
                 "how_it_should_be": "Токен кладут в `Metadata` через `CallCredentials`, а не в path/query — у gRPC нет query string."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Хранить токен в `ThreadLocal` на клиенте и читать его на сервере через `Context.current()`.",
@@ -1313,6 +1301,18 @@
                 "source_of_confusion": "`Context` в gRPC действительно используется на сервере для request-scoped значений после interceptor'а, но он не «телепортируется» через сеть.",
                 "if_it_were_true": "Тогда ломалась бы изоляция процессов и базовая модель распределённых систем.",
                 "how_it_should_be": "Токен передают по сети в `Metadata`; `Context` на сервере лишь хранит уже извлечённое interceptor'ом значение."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Сериализовать JWT внутрь protobuf-поля `auth_token` каждого запроса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Токен попадёт в payload сообщения, и его придётся повторять в каждом `.proto`-методе, смешивая бизнес-данные с infrastructure-метаданными.",
+                "source_of_confusion": "В REST иногда так делают для form-based аутентификации, но gRPC специально вынес метаданные в отдельный канал.",
+                "if_it_were_true": "Тогда смена схемы аутентификации (rotate, новый формат) требовала бы перегенерировать стабы и обновлять каждый RPC — нарушение separation of concerns.",
+                "how_it_should_be": "Токен передают через `Metadata` (заголовок `authorization`), а не как поле protobuf-сообщения."
               },
               "label": "D",
               "order": 3
@@ -1329,13 +1329,14 @@
           "question_text": "Какой подход к интеграции gRPC со Spring Boot обеспечивает декларативную регистрацию серверных сервисов и клиентских стабов через DI-контейнер?",
           "options": [
             {
-              "text": "Запускать `io.grpc.Server` вручную в `@PostConstruct` и поднимать клиентов как обычные `@Bean` через `ManagedChannelBuilder`.",
-              "correct": false,
+              "text": "Использовать `grpc-spring-boot-starter` (LogNet) или официальный `spring-grpc-spring-boot-starter`: пометить серверный класс `@GrpcService`, инжектить клиента через `@GrpcClient(\"name\")`, настроить адреса в `application.yml`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Так делали до появления стартеров — работает, но придётся самому заботиться о graceful shutdown (`@PreDestroy` с `awaitTermination()`), регистрации interceptor'ов, health/reflection-сервисах и proper-DI клиентов.",
-                "source_of_confusion": "Иногда советуют в туториалах «без магии», но в продовой кодовой базе это превращается в copy-paste из проекта в проект.",
-                "if_it_were_true": "Тогда так же делали бы и для Tomcat, но Spring Boot изначально снял этот boilerplate — для gRPC стартеры играют ту же роль.",
-                "how_it_should_be": "Стандарт — стартеры (`@GrpcService`/`@GrpcClient`), которые берут на себя lifecycle и DI; ручной `Server` оставляют для нестандартных случаев."
+                "explanation": "Стартеры берут на себя boilerplate: создают `Server` на порту, регистрируют все `@GrpcService`-бины, добавляют health/reflection, поднимают клиентские `ManagedChannel` по `grpc.client.<name>.address`; поля с `@GrpcClient` инжектируются как готовые стабы.",
+                "example": "`@GrpcService class UserGrpcService extends UserServiceGrpc.UserServiceImplBase` + `@GrpcClient(\"user-service\") private UserServiceBlockingStub userStub;`; в YAML — `grpc.server.port: 9090`, `grpc.client.user-service.address: dns:///user-service:9090`.",
+                "when_to_apply": "Spring Boot 2.x/3.x + gRPC — LogNet-стартер де-факто стандарт; для Spring Boot 3.4+ официальный Spring gRPC даёт лучшую интеграцию со Spring Security и Reactor.",
+                "edge_cases": "`@GrpcClient` инжектит стаб на init — при недоступном адресе канал уходит в `IDLE` и подключится при первом вызове (не fail-fast); reflection-сервис включается отдельно (`grpc.server.reflection-service-enabled: true`).",
+                "related": "[[grpc-interview#Q22]] аутентификация; [[grpc-interview#Q24]] тестирование gRPC; [[grpc-interview#Q39]] grpc-spring-boot-starter детально."
               },
               "label": "A",
               "order": 0
@@ -1353,19 +1354,6 @@
               "order": 1
             },
             {
-              "text": "Использовать `grpc-spring-boot-starter` (LogNet) или официальный `spring-grpc-spring-boot-starter`: пометить серверный класс `@GrpcService`, инжектить клиента через `@GrpcClient(\"name\")`, настроить адреса в `application.yml`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Стартеры берут на себя boilerplate: создают `Server` на порту, регистрируют все `@GrpcService`-бины, добавляют health/reflection, поднимают клиентские `ManagedChannel` по `grpc.client.<name>.address`; поля с `@GrpcClient` инжектируются как готовые стабы.",
-                "example": "`@GrpcService class UserGrpcService extends UserServiceGrpc.UserServiceImplBase` + `@GrpcClient(\"user-service\") private UserServiceBlockingStub userStub;`; в YAML — `grpc.server.port: 9090`, `grpc.client.user-service.address: dns:///user-service:9090`.",
-                "when_to_apply": "Spring Boot 2.x/3.x + gRPC — LogNet-стартер де-факто стандарт; для Spring Boot 3.4+ официальный Spring gRPC даёт лучшую интеграцию со Spring Security и Reactor.",
-                "edge_cases": "`@GrpcClient` инжектит стаб на init — при недоступном адресе канал уходит в `IDLE` и подключится при первом вызове (не fail-fast); reflection-сервис включается отдельно (`grpc.server.reflection-service-enabled: true`).",
-                "related": "[[grpc-interview#Q22]] аутентификация; [[grpc-interview#Q24]] тестирование gRPC; [[grpc-interview#Q39]] grpc-spring-boot-starter детально."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "Использовать `@FeignClient` с gRPC-транспортом и реестром Eureka.",
               "correct": false,
               "sections": {
@@ -1373,6 +1361,18 @@
                 "source_of_confusion": "Обе библиотеки декларативные (`@FeignClient` vs `@GrpcClient`) — похожие имена создают ложную аналогию.",
                 "if_it_were_true": "Тогда не было бы отдельной экосистемы gRPC-стартеров — все пользовались бы Feign.",
                 "how_it_should_be": "Для gRPC используют `@GrpcClient` из gRPC-стартера, а `@FeignClient` остаётся для REST."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Запускать `io.grpc.Server` вручную в `@PostConstruct` и поднимать клиентов как обычные `@Bean` через `ManagedChannelBuilder`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Так делали до появления стартеров — работает, но придётся самому заботиться о graceful shutdown (`@PreDestroy` с `awaitTermination()`), регистрации interceptor'ов, health/reflection-сервисах и proper-DI клиентов.",
+                "source_of_confusion": "Иногда советуют в туториалах «без магии», но в продовой кодовой базе это превращается в copy-paste из проекта в проект.",
+                "if_it_were_true": "Тогда так же делали бы и для Tomcat, но Spring Boot изначально снял этот boilerplate — для gRPC стартеры играют ту же роль.",
+                "how_it_should_be": "Стандарт — стартеры (`@GrpcService`/`@GrpcClient`), которые берут на себя lifecycle и DI; ручной `Server` оставляют для нестандартных случаев."
               },
               "label": "D",
               "order": 3
@@ -1389,18 +1389,6 @@
           "question_text": "Как быстро и без сетевых накладных расходов изолированно протестировать `*ImplBase`-сервис, покрыв бизнес-логику и обработку gRPC-статусов?",
           "options": [
             {
-              "text": "Поднимать настоящий `Server` на случайном TCP-порту в `@BeforeEach` и подключаться через `ManagedChannelBuilder.forAddress(\"localhost\", port).usePlaintext()`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Работает, но добавляет сетевой стек (Netty selectors, socket allocation), делая тесты медленнее на порядок и иногда flaky из-за занятых портов.",
-                "source_of_confusion": "Так часто пишут «integration smoke», но для unit-уровня это overkill — есть встроенный механизм без сети.",
-                "if_it_were_true": "Тогда gRPC-команда не стала бы добавлять `InProcessServerBuilder` в core-библиотеку специально для тестов.",
-                "how_it_should_be": "Для unit-уровня используют in-process transport (`InProcessServerBuilder`), а реальный порт — для отдельных integration-smoke."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Мокать stub целиком через Mockito (`mock(UserServiceBlockingStub.class)`) и тестировать сервис через эти моки.",
               "correct": false,
               "sections": {
@@ -1409,8 +1397,8 @@
                 "if_it_were_true": "Тогда баги в маппинге исключений на `Status` (забыли обернуть `EntityNotFoundException` в `Status.NOT_FOUND`) попадали бы в прод незамеченными.",
                 "how_it_should_be": "Собственный сервис тестируют через in-process сервер с реальным стабом; мок стаба уместен только для клиента к чужому сервису."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Использовать Testcontainers с образом сервиса и вызывать его через `grpcurl` из тестов.",
@@ -1421,8 +1409,8 @@
                 "if_it_were_true": "Тогда test feedback loop вырастал бы с миллисекунд до десятков секунд на каждый кейс.",
                 "how_it_should_be": "Логику сервиса покрывают in-process unit-тестами; Testcontainers + grpcurl оставляют для e2e/contract-уровня."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Использовать `InProcessServerBuilder.forName(...).directExecutor()` + `InProcessChannelBuilder` — сервер и канал общаются через in-memory transport без сокетов.",
@@ -1433,6 +1421,18 @@
                 "when_to_apply": "Unit/component-тесты gRPC-сервисов, тесты interceptor'ов и client-side логики (retry, deadline propagation); для интеграции с реальной БД — `@SpringBootTest(properties = \"grpc.server.port=0\")`.",
                 "edge_cases": "Забытый `shutdown()` накапливает каналы между тестами; `directExecutor()` синхронен и может маскировать race condition; для streaming используют `StreamRecorder` или `StepVerifier`.",
                 "related": "[[grpc-interview#Q22]] аутентификация; [[grpc-interview#Q23]] интеграция со Spring Boot; [[grpc-interview#Q15]] обработка ошибок и Status."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Поднимать настоящий `Server` на случайном TCP-порту в `@BeforeEach` и подключаться через `ManagedChannelBuilder.forAddress(\"localhost\", port).usePlaintext()`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Работает, но добавляет сетевой стек (Netty selectors, socket allocation), делая тесты медленнее на порядок и иногда flaky из-за занятых портов.",
+                "source_of_confusion": "Так часто пишут «integration smoke», но для unit-уровня это overkill — есть встроенный механизм без сети.",
+                "if_it_were_true": "Тогда gRPC-команда не стала бы добавлять `InProcessServerBuilder` в core-библиотеку специально для тестов.",
+                "how_it_should_be": "Для unit-уровня используют in-process transport (`InProcessServerBuilder`), а реальный порт — для отдельных integration-smoke."
               },
               "label": "D",
               "order": 3
@@ -1449,6 +1449,18 @@
           "question_text": "Какое утверждение про gRPC Health Checking Protocol (`grpc.health.v1.Health`) корректно?",
           "options": [
             {
+              "text": "Это произвольная конвенция: каждая команда придумывает свой `.proto` для health-check, а K8s `grpc:` probe вызывает любой такой кастомный сервис.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Протокол стандартизирован — `service Health { rpc Check; rpc Watch }` с фиксированными именами; K8s `grpc:` probe вызывает именно `grpc.health.v1.Health/Check`, кастомные сервисы он не понимает.",
+                "source_of_confusion": "Свобода `.proto` создаёт впечатление, что health тоже можно описать произвольно.",
+                "if_it_were_true": "Тогда писать свой Health приводило бы к тому, что K8s probe всегда FAIL → бесконечные рестарты пода (или NotReady-сервис продолжает получать трафик).",
+                "how_it_should_be": "Health — это стандартный сервис `grpc.health.v1.Health` с фиксированной схемой, который и вызывает K8s probe."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "`Check` — unary-запрос для разовой проверки (используется K8s liveness/readiness probe), `Watch` — server-streaming, толкающий клиенту новый `ServingStatus` при изменении состояния; per-service статусом управляет `HealthStatusManager` на сервере.",
               "correct": true,
               "sections": {
@@ -1458,8 +1470,8 @@
                 "edge_cases": "При graceful shutdown сначала переключают статус в `NOT_SERVING`, ждут вывода из ротации и только потом останавливают сервер; статус должен отражать реальную готовность (DB-pool, миграции, кеши), а не просто факт старта процесса.",
                 "related": "[[grpc-interview#Q26]] Server Reflection; [[grpc-interview#Q33]] observability; [[grpc-interview#Q37]] load balancing в Kubernetes."
               },
-              "label": "A",
-              "order": 0
+              "label": "B",
+              "order": 1
             },
             {
               "text": "`Check` и `Watch` обязаны возвращать одинаковое значение для всего процесса; поле `service` в `HealthCheckRequest` игнорируется.",
@@ -1469,18 +1481,6 @@
                 "source_of_confusion": "Кажется, что health — это бинарное «процесс жив или нет», поэтому per-service считают невозможным.",
                 "if_it_were_true": "Тогда нельзя было бы вывести из ротации отдельный сервис при graceful degradation — пришлось бы валить весь под, увеличивая blast radius.",
                 "how_it_should_be": "Статус управляется per-service по полю `service`; пустая строка — это особый случай «весь сервер»."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Это произвольная конвенция: каждая команда придумывает свой `.proto` для health-check, а K8s `grpc:` probe вызывает любой такой кастомный сервис.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Протокол стандартизирован — `service Health { rpc Check; rpc Watch }` с фиксированными именами; K8s `grpc:` probe вызывает именно `grpc.health.v1.Health/Check`, кастомные сервисы он не понимает.",
-                "source_of_confusion": "Свобода `.proto` создаёт впечатление, что health тоже можно описать произвольно.",
-                "if_it_were_true": "Тогда писать свой Health приводило бы к тому, что K8s probe всегда FAIL → бесконечные рестарты пода (или NotReady-сервис продолжает получать трафик).",
-                "how_it_should_be": "Health — это стандартный сервис `grpc.health.v1.Health` с фиксированной схемой, который и вызывает K8s probe."
               },
               "label": "C",
               "order": 2
@@ -1521,14 +1521,13 @@
               "order": 0
             },
             {
-              "text": "Reflection — отдельный gRPC-сервис (`grpc.reflection.v1alpha.ServerReflection`), который позволяет динамическим клиентам (`grpcurl`, Postman, service mesh) запросить список сервисов и `FileDescriptorProto`; на production его обычно отключают или закрывают сетевыми политиками.",
-              "correct": true,
+              "text": "Reflection полностью эквивалентен OpenAPI/Swagger — это статическая спецификация, которую публикуют один раз, и клиенты потом не нуждаются в подключении к серверу.",
+              "correct": false,
               "sections": {
-                "explanation": "Этот сервис добавляется через `ProtoReflectionService.newInstance()` и отдаёт descriptors по запросу; на проде его держат за фаерволом или в admin-namespace, чтобы не раскрывать внутреннюю структуру API.",
-                "example": "`Server.builder().addService(ProtoReflectionService.newInstance())` включает reflection; `grpcurl -plaintext localhost:9090 list` тогда отдаёт список сервисов.",
-                "when_to_apply": "На dev/staging — для отладки через `grpcurl` и автогенерации документации; на prod — выключено или доступно только из внутренней сети для оператора.",
-                "edge_cases": "Reflection раскрывает не только имена методов, но и все поля, типы, вложенные структуры и comments из `.proto` — это поверхность для разведки, отсюда требование отключать в публичных деплоях.",
-                "related": "[[grpc-interview#Q25]] Health Checking; [[grpc-interview#Q14]] Metadata; [[grpc-interview#Q21]] безопасность соединений."
+                "what_actually": "Reflection — это runtime-сервис на самом сервере, отвечающий на запросы `ServerReflectionInfo` в реальном времени; это не статическая спецификация и не способ дистрибуции `.proto`.",
+                "source_of_confusion": "OpenAPI — статический файл, и reflection ошибочно считают его аналогом.",
+                "if_it_were_true": "Тогда, подменив `.proto`-репозиторий чтением reflection в CI, теряли бы source of truth — нельзя ревьюить контракт в Merge Request, breaking changes уходили бы в прод.",
+                "how_it_should_be": "Reflection отвечает в рантайме на живом сервере; статическую дистрибуцию контракта дают `.proto` через buf.build / artifact registry."
               },
               "label": "B",
               "order": 1
@@ -1546,13 +1545,14 @@
               "order": 2
             },
             {
-              "text": "Reflection полностью эквивалентен OpenAPI/Swagger — это статическая спецификация, которую публикуют один раз, и клиенты потом не нуждаются в подключении к серверу.",
-              "correct": false,
+              "text": "Reflection — отдельный gRPC-сервис (`grpc.reflection.v1alpha.ServerReflection`), который позволяет динамическим клиентам (`grpcurl`, Postman, service mesh) запросить список сервисов и `FileDescriptorProto`; на production его обычно отключают или закрывают сетевыми политиками.",
+              "correct": true,
               "sections": {
-                "what_actually": "Reflection — это runtime-сервис на самом сервере, отвечающий на запросы `ServerReflectionInfo` в реальном времени; это не статическая спецификация и не способ дистрибуции `.proto`.",
-                "source_of_confusion": "OpenAPI — статический файл, и reflection ошибочно считают его аналогом.",
-                "if_it_were_true": "Тогда, подменив `.proto`-репозиторий чтением reflection в CI, теряли бы source of truth — нельзя ревьюить контракт в Merge Request, breaking changes уходили бы в прод.",
-                "how_it_should_be": "Reflection отвечает в рантайме на живом сервере; статическую дистрибуцию контракта дают `.proto` через buf.build / artifact registry."
+                "explanation": "Этот сервис добавляется через `ProtoReflectionService.newInstance()` и отдаёт descriptors по запросу; на проде его держат за фаерволом или в admin-namespace, чтобы не раскрывать внутреннюю структуру API.",
+                "example": "`Server.builder().addService(ProtoReflectionService.newInstance())` включает reflection; `grpcurl -plaintext localhost:9090 list` тогда отдаёт список сервисов.",
+                "when_to_apply": "На dev/staging — для отладки через `grpcurl` и автогенерации документации; на prod — выключено или доступно только из внутренней сети для оператора.",
+                "edge_cases": "Reflection раскрывает не только имена методов, но и все поля, типы, вложенные структуры и comments из `.proto` — это поверхность для разведки, отсюда требование отключать в публичных деплоях.",
+                "related": "[[grpc-interview#Q25]] Health Checking; [[grpc-interview#Q14]] Metadata; [[grpc-interview#Q21]] безопасность соединений."
               },
               "label": "D",
               "order": 3
@@ -1569,13 +1569,13 @@
           "question_text": "Какое утверждение про gRPC-Web и его ограничения в браузерных клиентах корректно?",
           "options": [
             {
-              "text": "gRPC-Web — это прозрачный client-side polyfill: достаточно подключить JS-библиотеку, и браузер начинает говорить чистым gRPC over `HTTP/2` без прокси.",
+              "text": "gRPC-Web — это синоним `grpc-gateway`: один reverse-proxy, отдающий REST/JSON-фасад поверх gRPC; protobuf в браузере не используется, всё передаётся JSON.",
               "correct": false,
               "sections": {
-                "what_actually": "Браузер не даёт JS-коду доступ к `HTTP/2`-фреймам и trailer-ам, которые требует gRPC; никакой polyfill это не обходит — прокси (Envoy с фильтром `grpc_web`) обязателен.",
-                "source_of_confusion": "Хочется верить, что «просто подключи либу» — и всё заработает, как с обычным fetch.",
-                "if_it_were_true": "Тогда команда деплоила бы без прокси и получала бы 415/502 на каждом вызове, а в spike-rollback выяснялось бы, что нужна Envoy-инфраструктура.",
-                "how_it_should_be": "gRPC-Web требует прокси для трансляции; чистый gRPC over `HTTP/2` из браузера невозможен."
+                "what_actually": "`grpc-gateway` действительно генерирует REST/JSON-фасад из `.proto`, но это другой инструмент; gRPC-Web сохраняет protobuf-сериализацию (binary или base64), типобезопасные стабы и `.proto`-контракт на клиенте.",
+                "source_of_confusion": "Оба решения связаны с «gRPC в вебе», поэтому их сливают в одно.",
+                "if_it_were_true": "Тогда, путая два решения, выбирали бы gRPC-Web ради «REST-подобной простоты» и удивлялись бы, что клиент всё равно требует protoc-стабы и Envoy.",
+                "how_it_should_be": "gRPC-Web сохраняет protobuf и стабы на клиенте; `grpc-gateway` — это REST/JSON-фасад без protobuf на стороне браузера."
               },
               "label": "A",
               "order": 0
@@ -1593,6 +1593,18 @@
               "order": 1
             },
             {
+              "text": "gRPC-Web — это прозрачный client-side polyfill: достаточно подключить JS-библиотеку, и браузер начинает говорить чистым gRPC over `HTTP/2` без прокси.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Браузер не даёт JS-коду доступ к `HTTP/2`-фреймам и trailer-ам, которые требует gRPC; никакой polyfill это не обходит — прокси (Envoy с фильтром `grpc_web`) обязателен.",
+                "source_of_confusion": "Хочется верить, что «просто подключи либу» — и всё заработает, как с обычным fetch.",
+                "if_it_were_true": "Тогда команда деплоила бы без прокси и получала бы 415/502 на каждом вызове, а в spike-rollback выяснялось бы, что нужна Envoy-инфраструктура.",
+                "how_it_should_be": "gRPC-Web требует прокси для трансляции; чистый gRPC over `HTTP/2` из браузера невозможен."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
               "text": "gRPC-Web — адаптер протокола поверх `HTTP/1.1` или `HTTP/2` (без доступа к низкоуровневым `HTTP/2`-фреймам из JS), требующий прокси (Envoy, grpc-web-proxy) для трансляции в обычный gRPC; из четырёх типов RPC браузер получает только Unary и Server Streaming.",
               "correct": true,
               "sections": {
@@ -1601,18 +1613,6 @@
                 "when_to_apply": "Для SPA на TypeScript, где нужна типобезопасность из `.proto` и тот же контракт, что у backend; для real-time каналов лучше WebSocket/SSE или Connect-Web.",
                 "edge_cases": "В текстовом режиме есть overhead от base64-обёртки (payload больше чистого gRPC); не выставляйте gRPC-Web в публичный интернет без аутентификации — он наследует всю поверхность API сервера.",
                 "related": "[[grpc-interview#Q34]] как gRPC-Web работает в браузерах; [[grpc-interview#Q28]] gRPC vs REST; [[grpc-interview#Q6]] типы RPC."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "gRPC-Web — это синоним `grpc-gateway`: один reverse-proxy, отдающий REST/JSON-фасад поверх gRPC; protobuf в браузере не используется, всё передаётся JSON.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`grpc-gateway` действительно генерирует REST/JSON-фасад из `.proto`, но это другой инструмент; gRPC-Web сохраняет protobuf-сериализацию (binary или base64), типобезопасные стабы и `.proto`-контракт на клиенте.",
-                "source_of_confusion": "Оба решения связаны с «gRPC в вебе», поэтому их сливают в одно.",
-                "if_it_were_true": "Тогда, путая два решения, выбирали бы gRPC-Web ради «REST-подобной простоты» и удивлялись бы, что клиент всё равно требует protoc-стабы и Envoy.",
-                "how_it_should_be": "gRPC-Web сохраняет protobuf и стабы на клиенте; `grpc-gateway` — это REST/JSON-фасад без protobuf на стороне браузера."
               },
               "label": "D",
               "order": 3
@@ -1641,13 +1641,14 @@
               "order": 0
             },
             {
-              "text": "gRPC и REST используют один транспорт `HTTP/1.1`, разница только в формате тела — protobuf в gRPC и JSON в REST.",
-              "correct": false,
+              "text": "gRPC использует `HTTP/2` + `Protocol Buffers` + строгий контракт `.proto` с автогенерацией стабов; REST обычно работает поверх `HTTP/1.1` с JSON и опциональным OpenAPI-контрактом.",
+              "correct": true,
               "sections": {
-                "what_actually": "gRPC требует именно `HTTP/2` — это спецификация, а не выбор разработчика: мультиплексирование, бинарные кадры и flow control нужны для streaming и низкой латентности.",
-                "source_of_confusion": "Кажется, что «оба поверх HTTP», и различие сводится к формату тела.",
-                "if_it_were_true": "Тогда gRPC-сервис деплоили бы за nginx без `HTTP/2` или за L4-балансировщиком и получали бы `UNAVAILABLE`/висящие стримы, теряя день на разбор.",
-                "how_it_should_be": "Различие глубже формата: gRPC завязан на `HTTP/2`, REST обычно работает поверх `HTTP/1.1`."
+                "explanation": "Это три фундаментальных столпа gRPC, формирующих остальные различия: четыре типа streaming, deadline propagation, бинарная сериализация компактнее JSON в 5-10 раз, типобезопасные клиенты для 10+ языков из одного `.proto`.",
+                "example": "`protoc` парсит `.proto` и генерирует стабы; `io.grpc`-runtime открывает один `HTTP/2`-канал и мультиплексирует RPC через streams, а контракт фиксируется в репозитории и ловит breaking changes на compile-time.",
+                "when_to_apply": "gRPC — для высоконагруженных внутренних API, polyglot-команд и streaming-сценариев; для публичных API и браузеров чаще выбирают REST.",
+                "edge_cases": "Контракт `.proto` обязателен и строг (в отличие от опционального OpenAPI), а бинарный protobuf не человекочитаем — это усложняет ad-hoc отладку по сравнению с JSON.",
+                "related": "[[grpc-interview#Q1]] что такое gRPC; [[grpc-interview#Q10]] почему HTTP/2; [[grpc-interview#Q35]] gRPC vs REST vs GraphQL."
               },
               "label": "B",
               "order": 1
@@ -1665,14 +1666,13 @@
               "order": 2
             },
             {
-              "text": "gRPC использует `HTTP/2` + `Protocol Buffers` + строгий контракт `.proto` с автогенерацией стабов; REST обычно работает поверх `HTTP/1.1` с JSON и опциональным OpenAPI-контрактом.",
-              "correct": true,
+              "text": "gRPC и REST используют один транспорт `HTTP/1.1`, разница только в формате тела — protobuf в gRPC и JSON в REST.",
+              "correct": false,
               "sections": {
-                "explanation": "Это три фундаментальных столпа gRPC, формирующих остальные различия: четыре типа streaming, deadline propagation, бинарная сериализация компактнее JSON в 5-10 раз, типобезопасные клиенты для 10+ языков из одного `.proto`.",
-                "example": "`protoc` парсит `.proto` и генерирует стабы; `io.grpc`-runtime открывает один `HTTP/2`-канал и мультиплексирует RPC через streams, а контракт фиксируется в репозитории и ловит breaking changes на compile-time.",
-                "when_to_apply": "gRPC — для высоконагруженных внутренних API, polyglot-команд и streaming-сценариев; для публичных API и браузеров чаще выбирают REST.",
-                "edge_cases": "Контракт `.proto` обязателен и строг (в отличие от опционального OpenAPI), а бинарный protobuf не человекочитаем — это усложняет ad-hoc отладку по сравнению с JSON.",
-                "related": "[[grpc-interview#Q1]] что такое gRPC; [[grpc-interview#Q10]] почему HTTP/2; [[grpc-interview#Q35]] gRPC vs REST vs GraphQL."
+                "what_actually": "gRPC требует именно `HTTP/2` — это спецификация, а не выбор разработчика: мультиплексирование, бинарные кадры и flow control нужны для streaming и низкой латентности.",
+                "source_of_confusion": "Кажется, что «оба поверх HTTP», и различие сводится к формату тела.",
+                "if_it_were_true": "Тогда gRPC-сервис деплоили бы за nginx без `HTTP/2` или за L4-балансировщиком и получали бы `UNAVAILABLE`/висящие стримы, теряя день на разбор.",
+                "how_it_should_be": "Различие глубже формата: gRPC завязан на `HTTP/2`, REST обычно работает поверх `HTTP/1.1`."
               },
               "label": "D",
               "order": 3
@@ -1689,14 +1689,13 @@
           "question_text": "Команда удаляет устаревшее поле `string old_email = 3;` из protobuf-сообщения `User`. Какой подход обеспечит обратную совместимость со старыми клиентами?",
           "options": [
             {
-              "text": "Удалить строку поля, но добавить `reserved 3;` и `reserved \"old_email\";` — номер 3 и имя `old_email` помечаются как занятые, а новые поля получают другие номера.",
-              "correct": true,
+              "text": "Поменять тип поля 3 с `string` на `int32` через `[deprecated = true]` — старые клиенты увидят флаг deprecated и перестанут отправлять поле.",
+              "correct": false,
               "sections": {
-                "explanation": "protobuf сериализует данные по field number, а не по имени; если номер 3 переиспользовать под новое поле другого типа, старые байты будут читаться как corrupt data, а `reserved` заставит `protoc` падать при попытке переиспользования.",
-                "example": "`message User { int64 id = 1; string name = 2; reserved 3; reserved \"old_email\"; string email = 4; }` — старые клиенты с tag=3 шлют данные, новый сервер игнорирует их как unknown fields.",
-                "when_to_apply": "Всегда при удалении поля в production-схеме; особенно критично для долгоживущих API с десятками клиентских команд и разными циклами релизов.",
-                "edge_cases": "Старые клиенты продолжают слать байты с tag=3, ожидая `string old_email` — новый сервер их молча отбрасывает (proto3 unknown fields), и без `reserved` коллега через полгода вставит новое поле с тем же номером.",
-                "related": "[[grpc-interview#Q2]] Protocol Buffers и field numbers; [[grpc-interview#Q32]] лучшие практики proto3; [[grpc-interview#Q36]] правила эволюции схемы."
+                "what_actually": "`[deprecated = true]` — это лишь подсказка для IDE/линтеров и документации, без runtime-семантики; старые клиенты продолжают слать данные, а смена `string`→`int32` ломает wire-format (length-delimited → varint).",
+                "source_of_confusion": "Кажется, что `deprecated` влияет на поведение клиента в рантайме.",
+                "if_it_were_true": "Тогда парсер на новом сервере получал бы невалидные varint-байты, RPC падал бы с `INVALID_ARGUMENT` или возвращал бы мусор.",
+                "how_it_should_be": "Удалённое поле резервируют через `reserved`, а не помечают `deprecated` со сменой типа; `deprecated` ничего не отключает в рантайме."
               },
               "label": "A",
               "order": 0
@@ -1726,13 +1725,14 @@
               "order": 2
             },
             {
-              "text": "Поменять тип поля 3 с `string` на `int32` через `[deprecated = true]` — старые клиенты увидят флаг deprecated и перестанут отправлять поле.",
-              "correct": false,
+              "text": "Удалить строку поля, но добавить `reserved 3;` и `reserved \"old_email\";` — номер 3 и имя `old_email` помечаются как занятые, а новые поля получают другие номера.",
+              "correct": true,
               "sections": {
-                "what_actually": "`[deprecated = true]` — это лишь подсказка для IDE/линтеров и документации, без runtime-семантики; старые клиенты продолжают слать данные, а смена `string`→`int32` ломает wire-format (length-delimited → varint).",
-                "source_of_confusion": "Кажется, что `deprecated` влияет на поведение клиента в рантайме.",
-                "if_it_were_true": "Тогда парсер на новом сервере получал бы невалидные varint-байты, RPC падал бы с `INVALID_ARGUMENT` или возвращал бы мусор.",
-                "how_it_should_be": "Удалённое поле резервируют через `reserved`, а не помечают `deprecated` со сменой типа; `deprecated` ничего не отключает в рантайме."
+                "explanation": "protobuf сериализует данные по field number, а не по имени; если номер 3 переиспользовать под новое поле другого типа, старые байты будут читаться как corrupt data, а `reserved` заставит `protoc` падать при попытке переиспользования.",
+                "example": "`message User { int64 id = 1; string name = 2; reserved 3; reserved \"old_email\"; string email = 4; }` — старые клиенты с tag=3 шлют данные, новый сервер игнорирует их как unknown fields.",
+                "when_to_apply": "Всегда при удалении поля в production-схеме; особенно критично для долгоживущих API с десятками клиентских команд и разными циклами релизов.",
+                "edge_cases": "Старые клиенты продолжают слать байты с tag=3, ожидая `string old_email` — новый сервер их молча отбрасывает (proto3 unknown fields), и без `reserved` коллега через полгода вставит новое поле с тем же номером.",
+                "related": "[[grpc-interview#Q2]] Protocol Buffers и field numbers; [[grpc-interview#Q32]] лучшие практики proto3; [[grpc-interview#Q36]] правила эволюции схемы."
               },
               "label": "D",
               "order": 3
@@ -1749,13 +1749,13 @@
           "question_text": "Платформа отдаёт API: внутренние микросервисы общаются между собой, а внешним SaaS-партнёрам и браузерному UI нужен тот же функционал. Какой выбор протоколов оптимален?",
           "options": [
             {
-              "text": "Использовать только REST/JSON и для внутренних сервисов, и для внешних клиентов — единый протокол упрощает инфраструктуру.",
+              "text": "Использовать gRPC только для streaming-операций, а все unary-вызовы оставить на REST — так не нужно два протокола одновременно.",
               "correct": false,
               "sections": {
-                "what_actually": "Внутри кластера с сотнями RPS REST/JSON тратит CPU на парсинг и пропускную способность на verbose-текст; нет deadline propagation, streaming нужно докручивать через SSE/WebSocket, нет автогенерации типобезопасных клиентов.",
-                "source_of_confusion": "«Один протокол везде» кажется проще в эксплуатации и tooling.",
-                "if_it_were_true": "Тогда latency p99 деградировала бы под нагрузкой, payload телеметрии раздувался бы в 5-10x, и контракты между командами расходились бы без compile-time проверки.",
-                "how_it_should_be": "Внутри — gRPC ради производительности и контракта, снаружи — REST-фасад; единый REST везде проигрывает на east-west трафике."
+                "what_actually": "Смешение по типу операции внутри одного сервиса фрагментирует контракт: половина API в `.proto`, половина в OpenAPI, дублирование DTO и валидаций, команды теряют единый источник истины.",
+                "source_of_confusion": "Кажется, что «по типу операции» проще, чем «по границе системы».",
+                "if_it_were_true": "Тогда каждое поле менялось бы в двух местах, расхождения накапливались бы, и баги типа «в REST поле обязательное, в gRPC опциональное» всплывали бы на интеграции.",
+                "how_it_should_be": "Делить надо по границе (внутри gRPC, снаружи REST-фасад), а не по типу операции внутри одного сервиса."
               },
               "label": "A",
               "order": 0
@@ -1774,6 +1774,18 @@
               "order": 1
             },
             {
+              "text": "Использовать только REST/JSON и для внутренних сервисов, и для внешних клиентов — единый протокол упрощает инфраструктуру.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Внутри кластера с сотнями RPS REST/JSON тратит CPU на парсинг и пропускную способность на verbose-текст; нет deadline propagation, streaming нужно докручивать через SSE/WebSocket, нет автогенерации типобезопасных клиентов.",
+                "source_of_confusion": "«Один протокол везде» кажется проще в эксплуатации и tooling.",
+                "if_it_were_true": "Тогда latency p99 деградировала бы под нагрузкой, payload телеметрии раздувался бы в 5-10x, и контракты между командами расходились бы без compile-time проверки.",
+                "how_it_should_be": "Внутри — gRPC ради производительности и контракта, снаружи — REST-фасад; единый REST везде проигрывает на east-west трафике."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
               "text": "Использовать только gRPC везде, включая внешних партнёров и браузер — protobuf даёт лучшую производительность, и партнёры подтянутся.",
               "correct": false,
               "sections": {
@@ -1781,18 +1793,6 @@
                 "source_of_confusion": "Хочется единого протокола ради максимальной производительности на всех границах.",
                 "if_it_were_true": "Тогда партнёры жаловались бы на сложность интеграции, часть вообще не онбордилась бы, а в браузере всё равно пришлось бы добавлять REST-фасад.",
                 "how_it_should_be": "Снаружи нужен REST-фасад поверх gRPC; чистый gRPC для внешних партнёров и браузера создаёт барьер интеграции."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Использовать gRPC только для streaming-операций, а все unary-вызовы оставить на REST — так не нужно два протокола одновременно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Смешение по типу операции внутри одного сервиса фрагментирует контракт: половина API в `.proto`, половина в OpenAPI, дублирование DTO и валидаций, команды теряют единый источник истины.",
-                "source_of_confusion": "Кажется, что «по типу операции» проще, чем «по границе системы».",
-                "if_it_were_true": "Тогда каждое поле менялось бы в двух местах, расхождения накапливались бы, и баги типа «в REST поле обязательное, в gRPC опциональное» всплывали бы на интеграции.",
-                "how_it_should_be": "Делить надо по границе (внутри gRPC, снаружи REST-фасад), а не по типу операции внутри одного сервиса."
               },
               "label": "D",
               "order": 3
@@ -1809,16 +1809,29 @@
           "question_text": "В Spring Boot нужно вызывать gRPC-сервис из 50+ компонентов при RPS 500-1000. Как организовать `ManagedChannel` и стабы?",
           "options": [
             {
-              "text": "Создавать новый `ManagedChannel` и stub внутри каждого метода-потребителя — это потокобезопасно и даёт свежее соединение на каждый вызов.",
-              "correct": false,
+              "text": "Один `ManagedChannel` как Spring singleton-bean (с `destroyMethod = \"shutdown\"`) + стабы тоже singleton-bean-ы; keepalive/deadline/retry конфигурируют на канале, а per-call настройки задают через `.withDeadlineAfter()` и `.withCallCredentials()`.",
+              "correct": true,
               "sections": {
-                "what_actually": "Каждый `ManagedChannel.build()` поднимает новое TCP-соединение, TLS handshake (~50-100мс) и `HTTP/2` SETTINGS-обмен; при 1000 RPS это тысячи коротких соединений в секунду, исчерпание ephemeral ports и деградация latency.",
-                "source_of_confusion": "«Свежее соединение = безопаснее» — интуиция из stateless-мира.",
-                "if_it_were_true": "Тогда процесс упирался бы в `TIME_WAIT` сокеты, latency вырастала бы в 10-100 раз, а keepalive/retry не работали бы (новый канал — новая история).",
-                "how_it_should_be": "`ManagedChannel` создают один раз как singleton и переиспользуют; per-call создание канала — антипаттерн."
+                "explanation": "`ManagedChannel` спроектирован как долгоживущий объект: мультиплексирует тысячи параллельных RPC через `HTTP/2` streams в одном соединении, держит keepalive, реализует client-side LB, ServiceConfig и retry; стабы — иммутабельные потокобезопасные обёртки.",
+                "example": "`@Bean(destroyMethod = \"shutdown\") public ManagedChannel userChannel() { return ManagedChannelBuilder.forAddress(\"user-service\", 9090).keepAliveTime(30, SECONDS).keepAliveWithoutCalls(true).enableRetry().usePlaintext().build(); }`.",
+                "when_to_apply": "Всегда в долгоживущих приложениях (Spring Boot, любой service runtime); короткоживущие CLI/lambda — отдельный случай, там канал создаётся под одну задачу и корректно закрывается.",
+                "edge_cases": "Spring управляет lifecycle канала (graceful shutdown через `@PreDestroy`); keepalive держит соединение тёплым, deadline переопределяется per-call без создания нового стаба.",
+                "related": "[[grpc-interview#Q5]] Channel и Stub; [[grpc-interview#Q17]] deadlines; [[grpc-interview#Q23]] интеграция со Spring Boot."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "Создавать `ManagedChannel` per-thread через `ThreadLocal` — так каждый поток получает изолированный канал и нет конкуренции за `HTTP/2` streams.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`ManagedChannel` уже потокобезопасен и мультиплексирует параллельные RPC через `HTTP/2` streams в одном соединении — это его киллер-фича; `ThreadLocal`-каналы создают по соединению на поток и теряют преимущества мультиплексирования.",
+                "source_of_confusion": "Кажется, что per-thread изоляция убирает «конкуренцию» за streams.",
+                "if_it_were_true": "Тогда был бы connection leak в логах, рост открытых сокетов на сервере и OOM на клиенте от накопленных каналов, а диагностика заняла бы дни.",
+                "how_it_should_be": "Один потокобезопасный singleton-канал на адрес; `ThreadLocal`-каналы — антипаттерн, ломающий мультиплексирование."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Создавать один `ManagedChannel` как singleton, но stub-ы создавать новые на каждый вызов через `newBlockingStub(channel)` — так безопаснее.",
@@ -1829,30 +1842,17 @@
                 "if_it_were_true": "Тогда были бы бесполезные аллокации в горячем пути (GC pressure при высоком RPS) без выигрыша по корректности.",
                 "how_it_should_be": "Канал и стаб держат singleton-ами; per-call меняют только настройки через `withDeadlineAfter`/`withCallCredentials`."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Один `ManagedChannel` как Spring singleton-bean (с `destroyMethod = \"shutdown\"`) + стабы тоже singleton-bean-ы; keepalive/deadline/retry конфигурируют на канале, а per-call настройки задают через `.withDeadlineAfter()` и `.withCallCredentials()`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`ManagedChannel` спроектирован как долгоживущий объект: мультиплексирует тысячи параллельных RPC через `HTTP/2` streams в одном соединении, держит keepalive, реализует client-side LB, ServiceConfig и retry; стабы — иммутабельные потокобезопасные обёртки.",
-                "example": "`@Bean(destroyMethod = \"shutdown\") public ManagedChannel userChannel() { return ManagedChannelBuilder.forAddress(\"user-service\", 9090).keepAliveTime(30, SECONDS).keepAliveWithoutCalls(true).enableRetry().usePlaintext().build(); }`.",
-                "when_to_apply": "Всегда в долгоживущих приложениях (Spring Boot, любой service runtime); короткоживущие CLI/lambda — отдельный случай, там канал создаётся под одну задачу и корректно закрывается.",
-                "edge_cases": "Spring управляет lifecycle канала (graceful shutdown через `@PreDestroy`); keepalive держит соединение тёплым, deadline переопределяется per-call без создания нового стаба.",
-                "related": "[[grpc-interview#Q5]] Channel и Stub; [[grpc-interview#Q17]] deadlines; [[grpc-interview#Q23]] интеграция со Spring Boot."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Создавать `ManagedChannel` per-thread через `ThreadLocal` — так каждый поток получает изолированный канал и нет конкуренции за `HTTP/2` streams.",
+              "text": "Создавать новый `ManagedChannel` и stub внутри каждого метода-потребителя — это потокобезопасно и даёт свежее соединение на каждый вызов.",
               "correct": false,
               "sections": {
-                "what_actually": "`ManagedChannel` уже потокобезопасен и мультиплексирует параллельные RPC через `HTTP/2` streams в одном соединении — это его киллер-фича; `ThreadLocal`-каналы создают по соединению на поток и теряют преимущества мультиплексирования.",
-                "source_of_confusion": "Кажется, что per-thread изоляция убирает «конкуренцию» за streams.",
-                "if_it_were_true": "Тогда был бы connection leak в логах, рост открытых сокетов на сервере и OOM на клиенте от накопленных каналов, а диагностика заняла бы дни.",
-                "how_it_should_be": "Один потокобезопасный singleton-канал на адрес; `ThreadLocal`-каналы — антипаттерн, ломающий мультиплексирование."
+                "what_actually": "Каждый `ManagedChannel.build()` поднимает новое TCP-соединение, TLS handshake (~50-100мс) и `HTTP/2` SETTINGS-обмен; при 1000 RPS это тысячи коротких соединений в секунду, исчерпание ephemeral ports и деградация latency.",
+                "source_of_confusion": "«Свежее соединение = безопаснее» — интуиция из stateless-мира.",
+                "if_it_were_true": "Тогда процесс упирался бы в `TIME_WAIT` сокеты, latency вырастала бы в 10-100 раз, а keepalive/retry не работали бы (новый канал — новая история).",
+                "how_it_should_be": "`ManagedChannel` создают один раз как singleton и переиспользуют; per-call создание канала — антипаттерн."
               },
               "label": "D",
               "order": 3
@@ -1869,6 +1869,19 @@
           "question_text": "Команда проектирует новый `enum OrderStatus` в proto3-сообщении. Какой подход следует лучшим практикам и сохраняет совместимость?",
           "options": [
             {
+              "text": "`ORDER_STATUS_UNSPECIFIED = 0` как первое значение (явный default/неизвестно), затем бизнес-значения с префиксом имени enum (`ORDER_STATUS_PENDING = 1`, `ORDER_STATUS_SHIPPED = 2`); запрещено менять значения существующих и переиспользовать номера.",
+              "correct": true,
+              "sections": {
+                "explanation": "proto3 требует значение 0 в каждом enum; UNSPECIFIED делает «default»-кейс явным, а не маскирует под бизнес-значение; префикс имени enum обязателен по style guide Google, потому что enum-значения в одном namespace и без префикса будут коллизии.",
+                "example": "`enum OrderStatus { ORDER_STATUS_UNSPECIFIED = 0; ORDER_STATUS_PENDING = 1; ORDER_STATUS_SHIPPED = 2; reserved 5; }` — при добавлении статуса старые клиенты получают UNSPECIFIED, а не «случайное» значение.",
+                "when_to_apply": "Всегда в новых proto3-схемах; особенно важно для долгоживущих API, где enum эволюционирует годами.",
+                "edge_cases": "Нельзя менять значения у существующих констант и переиспользовать номера; неизвестные новым клиентам значения на старых клиентах схлопываются в 0 (UNSPECIFIED).",
+                "related": "[[grpc-interview#Q2]] Protocol Buffers; [[grpc-interview#Q29]] обратная совместимость; [[grpc-interview#Q36]] правила эволюции схемы."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Первое значение enum = `PENDING = 1` (бизнес-смысл), без префиксов и без значения 0; так читается естественнее.",
               "correct": false,
               "sections": {
@@ -1876,18 +1889,6 @@
                 "source_of_confusion": "Кажется логичным начать перечисление с бизнес-значения «1 = первый статус».",
                 "if_it_were_true": "Тогда `protoc` падал бы на компиляции и CI ломался бы, а в proto2-стиле с required проблемы вылезли бы в рантайме на первом старом сообщении.",
                 "how_it_should_be": "Первым значением ставят `*_UNSPECIFIED = 0`, а бизнес-значения нумеруют с 1."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Объявить статусы через `oneof status { PendingState pending = 1; ShippedState shipped = 2; }` вместо enum — это даст type-safety и гибкость per-state.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`oneof` — про взаимоисключающие сложные данные (например, способ оплаты с разными полями), а не про простые перечисления; для статуса это overengineering, бьющий по эргономике и размеру payload.",
-                "source_of_confusion": "`oneof` ассоциируется с «вариативностью», и статус кажется частным случаем вариантов.",
-                "if_it_were_true": "Тогда SQL-запросы «count by status» превращались бы в гимнастику, BI-команда жаловалась бы, а рефакторинг назад на enum стоил бы миграции данных.",
-                "how_it_should_be": "Простой статус моделируют через `enum` с `*_UNSPECIFIED = 0`; `oneof` оставляют для разнородных взаимоисключающих структур."
               },
               "label": "B",
               "order": 1
@@ -1905,14 +1906,13 @@
               "order": 2
             },
             {
-              "text": "`ORDER_STATUS_UNSPECIFIED = 0` как первое значение (явный default/неизвестно), затем бизнес-значения с префиксом имени enum (`ORDER_STATUS_PENDING = 1`, `ORDER_STATUS_SHIPPED = 2`); запрещено менять значения существующих и переиспользовать номера.",
-              "correct": true,
+              "text": "Объявить статусы через `oneof status { PendingState pending = 1; ShippedState shipped = 2; }` вместо enum — это даст type-safety и гибкость per-state.",
+              "correct": false,
               "sections": {
-                "explanation": "proto3 требует значение 0 в каждом enum; UNSPECIFIED делает «default»-кейс явным, а не маскирует под бизнес-значение; префикс имени enum обязателен по style guide Google, потому что enum-значения в одном namespace и без префикса будут коллизии.",
-                "example": "`enum OrderStatus { ORDER_STATUS_UNSPECIFIED = 0; ORDER_STATUS_PENDING = 1; ORDER_STATUS_SHIPPED = 2; reserved 5; }` — при добавлении статуса старые клиенты получают UNSPECIFIED, а не «случайное» значение.",
-                "when_to_apply": "Всегда в новых proto3-схемах; особенно важно для долгоживущих API, где enum эволюционирует годами.",
-                "edge_cases": "Нельзя менять значения у существующих констант и переиспользовать номера; неизвестные новым клиентам значения на старых клиентах схлопываются в 0 (UNSPECIFIED).",
-                "related": "[[grpc-interview#Q2]] Protocol Buffers; [[grpc-interview#Q29]] обратная совместимость; [[grpc-interview#Q36]] правила эволюции схемы."
+                "what_actually": "`oneof` — про взаимоисключающие сложные данные (например, способ оплаты с разными полями), а не про простые перечисления; для статуса это overengineering, бьющий по эргономике и размеру payload.",
+                "source_of_confusion": "`oneof` ассоциируется с «вариативностью», и статус кажется частным случаем вариантов.",
+                "if_it_were_true": "Тогда SQL-запросы «count by status» превращались бы в гимнастику, BI-команда жаловалась бы, а рефакторинг назад на enum стоил бы миграции данных.",
+                "how_it_should_be": "Простой статус моделируют через `enum` с `*_UNSPECIFIED = 0`; `oneof` оставляют для разнородных взаимоисключающих структур."
               },
               "label": "D",
               "order": 3
@@ -1942,6 +1942,18 @@
               "order": 0
             },
             {
+              "text": "Использовать tcpdump/Wireshark на проде для всех gRPC-вызовов — это даёт точную информацию по `HTTP/2` фреймам и protobuf-payload.",
+              "correct": false,
+              "sections": {
+                "what_actually": "tcpdump — инструмент отладки, не observability: не масштабируется (терабайты в день), не агрегируется в метрики, требует расшифровки TLS, а protobuf без `.proto` нечитаем.",
+                "source_of_confusion": "«Точный wire-уровень» создаёт иллюзию лучшей наблюдаемости.",
+                "if_it_were_true": "Тогда операционные данные превращались бы в архив pcap-файлов, которые никто не разбирает, а tcpdump на pod-е пожирал бы CPU и I/O.",
+                "how_it_should_be": "Наблюдаемость строят на агрегируемых метриках/трейсах/логах через interceptor; tcpdump оставляют для разовой отладки."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "Полагаться на стандартные `HTTP`-метрики nginx/ingress на уровне L7-proxy и считать оттуда RPS/latency для gRPC.",
               "correct": false,
               "sections": {
@@ -1950,8 +1962,8 @@
                 "if_it_were_true": "Тогда SLO на error rate всегда выглядел бы зелёным (HTTP 200 на всё), а реальные сбои оставались бы невидимыми.",
                 "how_it_should_be": "Нужны gRPC-aware метрики через interceptor (`grpc_code`, `grpc_method`), а не HTTP-уровневые счётчики ingress."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Достаточно `/actuator/health` и Prometheus JVM-метрик (heap, GC, threads) — gRPC сам по себе observability не требует.",
@@ -1961,18 +1973,6 @@
                 "source_of_confusion": "Кажется, что «процесс жив + heap в норме» = наблюдаемость.",
                 "if_it_were_true": "Тогда при инциденте «приложение работает, но клиенты жалуются» не было бы данных для диагностики, и MTTR измерялся бы часами.",
                 "how_it_should_be": "Нужны per-RPC метрики, трейсинг и логи через interceptor; JVM-метрики и health их не заменяют."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Использовать tcpdump/Wireshark на проде для всех gRPC-вызовов — это даёт точную информацию по `HTTP/2` фреймам и protobuf-payload.",
-              "correct": false,
-              "sections": {
-                "what_actually": "tcpdump — инструмент отладки, не observability: не масштабируется (терабайты в день), не агрегируется в метрики, требует расшифровки TLS, а protobuf без `.proto` нечитаем.",
-                "source_of_confusion": "«Точный wire-уровень» создаёт иллюзию лучшей наблюдаемости.",
-                "if_it_were_true": "Тогда операционные данные превращались бы в архив pcap-файлов, которые никто не разбирает, а tcpdump на pod-е пожирал бы CPU и I/O.",
-                "how_it_should_be": "Наблюдаемость строят на агрегируемых метриках/трейсах/логах через interceptor; tcpdump оставляют для разовой отладки."
               },
               "label": "D",
               "order": 3
@@ -2001,6 +2001,18 @@
               "order": 0
             },
             {
+              "text": "gRPC-Web поддерживает все четыре типа RPC, включая Bidirectional Streaming, потому что использует WebSocket как транспорт под капотом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "gRPC-Web не использует WebSocket — он работает поверх обычных `HTTP`-запросов с упакованным gRPC-кадровым форматом в теле; стандарт прямо ограничивает Client Streaming и Bidirectional.",
+                "source_of_confusion": "WebSocket — известный full-duplex транспорт, и его приписывают gRPC-Web.",
+                "if_it_were_true": "Тогда разработчик закладывал бы Bidirectional-чат на gRPC-Web, обнаруживал бы ограничение на интеграции и в авральном режиме переписывал бы на WebSocket/SSE.",
+                "how_it_should_be": "gRPC-Web даёт Unary и Server Streaming поверх обычного `HTTP`; bidi/client streaming недоступны, WebSocket не используется."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "gRPC-Web — адаптер протокола: браузер шлёт gRPC-Web-запрос (`HTTP/1.1` или `HTTP/2` с упакованными gRPC-кадрами в теле), прокси (Envoy с фильтром `grpc_web`, grpc-gateway для Go, GCP Cloud Endpoints) транслирует его в обычный gRPC `HTTP/2`; поддерживаются только Unary и Server Streaming.",
               "correct": true,
               "sections": {
@@ -2009,18 +2021,6 @@
                 "when_to_apply": "SPA на TypeScript, где нужна типобезопасность из `.proto` и тот же контракт, что у backend; для real-time каналов лучше WebSocket/SSE или Connect-Web.",
                 "edge_cases": "За Envoy нужны фильтры `grpc_web` + `cors` + `router`; client/bidi streaming недоступны, а в текстовом режиме есть overhead на base64.",
                 "related": "[[grpc-interview#Q27]] gRPC-Web и ограничения; [[grpc-interview#Q40]] transcoding gRPC↔REST; [[grpc-interview#Q6]] типы RPC."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "gRPC-Web поддерживает все четыре типа RPC, включая Bidirectional Streaming, потому что использует WebSocket как транспорт под капотом.",
-              "correct": false,
-              "sections": {
-                "what_actually": "gRPC-Web не использует WebSocket — он работает поверх обычных `HTTP`-запросов с упакованным gRPC-кадровым форматом в теле; стандарт прямо ограничивает Client Streaming и Bidirectional.",
-                "source_of_confusion": "WebSocket — известный full-duplex транспорт, и его приписывают gRPC-Web.",
-                "if_it_were_true": "Тогда разработчик закладывал бы Bidirectional-чат на gRPC-Web, обнаруживал бы ограничение на интеграции и в авральном режиме переписывал бы на WebSocket/SSE.",
-                "how_it_should_be": "gRPC-Web даёт Unary и Server Streaming поверх обычного `HTTP`; bidi/client streaming недоступны, WebSocket не используется."
               },
               "label": "C",
               "order": 2
@@ -2049,28 +2049,16 @@
           "question_text": "Мобильное приложение и веб-SPA должны получать гибкие наборы полей (часто разные на одном экране), а внешние партнёры интегрируются через стандартный HTTP. Какой протокол подходит лучше всего?",
           "options": [
             {
-              "text": "gRPC — потому что он самый быстрый и protobuf компактнее JSON; мобильные клиенты получат бонус по latency, а партнёры подключатся через `grpc-gateway`.",
+              "text": "Использовать SOAP + XML — это самый зрелый протокол с богатой типизацией и формальными контрактами WSDL; партнёры точно знают этот стандарт.",
               "correct": false,
               "sections": {
-                "what_actually": "gRPC даёт фиксированный shape ответа на каждый RPC — клиент не может выбрать «только id и name»; при разных подмножествах полей на экранах придётся плодить узкоспециализированные RPC, взрывая API surface.",
-                "source_of_confusion": "«Самый быстрый протокол» кажется универсально лучшим выбором.",
-                "if_it_were_true": "Тогда плодились бы десятки методов `GetUserShort`/`GetUserWithProfile`/`GetUserForList`, контракт раздувался бы, а backend становился бы узким горлом для UI-изменений.",
-                "how_it_should_be": "Для гибкого выбора полей лучше GraphQL; gRPC даёт фиксированную форму ответа."
+                "what_actually": "SOAP/XML — verbose-формат предыдущей эпохи, проигрывающий всем трём современным альтернативам по производительности и эргономике; современные клиенты ждут REST/GraphQL/gRPC.",
+                "source_of_confusion": "«Зрелость и WSDL-контракты» создают иллюзию надёжного выбора для партнёров.",
+                "if_it_were_true": "Тогда онбординг партнёров затягивался бы («у нас нет SOAP-клиента»), мобильная команда жаловалась бы на размер ответов, а специалистов по SOAP становилось бы всё меньше.",
+                "how_it_should_be": "Для гибкого выбора полей берут GraphQL, а не SOAP/XML, который устарел по эргономике и производительности."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "REST + версионирование через `/v1/`, `/v2/` — клиенты делают набор HTTP-запросов с разными параметрами, а партнёры подключаются к тому же API.",
-              "correct": false,
-              "sections": {
-                "what_actually": "REST не даёт клиенту выбирать поля декларативно: «дай только три поля» требует либо нестандартного `?fields=`, либо отдельных endpoint-ов; для разнородных клиентов это overfetching или N+1-запросов.",
-                "source_of_confusion": "REST привычен, и кажется, что параметры запроса решают проблему выбора полей.",
-                "if_it_were_true": "Тогда мобильный клиент в 3G/4G скачивал бы больше нужного (overfetching → батарея, latency) либо делал бы каскад запросов под-ресурсов (latency-storm).",
-                "how_it_should_be": "Декларативный выбор полей даёт GraphQL; REST остаётся фиксированным по форме ответа."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "GraphQL — клиент сам выбирает форму ответа через query, один endpoint обслуживает мобильный и веб; для внешних партнёров — отдельный REST-фасад или открытый GraphQL endpoint в зависимости от их tooling.",
@@ -2082,17 +2070,29 @@
                 "edge_cases": "GraphQL parser строит plan по схеме, resolver-ы часто батчатся через DataLoader; внешним партнёрам отдают тот же endpoint или REST-фасад поверх.",
                 "related": "[[grpc-interview#Q28]] gRPC vs REST; [[grpc-interview#Q30]] когда gRPC, когда REST; [[grpc-interview#Q40]] transcoding gRPC↔REST."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "gRPC — потому что он самый быстрый и protobuf компактнее JSON; мобильные клиенты получат бонус по latency, а партнёры подключатся через `grpc-gateway`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "gRPC даёт фиксированный shape ответа на каждый RPC — клиент не может выбрать «только id и name»; при разных подмножествах полей на экранах придётся плодить узкоспециализированные RPC, взрывая API surface.",
+                "source_of_confusion": "«Самый быстрый протокол» кажется универсально лучшим выбором.",
+                "if_it_were_true": "Тогда плодились бы десятки методов `GetUserShort`/`GetUserWithProfile`/`GetUserForList`, контракт раздувался бы, а backend становился бы узким горлом для UI-изменений.",
+                "how_it_should_be": "Для гибкого выбора полей лучше GraphQL; gRPC даёт фиксированную форму ответа."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Использовать SOAP + XML — это самый зрелый протокол с богатой типизацией и формальными контрактами WSDL; партнёры точно знают этот стандарт.",
+              "text": "REST + версионирование через `/v1/`, `/v2/` — клиенты делают набор HTTP-запросов с разными параметрами, а партнёры подключаются к тому же API.",
               "correct": false,
               "sections": {
-                "what_actually": "SOAP/XML — verbose-формат предыдущей эпохи, проигрывающий всем трём современным альтернативам по производительности и эргономике; современные клиенты ждут REST/GraphQL/gRPC.",
-                "source_of_confusion": "«Зрелость и WSDL-контракты» создают иллюзию надёжного выбора для партнёров.",
-                "if_it_were_true": "Тогда онбординг партнёров затягивался бы («у нас нет SOAP-клиента»), мобильная команда жаловалась бы на размер ответов, а специалистов по SOAP становилось бы всё меньше.",
-                "how_it_should_be": "Для гибкого выбора полей берут GraphQL, а не SOAP/XML, который устарел по эргономике и производительности."
+                "what_actually": "REST не даёт клиенту выбирать поля декларативно: «дай только три поля» требует либо нестандартного `?fields=`, либо отдельных endpoint-ов; для разнородных клиентов это overfetching или N+1-запросов.",
+                "source_of_confusion": "REST привычен, и кажется, что параметры запроса решают проблему выбора полей.",
+                "if_it_were_true": "Тогда мобильный клиент в 3G/4G скачивал бы больше нужного (overfetching → батарея, latency) либо делал бы каскад запросов под-ресурсов (latency-storm).",
+                "how_it_should_be": "Декларативный выбор полей даёт GraphQL; REST остаётся фиксированным по форме ответа."
               },
               "label": "D",
               "order": 3
@@ -2109,30 +2109,6 @@
           "question_text": "В `.proto` есть поле `int32 user_age = 5;`. Команда хочет расширить тип до `int64`. Какое утверждение про эту эволюцию схемы корректно?",
           "options": [
             {
-              "text": "Менять `int32` на `int64` нельзя — это всегда breaking change, потому что меняется размер поля в памяти на клиенте и сервере.",
-              "correct": false,
-              "sections": {
-                "what_actually": "protobuf wire-format не различает `int32` и `int64` — оба сериализуются как varint (один wire type), поэтому смена между ними безопасна на проводе; разница лишь в типе сгенерированного кода после recompile.",
-                "source_of_confusion": "Кажется, что разные C-типы = разный формат на проводе.",
-                "if_it_were_true": "Тогда команда отказывалась бы от безопасной миграции «потому что нельзя» и тащила бы костыли (два поля одновременно), усложняя схему без причины.",
-                "how_it_should_be": "`int32 → int64` безопасно (тот же wire-type varint); номер поля сохраняется."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Менять `int32` на `int64` безопасно только если одновременно поменять номер поля с 5 на новый (например, 50) — это гарантирует, что старые клиенты не прочитают новое поле.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Смена номера поля — это и есть классический breaking change: старые клиенты шлют/ждут tag=5, новый сервер увидит «unknown field» и потеряет данные; изоляция через новый номер ломает совместимость.",
-                "source_of_confusion": "«Новый номер изолирует изменение» — ложная интуиция о безопасности.",
-                "if_it_were_true": "Тогда rolling deployment ломал бы interop между старыми и новыми инстансами, а в логах массово появлялись бы «unknown field tag=5».",
-                "how_it_should_be": "Номер поля сохраняют (5), а тип меняют внутри varint-группы — это и есть безопасный путь."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Безопасно сменить тип на любой другой числовой — `int32` ↔ `int64` ↔ `string` ↔ `float`, потому что protobuf делает автоматическое преобразование при десериализации.",
               "correct": false,
               "sections": {
@@ -2141,8 +2117,20 @@
                 "if_it_were_true": "Тогда при смене `int32` на `string` парсер на старом клиенте получал бы невалидную varint-последовательность и падал бы с `INVALID_ARGUMENT`.",
                 "how_it_should_be": "Безопасны только смены внутри одной wire-type-группы; между varint/length-delimited/fixed конвертации нет."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Менять `int32` на `int64` нельзя — это всегда breaking change, потому что меняется размер поля в памяти на клиенте и сервере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "protobuf wire-format не различает `int32` и `int64` — оба сериализуются как varint (один wire type), поэтому смена между ними безопасна на проводе; разница лишь в типе сгенерированного кода после recompile.",
+                "source_of_confusion": "Кажется, что разные C-типы = разный формат на проводе.",
+                "if_it_were_true": "Тогда команда отказывалась бы от безопасной миграции «потому что нельзя» и тащила бы костыли (два поля одновременно), усложняя схему без причины.",
+                "how_it_should_be": "`int32 → int64` безопасно (тот же wire-type varint); номер поля сохраняется."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Менять `int32` на `int64` безопасно (тот же wire-type — varint), номер поля 5 сохраняется; нельзя менять между группами несовместимых wire-type-ов (varint ↔ length-delimited ↔ fixed32 — это breaking).",
@@ -2153,6 +2141,18 @@
                 "when_to_apply": "При расширении диапазона числовых полей в production-схемах; всегда сверяться с таблицей wire-type перед сменой типа.",
                 "edge_cases": "Парсер сначала читает wire-type из tag-byte: совпал — читает, не совпал — пропускает (unknown) или ошибка; поэтому `int32→int64` проходит незаметно, а `int32→string` — нет.",
                 "related": "[[grpc-interview#Q2]] Protocol Buffers и wire-type; [[grpc-interview#Q29]] обратная совместимость; [[grpc-interview#Q32]] лучшие практики proto3."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Менять `int32` на `int64` безопасно только если одновременно поменять номер поля с 5 на новый (например, 50) — это гарантирует, что старые клиенты не прочитают новое поле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Смена номера поля — это и есть классический breaking change: старые клиенты шлют/ждут tag=5, новый сервер увидит «unknown field» и потеряет данные; изоляция через новый номер ломает совместимость.",
+                "source_of_confusion": "«Новый номер изолирует изменение» — ложная интуиция о безопасности.",
+                "if_it_were_true": "Тогда rolling deployment ломал бы interop между старыми и новыми инстансами, а в логах массово появлялись бы «unknown field tag=5».",
+                "how_it_should_be": "Номер поля сохраняют (5), а тип меняют внутри varint-группы — это и есть безопасный путь."
               },
               "label": "D",
               "order": 3
@@ -2169,14 +2169,13 @@
           "question_text": "gRPC-клиент в Kubernetes стучится в сервис через обычный `ClusterIP`-Service, и после деплоя 90% трафика идёт на один pod из десяти. Какое объяснение и решение корректны?",
           "options": [
             {
-              "text": "`ClusterIP`-Service балансирует на L4 (TCP-соединения), а gRPC поверх `HTTP/2` держит одно долгое соединение и мультиплексирует все RPC через streams в нём — поэтому все вызовы попадают на один pod. Решение: Headless Service (`clusterIP: None`) + DNS-резолвинг всех подов с `round_robin`, либо service mesh (Istio/Linkerd) с L7-балансировкой через Envoy.",
-              "correct": true,
+              "text": "Проблема в session affinity по умолчанию — нужно выставить `service.spec.sessionAffinity: None`, и трафик начнёт равномерно распределяться по подам.",
+              "correct": false,
               "sections": {
-                "explanation": "Причина известного gRPC-on-K8s антипаттерна — несовпадение слоёв: L4-балансер видит одну долгую TCP-сессию и не понимает `HTTP/2` streams; решения работают на L7 (клиент сам обходит поды или sidecar-proxy балансирует per-request).",
-                "example": "`ManagedChannelBuilder.forTarget(\"dns:///order-service-grpc:9090\").defaultLoadBalancingPolicy(\"round_robin\").build()` — Headless Service отдаёт A-записи всех Pod IP, клиент открывает соединение к каждому и распределяет RPC.",
-                "when_to_apply": "Всегда при deployment gRPC в Kubernetes с >1 replica; выбор между client-side (проще) и service-mesh (прозрачно, но операционно сложнее) — по зрелости команды.",
-                "edge_cases": "Istio внедряет Envoy как sidecar, который терминирует `HTTP/2` и балансирует на уровне запросов; обычный `ClusterIP` остаётся L4, поэтому нужен headless или mesh.",
-                "related": "[[grpc-interview#Q19]] модели балансировки; [[grpc-interview#Q20]] Name Resolver; [[grpc-interview#Q11]] мультиплексирование HTTP/2."
+                "what_actually": "`sessionAffinity: None` — это и есть значение по умолчанию для ClusterIP; дело не в нём, а в природе долгого `HTTP/2` соединения, которое не пересоздаётся между запросами.",
+                "source_of_confusion": "«Какая-то прилипчивость трафика» наводит на мысль о sessionAffinity.",
+                "if_it_were_true": "Тогда после изменения affinity ничего не менялось бы, и команда теряла бы день на ложную гипотезу.",
+                "how_it_should_be": "Причина — мультиплексирование в одном `HTTP/2` соединении; лечится headless + `round_robin` или mesh, а не affinity."
               },
               "label": "A",
               "order": 0
@@ -2194,18 +2193,6 @@
               "order": 1
             },
             {
-              "text": "Проблема в session affinity по умолчанию — нужно выставить `service.spec.sessionAffinity: None`, и трафик начнёт равномерно распределяться по подам.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`sessionAffinity: None` — это и есть значение по умолчанию для ClusterIP; дело не в нём, а в природе долгого `HTTP/2` соединения, которое не пересоздаётся между запросами.",
-                "source_of_confusion": "«Какая-то прилипчивость трафика» наводит на мысль о sessionAffinity.",
-                "if_it_were_true": "Тогда после изменения affinity ничего не менялось бы, и команда теряла бы день на ложную гипотезу.",
-                "how_it_should_be": "Причина — мультиплексирование в одном `HTTP/2` соединении; лечится headless + `round_robin` или mesh, а не affinity."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "Использовать `NodePort`-сервис вместо `ClusterIP` — это переводит балансировку на kube-proxy в режиме IPVS, который умеет `HTTP/2` stream-aware распределение.",
               "correct": false,
               "sections": {
@@ -2213,6 +2200,19 @@
                 "source_of_confusion": "Смена типа сервиса кажется способом «включить умную балансировку».",
                 "if_it_were_true": "Тогда команда меняла бы тип сервиса и открывала бы порты на нодах без результата, теряя ещё несколько дней.",
                 "how_it_should_be": "Нужен L7-роутинг (headless + `round_robin` или Envoy/Istio); kube-proxy в любом режиме остаётся L4."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`ClusterIP`-Service балансирует на L4 (TCP-соединения), а gRPC поверх `HTTP/2` держит одно долгое соединение и мультиплексирует все RPC через streams в нём — поэтому все вызовы попадают на один pod. Решение: Headless Service (`clusterIP: None`) + DNS-резолвинг всех подов с `round_robin`, либо service mesh (Istio/Linkerd) с L7-балансировкой через Envoy.",
+              "correct": true,
+              "sections": {
+                "explanation": "Причина известного gRPC-on-K8s антипаттерна — несовпадение слоёв: L4-балансер видит одну долгую TCP-сессию и не понимает `HTTP/2` streams; решения работают на L7 (клиент сам обходит поды или sidecar-proxy балансирует per-request).",
+                "example": "`ManagedChannelBuilder.forTarget(\"dns:///order-service-grpc:9090\").defaultLoadBalancingPolicy(\"round_robin\").build()` — Headless Service отдаёт A-записи всех Pod IP, клиент открывает соединение к каждому и распределяет RPC.",
+                "when_to_apply": "Всегда при deployment gRPC в Kubernetes с >1 replica; выбор между client-side (проще) и service-mesh (прозрачно, но операционно сложнее) — по зрелости команды.",
+                "edge_cases": "Istio внедряет Envoy как sidecar, который терминирует `HTTP/2` и балансирует на уровне запросов; обычный `ClusterIP` остаётся L4, поэтому нужен headless или mesh.",
+                "related": "[[grpc-interview#Q19]] модели балансировки; [[grpc-interview#Q20]] Name Resolver; [[grpc-interview#Q11]] мультиплексирование HTTP/2."
               },
               "label": "D",
               "order": 3
@@ -2229,13 +2229,13 @@
           "question_text": "В retry-политике через gRPC ServiceConfig команда указывает `\"retryableStatusCodes\": [\"UNAVAILABLE\", \"DEADLINE_EXCEEDED\", \"INTERNAL\", \"NOT_FOUND\"]` для всех методов. В чём проблема такой конфигурации?",
           "options": [
             {
-              "text": "Проблема только в `RESOURCE_EXHAUSTED` — он отсутствует, нужно добавить, тогда retry-политика станет корректной.",
+              "text": "Проблема в `maxAttempts` — он не указан явно, и gRPC по умолчанию ретраит бесконечно, что создаст retry-storm на падающем сервисе.",
               "correct": false,
               "sections": {
-                "what_actually": "`RESOURCE_EXHAUSTED` — transient-код, его добавление осмысленно, но главная проблема в другом: в списке `NOT_FOUND` (нетранзиентный) и `INTERNAL` (опасно для не-идемпотентных операций).",
-                "source_of_confusion": "Кажется, что не хватает одного «правильного» кода, и список станет верным.",
-                "if_it_were_true": "Тогда команда добавила бы `RESOURCE_EXHAUSTED`, поверила бы, что «теперь нормально», и продолжала бы создавать дубликаты при `INTERNAL` на `CreateOrder`.",
-                "how_it_should_be": "Сначала убирают `NOT_FOUND` и `INTERNAL` из retry; добавление `RESOURCE_EXHAUSTED` — вторично."
+                "what_actually": "`maxAttempts` обязателен в ServiceConfig и не имеет дефолта «бесконечно»; спека ограничивает его максимумом 5 (большее клипуется), а главная проблема — наличие `NOT_FOUND`/`INTERNAL` в списке.",
+                "source_of_confusion": "Retry-storm — реальный страх, и его приписывают отсутствию `maxAttempts`.",
+                "if_it_were_true": "Тогда команда «исправила» бы несуществующую проблему, а реальные баги (NOT_FOUND/INTERNAL в retry) остались бы.",
+                "how_it_should_be": "`maxAttempts` обязателен и ограничен 5; настоящая проблема — нетранзиентные коды в `retryableStatusCodes`."
               },
               "label": "A",
               "order": 0
@@ -2254,18 +2254,6 @@
               "order": 1
             },
             {
-              "text": "Проблема в `maxAttempts` — он не указан явно, и gRPC по умолчанию ретраит бесконечно, что создаст retry-storm на падающем сервисе.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`maxAttempts` обязателен в ServiceConfig и не имеет дефолта «бесконечно»; спека ограничивает его максимумом 5 (большее клипуется), а главная проблема — наличие `NOT_FOUND`/`INTERNAL` в списке.",
-                "source_of_confusion": "Retry-storm — реальный страх, и его приписывают отсутствию `maxAttempts`.",
-                "if_it_were_true": "Тогда команда «исправила» бы несуществующую проблему, а реальные баги (NOT_FOUND/INTERNAL в retry) остались бы.",
-                "how_it_should_be": "`maxAttempts` обязателен и ограничен 5; настоящая проблема — нетранзиентные коды в `retryableStatusCodes`."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "Проблема в формате: `retryableStatusCodes` должен содержать числа (`14, 4, 13, 5`), а не строки; со строками gRPC игнорирует политику.",
               "correct": false,
               "sections": {
@@ -2273,6 +2261,18 @@
                 "source_of_confusion": "Кажется, что «коды должны быть числами», как enum-значения в protobuf.",
                 "if_it_were_true": "Тогда разработчик сменил бы на числа, политика стала бы невалидной и retry отключился бы, маскируя проблему «слишком широких retryable-codes».",
                 "how_it_should_be": "Формат со строками корректен; проблема не в нём, а в опасных кодах `NOT_FOUND`/`INTERNAL` в списке."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Проблема только в `RESOURCE_EXHAUSTED` — он отсутствует, нужно добавить, тогда retry-политика станет корректной.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RESOURCE_EXHAUSTED` — transient-код, его добавление осмысленно, но главная проблема в другом: в списке `NOT_FOUND` (нетранзиентный) и `INTERNAL` (опасно для не-идемпотентных операций).",
+                "source_of_confusion": "Кажется, что не хватает одного «правильного» кода, и список станет верным.",
+                "if_it_were_true": "Тогда команда добавила бы `RESOURCE_EXHAUSTED`, поверила бы, что «теперь нормально», и продолжала бы создавать дубликаты при `INTERNAL` на `CreateOrder`.",
+                "how_it_should_be": "Сначала убирают `NOT_FOUND` и `INTERNAL` из retry; добавление `RESOURCE_EXHAUSTED` — вторично."
               },
               "label": "D",
               "order": 3
@@ -2313,6 +2313,18 @@
               "order": 1
             },
             {
+              "text": "На сервере — `@Component` с методами, помеченными `@GrpcMethod(\"get-order\")`; стартер ищет такие методы и генерирует proto-схему из их сигнатур.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`grpc-spring-boot-starter` не генерирует proto-схему из Java-кода — это противоположная философия contract-first gRPC; источник истины — `.proto`, из которого `protoc` генерирует Java-классы, и никаких `@GrpcMethod` в стартере нет.",
+                "source_of_confusion": "Привычка code-first из REST/MVC (где схему выводят из аннотированных методов контроллера) машинально переносится на gRPC, хотя там всё наоборот.",
+                "if_it_were_true": "Тогда разработчик искал бы несуществующую аннотацию, тратил время на «contract-from-code» и в итоге переходил бы на правильный workflow с потерей времени.",
+                "how_it_should_be": "Контракт описывают в `.proto`, наследуют `*ImplBase` и помечают `@GrpcService`; `@GrpcMethod` с генерацией схемы из кода не существует."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
               "text": "На сервере — наследовать сгенерированный `XxxServiceGrpc.XxxServiceImplBase` и пометить `@GrpcService` (стартер регистрирует его в gRPC-сервере на порту из `grpc.server.port`); на клиенте — `@GrpcClient(\"service-name\")` инжектит сконфигурированный stub из секции `grpc.client.*` в application.yml.",
               "correct": true,
               "sections": {
@@ -2321,18 +2333,6 @@
                 "when_to_apply": "Стандартная интеграция gRPC в Spring Boot, особенно в микросервисной архитектуре; стартер берёт на себя lifecycle, observability hooks и health endpoint.",
                 "edge_cases": "Стартер сканирует ApplicationContext на `@GrpcService` и регистрирует их в `GrpcServerLifecycle` (binding на порт, graceful shutdown); `@GrpcClient` подставляет нужный stub из `GrpcChannelFactory`.",
                 "related": "[[grpc-interview#Q23]] интеграция со Spring Boot; [[grpc-interview#Q13]] Interceptors; [[grpc-interview#Q31]] управление каналом."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "На сервере — `@Component` с методами, помеченными `@GrpcMethod(\"get-order\")`; стартер ищет такие методы и генерирует proto-схему из их сигнатур.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`grpc-spring-boot-starter` не генерирует proto-схему из Java-кода — это противоположная философия contract-first gRPC; источник истины — `.proto`, из которого `protoc` генерирует Java-классы, и никаких `@GrpcMethod` в стартере нет.",
-                "source_of_confusion": "Привычка code-first из REST/MVC (где схему выводят из аннотированных методов контроллера) машинально переносится на gRPC, хотя там всё наоборот.",
-                "if_it_were_true": "Тогда разработчик искал бы несуществующую аннотацию, тратил время на «contract-from-code» и в итоге переходил бы на правильный workflow с потерей времени.",
-                "how_it_should_be": "Контракт описывают в `.proto`, наследуют `*ImplBase` и помечают `@GrpcService`; `@GrpcMethod` с генерацией схемы из кода не существует."
               },
               "label": "D",
               "order": 3
@@ -2349,6 +2349,19 @@
           "question_text": "Команда хочет одновременно отдавать сервис как gRPC (внутренним) и REST/JSON (партнёрам), не дублируя бизнес-логику. Какое утверждение про transcoding через `google.api.http`-аннотации корректно?",
           "options": [
             {
+              "text": "В `.proto` добавляют аннотации `option (google.api.http) = {get: \"/v1/orders/{order_id}\"};`; прокси (Envoy с `grpc_json_transcoder`, grpc-gateway для Go или GCP Cloud Endpoints) по аннотациям + proto-descriptor транслирует HTTP/JSON в gRPC-вызов и обратно. Бизнес-логика реализована один раз на gRPC, REST-фасад — инфраструктурный слой.",
+              "correct": true,
+              "sections": {
+                "explanation": "`google.api.http`-аннотации (из Google API Design Guide) описывают маппинг HTTP-метод/path/body на gRPC-RPC; прокси читает proto-descriptor и конвертирует на лету: path-параметры → request fields, JSON body → protobuf, response protobuf → JSON.",
+                "example": "`rpc GetOrder (GetOrderRequest) returns (Order) { option (google.api.http) = { get: \"/v1/orders/{order_id}\" }; }` — внутренние клиенты идут напрямую по gRPC, внешние партнёры — через REST-фасад на том же proxy.",
+                "when_to_apply": "Когда один сервис должен обслуживать и внутренних gRPC-клиентов, и внешних REST-потребителей; типично — публичный API через transcoding-фасад на API Gateway.",
+                "edge_cases": "Один деплоймент слушает gRPC на 9090, перед ним Envoy/grpc-gateway слушает на 80/443; transcoding доступен on-premise и в любом облаке, не только в GCP.",
+                "related": "[[grpc-interview#Q30]] гибридный подход gRPC+REST; [[grpc-interview#Q28]] gRPC vs REST; [[grpc-interview#Q34]] gRPC-Web в браузерах."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "Transcoding генерирует отдельный REST-сервис на Java с дублирующими контроллерами — нужно поддерживать оба endpoint-а параллельно и синхронизировать вручную.",
               "correct": false,
               "sections": {
@@ -2356,18 +2369,6 @@
                 "source_of_confusion": "Кажется, что «REST-фасад» — это всегда дополнительный код контроллеров.",
                 "if_it_were_true": "Тогда команда писала бы REST-контроллеры рядом с gRPC-сервисом, синхронизировала бы вручную, и через полгода логика расходилась бы («через REST работает, через gRPC нет»).",
                 "how_it_should_be": "REST-фасад делает прокси из аннотаций `.proto`; дублирующих Java-контроллеров писать не нужно."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Transcoding меняет gRPC-сервер так, что он принимает и `HTTP/2`, и `HTTP/1.1` на одном порту: gRPC-клиенты говорят бинарно, REST — JSON; прокси не нужен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "gRPC-сервер сам по себе не делает transcoding: он принимает только `HTTP/2` с `content-type: application/grpc`; преобразование JSON↔protobuf происходит на отдельном слое — прокси (Envoy/grpc-gateway).",
-                "source_of_confusion": "Хочется «магии из коробки», когда один сервер сам понимает оба протокола без отдельного прокси-слоя перед ним.",
-                "if_it_were_true": "Тогда разработчик деплоил бы сервис без proxy, REST-клиенты получали бы 415 Unsupported Media Type, и наступало бы разочарование «без причины».",
-                "how_it_should_be": "Transcoding выполняет прокси перед сервером; сам gRPC-сервер JSON не принимает."
               },
               "label": "B",
               "order": 1
@@ -2385,14 +2386,13 @@
               "order": 2
             },
             {
-              "text": "В `.proto` добавляют аннотации `option (google.api.http) = {get: \"/v1/orders/{order_id}\"};`; прокси (Envoy с `grpc_json_transcoder`, grpc-gateway для Go или GCP Cloud Endpoints) по аннотациям + proto-descriptor транслирует HTTP/JSON в gRPC-вызов и обратно. Бизнес-логика реализована один раз на gRPC, REST-фасад — инфраструктурный слой.",
-              "correct": true,
+              "text": "Transcoding меняет gRPC-сервер так, что он принимает и `HTTP/2`, и `HTTP/1.1` на одном порту: gRPC-клиенты говорят бинарно, REST — JSON; прокси не нужен.",
+              "correct": false,
               "sections": {
-                "explanation": "`google.api.http`-аннотации (из Google API Design Guide) описывают маппинг HTTP-метод/path/body на gRPC-RPC; прокси читает proto-descriptor и конвертирует на лету: path-параметры → request fields, JSON body → protobuf, response protobuf → JSON.",
-                "example": "`rpc GetOrder (GetOrderRequest) returns (Order) { option (google.api.http) = { get: \"/v1/orders/{order_id}\" }; }` — внутренние клиенты идут напрямую по gRPC, внешние партнёры — через REST-фасад на том же proxy.",
-                "when_to_apply": "Когда один сервис должен обслуживать и внутренних gRPC-клиентов, и внешних REST-потребителей; типично — публичный API через transcoding-фасад на API Gateway.",
-                "edge_cases": "Один деплоймент слушает gRPC на 9090, перед ним Envoy/grpc-gateway слушает на 80/443; transcoding доступен on-premise и в любом облаке, не только в GCP.",
-                "related": "[[grpc-interview#Q30]] гибридный подход gRPC+REST; [[grpc-interview#Q28]] gRPC vs REST; [[grpc-interview#Q34]] gRPC-Web в браузерах."
+                "what_actually": "gRPC-сервер сам по себе не делает transcoding: он принимает только `HTTP/2` с `content-type: application/grpc`; преобразование JSON↔protobuf происходит на отдельном слое — прокси (Envoy/grpc-gateway).",
+                "source_of_confusion": "Хочется «магии из коробки», когда один сервер сам понимает оба протокола без отдельного прокси-слоя перед ним.",
+                "if_it_were_true": "Тогда разработчик деплоил бы сервис без proxy, REST-клиенты получали бы 415 Unsupported Media Type, и наступало бы разочарование «без причины».",
+                "how_it_should_be": "Transcoding выполняет прокси перед сервером; сам gRPC-сервер JSON не принимает."
               },
               "label": "D",
               "order": 3

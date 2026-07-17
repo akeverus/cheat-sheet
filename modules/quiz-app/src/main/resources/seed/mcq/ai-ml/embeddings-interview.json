@@ -9,6 +9,18 @@
           "question_text": "Что такое embedding?",
           "options": [
             {
+              "text": "`Embedding` — это исключительно one-hot вектор длиной во весь словарь, где единица стоит на позиции слова.",
+              "correct": false,
+              "sections": {
+                "what_actually": "One-hot — это разреженное представление без семантики; embedding, наоборот, плотный вектор, где близость кодирует смысл.",
+                "source_of_confusion": "Оба представляют слово вектором, поэтому one-hot ошибочно называют embedding.",
+                "if_it_were_true": "Тогда `emb(\"кошка\")` и `emb(\"котёнок\")` были бы ортогональны (сходство 0), но у embedding они близки.",
+                "how_it_should_be": "Embedding — плотный вектор небольшой размерности, а one-hot — разреженный и семантически пустой."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "`Embedding` — числовое представление данных (text, image, audio) в виде вектора чисел в многомерном пространстве, где семантически похожие объекты получают близкие векторы.",
               "correct": true,
               "sections": {
@@ -17,18 +29,6 @@
                 "when_to_apply": "Применяют как фундамент для semantic search, RAG retrieval, кластеризации, рекомендаций и anomaly detection — везде, где нужно сравнивать объекты по смыслу.",
                 "edge_cases": "Из embedding нельзя восстановить исходный текст — это не сжатие, а потерянная проекция смысла; очень короткие тексты (1-2 слова) дают шумные векторы.",
                 "related": "[[embeddings-interview#Q2]] зачем нужны embeddings; [[embeddings-interview#Q3]] как обучается модель; [[embeddings-interview#Q28]] применения помимо RAG."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "`Embedding` — это компактно закодированное представление текста, из которого декодером можно восстановить исходную строку почти без потерь.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Embedding — это lossy-проекция смысла в вектор; обратного декодера у него нет, восстановить исходный текст нельзя.",
-                "source_of_confusion": "И кодирование, и embedding уменьшают размер представления, поэтому их функции путают.",
-                "if_it_were_true": "Тогда хранить тексты можно было бы прямо как векторы и декодировать обратно, но декодера у embedding нет.",
-                "how_it_should_be": "Embedding кодирует семантику для сравнения близости, а не обратимое представление байтов текста."
               },
               "label": "B",
               "order": 1
@@ -46,13 +46,13 @@
               "order": 2
             },
             {
-              "text": "`Embedding` — это исключительно one-hot вектор длиной во весь словарь, где единица стоит на позиции слова.",
+              "text": "`Embedding` — это компактно закодированное представление текста, из которого декодером можно восстановить исходную строку почти без потерь.",
               "correct": false,
               "sections": {
-                "what_actually": "One-hot — это разреженное представление без семантики; embedding, наоборот, плотный вектор, где близость кодирует смысл.",
-                "source_of_confusion": "Оба представляют слово вектором, поэтому one-hot ошибочно называют embedding.",
-                "if_it_were_true": "Тогда `emb(\"кошка\")` и `emb(\"котёнок\")` были бы ортогональны (сходство 0), но у embedding они близки.",
-                "how_it_should_be": "Embedding — плотный вектор небольшой размерности, а one-hot — разреженный и семантически пустой."
+                "what_actually": "Embedding — это lossy-проекция смысла в вектор; обратного декодера у него нет, восстановить исходный текст нельзя.",
+                "source_of_confusion": "И кодирование, и embedding уменьшают размер представления, поэтому их функции путают.",
+                "if_it_were_true": "Тогда хранить тексты можно было бы прямо как векторы и декодировать обратно, но декодера у embedding нет.",
+                "how_it_should_be": "Embedding кодирует семантику для сравнения близости, а не обратимое представление байтов текста."
               },
               "label": "D",
               "order": 3
@@ -69,13 +69,13 @@
           "question_text": "Зачем нужны embeddings и чем они лучше keyword-поиска?",
           "options": [
             {
-              "text": "Embeddings нужны прежде всего чтобы ускорить поиск, заменив медленный `BM25` на быстрый точный посимвольный матчинг строк.",
+              "text": "Embeddings нужны только чтобы исправлять опечатки в запросе перед обычным keyword-поиском по словам.",
               "correct": false,
               "sections": {
-                "what_actually": "Ценность embeddings — в семантике, а не в скорости; vector search не быстрее keyword по своей природе и работает по смыслу, а не посимвольно.",
-                "source_of_confusion": "Слово «поиск» ассоциируется со скоростью, поэтому преимущество видят в производительности.",
-                "if_it_were_true": "Тогда embeddings не находили бы синонимы лучше `BM25`, но именно семантическое сходство — их главное отличие.",
-                "how_it_should_be": "Embeddings выигрывают за счёт понимания смысла запроса, а не за счёт скорости матчинга символов."
+                "what_actually": "Исправление опечаток — отдельная задача (fuzzy match); embeddings решают семантическое сходство даже при идеально написанных, но разных словах.",
+                "source_of_confusion": "И опечатки, и синонимы дают «несовпадение слов», поэтому задачи смешивают.",
+                "if_it_were_true": "Тогда «горячий напиток» и «кофе» без опечаток не сматчились бы, но embeddings их сближают.",
+                "how_it_should_be": "Embeddings ловят смысловую близость разных слов, а коррекция опечаток — это про написание."
               },
               "label": "A",
               "order": 0
@@ -94,13 +94,13 @@
               "order": 1
             },
             {
-              "text": "Embeddings нужны только чтобы исправлять опечатки в запросе перед обычным keyword-поиском по словам.",
+              "text": "Embeddings нужны прежде всего чтобы ускорить поиск, заменив медленный `BM25` на быстрый точный посимвольный матчинг строк.",
               "correct": false,
               "sections": {
-                "what_actually": "Исправление опечаток — отдельная задача (fuzzy match); embeddings решают семантическое сходство даже при идеально написанных, но разных словах.",
-                "source_of_confusion": "И опечатки, и синонимы дают «несовпадение слов», поэтому задачи смешивают.",
-                "if_it_were_true": "Тогда «горячий напиток» и «кофе» без опечаток не сматчились бы, но embeddings их сближают.",
-                "how_it_should_be": "Embeddings ловят смысловую близость разных слов, а коррекция опечаток — это про написание."
+                "what_actually": "Ценность embeddings — в семантике, а не в скорости; vector search не быстрее keyword по своей природе и работает по смыслу, а не посимвольно.",
+                "source_of_confusion": "Слово «поиск» ассоциируется со скоростью, поэтому преимущество видят в производительности.",
+                "if_it_were_true": "Тогда embeddings не находили бы синонимы лучше `BM25`, но именно семантическое сходство — их главное отличие.",
+                "how_it_should_be": "Embeddings выигрывают за счёт понимания смысла запроса, а не за счёт скорости матчинга символов."
               },
               "label": "C",
               "order": 2
@@ -141,18 +141,6 @@
               "order": 0
             },
             {
-              "text": "Embedding model обучают как классификатор с фиксированным числом классов через обычный cross-entropy по меткам категорий.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Обучение идёт contrastive/triplet/InfoNCE на парах сходства, а не классификацией на фиксированный набор классов.",
-                "source_of_confusion": "InfoNCE формально похож на multi-class loss, поэтому его принимают за обычную классификацию.",
-                "if_it_were_true": "Тогда модель работала бы только на заранее известных классах, но embeddings обобщаются на новые тексты.",
-                "how_it_should_be": "Цель обучения — сближать похожие и отдалять непохожие пары, а не предсказывать заранее заданный класс."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Это transformer (обычно encoder-only), который обучают на парах/тройках текстов с contrastive/triplet/InfoNCE loss, чтобы похожие тексты получали близкие векторы, а negatives — далёкие; выход формируется pooling'ом (mean или `[CLS]`).",
               "correct": true,
               "sections": {
@@ -162,8 +150,8 @@
                 "edge_cases": "Качество сильно зависит от hard negatives: слишком лёгкие negatives не учат модель различать тонкие смыслы; выбор pooling (mean vs `[CLS]`) тоже влияет на результат.",
                 "related": "[[embeddings-interview#Q1]] что такое embedding; [[embeddings-interview#Q27]] как fine-tune sentence transformers; [[embeddings-interview#Q8]] sentence-transformers."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Embedding-вектор — это просто конкатенация one-hot кодов всех токенов текста без какого-либо обучения модели.",
@@ -173,6 +161,18 @@
                 "source_of_confusion": "И там, и там «текст превращается в вектор», поэтому процесс упрощают до конкатенации.",
                 "if_it_were_true": "Тогда длина вектора зависела бы от длины текста, но embedding всегда фиксированной размерности.",
                 "how_it_should_be": "Это плотный вектор фиксированного размера от обученной модели, а не склейка разреженных кодов."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Embedding model обучают как классификатор с фиксированным числом классов через обычный cross-entropy по меткам категорий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обучение идёт contrastive/triplet/InfoNCE на парах сходства, а не классификацией на фиксированный набор классов.",
+                "source_of_confusion": "InfoNCE формально похож на multi-class loss, поэтому его принимают за обычную классификацию.",
+                "if_it_were_true": "Тогда модель работала бы только на заранее известных классах, но embeddings обобщаются на новые тексты.",
+                "how_it_should_be": "Цель обучения — сближать похожие и отдалять непохожие пары, а не предсказывать заранее заданный класс."
               },
               "label": "D",
               "order": 3
@@ -189,13 +189,14 @@
           "question_text": "Чем sparse embeddings отличаются от dense embeddings?",
           "options": [
             {
-              "text": "Dense embeddings имеют большую размерность (десятки тысяч координат), а sparse — маленькую (256-512), отсюда и сами названия этих двух типов.",
-              "correct": false,
+              "text": "Dense — компактный вектор, где все размерности значимы (`[0.1, -0.5, 0.3, ...]`) и хорошо ловят семантику; sparse — вектор размером со словарь, где почти все координаты нули (`TF-IDF`, `BM25`, `SPLADE`), и он силён на точных терминах.",
+              "correct": true,
               "sections": {
-                "what_actually": "Наоборот: dense — компактные (сотни-тысячи значимых координат), а sparse — огромной размерности со словарь, но почти все координаты нулевые.",
-                "source_of_confusion": "Слова «dense/sparse» интуитивно связывают с «большой/маленький», а не с долей ненулевых координат.",
-                "if_it_were_true": "Тогда `TF-IDF` был бы dense маленьким вектором, но он разреженный и размером со словарь.",
-                "how_it_should_be": "Различие в доле ненулевых координат: dense — все значимы, sparse — почти все нули."
+                "explanation": "Dense-векторы небольшой размерности кодируют смысл, но плохо ловят редкие точные термины. Sparse-векторы огромной размерности отмечают конкретные слова, поэтому отлично работают на кодах и именах, но слабее в семантике.",
+                "example": "Поиск артикула `SKU-12345` лучше отрабатывает sparse (`BM25`), а запрос «удобное кресло для спины» — dense; `hybrid` объединяет оба, чтобы покрыть обе ситуации.",
+                "when_to_apply": "Sparse выбирают для exact-match (коды, юридические термины), dense — для смысловых запросов, а hybrid — когда нужны оба свойства одновременно.",
+                "edge_cases": "`SPLADE` — это learned sparse: он сохраняет интерпретируемость по словам, но добавляет немного семантики, размывая чистое разделение sparse/dense.",
+                "related": "[[embeddings-interview#Q1]] что такое embedding; [[embeddings-interview#Q2]] зачем embeddings; [[embeddings-interview#Q9]] BGE-M3 даёт dense и sparse."
               },
               "label": "A",
               "order": 0
@@ -213,6 +214,18 @@
               "order": 1
             },
             {
+              "text": "Dense embeddings имеют большую размерность (десятки тысяч координат), а sparse — маленькую (256-512), отсюда и сами названия этих двух типов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: dense — компактные (сотни-тысячи значимых координат), а sparse — огромной размерности со словарь, но почти все координаты нулевые.",
+                "source_of_confusion": "Слова «dense/sparse» интуитивно связывают с «большой/маленький», а не с долей ненулевых координат.",
+                "if_it_were_true": "Тогда `TF-IDF` был бы dense маленьким вектором, но он разреженный и размером со словарь.",
+                "how_it_should_be": "Различие в доле ненулевых координат: dense — все значимы, sparse — почти все нули."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
               "text": "Sparse и dense — это одно и то же, просто dense нормализован, а sparse нет; никакой разницы в природе нет.",
               "correct": false,
               "sections": {
@@ -220,19 +233,6 @@
                 "source_of_confusion": "Оба называются embeddings, поэтому различие сводят к технической детали вроде нормализации.",
                 "if_it_were_true": "Тогда `BM25` и `OpenAI`-вектор были бы взаимозаменяемы, но они кодируют текст совершенно по-разному.",
                 "how_it_should_be": "Это два разных класса представлений — по доле ненулевых координат и по тому, что они кодируют."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Dense — компактный вектор, где все размерности значимы (`[0.1, -0.5, 0.3, ...]`) и хорошо ловят семантику; sparse — вектор размером со словарь, где почти все координаты нули (`TF-IDF`, `BM25`, `SPLADE`), и он силён на точных терминах.",
-              "correct": true,
-              "sections": {
-                "explanation": "Dense-векторы небольшой размерности кодируют смысл, но плохо ловят редкие точные термины. Sparse-векторы огромной размерности отмечают конкретные слова, поэтому отлично работают на кодах и именах, но слабее в семантике.",
-                "example": "Поиск артикула `SKU-12345` лучше отрабатывает sparse (`BM25`), а запрос «удобное кресло для спины» — dense; `hybrid` объединяет оба, чтобы покрыть обе ситуации.",
-                "when_to_apply": "Sparse выбирают для exact-match (коды, юридические термины), dense — для смысловых запросов, а hybrid — когда нужны оба свойства одновременно.",
-                "edge_cases": "`SPLADE` — это learned sparse: он сохраняет интерпретируемость по словам, но добавляет немного семантики, размывая чистое разделение sparse/dense.",
-                "related": "[[embeddings-interview#Q1]] что такое embedding; [[embeddings-interview#Q2]] зачем embeddings; [[embeddings-interview#Q9]] BGE-M3 даёт dense и sparse."
               },
               "label": "D",
               "order": 3
@@ -262,18 +262,6 @@
               "order": 0
             },
             {
-              "text": "`text-embedding-3-small` стоит дороже `large` ($0.13 против $0.02 за 1M токенов), потому что у small меньше размерность и его сложнее считать.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: `small` дешевле ($0.02/1M) и компактнее (1536), а `large` дороже ($0.13/1M) и больше (3072).",
-                "source_of_confusion": "Слово «small» интуитивно связывают с «премиальный/дорогой», переворачивая цену.",
-                "if_it_were_true": "Тогда для экономии брали бы `large`, но cost-sensitive сценарии рекомендуют именно `small`.",
-                "how_it_should_be": "`small` — дешёвый и компактный, `large` — дороже и качественнее; цена растёт с размером."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "У text-embedding-3 размерность жёстко фиксирована и truncate невозможен, поэтому экономить на storage через урезание нельзя.",
               "correct": false,
               "sections": {
@@ -282,8 +270,8 @@
                 "if_it_were_true": "Тогда параметр `dimensions=512` в API не работал бы, но он официально поддерживается.",
                 "how_it_should_be": "Matryoshka позволяет truncate размерности, экономя storage без существенной потери качества."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "text-embedding-3 принимает не более 512 токенов на вход, как BERT-модели, поэтому длинные тексты в неё не влезают.",
@@ -293,6 +281,18 @@
                 "source_of_confusion": "512 — типичный лимит многих encoder-моделей, и его приписывают всем подряд.",
                 "if_it_were_true": "Тогда крупные чанки пришлось бы дробить сильнее, но 8K токенов покрывают большие фрагменты.",
                 "how_it_should_be": "Лимит text-embedding-3 — 8191 токен; 512 — это про Cohere/BGE, а не про OpenAI v3."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "`text-embedding-3-small` стоит дороже `large` ($0.13 против $0.02 за 1M токенов), потому что у small меньше размерность и его сложнее считать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: `small` дешевле ($0.02/1M) и компактнее (1536), а `large` дороже ($0.13/1M) и больше (3072).",
+                "source_of_confusion": "Слово «small» интуитивно связывают с «премиальный/дорогой», переворачивая цену.",
+                "if_it_were_true": "Тогда для экономии брали бы `large`, но cost-sensitive сценарии рекомендуют именно `small`.",
+                "how_it_should_be": "`small` — дешёвый и компактный, `large` — дороже и качественнее; цена растёт с размером."
               },
               "label": "D",
               "order": 3
@@ -321,6 +321,18 @@
               "order": 0
             },
             {
+              "text": "У Cohere embed-v3 нет понятия input_type: документ и запрос кодируются абсолютно одинаково, как в любой обычной модели.",
+              "correct": false,
+              "sections": {
+                "what_actually": "input_type-aware — фирменная фича: `search_document` и `search_query` кодируются по-разному, что повышает retrieval-качество.",
+                "source_of_confusion": "Многие embedding-модели действительно кодируют всё одинаково, и это переносят на Cohere.",
+                "if_it_were_true": "Тогда параметр `input_type` в `co.embed(...)` был бы бесполезен, но он напрямую влияет на результат.",
+                "how_it_should_be": "Cohere различает типы входа (document/query/classification/clustering), оптимизируя вектор под задачу."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "Линейка Cohere 2023+ с 1024 dims: `embed-english-v3.0` (English) и `embed-multilingual-v3.0` (100+ языков); ключевая особенность — input_type-aware (`search_document`, `search_query`, `classification`, `clustering`), часто превосходит OpenAI на retrieval-бенчмарках.",
               "correct": true,
               "sections": {
@@ -329,18 +341,6 @@
                 "when_to_apply": "Хороший выбор для retrieval-ориентированных и multilingual-задач, когда важно качество поиска и поддержка многих языков из коробки.",
                 "edge_cases": "Если перепутать input_type (закодировать запрос как document), качество поиска падает — рассогласование типов снижает релевантность.",
                 "related": "[[embeddings-interview#Q5]] OpenAI text-embedding-3; [[embeddings-interview#Q17]] multilingual embeddings; [[embeddings-interview#Q11]] MTEB benchmark."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "У Cohere embed-v3 нет понятия input_type: документ и запрос кодируются абсолютно одинаково, как в любой обычной модели.",
-              "correct": false,
-              "sections": {
-                "what_actually": "input_type-aware — фирменная фича: `search_document` и `search_query` кодируются по-разному, что повышает retrieval-качество.",
-                "source_of_confusion": "Многие embedding-модели действительно кодируют всё одинаково, и это переносят на Cohere.",
-                "if_it_were_true": "Тогда параметр `input_type` в `co.embed(...)` был бы бесполезен, но он напрямую влияет на результат.",
-                "how_it_should_be": "Cohere различает типы входа (document/query/classification/clustering), оптимизируя вектор под задачу."
               },
               "label": "C",
               "order": 2
@@ -369,30 +369,6 @@
           "question_text": "Что такое Voyage AI и почему его выбирают для production RAG?",
           "options": [
             {
-              "text": "Voyage AI — это open-source библиотека для self-host, которая работает локально без API и поэтому подходит для PII.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Voyage AI — это API-сервис, а не self-host библиотека; для приватных данных без согласований он не годится.",
-                "source_of_confusion": "Многие embedding-решения open-source, и это свойство ошибочно переносят на Voyage.",
-                "if_it_were_true": "Тогда его рекомендовали бы как privacy-вариант, но для privacy советуют `BGE-M3`/`E5`.",
-                "how_it_should_be": "Voyage — облачный API; для privacy/self-host берут open-source модели вроде BGE или E5."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Voyage AI предлагает только одну универсальную general-модель и не имеет domain-specific вариантов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "У Voyage есть domain-specific модели: `voyage-code-2`, `voyage-finance-2`, `voyage-multilingual-2` — это его сильная сторона.",
-                "source_of_confusion": "У многих провайдеров одна general-модель, и это ожидание переносят на Voyage.",
-                "if_it_were_true": "Тогда не было бы смысла выбирать его под код/финансы, но именно domain-модели его выделяют.",
-                "how_it_should_be": "Voyage даёт набор domain-моделей (code, finance, multilingual) плюс general-вариант."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Voyage AI — стартап, специализирующийся на embeddings (интеграция с Anthropic): часто SOTA на MTEB, с domain-specific моделями (`voyage-code-2`, `voyage-finance-2`, `voyage-multilingual-2`, `voyage-large-2-instruct`); в 2025 — топ-выбор для production RAG.",
               "correct": true,
               "sections": {
@@ -402,8 +378,8 @@
                 "edge_cases": "Это API-сервис, поэтому для privacy-sensitive данных (PII) он не подходит без согласований; domain-модель вне своего домена не даёт преимущества.",
                 "related": "[[embeddings-interview#Q10]] как выбрать модель; [[embeddings-interview#Q11]] MTEB benchmark; [[embeddings-interview#Q26]] когда нужен fine-tuning."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Voyage AI принципиально показывает низкие результаты на MTEB, поэтому для качества его не используют.",
@@ -413,6 +389,30 @@
                 "source_of_confusion": "Малоизвестность стартапа создаёт ложное впечатление о слабом качестве.",
                 "if_it_were_true": "Тогда его не ставили бы в топ MTEB рядом с NV-Embed, но он там присутствует.",
                 "how_it_should_be": "Voyage регулярно занимает верхние строчки MTEB и ценится именно за качество."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Voyage AI — это open-source библиотека для self-host, которая работает локально без API и поэтому подходит для PII.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Voyage AI — это API-сервис, а не self-host библиотека; для приватных данных без согласований он не годится.",
+                "source_of_confusion": "Многие embedding-решения open-source, и это свойство ошибочно переносят на Voyage.",
+                "if_it_were_true": "Тогда его рекомендовали бы как privacy-вариант, но для privacy советуют `BGE-M3`/`E5`.",
+                "how_it_should_be": "Voyage — облачный API; для privacy/self-host берут open-source модели вроде BGE или E5."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Voyage AI предлагает только одну универсальную general-модель и не имеет domain-specific вариантов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У Voyage есть domain-specific модели: `voyage-code-2`, `voyage-finance-2`, `voyage-multilingual-2` — это его сильная сторона.",
+                "source_of_confusion": "У многих провайдеров одна general-модель, и это ожидание переносят на Voyage.",
+                "if_it_were_true": "Тогда не было бы смысла выбирать его под код/финансы, но именно domain-модели его выделяют.",
+                "how_it_should_be": "Voyage даёт набор domain-моделей (code, finance, multilingual) плюс general-вариант."
               },
               "label": "D",
               "order": 3
@@ -429,28 +429,17 @@
           "question_text": "Что такое sentence-transformers и каковы его плюсы и минусы?",
           "options": [
             {
-              "text": "`sentence-transformers` — это облачный API от OpenAI, который тарифицируется по токенам и не позволяет self-host.",
-              "correct": false,
+              "text": "`sentence-transformers` — Python-библиотека от UKP Lab для self-host embeddings (`all-MiniLM-L6-v2` 384d, `all-mpnet-base-v2` 768d и др.); плюсы — privacy, отсутствие API-costs, огромный выбор моделей и лёгкий fine-tuning; минусы — качество ниже proprietary и нужны GPU для скорости.",
+              "correct": true,
               "sections": {
-                "what_actually": "Это open-source библиотека для локального self-host без API-оплаты, а не облачный сервис OpenAI.",
-                "source_of_confusion": "Любую популярную embedding-технологию по привычке считают облачным API.",
-                "if_it_were_true": "Тогда privacy и нулевые API-costs не были бы её плюсами, но именно они — её главное преимущество.",
-                "how_it_should_be": "`sentence-transformers` ставится локально и работает без API; оплата по токенам — это про OpenAI."
+                "explanation": "Модель загружают локально и зовут `model.encode([...])`, получая numpy-векторы. Self-host убирает API-расходы и утечки данных, но без GPU инференс медленный, а качество отстаёт от OpenAI/Cohere.",
+                "example": "`SentenceTransformer('all-MiniLM-L6-v2').encode([\"Hello\", \"World\"])` возвращает массив shape (2, 384) — компактные быстрые векторы для self-host поиска.",
+                "when_to_apply": "Выбирают когда важны privacy и нулевая стоимость API, есть GPU-ресурсы, или нужен лёгкий fine-tuning под свой домен.",
+                "edge_cases": "На CPU при больших объёмах инференс становится узким местом; маленькие модели вроде MiniLM экономят, но заметно уступают по качеству mpnet и proprietary.",
+                "related": "[[embeddings-interview#Q9]] BGE и E5 модели; [[embeddings-interview#Q27]] как fine-tune sentence transformers; [[embeddings-interview#Q10]] как выбрать модель."
               },
               "label": "A",
               "order": 0
-            },
-            {
-              "text": "Главное преимущество sentence-transformers — стабильно лучшее качество, чем у OpenAI и Cohere, на любых задачах.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По качеству open-source модели обычно уступают proprietary; их ценят за privacy и стоимость, а не за превосходство.",
-                "source_of_confusion": "Большой выбор моделей создаёт впечатление, что среди них всегда найдётся лучше proprietary.",
-                "if_it_were_true": "Тогда никто не платил бы за OpenAI/Cohere, но за качество retrieval часто берут именно их.",
-                "how_it_should_be": "Sentence-transformers выигрывают в privacy и цене, но по качеству обычно отстают от proprietary."
-              },
-              "label": "B",
-              "order": 1
             },
             {
               "text": "sentence-transformers умеет только обучать модели с нуля и не предоставляет готовых предобученных моделей для inference.",
@@ -461,18 +450,29 @@
                 "if_it_were_true": "Тогда `SentenceTransformer('all-MiniLM-L6-v2')` не загружал бы готовую модель, но он это делает.",
                 "how_it_should_be": "Есть и готовые предобученные модели для inference, и удобный fine-tuning поверх них."
               },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Главное преимущество sentence-transformers — стабильно лучшее качество, чем у OpenAI и Cohere, на любых задачах.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По качеству open-source модели обычно уступают proprietary; их ценят за privacy и стоимость, а не за превосходство.",
+                "source_of_confusion": "Большой выбор моделей создаёт впечатление, что среди них всегда найдётся лучше proprietary.",
+                "if_it_were_true": "Тогда никто не платил бы за OpenAI/Cohere, но за качество retrieval часто берут именно их.",
+                "how_it_should_be": "Sentence-transformers выигрывают в privacy и цене, но по качеству обычно отстают от proprietary."
+              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`sentence-transformers` — Python-библиотека от UKP Lab для self-host embeddings (`all-MiniLM-L6-v2` 384d, `all-mpnet-base-v2` 768d и др.); плюсы — privacy, отсутствие API-costs, огромный выбор моделей и лёгкий fine-tuning; минусы — качество ниже proprietary и нужны GPU для скорости.",
-              "correct": true,
+              "text": "`sentence-transformers` — это облачный API от OpenAI, который тарифицируется по токенам и не позволяет self-host.",
+              "correct": false,
               "sections": {
-                "explanation": "Модель загружают локально и зовут `model.encode([...])`, получая numpy-векторы. Self-host убирает API-расходы и утечки данных, но без GPU инференс медленный, а качество отстаёт от OpenAI/Cohere.",
-                "example": "`SentenceTransformer('all-MiniLM-L6-v2').encode([\"Hello\", \"World\"])` возвращает массив shape (2, 384) — компактные быстрые векторы для self-host поиска.",
-                "when_to_apply": "Выбирают когда важны privacy и нулевая стоимость API, есть GPU-ресурсы, или нужен лёгкий fine-tuning под свой домен.",
-                "edge_cases": "На CPU при больших объёмах инференс становится узким местом; маленькие модели вроде MiniLM экономят, но заметно уступают по качеству mpnet и proprietary.",
-                "related": "[[embeddings-interview#Q9]] BGE и E5 модели; [[embeddings-interview#Q27]] как fine-tune sentence transformers; [[embeddings-interview#Q10]] как выбрать модель."
+                "what_actually": "Это open-source библиотека для локального self-host без API-оплаты, а не облачный сервис OpenAI.",
+                "source_of_confusion": "Любую популярную embedding-технологию по привычке считают облачным API.",
+                "if_it_were_true": "Тогда privacy и нулевые API-costs не были бы её плюсами, но именно они — её главное преимущество.",
+                "how_it_should_be": "`sentence-transformers` ставится локально и работает без API; оплата по токенам — это про OpenAI."
               },
               "label": "D",
               "order": 3
@@ -489,6 +489,18 @@
           "question_text": "Что такое модели BGE и E5?",
           "options": [
             {
+              "text": "`bge-m3` умеет выдавать только dense-векторы и не поддерживает ни sparse, ни colbert-представления.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`bge-m3` именно multi-functional: за один проход даёт dense, sparse и colbert — это его отличительная черта.",
+                "source_of_confusion": "Большинство моделей выдают только dense, и это ожидание переносят на bge-m3.",
+                "if_it_were_true": "Тогда для hybrid-поиска нужна была бы вторая sparse-модель, но bge-m3 закрывает это сам.",
+                "how_it_should_be": "`bge-m3` multi-functional: dense + sparse + colbert из одной модели."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "`BGE` (BAAI General Embedding) — open-source SOTA от Beijing Academy of AI (`bge-large-en-v1.5` 1024d, `bge-m3` — multilingual и multi-functional: dense + sparse + colbert); `E5` — embeddings от Microsoft (`multilingual-e5-large`, `e5-mistral-7b-instruct` 7B — топовое open-source качество).",
               "correct": true,
               "sections": {
@@ -498,32 +510,8 @@
                 "edge_cases": "`e5-mistral-7b` мощный, но 7B-параметров требуют серьёзного GPU; модели семейства E5 чувствительны к префиксам `query:`/`passage:`, без них качество падает.",
                 "related": "[[embeddings-interview#Q8]] sentence-transformers; [[embeddings-interview#Q4]] sparse vs dense; [[embeddings-interview#Q17]] multilingual embeddings."
               },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "BGE и E5 — это проприетарные closed-source API, доступные только по платной подписке, без возможности self-host.",
-              "correct": false,
-              "sections": {
-                "what_actually": "BGE и E5 — open-source модели (на Hugging Face), которые можно запускать локально; именно поэтому их берут для privacy.",
-                "source_of_confusion": "Высокое качество ассоциируется с платными закрытыми API, поэтому open-source статус упускают.",
-                "if_it_were_true": "Тогда их не советовали бы как privacy-вариант для self-host, но советуют именно за это.",
-                "how_it_should_be": "Это открытые модели для self-host; closed-source API — это про OpenAI/Cohere/Voyage."
-              },
               "label": "B",
               "order": 1
-            },
-            {
-              "text": "`bge-m3` умеет выдавать только dense-векторы и не поддерживает ни sparse, ни colbert-представления.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`bge-m3` именно multi-functional: за один проход даёт dense, sparse и colbert — это его отличительная черта.",
-                "source_of_confusion": "Большинство моделей выдают только dense, и это ожидание переносят на bge-m3.",
-                "if_it_were_true": "Тогда для hybrid-поиска нужна была бы вторая sparse-модель, но bge-m3 закрывает это сам.",
-                "how_it_should_be": "`bge-m3` multi-functional: dense + sparse + colbert из одной модели."
-              },
-              "label": "C",
-              "order": 2
             },
             {
               "text": "E5 — это модель от OpenAI, а BGE — от Cohere; обе входят в проприетарные линейки этих компаний.",
@@ -533,6 +521,18 @@
                 "source_of_confusion": "Имена крупных AI-вендоров автоматически приписывают известным embedding-моделям.",
                 "if_it_were_true": "Тогда они не были бы open-source на Hugging Face, но обе доступны как открытые модели.",
                 "how_it_should_be": "E5 — Microsoft, BGE — BAAI; обе open-source, а не от OpenAI/Cohere."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "BGE и E5 — это проприетарные closed-source API, доступные только по платной подписке, без возможности self-host.",
+              "correct": false,
+              "sections": {
+                "what_actually": "BGE и E5 — open-source модели (на Hugging Face), которые можно запускать локально; именно поэтому их берут для privacy.",
+                "source_of_confusion": "Высокое качество ассоциируется с платными закрытыми API, поэтому open-source статус упускают.",
+                "if_it_were_true": "Тогда их не советовали бы как privacy-вариант для self-host, но советуют именно за это.",
+                "how_it_should_be": "Это открытые модели для self-host; closed-source API — это про OpenAI/Cohere/Voyage."
               },
               "label": "D",
               "order": 3
@@ -549,18 +549,6 @@
           "question_text": "Как выбрать embedding model (какие факторы учитывать)?",
           "options": [
             {
-              "text": "Единственный фактор выбора — место модели в MTEB-лидерборде; берёшь модель №1, и для всех проектов это правильный выбор.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Помимо качества важны cost, latency, privacy, languages, domain и context length; топ MTEB не учитывает ваши ограничения.",
-                "source_of_confusion": "Лидерборд даёт простое одномерное ранжирование, и кажется, что выбор сводится к нему.",
-                "if_it_were_true": "Тогда для PII-данных все брали бы топовую API-модель, но privacy требует self-host.",
-                "how_it_should_be": "Выбор — это баланс качества, цены, latency, privacy, языков и домена под конкретный кейс."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Учитывают quality (`MTEB`-лидерборд), cost (API per-token vs self-host GPU), latency, privacy (API утекает данные → self-host для PII), languages, domain (general vs code/finance/medical), dimensions (качество vs storage) и context length (512 у BERT vs 8K у OpenAI).",
               "correct": true,
               "sections": {
@@ -570,8 +558,8 @@
                 "edge_cases": "`MTEB` не идеален и может не отражать ваш домен — поэтому лучший критерий всегда финальный замер recall на собственном корпусе, а не место в лидерборде.",
                 "related": "[[embeddings-interview#Q11]] MTEB benchmark; [[embeddings-interview#Q7]] Voyage AI; [[embeddings-interview#Q22]] cost optimization."
               },
-              "label": "B",
-              "order": 1
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Privacy не влияет на выбор: любую данные можно безопасно отправлять в любой embedding API, поэтому self-host не нужен.",
@@ -581,6 +569,18 @@
                 "source_of_confusion": "Embedding кажется безобидным вектором, и забывают, что в API уходит сам исходный текст.",
                 "if_it_were_true": "Тогда self-host вообще не имел бы смысла, но для PII он рекомендуется напрямую.",
                 "how_it_should_be": "Для чувствительных данных нужен self-host, чтобы текст не покидал инфраструктуру."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Единственный фактор выбора — место модели в MTEB-лидерборде; берёшь модель №1, и для всех проектов это правильный выбор.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Помимо качества важны cost, latency, privacy, languages, domain и context length; топ MTEB не учитывает ваши ограничения.",
+                "source_of_confusion": "Лидерборд даёт простое одномерное ранжирование, и кажется, что выбор сводится к нему.",
+                "if_it_were_true": "Тогда для PII-данных все брали бы топовую API-модель, но privacy требует self-host.",
+                "how_it_should_be": "Выбор — это баланс качества, цены, latency, privacy, языков и домена под конкретный кейс."
               },
               "label": "C",
               "order": 2
@@ -609,6 +609,18 @@
           "question_text": "Что такое MTEB benchmark и как им пользоваться?",
           "options": [
             {
+              "text": "MTEB — это закрытый платный бенчмарк, результаты которого недоступны публично и доступны только за подписку.",
+              "correct": false,
+              "sections": {
+                "what_actually": "MTEB — публичный open лидерборд на Hugging Face со свободным доступом к результатам.",
+                "source_of_confusion": "Корпоративные бенчмарки бывают закрытыми, и это переносят на MTEB.",
+                "if_it_were_true": "Тогда нельзя было бы свободно смотреть топ моделей, но лидерборд открыт всем.",
+                "how_it_should_be": "MTEB публичный: лидерборд и датасеты доступны бесплатно на Hugging Face."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
               "text": "MTEB тестирует embeddings только на одной задаче — retrieval, поэтому по нему нельзя судить о classification или clustering.",
               "correct": false,
               "sections": {
@@ -616,18 +628,6 @@
                 "source_of_confusion": "Retrieval — самое обсуждаемое применение embeddings, поэтому бенчмарк сводят к нему.",
                 "if_it_were_true": "Тогда по MTEB нельзя было бы оценить кластеризацию, но в нём есть отдельный clustering-таск.",
                 "how_it_should_be": "MTEB многозадачный: 56 датасетов и 8 типов задач сразу."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "MTEB — это идеальный финальный критерий: если модель лидер на MTEB, на ваших данных она гарантированно лучшая.",
-              "correct": false,
-              "sections": {
-                "what_actually": "MTEB не идеален и может не отражать ваш домен; авторитетный совет — финальный тест на собственных данных.",
-                "source_of_confusion": "Единый рейтинг внушает доверие, и его принимают за окончательную истину.",
-                "if_it_were_true": "Тогда замер на своём корпусе был бы лишним, но именно его рекомендуют как решающий.",
-                "how_it_should_be": "MTEB — первый фильтр; окончательный выбор — по recall на ваших данных."
               },
               "label": "B",
               "order": 1
@@ -646,13 +646,13 @@
               "order": 2
             },
             {
-              "text": "MTEB — это закрытый платный бенчмарк, результаты которого недоступны публично и доступны только за подписку.",
+              "text": "MTEB — это идеальный финальный критерий: если модель лидер на MTEB, на ваших данных она гарантированно лучшая.",
               "correct": false,
               "sections": {
-                "what_actually": "MTEB — публичный open лидерборд на Hugging Face со свободным доступом к результатам.",
-                "source_of_confusion": "Корпоративные бенчмарки бывают закрытыми, и это переносят на MTEB.",
-                "if_it_were_true": "Тогда нельзя было бы свободно смотреть топ моделей, но лидерборд открыт всем.",
-                "how_it_should_be": "MTEB публичный: лидерборд и датасеты доступны бесплатно на Hugging Face."
+                "what_actually": "MTEB не идеален и может не отражать ваш домен; авторитетный совет — финальный тест на собственных данных.",
+                "source_of_confusion": "Единый рейтинг внушает доверие, и его принимают за окончательную истину.",
+                "if_it_were_true": "Тогда замер на своём корпусе был бы лишним, но именно его рекомендуют как решающий.",
+                "how_it_should_be": "MTEB — первый фильтр; окончательный выбор — по recall на ваших данных."
               },
               "label": "D",
               "order": 3
@@ -669,30 +669,6 @@
           "question_text": "Какие dimensions (размерность вектора) выбрать?",
           "options": [
             {
-              "text": "Память от размерности почти не зависит, поэтому 3072-мерные векторы занимают примерно столько же storage, сколько 384-мерные.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Память растёт линейно: 1536 dims дают ~6 ГБ на 1M, а 384 — ~1.5 ГБ; разница в разы.",
-                "source_of_confusion": "Один вектор кажется маленьким, и забывают про умножение на миллионы записей.",
-                "if_it_were_true": "Тогда не было бы смысла снижать размерность ради экономии, но именно так экономят storage.",
-                "how_it_should_be": "Storage пропорционален dims × число векторов × 4 байта; большие размерности дороже."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
-              "text": "Лучше сразу брать максимальную размерность (3072): качество заметно выше и с запасом окупает дополнительный storage, поэтому меньшие dims брать нет смысла.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Прирост качества от больших dims обычно небольшой («чуть лучше»), а storage растёт сильно; начинать советуют с 512-1024.",
-                "source_of_confusion": "Интуиция «больше размерность = заметно лучше» переоценивает выигрыш качества.",
-                "if_it_were_true": "Тогда никто не использовал бы 512d, но это частый практичный дефолт.",
-                "how_it_should_be": "Качество растёт слабо, а storage — линейно; разумный старт 512-1024 dims."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Любую модель можно безопасно усечь до меньшей размерности без потери качества, Matryoshka для этого не нужна.",
               "correct": false,
               "sections": {
@@ -701,8 +677,20 @@
                 "if_it_were_true": "Тогда Matryoshka не была бы отдельной фичей, но именно она делает усечение корректным.",
                 "how_it_should_be": "Безопасный truncate — свойство Matryoshka-моделей, а не любых embeddings."
               },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Память от размерности почти не зависит, поэтому 3072-мерные векторы занимают примерно столько же storage, сколько 384-мерные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Память растёт линейно: 1536 dims дают ~6 ГБ на 1M, а 384 — ~1.5 ГБ; разница в разы.",
+                "source_of_confusion": "Один вектор кажется маленьким, и забывают про умножение на миллионы записей.",
+                "if_it_were_true": "Тогда не было бы смысла снижать размерность ради экономии, но именно так экономят storage.",
+                "how_it_should_be": "Storage пропорционален dims × число векторов × 4 байта; большие размерности дороже."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Это trade-off качество/storage: малые (256-512) — быстро и дёшево, чуть хуже качество; средние (768-1024) — стандарт open-source; большие (1536-3072) — OpenAI/Cohere, больше storage, чуть лучше качество. Best practice — начать с 512-1024 и увеличивать только при нехватке качества.",
@@ -713,6 +701,18 @@
                 "when_to_apply": "Подбирают размерность на старте под бюджет storage и требования к качеству; увеличивают, только если замер показал нехватку recall.",
                 "edge_cases": "Слишком малые размерности (ниже ~256) теряют качество резко; без Matryoshka нельзя свободно усекать обычные модели — обрезка ломает их вектор.",
                 "related": "[[embeddings-interview#Q5]] OpenAI text-embedding-3; [[embeddings-interview#Q24]] Matryoshka embeddings; [[embeddings-interview#Q25]] quantization."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Лучше сразу брать максимальную размерность (3072): качество заметно выше и с запасом окупает дополнительный storage, поэтому меньшие dims брать нет смысла.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Прирост качества от больших dims обычно небольшой («чуть лучше»), а storage растёт сильно; начинать советуют с 512-1024.",
+                "source_of_confusion": "Интуиция «больше размерность = заметно лучше» переоценивает выигрыш качества.",
+                "if_it_were_true": "Тогда никто не использовал бы 512d, но это частый практичный дефолт.",
+                "how_it_should_be": "Качество растёт слабо, а storage — линейно; разумный старт 512-1024 dims."
               },
               "label": "D",
               "order": 3
@@ -742,18 +742,6 @@
               "order": 0
             },
             {
-              "text": "Нормализация — это перевод float32-вектора в int8 для экономии памяти; к длине вектора она отношения не имеет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Перевод в int8 — это quantization; нормализация же приводит вектор к единичной длине, это разные операции.",
-                "source_of_confusion": "Обе операции «преобразуют вектор», поэтому нормализацию путают с квантизацией.",
-                "if_it_were_true": "Тогда `np.linalg.norm` был бы не нужен, но именно деление на норму даёт `||v|| = 1`.",
-                "how_it_should_be": "Нормализация делает `||v|| = 1`, а сжатие типа данных — это отдельная quantization."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "`sentence-transformers` по умолчанию возвращает уже нормализованные векторы, как и `OpenAI`, поэтому флаг `normalize_embeddings` можно не выставлять.",
               "correct": false,
               "sections": {
@@ -762,8 +750,8 @@
                 "if_it_were_true": "Тогда флаг `normalize_embeddings` был бы бессмысленным, но он существует именно для этого.",
                 "how_it_should_be": "sentence-transformers по умолчанию не нормализует — нужно явно включить флаг."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Смешивать нормализованные и сырые векторы в одном индексе совершенно безопасно — на качество поиска это не влияет.",
@@ -773,6 +761,18 @@
                 "source_of_confusion": "Кажется, что direction вектора сохраняется, поэтому масштаб считают неважным.",
                 "if_it_were_true": "Тогда согласованность не называли бы критичной, но именно её несоблюдение портит выдачу.",
                 "how_it_should_be": "В индексе все векторы должны быть единообразно нормализованы или нет — иначе поиск деградирует."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Нормализация — это перевод float32-вектора в int8 для экономии памяти; к длине вектора она отношения не имеет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перевод в int8 — это quantization; нормализация же приводит вектор к единичной длине, это разные операции.",
+                "source_of_confusion": "Обе операции «преобразуют вектор», поэтому нормализацию путают с квантизацией.",
+                "if_it_were_true": "Тогда `np.linalg.norm` был бы не нужен, но именно деление на норму даёт `||v|| = 1`.",
+                "how_it_should_be": "Нормализация делает `||v|| = 1`, а сжатие типа данных — это отдельная quantization."
               },
               "label": "D",
               "order": 3
@@ -789,18 +789,6 @@
           "question_text": "В чём разница между cosine similarity и dot product?",
           "options": [
             {
-              "text": "Cosine similarity и dot product дают одинаковый результат независимо от того, нормализованы векторы или нет, — это просто две записи одной и той же метрики.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Они совпадают только когда векторы нормализованы; на сырых векторах dot учитывает длину и расходится с cosine.",
-                "source_of_confusion": "Формулу `cos = A·B` запоминают без условия `|A|=|B|=1` и обобщают на все случаи.",
-                "if_it_were_true": "Тогда нормализация не влияла бы на выбор метрики, но именно она делает их эквивалентными.",
-                "how_it_should_be": "Равенство `cos = dot` верно лишь для нормализованных векторов; иначе результаты разные."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "`cos(A, B) = (A · B) / (|A| × |B|)`; если оба вектора нормализованы (`|A| = |B| = 1`), то `cos(A, B) = A · B`. Dot product быстрее (нет деления на нормы), поэтому в проде с нормализованными векторами выбирают метрику `dot` в vector DB и выигрывают ~10-30% latency.",
               "correct": true,
               "sections": {
@@ -809,6 +797,18 @@
                 "when_to_apply": "Используют dot, когда все векторы гарантированно нормализованы; cosine — когда нормы не гарантированы и важно учитывать только направление.",
                 "edge_cases": "Если векторы НЕ нормализованы, dot product учитывает их длину и даёт другие результаты, чем cosine — тогда подмена метрики искажает ранжирование.",
                 "related": "[[embeddings-interview#Q13]] нужна ли нормализация; [[embeddings-interview#Q29]] частые проблемы; [[embeddings-interview#Q1]] что такое embedding."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Cosine similarity и dot product дают одинаковый результат независимо от того, нормализованы векторы или нет, — это просто две записи одной и той же метрики.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они совпадают только когда векторы нормализованы; на сырых векторах dot учитывает длину и расходится с cosine.",
+                "source_of_confusion": "Формулу `cos = A·B` запоминают без условия `|A|=|B|=1` и обобщают на все случаи.",
+                "if_it_were_true": "Тогда нормализация не влияла бы на выбор метрики, но именно она делает их эквивалентными.",
+                "how_it_should_be": "Равенство `cos = dot` верно лишь для нормализованных векторов; иначе результаты разные."
               },
               "label": "B",
               "order": 1
@@ -849,13 +849,13 @@
           "question_text": "Что такое token limit для embedding и почему он важен?",
           "options": [
             {
-              "text": "Все embedding-модели имеют одинаковый лимит входа в 8191 токен, поэтому стратегия чанкинга от модели не зависит.",
+              "text": "Если текст превышает лимит, API возвращает явную ошибку валидации и embedding не создаётся, так что молча потерять хвост нельзя.",
               "correct": false,
               "sections": {
-                "what_actually": "Лимиты сильно разнятся: 512 у Cohere/BGE, 8191 у OpenAI, 16000 у Voyage — чанкинг напрямую зависит от модели.",
-                "source_of_confusion": "Знают лимит OpenAI (8191) и ошибочно распространяют его на все модели.",
-                "if_it_were_true": "Тогда один чанк влезал бы везде, но в Cohere (512) тот же текст придётся резать сильнее.",
-                "how_it_should_be": "Лимиты разные (512/8K/16K), и под каждую модель чанкинг свой."
+                "what_actually": "Многие API молча обрезают хвост текста и возвращают embedding по началу — потеря данных происходит незаметно.",
+                "source_of_confusion": "Ожидают строгую валидацию, как при превышении лимита в обычных REST API.",
+                "if_it_were_true": "Тогда лишний текст нельзя было бы потерять незаметно, но именно это и происходит при тихом truncate.",
+                "how_it_should_be": "Часто хвост молча обрезается, поэтому чанкинг нужно делать самому, не полагаясь на ошибку."
               },
               "label": "A",
               "order": 0
@@ -886,13 +886,13 @@
               "order": 2
             },
             {
-              "text": "Если текст превышает лимит, API возвращает явную ошибку валидации и embedding не создаётся, так что молча потерять хвост нельзя.",
+              "text": "Все embedding-модели имеют одинаковый лимит входа в 8191 токен, поэтому стратегия чанкинга от модели не зависит.",
               "correct": false,
               "sections": {
-                "what_actually": "Многие API молча обрезают хвост текста и возвращают embedding по началу — потеря данных происходит незаметно.",
-                "source_of_confusion": "Ожидают строгую валидацию, как при превышении лимита в обычных REST API.",
-                "if_it_were_true": "Тогда лишний текст нельзя было бы потерять незаметно, но именно это и происходит при тихом truncate.",
-                "how_it_should_be": "Часто хвост молча обрезается, поэтому чанкинг нужно делать самому, не полагаясь на ошибку."
+                "what_actually": "Лимиты сильно разнятся: 512 у Cohere/BGE, 8191 у OpenAI, 16000 у Voyage — чанкинг напрямую зависит от модели.",
+                "source_of_confusion": "Знают лимит OpenAI (8191) и ошибочно распространяют его на все модели.",
+                "if_it_were_true": "Тогда один чанк влезал бы везде, но в Cohere (512) тот же текст придётся резать сильнее.",
+                "how_it_should_be": "Лимиты разные (512/8K/16K), и под каждую модель чанкинг свой."
               },
               "label": "D",
               "order": 3
@@ -909,18 +909,6 @@
           "question_text": "Как обрабатывать тексты длиннее лимита (truncation)?",
           "options": [
             {
-              "text": "Достаточно просто truncate текст до лимита модели: в RAG это стандартный приём, а chunking считают избыточным усложнением пайплайна.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Best practice в RAG — именно proper chunking, чтобы не терять содержимое; truncate теряет хвост документа.",
-                "source_of_confusion": "Truncate — самый простой вариант, поэтому его принимают за правильный дефолт.",
-                "if_it_were_true": "Тогда длинные документы теряли бы хвост и recall падал бы, но chunking как раз этого избегает.",
-                "how_it_should_be": "В RAG предпочитают chunking; truncate уместен лишь для незначимых хвостов."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Summarize-first через LLM невозможно использовать перед embedding, потому что LLM нельзя комбинировать с embedding-моделями.",
               "correct": false,
               "sections": {
@@ -928,6 +916,18 @@
                 "source_of_confusion": "LLM и embedding-модели воспринимают как несовместимые инструменты разных пайплайнов.",
                 "if_it_were_true": "Тогда summarize не входил бы в список приёмов, но он прямо упоминается как вариант.",
                 "how_it_should_be": "Можно сначала суммаризировать LLM, затем эмбеддить summary — это рабочий подход."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Достаточно просто truncate текст до лимита модели: в RAG это стандартный приём, а chunking считают избыточным усложнением пайплайна.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Best practice в RAG — именно proper chunking, чтобы не терять содержимое; truncate теряет хвост документа.",
+                "source_of_confusion": "Truncate — самый простой вариант, поэтому его принимают за правильный дефолт.",
+                "if_it_were_true": "Тогда длинные документы теряли бы хвост и recall падал бы, но chunking как раз этого избегает.",
+                "how_it_should_be": "В RAG предпочитают chunking; truncate уместен лишь для незначимых хвостов."
               },
               "label": "B",
               "order": 1
@@ -969,19 +969,6 @@
           "question_text": "Что такое multilingual embeddings?",
           "options": [
             {
-              "text": "Multilingual-модель обучена на множестве языков и эмбеддит разные языки в одно общее пространство, так что `emb(\"hello\") ≈ emb(\"привет\") ≈ emb(\"你好\")`. Примеры: `Cohere embed-multilingual-v3` (100+ языков), `BGE-M3`, `OpenAI text-embedding-3` (хуже для низко-ресурсных), `paraphrase-multilingual-MiniLM`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Общее пространство означает, что перевод одной фразы на разные языки даёт близкие векторы. Это основа cross-lingual search и международных продуктов.",
-                "example": "Запрос «как войти» по-русски и «how to login» по-английски попадают в близкие точки пространства, поэтому находят одни и те же документы независимо от языка.",
-                "when_to_apply": "Нужны для международных продуктов, cross-lingual поиска и корпусов на нескольких языках, где запрос и документ могут быть на разных языках.",
-                "edge_cases": "Для одного конкретного языка специализированная monolingual-модель обычно чуть точнее multilingual; качество на низко-ресурсных языках у универсальных моделей заметно ниже.",
-                "related": "[[embeddings-interview#Q18]] cross-lingual search; [[embeddings-interview#Q6]] Cohere embed-v3; [[embeddings-interview#Q9]] BGE-M3."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Multilingual-модель эмбеддит каждый язык в своё отдельное пространство, поэтому векторы «hello» и «привет» сравнивать напрямую нельзя.",
               "correct": false,
               "sections": {
@@ -990,20 +977,8 @@
                 "if_it_were_true": "Тогда cross-lingual search был бы невозможен, но он работает именно на общем пространстве.",
                 "how_it_should_be": "Все языки ложатся в одно пространство, поэтому переводы фразы оказываются рядом."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Multilingual-модель — это monolingual-модель плюс автоматический Google Translate запроса перед эмбеддингом.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Multilingual-модель напрямую обучена на многих языках в общем пространстве, без отдельного шага перевода текста.",
-                "source_of_confusion": "Результат похож на «как будто перевели», поэтому предполагают внешний переводчик.",
-                "if_it_were_true": "Тогда нужен был бы отдельный сервис перевода, но модель эмбеддит языки сразу.",
-                "how_it_should_be": "Языки обрабатываются нативно в одном пространстве, перевод текста не требуется."
-              },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Multilingual-модель точнее специализированной monolingual-модели на каждом отдельном языке, ведь она видела кратно больше данных при обучении и заимствует закономерности из родственных языков, поэтому монолингвальные модели под конкретный язык брать смысла нет — общая модель покрывает и их сценарии.",
@@ -1013,6 +988,31 @@
                 "source_of_confusion": "Больший и более разнообразный корпус кажется прямым плюсом к точности на каждом языке, хотя на практике это trade-off между покрытием языков и качеством на одном.",
                 "if_it_were_true": "Тогда monolingual-модели (например, специализированные под русский) не имели бы смысла и давно исчезли бы с лидербордов.",
                 "how_it_should_be": "Multilingual берут ради общего пространства и cross-lingual-поиска; для максимума качества на одном языке чаще выигрывает специализированная monolingual-модель."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Multilingual-модель обучена на множестве языков и эмбеддит разные языки в одно общее пространство, так что `emb(\"hello\") ≈ emb(\"привет\") ≈ emb(\"你好\")`. Примеры: `Cohere embed-multilingual-v3` (100+ языков), `BGE-M3`, `OpenAI text-embedding-3` (хуже для низко-ресурсных), `paraphrase-multilingual-MiniLM`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Общее пространство означает, что перевод одной фразы на разные языки даёт близкие векторы. Это основа cross-lingual search и международных продуктов.",
+                "example": "Запрос «как войти» по-русски и «how to login» по-английски попадают в близкие точки пространства, поэтому находят одни и те же документы независимо от языка.",
+                "when_to_apply": "Нужны для международных продуктов, cross-lingual поиска и корпусов на нескольких языках, где запрос и документ могут быть на разных языках.",
+                "edge_cases": "Для одного конкретного языка специализированная monolingual-модель обычно чуть точнее multilingual; качество на низко-ресурсных языках у универсальных моделей заметно ниже.",
+                "related": "[[embeddings-interview#Q18]] cross-lingual search; [[embeddings-interview#Q6]] Cohere embed-v3; [[embeddings-interview#Q9]] BGE-M3."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Multilingual-модель — это monolingual-модель плюс автоматический Google Translate запроса перед эмбеддингом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Multilingual-модель напрямую обучена на многих языках в общем пространстве, без отдельного шага перевода текста.",
+                "source_of_confusion": "Результат похож на «как будто перевели», поэтому предполагают внешний переводчик.",
+                "if_it_were_true": "Тогда нужен был бы отдельный сервис перевода, но модель эмбеддит языки сразу.",
+                "how_it_should_be": "Языки обрабатываются нативно в одном пространстве, перевод текста не требуется."
               },
               "label": "D",
               "order": 3
@@ -1029,13 +1029,13 @@
           "question_text": "Что такое cross-lingual search и как он работает?",
           "options": [
             {
-              "text": "Cross-lingual search требует, чтобы запрос и документы были обязательно на одном языке, иначе поиск не сработает.",
+              "text": "Cross-lingual search возможен с любой monolingual-моделью, multilingual-модель для него не нужна.",
               "correct": false,
               "sections": {
-                "what_actually": "Смысл cross-lingual именно в разноязычии: английский запрос находит русские документы через общее пространство.",
-                "source_of_confusion": "Привычный поиск работает в пределах одного языка, и это ограничение переносят сюда.",
-                "if_it_were_true": "Тогда термин cross-lingual терял бы смысл, но он как раз про поиск между языками.",
-                "how_it_should_be": "Запрос и документы могут быть на разных языках — это и есть cross-lingual search."
+                "what_actually": "Нужна именно multilingual-модель с общим пространством; monolingual-модель не сблизит «login» и «логин» из разных языков.",
+                "source_of_confusion": "Раз embeddings ловят смысл, кажется, что язык не важен для любой модели.",
+                "if_it_were_true": "Тогда multilingual-модели были бы не нужны для кросс-языкового поиска, но именно они его обеспечивают.",
+                "how_it_should_be": "Cross-lingual работает только на multilingual-модели с единым языковым пространством."
               },
               "label": "A",
               "order": 0
@@ -1066,13 +1066,13 @@
               "order": 2
             },
             {
-              "text": "Cross-lingual search возможен с любой monolingual-моделью, multilingual-модель для него не нужна.",
+              "text": "Cross-lingual search требует, чтобы запрос и документы были обязательно на одном языке, иначе поиск не сработает.",
               "correct": false,
               "sections": {
-                "what_actually": "Нужна именно multilingual-модель с общим пространством; monolingual-модель не сблизит «login» и «логин» из разных языков.",
-                "source_of_confusion": "Раз embeddings ловят смысл, кажется, что язык не важен для любой модели.",
-                "if_it_were_true": "Тогда multilingual-модели были бы не нужны для кросс-языкового поиска, но именно они его обеспечивают.",
-                "how_it_should_be": "Cross-lingual работает только на multilingual-модели с единым языковым пространством."
+                "what_actually": "Смысл cross-lingual именно в разноязычии: английский запрос находит русские документы через общее пространство.",
+                "source_of_confusion": "Привычный поиск работает в пределах одного языка, и это ограничение переносят сюда.",
+                "if_it_were_true": "Тогда термин cross-lingual терял бы смысл, но он как раз про поиск между языками.",
+                "how_it_should_be": "Запрос и документы могут быть на разных языках — это и есть cross-lingual search."
               },
               "label": "D",
               "order": 3
@@ -1101,6 +1101,18 @@
               "order": 0
             },
             {
+              "text": "CLIP помещает изображения и текст в разные несвязанные пространства, поэтому их векторы нельзя сравнивать друг с другом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Суть CLIP — общее пространство для текста и картинок, где их векторы напрямую сравнимы скалярным произведением.",
+                "source_of_confusion": "Кажется, что разные модальности обязаны жить в разных пространствах.",
+                "if_it_were_true": "Тогда `image_features @ text_features.T` не имел бы смысла, но именно так считают сходство.",
+                "how_it_should_be": "CLIP делит одно пространство между модальностями, поэтому текст и картинки сравнимы."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
               "text": "CLIP требует обучать отдельный классификатор под каждый набор меток, zero-shot классификация изображений ему недоступна.",
               "correct": false,
               "sections": {
@@ -1109,8 +1121,8 @@
                 "if_it_were_true": "Тогда нельзя было бы сравнивать картинку с текстовыми метками напрямую, но `image @ text.T` это делает.",
                 "how_it_should_be": "CLIP классифицирует zero-shot, сравнивая изображение с текстовыми метками без дообучения."
               },
-              "label": "B",
-              "order": 1
+              "label": "C",
+              "order": 2
             },
             {
               "text": "`CLIP` (Contrastive Language-Image Pre-training) от OpenAI эмбеддит изображения и текст в одно общее пространство, так что можно искать картинки по тексту и наоборот; `image_features = model.encode_image(image)` и `text_features = model.encode_text([...])` сравнивают через скалярное произведение.",
@@ -1121,18 +1133,6 @@
                 "when_to_apply": "Применяют для поиска изображений по тексту, zero-shot классификации картинок через текстовые метки и multi-modal RAG (изображения + текст).",
                 "edge_cases": "CLIP-векторы (512d у ViT-B/32) хуже улавливают тонкие детали и текст на картинках; для лучшего качества берут `SigLIP`, `BLIP-2` или open-source `OpenCLIP`.",
                 "related": "[[embeddings-interview#Q20]] audio embeddings; [[embeddings-interview#Q21]] multimodal embeddings; [[embeddings-interview#Q1]] что такое embedding."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "CLIP помещает изображения и текст в разные несвязанные пространства, поэтому их векторы нельзя сравнивать друг с другом.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Суть CLIP — общее пространство для текста и картинок, где их векторы напрямую сравнимы скалярным произведением.",
-                "source_of_confusion": "Кажется, что разные модальности обязаны жить в разных пространствах.",
-                "if_it_were_true": "Тогда `image_features @ text_features.T` не имел бы смысла, но именно так считают сходство.",
-                "how_it_should_be": "CLIP делит одно пространство между модальностями, поэтому текст и картинки сравнимы."
               },
               "label": "D",
               "order": 3
@@ -1209,19 +1209,6 @@
           "question_text": "Что такое multimodal embeddings?",
           "options": [
             {
-              "text": "Multimodal embeddings — единое пространство для разных модальностей (text + image + video и др.); модели 2025: `CLIP` (text + image), `ImageBind` (Meta, 6 модальностей: text, image, audio, video, IMU, depth), `LanguageBind`, `Cohere Embed v3 multimodal` (text + image). Растущая, но менее зрелая область, чем text-only.",
-              "correct": true,
-              "sections": {
-                "explanation": "Все модальности проецируются в одно пространство, где можно сравнивать, например, текст и видео напрямую. `ImageBind` расширяет идею CLIP сразу до шести типов данных.",
-                "example": "Cross-modal search: запрос «найди видео, похожее на этот текст» эмбеддит текст и видео одной моделью и сравнивает их векторы в общем пространстве.",
-                "when_to_apply": "Применяют для cross-modal search (текст ↔ изображение ↔ видео) и multimodal RAG, где источники бывают разных типов одновременно.",
-                "edge_cases": "Область менее зрелая, чем text-only embeddings: модели тяжелее, качество на редких модальностях (IMU, depth) ниже, а инструментов и бенчмарков меньше.",
-                "related": "[[embeddings-interview#Q19]] image embeddings CLIP; [[embeddings-interview#Q20]] audio embeddings; [[embeddings-interview#Q1]] что такое embedding."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Multimodal embeddings на практике ограничены двумя модальностями — текст и изображение: совместить в одном пространстве больше типов данных (аудио, видео) технически не удаётся, потому что у каждой модальности своя структура и общий контрастив на них не сходится, поэтому моделей на 3+ модальности пока нет.",
               "correct": false,
               "sections": {
@@ -1229,6 +1216,18 @@
                 "source_of_confusion": "Самая известная модель `CLIP` работает именно с парой text+image, и её ошибочно принимают за предел возможностей мультимодальных embeddings.",
                 "if_it_were_true": "Тогда cross-modal-поиск «видео по звуку» был бы невозможен, а `ImageBind` с его шестью модальностями просто не существовал бы.",
                 "how_it_should_be": "Число модальностей ограничено зрелостью моделей, а не двойкой: text+image самые отлаженные, но `ImageBind`/`LanguageBind` уже кладут аудио и видео в то же пространство."
+              },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "В multimodal embeddings каждая модальность живёт в своём пространстве, поэтому текст и видео сравнивать напрямую нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Суть multimodal — единое общее пространство для всех модальностей, где текст и видео сравнимы напрямую.",
+                "source_of_confusion": "Разные типы данных кажутся несовместимыми, как будто требуют разных пространств.",
+                "if_it_were_true": "Тогда cross-modal search «видео по тексту» был бы невозможен, но он работает на общем пространстве.",
+                "how_it_should_be": "Все модальности проецируются в одно пространство, что и делает cross-modal сравнение возможным."
               },
               "label": "B",
               "order": 1
@@ -1246,13 +1245,14 @@
               "order": 2
             },
             {
-              "text": "В multimodal embeddings каждая модальность живёт в своём пространстве, поэтому текст и видео сравнивать напрямую нельзя.",
-              "correct": false,
+              "text": "Multimodal embeddings — единое пространство для разных модальностей (text + image + video и др.); модели 2025: `CLIP` (text + image), `ImageBind` (Meta, 6 модальностей: text, image, audio, video, IMU, depth), `LanguageBind`, `Cohere Embed v3 multimodal` (text + image). Растущая, но менее зрелая область, чем text-only.",
+              "correct": true,
               "sections": {
-                "what_actually": "Суть multimodal — единое общее пространство для всех модальностей, где текст и видео сравнимы напрямую.",
-                "source_of_confusion": "Разные типы данных кажутся несовместимыми, как будто требуют разных пространств.",
-                "if_it_were_true": "Тогда cross-modal search «видео по тексту» был бы невозможен, но он работает на общем пространстве.",
-                "how_it_should_be": "Все модальности проецируются в одно пространство, что и делает cross-modal сравнение возможным."
+                "explanation": "Все модальности проецируются в одно пространство, где можно сравнивать, например, текст и видео напрямую. `ImageBind` расширяет идею CLIP сразу до шести типов данных.",
+                "example": "Cross-modal search: запрос «найди видео, похожее на этот текст» эмбеддит текст и видео одной моделью и сравнивает их векторы в общем пространстве.",
+                "when_to_apply": "Применяют для cross-modal search (текст ↔ изображение ↔ видео) и multimodal RAG, где источники бывают разных типов одновременно.",
+                "edge_cases": "Область менее зрелая, чем text-only embeddings: модели тяжелее, качество на редких модальностях (IMU, depth) ниже, а инструментов и бенчмарков меньше.",
+                "related": "[[embeddings-interview#Q19]] image embeddings CLIP; [[embeddings-interview#Q20]] audio embeddings; [[embeddings-interview#Q1]] что такое embedding."
               },
               "label": "D",
               "order": 3
@@ -1269,13 +1269,13 @@
           "question_text": "Как оптимизировать стоимость embeddings (cost optimization)?",
           "options": [
             {
-              "text": "Главный рычаг экономии — брать самую большую модель с максимальной размерностью: она точнее, поэтому нужно меньше повторных запросов и переиндексаций, и в пересчёте на результат такой вектор выходит дешевле.",
+              "text": "Self-host дешевле, чем облачный API, начиная с любого объёма: фиксированная плата за GPU в пересчёте на вектор выходит ниже поштучной оплаты за токены, а обслуживание сервера почти ничего не стоит, поэтому свой инференс выгоден даже на тысяче документов.",
               "correct": false,
               "sections": {
-                "what_actually": "Большая модель и высокая размерность прямо дороже и по вызовам API, и по хранению; экономят наоборот — берут достаточную small-модель и урезают размерность через Matryoshka.",
-                "source_of_confusion": "«Дороже, но точнее → меньше переделок → дешевле в итоге» — знакомая логика из других задач, но для embeddings точности small-модели обычно хватает.",
-                "if_it_were_true": "Тогда лидеры по cost-эффективности использовали бы максимальные модели, а не `text-embedding-3-small` и обрезанные Matryoshka-векторы.",
-                "how_it_should_be": "Начинают с right-model (часто small достаточно) и small dimensions, добавляют кеш, batch и self-host на объёме — а не максимальную модель ради мнимой экономии."
+                "what_actually": "На малых объёмах API дешевле: фиксированная стоимость GPU и его обслуживания раскладывается на мало векторов. Self-host окупается лишь на больших потоках (ориентир >10M embeddings/месяц).",
+                "source_of_confusion": "«Своё железо дешевле аренды» верно на масштабе, но точку безубыточности недооценивают и переносят вывод на любой объём.",
+                "if_it_were_true": "Тогда никто не платил бы за embedding API даже для маленьких проектов, и managed-сервисы были бы не нужны.",
+                "how_it_should_be": "Считают точку окупаемости: до неё дешевле API, после (high volume) — self-host; для тысячи документов поднимать GPU невыгодно."
               },
               "label": "A",
               "order": 0
@@ -1294,18 +1294,6 @@
               "order": 1
             },
             {
-              "text": "Self-host дешевле, чем облачный API, начиная с любого объёма: фиксированная плата за GPU в пересчёте на вектор выходит ниже поштучной оплаты за токены, а обслуживание сервера почти ничего не стоит, поэтому свой инференс выгоден даже на тысяче документов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "На малых объёмах API дешевле: фиксированная стоимость GPU и его обслуживания раскладывается на мало векторов. Self-host окупается лишь на больших потоках (ориентир >10M embeddings/месяц).",
-                "source_of_confusion": "«Своё железо дешевле аренды» верно на масштабе, но точку безубыточности недооценивают и переносят вывод на любой объём.",
-                "if_it_were_true": "Тогда никто не платил бы за embedding API даже для маленьких проектов, и managed-сервисы были бы не нужны.",
-                "how_it_should_be": "Считают точку окупаемости: до неё дешевле API, после (high volume) — self-host; для тысячи документов поднимать GPU невыгодно."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "Повторно эмбеддить неизменные документы при каждой переиндексации обязательно, иначе векторы устаревают и поиск ломается.",
               "correct": false,
               "sections": {
@@ -1313,6 +1301,18 @@
                 "source_of_confusion": "Кажется, что переиндексация требует пересчёта всего, чтобы данные были «свежими».",
                 "if_it_were_true": "Тогда avoid re-embedding не был бы советом по экономии, но он прямо рекомендуется.",
                 "how_it_should_be": "Неизменные документы при той же модели не эмбеддят заново — кешированный вектор валиден."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Главный рычаг экономии — брать самую большую модель с максимальной размерностью: она точнее, поэтому нужно меньше повторных запросов и переиндексаций, и в пересчёте на результат такой вектор выходит дешевле.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Большая модель и высокая размерность прямо дороже и по вызовам API, и по хранению; экономят наоборот — берут достаточную small-модель и урезают размерность через Matryoshka.",
+                "source_of_confusion": "«Дороже, но точнее → меньше переделок → дешевле в итоге» — знакомая логика из других задач, но для embeddings точности small-модели обычно хватает.",
+                "if_it_were_true": "Тогда лидеры по cost-эффективности использовали бы максимальные модели, а не `text-embedding-3-small` и обрезанные Matryoshka-векторы.",
+                "how_it_should_be": "Начинают с right-model (часто small достаточно) и small dimensions, добавляют кеш, batch и self-host на объёме — а не максимальную модель ради мнимой экономии."
               },
               "label": "D",
               "order": 3
@@ -1329,18 +1329,6 @@
           "question_text": "Как и когда кешировать embeddings?",
           "options": [
             {
-              "text": "Кешировать embeddings нельзя, потому что одна и та же строка каждый раз даёт новый случайный вектор.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для фиксированной модели один и тот же текст даёт детерминированный одинаковый вектор — потому кеш и работает.",
-                "source_of_confusion": "Стохастичность генерации у LLM ошибочно переносят на детерминированный embedding.",
-                "if_it_were_true": "Тогда кеш по `md5(text)` был бы бесполезен, но он стандартный приём экономии.",
-                "how_it_should_be": "Embedding детерминирован для данной модели, поэтому хеш-кеш корректен и эффективен."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Кеш embeddings можно не инвалидировать: вектор жёстко привязан к тексту, а не к модели, поэтому после апгрейда или смены embedding-модели старые сохранённые векторы остаются совместимыми с новыми запросами.",
               "correct": false,
               "sections": {
@@ -1349,8 +1337,32 @@
                 "if_it_were_true": "Тогда апгрейд embedding-модели не требовал бы re-embed корпуса, и векторы `text-embedding-2` работали бы вперемешку с `text-embedding-3`.",
                 "how_it_should_be": "Ключ кеша привязывают к тексту И к версии модели; при смене модели кеш сбрасывают и переэмбеддят документы заново."
               },
+              "label": "A",
+              "order": 0
+            },
+            {
+              "text": "Кеширование окупается только там, где запросы почти не повторяются: чем уникальнее каждый входящий текст, тем больше вызовов API удаётся сэкономить на попаданиях в кеш, поэтому именно уникальный трафик — идеальный кейс для кеша по хешу текста.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кеш экономит ровно на повторах: попадание случается, когда тот же текст встречается снова. При полностью уникальных запросах hit-rate ≈ 0 и кеш бесполезен.",
+                "source_of_confusion": "Логику путают на обратную: кажется, что «много уникального трафика = много возможностей сэкономить», хотя экономят именно повторяющиеся запросы.",
+                "if_it_were_true": "Тогда кеш давал бы максимум выгоды на потоке никогда не повторяющихся строк, что противоречит самому принципу «хеш → сохранённый вектор».",
+                "how_it_should_be": "Кешируют повторяющиеся запросы (популярные поиски), A/B-тесты моделей на одних текстах, dev/staging; на уникальном трафике кеш не нужен."
+              },
               "label": "B",
               "order": 1
+            },
+            {
+              "text": "Кешировать embeddings нельзя, потому что одна и та же строка каждый раз даёт новый случайный вектор.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для фиксированной модели один и тот же текст даёт детерминированный одинаковый вектор — потому кеш и работает.",
+                "source_of_confusion": "Стохастичность генерации у LLM ошибочно переносят на детерминированный embedding.",
+                "if_it_were_true": "Тогда кеш по `md5(text)` был бы бесполезен, но он стандартный приём экономии.",
+                "how_it_should_be": "Embedding детерминирован для данной модели, поэтому хеш-кеш корректен и эффективен."
+              },
+              "label": "C",
+              "order": 2
             },
             {
               "text": "Кеш по хешу текста: ключ `md5(text)`, и при попадании возвращают сохранённый вектор вместо повторного вызова API. Кешируют repeated queries (популярные поиски), A/B-тесты разных моделей на одних запросах, dev/staging-окружения. Не кешируют, если embeddings часто обновляются.",
@@ -1361,18 +1373,6 @@
                 "when_to_apply": "Кешируют когда одни и те же тексты эмбеддятся повторно: популярные запросы, тесты моделей, dev-среды — там попаданий много.",
                 "edge_cases": "Кеш надо инвалидировать при смене модели (старый вектор от другой модели несовместим); не кешируют, если контент часто меняется или storage дороже API (редкость).",
                 "related": "[[embeddings-interview#Q22]] cost optimization; [[embeddings-interview#Q29]] частые проблемы; [[embeddings-interview#Q1]] что такое embedding."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
-              "text": "Кеширование окупается только там, где запросы почти не повторяются: чем уникальнее каждый входящий текст, тем больше вызовов API удаётся сэкономить на попаданиях в кеш, поэтому именно уникальный трафик — идеальный кейс для кеша по хешу текста.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Кеш экономит ровно на повторах: попадание случается, когда тот же текст встречается снова. При полностью уникальных запросах hit-rate ≈ 0 и кеш бесполезен.",
-                "source_of_confusion": "Логику путают на обратную: кажется, что «много уникального трафика = много возможностей сэкономить», хотя экономят именно повторяющиеся запросы.",
-                "if_it_were_true": "Тогда кеш давал бы максимум выгоды на потоке никогда не повторяющихся строк, что противоречит самому принципу «хеш → сохранённый вектор».",
-                "how_it_should_be": "Кешируют повторяющиеся запросы (популярные поиски), A/B-тесты моделей на одних текстах, dev/staging; на уникальном трафике кеш не нужен."
               },
               "label": "D",
               "order": 3
@@ -1401,18 +1401,6 @@
               "order": 0
             },
             {
-              "text": "При усечении Matryoshka-вектора с 3072 до 512 dims качество падает до нуля, потому что теряется 5/6 информации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Потеря при truncate составляет лишь ~5-10%, ведь основной смысл MRL сосредоточен в начале вектора, а не равномерно.",
-                "source_of_confusion": "Линейно делят «потерю информации» по числу отброшенных координат.",
-                "if_it_were_true": "Тогда tiered search по 256d был бы бессмысленным, но он работает именно благодаря малой потере.",
-                "how_it_should_be": "Качество просаживается умеренно (~5-10%), потому что начало вектора несёт основной смысл."
-              },
-              "label": "B",
-              "order": 1
-            },
-            {
               "text": "Matryoshka — это про сжатие типа данных вектора (float32 → int8), а не про усечение числа размерностей.",
               "correct": false,
               "sections": {
@@ -1421,8 +1409,8 @@
                 "if_it_were_true": "Тогда `emb_full[:512]` не относился бы к Matryoshka, но это её ключевая операция.",
                 "how_it_should_be": "Matryoshka усекает размерности; смена типа данных — это отдельная quantization."
               },
-              "label": "C",
-              "order": 2
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Matryoshka representation learning (MRL) — embeddings обучены так, что их префиксы тоже валидны: 3072-мерный вектор можно усечь до первых 512 dims с потерей качества всего ~5-10%. Применяют для tiered search и экономии storage (3-5x); модели — `OpenAI text-embedding-3`, `Nomic embed`.",
@@ -1433,6 +1421,18 @@
                 "when_to_apply": "Применяют для tiered search (быстрый отбор по 256d, затем rerank top-k по 1536d) и для экономии storage без переэмбеддинга.",
                 "edge_cases": "Truncate работает только у MRL-моделей; усечение обычной модели разрушает вектор. Слишком агрессивная обрезка (ниже ~256) ощутимо роняет качество даже у Matryoshka.",
                 "related": "[[embeddings-interview#Q12]] выбор размерности; [[embeddings-interview#Q5]] OpenAI text-embedding-3; [[embeddings-interview#Q25]] quantization."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "При усечении Matryoshka-вектора с 3072 до 512 dims качество падает до нуля, потому что теряется 5/6 информации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Потеря при truncate составляет лишь ~5-10%, ведь основной смысл MRL сосредоточен в начале вектора, а не равномерно.",
+                "source_of_confusion": "Линейно делят «потерю информации» по числу отброшенных координат.",
+                "if_it_were_true": "Тогда tiered search по 256d был бы бессмысленным, но он работает именно благодаря малой потере.",
+                "how_it_should_be": "Качество просаживается умеренно (~5-10%), потому что начало вектора несёт основной смысл."
               },
               "label": "D",
               "order": 3
@@ -1449,17 +1449,28 @@
           "question_text": "Что такое quantization embeddings (binary, int8)?",
           "options": [
             {
-              "text": "Quantization сжимает тип данных координат: `fp16` (2 байта/dim, 2x экономия), `int8` (1 байт/dim, 4x), binary (1 бит/dim, 32x). Binary сравнивают через Hamming distance (XOR + popcount, очень быстро). Trade-off: binary ~5-10% потери recall, int8 ~1-2%.",
-              "correct": true,
+              "text": "Binary quantization даёт почти нулевую потерю recall (менее 0.1%) при максимальной 32x-экономии памяти, поэтому её стоит применять по умолчанию везде вместо int8 и float — это лучший баланс качества и размера при любых масштабах.",
+              "correct": false,
               "sections": {
-                "explanation": "Вместо float32 (4 байта/dim) координаты хранят грубее, экономя память и ускоряя сравнение. Binary превращает вектор в биты `(vec > 0)`, что делает сравнение почти бесплатным.",
-                "example": "`binary_vec = (vec > 0).astype(np.uint8)` даёт 1 бит на dim; сравнение через Hamming (XOR + popcount) в разы быстрее float-арифметики при ~5-10% потере recall.",
-                "when_to_apply": "Применяют на гигантских масштабах (100M+ векторов в 2025), где storage и latency критичны, а небольшая потеря recall приемлема.",
-                "edge_cases": "Binary теряет recall заметнее (5-10%), поэтому часто делают rerank top-k по полным float-векторам; int8 теряет мало (1-2%), но требует калибровки масштаба.",
-                "related": "[[embeddings-interview#Q24]] Matryoshka embeddings; [[embeddings-interview#Q12]] выбор размерности; [[embeddings-interview#Q22]] cost optimization."
+                "what_actually": "Binary теряет заметно больше — порядка 5-10% recall (у int8 всего ~1-2%). Её берут для гигантских масштабов (100M+), где хранить float32 непрактично, а не как дефолт.",
+                "source_of_confusion": "Впечатляющая 32x-экономия заслоняет цену: потерю recall у binary недооценивают и путают с почти-бесплатным int8.",
+                "if_it_were_true": "Тогда int8 и float-хранение были бы не нужны вовсе, а все векторные БД по умолчанию хранили бы только бинарные векторы.",
+                "how_it_should_be": "Выбирают по масштабу и допустимой потере: int8 — почти бесплатный выигрыш 4x, binary — 32x ценой 5-10% recall на очень больших индексах."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "Бинарные векторы сравнивают тем же cosine similarity, что и float-векторы, никаких специальных метрик не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Бинарные векторы сравнивают через Hamming distance (XOR + popcount), а не cosine — это и даёт скорость.",
+                "source_of_confusion": "Cosine — привычная метрика для embeddings, и её переносят на любой формат.",
+                "if_it_were_true": "Тогда binary не был бы «очень быстрым», но скорость как раз от XOR + popcount, а не от cosine.",
+                "how_it_should_be": "Для binary используют Hamming distance; cosine — для float-векторов."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Quantization уменьшает число размерностей вектора (3072 → 512), как и Matryoshka, не трогая тип данных координат.",
@@ -1470,29 +1481,18 @@
                 "if_it_were_true": "Тогда binary `(vec > 0)` менял бы длину вектора, но он сохраняет dims, меняя лишь точность.",
                 "how_it_should_be": "Quantization огрубляет тип данных; число размерностей при этом не меняется."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Binary quantization даёт почти нулевую потерю recall (менее 0.1%) при максимальной 32x-экономии памяти, поэтому её стоит применять по умолчанию везде вместо int8 и float — это лучший баланс качества и размера при любых масштабах.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Binary теряет заметно больше — порядка 5-10% recall (у int8 всего ~1-2%). Её берут для гигантских масштабов (100M+), где хранить float32 непрактично, а не как дефолт.",
-                "source_of_confusion": "Впечатляющая 32x-экономия заслоняет цену: потерю recall у binary недооценивают и путают с почти-бесплатным int8.",
-                "if_it_were_true": "Тогда int8 и float-хранение были бы не нужны вовсе, а все векторные БД по умолчанию хранили бы только бинарные векторы.",
-                "how_it_should_be": "Выбирают по масштабу и допустимой потере: int8 — почти бесплатный выигрыш 4x, binary — 32x ценой 5-10% recall на очень больших индексах."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Бинарные векторы сравнивают тем же cosine similarity, что и float-векторы, никаких специальных метрик не требуется.",
-              "correct": false,
+              "text": "Quantization сжимает тип данных координат: `fp16` (2 байта/dim, 2x экономия), `int8` (1 байт/dim, 4x), binary (1 бит/dim, 32x). Binary сравнивают через Hamming distance (XOR + popcount, очень быстро). Trade-off: binary ~5-10% потери recall, int8 ~1-2%.",
+              "correct": true,
               "sections": {
-                "what_actually": "Бинарные векторы сравнивают через Hamming distance (XOR + popcount), а не cosine — это и даёт скорость.",
-                "source_of_confusion": "Cosine — привычная метрика для embeddings, и её переносят на любой формат.",
-                "if_it_were_true": "Тогда binary не был бы «очень быстрым», но скорость как раз от XOR + popcount, а не от cosine.",
-                "how_it_should_be": "Для binary используют Hamming distance; cosine — для float-векторов."
+                "explanation": "Вместо float32 (4 байта/dim) координаты хранят грубее, экономя память и ускоряя сравнение. Binary превращает вектор в биты `(vec > 0)`, что делает сравнение почти бесплатным.",
+                "example": "`binary_vec = (vec > 0).astype(np.uint8)` даёт 1 бит на dim; сравнение через Hamming (XOR + popcount) в разы быстрее float-арифметики при ~5-10% потере recall.",
+                "when_to_apply": "Применяют на гигантских масштабах (100M+ векторов в 2025), где storage и latency критичны, а небольшая потеря recall приемлема.",
+                "edge_cases": "Binary теряет recall заметнее (5-10%), поэтому часто делают rerank top-k по полным float-векторам; int8 теряет мало (1-2%), но требует калибровки масштаба.",
+                "related": "[[embeddings-interview#Q24]] Matryoshka embeddings; [[embeddings-interview#Q12]] выбор размерности; [[embeddings-interview#Q22]] cost optimization."
               },
               "label": "D",
               "order": 3
@@ -1509,16 +1509,28 @@
           "question_text": "Когда нужен fine-tuning embedding model?",
           "options": [
             {
-              "text": "Fine-tuning embedding-модели стоит делать в любом проекте с самого начала: off-the-shelf модели обучены на общих данных и в большинстве случаев недобирают recall на конкретной задаче, поэтому дообучение — базовый первый шаг, а не крайняя мера.",
+              "text": "Fine-tuning особенно эффективен на маленьком датасете (<1000 примеров), потому что модель быстрее адаптируется к немногим примерам.",
               "correct": false,
               "sections": {
-                "what_actually": "Fine-tuning — крайняя мера, а не первый шаг. Готовые модели хороши на типовом контенте; дообучают лишь когда замеры показали плохой recall из-за специфики домена.",
-                "source_of_confusion": "Кажется, что «своё дообучение всегда точнее общего» — но выигрыш появляется только на доменной лексике и узких задачах, а не в среднем.",
-                "if_it_were_true": "Тогда `text-embedding-3` и `BGE` не работали бы из коробки в большинстве RAG-проектов, а они как раз работают.",
-                "how_it_should_be": "Сначала пробуют готовую модель, улучшают chunking и меняют модель; fine-tuning достают, только если recall всё ещё плох на domain-specific данных."
+                "what_actually": "На маленьком датасете fine-tuning переобучается и его как раз НЕ рекомендуют; нужны тысячи golden-пар.",
+                "source_of_confusion": "«Мало данных — быстрее обучить» путают с «мало данных — лучше результат».",
+                "if_it_were_true": "Тогда <1000 примеров не были бы в списке «когда НЕ нужен», но они там именно из-за переобучения.",
+                "how_it_should_be": "Маленький датасет ведёт к переобучению; для fine-tuning нужен достаточный объём пар."
               },
               "label": "A",
               "order": 0
+            },
+            {
+              "text": "Fine-tuning стоит предпочесть готовой модели по умолчанию: разовое дообучение окупается, а дальше своя модель работает без затрат и поддержки, тогда как за вызовы чужого API приходится платить постоянно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "У fine-tuning есть постоянная цена: обучение ~$500-5000 плюс переобучение при дрейфе данных и валидация. Готовая модель обходится в $0 сверх обычных вызовов.",
+                "source_of_confusion": "«Своя модель = один раз обучил и забыл» игнорирует эксплуатацию: дообученную модель надо поддерживать и переобучать при изменении данных.",
+                "if_it_were_true": "Тогда fine-tuning был бы дефолтом для всех, а команды без ML-экспертизы не полагались бы на готовые embedding-API.",
+                "how_it_should_be": "Считают TCO: готовая модель бесплатна сверх вызовов и не требует поддержки; fine-tuning оправдан только при реальном выигрыше recall на своём домене."
+              },
+              "label": "B",
+              "order": 1
             },
             {
               "text": "Fine-tuning нужен при domain-specific лексике (medical, legal, code), специфичных задачах (например matching support-тикетов) и когда general-модель даёт плохой recall на ваших данных. НЕ нужен для generic-контента, маленького датасета (<1000 примеров) или без ML-экспертизы.",
@@ -1530,29 +1542,17 @@
                 "edge_cases": "Trade-off: обучение стоит ~$500-5000 плюс maintenance против $0 за off-the-shelf; на маленьком датасете fine-tuning переобучается и может ухудшить качество.",
                 "related": "[[embeddings-interview#Q27]] как fine-tune sentence transformers; [[embeddings-interview#Q10]] как выбрать модель; [[embeddings-interview#Q7]] domain-specific Voyage."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Fine-tuning особенно эффективен на маленьком датасете (<1000 примеров), потому что модель быстрее адаптируется к немногим примерам.",
-              "correct": false,
-              "sections": {
-                "what_actually": "На маленьком датасете fine-tuning переобучается и его как раз НЕ рекомендуют; нужны тысячи golden-пар.",
-                "source_of_confusion": "«Мало данных — быстрее обучить» путают с «мало данных — лучше результат».",
-                "if_it_were_true": "Тогда <1000 примеров не были бы в списке «когда НЕ нужен», но они там именно из-за переобучения.",
-                "how_it_should_be": "Маленький датасет ведёт к переобучению; для fine-tuning нужен достаточный объём пар."
-              },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Fine-tuning стоит предпочесть готовой модели по умолчанию: разовое дообучение окупается, а дальше своя модель работает без затрат и поддержки, тогда как за вызовы чужого API приходится платить постоянно.",
+              "text": "Fine-tuning embedding-модели стоит делать в любом проекте с самого начала: off-the-shelf модели обучены на общих данных и в большинстве случаев недобирают recall на конкретной задаче, поэтому дообучение — базовый первый шаг, а не крайняя мера.",
               "correct": false,
               "sections": {
-                "what_actually": "У fine-tuning есть постоянная цена: обучение ~$500-5000 плюс переобучение при дрейфе данных и валидация. Готовая модель обходится в $0 сверх обычных вызовов.",
-                "source_of_confusion": "«Своя модель = один раз обучил и забыл» игнорирует эксплуатацию: дообученную модель надо поддерживать и переобучать при изменении данных.",
-                "if_it_were_true": "Тогда fine-tuning был бы дефолтом для всех, а команды без ML-экспертизы не полагались бы на готовые embedding-API.",
-                "how_it_should_be": "Считают TCO: готовая модель бесплатна сверх вызовов и не требует поддержки; fine-tuning оправдан только при реальном выигрыше recall на своём домене."
+                "what_actually": "Fine-tuning — крайняя мера, а не первый шаг. Готовые модели хороши на типовом контенте; дообучают лишь когда замеры показали плохой recall из-за специфики домена.",
+                "source_of_confusion": "Кажется, что «своё дообучение всегда точнее общего» — но выигрыш появляется только на доменной лексике и узких задачах, а не в среднем.",
+                "if_it_were_true": "Тогда `text-embedding-3` и `BGE` не работали бы из коробки в большинстве RAG-проектов, а они как раз работают.",
+                "how_it_should_be": "Сначала пробуют готовую модель, улучшают chunking и меняют модель; fine-tuning достают, только если recall всё ещё плох на domain-specific данных."
               },
               "label": "D",
               "order": 3
@@ -1569,13 +1569,14 @@
           "question_text": "Как fine-tune embedding model на sentence-transformers?",
           "options": [
             {
-              "text": "Для fine-tuning на sentence-transformers достаточно списка отдельных предложений без пар — модель сама поймёт, какие из них похожи.",
-              "correct": false,
+              "text": "Готовят пары (query, positive_doc) или тройки (query, positive, negative) как `InputExample`, берут базовую модель (`all-MiniLM-L6-v2`), выбирают loss (чаще `MultipleNegativesRankingLoss` с in-batch negatives) и зовут `model.fit(...)`. Основная работа — собрать golden-пары (query, relevant_doc).",
+              "correct": true,
               "sections": {
-                "what_actually": "Нужны именно пары (query, positive_doc) или тройки; без размеченных пар модели неоткуда узнать, что считать похожим.",
-                "source_of_confusion": "Кажется, что contrastive-обучение само находит связи в произвольном тексте.",
-                "if_it_were_true": "Тогда `InputExample(texts=[query, doc])` был бы не нужен, но именно пары подают в обучение.",
-                "how_it_should_be": "Обучают на размеченных парах/тройках сходства, а не на произвольном наборе предложений."
+                "explanation": "Loss подбирают под формат данных: `MultipleNegativesRankingLoss` для пар с in-batch negatives, `TripletLoss` для троек, `CosineSimilarityLoss` для пар со score. Качество определяется качеством обучающих пар, а не кодом.",
+                "example": "`train_loss = losses.MultipleNegativesRankingLoss(model); model.fit(train_objectives=[(dataloader, train_loss)], epochs=3)` — далее `model.save(\"my-fine-tuned-model\")`.",
+                "when_to_apply": "Применяют когда нужен self-host fine-tune под домен и есть набор пар (query, relevant_doc); это самый доступный путь дообучения embeddings.",
+                "edge_cases": "Главная трудность — data preparation: собрать корректные golden-пары; шумные или неверные пары ухудшат модель сильнее, чем поможет любой выбор loss.",
+                "related": "[[embeddings-interview#Q26]] когда нужен fine-tuning; [[embeddings-interview#Q8]] sentence-transformers; [[embeddings-interview#Q3]] как работает embedding model."
               },
               "label": "A",
               "order": 0
@@ -1593,19 +1594,6 @@
               "order": 1
             },
             {
-              "text": "Готовят пары (query, positive_doc) или тройки (query, positive, negative) как `InputExample`, берут базовую модель (`all-MiniLM-L6-v2`), выбирают loss (чаще `MultipleNegativesRankingLoss` с in-batch negatives) и зовут `model.fit(...)`. Основная работа — собрать golden-пары (query, relevant_doc).",
-              "correct": true,
-              "sections": {
-                "explanation": "Loss подбирают под формат данных: `MultipleNegativesRankingLoss` для пар с in-batch negatives, `TripletLoss` для троек, `CosineSimilarityLoss` для пар со score. Качество определяется качеством обучающих пар, а не кодом.",
-                "example": "`train_loss = losses.MultipleNegativesRankingLoss(model); model.fit(train_objectives=[(dataloader, train_loss)], epochs=3)` — далее `model.save(\"my-fine-tuned-model\")`.",
-                "when_to_apply": "Применяют когда нужен self-host fine-tune под домен и есть набор пар (query, relevant_doc); это самый доступный путь дообучения embeddings.",
-                "edge_cases": "Главная трудность — data preparation: собрать корректные golden-пары; шумные или неверные пары ухудшат модель сильнее, чем поможет любой выбор loss.",
-                "related": "[[embeddings-interview#Q26]] когда нужен fine-tuning; [[embeddings-interview#Q8]] sentence-transformers; [[embeddings-interview#Q3]] как работает embedding model."
-              },
-              "label": "C",
-              "order": 2
-            },
-            {
               "text": "`MultipleNegativesRankingLoss` требует явно размечать каждый negative-пример вручную, in-batch negatives он не использует.",
               "correct": false,
               "sections": {
@@ -1613,6 +1601,18 @@
                 "source_of_confusion": "Слово «negatives» в названии наводит на мысль о ручной разметке негативов.",
                 "if_it_were_true": "Тогда он не был бы «самым частым» из-за простоты данных, но его ценят именно за in-batch negatives.",
                 "how_it_should_be": "Loss берёт негативы из батча автоматически, поэтому достаточно положительных пар."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Для fine-tuning на sentence-transformers достаточно списка отдельных предложений без пар — модель сама поймёт, какие из них похожи.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужны именно пары (query, positive_doc) или тройки; без размеченных пар модели неоткуда узнать, что считать похожим.",
+                "source_of_confusion": "Кажется, что contrastive-обучение само находит связи в произвольном тексте.",
+                "if_it_were_true": "Тогда `InputExample(texts=[query, doc])` был бы не нужен, но именно пары подают в обучение.",
+                "how_it_should_be": "Обучают на размеченных парах/тройках сходства, а не на произвольном наборе предложений."
               },
               "label": "D",
               "order": 3
@@ -1629,18 +1629,6 @@
           "question_text": "Какие применения у embeddings помимо RAG?",
           "options": [
             {
-              "text": "Embeddings применимы исключительно в RAG; ни для рекомендаций, ни для кластеризации, ни для детекции аномалий они не используются.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Embeddings широко применяют вне RAG: рекомендации, clustering, anomaly detection, дедупликация, антиплагиат и др.",
-                "source_of_confusion": "RAG — самый обсуждаемый кейс, поэтому embeddings сводят только к нему.",
-                "if_it_were_true": "Тогда Netflix/Amazon не строили бы рекомендации на embeddings, но они это делают.",
-                "how_it_should_be": "RAG — лишь одно из многих применений; embeddings универсальны для задач сходства."
-              },
-              "label": "A",
-              "order": 0
-            },
-            {
               "text": "Для классификации embeddings бесполезны, так как поверх них нельзя обучить классификатор и приходится использовать сырой текст.",
               "correct": false,
               "sections": {
@@ -1649,20 +1637,8 @@
                 "if_it_were_true": "Тогда «classification (embedding + linear)» не входил бы в список применений, но он там есть.",
                 "how_it_should_be": "Embedding + linear-слой — рабочая и распространённая схема классификации."
               },
-              "label": "B",
-              "order": 1
-            },
-            {
-              "text": "Рекомендации на embeddings строят, генерируя текст описания товара через LLM, а не через поиск ближайших векторов.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Рекомендации строят как поиск ближайших соседей в векторном пространстве, а не через LLM-генерацию описаний.",
-                "source_of_confusion": "Хайп вокруг LLM заставляет приписывать им и рекомендательную логику.",
-                "if_it_were_true": "Тогда embeddings не были бы нужны для «похожих items», но именно их близость и даёт рекомендации.",
-                "how_it_should_be": "Рекомендации — это nearest-neighbor поиск по векторам, а не генерация текста LLM."
-              },
-              "label": "C",
-              "order": 2
+              "label": "A",
+              "order": 0
             },
             {
               "text": "Помимо RAG: semantic search, recommendations («похожие items», Netflix/Amazon), clustering без supervision, anomaly detection (outliers в пространстве), classification (embedding + linear), deduplication near-duplicate, personalization (профиль как avg liked items), plagiarism detection, knowledge graph construction (entity linking).",
@@ -1673,6 +1649,30 @@
                 "when_to_apply": "Применяют когда задача сводится к «насколько объекты похожи»: похожие товары, группировка документов, поиск выбросов, дедупликация, антиплагиат.",
                 "edge_cases": "Качество всех этих применений упирается в качество embeddings: плохие векторы (короткие тексты, не тот домен) ломают и кластеризацию, и рекомендации, а не только RAG.",
                 "related": "[[embeddings-interview#Q2]] зачем embeddings; [[embeddings-interview#Q1]] что такое embedding; [[embeddings-interview#Q29]] частые проблемы."
+              },
+              "label": "B",
+              "order": 1
+            },
+            {
+              "text": "Embeddings применимы исключительно в RAG; ни для рекомендаций, ни для кластеризации, ни для детекции аномалий они не используются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Embeddings широко применяют вне RAG: рекомендации, clustering, anomaly detection, дедупликация, антиплагиат и др.",
+                "source_of_confusion": "RAG — самый обсуждаемый кейс, поэтому embeddings сводят только к нему.",
+                "if_it_were_true": "Тогда Netflix/Amazon не строили бы рекомендации на embeddings, но они это делают.",
+                "how_it_should_be": "RAG — лишь одно из многих применений; embeddings универсальны для задач сходства."
+              },
+              "label": "C",
+              "order": 2
+            },
+            {
+              "text": "Рекомендации на embeddings строят, генерируя текст описания товара через LLM, а не через поиск ближайших векторов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендации строят как поиск ближайших соседей в векторном пространстве, а не через LLM-генерацию описаний.",
+                "source_of_confusion": "Хайп вокруг LLM заставляет приписывать им и рекомендательную логику.",
+                "if_it_were_true": "Тогда embeddings не были бы нужны для «похожих items», но именно их близость и даёт рекомендации.",
+                "how_it_should_be": "Рекомендации — это nearest-neighbor поиск по векторам, а не генерация текста LLM."
               },
               "label": "D",
               "order": 3
@@ -1689,14 +1689,13 @@
           "question_text": "Какие частые проблемы возникают при работе с embeddings?",
           "options": [
             {
-              "text": "Частые проблемы: embedding drift (модель обновили → re-embed всё), query/doc model mismatch (эмбедили разными моделями), wrong distance metric (Euclidean для нормализованных), bad chunking (целые документы вместо chunks), отсутствие нормализации где нужна, короткие тексты, cost runaway без кеша, деградация без fine-tuning, multilingual в monolingual-модели, попытка восстановить текст из вектора.",
-              "correct": true,
+              "text": "Главная проблема embeddings в том, что из вектора легко восстановить исходный текст, что создаёт утечку данных.",
+              "correct": false,
               "sections": {
-                "explanation": "Большинство проблем — это рассогласование: разные модели, разные нормы, не та метрика. Любое смешение несовместимых векторов или неверная предобработка резко роняют качество поиска.",
-                "example": "Если документы эмбедили `OpenAI`, а запросы — `BGE`, их векторы лежат в разных пространствах (model mismatch), и поиск выдаёт мусор, хотя оба этапа формально «работают».",
-                "when_to_apply": "Этот чек-лист используют при отладке плохого retrieval: проверяют единство модели, нормализацию, метрику и качество чанкинга в первую очередь.",
-                "edge_cases": "Embedding drift особенно коварен: после смены версии модели старые и новые векторы несовместимы, и без полного re-embed качество тихо деградирует со временем.",
-                "related": "[[embeddings-interview#Q13]] нормализация; [[embeddings-interview#Q14]] cosine vs dot; [[embeddings-interview#Q16]] chunking."
+                "what_actually": "Наоборот: восстановить текст из embedding нельзя — ошибка как раз в попытке относиться к нему как к обратимому сжатию.",
+                "source_of_confusion": "Раз вектор «содержит смысл текста», кажется, что текст в нём закодирован обратимо.",
+                "if_it_were_true": "Тогда embeddings были бы обратимым сжатием, но из них нельзя reconstruct исходный текст.",
+                "how_it_should_be": "Embedding необратим; ошибка — трактовать его как сжатие, из которого восстановим текст."
               },
               "label": "A",
               "order": 0
@@ -1726,13 +1725,14 @@
               "order": 2
             },
             {
-              "text": "Главная проблема embeddings в том, что из вектора легко восстановить исходный текст, что создаёт утечку данных.",
-              "correct": false,
+              "text": "Частые проблемы: embedding drift (модель обновили → re-embed всё), query/doc model mismatch (эмбедили разными моделями), wrong distance metric (Euclidean для нормализованных), bad chunking (целые документы вместо chunks), отсутствие нормализации где нужна, короткие тексты, cost runaway без кеша, деградация без fine-tuning, multilingual в monolingual-модели, попытка восстановить текст из вектора.",
+              "correct": true,
               "sections": {
-                "what_actually": "Наоборот: восстановить текст из embedding нельзя — ошибка как раз в попытке относиться к нему как к обратимому сжатию.",
-                "source_of_confusion": "Раз вектор «содержит смысл текста», кажется, что текст в нём закодирован обратимо.",
-                "if_it_were_true": "Тогда embeddings были бы обратимым сжатием, но из них нельзя reconstruct исходный текст.",
-                "how_it_should_be": "Embedding необратим; ошибка — трактовать его как сжатие, из которого восстановим текст."
+                "explanation": "Большинство проблем — это рассогласование: разные модели, разные нормы, не та метрика. Любое смешение несовместимых векторов или неверная предобработка резко роняют качество поиска.",
+                "example": "Если документы эмбедили `OpenAI`, а запросы — `BGE`, их векторы лежат в разных пространствах (model mismatch), и поиск выдаёт мусор, хотя оба этапа формально «работают».",
+                "when_to_apply": "Этот чек-лист используют при отладке плохого retrieval: проверяют единство модели, нормализацию, метрику и качество чанкинга в первую очередь.",
+                "edge_cases": "Embedding drift особенно коварен: после смены версии модели старые и новые векторы несовместимы, и без полного re-embed качество тихо деградирует со временем.",
+                "related": "[[embeddings-interview#Q13]] нормализация; [[embeddings-interview#Q14]] cosine vs dot; [[embeddings-interview#Q16]] chunking."
               },
               "label": "D",
               "order": 3
