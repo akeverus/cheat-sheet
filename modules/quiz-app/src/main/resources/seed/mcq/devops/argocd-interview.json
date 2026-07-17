@@ -71,7 +71,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "Разница только в инструменте: push-based использует `Jenkins`, а GitOps обязательно использует `GitLab CI`; модель доставки в обоих случаях одинаковая.",
+              "text": "Разница только в инструменте: push-based берёт `Jenkins`, а `GitOps` — строго `GitLab CI`, но сама итоговая модель доставки через `kubectl apply` в `Git` одинаковая.",
               "correct": false,
               "sections": {
                 "what_actually": "Различие принципиальное — кто инициирует деплой и где находятся credentials, а не какой именно CI-инструмент применяется.",
@@ -431,7 +431,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`Sync Waves` группируют ресурсы, но `ArgoCD` применяет группы параллельно, а число в аннотации лишь задаёт порядок отображения ресурсов в дереве UI.",
+              "text": "`Sync Waves` лишь группируют ресурсы в дереве `ArgoCD`, но `API Server` применяет манифесты `Deployment` параллельно, а число в аннотации `sync-wave` задаёт только порядок отображения.",
               "correct": false,
               "sections": {
                 "what_actually": "Волны задают именно порядок применения по возрастанию веса с ожиданием `Healthy`, а к приоритету CPU пода это отношения не имеет.",
@@ -624,7 +624,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "`ApplicationSet` — это просто группа подов внутри одного `Application`, позволяющая запускать несколько идентичных реплик одного и того же сервиса на разных рабочих нодах.",
+              "text": "`ApplicationSet` — это просто группа подов `Pod` внутри одного `Application`: `Deployment`-обёртка, запускающая несколько реплик через `ReplicaSet` одного сервиса на разных `Node`.",
               "correct": false,
               "sections": {
                 "what_actually": "`ApplicationSet` генерирует множество отдельных `Application` объектов по шаблону, а не управляет репликами подов внутри одного приложения.",
@@ -756,7 +756,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "В `App of Apps` дочерние `Application` создаются в тех же namespace, что и их рабочие нагрузки, а не в namespace `argocd`.",
+              "text": "В `App of Apps` дочерние объекты `Application` создаются в тех же `namespace`, что и рабочие нагрузки `Deployment`, а не в системном `namespace` `argocd`.",
               "correct": false,
               "sections": {
                 "what_actually": "Дочерние `Application` объекты по умолчанию создаются в namespace `argocd` (где живёт контроллер), даже если их нагрузки деплоятся в другие namespace.",
@@ -971,7 +971,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`ArgoCD` шифрует секреты собственным ключом и хранит их в `argocd-secret`, откуда отдаёт приложениям при синке, поэтому внешние решения не обязательны.",
+              "text": "`ArgoCD` шифрует секреты собственным ключом и хранит их в `argocd-secret` (встроенное хранилище), откуда отдаёт приложениям при синке, поэтому внешние решения не обязательны.",
               "correct": false,
               "sections": {
                 "what_actually": "`ArgoCD` принципиально не хранит секреты; для них используют `Sealed Secrets`, ESO, AVP или SOPS, а не встроенное хранилище.",
@@ -1008,7 +1008,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "`External Secrets Operator` подтягивает значения из Vault и складывает их в `ConfigMap`, на который ссылается `Deployment`, поэтому в `Git` попадают только ссылки.",
+              "text": "`External Secrets Operator` подтягивает значения из `Vault` и кладёт их в `ConfigMap` или `Secret`, на который ссылается `Deployment`, поэтому в `Git` попадают лишь ссылки `secretRef`.",
               "correct": false,
               "sections": {
                 "what_actually": "ESO синхронизирует секреты из Vault в Kubernetes `Secret` внутри кластера; в `Git` остаётся только `ExternalSecret` CR без значений.",
@@ -1104,7 +1104,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "`argocd app rollback my-app 5` под капотом делает `git revert` соответствующего коммита в подключённом репозитории и пушит его, поэтому история `Git` синхронизируется с откатом автоматически и отдельный `git revert` не нужен.",
+              "text": "`argocd app rollback my-app 5` под капотом делает `git revert` нужного коммита в `Git` и пушит его в `main`, поэтому история `Git` синхронизируется сама и отдельный `git revert` не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "`argocd app rollback` не трогает `Git` — он лишь деплоит старую ревизию; для постоянного отката нужен отдельный `git revert` + push.",
@@ -1151,7 +1151,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`ArgoCD` следит и за app-репозиторием, и за config-репозиторием: заметив пуш кода, он сам запускает сборку образа, а затем синхронизирует кластер с новой конфигурацией.",
+              "text": "`ArgoCD` следит и за app-репозиторием, и за config-репозиторием: заметив пуш кода, он сам запускает сборку образа (в своём CI), а затем синхронизирует кластер.",
               "correct": false,
               "sections": {
                 "what_actually": "`ArgoCD` работает с config-репозиторием (манифесты), а сборку образов из кода делает CI; доступ к исходникам ему не нужен.",
@@ -1248,7 +1248,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "Секрет для верификации входящего webhook хранится в отдельном выделенном `Secret`, на который каждый `Application` ссылается напрямую через поле `spec.source.webhookSecretRef`.",
+              "text": "Секрет для верификации входящего `webhook` хранится в отдельном выделенном `Secret` (не в `argocd-secret`), на который каждый `Application` ссылается напрямую через `spec.source.webhookSecretRef`.",
               "correct": false,
               "sections": {
                 "what_actually": "Секрет webhook хранится в `argocd-secret` (например `webhook.github.secret`), а не в `Application` и не в открытом виде в CR.",
@@ -1271,7 +1271,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`ArgoCD Notifications` автоматически рассылает уведомления по триггерам из `argocd-notifications-cm` сразу всем приложениям проекта, а аннотация-подписка на `Application` нужна лишь для смены целевого канала доставки.",
+              "text": "`ArgoCD Notifications` автоматически шлёт уведомления по `trigger` из `argocd-notifications-cm` через `service` сразу всем `Application` проекта, а `annotation`-подписка нужна лишь для смены `channel`.",
               "correct": false,
               "sections": {
                 "what_actually": "Уведомление для приложения требует аннотации-подписки (`notifications.argoproj.io/subscribe.*`); без неё триггер для этого `Application` не сработает.",
@@ -1356,7 +1356,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "Пути в `ignoreDifferences` задаются через `jsonPointers`, а `jqPathExpressions` применим только к ресурсу целиком и не может указывать на отдельный элемент массива.",
+              "text": "Пути в `ignoreDifferences` задают только через `jsonPointers` (`RFC 6901`), а `jqPathExpressions` и `managedFieldsManagers` применимы лишь к `Deployment` целиком и не указывают на элемент `spec.replicas`.",
               "correct": false,
               "sections": {
                 "what_actually": "Поддерживаются именно `jsonPointers` (RFC 6901) и `jqPathExpressions` (jq); регулярные выражения по имени поля здесь не используются.",
@@ -1391,7 +1391,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`Flux CD` имеет заметно более богатый встроенный веб-UI, чем `ArgoCD`, а у самого `ArgoCD` графического интерфейса нет вовсе — только CLI.",
+              "text": "`Flux CD` имеет заметно более богатый встроенный веб-UI `Weave GitOps`, чем `ArgoCD` с его `Dex` и `ApplicationSet`, а у самого `ArgoCD` интерфейса нет — только `argocd` CLI.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: встроенный богатый UI — у `ArgoCD`, а `Flux` своего UI не имеет (используются сторонние вроде Weave GitOps).",
@@ -1451,7 +1451,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "`ArgoCD` поддерживает локальных пользователей и один внешний OIDC-провайдер, но подключить одновременно несколько IdP (например Keycloak и Okta) не получится.",
+              "text": "`ArgoCD` поддерживает локальных пользователей и только один внешний OIDC через `Dex`, но подключить несколько IdP (`Keycloak` и `Okta`) сразу одновременно не получится.",
               "correct": false,
               "sections": {
                 "what_actually": "`ArgoCD` поддерживает SSO через встроенный `Dex` и прямой внешний OIDC (Keycloak, Okta, Azure AD); локальные пользователи — лишь один из вариантов.",
@@ -1584,7 +1584,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "Для отладки синка первым делом перезапускают под `argocd-application-controller`, чтобы сбросить кеш состояния; `argocd app diff` покажет расхождения лишь после ручного hard-refresh.",
+              "text": "Для отладки синка первым делом перезапускают под `argocd-application-controller` и `argocd-repo-server`, чтобы сбросить `Redis`-кеш; только затем `argocd app diff` и `argocd app get` покажут `OutOfSync`.",
               "correct": false,
               "sections": {
                 "what_actually": "Основные инструменты диагностики — `argocd app diff`, `argocd app get`, `argocd app sync --dry-run` и логи контроллеров; рестарт пода — крайняя, редко нужная мера.",
@@ -1668,7 +1668,7 @@
             {
               "label": "D",
               "order": 3,
-              "text": "В multi-source один источник должен быть `Helm`-чартом, а остальные — репозиториями с values-файлами; объединить два `Helm`-чарта в одном `Application` не поддерживается.",
+              "text": "В multi-source `spec.sources` один источник обязан быть `Helm`-чартом, а прочие — `Git`-репозиториями с values; объединить два `Helm`-чарта или `Kustomize` в одном `Application` через `ref` нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "Как раз типичный сценарий — `Helm`-чарт из одного источника плюс репозиторий с values-файлами (`ref: values`) из другого; источники разнородны.",
@@ -1824,7 +1824,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "`Argo Rollouts` — это прямая альтернатива `ArgoCD`: он сам по себе полноценно реализует всю GitOps-доставку манифестов из `Git`-репозитория и потому заменяет собой `ArgoCD` целиком.",
+              "text": "`Argo Rollouts` — это прямая полноценная альтернатива `ArgoCD` и `Flux`: он сам по себе тянет всю `GitOps`-доставку `Deployment` из `Git` и `Helm`, потому целиком заменяет собой `ArgoCD`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Argo Rollouts` дополняет `ArgoCD`, отвечая за стратегию выката (`canary`/`blue-green`); GitOps-доставку из `Git` по-прежнему обеспечивает `ArgoCD`.",
@@ -1991,7 +1991,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "Достаточно просто установить `ArgoCD` в кластер — он вполне защищён по умолчанию, дополнительная сетевая изоляция и ротация admin-пароля на практике не требуются.",
+              "text": "Достаточно установить `ArgoCD` в кластер — он защищён по умолчанию (out-of-the-box), дополнительная сетевая изоляция и ротация admin-пароля не требуются.",
               "correct": false,
               "sections": {
                 "what_actually": "Дефолтная установка требует усиления: изоляция API Server, ротация начального admin-пароля, RBAC и TLS — обязательные шаги для prod.",
@@ -2003,7 +2003,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "Для удобства разработчиков обычно рекомендуется выдавать всем пользователям роль `role:admin`, так как `role:readonly` слишком сильно ограничен для повседневной работы.",
+              "text": "Для удобства всем пользователям выдают `role:admin` в `argocd-rbac-cm`, ведь `role:readonly` и `AppProject`-ограничения через `NetworkPolicy` и `RBAC` слишком строги для работы.",
               "correct": false,
               "sections": {
                 "what_actually": "Рекомендуется обратное — большинству давать `role:readonly`, а расширенные права (sync, admin) — точечно по принципу минимальных привилегий.",
@@ -2123,7 +2123,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "`ESO` читает значения из Vault и создаёт из них обычный `Secret` в кластере, а `ArgoCD` затем синхронизирует этот `Secret` из `Git` вместе с остальными манифестами.",
+              "text": "`ESO` читает значения из `Vault` или `AWS` и создаёт из них обычный `Secret`, а `ArgoCD` затем синхронизирует этот готовый `Secret` из `Git` вместе с остальным `Deployment`.",
               "correct": false,
               "sections": {
                 "what_actually": "ESO создаёт `Secret` внутри кластера, читая значения из Vault; в `Git` остаётся только `ExternalSecret` без секретных данных.",
@@ -2243,7 +2243,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "`Cluster`-генератор `ApplicationSet` фильтрует кластеры по labels, но берёт их из аннотаций кластера в самом spoke, а не из cluster-`Secret` на hub.",
+              "text": "`Cluster`-генератор `ApplicationSet` фильтрует кластеры по `labels`, но берёт их из `annotation` spoke-кластера и `ConfigMap`, а не из cluster-`Secret` с `bearerToken` на hub.",
               "correct": false,
               "sections": {
                 "what_actually": "`Cluster`-генератор поддерживает selector по labels (например `environment: production`), что ограничивает деплой нужным подмножеством кластеров.",
@@ -2255,7 +2255,7 @@
             {
               "label": "C",
               "order": 2,
-              "text": "Главное преимущество hub-spoke — снижение нагрузки на API-серверы spoke-кластеров, так как весь reconcile идёт на hub, а в spoke передаются уже применённые манифесты без постоянного сравнения состояния.",
+              "text": "Главное преимущество hub-spoke — снижение нагрузки на API-серверы spoke-кластеров: весь reconcile идёт на hub, а в spoke передаются готовые манифесты без постоянного сравнения.",
               "correct": false,
               "sections": {
                 "what_actually": "Hub-spoke как раз централизует управление в одном hub, который является потенциальным SPOF; преимущество — единая точка управления, а не распределённость.",
@@ -2411,7 +2411,7 @@
             {
               "label": "A",
               "order": 0,
-              "text": "Триггеры в `ArgoCD Notifications` реагируют на изменения sync-статуса приложения, а на health-состояния вроде `Degraded` подписываются через отдельный health-компонент.",
+              "text": "`trigger` в `ArgoCD Notifications` реагируют только на изменения sync-статуса (`Synced`/`OutOfSync`), а на health-состояния (`Degraded`) подписываются через отдельный штатный `service` прямо в `argocd-cm`.",
               "correct": false,
               "sections": {
                 "what_actually": "Триггеры задаются любым условием на статус, включая `app.status.health.status == 'Degraded'`, а не только на успешный sync.",
@@ -2483,7 +2483,7 @@
             {
               "label": "B",
               "order": 1,
-              "text": "`ArgoCD` и `Flux CD` используют общий набор CRD (`Application`/`ApplicationSet`) и одинаковую Application-centric модель, так что `Flux` — по сути тот же `ArgoCD`, только управляемый через `flux bootstrap` вместо веб-UI.",
+              "text": "`ArgoCD` и `Flux CD` используют общий набор `CRD` (`Application`/`ApplicationSet`/`GitRepository`) и одинаковую Application-centric модель, так что `Flux` — по сути тот же самый `ArgoCD`, только управляемый через `flux bootstrap`.",
               "correct": false,
               "sections": {
                 "what_actually": "Application-centric с CRD `Application`/`ApplicationSet` — это `ArgoCD`; Source-centric с `GitRepository`/`Kustomization`/`HelmRelease` — это `Flux`.",
