@@ -1,7 +1,7 @@
 {
   "topic_slug": "performance-testing-interview",
   "round": 8,
-  "status": "IN-PROGRESS — c1 применён (§1 факт-скан + 3 версия-фикса + freshness sidecar + correct-trim ≤2 предл.). Далее c2 (distractor enrich + de-caricature + flip code/parens), c3 (skel-harmonize), c4/FINAL (BATCHED blind acceptance).",
+  "status": "IN-PROGRESS — c1+c2 применены. Далее c3 (length-balance still-long correct + code/paren-паритет дистракторов ~30 блоков), c4 (skel-harmonize), c5/FINAL (BATCHED blind acceptance).",
   "blocks_total": 42,
   "profile": "EXTREME STRONG-raw (близнец cassandra/elasticsearch): correct изначально энциклопедии ~40 слов ср (max 81), code-rich, самый длинный/детальный в 41/42; дистракторы смешанные — ~11 блоков с богатыми дистракторами (Q12/14/24/25/26/27/28/32/36/37/38), ~28 с короткими карикатурами 8-16 слов. Крупный файл (42 блока).",
   "baseline_gates_raw": {
@@ -17,5 +17,8 @@
   },
   "c1_s1_scan": "§1 факт-скан всех 42 correct: факт-корректны/single-defensible/актуальны для инструментария 2025-2026, КРОМЕ 3 версия/факт-дефектов, исправленных в c1: Q22 Gatling Java/Kotlin DSL «с 2023» → с версии 3.7 (2021); Akka удалён в Gatling 3.11 (2024) → correct отражает «ранее на Akka, с 3.11 на Netty». Q31 CRD k6-operator `kind: K6` → актуальный `kind: TestRun` (K6 deprecated ~2023). Q35 `pg_bench` → корректное имя `pgbench`. Version-sensitive заметки в freshness sidecar (Q22/Q27/Q31/Q35/Q39).",
   "c1_done": "37 correct trimmed (fact-preserving, детали дублируются в rich sections): ~40ср→32ср слов (max 81→~44). Все correct доведены до ≤2 предложений (Q8/Q12/Q14/Q20/Q21/Q25/Q26/Q30/Q31/Q32/Q34/Q36/Q37/Q38/Q39 переписаны без 3-4 предложений). Freshness sidecar создан → SOURCE_COVERAGE ok. Gates после c1: SENTENCE 3→1 PASS, SOURCE ok PASS, DUPLICATE 1 (Q24, под порогом), ABSOLUTE ok, POS ok; остаточные CORRECT_LONGEST 0.952 / OPTION_LENGTH 6.0 / CORRECT_WRONG 2.225 / DETAIL 0.952 / STYLE 0.952 — рычаги дистрактор-enrich (c2).",
-  "commits": "<c1>"
+  "c2_done": "109 distractor enrich (короткие карикатуры 8-16сл → реальные perf-термы в ложной рамке, misconception сохранён, де-карикатура, ~длина correct, +code/паренс) + 3 correct дотрим (Q38/Q40/Q42, самые длинные) + Q24-A dup-n-gram разорван. Gates после c2: CORRECT_LONGEST 0.952→0.667, OPTION_LENGTH 6.0→2.24, CORRECT_WRONG 2.225→1.223, DETAIL 0.952→0.905, STYLE 0.952→0.69 (len 0.69/code 0.60), DUPLICATE→0 PASS, ABSOLUTE 0.151 ok, SENTENCE 1 PASS, POS ok, SOURCE ok.",
+  "c2_gates": "PASS: SENTENCE 1, DUPLICATE 0, ABSOLUTE 0.151, POS dist 1.1/seq 4, SOURCE ok. FAIL (остаток c3): CORRECT_LONGEST 0.667, OPTION_LENGTH 2.24 (18 блоков >1.35), CORRECT_WRONG 1.223, DETAIL 0.905 (38/42 доминируют по оси W/C/P), STYLE 0.69.",
+  "c3_todo": "Диагностика per-block: W+N SOLE-LONG (correct ещё длиннее, worst Q40 W+18/Q22 W+17/Q12 W+15/Q34 W+12/Q42 W+12/Q5 W+11/Q38 W+10) → трим correct + bump самый короткий дистрактор до correct/1.35. Code-gap C+N (Q18 C+8/Q25 C+8/Q30 C+7/Q32 C+5/Q4 C+4/Q17 C+4/Q20 C+4/Q21 C+4/Q28 C+4/Q31 C+4/Q36 C+4...) → +code-термы дистракторам. Paren-gap P+N (Q25 P+9/Q26 P+9/Q18 P+8/Q15 P+5/Q28 P+5/Q36 P+5/Q37 P+5/Q42 P+5...) → +скобочные пояснения дистракторам. Правило: в каждом доминируемом блоке довести сильнейший дистрактор до detail-twin correct (≈W, ≥C-1, ≥P-1) + все дистракторы ≥ correct/1.35 для OLR.",
+  "commits": "4ff12f73 (c1) → <c2 WIP>"
 }
