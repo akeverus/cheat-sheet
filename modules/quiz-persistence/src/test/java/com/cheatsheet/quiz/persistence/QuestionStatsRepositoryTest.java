@@ -81,4 +81,43 @@ class QuestionStatsRepositoryTest extends AbstractPostgresRepositoryTest {
         assertThat(stats.get(0).maturityScore()).isEqualTo(25.0, within(0.01));
         // 2.5 * 10 = 25.0
     }
+
+    @Test
+    void getScheduleAggregateSplitsDueNowFromOverdue() {
+        long now = 1_800_000_000L;
+        long day = 86_400L;
+        // 3 карточки: одна выучена и в будущем, одна due (полдня назад),
+        // одна просрочена (2 дня назад). dueNow = due + overdue = 2, overdue = 1.
+        insertCard("q1", 5, now + day, 4);      // не due, выучена (repetitions ≥ 3)
+        insertCard("q2", 1, now - day / 2, 0);  // due сейчас, не просрочена (< суток)
+        insertCard("q3", 0, now - 2 * day, 0);  // просрочена (≥ суток)
+
+        QuestionStatsRepository.ScheduleAggregate agg =
+                repository.getScheduleAggregate(now, now - day, 3);
+
+        assertThat(agg.cardsTotal()).isEqualTo(3);
+        assertThat(agg.cardsMastered()).isEqualTo(1);
+        assertThat(agg.dueNow()).isEqualTo(2);
+        assertThat(agg.overdue()).isEqualTo(1);
+    }
+
+    @Test
+    void getScheduleAggregateOnEmptyDbReturnsZeroes() {
+        QuestionStatsRepository.ScheduleAggregate agg =
+                repository.getScheduleAggregate(1_800_000_000L, 1_799_913_600L, 3);
+        assertThat(agg.cardsTotal()).isZero();
+        assertThat(agg.dueNow()).isZero();
+        assertThat(agg.overdue()).isZero();
+    }
+
+    private void insertCard(String slug, int repetitions, long nextReviewAt, int correctCount) {
+        Long id = jdbcTemplate.queryForObject(
+                "INSERT INTO questions (slug, source_slug, file_path, topic, question_text, answer_markdown, source_hash) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id",
+                Long.class, slug, slug, slug + ".md", "java", "Q?", "A.", "h-" + slug);
+        jdbcTemplate.update(
+                "INSERT INTO review_state (question_id, repetitions, interval_days, ease_factor, " +
+                        "next_review_at, last_result, correct_count, wrong_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                id, repetitions, 10, 2.5, nextReviewAt, "CORRECT", correctCount, 0);
+    }
 }

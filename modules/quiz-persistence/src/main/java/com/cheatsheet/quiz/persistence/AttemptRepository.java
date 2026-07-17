@@ -91,6 +91,72 @@ public class AttemptRepository {
         return rows.stream().findFirst();
     }
 
+    /**
+     * Агрегаты по таблице {@code attempt} для семантической аналитики
+     * ({@link com.cheatsheet.quiz.domain.LearningMetrics}). Один проход по логу
+     * попыток: разводит первую попытку (честная память) от повторений, считает
+     * удержание в окнах и среднее время ответа.
+     *
+     * @param sevenDayCutoffEpoch  epoch-секунды границы окна 7 дней (now − 7д)
+     * @param thirtyDayCutoffEpoch epoch-секунды границы окна 30 дней (now − 30д)
+     * @return сырой агрегат (проценты вычисляет сервис)
+     */
+    public AttemptAggregate aggregate(long sevenDayCutoffEpoch, long thirtyDayCutoffEpoch) {
+        List<AttemptAggregate> rows = jdbcTemplate.query(
+                "SELECT " +
+                        "COUNT(DISTINCT question_id) AS cards_seen, " +
+                        "COUNT(*) AS attempts_total, " +
+                        "COALESCE(SUM(CASE WHEN outcome = 'CORRECT' THEN 1 ELSE 0 END), 0) AS attempts_correct, " +
+                        "COALESCE(SUM(CASE WHEN outcome IN ('WRONG', 'UNKNOWN') THEN 1 ELSE 0 END), 0) AS attempts_incorrect, " +
+                        "COALESCE(SUM(CASE WHEN is_first_attempt THEN 1 ELSE 0 END), 0) AS first_total, " +
+                        "COALESCE(SUM(CASE WHEN is_first_attempt AND outcome = 'CORRECT' THEN 1 ELSE 0 END), 0) AS first_correct, " +
+                        "COALESCE(SUM(CASE WHEN NOT is_first_attempt AND outcome IN ('CORRECT','WRONG','UNKNOWN') AND created_at >= ? THEN 1 ELSE 0 END), 0) AS rev7_total, " +
+                        "COALESCE(SUM(CASE WHEN NOT is_first_attempt AND outcome = 'CORRECT' AND created_at >= ? THEN 1 ELSE 0 END), 0) AS rev7_correct, " +
+                        "COALESCE(SUM(CASE WHEN NOT is_first_attempt AND outcome IN ('CORRECT','WRONG','UNKNOWN') AND created_at >= ? THEN 1 ELSE 0 END), 0) AS rev30_total, " +
+                        "COALESCE(SUM(CASE WHEN NOT is_first_attempt AND outcome = 'CORRECT' AND created_at >= ? THEN 1 ELSE 0 END), 0) AS rev30_correct, " +
+                        "AVG(response_time_ms) AS avg_response_ms " +
+                        "FROM attempt",
+                (rs, rowNum) -> {
+                    double avg = rs.getDouble("avg_response_ms");
+                    double avgResponse = rs.wasNull() ? -1.0 : avg;
+                    return new AttemptAggregate(
+                            rs.getLong("cards_seen"),
+                            rs.getLong("attempts_total"),
+                            rs.getLong("attempts_correct"),
+                            rs.getLong("attempts_incorrect"),
+                            rs.getLong("first_total"),
+                            rs.getLong("first_correct"),
+                            rs.getLong("rev7_total"),
+                            rs.getLong("rev7_correct"),
+                            rs.getLong("rev30_total"),
+                            rs.getLong("rev30_correct"),
+                            avgResponse);
+                },
+                sevenDayCutoffEpoch, sevenDayCutoffEpoch, thirtyDayCutoffEpoch, thirtyDayCutoffEpoch);
+        return rows.isEmpty() ? AttemptAggregate.EMPTY : rows.get(0);
+    }
+
+    /**
+     * Сырой агрегат попыток: числители/знаменатели для долей считает
+     * {@code LearningMetricsService}. {@code averageResponseMs = -1} — нет данных.
+     */
+    public record AttemptAggregate(
+            long cardsSeen,
+            long attemptsTotal,
+            long attemptsCorrect,
+            long attemptsIncorrect,
+            long firstTotal,
+            long firstCorrect,
+            long rev7Total,
+            long rev7Correct,
+            long rev30Total,
+            long rev30Correct,
+            double averageResponseMs
+    ) {
+        public static final AttemptAggregate EMPTY =
+                new AttemptAggregate(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1.0);
+    }
+
     private static Attempt mapRow(ResultSet rs) throws SQLException {
         return new Attempt(
                 rs.getLong("id"),

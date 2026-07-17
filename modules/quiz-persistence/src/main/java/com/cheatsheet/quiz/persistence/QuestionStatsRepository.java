@@ -152,6 +152,37 @@ public class QuestionStatsRepository {
     }
 
     /**
+     * Агрегат карточек и расписания из {@code review_state} (глобально, без
+     * фильтра) для {@link com.cheatsheet.quiz.domain.LearningMetrics}. Разводит
+     * {@code dueNow} (готовы к повтору сейчас) и {@code overdue} (просрочены —
+     * запланированы раньше {@code overdueCutoffEpoch}, обычно now − сутки).
+     *
+     * @param nowEpoch          текущее время (epoch-секунды)
+     * @param overdueCutoffEpoch граница «просрочки» (обычно now − 86400)
+     * @param minRepetitions    порог «выучено»
+     */
+    public ScheduleAggregate getScheduleAggregate(long nowEpoch, long overdueCutoffEpoch, int minRepetitions) {
+        List<ScheduleAggregate> rows = jdbcTemplate.query(
+                "SELECT COUNT(*) AS cards_total, " +
+                        "COALESCE(SUM(CASE WHEN repetitions >= ? THEN 1 ELSE 0 END), 0) AS cards_mastered, " +
+                        "COALESCE(SUM(CASE WHEN next_review_at <= ? THEN 1 ELSE 0 END), 0) AS due_now, " +
+                        "COALESCE(SUM(CASE WHEN next_review_at <= ? THEN 1 ELSE 0 END), 0) AS overdue " +
+                        "FROM review_state",
+                (rs, rowNum) -> new ScheduleAggregate(
+                        rs.getLong("cards_total"),
+                        rs.getLong("cards_mastered"),
+                        rs.getLong("due_now"),
+                        rs.getLong("overdue")),
+                minRepetitions, nowEpoch, overdueCutoffEpoch);
+        return rows.isEmpty() ? ScheduleAggregate.EMPTY : rows.get(0);
+    }
+
+    /** Агрегат карточек и расписания из {@code review_state}. */
+    public record ScheduleAggregate(long cardsTotal, long cardsMastered, long dueNow, long overdue) {
+        public static final ScheduleAggregate EMPTY = new ScheduleAggregate(0, 0, 0, 0);
+    }
+
+    /**
      * Возвращает агрегированную статистику по списку тем.
      */
     public InterviewStats getAggregatedStatsByTopics(List<String> topics, Boolean important, Boolean onlyWrong,
