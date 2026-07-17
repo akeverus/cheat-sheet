@@ -1,8 +1,9 @@
 {
   "topic_slug": "argocd-interview",
   "round": 8,
-  "status": "WIP c2 (§1 факт-скан + correct-trim): §1 факт-скан всех 42 correct — CLEAN (OpenGitOps 4 принципа, компонентный набор, поля CRD, sync/health-статусы, фазы wave/hook, генераторы, secret-подходы, стратегии Image Updater, sharding с 2.9, multi-source с 2.6, revisionHistoryLimit=10, reconciliation ~180с; фактов после cutoff не выдумано). correct-trim: энциклопедии (mean 41сл, 3+ предл.) → 1-2 предл. (mean 20сл), полные каталоги остались в sections (нетронуты). Только correct.text менялся; correct-флаг/label/order/sections/дистракторы байт-сохранены. Профиль после c2: CORRECT_LONGEST 1.0→0.571, OPTION_LENGTH 4.27→2.08, CORRECT_WRONG 2.413→1.173, SENTENCE 4→2, DETAIL 1.0→0.762, STYLE 1.0→0.786. Осталось (c3): band-нормализация дистракторов вверх к correct + code-span паритет + sentence-паритет + структурный де-tell + de-hedge + де-каррикатура → (c4) BATCHED blind panel + FINAL.",
-  "reviewed_commit": "HEAD (c2)",
+  "status": "WIP c3 (length-паритет): cap 9 трёх-предложенных correct → ≤2 предл. + word-band всех блоков (в основном ПОДНЯТЫ дистракторы до tie/выше correct, факты correct не деградированы; часть длинных correct слегка подрезана). Закрыто 5 метрик: CORRECT_LONGEST 0.571→0.119, OPTION_LENGTH 2.08→1.33 (0 viol), CORRECT_WRONG 1.173→1.023, SENTENCE 2→1, STYLE-длина 0.60→0.21. Осталось 2 красных (CODE-lever, c4): DETAIL_PARITY 0.762→0.714 и STYLE code-span 0.77 — correct = code-span экстремум в 30 блоках. c4: сбить code-экстремум correct (добавить backtick'и реальных Argo-терминов в 1 дистрактор/блок — безопаснее для band, чем un-backtick correct) + структурный де-tell (semicolon/opening) + де-каррикатура straw-men. Затем c5: BATCHED blind panel + FINAL. Предыдущее (c2): ",
+  "prev_status_c2": "WIP c2 (§1 факт-скан + correct-trim): §1 факт-скан всех 42 correct — CLEAN (OpenGitOps 4 принципа, компонентный набор, поля CRD, sync/health-статусы, фазы wave/hook, генераторы, secret-подходы, стратегии Image Updater, sharding с 2.9, multi-source с 2.6, revisionHistoryLimit=10, reconciliation ~180с; фактов после cutoff не выдумано). correct-trim: энциклопедии (mean 41сл, 3+ предл.) → 1-2 предл. (mean 20сл), полные каталоги остались в sections (нетронуты). Только correct.text менялся; correct-флаг/label/order/sections/дистракторы байт-сохранены. Профиль после c2: CORRECT_LONGEST 1.0→0.571, OPTION_LENGTH 4.27→2.08, CORRECT_WRONG 2.413→1.173, SENTENCE 4→2, DETAIL 1.0→0.762, STYLE 1.0→0.786. Осталось (c3): band-нормализация дистракторов вверх к correct + code-span паритет + sentence-паритет + структурный де-tell + de-hedge + де-каррикатура → (c4) BATCHED blind panel + FINAL.",
+  "reviewed_commit": "HEAD (c3)",
   "blocks_total": 42,
   "baseline_gates_pre_c1": {
     "verify_mcq_json": "OK",
@@ -38,6 +39,21 @@
       "style_guessability": "1.0 → 0.786 (длина 0.60, code-span 0.79)"
     },
     "remaining_reds_are_c3": "OPTION_LENGTH/CORRECT_LONGEST/CORRECT_WRONG/SENTENCE/DETAIL/STYLE закрываются band-нормализацией дистракторов вверх + code-span/sentence паритетом (c3)"
+  },
+  "c3_done": {
+    "sentence_caps": "9 correct (Q18,21,22,23,32,37,38,41,42) с 3 предл. → ≤2 предл., факты сохранены",
+    "word_band": "все 42 блока в band; ~57 первичных + 13 фикс-правок; в основном ПОДНЯТЫ дистракторы (tie/выше correct) — correct-факты не деградированы",
+    "invariants": "correct-флаг/label/order/sections байт-сохранены; single-correct 42/42; verify-mcq-json OK",
+    "gate_after_c3": {
+      "correct_longest_rate": "0.571 → 0.119 (5/42)",
+      "option_length_ratio": "2.08 → 1.33 (0 viol)",
+      "correct_wrong_avg_ratio": "1.173 → 1.023",
+      "sentence_parity": "2 → 1 (0 viol)",
+      "style_length_guess": "0.60 → 0.21",
+      "detail_parity": "0.762 → 0.714 (FAIL, c4)",
+      "style_code_guess": "0.79 → 0.77 (FAIL, c4)"
+    },
+    "remaining_reds_are_c4": "DETAIL_PARITY + STYLE code-span — correct = code-span экстремум в 30 блоках; c4 сбивает code-экстремум (backtick реальных Argo-терминов в дистракторы) + де-tell + де-каррикатура"
   },
   "plan_worst_first": "Проверенный на networking/mtls конвейер: (1) §1 факт-скан всех 42 correct (приоритет, сверка с official Argo docs через context7); (2) correct-trim энциклопедий в sections (§17/§18.1-C) — снимает CORRECT_LONGEST/OPTION_LENGTH/CORRECT_WRONG/SENTENCE/DETAIL/STYLE разом; (3) band-нормализация всех опций к 15-18 прозаич.слов по точной мере gate.words() + поднятие дистракторов правдоподобной деталью; (4) code-span паритет (correct не strict-экстремум по backtick); (5) структурный де-tell (semicolon/opening-class separability=0) + de-hedge дистракторов; (6) де-каррикатура straw-men; (7) BATCHED blind panel (2× correctness + adversary). Correct-факты сохранять; метку верного не менять (кроме §1 факт-фикса).",
   "records": []
