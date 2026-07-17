@@ -4,8 +4,10 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewStats;
+import com.cheatsheet.quiz.domain.LearningMetrics;
 import com.cheatsheet.quiz.domain.TopicStats;
 import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
+import com.cheatsheet.quiz.feature.interview.usecase.stats.LearningMetricsService;
 import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
 import com.cheatsheet.quiz.infrastructure.search.SearchService;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
@@ -37,6 +39,7 @@ public class StatsPageService {
     SearchService searchService;
     ObjectMapper objectMapper;
     QuestionStatsRepository questionStatsRepository;
+    LearningMetricsService learningMetricsService;
 
     /**
      * Строит state страницы статистики по фильтру и поисковому запросу.
@@ -64,6 +67,7 @@ public class StatsPageService {
         long nowEpoch = System.currentTimeMillis() / 1000L;
         List<QuestionStatsRepository.ForecastDay> forecast =
                 questionStatsRepository.findReviewForecast(nowEpoch, FORECAST_DAYS);
+        LearningMetrics metrics = learningMetricsService.compute();
         return new StatsPageState(
                 stats,
                 topics,
@@ -75,7 +79,8 @@ public class StatsPageService {
                 topicStats,
                 topicStatsJson,
                 coverageGaps,
-                forecast
+                forecast,
+                metrics
         );
     }
 
@@ -106,14 +111,15 @@ public class StatsPageService {
             List<TopicStats> topicStats,
             String topicStatsJson,
             List<QuestionStatsRepository.TopicCoverage> coverageGaps,
-            List<QuestionStatsRepository.ForecastDay> reviewForecast
+            List<QuestionStatsRepository.ForecastDay> reviewForecast,
+            LearningMetrics metrics
     ) {
         public StatsPageState(InterviewStats stats, List<String> topics, List<?> groups,
                               String selectedGroup, InterviewFilter filter, String searchQuery,
                               List<SearchService.SearchItem> searchResults,
                               List<TopicStats> topicStats, String topicStatsJson) {
             this(stats, topics, groups, selectedGroup, filter, searchQuery, searchResults,
-                    topicStats, topicStatsJson, List.of(), List.of());
+                    topicStats, topicStatsJson, List.of(), List.of(), LearningMetrics.EMPTY);
         }
     }
 }

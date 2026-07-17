@@ -38,8 +38,15 @@ public class SessionSummary implements Serializable {
         this.wrongCount = builder.wrongCount;
         this.unknownCount = builder.unknownCount;
         this.dueCount = builder.dueCount;
-        this.accuracy = builder.totalQuestions > 0
-                ? (builder.correctCount * 100.0) / builder.totalQuestions : 0.0;
+        // Знаменатель точности — число ОТВЕЧЕННЫХ вопросов (correct+wrong+unknown),
+        // а не запланированный totalQuestions. Так знаменатель согласован с
+        // LearningMetrics.overallAccuracy (Фаза 4) и честен, если сессия завершилась
+        // не на всех вопросах (пауза) или total вырос от штрафных (EXAM): точность
+        // не «размывается» неотвеченными. При полном прохождении answered == total,
+        // поэтому существующие итоги не меняются.
+        int answered = builder.correctCount + builder.wrongCount + builder.unknownCount;
+        this.accuracy = answered > 0
+                ? (builder.correctCount * 100.0) / answered : 0.0;
         this.duration = builder.duration;
         this.mode = builder.mode;
         this.topicResults = List.copyOf(builder.topicResults);

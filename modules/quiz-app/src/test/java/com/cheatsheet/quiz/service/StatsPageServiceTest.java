@@ -3,8 +3,10 @@ package com.cheatsheet.quiz.service;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewStats;
 import com.cheatsheet.quiz.domain.TopicStats;
+import com.cheatsheet.quiz.domain.LearningMetrics;
 import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
 import com.cheatsheet.quiz.feature.interview.service.page.StatsPageService;
+import com.cheatsheet.quiz.feature.interview.usecase.stats.LearningMetricsService;
 import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
 import com.cheatsheet.quiz.infrastructure.search.SearchService;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
@@ -39,13 +41,16 @@ class StatsPageServiceTest {
     ObjectMapper objectMapper;
     @Mock
     QuestionStatsRepository questionStatsRepository;
+    @Mock
+    LearningMetricsService learningMetricsService;
 
     StatsPageService service;
 
     @BeforeEach
     void setUp() {
         service = new StatsPageService(facade, questionRepository, topicCatalogService,
-                searchService, objectMapper, questionStatsRepository);
+                searchService, objectMapper, questionStatsRepository, learningMetricsService);
+        when(learningMetricsService.compute()).thenReturn(LearningMetrics.EMPTY);
     }
 
     @Test
@@ -66,6 +71,8 @@ class StatsPageServiceTest {
         assertThat(state.topicStatsJson()).isEqualTo("[]");
         assertThat(state.searchQuery()).isEqualTo("hashmap");
         assertThat(state.stats().correct()).isEqualTo(7);
+        // Метрики обучения (Фаза 4) прокидываются в state страницы.
+        assertThat(state.metrics()).isEqualTo(LearningMetrics.EMPTY);
     }
 
     @Test

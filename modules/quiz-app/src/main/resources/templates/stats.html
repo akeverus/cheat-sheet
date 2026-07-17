@@ -11,6 +11,67 @@
      расходуется на вторичные controls. -->
 <section th:replace="~{fragments/stats-grid :: stats-grid(stats=${stats})}"></section>
 
+<!-- Метрики обучения с ЯВНЫМИ знаменателями (Фаза 4). Раньше числа смешивали
+     знаменатели: total=карточки, correct/wrong=суммы попыток. Здесь группы
+     разведены — у каждой доли свой знаменатель, «нет данных» показываем как «—»,
+     а не «0 %». -->
+<section class="card learning-metrics" aria-labelledby="learning-metrics-title"
+         th:if="${metrics != null}">
+    <div class="learning-metrics-head">
+        <h2 id="learning-metrics-title">Метрики обучения</h2>
+        <p>Каждая доля — со своим знаменателем: точность первой попытки честнее
+           отражает память, чем общая (все попытки, включая повторные).</p>
+    </div>
+    <div class="learning-metrics-grid">
+        <article class="metric-group">
+            <h3 class="metric-group-title">Карточки</h3>
+            <dl class="metric-list">
+                <div class="metric-row"><dt>Всего</dt>
+                    <dd th:text="${metrics.cardsTotal}">0</dd></div>
+                <div class="metric-row"><dt>Начато</dt>
+                    <dd><span th:text="${metrics.cardsSeen}">0</span>
+                        <span class="metric-denom" th:text="'из ' + ${metrics.cardsTotal}">из 0</span></dd></div>
+                <div class="metric-row"><dt>Выучено</dt>
+                    <dd><span th:text="${metrics.cardsMastered}">0</span>
+                        <span class="metric-denom" th:text="'из ' + ${metrics.cardsTotal}">из 0</span></dd></div>
+            </dl>
+        </article>
+        <article class="metric-group">
+            <h3 class="metric-group-title">Точность</h3>
+            <dl class="metric-list">
+                <div class="metric-row"><dt>Первая попытка</dt>
+                    <dd th:text="${metrics.hasFirstAttemptAccuracy()} ? ${#numbers.formatDecimal(metrics.firstAttemptAccuracy, 1, 1)} + ' %' : '—'">—</dd></div>
+                <div class="metric-row"><dt>Все попытки</dt>
+                    <dd th:text="${metrics.hasOverallAccuracy()} ? ${#numbers.formatDecimal(metrics.overallAccuracy, 1, 1)} + ' %' : '—'">—</dd></div>
+                <div class="metric-row"><dt>Верных ответов</dt>
+                    <dd><span th:text="${metrics.attemptsCorrect}">0</span>
+                        <span class="metric-denom" th:text="'из ' + ${metrics.attemptsTotal}">из 0</span></dd></div>
+            </dl>
+        </article>
+        <article class="metric-group">
+            <h3 class="metric-group-title">Удержание</h3>
+            <dl class="metric-list">
+                <div class="metric-row"><dt>За 7 дней</dt>
+                    <dd th:text="${metrics.hasRetention7d()} ? ${#numbers.formatDecimal(metrics.retention7d, 1, 1)} + ' %' : '—'">—</dd></div>
+                <div class="metric-row"><dt>За 30 дней</dt>
+                    <dd th:text="${metrics.hasRetention30d()} ? ${#numbers.formatDecimal(metrics.retention30d, 1, 1)} + ' %' : '—'">—</dd></div>
+            </dl>
+            <p class="metric-note">Доля верных среди повторений в окне.</p>
+        </article>
+        <article class="metric-group">
+            <h3 class="metric-group-title">Расписание</h3>
+            <dl class="metric-list">
+                <div class="metric-row"><dt>Готовы сейчас</dt>
+                    <dd th:text="${metrics.dueNow}">0</dd></div>
+                <div class="metric-row"><dt>Просрочено</dt>
+                    <dd th:text="${metrics.overdue}">0</dd></div>
+                <div class="metric-row"><dt>Ср. время ответа</dt>
+                    <dd th:text="${metrics.hasAverageResponse()} ? ${#numbers.formatDecimal(metrics.averageResponseMs / 1000.0, 1, 1)} + ' с' : '—'">—</dd></div>
+            </dl>
+        </article>
+    </div>
+</section>
+
 <!-- Следующее действие: аналитика должна сразу подсказывать учебный шаг, а не
      только показывать числа. Блок использует уже существующие маршруты/флаги:
      / — повторение due, onlyWrong — разбор ошибок, weakTopics — стратегия слабых тем. -->
