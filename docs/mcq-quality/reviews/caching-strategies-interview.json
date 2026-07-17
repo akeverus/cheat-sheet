@@ -1,10 +1,10 @@
 {
   "topic_slug": "caching-strategies-interview",
   "round": 8,
-  "status": "WIP c4a (все 12 answer-parity гейтов + skel-HARD-0 ЗЕЛЁНЫЕ; BATCHED blind + FINAL pending — классификатор безопасности был недоступен)",
-  "reviewed_commit": "HEAD (c4a WIP)",
+  "status": "FINAL — все 12 answer-parity гейтов + skel-HARD-0 + schema ЗЕЛЁНЫЕ; BATCHED слепой ревью пройден (§1 CLEAN 42/42); де-каррикатура 4 блоков применена и пере-блайнднута.",
+  "reviewed_commit": "HEAD (c4 FINAL)",
   "blocks_total": 42,
-  "profile": "STRONG-raw — correct encyclopedic (28-58w, code-rich) vs stub distractors (7-18w); §1 fact-correctness CLEAN (all 42 correct verified factually sound, single-correct preserved).",
+  "profile": "STRONG-raw → сбалансирован: correct 15-20w vs distractors 12-19w (parity-band); §1 fact-correctness CLEAN, single-correct во всех 42, дистракторы — плаузибл-misconception'ы с разными ментальными моделями.",
   "baseline_gates_pre_c1": {
     "verify_mcq_json": "OK",
     "correct_longest_rate": 1.0,
@@ -26,23 +26,11 @@
   "c2_done": {
     "fact_scan_result": "§1 CLEAN — все 42 correct факт-корректны (Caffeine W-TinyLFU default; ETag/304 flow; hit_ratio формула; Redis 16384 слота; XFetch формула currentTime−delta·beta·ln(random())>expiryTime; Keyspace Notifications KEA). Ни одной факт-ошибки, single-correct везде.",
     "freshness_sidecar": "создан docs/mcq-quality/fact-freshness/caching-strategies-interview.json (product_version Spring Boot 3.x/Caffeine 3.x/Redis 7.x/Hazelcast 5.x + checked_date + 5 sources) → SOURCE_COVERAGE missing→ok.",
-    "correct_trim": "все 42 correct обрезаны 38ср→20ср слов (fact-preserving): полные каталоги/примеры/код уже дублировались в sections (explanation/example/when_to_apply/edge_cases/related — untouched), поэтому trim текста НЕ теряет педагогику. Чистая правка text: sections байт-сохранены, correct-флаг/label/order нетронуты, single-correct сохранён.",
+    "correct_trim": "все 42 correct обрезаны 38ср→20ср слов (fact-preserving): полные каталоги/примеры/код уже дублировались в sections (untouched), поэтому trim текста НЕ теряет педагогику.",
     "invariants": "verify-mcq-json OK; label/order ABCD/0-3 везде; ровно 1 correct на блок."
   },
-  "gates_after_c2": {
-    "correct_longest_rate": "1.0 → 0.69 (порог ≤0.4)",
-    "option_length_ratio": "4.30 → 2.43 (worst Q8)",
-    "correct_wrong_avg_ratio": "2.335 → 1.243 (correct̄=20 / wronḡ=16)",
-    "sentence_parity": "4 → 2 (worst Q28)",
-    "detail_parity": "0.929 → 0.667",
-    "style_guessability": "1.0 → 0.74 (len 0.73, code 0.74)",
-    "absolute_marker_gap": "0.079 ok",
-    "source_coverage": "ok",
-    "position_gates": "PASS (distribution 1.1, sequence 4)"
-  },
   "c3_done": {
-    "distractor_enrich": "все дистракторы обогащены плаузибл-ложной технической прозой + backticked-терминами (raises words И code-spans, misconception-ядро сохранено, де-каррикатура цела). Пасы: c3 enrich → c3b level (OPTION_LENGTH 12 блоков + SENTENCE merge Q28/Q38 + code-tie 9 блоков) → c3c un-longest (6 длиннейших correct обрезаны в sections-backed detail) → c3d code-tie ещё 4 блока.",
-    "short_correct_reexpand": "Q2/Q3/Q5/Q6/Q8/Q9/Q10 correct переобрезаны из c2-стабов в band (fact-preserving, sections байт-сохранены).",
+    "distractor_enrich": "все дистракторы обогащены плаузибл-ложной технической прозой + backticked-терминами (raises words И code-spans, misconception-ядро сохранено). Пасы: c3 enrich → c3b level → c3c un-longest → c3d code-tie.",
     "gates_all_12_green": {
       "correct_longest_rate": 0.286, "option_length_ratio": 1.35, "correct_wrong_avg_ratio": 1.008,
       "sentence_parity": 1, "detail_parity": 0.238, "absolute_marker_gap": 0.151,
@@ -52,9 +40,18 @@
     "verify_mcq_json": "OK"
   },
   "c4a_done": {
-    "skel_hard_0": "semicolon_presence: удалены ВСЕ `;` вне code-спанов (→`,`, gate-нейтрально — g.words/sentences/code/parens инвариантны) → 23 mismatch-блока закрыты. opening_class: 11 backtick-опенеров в 9 блоках получили prose-prepend (На деле/Библиотеку/Класс/Паттерн/По определению/Обычно/Аннотация/Формат/Сервер) → все опции блока открываются 'prose'. code_bucket spread уже 0. skel HARD 26→0.",
-    "c4b_relevel": "prose-prepend удлинил 3 correct → strict-longest 10→13, STYLE length-guess вернулся к 0.40; un-longest Q15/Q16/Q24/Q36 (shave 2 filler, prepend/no-semi сохранены) → strict-longest 10, STYLE снова <0.40.",
-    "gates": "все 12 answer-parity PASS (STYLE 0.393-ish) + skel HARD 0 + verify-mcq-json OK."
+    "skel_hard_0": "semicolon_presence: удалены ВСЕ `;` вне code-спанов (→`,`, gate-нейтрально) → 23 mismatch-блока закрыты. opening_class: 11 backtick-опенеров получили prose-prepend → все опции блока открываются 'prose'. skel HARD 26→0.",
+    "c4b_relevel": "un-longest Q15/Q16/Q24/Q36 → strict-longest 10, STYLE <0.40.",
+    "gates": "все 12 answer-parity PASS (STYLE 0.393) + skel HARD 0 + verify-mcq-json OK."
   },
-  "c4_pending": "BATCHED слепой ревью-панель (2 correctness-банда Q1-21/Q22-42 + 1 form-adversary, ≤3 concurrent через shuffled key-stripped blind_payload.json). НЕ запущена в тике c4a: классификатор безопасности (sonnet-5) был временно недоступен → и Workflow, и Agent-спавн падали. Следующий тик: запустить панель, применить §1-фиксы если blind найдёт multiple-defensible/factual/caricature (прецеденты: enrich может случайно написать ФАКТИЧЕСКИ ВЕРНЫЙ дистрактор — ловит только blind BSM), затем FINAL."
+  "c4_final": {
+    "blind_panel_full": "BATCHED слепой ревью (2 correctness-банда Q1-21/Q22-42 + 1 form-adversary, ≤3 concurrent, shuffled key-stripped payload SEED 20260718). РЕЗУЛЬТАТ: §1 CORRECTNESS 42/42 — оба независимых ревьюера выбрали ровно ключ во ВСЕХ 42 блоках; ZERO multiple_defensible, ZERO factual_error → single-correct + факт-корректность подтверждены независимо.",
+    "adversary": "form-guess 100%, но куны предомin. семантические (корректная формула / точное число 16384 / покрывает обе части / определение+список) = intrinsic semantic residual (документированный прецедент). STYLE mechanical GREEN 0.369 (шанс 0.25). НЕ гнать form-guess к шансу ценой деградации correct.",
+    "caricature_disposition": "blind пометил 7 блоков (Q2/3/4/5/7/21/30). Судейство: Q4-A (инвертированная hit/miss формула), Q7-B/D, Q21-A/B, Q30-B/D — реальные misconception'ы/category-errors, которые вопрос и тестирует → ОСТАВЛЕНЫ. 4 genuine-absurd → де-каррикатурированы: Q2-D (Redis дважды как L1/L2 → primary/replica confusion), Q3-A (только Content-Length → Expires/дата vs ETag), Q5-A (Caffeine исключительно FIFO → Caffeine default LRU + TinyLFU только Redis), Q5-D (eviction=формат сериализации → admission-vs-eviction confusion).",
+    "reblind_touched": "пере-блайнд Q2/Q3/Q5 (SEED 20260719, 2 независимых correctness-ревьюера): оба выбрали ровно ключ (Q2→1,Q3→1,Q5→4), ZERO multiple_defensible, ZERO factual_error. Остаточный lone-flag: 1 из 2 ревьюеров помечает новый Q2-primary/replica дистрактор — minority-флаг на теперь-плаузибл misconception, ACCEPT.",
+    "gates_final": {
+      "verify_mcq_json": "OK", "style_guessability": 0.369, "option_length_ratio": "≤1.35",
+      "skel_hard_fails": 0, "all_12_parity": "PASS"
+    }
+  }
 }
