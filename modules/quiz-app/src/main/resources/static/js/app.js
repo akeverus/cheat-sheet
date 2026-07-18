@@ -244,12 +244,34 @@
       EXAM: 'Начать экзамен',
       MARATHON: 'Начать интенсив',
     };
+    const countInput = countField.querySelector('input[name="count"]');
+    // Предпросмотр набора (конструктор сессии, Этап 8): показывает объём и грубую
+    // оценку времени ДО запуска. Время — оценка (≈), а не измерение: константа
+    // SECONDS_PER_Q = типичное «прочитать вопрос + варианты + ответить». TRAINING —
+    // бесконечный режим (без счётчика), поэтому «без ограничения».
+    const preview = document.getElementById('session-preview');
+    const previewCount = preview && preview.querySelector('[data-preview-count]');
+    const previewTime = preview && preview.querySelector('[data-preview-time]');
+    const SECONDS_PER_Q = 45;
+    const updatePreview = () => {
+      if (!preview) return;
+      if (modeSelect.value === 'TRAINING') {
+        if (previewCount) previewCount.textContent = 'Без ограничения по числу';
+        if (previewTime) previewTime.textContent = 'сессия идёт, пока не остановишь';
+        return;
+      }
+      const n = countInput ? (Number.parseInt(countInput.value || '', 10) || 0) : 0;
+      const mins = Math.max(1, Math.round((n * SECONDS_PER_Q) / 60));
+      if (previewCount) previewCount.textContent = n + ' ' + pluralRu(n, 'вопрос', 'вопроса', 'вопросов');
+      if (previewTime) previewTime.textContent = '≈ ' + mins + ' ' + pluralRu(mins, 'минута', 'минуты', 'минут');
+    };
     const sync = () => {
       const isTraining = modeSelect.value === 'TRAINING';
       countField.classList.toggle('hidden', isTraining);
       startBtn.textContent = MODE_CTA[modeSelect.value] || 'Начать сессию';
+      updatePreview();
     };
-    const countInput = countField.querySelector('input[name="count"]');
+    if (countInput) countInput.addEventListener('input', updatePreview);
     // SET-15: при явной СМЕНЕ режима подставляем per-mode серверный дефолт
     // (data-default-count у <option>) — чтобы поле не оставалось жёстко «20» для
     // MARATHON/STUDY/FLASHCARD (их серверный дефолт 50, EXAM=20). Слушатель на

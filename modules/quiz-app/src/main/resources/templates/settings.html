@@ -38,127 +38,161 @@
         </div>
 
         <!-- ============================ ПАНЕЛЬ: СЕССИЯ ============================ -->
+        <!-- Конструктор сессии (docs 2.5): слева — параметры набора (охват + режим)
+             и запуск с живым предпросмотром объёма/времени; справа — сводка
+             (Повторение + Статистика) как контекст решения. App-настройки
+             (Оформление/Данные) вынесены в соседние вкладки. -->
         <section class="settings-panel is-active" role="tabpanel" id="panel-session"
                  aria-labelledby="tab-session" tabindex="0">
-            <h2 class="settings-panel-title">Сессия</h2>
+            <div class="session-builder">
+                <div class="builder-main">
+                    <header class="builder-intro">
+                        <p class="eyebrow">Конструктор</p>
+                        <h2 class="settings-panel-title builder-title">Новая тренировка</h2>
+                        <p class="builder-lead">Собери набор: задай охват и режим — предпросмотр покажет объём и примерное время до запуска.</p>
+                    </header>
 
-            <!-- Лаунчер: две колонки — слева фильтры выборки вопросов, справа режим
-                 и запуск. На узких экранах колонки складываются в стопку. -->
-            <div class="session-launcher">
-                <div class="launcher-col" id="launcher-filters">
-                    <h3 class="launcher-subtitle">Фильтры</h3>
-                    <form method="get" th:action="@{/settings}" class="filters-form" id="filters-form" data-sidebar-form="filters">
-                        <div class="filters-fields">
+                    <!-- Параметр 1: охват выборки (GET /settings — перезагружает страницу
+                         с применённым фильтром; результат виден в сводке справа). -->
+                    <section class="builder-section" aria-labelledby="builder-scope-title">
+                        <h3 class="builder-section-title" id="builder-scope-title">Охват</h3>
+                        <form method="get" th:action="@{/settings}" class="filters-form" id="filters-form" data-sidebar-form="filters">
+                            <div class="filters-fields">
+                                <label class="field">
+                                    <span class="field-label">Группа:</span>
+                                    <select name="group">
+                                        <option value="">Все</option>
+                                        <option th:each="group : ${groups != null ? groups : T(java.util.Collections).emptyList()}"
+                                                th:value="${group.id()}"
+                                                th:text="${group.title() + ' - ' + group.description() + ' (' + group.topicCount() + ')'}"
+                                                th:selected="${selectedGroup != null and selectedGroup == group.id()}">
+                                        </option>
+                                    </select>
+                                </label>
+                                <label class="field">
+                                    <span class="field-label">Тема:</span>
+                                    <select name="topic">
+                                        <option value="">Все</option>
+                                        <option th:each="topic : ${topics != null ? topics : T(java.util.Collections).emptyList()}"
+                                                th:value="${topic}"
+                                                th:text="${#strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(topic), '-', ' '), '_', ' '))}"
+                                                th:title="${topic}"
+                                                th:selected="${filter != null and filter.topic != null and filter.topic == topic}">
+                                        </option>
+                                    </select>
+                                </label>
+                            </div>
+                            <div class="filters-toggles">
+                                <label class="toggle-item">
+                                    <input type="checkbox" name="important" value="true" th:checked="${filter?.importantOnly}">
+                                    <span>Избранные</span>
+                                </label>
+                                <label class="toggle-item">
+                                    <input type="checkbox" name="onlyWrong" value="true" th:checked="${filter?.onlyWrong}">
+                                    <span>Ошибки</span>
+                                </label>
+                                <label class="toggle-item">
+                                    <input type="checkbox" name="shuffle" value="true" th:checked="${filter?.shuffle}" id="shuffle-checkbox" aria-describedby="filter-mode-hint">
+                                    <span>Микс тем</span>
+                                </label>
+                                <label class="toggle-item">
+                                    <input type="checkbox" name="weakTopics" value="true" th:checked="${weakTopics}">
+                                    <span>Слабые темы</span>
+                                </label>
+                            </div>
                             <label class="field">
-                                <span class="field-label">Группа:</span>
-                                <select name="group">
-                                    <option value="">Все</option>
-                                    <option th:each="group : ${groups != null ? groups : T(java.util.Collections).emptyList()}"
-                                            th:value="${group.id()}"
-                                            th:text="${group.title() + ' - ' + group.description() + ' (' + group.topicCount() + ')'}"
-                                            th:selected="${selectedGroup != null and selectedGroup == group.id()}">
-                                    </option>
+                                <span class="field-label">Порядок:</span>
+                                <select name="ordered" aria-describedby="filter-mode-hint">
+                                    <option value="true" th:selected="${filter == null or filter.ordered != false}">Учебный</option>
+                                    <option value="false" th:selected="${filter != null and filter.ordered == false}">Свободный</option>
                                 </select>
                             </label>
+                            <button type="submit">Применить фильтры</button>
+                        </form>
+                        <p class="control-inline-hint" id="filter-mode-hint" role="status" aria-live="polite">Учебный порядок: от базы к более сложным идеям.</p>
+                    </section>
+
+                    <!-- Параметр 2: режим и запуск (POST /start). Предпросмотр объёма/времени
+                         обновляет app.js (initSessionModeForm) при смене режима/числа. -->
+                    <section class="builder-section builder-launch" aria-labelledby="builder-mode-title">
+                        <h3 class="builder-section-title" id="builder-mode-title">Режим и запуск</h3>
+                        <form method="post" th:action="@{/start}" class="session-form" id="session-form" data-sidebar-form="session">
+                            <input type="hidden" name="topic" th:value="${filter?.topic}">
+                            <input type="hidden" name="group" th:value="${selectedGroup}">
+                            <input type="hidden" name="important" th:if="${filter?.importantOnly}" value="true">
+                            <input type="hidden" name="onlyWrong" th:if="${filter?.onlyWrong}" value="true">
+                            <input type="hidden" name="shuffle" th:if="${filter?.shuffle}" value="true">
+                            <input type="hidden" name="weakTopics" th:if="${weakTopics}" value="true">
+                            <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
                             <label class="field">
-                                <span class="field-label">Тема:</span>
-                                <select name="topic">
-                                    <option value="">Все</option>
-                                    <option th:each="topic : ${topics != null ? topics : T(java.util.Collections).emptyList()}"
-                                            th:value="${topic}"
-                                            th:text="${#strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(topic), '-', ' '), '_', ' '))}"
-                                            th:title="${topic}"
-                                            th:selected="${filter != null and filter.topic != null and filter.topic == topic}">
-                                    </option>
+                                <span class="field-label">Режим:</span>
+                                <!-- data-default-count: серверный per-mode дефолт числа вопросов
+                                     (application.yml default-exam-count=20 / default-marathon-count=50;
+                                     SessionFlowService.resolveSessionTotal: EXAM→exam, остальные→marathon).
+                                     app.js при СМЕНЕ режима подставляет его в счётчик — SET-15: раньше
+                                     поле было жёстко 20 для всех, MARATHON/STUDY/FLASHCARD получали 20
+                                     вместо 50. Источник правды — application.yml (значения продублированы). -->
+                                <select name="mode" id="session-mode-select">
+                                    <option value="TRAINING" data-default-count="20" th:selected="${mode == null or mode.name() == 'TRAINING'}">Тренировка</option>
+                                    <option value="STUDY" data-default-count="50" th:selected="${mode != null and mode.name() == 'STUDY'}">Изучение</option>
+                                    <option value="FLASHCARD" data-default-count="50" th:selected="${mode != null and mode.name() == 'FLASHCARD'}">Флешкарты</option>
+                                    <option value="EXAM" data-default-count="20" th:selected="${mode != null and mode.name() == 'EXAM'}">Экзамен</option>
+                                    <option value="MARATHON" data-default-count="50" th:selected="${mode != null and mode.name() == 'MARATHON'}">Интенсив</option>
                                 </select>
                             </label>
-                        </div>
-                        <div class="filters-toggles">
-                            <label class="toggle-item">
-                                <input type="checkbox" name="important" value="true" th:checked="${filter?.importantOnly}">
-                                <span>Избранные</span>
+                            <!-- ТРЕНИРОВКА — бесконечный режим без сессии (SessionFlowService.startSession:
+                                 TRAINING → clearSession). app.js (initSessionModeForm) скрывает счётчик
+                                 и переименовывает CTA в «Начать тренировку» при TRAINING. -->
+                            <label class="field field-inline" id="session-count-field">
+                                <span class="field-label">Вопросов:</span>
+                                <input type="number" name="count" min="1" max="200" value="20">
                             </label>
-                            <label class="toggle-item">
-                                <input type="checkbox" name="onlyWrong" value="true" th:checked="${filter?.onlyWrong}">
-                                <span>Ошибки</span>
-                            </label>
-                            <label class="toggle-item">
-                                <input type="checkbox" name="shuffle" value="true" th:checked="${filter?.shuffle}" id="shuffle-checkbox" aria-describedby="filter-mode-hint">
-                                <span>Микс тем</span>
-                            </label>
-                            <label class="toggle-item">
-                                <input type="checkbox" name="weakTopics" value="true" th:checked="${weakTopics}">
-                                <span>Слабые темы</span>
-                            </label>
-                        </div>
-                        <label class="field">
-                            <span class="field-label">Порядок:</span>
-                            <select name="ordered" aria-describedby="filter-mode-hint">
-                                <option value="true" th:selected="${filter == null or filter.ordered != false}">Учебный</option>
-                                <option value="false" th:selected="${filter != null and filter.ordered == false}">Свободный</option>
-                            </select>
-                        </label>
-                        <button type="submit">Применить фильтры</button>
-                    </form>
-                    <p class="control-inline-hint" id="filter-mode-hint" role="status" aria-live="polite">Учебный порядок: от базы к более сложным идеям.</p>
+                            <!-- Предпросмотр набора: значения проставляет app.js. Без JS блок
+                                 показывает нейтральную подсказку (не пустой). aria-live —
+                                 читается скринридером при изменении режима/числа. -->
+                            <div class="session-preview" id="session-preview" role="status" aria-live="polite">
+                                <span class="preview-metric">
+                                    <span class="preview-label">В наборе</span>
+                                    <span class="preview-value" data-preview-count>по числу ниже</span>
+                                </span>
+                                <span class="preview-metric">
+                                    <span class="preview-label">Примерно</span>
+                                    <span class="preview-value" data-preview-time>оценка появится ниже</span>
+                                </span>
+                            </div>
+                            <button type="submit" id="session-start-btn" class="btn primary-btn">Начать сессию</button>
+                        </form>
+                        <form method="post" th:action="@{/finish}" class="d-inline" th:if="${interviewSession != null}">
+                            <button type="submit" class="btn-finish-small">Завершить сессию</button>
+                        </form>
+                    </section>
+
+                    <p class="control-inline-hint">После настройки переходи во вкладку «Фокус» и отвечай без отвлечений.</p>
                 </div>
 
-                <div class="launcher-col" id="launcher-session">
-                    <h3 class="launcher-subtitle">Режим</h3>
-                    <form method="post" th:action="@{/start}" class="session-form" id="session-form" data-sidebar-form="session">
-                        <input type="hidden" name="topic" th:value="${filter?.topic}">
-                        <input type="hidden" name="group" th:value="${selectedGroup}">
-                        <input type="hidden" name="important" th:if="${filter?.importantOnly}" value="true">
-                        <input type="hidden" name="onlyWrong" th:if="${filter?.onlyWrong}" value="true">
-                        <input type="hidden" name="shuffle" th:if="${filter?.shuffle}" value="true">
-                        <input type="hidden" name="weakTopics" th:if="${weakTopics}" value="true">
-                        <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
-                        <label class="field">
-                            <span class="field-label">Режим:</span>
-                            <!-- data-default-count: серверный per-mode дефолт числа вопросов
-                                 (application.yml default-exam-count=20 / default-marathon-count=50;
-                                 SessionFlowService.resolveSessionTotal: EXAM→exam, остальные→marathon).
-                                 app.js при СМЕНЕ режима подставляет его в счётчик — SET-15: раньше
-                                 поле было жёстко 20 для всех, MARATHON/STUDY/FLASHCARD получали 20
-                                 вместо 50. Источник правды — application.yml (значения продублированы). -->
-                            <select name="mode" id="session-mode-select">
-                                <option value="TRAINING" data-default-count="20" th:selected="${mode == null or mode.name() == 'TRAINING'}">Тренировка</option>
-                                <option value="STUDY" data-default-count="50" th:selected="${mode != null and mode.name() == 'STUDY'}">Изучение</option>
-                                <option value="FLASHCARD" data-default-count="50" th:selected="${mode != null and mode.name() == 'FLASHCARD'}">Флешкарты</option>
-                                <option value="EXAM" data-default-count="20" th:selected="${mode != null and mode.name() == 'EXAM'}">Экзамен</option>
-                                <option value="MARATHON" data-default-count="50" th:selected="${mode != null and mode.name() == 'MARATHON'}">Интенсив</option>
-                            </select>
-                        </label>
-                        <!-- ТРЕНИРОВКА — бесконечный режим без сессии (SessionFlowService.startSession:
-                             TRAINING → clearSession). app.js (initSessionModeForm) скрывает счётчик
-                             и переименовывает CTA в «Начать тренировку» при TRAINING. -->
-                        <label class="field field-inline" id="session-count-field">
-                            <span class="field-label">Вопросов:</span>
-                            <input type="number" name="count" min="1" max="200" value="20">
-                        </label>
-                        <button type="submit" id="session-start-btn">Начать сессию</button>
-                    </form>
-                    <form method="post" th:action="@{/finish}" class="d-inline" th:if="${interviewSession != null}">
-                        <button type="submit" class="btn-finish-small">Завершить сессию</button>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Прогресс: компактная полоса под лаунчером. -->
-            <div class="launcher-progress" id="launcher-progress">
-                <h3 class="launcher-subtitle">Прогресс</h3>
-                <div class="streak-bar hidden" id="streak-bar" data-streak-bar>
-                    <span class="streak-fire"><svg class="ed-icon" aria-hidden="true"><use href="#i-flame"></use></svg></span>
-                    <span class="streak-days" id="streak-days" data-streak-days>0 дней</span>
-                    <div class="streak-progress">
-                        <div class="streak-progress-fill" id="streak-progress-fill" data-streak-fill></div>
+                <!-- Сводка: контекст решения справа (на мобиле — под конструктором). -->
+                <aside class="builder-aside" aria-label="Сводка прогресса">
+                    <div class="card builder-card" id="builder-review-card">
+                        <p class="eyebrow">Повторение</p>
+                        <p class="builder-card-value" th:text="${stats != null ? stats.due() : 0}">0</p>
+                        <p class="muted tiny" th:text="${stats != null and stats.due() > 0}
+                               ? 'карточек ждут повтора — планировщик подмешает их в тренировку'
+                               : 'очередь пуста — всё повторено вовремя'">нет карточек к повтору</p>
                     </div>
-                    <span id="streak-count" class="streak-count-text" data-streak-count>0/10</span>
-                </div>
-                <div th:replace="~{fragments/stats-grid :: stats-grid-content(stats=${stats})}"></div>
+                    <div class="card builder-card" id="builder-stats-card">
+                        <p class="eyebrow">Статистика</p>
+                        <div class="streak-bar hidden" id="streak-bar" data-streak-bar>
+                            <span class="streak-fire"><svg class="ed-icon" aria-hidden="true"><use href="#i-flame"></use></svg></span>
+                            <span class="streak-days" id="streak-days" data-streak-days>0 дней</span>
+                            <div class="streak-progress">
+                                <div class="streak-progress-fill" id="streak-progress-fill" data-streak-fill></div>
+                            </div>
+                            <span id="streak-count" class="streak-count-text" data-streak-count>0/10</span>
+                        </div>
+                        <div th:replace="~{fragments/stats-grid :: stats-grid-content(stats=${stats})}"></div>
+                    </div>
+                </aside>
             </div>
-
-            <p class="control-inline-hint">После настройки переходи во вкладку «Фокус» и отвечай без отвлечений.</p>
         </section>
 
         <!-- ========================== ПАНЕЛЬ: ОФОРМЛЕНИЕ ========================== -->
