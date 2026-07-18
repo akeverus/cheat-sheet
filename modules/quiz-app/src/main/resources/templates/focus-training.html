@@ -48,7 +48,12 @@
              ВНЕ split (flow/grid/PROC-07) .focus-rail = display:contents → прозрачна,
              дети хойстятся как прямые grid-элементы .focus-training (существующие
              descendant-селекторы продолжают матчить). -->
-        <div class="focus-rail">
+        <div class="focus-rail"
+             th:with="hasCode=${current.question.codeSnippet() != null and !current.question.codeSnippet().isBlank()},
+                      hasDiagram=${current.question.diagramMermaid() != null and !current.question.diagramMermaid().isBlank()}">
+        <!-- hasCode/hasDiagram подняты сюда: th:with (precedence 500) выполняется
+             ПОЗЖЕ th:if (300), поэтому на одном элементе с th:if переменные ещё null.
+             Тут они в scope для th:if потомка .question-materials ниже. -->
         <!-- Этап 2 редизайна: ряд мета-бейджей в шапке левого пейна (макет
              question-desktop) — быстрый контекст «что за вопрос». Сложность из
              Question.difficulty (EASY/MEDIUM/HARD → Лёгкий/Средний/Сложный);
@@ -121,49 +126,67 @@
            th:text="${reviewReason.message()}">Причина повторения</p>
         <h2 class="focus-question" th:utext="${@markdownRenderService.toInlineHtml(current.question.questionText)}">Вопрос</h2>
 
-        <!-- #7: код — часть условия вопроса, а не «необязательный пример». Поэтому
-             <details open> (раскрыт по умолчанию, свернуть можно), а summary — код-
-             аффорданс (mono + иконка ⟨⟩), НЕ нейтральная secondary-кнопка. Нативный
-             <details> раскрывается без JS; ▸/▾ показывают состояние. -->
-        <div class="question-code-wrap content-box"
-             th:if="${current.question.codeSnippet() != null and !current.question.codeSnippet().isBlank()}">
-            <details class="question-code-details" open>
-                <summary class="question-code-summary">
-                    <svg class="ed-icon" aria-hidden="true"><use href="#i-code"></use></svg>
-                    <span>Код к вопросу</span>
-                </summary>
-                <pre class="question-code"><code th:text="${current.question.codeSnippet()}"></code></pre>
-            </details>
-        </div>
+        <!-- Этап 3 редизайна: материалы к вопросу (код + схема). Когда есть ОБА,
+             макет хендоффа-3 показывает их вкладками «Пример кода / Схема» вместо
+             двух стопкой. PE: список вкладок отрендерен с [hidden] и включается
+             app.js (initContentTabs) — без JS обе панели видны стопкой, контент
+             не теряется. tabpanel-семантика (role/id/aria-labelledby) навешивается
+             ТОЛЬКО когда есть оба материала (иначе tabpanel без tab — невалидный ARIA). -->
+        <div class="question-materials"
+             th:if="${hasCode or hasDiagram}">
 
-        <!-- P0.2: Mermaid-диаграмма условия. Источник — ```mermaid fence в cheatsheet;
-             парсер кладёт его в diagram_mermaid (не в code_snippet), поэтому здесь это
-             отдельное поле. mermaid-init (head includeMermaid=true) рисует .mermaid по
-             textContent → SVG. Раньше mermaid попадал в code_snippet и рендерился как
-             экранированный текст графа с литеральными <br/>. Обёртка .question-diagram
-             нужна guard-логике mermaid-init: при ошибке рендера снимается весь блок, а
-             не остаётся сырой код. th:text (не th:utext) — mermaid читает textContent,
-             экранирование корректно. -->
-        <!-- Этап 3 редизайна (DiagramBlock, docs 3.5/8.3): блок-диаграмма с
-             toolbar-заголовком и вкладкой «Исходник». Ключевое изменение — при
-             ошибке mermaid блок больше НЕ удаляется целиком (раньше пользователь
-             терял контент): mermaid-init/renderDynamicContent прячут .mermaid и
-             раскрывают .diagram-source-details, так что исходник виден всегда.
-             Отдельная escaped-копия исходника в <details> переживает подмену
-             textContent .mermaid на SVG при успешном рендере. -->
-        <div class="question-diagram question-diagram-wrap content-box"
-             th:if="${current.question.diagramMermaid() != null and !current.question.diagramMermaid().isBlank()}">
-            <div class="content-toolbar">
-                <span class="content-box-title">Схема</span>
+            <div class="content-tablist" role="tablist" aria-label="Материалы к вопросу"
+                 th:if="${hasCode and hasDiagram}" hidden>
+                <button type="button" class="content-tab" role="tab" id="qmtab-code"
+                        aria-controls="qmpanel-code" aria-selected="true">
+                    <svg class="ed-icon" aria-hidden="true"><use href="#i-code"></use></svg><span>Пример кода</span>
+                </button>
+                <button type="button" class="content-tab" role="tab" id="qmtab-diagram"
+                        aria-controls="qmpanel-diagram" aria-selected="false" tabindex="-1">
+                    <svg class="ed-icon" aria-hidden="true"><use href="#i-diagram"></use></svg><span>Схема</span>
+                </button>
             </div>
-            <pre class="mermaid" th:text="${current.question.diagramMermaid()}"></pre>
-            <details class="diagram-source-details">
-                <summary class="diagram-source-summary">
-                    <svg class="ed-icon" aria-hidden="true"><use href="#i-code"></use></svg><span>Исходник</span>
-                </summary>
-                <pre class="diagram-source"><code th:text="${current.question.diagramMermaid()}"></code></pre>
-            </details>
-        </div>
+
+            <!-- #7: код — часть условия вопроса, а не «необязательный пример». Поэтому
+                 <details open> (раскрыт по умолчанию, свернуть можно), а summary — код-
+                 аффорданс (mono + иконка ⟨⟩). Под вкладками (js-content-tabs) summary
+                 прячется — панель уже подписана вкладкой «Пример кода». -->
+            <div class="question-code-wrap content-box content-tabpanel" id="qmpanel-code"
+                 th:if="${hasCode}"
+                 th:attr="role=${hasDiagram} ? 'tabpanel' : null,
+                          aria-labelledby=${hasDiagram} ? 'qmtab-code' : null">
+                <details class="question-code-details" open>
+                    <summary class="question-code-summary">
+                        <svg class="ed-icon" aria-hidden="true"><use href="#i-code"></use></svg>
+                        <span>Код к вопросу</span>
+                    </summary>
+                    <pre class="question-code"><code th:text="${current.question.codeSnippet()}"></code></pre>
+                </details>
+            </div>
+
+            <!-- P0.2: Mermaid-диаграмма условия. Источник — ```mermaid fence в cheatsheet;
+                 парсер кладёт его в diagram_mermaid (не в code_snippet). mermaid-init
+                 рисует .mermaid по textContent → SVG. Обёртка .question-diagram нужна
+                 guard-логике mermaid-init: при ошибке рендера НЕ удаляется весь блок,
+                 а прячется .mermaid и раскрывается .diagram-source-details, так что
+                 исходник виден всегда. th:text (не th:utext) — mermaid читает textContent.
+                 Под вкладками .content-box-title «Схема» прячется (дублирует вкладку). -->
+            <div class="question-diagram question-diagram-wrap content-box content-tabpanel" id="qmpanel-diagram"
+                 th:if="${hasDiagram}"
+                 th:attr="role=${hasCode} ? 'tabpanel' : null,
+                          aria-labelledby=${hasCode} ? 'qmtab-diagram' : null">
+                <div class="content-toolbar">
+                    <span class="content-box-title">Схема</span>
+                </div>
+                <pre class="mermaid" th:text="${current.question.diagramMermaid()}"></pre>
+                <details class="diagram-source-details">
+                    <summary class="diagram-source-summary">
+                        <svg class="ed-icon" aria-hidden="true"><use href="#i-code"></use></svg><span>Исходник</span>
+                    </summary>
+                    <pre class="diagram-source"><code th:text="${current.question.diagramMermaid()}"></code></pre>
+                </details>
+            </div>
+        </div><!-- /.question-materials -->
         </div><!-- /.focus-rail : конец левой колонки split -->
 
         <div th:if="${flashcardMode}" class="flashcard-phase"

@@ -835,6 +835,50 @@
     activate(initial, false);
   }
 
+  // Вкладки «Пример кода / Схема» на экране вопроса (Этап 3, handoff-3).
+  // Присутствуют только когда у вопроса есть И код, И диаграмма (иначе tablist
+  // не отрендерен). PE: без JS обе панели видны стопкой; здесь включаем
+  // переключение и показываем одну активную. ARIA tablist keyboard-паттерн.
+  function initContentTabs() {
+    document.querySelectorAll('.question-materials').forEach((materials) => {
+      const tablist = materials.querySelector('.content-tablist');
+      if (!tablist) return;
+      const tabs = Array.from(tablist.querySelectorAll('[role="tab"]'));
+      if (!tabs.length) return;
+      const panels = tabs.map((t) => document.getElementById(t.getAttribute('aria-controls')));
+      if (panels.some((p) => !p)) return;
+
+      materials.classList.add('js-content-tabs');
+      tablist.hidden = false;
+
+      const activate = (idx, focusTab) => {
+        tabs.forEach((t, i) => {
+          const on = i === idx;
+          t.setAttribute('aria-selected', on ? 'true' : 'false');
+          t.tabIndex = on ? 0 : -1;
+          panels[i].classList.toggle('is-active', on);
+        });
+        if (focusTab) tabs[idx].focus();
+      };
+
+      tabs.forEach((tab, i) => {
+        tab.addEventListener('click', () => activate(i, false));
+        tab.addEventListener('keydown', (e) => {
+          let idx = -1;
+          if (e.key === 'ArrowRight' || e.key === 'ArrowDown') idx = (i + 1) % tabs.length;
+          else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') idx = (i - 1 + tabs.length) % tabs.length;
+          else if (e.key === 'Home') idx = 0;
+          else if (e.key === 'End') idx = tabs.length - 1;
+          if (idx < 0) return;
+          e.preventDefault();
+          activate(idx, true);
+        });
+      });
+
+      activate(0, false); // по умолчанию — «Пример кода»
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     hydrateProgressBarsFromData();
     document.querySelectorAll('.btn-favorite').forEach((button) => {
@@ -849,6 +893,7 @@
     initExportButtons();
     initPersonalization();
     initSettingsTabs();
+    initContentTabs();
     initDangerousFormGuard(confirmModal);
     initSubmitOnceGuard();
     initFlashcardShortcuts();
