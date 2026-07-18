@@ -11,7 +11,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`HashiCorp Vault` — централизованный конфиг-сервер вроде Spring Cloud Config: он держит все настройки и секреты приложения в статичных KV-парах; раздаёт их по HTTP при старте и версионирует каждое изменение в общей истории.",
+              "text": "`HashiCorp Vault` — централизованный конфиг-сервер вроде Spring Cloud Config: он держит все настройки и секреты приложения в статичных KV-парах, раздаёт их по HTTP при старте и версионирует каждое изменение в общей истории, как репозиторий конфигурации.",
               "correct": false,
               "sections": {
                 "what_actually": "Vault — хранилище секретов с динамической генерацией и шифрованием, а не VCS для конфигов; историю он ведёт только в KV v2 как версии секретов.",
@@ -23,6 +23,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`HashiCorp Vault` — сервер идентификации вроде Keycloak: аутентифицирует конечных пользователей через логин-форму, выдаёт им OAuth2-токены и хранит их профили, роли и группы для single sign-on между сервисами организации.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Vault аутентифицирует не конечных пользователей, а сервисы, и выдаёт токены для доступа к секретам, а не OAuth2 для входа людей в UI.",
+                "source_of_confusion": "И Keycloak, и Vault выдают токены и работают с identity, поэтому управление секретами путают с single sign-on для пользователей.",
+                "if_it_were_true": "Будь это IdP, у него были бы логин-формы, пользовательские профили и OAuth2-flow, но у Vault — auth-методы для сервисов и secret engines.",
+                "how_it_should_be": "Вход пользователей и SSO закрывают Keycloak или Auth0, а Vault отвечает за секреты, к которым сервисы обращаются по своим токенам."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`HashiCorp Vault` — централизованное хранилище секретов с динамической генерацией учётных данных, шифрованием как сервисом и аудит-логами; приложение получает токен, запрашивает секреты, а Vault выдаёт или генерирует их и автоматически ротирует.",
               "correct": true,
               "sections": {
@@ -34,21 +46,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`HashiCorp Vault` — сервер идентификации вроде Keycloak: аутентифицирует конечных пользователей через логин-форму и выдаёт им OAuth2-токены; профили, роли и группы он хранит для single sign-on между сервисами.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Vault не маршрутизирует трафик и не балансирует нагрузку; он хранит и выдаёт секреты по API, не зная о пользовательских сессиях.",
-                "source_of_confusion": "Слово «vault» ассоциируется с инфраструктурой, и его ошибочно ставят в один ряд с балансировщиками и прокси.",
-                "if_it_were_true": "Будь это балансировщик, у него были бы upstream-пулы и health-чеки бэкендов, но у Vault — secret engines и auth-методы.",
-                "how_it_should_be": "Балансировку делают `nginx`, `HAProxy` или Ingress, а Vault отвечает за централизованное управление секретами."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "`HashiCorp Vault` — локальное хранилище ключей внутри JVM на основе Java `KeyStore`: держит пароли и сертификаты в зашифрованном файле рядом с jar; подгружает их в память приложения при старте.",
+              "text": "`HashiCorp Vault` — локальное хранилище ключей внутри JVM на основе Java `KeyStore`: держит пароли и сертификаты в зашифрованном файле рядом с jar и подгружает их в память приложения при старте из того же артефакта.",
               "correct": false,
               "sections": {
                 "what_actually": "Vault — это внешний сетевой сервис с API и политиками доступа, а не файловый `KeyStore` внутри процесса JVM.",
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно повесить `@EnableVault` на `@SpringBootApplication`: host, port, scheme и `APPROLE` Spring определит сам, без `bootstrap.yml`, starter'а `spring-cloud-starter-vault-config` и `role-id`/`secret-id`.",
+              "text": "Хватает одной аннотации `@EnableVault` на `@SpringBootApplication`: host, port, scheme и метод `APPROLE` Spring выведет сам, без `bootstrap.yml`, стартера `spring-cloud-starter-vault-config` и пары `role-id`/`secret-id`.",
               "correct": false,
               "sections": {
                 "what_actually": "Аннотации `@EnableVault` нет; нужно подключить зависимость и задать host/порт/auth в `bootstrap.yml` или через `AbstractVaultConfiguration`.",
@@ -83,7 +83,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Адрес под `spring.cloud.vault.uri` и `spring.cloud.vault.token` с долгоживущим root-токеном кладут прямо в `application.yml` без `bootstrap.yml`, а `APPROLE` с `role-id`/`secret-id` считают устаревшей опцией.",
+              "text": "Адрес под `spring.cloud.vault.uri` и `spring.cloud.vault.token` с долгоживущим root-токеном кладут прямо в `application.yml` без `bootstrap.yml`, а метод `APPROLE` с парой `role-id`/`secret-id` считают устаревшей опцией прежних версий.",
               "correct": false,
               "sections": {
                 "what_actually": "Для Spring Cloud Vault настройки читаются на этапе bootstrap из `bootstrap.yml` (или `spring.config.import`), а не из обычного `application.yml`.",
@@ -95,18 +95,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Настройка идёт наследованием `AbstractVaultConfiguration` с переопределением `vaultEndpoint()`, `clientAuthentication()` и бином `VaultTemplate`, а property-стиль `spring.cloud.vault.*` в `bootstrap.yml` работает лишь при явной `@Bean`-конфигурации.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Spring Vault настраивается через `bootstrap.yml`/`application.yml` и Java-конфиг (`AbstractVaultConfiguration`); env vars — лишь один из источников значений.",
-                "source_of_confusion": "Секреты часто прокидывают через env, поэтому ошибочно считают env единственным способом настройки.",
-                "if_it_were_true": "Будь env единственным вариантом, нельзя было бы переопределить `VaultEndpoint` в Java-конфиге, но это штатная возможность.",
-                "how_it_should_be": "Используют YAML и/или Java-конфигурацию, а env vars подставляют как значения плейсхолдеров вроде `${VAULT_ROLE_ID}`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Подключают `spring-vault-core` (или starter `spring-cloud-starter-vault-config`), задают в `bootstrap.yml` host/port/scheme и метод аутентификации (например `APPROLE` с `role-id`/`secret-id`), либо настраивают программно через `AbstractVaultConfiguration`.",
               "correct": true,
               "sections": {
@@ -115,6 +103,18 @@
                 "when_to_apply": "Применяют при первой интеграции с Vault: starter — для типового Boot-приложения, `AbstractVaultConfiguration` — когда нужен полный контроль над `VaultEndpoint` и `ClientAuthentication`.",
                 "edge_cases": "Настройки Vault в Spring Cloud читаются на этапе bootstrap (ДО `application.yml`), поэтому их кладут именно в `bootstrap.yml`, иначе секреты не успеют загрузиться.",
                 "related": "[[spring-vault-interview#Q1]] зачем нужен Vault; [[spring-vault-interview#Q7]] методы аутентификации; [[spring-vault-interview#Q9]] интеграция с PropertySource."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Настройку выполняют наследованием `AbstractVaultConfiguration` с переопределением `vaultEndpoint()` и `clientAuthentication()`, а property-стиль `spring.cloud.vault.*` в `bootstrap.yml` требует ручной `@Bean`-конфигурации, без которой стартером не подхватывается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Property-стиль `spring.cloud.vault.*` работает через auto-configuration стартера сам по себе; `AbstractVaultConfiguration` нужен, когда требуется программный контроль над подключением.",
+                "source_of_confusion": "Java-конфиг выглядит «основным» способом, поэтому property-настройку ошибочно считают вторичной и требующей ручных бинов.",
+                "if_it_were_true": "Требуй property-стиль ручного `@Bean`, простейшая настройка через `bootstrap.yml` без Java-кода не поднимала бы Vault, но она работает.",
+                "how_it_should_be": "Property-стиля в `bootstrap.yml` хватает для типовой настройки; `AbstractVaultConfiguration` берут для тонкого программного контроля."
               }
             }
           ]
@@ -144,7 +144,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Через `@Value(\"${db.password}\")` и `@VaultPropertySource` доступны лишь значения, заранее продублированные в локальный `application.properties`, а реальный HTTP-запрос к Vault выполняет метод `VaultTemplate.read(...)`.",
+              "text": "Через `@Value(\"${db.password}\")` и `@VaultPropertySource` читаются значения, заранее продублированные в локальный `application.properties`, а реальный HTTP-запрос к Vault выполняет уже метод `VaultTemplate.read(...)`.",
               "correct": false,
               "sections": {
                 "what_actually": "Кроме `VaultTemplate` есть `@Value` (через Spring Cloud Vault) и `@VaultPropertySource`, которые маппят секреты Vault в Spring-проперти.",
@@ -168,7 +168,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Аннотация `@VaultPropertySource(\"secret/myapp/config\")` кладёт секреты в отдельный бин `VaultTemplate`, а не в `Environment`, поэтому её ключи не резолвятся через `${...}`-плейсхолдеры в бинах.",
+              "text": "Аннотация `@VaultPropertySource(\"secret/myapp/config\")` кладёт секреты в отдельный бин `VaultTemplate`, а не в `Environment`, поэтому её ключи не резолвятся через `${...}`-плейсхолдеры в других бинах приложения.",
               "correct": false,
               "sections": {
                 "what_actually": "`@VaultPropertySource` именно читает секреты из указанного пути и добавляет их как PropertySource; запись секретов — это `VaultTemplate.write(...)`.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Dynamic Secrets` действуют, пока их не отозвать явным вызовом по `leaseId`; `leaseDuration` в ответе `vaultTemplate.read(\"database/creds/my-role\")` — справочная метка, а не срок автоматического отзыва creds.",
+              "text": "`Dynamic Secrets` действуют, пока их не отозвать явным вызовом по `leaseId`; `leaseDuration` в ответе `vaultTemplate.read(\"database/creds/my-role\")` — справочная метка, а не срок автоматического отзыва выданных creds сервером.",
               "correct": false,
               "sections": {
                 "what_actually": "Ключевая черта dynamic secrets — ограниченный TTL и автоматический revoke; именно конечное время жизни снижает риск утечки.",
@@ -215,7 +215,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Dynamic Secrets` — учётные данные, которые Vault генерирует on-demand с ограниченным TTL и автоматически отзывает после истечения; в Spring их читают через `vaultTemplate.read(\"database/creds/my-role\")`, получая уникальные username/password и `leaseId`/`leaseDuration`.",
+              "text": "`Dynamic Secrets` — учётные данные, которые Vault генерирует on-demand с ограниченным TTL и автоматически отзывает после истечения; в Spring их читают через `vaultTemplate.read(\"database/creds/my-role\")`, получая уникальные username/password и `leaseId`.",
               "correct": true,
               "sections": {
                 "explanation": "Вместо статичного пароля Vault создаёт временного пользователя в БД по `creation_statements` роли и сам удаляет его по истечении `default_ttl`, поэтому утёкшие creds быстро становятся бесполезны.",
@@ -251,7 +251,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`SecretLeaseContainer` — это in-memory кэш секретов: он держит значения по пути в `Map` и отдаёт их через `getSecret(path)`, ходя в Vault лишь при первом чтении. Продление TTL остаётся за сервером.",
+              "text": "`SecretLeaseContainer` — это in-memory кэш секретов: он держит значения по пути в `Map` и отдаёт их через `getSecret(path)`, обращаясь к Vault при первом чтении и кэшируя ответ, а продление TTL и ротацию lease оставляет на стороне сервера.",
               "correct": false,
               "sections": {
                 "what_actually": "`SecretLeaseContainer` — Spring-бин для управления lease секретов, а не Docker-контейнер; dev-сервер Vault поднимают через Testcontainers `VaultContainer`.",
@@ -263,19 +263,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`SecretLeaseContainer` — компонент Spring Vault, который управляет lease (арендой) секретов: автоматически продлевает их до истечения TTL и ротирует. Секрет регистрируют через `addRequestedSecret(RequestedSecret.rotating(path))`, а на получение новых creds подписываются через `addLeaseListener(...)`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Dynamic secrets имеют конечный TTL; без продления они истекут и приложение упадёт. Контейнер на `TaskScheduler` следит за lease и обновляет/ротирует их заранее.",
-                "example": "`container.setExpiryThreshold(Duration.ofMinutes(1))` заставит продлевать lease за минуту до истечения, а `addRequestedSecret(RequestedSecret.rotating(\"database/creds/my-role\"))` + `addLeaseListener(cb)` переконфигурируют DataSource при каждой ротации.",
-                "when_to_apply": "Нужен для долгоживущих приложений с dynamic secrets (БД-доступы, облачные ключи), где creds надо держать валидными без рестарта и ручного продления.",
-                "edge_cases": "Если lease не продлевается или истёк `max_ttl`, renew уже невозможен — контейнер выполнит rotation и через callback придут полностью новые creds, которые нужно применить.",
-                "related": "[[spring-vault-interview#Q4]] dynamic secrets и их TTL; [[spring-vault-interview#Q11]] ротация секретов вручную через Scheduling; [[spring-vault-interview#Q1]] базовая роль Vault."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`SecretLeaseContainer` шифрует данные приложения симметричным ключом, выступая тонким клиентом `Transit Engine`, а секреты регистрируют через `opsForTransit()` и реагируют на ротацию ключа слушателем. Расшифровку он делает прозрачно при чтении.",
               "correct": false,
               "sections": {
@@ -283,6 +270,19 @@
                 "source_of_confusion": "И lease-контейнер, и Transit относятся к Vault, поэтому их функции иногда смешивают.",
                 "if_it_were_true": "Будь это Transit-клиент, у него были бы методы `encrypt`/`decrypt`, но его API — `addRequestedSecret(RequestedSecret.renewable(...))`/`RequestedSecret.rotating(...)` + `addLeaseListener`.",
                 "how_it_should_be": "Для шифрования используют `vaultTemplate.opsForTransit()`, а `SecretLeaseContainer` — для продления и ротации lease."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`SecretLeaseContainer` — компонент Spring Vault для управления lease (арендой) секретов: продлевает их до истечения TTL и ротирует. Секрет регистрируют через `addRequestedSecret(RequestedSecret.rotating(path))`, а на новые creds подписываются через `addLeaseListener(...)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Dynamic secrets имеют конечный TTL; без продления они истекут и приложение упадёт. Контейнер на `TaskScheduler` следит за lease и обновляет/ротирует их заранее.",
+                "example": "`container.setExpiryThreshold(Duration.ofMinutes(1))` заставит продлевать lease за минуту до истечения, а `addRequestedSecret(RequestedSecret.rotating(\"database/creds/my-role\"))` + `addLeaseListener(cb)` переконфигурируют DataSource при каждой ротации.",
+                "when_to_apply": "Нужен для долгоживущих приложений с dynamic secrets (БД-доступы, облачные ключи), где creds надо держать валидными без рестарта и ручного продления.",
+                "edge_cases": "Если lease не продлевается или истёк `max_ttl`, renew уже невозможен — контейнер выполнит rotation и через callback придут полностью новые creds, которые нужно применить.",
+                "related": "[[spring-vault-interview#Q4]] dynamic secrets и их TTL; [[spring-vault-interview#Q11]] ротация секретов вручную через Scheduling; [[spring-vault-interview#Q1]] базовая роль Vault."
               }
             },
             {
@@ -323,7 +323,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Transit Engine` при вызове `opsForTransit().encrypt(\"my-key\", ...)` возвращает приложению сам симметричный ключ в поле `plaintext`; дальше оно шифрует нужные данные `Plaintext.of(...)` уже локально своими силами.",
+              "text": "`Transit Engine` при вызове `opsForTransit().encrypt(\"my-key\", ...)` возвращает приложению сам симметричный ключ в поле `plaintext`; дальше оно шифрует нужные данные `Plaintext.of(...)` уже локально своими силами на стороне клиента.",
               "correct": false,
               "sections": {
                 "what_actually": "Главная идея Transit — ключ никогда не покидает Vault; приложение шлёт данные и получает результат, не видя ключа.",
@@ -335,7 +335,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Transit Engine` после `rotate(\"my-key\")` перестаёт расшифровывать прежние шифротексты вида `vault:v1:...` через `decrypt(...)`; движок держит лишь одну актуальную версию ключа, а прежнюю сразу отбрасывает.",
+              "text": "`Transit Engine` после `rotate(\"my-key\")` перестаёт расшифровывать прежние шифротексты вида `vault:v1:...` через `decrypt(...)`: движок держит одну актуальную версию ключа и сразу отбрасывает предыдущую при каждой ротации.",
               "correct": false,
               "sections": {
                 "what_actually": "Ротация лишь добавляет новую версию ключа; старые `vault:v1:...` остаются расшифровываемыми, потому что версия зашита в шифротекст.",
@@ -347,7 +347,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Transit Engine` шифрует и расшифровывает данные, не отдавая ключи приложению: через `vaultTemplate.opsForTransit().encrypt(\"my-key\", Plaintext.of(...))` получают шифротекст вида `vault:v1:...`, а `decrypt(...)` возвращает исходный текст; ключи живут и ротируются в Vault.",
+              "text": "`Transit Engine` шифрует и расшифровывает данные, не отдавая ключи приложению: через `opsForTransit().encrypt(\"my-key\", Plaintext.of(...))` получают шифротекст вида `vault:v1:...`, а `decrypt(...)` возвращает исходный текст; ключи ротируются внутри Vault.",
               "correct": true,
               "sections": {
                 "explanation": "Приложение никогда не видит сам ключ — оно лишь шлёт данные в Vault и получает результат. Версия ключа (`v1`, `v2`) закодирована в шифротексте, поэтому Vault знает, чем расшифровывать.",
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Несколько методов под разные среды: `TOKEN` (dev, статичный токен), `APPROLE` (production: Role ID + Secret ID), `KUBERNETES` (Service Account JWT), `AWS` (IAM/EC2 identity), `GCP`, `TLS` (клиентский сертификат) и `LDAP/AD`; для prod-микросервисов рекомендуют `APPROLE`.",
+              "text": "Несколько методов под разные среды: `TOKEN` (dev, статичный токен), `APPROLE` (Role ID + Secret ID), `KUBERNETES` (Service Account JWT), `AWS` (IAM/EC2 identity), `GCP` и `TLS` (клиентский сертификат `CERT`); для prod рекомендуют `APPROLE`.",
               "correct": true,
               "sections": {
                 "explanation": "Метод выбирают по среде запуска: где есть нативный identity (K8s, AWS, GCP) — берут его; в CI/CD и on-prem без нативного identity — `APPROLE`; `TOKEN` оставляют для локальной разработки.",
@@ -384,7 +384,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Spring Vault опирается прежде всего на `TOKEN`-аутентификацию; методы `APPROLE`, `KUBERNETES` и `AWS` — лишь обёртки, которые на старте разворачиваются в статичный токен из `spring.cloud.vault.token`.",
+              "text": "Spring Vault опирается прежде всего на `TOKEN`-аутентификацию; методы `APPROLE`, `KUBERNETES` и `AWS` — это обёртки, которые на старте всё равно разворачиваются в один статичный токен из `spring.cloud.vault.token`.",
               "correct": false,
               "sections": {
                 "what_actually": "Кроме `TOKEN` есть `APPROLE`, `KUBERNETES`, `AWS`, `GCP`, `TLS`, `LDAP/AD`; статичный токен — лишь dev-вариант, не рекомендованный для prod.",
@@ -396,7 +396,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для production берут `TOKEN` с длинным TTL через `spring.cloud.vault.token`; метод `APPROLE` с парой `Role ID`/`Secret ID` и `KUBERNETES` оставляют лишь для локальных тестов и CI.",
+              "text": "Для production берут `TOKEN` с длинным TTL через `spring.cloud.vault.token`, а метод `APPROLE` с парой `Role ID`/`Secret ID` и `KUBERNETES` с Service Account JWT оставляют для локальных тестов и CI-пайплайнов.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `APPROLE` рекомендован для production-микросервисов, а статичный `TOKEN` — это dev-вариант, который сложно ротировать.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Метод `KUBERNETES` ждёт, что `Service Account` JWT и путь `spring.cloud.vault.kubernetes.role` впишут вручную в `application.yml`; сам токен придётся заново класть в конфиг при каждом пересоздании пода.",
+              "text": "Метод `KUBERNETES` ждёт, что `Service Account` JWT и путь `spring.cloud.vault.kubernetes.role` впишут вручную в `application.yml`; сам токен придётся заново класть в конфиг при каждом пересоздании пода в кластере.",
               "correct": false,
               "sections": {
                 "what_actually": "`KUBERNETES`-метод использует автоматически монтируемый Service Account JWT из файла токена пода, без статичных паролей в конфиге.",
@@ -431,31 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Vault PKI` хранит выпущенные где-то ещё сертификаты как файлы и отдаёт их по пути `pki/cert/serial` через `opsForPki().read(...)` из `KV`-стораджа.",
-              "correct": false,
-              "sections": {
-                "what_actually": "PKI — это центр сертификации: он сам выпускает (генерирует) cert и private key по запросу, а не хранит готовые файлы как KV.",
-                "source_of_confusion": "И PKI, и KV отдают данные по пути, поэтому выпуск сертификата путают с простым чтением хранимого файла.",
-                "if_it_were_true": "Будь это просто хранилище файлов, не было бы динамического `issueCertificate` с TTL и генерацией ключа.",
-                "how_it_should_be": "PKI генерирует сертификаты on-demand с заданным TTL; для хранения произвольных файлов используют KV."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`Vault PKI` рассчитан на долгоживущие сертификаты: параметр `ttl` в `VaultCertificateRequest` задаёт срок от года и выше, короткий TTL он игнорирует.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Основная ценность PKI — именно короткоживущие cert (часы/дни) с автоперевыпуском, а не годовые сертификаты.",
-                "source_of_confusion": "Привычка к годовым сертификатам от внешних CA создаёт ожидание тех же сроков и у Vault.",
-                "if_it_were_true": "Будь минимальный срок год, исчезло бы преимущество — снижение окна компрометации за счёт коротких cert.",
-                "how_it_should_be": "PKI задаёт TTL в запросе (`ttl(Duration.ofHours(24))`), что и позволяет выпускать короткоживущие сертификаты."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`Vault PKI` выпускает короткоживущие сертификаты по запросу: через `vaultTemplate.opsForPki().issueCertificate(\"pki/issue/myapp-role\", request)` с `VaultCertificateRequest` (commonName, altNames, ttl) приложение получает `certificate`, `private_key`, `issuing_ca` и `serial_number`.",
+              "text": "`Vault PKI` выпускает короткоживущие сертификаты по запросу: через `opsForPki().issueCertificate(\"pki/issue/myapp-role\", request)` с `VaultCertificateRequest` приложение получает `certificate`, `private_key` и `issuing_ca`.",
               "correct": true,
               "sections": {
                 "explanation": "Vault выступает удостоверяющим центром: вместо годовых сертификатов от DevOps приложение само просит cert на часы/дни и обновляет его без ручного участия.",
@@ -466,9 +442,33 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "`Vault PKI` хранит выпущенные где-то ещё сертификаты как готовые файлы и отдаёт их по пути `pki/cert/serial` через `opsForPki().read(...)`, читая их из `KV`-стораджа так же, как обычные секреты приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "PKI — это центр сертификации: он сам выпускает (генерирует) cert и private key по запросу, а не хранит готовые файлы как KV.",
+                "source_of_confusion": "И PKI, и KV отдают данные по пути, поэтому выпуск сертификата путают с простым чтением хранимого файла.",
+                "if_it_were_true": "Будь это просто хранилище файлов, не было бы динамического `issueCertificate` с TTL и генерацией ключа.",
+                "how_it_should_be": "PKI генерирует сертификаты on-demand с заданным TTL; для хранения произвольных файлов используют KV."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Vault PKI` рассчитан на долгоживущие сертификаты: параметр `ttl` в `VaultCertificateRequest` задаёт срок от года и выше, а короткий TTL в часах движок молча игнорирует и всё равно выпускает cert на год.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Основная ценность PKI — именно короткоживущие cert (часы/дни) с автоперевыпуском, а не годовые сертификаты.",
+                "source_of_confusion": "Привычка к годовым сертификатам от внешних CA создаёт ожидание тех же сроков и у Vault.",
+                "if_it_were_true": "Будь минимальный срок год, исчезло бы преимущество — снижение окна компрометации за счёт коротких cert.",
+                "how_it_should_be": "PKI задаёт TTL в запросе (`ttl(Duration.ofHours(24))`), что и позволяет выпускать короткоживущие сертификаты."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "`issueCertificate(\"pki/issue/myapp-role\", request)` возвращает лишь `certificate` и `issuing_ca`, тогда как `private_key` приложение генерирует само и передаёт в `VaultCertificateRequest` как CSR.",
+              "text": "`issueCertificate(\"pki/issue/myapp-role\", request)` возвращает в ответе `certificate` и `issuing_ca`, тогда как `private_key` приложение генерирует само и передаёт в `VaultCertificateRequest` заранее подготовленный CSR.",
               "correct": false,
               "sections": {
                 "what_actually": "Vault PKI возвращает в ответе `certificate`, `private_key`, `issuing_ca` и `serial_number` — приватный ключ генерируется на стороне Vault.",
@@ -491,7 +491,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring Cloud Vault` регистрирует PropertySource из путей `secret/myapp` и `secret/application` во время `refresh()` контекста, уже после создания всех бинов приложения, поэтому конструкторная `@Value`-инъекция и `@ConfigurationProperties` этих значений не видят.",
+              "text": "`Spring Cloud Vault` регистрирует PropertySource из путей `secret/myapp` и `secret/application` во время `refresh()` контекста, уже после создания всех бинов приложения, поэтому конструкторная `@Value`-инъекция и `@ConfigurationProperties` этих значений уже не видят при инициализации бинов на старте.",
               "correct": false,
               "sections": {
                 "what_actually": "Секреты Vault читаются на этапе bootstrap — ДО `application.yml` и до инициализации обычных бинов, иначе `@Value` не получил бы значения вовремя.",
@@ -503,20 +503,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Spring Cloud Vault` на этапе bootstrap превращает секреты Vault в PropertySource: по `application-name`, профилям и `default-context` он читает несколько путей (например `secret/myapp/production`, `secret/myapp`, `secret/application`), где более специфичные переопределяют менее специфичные.",
-              "correct": true,
-              "sections": {
-                "explanation": "Секреты становятся обычными Spring-проперти, доступными через `@Value`/`Environment`; порядок путей задаёт приоритет — profile-specific важнее application-specific, тот важнее default-context.",
-                "example": "Из `secret/myapp/production` и `secret/myapp` собираются проперти; `@Value(\"${external.api.key}\")` в `@RefreshScope`-бине после `POST /actuator/refresh` перечитает значение без рестарта.",
-                "when_to_apply": "Применяют, когда нужно подавать секреты как конфигурацию приложения и переопределять их по профилям/окружениям без жёсткого кода путей.",
-                "edge_cases": "`@Value` без `@RefreshScope` не обновится после изменения секрета в Vault: значение зафиксируется на старте, обновление требует `@RefreshScope` + `/actuator/refresh`.",
-                "related": "[[spring-vault-interview#Q3]] способы чтения секретов; [[spring-vault-interview#Q2]] настройка bootstrap.yml; [[spring-vault-interview#Q13]] различия KV v1 и KV v2."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`secret/application` при нескольких путях получает больший приоритет над специфичными `secret/myapp/production` и `secret/myapp`, из-за чего собранные по `application-name` и `default-context` значения перекрываются более общими дефолтными.",
+              "text": "`secret/application` при нескольких путях получает больший приоритет над специфичными `secret/myapp/production` и `secret/myapp`, из-за чего собранные по `application-name` и `default-context` значения перекрываются более общими дефолтными значениями из общего контекста.",
               "correct": false,
               "sections": {
                 "what_actually": "Приоритет обратный: более специфичные пути (profile- и application-specific) переопределяют общий default-context `secret/application`.",
@@ -526,15 +513,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`SecretLeaseContainer` из `Spring Cloud Vault` периодически перечитывает путь `secret/` и обновляет `@Value`-поля обычных бинов без `@RefreshScope`, поэтому секрет достаточно изменить в Vault без рестарта приложения.",
+              "order": 2,
+              "label": "C",
+              "text": "`SecretLeaseContainer` из `Spring Cloud Vault` периодически перечитывает путь `secret/` и обновляет `@Value`-поля обычных бинов без `@RefreshScope`, поэтому изменения секрета в Vault сразу видны приложению без рестарта и без ручного вызова refresh или actuator-эндпоинта.",
               "correct": false,
               "sections": {
                 "what_actually": "Обычные `@Value`-поля фиксируются на старте; для обновления без рестарта нужен `@RefreshScope` и `POST /actuator/refresh`.",
                 "source_of_confusion": "Раз секрет «живёт» в Vault, кажется, что приложение всегда видит его актуальную версию.",
                 "if_it_were_true": "Будь обновление автоматическим, `@RefreshScope` и эндпоинт `/actuator/refresh` были бы не нужны, но они и решают эту задачу.",
                 "how_it_should_be": "Бины помечают `@RefreshScope`, а после изменения секрета дёргают `/actuator/refresh`, чтобы перечитать значения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Cloud Vault` на этапе bootstrap превращает секреты Vault в PropertySource: по `application-name`, профилям и `default-context` он читает несколько путей (например `secret/myapp/production`, `secret/myapp`, `secret/application`), где более специфичные переопределяют менее специфичные.",
+              "correct": true,
+              "sections": {
+                "explanation": "Секреты становятся обычными Spring-проперти, доступными через `@Value`/`Environment`; порядок путей задаёт приоритет — profile-specific важнее application-specific, тот важнее default-context.",
+                "example": "Из `secret/myapp/production` и `secret/myapp` собираются проперти; `@Value(\"${external.api.key}\")` в `@RefreshScope`-бине после `POST /actuator/refresh` перечитает значение без рестарта.",
+                "when_to_apply": "Применяют, когда нужно подавать секреты как конфигурацию приложения и переопределять их по профилям/окружениям без жёсткого кода путей.",
+                "edge_cases": "`@Value` без `@RefreshScope` не обновится после изменения секрета в Vault: значение зафиксируется на старте, обновление требует `@RefreshScope` + `/actuator/refresh`.",
+                "related": "[[spring-vault-interview#Q3]] способы чтения секретов; [[spring-vault-interview#Q2]] настройка bootstrap.yml; [[spring-vault-interview#Q13]] различия KV v1 и KV v2."
               }
             }
           ]
@@ -551,7 +551,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Интеграционно `VaultContainer` из Testcontainers через `withVaultToken` и `withSecretInVault` поднимает KV `secret/`; методы `APPROLE`, `database/creds/` и `pki/issue/` в dev-режиме гоняют на реальном Vault.",
+              "text": "Двумя уровнями: интеграционно — поднять реальный Vault через Testcontainers `VaultContainer` (`withVaultToken`, `withSecretInVault`) и пробросить host/port в `@DynamicPropertySource`; юнит — замокать `VaultTemplate` через Mockito и застабить `read(...)` нужным ответом.",
+              "correct": true,
+              "sections": {
+                "explanation": "Интеграционный тест проверяет реальный путь через Vault API, а юнит-тест изолирует бизнес-логику сервиса от сети, подменяя ответы `VaultTemplate` моками.",
+                "example": "`new VaultContainer<>(\"hashicorp/vault:latest\").withVaultToken(\"test-token\").withSecretInVault(\"secret/myapp/db\", \"password=test-password\")` поднимет Vault, а `@DynamicPropertySource` подставит его host/port.",
+                "when_to_apply": "Интеграционный подход берут для проверки конфигурации и аутентификации Vault, юнит-моки — для быстрой проверки сервисов чтения секретов без Docker.",
+                "edge_cases": "Testcontainers требуют запущенного Docker daemon; мок `VaultTemplate` его не требует, но и не проверяет реальную интеграцию, поэтому уровни дополняют друг друга.",
+                "related": "[[spring-vault-interview#Q3]] чтение секретов через VaultTemplate; [[spring-vault-interview#Q2]] настройка подключения; [[spring-vault-interview#Q14]] поведение при недоступности Vault."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Интеграционно `VaultContainer` из Testcontainers через `withVaultToken` и `withSecretInVault` поднимает KV `secret/`; методы `APPROLE`, `database/creds/` и `pki/issue/` в dev-режиме гоняют на реальном боевом Vault прямо из тестов.",
               "correct": false,
               "sections": {
                 "what_actually": "Vault тестируют через Testcontainers `VaultContainer` (интеграция) и моки `VaultTemplate` (юнит); прод для тестов не нужен и опасен.",
@@ -561,9 +574,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Юнит-тесты лучше гонять против `VaultContainer`: замоканный `VaultTemplate` с застабленным `read(...)` и `VaultResponseSupport` пропускает десериализацию KV `data/` через `ObjectMapper`; маппинг остаётся непроверенным.",
+              "order": 2,
+              "label": "C",
+              "text": "Юнит-тесты лучше гонять против `VaultContainer`: замоканный `VaultTemplate` с застабленным `read(...)` и `VaultResponseSupport` пропускает десериализацию KV `data/` через `ObjectMapper`; маппинг остаётся полностью непроверенным.",
               "correct": false,
               "sections": {
                 "what_actually": "`VaultTemplate` — обычный бин, который штатно мокается Mockito: `@Mock VaultTemplate` + `when(template.read(...))`; Docker для юнит-теста не нужен.",
@@ -573,8 +586,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "Аннотация `@DynamicPropertySource` работает как `@TestPropertySource`: она подставляет статические значения из `application-test.yml`; порт `VaultContainer` и `withVaultToken` через неё в `spring.cloud.vault.uri` не пробросить.",
               "correct": false,
               "sections": {
@@ -582,19 +595,6 @@
                 "source_of_confusion": "Аннотация задаёт проперти, поэтому кажется, что туда вписывают любой статичный адрес.",
                 "if_it_were_true": "Будь это хардкод прод-адреса, тесты ходили бы в боевой Vault, что и хотят избежать через эфемерный контейнер.",
                 "how_it_should_be": "В `@DynamicPropertySource` подставляют `vault::getHost`/`vault::getFirstMappedPort` контейнера, чтобы тест шёл в него."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Двумя уровнями: интеграционно — поднять реальный Vault через Testcontainers `VaultContainer` (`withVaultToken`, `withSecretInVault`) и пробросить host/port в `@DynamicPropertySource`; юнит — замокать `VaultTemplate` через Mockito и застабить `read(...)` нужным `VaultResponseSupport`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Интеграционный тест проверяет реальный путь через Vault API, а юнит-тест изолирует бизнес-логику сервиса от сети, подменяя ответы `VaultTemplate` моками.",
-                "example": "`new VaultContainer<>(\"hashicorp/vault:latest\").withVaultToken(\"test-token\").withSecretInVault(\"secret/myapp/db\", \"password=test-password\")` поднимет Vault, а `@DynamicPropertySource` подставит его host/port.",
-                "when_to_apply": "Интеграционный подход берут для проверки конфигурации и аутентификации Vault, юнит-моки — для быстрой проверки сервисов чтения секретов без Docker.",
-                "edge_cases": "Testcontainers требуют запущенного Docker daemon; мок `VaultTemplate` его не требует, но и не проверяет реальную интеграцию, поэтому уровни дополняют друг друга.",
-                "related": "[[spring-vault-interview#Q3]] чтение секретов через VaultTemplate; [[spring-vault-interview#Q2]] настройка подключения; [[spring-vault-interview#Q14]] поведение при недоступности Vault."
               }
             }
           ]
@@ -611,6 +611,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Стоит поменять creds в `database/creds/my-role` — и `HikariCP` сам подхватит новый пароль даже для уже открытых соединений, ведь `HikariDataSource` хранит его в `setUsername`/`setPassword` и переиспользует при каждом `getConnection()` из пула соединений.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Пул не обновляет creds существующих соединений сам: нужно явно вызвать `setUsername`/`setPassword` и `softEvictConnections()`.",
+                "source_of_confusion": "Раз dynamic secrets «ротируются автоматически» в Vault, кажется, что и пул синхронизируется без кода.",
+                "if_it_were_true": "Будь это автоматически, не понадобились бы ни `@Scheduled`, ни `softEvictConnections`, но без них соединения протухнут.",
+                "how_it_should_be": "В коде периодически читают новые creds и применяют их к пулу с мягким вытеснением старых соединений."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Через периодический запрос свежих creds и мягкое обновление пула: `@Scheduled(fixedDelay = ...)` читает `database/creds/my-role`, затем обновляет `HikariDataSource` (`setUsername`/`setPassword`) и вызывает `softEvictConnections()`, чтобы новые соединения брали новые creds без жёсткого обрыва.",
               "correct": true,
               "sections": {
@@ -619,18 +631,6 @@
                 "when_to_apply": "Применяют для dynamic-creds БД/брокеров в долгоживущих сервисах, где надо менять учётки без даунтайма и без рестарта пода.",
                 "edge_cases": "`evictConnection`/жёсткое закрытие во время активных запросов рвёт соединения; поэтому берут `softEvictConnections`, а ошибки ротации логируют и алертят, не роняя приложение.",
                 "related": "[[spring-vault-interview#Q4]] dynamic secrets и их TTL; [[spring-vault-interview#Q5]] SecretLeaseContainer как альтернатива ручному Scheduling; [[spring-vault-interview#Q15]] best practice graceful rotation."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Достаточно поменять creds в `database/creds/my-role` — `HikariCP` сам подхватит новый пароль и для уже открытых соединений, ведь `HikariDataSource` хранит его в `setUsername`/`setPassword` и переиспользует при каждом новом `getConnection()` из пула.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Пул не обновляет creds существующих соединений сам: нужно явно вызвать `setUsername`/`setPassword` и `softEvictConnections()`.",
-                "source_of_confusion": "Раз dynamic secrets «ротируются автоматически» в Vault, кажется, что и пул синхронизируется без кода.",
-                "if_it_were_true": "Будь это автоматически, не понадобились бы ни `@Scheduled`, ни `softEvictConnections`, но без них соединения протухнут.",
-                "how_it_should_be": "В коде периодически читают новые creds и применяют их к пулу с мягким вытеснением старых соединений."
               }
             },
             {
@@ -648,7 +648,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Ротацию `database/creds/my-role` из кода приложения самому не сделать — этим по расписанию занимается администратор Vault, вручную вызывая `vault lease renew` и `vault read`, а `@Scheduled`, `softEvictConnections()` и `HikariDataSource` для этого не нужны.",
+              "text": "Ротацию `database/creds/my-role` из кода приложения самому не сделать — этим по расписанию занимается администратор Vault, вручную вызывая `vault lease renew` и `vault read`, а `@Scheduled`, `softEvictConnections()` и `HikariDataSource` для этого не нужны и в применении новых creds не участвуют.",
               "correct": false,
               "sections": {
                 "what_actually": "Ротацию в приложении автоматизируют через `@Scheduled` + обновление пула или через `SecretLeaseContainer`; ручной CLI — не единственный путь.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Vault Agent` — библиотека внутри `Spring Boot`, которую добавляют зависимостью и дёргают из кода приложения; она читает секреты через `VaultTemplate` и раздаёт их бинам, так что отдельный процесс рядом с подом не нужен.",
+              "text": "`Vault Agent` — библиотека внутри `Spring Boot`, которую добавляют зависимостью и дёргают из кода приложения; она читает секреты через `VaultTemplate` и раздаёт их бинам, так что отдельный процесс-sidecar рядом с подом при этом не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "Vault Agent — отдельный sidecar-процесс рядом с приложением, а не Java-библиотека внутри JVM; код приложения о нём не знает.",
@@ -683,18 +683,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Vault Agent` хорош тем, что приложение через агент начинает напрямую обращаться к Vault API и клиенту `VaultTemplate`, тесно завязываясь на `Vault SDK`; отрендеренные в общий том файлы с секретами оно при таком подходе не задействует.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: агент развязывает приложение и Vault — приложение читает обычный файл и вовсе не знает о Vault API.",
-                "source_of_confusion": "Раз агент про Vault, кажется, что он усиливает связь приложения с Vault, а не ослабляет её.",
-                "if_it_were_true": "Будь приложение завязано на Vault SDK через агент, исчез бы смысл sidecar — прозрачность для приложения.",
-                "how_it_should_be": "Агент изолирует приложение от Vault: оно работает с файлами конфигурации, не подключая Vault-клиент."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "`Vault Agent` — sidecar-процесс рядом с приложением: он аутентифицируется в Vault, получает секреты, рендерит их в файлы по шаблонам и автоматически обновляет файлы при ротации; в Kubernetes его включают аннотациями `vault.hashicorp.com/agent-inject` и `agent-inject-template-*`.",
               "correct": true,
               "sections": {
@@ -706,9 +694,21 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "`Vault Agent` хорош тем, что приложение через агент начинает напрямую обращаться к Vault API и клиенту `VaultTemplate`, тесно завязываясь на `Vault SDK` и его версии; отрендеренные в общий том файлы с секретами оно при таком подходе не задействует и читает всё из Vault по сети само.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: агент развязывает приложение и Vault — приложение читает обычный файл и вовсе не знает о Vault API.",
+                "source_of_confusion": "Раз агент про Vault, кажется, что он усиливает связь приложения с Vault, а не ослабляет её.",
+                "if_it_were_true": "Будь приложение завязано на Vault SDK через агент, исчез бы смысл sidecar — прозрачность для приложения.",
+                "how_it_should_be": "Агент изолирует приложение от Vault: оно работает с файлами конфигурации, не подключая Vault-клиент."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "`Vault Agent` получает секреты один раз при старте пода и пишет их в файл; при ротации в Vault эти файлы остаются со старыми значениями, пока `agent-inject-template-*` не пересоберут через `kubectl rollout restart`.",
+              "text": "`Vault Agent` получает секреты один раз при старте пода и пишет их в файл; при ротации в Vault эти файлы остаются со старыми значениями, пока `agent-inject-template-*` не пересоберут через ручной `kubectl rollout restart` всего деплоймента.",
               "correct": false,
               "sections": {
                 "what_actually": "Агент отслеживает изменения и автоматически перерендеривает файлы при ротации секретов, а не только на старте.",
@@ -731,19 +731,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`KV v2` добавляет версионирование (хранит последние N версий), мягкое удаление с восстановлением и metadata (creation time, версия); путь содержит `data/` (`secret/data/myapp`), тогда как `KV v1` версий и soft-delete не имеет и хранит секрет по `secret/myapp`.",
-              "correct": true,
-              "sections": {
-                "explanation": "v1 — простой key/value без истории: запись затирает старое значение. v2 версионирует записи, позволяет откатиться и помечает удаление как recoverable, добавляя `data/` в путь.",
-                "example": "В Spring Cloud Vault `kv.version: 2` включает v2; секрет тогда лежит в `secret/data/myapp/config`, и стартер сам добавляет префикс `data/` при чтении.",
-                "when_to_apply": "v2 берут, когда нужны история версий, безопасное восстановление и метаданные секретов; v1 — для простых случаев или legacy без версионирования.",
-                "edge_cases": "Прямое обращение к v2-пути без `data/` приведёт к ошибке: структура путей у движков разная, и смешивать `secret/myapp` с `secret/data/myapp` нельзя.",
-                "related": "[[spring-vault-interview#Q3]] чтение секретов из KV; [[spring-vault-interview#Q9]] секреты как PropertySource; [[spring-vault-interview#Q2]] настройка backend и версии."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`KV v1` тоже ведёт историю версий и мягкое удаление секретов через путь `secret/metadata/`; `KV v2` при этом облегчённый движок, который перезаписывает секрет прямо по `secret/myapp` и не хранит ни предыдущих версий, ни metadata.",
               "correct": false,
               "sections": {
@@ -754,9 +741,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`KV v2` в этой версии читает и пишет по тому же пути `secret/myapp`, что и `KV v1`; префикс `data/` движок использует лишь внутри, а в реальных API-путях клиента `VaultTemplate` он не фигурирует.",
+              "order": 1,
+              "label": "B",
+              "text": "`KV v2` в этой версии читает и пишет по тому же пути `secret/myapp`, что и `KV v1`; префикс `data/` остаётся деталью внутреннего хранения, а в реальных API-путях клиента `VaultTemplate` он не фигурирует и указывать его не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "В `KV v2` секреты лежат в подпути `data/`: `secret/data/myapp`; Spring Cloud Vault добавляет этот префикс автоматически.",
@@ -766,15 +753,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`KV v2` отличается в основном встроенным check-and-set при записи через `VaultKeyValueOperations`, который задают флагом `spring.cloud.vault.kv.version`; версионирование и soft-delete есть в обеих версиях и на схему пути `secret/data/` не влияют.",
+              "order": 2,
+              "label": "C",
+              "text": "`KV v2` отличается в основном встроенным check-and-set при записи через `VaultKeyValueOperations`, который задают флагом `spring.cloud.vault.kv.version`; версионирование и soft-delete есть в обеих версиях движка и на схему пути `secret/data/` при чтении никак не влияют.",
               "correct": false,
               "sections": {
                 "what_actually": "Версию KV в Spring Cloud Vault задают явно через `kv.version`; нельзя полагаться на «правильный» дефолт без проверки бэкенда.",
                 "source_of_confusion": "Раз v2 — современный движок, кажется, что стартер использует его по умолчанию во всех версиях.",
                 "if_it_were_true": "Будь дефолт всегда v2, чтение v1-секретов из legacy-бэкенда ломалось бы из-за лишнего `data/`.",
                 "how_it_should_be": "Версию указывают в `spring.cloud.vault.kv.version` согласно реально включённому в Vault движку."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`KV v2` добавляет версионирование (хранит последние N версий), мягкое удаление с восстановлением и metadata (creation time, версия); путь содержит `data/` (`secret/data/myapp`), тогда как `KV v1` версий и soft-delete не имеет и хранит секрет по `secret/myapp`.",
+              "correct": true,
+              "sections": {
+                "explanation": "v1 — простой key/value без истории: запись затирает старое значение. v2 версионирует записи, позволяет откатиться и помечает удаление как recoverable, добавляя `data/` в путь.",
+                "example": "В Spring Cloud Vault `kv.version: 2` включает v2; секрет тогда лежит в `secret/data/myapp/config`, и стартер сам добавляет префикс `data/` при чтении.",
+                "when_to_apply": "v2 берут, когда нужны история версий, безопасное восстановление и метаданные секретов; v1 — для простых случаев или legacy без версионирования.",
+                "edge_cases": "Прямое обращение к v2-пути без `data/` приведёт к ошибке: структура путей у движков разная, и смешивать `secret/myapp` с `secret/data/myapp` нельзя.",
+                "related": "[[spring-vault-interview#Q3]] чтение секретов из KV; [[spring-vault-interview#Q9]] секреты как PropertySource; [[spring-vault-interview#Q2]] настройка backend и версии."
               }
             }
           ]
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "При недоступности Vault некоторые считают, что корректнее сразу прерывать старт через `spring.cloud.vault.fail-fast`, поскольку работа со stale-секретами из кэша опаснее простоя и грозит подключением к БД по уже отозванным `database/creds/` учёткам.",
+              "text": "При недоступности Vault некоторые считают, что корректнее сразу прерывать старт через `spring.cloud.vault.fail-fast`, поскольку работа со stale-секретами из кэша опаснее короткой остановки сервиса и грозит подключением к БД по отозванным `database/creds/` учёткам.",
               "correct": false,
               "sections": {
                 "what_actually": "Рекомендуют graceful degradation: кэш последних секретов + Circuit Breaker, чтобы пережить кратковременную недоступность Vault, а не ронять сервис.",
@@ -816,7 +816,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Достаточно один раз закэшировать секреты из `KV data/` без TTL и отключить `spring.cloud.vault.config.lifecycle`: статические значения в Vault меняются редко, поэтому устаревание кэша не создаёт рисков для работающего приложения.",
+              "text": "Стоит один раз закэшировать секреты из `KV data/` без TTL и отключить `spring.cloud.vault.config.lifecycle`: статические значения в Vault меняются редко, поэтому устаревание кэша не создаёт рисков для работающего приложения.",
               "correct": false,
               "sections": {
                 "what_actually": "У кэша есть риск устаревших/отозванных creds: при ротации в Vault старое значение из кэша станет невалидным, поэтому нужен TTL и мониторинг.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Circuit Breaker сам сохраняет последний ответ Vault в своём состоянии и в fallback-методе возвращает его через `SecretLeaseContainer`, поэтому отдельный кэш или резервный `VaultOperations` заводить не нужно.",
+              "text": "Circuit Breaker сам сохраняет последний ответ Vault в своём состоянии и в fallback-методе возвращает его через `SecretLeaseContainer`, поэтому отдельный кэш или резервный `VaultOperations` в приложении заводить уже не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "Circuit Breaker лишь предотвращает шквал падающих вызовов; запасное значение должен дать кэш или fallback, иначе отдавать нечего.",
@@ -863,19 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В проде удобнее держать один общий `myapp-role` на все среды, использовать единый `APPROLE` `secret-id` без ротации, задавать общий большой TTL для `database/creds/` и `pki/issue/`, чтобы централизовать политики и не плодить конфигурацию по стендам.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Рекомендуется заводить отдельные роли по средам (`prod-myapp-role`, `staging-myapp-role`) с разными политиками для изоляции доступа.",
-                "source_of_confusion": "Единая роль кажется проще в сопровождении, чем несколько ролей с раздельными политиками.",
-                "if_it_were_true": "Будь роль общей, компрометация staging-секрета открывала бы доступ и к prod, чего изоляция и избегает.",
-                "how_it_should_be": "Для каждой среды создают свою роль с минимально необходимыми политиками, разделяя prod и staging."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Не логировать секреты даже на DEBUG, использовать `APPROLE` вместо `TOKEN` в проде, ставить минимальный TTL для dynamic creds, включать аудит-логирование Vault, заводить отдельные роли по средам, делать graceful rotation (`softEvictConnections`) и мониторить доступность через `/actuator/health`.",
+              "text": "Не логировать секреты даже на DEBUG, использовать `APPROLE` вместо `TOKEN` в проде, ставить минимальный TTL для dynamic creds, включать аудит Vault, заводить отдельные роли по средам, делать graceful rotation (`softEvictConnections`) и мониторить доступность через `/actuator/health`.",
               "correct": true,
               "sections": {
                 "explanation": "Эти практики снижают риск утечки и упрощают эксплуатацию: короткий TTL и аудит ограничивают и фиксируют доступ, отдельные роли изолируют среды, graceful rotation исключает даунтайм при смене creds.",
@@ -883,6 +871,18 @@
                 "when_to_apply": "Применяют при выводе Spring Vault в production: для всех security-чувствительных сервисов, где важны аудит, ротация и изоляция сред.",
                 "edge_cases": "Минимальный TTL увеличивает нагрузку на renew/rotation, а аудит-логи сами содержат чувствительные метаданные — их доступ и хранение тоже надо защищать.",
                 "related": "[[spring-vault-interview#Q7]] почему AppRole, а не TOKEN; [[spring-vault-interview#Q11]] graceful rotation пула; [[spring-vault-interview#Q14]] устойчивость к недоступности Vault."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В проде удобнее держать один общий `myapp-role` на все среды, использовать единый `APPROLE` `secret-id` без ротации, задавать общий большой TTL для `database/creds/` и `pki/issue/`, чтобы централизовать политики и не плодить конфигурацию по стендам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендуется заводить отдельные роли по средам (`prod-myapp-role`, `staging-myapp-role`) с разными политиками для изоляции доступа.",
+                "source_of_confusion": "Единая роль кажется проще в сопровождении, чем несколько ролей с раздельными политиками.",
+                "if_it_were_true": "Будь роль общей, компрометация staging-секрета открывала бы доступ и к prod, чего изоляция и избегает.",
+                "how_it_should_be": "Для каждой среды создают свою роль с минимально необходимыми политиками, разделяя prod и staging."
               }
             },
             {
