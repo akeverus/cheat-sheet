@@ -10,11 +10,15 @@
    #58d4d0 как единственный коммитнутый интерактив, амбер/success/danger
    разведены. Семантические имена токенов (--color-*) СОХРАНЕНЫ (мост к
    существующему base.css на время поэтапной замены), но ЗНАЧЕНИЯ переведены на
-   палитру архива:
-     • :root                      — light (СИНТЕЗ, AA-совместимый: архив даёт
-                                     только dark, светлая тема выведена вручную);
-     • :root[data-theme="dark"]   — dark (ТОЧНО из design-tokens.css архива) +
-                                     зеркало в prefers-color-scheme для no-JS.
+   палитру макетов handoff-3 (ДЕФОЛТ = DARK, реставр 2026-07-18):
+     • :root                      — dark (ТОЧНО из assets/tokens/tokens.css
+                                     макетов; безусловный дефолт — макеты все
+                                     тёмные, решение пользователя);
+     • :root[data-theme="light"]  — light (вторичная тема, явный тумблер;
+                                     значения макетов, акценты приглушены до AA
+                                     на белом фоне).
+   No-JS OS-light больше НЕ форсит светлую (нет prefers-color-scheme зеркала) —
+   тёмная тема по умолчанию для всех; переключение только через тумблер (JS).
    Шрифты: Inter (UI/display/body) + JetBrains Mono (код/эйбрау). Newsreader/
    Space Grotesk убраны (см. head.html). Структурные shell-токены
    (--sidebar-width / --content-max / --header-height / --mobile-nav-height) —
@@ -25,47 +29,54 @@
    ========================================================================== */
 
 :root {
-  /* Схема для нативного хрома (scrollbar, <select>, каретка). База — light;
-     dark переопределяется в [data-theme="dark"] и prefers-color-scheme. */
-  color-scheme: light;
+  /* Схема для нативного хрома (scrollbar, <select>, каретка). База — DARK
+     (реставр 2026-07-18: макеты handoff-3 все тёмные, dark — дефолт по решению
+     пользователя). light переопределяется явным [data-theme="light"]. */
+  color-scheme: dark;
 
-  /* ---- Цвет — light (синтез из архивной teal-палитры, WCAG AA) ---- */
-  --color-bg-primary:   #eef2f2; /* прохладный near-white холст */
-  --color-bg-secondary: #f6f9f9; /* surface-ступень */
-  --color-bg-tertiary:  #ffffff; /* приподнятая карта / input-well */
-  --color-surface-soft: #e7eded; /* мягкая ступень (тулбары, код-фон) */
-  --color-bg-inverse:   #0b151c;
+  /* ---- Цвет — DARK (ТОЧНАЯ палитра макетов handoff-3, assets/tokens/tokens.css) ---- */
+  --color-bg-primary:   #071116; /* bg-0 / canvas */
+  --color-bg-secondary: #0d1b22; /* surface */
+  --color-bg-tertiary:  #12252e; /* surface-raised */
+  --color-surface-soft: #102029; /* surface-soft */
+  --color-bg-inverse:   #eef6f5;
+  /* Соседние ступени фона для градиента-шелла (bg-0→bg-1). */
+  --color-bg-canvas-2:  #0b171d; /* bg-1 */
 
-  --color-text-primary:   #0c1a1f; /* ink ~15:1 */
-  --color-text-secondary: #3d4f56; /* ~8:1 */
-  --color-text-tertiary:  #5a6d74; /* ~4.8:1 (AA) */
-  --color-text-inverse:   #eef5f5;
-  --color-text-link:      #0c6360; /* тёмный teal ~5.2:1 */
+  --color-text-primary:   #eef6f5; /* text ~16:1 */
+  --color-text-secondary: #a8b9bd; /* text-2 ~9:1 */
+  --color-text-tertiary:  #8397a0; /* text-3 (нюанс ярче #6f858c ради AA small) */
+  --color-text-inverse:   #071116;
+  --color-text-link:      #39d0c7;
 
-  --color-border-primary:   #c5d2d5;
-  --color-border-secondary: #d8e2e4;
-  --color-border-focus:     #0d7a76;
-  /* Кольцо клавиатурного фокуса — отдельный токен, сильнее рамки выбора. */
-  --color-focus-ring:       #0a6360;
+  --color-border-primary:   #233a44; /* border */
+  --color-border-secondary: #16262e; /* мягче border (внутр. разделители) */
+  --color-border-strong:    #335463; /* border-strong (чипы/letter-боксы) */
+  --color-border-focus:     #39d0c7;
+  /* Кольцо клавиатурного фокуса — ярче рамки выбора (focus). */
+  --color-focus-ring:       #8af3eb;
 
-  --color-accent-primary:        #0f726e; /* teal-fill (белый текст AA) */
-  --color-accent-strong:         #0d6b67; /* teal-as-text */
-  --color-accent-primary-hover:  #0b615d;
-  --color-accent-primary-active: #094f4c;
-  --color-accent-on:             #ffffff; /* текст на teal-fill */
-  --color-accent-secondary:      #8a5a00; /* амбер-ink */
-  --color-accent-wash:           #d9f0ef; /* teal-wash (выбранный) */
+  --color-accent-primary:        #39d0c7; /* accent (teal-fill, тёмный ink AA) */
+  --color-accent-2:              #1fad91; /* accent-2 (второй стоп градиента) */
+  --color-accent-strong:         #7ce6df; /* teal-as-text (крупный контраст) */
+  --color-accent-primary-hover:  #5fe0d8;
+  --color-accent-primary-active: #2bb8af;
+  --color-accent-on:             #03211f; /* тёмный текст на teal-fill */
+  --color-accent-secondary:      #f7b83f; /* амбер (warning-семья, XP-бейдж) */
+  --color-accent-wash:           #12302f; /* teal-wash (выбранный, поверх surface) */
 
-  --color-status-success:      #157f52;
-  --color-status-success-on:   #ffffff;
-  --color-status-success-wash: #dcf1e7;
-  --color-status-warning:      #8a6500;
-  --color-status-error:        #c0392b;
-  --color-status-error-on:     #ffffff;
-  --color-status-error-wash:   #f7e0dc;
-  --color-status-info:         #1466a8;
+  --color-status-success:      #35c987;
+  --color-status-success-on:   #052118;
+  --color-status-success-wash: #0f2f22;
+  --color-status-warning:      #f7b83f;
+  --color-status-error:        #ff715f;
+  --color-status-error-on:     #2a0d09;
+  --color-status-error-wash:   #331917;
+  --color-status-info:         #5db8ff;
+  --color-status-info-wash:    #0e2636;
+  --color-status-purple:       #9e7bff;
 
-  --color-surface-overlay: rgba(11, 21, 28, 0.42);
+  --color-surface-overlay: rgba(0, 0, 0, 0.55);
 
   /* Типографика — Inter (UI/display/body) + JetBrains Mono (код/эйбрау).
      Семейства совпадают с загружаемыми из Google Fonts (см. head.html). */
@@ -128,23 +139,23 @@
   --max-width-options:  60rem;
   --page-gutter: var(--space-5);
 
-  /* ---- Структурные shell-токены (редизайн, из архива) ---- */
-  --sidebar-width:     232px;
-  --content-max:       1560px;
-  --header-height:     64px;
-  --mobile-nav-height: 64px;
+  /* ---- Структурные shell-токены (ТОЧНО из prototype/styles.css handoff-3) ---- */
+  --sidebar-width:     220px;  /* .shell grid-template-columns: 220px 1fr */
+  --content-max:       1220px; /* .content max-width */
+  --header-height:     64px;   /* .topbar height (mobile 54px) */
+  --mobile-nav-height: 64px;   /* .mobile-nav height */
 
-  /* Радиусы (архив: sm6 / md10 / lg14 / xl20). */
-  --border-radius-sm:   6px;
-  --border-radius-md:  10px;
-  --border-radius-lg:  14px;
-  --border-radius-xl:  20px;
+  /* Радиусы (макеты handoff-3: sm8 / md12 / lg18; xl24 — для крупных карт). */
+  --border-radius-sm:   8px;
+  --border-radius-md:  12px;
+  --border-radius-lg:  18px;
+  --border-radius-xl:  24px;
   --border-radius-full: 999px;
 
-  /* Тени — скупо (терминальная эстетика опирается на границы/кольца). */
-  --shadow-sm: 0 1px 2px rgba(4, 10, 14, 0.06), 0 2px 8px rgba(4, 10, 14, 0.05);
-  --shadow-md: 0 4px 14px rgba(4, 10, 14, 0.10);
-  --shadow-lg: 0 4px 14px rgba(4, 10, 14, 0.10), 0 12px 32px rgba(4, 10, 14, 0.08);
+  /* Тени — dark-дефолт (макеты: мягкая глубокая тень под панелями). */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30), 0 2px 10px rgba(0, 0, 0, 0.28);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.28);
   --shadow-focus: 0 0 0 2px var(--color-bg-primary), 0 0 0 4px var(--color-border-focus);
 
   /* Motion */
@@ -168,102 +179,60 @@
 }
 
 /* ===========================================================================
-   Dark — ТОЧНАЯ палитра архива (design-tokens.css). Явный тумблер
-   [data-theme="dark"] (head.html ставит pre-paint). Ниже — зеркало для no-JS
-   OS-dark. Наследует структуру (spacing/radius/shell/motion/z) из :root.
+   Light — вторичная тема (реставр: dark — дефолт). Явный тумблер
+   [data-theme="light"] (head.html ставит pre-paint; JS-режим 'auto' тоже
+   выставляет data-theme явно). Значения — light-палитра макетов handoff-3
+   (assets/tokens/tokens.css), акценты приглушены до AA на белом фоне.
+   Наследует структуру (spacing/radius/shell/motion/z) из :root.
    ========================================================================== */
-:root[data-theme="dark"] {
-  color-scheme: dark;
+:root[data-theme="light"] {
+  color-scheme: light;
 
-  --color-bg-primary:   #071016; /* canvas */
-  --color-bg-secondary: #0b151c; /* surface */
-  --color-bg-tertiary:  #101c24; /* surface-raised */
-  --color-surface-soft: #13222b; /* surface-soft */
-  --color-bg-inverse:   #eef5f5;
+  --color-bg-primary:   #f5f8f8; /* bg-0 */
+  --color-bg-secondary: #ffffff; /* surface */
+  --color-bg-tertiary:  #f7fbfa; /* surface-raised */
+  --color-surface-soft: #eef6f4; /* surface-soft */
+  --color-bg-inverse:   #0d1b22;
+  --color-bg-canvas-2:  #ffffff;
 
-  --color-text-primary:   #eef5f5; /* ~16:1 */
-  --color-text-secondary: #a8b6bb; /* ~9:1 */
-  --color-text-tertiary:  #7f9199; /* ~6:1 */
-  --color-text-inverse:   #071016;
-  --color-text-link:      #7ce6df;
+  --color-text-primary:   #152327; /* ~14:1 */
+  --color-text-secondary: #52666b; /* ~7:1 */
+  --color-text-tertiary:  #647377; /* ~5:1 (AA small) */
+  --color-text-inverse:   #f5f8f8;
+  --color-text-link:      #0c6b64; /* тёмный teal ~5.2:1 */
 
-  --color-border-primary:   #2a3b45;
-  --color-border-secondary: #1b2a33;
-  --color-border-focus:     #58d4d0;
-  --color-focus-ring:       #7ce6df;
+  --color-border-primary:   #d8e5e3; /* border */
+  --color-border-secondary: #e6efed;
+  --color-border-strong:    #b8cfcc; /* border-strong */
+  --color-border-focus:     #0f9a90;
+  --color-focus-ring:       #0a6360;
 
-  --color-accent-primary:        #58d4d0; /* teal-fill (dark ink AA) */
-  --color-accent-strong:         #7ce6df; /* teal-as-text */
-  --color-accent-primary-hover:  #7ce6df;
-  --color-accent-primary-active: #42c3bf;
-  --color-accent-on:             #062126;
-  --color-accent-secondary:      #ffc552;
-  --color-accent-wash:           #16333a;
+  --color-accent-primary:        #0d8074; /* teal-fill (белый текст AA 4.8:1) */
+  --color-accent-2:              #0e8a75;
+  --color-accent-strong:         #0c6b64; /* teal-as-text */
+  --color-accent-primary-hover:  #0c7a6f; /* светлая тема: hover темнее */
+  --color-accent-primary-active: #0a7267;
+  --color-accent-on:             #ffffff;
+  --color-accent-secondary:      #8a5a00; /* амбер-ink */
+  --color-accent-wash:           #d9f0ef;
 
-  --color-status-success:      #4fd58a;
-  --color-status-success-on:   #06231a;
-  --color-status-success-wash: #103b2a;
-  --color-status-warning:      #ffc552;
-  --color-status-error:        #ff765f;
-  --color-status-error-on:     #2a0d09;
-  --color-status-error-wash:   #3a1b1c;
-  --color-status-info:         #64b8ff;
+  --color-status-success:      #157f52;
+  --color-status-success-on:   #ffffff;
+  --color-status-success-wash: #dcf1e7;
+  --color-status-warning:      #8a6500;
+  --color-status-error:        #c0392b;
+  --color-status-error-on:     #ffffff;
+  --color-status-error-wash:   #f7e0dc;
+  --color-status-info:         #1466a8;
+  --color-status-info-wash:    #dbeafe;
+  --color-status-purple:       #6d4bd8;
 
-  --color-surface-overlay: rgba(0, 0, 0, 0.55);
+  --color-surface-overlay: rgba(11, 21, 28, 0.42);
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30), 0 2px 10px rgba(0, 0, 0, 0.28);
-  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 6px 20px rgba(0, 0, 0, 0.40);
+  --shadow-sm: 0 1px 2px rgba(4, 10, 14, 0.06), 0 2px 8px rgba(4, 10, 14, 0.05);
+  --shadow-md: 0 4px 14px rgba(4, 10, 14, 0.10);
+  --shadow-lg: 0 16px 42px rgba(28, 55, 61, 0.12);
   --shadow-focus: 0 0 0 2px var(--color-bg-primary), 0 0 0 4px var(--color-border-focus);
-}
-
-/* No-JS зеркало: OS-dark без явного тумблера. Совпадает по значениям с
-   :root[data-theme="dark"]; :not([data-theme="light"]) уважает явный light. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-
-    --color-bg-primary:   #071016;
-    --color-bg-secondary: #0b151c;
-    --color-bg-tertiary:  #101c24;
-    --color-surface-soft: #13222b;
-    --color-bg-inverse:   #eef5f5;
-
-    --color-text-primary:   #eef5f5;
-    --color-text-secondary: #a8b6bb;
-    --color-text-tertiary:  #7f9199;
-    --color-text-inverse:   #071016;
-    --color-text-link:      #7ce6df;
-
-    --color-border-primary:   #2a3b45;
-    --color-border-secondary: #1b2a33;
-    --color-border-focus:     #58d4d0;
-    --color-focus-ring:       #7ce6df;
-
-    --color-accent-primary:        #58d4d0;
-    --color-accent-strong:         #7ce6df;
-    --color-accent-primary-hover:  #7ce6df;
-    --color-accent-primary-active: #42c3bf;
-    --color-accent-on:             #062126;
-    --color-accent-secondary:      #ffc552;
-    --color-accent-wash:           #16333a;
-
-    --color-status-success:      #4fd58a;
-    --color-status-success-on:   #06231a;
-    --color-status-success-wash: #103b2a;
-    --color-status-warning:      #ffc552;
-    --color-status-error:        #ff765f;
-    --color-status-error-on:     #2a0d09;
-    --color-status-error-wash:   #3a1b1c;
-    --color-status-info:         #64b8ff;
-
-    --color-surface-overlay: rgba(0, 0, 0, 0.55);
-
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30), 0 2px 10px rgba(0, 0, 0, 0.28);
-    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.35);
-    --shadow-lg: 0 6px 20px rgba(0, 0, 0, 0.40);
-    --shadow-focus: 0 0 0 2px var(--color-bg-primary), 0 0 0 4px var(--color-border-focus);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

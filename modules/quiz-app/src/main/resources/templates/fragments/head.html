@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Цвет браузерного chrome для мобильных (Android Chrome, iOS Safari). -->
-    <meta name="theme-color" content="#071016">
+    <meta name="theme-color" content="#071116">
     <meta name="color-scheme" content="dark light">
     <!-- Тема + размер шрифта: применяем на <html> ДО первого кадра (без вспышки
          белым и без скачка размера). Здесь же центральный API персонализации
@@ -26,7 +26,7 @@
         // Мульти-дизайн-движок (11 вариантов, переключатель, window.__design,
         // ось в /settings) удалён в FE-CMP-1 — токены только instrument (tokens.css
         // light+dark). theme-color instrument×тема:
-        var THEME_COLORS = { light: '#eef2f2', dark: '#071016' };
+        var THEME_COLORS = { light: '#f5f8f8', dark: '#071116' };
         root.setAttribute('data-design', 'instrument');
         // CLS-резерв (R0.64): метка «JS работает» + сохранённая вкладка /settings
         // ДО первого кадра — base.css рисует вкладочное состояние сразу, и
@@ -43,9 +43,13 @@
           return THEME_COLORS[resolved] || THEME_COLORS.dark;
         }
 
+        // ДЕФОЛТ = 'dark' (решение пользователя 2026-07-18: «Тёмная по умолчанию,
+        // как макеты»; светлая остаётся явным тумблером/выбором 'light', follow-OS —
+        // явный выбор 'auto'). Первый визит без сохранённого выбора → тёмная тема
+        // макетов handoff-3, а не системная.
         function readPref() {
-          try { var p = localStorage.getItem('theme'); return (p === 'light' || p === 'dark' || p === 'auto') ? p : 'auto'; }
-          catch (e) { return 'auto'; }
+          try { var p = localStorage.getItem('theme'); return (p === 'light' || p === 'dark' || p === 'auto') ? p : 'dark'; }
+          catch (e) { return 'dark'; }
         }
         function resolve(pref) { return pref === 'auto' ? systemTheme() : pref; }
         function applyResolved(resolved) {
@@ -271,7 +275,7 @@
          того же URL строкой выше ничего не ускорял (no-op для same-origin CSS,
          которая и так грузится с наивысшим приоритетом) и был удалён — не
          возвращать. См. docs/design/DESIGN.md + docs/design/systems/*.md. -->
-    <link rel="stylesheet" th:href="@{/css/tokens.css(v=68)}">
+    <link rel="stylesheet" th:href="@{/css/tokens.css(v=69)}">
     <link rel="stylesheet" th:href="@{/css/base.css(v=114)}">
     <!-- shell.css — каркас редизайна (ui-redesign-handoff): sidebar/topbar/
          mobile-nav + базовые компоненты. Грузится ПОСЛЕ base.css (перекрывает

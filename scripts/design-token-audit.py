@@ -48,24 +48,25 @@ def parse_tokens(body):
     return out
 
 root = parse_tokens(block_body(r":root"))
-ed_dark = parse_tokens(block_body(r"\[data-theme=\"dark\"\]"))
+ed_light = parse_tokens(block_body(r"\[data-theme=\"light\"\]"))
 
-# SINGLE-SOURCE (DEADCODE-1, 2026-07-16): единственный дизайн — instrument, его
-# значения живут ПРЯМО в :root (light) и :root[data-theme="dark"] (dark). Нет
-# отдельного html[data-design="…"] override-слоя (промоут его удалил). Старый
-# design_light/design_dark сохранены пустыми для совместимости каскада.
+# SINGLE-SOURCE + DARK-DEFAULT (реставр 2026-07-18): единственный дизайн —
+# instrument. ДЕФОЛТ инвертирован — dark-значения макетов handoff-3 живут ПРЯМО
+# в :root (безусловная тёмная база, макеты все тёмные), а :root[data-theme="light"]
+# — override для явного светлого тумблера. Нет отдельного html[data-design="…"]
+# слоя. Старый design_light/design_dark сохранены пустыми для совместимости каскада.
 DESIGNS = ["instrument"]
 design_light = {d: {} for d in DESIGNS}
 design_dark = {d: {} for d in DESIGNS}
 
 def effective(design, theme):
-    """Single-source каскад: :root (light) -> :root[data-theme="dark"] (dark)."""
+    """Каскад dark-default: :root (dark) -> :root[data-theme="light"] (light override)."""
     m = dict(root)
-    if theme == "dark":
-        m.update(ed_dark)
-    m.update(design_light[design])
-    if theme == "dark":
-        m.update(design_dark[design])
+    if theme == "light":
+        m.update(ed_light)
+    m.update(design_dark[design])
+    if theme == "light":
+        m.update(design_light[design])
     return m
 
 # ---- color math --------------------------------------------------------------
@@ -186,13 +187,14 @@ for d in DESIGNS:
                 sev = fails if minr >= 4.5 else warns
                 sev.append(f"{d}/{theme}: {r:4.2f}:1 (<{minr}) {label}  [{fg_t} on {bg_t}]")
 
-# ---- completeness (single-source): dark должен переопределить каждый light-цвет-
-# токен, иначе светлый цвет протёк бы в тёмную тему. Источник dark = :root[data-theme="dark"].
+# ---- completeness (dark-default): light-блок должен переопределить каждый цвет-
+# токен базового :root(dark), иначе тёмный цвет протёк бы в светлую тему.
+# Источник light = :root[data-theme="light"].
 COLOR_TOKENS = [k for k in root if k.startswith("--color-")]
 comp_issues = []
-missing = [k for k in COLOR_TOKENS if k not in ed_dark]
+missing = [k for k in COLOR_TOKENS if k not in ed_light]
 for k in missing:
-    comp_issues.append(f"dark: '{k}' (light={root[k]}) не переопределён в :root[data-theme=\"dark\"] -> светлый цвет протёк бы в тёмную тему")
+    comp_issues.append(f"light: '{k}' (dark={root[k]}) не переопределён в :root[data-theme=\"light\"] -> тёмный цвет протёк бы в светлую тему")
 
 # ---- base.css purity: hardcoded colors outside var()/comments ----------------
 # strip comments first
@@ -215,7 +217,7 @@ print()
 print(f"[2] LARGE-TEXT SHORTFALL (< 3.0:1 on a large/label pairing): {len(warns)}")
 for w in warns: print("   WARN  " + w)
 print()
-print(f"[3] DARK COMPLETENESS (single-source :root) issues: {len(comp_issues)}")
+print(f"[3] LIGHT COMPLETENESS (dark-default :root) issues: {len(comp_issues)}")
 for c in comp_issues: print("   MISS  " + c)
 print()
 print(f"[4] base.css hardcoded hex colors (outside comments): {len(hard)}")
