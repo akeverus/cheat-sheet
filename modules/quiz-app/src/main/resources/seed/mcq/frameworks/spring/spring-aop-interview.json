@@ -11,19 +11,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`AOP` — это паттерн внедрения зависимостей (`DI`), позволяющий Spring подставлять реализации интерфейсов в поля через `@Autowired`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`DI` (внедрение зависимостей) и `AOP` — разные механизмы: DI собирает граф бинов, а AOP перехватывает вызовы методов через прокси.",
-                "source_of_confusion": "И DI, и AOP — части ядра Spring, поэтому их легко спутать как «одно и то же про бины».",
-                "if_it_were_true": "Тогда `@Aspect` и `@Before` управляли бы инъекцией бинов, но они описывают перехват вызовов, а не сборку зависимостей.",
-                "how_it_should_be": "DI отвечает за то, какой объект подставить; AOP — за то, что сделать вокруг вызова метода этого объекта."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`AOP` — парадигма для вынесения cross-cutting concerns (логирование, транзакции, безопасность, метрики, retry) в отдельные модули — аспекты, чтобы не дублировать сквозную логику в каждом методе; в Spring она реализована поверх динамических прокси и убирает бойлерплейт из бизнес-кода.",
+              "text": "`AOP` — парадигма для вынесения cross-cutting concerns (логирование, транзакции, безопасность) в аспекты, чтобы не дублировать сквозную логику; в Spring реализована поверх динамических прокси.",
               "correct": true,
               "sections": {
                 "explanation": "Cross-cutting concern — это логика, повторяющаяся во многих местах и не относящаяся к бизнес-задаче напрямую. AOP собирает её в одном аспекте, а бизнес-методы остаются чистыми.",
@@ -34,9 +22,21 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "`AOP` — это механизм внедрения зависимостей (`DI`): Spring находит бины по типу и подставляет реализации интерфейсов в поля и конструкторы через `@Autowired`, собирая граф зависимостей всего приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`DI` (внедрение зависимостей) и `AOP` — разные механизмы: DI собирает граф бинов, а AOP перехватывает вызовы методов через прокси.",
+                "source_of_confusion": "И DI, и AOP — части ядра Spring, поэтому их легко спутать как «одно и то же про бины».",
+                "if_it_were_true": "Тогда `@Aspect` и `@Before` управляли бы инъекцией бинов, но они описывают перехват вызовов, а не сборку зависимостей.",
+                "how_it_should_be": "DI отвечает за то, какой объект подставить; AOP — за то, что сделать вокруг вызова метода этого объекта."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
-              "text": "`AOP` — это способ писать многопоточный код, автоматически синхронизируя доступ к разделяемым ресурсам.",
+              "text": "`AOP` — это подход к написанию многопоточного кода: аспект перехватывает вызовы методов и синхронизирует доступ к разделяемым ресурсам, расставляя блокировки вокруг конкурентных участков.",
               "correct": false,
               "sections": {
                 "what_actually": "AOP не занимается синхронизацией потоков; он лишь перехватывает вызовы методов и не добавляет блокировок сам по себе.",
@@ -48,7 +48,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`AOP` нужен исключительно для генерации кода во время компиляции и не применяется в рантайме.",
+              "text": "`AOP` вплетает аспекты на этапе компиляции: отдельный компилятор перерабатывает байткод классов и встраивает advice прямо в целевые методы, поэтому в рантайме прокси не создаются.",
               "correct": false,
               "sections": {
                 "what_actually": "Spring AOP работает именно в рантайме через динамические прокси; compile-time weaving — это про AspectJ, а не про Spring AOP.",
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Aspect` — это синоним `JoinPoint`: оба обозначают конкретную точку вызова метода в приложении.",
+              "text": "`Aspect` — это конкретная точка вызова метода, к которой привязан advice (то же, что `JoinPoint`); `Pointcut` — предикат отбора точек, `Advice` — действие при совпадении, `Weaving` — связывание аспекта с бином.",
               "correct": false,
               "sections": {
                 "what_actually": "Aspect — это модуль (Pointcut + Advice), а JoinPoint — конкретная точка выполнения; это разные уровни абстракции.",
@@ -83,19 +83,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Weaving` — это процесс компиляции аспекта в отдельный jar-файл, который потом подключают как зависимость.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Weaving — это применение аспекта к целевому объекту (в Spring AOP — создание прокси в рантайме), а не сборка jar.",
-                "source_of_confusion": "Слово «weaving» звучит как сборочный этап, похожий на упаковку артефакта.",
-                "if_it_were_true": "Тогда у аспекта был бы отдельный артефакт сборки, но weaving — это связывание advice с JoinPoint-ами.",
-                "how_it_should_be": "Weaving связывает аспект с целевым кодом; в Spring это происходит через прокси при создании бина."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`JoinPoint` — точка выполнения (в Spring AOP это всегда вызов метода); `Pointcut` — предикат, какие JoinPoint-ы перехватывать; `Advice` — что делать при совпадении; `Aspect` — модуль = Pointcut + Advice(s); `Weaving` — процесс применения аспекта к целевому объекту.",
+              "text": "`JoinPoint` — точка выполнения (в Spring AOP — вызов метода), `Pointcut` — предикат отбора точек, `Advice` — действие при совпадении, `Aspect` — модуль (Pointcut + Advice), `Weaving` — применение аспекта к бину.",
               "correct": true,
               "sections": {
                 "explanation": "Мнемоника: Aspect = Pointcut (где?) + Advice (что?). Pointcut описывает множество точек, Advice — действие, Weaving связывает их с целевым бином через прокси.",
@@ -106,9 +94,21 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "`Weaving` — это сборка аспекта в отдельный jar-артефакт, подключаемый как зависимость; `JoinPoint` — точка вызова метода, `Pointcut` — предикат её отбора, `Advice` — действие, `Aspect` — модуль из Pointcut и Advice.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Weaving — это применение аспекта к целевому объекту (в Spring AOP — создание прокси в рантайме), а не сборка jar.",
+                "source_of_confusion": "Слово «weaving» звучит как сборочный этап, похожий на упаковку артефакта.",
+                "if_it_were_true": "Тогда у аспекта был бы отдельный артефакт сборки, но weaving — это связывание advice с JoinPoint-ами.",
+                "how_it_should_be": "Weaving связывает аспект с целевым кодом; в Spring это происходит через прокси при создании бина."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "`Pointcut` — это код, который выполняется при перехвате, а `Advice` — выражение, описывающее, какие методы перехватывать.",
+              "text": "`Pointcut` — это код, выполняемый при перехвате, а `Advice` — выражение, описывающее, какие методы перехватывать; `JoinPoint` — точка вызова метода, `Aspect` — модуль, `Weaving` — применение аспекта к бину.",
               "correct": false,
               "sections": {
                 "what_actually": "Термины перепутаны местами: Pointcut — это предикат (где перехватывать), а Advice — выполняемое действие (что делать).",
@@ -131,19 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring AOP` работает на любых Java-классах, а `AspectJ` — только на Spring-бинах.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Всё наоборот: AspectJ через weaving работает на любых классах, а Spring AOP — только на бинах из контекста.",
-                "source_of_confusion": "Кажется, что «родной» Spring AOP мощнее «внешнего» AspectJ.",
-                "if_it_were_true": "Тогда Spring AOP перехватывал бы `new MyService()` вне контекста, но без прокси он этого не делает.",
-                "how_it_should_be": "Spring AOP ограничен бинами; AspectJ через weaving охватывает любой Java-класс."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`Spring AOP` использует runtime-прокси, перехватывает только вызовы методов и только на Spring-бинах, не ловит self-invocation и даёт overhead прокси; `AspectJ` делает bytecode weaving (compile-time/load-time), работает на любых Java-классах, перехватывает поля/конструкторы/статик-блоки, ловит self-invocation и не имеет runtime-overhead.",
+              "text": "`Spring AOP` строит runtime-прокси вокруг бина: перехватывает вызовы методов на бинах и пропускает self-invocation. `AspectJ` вплетает байт-код на compile/load-time, доставая и поля, и конструкторы.",
               "correct": true,
               "sections": {
                 "explanation": "Ключевое различие — механизм: Spring AOP оборачивает бин прокси-объектом, AspectJ вплетает байт-код. Отсюда вытекают все остальные отличия (область применения, типы JoinPoint, self-invocation).",
@@ -154,9 +142,21 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring AOP` работает поверх любого Java-класса независимо от контейнера, тогда как `AspectJ` перехватывает методы у бинов, зарегистрированных в Spring-контексте, и вне контейнера аспекты не применяет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Всё наоборот: AspectJ через weaving работает на любых классах, а Spring AOP — только на бинах из контекста.",
+                "source_of_confusion": "Кажется, что «родной» Spring AOP мощнее «внешнего» AspectJ.",
+                "if_it_were_true": "Тогда Spring AOP перехватывал бы `new MyService()` вне контекста, но без прокси он этого не делает.",
+                "how_it_should_be": "Spring AOP ограничен бинами; AspectJ через weaving охватывает любой Java-класс."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
-              "text": "`Spring AOP` перехватывает self-invocation (`this.method()`), а `AspectJ` — нет.",
+              "text": "`Spring AOP` перехватывает self-invocation вида `this.method()`, поскольку прокси видит внутренние вызовы бина, тогда как `AspectJ` со своим weaving вызовы метода внутри того же объекта не отлавливает.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: self-invocation идёт мимо прокси, поэтому Spring AOP его не ловит; AspectJ через weaving ловит, так как меняет сам байт-код.",
@@ -168,7 +168,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Различий нет: `Spring AOP` — это просто другое название для `AspectJ`, и они полностью взаимозаменяемы.",
+              "text": "`Spring AOP` и `AspectJ` — два названия одной технологии: общий weaver, одинаковый набор JoinPoint и совпадающие возможности, так что реализации свободно заменяют друг друга без изменения поведения.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные технологии: Spring AOP — прокси в рантайме, AspectJ — weaving байт-кода; их возможности существенно различаются.",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "При CGLIB-прокси можно спокойно навешивать advice на `final`-методы — ограничение касается только конструкторов.",
+              "text": "Через CGLIB advice навешивается и на `final`-методы: сгенерированный подкласс перехватывает вызов перед делегированием в родителя. За рамками проксирования остаются конструкторы, вызываемые в обход прокси.",
               "correct": false,
               "sections": {
                 "what_actually": "CGLIB переопределяет методы наследованием, а `final`-метод переопределить нельзя, поэтому advice на нём не сработает.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`CGLIB` создаёт прокси, реализуя все интерфейсы целевого класса, не наследуя сам класс.",
+              "text": "`CGLIB` строит прокси, реализуя все интерфейсы целевого класса и делегируя вызовы в исходный экземпляр, поэтому наследовать сам класс не требуется и `final`-класс перехвату не мешает.",
               "correct": false,
               "sections": {
                 "what_actually": "CGLIB наследует целевой класс и переопределяет его методы; реализация интерфейсов — это путь JDK-прокси.",
@@ -215,20 +215,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "По умолчанию, если целевой класс реализует интерфейс, Spring создаёт `JDK dynamic proxy` (через `java.lang.reflect.Proxy`); если интерфейса нет или задан `proxyTargetClass = true`, используется `CGLIB`, который генерирует подкласс целевого класса — отсюда ограничение: AOP не работает на `final`-классах и `final`-методах.",
+              "text": "Если у бина есть интерфейс, Spring создаёт `JDK dynamic proxy` через `java.lang.reflect.Proxy`; без интерфейса или при `proxyTargetClass = true` — `CGLIB`-подкласс, отсюда запрет на advice для `final`.",
               "correct": true,
               "sections": {
                 "explanation": "JDK-прокси реализует интерфейс целевого бина, CGLIB наследует сам класс и переопределяет методы. В обоих случаях клиенту инжектируется прокси, а не реальный объект.",
-                "example": "`OrderService` с интерфейсом → `java.lang.reflect.Proxy`; `@Service class UserService` без интерфейса → CGLIB-подкласс `UserService$$EnhancerBySpringCGLIB`.",
+                "example": "`OrderService` с интерфейсом → `java.lang.reflect.Proxy`; `@Service class UserService` без интерфейса → CGLIB-подкласс (в Spring 6 имя вида `UserService$$SpringCGLIB$$0`).",
                 "when_to_apply": "Понимание нужно, когда инъекция по типу падает (нужен интерфейс, а не impl) или когда аспект «не срабатывает» из-за `final`.",
-                "edge_cases": "CGLIB не может переопределить `final`-метод и не наследует `final`-класс, поэтому advice на них молча не применяется; в Spring Boot по умолчанию `proxyTargetClass = true`.",
+                "edge_cases": "CGLIB не переопределяет `final`-метод — advice на нём молча не срабатывает; а `final`-класс, которому нужен CGLIB-прокси (нет интерфейса или `proxyTargetClass = true`), не наследуется вовсе, и Spring падает на старте с `AopConfigException` («Cannot subclass final class»). В Spring Boot по умолчанию `proxyTargetClass = true`.",
                 "related": "[[spring-aop-interview#Q3]] Spring AOP vs AspectJ; [[spring-aop-interview#Q6]] где AOP не работает; [[spring-aop-interview#Q8]] @EnableAspectJAutoProxy."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Spring всегда использует `JDK dynamic proxy` независимо от того, есть у класса интерфейс или нет.",
+              "text": "Spring использует `JDK dynamic proxy` независимо от наличия интерфейса у бина: `java.lang.reflect.Proxy` генерирует обёртку по типу цели и переопределяет вызовы, поэтому подклассование через CGLIB не задействуется.",
               "correct": false,
               "sections": {
                 "what_actually": "JDK dynamic proxy требует интерфейс; для классов без интерфейса Spring переключается на CGLIB.",
@@ -251,7 +251,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Проблему self-invocation решают, помечая внутренний метод `private` — тогда Spring проксирует его отдельно.",
+              "text": "Self-invocation обходят, помечая внутренний метод `private`: тогда CGLIB-прокси перехватывает его отдельным вызовом, и навешенный advice вроде `@Transactional` срабатывает даже при обращении через `this`.",
               "correct": false,
               "sections": {
                 "what_actually": "`private`-методы прокси вообще не видит, так что это лишь усугубляет проблему, а не решает её.",
@@ -263,20 +263,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Self-invocation — это когда метод вызывает другой метод того же объекта через `this.method()`: такой вызов идёт напрямую, минуя прокси, поэтому advice (например `@Transactional`) не срабатывает; обходят инъекцией самого себя (`@Autowired @Lazy self`), вызовом через `AopContext.currentProxy()`, выносом метода в отдельный бин или переходом на AspectJ.",
-              "correct": true,
-              "sections": {
-                "explanation": "Прокси перехватывает только внешние вызовы. Внутренний `this.save()` обходит прокси, поэтому навешенный на `save()` advice не выполняется — транзакция/лог/retry молча пропадают.",
-                "example": "В `processOrder()` вызов `this.saveOrder()` с `@Transactional(REQUIRES_NEW)` новую транзакцию не откроет; через инжектированный `self.saveOrder()` — откроет, потому что идёт через прокси.",
-                "when_to_apply": "Учитывать всегда, когда внутри бина один аннотированный метод зовёт другой аннотированный метод того же бина.",
-                "edge_cases": "`AopContext.currentProxy()` требует `@EnableAspectJAutoProxy(exposeProxy = true)`; лучшее архитектурное решение — вынести метод в отдельный компонент.",
-                "related": "[[spring-aop-interview#Q4]] прокси-механизм; [[spring-aop-interview#Q8]] exposeProxy; [[spring-aop-interview#Q21]] self-invocation у @Transactional."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Self-invocation полностью обходится включением `@Transactional` сразу на классе, а не на методах.",
+              "text": "Self-invocation устраняют, перенося `@Transactional` с методов на уровень класса: прокси применяет транзакционные настройки ко всем методам бина, поэтому внутренний вызов `this.save()` тоже открывает транзакцию.",
               "correct": false,
               "sections": {
                 "what_actually": "Аннотация на классе лишь применяет настройки ко всем методам, но внутренний вызов всё равно идёт мимо прокси.",
@@ -286,15 +273,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Self-invocation — это рекурсивный вызов метода самим собой, приводящий к `StackOverflowError`, и решается ограничением глубины рекурсии.",
+              "order": 2,
+              "label": "C",
+              "text": "Self-invocation — это когда метод рекурсивно вызывает сам себя через `this.method()` и уходит в бесконечную рекурсию с `StackOverflowError`; решают это ограничением глубины рекурсии или условием выхода.",
               "correct": false,
               "sections": {
                 "what_actually": "Проблема не про рекурсию, а про обход прокси при внутреннем вызове `this.method()`; стек тут ни при чём.",
                 "source_of_confusion": "Слово «self» наводит на мысль о рекурсии, а не о потере прокси.",
                 "if_it_were_true": "Тогда решением была бы защита от глубокой рекурсии, но реальная проблема — несработавший advice.",
                 "how_it_should_be": "Self-invocation — это потеря перехвата при внутреннем вызове; решается прохождением через прокси."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Это вызов методом другого метода того же объекта через `this.method()`: он идёт мимо прокси, поэтому advice вроде `@Transactional` не срабатывает. Обходят инъекцией `@Lazy self` или выносом в отдельный бин.",
+              "correct": true,
+              "sections": {
+                "explanation": "Прокси перехватывает только внешние вызовы. Внутренний `this.save()` обходит прокси, поэтому навешенный на `save()` advice не выполняется — транзакция/лог/retry молча пропадают.",
+                "example": "В `processOrder()` вызов `this.saveOrder()` с `@Transactional(REQUIRES_NEW)` новую транзакцию не откроет; через инжектированный `self.saveOrder()` — откроет, потому что идёт через прокси.",
+                "when_to_apply": "Учитывать всегда, когда внутри бина один аннотированный метод зовёт другой аннотированный метод того же бина.",
+                "edge_cases": "`AopContext.currentProxy()` требует `@EnableAspectJAutoProxy(exposeProxy = true)`; лучшее архитектурное решение — вынести метод в отдельный компонент.",
+                "related": "[[spring-aop-interview#Q4]] прокси-механизм; [[spring-aop-interview#Q8]] exposeProxy; [[spring-aop-interview#Q21]] self-invocation у @Transactional."
               }
             }
           ]
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "AOP не работает только на абстрактных классах; на `final`-методах и `private`-методах он применяется без ограничений.",
+              "text": "Перехват `Spring AOP` спотыкается на абстрактных классах: прокси не подклассит `abstract`. А на `final`-методах и `private`-методах advice навешивается штатно — CGLIB и рефлексия до них добираются без помех.",
               "correct": false,
               "sections": {
                 "what_actually": "Реальные ограничения — `final`/`private`/`static`-методы, конструкторы и не-бины; абстрактные классы сами по себе advice не блокируют.",
@@ -323,19 +323,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "AOP работает на объектах, созданных через `new`, если класс помечен `@Component`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@Component` помогает только при создании бина контейнером; объект из `new` контейнер не оборачивает прокси, и advice не сработает.",
-                "source_of_confusion": "Кажется, что аннотация `@Component` «активирует» AOP в любом экземпляре класса.",
-                "if_it_were_true": "Тогда `new UserService()` был бы проксирован, но прокси создаёт только Spring при сборке бина.",
-                "how_it_should_be": "Объект нужно получать из контекста (`@Autowired`), тогда он будет прокси; `new` даёт «голый» объект."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "AOP не работает на объектах не из Spring-контекста (`new MyService()`), на `final`-классах и `final`-методах (CGLIB не наследует/не переопределяет), на `private` и `static`-методах (не видны прокси), на конструкторах (их перехватывает только AspectJ) и при self-invocation, когда вызов идёт мимо прокси.",
+              "text": "`Spring AOP` действует через прокси и потому молчит на объектах вне контекста (`new MyService()`), на `final`-классах и методах, на `private`/`static`-методах, на конструкторах и при self-invocation.",
               "correct": true,
               "sections": {
                 "explanation": "Все ограничения сводятся к одному: Spring AOP действует через прокси, который перехватывает только внешние вызовы переопределяемых методов на бинах из контекста.",
@@ -346,9 +334,21 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring AOP` перехватывает и объект, созданный через `new UserService()`, если класс помечен `@Component`: сканирование компонентов регистрирует его как бин, и контейнер оборачивает экземпляр прокси.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Component` помогает только при создании бина контейнером; объект из `new` контейнер не оборачивает прокси, и advice не сработает.",
+                "source_of_confusion": "Кажется, что аннотация `@Component` «активирует» AOP в любом экземпляре класса.",
+                "if_it_were_true": "Тогда `new UserService()` был бы проксирован, но прокси создаёт только Spring при сборке бина.",
+                "how_it_should_be": "Объект нужно получать из контекста (`@Autowired`), тогда он будет прокси; `new` даёт «голый» объект."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "AOP отлично работает на `private`-методах: прокси видит их через рефлексию и навешивает advice.",
+              "text": "`Spring AOP` навешивает advice и на `private`-методы: CGLIB-подкласс достаёт их через рефлексию (`setAccessible(true)`), поэтому логирующий или транзакционный аспект перехватывает приватные вызовы внутри бина.",
               "correct": false,
               "sections": {
                 "what_actually": "Прокси перехватывает только переопределяемые (public/protected) методы; `private` не виден ни JDK-прокси, ни CGLIB-подклассу.",
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно пометить класс только `@Aspect` — Spring сам зарегистрирует его как бин и применит advice.",
+              "text": "Класс помечают аннотацией `@Aspect`: она работает как специализированный стереотип, поэтому Spring сам создаёт бин и через `@EnableAspectJAutoProxy` подключает advice-методы к нужным join point'ам.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Aspect` — это лишь маркер для обработки advice; без стереотипа (`@Component`) или явного `@Bean` Spring бин не создаст.",
@@ -383,7 +383,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Аспект объявляют, реализуя интерфейс `org.aspectj.lang.Aspect` и переопределяя метод `weave()`.",
+              "text": "Нужны три вещи: пометить класс `@Aspect`, добавить стереотип `@Component` (или `@Bean`), чтобы Spring создал бин, и написать хотя бы один advice-метод с pointcut, например `@Before(\"execution(...)\")`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@Aspect` сам по себе не регистрирует бин — это просто маркер. Регистрацию даёт стереотип (`@Component`/`@Service`), а смысл аспекту придают advice-методы с pointcut-выражениями.",
+                "example": "`@Aspect @Component class LoggingAspect { @Before(\"execution(* com.example.service.*.*(..))\") void logBefore(JoinPoint jp) { ... } }`.",
+                "when_to_apply": "При создании любого нового аспекта — логирующего, метрик, retry; шаблон одинаковый.",
+                "edge_cases": "Если забыть `@Component`, аспект скомпилируется, но не сработает в рантайме — частая ошибка новичков; в XML-конфигурации бин регистрируют через `<bean>` отдельно.",
+                "related": "[[spring-aop-interview#Q2]] что такое Aspect и Advice; [[spring-aop-interview#Q8]] @EnableAspectJAutoProxy; [[spring-aop-interview#Q13]] типы Advice."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Аспект объявляют, реализуя интерфейс `org.aspectj.lang.Aspect` из AspectJ и переопределяя метод `weave()`, куда кладут логику перехвата; контейнер вызывает его при создании прокси вокруг целевого бина.",
               "correct": false,
               "sections": {
                 "what_actually": "Никакого интерфейса `Aspect` с методом `weave()` нет: аспект — это обычный класс с аннотацией `@Aspect` и advice-методами.",
@@ -393,28 +406,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Чтобы класс стал аспектом, его метод должен называться `advice()` — Spring ищет аспекты по имени метода.",
+              "order": 3,
+              "label": "D",
+              "text": "Чтобы класс стал аспектом, в нём объявляют метод с именем `advice()`: Spring при сканировании ищет аспекты по этому имени и вызывает найденный метод в каждой перехваченной точке выполнения целевого бина.",
               "correct": false,
               "sections": {
                 "what_actually": "Spring определяет аспект по аннотации `@Aspect`, а advice — по аннотациям `@Before`/`@Around` и т.д., а не по имени метода.",
                 "source_of_confusion": "Кажется, что фреймворк ищет специальные методы по соглашению об именовании.",
                 "if_it_were_true": "Тогда переименование метода ломало бы аспект, но имя advice-метода произвольно.",
                 "how_it_should_be": "Имя advice-метода любое; важны аннотации `@Aspect` на классе и `@Before`/`@Around` на методах."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Нужно три вещи: пометить класс `@Aspect` (маркер для AspectJ annotation processor), пометить его стереотипом вроде `@Component` (чтобы Spring создал бин) и добавить хотя бы один advice-метод с pointcut (например `@Before(\"execution(...)\")`); без `@Component` Spring не увидит аспект, без `@Aspect` — создаст обычный бин, но не обработает его как аспект.",
-              "correct": true,
-              "sections": {
-                "explanation": "`@Aspect` сам по себе не регистрирует бин — это просто маркер. Регистрацию даёт стереотип (`@Component`/`@Service`), а смысл аспекту придают advice-методы с pointcut-выражениями.",
-                "example": "`@Aspect @Component class LoggingAspect { @Before(\"execution(* com.example.service.*.*(..))\") void logBefore(JoinPoint jp) { ... } }`.",
-                "when_to_apply": "При создании любого нового аспекта — логирующего, метрик, retry; шаблон одинаковый.",
-                "edge_cases": "Если забыть `@Component`, аспект скомпилируется, но не сработает в рантайме — частая ошибка новичков; в XML-конфигурации бин регистрируют через `<bean>` отдельно.",
-                "related": "[[spring-aop-interview#Q2]] что такое Aspect и Advice; [[spring-aop-interview#Q8]] @EnableAspectJAutoProxy; [[spring-aop-interview#Q13]] типы Advice."
               }
             }
           ]
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Параметр `proxyTargetClass = true` отключает прокси полностью и заставляет Spring вызывать методы напрямую.",
+              "text": "`@EnableAspectJAutoProxy` включает proxy-based AOP и обработку `@Aspect`-бинов; его атрибут `proxyTargetClass = true` отключает создание прокси, из-за чего Spring вызывает целевые методы напрямую, минуя advice.",
               "correct": false,
               "sections": {
                 "what_actually": "`proxyTargetClass = true` не отключает прокси, а форсирует CGLIB (subclass-прокси) вместо JDK-прокси.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@EnableAspectJAutoProxy` всегда нужно писать вручную, иначе аспекты не работают даже в Spring Boot.",
+              "text": "`@EnableAspectJAutoProxy` активирует создание прокси для `@Aspect`-бинов; в Spring Boot её нужно объявлять на `@Configuration` вручную, иначе автоконфигурация аспекты не подхватит и advice не сработают.",
               "correct": false,
               "sections": {
                 "what_actually": "В Spring Boot её добавляет `AopAutoConfiguration` автоматически, так что вручную писать не обязательно.",
@@ -455,19 +455,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@EnableAspectJAutoProxy` подключает полноценный `AspectJ`-weaver и переводит приложение на bytecode weaving вместо прокси.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Аннотация лишь включает создание прокси Spring AOP; weaver AspectJ она не подключает — это отдельная технология.",
-                "source_of_confusion": "Наличие «AspectJ» в имени аннотации создаёт впечатление, что включается полный AspectJ.",
-                "if_it_were_true": "Тогда стали бы перехватываться поля и конструкторы, но Spring остаётся на runtime-прокси.",
-                "how_it_should_be": "Аннотация активирует proxy-based AOP; имя отсылает к синтаксису AspectJ, а не к его weaver."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`@EnableAspectJAutoProxy` активирует обработку `@Aspect`-бинов и создание прокси; в Spring Boot он добавляется автоматически через `AopAutoConfiguration` при наличии `spring-aop` в classpath, а в plain Spring его указывают явно (или через `<aop:aspectj-autoproxy/>` в XML); параметры `proxyTargetClass = true` форсируют CGLIB, `exposeProxy = true` включают `AopContext.currentProxy()`.",
+              "text": "`@EnableAspectJAutoProxy` включает обработку `@Aspect`-бинов и создание для них прокси; в Spring Boot добавляется автоматически через `AopAutoConfiguration`, а в plain Spring его указывают явно.",
               "correct": true,
               "sections": {
                 "explanation": "Без активации auto-proxy аспекты остаются обычными бинами и не оборачивают цели. Аннотация регистрирует `AnnotationAwareAspectJAutoProxyCreator`, который и строит прокси.",
@@ -475,6 +463,18 @@
                 "when_to_apply": "Явно нужна в чистом Spring без Boot; в Boot-приложениях её добавляют лишь чтобы поменять параметры (например `exposeProxy = true`).",
                 "edge_cases": "В Spring Boot по умолчанию `proxyTargetClass = true` (CGLIB всегда); `exposeProxy = true` обязателен для обхода self-invocation через `AopContext.currentProxy()`.",
                 "related": "[[spring-aop-interview#Q4]] JDK vs CGLIB; [[spring-aop-interview#Q5]] обход self-invocation; [[spring-aop-interview#Q7]] объявление аспекта."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@EnableAspectJAutoProxy` активирует обработку `@Aspect`-бинов и подключает `AspectJ`-weaver, переводя приложение на compile-time/load-time bytecode weaving вместо runtime-прокси Spring AOP.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Аннотация лишь включает создание прокси Spring AOP; weaver AspectJ она не подключает — это отдельная технология.",
+                "source_of_confusion": "Наличие «AspectJ» в имени аннотации создаёт впечатление, что включается полный AspectJ.",
+                "if_it_were_true": "Тогда стали бы перехватываться поля и конструкторы, но Spring остаётся на runtime-прокси.",
+                "how_it_should_be": "Аннотация активирует proxy-based AOP; имя отсылает к синтаксису AspectJ, а не к его weaver."
               }
             }
           ]
@@ -491,7 +491,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`execution` отбирает методы по сигнатуре: `execution([modifier] return-type [class.]method(params) [throws])`; в нём `*` обозначает один сегмент (один тип/компонент пути), `..` — любое число пакетов в пути или любое число параметров в скобках, а `+` — тип и все его подтипы. Например `execution(* com.example.service..*.*(..))` отбирает все методы пакета `service` и его подпакетов.",
+              "text": "`execution` отбирает методы по сигнатуре `[modifier] return-type method(params)`; здесь `*` — один сегмент пути или типа, `..` — любое число пакетов в пути или параметров в скобках, а `+` — тип и все его подтипы.",
               "correct": true,
               "sections": {
                 "explanation": "`execution` — самый частый designator. Звёздочка покрывает ровно один элемент, `..` — переменное количество, `+` расширяет до подтипов. Это позволяет точно описать набор методов.",
@@ -504,7 +504,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`execution` отбирает методы по сигнатуре: `execution([modifier] return-type [class.]method(params) [throws])`; в нём `*` обозначает один сегмент (один тип/компонент пути), `..` применяется только в позиции пакета для вложенных пакетов, а любое число параметров в скобках задаётся через `*`; `+` же — тип и все его подтипы. Например `execution(* com.example.service..OrderService.find*(*))` отбирает методы с любым набором параметров.",
+              "text": "`execution` отбирает методы по сигнатуре `[modifier] return-type method(params)`; здесь `*` — один сегмент пути или типа, `..` задаёт вложенные пакеты, а любое число параметров — через `*`, `+` — тип и подтипы.",
               "correct": false,
               "sections": {
                 "what_actually": "`execution` поддерживает wildcards `*`, `..`, `+`, поэтому можно описывать целые пакеты и сигнатуры, а не только точные имена.",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`execution` отбирает методы по сигнатуре: `execution([modifier] return-type [class.]method(params) [throws])`; в нём `*` обозначает любое число сегментов пути или параметров, `..` — ровно один сегмент (один тип/компонент пути), а `+` — тип и все его подтипы. Например `execution(* com.example.service..*(..))` отбирает все методы пакета `service` и его подпакетов.",
+              "text": "`execution` отбирает методы по сигнатуре `[modifier] return-type method(params)`; здесь `*` — любое число сегментов пути или параметров, `..` — ровно один сегмент, а `+` — тип и все его подтипы.",
               "correct": false,
               "sections": {
                 "what_actually": "Значения перепутаны: `*` — это один сегмент, а `..` — любое число пакетов в пути или параметров.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`execution` отбирает методы по сигнатуре: `execution([modifier] return-type [class.]method(params) [throws])`; в нём `*` обозначает один сегмент (один тип/компонент пути), `..` — любое число пакетов в пути или параметров в скобках, а `+` ставится после типа параметра и означает «один или более аргументов такого типа». Например `execution(* com.example.service..*.*(String+))` отбирает методы с одним и более `String`-аргументом.",
+              "text": "`execution` отбирает методы по сигнатуре `[modifier] return-type method(params)`; здесь `*` — один сегмент пути или типа, `..` — любое число пакетов или параметров, а `+` у типа параметра — «один и более аргументов».",
               "correct": false,
               "sections": {
                 "what_actually": "`+` после типа означает «тип и все его подтипы»; логическое И — это `&&` при комбинировании pointcut-ов.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Spring AOP` доступен только один designator — `execution`; всё остальное (`within`, `@annotation`, `args`) есть лишь в `AspectJ`.",
+              "text": "В `Spring AOP` из pointcut-designators реализован `execution`, тогда как `within`, `@annotation` и `args` доступны при подключении полноценного `AspectJ` с compile-time weaving.",
               "correct": false,
               "sections": {
                 "what_actually": "Spring AOP поддерживает `within`, `this`, `target`, `args`, `@annotation`, `@within`, `@target`, `@args` и собственный `bean` — не только `execution`.",
@@ -563,7 +563,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Designator `args` и `@args` — это одно и то же: оба матчат методы, у которых аргумент помечен аннотацией.",
+              "text": "Designator `args` и `@args` — синонимы: оба отбирают методы, у которых тип фактического аргумента помечен указанной аннотацией, так что `args(Tx)` и `@args(Tx)` дают один результат.",
               "correct": false,
               "sections": {
                 "what_actually": "`args` матчит по типу аргументов, а `@args` — по аннотации на типе аргумента; это разные критерии.",
@@ -575,7 +575,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Designator `bean(orderService)` доступен и в `Spring AOP`, и в чистом `AspectJ` одинаково.",
+              "text": "Designator `bean(orderService)` входит в стандартный синтаксис pointcut-выражений `AspectJ`, поэтому одинаково доступен и в `Spring AOP`, и в standalone-проекте на чистом `AspectJ` с load-time weaving.",
               "correct": false,
               "sections": {
                 "what_actually": "`bean(...)` — расширение именно Spring AOP, привязанное к имени Spring-бина; в чистом AspectJ его нет.",
@@ -587,7 +587,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Кроме `execution` есть `within` (все методы класса/пакета), `this` (прокси реализует тип), `target` (целевой объект — данного типа), `args` (аргументы заданного типа), `@annotation` (метод помечен аннотацией), `@within`/`@target` (класс/объект аннотирован), `@args` (аргумент аннотирован) и `bean` (по имени Spring-бина — только в Spring); designator выбирают по тому, что нужно матчить — сигнатуру, тип, аннотацию или имя бина.",
+              "text": "Кроме `execution` есть `within` (класс/пакет), `this`/`target` (по типу), `args` (тип аргументов), `@annotation`/`@within`/`@target`/`@args` (по аннотациям) и `bean` (имя Spring-бина, расширение).",
               "correct": true,
               "sections": {
                 "explanation": "Каждый designator матчит свой аспект цели: `execution`/`within` — по сигнатуре/расположению, `this`/`target` — по типу, `@annotation`/`@within` — по аннотациям, `bean` — по имени. Их комбинируют через `&&`/`||`.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Имя параметра в advice может быть любым — Spring сопоставляет аннотацию по её типу, а не по имени в `@annotation(...)`.",
+              "text": "Объявляют аннотацию с `@Retention(RUNTIME)`, вешают на методы и пишут `@Around(\"@annotation(timed)\")`; имя параметра advice не обязано совпадать с `timed` — Spring связывает аннотацию по её типу `Timed`.",
               "correct": false,
               "sections": {
                 "what_actually": "Spring связывает аннотацию именно по совпадению имени в `@annotation(timed)` с именем параметра `Timed timed`; произвольное имя ломает binding.",
@@ -623,19 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Достаточно объявить аннотацию с `@Retention(SOURCE)` и поставить её на метод — Spring AOP подхватит её как pointcut.",
-              "correct": false,
-              "sections": {
-                "what_actually": "При `RetentionPolicy.SOURCE` аннотация исчезает после компиляции и в рантайме не видна, поэтому pointcut по ней не сработает.",
-                "source_of_confusion": "`SOURCE`/`CLASS`/`RUNTIME` легко перепутать, не вникая в момент жизни аннотации.",
-                "if_it_were_true": "Тогда `@annotation(...)` находил бы метод и при `SOURCE`, но прокси работает в рантайме и аннотации там уже нет.",
-                "how_it_should_be": "Для AOP аннотации нужен `@Retention(RetentionPolicy.RUNTIME)`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Объявляют аннотацию с `@Retention(RUNTIME)` и нужным `@Target`, помечают ею методы, а в аспекте пишут advice с `@Around(\"@annotation(timed)\")`, где имя `timed` в выражении совпадает с именем параметра advice-метода (`ProceedingJoinPoint pjp, Timed timed`) — так Spring и матчит метод по аннотации, и передаёт саму аннотацию в advice, давая доступ к её атрибутам.",
+              "text": "Аннотацию с `@Retention(RUNTIME)` и `@Target` вешают на методы и пишут `@Around(\"@annotation(timed)\")`, где `timed` совпадает с параметром advice `Timed timed`; Spring матчит метод и отдаёт аннотацию.",
               "correct": true,
               "sections": {
                 "explanation": "Designator `@annotation(имя)` одновременно отбирает методы с этой аннотацией и связывает её с параметром advice. Ключ — совпадение имени в выражении и имени параметра метода.",
@@ -646,9 +634,21 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "Аннотацию объявляют с `@Retention(RetentionPolicy.SOURCE)` и `@Target`, вешают на метод и матчат через `@Around(\"@annotation(timed)\")` — этого хватает, чтобы Spring AOP подхватил её как pointcut.",
+              "correct": false,
+              "sections": {
+                "what_actually": "При `RetentionPolicy.SOURCE` аннотация исчезает после компиляции и в рантайме не видна, поэтому pointcut по ней не сработает.",
+                "source_of_confusion": "`SOURCE`/`CLASS`/`RUNTIME` легко перепутать, не вникая в момент жизни аннотации.",
+                "if_it_were_true": "Тогда `@annotation(...)` находил бы метод и при `SOURCE`, но прокси работает в рантайме и аннотации там уже нет.",
+                "how_it_should_be": "Для AOP аннотации нужен `@Retention(RetentionPolicy.RUNTIME)`."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "Кастомную аннотацию нельзя использовать как pointcut — для этого годятся только встроенные вроде `@Transactional`.",
+              "text": "Designator `@annotation(...)` матчит по аннотациям, которые Spring знает сам — встроенным вроде `@Transactional`; кастомную аннотацию он как pointcut не подхватывает, даже с `@Retention(RUNTIME)`.",
               "correct": false,
               "sections": {
                 "what_actually": "Любая собственная аннотация с `RUNTIME`-retention отлично работает как pointcut через `@annotation(...)`.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Pointcut` объявляют на пустом методе-маркере (`@Pointcut(\"execution(...)\") public void serviceLayer() {}`), а затем ссылаются на него по имени метода из нескольких advice (`@Before(\"serviceLayer()\")`); такие именованные pointcut-ы можно комбинировать операторами `&&`, `||`, `!` (например `serviceLayer() && auditedMethod()`), что устраняет дублирование выражений.",
+              "text": "`@Pointcut` вешают на пустой метод-маркер (`void serviceLayer(){}`), а advice ссылаются на него по имени (`@Before(\"serviceLayer()\")`); именованные pointcut-ы комбинируют операторами `&&`, `||`, `!`.",
               "correct": true,
               "sections": {
                 "explanation": "Метод-маркер с `@Pointcut` не выполняется — он лишь даёт имя выражению. Это как именованная константа: одно выражение, много ссылок, проще менять и читать.",
@@ -684,7 +684,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Именованные pointcut-ы нельзя комбинировать — каждый advice может ссылаться ровно на один `@Pointcut`.",
+              "text": "`@Pointcut` вешают на пустой метод-маркер, а advice ссылаются на него по имени (`@Before(\"serviceLayer()\")`); но именованный pointcut — атомарная единица, скомбинировать их операторами `&&`, `||`, `!` не выйдет.",
               "correct": false,
               "sections": {
                 "what_actually": "Pointcut-ы свободно комбинируются операторами `&&`, `||`, `!`, в том числе внутри другого `@Pointcut`.",
@@ -696,7 +696,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Метод с `@Pointcut` должен содержать тело с реальной логикой проверки — Spring выполняет его на каждом вызове.",
+              "text": "`@Pointcut` вешают на метод, тело которого содержит логику отбора: Spring выполняет его на каждом вызове бизнес-метода как предикат, а advice ссылаются на него по имени (`@Before`).",
               "correct": false,
               "sections": {
                 "what_actually": "Тело метода-маркера пустое и никогда не выполняется; матчинг делает само pointcut-выражение в аннотации.",
@@ -708,7 +708,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`@Pointcut` навешивают прямо на бизнес-метод, который нужно перехватывать, — тогда его выражение применится к этому методу.",
+              "text": "`@Pointcut` вешают прямо на перехватываемый бизнес-метод (по аналогии с `@Transactional`), тогда его выражение применится к этому методу; advice ссылаются на pointcut по имени.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Pointcut` ставят на отдельный пустой метод-маркер в аспекте, а не на перехватываемый бизнес-метод; маркер лишь именует выражение.",
@@ -731,7 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Их четыре: `@Before` (до метода), `@AfterReturning` (после успешного возврата), `@AfterThrowing` (при выбросе исключения) и `@After` (всегда, как finally); полного контроля над вызовом ни один advice не даёт — чтобы обернуть метод целиком, подменить аргументы или результат, используют отдельный `MethodInterceptor`, а не advice-аннотацию. Порядок при одном JoinPoint: `@Before` → метод → `@AfterReturning`/`@AfterThrowing` → `@After`.",
+              "text": "Их четыре: `@Before` (до метода), `@AfterReturning` (после возврата), `@AfterThrowing` (при исключении) и `@After` (всегда, как finally); полный контроль над вызовом даёт отдельный `MethodInterceptor`, не advice.",
               "correct": false,
               "sections": {
                 "what_actually": "Типов пять: `@Before`, `@AfterReturning`, `@AfterThrowing`, `@After` и `@Around`; двумя дело не ограничивается.",
@@ -743,7 +743,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Их пять: `@Before` (до метода), `@AfterReturning` (после успешного возврата), `@AfterThrowing` (при выбросе исключения), `@After` (только при успешном завершении, если исключения не было) и `@Around` (оборачивает вызов и даёт полный контроль); порядок при одном JoinPoint: `@Around`(до) → `@Before` → метод → `@Around`(после) → `@AfterReturning`/`@AfterThrowing` → `@After`.",
+              "text": "Их пять: `@Before` (до метода), `@AfterReturning` (после возврата), `@AfterThrowing` (при исключении), `@After` (после успешного завершения, без исключения) и `@Around` (оборачивает вызов и даёт полный контроль).",
               "correct": false,
               "sections": {
                 "what_actually": "`@After` работает как `finally` — выполняется всегда, и при успехе, и при исключении; «только при успехе» — это `@AfterReturning`.",
@@ -755,7 +755,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Их пять: `@Before` (до метода, результат менять нельзя), `@AfterReturning` (после успешного возврата, может работать с returning-объектом), `@AfterThrowing` (при выбросе исключения), `@After` (всегда, как finally) и `@Around` (оборачивает вызов и даёт полный контроль над аргументами, результатом и исключением); порядок при одном JoinPoint: `@Around`(до) → `@Before` → метод → `@Around`(после) → `@AfterReturning`/`@AfterThrowing` → `@After`.",
+              "text": "Их пять: `@Before` (до метода), `@AfterReturning` (после возврата), `@AfterThrowing` (при исключении), `@After` (всегда, как finally) и `@Around` — оборачивает вызов и даёт полный контроль над результатом.",
               "correct": true,
               "sections": {
                 "explanation": "Разница — в моменте срабатывания и в возможности влиять на результат. Только `@Around` может не вызвать метод, изменить аргументы и подменить возвращаемое значение; остальные лишь наблюдают.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Их пять: `@Before` (до метода, может подменить возвращаемое значение, вернув другой объект из тела advice), `@AfterReturning` (после успешного возврата), `@AfterThrowing` (при выбросе исключения), `@After` (всегда, как finally) и `@Around` (оборачивает вызов); порядок при одном JoinPoint: `@Around`(до) → `@Before` → метод → `@Around`(после) → `@AfterReturning`/`@AfterThrowing` → `@After`.",
+              "text": "Их пять: `@Before` (до метода, может вернуть другой объект и подменить результат), `@AfterReturning` (после возврата), `@AfterThrowing` (при исключении), `@After` (всегда, как finally) и `@Around` (полный контроль).",
               "correct": false,
               "sections": {
                 "what_actually": "`@Before` выполняется до метода и не имеет доступа к результату, поэтому изменить возврат не может; это умеет только `@Around` (и частично `@AfterReturning`).",
@@ -791,20 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Around` полностью оборачивает вызов: он получает `ProceedingJoinPoint pjp`, сам решает, вызывать ли `pjp.proceed()` (можно с изменёнными аргументами через `pjp.proceed(args)`), обязан вернуть результат (иначе вызывающий код получит `null`) и должен объявлять `throws Throwable`; если не вызвать `proceed()`, целевой метод не выполнится вовсе.",
-              "correct": true,
-              "sections": {
-                "explanation": "`@Around` — единственный advice с полным контролем: до, вокруг и после вызова. `proceed()` запускает следующий advice или сам метод; без него метод не отработает.",
-                "example": "Логирующий `@Around`: `long start = nanoTime(); Object r = pjp.proceed(); log(...); return r;` — измеряет время и пробрасывает результат.",
-                "when_to_apply": "Когда нужно измерить время, добавить retry, кэширование, подменить аргументы/результат или поймать и обернуть исключение — всё, чего не дают наблюдающие advice.",
-                "edge_cases": "Если в `catch` не пробросить исключение — оно «проглотится» и вызывающий код не узнает об ошибке; если забыть `return result` — метод вернёт `null`, даже если реально вернул объект.",
-                "related": "[[spring-aop-interview#Q13]] все типы advice; [[spring-aop-interview#Q15]] ProceedingJoinPoint; [[spring-aop-interview#Q19]] retry на @Around."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Возвращаемое значение `@Around` игнорируется: метод вернёт то, что вернул `proceed()`, независимо от advice.",
+              "text": "`@Around` оборачивает вызов, получает `ProceedingJoinPoint pjp` и сам зовёт `pjp.proceed()`, но возвращаемое значение advice игнорируется: вызывающий код получит результат `proceed()`, а не то, что вернул advice.",
               "correct": false,
               "sections": {
                 "what_actually": "Вызывающий код получает именно то, что вернул advice; если не вернуть результат `proceed()`, наружу уйдёт `null`.",
@@ -814,9 +801,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`@Around` автоматически вызывает целевой метод; вызывать `proceed()` вручную не нужно, advice лишь добавляет логику до и после.",
+              "order": 1,
+              "label": "B",
+              "text": "`@Around` оборачивает вызов и получает `ProceedingJoinPoint pjp`, но целевой метод вызывается автоматически: звать `pjp.proceed()` вручную не требуется, advice добавляет логику до и после метода.",
               "correct": false,
               "sections": {
                 "what_actually": "Целевой метод выполняется только если advice сам вызовет `pjp.proceed()`; без этого вызова метод не отработает.",
@@ -826,15 +813,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`@Around` принимает обычный `JoinPoint`, а `proceed()` берётся из статического хелпера `AopContext`.",
+              "order": 2,
+              "label": "C",
+              "text": "`@Around` оборачивает вызов, но принимает обычный `JoinPoint`, как остальные advice; чтобы выполнить целевой метод, зовут `proceed()` из статического хелпера `AopContext`, а не из самого join point.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Around` принимает `ProceedingJoinPoint` — расширение `JoinPoint` с методом `proceed()`; `AopContext` тут ни при чём.",
                 "source_of_confusion": "`AopContext.currentProxy()` тоже относится к AOP, и его роль приписывают `proceed()`.",
                 "if_it_were_true": "Тогда `@Before` с `JoinPoint` тоже мог бы звать `proceed()`, но `proceed()` есть только у `ProceedingJoinPoint`.",
                 "how_it_should_be": "`@Around` получает `ProceedingJoinPoint`, и `proceed()` — его метод, а не из `AopContext`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Around` оборачивает вызов: получает `ProceedingJoinPoint pjp`, сам решает, звать ли `pjp.proceed()`, обязан вернуть результат `proceed()` и объявить `throws Throwable`; иначе целевой метод не выполнится.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@Around` — единственный advice с полным контролем: до, вокруг и после вызова. `proceed()` запускает следующий advice или сам метод; без него метод не отработает.",
+                "example": "Логирующий `@Around`: `long start = nanoTime(); Object r = pjp.proceed(); log(...); return r;` — измеряет время и пробрасывает результат.",
+                "when_to_apply": "Когда нужно измерить время, добавить retry, кэширование, подменить аргументы/результат или поймать и обернуть исключение — всё, чего не дают наблюдающие advice.",
+                "edge_cases": "Если в `catch` не пробросить исключение — оно «проглотится» и вызывающий код не узнает об ошибке; если забыть `return result` — метод вернёт `null`, даже если реально вернул объект.",
+                "related": "[[spring-aop-interview#Q13]] все типы advice; [[spring-aop-interview#Q15]] ProceedingJoinPoint; [[spring-aop-interview#Q19]] retry на @Around."
               }
             }
           ]
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`JoinPoint` даёт доступ к перехваченному вызову: `getSignature()`, `getArgs()`, `getTarget()` (целевой объект) и `getThis()` (текущий объект); поскольку advice всегда исполняется на прокси, `getThis()` и `getTarget()` возвращают один и тот же объект. `ProceedingJoinPoint` — его расширение, доступное только в `@Around`, которое добавляет метод `proceed()`.",
+              "text": "`JoinPoint` даёт данные вызова (`getSignature()`, `getArgs()`, `getTarget()`, `getThis()`); раз advice исполняется на прокси, `getThis()` и `getTarget()` дают один объект, а `proceed()` — в `@Around`.",
               "correct": false,
               "sections": {
                 "what_actually": "`getThis()` возвращает прокси, а `getTarget()` — реальный целевой объект; они различаются, особенно при проксировании.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`JoinPoint` — объект с информацией о перехваченном вызове (`getSignature()`, `getArgs()`, `getTarget()`, `getThis()`), а `ProceedingJoinPoint` расширяет его методом `proceed()`; при этом `ProceedingJoinPoint` можно объявить параметром в любом advice — и в `@Before`, и в `@AfterReturning`, — чтобы при необходимости повторно запустить целевой метод через `proceed()`.",
+              "text": "`JoinPoint` несёт данные вызова (`getSignature()`, `getArgs()`, `getTarget()`, `getThis()`), а `ProceedingJoinPoint` с `proceed()` можно объявить и в `@Before`, и в `@AfterReturning`, чтобы заново вызвать метод.",
               "correct": false,
               "sections": {
                 "what_actually": "`ProceedingJoinPoint` передаётся только в `@Around`; в `@Before`/`@AfterReturning` используется обычный `JoinPoint`.",
@@ -875,19 +875,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`JoinPoint` и `ProceedingJoinPoint` — два имени одного и того же типа: оба дают `getSignature()`, `getArgs()`, `getTarget()`, `getThis()` и метод `proceed()` для запуска целевого метода, поэтому `proceed()` можно вызвать в любом advice — и в `@Around`, и в `@Before` — независимо от того, какой из типов объявлен параметром.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`proceed()` есть только у `ProceedingJoinPoint`, и он доступен лишь в `@Around`; обычный `JoinPoint` метода `proceed()` не имеет.",
-                "source_of_confusion": "Имена похожи, и кажется, что это один тип с одним набором методов.",
-                "if_it_were_true": "Тогда `@Before` мог бы звать `proceed()`, но в наблюдающих advice такого метода нет.",
-                "how_it_should_be": "`ProceedingJoinPoint` — расширение `JoinPoint` с `proceed()`, доступное только в `@Around`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`JoinPoint` — объект с информацией о перехваченном вызове: `getSignature()`, `getArgs()`, `getTarget()`, `getThis()`, `getKind()`; `ProceedingJoinPoint` — это его расширение, доступное только в `@Around`, которое добавляет метод `proceed()` (и `proceed(args)`) для запуска целевого метода. Остальные advice (`@Before`/`@After`...) получают обычный `JoinPoint` без `proceed()`.",
+              "text": "`JoinPoint` даёт метаданные вызова (`getSignature()`, `getArgs()`, `getTarget()`, `getThis()`); `ProceedingJoinPoint` добавляет `proceed()` и живёт в `@Around`, а прочие advice получают `JoinPoint` без него.",
               "correct": true,
               "sections": {
                 "explanation": "`JoinPoint` даёт метаданные вызова, но не управляет им. `ProceedingJoinPoint` добавляет управление — возможность вызвать (или не вызвать) метод и передать другие аргументы. Поэтому он только в `@Around`.",
@@ -895,6 +883,18 @@
                 "when_to_apply": "`JoinPoint` — когда нужно только прочитать данные вызова (лог, аудит); `ProceedingJoinPoint` — когда нужно вызвать метод и/или подменить аргументы/результат.",
                 "edge_cases": "`getTarget()` возвращает целевой объект, а `getThis()` — прокси; в self-invocation они различаются и это помогает понять, почему advice не сработал.",
                 "related": "[[spring-aop-interview#Q14]] @Around и proceed(); [[spring-aop-interview#Q16]] данные о методе через JoinPoint; [[spring-aop-interview#Q13]] какие advice какой тип получают."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`JoinPoint` и `ProceedingJoinPoint` — два имени одного типа с `getSignature()`, `getArgs()`, `getTarget()`, `getThis()` и общим `proceed()`, поэтому `proceed()` доступен и в `@Around`, и в `@Before`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`proceed()` есть только у `ProceedingJoinPoint`, и он доступен лишь в `@Around`; обычный `JoinPoint` метода `proceed()` не имеет.",
+                "source_of_confusion": "Имена похожи, и кажется, что это один тип с одним набором методов.",
+                "if_it_were_true": "Тогда `@Before` мог бы звать `proceed()`, но в наблюдающих advice такого метода нет.",
+                "how_it_should_be": "`ProceedingJoinPoint` — расширение `JoinPoint` с `proceed()`, доступное только в `@Around`."
               }
             }
           ]
@@ -911,19 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Через `JoinPoint`/`ProceedingJoinPoint`: приводят `getSignature()` к `MethodSignature`, берут `getMethod()` (рефлексивный `Method`), `getReturnType()` и `getParameterNames()`; имена параметров доступны всегда, без флагов компиляции, потому что AspectJ сохраняет их прямо в сигнатуре join point. Аннотации метода берут из `getMethod().getAnnotation(...)`, аргументы — из `pjp.getArgs()`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Без флага `-parameters` имена параметров не сохраняются, и `getParameterNames()` вернёт синтетические `arg0`, `arg1`.",
-                "source_of_confusion": "В Spring Boot флаг включён по умолчанию, и кажется, что так везде.",
-                "if_it_were_true": "Тогда в любом проекте без настройки имена параметров были бы читаемыми, но это не так.",
-                "how_it_should_be": "Для читаемых имён нужен `-parameters`; Boot включает его сам, plain-проекту — настроить вручную."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Через `JoinPoint`/`ProceedingJoinPoint`: приводят `getSignature()` к `MethodSignature`, оттуда берут `getMethod()` (рефлексивный `Method`), `getParameterNames()`, `getReturnType()`; аргументы дают `pjp.getArgs()`, аннотации метода — `method.getAnnotation(...)`, имя класса — `pjp.getTarget().getClass().getSimpleName()`. Для доступа к именам параметров нужна компиляция с флагом `-parameters` (Spring Boot включает его автоматически).",
+              "text": "Через `JoinPoint`: `getSignature()` приводят к `MethodSignature`, берут `getMethod()` и `getParameterNames()`, аргументы — `pjp.getArgs()`. Имена параметров требуют флага `-parameters` (Spring Boot включает сам).",
               "correct": true,
               "sections": {
                 "explanation": "`MethodSignature` — расширение `Signature`, дающее рефлексивный `Method` и метаданные параметров/возврата. Имена параметров без `-parameters` будут `arg0`, `arg1`, поэтому флаг важен.",
@@ -934,9 +922,21 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Через `JoinPoint`: `getSignature()` приводят к `MethodSignature`, берут `getMethod()` и `getParameterNames()`, аргументы — `pjp.getArgs()`. Имена параметров доступны и без флага `-parameters` — их сохраняет AspectJ.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Без флага `-parameters` имена параметров не сохраняются, и `getParameterNames()` вернёт синтетические `arg0`, `arg1`.",
+                "source_of_confusion": "В Spring Boot флаг включён по умолчанию, и кажется, что так везде.",
+                "if_it_were_true": "Тогда в любом проекте без настройки имена параметров были бы читаемыми, но это не так.",
+                "how_it_should_be": "Для читаемых имён нужен `-parameters`; Boot включает его сам, plain-проекту — настроить вручную."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
-              "text": "Через `JoinPoint`/`ProceedingJoinPoint`: приводят `getSignature()` к `FieldSignature`, оттуда берут `getMethod()` (рефлексивный `Method`), `getParameterNames()` и `getReturnType()`; аргументы дают `pjp.getArgs()`, аннотации метода — `method.getAnnotation(...)`, а имена параметров требуют компиляции с флагом `-parameters` (Spring Boot включает его автоматически).",
+              "text": "Через `JoinPoint`: `getSignature()` приводят к `FieldSignature`, берут `getMethod()` и `getParameterNames()`, аргументы — `pjp.getArgs()`. Имена параметров требуют флага `-parameters` (Spring Boot включает сам).",
               "correct": false,
               "sections": {
                 "what_actually": "Для метода сигнатуру приводят к `MethodSignature` и зовут `getMethod()`; `FieldSignature` — про поля, которых в Spring AOP нет.",
@@ -948,7 +948,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Данные о методе получают рефлексией целевого класса: `pjp.getTarget().getClass().getEnclosingMethod()` возвращает перехваченный `Method`, из него берут `getParameterTypes()`, `getReturnType()` и `getAnnotations()`; аргументы вызова достают из `pjp.getArgs()`, а имя класса — из `pjp.getTarget().getClass().getSimpleName()`.",
+              "text": "Метаданные метода берут из `HttpServletRequest`: аспект достаёт запрос через `RequestContextHolder`, из него — `HandlerMethod`, а оттуда `getMethod()`, аннотации и типы; аргументы — `pjp.getArgs()`.",
               "correct": false,
               "sections": {
                 "what_actually": "AOP не работает с `HttpServletRequest`; метаданные вызова дают `JoinPoint`/`MethodSignature`, а не объект запроса.",
@@ -971,7 +971,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Порядок аспектов задаётся алфавитным именем класса — Spring сортирует их лексикографически.",
+              "text": "Порядок определяется именем класса аспекта: Spring сортирует их лексикографически по короткому имени бина, поэтому `AuthAspect` отработает раньше `LoggingAspect`, а переименование класса меняет всю цепочку.",
               "correct": false,
               "sections": {
                 "what_actually": "Порядок определяется `@Order`/`Ordered`, а не именем класса; без `@Order` порядок и вовсе не определён.",
@@ -983,7 +983,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Аспект с большим значением `@Order` выполняется первым и оборачивает остальные снаружи.",
+              "text": "Аспект с наибольшим значением `@Order` получает высший приоритет: он выполняется первым и оборачивает остальные снаружи, так что `@Order(3)` окажется внешним слоем, а `@Order(1)` — ближе к методу.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: меньшее значение `@Order` = выше приоритет = внешний слой, который выполняется первым на входе.",
@@ -995,7 +995,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Если у аспектов нет `@Order`, Spring гарантированно выполняет их в порядке объявления в файле.",
+              "text": "Если `@Order` не задан, аспекты применяются в порядке объявления в классе: Spring сохраняет исходный порядок регистрации advice, поэтому верхний `@Before` обернёт нижний как внешний слой.",
               "correct": false,
               "sections": {
                 "what_actually": "Без `@Order` порядок не определён и полагаться на него нельзя; «по объявлению» гарантии нет.",
@@ -1007,7 +1007,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Порядок задают аннотацией `@Order` (или интерфейсом `Ordered`): меньшее число = выше приоритет, аспект стоит «снаружи» — его `@Before` срабатывает раньше, а `@After`/`@AfterReturning` позже; например `@Order(1)` Security оборачивает `@Order(2)` Transaction, а тот — `@Order(3)` Logging. Без явного `@Order` порядок не определён.",
+              "text": "Порядок задают аннотацией `@Order` или интерфейсом `Ordered`: меньшее число — выше приоритет, аспект стоит «снаружи», его `@Before` срабатывает раньше, а `@After` позже; без `@Order` порядок не определён.",
               "correct": true,
               "sections": {
                 "explanation": "Аспекты вкладываются как луковица: меньший `@Order` — внешний слой. На входе он первый, на выходе — последний. Так Security оказывается снаружи транзакции, а логирование — внутри.",
@@ -1031,7 +1031,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Делают аспект с `@Pointcut` на сервисный слой и `@Around`-advice, который логирует сигнатуру и аргументы до вызова, замеряет время через `System.nanoTime()`, вызывает `pjp.proceed()`, логирует результат и длительность, а в `catch` логирует исключение и пробрасывает его дальше; важно не логировать пароли, токены и чувствительные данные из аргументов.",
+              "text": "Объявляют `@Pointcut` с выражением `execution(* ..service.*.*(..))` на сервисный слой, и Spring логирует совпавшие вызовы по самому выражению — отдельный advice-метод писать не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Pointcut` лишь именует выражение и сам ничего не делает; чтобы что-то логировать, нужен advice (`@Before`/`@Around`), ссылающийся на этот pointcut.",
+                "source_of_confusion": "Кажется, что pointcut «и есть» действие перехвата.",
+                "if_it_were_true": "Тогда один `@Pointcut` уже писал бы логи, но он только описывает, какие методы матчить.",
+                "how_it_should_be": "Pointcut описывает «где», а логирующий код живёт в advice, привязанном к нему."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Делают аспект с `@Pointcut` по сервисному слою и `@Around`-advice: логируют аргументы до `pjp.proceed()`, результат и длительность после, а чувствительные данные маскируют.",
               "correct": true,
               "sections": {
                 "explanation": "`@Around` подходит лучше всего, потому что видит и вход (аргументы), и выход (результат/исключение/время) в одном месте. Pointcut по слою (`execution(* ..service.*.*(..))`) задаёт область.",
@@ -1042,21 +1054,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Чтобы залогировать вызовы, достаточно объявить `@Pointcut` — отдельный advice-метод не нужен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@Pointcut` лишь именует выражение и сам ничего не делает; чтобы что-то логировать, нужен advice (`@Before`/`@Around`), ссылающийся на этот pointcut.",
-                "source_of_confusion": "Кажется, что pointcut «и есть» действие перехвата.",
-                "if_it_were_true": "Тогда один `@Pointcut` уже писал бы логи, но он только описывает, какие методы матчить.",
-                "how_it_should_be": "Pointcut описывает «где», а логирующий код живёт в advice, привязанном к нему."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "Логирование через AOP делают только в `@Before`, потому что только он имеет доступ к аргументам метода.",
+              "text": "Логирование вызовов делают в `@Before`-advice, поскольку доступ к аргументам через `getArgs()` есть именно у него; на входе он пишет в лог сигнатуру и аргументы метода.",
               "correct": false,
               "sections": {
                 "what_actually": "Аргументы (`getArgs()`) доступны во всех advice, включая `@Around`; именно `@Around` удобнее, так как видит и результат, и исключение, и время.",
@@ -1068,7 +1068,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "AOP-логирование автоматически маскирует пароли и токены в аргументах, поэтому об этом можно не думать.",
+              "text": "AOP-логирование прогоняет аргументы через встроенный фильтр и маскирует пароли и токены в выводе, поэтому экранировать чувствительные значения в advice вручную не приходится.",
               "correct": false,
               "sections": {
                 "what_actually": "Никакой автоматической маскировки нет: `getArgs()` отдаёт значения как есть, и за фильтрацию чувствительных данных отвечает разработчик.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Объявляют аннотацию `@Retry` (атрибуты `attempts`, `on` — список retryable-исключений, `delayMs`) с `@Retention(RUNTIME)`, а в `@Around(\"@annotation(retry)\")`-advice в цикле зовут `pjp.proceed()`; при исключении проверяют, retryable ли оно (`isRetryable(e, retry.on())`), и если да — логируют попытку, ждут `delayMs` и повторяют, иначе пробрасывают; после исчерпания попыток бросают последнее исключение.",
+              "text": "Объявляют `@Retry` (`attempts`, `on`, `delayMs`) и в `@Around(\"@annotation(retry)\")`-advice в цикле зовут `pjp.proceed()`; при исключении из `retry.on()` ждут `delayMs` и повторяют, иначе сразу пробрасывают.",
               "correct": true,
               "sections": {
                 "explanation": "`@Around` нужен потому, что только он может повторно вызывать целевой метод. Аннотация передаётся в advice через `@annotation(retry)`, давая доступ к `attempts/on/delayMs`.",
@@ -1104,7 +1104,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Объявляют аннотацию `@Retry` (атрибуты `attempts`, `on`, `delayMs`) с `@Retention(RUNTIME)`, а в `@Around(\"@annotation(retry)\")`-advice в цикле зовут `pjp.proceed()`, проверяя retryable-исключения и выжидая `delayMs`; такой retry безопасно навешивать на любые методы, включая списание денег и отправку платежей, потому что AOP перед повтором автоматически откатывает побочные эффекты неудачной попытки.",
+              "text": "Объявляют `@Retry` (`attempts`, `on`, `delayMs`) и в `@Around(\"@annotation(retry)\")`-advice в цикле зовут `pjp.proceed()`; так retry вешают и на списание денег — AOP откатит эффекты неудачной попытки перед повтором.",
               "correct": false,
               "sections": {
                 "what_actually": "Retry безопасен только для идемпотентных операций; повтор неидемпотентного платежа приведёт к двойному списанию.",
@@ -1116,7 +1116,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Объявляют аннотацию `@Retry` (атрибуты `attempts`, `delayMs`) с `@Retention(RUNTIME)`, а retry-логику вешают в `@Before(\"@annotation(retry)\")`-advice: в цикле повторно инвокируют целевой метод, ловят исключение, проверяют retryable ли оно, ждут `delayMs` и повторяют, пока не исчерпаны попытки; после успешной попытки управление уходит в сам метод.",
+              "text": "Объявляют `@Retry` (`attempts`, `on`, `delayMs`), а retry-цикл кладут в `@Before(\"@annotation(retry)\")`-advice: до вызова ловят исключение метода, сверяют `retry.on()` и после `delayMs` повторяют его.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Before` не может вызвать целевой метод и не видит его исключений; повторный вызов возможен только из `@Around` через `proceed()`.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Объявляют аннотацию `@Retry` (`attempts`, `delayMs`) с `@Retention(RUNTIME)`, а в `@Around(\"@annotation(retry)\")`-advice в цикле зовут `pjp.proceed()`; повторяют на любом исключении, так как `proceed()` всегда оборачивает исходную ошибку в `UndeclaredThrowableException` и различить retryable-типы внутри advice невозможно; после исчерпания попыток бросают последнее исключение.",
+              "text": "Объявляют `@Retry` (`attempts`, `on`, `delayMs`) и в `@Around(\"@annotation(retry)\")`-advice в цикле зовут `pjp.proceed()`; повторяют на любой ошибке — `proceed()` прячет её тип в `UndeclaredThrowableException`.",
               "correct": false,
               "sections": {
                 "what_actually": "Повторять стоит только retryable-исключения (например сетевые таймауты); на бизнес-ошибках (валидация) повтор бессмысленен и вреден.",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Объявляют аннотацию `@Timed`, а в `@Around(\"@annotation(timed)\")`-advice замеряют `System.nanoTime()` до и после `pjp.proceed()`; готового аналога в экосистеме нет, поэтому `Timer` и `MeterRegistry` из Micrometer для аспектного замера времени неприменимы и вызываются только вручную из бизнес-кода.",
+              "text": "Объявляют `@Timed`, а в `@Around(\"@annotation(timed)\")`-advice замеряют `System.nanoTime()` вокруг `pjp.proceed()`; готового аналога нет, поэтому `Timer` и `MeterRegistry` из Micrometer в аспекте неприменимы.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть готовый `@Timed` из Micrometer, интегрированный с Spring Boot Actuator; свой аспект чаще всего не нужен.",
@@ -1163,7 +1163,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Объявляют аннотацию `@Timed` (с опциональным именем метрики), а в `@Around(\"@annotation(timed)\")`-advice оборачивают вызов измерением: либо вручную `System.nanoTime()` до и после `pjp.proceed()`, либо через `Timer` из Micrometer, регистрируя его в `MeterRegistry`; в реальных проектах используют готовый `@Timed` из Micrometer, интегрированный с Spring Boot Actuator.",
+              "text": "Объявляют `@Timed`, а в `@Around(\"@annotation(timed)\")`-advice замеряют `System.nanoTime()` вокруг `pjp.proceed()` либо `Timer` из Micrometer в `MeterRegistry`; в проектах с Actuator берут готовый `@Timed`.",
               "correct": true,
               "sections": {
                 "explanation": "`@Around` охватывает весь вызов, поэтому корректно измеряет длительность даже при исключении. Имя метрики берут из атрибута аннотации или из сигнатуры метода.",
@@ -1176,7 +1176,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Объявляют аннотацию `@Timed`, а замер вешают на `@AfterReturning(\"@annotation(timed)\")`-advice: в момент успешного возврата вызывают `System.nanoTime()` и получают длительность выполнения метода; для методов, бросающих исключение, тот же замер дублируют в `@AfterThrowing`-advice.",
+              "text": "Объявляют `@Timed`, а замер вешают на `@AfterReturning(\"@annotation(timed)\")`-advice: в момент возврата берут `System.nanoTime()` и получают длительность; ветку с исключением закрывают `@AfterThrowing`.",
               "correct": false,
               "sections": {
                 "what_actually": "`@AfterReturning` видит только момент успешного возврата и не знает момента старта, поэтому длительность по нему не вычислить; нужен `@Around`.",
@@ -1188,7 +1188,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Объявляют аннотацию `@Timed`, а замер делают парой advice: в `@Before(\"@annotation(timed)\")` сохраняют `System.nanoTime()` в поле аспекта, в `@After` вычитают его и пишут длительность в лог или `MeterRegistry`; аспект — синглтон, но одно поле корректно хранит начало вызова отдельно для каждого потока.",
+              "text": "Объявляют `@Timed`, а замер делят на пару advice: в `@Before(\"@annotation(timed)\")` сохраняют `System.nanoTime()` в поле аспекта, в `@After` вычитают его; поле синглтона хранит начало для каждого потока.",
               "correct": false,
               "sections": {
                 "what_actually": "Хранить `startTime` в поле аспекта небезопасно: аспект — синглтон, и при конкурентных вызовах значения перетрут друг друга; корректно измерять в одном `@Around`.",
@@ -1211,7 +1211,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Transactional` реализован не через AOP, а через специальный байткод-агент, который Spring внедряет при старте JVM.",
+              "text": "`@Transactional` реализован не поверх AOP-прокси, а отдельным байткод-агентом: на старте JVM Spring через load-time weaving инструментирует классы и вшивает вызовы `begin`/`commit` прямо в тела методов.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Transactional` работает через обычный Spring AOP-прокси (`TransactionInterceptor`), без байткод-агента и weaving.",
@@ -1223,20 +1223,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@Transactional` — это `@Around`-аспект: Spring создаёт прокси, в котором `TransactionInterceptor` (реализующий `MethodInterceptor`) открывает транзакцию до `pjp.proceed()`, при успехе делает `commit`, при `RuntimeException` (и `Error`) — `rollback`, а при checked-исключении по умолчанию делает `commit`; отсюда же вытекает проблема self-invocation — внутренний `this.save()` идёт мимо прокси и транзакция не создаётся.",
-              "correct": true,
-              "sections": {
-                "explanation": "Транзакционность — это перехват вызова прокси: begin → proceed → commit/rollback. Это объясняет и поведение откатов, и то, почему `@Transactional` не работает на внутренних вызовах.",
-                "example": "`tx = txManager.getTransaction(def); try { Object r = pjp.proceed(); txManager.commit(tx); return r; } catch(RuntimeException e){ txManager.rollback(tx); throw e; }` — упрощённая модель.",
-                "when_to_apply": "Понимание нужно при отладке «почему транзакция не откатилась» (checked-исключение) или «почему не создалась» (self-invocation, `private`/`final`-метод).",
-                "edge_cases": "По умолчанию rollback только на unchecked-исключениях; checked-исключение коммитится, если не указать `rollbackFor`; внутренний вызов аннотированного метода транзакцию не открывает.",
-                "related": "[[spring-aop-interview#Q5]] self-invocation; [[spring-aop-interview#Q14]] @Around-механика; [[spring-aop-interview#Q17]] порядок транзакционного аспекта."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "По умолчанию `@Transactional` откатывает транзакцию на любом исключении, включая checked-исключения.",
+              "text": "`@Transactional` по умолчанию откатывает транзакцию и на unchecked-, и на checked-исключениях: `TransactionInterceptor` в `completeTransactionAfterThrowing` вызывает `rollback` для обоих видов исключений.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию rollback происходит только на `RuntimeException`/`Error`; checked-исключение по умолчанию коммитится (если не задан `rollbackFor`).",
@@ -1246,15 +1233,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`@Transactional` на внутреннем вызове (`this.save()`) всегда открывает новую транзакцию, потому что транзакции не зависят от прокси.",
+              "order": 2,
+              "label": "C",
+              "text": "Внутренний вызов `this.save()` тоже открывает транзакцию: `TransactionInterceptor` держит контекст в `TransactionSynchronizationManager` через `ThreadLocal`, поэтому перехват не зависит от прокси.",
               "correct": false,
               "sections": {
                 "what_actually": "Внутренний вызов идёт мимо прокси, поэтому `TransactionInterceptor` не срабатывает и новая транзакция не открывается — это self-invocation.",
                 "source_of_confusion": "Транзакции воспринимают как «всегда работающие», независимо от способа вызова.",
                 "if_it_were_true": "Тогда `REQUIRES_NEW` на `this.save()` создавал бы транзакцию, но без прокси этого не происходит.",
                 "how_it_should_be": "Транзакция зависит от прокси; внутренний вызов её не открывает (нужен вызов через прокси/другой бин)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@Transactional` — `@Around`-аспект на прокси: `TransactionInterceptor` до `proceed()` открывает транзакцию, при успехе `commit`, при `RuntimeException`/`Error` — `rollback`; отсюда и self-invocation.",
+              "correct": true,
+              "sections": {
+                "explanation": "Транзакционность — это перехват вызова прокси: begin → proceed → commit/rollback. Это объясняет и поведение откатов, и то, почему `@Transactional` не работает на внутренних вызовах.",
+                "example": "`tx = txManager.getTransaction(def); try { Object r = pjp.proceed(); txManager.commit(tx); return r; } catch(RuntimeException e){ txManager.rollback(tx); throw e; }` — упрощённая модель.",
+                "when_to_apply": "Понимание нужно при отладке «почему транзакция не откатилась» (checked-исключение) или «почему не создалась» (self-invocation, `private`/`final`-метод).",
+                "edge_cases": "По умолчанию rollback только на unchecked-исключениях; checked-исключение коммитится, если не указать `rollbackFor`; внутренний вызов аннотированного метода транзакцию не открывает.",
+                "related": "[[spring-aop-interview#Q5]] self-invocation; [[spring-aop-interview#Q14]] @Around-механика; [[spring-aop-interview#Q17]] порядок транзакционного аспекта."
               }
             }
           ]
@@ -1271,20 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Лучший подход — integration-тест с реальным Spring-контекстом (`@SpringBootTest`): инжектируют проксированный бин (`@Autowired OrderService`), вызывают его метод и проверяют, что аспект сработал (например через `@SpyBean` на аспекте и `verify(...)`); альтернативы — unit-тест аспекта напрямую с `mock(ProceedingJoinPoint.class)` или AspectJ-утилиты для сложных случаев.",
-              "correct": true,
-              "sections": {
-                "explanation": "Аспект применяется только через прокси, поэтому в integration-тесте важно вызывать именно бин из контекста, а не `new`. Так проверяется реальное срабатывание advice на проксированном вызове.",
-                "example": "`@SpringBootTest class T { @Autowired OrderService svc; @SpyBean LoggingAspect aspect; @Test void t(){ svc.create(req); verify(aspect).logCall(any()); } }`.",
-                "when_to_apply": "Integration-тест — когда нужно убедиться, что аспект реально срабатывает на проксированном бине; unit-тест — когда проверяется внутренняя логика advice изолированно.",
-                "edge_cases": "Если в тесте создать объект через `new` вместо инъекции из контекста, прокси не будет и аспект не сработает — тест ничего не проверит; unit-тест аспекта не проверяет, что pointcut действительно матчит нужные методы.",
-                "related": "[[spring-aop-interview#Q5]] почему важен прокси-вызов; [[spring-aop-interview#Q14]] @Around и ProceedingJoinPoint; [[spring-aop-interview#Q15]] mock ProceedingJoinPoint в unit-тесте."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Для unit-теста advice нужно мокать `JoinPoint`, потому что `ProceedingJoinPoint` нельзя создать через `mock`.",
+              "text": "Для unit-теста advice мокают `JoinPoint`, настраивают `getSignature()`/`getArgs()` и проверяют логику; `ProceedingJoinPoint` использовать не выходит, поскольку его экземпляр нельзя получить через `mock(...)`.",
               "correct": false,
               "sections": {
                 "what_actually": "Для `@Around`-advice мокают именно `ProceedingJoinPoint` (например `mock(ProceedingJoinPoint.class)`), задавая поведение `proceed()` и `getSignature()`.",
@@ -1294,9 +1281,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "AOP-аспекты вообще нельзя протестировать — их поведение проявляется только в продакшене.",
+              "order": 1,
+              "label": "B",
+              "text": "AOP-аспекты не покрываются автотестами: advice вплетается прокси-механизмом при инициализации контекста, поэтому его эффект проявляется на развёрнутом приложении, а в тестовой среде поймать срабатывание не выходит.",
               "correct": false,
               "sections": {
                 "what_actually": "Аспекты тестируются и integration-тестом (`@SpringBootTest` + проксированный бин), и unit-тестом (`mock(ProceedingJoinPoint.class)`).",
@@ -1306,9 +1293,22 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "Integration-тест в живом контексте (`@SpringBootTest`): берут проксированный бин `@Autowired`, вызывают метод и проверяют срабатывание advice; логику `@Around` покрывают unit-тестом с моком `ProceedingJoinPoint`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Аспект применяется только через прокси, поэтому в integration-тесте важно вызывать именно бин из контекста, а не `new`. Так проверяется реальное срабатывание advice на проксированном вызове.",
+                "example": "`@SpringBootTest class T { @Autowired OrderService svc; @MockitoSpyBean LoggingAspect aspect; @Test void t(){ svc.create(req); verify(aspect).logCall(any()); } }`.",
+                "when_to_apply": "Integration-тест — когда нужно убедиться, что аспект реально срабатывает на проксированном бине; unit-тест — когда проверяется внутренняя логика advice изолированно.",
+                "edge_cases": "Если в тесте создать объект через `new` вместо инъекции из контекста, прокси не будет и аспект не сработает — тест ничего не проверит; unit-тест аспекта не проверяет, что pointcut действительно матчит нужные методы.",
+                "related": "[[spring-aop-interview#Q5]] почему важен прокси-вызов; [[spring-aop-interview#Q14]] @Around и ProceedingJoinPoint; [[spring-aop-interview#Q15]] mock ProceedingJoinPoint в unit-тесте."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "Аспект достаточно протестировать, создав его и целевой объект через `new` и вызвав метод напрямую.",
+              "text": "Аспект проверяют, создав его и целевой объект оператором `new`, связав вручную и вызвав метод напрямую: срабатывание advice подтверждается прямо в этом вызове, без подъёма Spring-контекста.",
               "correct": false,
               "sections": {
                 "what_actually": "При создании через `new` прокси не создаётся, поэтому advice не сработает и тест не проверит реальное поведение аспекта.",
