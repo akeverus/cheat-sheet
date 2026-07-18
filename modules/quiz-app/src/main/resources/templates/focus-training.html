@@ -49,6 +49,16 @@
              дети хойстятся как прямые grid-элементы .focus-training (существующие
              descendant-селекторы продолжают матчить). -->
         <div class="focus-rail">
+        <!-- Этап 2 редизайна: ряд мета-бейджей в шапке левого пейна (макет
+             question-desktop) — быстрый контекст «что за вопрос». Сложность из
+             Question.difficulty (EASY/MEDIUM/HARD → Лёгкий/Средний/Сложный);
+             accent-бейдж «К повторению» показывается только когда планировщик дал
+             повод (reviewReason != null) и согласован с .focus-question-reason ниже.
+             Не дублирует zone-chip (режим сессии) и topic-эйбрау (область). -->
+        <div class="question-meta" th:with="diff=${current.question.difficulty() != null ? current.question.difficulty().name() : 'MEDIUM'}">
+            <span class="badge" th:text="${diff == 'EASY' ? 'Лёгкий' : (diff == 'HARD' ? 'Сложный' : 'Средний')}">Средний</span>
+            <span class="badge accent" th:if="${reviewReason != null}">К повторению</span>
+        </div>
         <div class="focus-topbar">
             <div class="question-zone-head">
                 <span class="zone-chip" th:text="${focusModeChipText}">Тренировка</span>

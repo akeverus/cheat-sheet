@@ -171,7 +171,13 @@ html[data-design] .progress-mini {
 html[data-design] .progress-mini > span {
   display: block;
   height: 100%;
+  /* Ширину ставит app.js (hydrateProgressBarsFromData из data-progress) — как у
+     .session-progress-fill. Дефолт 0, чтобы: (1) без JS полоса пустая, а не 100%
+     (block без width растянулся бы на весь трек); (2) в серверном HTML не было
+     инлайн-style= (контракт assertNoInlineUiAttributes). */
+  width: 0;
   background: var(--color-accent-primary);
+  transition: width var(--duration-slow) var(--easing-out);
 }
 html[data-design] .top-actions { display: flex; gap: 8px; }
 html[data-design] .icon-button {
@@ -251,6 +257,16 @@ html[data-design] .badge.accent {
   color: var(--color-accent-strong);
   border-color: var(--color-accent-primary);
   background: var(--color-accent-wash);
+}
+
+/* Этап 2 редизайна: ряд мета-бейджей в шапке левого пейна экрана вопроса
+   (сложность + «К повторению»). Flex-ряд с переносом; отбивка до heading-героя. */
+html[data-design] .focus-training .question-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
 }
 
 /* Типо-утилиты (общие для новых страниц). */
