@@ -1,99 +1,1535 @@
 {
   "topic_slug": "mutation-testing-interview",
-  "round": "ROUND-8",
-  "total_blocks": 20,
-  "blocks_reaudited": 20,
-  "status": "FINAL (все 20 блоков контент-реаудированы: c1 Q4/Q5 + c2 POS + c3 surface + c4 Q1-3/Q6-8 + c5 Q9-14 + c6 Q15-20)",
-  "chunks_reviewed": [
-    "c1 (2026-07-14): Q4/Q5 — skel-HARD `;`-паритет + де-карикатура O3-дистракторов + bootstrap freshness/review sidecars",
-    "c2 (2026-07-14): POS de-cycle всех 20 блоков — CORRECT_POSITION_SEQUENCE 20→3",
-    "c3 (2026-07-14): surface backtick-bucket tells Q1/Q16/Q20 → 0 (formatting-only обёртка терминов в backticks)",
-    "c4 (2026-07-14): Q1/Q2/Q3/Q6/Q7/Q8 контент-реаудит по 20 правилам; Q8 переработаны дистракторы B+D (де-карикатура + устранён second_correct)",
-    "c5 (2026-07-14): Q9/Q10/Q12/Q13 PASS сразу; Q11 форма (дистракторы B/D → позитивные Java-twin'ы correct, убран form-tell «единственный фича-лист»); Q14 фактический фикс `Mutil`→`Gremlins` (несуществующий Go-инструмент, verified WebSearch) в JSON + .md",
-    "c6 (2026-07-14): Q15-Q20 контент-реаудит по 20 правилам; Q15/Q17/Q19/Q20 PASS; Q16 форма (убран самоопровергающий хвост дистракторов + O2/O3 → разнородные списки с инвертированным ядром); Q18 форма+second_correct (B: та же correct-таблица → грубая двухуровневая градация+абсолют; C де-карикатурен → достижимость-модель). Файл FINAL.",
-    "c7 (2026-07-15): de-dup minimal-pair каркасов (DUPLICATE_NGRAMS 92→0) + length-rebalance (OPTION_LENGTH_RATIO 1.64→1.35) + de-caricature Q14/Q17 (правдоподобно-ложные дистракторы вместо dismissive) + STYLE 0.421→0.387. Затем восстановление регресса от de-dup: DETAIL_PARITY 0.45→0.35 (Q11/Q12 — вернул parens-паритет дистракторам, un-dom) и skel HARD 3→0 (Q10 B/C/D — `{ i++; }` семиколон-паритет; Q11-D/Q12-D — убран лишний `;`). Correct байт-локнут во всех блоках. Файл остаётся FINAL, все гейты зелёные."
-  ],
-  "blind_c5": "Чанк Q9-Q14, 2 независимых blind (SEED=9950). PASS сразу: Q9 (correct O3 — triage выживших: пробел→тест / equivalent→skip / приемлемая граница), Q10 (O1 — семантически идентичный, неубиваем; O2 «автодетект» ложен но не hidden_truth), Q12 (O4 Stryker JS/TS/.NET/Scala; O2 «break не роняет сборку» — сильный дистрактор, но correct чист), Q13 (O4 mutmut/pytest/медленно; nit «динамический язык» неточен — не блокер). Q11 FAIL (form-tell: correct — единственный богатый позитивный фича-лист, дистракторы = ограничение/чужая платформа); 3 итерации → B переработан в позитивный Java-twin correct (суперлатив «самый популярный» + фича-лист, единственная ошибка = «правит исходный .java и перекомпилирует» вместо байткода), D → XML/CSV-only; re-blind (SEED=10010) PASS: guessable_by_form=false, semantic_correct=O3(=C), второго верного нет. Q14 FAIL (фактический: `Mutil (Go)` — несуществующий инструмент, verified WebSearch: реальные Go-тулзы Gremlins/go-mutesting); замена Mutil→Gremlins во всех 4 опциях + question_text + секциях + .md; re-blind (SEED=9970) PASS: correct O4(=B), форма честная (twin rich-lists), Cosmic Ray≠mutmut — ключевой различитель.",
-  "blind_c4": "Чанк Q1/Q2/Q3/Q6/Q7/Q8. Reviewer A (SEED=9700, Q1-3): все PASS — semantic_correct O1/O1/O1 ✓, guessable_by_form=false, блокеров нет (нит: absolutes в двух дистракторах Q2 — non-blocking). Reviewer B (SEED=9700, Q6-8): Q6 PASS (correct=O4 ✓); Q7 PASS (correct=O4 ✓, near-miss O1 add-vs-remove Void Method Call — легитимный FALSE-дистрактор, не hidden_truth); Q8 FAIL №1 (SEED=9800): каррикатура-D `killed/(total−equivalent) только 100%` + absolutes_tell; переписал D. FAIL №2 (SEED=9800): новый D `killed/total` = second_correct (это PIT Mutation Coverage, фактически верен). Переписал D снова → `covered_mutants/total` (covered≠killed) + подрезал self-announcing хвост B. Re-blind Q8 (SEED=9900): PASS — semantic_correct=O3(=C) ✓, guessable_by_form=false, hidden_truth-проверка O1 снята (`covered/total` не именованная метрика PIT), блокеров нет.",
-  "blind_c3": "SEED=9600, shuffle Q1/Q16/Q20. Независимый reviewer ПОСЛЕ backtick-выравнивания: Q1 guessable_by_form=false, semantic_correct=O3(=B) ✓; Q16 guessable_by_form=false, semantic_correct=O1(=C) ✓ (нит minor_backtick_imbalance у дистрактора устранён добором Q16-A bt 1→2); Q20 guessable_by_form=false, semantic_correct=O2(=B) ✓, flags=[]. ИТОГ PASS. Изменения formatting-only (strip-backtick equality к HEAD; correct-тач только Q16-C — обёрнуты `incremental`/`in-process`, слова/смысл неизменны).",
-  "pos_decycle": "c2 (2026-07-14): строгий A→B→C→D цикл (CORRECT_POSITION_SEQUENCE=20) → чистая перестановка label/order внутри каждого блока (seed=3, target_seq=BABBDDACAACCDBCCADDB, maxrun=3). Содержимое опций (text/correct/sections) БАЙТ-ИДЕНТИЧНО HEAD — immutable-guard: per-block + глобальный content-мультимножество == HEAD (drift=0); git diff симметричен (205 ins / 205 del). 15/20 блоков сменили позицию correct. Гейт: CORRECT_POSITION_SEQUENCE 20→3 (PASS), DISTRIBUTION=1.0 (5/5/5/5); surface tells неизменны (=3, position-agnostic); skel hard_fails=0. Blind review не требуется — контент не менялся.",
-  "reworked": {
-    "Q4": {
-      "correct": "D",
-      "byte_locked_correct": true,
-      "changes": [
-        "A: `line1;`↔`line2;` → `stmtA`↔`stmtB` (снят лишний `;` внутри код-спана; skel-HARD semicolon_presence устранён; backtick-count 42 сохранён)",
-        "C: карикатура «ровно один mutation-оператор — инверсия булевых, 7 псевдонимов, никакие boundary/math не применяются» → правдоподобное заблуждение «mutation = подмена ВХОДНЫХ данных (фаззинг)»; текст + все 4 wrong-секции переписаны"
-      ],
-      "distractor_models": "A=перестановка блоков, B=переименование, C=смешение с фаззингом входов (самое живучее); все три — разные ошибочные модели, не карикатуры"
-    },
-    "Q5": {
-      "correct": "A",
-      "byte_locked_correct": true,
-      "changes": [
-        "B: карикатура «Conditional Boundary удаляет void-вызовы log()/save()/notify()/flush() из тела» → плотная cross-operator путаница «Boundary = Remove Conditional (условие → `if (true)`)»; снят лишний `;`; текст + все 4 wrong-секции переписаны"
-      ],
-      "distractor_models": "B=Remove Conditional (снос условия), C=Constant (подмена литерала), D=Negate (полный разворот); три соседних мутатора, корректно спутанных"
-    },
-    "Q8": {
-      "correct": "C",
-      "byte_locked_correct": true,
-      "changes": [
-        "D: карикатура «killed/(total−equivalent), но годным считается ТОЛЬКО 100%, 99% провал, обязателен даже при equivalent» (absolutes_tell) → формульный дистрактор `covered_mutants/total` (модель «covered≠killed»: мутант засчитан, если тест до него добрался, а не уронил); текст + все 4 wrong-секции переписаны. Промежуточный вариант `killed/total` ОТВЕРГНУТ blind-ревью как second_correct (= PIT Mutation Coverage).",
-        "B: подрезан self-announcing/карикатурный хвост «100% легко достижимо, если ПЛОДИТЬ equivalent-мутантов» → «100% кажется лёгким, ведь equivalent прибавляют к killed как якобы убитых»; if_it_were_true смягчён (без «плодить»)"
-      ],
-      "distractor_models": "A=инвертированная формула `total/killed` (odd_one_out, non-blocking), B=equivalent в числитель, D=covered-vs-killed (mutation testing спутан с coverage); три разные ошибочные модели"
-    },
-    "Q11": {
-      "correct": "C",
-      "byte_locked_correct": true,
-      "issue": "form-tell: correct C — единственный «богатый позитивный фича-лист» (Java+HTML+JUnit5+incremental+coverage-based+суперлатив «самый популярный»), а дистракторы = ограничение/оговорка/чужая платформа → guessable_by_form=true (blind ×3).",
-      "changes": [
-        "B: reframe «правит .java, непригоден для больших проектов» (минус-тон) → позитивный Java-twin correct: тот же суперлатив «самый популярный» + HTML/JUnit5/incremental/coverage-based, единственная ошибка «правит исходный `.java` и перекомпилирует» (реально PIT мутирует БАЙТКОД) вшита в середину, конец — позитив. Теперь форма решается только знанием байткод-vs-исходник.",
-        "D: reframe «только агрегированный процент в консоли, без разбивки» → «только машинный XML/CSV, HTML-отчёта не формирует» (нейтральный тон, снят self-flagging минус); секции обновлены."
-      ],
-      "distractor_models": "A=чужая платформа (PIT для JS/TS — это Stryker), B=неверный механизм (source-recompile вместо байткода), D=неверный вывод (нет HTML, только XML/CSV); три разные правдоподобные модели",
-      "resolution": "re-blind SEED=10010 PASS: guessable_by_form=false (B зеркалит суперлатив+фича-лист), semantic_correct=C, second_correct=нет. Non-blocking nit: correct-текст не говорит «байткод» явно (есть в его sections)."
-    },
-    "Q14": {
-      "correct": "B",
-      "byte_locked_correct": false,
-      "fact_fix": true,
-      "issue": "фактическая ошибка: `Mutil (Go)` — несуществующий инструмент (verified WebSearch: реальные Go-тулзы — Gremlins/go-gremlins и go-mutesting). Присутствовал в correct B + всех дистракторах + question_text + .md-шпаргалке.",
-      "changes": [
-        "Замена `Mutil`→`Gremlins` во ВСЕХ 4 опциях (text+секции) + question_text seed-JSON + строке 371 cheatsheets/interview/testing/mutation-testing-interview.md. Языковые привязки сохранены: correct B=Gremlins(Go); swap-дистрактор C=Gremlins(PHP) ошибка; caricature A=Gremlins(«не существует») ошибка; D=Gremlins(Go)+Cosmic Ray-mutmut ложь."
-      ],
-      "distractor_models": "A=нигилизм «тулз нет» (caricature, odd_one_out), C=перепутаны языки (Infection↔Gremlins), D=«Cosmic Ray=переименованный mutmut» (ложь: независимые проекты); correct правит фактический дефект",
-      "resolution": "re-blind SEED=9970 PASS: correct=B единственный, форма честная (twin rich-lists O1/O4 снимают form-tell), различитель Cosmic Ray≠mutmut. Факты подтверждены: Gremlins=Go, Infection=PHP, Cosmic Ray=Python-отдельный."
-    },
-    "Q16": {
-      "correct": "C",
-      "byte_locked_correct": true,
-      "issue": "form-tell (blind ×3): R1 — три дистрактора с одинаковым самоопровергающим хвостом («не ускоряет, лишь надёжнее/точнее»), correct — единственный позитивный финал; R2 — correct единственный разнородный перечень vs моно-тематичные дистракторы.",
-      "changes": [
-        "B (growing-sample): убран хвост «не быстрее» → уверенное утверждение модели; затем разнородный список (parallel+bytecode спереди + инвертированное ядро incremental=наращивание выборки); нейтрализован sell-хвост «ключевая оптимизация»→фактологичный.",
-        "D (isolation): убран хвост «быстрее не становится» → уверенное; затем разнородный список (coverage-sel+parallel спереди + инвертированное ядро in-process=форк JVM на мутант); нейтрализован speed-sell-хвост.",
-        "backtick-spans выровнены 2/2/2/2; skel `;`-паритет сохранён."
-      ],
-      "distractor_models": "A=резать suite (карикатура-модель, absolutes), B=incremental наращивает выборку (инверсия механизма), D=in-process=форк JVM на мутант (инверсия механизма); B/D — hidden_truth-подмешивание реальных приёмов для правдоподобия",
-      "resolution": "re-blind SEED=10400 PASS однозначность (semantic_correct=C, second_correct=нет). Residual: correct — единственный без спорного/эмпирического финала (byte-lock, неустраним) → умеренная форм-угадываемость, принята."
-    },
-    "Q18": {
-      "correct": "D",
-      "byte_locked_correct": true,
-      "issue": "second_correct + форма (blind ×3): дистрактор B нёс ТУ ЖЕ верную таблицу ориентиров (90%+/75-85%/60-75%/N/A), отличаясь лишь фразой «снимок важнее тренда» → почти-correct; плюс correct — единственный «it-depends+тренд».",
-      "changes": [
-        "B: «важен абсолют + correct-таблица» → грубая двухуровневая градация по критичности (критичные 90%+, остальное 80%) + абсолют-над-трендом (ДВЕ явные ошибки, НЕ второй правильный; correct-таблица убрана).",
-        "C: де-карикатура «Ориентиры перевёрнуты/перестраховка» → достижимость-модель «планку задирают там, где score дешевле взять» (нейтральный тон, снят meta-tell «перевёрнуты»); wrong-секции B и C переписаны."
-      ],
-      "distractor_models": "A=единый flat-80 (нет градации), B=грубая двухуровневая градация+абсолют>тренд, C=достижимость (высокий порог простому коду); критичность-осознанность в 3/4 опций → correct не единственный нюансный",
-      "resolution": "re-blind SEED=10300 PASS однозначность, second_correct=нет (подтверждено ×3). Residual: тренд-ось эксклюзивна correct (byte-lock) → умеренная форм-угадываемость, принята как §30."
-    }
+  "round": 9,
+  "reviewed_commit": null,
+  "status": "TODO",
+  "source_file": "modules/quiz-app/src/main/resources/seed/mcq/testing/mutation-testing-interview.json",
+  "theory_file": "cheatsheets/interview/testing/mutation-testing-interview.md",
+  "summary": {
+    "questions": 20,
+    "blocks": 20,
+    "blocks_done": 0,
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0
   },
-  "blind_c1": "SEED=9500, shuffle Q4/Q5. Ре-ревью (независимый reviewer) ПОСЛЕ переписи: Q4 form_guess=«не могу», guessable_by_form=false, semantic_correct=O4(=D) ✓, flags=[]. Q5 form_guess=«не могу», guessable_by_form=false, semantic_correct=O4(=A) ✓, flags=[]. ИТОГ PASS. (Первый blind SEED=9400 дал FAIL по каррикатуре O3 в обоих блоках — устранено этой переписью.)",
-  "gates": "c7/FINAL (2026-07-15): answer-parity 1/1 PASS ВСЕ метрики зелёные — OPTION_LENGTH_RATIO=1.35 (Q6, 0 блоков >1.35), DUPLICATE_NGRAMS=0, DETAIL_PARITY=0.35 (7/20 ≤0.4), CORRECT_LONGEST_RATE=0.15, CORRECT_WRONG_AVG_RATIO=0.98, SENTENCE_PARITY=1, ABSOLUTE_MARKER_GAP=-0.1, CORRECT_POSITION_DISTRIBUTION=1.0 (5/5/5/5), CORRECT_POSITION_SEQUENCE=3, STYLE_GUESSABILITY=0.387 (len=0.19/code=0.39), SOURCE_COVERAGE=ok. skel hard_fails=0 warn_blocks=12. Прежний accepted-профиль (DUPLICATE=92 / OPTION_LENGTH=1.64 из §30) УСТРАНЁН в c7 — теперь честно зелёный, а не accepted.",
-  "residual": "ФАЙЛ FINAL ✅ — все 20 блоков контент-реаудированы (c1-c6). POS 20→3 ✅. Surface NO_TELLS ✅. Форм-residual (принят, §30-класс): Q16/Q18 byte-locked correct канонически-нюансен, остаточная умеренная форм-угадываемость структурно неустранима без правки correct — тренд/критичность-ось эксклюзивна верному ответу, натяжка дистрактора воссоздаёт second_correct (по §1 single-correct > форм-паритет). Non-blocking (на будущее): Q8 A(`total/killed`) odd_one_out; Q11 correct не говорит «байткод» явно (есть в sections); Q14 O3 нигилизм-каррикатура служит odd_one_out. Accepted-exceptions (§30/§18.1): OPTION_LENGTH_RATIO=1.64 (плотный byte-locked catalog Q4) и DUPLICATE_NGRAMS=92 (структурный skeleton-паритет).",
-  "notes": "Первый ROUND-8 тик по mutation-testing. Файл исходно высокого качества (богатые параллельные дистракторы). Правился ТОЛЬКО JSON-seed, correct (Q4-D, Q5-A, Q8-C) byte-locked к HEAD, label/order/1-correct инвариантны. Ключевой урок c4: формульные дистракторы для mutation score опасны hidden_truth — killed/total (Mutation Coverage) и killed/(killed+survived) (Test Strength) — РЕАЛЬНЫЕ метрики PIT, нельзя использовать как «неверные»; только covered/total и инверсии однозначно ложны. Урок c6: для ДВУХ-осевого correct (напр. «зависит от критичности» И «тренд важнее абсолюта») идеальный дистрактор невозможен — он либо совпадает по одной оси (second_correct), либо оставляет correct единственным нюансным (форм-tell). При byte-lock correct приоритет за single-correct (§1), форм-residual принимается и документируется. Правил ТОЛЬКО JSON-seed; correct Q16-C/Q18-D byte-locked к HEAD; label/order/1-correct инвариантны.",
-  "blind_c6": "Чанк Q15-Q20, 4 blind-раунда. R1 (SEED 9990/10010/10090): Q15/Q17 PASS; Q16/Q18/Q19/Q20 FAIL guessable_by_form=true (систем-паттерн: correct=нюансный/полный, дистракторы=абсолюты/каррикатуры). R-Q19/Q20 (SEED 10090): PASS — Q19 correct O4 (многослойная критика; дистракторы integration-tool/equivalent-plus/no-criticism — чистые инверсии), Q20 correct O3 (incremental на PR+threshold роняет билд+ночной прогон; сильный twin O2 «гейт=раскраска, ронять нельзя»). Q16: R1 self-negating-tail tell → убрал самоопровержение; R2 (SEED 10200) mono-thematic tell → O2/O3 разнородные списки; R3 (SEED 10300/10400) нейтрализованы sell-хвосты → PASS однозначность, second_correct=нет, дистракторы=инвертированные определения incremental(наращивание)/in-process(форк JVM) с hidden_truth-подмешиванием. Q18: R1 second_correct (дистрактор нёс correct-таблицу, отличаясь лишь фразой про тренд) → B external-benchmark→грубая-двухуровневая-градация+абсолют (2 ошибки), C де-карикатура→достижимость; критичность размазана 3/4; re-blind SEED=10300 PASS однозначность, second_correct=нет ×3. Форм-residual (Q16/Q18): byte-locked correct канонически-нюансен, остаточная умеренная угадываемость структурно неустранима без правки correct (тренд-ось эксклюзивна верному ответу); принято как §30-класс, форм-паритет < single-correct по §1.",
-  "blind_c7": "c7 blind (2026-07-14/15): чанк Q2-Q20 (13 блоков) de-dup + rebalance — 20/20 блоков blind-ACCEPT независимым ревьюером. Q14/Q17 REVISE (каррикатура не до конца ушла) → re-author c7b с явными plausible-false тезисами (неверные language-маппинги / оверобобщения, запрет dismissive-оборотов) → ACCEPT. Регресс-фикс DETAIL/skel (Q10/Q11/Q12) переблайнжен c7d (SEED=Q*7717+91, 3 независимых ревьюера, свежий сид): ВСЕ ACCEPT — single_correct=true, correct_label совпал с expected (Q10→C equivalent-mutant игра слова; Q11→C PIT HTML-vs-XML; Q12→A Stryker JS/TS+.NET+Scala vs break-не-ломает-сборку), factual_error_in_correct=false, other_defensible=false, caricature=false, dup_scaffold=false, form_guess=false. Общий while/install-каркас признан legit-parity, не дефектом."
+  "reset_baseline": {
+    "reset_date": "2026-07-17",
+    "old_pass_carried_forward": false,
+    "schema_precheck": "PASS",
+    "structural_invariants_precheck": "PASS",
+    "theory_file_present": true,
+    "json_q_numbers": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ],
+    "theory_q_numbers": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20
+    ],
+    "missing_theory_q_numbers": [],
+    "extra_theory_q_numbers": [],
+    "current_correct_positions": [
+      "B",
+      "A",
+      "B",
+      "B",
+      "D",
+      "D",
+      "A",
+      "C",
+      "A",
+      "A",
+      "C",
+      "C",
+      "D",
+      "B",
+      "C",
+      "C",
+      "A",
+      "D",
+      "D",
+      "B"
+    ],
+    "acceptance_note": "Baseline diagnostics are not ROUND 9 acceptance evidence."
+  },
+  "blocks": [
+    {
+      "q_number": 1,
+      "block_idx": 0,
+      "status": "TODO",
+      "stem": {
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
+      },
+      "correct": {
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
+      },
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        }
+      ],
+      "parity": {
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
+    },
+    {
+      "q_number": 2,
+      "block_idx": 0,
+      "status": "TODO",
+      "stem": {
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
+      },
+      "correct": {
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
+      },
+      "distractors": [
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        }
+      ],
+      "parity": {
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
+    },
+    {
+      "q_number": 3,
+      "block_idx": 0,
+      "status": "TODO",
+      "stem": {
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
+      },
+      "correct": {
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
+      },
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        }
+      ],
+      "parity": {
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
+    },
+    {
+      "q_number": 4,
+      "block_idx": 0,
+      "status": "TODO",
+      "stem": {
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
+      },
+      "correct": {
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
+      },
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        }
+      ],
+      "parity": {
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
+    },
+    {
+      "q_number": 5,
+      "block_idx": 0,
+      "status": "TODO",
+      "stem": {
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
+      },
+      "correct": {
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
+      },
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        }
+      ],
+      "parity": {
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
+    },
+    {
+      "q_number": 6,
+      "block_idx": 0,
+      "status": "TODO",
+      "stem": {
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
+      },
+      "correct": {
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
+      },
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        }
+      ],
+      "parity": {
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
+    },
+    {
+      "q_number": 7,
+      "block_idx": 0,
+      "status": "TODO",
+      "stem": {
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
+      },
+      "correct": {
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
+      },
+      "distractors": [
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        }
+      ],
+      "parity": {
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
+    },
+    {
+      "q_number": 8,
+      "block_idx": 0,
+      "status": "TODO",
+      "stem": {
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
+      },
+      "correct": {
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
+      },
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        }
+      ],
+      "parity": {
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
+    },
+    {
+      "q_number": 9,
+      "block_idx": 0,
+      "status": "TODO",
+      "stem": {
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
+      },
+      "correct": {
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
+      },
+      "distractors": [
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        }
+      ],
+      "parity": {
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
+    },
+    {
+      "q_number": 10,
+      "block_idx": 0,
+      "status": "TODO",
+      "stem": {
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
+      },
+      "correct": {
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
+      },
+      "distractors": [
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        }
+      ],
+      "parity": {
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
+    },
+    {
+      "q_number": 11,
+      "block_idx": 0,
+      "status": "TODO",
+      "stem": {
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
+      },
+      "correct": {
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
+      },
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        }
+      ],
+      "parity": {
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
+    },
+    {
+      "q_number": 12,
+      "block_idx": 0,
+      "status": "TODO",
+      "stem": {
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
+      },
+      "correct": {
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
+      },
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        }
+      ],
+      "parity": {
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
+    },
+    {
+      "q_number": 13,
+      "block_idx": 0,
+      "status": "TODO",
+      "stem": {
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
+      },
+      "correct": {
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
+      },
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        }
+      ],
+      "parity": {
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
+    },
+    {
+      "q_number": 14,
+      "block_idx": 0,
+      "status": "TODO",
+      "stem": {
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
+      },
+      "correct": {
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
+      },
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        }
+      ],
+      "parity": {
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
+    },
+    {
+      "q_number": 15,
+      "block_idx": 0,
+      "status": "TODO",
+      "stem": {
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
+      },
+      "correct": {
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
+      },
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        }
+      ],
+      "parity": {
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
+    },
+    {
+      "q_number": 16,
+      "block_idx": 0,
+      "status": "TODO",
+      "stem": {
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
+      },
+      "correct": {
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
+      },
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        }
+      ],
+      "parity": {
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
+    },
+    {
+      "q_number": 17,
+      "block_idx": 0,
+      "status": "TODO",
+      "stem": {
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
+      },
+      "correct": {
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
+      },
+      "distractors": [
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        }
+      ],
+      "parity": {
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
+    },
+    {
+      "q_number": 18,
+      "block_idx": 0,
+      "status": "TODO",
+      "stem": {
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
+      },
+      "correct": {
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
+      },
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        }
+      ],
+      "parity": {
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
+    },
+    {
+      "q_number": 19,
+      "block_idx": 0,
+      "status": "TODO",
+      "stem": {
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
+      },
+      "correct": {
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
+      },
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        }
+      ],
+      "parity": {
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
+    },
+    {
+      "q_number": 20,
+      "block_idx": 0,
+      "status": "TODO",
+      "stem": {
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
+      },
+      "correct": {
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
+      },
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        }
+      ],
+      "parity": {
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
+    }
+  ]
 }

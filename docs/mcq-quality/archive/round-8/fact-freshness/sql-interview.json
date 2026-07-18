@@ -1,0 +1,34 @@
+{
+  "topic_slug": "sql-interview",
+  "version_sensitive": true,
+  "product_version": "SQL:2016 стандарт; PostgreSQL 16, MySQL 8.0 — диалектная специфика",
+  "checked_date": "2026-07-12",
+  "sources": [
+    "https://www.postgresql.org/docs/16/ddl-constraints.html",
+    "https://www.postgresql.org/docs/16/datatype-datetime.html",
+    "https://www.postgresql.org/docs/16/sql-createprocedure.html",
+    "https://dev.mysql.com/doc/refman/8.0/en/datetime.html",
+    "https://www.postgresql.org/docs/16/rules-materializedviews.html"
+  ],
+  "version_sensitive_claims": [
+    "UNIQUE в PostgreSQL допускает несколько NULL (считаются различными); в SQL Server по умолчанию один NULL. С PostgreSQL 15 доступно UNIQUE NULLS NOT DISTINCT [Q2, Q3]. Актуально в PostgreSQL 16.",
+    "EXCLUDE-ограничение (запрет пересечения диапазонов через GiST-операторы) — специфика PostgreSQL, в стандарте SQL его нет [Q2]. Актуально в PostgreSQL 16.",
+    "MySQL TIMESTAMP: 32-битное хранение, диапазон 1970-01-01 — 2038-01-19 («проблема 2038»), 4 байта, конвертация в UTC; DATETIME: 1000-9999, 8 байт, хранит «как есть» [Q6]. Актуально в MySQL 8.0.",
+    "PostgreSQL TIMESTAMPTZ: 8 байт (как и TIMESTAMP), зону НЕ хранит — конвертирует в UTC при записи и в зону сессии при чтении [Q6]. Актуально в PostgreSQL 16.",
+    "Процедуры с COMMIT/ROLLBACK внутри — начиная с PostgreSQL 11 (CREATE PROCEDURE + CALL); функции управлять транзакцией не могут [Q10]. Актуально в PostgreSQL 16.",
+    "REFRESH MATERIALIZED VIEW CONCURRENTLY требует уникального индекса на matview; автоматического инкрементального обновления matview в PostgreSQL 16 нет (IVM — сторонние расширения) [Q9].",
+    "TRUNCATE — DDL: в PostgreSQL транзакционен (можно ROLLBACK), в MySQL/Oracle выполняет неявный COMMIT [Q1]. Диалектно-чувствительно.",
+    "Стандартный MERGE INTO ... USING ... WHEN MATCHED появился в PostgreSQL 15; INSERT ... ON CONFLICT — с PostgreSQL 9.5 [Q16]. Актуально в PostgreSQL 16.",
+    "RETURNING поддерживают PostgreSQL, Oracle (RETURNING INTO), MariaDB 10.5+, SQL Server (OUTPUT); MySQL 8.0 НЕ поддерживает RETURNING [Q20].",
+    "CTE: до PostgreSQL 12 всегда материализовался (optimization fence); с PG12 инлайнится по умолчанию, управление — MATERIALIZED/NOT MATERIALIZED. Data-modifying CTE (WITH ... DELETE/UPDATE/INSERT RETURNING) — специфика PostgreSQL [Q19, Q20].",
+    "GROUP BY по алиасу из SELECT: запрещён стандартом SQL, но PostgreSQL и MySQL резолвят имена выходных столбцов как расширение [Q14].",
+    "SQL Server temp-таблицы: #name — локальная (сессия), ##name — глобальная (все сессии). PostgreSQL: CREATE TEMP TABLE — сессионная, поддерживает индексы и ограничения [Q12].",
+    "Клауза CYCLE для рекурсивных CTE — с PostgreSQL 14, явная opt-in (не включается автоматически); до неё защита от циклов — ручная (массив пути / лимит глубины) [Q48]. Актуально в PostgreSQL 16.",
+    "Hash-индексы WAL-logged (crash-safe, реплицируются) начиная с PostgreSQL 10; до 10 не журналировались и требовали REINDEX после сбоя [Q51]. Актуально в PostgreSQL 16.",
+    "Декларативное партиционирование (PARTITION BY RANGE/LIST/HASH) — с PostgreSQL 10; глобальных индексов по партициям в PostgreSQL 16 нет (CREATE INDEX создаёт набор локальных) [Q50].",
+    "EXPLAIN ANALYZE реально выполняет запрос, включая DML (UPDATE/DELETE меняют данные — замер оборачивают в BEGIN/ROLLBACK); просто EXPLAIN не выполняет [Q49]. Стабильная семантика PostgreSQL.",
+    "Autovacuum срабатывает по порогам dead tuples (autovacuum_vacuum_threshold + scale_factor 20%), не по расписанию; VACUUM FULL берёт ACCESS EXCLUSIVE [Q52]. Актуально в PostgreSQL 16.",
+    "MVCC PostgreSQL: xmin/xmax, 32-битный xid с wraparound ~2 млрд (freeze через VACUUM); READ COMMITTED — снимок на каждый оператор, REPEATABLE READ — на транзакцию [Q53]."
+  ],
+  "notes": "Ядро SQL (constraints, NULL-семантика, нормальные формы, View) — стандарт SQL:2016, стабильно. Диалектная специфика привязана к PostgreSQL 16 / MySQL 8.0. Покрывает все чанки Q1-Q53."
+}

@@ -1,0 +1,39 @@
+{
+  "topic_slug": "project-reactor-interview",
+  "version_sensitive": true,
+  "product_version": "Project Reactor 3.6.x (reactor-core), Reactive Streams 1.0.4, JDK 9+ Flow API",
+  "checked_date": "2026-07-12",
+  "sources": [
+    "https://projectreactor.io/docs/core/release/reference/",
+    "https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Flux.html",
+    "https://projectreactor.io/docs/core/release/api/reactor/core/publisher/Mono.html",
+    "https://github.com/reactive-streams/reactive-streams-jvm",
+    "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/Flow.html"
+  ],
+  "version_sensitive_claims": [
+    "Reactive Streams включена в JDK 9 как java.util.concurrent.Flow (Publisher/Subscriber/Subscription/Processor) [Q2]. Стабильно, актуально для JDK 17/21.",
+    "RxJava 3: backpressure только у Flowable (Observable — без); Project Reactor: встроен во все типы, null в потоке запрещён, есть Context [Q3]. Актуально для RxJava 3.x / Reactor 3.6.",
+    "Mono.just(null) бросает NullPointerException; для nullable-значений — Mono.justOrEmpty [Q6]. Стабильный контракт Reactor 3.x.",
+    "Flux.create: FluxSink потокобезопасен (многопоточная эмиссия), OverflowStrategy задаётся параметром, дефолт BUFFER; Flux.push — однопоточная эмиссия, тоже имеет перегрузку с OverflowStrategy [Q9]. Актуально в Reactor 3.6.",
+    "Flux.generate: синхронный генератор (SynchronousSink), ровно один sink.next() за итерацию, pull-based backpressure; вариант с stateSupplier [Q10]. Стабильный контракт Reactor 3.x.",
+    "Flux.range(start, count) — начало и количество (не границы); Flux.interval — бесконечный поток тиков [Q7]. Стабильный контракт Reactor 3.x.",
+    "flatMap: дефолтная конкурентность 256 (Queues.SMALL_BUFFER_SIZE); concatMap — последовательные подписки; switchMap отменяет предыдущий inner [Q12]. Актуально в Reactor 3.6.",
+    "filterWhen(T → Publisher<Boolean>) — асинхронный фильтр базового API [Q16]; take(n) отменяет подписку на источник после n элементов; limitRequest с Reactor 3.5 помечен deprecated в пользу take(n, true), limitRate актуален [Q18].",
+    "transform применяется при сборке цепочки; transformDeferred — на каждую подписку (появился как замена compose в Reactor 3.3) [Q14].",
+    "retry(N) переподписывается немедленно без задержки; retryWhen(Retry.backoff/fixedDelay) — задержки, jitter, filter по типу [Q25]. Стабильный контракт Reactor 3.x (Retry API с 3.3.4).",
+    "Exceptions.propagate оборачивает checked в RuntimeException (Error/RuntimeException как есть); Exceptions.unwrap распаковывает [Q26]. Стабильно в Reactor 3.6.",
+    "Стратегии onBackpressureBuffer (по умолчанию неограничен)/Drop/Latest/Error; limitRate(n) — replenish при ~75% потребления [Q28, Q29]. Актуально в Reactor 3.6.",
+    "Schedulers: immediate/single/parallel (=числу CPU)/boundedElastic (10×CPU + очередь 100K); elastic() deprecated с 3.3, удалён в новых версиях [Q30]. Актуально для Reactor 3.6.",
+    "subscribeOn позиционно-независим (побеждает ближайший к источнику), publishOn переключает downstream от точки вызова [Q31]. Стабильный контракт Reactor 3.x.",
+    "ParallelFlux: parallel(n) делит на рельсы, реальный параллелизм только после runOn(Scheduler); Context иммутабелен, распространяется снизу вверх, contextWrite/deferContextual (API с Reactor 3.4) [Q32-Q34].",
+    "Hot-преобразования: share()=publish().refCount(1), publish()+connect()/autoConnect(n), cache() replay, Sinks.many() (Sinks API с 3.4 вместо *Processor) [Q35-Q37].",
+    "Временные операторы interval/delayElements/delaySubscription/timeout/elapsed/timestamp/timed на Schedulers.parallel() по умолчанию; timeout считается между элементами [Q38, Q39]. StepVerifier из reactor-test [Q40].",
+    "StepVerifier.withVirtualTime требует Supplier<Publisher> (сборка после подмены VirtualTimeScheduler); thenAwait/expectNoEvent перематывают виртуальное время [Q41]. Стабильно в reactor-test 3.x.",
+    "TestPublisher: ручные next()/error()/complete(), контроль спроса assertMinRequested/awaitRequest; createNoncompliant(REQUEST_OVERFLOW и др.) — осознанные нарушения спецификации [Q42]. Актуально в reactor-test 3.6.",
+    "Отладка: Hooks.onOperatorDebug() глобален и дорог (сброс — resetOnOperatorDebug); checkpoint(\"name\") — error-path-only, production-safe; ReactorDebugAgent (reactor-tools) — инструментирование байткода без runtime-цены [Q43-Q45]. Актуально в Reactor 3.6.",
+    "WebFlux работает на Reactor Netty event-loop (не Servlet API); поддерживает и аннотационную модель (@RestController), и функциональную (RouterFunction); реактивный I/O — WebClient/R2DBC [Q46]. Актуально для Spring Framework 6.x.",
+    "block() на потоке с маркером NonBlocking (Netty event-loop) бросает IllegalStateException; изоляция блокирующего кода — Mono.fromCallable(...).subscribeOn(Schedulers.boundedElastic()) [Q47]. Стабильный контракт Reactor 3.2+.",
+    "context-propagation: io.micrometer:context-propagation, ThreadLocalAccessor регистрируется в ContextRegistry, оператор contextCapture() с Reactor 3.5; Hooks.enableAutomaticContextPropagation() — автоматический режим [Q48]. Актуально на 2026."
+  ],
+  "notes": "Ядро (Reactive Streams протокол, Mono/Flux контракты, фабрики) стабильно с Reactor 3.1+; претензий к свежести нет. Покрывает Q1-Q48 (все 48 блоков)."
+}

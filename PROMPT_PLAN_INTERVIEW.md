@@ -1,6 +1,10 @@
+# ROUND 9 EXECUTION NOTE
+
+The true reset and inventory were completed on 2026-07-17. Do not carry forward any ROUND 8 acceptance. Do not repeat the reset if `docs/mcq-quality/reset-manifest.json` has `reset_complete: true`; begin with the next clean content-review unit.
+
 /loop 15m
 
-ROUND-8 FULL MCQ CORPUS RESET AND QUALITY SWEEP
+ROUND-9 FULL MCQ CORPUS RESET AND QUALITY SWEEP
 
 Каждый тик выполняй ровно одну атомарную единицу полного повторного аудита
 корпуса вопросов для собеседований и связанных MCQ-ответов.
@@ -40,8 +44,8 @@ edge cases, источники заблуждений, related-ссылки и v
    - старый progress log как источник приёмки.
 3. Git-историю и существующие commits НЕ удаляй.
 4. Сохрани старые findings только как исторические notes.
-5. Замени рабочий план новым ROUND-8 планом:
-   - `PLAN_INTERVIEW_ROUND8_RESET.md`, если он уже лежит в проекте;
+5. Замени рабочий план новым ROUND-9 планом:
+   - `PLAN_INTERVIEW_ROUND9_RESET.md`, если он уже лежит в проекте;
    - либо создай эквивалент по правилам этого prompt.
 6. Все файлы корпуса выставь в `⬜` по ВСЕМ критериям.
 7. Ни один старый `✅` не переносить.
@@ -1591,7 +1595,7 @@ targeted tests, если добавлены
 Пример:
 
 ```bash
-git commit -m "pedago(mcq): <topic> — ROUND-8 full quality audit Q<X>-Q<Y>" -- \
+git commit -m "pedago(mcq): <topic> — ROUND-9 full quality audit Q<X>-Q<Y>" -- \
   <json-path> \
   <optional-md-path> \
   <review-sidecar-path> \

@@ -1,14 +1,14 @@
 {
   "topic_slug": "java-pattern-matching-interview",
-  "version_sensitive": true,
-  "product_version": "Java 21 (LTS, сентябрь 2023) — точка, где все три ядровые формы pattern matching финализированы как стандарт (без `--enable-preview`); актуально проверено на линейке Java 21–25 (LTS 25 — сентябрь 2025). Финализация: (1) `instanceof` type patterns — JEP 305 preview (Java 14) → JEP 375 (15) → **JEP 394 FINAL (Java 16)**; (2) pattern matching для `switch` — JEP 406 preview (17) → 420/427/433 → **JEP 441 FINAL (Java 21)**, включая guarded patterns (`case T t when <cond>`), `case null` и `case null, default`; (3) record patterns (деконструкция) — JEP 405 preview (19) → JEP 432 (20) → **JEP 440 FINAL (Java 21)**, вложенность произвольной глубины. `switch` expression сам — JEP 361 FINAL (Java 14). Exhaustiveness для sealed-иерархий + `java.lang.MatchException` (safety-net при separate-compilation / нарушенной exhaustiveness) введены в **Java 21**. Record-pattern точно сохраняет ОБЪЯВЛЕННЫЙ тип компонента (в т.ч. примитив `int` без autoboxing) — стабильно с Java 21. Generic record pattern даёт unchecked-warning + heap pollution из-за type erasure — стабильно. Version-sensitive точки ПОСЛЕ Java 21 (важно не подать их как финал): **Primitive Types in Patterns, instanceof и switch (JEP 455 preview в Java 23, JEP 488 2-й preview в Java 24) — ОСТАЮТСЯ preview**, т.е. `case int i`/`obj instanceof int` требуют `--enable-preview` и не финализированы на начало 2026; **Unnamed variables & patterns `_` — JEP 456 FINAL в Java 22** (в Java 21 были preview JEP 443). Вопросы файла тестируют ядро Java 21 (instanceof/switch/record patterns, flow scoping, exhaustiveness, MatchException, dominance, heap pollution, expression problem vs Visitor) — оно стабильно и в пределах knowledge-cutoff.",
-  "checked_date": "2026-07-16",
-  "sources": [
-    "JEP 394: Pattern Matching for instanceof (FINAL в Java 16) — type patterns + flow scoping binding-переменной",
-    "JEP 441: Pattern Matching for switch (FINAL в Java 21) — type patterns в case, guarded patterns (when), case null, dominance-проверка, exhaustiveness",
-    "JEP 440: Record Patterns (FINAL в Java 21) — деконструкция record, вложенность произвольной глубины, точное сохранение типа компонента",
-    "java.lang.MatchException (Java 21) — runtime safety-net при нарушении compile-time exhaustiveness (separate compilation); JEP 361 switch expressions (Java 14)",
-    "JEP 455: Primitive Types in Patterns, instanceof, and switch (preview в Java 23, JEP 488 2-й preview в Java 24 — НЕ финал на начало 2026); JEP 456 Unnamed Variables & Patterns (FINAL в Java 22)"
-  ],
-  "notes": "Ядро (три формы pattern matching финализированы в Java 16/21/21, flow scoping, sealed-exhaustiveness, MatchException, dominance «label is dominated», NPE на null без `case null`, generic-record heap pollution, record-pattern сохраняет примитивный тип компонента, expression-problem trade-off vs Visitor) стабильно и в пределах knowledge-cutoff (янв-2026). ГЛАВНАЯ version-sensitive осторожность — НЕ подавать primitive type patterns (JEP 455/488) как финал: они остаются preview 23–24. JEP/версия-номера сверены. Проверять при мажорном bump JDK (финализация JEP 455). ЭМПИРИЧЕСКИ проверено на javac/java Corretto 21.0.4 и 22.0.2 (2026-07-16): (Q11) `if (obj instanceof Box<String> b)` при `obj` типа `Object` — COMPILE-ERROR «Object cannot be safely cast to Box<String>» (unchecked-cast запрещён в instanceof); компилируются `Box<?> b`, raw `Box b`, `Box<?>(String s)` (последняя на Box<Integer> НЕ матчится, без CCE). (Q4) null во вложенном record-компоненте при деконструкции `Rectangle(Point(int x,int y),…)` → ветка не матчится (падает в default), NPE НЕ бросается (в отличие от вложенного type-паттерна `Point tl`, который биндит null)."
+  "round": 9,
+  "status": "TODO",
+  "version_sensitive": null,
+  "product_version": null,
+  "checked_date": null,
+  "sources": [],
+  "version_sensitive_claims": [],
+  "staleness_risks": [],
+  "notes": [
+    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+  ]
 }

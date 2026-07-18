@@ -1,0 +1,29 @@
+{
+  "topic_slug": "design-patterns-interview",
+  "version_sensitive": true,
+  "product_version": "GoF Design Patterns (1994, каталог 23 паттернов) — язык-агностично; Java-специфика по Java SE 21 (LTS), JLS core semantics",
+  "checked_date": "2026-07-12",
+  "sources": [
+    "Gamma, Helm, Johnson, Vlissides — Design Patterns: Elements of Reusable Object-Oriented Software (1994)",
+    "https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html",
+    "https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html",
+    "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Enum.html",
+    "https://refactoring.guru/design-patterns/catalog"
+  ],
+  "version_sensitive_claims": [
+    "Каталог GoF: 23 паттерна в 3 категориях — Creational 5, Structural 7, Behavioral 11 [Q2]. Стабилен с 1994, версий не имеет.",
+    "Double-Checked Locking: поле instance ДОЛЖНО быть volatile начиная с Java 5 (JSR-133, JMM) — без него возможен instruction reordering и публикация half-constructed объекта. До Java 5 DCL был сломан даже с volatile [Q6]. Актуально в Java SE 21.",
+    "enum-Singleton: enum неявно extends java.lang.Enum, наследоваться от другого класса нельзя (JLS §8.9); reflective создание enum запрещено (Constructor.newInstance бросает IllegalArgumentException 'Cannot reflectively create enum objects'); сериализация enum безопасна by-name, readResolve не требуется [Q7]. Стабильно с Java 5.",
+    "Singleton race condition при ленивой инициализации без синхронизации: два потока проходят instance==null и создают два экземпляра — семантика JMM, стабильна [Q8].",
+    "Object.clone() по умолчанию делает SHALLOW copy (примитивы копируются, поля-ссылки — только ссылка); для клонирования класс реализует Cloneable (не наследуется от мифического 'Prototype'), иначе CloneNotSupportedException. Deep copy пишется вручную. Семантика JLS/Object, стабильна [Q13].",
+    "Структурных GoF-паттернов ровно 7: Adapter, Decorator, Proxy, Composite, Bridge, Facade, Flyweight. Simple Factory в каталог GoF НЕ входит (это идиома, не паттерн из книги 1994) [Q10, Q14]. Стабильно с 1994.",
+    "Поведенческих GoF-паттернов ровно 11 (не 8): Chain of Responsibility, Command, Interpreter, Iterator, Mediator, Memento, Observer, State, Strategy, Template Method, Visitor [Q24]. Стабильно с 1994.",
+    "Flyweight (структурный) разделяет intrinsic-состояние между объектами, extrinsic принимает параметром. Пример: Integer.valueOf() кэширует объекты в диапазоне -128..127 (java.lang.Integer.IntegerCache, минимальный верхний порог настраивается -XX:AutoBoxCacheMax) [Q23]. Актуально в Java SE 21.",
+    "java.util.Observable/Observer помечены @Deprecated с Java 9 (JDK-8154801) — не рекомендованы к использованию; современная замена — PropertyChangeListener/Flow API/реактивные библиотеки [Q27]. Актуально в Java SE 21.",
+    "Proxy заместитель имеет тот же интерфейс ИЛИ является subclass; Spring AOP-прокси: JDK Dynamic Proxy для интерфейсов, CGLIB-subclass для классов — оба валидны [Q20]. Актуально в Spring 6 / Java SE 21.",
+    "Java 8+ лямбды/функциональные интерфейсы упрощают паттерны: Strategy→Comparator/Function, Command→Runnable/Supplier, Observer→Consumer<T>, Factory→Supplier<T>, Iterator→Stream; records (Java 16+) сокращают Builder для простых иммутабельных данных, но НЕ заменяют его при множестве опциональных полей [Q41]. Актуально в Java SE 21.",
+    "Object Pool — не GoF-паттерн, а идиома; современные пулы: HikariCP (JDBC), java.util.concurrent.ExecutorService (потоки), пул ByteBuffer в Netty. Object Pool ≠ Flyweight (пул переиспользует мутабельные дорогие объекты; Flyweight разделяет неизменяемое intrinsic-состояние) [Q46]. Актуально 2026.",
+    "Specification (DDD, Eric Evans) инкапсулирует бизнес-правило в объект с isSatisfiedBy(); комбинируется через and()/or()/not() (в Java — default-методы функционального интерфейса, класс-на-правило НЕ требуется). Spring Data JPA Specification — родственная, но НЕ идентичная реализация (строит Criteria-запрос) [Q48]. Актуально в Spring Data 3 / Java SE 21."
+  ],
+  "notes": "Design Patterns как каталог GoF — version-insensitive (зафиксирован в 1994). Java-специфичные утверждения (DCL/volatile, enum, Integer-кэш, Observable-deprecation, лямбды/records) привязаны к JMM/JLS/JDK начиная с Java 5 и стабильны вплоть до Java SE 21. Покрывает весь файл Q1-Q48 (ROUND-8 FINAL)."
+}

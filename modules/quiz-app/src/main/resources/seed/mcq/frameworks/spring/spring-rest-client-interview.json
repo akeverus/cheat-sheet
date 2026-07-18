@@ -6,10 +6,10 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие HTTP-клиенты есть в Spring и чем они принципиально отличаются?",
+          "question_text": "Какие основные HTTP-клиенты предлагает Spring и чем различаются их модели выполнения?",
           "options": [
             {
-              "text": "В Spring клиенты различают по типу возврата: `RestTemplate` отдаёт готовый объект сразу, `RestClient` возвращает `CompletableFuture` для асинхронной обработки в пуле, а реактивный `WebClient` — неблокирующий поток `Flux`, и выбирают их именно по нужной модели исполнения запросов.",
+              "text": "`RestTemplate` выполняет запрос синхронно, `RestClient` возвращает `CompletableFuture`, а `WebClient` формирует `Mono` или `Flux`. Поэтому между ними выбирают прежде всего по тому, нужен ли вызывающему коду обычный результат, future-API или реактивный поток.",
               "sections": {
                 "what_actually": "Реактивен только `WebClient`; `RestTemplate` и `RestClient` синхронные и возвращают обычные объекты, а не `Mono`/`Flux`.",
                 "source_of_confusion": "WebFlux активно продвигает реактивность, и кажется, что весь современный Spring перешёл на `Mono`/`Flux`.",
@@ -21,7 +21,7 @@
               "label": "A"
             },
             {
-              "text": "В Spring три клиента: `RestTemplate` для legacy-кода, реактивный `WebClient` на WebFlux и новый `RestClient`, который работает как синхронный фасад поверх реактивного движка, внутри вызывает `block()` и потому тоже тянет реактивные зависимости в проект.",
+              "text": "`RestTemplate` и `RestClient` являются синхронными, но `RestClient` реализован как блокирующая оболочка над `WebClient` и требует `spring-webflux`. Поэтому новый fluent-клиент сохраняет реактивный движок, хотя наружу возвращает обычный объект.",
               "sections": {
                 "what_actually": "`RestClient` — самостоятельный класс из Spring 6.1 с fluent-builder API, а не переименование `RestTemplate`; клиентов три, а не два.",
                 "source_of_confusion": "Похожие имена `RestTemplate` и `RestClient` и их синхронная природа создают иллюзию, что это одно и то же.",
@@ -33,7 +33,7 @@
               "label": "B"
             },
             {
-              "text": "В Spring три клиента построены поверх одного класса `ClientHttpRequestFactory` и делят общий внутренний fluent-builder, поэтому `RestTemplate`, `RestClient` и `WebClient` дают почти одинаковый набор методов и различаются в основном именем пакета и годом своего появления.",
+              "text": "`RestTemplate`, `RestClient` и `WebClient` используют один общий fluent-контракт и одну `ClientHttpRequestFactory`. Поэтому их API и инфраструктура взаимозаменяемы, а практическая разница сводится к версии Spring и названиям методов.",
               "sections": {
                 "what_actually": "Различия существенные: разный стиль API (перегрузки vs fluent vs reactive), разные зависимости (`spring-web` vs `spring-webflux`) и разный статус поддержки.",
                 "source_of_confusion": "Все три решают одну задачу — HTTP-вызовы, поэтому поверхностно кажутся взаимозаменяемыми деталями.",
@@ -45,7 +45,7 @@
               "label": "C"
             },
             {
-              "text": "В Spring три основных клиента: `RestTemplate` (синхронный, классический, в maintenance mode — НЕ `@Deprecated`), `WebClient` (реактивный, Spring 5+, на WebFlux) и `RestClient` (синхронный fluent, Spring 6.1+), и выбирают их по стилю стека и статусу поддержки.",
+              "text": "`RestTemplate` — исходный синхронный template-API, `RestClient` — современный синхронный fluent-API из `spring-web`, а `WebClient` — реактивный API из `spring-webflux`. Выбор зависит от модели приложения, стриминга и необходимости поддерживать legacy-код.",
               "sections": {
                 "explanation": "`RestTemplate` — старый синхронный API на перегрузках методов; `WebClient` — реактивный с `Mono`/`Flux` поверх `spring-webflux`; `RestClient` — новый синхронный fluent-builder из `spring-web`, заменяющий `RestTemplate`.",
                 "example": "Для нового нереактивного проекта на Spring 6.1 берут `RestClient`, для WebFlux с высокой конкурентностью — `WebClient`, а `RestTemplate` оставляют только в ещё не мигрированном legacy.",
@@ -66,15 +66,15 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Почему `RestTemplate` перевели в maintenance mode и что это значит на практике?",
+          "question_text": "Что означает режим поддержки `RestTemplate` и как он влияет на выбор клиента?",
           "options": [
             {
-              "text": "`RestTemplate` перевели в maintenance mode из-за устаревшего дизайна эпохи Java 5: перегрузка методов вместо fluent API, сложная расширяемость и слабая поддержка современных паттернов; `RestClient` решает это единым fluent-builder, оставаясь совместимым по инфраструктуре. Важно: `RestTemplate` НЕ помечен `@Deprecated`, он просто не развивается.",
+              "text": "`RestTemplate` в режиме поддержки продолжает получать исправления и делит с `RestClient` низкоуровневую инфраструктуру, но новые высокоуровневые возможности развивают в fluent-клиенте. Legacy-код можно мигрировать постепенно, а новый синхронный код разумнее писать на `RestClient`.",
               "sections": {
-                "explanation": "Maintenance mode — это решение «заморозить» развитие: класс поддерживают ради обратной совместимости, но новые возможности идут в `RestClient`. Аннотации `@Deprecated` на `RestTemplate` нет.",
-                "example": "Старый код `restTemplate.getForObject(url, Type.class)` продолжает работать в Spring 6.x; новые эндпоинты пишут на `RestClient` с fluent-API.",
+                "explanation": "`RestTemplate` остаётся рабочим синхронным клиентом и разделяет с `RestClient` request factories, interceptors, initializers и message converters. Однако новые высокоуровневые возможности Spring развивает в `RestClient`, поэтому режим поддержки не равен удалению или немедленной обязательной миграции.",
+                "example": "Существующий `restTemplate.getForObject(...)` продолжает работать; новый синхронный вызов оформляют через `restClient.get().uri(...).retrieve().body(...)`, не переписывая весь legacy-код одним рискованным коммитом.",
                 "when_to_apply": "В новых проектах брать `RestClient` (синхронный) или `WebClient` (реактивный); существующий код на `RestTemplate` мигрировать по мере необходимости, без спешки.",
-                "edge_cases": "Maintenance mode ≠ удаление и ≠ `@Deprecated`: `RestTemplate` продолжит работать в Spring 6.x, но новых возможностей в нём не появится.",
+                "edge_cases": "Не путать историческую формулировку maintenance mode с `@Deprecated`: в текущем Javadoc Spring Framework 7 класс не аннотирован как deprecated, но `RestClient` назван фокусом новых higher-level features.",
                 "related": "[[spring-rest-client-interview#Q1]] три клиента Spring; [[spring-rest-client-interview#Q3]] как работает `RestClient`; [[spring-rest-client-interview#Q13]] миграция на `RestClient`."
               },
               "correct": true,
@@ -82,7 +82,7 @@
               "label": "A"
             },
             {
-              "text": "`RestTemplate` заморозили, потому что команда Spring делает ставку на неблокирующую модель и рекомендует оборачивать синхронные вызовы в `WebClient` через `.block()`; ради этого курса старый клиент оставили без дальнейших доработок. Новый `RestClient` подают как временный мост до массового перехода проектов на реактивный стек.",
+              "text": "`RestTemplate` перевели в режим поддержки из-за глобальной блокировки внутри `ClientHttpRequestFactory`, которая сериализует конкурентные запросы независимо от HTTP-движка. `RestClient` устранил этот монитор и отдельную очередь ожидания, поэтому миграция нужна ради корректной параллельной работы.",
               "sections": {
                 "what_actually": "Замена `RestTemplate` — синхронный `RestClient`, а не блокирующий `WebClient`; реактивность не является причиной maintenance mode.",
                 "source_of_confusion": "Раз `WebClient` появился раньше `RestClient`, кажется, что синхронику «обязали» уйти в реактивность.",
@@ -94,7 +94,7 @@
               "label": "B"
             },
             {
-              "text": "`RestTemplate` отправили в maintenance mode из-за того, что его `ClientHttpRequestFactory` держит общий монитор и сериализует запросы на одном замке; `RestClient` снял это, разведя вызовы по независимым `HttpClient`-соединениям без общей блокировки. Замеры под нагрузкой показывали заметную деградацию пропускной способности у старого клиента.",
+              "text": "`RestTemplate` перевели в режим поддержки как этап перехода на реактивность, поэтому синхронные вызовы предлагают выполнять через `WebClient.block()`. `RestClient` служит временной оболочкой и позднее должен уступить реактивному API.",
               "sections": {
                 "what_actually": "Причина — устаревший дизайн API, а не мнимая блокировка: производительность синхронных клиентов сопоставима, дело в эргономике и расширяемости.",
                 "source_of_confusion": "Синхронность `RestTemplate` ассоциируется с «блокирующим и медленным», и это переносят на причину заморозки.",
@@ -106,7 +106,7 @@
               "label": "C"
             },
             {
-              "text": "`RestTemplate` перевели в maintenance mode, потому что в Spring 6 его физически вынесли из модуля `spring-web` в отдельный legacy-артефакт и пометили `@Deprecated`; поэтому старый синхронный код без подключения нового зависимого модуля перестаёт компилироваться под новой версией. Команде предлагают заранее перейти на `RestClient` из основного пакета.",
+              "text": "`RestTemplate` перевели в режим поддержки и вынесли из `spring-web` в отдельный legacy-артефакт с аннотацией `@Deprecated`. Приложения на новой версии должны подключить этот модуль либо сразу перейти на `RestClient`.",
               "sections": {
                 "what_actually": "`RestTemplate` не удалён и НЕ помечен `@Deprecated`: maintenance mode означает «не развивается», но класс остаётся в `spring-web` и работает в Spring 6.x.",
                 "source_of_confusion": "«Maintenance mode» часто путают с удалением или с аннотацией `@Deprecated`, ожидая скорого removal.",
@@ -126,10 +126,10 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как работает `RestClient` и как через него выполняют GET/POST/PUT/DELETE?",
+          "question_text": "Как создают `RestClient` и выполняют через него основные HTTP-операции?",
           "options": [
             {
-              "text": "`RestClient` вызывают статически, без builder-а: `RestClient.getForObject(\"/u/{id}\", User.class, 42)`, `RestClient.postForEntity(...)`, `RestClient.put(...)`, `RestClient.delete(...)`; для прочего берут `RestClient.exchange(...)`, `RestClient.headForHeaders(...)`, `RestClient.optionsForAllow(...)` и `RestClient.patchForObject(...)`, повторяя привычный классический стиль вызовов старого клиента.",
+              "text": "`RestClient` используют как набор статических template-методов `getForObject(...)`, `postForEntity(...)`, `put(...)`, `delete(...)` и общего `exchange(...)`. Builder регистрирует конвертеры и headers, а сами HTTP-вызовы сохраняют сигнатуры `RestTemplate`.",
               "sections": {
                 "what_actually": "`RestClient` строится через `RestClient.builder()` и вызывается fluent-цепочкой `get().uri().retrieve().body()`, а не статическими `getForObject`.",
                 "source_of_confusion": "Привычка к стилю `RestTemplate.getForObject` переносится на `RestClient` по аналогии имени.",
@@ -141,7 +141,7 @@
               "label": "A"
             },
             {
-              "text": "`RestClient` создаётся через `RestClient.builder()` с `baseUrl`/`defaultHeader`, а вызовы строятся fluent-цепочкой: `client.get().uri(\"/users/{id}\", 42).retrieve().body(User.class)`; для POST/PUT/DELETE используют `post()`/`put()`/`delete()` с `.body(...)` и `.contentType(...)`.",
+              "text": "`RestClient` создают через `create(...)` или `builder()`, после чего запрос собирают цепочкой `get().uri(...).retrieve().body(...)`. Для записи используют `post()` или `put()` с `body(...)`, а `delete()` выполняет удаление и возвращает обычный синхронный результат.",
               "sections": {
                 "explanation": "Сначала собирают клиент билдером (`baseUrl`, `defaultHeader`, `requestFactory`), затем под каждый глагол вызывают цепочку: метод → `uri(...)` → опционально `contentType`/`body` → `retrieve()` → извлечение результата.",
                 "example": "GET: `client.get().uri(\"/users/{id}\", 42).retrieve().body(User.class)`; POST: `client.post().uri(\"/users\").contentType(MediaType.APPLICATION_JSON).body(req).retrieve().body(User.class)`.",
@@ -154,7 +154,7 @@
               "label": "B"
             },
             {
-              "text": "`RestClient` строит `client.get().uri(\"/users/{id}\", 42)`, затем `retrieve()` возвращает `CompletableFuture<ResponseEntity>`; тело достают через `.thenApply(...)` и `.get()`, а для POST/PUT/DELETE навешивают `.exceptionally(...)` на будущий результат.",
+              "text": "`RestClient` создают через builder, но `retrieve()` возвращает `CompletableFuture<ResponseEntity<T>>` с данными ответа. Поэтому GET завершают через `thenApply(...)`, а POST, PUT и DELETE обрабатывают операторами будущего результата.",
               "sections": {
                 "what_actually": "`RestClient` синхронный: `retrieve().body(...)` сразу возвращает готовый объект, а не `CompletableFuture`.",
                 "source_of_confusion": "Современные клиенты ассоциируются с асинхронностью, и это ошибочно приписывают `RestClient`.",
@@ -166,7 +166,7 @@
               "label": "C"
             },
             {
-              "text": "`RestClient` читает через `client.get().uri(\"/users/{id}\", 42).retrieve().body(User.class)`, а запись делегирует внутреннему `WebClient`: `client.post()` кладёт тело в `bodyValue(dto)` с `.contentType(...)`; затем `.retrieve().toEntity(User.class)` идёт через реактивный слой.",
+              "text": "`RestClient` выполняет GET синхронно, а POST и PUT делегирует внутреннему `WebClient` и возвращает `Mono<T>`. Такой гибрид сочетает `body(Class)` для чтения с реактивным `bodyValue(...)` для отправки.",
               "sections": {
                 "what_actually": "`RestClient` поддерживает все HTTP-методы: `get()`, `post()`, `put()`, `delete()` и др., с телом запроса и заголовками.",
                 "source_of_confusion": "Примеры чаще показывают GET, и из-за этого кажется, что остальные глаголы не реализованы.",
@@ -189,7 +189,7 @@
           "question_text": "Чем `retrieve()` отличается от `exchange()` в `RestClient`?",
           "options": [
             {
-              "text": "`retrieve()` и `exchange((req, resp) -> ...)` оба сами разбирают ошибки 4xx/5xx в `RestClientException` и оба сразу отдают десериализованное тело, а различаются они стилем записи: короткая форма против лямбды, дающей тот же `ResponseSpec`.",
+              "text": "`retrieve()` и `exchange(...)` применяют одинаковые status handlers и возвращают один `ResponseSpec`. В обоих случаях 4xx и 5xx преобразуются в исключения до выполнения пользовательской обработки.",
               "sections": {
                 "what_actually": "Это разные методы: `retrieve()` автоматически обрабатывает ошибки и извлекает тело, а `exchange()` даёт ручной доступ к запросу и ответу.",
                 "source_of_confusion": "Оба завершают цепочку построения запроса, поэтому кажутся взаимозаменяемыми.",
@@ -201,7 +201,7 @@
               "label": "A"
             },
             {
-              "text": "`retrieve()` предназначен для идемпотентных чтений `GET` и сам кладёт ответ в локальный кэш, а `exchange((request, response) -> ...)` Spring подключает для пишущих запросов `POST`, где по статусу `HttpStatus.CREATED` читают заголовок `Location` созданного ресурса.",
+              "text": "`retrieve()` предназначен для GET и сохраняет успешный ответ в локальном кэше, а `exchange(...)` обслуживает остальные HTTP-глаголы. Выбор определяется методом запроса и его идемпотентностью, а не требуемым уровнем контроля над ответом.",
               "sections": {
                 "what_actually": "Оба метода работают с любыми HTTP-глаголами; различие в уровне контроля, а не в типе запроса.",
                 "source_of_confusion": "Произвольное сопоставление методов глаголам выглядит как «правило», но его не существует.",
@@ -213,7 +213,7 @@
               "label": "B"
             },
             {
-              "text": "`retrieve()` сам обрабатывает ошибки (4xx/5xx → `RestClientException`) и извлекает тело, а `exchange((request, response) -> ...)` даёт ручной доступ к запросу и ответу: можно читать статус, заголовки и тело как `InputStream`, например маппить 404 в `Optional.empty()`.",
+              "text": "`retrieve()` создаёт `ResponseSpec`, применяет стандартную обработку 4xx и 5xx и затем декодирует тело. `exchange(...)` передаёт callback сырые объекты запроса и ответа, поэтому приложение само интерпретирует статус, заголовки и тело.",
               "sections": {
                 "explanation": "`retrieve()` — высокоуровневый путь: автоматически бросает исключение на ошибочный статус и парсит тело; `exchange()` — низкоуровневый: вы сами решаете, что делать с каждым статусом и как читать ответ.",
                 "example": "С `exchange()` пишут `if (response.getStatusCode() == HttpStatus.NOT_FOUND) return Optional.empty();` иначе `Optional.of(response.bodyTo(User.class))`, без выброса исключения на 404.",
@@ -226,7 +226,7 @@
               "label": "C"
             },
             {
-              "text": "`retrieve()` в `RestClient` покрывает и автоматику ошибок, и ручной разбор через `onStatus((req, resp) -> ...)`, а `exchange(...)` — это отдельная конструкция реактивного `WebClient`, которая отдаёт `Mono<ClientResponse>` для неблокирующей обработки статуса, тела и заголовков ответа.",
+              "text": "`retrieve()` относится к синхронному `RestClient`, а `exchange(...)` доступен реактивному `WebClient` и возвращает `Mono<ClientResponse>`. В синхронном клиенте ручную обработку статуса, заголовков и тела выполняют через последовательность `onStatus(...)` и `body(...)`.",
               "sections": {
                 "what_actually": "У `RestClient` есть собственный `exchange((request, response) -> ...)`, дающий ручной доступ к ответу прямо в синхронном клиенте.",
                 "source_of_confusion": "Метод `exchange` исторически известен по `RestTemplate`/`WebClient`, и кажется, что в `RestClient` его нет.",
@@ -246,10 +246,10 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как обрабатывать ошибки HTTP в `RestClient`?",
+          "question_text": "Как настраивают обработку HTTP-ошибок в `RestClient`?",
           "options": [
             {
-              "text": "Используют `.onStatus(predicate, handler)` в цепочке для конкретных кодов и `defaultStatusHandler(...)` в билдере для глобальной обработки; по умолчанию `retrieve()` бросает `HttpClientErrorException` (4xx) или `HttpServerErrorException` (5xx).",
+              "text": "В `RestClient` для отдельного вызова после `retrieve()` задают `onStatus(...)`, а общие правила регистрируют через `defaultStatusHandler(...)`. Неперехваченные 4xx и 5xx по умолчанию приводят к `HttpClientErrorException` или `HttpServerErrorException`.",
               "sections": {
                 "explanation": "`onStatus` принимает предикат по статусу и обработчик, который может выбросить доменное исключение; `defaultStatusHandler` задаёт ту же логику глобально на уровне билдера для всех запросов клиента.",
                 "example": "`.onStatus(HttpStatusCode::is4xxClientError, (req, resp) -> { throw new UserNotFoundException(id); })` превращает любой 4xx в осмысленное доменное исключение вместо общего `RestClientException`.",
@@ -262,7 +262,7 @@
               "label": "A"
             },
             {
-              "text": "Ошибки ловят в try/catch вокруг `exchange()`, читая ответ (`ClientHttpResponse`) и вызывая `getStatusCode()` вручную; `retrieve()` же отдаёт тело без разбора статусов для 4xx и 5xx.",
+              "text": "В `RestClient` HTTP-статусы разбирают внутри `exchange(...)`, потому что `retrieve()` декодирует тело независимо от 4xx или 5xx. Исключение возникает, когда выбранный `HttpMessageConverter` не читает ошибочный payload.",
               "sections": {
                 "what_actually": "В `RestClient` есть `onStatus` в цепочке и `defaultStatusHandler` в билдере — декларативные хуки по статусу, а не только внешний try/catch.",
                 "source_of_confusion": "Привычка ловить исключения через try/catch создаёт впечатление, что это единственный способ.",
@@ -274,7 +274,7 @@
               "label": "B"
             },
             {
-              "text": "Обработчик `onStatus(predicate, handler)` срабатывает на 2xx для валидации успешных тел; `defaultStatusHandler(...)` из `RestClient.Builder` перехватывает 4xx и 5xx, конвертируя их в `HttpMessageNotReadableException`.",
+              "text": "В `RestClient` обработчик `onStatus(...)` валидирует успешные 2xx, а `defaultStatusHandler(...)` преобразует 4xx и 5xx в `HttpMessageNotReadableException`. Доменные исключения поэтому создают в response converter.",
               "sections": {
                 "what_actually": "`onStatus` предназначен именно для ошибочных и любых статусов: типично его вешают на `is4xxClientError`/`is5xxServerError`.",
                 "source_of_confusion": "Слово «status handler» звучит обобщённо, и кажется, что он про проверку успешных ответов.",
@@ -286,7 +286,7 @@
               "label": "C"
             },
             {
-              "text": "По умолчанию `retrieve()` при статусах 4xx и 5xx возвращает `Optional.empty()`; ошибку определяют по пустому `Optional`, а тело успешного ответа читают через `body(Class)`.",
+              "text": "В `RestClient` при 4xx или 5xx `retrieve()` возвращает пустой `Optional`, а `onStatus(...)` позволяет заменить его fallback-значением. Исключения возникают при сетевой ошибке, но не из HTTP-статуса.",
               "sections": {
                 "what_actually": "По умолчанию `retrieve()` бросает `HttpClientErrorException`/`HttpServerErrorException` на ошибочных статусах, а не возвращает `null`.",
                 "source_of_confusion": "Многие API возвращают `null` при отсутствии данных, и это ошибочно переносят на ошибки HTTP.",
@@ -306,10 +306,10 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как десериализовать коллекцию (например `List<T>`) через `RestClient`?",
+          "question_text": "Как десериализовать параметризованный ответ, например `List<User>`, через `RestClient`?",
           "options": [
             {
-              "text": "Для `List<T>` передают `ParameterizedTypeReference`: `client.get().uri(\"/users\").retrieve().body(new ParameterizedTypeReference<List<User>>() {})`, иначе стирание типов не позволит десериализовать элементы правильно.",
+              "text": "Для `List<User>` передают `ParameterizedTypeReference`, например `body(new ParameterizedTypeReference<List<User>>() {})`. Type token сохраняет сведения об элементе `User`, которые иначе теряются из-за стирания типов.",
               "sections": {
                 "explanation": "Из-за type erasure обычный `Class<?>` не хранит параметр generic-типа; `ParameterizedTypeReference` через анонимный подкласс сохраняет полный тип `List<User>` для корректного маппинга элементов.",
                 "example": "`List<User> users = client.get().uri(\"/users\").retrieve().body(new ParameterizedTypeReference<List<User>>() {});` — в Java 11+ можно diamond: `new ParameterizedTypeReference<>() {}`.",
@@ -322,7 +322,7 @@
               "label": "A"
             },
             {
-              "text": "Для `List<User>` берут `exchange()` и читают тело из `ClientHttpResponse` вручную, потому что `body(...)` теряет параметр типа элементов.",
+              "text": "Для `List<User>` используют `exchange(...)` и самостоятельно читают полный `ClientHttpResponse`, поскольку `body(...)` принимает лишь `Class<T>`. Generic-типы доступны низкоуровневому callback, но не обычному `ResponseSpec`.",
               "sections": {
                 "what_actually": "`retrieve().body(new ParameterizedTypeReference<List<User>>() {})` прекрасно работает; `exchange()` для коллекций не обязателен.",
                 "source_of_confusion": "`exchange()` ассоциируется с «низкоуровневым контролем», и кажется нужным для нетривиальной десериализации.",
@@ -334,7 +334,7 @@
               "label": "B"
             },
             {
-              "text": "Тело берут как `String` и разбирают через `ObjectMapper` с `TypeReference`, поскольку `retrieve()` отдаёт коллекции сырым JSON.",
+              "text": "Для `List<User>` ответ получают как `String`, после чего разбирают отдельным `ObjectMapper` и `TypeReference`. Встроенные message converters не декодируют параметризованные контейнеры через `retrieve()`.",
               "sections": {
                 "what_actually": "`RestClient` отлично десериализует коллекции через `ParameterizedTypeReference` — ручной `ObjectMapper` не требуется.",
                 "source_of_confusion": "Ручной парсинг кажется «надёжным» обходом, если не знать про `ParameterizedTypeReference`.",
@@ -346,7 +346,7 @@
               "label": "C"
             },
             {
-              "text": "Достаточно передать `List.class` прямо в `body()` (без обёрток): вызов `retrieve().body(List.class)` вернёт `List<User>` с правильными типами элементов.",
+              "text": "Для `List<User>` вызывают `body(List.class)` и присваивают результат типизированной переменной. Jackson восстанавливает элемент `User` из generic-типа места присваивания, поэтому type token не нужен.",
               "sections": {
                 "what_actually": "`List.class` теряет параметр типа из-за стирания, и элементы десериализуются как `LinkedHashMap`, а не как `User`.",
                 "source_of_confusion": "`List.class` выглядит логичным аналогом `User.class`, и кажется, что этого хватит.",
@@ -366,10 +366,10 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Когда стоит использовать `WebClient` вместо `RestClient`?",
+          "question_text": "Когда `WebClient` предпочтительнее `RestClient`?",
           "options": [
             {
-              "text": "`WebClient` подключают для нагрузочных сценариев и тестов (`WebTestClient`), где нужно слать много параллельных запросов; продакшен-вызовы в `Spring WebFlux` направляют через `RestClient` с `Mono<T>`-обёрткой.",
+              "text": "`WebClient` выбирают для массовых тестовых и нагрузочных вызовов, но production-код WebFlux строят на `RestClient`, обёрнутом в `Mono.fromCallable(...)`. Так реактивная сигнатура и backpressure сохраняются поверх более простого синхронного транспорта.",
               "sections": {
                 "what_actually": "В WebFlux-приложениях `WebClient` — основной продакшен-клиент, а не тестовый инструмент.",
                 "source_of_confusion": "`.block()` иногда используют в тестах, и это создаёт ложное впечатление, что `WebClient` только для тестов.",
@@ -381,7 +381,7 @@
               "label": "A"
             },
             {
-              "text": "`WebClient` берут в реактивном стеке (`Spring WebFlux`), когда нужны типы `Mono<T>`/`Flux<T>`, высокая конкурентность на малом числе потоков или стриминг (`Flux<ServerSentEvent>`); для обычного синхронного MVC проще `RestClient`.",
+              "text": "`WebClient` выбирают, когда цепочка остаётся неблокирующей, нужны `Mono` или `Flux`, потоковый ответ либо высокая конкурентность на ограниченном числе потоков. В блокирующем MVC-коде `RestClient` обычно проще и не требует реактивной композиции.",
               "sections": {
                 "explanation": "`WebClient` неблокирующий и интегрирован с реактивным конвейером: возвращает `Mono`/`Flux`, эффективно держит много одновременных вызовов на немногих потоках и умеет стримить ответы.",
                 "example": "`Mono<User> m = webClient.get().uri(\"/users/{id}\", id).retrieve().bodyToMono(User.class);` или `Flux<User> all = webClient.get().uri(\"/users\").retrieve().bodyToFlux(User.class);` для потоковой выдачи.",
@@ -394,7 +394,7 @@
               "label": "B"
             },
             {
-              "text": "`WebClient` выбирают для простых блокирующих `GET`-вызовов в `Spring MVC`, где реактивные типы не нужны; `RestClient` же берут ради асинхронных `Mono<T>`/`Flux<T>` и стриминга (`Flux<ServerSentEvent>`).",
+              "text": "`WebClient` предназначен для простых блокирующих вызовов в MVC, а `RestClient` — для асинхронных потоков `Mono` и `Flux`. Поэтому реактивный стек и потоковую обработку ответа строят вокруг синхронного fluent-клиента.",
               "sections": {
                 "what_actually": "Всё наоборот: `WebClient` реактивный (`Mono`/`Flux`), а синхронный блокирующий вызов — это как раз `RestClient`.",
                 "source_of_confusion": "Роли клиентов легко перепутать, если не помнить, какой из них реактивный.",
@@ -406,7 +406,7 @@
               "label": "C"
             },
             {
-              "text": "`WebClient` берут и в синхронном сервлет-стеке (`Spring MVC`), поскольку неблокирующий ввод-вывод ускоряет обычные вызовы; результат получают через `.block()` из `Mono<T>`, а `RestClient` — для совсем простых `GET`-запросов.",
+              "text": "`WebClient` эффективнее в сервлетном приложении даже тогда, когда каждый вызов завершается `.block()`. Неблокирующий транспорт сохраняет преимущество после ожидания, поэтому `RestClient` оставляют для редких административных запросов.",
               "sections": {
                 "what_actually": "`WebClient` оправдан только в реактивном стеке; в обычном MVC проще и правильнее синхронный `RestClient`, который не устарел.",
                 "source_of_confusion": "Хайп вокруг реактивности рождает идею «реактивное всегда лучше».",
@@ -426,10 +426,10 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как получить результат от `WebClient` синхронно?",
+          "question_text": "Как получить результат `WebClient` синхронно и где это допустимо?",
           "options": [
             {
-              "text": "Синхронный результат даёт `.block()` на `Mono`/`Flux`: `webClient.get().uri(...).retrieve().bodyToMono(User.class).block()`; внутри WebFlux он сам определяет текущий event loop, перепланирует цепочку на пул `boundedElastic` через `Schedulers` и затем отдаёт готовое значение обратно в вызывающий синхронный код.",
+              "text": "В `WebClient` готовое значение получают через `.block()`, а Reactor переносит ожидание с event-loop на выделенный `boundedElastic`. Поэтому такой вызов безопасен в контроллере WebFlux, интеграционном тесте и обычном императивном сервисе.",
               "sections": {
                 "what_actually": "`.block()` в реактивном контексте блокирует event loop поток и может привести к `IllegalStateException` или deadlock; он не рекомендован для WebFlux.",
                 "source_of_confusion": "Раз метод существует и работает в тестах, его ошибочно считают штатным и безопасным везде.",
@@ -441,7 +441,7 @@
               "label": "A"
             },
             {
-              "text": "Синхронный результат отдаёт терминальный оператор `.sync()` на `Mono`/`Flux`: `webClient.get().uri(...).retrieve().bodyToMono(User.class).sync()`; он помечает цепочку блокирующей, переносит выполнение в пул `Schedulers.boundedElastic()` и снимает значение через `.blockingGet()`, отдавая готовый `User` в вызывающий код.",
+              "text": "В `WebClient` синхронное извлечение выполняет оператор `.sync()`, который превращает publisher в обычное значение и ожидает его через `blockingGet()`. Метод `.block()` оставлен для совместимости со старым Reactor API и обходится без нового scheduler.",
               "sections": {
                 "what_actually": "У `WebClient` нет метода `.sync()`; синхронности добиваются через `.block()` на `Mono`/`Flux`, и в реактивном контексте это небезопасно.",
                 "source_of_confusion": "Кажется, что у реактивного клиента есть удобный «синхронный режим» под именем `.sync()`.",
@@ -453,12 +453,12 @@
               "label": "B"
             },
             {
-              "text": "Синхронность достигается вызовом `.block()` на `Mono`/`Flux`: `webClient.get().uri(...).retrieve().bodyToMono(User.class).block()`; но это антипаттерн, так как в реактивном контексте `.block()` блокирует event loop поток (риск `IllegalStateException`/deadlock) — допустимо лишь в тестах или нереактивном коде, где лучше `RestClient`.",
+              "text": "В `WebClient` `Mono.block()` может вернуть готовое значение, но его нельзя вызывать на non-blocking потоке реактивного приложения. На контролируемой императивной границе это возможно, хотя для синхронного HTTP-вызова проще `RestClient`.",
               "sections": {
-                "explanation": "`.block()` превращает реактивный `Mono` в обычное значение, ожидая завершения; проблема в том, что в WebFlux event loop держит немного потоков, и блокировка одного из них ломает неблокирующую модель.",
+                "explanation": "`block()` подписывается на publisher и ожидает результат на текущем потоке. Reactor запрещает блокирующие операции на потоках, помеченных как non-blocking; вне реактивного event loop вызов технически возможен, но смешение моделей нужно делать осознанно.",
                 "example": "`User user = webClient.get().uri(\"/users/{id}\", id).retrieve().bodyToMono(User.class).block();` сработает в тесте, но в обработчике WebFlux вызовет `IllegalStateException` про блокировку.",
-                "when_to_apply": "Допустимо в юнит-тестах или нереактивном вспомогательном коде; в продакшене Spring MVC для синхронных вызовов берут `RestClient`, а не `WebClient.block()`.",
-                "edge_cases": "В чисто реактивном стеке Reactor может выбросить `IllegalStateException: block()/blockFirst()/blockLast() are blocking, which is not supported`, и приложение зависнет под нагрузкой.",
+                "when_to_apply": "Допустим на контролируемой императивной границе или в небольшом вспомогательном коде, который заведомо выполняется не на event-loop. В реактивной цепочке следует возвращать `Mono`/`Flux`, а для полностью синхронного клиента использовать `RestClient`.",
+                "edge_cases": "`block()` не переносит выполнение на `boundedElastic` автоматически. Для реально блокирующей работы scheduler выбирают явно, но блокировать сам event-loop всё равно нельзя.",
                 "related": "[[spring-rest-client-interview#Q7]] когда выбирать `WebClient`; [[spring-rest-client-interview#Q1]] сравнение клиентов; [[spring-rest-client-interview#Q3]] синхронный `RestClient` как правильная замена."
               },
               "correct": true,
@@ -466,7 +466,7 @@
               "label": "C"
             },
             {
-              "text": "Синхронное значение получают, подписавшись на `Mono`/`Flux` оператором `.subscribe()`: `webClient.get().uri(...).retrieve().bodyToMono(User.class).subscribe()`; подписка запускает всю цепочку прямо на текущем вызывающем потоке, дожидается готового `User` и возвращает его в вызвавший код.",
+              "text": "В `WebClient` `subscribe()` запускает цепочку на текущем потоке, дожидается сигнала и возвращает опубликованное значение вызывающему методу. Поэтому `bodyToMono(User.class).subscribe()` можно применять как синхронный аналог `RestClient.retrieve().body(User.class)` в MVC-коде.",
               "sections": {
                 "what_actually": "`.subscribe()` запускает асинхронную обработку и ничего не возвращает синхронно; для блокирующего получения нужен `.block()`.",
                 "source_of_confusion": "`.subscribe()` звучит как «получить результат», хотя это лишь старт неблокирующего конвейера.",
@@ -486,52 +486,52 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `@HttpExchange` и как им пользоваться?",
+          "question_text": "Как использовать `@HttpExchange` для декларативного HTTP-клиента?",
           "options": [
             {
-              "text": "`@HttpExchange` (Spring 6) — декларативный HTTP-клиент: объявляют интерфейс с методами под аннотациями `@GetExchange`/`@PostExchange` и т.д., затем через `HttpServiceProxyFactory` создают прокси-бин поверх `RestClient`/`WebClient` и используют его как обычный сервис.",
+              "text": "Для `@HttpExchange` объявляют интерфейс с `@GetExchange`, `@PostExchange` и другими методами, затем создают прокси через `HttpServiceProxyFactory` и адаптер клиента. В новых версиях Spring группы интерфейсов можно явно зарегистрировать через `@ImportHttpServices`.",
               "sections": {
-                "explanation": "Это встроенный в Spring Framework аналог `@FeignClient`: интерфейс описывает HTTP-API в терминах методов и аннотаций, а Spring генерирует реализацию-прокси, делегирующую в выбранный клиент (`RestClient` или `WebClient`).",
-                "example": "Объявляют `@HttpExchange(\"/users\") interface UserClient { @GetExchange(\"/{id}\") User getUser(@PathVariable long id); }`, создают бин через `HttpServiceProxyFactory.builderFor(RestClientAdapter.create(restClient)).build().createClient(UserClient.class)` и инжектят `UserClient`.",
-                "when_to_apply": "Применяют, когда нужен типобезопасный декларативный клиент к внешнему сервису без ручного написания тела запросов, особенно при множестве эндпоинтов одного API.",
-                "edge_cases": "Прокси создаётся фабрикой, поэтому без регистрации бина через `HttpServiceProxyFactory` интерфейс не заработает сам по себе — это не `@Component`, который Spring просканирует автоматически.",
-                "related": "[[spring-rest-client-interview#Q10]] аннотации параметров `@HttpExchange`; [[spring-rest-client-interview#Q11]] подключение к `RestClient`/`WebClient`; [[spring-rest-client-interview#Q3]] лежащий в основе `RestClient`."
+                "explanation": "`@HttpExchange` описывает HTTP service contract. Прокси создаёт `HttpServiceProxyFactory` поверх `RestClientAdapter`, `WebClientAdapter` или `RestTemplateAdapter`; в новых версиях Spring явная регистрация групп через `@ImportHttpServices` может объявить прокси-бинами.",
+                "example": "`@GetExchange(\"/users/{id}\") User find(@PathVariable long id);` связывают с настроенным `RestClient`, после чего `factory.createClient(UserApi.class)` возвращает реализацию интерфейса.",
+                "when_to_apply": "Подходит для типизированного декларативного клиента, когда HTTP-контракт удобнее держать в Java-интерфейсе и переиспользовать между вызывающими компонентами.",
+                "edge_cases": "Сам интерфейс не становится бином без фабрики, registrar или `@ImportHttpServices`. В актуальном Spring тот же контракт может реализовать серверный `@Controller`, но это не превращает `@HttpExchange` в замену `@Controller`.",
+                "related": "[[spring-rest-client-interview#Q10]] параметры методов; [[spring-rest-client-interview#Q11]] выбор адаптера; [[spring-rest-client-interview#Q12]] конфигурация underlying client."
               },
               "correct": true,
               "order": 0,
               "label": "A"
             },
             {
-              "text": "`@HttpExchange` (Spring 6) — самодостаточный декларативный клиент: достаточно объявить интерфейс с методами `@GetExchange`/`@PostExchange`, и стартер `spring-boot-starter-web` сам сканирует его при старте и регистрирует готовый прокси-бин поверх `RestClient`/`WebClient` без отдельной ручной фабрики.",
+              "text": "Для `@HttpExchange` достаточно объявить интерфейс, после чего `spring-boot-starter-web` автоматически сканирует пакет и регистрирует proxy bean без конфигурации. Выбор `RestClient` или `WebClient` определяется типом возврата метода и доступными зависимостями.",
               "sections": {
-                "what_actually": "Нужно явно создать прокси через `HttpServiceProxyFactory` и адаптер клиента; одной аннотации на интерфейсе недостаточно.",
-                "source_of_confusion": "Автоконфигурация Spring Boot создаёт иллюзию, что всё произойдёт само от одной аннотации.",
-                "if_it_were_true": "Если бы хватало аннотации, не было бы шага регистрации бина через фабрику и адаптер.",
-                "how_it_should_be": "Регистрировать бин через `HttpServiceProxyFactory.createClient(...)` (или Boot auto-config), а не рассчитывать на одну аннотацию."
+                "what_actually": "Нужна явная регистрация: создание прокси через `HttpServiceProxyFactory` либо механизм HTTP Service groups, например `@ImportHttpServices` в поддерживающей его версии Spring.",
+                "source_of_confusion": "Многие Spring Boot starters действительно автоматически регистрируют инфраструктуру, поэтому интерфейс с аннотацией легко принять за аналог `@FeignClient` или repository scanning.",
+                "if_it_were_true": "Без явного выбора группы или адаптера Spring не знал бы, какой base URL, transport и client customizations применить к интерфейсу.",
+                "how_it_should_be": "Создавать proxy bean явно или импортировать HTTP services group, затем конфигурировать underlying `RestClient`/`WebClient`."
               },
               "correct": false,
               "order": 1,
               "label": "B"
             },
             {
-              "text": "`@HttpExchange` (Spring 6) — декларативный клиент из экосистемы Spring Cloud: интерфейс с методами `@GetExchange`/`@PostExchange` подхватывает автоконфигурация `spring-cloud-openfeign`, которая через `FeignClientFactoryBean` собирает прокси поверх `RestClient` и регистрирует готовый бин в контексте.",
+              "text": "Для `@HttpExchange` требуется Spring Cloud OpenFeign, а интерфейс обрабатывает `FeignClientFactoryBean` вместе с контрактом Feign и его encoder/decoder. Без cloud starter такой тип не регистрируется и не может использовать underlying `RestClient` или `WebClient`.",
               "sections": {
-                "what_actually": "`@HttpExchange` встроен в сам Spring Framework 6 и не требует Spring Cloud или OpenFeign.",
-                "source_of_confusion": "Декларативные клиенты исторически ассоциируются с `@FeignClient` из Spring Cloud.",
-                "if_it_were_true": "Если бы он требовал Spring Cloud, его нельзя было бы назвать встроенным в core Spring Framework.",
-                "how_it_should_be": "Подключать `@HttpExchange` через ядро Spring (`spring-web`) и `HttpServiceProxyFactory`, без Spring Cloud."
+                "what_actually": "`@HttpExchange` входит в Spring Framework и не зависит от OpenFeign; Spring Cloud может дополнять HTTP service groups load balancing и другими интеграциями, но не владеет базовым механизмом.",
+                "source_of_confusion": "Оба подхода строят Java-прокси для удалённого HTTP API, поэтому `@HttpExchange` часто ошибочно считают новым именем `@FeignClient`.",
+                "if_it_were_true": "Интерфейс нельзя было бы использовать только с `spring-web` и `HttpServiceProxyFactory`, однако это штатный сценарий Spring Framework.",
+                "how_it_should_be": "Выбирать между Spring HTTP Service Client и OpenFeign как между отдельными механизмами, не смешивая их фабрики и аннотации."
               },
               "correct": false,
               "order": 2,
               "label": "C"
             },
             {
-              "text": "`@HttpExchange` (Spring 6) — серверная аннотация для контроллеров: ею помечают класс вместо `@RestController`, а методы под `@GetExchange`/`@PostExchange` описывают входящие эндпоинты, которые затем `DispatcherServlet` маршрутизирует поверх стандартного `RequestMappingHandlerMapping` как обычный веб-слой приложения.",
+              "text": "Для `@HttpExchange` аннотацию ставят на серверный класс вместо `@RestController`, и Spring публикует его методы как endpoints. Клиентский интерфейс, адаптер и proxy factory при этом не требуются.",
               "sections": {
-                "what_actually": "`@HttpExchange` — клиентская аннотация для вызова чужих API, а не серверная замена `@RestController`.",
-                "source_of_confusion": "Похожие имена аннотаций (`@GetExchange` vs `@GetMapping`) создают путаницу клиент/сервер.",
-                "if_it_were_true": "Если бы это была серверная аннотация, она поднимала бы эндпоинты, а не строила прокси к удалённому сервису.",
-                "how_it_should_be": "Использовать `@HttpExchange` для описания клиента к внешнему API; серверные эндпоинты по-прежнему на `@RestController`."
+                "what_actually": "На сервере `@Controller` может реализовать интерфейс с `@HttpExchange`-методами, но контроллер всё равно должен быть зарегистрирован как серверный компонент; аннотация не заменяет `@Controller` и не публикует произвольный класс сама.",
+                "source_of_confusion": "Актуальный Spring позволяет переиспользовать HTTP service contract на серверной стороне, поэтому неверно и обратное упрощение «это исключительно клиентская аннотация».",
+                "if_it_were_true": "Обычный класс с одним `@HttpExchange` без `@Controller` автоматически появился бы в mapping registry, чего не происходит.",
+                "how_it_should_be": "Использовать интерфейс как контракт; для клиента создавать proxy, а для сервера реализовывать его зарегистрированным `@Controller`."
               },
               "correct": false,
               "order": 3,
@@ -546,52 +546,52 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие аннотации параметров поддерживает `@HttpExchange`?",
+          "question_text": "Какие параметры поддерживают методы `@HttpExchange` в актуальном Spring Framework?",
           "options": [
             {
-              "text": "`@HttpExchange` принимает `@RequestBody` (тело) и `@RequestHeader` (заголовок), тогда как путь и query вписывают литералами прямо в `@GetExchange`, `@PostExchange`, `@PutExchange`, `@PatchExchange` или `@DeleteExchange`.",
+              "text": "Методы `@HttpExchange` принимают `@RequestBody` и `@RequestHeader`, а path, query и multipart-части включают в строку аннотации или body вручную. Аргумент метода не может динамически изменить URL, HTTP-глагол или структуру multipart-запроса.",
               "sections": {
-                "what_actually": "Поддерживается набор аннотаций: `@PathVariable`, `@RequestParam`, `@RequestHeader`, `@RequestBody`, `@CookieValue`, а также типы `URI` и `HttpMethod`.",
+                "what_actually": "Набор шире: есть URI/query/header/body/cookie/multipart/request attributes и динамические `URI`, `UriBuilderFactory`, `HttpMethod`.",
                 "source_of_confusion": "Кажется, что декларативный клиент «зашивает» всё в строку пути, оставляя из параметров только тело.",
                 "if_it_were_true": "Если бы был только `@RequestBody`, нельзя было бы передать `@PathVariable id` или `@RequestParam role`.",
-                "how_it_should_be": "Использовать полный набор: `@PathVariable`, `@RequestParam`, `@RequestHeader`, `@RequestBody`, `@CookieValue`, `URI`, `HttpMethod`."
+                "how_it_should_be": "Выбирать стандартную аннотацию или специальный тип в соответствии с частью HTTP-запроса, а не встраивать все значения в annotation URL."
               },
               "correct": false,
               "order": 0,
               "label": "A"
             },
             {
-              "text": "`@HttpExchange` берёт заголовки и cookie из общей настройки клиента: их прописывают через `defaultHeader` и `defaultCookie` в `RestClient.Builder` или `WebClient.Builder`, а параметрами остаются `@PathVariable`, `@RequestParam`, `@RequestBody`.",
+              "text": "Методы `@HttpExchange` принимают `@PathVariable`, `@RequestParam` и `@RequestBody`, а headers, cookies и multipart задаёт builder клиента. Значения уровня отдельного вызова для этих частей не поддерживаются.",
               "sections": {
-                "what_actually": "На уровне метода доступны `@RequestHeader` и `@CookieValue`, поэтому заголовки и cookie задаются и пер-вызов, а не только глобально.",
+                "what_actually": "`@RequestHeader`, `@CookieValue` и `@RequestPart` позволяют задавать значения на каждый вызов; defaults underlying client лишь дополняют их.",
                 "source_of_confusion": "Глобальные `defaultHeader` в билдере создают впечатление, что это единственное место для заголовков.",
                 "if_it_were_true": "Если бы заголовков на параметрах не было, нельзя было бы передать, например, `@RequestHeader(\"X-Upload-Token\")` для конкретного запроса.",
-                "how_it_should_be": "Использовать `@RequestHeader`/`@CookieValue` на параметрах для пер-вызовных значений в дополнение к глобальным defaults."
+                "how_it_should_be": "Использовать method parameters для динамических headers, cookies и parts, а builder — для общих значений клиента."
               },
               "correct": false,
               "order": 1,
               "label": "B"
             },
             {
-              "text": "`@HttpExchange` заводит собственные фирменные аннотации: путь помечают `@HttpPathVariable`, query — `@HttpRequestParam`, заголовок — `@HttpRequestHeader`, тело — `@HttpRequestBody`, cookie — `@HttpCookieValue`, а сам метод — `@HttpMethodValue`.",
+              "text": "Методы `@HttpExchange` используют отдельные клиентские аннотации `@HttpPathVariable`, `@HttpRequestParam`, `@HttpRequestHeader` и `@HttpRequestBody`, согласованные с `@GetExchange`. Стандартные Spring Web-аннотации обслуживают серверное связывание аргументов и в proxy-интерфейсе напрямую игнорируются.",
               "sections": {
-                "what_actually": "Используются те же самые MVC-аннотации `@PathVariable`, `@RequestParam`, `@RequestHeader` и др., без префикса `@Http...`.",
+                "what_actually": "Используются стандартные Spring Web-аннотации без префикса `Http`: `@PathVariable`, `@RequestParam`, `@RequestHeader`, `@RequestBody`, `@RequestPart` и другие.",
                 "source_of_confusion": "По аналогии с `@GetExchange`/`@PostExchange` кажется, что и параметры получили префикс `Http`.",
                 "if_it_were_true": "Если бы существовали `@HttpPathVariable`, примеры в документации не использовали бы обычные MVC-аннотации.",
-                "how_it_should_be": "Применять стандартные `@PathVariable`/`@RequestParam`/`@RequestHeader`, а не выдуманные `@Http...` варианты."
+                "how_it_should_be": "Переиспользовать стандартные аннотации Spring Web и документированные специальные типы, не придумывая отдельное семейство."
               },
               "correct": false,
               "order": 2,
               "label": "C"
             },
             {
-              "text": "`@HttpExchange` поддерживает `@PathVariable` (путь), `@RequestParam` (query), `@RequestHeader` (заголовок), `@RequestBody` (тело), `@CookieValue` (cookie), а также параметры типов `URI` (динамический URL) и `HttpMethod` (динамический метод).",
+              "text": "Методы `@HttpExchange` поддерживают стандартные request-аннотации, включая path, query, headers, body, parts, cookies и attributes. Специальные аргументы `URI`, `UriBuilderFactory`, `HttpMethod` и `MultipartFile` покрывают динамический URL, HTTP-глагол и загрузку файлов.",
               "sections": {
-                "explanation": "Набор повторяет привычные MVC-аннотации, но применяется на клиенте: каждая помечает аргумент метода и определяет, в какую часть HTTP-запроса он попадёт; `URI` и `HttpMethod` позволяют переопределять адрес и глагол на лету.",
-                "example": "`@GetExchange(\"/search\") SearchResult search(@RequestParam String query, @RequestParam(defaultValue=\"1\") int page, @RequestHeader(\"Accept-Language\") String lang);` — параметры раскладываются по query и заголовкам.",
-                "when_to_apply": "Применяют, когда у метода интерфейса есть динамические части запроса: id в пути, фильтры в query, токен в заголовке или тело в `@RequestBody`.",
-                "edge_cases": "Параметр типа `URI` переопределяет `baseUrl` целиком, а `HttpMethod` — глагол; используйте их аккуратно, иначе динамический URL обойдёт настроенную базовую конфигурацию клиента.",
-                "related": "[[spring-rest-client-interview#Q9]] что такое `@HttpExchange`; [[spring-rest-client-interview#Q11]] подключение к `RestClient`/`WebClient`; [[spring-rest-client-interview#Q12]] заголовки и базовый URL."
+                "explanation": "Метод может разложить аргументы по URI, headers, cookies, body и multipart, а `URI`, `UriBuilderFactory` и `HttpMethod` динамически переопределяют части запроса. Поддержка отдельных аргументов зависит от адаптера.",
+                "example": "`upload(@PathVariable long id, @RequestPart Resource file, @RequestHeader(\"X-Token\") String token)` формирует multipart-запрос; параметр `URI` может целиком заменить URL из аннотации.",
+                "when_to_apply": "Использовать типизированные параметры вместо ручной сборки строки URL или headers; для нестандартного доменного аргумента можно добавить `HttpServiceArgumentResolver`.",
+                "edge_cases": "`@RequestAttribute` поддерживают `RestClient` и `WebClient`; `StreamingHttpOutputMessage.Body` является дополнительной возможностью `RestClientAdapter`. `RequestEntity` по умолчанию не поддерживается как единый параметр.",
+                "related": "[[spring-rest-client-interview#Q9]] создание прокси; [[spring-rest-client-interview#Q11]] адаптеры; [[spring-rest-client-interview#Q12]] defaults underlying client."
               },
               "correct": true,
               "order": 3,
@@ -606,10 +606,10 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как подключить интерфейс `@HttpExchange` к `RestClient` против `WebClient`?",
+          "question_text": "Как один интерфейс `@HttpExchange` подключить к `RestClient` или `WebClient`?",
           "options": [
             {
-              "text": "Оба случая идут через `WebClientAdapter.create(webClient)`; синхронный `RestClient` Spring оборачивает в `WebClient` с блокирующим `exchange`, а `HttpServiceProxyFactory.builderFor(adapter)` строит прокси поверх; base-url приходит из `spring.webclient.base-url`.",
+              "text": "Интерфейс `@HttpExchange` в обоих случаях подключают через `WebClientAdapter`, а синхронный `RestClient` сначала преобразуется во внутренний `WebClient`. Базовый URL и transport-настройки при этом читаются из свойства `spring.webclient.base-url`.",
               "sections": {
                 "what_actually": "Для `RestClient` существует собственный `RestClientAdapter`, и он не оборачивается в `WebClient` под капотом.",
                 "source_of_confusion": "Реактивный `WebClient` воспринимается как «более общий», и кажется, что синхронный путь идёт через него.",
@@ -621,7 +621,7 @@
               "label": "A"
             },
             {
-              "text": "Под `RestClient` пишут один интерфейс, а под `WebClient` — совсем другой; методы различаются типом возврата: `RestClient` ждёт `String`, тогда как `WebClient` — `Mono<String>`; адаптер `WebClientAdapter.create(...)` подбирает совместимый вариант.",
+              "text": "Интерфейс `@HttpExchange` приходится дублировать для синхронного и реактивного транспорта, потому что adapter не учитывает declared return type. Первая версия возвращает `T` или `ResponseEntity<T>`, а вторая использует `Mono<T>` или `Flux<T>`.",
               "sections": {
                 "what_actually": "Интерфейс `@HttpExchange` одинаков для обоих клиентов: меняется только конфигурация адаптера, а не объявление методов.",
                 "source_of_confusion": "Раз клиенты разные (синхронный/реактивный), кажется, что и интерфейсы должны отличаться.",
@@ -633,20 +633,20 @@
               "label": "B"
             },
             {
-              "text": "Интерфейс один и тот же; различается лишь адаптер: для `RestClient` — `RestClientAdapter.create(restClient)`, для `WebClient` — `WebClientAdapter.create(webClient)`, затем через `HttpServiceProxyFactory.builderFor(adapter).build().createClient(...)` создают прокси; сам base-url задают на интерфейсе через `@HttpExchange(url = ...)`.",
+              "text": "Интерфейс `@HttpExchange` связывают с `RestClientAdapter`, `WebClientAdapter` или `RestTemplateAdapter`, после чего адаптер передают в `HttpServiceProxyFactory`. Base URL задают в underlying client, аннотации или `UriBuilderFactory`, а reactive return types требуют `WebClientAdapter`.",
               "sections": {
-                "explanation": "Контракт `UserClient` остаётся неизменным; меняется только источник HTTP-вызовов — синхронный `RestClientAdapter` или реактивный `WebClientAdapter`, который оборачивает фабрика прокси.",
-                "example": "`RestClientAdapter adapter = RestClientAdapter.create(restClient);` либо `WebClientAdapter adapter = WebClientAdapter.create(webClient);` далее `factory.builderFor(adapter).build().createClient(UserClient.class)`.",
-                "when_to_apply": "Адаптер выбирают по стеку: `RestClientAdapter` для синхронного MVC, `WebClientAdapter` для реактивного WebFlux, сохраняя один и тот же интерфейс клиента.",
-                "edge_cases": "При реактивном адаптере методы интерфейса должны возвращать `Mono`/`Flux`, иначе вызов заблокируется; при синхронном — обычные типы; смешивать стиль возврата с адаптером нельзя.",
-                "related": "[[spring-rest-client-interview#Q9]] что такое `@HttpExchange`; [[spring-rest-client-interview#Q10]] аннотации параметров; [[spring-rest-client-interview#Q7]] когда выбирать `WebClient`."
+                "explanation": "`HttpServiceProxyFactory` работает с adapter abstraction. Синхронные adapters поддерживают обычные return values, `WebClientAdapter` также поддерживает reactive return types через `ReactiveAdapterRegistry`.",
+                "example": "`RestClientAdapter.create(restClient)` и `WebClientAdapter.create(webClient)` передаются в `HttpServiceProxyFactory.builderFor(adapter).build()`, после чего вызывается `createClient(Api.class)`.",
+                "when_to_apply": "Один интерфейс можно переиспользовать, если его сигнатуры совместимы с выбранным adapter; реактивные `Mono`/`Flux` требуют `WebClientAdapter`.",
+                "edge_cases": "Base URL может находиться в underlying client, type-level `@HttpExchange` или переданном `UriBuilderFactory`; утверждение, что он обязан находиться только в аннотации, неверно.",
+                "related": "[[spring-rest-client-interview#Q9]] HTTP Service Client; [[spring-rest-client-interview#Q10]] параметры; [[spring-rest-client-interview#Q7]] выбор WebClient."
               },
               "correct": true,
               "order": 2,
               "label": "C"
             },
             {
-              "text": "Прокси собираются поверх `RestTemplateAdapter`; и `RestClient`, и `WebClient` Spring внутри приводит к `RestTemplate`, затем через `HttpServiceProxyFactory.builderFor(adapter)` строит клиент; base-url берётся из `@HttpExchange(url = ...)` на самом интерфейсе.",
+              "text": "Интерфейс `@HttpExchange` сначала связывают с `RestTemplateAdapter`, к которому приводятся и `RestClient`, и `WebClient`. Различие клиентов появляется лишь в request factory после создания прокси.",
               "sections": {
                 "what_actually": "`@HttpExchange` подключается к `RestClient` (через `RestClientAdapter`) и `WebClient` (через `WebClientAdapter`); под `RestTemplate` его обычно не строят.",
                 "source_of_confusion": "Декларативные клиенты исторически связывают с классическим `RestTemplate`/Feign.",
@@ -666,10 +666,10 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как настроить таймауты, базовый URL и заголовки в `RestClient`?",
+          "question_text": "Где в `RestClient` настраивают базовый URL, заголовки, интерсепторы и таймауты?",
           "options": [
             {
-              "text": "Базовый URL и заголовки навешивает `ClientHttpRequestInterceptor` из полей `baseUrl`, `defaultHeader` и `defaultUriVariables`; его цепляют в `RestClient.builder().requestInterceptor(...)`, а `setConnectTimeout`/`setReadTimeout` вызывают на `ClientHttpRequestInterceptor` поверх `SimpleClientHttpRequestFactory` и `ClientHttpRequestFactory`.",
+              "text": "В `RestClient` все параметры хранит `ClientHttpRequestInterceptor`, включая base URL, default headers и connect/read timeouts. Builder получает один interceptor, а отдельная `ClientHttpRequestFactory` для настройки не нужна.",
               "sections": {
                 "what_actually": "`RestClient.builder().baseUrl(\"https://api.example.com/v2\")` задаёт базовый URL один раз, и в вызовах остаётся только относительный путь.",
                 "source_of_confusion": "Привычка передавать полный URL в каждый вызов скрывает наличие `baseUrl` в билдере.",
@@ -681,7 +681,7 @@
               "label": "A"
             },
             {
-              "text": "Таймауты задают отдельным методом `.timeout(Duration.ofSeconds(...))` прямо в цепочке `get().uri(...).retrieve()`; `baseUrl`, `defaultHeader` и `readTimeout` навешивают через `RestClient.builder()`, а `requestFactory(...)` принимает готовый `SimpleClientHttpRequestFactory` с `setReadTimeout` и `ClientHttpRequestFactory`.",
+              "text": "В `RestClient` таймаут задают методом `.timeout(Duration)` в цепочке запроса рядом с `retrieve()`. Builder отвечает за base URL и headers, а request factory выбирает только HTTP-движок.",
               "sections": {
                 "what_actually": "Таймауты задают через `ClientHttpRequestFactory` (например `setConnectTimeout`/`setReadTimeout` или Apache `HttpClient`), а не методом `.timeout()` в цепочке.",
                 "source_of_confusion": "У реактивного `WebClient` есть `timeout` в конвейере, и это переносят на `RestClient`.",
@@ -693,7 +693,7 @@
               "label": "B"
             },
             {
-              "text": "Таймауты и заголовки декларативно объявляют аннотацией `@RestClientConfig`: её атрибуты `connectTimeout`, `readTimeout`, `baseUrl` и `defaultHeader` обрабатывает `RestClientRegistrar`; он строит `RestClient.builder()` с фабрикой `requestFactory(...)` поверх `SimpleClientHttpRequestFactory`, `JdkClientHttpRequestFactory` или `ClientHttpRequestFactory`.",
+              "text": "В `RestClient` конфигурацию описывают аннотацией `@RestClientConfig`, которую обрабатывает `RestClientRegistrar`. Её атрибуты создают request factory, default headers и интерсепторы без builder.",
               "sections": {
                 "what_actually": "Настройка делается через `RestClient.builder()` (`baseUrl`, `defaultHeader`, `requestFactory`) и `ClientHttpRequestFactory`; аннотации `@RestClientConfig` не существует.",
                 "source_of_confusion": "Spring любит аннотации, поэтому кажется, что и тут должна быть декларативная аннотация конфигурации.",
@@ -705,7 +705,7 @@
               "label": "C"
             },
             {
-              "text": "Через `RestClient.builder()` задают `baseUrl`, `defaultHeader`, общий `requestFactory` и `requestInterceptor`; таймауты настраивают на `ClientHttpRequestFactory` (`setConnectTimeout`/`setReadTimeout` у `SimpleClientHttpRequestFactory` или через Apache `HttpClient`), затем передают фабрику в `requestFactory(...)`.",
+              "text": "В `RestClient` builder задаёт base URL, default headers, URI-настройки и интерсепторы. Сетевые таймауты конфигурируют на `ClientHttpRequestFactory` или underlying HTTP-клиенте и подключают через `requestFactory(...)`.",
               "sections": {
                 "explanation": "Билдер отвечает за базовый URL, дефолтные заголовки, переменные URI и интерсепторы; за низкоуровневые сетевые параметры (таймауты, пул соединений) отвечает `ClientHttpRequestFactory`, который подкладывают в `requestFactory(...)`.",
                 "example": "`SimpleClientHttpRequestFactory f = new SimpleClientHttpRequestFactory(); f.setConnectTimeout(5000); f.setReadTimeout(10000);` затем `RestClient.builder().baseUrl(url).requestFactory(f).defaultHeader(\"Authorization\", \"Bearer \"+key).build();`.",
@@ -726,10 +726,10 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как мигрировать с `RestTemplate` на `RestClient`?",
+          "question_text": "Как безопасно мигрировать с `RestTemplate` на `RestClient`?",
           "options": [
             {
-              "text": "Для коллекций `RestClient` сам восстанавливает дженерик по типу `List<Order>`: `body(List.class)` возвращает типизированные элементы через рефлексию, поэтому `ParameterizedTypeReference` меняют на обычный `List.class` в `retrieve().body(...)`.",
+              "text": "При миграции на `RestClient` вызов `body(List.class)` восстанавливает generic-тип элементов из объявленной переменной и сигнатуры вызывающего метода. Поэтому прежний `ParameterizedTypeReference<List<Order>>` заменяют на raw `List.class`, сохраняя типизированный результат без дополнительного token.",
               "sections": {
                 "what_actually": "Стирание типов JVM никуда не делось: для `List<User>` в `RestClient` по-прежнему нужен `ParameterizedTypeReference`, как и в `RestTemplate.exchange`.",
                 "source_of_confusion": "Хочется думать, что новый клиент магически обходит type erasure.",
@@ -741,12 +741,12 @@
               "label": "A"
             },
             {
-              "text": "Можно создать `RestClient` прямо из настроенного `RestTemplate` через `RestClient.create(oldTemplate)` (сохраняются конвертеры, фабрика запросов, интерсепторы), а вызовы переписать на fluent-стиль: `getForObject` → `get().uri(...).retrieve().body(...)`, `postForEntity` → `post().uri(...).body(...).retrieve().toEntity(...)`.",
+              "text": "При миграции на `RestClient` используют `create(template)` или `builder(template)`, чтобы переиспользовать конфигурацию старого клиента, а вызовы переводят на fluent-цепочки. Отдельно проверяют status handling, generic-типы и callbacks, а не ограничиваются переименованием методов.",
               "sections": {
-                "explanation": "`RestClient.create(restTemplate)` переиспользует уже настроенную инфраструктуру (`MessageConverters`, `RequestFactory`, `Interceptors`), поэтому миграцию делают постепенно, не теряя существующую конфигурацию.",
+                "explanation": "`create(RestTemplate)` и `builder(RestTemplate)` позволяют использовать ту же конфигурацию `RestTemplate`, включая общую HTTP-инфраструктуру. Миграция меняет high-level API, поэтому status handling и пользовательские callback-сценарии нужно проверить отдельно.",
                 "example": "`String r = restTemplate.getForObject(url, String.class);` превращается в `String r = restClient.get().uri(url).retrieve().body(String.class);`, а `exchange(..., ParameterizedTypeReference)` — в `get().uri(url).retrieve().toEntity(new ParameterizedTypeReference<>(){})`.",
-                "when_to_apply": "Подходит для поэтапной миграции: сначала оборачивают старый `RestTemplate` в `RestClient`, затем по одному переписывают вызовы на fluent-API.",
-                "edge_cases": "`RestClient.create(oldTemplate)` копирует конфигурацию, но не отслеживает её дальнейшие изменения в исходном `RestTemplate`; после создания клиента менять старый шаблон бессмысленно.",
+                "when_to_apply": "Подходит для постепенной миграции: сначала переиспользовать проверенную transport-конфигурацию, затем переводить отдельные вызовы на fluent API и тестировать поведение.",
+                "edge_cases": "Механическое соответствие методов неполное: `exchange` callbacks, error handler, generic responses и streaming могут потребовать явного решения. Не заменять `ParameterizedTypeReference` на raw `Class`.",
                 "related": "[[spring-rest-client-interview#Q2]] почему `RestTemplate` в maintenance mode; [[spring-rest-client-interview#Q3]] fluent-вызовы `RestClient`; [[spring-rest-client-interview#Q6]] `ParameterizedTypeReference` для коллекций."
               },
               "correct": true,
@@ -754,7 +754,7 @@
               "label": "B"
             },
             {
-              "text": "Старый вызов `getForObject(url, String.class)` мигрирует прямо в `restClient.fetch(url, String.class)`, а `postForEntity` переходит в `restClient.send(...)`, поскольку `RestClient` сохраняет краткие обёртки `fetch` и `send` поверх fluent-API.",
+              "text": "При миграции на `RestClient` методы `getForObject` и `postForEntity` заменяют на короткие `fetch(...)` и `send(...)` с теми же аргументами. Fluent-цепочки нужны для нестандартных HTTP-глаголов, streaming и ручного доступа к ответу.",
               "sections": {
                 "what_actually": "Метода `fetch` у `RestClient` нет; эквивалент — fluent-цепочка `get().uri(url).retrieve().body(String.class)`.",
                 "source_of_confusion": "Хочется верить в простую замену «метод на метод», как было в `RestTemplate`.",
@@ -766,7 +766,7 @@
               "label": "C"
             },
             {
-              "text": "Конвертеры и интерсепторы старого `RestTemplate` переносят руками через `RestClient.builder().messageConverters(...)` и `requestInterceptor(...)`, поскольку `RestClient.create(oldTemplate)` копирует `baseUrl`, а список `HttpMessageConverter` придётся собирать заново.",
+              "text": "При миграции на `RestClient` вызов `create(template)` копирует URI-настройки, а converters, interceptors, error handler и request factory переносят вручную. Поэтому создание из старого клиента почти равно пустому builder и не сохраняет проверенную transport-конфигурацию.",
               "sections": {
                 "what_actually": "`RestClient.create(oldTemplate)` как раз сохраняет `MessageConverters`, `RequestFactory` и `Interceptors`, так что настраивать с нуля не нужно.",
                 "source_of_confusion": "Новый клиент ассоциируется с «чистым стартом», и кажется, что старую конфигурацию переиспользовать нельзя.",

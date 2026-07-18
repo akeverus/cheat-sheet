@@ -1,28 +1,14 @@
 {
   "topic_slug": "fine-tuning-llm-interview",
-  "version_sensitive": true,
-  "product_version": "HuggingFace TRL 0.x / PEFT (LoRA, QLoRA 4-bit NF4), DeepSeek-R1 (GRPO, 2025), Llama-3, BloombergGPT; GPU-парк A100/H100/RTX 4090; облачные цены и VRAM-оценки актуальны на checked_date",
-  "checked_date": "2026-07-13",
-  "sources": [
-    "https://huggingface.co/docs/trl/en/sft_trainer",
-    "https://huggingface.co/docs/trl/en/dpo_trainer",
-    "https://huggingface.co/docs/trl/en/grpo_trainer",
-    "https://huggingface.co/docs/peft/en/developer_guides/lora",
-    "https://huggingface.co/docs/peft/en/developer_guides/quantization",
-    "https://arxiv.org/abs/2305.14314",
-    "https://arxiv.org/abs/2106.09685",
-    "https://arxiv.org/abs/2402.03300",
-    "https://arxiv.org/abs/2501.12948",
-    "https://arxiv.org/abs/2305.11206"
-  ],
-  "version_sensitive_claims": [
-    "Лестница Prompting → RAG → Fine-tuning: prompting — дешёвый быстрый старт (минуты, $0), RAG — для свежих/фактологических знаний (re-index без переобучения), fine-tuning — для устойчивого нового стиля/формата/домена; часто FT+RAG комбинируют (FT для стиля, RAG для фактов) [Q2]. Каноническая иерархия из практики (OpenAI/Anthropic prompt-eng guides + RAG-литература), стабильна.",
-    "DAPT (continued pretraining) идёт на СЫРОМ неразмеченном тексте, loss на всей последовательности, объёмы миллиарды-триллионы токенов; SFT — на парах {instruction, response} с chat template, completion_only_loss=True (loss ТОЛЬКО на ответе), объёмы тысячи-миллионы примеров; типичный pipeline base → (опц.) DAPT → SFT → preference optimization [Q11]. Семантика TRL SFTTrainer + DAPT-литература, актуально в TRL 0.x.",
-    "GRPO (Group Relative Policy Optimization, DeepSeek, arXiv:2402.03300) — RL БЕЗ value model: advantage группо-относительный A_i=(r_i − mean)/std по группе сэмплов на один prompt, обычно с rule-based verifiable reward (математика верна? тесты прошли?); дешевле PPO (~на 50% — нет отдельного критика). Применён в DeepSeek-R1 (arXiv:2501.12948, 2025). GRPO ≠ DPO (не офлайн-пары) и ≠ PPO (нет value-модели/GAE) [Q16]. Актуально на 2026-07.",
-    "Стартовые learning rate (порядки, не абсолют): full FT 1e-5..5e-5, LoRA 1e-4..5e-4, QLoRA 1e-4..3e-4, DPO 5e-7..5e-6, GRPO 1e-6..5e-6; epochs SFT обычно 1-3 (перебор → overfitting); effective batch = per_device × grad_accum × num_gpus (цель ~32-128 для SFT, 16-64 для DPO). Правила: LoRA lr >> full FT (адаптер мал); DPO lr << SFT; eval каждую эпоху + early stop; bf16 > fp16 на A100/H100. Sanity: стартовый loss ≈ ln(vocab) ≈ 10-12 [Q26]. Ориентиры из TRL/PEFT-практики; конкретные числа — рекомендации, не жёсткий стандарт.",
-    "QLoRA (4-bit NF4, arXiv:2305.14314) резко снижает VRAM обучения: базовые веса квантованы в 4-bit, обучаются только LoRA-адаптеры; порядковые VRAM-оценки для дообучения (7B ~6-14 GB, 70B — одна A100 80GB и выше) version-sensitive и зависят от seq_len/optimizer; НЕ равны инференс-памяти (только веса) [Q25]. Актуально в PEFT/bitsandbytes на 2026-07.",
-    "TCO fine-tuning vs API: разовое обучение и постоянный инференс считают РАЗДЕЛЬНО; напр. 8B QLoRA ~8h на A100 80GB × ~$1.29/hr ≈ $10 разово; облачные цены GPU (A100 ~$1.2-1.3/hr, H100 ~$2.5/hr on-demand) — version-sensitive рыночные величины; API выигрывает не дороговизной обучения, а на устойчивом трафике [Q35]. Цены-ориентиры на 2026-07, меняются с рынком.",
-    "gpt-4o-mini и подобные vendor-модели поддерживают managed fine-tuning; конкретные имена моделей/цены (gpt-4o-mini, Llama-3, BloombergGPT как DAPT-пример) — version-sensitive, проверять у вендора."
-  ],
-  "notes": "Файл version-sensitive: GPU-VRAM/цены, имена моделей (DeepSeek-R1, Llama-3, BloombergGPT, gpt-4o-mini), библиотечные конфиги (completion_only_loss, QLoRA 4-bit NF4, GRPO/DPO/ORPO/DoRA) и гиперпараметр-диапазоны. Числовые lr/epochs/VRAM/цены — практические ОРИЕНТИРЫ, не универсальный стандарт; алгоритмические факты (GRPO без value-model, DAPT vs SFT loss-target, QLoRA 4-bit) стабильны и привязаны к первоисточникам-статьям. Sidecar закрывает SOURCE_COVERAGE для ROUND-8; акцент на c8-блоках Q2/Q11/Q16/Q26 + смежные Q25/Q35. checked_date=2026-07-13, knowledge-cutoff guard соблюдён (пост-янв-2026 факты не выдуманы)."
+  "round": 9,
+  "status": "TODO",
+  "version_sensitive": null,
+  "product_version": null,
+  "checked_date": null,
+  "sources": [],
+  "version_sensitive_claims": [],
+  "staleness_risks": [],
+  "notes": [
+    "ROUND 9 reset: previous freshness evidence was archived and is not accepted automatically."
+  ]
 }

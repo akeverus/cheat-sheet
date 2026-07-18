@@ -1,2500 +1,3410 @@
 {
   "topic_slug": "test-strategies-interview",
-  "round": "ROUND-8",
-  "status": "COMPLETE",
-  "reviewed_commit": "383b5bd4",
-  "chunks_reviewed": 5,
-  "gate_summary": {
-    "note": "baseline (до R8): LONGEST 0.956 (43/45), RATIO 7.0 (Q19), AVG 2.404, SENTENCE 2 (12 блоков>1), DETAIL 0.844, ABS_GAP 0.222 ok, DIST 12/11/11/11 ok, SEQ 45 (ABCD-цикл), DUP 0, TEMPORAL 3, SOURCE_COVERAGE missing, STYLE 0.967 (len 0.97 / code 0.81), skel hard=31/45, stamp mean CV=0.566, corLen=359, disMean/corLen=0.35",
-    "final": {
-      "correct_longest_rate": "0.956 -> 0.089 PASS",
-      "option_length_ratio": "7.0 -> 2.5 FAIL-ACCEPTED (compact-by-design опция в каждом блоке; прецеденты kotlin 3.12, owasp 2.43; худший блок Q5)",
-      "correct_wrong_avg_ratio": "2.404 -> 1.058 PASS",
-      "sentence_parity": "2 -> 1 PASS",
-      "detail_parity": "0.844 -> 0.311 PASS",
-      "absolute_marker_gap": "0.096 PASS",
-      "position_distribution": "A12/B11/C11/D11 (1.09) PASS",
-      "position_sequence": "45 -> 2 PASS",
-      "duplicate_ngrams": "0 PASS",
-      "temporal_claims": "5 ok",
-      "source_coverage": "freshness sidecar создан PASS",
-      "style_guessability": "0.967 -> 0.133 PASS",
-      "skel_hard": "31 -> 0",
-      "stamp_cv": "0.566 -> 0.191 (после boost-пассов ниже)"
-    }
+  "round": 9,
+  "reviewed_commit": null,
+  "status": "TODO",
+  "source_file": "modules/quiz-app/src/main/resources/seed/mcq/testing/test-strategies-interview.json",
+  "theory_file": "cheatsheets/interview/testing/test-strategies-interview.md",
+  "summary": {
+    "questions": 45,
+    "blocks": 45,
+    "blocks_done": 0,
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0
   },
-  "blocks_total": 45,
-  "blocks_reviewed": 45,
-  "notes": "c1 (Q1-Q10, Q7 пропущен — блок уже в паритете: все 4 опции 283-313c/2sent/bt10-12, не трогаем): 27 дистракторов подняты, blind 9/9. Cures: Q2D CAR (ровно-100/20/5 квоты) -> нормативные квоты на спринт с CI-гейтом; Q3 FORM-TELL на correct (атрибуция в скобках только у correct) -> дистракторам даны свои атрибуции (Хамбл-Continuous Delivery, PMBOK); Q5 FORM-TELL на correct (единственный рукописный перечень секций) -> C переделан в Test Plan/IEEE 829 с зеркальным перечнем секций (реальная путаница Plan vs Strategy); Q6 DUP (D и C = отказ от инкрементальности) -> D на ось 'пропуск RED для тривиального кода'; Q9C BSM (клевета на реальный TCR) -> убран термин TCR, оставлена ось no-refactor. KNOWN LIMITATION: correct Q3 содержит опечатку 'Брайан Маринг' (правильно Марик/Marick) — correct-текст вне мандата R8, кандидат на отдельный fact-fix. SEMI_YES={4,6}.",
-  "notes_chunk2": "c2 (Q11-Q20): 30 дистракторов подняты; blind 10/10. Cures: Q12B CAR ('экономия окупает инциденты') -> progressive-delivery механизм (MTTR ниже длительности регрессии); Q12C compact удлинён (FORM-TELL 'одна строка'); Q13D compact удлинён; Q14A кросс-вопросный DUP с Q12B -> ось 'бета-программа/NPS вместо телеметрии'; Q14 FORM-TELL на correct (5 именованных техник со скобками) -> дистракторам свои скобочные перечни, длины 277-315 vs 346; Q15B BSM-шов ('PITest — раннер jqwik') сглажен, Q15D CAR (UI-мутации через флаги) -> fuzzing-конфьюжн; Q16B CAR ('находит всё') -> SBTM-термины (чартеры, тайм-боксы); Q17 FORM-TELL на correct -> дистракторы дотянуты структурой (двоеточия-перечни, 232-264 vs 337); Q19A CAR big-bang -> механизм release train; Q20B BSM (eventual=strong самоопровержение) -> кворум-конфьюжн (W+R>N 'исключает' устаревшие чтения); Q20C поднят. SEMI_YES={19} (нумерованные шаги с ';' зеркалированы во все опции Q19).",
-  "notes_chunk3": "c3 (Q21-Q30): 30 дистракторов подняты; blind 10/10. Cures: Q21 FORM-TELL (все дистракторы были абсолютистскими 'только/не нуждается' на фоне нейтрального correct) -> нейтральные механизмы (SyncTaskExecutor-контур, Schema Registry BACKWARD как замена контрактов, shadow-консьюмеры); Q24 FORM-TELL (пренебрежительные клейма у дистракторов) -> нейтральные таксономии с ложными связями (Quality/Process 'вычисляются из coverage-трендов', leakage инвертирован, Mutation Score = пересчёт LC); Q26 FORM-TELL (correct вдвое длиннее) -> дистракторы 292-341 vs 460; Q27D BSM (tiered описан как 'все ярусы разом' — самоопровержение) -> ось 'ярусы = модули по критичности'; Q29B кросс-DUP с Q24 (coverage-гейт заменяет ревью) -> мутационный гейт PITest 'принято без чтения'. SEMI_YES={22,24}.",
-  "notes_chunk4": "c4 (Q31-Q40, 30 дистракторов подняты): blind-ревьюер 10/10 semantic-verdict. Флаги и лечение: DUP Q32<->Q33 (prod-данные без анонимизации + GDPR-через-RBAC дублировались) — Q32 B переаксирован на ephemeral-окружения (preview-стенд на ветку вместо постоянной лестницы) со своим списком 'Принципы:' (заодно закрыт слабый FORM-TELL 'уровни+Принципы только у correct'); BSM Q35 D (SCC 'проверяет производительность стабов' — выдуманное назначение) — заменён на когерентную инверсию consumer/provider-driven; FORM-TELL Q40 (correct — единственный с двумя перечнями и англ. ярлыками антипаттернов) — всем трём дистракторам даны свои ';'-перечни практик + свой список 'Антипаттерны:' с правдоподобными англ. ярлыками (Unmeasured Code / Manual Regression / Living Document и т.д.). SEMI_YES={35,40}; Q31 A/D и Q38 D избавлены от лишних ';'. Пост-гейт фикс: Q35 A разбит на 2 предложения (sentence_count max-min был 2). Зона Q31-Q40 skel-HARD=0; file-hard 13->4 (остаток — зона c5 Q41-Q45); stamp mean CV 0.566->0.236, disMean/corLen 0.35->0.69.",
-  "notes_chunk5": "c5 (Q41-Q45, 15 дистракторов подняты): blind-ревьюер 5/5 semantic-verdict. Батчевый FORM-TELL 'КАПС-акценты только у correct' (Q41 РЕЗУЛЬТАТ/ПОВЕДЕНИЕ, Q42 CONSUMER/PROVIDER, Q45 ДРУГИХ/РЕАЛЬНЫМИ) — вылечен зеркалированием капс-акцентов в дистракторы (ЛЮБЫМ/БЕЗ/ВСЕГДА, НЕЗАВИСИМО/PROVIDER'у/CONSUMER'а, ВСЕ/ВСЕХ/СОБСТВЕННУЮ/ОТДЕЛЬНОГО). DUP Q41 B<->C (Spy='искусственный без логики' в двух вариантах) — из B убран Spy, заменён на Dummy-вырожденный-случай. DUP Q45 B <-> Q42 C (docker-compose-всё-живьём межвопросно) — Q45 B переведён на Kubernetes-стенд. CAR Q43 A ('ровно 2000/150/15') — одет в правдоподобный механизм: нормативные 70/20/10 из гайдлайна Google с CI-квотами на доли слоёв. Q44 паритет скобочных перечислений добавлен во все дистракторы. SEMI_YES={41,44}; Q44 A/C переведены с btick- на prose-зачин (correct - prose). Файл целиком: skel-HARD 31->0, stamp mean CV 0.566->0.191, disMean/corLen 0.35->0.74. Остаток: POS (SEQ=45), FINAL.",
-  "notes_pos_final": "POS: BASE-паттерн разорвал ABCD-цикл (SEQ 45->2, moved 34, dist A12/B11/C11/D11, max run 2), только label/order, correct-тексты байт-в-байт. FINAL: 36 length-boost комма-клауз на богатейший дистрактор correct-longest блоков (LONGEST 0.578->0.089, AVG 1.195->1.058, STYLE 0.6->0.133) + 8 paren-глосс внутри клауз (DETAIL 0.467->0.311) + 10 хвостовых расширений кратчайших опций в худших ratio-блоках (worst 3.0->2.5). RATIO 2.5 — принятое исключение (compact-опция ~55-65% в каждом блоке by design). Известные ограничения (correct неприкосновенен): Q3 «Брайан Маринг» (правильно Марик) — см. freshness-сайдкар. Все прочие метрики батареи PASS; skel-HARD 0 по всему файлу.",
-  "records": [
+  "reset_baseline": {
+    "reset_date": "2026-07-17",
+    "old_pass_carried_forward": false,
+    "schema_precheck": "PASS",
+    "structural_invariants_precheck": "PASS",
+    "theory_file_present": true,
+    "json_q_numbers": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+    ],
+    "theory_q_numbers": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45
+    ],
+    "missing_theory_q_numbers": [],
+    "extra_theory_q_numbers": [],
+    "current_correct_positions": [
+      "C",
+      "A",
+      "D",
+      "B",
+      "A",
+      "C",
+      "B",
+      "D",
+      "C",
+      "A",
+      "D",
+      "B",
+      "A",
+      "C",
+      "B",
+      "D",
+      "C",
+      "A",
+      "D",
+      "B",
+      "A",
+      "C",
+      "B",
+      "D",
+      "C",
+      "A",
+      "D",
+      "B",
+      "A",
+      "C",
+      "B",
+      "D",
+      "C",
+      "A",
+      "D",
+      "B",
+      "A",
+      "C",
+      "B",
+      "D",
+      "C",
+      "A",
+      "D",
+      "B",
+      "A"
+    ],
+    "acceptance_note": "Baseline diagnostics are not ROUND 9 acceptance evidence."
+  },
+  "blocks": [
     {
       "q_number": 1,
       "block_idx": 0,
-      "correct_label": "A",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 2,
       "block_idx": 0,
-      "correct_label": "B",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 3,
       "block_idx": 0,
-      "correct_label": "C",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": false,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 4,
       "block_idx": 0,
-      "correct_label": "D",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 5,
       "block_idx": 0,
-      "correct_label": "A",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 6,
       "block_idx": 0,
-      "correct_label": "B",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
+    },
+    {
+      "q_number": 7,
+      "block_idx": 0,
+      "status": "TODO",
+      "stem": {
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
+      },
+      "correct": {
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
+      },
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        },
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
+        }
+      ],
+      "parity": {
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 8,
       "block_idx": 0,
-      "correct_label": "D",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 9,
       "block_idx": 0,
-      "correct_label": "A",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 10,
       "block_idx": 0,
-      "correct_label": "B",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 11,
       "block_idx": 0,
-      "correct_label": "C",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 12,
       "block_idx": 0,
-      "correct_label": "D",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 13,
       "block_idx": 0,
-      "correct_label": "A",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 14,
       "block_idx": 0,
-      "correct_label": "B",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 15,
       "block_idx": 0,
-      "correct_label": "C",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 16,
       "block_idx": 0,
-      "correct_label": "D",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 17,
       "block_idx": 0,
-      "correct_label": "A",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 18,
       "block_idx": 0,
-      "correct_label": "B",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 19,
       "block_idx": 0,
-      "correct_label": "C",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 20,
       "block_idx": 0,
-      "correct_label": "D",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 21,
       "block_idx": 0,
-      "correct_label": "A",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 22,
       "block_idx": 0,
-      "correct_label": "B",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 23,
       "block_idx": 0,
-      "correct_label": "C",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 24,
       "block_idx": 0,
-      "correct_label": "D",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 25,
       "block_idx": 0,
-      "correct_label": "A",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 26,
       "block_idx": 0,
-      "correct_label": "B",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 27,
       "block_idx": 0,
-      "correct_label": "C",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 28,
       "block_idx": 0,
-      "correct_label": "D",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 29,
       "block_idx": 0,
-      "correct_label": "A",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 30,
       "block_idx": 0,
-      "correct_label": "B",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 31,
       "block_idx": 0,
-      "correct_label": "C",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 32,
       "block_idx": 0,
-      "correct_label": "D",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 33,
       "block_idx": 0,
-      "correct_label": "A",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 34,
       "block_idx": 0,
-      "correct_label": "B",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 35,
       "block_idx": 0,
-      "correct_label": "C",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 36,
       "block_idx": 0,
-      "correct_label": "D",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 37,
       "block_idx": 0,
-      "correct_label": "A",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 38,
       "block_idx": 0,
-      "correct_label": "B",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 39,
       "block_idx": 0,
-      "correct_label": "C",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 40,
       "block_idx": 0,
-      "correct_label": "D",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 41,
       "block_idx": 0,
-      "correct_label": "A",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 42,
       "block_idx": 0,
-      "correct_label": "B",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 43,
       "block_idx": 0,
-      "correct_label": "C",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 44,
       "block_idx": 0,
-      "correct_label": "D",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "A": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "A",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     },
     {
       "q_number": 45,
       "block_idx": 0,
-      "correct_label": "A",
+      "status": "TODO",
       "stem": {
-        "clear": true,
-        "single_concept": true,
-        "no_answer_hint": true,
-        "version_scope_explicit": true
+        "clear": null,
+        "single_concept": null,
+        "no_answer_hint": null,
+        "version_scope_explicit": null
       },
       "correct": {
-        "factually_true": true,
-        "complete_for_stem": true,
-        "scope_correct": true,
-        "unique_defensible": true,
-        "not_visually_distinct": true,
-        "sections_consistent": true
+        "factually_true": null,
+        "complete_for_stem": null,
+        "scope_correct": null,
+        "unique_defensible": null,
+        "not_visually_distinct": null,
+        "sections_consistent": null,
+        "russian_readability": null
       },
-      "distractors": {
-        "B": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+      "distractors": [
+        {
+          "label": "B",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "C": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "C",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         },
-        "D": {
-          "plausible": true,
-          "one_primary_error": true,
-          "real_api_or_concept": true,
-          "false_under_stem": true,
-          "distinct_misconception": true,
-          "not_caricature": true,
-          "sections_consistent": true
+        {
+          "label": "D",
+          "plausible": null,
+          "one_primary_error": null,
+          "real_api_or_concept": null,
+          "false_under_stem": null,
+          "distinct_misconception": null,
+          "not_caricature": null,
+          "sections_consistent": null
         }
-      },
+      ],
       "parity": {
-        "option_parity": true,
-        "visual_format_parity": true,
-        "russian_readability": true,
-        "no_stamped_clone": true,
-        "blind_style_pass": true,
-        "blind_semantic_pass": true
-      }
+        "option_parity": null,
+        "visual_format_parity": null,
+        "surface_parity": null,
+        "answer_completeness": null,
+        "russian_readability": null,
+        "no_stamped_clone": null,
+        "blind_style_pass": null,
+        "blind_semantic_pass": null
+      },
+      "llm_review": {
+        "four_option_pass": null,
+        "skel": null,
+        "cross_option_issues": [],
+        "bst": null,
+        "bsm": null,
+        "reviewed_by": null,
+        "notes": []
+      },
+      "notes": []
     }
   ]
 }

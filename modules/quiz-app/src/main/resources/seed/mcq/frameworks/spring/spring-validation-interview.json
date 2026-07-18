@@ -6,55 +6,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `Bean Validation` (JSR 380) и как подключить его в `Spring Boot`?",
+          "question_text": "Что такое `Jakarta Validation` 3.x и как подключить её в `Spring Boot` 4?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "`Bean Validation` — подсистема `Spring Data JPA`: аннотации вроде `@NotNull` из `jakarta.validation` срабатывают исключительно на этапе `@PrePersist`, когда `CrudRepository` вызывает `save`; а на обычных DTO без сущности они полностью игнорируются.",
+              "text": "`Jakarta Validation` — стандарт декларативных constraints, а `Hibernate Validator` — его реализация; однако в `Spring Boot` 4 провайдер по-прежнему всегда приходит транзитивно с web-стартером, поэтому отдельный `spring-boot-starter-validation` не нужен.",
               "correct": false,
               "sections": {
-                "what_actually": "`Bean Validation` — независимый стандарт JSR 380, а не подсистема `Spring Data JPA`; он проверяет DTO в контроллере через `@Valid` ещё до всякого `save`.",
-                "source_of_confusion": "`Hibernate Validator` действительно вызывается из `Hibernate ORM` на `@PrePersist`, из-за чего валидация кажется собственностью JPA-слоя.",
-                "if_it_were_true": "Если бы это была часть JPA, то `@NotNull` на DTO в `@RestController` без сущности не срабатывал бы, но он прекрасно валидируется через `@Valid`.",
-                "how_it_should_be": "`Bean Validation` — отдельный API из `jakarta.validation`; JPA лишь дополнительно дёргает его на lifecycle-событиях, но не владеет им."
+                "what_actually": "API валидации и провайдер не следует считать гарантированной частью web-стартера: для Boot-приложения обычно явно подключают `spring-boot-starter-validation`.",
+                "source_of_confusion": "В старых версиях Spring Boot Hibernate Validator действительно приходил через web-стартер, и это устаревшее правило продолжают переносить на новые проекты.",
+                "if_it_were_true": "Если бы web-стартер гарантировал провайдер, отдельный validation-стартер не существовал бы как рекомендуемый способ подключения Jakarta Validation.",
+                "how_it_should_be": "Добавить `org.springframework.boot:spring-boot-starter-validation`; он предоставляет API, Hibernate Validator и интеграцию с инфраструктурой Spring."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Bean Validation` — чисто императивный API: проверки запускают вручную через `Validator.validate(obj)` из `jakarta.validation`; а декларативные `@NotNull`, `@Size` и `@Email` он не поддерживает и `@Valid` в контроллере не распознаёт.",
+              "text": "Для работы достаточно зависимости `jakarta.validation:jakarta.validation-api`: она содержит аннотации и одновременно исполняет их в рантайме. `Hibernate Validator` или другой провайдер нужен только для нестандартных constraints, но не для `@NotNull` и `@Valid`.",
               "correct": false,
               "sections": {
-                "what_actually": "Ядро `Bean Validation` — именно декларативные аннотации-ограничения `@NotNull` и `@Email`; программный `Validator.validate()` лишь один из способов их запустить.",
-                "source_of_confusion": "Существование интерфейса `jakarta.validation.Validator` создаёт впечатление чисто императивного API без аннотаций.",
-                "if_it_were_true": "Если бы аннотаций не было, то `@NotNull` и `@Size` попросту не существовали бы в `jakarta.validation`, но они — ядро стандарта.",
-                "how_it_should_be": "API сочетает декларативные аннотации и программный запуск через `Validator`; в `Spring MVC` основной путь — декларативный через `@Valid`."
+                "what_actually": "`jakarta.validation-api` задаёт только контракт; выполнять constraints должен провайдер, например Hibernate Validator, который и приносит Boot starter.",
+                "source_of_confusion": "Аннотации находятся в API-артефакте и код успешно компилируется, поэтому легко принять наличие типов за наличие исполняющей реализации.",
+                "if_it_were_true": "Если бы API сам был реализацией, стандартный bootstrap не искал бы `ValidationProvider`, а приложение не получало бы ошибку при отсутствии провайдера.",
+                "how_it_should_be": "Подключать API вместе с совместимым провайдером; в Spring Boot это проще и надёжнее сделать через `spring-boot-starter-validation`."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`Bean Validation` (JSR 380, теперь `Jakarta Validation`) — стандарт декларативной валидации через аннотации, референсная реализация `Hibernate Validator`; в `Spring Boot` подключается стартером `spring-boot-starter-validation` и автоматически срабатывает на `@Valid`/`@Validated`.",
+              "text": "`Jakarta Validation` 3.x — стандарт декларативной валидации из пакета `jakarta.validation`, а `Hibernate Validator` — его reference implementation. В `Spring Boot` 4 обычно добавляют `spring-boot-starter-validation`, после чего Boot настраивает `Validator` и интеграцию с MVC и method validation.",
               "correct": true,
               "sections": {
-                "explanation": "Стандарт описывает аннотации-ограничения (`@NotNull`, `@Email`, `@Min`), которые вешают на поля DTO; `Hibernate Validator` исполняет эти правила в рантайме.",
-                "example": "Зависимость `spring-boot-starter-validation` тянет `hibernate-validator`, `jakarta.validation-api` и интеграцию с MVC, после чего работает декларативная проверка request body.",
-                "when_to_apply": "Подключают на любой DTO-слой, где нужна декларативная проверка входных данных вместо ручных `if`-проверок в начале каждого метода контроллера.",
-                "edge_cases": "Начиная со `Spring Boot` 2.3 валидация вынесена в отдельный стартер: если его не добавить, аннотации будут на полях, но `@Valid` не сработает и валидации не будет.",
-                "related": "[[spring-validation-interview#Q2]] стандартные constraint-аннотации; [[spring-validation-interview#Q3]] отличие `@Valid` от `@Validated`; [[spring-validation-interview#Q4]] обработка ошибок валидации."
+                "explanation": "Стандарт определяет constraints, метаданные и API `Validator`, а провайдер исполняет правила. Spring связывает провайдер с data binding, MVC и проверкой методов; сами аннотации без провайдера ничего не проверяют.",
+                "example": "Зависимость `org.springframework.boot:spring-boot-starter-validation` позволяет использовать `jakarta.validation.constraints.NotBlank` в DTO и `@Valid @RequestBody` в контроллере без ручного создания `ValidatorFactory`.",
+                "when_to_apply": "Стартер подключают, когда приложение принимает DTO, проверяет контракты методов или программно вызывает `jakarta.validation.Validator`.",
+                "edge_cases": "`JSR 380` — историческое имя Bean Validation 2.0 с пакетами `javax.validation`. Для Spring Framework 7 и Boot 4 нужен namespace `jakarta.validation`; смешивание `javax` и `jakarta` не запускает ожидаемую интеграцию.",
+                "related": "[[spring-validation-interview#Q2]] стандартные constraints; [[spring-validation-interview#Q3]] `@Valid` и `@Validated`; [[spring-validation-interview#Q11]] method validation в сервисах."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`spring-boot-starter-validation` для валидации в `Spring Boot` не нужен: `@NotNull` и `@Valid` вешают прямо на поля, ведь `Hibernate Validator` и весь `jakarta.validation` уже входят в `spring-boot-starter-web` транзитивно; добавлять зависимость не надо.",
+              "text": "Актуальным стандартом для `Spring Boot` 4 остаётся `Bean Validation` 2.0 (`JSR 380`) из пакета `javax.validation`; пакет `jakarta.validation` предназначен только для Jakarta EE-серверов и в обычном Spring-приложении не распознаётся.",
               "correct": false,
               "sections": {
-                "what_actually": "С `Spring Boot` 2.3 `Hibernate Validator` вынесен из `spring-boot-starter-web` в отдельный `spring-boot-starter-validation`, без которого `@Valid` не сработает.",
-                "source_of_confusion": "До 2.3 `hibernate-validator` действительно шёл транзитивно в web-стартере, и это устаревшее знание тянется до сих пор.",
-                "if_it_were_true": "Если бы зависимость была не нужна, то `@Valid @RequestBody` возвращал бы `400` из коробки, но без стартера проверка молча пропускается.",
-                "how_it_should_be": "Нужно явно добавить `spring-boot-starter-validation`; одних аннотаций `jakarta.validation` на полях для срабатывания недостаточно."
+                "what_actually": "Современный Spring Framework 7 работает с Jakarta Validation и импортами `jakarta.validation`; namespace `javax.validation` относится к поколениям до миграции Jakarta EE 9.",
+                "source_of_confusion": "Множество старых статей и проектов на Spring Boot 2 используют `JSR 380` и `javax.validation`, поэтому эти импорты выглядят привычными.",
+                "if_it_were_true": "Если бы `javax.validation` оставался актуальным, сигнатуры Spring 7 и Hibernate Validator 9 ссылались бы на него, но они используют `jakarta.validation`.",
+                "how_it_should_be": "В Boot 4 импортировать `jakarta.validation.Valid`, `jakarta.validation.Validator` и constraints из `jakarta.validation.constraints`."
               }
             }
           ]
@@ -66,55 +66,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие стандартные constraint-аннотации есть в `Bean Validation` и чем они различаются?",
+          "question_text": "Какие стандартные constraint-аннотации есть в `Jakarta Validation` и чем они различаются?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Обе аннотации `@NotEmpty` и `@NotBlank` — полные синонимы: как и `@NotNull`, отвергают `null`, пустую `String` и строку пробелов `\" \"`; разнятся лишь применимым типом среди `@Size`, `@Pattern`, `@Min`.",
+              "text": "`@NotNull` запрещает только `null`, а `@NotEmpty` и `@NotBlank` запрещают `null` и пустое значение; при этом для строки последние две эквивалентны и обе пропускают либо обе отклоняют строку, состоящую только из пробельных символов.",
               "correct": false,
               "sections": {
-                "what_actually": "`@NotEmpty` пропускает строку из пробелов `\" \"`, а `@NotBlank` её отвергает — в этом ключевое различие, а не синонимичность.",
-                "source_of_confusion": "Оба имени начинаются с `@Not` и оба про «пустоту», плюс рядом стоит `@NotNull`, поэтому их легко счесть одинаковыми.",
-                "if_it_were_true": "Если бы они были синонимами, то `@NotEmpty` валил бы `\" \"`, но эта строка проходит `@NotEmpty` и отсекается только `@NotBlank`.",
-                "how_it_should_be": "`@NotEmpty` = не `null` и длина больше нуля; `@NotBlank` дополнительно делает `trim` и требует непробельных символов."
+                "what_actually": "`@NotEmpty` требует ненулевую длину и пропустит строку из пробелов, тогда как `@NotBlank` требует хотя бы один непробельный символ.",
+                "source_of_confusion": "Обе аннотации запрещают `null` и пустую строку, поэтому различие проявляется только на строках из пробельных символов и легко теряется.",
+                "if_it_were_true": "Если бы они были эквивалентны, значение `\"   \"` давало бы одинаковый результат, но оно проходит `@NotEmpty` и нарушает `@NotBlank`.",
+                "how_it_should_be": "Для коллекции или простой непустой строки использовать `@NotEmpty`, а для пользовательского текста без одних пробелов — `@NotBlank`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Проверка `@Email` из `jakarta.validation` по умолчанию отвергает `null` и по RFC 5322 требует домен с точкой, поэтому `\"user@localhost\"` не проходит; `@NotNull` поверх `@Email` становится излишним.",
+              "text": "`@Email` одновременно делает поле обязательным и проверяет адрес по единому строгому RFC-алгоритму, заданному спецификацией. Поэтому `null` нарушает `@Email`, результат не зависит от провайдера, а отдельный `@NotNull` или `@NotBlank` избыточен.",
               "correct": false,
               "sections": {
-                "what_actually": "`@Email` по контракту считает `null` валидным и по умолчанию пропускает `\"user@localhost\"`, так что для обязательности нужен отдельный `@NotNull`.",
-                "source_of_confusion": "Ожидание строгой RFC-проверки и того, что `@Email` сам покрывает `null`, — частое заблуждение про `jakarta.validation`.",
-                "if_it_were_true": "Если бы `@Email` отвергал `null`, то поле без `@NotNull` уже было бы обязательным, но пустое значение спокойно проходит `@Email`.",
-                "how_it_should_be": "`@Email` проверяет лишь формат непустой строки и довольно лениво; обязательность даёт `@NotNull`, а строгость — `@Pattern`."
+                "what_actually": "`@Email` считает `null` валидным, а точная семантика корректного email оставлена провайдеру; обязательность задают отдельным constraint.",
+                "source_of_confusion": "Название аннотации воспринимается как полная проверка обязательного email, хотя стандарт разделяет отсутствие значения и формат присутствующего значения.",
+                "if_it_were_true": "Если бы `@Email` запрещал `null`, необязательное поле с проверкой формата нельзя было бы выразить без отдельной группы или кастомного валидатора.",
+                "how_it_should_be": "Комбинировать `@Email` с `@NotBlank` для обязательного адреса и не обещать более строгую RFC-семантику, чем гарантирует выбранный провайдер."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Есть проверки null/empty (`@NotNull`, `@NotEmpty`, `@NotBlank`), числовые (`@Min`, `@Max`, `@Positive`, `@Digits`), строковые (`@Size`, `@Pattern`, `@Email`) и для дат (`@Past`, `@Future`); они различаются типом значения и условием прохождения.",
+              "text": "Стандарт включает проверки отсутствия и пустоты (`@NotNull`, `@NotEmpty`, `@NotBlank`), размеров и шаблонов (`@Size`, `@Pattern`, `@Email`), чисел (`@Min`, `@DecimalMin`, `@Positive`, `@Digits`) и времени (`@Past`, `@Future`); различаются условие, поддерживаемые типы и отношение к `null`.",
               "correct": true,
               "sections": {
-                "explanation": "`@NotNull` запрещает только `null`, `@NotEmpty` ещё и пустую строку/коллекцию, `@NotBlank` — ещё и строку из пробелов; числовые и строковые работают по своим правилам.",
-                "example": "Для строки: `@NotBlank` отвергает `null`, `\"\"` и `\" \"`, а `@Size(min=2,max=50)` ограничивает длину; для числа `@Positive` требует значение `> 0`.",
-                "when_to_apply": "Эти аннотации применяют на поля DTO, чтобы покрыть типовые проверки декларативно, не дублируя `if`-условия в каждом методе.",
-                "edge_cases": "`@NotEmpty` и `@NotBlank` применимы не ко всем типам: `@NotBlank` только к `CharSequence`, а `@NotEmpty` — к строкам, коллекциям, картам и массивам.",
-                "related": "[[spring-validation-interview#Q1]] что такое Bean Validation; [[spring-validation-interview#Q7]] своя constraint-аннотация; [[spring-validation-interview#Q10]] композиция constraints."
+                "explanation": "`@NotNull` отклоняет только `null`; `@NotEmpty` также требует ненулевой размер строки, коллекции, map или массива; `@NotBlank` применим к `CharSequence` и требует непробельный символ. Большинство остальных constraints считают `null` валидным.",
+                "example": "`@NotBlank @Size(min = 2, max = 50) String name` задаёт обязательный текст и длину, а `@Positive BigDecimal amount` требует значение строго больше нуля.",
+                "when_to_apply": "Выбирать нужно минимальный набор независимых constraints, явно разделяя обязательность, форму, диапазон и размер значения.",
+                "edge_cases": "`@Size` измеряет размер, а не числовую величину. `@Min`/`@Max` поддерживают в том числе `BigDecimal` и `BigInteger`; `@DecimalMin`/`@DecimalMax` принимают границу строкой и умеют исключительную границу через `inclusive = false`.",
+                "related": "[[spring-validation-interview#Q1]] подключение Jakarta Validation; [[spring-validation-interview#Q7]] собственный constraint; [[spring-validation-interview#Q15]] constraints элементов контейнера."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Ограничения `@Min` и `@Max` применимы лишь к типу `BigDecimal`, а для целых `int`, `long`, `Integer` нужны отдельные `@DecimalMin`/`@DecimalMax`; поэтому `@Min(18)` над полем `int age` не скомпилируется.",
+              "text": "`@Min` и `@Max` предназначены только для целочисленных примитивов и `BigInteger`; для `BigDecimal` всегда обязательны `@DecimalMin` и `@DecimalMax`. Поэтому `@Min(1)` над `BigDecimal amount` является неподдерживаемой декларацией.",
               "correct": false,
               "sections": {
-                "what_actually": "`@Min`/`@Max` предназначены для целочисленных `int`, `long`, `BigInteger`, а `@DecimalMin`/`@DecimalMax` — для `BigDecimal` и строк с числом.",
-                "source_of_confusion": "Наличие пары `@DecimalMin`/`@DecimalMax` создаёт впечатление, что обычные `@Min`/`@Max` не для чисел.",
-                "if_it_were_true": "Если бы `@Min` не работал с `int`, то `@Min(18)` на `private int age` не компилировался бы, но он работает штатно.",
-                "how_it_should_be": "`@Min`/`@Max` берут `long`-границу для целых, `@DecimalMin`/`@DecimalMax` — строковую границу для `BigDecimal`."
+                "what_actually": "Стандарт включает `BigDecimal` в поддерживаемые типы `@Min` и `@Max`; decimal-варианты нужны прежде всего для строковой и при необходимости исключительной границы.",
+                "source_of_confusion": "Названия `DecimalMin` и `DecimalMax` выглядят как специальные версии исключительно для `BigDecimal`, хотя различие находится в представлении границы.",
+                "if_it_were_true": "Если бы `@Min` не поддерживал `BigDecimal`, стандартный список его поддерживаемых типов не содержал бы этот класс.",
+                "how_it_should_be": "Использовать `@Min(long)` для подходящей целой границы либо `@DecimalMin(String, inclusive=...)`, когда нужна точная decimal-граница или строгая неравность."
               }
             }
           ]
@@ -126,55 +126,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Чем `@Valid` отличается от `@Validated`?",
+          "question_text": "Чем `@Valid` отличается от `@Validated` в современном Spring?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "`@Valid` можно повесить на класс сервиса, чтобы включить метод-уровневую валидацию через `MethodValidationPostProcessor`; а `@Validated` применяется исключительно к отдельным параметрам метода вроде `@Valid @RequestBody`, но на сам класс-тип его повесить уже нельзя.",
+              "text": "`@Valid` ставят на класс сервиса как pointcut для `MethodValidationPostProcessor` и через него выбирают группы, а `@Validated` используют только на полях вложенных DTO для каскада; на тип сервиса `@Validated` не влияет.",
               "correct": false,
               "sections": {
-                "what_actually": "Метод-уровневую валидацию через AOP включает `@Validated` на классе, а `@Valid` на тип повесить нельзя из-за его `@Target`.",
-                "source_of_confusion": "Оба про валидацию методов, поэтому их роли на классе легко перепутать местами.",
-                "if_it_were_true": "Если бы `@Valid` работал на классе, то `@Validated` на сервисе был бы не нужен, но именно `@Validated` включает `MethodValidationPostProcessor`.",
-                "how_it_should_be": "На класс сервиса ставят `@Validated` для AOP-валидации методов; `@Valid` применяют к полям и параметрам."
+                "what_actually": "Именно `@Validated` на типе сервиса служит pointcut для Spring method validation и может выбирать группы; каскад обозначает `@Valid`.",
+                "source_of_confusion": "Обе аннотации запускают проверку в некоторых MVC-сценариях, из-за чего их отдельные роли легко поменять местами.",
+                "if_it_were_true": "Если бы type-level pointcut был у `@Valid`, сервисы не требовали бы `@Validated`, а сама `@Valid` должна была бы поддерживать `TYPE` и атрибут групп.",
+                "how_it_should_be": "На сервисный класс ставить `@Validated`, а на параметр, поле или type argument, чей объектный граф нужно проверить, — `@Valid`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`@Validated` поддерживает каскадную валидацию вложенных объектов, а `@Valid` её по умолчанию не запускает; именно поэтому на поле `Address` внутри родительского DTO для проверки его полей вглубь ставят именно `@Validated`, а не `@Valid`.",
+              "text": "`@Validated` является расширенной каскадной аннотацией: её ставят на поле `Address` или type argument коллекции, и она рекурсивно проверяет вложенный объект. `@Valid` только выбирает стандартную группу `Default` и внутрь объекта не проходит.",
               "correct": false,
               "sections": {
-                "what_actually": "Наоборот: каскад в глубину вложенных объектов запускает `@Valid` на поле, а `@Validated` сам по себе каскад не включает.",
-                "source_of_confusion": "`@Validated` звучит «спринговее» и мощнее, поэтому ему ошибочно приписывают и каскад.",
-                "if_it_were_true": "Если бы каскад давал `@Validated`, то `@Validated` на поле `Address` проверял бы его поля, но для этого нужен `@Valid`.",
-                "how_it_should_be": "Каскад вложенных объектов даёт `@Valid` на поле; `@Validated` отвечает за группы и метод-уровень, но не за каскад."
+                "what_actually": "`@Validated` не имеет цели `FIELD` или `TYPE_USE` и не обозначает каскад; для рекурсивной проверки предназначена `jakarta.validation.Valid`.",
+                "source_of_confusion": "Spring-аннотация выглядит функционально богаче благодаря поддержке групп, и ей ошибочно приписывают все возможности `@Valid`.",
+                "if_it_were_true": "Если бы `@Validated` обозначала каскад, её можно было бы поставить в `List<@Validated Address>`, но такая цель аннотацией не поддерживается.",
+                "how_it_should_be": "Использовать `@Valid` на вложенной ссылке или type argument; `@Validated(Group.class)` применять в точке запуска для выбора групп."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`@Valid` — из `Jakarta Validation`, поддерживает каскадную валидацию вложенных объектов, но не умеет группы; `@Validated` — из `Spring`, добавляет группы валидации и метод-уровень на классе, но сам каскад не запускает.",
+              "text": "`@Valid` — стандартная аннотация Jakarta для запуска проверки аргумента и каскада по объектному графу; групп у неё нет. Spring-аннотация `@Validated` принимает validation hints, обычно классы групп, а на типе Spring-бина служит pointcut для прокси method validation.",
               "correct": true,
               "sections": {
-                "explanation": "`@Valid` ставят на поле/параметр для запуска проверки и каскада вглубь; `@Validated(Group.class)` выбирает группу и на классе включает валидацию методов через AOP.",
-                "example": "`@Validated(OnCreate.class)` на параметре контроллера активирует только constraints группы `OnCreate`; `@Valid` на поле `Address` запускает проверку его внутренних полей.",
-                "when_to_apply": "`@Valid` берут для каскадной проверки вложенных DTO, `@Validated` — когда нужны группы или валидация методов сервиса.",
-                "edge_cases": "На request body часто комбинируют оба: `@Validated(Group.class)` для группы плюс `@Valid` на вложенных полях для каскада, так как одно другое не заменяет.",
-                "related": "[[spring-validation-interview#Q5]] каскадная валидация; [[spring-validation-interview#Q6]] группы валидации; [[spring-validation-interview#Q11]] валидация методов сервиса."
+                "explanation": "В MVC обе аннотации могут инициировать проверку отдельного command object, но только `@Validated` передаёт группы. В объектной модели именно `@Valid` помечает ассоциацию или элемент контейнера для каскада.",
+                "example": "`@Validated(OnCreate.class) @RequestBody CreateUserRequest request` выбирает группу; поле `List<@Valid Address> addresses` внутри DTO рекурсивно проверяет каждый адрес.",
+                "when_to_apply": "Использовать `@Valid` для дефолтной проверки и каскада, `@Validated(Group.class)` — для групп, а `@Validated` на сервисе — для AOP method validation.",
+                "edge_cases": "Class-level `@Validated` на MVC-контроллере включает AOP-путь. Для нативной method validation Spring MVC 6.1+/7 его рекомендуют убрать; прямые constraints параметров контроллера обрабатывает сам MVC.",
+                "related": "[[spring-validation-interview#Q5]] каскадная проверка; [[spring-validation-interview#Q6]] группы; [[spring-validation-interview#Q11]] валидация сервисных методов."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`@Valid` и `@Validated` полностью взаимозаменяемы: оба объявлены в `Spring`, оба одинаково запускают каскад вложенных объектов в контроллере и оба принимают группы валидации; так что `@Valid(OnCreate.class)` работает точно так же, как `@Validated` на параметре.",
+              "text": "`@Valid` и `@Validated` функционально взаимозаменяемы в Spring: обе запускают только группу `Default`, одинаково каскадируют вложенные значения и включают service method validation. Разница сводится к пакету импорта, а группы выбирают только программным вызовом `Validator.validate`.",
               "correct": false,
               "sections": {
-                "what_actually": "Они из разных источников — `@Valid` из `Jakarta Validation`, `@Validated` из `Spring` — и не взаимозаменяемы: группы умеет только `@Validated`.",
-                "source_of_confusion": "Оба запускают валидацию в контроллере и часто стоят рядом, поэтому кажутся синонимами.",
-                "if_it_were_true": "Если бы `@Valid` поддерживал группы, то `@Valid(OnCreate.class)` компилировался бы, но у `@Valid` нет атрибута `value` для групп.",
-                "how_it_should_be": "`@Valid` — для каскада, `@Validated` — для групп и метод-уровня; пересекаются они лишь в базовом запуске проверки."
+                "what_actually": "Аннотации принадлежат разным API и имеют разные цели: у `@Valid` нет атрибутов групп, а у `@Validated` нет `FIELD`/`TYPE_USE` для каскада.",
+                "source_of_confusion": "На простом `@RequestBody` обе могут привести к проверке DTO, что создаёт впечатление полной взаимозаменяемости.",
+                "if_it_were_true": "Если бы контракты совпадали, обе аннотации имели бы одинаковые `@Target`, поддержку групп и роль type-level pointcut, но эти возможности распределены между ними.",
+                "how_it_should_be": "Выбирать аннотацию по задаче: `@Valid` — стандартная проверка и каскад, `@Validated` — Spring hints, группы и type-level method validation."
               }
             }
           ]
@@ -186,55 +186,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как обработать ошибки валидации в контроллере?",
+          "question_text": "Какие исключения валидации возникают в `Spring MVC` 7 и как их обрабатывать?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Детали ошибок тела `@Valid @RequestBody` даёт `ConstraintViolationException`: в `@RestControllerAdvice` через `@ExceptionHandler` ловят и читают `getConstraintViolations()`; тогда как `MethodArgumentNotValidException` с `BindingResult` остаётся для `@RequestParam` и `@PathVariable`.",
+              "text": "Любая MVC-валидация заканчивается `MethodArgumentNotValidException`: и `@Valid @RequestBody`, и прямой `@Min` на `@RequestParam` формируют один `BindingResult`. Поэтому отдельная обработка `HandlerMethodValidationException` в advice не требуется.",
               "correct": false,
               "sections": {
-                "what_actually": "Для `@Valid @RequestBody` Spring MVC бросает `MethodArgumentNotValidException`, а `ConstraintViolationException` — для `@RequestParam`/`@PathVariable` и сервиса.",
-                "source_of_confusion": "Оба исключения про нарушение constraints, поэтому их легко перепутать по сценарию срабатывания.",
-                "if_it_were_true": "Если бы body давал `ConstraintViolationException`, у него был бы `BindingResult`, но `BindingResult` несёт именно `MethodArgumentNotValidException`.",
-                "how_it_should_be": "Для request body обрабатывают `MethodArgumentNotValidException`; `ConstraintViolationException` — для параметров и сервисного уровня."
+                "what_actually": "Прямые constraints на параметрах или возвращаемом значении включают нативную method validation MVC и могут дать `HandlerMethodValidationException`.",
+                "source_of_confusion": "До появления нативной method validation основным MVC-исключением действительно был `MethodArgumentNotValidException` для связанного объекта.",
+                "if_it_were_true": "Если бы исключение было одно, документация Spring не требовала бы обрабатывать оба типа в зависимости от сигнатуры handler method.",
+                "how_it_should_be": "Обрабатывать `MethodArgumentNotValidException` для отдельного command object и `HandlerMethodValidationException` для результатов проверки метода."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Глобально через `@ExceptionHandler` в `@RestControllerAdvice`: ловят `MethodArgumentNotValidException` для `@RequestBody` и `ConstraintViolationException` для `@RequestParam`/`@PathVariable`/сервиса; либо локально — принять `BindingResult` следующим параметром после `@Valid`.",
+              "text": "Для отдельного `@Valid`/`@Validated` command object Spring MVC бросает `MethodArgumentNotValidException`; если сигнатура требует method validation из-за прямых constraints параметров или return value — `HandlerMethodValidationException`. В `@RestControllerAdvice` нужно поддержать оба формата, а `BindingResult` ставят сразу после проверяемого объекта.",
               "correct": true,
               "sections": {
-                "explanation": "В `@RestControllerAdvice` из `ex.getBindingResult().getFieldErrors()` собирают список полей и сообщений и возвращают `400` с телом ошибки; для `ConstraintViolationException` берут `getConstraintViolations()`.",
-                "example": "Обработчик `MethodArgumentNotValidException` маппит каждую ошибку в `{field, message}` и отдаёт `ResponseEntity.badRequest()`; вариант с `BindingResult result` позволяет проверить `result.hasErrors()` прямо в методе.",
-                "when_to_apply": "Глобальный `@RestControllerAdvice` применяют для единого формата ошибок на весь API; локальный `BindingResult` — когда нужно обработать ошибку нестандартно в конкретном методе.",
-                "edge_cases": "`MethodArgumentNotValidException` бросается для `@RequestBody`/`@ModelAttribute`, а `ConstraintViolationException` — для параметров и сервисного `@Validated`; забыв второй обработчик, легко получить `500` вместо `400`.",
-                "related": "[[spring-validation-interview#Q3]] `@Valid` против `@Validated`; [[spring-validation-interview#Q11]] валидация на сервисном уровне; [[spring-validation-interview#Q12]] MVC против сервисной валидации."
+                "explanation": "Первое исключение содержит ошибки одного связанного аргумента, второе группирует `ParameterValidationResult` по параметрам метода. Нативная MVC method validation покрывает и прямые, и вложенные constraints и имеет приоритет над индивидуальной проверкой аргумента.",
+                "example": "`create(@Valid @RequestBody UserRequest body)` обычно даёт `MethodArgumentNotValidException`, а `find(@RequestParam @Min(1) long page)` — `HandlerMethodValidationException`; оба маппят в единый ответ `400`.",
+                "when_to_apply": "Централизованный advice или наследник `ResponseEntityExceptionHandler` используют, чтобы стабильно выдавать один API-контракт ошибок для всех контроллеров.",
+                "edge_cases": "Если сразу после command object стоит `Errors`/`BindingResult`, handler можно вызвать с его ошибками; но нарушение другого параметра без соседнего `Errors` всё равно даст `HandlerMethodValidationException`. Сервисный AOP-путь по умолчанию даёт `ConstraintViolationException` и обрабатывается отдельно.",
+                "related": "[[spring-validation-interview#Q3]] `@Valid` и `@Validated`; [[spring-validation-interview#Q12]] MVC против сервисной проверки; [[spring-validation-interview#Q15]] коллекции в контроллере."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Параметр `BindingResult` объявляют первым параметром, до `@Valid @RequestBody`, иначе Spring не свяжет его и бросит `MethodArgumentNotValidException`; `@ExceptionHandler` на `ConstraintViolationException` в `@RestControllerAdvice` для `@RequestParam`/`@PathVariable` не нужен.",
+              "text": "В нативном Spring MVC прямые constraints `@RequestParam` и `@PathVariable` по-прежнему приводят к `ConstraintViolationException`, а `HandlerMethodValidationException` предназначен только для `@Validated`-сервисов. `MethodArgumentNotValidException` остаётся для request body.",
               "correct": false,
               "sections": {
-                "what_actually": "`BindingResult` обязан идти строго сразу после валидируемого `@Valid @RequestBody`, а не до него, иначе Spring не привяжет ошибки к нужному объекту.",
-                "source_of_confusion": "Порядок параметров кажется несущественным, как в обычных методах без привязки к аргументу.",
-                "if_it_were_true": "Если бы `BindingResult` шёл первым, он не знал бы, к какому аргументу относятся ошибки, поэтому Spring требует позицию сразу за `@Valid`.",
-                "how_it_should_be": "Ставьте `BindingResult` непосредственно после `@Valid @RequestBody ...`; тогда он соберёт ошибки именно этого объекта."
+                "what_actually": "Без class-level `@Validated` контроллер использует встроенную MVC method validation и бросает `HandlerMethodValidationException`; сервисный proxy по умолчанию бросает `ConstraintViolationException`.",
+                "source_of_confusion": "Старый AOP-подход к method validation контроллера и текущая сервисная валидация действительно используют набор `ConstraintViolation`.",
+                "if_it_were_true": "Если бы MVC продолжал бросать только `ConstraintViolationException`, нового структурированного исключения с `ParameterValidationResult` не было бы в контракте контроллеров.",
+                "how_it_should_be": "Для современного MVC ловить `HandlerMethodValidationException`; `ConstraintViolationException` оставлять обработчику proxy method validation сервисов."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Ошибки `@Valid` Spring оборачивает в единый `ValidationException` из `jakarta.validation` — надкласс и `MethodArgumentNotValidException`, и `ConstraintViolationException`; поэтому в `@RestControllerAdvice` хватает одного `@ExceptionHandler(ValidationException.class)` без разбора `@RequestBody` и `@RequestParam`.",
+              "text": "Достаточно добавить `BindingResult` последним параметром handler method: он соберёт нарушения всех `@RequestBody`, `@RequestParam` и `@PathVariable`, независимо от порядка. После этого MVC не бросит ни `MethodArgumentNotValidException`, ни `HandlerMethodValidationException`.",
               "correct": false,
               "sections": {
-                "what_actually": "Spring бросает разные типы: `MethodArgumentNotValidException` для body и `ConstraintViolationException` для параметров, и они не наследуют общий `ValidationException`.",
-                "source_of_confusion": "`ValidationException` реально есть в `jakarta.validation` как базовый тип, что наводит на мысль об одном обработчике.",
-                "if_it_were_true": "Если бы хватало одного `ValidationException`, то `MethodArgumentNotValidException` не был бы отдельным наследником `BindException` из Spring MVC.",
-                "how_it_should_be": "Нужны минимум два `@ExceptionHandler` — на `MethodArgumentNotValidException` и `ConstraintViolationException`, ведь пути валидации разные."
+                "what_actually": "`Errors`/`BindingResult` относится к конкретному model/command object и должен идти непосредственно после него; он не является общим контейнером ошибок всего метода.",
+                "source_of_confusion": "Название `BindingResult` выглядит как универсальный результат binding и validation, хотя позиция в сигнатуре связывает его только с одним аргументом.",
+                "if_it_were_true": "Если бы последний `BindingResult` собирал всё, Spring не требовал бы соседства с проверяемым аргументом и не бросал бы method-level исключение для других параметров.",
+                "how_it_should_be": "Ставить `BindingResult` сразу после соответствующего command object и всё равно предусматривать обработку method validation для остальных параметров."
               }
             }
           ]
@@ -246,55 +246,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как работает каскадная валидация вложенных объектов?",
+          "question_text": "Как работают каскадная и container-element validation во вложенных объектах?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "`@Valid` на поле, тип которого — другой объект или коллекция, включает рекурсивную проверку полей этого объекта; работает вглубь, поэтому если вложенный объект сам содержит поле с `@Valid`, оно тоже валидируется.",
+              "text": "`@Valid` помечает ссылку или type argument для каскадной проверки: валидатор проходит вложенный объект рекурсивно, а `List<@Valid Item>` проверяет каждый элемент. Constraints самого контейнера задают отдельно, например `@NotEmpty`; `null`-ссылку каскад пропускает.",
               "correct": true,
               "sections": {
-                "explanation": "Без `@Valid` на поле валидатор проверит только сам объект (например, `@NotNull`), но не заглянет внутрь него; с `@Valid` запускается полная проверка вложенных constraints.",
-                "example": "На `private @Valid @NotNull Address shippingAddress` сначала проверяется `@NotNull`, затем рекурсивно `@NotBlank` на `street`/`city` и `@Pattern` на `zip` внутри `Address`.",
-                "when_to_apply": "Каскад применяют, когда DTO агрегирует другие DTO (адрес, список позиций заказа) и их внутренние поля тоже нужно проверить за один проход.",
-                "edge_cases": "На коллекции `@Valid` валидирует каждый элемент; забыв `@Valid` на `List<OrderItemRequest>`, получишь проверку только размера списка, но не полей элементов.",
-                "related": "[[spring-validation-interview#Q3]] `@Valid` против `@Validated`; [[spring-validation-interview#Q8]] кросс-field валидация; [[spring-validation-interview#Q15]] валидация элементов коллекции."
+                "explanation": "Без `@Valid` проверяются constraints самой ссылки или контейнера, но не объектный граф. Каскад продолжается на каждом помеченном уровне, при этом провайдер предотвращает бесконечные циклы в графе.",
+                "example": "`@NotEmpty List<@NotNull @Valid OrderItemRequest> items` запрещает пустой список и null-элементы, затем проверяет constraints каждого `OrderItemRequest`.",
+                "when_to_apply": "Каскад нужен для агрегирующих DTO: заказ с позициями, пользователь с адресами, map ключей и значений или вложенные контейнеры.",
+                "edge_cases": "Для контейнера следует выбрать `@Valid` либо на самом контейнере (традиционный стиль), либо на нужном type argument; дублировать оба места не следует. `@ConvertGroup` работает только вместе с каскадом и может сменить группу для дочернего объекта.",
+                "related": "[[spring-validation-interview#Q3]] роль `@Valid`; [[spring-validation-interview#Q6]] группы и group conversion; [[spring-validation-interview#Q15]] коллекции в MVC."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`@Valid` на поле внешнего объекта распространяет каскад лишь на один уровень вглубь: он проверит только непосредственные поля, а вложенный туда объект с собственным `@Valid` уже третий уровень иерархии не затронет; глубже валидация не идёт.",
+              "text": "`@Valid` проходит только один уровень: проверяет непосредственные поля вложенного объекта, но не следует по его собственным `@Valid`-ссылкам. Для каждого следующего уровня нужно вручную вызвать `Validator.validate(...)` из родительского валидатора.",
               "correct": false,
               "sections": {
-                "what_actually": "Каскад рекурсивен на любую глубину: пока на каждом уровне стоит `@Valid`, `Validator` спускается по иерархии сколь угодно глубоко.",
-                "source_of_confusion": "Формулировка про «вложенный объект» наводит на мысль об ограничении ровно одним уровнем вложенности.",
-                "if_it_were_true": "Будь лимит в один уровень, `@Valid` на поле внутри вложенного объекта ничего бы не давал, но он запускает следующий уровень проверки.",
-                "how_it_should_be": "Глубина каскада не ограничена: ставьте `@Valid` на каждом уровне, и `ConstraintValidator` пройдёт всю иерархию до конца."
+                "what_actually": "Каскад рекурсивен: если следующий объект или элемент контейнера тоже помечен `@Valid`, validation engine продолжит обход автоматически.",
+                "source_of_confusion": "Примеры часто показывают только родитель и один дочерний DTO, поэтому глубину механизма легко ошибочно принять за ограниченную.",
+                "if_it_were_true": "Если бы каскад останавливался через один уровень, `@Valid` внутри дочернего типа не имел бы эффекта при проверке корневого объекта.",
+                "how_it_should_be": "Помечать каждую ассоциацию, по которой нужен переход; движок сам рекурсивно проверит граф и остановит циклический обход."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`Validator` в Spring всегда рекурсивно спускается во внутренние поля любого вложенного объекта: каскадная валидация включена по умолчанию, даже если поле не помечено `@Valid`; поэтому сама аннотация лишь дублирует стандартное поведение.",
+              "text": "Любой вложенный объект проверяется автоматически, когда валидируется родитель: `@Valid` нужен только для смены группы. Поэтому `@NotEmpty List<Item>` проверит constraints каждого `Item`, даже если ни контейнер, ни его type argument не помечены `@Valid`.",
               "correct": false,
               "sections": {
-                "what_actually": "По умолчанию каскад выключен: без `@Valid` на поле `Validator` проверит лишь сам объект (например `@NotNull` на ссылке), но не его внутренние поля.",
-                "source_of_confusion": "Раз внешний объект валидируется, кажется естественным, что и вложенные проверяются рекурсивно без дополнительной пометки.",
-                "if_it_were_true": "Будь каскад всегда включён, аннотация `@Valid` на поле не несла бы смысла, тогда как именно она его и активирует.",
-                "how_it_should_be": "Каскад включают явно, ставя `@Valid` на каждое поле или коллекцию, чьи внутренние `constraints` должны проверяться."
+                "what_actually": "Graph validation включается явно через `@Valid`; constraint контейнера `@NotEmpty` проверяет лишь его размер и не каскадирует во внутренние объекты.",
+                "source_of_confusion": "Проверка корневого bean кажется естественно рекурсивной, но стандарт намеренно требует явно обозначить границы обхода графа.",
+                "if_it_were_true": "Если бы каскад был автоматическим, аннотация `@Valid` не имела бы самостоятельного назначения и любой большой граф обходился бы без контроля.",
+                "how_it_should_be": "Добавить `@Valid` на ссылку или `List<@Valid Item>` и отдельно задать constraints контейнера вроде `@NotEmpty` или `@Size`."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`@Validated` на самом поле запускает каскадную валидацию вложенного объекта: именно эта спринговая аннотация умеет спускаться во внутренние поля; `@Valid` же отвечает лишь за дефолтную группу и для каскада не предназначен.",
+              "text": "Для коллекции требуется одновременно поставить `@Valid` на контейнер и на type argument: только `@Valid List<@Valid Item>` гарантирует каскад по элементам. Если оставить одну из двух аннотаций, элементы стандартной `List` проверяться не будут.",
               "correct": false,
               "sections": {
-                "what_actually": "Каскад запускает именно `@Valid` на поле; `@Validated` вообще нельзя повесить на поле — он отвечает за группы и валидацию на уровне метода.",
-                "source_of_confusion": "`@Validated` кажется «более спринговым», поэтому ему ошибочно приписывают и каскад вложенных объектов.",
-                "if_it_were_true": "Если бы `@Validated` запускал каскад, он имел бы `@Target(FIELD)`, но на поле он не ставится, тогда как `@Valid` — ставится.",
-                "how_it_should_be": "Для каскада используйте `@Valid` на поле, а `@Validated` применяйте на уровне класса или параметра для выбора групп."
+                "what_actually": "Оба варианта поддерживаются, но для одного контейнера следует выбрать один: type-use `List<@Valid Item>` — предпочтительный современный стиль.",
+                "source_of_confusion": "Два синтаксически допустимых места для `@Valid` выглядят как взаимодополняющие, хотя это альтернативные способы обозначить каскад.",
+                "if_it_were_true": "Если бы требовались обе аннотации, традиционный `@Valid List<Item>` перестал бы поддерживаться, хотя спецификация сохраняет его совместимость.",
+                "how_it_should_be": "Помечать нужный type argument, особенно в nested container; не дублировать `@Valid` на контейнере, чтобы не получить повторный обход."
               }
             }
           ]
@@ -306,55 +306,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое группы валидации и зачем они нужны?",
+          "question_text": "Что дают validation groups, `@GroupSequence` и `@ConvertGroup`?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Аннотация `@GroupSequence` исполняет перечисленные в нём группы параллельно и собирает нарушения из всех них сразу; даже если ранняя группа с `@NotNull` упала, поздние проверки всё равно выполнятся.",
+              "text": "Группы выбирают набор constraints, а `@GroupSequence` лишь задаёт порядок представления уже собранных нарушений: все группы последовательности всё равно выполняются. `@ConvertGroup` меняет только текст сообщения, но не группу дочернего объекта.",
               "correct": false,
               "sections": {
-                "what_actually": "`@GroupSequence` задаёт строго последовательный порядок: следующая группа проверяется, только если предыдущая прошла без нарушений.",
-                "source_of_confusion": "Слово «sequence» иногда воспринимают как «набор» групп, а не как «последовательность с прерыванием».",
-                "if_it_were_true": "Если бы группы шли параллельно, нарушения ранней не блокировали бы дорогие проверки поздней, но ради этого fail-fast и нужен `@GroupSequence`.",
-                "how_it_should_be": "`@GroupSequence` исполняет группы по очереди и останавливается на первой группе с нарушениями, не доходя до последующих."
+                "what_actually": "Последовательность прекращается после первой группы с нарушениями, а `@ConvertGroup` именно преобразует активную группу при каскаде в дочерний объект.",
+                "source_of_confusion": "Название sequence можно понять как сортировку результатов, а convert group — как преобразование метаданных уже найденной ошибки.",
+                "if_it_were_true": "Если бы выполнялись все группы, дорогая поздняя проверка запускалась бы даже после провала базовой, что противоречит назначению group sequence.",
+                "how_it_should_be": "Использовать sequence для ordered short-circuit, а conversion — рядом с `@Valid` для выбора другой группы на каскадной границе."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Группу `Default.class` нужно указывать явно в `groups` у каждого constraint; иначе это ограничение не попадёт ни в одну группу и при обычной валидации проверяться не будет вовсе.",
+              "text": "Constraint без явного `groups` не принадлежит ни одной группе и никогда не проверяется обычным `@Valid`. Поэтому у каждой `@NotNull` нужно писать `groups = Default.class`, иначе ни `@Validated`, ни `Validator.validate` её не увидят.",
               "correct": false,
               "sections": {
-                "what_actually": "Constraint без явного `groups` автоматически принадлежит `Default.class` и проверяется по умолчанию — указывать её руками не нужно.",
-                "source_of_confusion": "Имя `Default` наводит на мысль, что её, как и прочие группы, надо назначать вручную.",
-                "if_it_were_true": "Если бы её требовалось указывать всегда, простой `@NotBlank` без `groups` не срабатывал бы никогда, но он работает из коробки.",
-                "how_it_should_be": "`Default.class` подразумевается автоматически; явно её пишут лишь при включении дефолтной группы в `@GroupSequence`."
+                "what_actually": "Constraint без `groups` автоматически принадлежит `jakarta.validation.groups.Default`, и обычная валидация как раз запрашивает эту группу.",
+                "source_of_confusion": "Пользовательские группы назначаются явно, из-за чего то же правило ошибочно переносят на предопределённую группу по умолчанию.",
+                "if_it_were_true": "Если бы `Default` требовалось указывать вручную, большинство простых DTO с обычным `@NotNull` вообще не валидировалось бы.",
+                "how_it_should_be": "Не указывать `groups` для базовых правил; явные группы добавлять только для сценариев, отличающихся от дефолтной проверки."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Группы валидации в контроллере задаются через `@Valid(OnCreate.class)`: класс группы передают прямо в `@Valid` на параметре метода; и валидатор проверит только те constraints, что помечены этой группой.",
+              "text": "`@ConvertGroup(from = A.class, to = B.class)` переключает корневую валидацию с A на B во всём графе и работает даже без `@Valid`. Его ставят на класс DTO вместо `@Validated(A.class)`, чтобы выбрать группу запроса.",
               "correct": false,
               "sections": {
-                "what_actually": "У `@Valid` нет атрибута для групп вовсе; группу задают через `@Validated(OnCreate.class)`, существующий именно ради этой возможности.",
-                "source_of_confusion": "Раз `@Valid` запускает валидацию, кажется логичным, что он же и принимает класс группы.",
-                "if_it_were_true": "Будь `@Valid(OnCreate.class)` допустим, аннотация `@Validated` для групп была бы не нужна, но принимать класс группы умеет именно она.",
-                "how_it_should_be": "Для выбора группы используйте `@Validated(Group.class)`; `@Valid` запускает лишь дефолтную группу и каскад."
+                "what_actually": "Group conversion применяется только при каскадной проверке на элементе с `@Valid` и меняет группу для конкретного дочернего перехода, а не для корня.",
+                "source_of_confusion": "Имя аннотации звучит как общий переключатель групп, хотя её область действия ограничена cascadable association.",
+                "if_it_were_true": "Если бы conversion выбирал корневую группу, он заменял бы `@Validated`, но без `@Valid` такая декларация является некорректной.",
+                "how_it_should_be": "Корневую группу выбирать `@Validated(A.class)`, а на дочерней ссылке писать `@Valid @ConvertGroup(from=A.class, to=B.class)`."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Группы — это маркер-интерфейсы, позволяющие применять разные constraints в зависимости от сценария (создание vs обновление); каждый constraint указывает `groups`, а `@Validated(Group.class)` активирует только нужную группу.",
+              "text": "Группы — маркерные интерфейсы для разных наборов правил; `@Validated(OnCreate.class)` выбирает нужный набор. `@GroupSequence` выполняет группы по порядку и прекращает проверку после первой неуспешной, а `@Valid @ConvertGroup(from=A.class, to=B.class)` меняет группу при переходе к дочернему объекту.",
               "correct": true,
               "sections": {
-                "explanation": "На одно поле вешают несколько ограничений с разными `groups`, и для каждого эндпоинта `@Validated(OnCreate.class)`/`@Validated(OnUpdate.class)` выбирает свой набор правил.",
-                "example": "`@Null(groups=OnCreate.class)` требует `id == null` при создании, а `@NotNull(groups=OnUpdate.class)` делает `id` обязательным при обновлении — одно поле, два контекста.",
-                "when_to_apply": "Группы применяют, когда один DTO переиспользуется в разных операциях и набор обязательных полей зависит от сценария.",
-                "edge_cases": "Constraint без явного `groups` попадает в `Default.class`; `@GroupSequence` задаёт порядок проверки, останавливаясь на первой провалившейся группе.",
-                "related": "[[spring-validation-interview#Q3]] `@Valid` против `@Validated`; [[spring-validation-interview#Q1]] что такое Bean Validation; [[spring-validation-interview#Q13]] кастомизация сообщений."
+                "explanation": "Constraint может входить в одну или несколько групп. Последовательность позволяет сначала выполнить дешёвые структурные правила, а conversion развязывает группу родителя и внутреннюю модель групп дочернего типа.",
+                "example": "`@Validated(OnCreate.class)` проверяет create-правила корня; поле `@Valid @ConvertGroup(from=OnCreate.class, to=AddressCreate.class) Address address` каскадирует уже с `AddressCreate`.",
+                "when_to_apply": "Группы полезны, когда один тип проверяется в нескольких контекстах; sequence — когда следующий этап зависит от предыдущего; conversion — на границе переиспользуемого вложенного типа.",
+                "edge_cases": "Constraint без `groups` относится к `Default`. Запрос `OnCreate` не добавляет `Default` автоматически, если группа его не наследует и он не запрошен отдельно. `@ConvertGroup` без `@Valid` недопустим.",
+                "related": "[[spring-validation-interview#Q3]] выбор групп через `@Validated`; [[spring-validation-interview#Q5]] каскад; [[spring-validation-interview#Q11]] группы в method validation."
               }
             }
           ]
@@ -366,55 +366,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как создать кастомную constraint-аннотацию?",
+          "question_text": "Как корректно определить собственную constraint-аннотацию и её валидатор?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Для кастомной аннотации указывают `@Constraint(validatedBy = XxxValidator.class)` с элементом `message` и методом `isValid`, а необязательные `groups` и `payload` добавляют лишь когда `ConstraintValidator<A, T>` участвует в `@Validated`-группах.",
+              "text": "Достаточно `@Constraint(validatedBy = XxxValidator.class)`, `message()` и `isValid(...)`; элементы `groups()` и `payload()` добавляют только если приложение реально использует группы или payload. Без этих элементов constraint остаётся валидным для `Default`.",
               "correct": false,
               "sections": {
-                "what_actually": "`groups` и `payload` — обязательные элементы любой constraint-аннотации по спецификации; без них `Hibernate Validator` бросает `ConstraintDefinitionException`.",
-                "source_of_confusion": "Раз `groups` и `payload` редко используют напрямую, кажется, что их можно не объявлять в аннотации.",
-                "if_it_were_true": "Будь они опциональны, аннотация без `groups` и `payload` собиралась бы и работала, но `@Constraint` отвергается как невалидный.",
-                "how_it_should_be": "Всегда объявляйте `message`, `groups` и `payload` — это контракт constraint-аннотации, даже со значениями по умолчанию."
+                "what_actually": "Каждая constraint-аннотация обязана объявлять `message`, `groups` и `payload` с корректными типами и значениями по умолчанию.",
+                "source_of_confusion": "`groups` и `payload` редко задают при использовании аннотации, поэтому их легко принять за необязательные части определения.",
+                "if_it_were_true": "Если бы эти элементы были опциональны, спецификация не проверяла бы их наличие и провайдер не бросал бы `ConstraintDefinitionException`.",
+                "how_it_should_be": "Всегда объявлять `String message()`, `Class<?>[] groups() default {}` и `Class<? extends Payload>[] payload() default {}`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Сам класс-валидатор для аннотации `@Constraint` реализует интерфейс `Validator` из пакета `org.springframework.validation` с методами `supports` и `validate`, а вовсе не `ConstraintValidator` с его методом `isValid`.",
+              "text": "Класс из `validatedBy` должен реализовать `org.springframework.validation.Validator`: `supports(Class)` выбирает тип, а `validate(Object, Errors)` формирует violation. Интерфейс `ConstraintValidator<A,T>` используется только внутри Hibernate ORM.",
               "correct": false,
               "sections": {
-                "what_actually": "Кастомный constraint реализует `jakarta.validation.ConstraintValidator<A, T>` с `initialize` и `isValid`, а не спринговый интерфейс `Validator`.",
-                "source_of_confusion": "В Spring есть свой `Validator` с `supports`/`validate`, и два разных механизма валидации легко перепутать.",
-                "if_it_were_true": "Если бы требовался Spring-`Validator`, аннотация `@Constraint(validatedBy = ...)` ссылалась бы на него, но она требует `ConstraintValidator`.",
-                "how_it_should_be": "Для аннотации-constraint используйте `ConstraintValidator`; `Validator` из `org.springframework.validation` — это отдельный подход без аннотаций."
+                "what_actually": "Jakarta constraint связывается с `jakarta.validation.ConstraintValidator<A,T>` и его `isValid`; Spring `Validator` — отдельный императивный механизм.",
+                "source_of_confusion": "В обоих API интерфейс называется Validator и оба могут работать через Spring MVC, хотя их контракты и регистрация различаются.",
+                "if_it_were_true": "Если бы `validatedBy` принимал Spring Validator, тип атрибута `@Constraint` не был бы ограничен классами `ConstraintValidator`.",
+                "how_it_should_be": "Для аннотации реализовать `ConstraintValidator`; Spring Validator выбирать только для отдельной программной проверки через `Errors`."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "В методе `isValid` кастомного `ConstraintValidator<A, T>` следует явно вернуть `false` на `null`, иначе пустое значение пройдёт `@Constraint`-проверку, а `@NotNull` и `@NotBlank` его не спасут.",
+              "text": "Любой кастомный `ConstraintValidator` обязан отклонять `null` внутри `isValid`, иначе constraint определён неверно. Отдельный `@NotNull` не следует комбинировать с ним, поскольку пользовательская аннотация всегда отвечает и за обязательность.",
               "correct": false,
               "sections": {
-                "what_actually": "В `isValid` на `null` принято возвращать `true`, а проверку на отсутствие значения отдавать `@NotNull`, чтобы не дублировать ответственность.",
-                "source_of_confusion": "Интуитивно кажется, что `ConstraintValidator` обязан сам отсекать `null` как заведомо «невалидное» значение.",
-                "if_it_were_true": "Если бы `isValid` сам отклонял `null`, нельзя было бы сделать необязательное поле с форматом, где `null` допустим, а заданное значение проверяется по шаблону.",
-                "how_it_should_be": "Возвращайте `true` на `null` в `isValid`, а обязательность поля выражайте отдельным `@NotNull` или `@NotBlank`."
+                "what_actually": "Спецификация рекомендует разделять обязанности: форматный validator обычно возвращает `true` для `null`, а обязательность выражает `@NotNull` или `@NotBlank`.",
+                "source_of_confusion": "Интуитивно `null` выглядит невалидным для любого бизнес-формата, хотя отсутствие значения и формат присутствующего значения — независимые правила.",
+                "if_it_were_true": "Если бы каждый constraint отклонял `null`, нельзя было бы описать необязательное поле, которое проверяется только когда значение присутствует.",
+                "how_it_should_be": "Осознанно определить семантику null; для переиспользуемого форматного constraint обычно пропускать `null` и добавлять `@NotNull` отдельно."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Объявляют аннотацию с `@Constraint(validatedBy = XxxValidator.class)` и обязательными элементами `message`, `groups`, `payload`, затем пишут класс, реализующий `ConstraintValidator<A, T>` с методами `initialize` и `isValid`.",
+              "text": "Аннотацию помечают `@Constraint`, `@Retention(RUNTIME)` и подходящим `@Target`, объявляют `message`, `groups`, `payload`, а класс из `validatedBy` реализует `ConstraintValidator<A,T>` и `isValid`. `initialize` переопределяют только когда нужно прочитать атрибуты аннотации.",
               "correct": true,
               "sections": {
-                "explanation": "В `initialize(annotation)` читают атрибуты аннотации (например, `regexp`), а в `isValid(value, ctx)` возвращают `boolean` — проходит ли значение проверку.",
-                "example": "Для `@Phone` валидатор `PhoneValidator implements ConstraintValidator<Phone, String>` в `isValid` делает `value.matches(regexp)`, а на `null` возвращает `true`, отдавая null-проверку `@NotNull`.",
-                "when_to_apply": "Свою аннотацию создают, когда стандартных constraints не хватает: бизнес-формат телефона, ИНН, кастомный шаблон строки.",
-                "edge_cases": "В `isValid` не проверяют `null` (за него отвечает `@NotNull`); `groups` и `payload` обязательны в объявлении, иначе аннотация не считается constraint.",
-                "related": "[[spring-validation-interview#Q2]] стандартные constraints; [[spring-validation-interview#Q8]] кросс-field валидация на классе; [[spring-validation-interview#Q9]] stateful validator с DI."
+                "explanation": "Провайдер выбирает совместимый validator по типу T, вызывает `initialize` до использования экземпляра и затем `isValid` для каждого значения. С версии 2.0 у `initialize` есть пустая default-реализация.",
+                "example": "`@Phone` объявляет `regexp()`, а `PhoneValidator implements ConstraintValidator<Phone,String>` сохраняет regexp как неизменяемую конфигурацию в `initialize` и проверяет значение в `isValid`.",
+                "when_to_apply": "Собственный constraint создают для повторяемого доменного правила, которое нельзя точно выразить композицией стандартных аннотаций.",
+                "edge_cases": "Обычно `null` оставляют `@NotNull`. Неподдерживаемый тип приводит к `UnexpectedTypeException`; поэтому target types и generic T нужно документировать и не изменять проверяемый объект в `isValid`.",
+                "related": "[[spring-validation-interview#Q8]] class-level и cross-parameter constraints; [[spring-validation-interview#Q9]] DI и thread-safety; [[spring-validation-interview#Q10]] композиция."
               }
             }
           ]
@@ -426,55 +426,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как реализовать кросс-field валидацию (например, `password == confirmPassword`)?",
+          "question_text": "Как реализовать проверку нескольких полей DTO и cross-parameter constraint метода?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Аннотацию вешают на уровень класса (`@Target(ElementType.TYPE)`), а валидатор реализует `ConstraintValidator<A, Object>` и сравнивает поля объекта целиком, читая их рефлексией (например, через `BeanWrapperImpl`).",
+              "text": "Для полей DTO создают class-level constraint и типизированный `ConstraintValidator<A,Dto>`; для нескольких параметров метода — constraint на методе/конструкторе и validator `ConstraintValidator<A,Object[]>` с `@SupportedValidationTarget(PARAMETERS)`. Это разные цели одного общего принципа.",
               "correct": true,
               "sections": {
-                "explanation": "Поскольку проверка касается нескольких полей сразу, нужна не полевая, а классовая аннотация: ей доступен весь объект, а не одно значение.",
-                "example": "`@PasswordMatch(password=\"password\", confirmPassword=\"confirmPassword\")` на классе `RegisterRequest`; валидатор читает оба поля и через `addPropertyNode` привязывает ошибку к `confirmPassword`.",
-                "when_to_apply": "Классовую валидацию применяют для зависимостей между полями: совпадение паролей, `dateFrom <= dateTo`, «если A задано, то B обязательно».",
-                "edge_cases": "`addPropertyNode` важен, чтобы ошибка указывала на конкретное поле, а не на весь объект; без `disableDefaultConstraintViolation` появится лишний дефолтный violation.",
-                "related": "[[spring-validation-interview#Q7]] своя constraint-аннотация; [[spring-validation-interview#Q5]] каскадная валидация; [[spring-validation-interview#Q9]] stateful validator."
+                "explanation": "Class-level validator получает целый bean и может сравнить его свойства. Cross-parameter validator получает массив фактических аргументов executable; специальная мета-аннотация отличает его от проверки return value.",
+                "example": "`@PasswordMatches` на `RegisterRequest` сравнивает `password` и `confirmPassword`; `@ConsistentDates` на `book(start,end)` реализован через `ConstraintValidator<ConsistentDates,Object[]>`.",
+                "when_to_apply": "Class-level constraint выбирать для инварианта DTO, а cross-parameter — когда инвариант относится именно к сигнатуре метода и отдельный request object создавать неуместно.",
+                "edge_cases": "Class-level violation по умолчанию относится ко всему bean; через `disableDefaultConstraintViolation()` и `addPropertyNode(...)` её можно привязать к полю. Для constraint, способного проверять и параметры, и return value, нужен `validationAppliesTo` при неоднозначности.",
+                "related": "[[spring-validation-interview#Q7]] определение constraint; [[spring-validation-interview#Q11]] method validation сервиса; [[spring-validation-interview#Q4]] ошибки method validation MVC."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Чтобы привязать ошибку к полю `confirmPassword`, из метода `isValid` достаточно вернуть `false`: Spring затем сам определит проблемное поле по имени геттера или самого валидатора.",
+              "text": "Один `ConstraintValidator<A,Object>` автоматически получает DTO для class-level использования и `Object[]` для метода; `@SupportedValidationTarget` не нужен, потому что провайдер определяет режим по фактическому объекту внутри `isValid`.",
               "correct": false,
               "sections": {
-                "what_actually": "Без `addPropertyNode` ошибка привяжется ко всему объекту, а не к полю `confirmPassword` — Spring сам целевое поле не угадывает.",
-                "source_of_confusion": "Кажется, что фреймворк «умный» и по имени метода сам поймёт, к какому полю относится нарушение.",
-                "if_it_were_true": "Если бы Spring угадывал поле, методы `disableDefaultConstraintViolation` и `addPropertyNode` были бы лишними, но именно они задают целевое поле.",
-                "how_it_should_be": "Явно вызывайте `disableDefaultConstraintViolation()` и `addPropertyNode(...)`, чтобы ошибка указала на нужное поле формы."
+                "what_actually": "Cross-parameter validator должен явно объявить target `ValidationTarget.PARAMETERS`; одного широкого generic-типа `Object` недостаточно для выбора назначения.",
+                "source_of_confusion": "`Object` технически способен хранить и bean, и массив, поэтому кажется, что runtime type может полностью заменить метаданные target.",
+                "if_it_were_true": "Если бы target выводился из значения, провайдер не смог бы однозначно отличить проверку параметров от проверки return value на аннотации метода.",
+                "how_it_should_be": "Определить отдельный cross-parameter validator с `@SupportedValidationTarget(PARAMETERS)` и типом `Object[]`; generic validator оставить для bean."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Для кросс-field валидации сам валидатор реализуют как `ConstraintValidator<A, String>` с `@Target(ElementType.TYPE)` на аннотации, чтобы метод `isValid` получил на вход строковые значения обоих сравниваемых полей объекта.",
+              "text": "Cross-parameter validator реализуют как `ConstraintValidator<A,FirstParameterType>`: провайдер передаёт в `isValid` первый аргумент, а остальные доступны через `ConstraintValidatorContext`. Аннотацию при этом ставят на каждый параметр отдельно.",
               "correct": false,
               "sections": {
-                "what_actually": "Тип-параметр должен быть `Object` (или сам класс DTO), ведь при `@Target(ElementType.TYPE)` валидатор получает целый объект, а не строку.",
-                "source_of_confusion": "Привычка к полевым валидаторам `ConstraintValidator<A, String>` машинально переносится и на классовый случай.",
-                "if_it_were_true": "Будь тип `String`, `isValid` получил бы лишь одно значение и не смог бы сравнить два поля объекта.",
-                "how_it_should_be": "Используйте `ConstraintValidator<A, Object>`; тогда `isValid` получает весь объект и читает нужные поля рефлексией."
+                "what_actually": "Cross-parameter validator получает все аргументы одним `Object[]`, а constraint размещают на методе или конструкторе, не на каждом параметре.",
+                "source_of_confusion": "Обычный parameter constraint действительно получает одно значение, и его контракт ошибочно переносят на связь нескольких аргументов.",
+                "if_it_were_true": "Если бы остальные аргументы находились в context, тип cross-parameter validator не был бы нормативно ограничен `Object[]` или `Object`.",
+                "how_it_should_be": "Использовать `ConstraintValidator<A,Object[]>`, проверить длину и типы массива и пометить validator `ValidationTarget.PARAMETERS`."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Кросс-field валидацию делают полевой аннотацией с `@Target(ElementType.FIELD)`: её вешают на каждое связанное поле и передают имя соседнего поля параметром, а `isValid` в `ConstraintValidator<A, String>` сравнит оба значения.",
+              "text": "Для сравнения полей достаточно повесить одну field-level аннотацию на `confirmPassword`: `ConstraintValidator<A,String>` через `ConstraintValidatorContext` получает весь исходный DTO и читает соседнее поле без class-level constraint.",
               "correct": false,
               "sections": {
-                "what_actually": "Полевая аннотация видит только своё значение и не имеет доступа к соседним полям; для сравнения полей нужна классовая аннотация с `@Target(ElementType.TYPE)`.",
-                "source_of_confusion": "Раз проверка касается двух полей, кажется логичным повесить её на эти поля, а не на класс.",
-                "if_it_were_true": "Если бы полевой валидатор видел соседние поля, классовые `@Target(ElementType.TYPE)`-аннотации были бы не нужны, но они существуют именно ради кросс-field случая.",
-                "how_it_should_be": "Вешайте кросс-field constraint на класс — только так `ConstraintValidator` получит весь объект и сравнит несколько полей."
+                "what_actually": "Полевой validator получает значение отмеченного поля, а context не предоставляет произвольный доступ к корневому bean; для нескольких свойств нужен class-level target.",
+                "source_of_confusion": "Context умеет строить property path, поэтому ему ошибочно приписывают и доступ к состоянию всех соседних свойств.",
+                "if_it_were_true": "Если бы field validator видел root bean, отдельные class-level constraints не были бы нужны для инвариантов между свойствами.",
+                "how_it_should_be": "Передавать в `isValid` типизированный DTO через class-level constraint, а `addPropertyNode` использовать только для адресации результата."
               }
             }
           ]
@@ -486,55 +486,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как создать stateful validator с инъекцией `Spring`-бинов (например, проверка уникальности email в БД)?",
+          "question_text": "Как внедрить Spring-бин в `ConstraintValidator` и обеспечить корректные lifecycle и thread-safety?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Validator помечают `@Component`, и тогда `@Autowired`-зависимости работают: `Spring Boot` через `LocalValidatorFactoryBean` подключает `SpringConstraintValidatorFactory`, которая создаёт валидаторы из контекста, а не через `new`.",
+              "text": "Spring-backed `LocalValidatorFactoryBean` использует `SpringConstraintValidatorFactory`, поэтому validator может получать зависимости и без обязательного `@Component`. Но провайдер вправе кэшировать его экземпляр: `isValid` обязан быть thread-safe и не хранить данные конкретного вызова в полях.",
               "correct": true,
               "sections": {
-                "explanation": "По умолчанию `Hibernate Validator` инстанцирует валидаторы рефлексией без DI; интеграция Spring заменяет фабрику, чтобы валидатор стал управляемым бином с инъекциями.",
-                "example": "`UniqueEmailValidator implements ConstraintValidator<UniqueEmail, String>` с `@Autowired UserRepository` в `isValid` делает `!userRepository.existsByEmail(email)` — обращение к БД прямо из валидатора.",
-                "when_to_apply": "DI в валидаторе нужен, когда проверка зависит от состояния: уникальность в БД, обращение к другому сервису, доступ к конфигурации.",
-                "edge_cases": "DI работает только когда валидацию запускает Spring-инфраструктура; при прямом `jakarta.validation.Validator` мимо контекста инъекции будут `null`.",
-                "related": "[[spring-validation-interview#Q7]] своя constraint-аннотация; [[spring-validation-interview#Q11]] валидация на сервисном уровне; [[spring-validation-interview#Q14]] Spring Validator interface."
+                "explanation": "Lifecycle экземпляра не определён спецификацией, и рассчитывать на новый объект для каждого запроса нельзя. В `initialize` допустимо сохранить неизменяемую конфигурацию аннотации, а входное значение и request-specific данные нужно обрабатывать локально в `isValid`.",
+                "example": "`UniqueEmailValidator` получает `UserRepository` через constructor injection, а `isValid(email, context)` использует только аргументы и repository. Последний email или промежуточный результат в поле validator не сохраняются.",
+                "when_to_apply": "DI оправдан для конфигурации или чтения внешнего состояния, когда правило действительно должно оставаться Jakarta constraint и запускается через Spring-managed `Validator`.",
+                "edge_cases": "`Validation.buildDefaultValidatorFactory()` не подключает Spring DI. Проверка уникальности запросом к БД подвержена race condition и годится лишь для ранней обратной связи; целостность должна гарантировать уникальное ограничение БД.",
+                "related": "[[spring-validation-interview#Q7]] собственный constraint; [[spring-validation-interview#Q11]] сервисная method validation; [[spring-validation-interview#Q14]] Spring Validator."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Инъекция в `ConstraintValidator` работает всегда: даже прямой `Validation.buildDefaultValidatorFactory()` подхватит `SpringConstraintValidatorFactory`, и `@Autowired`-поля бина `@Component` не окажутся `null` без `LocalValidatorFactoryBean`.",
+              "text": "Достаточно пометить validator `@Component`: тогда даже `Validation.buildDefaultValidatorFactory()` найдёт Spring-контекст и внедрит зависимости. `LocalValidatorFactoryBean` нужен только для локализации сообщений, но на создание `ConstraintValidator` не влияет.",
               "correct": false,
               "sections": {
-                "what_actually": "Прямой `Validation.buildDefaultValidatorFactory()` идёт мимо контекста и использует дефолтную фабрику, поэтому `@Autowired`-поля бина `@Component` окажутся `null`.",
-                "source_of_confusion": "Кажется, что раз валидатор — `@Component`, DI сработает независимо от точки запуска валидации.",
-                "if_it_were_true": "Будь DI и так, `LocalValidatorFactoryBean` был бы не нужен, но именно он подменяет фабрику на `SpringConstraintValidatorFactory`.",
-                "how_it_should_be": "Запускайте валидацию через спринговый `Validator` или MVC; прямой `buildDefaultValidatorFactory()` обходит DI."
+                "what_actually": "Стандартный bootstrap не знает о Spring; DI обеспечивает именно Spring `ConstraintValidatorFactory`, настроенная через `LocalValidatorFactoryBean`.",
+                "source_of_confusion": "В Boot-приложении интегрированный Validator настраивается автоматически, и работающий DI ошибочно приписывают одной аннотации `@Component`.",
+                "if_it_were_true": "Если бы default factory сканировала Spring-контекст, чистая Jakarta Validation зависела бы от Spring и не нуждалась бы в extension point `ConstraintValidatorFactory`.",
+                "how_it_should_be": "Запускать проверку через Spring-managed Validator; сам validator не обязан быть component-scanned bean для autowiring фабрикой Spring."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Stateful `ConstraintValidator` обязан быть `@Scope(\"prototype\")`: иначе закэшированное в `initialize` состояние с `@Autowired`-репозитория у singleton-бина `@Component` станет общим и `isValid` даст гонки.",
+              "text": "Провайдер гарантированно создаёт новый `ConstraintValidator` перед каждым вызовом `isValid`, поэтому в полях безопасно хранить текущего пользователя, проверяемое значение и промежуточный результат. Для thread-safety достаточно объявить bean prototype-scoped.",
               "correct": false,
               "sections": {
-                "what_actually": "`ConstraintValidator` может быть singleton-бином: `isValid` не хранит состояние между запросами, а данные берёт из аргумента и `@Autowired`-репозитория на каждый вызов.",
-                "source_of_confusion": "Слово «stateful» наводит на мысль, что валидатор кэширует изменяемое состояние и потому требует `@Scope(\"prototype\")`.",
-                "if_it_were_true": "Требуйся prototype-scope, singleton-валидатор `@Component` давал бы гонки, но корректный `isValid` ничего не кэширует в `initialize`.",
-                "how_it_should_be": "Делайте `isValid` без разделяемого изменяемого состояния; тогда singleton-валидатор с `@Autowired`-репозиторием безопасен."
+                "what_actually": "Lifecycle не определён, провайдер может кэшировать экземпляры, а `isValid` по спецификации обязан быть thread-safe независимо от Spring scope.",
+                "source_of_confusion": "Название factory и dependent lifecycle создают ожидание нового объекта на каждую проверку, хотя провайдеру разрешено кэширование.",
+                "if_it_were_true": "Если бы экземпляр всегда был одноразовым, спецификация не требовала бы thread-safe реализации `isValid` и не разрешала бы provider cache.",
+                "how_it_should_be": "Не хранить per-call состояние в полях; использовать локальные переменные и неизменяемые зависимости, не полагаясь на prototype scope."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Чтобы `@Autowired` в `ConstraintValidator` сработал, ничего настраивать не нужно: `Hibernate Validator` сканирует `Spring`-контекст и внедряет зависимости даже без `LocalValidatorFactoryBean` и `SpringConstraintValidatorFactory`.",
+              "text": "Spring может внедрять в `ConstraintValidator` только поля или setters: даже `SpringConstraintValidatorFactory` обязана вызывать public no-arg constructor, поэтому constructor injection без `@Component` для такого validator не поддерживается.",
               "correct": false,
               "sections": {
-                "what_actually": "DI в `ConstraintValidator` обеспечивает `Spring` через `LocalValidatorFactoryBean` + `SpringConstraintValidatorFactory`; сам `Hibernate Validator` контекст не сканирует и создаёт валидатор через `new`.",
-                "source_of_confusion": "Раз в `Spring Boot` валидация «просто работает», кажется, будто зависимости внедряет сам `Hibernate Validator`.",
-                "if_it_were_true": "Тогда `@Autowired` в валидаторе работал бы и в чистом `Jakarta`-приложении без `Spring`, чего не происходит.",
-                "how_it_should_be": "`Spring Boot` через `LocalValidatorFactoryBean` подключает `SpringConstraintValidatorFactory`, которая и внедряет `@Autowired`-зависимости в валидатор."
+                "what_actually": "Дефолтная Jakarta factory использует no-arg constructor, но Spring factory создаёт объект через bean factory и поддерживает обычную injection, включая подходящий constructor.",
+                "source_of_confusion": "Требование public no-arg относится к default provider factory, и его ошибочно распространяют на заменяемую Spring-интеграцию.",
+                "if_it_were_true": "Если бы Spring был ограничен no-arg созданием, Kotlin-пример Spring с constructor-injected dependency в `ConstraintValidator` не работал бы.",
+                "how_it_should_be": "Использовать Spring-backed Validator и constructor injection как в других компонентах; `@Component` для создания через эту factory не обязателен."
               }
             }
           ]
@@ -546,55 +546,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как работает композиция constraints?",
+          "question_text": "Как работает constraint composition и что меняет `@ReportAsSingleViolation`?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Composed-аннотацию разрешено вешать лишь на тот тип цели, что задан во вложенных constraints, а ; собственный `@Target` указывать запрещено — он конфликтует с `@Retention` наследуемых ограничений.",
+              "text": "Composing constraints по умолчанию объединяются через OR: достаточно пройти хотя бы один из `@Size` или `@Pattern`. `@ReportAsSingleViolation` переключает композицию на AND и только после этого требует успешного выполнения всех вложенных правил.",
               "correct": false,
               "sections": {
-                "what_actually": "У composed-аннотации собственный `@Target` обязателен и задаёт места применения (например, `FIELD`, `PARAMETER`), независимо от вложенных constraints.",
-                "source_of_confusion": "Кажется, что цель наследуется от вложенных constraints, поэтому свой `@Target` не нужен.",
-                "if_it_were_true": "Будь `@Target` запрещён, аннотацию нельзя было бы скомпилировать, ведь `@Target`/`@Retention` обязательны у любой аннотации.",
-                "how_it_should_be": "Задавайте свой `@Target` и `@Retention`; они определяют применимость, а вложенные constraints — правила проверки."
+                "what_actually": "Обычная композиция применяет все composing constraints как совместный набор, то есть значение должно удовлетворять каждому; single-violation не меняет логику на AND.",
+                "source_of_confusion": "Сворачивание нескольких нарушений в одно сообщение выглядит как изменение логической операции над вложенными правилами.",
+                "if_it_were_true": "Если бы default был OR, composed constraint из `@NotBlank` и `@Pattern` пропускал бы любую непустую строку независимо от шаблона.",
+                "how_it_should_be": "Считать композицию конъюнкцией; для иных булевых правил использовать provider-specific возможности или собственный validator."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Аннотация `@ReportAsSingleViolation` полностью отключает вложенные проверки: `@Size` и `@Pattern` внутри composed-аннотации не выполняются совсем; остаётся лишь общее сообщение самой мета-аннотации, а сами ограничения игнорируются.",
+              "text": "`@ReportAsSingleViolation` отключает выполнение composing constraints и оставляет только сообщение главной аннотации. Поэтому композиция без собственного `ConstraintValidator` после добавления этой мета-аннотации перестаёт проверять `@Size` и `@Pattern`.",
               "correct": false,
               "sections": {
-                "what_actually": "Вложенные `@Size` и `@Pattern` проверяются как обычно; `@ReportAsSingleViolation` лишь сворачивает их нарушения в один violation вместо нескольких.",
-                "source_of_confusion": "Слово «single» наводит на мысль, что одной становится и проверка, а не только сообщение.",
-                "if_it_were_true": "Отключайся вложенные проверки, composed-аннотация вроде `@PersonName` ничего бы не проверяла, но она реально применяет `@Size` и `@Pattern`.",
-                "how_it_should_be": "Все вложенные ограничения работают; `@ReportAsSingleViolation` влияет только на число выдаваемых сообщений."
+                "what_actually": "Composing constraints продолжают проверяться; evaluation останавливается на первом failure, а наружу возвращается одно нарушение главного constraint.",
+                "source_of_confusion": "Фраза single violation относится к error report, но её легко прочитать как single validation без выполнения вложенных правил.",
+                "if_it_were_true": "Если бы проверки отключались, composed-аннотация с `validatedBy = {}` не имела бы никакой исполняемой логики.",
+                "how_it_should_be": "Использовать аннотацию для единого сообщения, понимая short-circuit на первой ошибке, а не для отключения composing constraints."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Мета-аннотацию помечают `@Constraint(validatedBy = {})` (без своего валидатора) и навешивают на неё несколько стандартных constraints; их проверки применяются вместе, а `@ReportAsSingleViolation` сворачивает все нарушения в одно сообщение.",
+              "text": "Composed constraint сам помечают `@Constraint` и навешивают на него другие constraints; собственный validator можно не задавать (`validatedBy = {}`). По умолчанию каждое нарушение имеет свой report, а `@ReportAsSingleViolation` останавливается на первом failure и возвращает одно сообщение главной аннотации.",
               "correct": true,
               "sections": {
-                "explanation": "Композиция переиспользует готовые ограничения как набор: одна аннотация заменяет несколько повторяющихся, унифицируя правило в разных DTO.",
-                "example": "`@PersonName` объединяет `@NotNull`, `@NotBlank`, `@Size(min=2,max=50)` и `@Pattern(...)`; повесив `@PersonName` на `firstName` и `lastName`, получаешь один набор правил.",
-                "when_to_apply": "Композицию применяют, когда одно и то же сочетание ограничений нужно на многих полях — чтобы не дублировать стопку аннотаций.",
-                "edge_cases": "Без `@ReportAsSingleViolation` каждое нарушенное вложенное ограничение даёт свою ошибку; с ней — одно общее сообщение мета-аннотации.",
-                "related": "[[spring-validation-interview#Q2]] стандартные constraints; [[spring-validation-interview#Q7]] своя constraint-аннотация; [[spring-validation-interview#Q13]] кастомизация сообщений."
+                "explanation": "Композиция рекурсивно применяет главную и composing-аннотации. Группы, payload и validation target главного constraint наследуются вложенными, а их собственные значения этих атрибутов игнорируются.",
+                "example": "`@Username` объединяет `@NotBlank`, `@Size(min=3,max=30)` и `@Pattern(...)`; с `@ReportAsSingleViolation` клиент получает одно сообщение `{username.invalid}` вместо нескольких деталей.",
+                "when_to_apply": "Композиция полезна для повторяемого доменного правила из стандартных constraints; единый violation выбирают, когда API намеренно не раскрывает причину или нужен один стабильный код ошибки.",
+                "edge_cases": "Главный constraint может иметь и собственный validator — тогда он тоже выполняется. Через `@OverridesAttribute` можно пробросить настройки composing constraint; все составные правила должны иметь совместимый validation target и тип.",
+                "related": "[[spring-validation-interview#Q2]] стандартные constraints; [[spring-validation-interview#Q7]] собственная аннотация; [[spring-validation-interview#Q13]] сообщения."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Композиция требует обязательного собственного `ConstraintValidator`, который в методе `isValid` вручную и последовательно вызывает каждый вложенный стандартный constraint; иначе проверки композиции не запустятся вовсе.",
+              "text": "Любая composed-аннотация обязана иметь собственный `ConstraintValidator`, который вручную вызывает validators для `@Size`, `@Pattern` и остальных вложенных правил. Пустой `validatedBy = {}` означает, что вся композиция является только документацией.",
               "correct": false,
               "sections": {
-                "what_actually": "Композиции свой валидатор не нужен — `@Constraint(validatedBy = {})` оставляют пустым, а проверки выполняют вложенные стандартные constraints, не `isValid`.",
-                "source_of_confusion": "Привычка к кастомным constraints с обязательным `ConstraintValidator` переносится и на композицию.",
-                "if_it_were_true": "Будь свой валидатор обязателен, `validatedBy = {}` не имел бы смысла, но именно пустой массив включает режим композиции.",
-                "how_it_should_be": "Оставляйте `validatedBy = {}` и не пишите `isValid`; работают навешанные стандартные constraints."
+                "what_actually": "Провайдер сам обнаруживает composing constraints; `validatedBy = {}` — нормальная декларация композиции без дополнительной собственной проверки.",
+                "source_of_confusion": "У обычного custom constraint чаще есть validator, и это требование ошибочно переносят на составную аннотацию.",
+                "if_it_were_true": "Если бы вложенные validators требовалось вызывать вручную, композиция не давала бы переиспользования метаданных и стандарт не описывал бы их рекурсивное применение.",
+                "how_it_should_be": "Оставить `validatedBy = {}`, когда достаточно composing constraints; добавлять validator только для дополнительной логики главного правила."
               }
             }
           ]
@@ -606,55 +606,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как включить валидацию на уровне сервиса (не только контроллера)?",
+          "question_text": "Как включить Jakarta method validation на уровне Spring-сервиса?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "При провале валидации в `@Validated`-сервисе летит тот же `MethodArgumentNotValidException` с `BindingResult`, что и в контроллере с `@RequestBody` и `@Valid`; а не `ConstraintViolationException`.",
+              "text": "`@Validated` на сервисе создаёт тот же MVC-путь, поэтому нарушение параметра всегда бросает `MethodArgumentNotValidException` с `BindingResult`. `ConstraintViolationException` и `MethodValidationException` к Spring service method validation не относятся.",
               "correct": false,
               "sections": {
-                "what_actually": "Метод-валидация через `@Validated` бросает `ConstraintViolationException`, а `MethodArgumentNotValidException` — это MVC с `@RequestBody` и `BindingResult`.",
-                "source_of_confusion": "Оба исключения сигналят о провале валидации, поэтому их путают по слою.",
-                "if_it_were_true": "Бросай сервис `MethodArgumentNotValidException`, у него был бы `BindingResult`, но метод-валидация даёт `getConstraintViolations()`.",
-                "how_it_should_be": "Ловите `ConstraintViolationException` для сервисной валидации; `MethodArgumentNotValidException` оставьте обработчику контроллера."
+                "what_actually": "Proxy method validation по умолчанию бросает `ConstraintViolationException`; опционально post-processor может адаптировать результат в Spring `MethodValidationException`.",
+                "source_of_confusion": "В контроллере похожие аннотации приводят к `MethodArgumentNotValidException`, и MVC-исключение ошибочно переносят на сервисный слой.",
+                "if_it_were_true": "Если бы сервис выдавал `BindingResult`, method interceptor должен был бы участвовать в data binding HTTP-аргумента, чего на сервисном уровне нет.",
+                "how_it_should_be": "Обрабатывать default `ConstraintViolationException` либо явно включённый `MethodValidationException`, но не MVC `MethodArgumentNotValidException`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Сервисная валидация через `@Validated` и `MethodValidationPostProcessor` ловит self-invocation: прямой `this.method()` того же бина проходит AOP-прокси; проверяет `@Valid`, `@NotNull`, `@Positive` параметры.",
+              "text": "AOP-проверка охватывает и self-invocation: вызов `this.create(...)` проходит через `MethodValidationPostProcessor`, потому что наличие `@Validated` меняет bytecode всех методов бина. Ограничение proxy касается только `@Transactional`.",
               "correct": false,
               "sections": {
-                "what_actually": "Валидация идёт через AOP-прокси от `MethodValidationPostProcessor`, а self-invocation его минует, поэтому прямой `this.method()` не проверяется.",
-                "source_of_confusion": "Кажется, что раз метод под `@Validated`, проверка применится при любом его вызове.",
-                "if_it_were_true": "Проходи self-invocation через прокси, известной проблемы self-invocation в Spring AOP не было бы, но `this.method()` идёт мимо.",
-                "how_it_should_be": "Вызывайте метод через бин-прокси (другой бин или self-inject); прямой внутренний вызов `@Valid`-проверку пропускает."
+                "what_actually": "Spring-driven method validation использует AOP proxy; прямой вызов через `this` не проходит interceptor и потому не проверяется.",
+                "source_of_confusion": "Аннотация находится на самом классе, поэтому кажется, что поведение встроено в методы, а не обеспечивается внешним proxy.",
+                "if_it_were_true": "Если бы Spring переписывал bytecode, стандартная проблема self-invocation не распространялась бы на method validation, но документация прямо указывает proxy-модель.",
+                "how_it_should_be": "Вызывать проверяемый метод через proxy, обычно из другого бина, либо вынести границу в отдельный сервис вместо self-injection."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Для сервисной валидации хватит `@Valid` на параметрах: ни `@Validated`, ни `MethodValidationPostProcessor` из `ValidationAutoConfiguration` не нужны; `@NotNull` и `@Positive` в `Spring Boot` сработают сами.",
+              "text": "При наличии validation-провайдера Boot автоматически перехватывает каждый сервис с constraints в сигнатурах; type-level `@Validated` не нужен. Достаточно поставить `@NotNull`, `@Positive` или `@Valid` на параметры любого Spring-бина.",
               "correct": false,
               "sections": {
-                "what_actually": "Голые `@Valid`/`@NotNull` на параметрах сервиса не сработают без `@Validated` на классе и `MethodValidationPostProcessor`, создающего AOP-прокси.",
-                "source_of_confusion": "В контроллере `@Valid` на параметре работает «сам», и это ошибочно переносят на сервис.",
-                "if_it_were_true": "Хватай `@Valid` на параметре, `@Validated` был бы не нужен, но без него `MethodValidationPostProcessor` не оборачивает бин прокси.",
-                "how_it_should_be": "Ставьте `@Validated` на класс сервиса; тогда `MethodValidationPostProcessor` включит проверку `@NotNull`/`@Positive` параметров."
+                "what_actually": "Boot настраивает инфраструктуру, но целевой класс должен быть помечен `@Validated`, чтобы стать кандидатом для Spring proxy method validation.",
+                "source_of_confusion": "Автоконфигурация создаёт post-processor автоматически, и это ошибочно понимают как автоматический pointcut на все бины.",
+                "if_it_were_true": "Если бы все constraints перехватывались без маркера, документация Boot не требовала бы type-level `@Validated` для поиска inline method constraints.",
+                "how_it_should_be": "Пометить сервис `@Validated`; затем размещать constraints на параметрах/return value и `@Valid` на объектах, требующих каскада."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Нужен `MethodValidationPostProcessor` (в `Spring Boot` он есть автоматически через `ValidationAutoConfiguration`) и аннотация `@Validated` на классе сервиса; тогда параметры методов с `@Valid`/`@NotNull`/`@Positive` валидируются через AOP-прокси.",
+              "text": "Нужны validation provider, `MethodValidationPostProcessor` и `@Validated` на типе сервиса; в Boot 4 post-processor автоконфигурируется при наличии провайдера. AOP proxy проверяет direct constraints и каскад `@Valid` на аргументах, а также constraints возвращаемого значения.",
               "correct": true,
               "sections": {
-                "explanation": "`@Validated` на бине заставляет Spring обернуть его прокси, который перехватывает вызовы и проверяет аргументы (и возвращаемое значение) по constraint-аннотациям.",
-                "example": "`@Service @Validated` с методом `create(@Valid @NotNull CreateUserRequest req)` и `findById(@Positive Long id)` — при нарушении бросается `ConstraintViolationException` прямо из сервиса.",
-                "when_to_apply": "Сервисную валидацию включают для внутренних API и переиспользуемых бинов, где нужен контракт на аргументы вне контроллера.",
-                "edge_cases": "Валидация идёт через AOP-прокси, поэтому self-invocation (вызов метода изнутри того же бина) её не запускает; нарушение даёт `ConstraintViolationException`, а не `MethodArgumentNotValidException`.",
-                "related": "[[spring-validation-interview#Q3]] `@Valid` против `@Validated`; [[spring-validation-interview#Q12]] MVC против сервисной валидации; [[spring-validation-interview#Q4]] обработка ошибок валидации."
+                "explanation": "`@Validated` служит pointcut и при необходимости выбирает группы. Interceptor вызывает executable validation до метода для параметров и после метода для return value.",
+                "example": "`@Service @Validated class OrderService { @NotNull Order create(@Valid @NotNull CreateOrder cmd) { ... } }` проверяет входной DTO и ненулевой результат при внешнем вызове через bean proxy.",
+                "when_to_apply": "Method validation задаёт контракт переиспользуемого сервиса независимо от HTTP-границы и полезна для вызовов из listeners, jobs и других бинов.",
+                "edge_cases": "Self-invocation минует proxy. По умолчанию нарушение даёт `ConstraintViolationException`; `MethodValidationPostProcessor#setAdaptConstraintViolations(true)` переключает на `MethodValidationException` с адаптированными ошибками.",
+                "related": "[[spring-validation-interview#Q3]] роль `@Validated`; [[spring-validation-interview#Q8]] cross-parameter constraint; [[spring-validation-interview#Q12]] отличие от MVC."
               }
             }
           ]
@@ -666,55 +666,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Чем отличается валидация в `Spring MVC` от валидации на сервисном уровне?",
+          "question_text": "Чем различаются validation paths и исключения в `Spring MVC` и в сервисном слое?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Разницы нет: и MVC, и `@Validated`-сервис валидируют через один и тот же `HandlerMethodArgumentResolver`; бросают `MethodArgumentNotValidException` с `BindingResult`, без всякого AOP-прокси, `MethodValidationPostProcessor` и `ConstraintViolationException`.",
+              "text": "И MVC, и сервис всегда используют `HandlerMethodValidationException`: в контроллере оно содержит HTTP-параметры, а в сервисе — те же `ParameterValidationResult`. `MethodArgumentNotValidException` и `ConstraintViolationException` в Spring 7 больше не применяются.",
               "correct": false,
               "sections": {
-                "what_actually": "Механизмы разные: MVC использует `HandlerMethodArgumentResolver`, сервис — AOP-прокси `MethodValidationPostProcessor`, и исключения разные (`MethodArgumentNotValidException` против `ConstraintViolationException`).",
-                "source_of_confusion": "Аннотации те же (`@Valid`/`@NotNull`), поэтому кажется, что и механизм один.",
-                "if_it_were_true": "Будь механизм один, `BindingResult` был бы доступен и в `@Validated`-сервисе, но там его нет, а есть `getConstraintViolations()`.",
-                "how_it_should_be": "Различайте два пути: `HandlerMethodArgumentResolver` на границе запроса и AOP-валидацию методов бина."
+                "what_actually": "`HandlerMethodValidationException` относится к встроенной MVC method validation; сервисный AOP-путь по умолчанию даёт `ConstraintViolationException`, а command object ещё даёт `MethodArgumentNotValidException`.",
+                "source_of_confusion": "Появление единого Spring method validation API создаёт впечатление, что одно новое исключение заменило все прежние пути.",
+                "if_it_were_true": "Если бы тип был общим, Spring MVC не документировал бы два своих исключения, а method post-processor не имел бы отдельного режима адаптации.",
+                "how_it_should_be": "Разделять individual MVC argument validation, native MVC method validation и proxy method validation сервиса как три связанных, но разных пути."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "MVC-валидация работает через `HandlerMethodArgumentResolver` и бросает `MethodArgumentNotValidException`, позволяя перехватить `BindingResult`; сервисная — через AOP-прокси (`MethodValidationPostProcessor`), бросает `ConstraintViolationException`, без `BindingResult` и не работает при self-invocation.",
+              "text": "MVC отдельно валидирует `@Valid` command object и даёт `MethodArgumentNotValidException`, но при direct constraints параметров/return value выполняет native method validation и даёт `HandlerMethodValidationException`. Сервис с type-level `@Validated` проверяется AOP proxy и по умолчанию даёт `ConstraintViolationException`.",
               "correct": true,
               "sections": {
-                "explanation": "Это два разных механизма запуска одних и тех же constraint-аннотаций: один встроен в обработку HTTP-запроса, другой оборачивает любой бин AOP-прокси.",
-                "example": "В контроллере `@Valid @RequestBody` даёт `MethodArgumentNotValidException` и доступ к `BindingResult`; в `@Service @Validated` метод с `@Valid` бросает `ConstraintViolationException` без `BindingResult`.",
-                "when_to_apply": "MVC-валидацию выбирают для fail-fast на границе API; сервисную — как дополнительный контракт для внутренних бинов и переиспользуемой логики.",
-                "edge_cases": "Сервисная валидация уязвима к self-invocation (прямой `this.method()` минует прокси), у MVC такой проблемы нет; и исключения у них разные.",
-                "related": "[[spring-validation-interview#Q11]] включение сервисной валидации; [[spring-validation-interview#Q4]] обработка ошибок валидации; [[spring-validation-interview#Q3]] `@Valid` против `@Validated`."
+                "explanation": "MVC интегрирован с argument resolution и знает типы HTTP-параметров; service validation работает вокруг вызова произвольного Spring-бина. Поэтому форма результатов, момент запуска и исключения различаются, хотя в основе лежит один Jakarta provider.",
+                "example": "`@Valid @RequestBody UserRequest` без direct method constraints → `MethodArgumentNotValidException`; `@RequestParam @Min(1) int page` → `HandlerMethodValidationException`; `@Validated OrderService.find(@Positive long id)` → `ConstraintViolationException`.",
+                "when_to_apply": "MVC-проверка защищает транспортную границу, а service method validation фиксирует контракт внутреннего API; их можно сочетать, если дублирование оправдано разными точками вызова.",
+                "edge_cases": "Class-level `@Validated` на контроллере переводит его на AOP method validation; чтобы получить нативную поддержку Spring MVC 6.1+/7, аннотацию с класса контроллера убирают. Сервис можно настроить на `MethodValidationException` вместо default.",
+                "related": "[[spring-validation-interview#Q4]] обработка MVC-ошибок; [[spring-validation-interview#Q11]] сервисная method validation; [[spring-validation-interview#Q15]] bulk-параметры."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Проблема self-invocation бьёт и по MVC, как по `@Validated`-сервису с `MethodValidationPostProcessor`: внутренний вызов метода контроллера минует `HandlerMethodArgumentResolver`; и `@Valid` с `MethodArgumentNotValidException` не срабатывают.",
+              "text": "Для нативной MVC method validation контроллер обязательно помечают class-level `@Validated`; тогда прямые constraints обрабатываются без AOP и дают `HandlerMethodValidationException`. Если убрать аннотацию, проверяется только `@RequestBody`.",
               "correct": false,
               "sections": {
-                "what_actually": "Self-invocation касается только AOP-валидации `@Validated`-сервиса; MVC-валидацию запускает `HandlerMethodArgumentResolver` при обработке HTTP-запроса, а не внутренний вызов.",
-                "source_of_confusion": "Self-invocation — известная AOP-проблема, и её ошибочно распространяют на любой слой, включая MVC.",
-                "if_it_were_true": "Страдай MVC от self-invocation, входящий HTTP-запрос мог бы пройти без `@Valid`, но resolver проверяет аргументы до вызова метода.",
-                "how_it_should_be": "Помните про self-invocation только для `@Validated`-сервисов; в MVC валидация привязана к обработке запроса `HandlerMethodArgumentResolver`."
+                "what_actually": "В современном MVC всё наоборот: class-level `@Validated` включает AOP proxy, и для встроенной method validation его рекомендуют удалить.",
+                "source_of_confusion": "До встроенной поддержки Spring 6.1 class-level `@Validated` действительно был типичным способом проверять controller method constraints.",
+                "if_it_were_true": "Если бы аннотация включала native path, документация не просила бы убрать её для использования `HandlerMethodValidationException`.",
+                "how_it_should_be": "Не ставить `@Validated` на класс контроллера без необходимости legacy AOP; direct constraints обнаруживает и проверяет сам MVC."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Объект `BindingResult` доступен в обоих случаях: и в методе контроллера через `HandlerMethodArgumentResolver` рядом с `@Valid`; и в `@Validated`-методе сервиса через `MethodValidationPostProcessor` вместо `ConstraintViolationException`.",
+              "text": "Прямые constraints контроллера дают `ConstraintViolationException`, поскольку MVC использует `MethodValidationPostProcessor`; сервисный `@Validated` вместо этого встроен в argument resolver и даёт `HandlerMethodValidationException` с HTTP-контекстом.",
               "correct": false,
               "sections": {
-                "what_actually": "`BindingResult` живёт только в MVC рядом с валидируемым аргументом через `HandlerMethodArgumentResolver`; в `@Validated`-методе сервиса его нет.",
-                "source_of_confusion": "Привычка к `BindingResult` в контроллере наводит на мысль, что он есть везде, где валидация.",
-                "if_it_were_true": "Будь `BindingResult` в сервисе, метод-валидация не бросала бы `ConstraintViolationException`, а складывала ошибки в `BindingResult`.",
-                "how_it_should_be": "Используйте `BindingResult` только в контроллере; для сервиса ловите `ConstraintViolationException` в `@ControllerAdvice`."
+                "what_actually": "Механизмы перепутаны: native MVC даёт `HandlerMethodValidationException`, а AOP post-processor сервиса по умолчанию — `ConstraintViolationException`.",
+                "source_of_confusion": "И контроллер, и сервис являются Spring-бинами, поэтому кажется, что одна proxy-инфраструктура обслуживает оба направления.",
+                "if_it_were_true": "Если бы сервис проходил argument resolver, ему понадобился бы HTTP request и аннотации вроде `@RequestParam`, хотя сервис не зависит от web-слоя.",
+                "how_it_should_be": "Связывать `HandlerMethodValidationException` с MVC handler method, а `ConstraintViolationException` — с default proxy validation обычного бина."
               }
             }
           ]
@@ -726,55 +726,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как кастомизировать сообщения об ошибках валидации?",
+          "question_text": "Как настраиваются и интерполируются сообщения Jakarta Validation в Spring Boot?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Текст задают атрибутом `message` прямо в аннотации, либо ключом `{my.key}` со значением в `ValidationMessages.properties` (Spring Boot интегрирует его с `MessageSource` для i18n); внутри сообщений работает интерполяция плейсхолдеров и EL.",
+              "text": "`message` может содержать literal или bundle-ключ `{my.key}`; переносимый bundle стандарта — `ValidationMessages.properties`, а Boot дополнительно использует application `MessageSource`. Атрибуты constraint подставляются как `{min}`, а проверяемое значение доступно EL-выражению `${validatedValue}`.",
               "correct": true,
               "sections": {
-                "explanation": "Inline-сообщение быстро и локально, а вынос в `properties`-файл по ключу даёт переиспользование и перевод на разные языки через `MessageSource`.",
-                "example": "`@Size(min=2, max=50, message=\"Имя от {min} до {max} символов\")` подставит границы; ключ `{user.name.required}` возьмёт текст из `ValidationMessages.properties`.",
-                "when_to_apply": "Кастомные сообщения нужны для понятных пользователю ошибок, единого формата на весь API и локализации интерфейса.",
-                "edge_cases": "В шаблонах доступны `{min}`/`{max}`/`{value}` (атрибуты), `${validatedValue}` (проверяемое значение через EL) и форматирование вроде `${formatter.format('%1$.2f', validatedValue)}`.",
-                "related": "[[spring-validation-interview#Q2]] стандартные constraints; [[spring-validation-interview#Q6]] группы валидации; [[spring-validation-interview#Q10]] композиция constraints."
+                "explanation": "Сначала разрешаются resource-bundle keys и message parameters, затем provider завершает стандартную интерполяцию. Spring Boot передаёт свой `MessageSource`, поэтому общие application bundles можно использовать вместе со стандартным механизмом.",
+                "example": "`@Size(min=2,max=50,message=\"{user.name.size}\")` берёт локализованный шаблон, например `Имя должно содержать от {min} до {max} символов`, и подставляет 2 и 50.",
+                "when_to_apply": "Literal подходит для локального технического правила, а ключи — для единых кодов, переиспользования и выбора текста по `Locale` запроса.",
+                "edge_cases": "Синтаксис `{...}` используется и для ключей, и для атрибутов по правилам интерполяции; `${...}` — EL. Доступный уровень EL может ограничиваться провайдером и его настройками, особенно для программно построенных violations.",
+                "related": "[[spring-validation-interview#Q2]] атрибуты стандартных constraints; [[spring-validation-interview#Q7]] сообщения custom constraint; [[spring-validation-interview#Q10]] единый report композиции."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Файл с сообщениями валидации обязан называться `messages.properties` и лежать в корне classpath: дефолтный резолвер `Bean Validation` ищет ключи вроде `{user.name.size}` именно в нём; а `ValidationMessages.properties` он игнорирует.",
+              "text": "В Spring Boot допустим только `messages.properties`: стандартный `ValidationMessages.properties` отключён и никогда не участвует в разрешении `{my.key}`. Поэтому переносимый Jakarta Validation bundle нужно переименовать при любом запуске под Spring.",
               "correct": false,
               "sections": {
-                "what_actually": "Bean Validation по умолчанию читает ключи из `ValidationMessages.properties`, а `messages.properties` — это файл Spring `MessageSource` для общих сообщений приложения.",
-                "source_of_confusion": "В Spring-приложениях привычен `messages.properties` для i18n, и его путают с файлом сообщений `ValidationMessages.properties`.",
-                "if_it_were_true": "Если бы валидация читала `messages.properties`, ключ `{user.name.size}` в нём подхватывался бы без `ValidationMessages.properties`, но дефолтный резолвер ищет именно последний.",
-                "how_it_should_be": "Кладите сообщения валидации в `ValidationMessages.properties`; Spring Boot дополнительно мостит их с `MessageSource` для i18n."
+                "what_actually": "`ValidationMessages.properties` остаётся стандартным bundle Jakarta Validation; Boot дополнительно связывает validation с application `MessageSource`, а не запрещает стандартный ресурс.",
+                "source_of_confusion": "Spring i18n обычно ассоциируется с `messages.properties`, поэтому его принимают за полную замену стандартного bundle.",
+                "if_it_were_true": "Если бы Boot отключал `ValidationMessages`, одна и та же библиотека custom constraints теряла бы свои стандартные сообщения только внутри Spring.",
+                "how_it_should_be": "Для переносимой библиотеки использовать `ValidationMessages.properties`, а application `MessageSource` — для сообщений конкретного Boot-приложения."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "В тексте сообщения нельзя ссылаться на атрибуты аннотации: плейсхолдеры `{min}` и `{max}` в `@Size` выводятся `Hibernate Validator` буквально как текст со скобками; а не подставляют значения constraint.",
+              "text": "Значения атрибутов аннотации в message не интерполируются: `{min}`, `{max}` и `{value}` всегда считаются resource-bundle keys. Если соответствующего ключа нет, пользователю возвращаются фигурные скобки вместо чисел.",
               "correct": false,
               "sections": {
-                "what_actually": "Плейсхолдеры `{min}`, `{max}`, `{value}` интерполируются реальными значениями атрибутов аннотации `@Size` при формировании сообщения.",
-                "source_of_confusion": "Фигурные скобки выглядят как литералы, поэтому кажется, что `{min}` и `{max}` не раскрываются.",
-                "if_it_were_true": "Если бы `{min}` не раскрывался, сообщение «от {min} до {max}» показывало бы скобки пользователю, но `Hibernate Validator` подставляет числа.",
-                "how_it_should_be": "Используйте `{min}`/`{max}`/`{value}` в тексте — интерполятор заменит их на значения атрибутов constraint."
+                "what_actually": "После разрешения bundle параметры, совпадающие с атрибутами constraint, подставляются из самой аннотации, например `{min}` и `{max}` у `@Size`.",
+                "source_of_confusion": "Один синтаксис фигурных скобок участвует в нескольких шагах алгоритма и выглядит только как обращение к properties.",
+                "if_it_were_true": "Если бы атрибуты не подставлялись, стандартные сообщения `@Size` не могли бы показывать настроенные границы без отдельного ключа для каждой комбинации.",
+                "how_it_should_be": "Использовать имена атрибутов constraint в фигурных скобках и хранить в bundle шаблон, а не все готовые варианты сообщения."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Чтобы подставить проверяемое значение, в атрибуте `message` пишут `{validatedValue}` в обычных фигурных скобках; ровно как ключи вроде `{my.key}` и атрибуты `{min}` — единый синтаксис плейсхолдеров.",
+              "text": "Проверяемое значение подставляют как `{validatedValue}`, тем же синтаксисом, что `{min}`. Знак `$` применять нельзя: `${validatedValue}` воспринимается как literal и выводится пользователю без вычисления.",
               "correct": false,
               "sections": {
-                "what_actually": "Проверяемое значение доступно через EL-выражение `${validatedValue}` со знаком доллара, а не через message-параметр `{validatedValue}`.",
-                "source_of_confusion": "Синтаксис `{...}` и `${...}` похож, поэтому их легко перепутать.",
-                "if_it_were_true": "Если бы хватало `{validatedValue}`, то отдельный EL-синтаксис `${...}` был бы не нужен, но именно он включает выражения.",
-                "how_it_should_be": "Для проверяемого значения используйте EL `${validatedValue}`; `{...}` — для атрибутов аннотации и ключей сообщений."
+                "what_actually": "`validatedValue` доступно через EL-синтаксис `${validatedValue}`; без `$` имя не является атрибутом обычного constraint и не подставляется как значение.",
+                "source_of_confusion": "Message parameters и EL внешне различаются одним символом, поэтому синтаксисы часто смешивают.",
+                "if_it_were_true": "Если бы фигурных скобок было достаточно, спецификации не понадобился бы отдельный EL-шаг с `${...}` для выражений.",
+                "how_it_should_be": "Для атрибутов использовать `{min}`, `{value}` и подобные параметры, а для validated value — `${validatedValue}` с учётом EL policy провайдера."
               }
             }
           ]
@@ -786,55 +786,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `Spring Validator interface` и когда его использовать?",
+          "question_text": "Что представляет собой `org.springframework.validation.Validator` и как его подключают?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "`org.springframework.validation.Validator` подключают, просто пометив его `@Component`: Spring сам вызовет `supports(Class)` и `validate(target, Errors)` во всех подходящих контроллерах автоматически; без `@InitBinder` и `WebDataBinder.addValidators`.",
+              "text": "Любой `Validator`, помеченный `@Component`, автоматически применяется ко всем совместимым MVC-аргументам: Spring сам вызывает `supports` и регистрирует его глобально. `@InitBinder`, MVC configuration и явный вызов не нужны.",
               "correct": false,
               "sections": {
-                "what_actually": "Одного `@Component` мало: validator привязывают через `@InitBinder` и `binder.addValidators(validator)` (или вызывают явно), иначе `validate(target, Errors)` не сработает.",
-                "source_of_confusion": "Привычка к автоконфигурации Spring наводит на мысль, что бин-`Validator` подключится сам.",
-                "if_it_were_true": "Если бы хватало `@Component`, `@InitBinder` с `addValidators` был бы не нужен, но именно он регистрирует validator для контроллера.",
-                "how_it_should_be": "Регистрируйте `Validator` через `@InitBinder`/`WebDataBinder.addValidators` (или вызывайте вручную); сам по себе бин к запросу не привяжется."
+                "what_actually": "Само присутствие component bean не привязывает его к data binder; validator нужно зарегистрировать локально, глобально или вызвать программно.",
+                "source_of_confusion": "Spring часто автоматически собирает beans определённого типа, поэтому такое же поведение ожидают от каждого `Validator`.",
+                "if_it_were_true": "Если бы component scanning было достаточно, API `WebDataBinder.addValidators` и MVC hook `getValidator()` не имели бы практического назначения.",
+                "how_it_should_be": "Подключить validator через `@InitBinder`, MVC configuration, конкретный `DataBinder` либо явно вызвать `validate(target, errors)`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`supports(Class)` нужен только для логирования: `validate(target, Errors)` вызывается инфраструктурой `@InitBinder` для объектов любого типа независимо от того, что вернёт `supports`; а `Errors` наполняется всегда.",
+              "text": "Метод `supports(Class<?>)` носит справочный характер: `DataBinder` всё равно вызывает `validate` для каждого зарегистрированного validator независимо от результата. Поэтому можно всегда возвращать `false`, если внутри `validate` есть `instanceof`.",
               "correct": false,
               "sections": {
-                "what_actually": "`supports(Class)` определяет применимость валидатора: вернёт `false` — инфраструктура `@InitBinder` не вызовет `validate(target, Errors)` для такого объекта.",
-                "source_of_confusion": "Метод `supports` выглядит вспомогательным, поэтому его роль недооценивают.",
-                "if_it_were_true": "Если бы `supports` ни на что не влиял, его не было бы в контракте `Validator`, но он управляет вызовом `validate`.",
-                "how_it_should_be": "Реализуйте `supports` честно (`clazz.isAssignableFrom(...)`) — он решает, будет ли вообще вызван `validate(target, Errors)` для типа."
+                "what_actually": "`supports` является частью контракта применимости и проверяется перед корректным вызовом validator для целевого типа.",
+                "source_of_confusion": "Раз тип можно повторно проверить в `validate`, предварительный метод выглядит как необязательная оптимизация.",
+                "if_it_were_true": "Если бы результат игнорировался, infrastructure не могла бы безопасно выбрать один validator из нескольких зарегистрированных для разных command objects.",
+                "how_it_should_be": "Возвращать `true` для реально поддерживаемых типов, обычно через `TargetType.class.isAssignableFrom(clazz)`, и не дублировать dispatch вручную."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`org.springframework.validation.Validator` — это тот же `jakarta.validation.Validator`, лишь переэкспортированный Spring под своим пакетом; его `supports(Class)` и `validate(target, Errors)` — просто обёртки над `validate(obj)` и `@Valid` из Bean Validation.",
+              "text": "Это тот же интерфейс, что `jakarta.validation.Validator`, только переэкспортированный Spring: `supports` и `Errors` являются default-методами поверх `validate(object)`. Любую реализацию одного интерфейса можно привести к другому без adapter.",
               "correct": false,
               "sections": {
-                "what_actually": "Это разные интерфейсы: спринговый `Validator` с `supports`/`validate(target, Errors)` и Bean Validation `jakarta.validation.Validator` с `validate(obj)` — у них разные методы и назначение.",
-                "source_of_confusion": "Совпадение простого имени `Validator` в обоих API создаёт впечатление, что это один и тот же тип.",
-                "if_it_were_true": "Если бы это был тот же интерфейс, у `org.springframework.validation.Validator` был бы метод `validate(obj)`, но у него `validate(target, Errors)`.",
-                "how_it_should_be": "Различайте `org.springframework.validation.Validator` (программный, с `Errors`) и `jakarta.validation.Validator` (запуск constraint-аннотаций через `@Valid`)."
+                "what_actually": "Интерфейсы независимы и имеют разные контракты; `LocalValidatorFactoryBean` специально адаптирует Jakarta violations к Spring `Errors` и реализует оба API.",
+                "source_of_confusion": "Одинаковое простое имя и готовый dual-interface adapter создают видимость одного переэкспортированного типа.",
+                "if_it_were_true": "Если бы тип был один, не требовалось бы преобразовывать `ConstraintViolation` в `FieldError`, а пакеты и сигнатуры совпадали бы.",
+                "how_it_should_be": "Различать Jakarta declarative API и Spring `Validator`; использовать `LocalValidatorFactoryBean`, когда нужен мост между ними."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`org.springframework.validation.Validator` — программный (не аннотационный) подход Spring с методами `supports(Class)` и `validate(target, Errors)`; ошибки пишут через `errors.rejectValue(...)`, а в контроллер validator подключают через `@InitBinder` и `WebDataBinder.addValidators`.",
+              "text": "`org.springframework.validation.Validator` — императивный контракт с `supports(Class<?>)` и `validate(Object, Errors)`; ошибки добавляют через `reject`/`rejectValue`. В MVC его регистрируют через `@InitBinder`/`WebDataBinder`, глобальную MVC config или вызывают явно вне web-слоя.",
               "correct": true,
               "sections": {
-                "explanation": "В отличие от декларативных аннотаций, здесь логику проверки пишут императивно в Java, что удобно для сложных бизнес-правил с обращением к сервисам и БД.",
-                "example": "`OrderValidator implements Validator` в `validate` делает `if (order.getItems().isEmpty()) errors.rejectValue(\"items\", ...)` и проверку даты доставки относительно `now()`.",
-                "when_to_apply": "Его применяют для сложной бизнес-валидации с зависимостями и состоянием, прямой связи с `BindingResult` или в легаси-проектах до Bean Validation.",
-                "edge_cases": "В новых проектах предпочтительнее Bean Validation (включая stateful через DI); `Spring Validator` оставляют для действительно сложных сценариев, где аннотаций мало.",
-                "related": "[[spring-validation-interview#Q9]] stateful validator с DI; [[spring-validation-interview#Q1]] что такое Bean Validation; [[spring-validation-interview#Q4]] обработка ошибок валидации."
+                "explanation": "Spring Validator не требует constraint-аннотаций и пишет object/field errors в общий `Errors`. Это удобно для объектно-специфичных правил и существующей инфраструктуры data binding.",
+                "example": "`OrderFormValidator` проверяет тип в `supports`, а в `validate` вызывает `errors.rejectValue(\"deliveryDate\", \"deliveryDate.invalid\")`; controller добавляет его в `@InitBinder`.",
+                "when_to_apply": "Использовать для императивной проверки command object, когда декларативная модель неудобна, либо при интеграции с legacy Spring binding-кодом.",
+                "edge_cases": "`SmartValidator` добавляет validation hints. `LocalValidatorFactoryBean` одновременно реализует Jakarta Validator и адаптируется к Spring Validator, но произвольный Spring Validator сам по себе не становится Jakarta provider.",
+                "related": "[[spring-validation-interview#Q7]] Jakarta custom constraint; [[spring-validation-interview#Q9]] DI в ConstraintValidator; [[spring-validation-interview#Q4]] MVC errors."
               }
             }
           ]
@@ -846,55 +846,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как валидировать элементы коллекции в контроллере?",
+          "question_text": "Как валидировать коллекцию и её элементы в контроллере Spring MVC 7?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Валидация generic-элементов `List<@Valid CreateUserRequest>` и `List<@NotBlank String>` в `@RequestParam` срабатывает в любом методе контроллера сама, и `@Validated` на классе для этого не требуется.",
+              "text": "Прямой bulk-параметр обязательно требует class-level `@Validated` на контроллере: только AOP proxy распознаёт `@NotEmpty List<@Valid Item>`. Встроенная MVC method validation без этой аннотации коллекции и type-use constraints не проверяет.",
               "correct": false,
               "sections": {
-                "what_actually": "Для проверки элементов коллекции-параметра через container-element constraints нужен `@Validated` на классе контроллера, включающий метод-валидацию.",
-                "source_of_confusion": "Для `@RequestBody`-обёртки `@Validated` действительно не нужен, и это переносят на прямой `List`-параметр.",
-                "if_it_were_true": "Если бы `@Validated` был не нужен, `@NotBlank` на `List<@NotBlank String>` в `@RequestParam` срабатывал бы и без него, но без `@Validated` проверки нет.",
-                "how_it_should_be": "Помечайте контроллер `@Validated`, когда валидируете элементы `List<...>`-параметров через container-element constraints."
+                "what_actually": "Spring MVC 7 имеет встроенную method validation; class-level `@Validated` для неё не нужен и переводит контроллер на старый AOP-путь.",
+                "source_of_confusion": "До Spring 6.1 `@Validated` на контроллере был распространённым решением для constraints прямых method parameters.",
+                "if_it_were_true": "Если бы native MVC не умел такие параметры, документация не рекомендовала бы убрать class-level `@Validated` ради встроенной method validation.",
+                "how_it_should_be": "Оставить контроллер без type-level `@Validated` и объявить direct/container-element constraints непосредственно в сигнатуре handler method."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Либо обернуть коллекцию в DTO с `@Valid @NotEmpty List<...>` полем, либо валидировать generic-элементы напрямую через `@Valid` перед типом: `List<@Valid CreateUserRequest>` (или `List<@NotBlank String>`) на классе/методе с `@Validated`.",
+              "text": "Надёжные варианты: DTO-обёртка с `@NotEmpty List<@Valid Item>` и `@Valid @RequestBody`, либо прямой параметр `@RequestBody @NotEmpty List<@Valid Item>`. Первый путь обычно даёт `MethodArgumentNotValidException`, второй включает native MVC method validation и даёт `HandlerMethodValidationException`.",
               "correct": true,
               "sections": {
-                "explanation": "DTO-обёртка даёт привычный `@RequestBody`-объект и `MethodArgumentNotValidException`, а прямой `List` с `@Valid`-элементами опирается на валидацию контейнеров из Bean Validation 2.0+.",
-                "example": "`@Valid @RequestBody @NotEmpty List<@Valid CreateUserRequest> users` валидирует каждый элемент; для параметров — `@RequestParam @NotEmpty List<@NotBlank String> tags`.",
-                "when_to_apply": "Обёртку выбирают, когда нужны дополнительные поля и единый стиль ошибок; прямой `List<@Valid ...>` — для лаконичных bulk-эндпоинтов.",
-                "edge_cases": "Для прямого `List<@Valid ...>` параметра нужен `@Validated` на классе контроллера, иначе валидация элементов не запустится; без `@Valid` перед типом проверится только размер списка.",
-                "related": "[[spring-validation-interview#Q5]] каскадная валидация; [[spring-validation-interview#Q3]] `@Valid` против `@Validated`; [[spring-validation-interview#Q11]] валидация на сервисном уровне."
+                "explanation": "Constraint на контейнере проверяет сам список, а `@Valid` на type argument каскадирует в каждый DTO. Для простых значений используют container-element constraint, например `List<@NotBlank String>`.",
+                "example": "`record BatchRequest(@NotEmpty List<@Valid CreateUserRequest> users) {}` валидируют как `create(@Valid @RequestBody BatchRequest request)`; компактный вариант — `create(@RequestBody @NotEmpty List<@Valid CreateUserRequest> users)`.",
+                "when_to_apply": "Обёртку выбирать для расширяемого API и стабильной схемы ошибок, прямую коллекцию — для действительно простого bulk-контракта без дополнительных метаданных.",
+                "edge_cases": "Не ставить `@Valid` одновременно на контейнер и его type argument. Стандартные value extractors поддерживают `List`, `Set`, `Map` keys/values и `Optional`; custom container требует собственного `ValueExtractor`.",
+                "related": "[[spring-validation-interview#Q4]] два MVC-исключения; [[spring-validation-interview#Q5]] каскад и контейнеры; [[spring-validation-interview#Q12]] native method validation."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Аннотация `@Valid` на параметре `List<CreateUserRequest>` сама по себе каскадно валидирует поля каждого элемента, и вложенный `List<@Valid CreateUserRequest>` с `@Validated` не нужен.",
+              "text": "Для DTO-элементов нужно одновременно пометить и параметр-контейнер, и type argument: только `@Valid @RequestBody @NotEmpty List<@Valid Item>` считается полным каскадом. Если убрать любую из двух `@Valid`, поля элементов останутся непроверенными.",
               "correct": false,
               "sections": {
-                "what_actually": "`@Valid` на самом параметре-списке проверит контейнер, но поля каждого элемента требуют `@Valid` внутри generic: `List<@Valid CreateUserRequest>`.",
-                "source_of_confusion": "Кажется, что `@Valid` на коллекции «распространяется» на её элементы автоматически.",
-                "if_it_were_true": "Если бы внешнего `@Valid` хватало, конструкция `List<@Valid CreateUserRequest>` была бы избыточной, но именно она запускает каскад по элементам.",
-                "how_it_should_be": "Ставьте `@Valid` перед типом элемента (`List<@Valid CreateUserRequest>`) и класс `@Validated`, чтобы провалидировать поля каждого элемента."
+                "what_actually": "Container-level и type-use `@Valid` являются альтернативными способами каскада; современный предпочтительный вариант — `List<@Valid Item>` без дублирования.",
+                "source_of_confusion": "Два допустимых места размещения `@Valid` выглядят как два обязательных этапа: запуск контейнера и отдельный запуск элемента.",
+                "if_it_were_true": "Если бы требовались обе аннотации, поддерживаемый традиционный стиль `@Valid List<Item>` и современный `List<@Valid Item>` не работали бы по отдельности.",
+                "how_it_should_be": "Предпочесть `List<@Valid Item>` и отдельно добавить `@NotEmpty`/`@Size` к контейнеру; одной каскадной аннотации достаточно."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Чтобы провалидировать список в `@RequestBody` через `@Valid`, его нужно объявлять как `Set`, потому что `Bean Validation` умеет каскадировать в `Set`, но не `List`.",
+              "text": "`List<@NotBlank String>` и `Map<@NotBlank String,@Valid Item>` заработают только после ручной регистрации `ValueExtractor` для `List` и `Map`. Jakarta Validation не поставляет extractors стандартных контейнеров, чтобы не зависеть от Collections API.",
               "correct": false,
               "sections": {
-                "what_actually": "Bean Validation 2.0+ валидирует элементы любых контейнеров, включая `List`, `Set` и `Map`, через `@Valid`/constraints в generic-параметре.",
-                "source_of_confusion": "Редкость прямой валидации `List`-параметров наводит на мысль о специальном требовании к типу коллекции.",
-                "if_it_were_true": "Если бы `List` не поддерживался, обёртка `List<@Valid CreateUserRequest>` в DTO не валидировала бы элементы, но `@Valid` на ней работает.",
-                "how_it_should_be": "Используйте `List` спокойно: `@Valid`/`@NotBlank` в generic-параметре проверяют элементы любых стандартных коллекций."
+                "what_actually": "Совместимый provider обязан иметь built-in value extractors для стандартных `Iterable`, `List`, `Map`, `Optional` и ряда других контейнеров.",
+                "source_of_confusion": "Для собственного generic-container действительно нужен custom `ValueExtractor`, и это требование ошибочно распространяют на JDK collections.",
+                "if_it_were_true": "Если бы даже `List` требовал ручной extractor, container-element validation не работала бы из коробки в типичном Jakarta Validation приложении.",
+                "how_it_should_be": "Для стандартных контейнеров просто размещать constraints на type arguments; регистрировать extractor только для неподдерживаемого custom container."
               }
             }
           ]
@@ -906,55 +906,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие типичные ошибки возникают при работе с `Bean Validation` и как их исправить?",
+          "question_text": "Какие типичные ошибки мешают Jakarta Validation корректно работать в современном Spring?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Если вложенные объекты не проверяются, причина всегда в отсутствии `spring-boot-starter-validation`: без стартера `@Valid` на поле, `@Validated`, `@Component`-валидатор и `ConstraintViolationException` не работают, и добавление зависимости чинит каскад.",
+              "text": "После подключения `spring-boot-starter-validation` provider автоматически проходит все поля, чьи типы содержат constraints; отдельная `@Valid` нужна только для group conversion. Поэтому при работающей корневой проверке вложенный DTO должен проверяться без каскадной аннотации.",
               "correct": false,
               "sections": {
-                "what_actually": "Каскад вглубь чинится `@Valid` на поле вложенного объекта; `spring-boot-starter-validation` нужен для валидации вообще, но сам каскад не включает.",
-                "source_of_confusion": "И «нет валидации», и «нет каскада» — про неработающую проверку, поэтому причины путают.",
-                "if_it_were_true": "Если бы стартер включал каскад, `@Valid` на поле был бы не нужен, но без него вложенные поля не проверяются даже со стартером.",
-                "how_it_should_be": "Для каскада добавьте `@Valid` на поле; `spring-boot-starter-validation` обеспечивает базовую валидацию, а глубину задаёт именно `@Valid`."
+                "what_actually": "Стартер предоставляет provider, но границы каскада по объектному графу всё равно нужно явно обозначить `@Valid`.",
+                "source_of_confusion": "Отсутствие provider и отсутствие cascade внешне выглядят одинаково: constraints вложенного объекта не дают ошибок.",
+                "if_it_were_true": "Если бы стартер включал автоматический обход, `@Valid` была бы избыточна и любой достижимый объект проверялся бы без контроля.",
+                "how_it_should_be": "Сначала проверить наличие provider, затем точку запуска и `@Valid` на каждой нужной ассоциации или type argument."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Частые проблемы: забыт `@Valid`/`@Validated` (валидация не срабатывает), нет `@Valid` на поле (вложенные объекты не проверяются), `ConstraintViolationException` без обработчика даёт `500`, валидатор без `@Component` не получает DI, а self-invocation минует AOP-проверку.",
+              "text": "Проверяют namespace `jakarta`, наличие provider, точку запуска (`@Valid`/`@Validated`), каскад на вложенных ссылках, выбранные groups и правильный тип исключения. Для controllers учитывают native method validation, а `ConstraintValidator` не делают stateful и не полагаются на него вместо DB constraint.",
               "correct": true,
               "sections": {
-                "explanation": "Большинство ошибок сводится к двум причинам: не запущена валидация (нет аннотации/прокси) или не настроена обработка нужного исключения.",
-                "example": "`null` не проходит `@NotBlank` — это нормально: `@NotBlank` = `@NotNull` + не пусто; а для групп нужен `@Validated(Group.class)`, а не `@Valid`, который группы игнорирует.",
-                "when_to_apply": "Этот чек-лист полезен при отладке «почему валидация не работает» и при ревью контроллеров и сервисов.",
-                "edge_cases": "Тонкость: для DI в валидаторе нужен `@Component` и запуск через Spring-инфраструктуру; self-invocation решают выносом метода в отдельный бин или inject self.",
-                "related": "[[spring-validation-interview#Q3]] `@Valid` против `@Validated`; [[spring-validation-interview#Q5]] каскадная валидация; [[spring-validation-interview#Q11]] валидация на сервисном уровне."
+                "explanation": "Сбой обычно относится к одному из уровней: dependencies, несовместимые импорты, не запущенная validation, не обозначенный cascade, не та группа, другой execution path или неверная обработка результата.",
+                "example": "`javax.validation.NotNull` в Boot 4 заменить на `jakarta.validation.constraints.NotNull`; для `List<Item>` добавить `List<@Valid Item>`; для create-группы вызвать `@Validated(OnCreate.class)` и обработать ожидаемое MVC/service exception.",
+                "when_to_apply": "Чек-лист использовать при отладке endpoint/service, code review validation-контрактов и миграции с Boot 2/старого MVC AOP-подхода.",
+                "edge_cases": "Class-level `@Validated` на controller меняет native MVC path; self-invocation обходит service proxy. DI validator работает только через Spring-backed factory, а запрос `exists` не защищает уникальность от гонки без ограничения БД.",
+                "related": "[[spring-validation-interview#Q1]] зависимости и namespace; [[spring-validation-interview#Q4]] MVC exceptions; [[spring-validation-interview#Q9]] lifecycle validator."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Если группы валидации не применяются, нужно добавить `@Valid(Group.class)` на параметр вместо `@Validated`: у `@Valid` есть атрибут `value` для групп, а `@Valid(Group.class)` активирует нужную группу вместо дефолтной `Default`.",
+              "text": "Если явно выбрана группа `OnCreate`, constraints из `Default` автоматически добавляются к ней, а `@Valid` всегда запускает все объявленные группы. Поэтому отсутствие ожидаемой ошибки нельзя объяснить неверной группой или group conversion.",
               "correct": false,
               "sections": {
-                "what_actually": "Проблема с группами решается заменой `@Valid` на `@Validated(Group.class)`: у `@Valid` вообще нет атрибутов, тем более для групп.",
-                "source_of_confusion": "Раз `@Valid` запускает валидацию, кажется, что он же должен принимать и группу через `value`.",
-                "if_it_were_true": "Если бы `@Valid(Group.class)` существовал, отдельный `@Validated` для групп был бы не нужен, но именно он принимает класс группы.",
-                "how_it_should_be": "Для групп используйте `@Validated(Group.class)`; `@Valid` всегда запускает только группу `Default`."
+                "what_actually": "Проверяются запрошенные группы и их наследуемые группы; `Default` не добавляется к произвольной группе автоматически, а `@Valid` не означает «все группы».",
+                "source_of_confusion": "Слово default воспринимается как обязательная база любого запуска, хотя это всего лишь предопределённая группа при отсутствии явного выбора.",
+                "if_it_were_true": "Если бы `Default` всегда включался, невозможно было бы изолировать сценарные constraints от базовых через явный набор групп.",
+                "how_it_should_be": "Явно спроектировать группы, наследование/sequence и conversion; проверять, какую группу передаёт конкретный `@Validated` или вызов Validator."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "То, что `null` не проходит `@NotBlank`, — это баг `Hibernate Validator`: по идее на `null` должен реагировать только `@NotNull`, поэтому баг штатно обходят, заменяя `@NotBlank` на пару `@Size(min=1)` и ручную проверку.",
+              "text": "`@Size`, `@Email`, `@Pattern`, `@Positive` и пользовательские форматные constraints по умолчанию обязаны отклонять `null`, поэтому добавление `@NotNull` или `@NotBlank` приводит лишь к двум одинаковым violations и считается ошибкой моделирования.",
               "correct": false,
               "sections": {
-                "what_actually": "Это не баг, а спецификация: `@NotBlank` намеренно проверяет и на `null` (равно `@NotNull` + непустота после `trim`).",
-                "source_of_confusion": "Поведение «`null` не проходит» воспринимают как неожиданное и приписывают ошибке реализации `Hibernate Validator`.",
-                "if_it_were_true": "Если бы это был баг, `@NotBlank` иногда пропускал бы `null`, но он стабильно отвергает его по контракту.",
-                "how_it_should_be": "Не обходите это «фиксом»: `@NotBlank` штатно отвергает `null`, `\"\"` и `\" \"`; для иной логики берите `@Size`/`@NotNull` осознанно."
+                "what_actually": "Большинство форматных, размерных и числовых constraints считают `null` валидным; обязательность намеренно выражают отдельным nullness constraint.",
+                "source_of_confusion": "Невалидное с точки зрения бизнеса отсутствие значения интуитивно приписывают каждой аннотации на поле.",
+                "if_it_were_true": "Если бы все constraints отклоняли `null`, необязательное значение с проверкой формата нельзя было бы описать без групп или собственного validator.",
+                "how_it_should_be": "Комбинировать независимые правила: например, `@NotBlank @Email` для обязательного email и только `@Email` для необязательного."
               }
             }
           ]

@@ -1,0 +1,43 @@
+{
+  "topic_slug": "java-collections-interview",
+  "version_sensitive": true,
+  "product_version": "Java 17/21 LTS (OpenJDK, java.util Collections Framework)",
+  "checked_date": "2026-07-12",
+  "sources": [
+    "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Collection.html",
+    "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/List.html",
+    "https://github.com/openjdk/jdk/blob/master/src/java.base/share/classes/java/util/ArrayList.java",
+    "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/CopyOnWriteArrayList.html"
+  ],
+  "version_sensitive_claims": [
+    "ArrayList: рост ёмкости 1.5x (oldCapacity + (oldCapacity >> 1)), дефолтная ёмкость 10 при первом add — стабильно в OpenJDK 8..21+ [Q7].",
+    "HashMap/HashSet: treeification цепочек bucket-ов (порог 8, MIN_TREEIFY_CAPACITY 64) появилась в Java 8; worst-case contains/get стал O(log n) [Q2, Q10].",
+    "List.of()/Set.of()/Map.of() — фабрики Java 9+; полностью immutable, null запрещён (NPE) [Q9].",
+    "Arrays.asList() — фикс-размер, backed массивом, set() пишет в исходный массив, null допустим; контракт стабилен с Java 1.2 [Q9].",
+    "Iterable: единственный абстрактный метод iterator(); forEach(Consumer) и spliterator() — default с Java 8 [Q5].",
+    "CopyOnWriteArrayList (java.util.concurrent, Java 5+): полная копия массива на модификацию, snapshot-итератор без ConcurrentModificationException [Q8].",
+    "TreeSet/TreeMap: красно-чёрное дерево, O(log n); уникальность по compareTo()/compare()==0 (SortedSet contract), null-элементы запрещены [Q10].",
+    "Map не наследуется от Collection — контракт стабилен со времён Java 1.2 Collections Framework [Q1, Q3].",
+    "HashMap: константы TREEIFY_THRESHOLD=8, UNTREEIFY_THRESHOLD=6, MIN_TREEIFY_CAPACITY=64 — стабильны в OpenJDK 8..21+ [Q13].",
+    "HashMap: spread-функция h ^ (h >>> 16) и индекс hash & (capacity-1); ёмкость всегда степень двойки [Q12].",
+    "ConcurrentHashMap: с Java 8 — CAS + synchronized на первый узел бакета (сегменты Java 7 удалены); get без блокировок; null-ключи/значения запрещены; итератор weakly consistent [Q15].",
+    "NavigableMap/NavigableSet введены в Java 6 — TreeMap реализует NavigableMap со всех современных версий [Q17].",
+    "LinkedHashMap: accessOrder=true (третий аргумент конструктора) + removeEldestEntry — штатный LRU-паттерн, стабилен с Java 1.4 [Q18, Q19].",
+    "WeakHashMap: ключи через WeakReference, очистка записей при последующих операциях после GC; не потокобезопасен [Q20].",
+    "HashMap.newHashMap(expectedSize) появился в Java 19 [Q14].",
+    "Map default-методы (getOrDefault/computeIfAbsent/merge/replaceAll/forEach) — все Java 8; putIfAbsent существовал в интерфейсе ConcurrentMap с Java 5, в Map как default — Java 8 [Q23].",
+    "ArrayDeque появился в Java 6; рекомендуемая замена Stack (synchronized-наследник Vector, Java 1.0) и LinkedList для стеков/очередей [Q25, Q27].",
+    "Collection.removeIf — default-метод Java 8 (не Java 11) [Q30].",
+    "EnumSet/EnumMap — Java 5; RegularEnumSet (один long, ≤64 констант) / JumboEnumSet (long[]) [Q28].",
+    "IdentityHashMap использует linear probing и System.identityHashCode — стабильно со времён Java 1.4 [Q21].",
+    "Spliterator введён в Java 8 вместе со Stream API; trySplit может вернуть null [Q31].",
+    "TimSort для объектов — с Java 7 (замена merge sort), Dual-Pivot Quicksort для примитивов — с Java 7; Arrays.parallelSort — Java 8 [Q34].",
+    "List.copyOf/Set.copyOf/Map.copyOf — Java 10; List.of/Set.of/Map.of — Java 9; порядок итерации Set.of рандомизирован per-JVM-run (SALT) [Q35, Q36].",
+    "SequencedCollection/SequencedSet/SequencedMap введены в Java 21 (JEP 431); getFirst()/getLast() на пустой коллекции бросают NoSuchElementException; reversed() — view, не копия [Q41].",
+    "ConcurrentHashMap.size() — приблизительный (агрегация CounterCell); чтение lock-free по volatile-полям val/next [Q42].",
+    "NavigableMap: floorKey(≤)/ceilingKey(≥)/lowerKey(<)/higherKey(>) за O(log n); subMap/headMap/tailMap — live views [Q44].",
+    "PriorityQueue: двоичная min-куча, offer/poll O(log n), peek O(1), итерация не отсортирована; max-heap через Comparator.reverseOrder() [Q45].",
+    "Guava НЕ входит в JDK ни в одной версии; Eclipse Collections и Apache Commons Collections — отдельные артефакты [Q40]."
+  ],
+  "notes": "Ядро Collections Framework стабильно; версяно-чувствительные точки — treeification (8+), фабрики of() (9+), SequencedCollection (21) пока в MCQ не задействован. Покрывает Q1-Q10; расширяется по мере чанков."
+}

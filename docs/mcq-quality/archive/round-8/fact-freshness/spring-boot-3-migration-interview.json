@@ -1,0 +1,26 @@
+{
+  "topic_slug": "spring-boot-3-migration-interview",
+  "version_sensitive": true,
+  "product_version": "Spring Boot 3.x (линейка стартовала Spring Boot 3.0, ноябрь 2022; конкретный минор зависит от checked_date). Spring Boot 3.0 поднял baseline до Java 17, перевёл платформу с javax.* на jakarta.* (Jakarta EE 9+), перешёл на Spring Framework 6, добавил первоклассную поддержку GraalVM Native Image, единую Observability (Micrometer + OpenTelemetry, вместо Spring Cloud Sleuth), декларативные HTTP Interface Clients и Problem Details (RFC 7807). Последующие миноры: 3.1 (май 2023), 3.2 (ноябрь 2023 — Virtual Threads на Java 21 через spring.threads.virtual.enabled, декларативный RestClient), 3.3, 3.4. Числа/версии/имена методов в вопросах иллюстративны и зависят от минора.",
+  "checked_date": "2026-07-15",
+  "sources": [
+    "https://docs.spring.io/spring-boot/docs/current/reference/html/",
+    "https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.0-Migration-Guide",
+    "https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.2-Release-Notes",
+    "https://docs.spring.io/spring-framework/reference/",
+    "https://docs.spring.io/spring-security/reference/migration-7/index.html",
+    "https://spring.io/blog/2022/11/24/spring-boot-3-0-goes-ga"
+  ],
+  "version_sensitive_claims": [
+    "Spring Boot 3.0 (ноябрь 2022): baseline Java 17, миграция javax.* → jakarta.* (Jakarta EE 9+), Spring Framework 6, поддержка GraalVM Native Image из коробки, единая Observability (Micrometer + OpenTelemetry), HTTP Interface Clients, Problem Details (RFC 7807).",
+    "Переименование javax.* → jakarta.* — юридическое (Java EE передана из Oracle в Eclipse Foundation в 2017, права на trademark 'javax' не переданы). Затронуты Java EE пакеты (jakarta.persistence/servlet/validation/jms/mail/annotation); пакеты из Java SE/JDK (javax.sql, javax.crypto, javax.net, javax.management, javax.naming) остаются javax.*.",
+    "Порядок миграции 2.7 → 3.x: сначала Java 17, затем последние 2.7.x, OpenRewrite-рецепт boot3.UpgradeSpringBoot_3_0, подъём spring-boot-starter-parent до 3.x, замена пакетов, обновление сторонних библиотек, тесты.",
+    "Spring Security 6 (в SB 3.x): WebSecurityConfigurerAdapter удалён, конфигурация через бин SecurityFilterChain; authorizeRequests → authorizeHttpRequests; antMatchers/mvcMatchers → requestMatchers; lambda-DSL Customizer + http.build().",
+    "Spring Boot 3.2 (ноябрь 2023): первоклассная поддержка Java 21 Virtual Threads (spring.threads.virtual.enabled=true для Tomcat/@Async/@Scheduled), декларативный блокирующий RestClient (fluent API, замена RestTemplate).",
+    "Observability: Spring Cloud Sleuth удалён, заменён на micrometer-tracing (мосты, напр. micrometer-tracing-bridge-otel); единый Observation API создаёт span + метрику; sampling через management.tracing.sampling.probability.",
+    "GraalVM Native Image — AOT-компиляция в нативный executable (быстрый старт, память ~треть от JVM); reflection/resource/proxy требуют hints (@RegisterReflectionForBinding, RuntimeHintsRegistrar). AOT processing (spring-boot:process-aot) ускоряет старт и обычного JAR (spring.aot.enabled).",
+    "Auto-configuration: декларация в META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports (одно имя класса на строку) + аннотация @AutoConfiguration; legacy spring.factories ещё поддерживается для обратной совместимости.",
+    "spring-boot-properties-migrator (scope=runtime, временно на апгрейд) выводит в логи предупреждения о переименованных/устаревших property-ключах (напр. management.metrics.export.prometheus.enabled → management.prometheus.metrics.export.enabled).",
+    "Числовые метрики (старт ~100 мс, память ~30%, размер образа), конкретные версии миноров и сигнатуры API иллюстративны и зависят от версии Spring Boot / GraalVM / JDK."
+  ]
+}
