@@ -1615,12 +1615,24 @@
          </details>`
       : '';
 
+    // Этап 4 редизайна (docs 3.6/3.7): разделяем компактный ResultBanner (только
+    // статус — peak-end момент) и нейтральный ExplanationPanel (объяснение +
+    // «Подробнее»). Раньше вердикт и стена объяснения жили в одном цветном боксе,
+    // из-за чего статус тонул в тексте. Банер сохраняет тестированный стиль
+    // .result-correct/.result-wrong; объяснение уезжает в сиблинг .explanation-panel
+    // с нейтральным фоном и эйбрау «Почему это так?».
+    const explanationBody = `${leadBlock}${detailBlock}`;
+    const explanationPanel = explanationBody.trim().length
+      ? `<div class="explanation-panel">
+           <span class="explanation-eyebrow">Почему это так?</span>
+           ${explanationBody}
+         </div>`
+      : '';
     feedbackDiv.innerHTML = `
-      <div class="${isCorrect ? 'result-correct' : 'result-wrong'}">
+      <div class="${isCorrect ? 'result-correct' : 'result-wrong'} result-banner">
         <strong class="result-verdict">${buildVerdictLine(data)}</strong>
-        ${leadBlock}
-        ${detailBlock}
       </div>
+      ${explanationPanel}
     `;
     feedbackDiv.classList.remove('hidden');
     renderDynamicContent(feedbackDiv);
