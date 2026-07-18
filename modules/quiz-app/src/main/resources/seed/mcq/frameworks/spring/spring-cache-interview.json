@@ -23,19 +23,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Это кэш второго уровня `Hibernate`, встроенный в `Spring Data JPA`; он переиспользует загруженные entity между сессиями, а `@Cacheable` управляет этим L2-регионом.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Spring Cache` не связана с `Hibernate` L2 и работает с любыми методами, а не только с entity.",
-                "source_of_confusion": "И L2-кэш, и `@Cacheable` кэшируют данные, но это независимые механизмы разных уровней.",
-                "if_it_were_true": "Тогда кэшировать можно было бы только загруженные entity через `EntityManager`, а не произвольные результаты методов.",
-                "how_it_should_be": "`@Cacheable` кэширует возвращаемое значение метода через `Spring AOP`, не затрагивая L2-регион `Hibernate`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Это прослойка, которая добавляет кэширование декларативно через аннотации (`@Cacheable`, `@CacheEvict`) поверх `Spring AOP`, не привязывая код к конкретному провайдеру; провайдер меняется через конфигурацию.",
+              "text": "Это прослойка, которая декларативно добавляет кэширование через аннотации (`@Cacheable`, `@CacheEvict`) поверх `Spring AOP`, не привязывая код к провайдеру; сам провайдер меняется через конфигурацию.",
               "correct": true,
               "sections": {
                 "explanation": "Аннотация превращается в AOP-advice, который перехватывает вызов метода и проверяет кэш до/после выполнения. Логика кэширования вынесена из бизнес-кода, а провайдер (`Caffeine`, `Redis`, `EhCache`) подключается через зависимость и `spring.cache.type`.",
@@ -43,6 +31,18 @@
                 "when_to_apply": "Берут, когда нужно кэшировать дорогие чтения декларативно и хотят свободу смены провайдера без переписывания кода.",
                 "edge_cases": "Без `@EnableCaching` аннотации молча игнорируются; дефолтный `ConcurrentMapCacheManager` не имеет TTL и не годится для прода.",
                 "related": "[[spring-cache-interview#Q3]] как работает `@Cacheable`; [[spring-cache-interview#Q11]] какие `CacheManager` доступны; [[spring-cache-interview#Q15]] почему self-invocation ломает кэш."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Это кэш второго уровня `Hibernate`, встроенный в `Spring Data JPA`; он переиспользует загруженные entity между сессиями, а `@Cacheable` управляет этим L2-регионом и его настройками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Cache` не связана с `Hibernate` L2 и работает с любыми методами, а не только с entity.",
+                "source_of_confusion": "И L2-кэш, и `@Cacheable` кэшируют данные, но это независимые механизмы разных уровней.",
+                "if_it_were_true": "Тогда кэшировать можно было бы только загруженные entity через `EntityManager`, а не произвольные результаты методов.",
+                "how_it_should_be": "`@Cacheable` кэширует возвращаемое значение метода через `Spring AOP`, не затрагивая L2-регион `Hibernate`."
               }
             },
             {
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Нужно реализовать интерфейс `CacheManager` и объявить его бином, поскольку дефолтного провайдера у `Spring Boot` нет, иначе `@EnableCaching` и `@Cacheable` не кэшируют результат.",
+              "text": "Нужно реализовать интерфейс `CacheManager` и объявить его бином: дефолтного провайдера у `Spring Boot` нет, поэтому без собственного менеджера `@EnableCaching` и `@Cacheable` не кэшируют результат и метод отрабатывает каждый раз.",
               "correct": false,
               "sections": {
                 "what_actually": "У `Spring Boot` есть дефолтный `ConcurrentMapCacheManager`, поэтому свой бин `CacheManager` не обязателен.",
@@ -83,18 +83,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Кэширование включается свойством `spring.cache.enabled=true` в `application.yml`, после чего `Spring Boot` сам обрабатывает `@Cacheable`, а аннотация `@EnableCaching` на классе при этом не требуется.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Обработку аннотаций включает `@EnableCaching`, а не свойство в `application.yml`.",
-                "source_of_confusion": "`spring.cache.type` действительно настраивает кэш, поэтому кажется, что хватит одного свойства.",
-                "if_it_were_true": "Тогда `@EnableCaching` была бы лишней, а кэш управлялся бы только через `application.yml`.",
-                "how_it_should_be": "Кэширование активирует `@EnableCaching`, а свойства лишь донастраивают уже включённый механизм."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Добавить зависимость `spring-boot-starter-cache`, поставить `@EnableCaching` на конфигурацию или главный класс, после чего работает дефолтный `ConcurrentMapCacheManager`, а для прода подключают `Caffeine` или `Redis`.",
               "correct": true,
               "sections": {
@@ -106,9 +94,21 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "Кэширование включается свойством `spring.cache.enabled=true` в `application.yml`, после чего `Spring Boot` сам обрабатывает `@Cacheable`, а аннотация `@EnableCaching` на классе при этом не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Обработку аннотаций включает `@EnableCaching`, а не свойство в `application.yml`.",
+                "source_of_confusion": "`spring.cache.type` действительно настраивает кэш, поэтому кажется, что хватит одного свойства.",
+                "if_it_were_true": "Тогда `@EnableCaching` была бы лишней, а кэш управлялся бы только через `application.yml`.",
+                "how_it_should_be": "Кэширование активирует `@EnableCaching`, а свойства лишь донастраивают уже включённый механизм."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "Достаточно зависимости `spring-boot-starter-cache`: автоконфигурация сама включает обработку `@Cacheable` и `@CacheEvict`, поэтому отдельная `@EnableCaching` избыточна, а `ConcurrentMapCacheManager` поднимается автоматически уже при старте.",
+              "text": "Хватает зависимости `spring-boot-starter-cache`: автоконфигурация сама включает обработку `@Cacheable` и `@CacheEvict`, так что отдельная `@EnableCaching` не нужна, а `ConcurrentMapCacheManager` поднимается автоматически уже при старте.",
               "correct": false,
               "sections": {
                 "what_actually": "Без `@EnableCaching` автоконфигурация не регистрирует кэш-аспект, и `@Cacheable` игнорируется.",
@@ -143,19 +143,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "При первом вызове метод выполняется и результат кладётся в кэш; при повторных вызовах с тем же ключом возвращается значение из кэша, и метод не вызывается.",
-              "correct": true,
-              "sections": {
-                "explanation": "Прокси перехватывает вызов: делает `cache.get(key)`. При hit отдаёт значение, не заходя в метод; при miss выполняет метод, кладёт результат через `cache.put` и возвращает его.",
-                "example": "`@Cacheable(value = \"products\", key = \"#id\")` для `getProduct(42)`: первый вызов идёт в `repository.findById`, второй с `id=42` отдаёт из кэша без обращения к БД.",
-                "when_to_apply": "Применяют для дорогих идемпотентных чтений по ключу, где данные меняются редко относительно частоты чтений.",
-                "edge_cases": "По умолчанию `null` не кэшируется; параметры `condition`, `unless`, `sync` меняют поведение записи и конкурентного доступа.",
-                "related": "[[spring-cache-interview#Q4]] отличие от `@CachePut`; [[spring-cache-interview#Q9]] `condition` vs `unless`; [[spring-cache-interview#Q18]] `sync = true` против stampede."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "При каждом вызове метод выполняется заново и перезаписывает значение по ключу; в кэше поэтому оказывается результат самого последнего обращения, а прежнее сохранённое значение затирается.",
               "correct": false,
               "sections": {
@@ -166,8 +153,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Аннотация действует на уровне SQL: она перехватывает запрос к базе, сохраняет полученный набор строк; при повторном обращении она отдаёт их из кэша, минуя сам Java-метод.",
               "correct": false,
               "sections": {
@@ -175,6 +162,19 @@
                 "source_of_confusion": "Похоже на кэш второго уровня ORM, который действительно работает ближе к SQL.",
                 "if_it_were_true": "Тогда кэш срабатывал бы для любого доступа к таблице, минуя саму сигнатуру метода.",
                 "how_it_should_be": "Кэшируется результат метода по его ключу, а обращение к базе просто не происходит при попадании."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "При первом вызове метод выполняется и результат кладётся в кэш; при повторных вызовах с тем же ключом возвращается сохранённое значение из кэша, а сам метод повторно не вызывается.",
+              "correct": true,
+              "sections": {
+                "explanation": "Прокси перехватывает вызов: делает `cache.get(key)`. При hit отдаёт значение, не заходя в метод; при miss выполняет метод, кладёт результат через `cache.put` и возвращает его.",
+                "example": "`@Cacheable(value = \"products\", key = \"#id\")` для `getProduct(42)`: первый вызов идёт в `repository.findById`, второй с `id=42` отдаёт из кэша без обращения к БД.",
+                "when_to_apply": "Применяют для дорогих идемпотентных чтений по ключу, где данные меняются редко относительно частоты чтений.",
+                "edge_cases": "По умолчанию `null` тоже кэшируется (обёрнут в `NullValue`), поэтому пустой ответ может залипнуть; параметры `condition`, `unless`, `sync` меняют запись и конкурентный доступ.",
+                "related": "[[spring-cache-interview#Q4]] отличие от `@CachePut`; [[spring-cache-interview#Q9]] `condition` vs `unless`; [[spring-cache-interview#Q18]] `sync = true` против stampede."
               }
             }
           ]
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@CachePut` после выполнения метода удаляет запись из кэша по своему `key`, а `@Cacheable` её добавляет; вместе они образуют пару «положить и убрать».",
+              "text": "`@CachePut` после выполнения метода удаляет запись из кэша по своему `key`, а `@Cacheable` её добавляет; вместе они образуют пару «положить и убрать» по одному ключу.",
               "correct": false,
               "sections": {
                 "what_actually": "`@CachePut` записывает результат в кэш, а удалением занимается `@CacheEvict`.",
@@ -203,19 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@CachePut` и `@Cacheable` ведут себя одинаково и оба кладут результат в кэш; разные имена введены лишь для читаемости, чтобы подчеркнуть намерение при одинаковой механике.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@Cacheable` при попадании пропускает метод, а `@CachePut` выполняет его всегда — механика разная.",
-                "source_of_confusion": "Обе кладут результат в кэш, поэтому кажется, что разница только в названии.",
-                "if_it_were_true": "Тогда одну аннотацию можно было бы свободно заменять другой без изменения поведения.",
-                "how_it_should_be": "Выбор зависит от сценария: чтение — `@Cacheable`, принудительное обновление — `@CachePut`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`@CachePut` всегда выполняет метод и обновляет кэш результатом, а `@Cacheable` выполняет метод только при cache miss; `@CachePut` нужен для записи свежего значения при создании/обновлении.",
+              "text": "`@CachePut` всегда выполняет метод и обновляет кэш результатом, а `@Cacheable` выполняет метод при cache miss; `@CachePut` нужен для свежего значения при создании/обновлении.",
               "correct": true,
               "sections": {
                 "explanation": "Семантика разная: `@Cacheable` оптимизирует чтения (пропускает метод при hit), `@CachePut` синхронизирует кэш с источником (метод исполняется всегда, кэш получает новый результат).",
@@ -223,6 +211,18 @@
                 "when_to_apply": "Берут `@CachePut` на методах создания/обновления, чтобы держать кэш в актуальном состоянии без отдельного evict.",
                 "edge_cases": "Ключ обычно строят по `#result`, что доступно только после выполнения; нельзя вешать `@CachePut` и `@Cacheable` на один метод с одним ключом — будет конфликт смысла.",
                 "related": "[[spring-cache-interview#Q3]] что делает `@Cacheable`; [[spring-cache-interview#Q5]] как работает `@CacheEvict`; [[spring-cache-interview#Q8]] ключ через `#result`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`@CachePut` и `@Cacheable` ведут себя одинаково и оба кладут результат в кэш; разные имена введены ради читаемости, чтобы подчеркнуть намерение при одинаковой механике.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Cacheable` при попадании пропускает метод, а `@CachePut` выполняет его всегда — механика разная.",
+                "source_of_confusion": "Обе кладут результат в кэш, поэтому кажется, что разница только в названии.",
+                "if_it_were_true": "Тогда одну аннотацию можно было бы свободно заменять другой без изменения поведения.",
+                "how_it_should_be": "Выбор зависит от сценария: чтение — `@Cacheable`, принудительное обновление — `@CachePut`."
               }
             },
             {
@@ -251,7 +251,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@CacheEvict` удаляет запись из кэша; `allEntries = true` чистит весь кэш, `beforeInvocation = true` удаляет до выполнения метода (даже при исключении), по умолчанию — после успешного выполнения.",
+              "text": "`@CacheEvict` по умолчанию удаляет запись до выполнения метода; даже упавший вызов поэтому оставит кэш очищенным, а флаг `beforeInvocation = true` повторяет это же стандартное поведение.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `@CacheEvict` удаляет запись после успешного выполнения, а не до него.",
+                "source_of_confusion": "Параметр `beforeInvocation` существует, но он меняет момент удаления, а не является дефолтом.",
+                "if_it_were_true": "Тогда упавший метод всё равно чистил бы кэш, что часто нежелательно.",
+                "how_it_should_be": "Для удаления до вызова нужно явно указать `beforeInvocation = true`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@CacheEvict` удаляет запись; `allEntries = true` чистит весь кэш, `beforeInvocation = true` удаляет до вызова метода (даже при исключении), иначе — после успешного выполнения.",
               "correct": true,
               "sections": {
                 "explanation": "Используется при удалении или изменении данных, чтобы устаревшее значение не отдавалось из кэша. Дефолт `beforeInvocation = false` означает evict только если метод отработал без ошибки.",
@@ -262,21 +274,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`@CacheEvict` по умолчанию удаляет запись до выполнения метода; даже упавший вызов поэтому оставит кэш очищенным, а `beforeInvocation = true` лишь повторяет стандартное поведение.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По умолчанию `@CacheEvict` удаляет запись после успешного выполнения, а не до него.",
-                "source_of_confusion": "Параметр `beforeInvocation` существует, но он меняет момент удаления, а не является дефолтом.",
-                "if_it_were_true": "Тогда упавший метод всё равно чистил бы кэш, что часто нежелательно.",
-                "how_it_should_be": "Для удаления до вызова нужно явно указать `beforeInvocation = true`."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "`@CacheEvict` работает с одним ключом за вызов; чтобы очистить весь кэш, ключи приходится перебирать вручную в отдельном методе `evictAll`.",
+              "text": "`@CacheEvict` работает с одним ключом за вызов; чтобы очистить весь кэш, все ключи приходится перебирать вручную в отдельном методе `evictAll` через `cache.evict`.",
               "correct": false,
               "sections": {
                 "what_actually": "`allEntries = true` очищает весь кэш одной аннотацией, без ручного перебора ключей.",
@@ -311,6 +311,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "`@Caching` объединяет несколько аннотаций одного типа (`@Cacheable`/`@CachePut`/`@CacheEvict`) на одном методе, а `@CacheConfig` выносит общие настройки (например `cacheNames`) на уровень класса, чтобы не повторять их в каждом методе.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@Caching` нужен, когда на один метод требуется несколько операций над разными кэшами сразу. `@CacheConfig` убирает дублирование: задаёте `cacheNames` один раз на классе, а методы помечаете голыми `@Cacheable`/`@CacheEvict`.",
+                "example": "`@Caching(cacheable = @Cacheable(\"products\"), evict = @CacheEvict(value = \"allProducts\", allEntries = true))` на одном методе; `@CacheConfig(cacheNames = \"products\")` на классе `ProductService`.",
+                "when_to_apply": "`@Caching` — для составных кэш-операций; `@CacheConfig` — когда в классе много методов работают с одним кэшем.",
+                "edge_cases": "`@CacheConfig` задаёт лишь дефолты — их можно переопределить на конкретном методе; `@Caching` делает аннотации многословными, поэтому им не злоупотребляют.",
+                "related": "[[spring-cache-interview#Q3]] `@Cacheable`; [[spring-cache-interview#Q5]] `@CacheEvict`; [[spring-cache-interview#Q4]] `@CachePut`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`@CacheConfig` вешают на отдельный метод, чтобы переопределить `cacheNames` всего класса, а `@Caching` ставят на класс, распространяя одну общую связку `@Cacheable` и `@CacheEvict` сразу на все публичные методы этого класса.",
               "correct": false,
               "sections": {
@@ -321,8 +334,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`@Caching` и `@CacheConfig`, начиная со `Spring Boot 3`, объявлены устаревшими и заменены единой аннотацией `@CacheLayer`, которая сразу задаёт и группировку операций `@Cacheable`/`@CacheEvict`, и общие `cacheNames` на уровне класса.",
               "correct": false,
               "sections": {
@@ -330,19 +343,6 @@
                 "source_of_confusion": "Spring действительно много рефакторит, и слияние близких аннотаций кажется правдоподобным.",
                 "if_it_were_true": "Тогда старый код с `@Caching` и `@CacheConfig` перестал бы компилироваться после апгрейда.",
                 "how_it_should_be": "`@Caching` группирует операции, `@CacheConfig` выносит общие настройки — это две самостоятельные аннотации."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`@Caching` объединяет несколько аннотаций одного типа (`@Cacheable`/`@CachePut`/`@CacheEvict`) на одном методе, а `@CacheConfig` выносит общие настройки (например `cacheNames`) на уровень класса, чтобы не повторять их в каждом методе.",
-              "correct": true,
-              "sections": {
-                "explanation": "`@Caching` нужен, когда на один метод требуется несколько операций над разными кэшами сразу. `@CacheConfig` убирает дублирование: задаёте `cacheNames` один раз на классе, а методы помечаете голыми `@Cacheable`/`@CacheEvict`.",
-                "example": "`@Caching(cacheable = @Cacheable(\"products\"), evict = @CacheEvict(value = \"allProducts\", allEntries = true))` на одном методе; `@CacheConfig(cacheNames = \"products\")` на классе `ProductService`.",
-                "when_to_apply": "`@Caching` — для составных кэш-операций; `@CacheConfig` — когда в классе много методов работают с одним кэшем.",
-                "edge_cases": "`@CacheConfig` задаёт лишь дефолты — их можно переопределить на конкретном методе; `@Caching` делает аннотации многословными, поэтому им не злоупотребляют.",
-                "related": "[[spring-cache-interview#Q3]] `@Cacheable`; [[spring-cache-interview#Q5]] `@CacheEvict`; [[spring-cache-interview#Q4]] `@CachePut`."
               }
             },
             {
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Ключ по умолчанию собирается из имени класса, имени метода и хэша аргументов; поэтому `getUser(1)` и `findUser(1)` не пересекаются.",
+              "text": "Ключ по умолчанию собирает `SimpleKeyGenerator` из имени класса, имени метода и хэша аргументов; поэтому `getUser(1)` и `findUser(1)` не пересекаются даже в одном кэше.",
               "correct": false,
               "sections": {
                 "what_actually": "Имя метода и класса в стандартный ключ не входят — только аргументы через `SimpleKeyGenerator`.",
@@ -383,7 +383,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Ключ по умолчанию — это хэш-код результата метода; поэтому `getUser(1)` и `getUser(2)` с равными объектами делят одну запись.",
+              "text": "Ключ по умолчанию — это хэш-код результата метода; поэтому `getUser(1)` и `getUser(2)`, вернувшие равные объекты, делят одну запись кэша по общему хэшу.",
               "correct": false,
               "sections": {
                 "what_actually": "Ключ вычисляется из аргументов до вызова метода, а не из его результата.",
@@ -395,7 +395,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Ключ по умолчанию — это конкатенация всех аргументов метода в строку через запятую; вызов `getUser(1, 2)` поэтому даёт ключ `\"1,2\"`.",
+              "text": "Ключ по умолчанию — это конкатенация всех аргументов метода в строку через запятую; вызов `getUser(1, 2)` поэтому даёт строковый ключ `\"1,2\"` без учёта типов аргументов.",
               "correct": false,
               "sections": {
                 "what_actually": "Для одного параметра ключом становится сам аргумент, а для нескольких — объект `SimpleKey`, не строка.",
@@ -407,7 +407,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Используется `SimpleKeyGenerator`: 0 параметров → `SimpleKey.EMPTY`, 1 параметр → сам параметр, 2+ параметра → `SimpleKey(param1, param2, ...)`; имя метода в ключ не входит.",
+              "text": "Используется `SimpleKeyGenerator`: 0 параметров → `SimpleKey.EMPTY`, 1 параметр → сам параметр, 2+ параметра → `SimpleKey(param1, ...)`; имя метода в ключ не входит.",
               "correct": true,
               "sections": {
                 "explanation": "Так как имя метода не учитывается, два метода с одним кэшем и одинаковыми типами параметров могут получить совпадающие ключи и перезаписывать данные друг друга.",
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Атрибут `key` принимает только простое имя параметра: `key = \"#id\"`, `key = \"#userId\"`, `key = \"#p0\"`; поля вроде `#order.id` и конкатенация `#a + #b` требуют собственного `KeyGenerator`.",
+              "text": "Атрибут `key` ограничен именем одного параметра: `key = \"#id\"`, `key = \"#userId\"`, `key = \"#p0\"`; поля вроде `#order.id` и конкатенация `#a + #b` требуют собственного бина `KeyGenerator` с методом `generate`.",
               "correct": false,
               "sections": {
                 "what_actually": "SpEL в `key` поддерживает и поля `#order.id`, и конкатенацию `#a + #b`.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "SpEL-ключ строится через `#result`: `key = \"#result.id\"`, `key = \"#result.name\"`, `key = \"#result.code\"`; значение готово после метода, а `#userId`, `#p0` работают только в `condition`.",
+              "text": "SpEL-ключ строится через `#result`: `key = \"#result.id\"`, `key = \"#result.name\"`, `key = \"#result.code\"`; значение готово после метода, а `#userId`, `#p0` доступны в `condition`, но не в самом `key`.",
               "correct": false,
               "sections": {
                 "what_actually": "В выражении `key` доступны параметры (`#userId`, `#p0`) и `#root`, а `#result` — нет.",
@@ -504,7 +504,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`condition` вычисляется после выполнения метода и потому видит `#result`; `unless` же срабатывает до вызова и опирается только на входные параметры, отменяя кэширование по ним.",
+              "text": "`condition` вычисляется после выполнения метода и потому видит `#result`; `unless` же срабатывает до вызова и опирается на входные параметры, отменяя кэширование по ним.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `condition` работает до вызова по параметрам, а `unless` — после и видит `#result`.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Реализуют интерфейс `CacheManager` и его метод `getCache`, который возвращает готовый ключ; бин с `getCache` подключают через `@Cacheable(keyGenerator = \"...\")`.",
+              "text": "Реализуют интерфейс `CacheManager` и его метод `getCache`, который возвращает готовый ключ по имени; бин с таким `getCache` подключают к методу через `@Cacheable(keyGenerator = \"...\")`.",
               "correct": false,
               "sections": {
                 "what_actually": "Ключи формирует бин, реализующий интерфейс `KeyGenerator` с методом `generate(...)`, а не `CacheManager`.",
@@ -575,7 +575,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Кастомный ключ задают выражением SpEL в атрибуте `key`, например `@Cacheable(key = \"#p0\")`; `Spring` строит его сам, минуя отдельный `KeyGenerator`.",
+              "text": "Кастомный ключ задают выражением SpEL в атрибуте `key`, например `@Cacheable(key = \"#p0\")`; `Spring` вычисляет его сам при каждом вызове, минуя отдельный бин `KeyGenerator` и его регистрацию.",
               "correct": false,
               "sections": {
                 "what_actually": "Помимо SpEL в `key`, Spring поддерживает бин `KeyGenerator` как отдельный механизм генерации ключей.",
@@ -587,7 +587,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Реализуют интерфейс `KeyGenerator` с методом `generate(Object target, Method method, Object... params)`, регистрируют бин и ссылаются на него через `@Cacheable(keyGenerator = \"myKeyGenerator\")`; либо задают глобально через `CachingConfigurer.keyGenerator()`.",
+              "text": "Реализуют интерфейс `KeyGenerator` с методом `generate(target, method, params)`, регистрируют бин и ссылаются на него через `@Cacheable(keyGenerator = \"myKeyGenerator\")`; либо задают глобально через `CachingConfigurer`.",
               "correct": true,
               "sections": {
                 "explanation": "Метод `generate` получает целевой объект, `Method` и параметры, и возвращает любой объект-ключ (часто строку из имени класса, метода и параметров). Бин подключают по имени на методе или делают дефолтным через `CachingConfigurer`.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring Boot` автоконфигурирует только `ConcurrentMapCacheManager` и `RedisCacheManager`; `CaffeineCacheManager`, `JCacheCacheManager` (`EhCache 3`), `HazelcastCacheManager` и `Infinispan` регистрируют вручную как `@Bean`, поэтому `spring.cache.type` на них не влияет.",
+              "text": "`Spring Boot` автоконфигурирует две реализации — `ConcurrentMapCacheManager` и `RedisCacheManager`; `CaffeineCacheManager`, `JCacheCacheManager` (`EhCache 3`), `HazelcastCacheManager` и `Infinispan` приходится регистрировать вручную как `@Bean`, поэтому `spring.cache.type` на них не влияет.",
               "correct": false,
               "sections": {
                 "what_actually": "`Spring Boot` автоконфигурирует все перечисленные провайдеры — `Caffeine`, `Redis`, `JCache`, `Hazelcast`, `Infinispan` — как только их зависимость есть в classpath.",
@@ -623,6 +623,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "`Spring Boot` по умолчанию строит `RedisCacheManager` и ждёт `Redis` на `localhost:6379`; при недоступности он откатывается на `ConcurrentMapCacheManager`, `CaffeineCacheManager`, `HazelcastCacheManager` или `JCacheCacheManager` по `spring.cache.type`, игнорируя `spring-boot-starter-data-redis`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию поднимается `ConcurrentMapCacheManager`; `RedisCacheManager` включается лишь при `spring-boot-starter-data-redis` и `spring.cache.type=redis`.",
+                "source_of_confusion": "В проде кэш часто именно `Redis`, поэтому его ошибочно считают поведением по умолчанию.",
+                "if_it_were_true": "Тогда любое приложение с кэшем падало бы при старте без запущенного `Redis` на `localhost:6379`.",
+                "how_it_should_be": "Без redis-стартера дефолт — in-memory `ConcurrentMapCacheManager`, а `Redis` подключают явно зависимостью и свойством."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "`Spring Boot` автоматически выбирает провайдер по classpath: `ConcurrentMapCacheManager` (дефолт), `CaffeineCacheManager`, `RedisCacheManager`, `JCacheCacheManager` (`EhCache 3`), `HazelcastCacheManager`, `Infinispan`; явно задаётся через `spring.cache.type`, а `type: none` отключает кэш.",
               "correct": true,
               "sections": {
@@ -631,18 +643,6 @@
                 "when_to_apply": "Знание нужно при выборе провайдера под требования: in-memory `Caffeine` против распределённого `Redis`/`Hazelcast`.",
                 "edge_cases": "Если на classpath сразу несколько провайдеров, без явного `spring.cache.type` выбор может быть неожиданным; `type: none` удобно для отключения кэша в тестах.",
                 "related": "[[spring-cache-interview#Q12]] настройка `Caffeine`; [[spring-cache-interview#Q13]] подключение `Redis`; [[spring-cache-interview#Q1]] что такое абстракция кэша."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`Spring Boot` по умолчанию строит `RedisCacheManager` и ждёт `Redis` на `localhost:6379`; при недоступности он откатывается на `ConcurrentMapCacheManager`, `CaffeineCacheManager`, `HazelcastCacheManager` или `JCacheCacheManager` по `spring.cache.type`, игнорируя `spring-boot-starter-data-redis`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По умолчанию поднимается `ConcurrentMapCacheManager`; `RedisCacheManager` включается лишь при `spring-boot-starter-data-redis` и `spring.cache.type=redis`.",
-                "source_of_confusion": "В проде кэш часто именно `Redis`, поэтому его ошибочно считают поведением по умолчанию.",
-                "if_it_were_true": "Тогда любое приложение с кэшем падало бы при старте без запущенного `Redis` на `localhost:6379`.",
-                "how_it_should_be": "Без redis-стартера дефолт — in-memory `ConcurrentMapCacheManager`, а `Redis` подключают явно зависимостью и свойством."
               }
             },
             {
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Подключают зависимость `caffeine`, затем задают через YAML (`spring.cache.caffeine.spec=maximumSize=500,expireAfterWrite=10m`) или Java Config с `CaffeineCacheManager.registerCustomCache(...)` для разных TTL; `expireAfterWrite` — TTL от записи, `expireAfterAccess` — sliding-окно от последнего обращения.",
+              "text": "Подключают зависимость `caffeine`, затем настраивают через YAML (`spring.cache.caffeine.spec=maximumSize=500,expireAfterWrite=10m`) или Java Config с `registerCustomCache(...)` для разных TTL; `expireAfterWrite` — TTL от записи, `expireAfterAccess` — sliding-окно от последнего обращения.",
               "correct": true,
               "sections": {
                 "explanation": "YAML-`spec` задаёт общие параметры для всех кэшей; Java Config даёт индивидуальную настройку (размер, TTL, `recordStats`) каждому кэшу. `expireAfterWrite` истекает строго через интервал после записи, `expireAfterAccess` сбрасывает таймер при каждом доступе.",
@@ -684,7 +684,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Чтобы включить `Caffeine`, достаточно выставить свойство `spring.cache.type=caffeine` в `application.yml`; автоконфигурация сама подтянет реализацию `com.github.ben-manes.caffeine:caffeine` и поднимет `CaffeineCacheManager`, так что отдельная зависимость в `build.gradle` уже не потребуется.",
+              "text": "Чтобы включить `Caffeine`, выставляют свойство `spring.cache.type=caffeine` в `application.yml`; автоконфигурация сама подтянет реализацию `com.github.ben-manes.caffeine:caffeine` и поднимет `CaffeineCacheManager`, так что отдельная зависимость в `build.gradle` уже не потребуется.",
               "correct": false,
               "sections": {
                 "what_actually": "`Caffeine` — библиотека на classpath; без зависимости `com.github.ben-manes.caffeine:caffeine` автоконфигурация `CaffeineCacheManager` не срабатывает.",
@@ -731,7 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Значения `RedisCacheManager` живут как Java-объекты в heap, а в `Redis` лишь индексируются по ключу; поэтому `@Cacheable`, `@CachePut` и `@CacheEvict` не требуют `implements Serializable` или `JdkSerializationRedisSerializer`.",
+              "text": "Значения `RedisCacheManager` живут как Java-объекты в heap, а `Redis` держит по ключу указатель на них; поэтому `@Cacheable`, `@CachePut` и `@CacheEvict` не требуют `implements Serializable` или `JdkSerializationRedisSerializer`.",
               "correct": false,
               "sections": {
                 "what_actually": "`RedisCacheManager` сериализует значения в байты и хранит их в `Redis`, поэтому объекты должны быть `Serializable`.",
@@ -743,7 +743,19 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Добавляют `spring-boot-starter-data-redis`, задают `spring.cache.type=redis` и координаты `spring.data.redis.host/port`; `Spring Boot` сам создаёт `RedisCacheManager`, по умолчанию сериализуя значения через `JdkSerializationRedisSerializer` (объекты должны быть `Serializable`).",
+              "text": "Хватает объявить бин `RedisTemplate`; `Spring Boot` соберёт из него `RedisCacheManager`, и `@Cacheable` подхватит его подключение к `Redis`, `RedisConnectionFactory` и настройки `spring.data.redis` без отдельного стартера.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`RedisCacheManager` создаёт автоконфигурация при наличии `spring-boot-starter-data-redis` и `spring.cache.type=redis`, а не бин `RedisTemplate`.",
+                "source_of_confusion": "И `RedisTemplate`, и `RedisCacheManager` работают поверх одного `RedisConnectionFactory`, отсюда смешение их ролей.",
+                "if_it_were_true": "Тогда любой проект с `RedisTemplate` для иных задач неожиданно превращал бы `@Cacheable` в Redis-кэш.",
+                "how_it_should_be": "Подключают стартер и `spring.cache.type=redis`, а `RedisTemplate` при этом не нужен."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Добавляют `spring-boot-starter-data-redis`, задают `spring.cache.type=redis` и `spring.data.redis.host/port`; `Spring Boot` сам создаёт `RedisCacheManager`, по умолчанию сериализуя значения через `JdkSerializationRedisSerializer` (объекты должны быть `Serializable`).",
               "correct": true,
               "sections": {
                 "explanation": "Стартер приносит клиент `Lettuce` и автоконфигурацию. Без явной настройки сериализатора значения пишутся JDK-сериализацией в `byte[]`, поэтому кэшируемые классы обязаны реализовывать `Serializable` либо нужно настроить `Jackson2JsonRedisSerializer`.",
@@ -751,18 +763,6 @@
                 "when_to_apply": "Берут `Redis`, когда нужен распределённый кэш, общий для нескольких инстансов приложения.",
                 "edge_cases": "JDK-сериализация хрупка к изменению структуры классов и нечитаема снаружи; в проде обычно переходят на JSON-сериализатор.",
                 "related": "[[spring-cache-interview#Q14]] настройка TTL в `Redis`; [[spring-cache-interview#Q11]] выбор провайдера; [[spring-cache-interview#Q18]] `sync` и распределённый stampede."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Достаточно объявить бин `RedisTemplate`; `Spring Boot` соберёт из него `RedisCacheManager`, и `@Cacheable` подхватит его подключение к `Redis`, `RedisConnectionFactory` и настройки `spring.data.redis` без отдельного стартера.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`RedisCacheManager` создаёт автоконфигурация при наличии `spring-boot-starter-data-redis` и `spring.cache.type=redis`, а не бин `RedisTemplate`.",
-                "source_of_confusion": "И `RedisTemplate`, и `RedisCacheManager` работают поверх одного `RedisConnectionFactory`, отсюда смешение их ролей.",
-                "if_it_were_true": "Тогда любой проект с `RedisTemplate` для иных задач неожиданно превращал бы `@Cacheable` в Redis-кэш.",
-                "how_it_should_be": "Подключают стартер и `spring.cache.type=redis`, а `RedisTemplate` при этом не нужен."
               }
             },
             {
@@ -791,7 +791,31 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Глобально TTL задают через `spring.cache.redis.time-to-live=30m`, а индивидуально — через Java Config: `RedisCacheConfiguration.defaultCacheConfig().entryTtl(Duration.ofMinutes(30))` и `RedisCacheManager.builder(factory).cacheDefaults(...).withInitialCacheConfigurations(map)` с разным `entryTtl` на каждый кэш.",
+              "text": "TTL у `Redis`-кэша задаётся глобальным свойством `spring.cache.redis.time-to-live`, а разный TTL для отдельных кэшей `products` и `sessions` задать нельзя, ведь оно применяется ко всем кэшам одинаково.",
+              "correct": false,
+              "sections": {
+                "what_actually": "На деле TTL можно задать индивидуально каждому кэшу через `withInitialCacheConfigurations` с разным `entryTtl`.",
+                "source_of_confusion": "Свойство `spring.cache.redis.time-to-live` действительно глобальное, и легко решить, что других способов нет.",
+                "if_it_were_true": "Будь так, `products` и `sessions` были бы обречены на один общий интервал жизни.",
+                "how_it_should_be": "Для разных TTL собирают `RedisCacheManager` с `Map` конфигураций, где у каждого кэша свой `entryTtl`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Свойство `spring.cache.redis.time-to-live` принимает значение в миллисекундах, например `1800000`, и для тридцати минут пишут это число, а не `Duration`-строку `30m`, иначе контекст не поднимется при старте.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Свойство `time-to-live` — это `Duration`, поэтому `30m` и `1h` парсятся штатно.",
+                "source_of_confusion": "В старых обёртках над `Jedis`/`Lettuce` TTL действительно задавали числом, отсюда путаница.",
+                "if_it_were_true": "Тогда запись `spring.cache.redis.time-to-live=30m` роняла бы контекст на старте.",
+                "how_it_should_be": "Значение указывают в `Duration`-формате (`30m`, `1h`) либо простым числом миллисекунд."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Глобально TTL задают свойством `spring.cache.redis.time-to-live=30m`, а индивидуально — через Java Config: `RedisCacheConfiguration.entryTtl(...)` в `cacheDefaults(...)` и `withInitialCacheConfigurations(map)` с `entryTtl` на кэш.",
               "correct": true,
               "sections": {
                 "explanation": "`RedisCacheConfiguration` несёт TTL и сериализатор; `cacheDefaults` задаёт дефолт, а `withInitialCacheConfigurations` переопределяет TTL для именованных кэшей. Так `products` живёт 10 минут, а `sessions` — час.",
@@ -802,33 +826,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "TTL у `Redis`-кэша задаётся только глобальным свойством `spring.cache.redis.time-to-live`, и разный TTL для отдельных кэшей `products` и `sessions` задать нельзя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "На деле TTL можно задать индивидуально каждому кэшу через `withInitialCacheConfigurations` с разным `entryTtl`.",
-                "source_of_confusion": "Свойство `spring.cache.redis.time-to-live` действительно глобальное, и легко решить, что других способов нет.",
-                "if_it_were_true": "Будь так, `products` и `sessions` были бы обречены на один общий интервал жизни.",
-                "how_it_should_be": "Для разных TTL собирают `RedisCacheManager` с `Map` конфигураций, где у каждого кэша свой `entryTtl`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Свойство `spring.cache.redis.time-to-live` принимает значение в миллисекундах, например `1800000`, и для тридцати минут пишут это число, а не `Duration`-строку `30m`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Свойство `time-to-live` — это `Duration`, поэтому `30m` и `1h` парсятся штатно.",
-                "source_of_confusion": "В старых обёртках над `Jedis`/`Lettuce` TTL действительно задавали числом, отсюда путаница.",
-                "if_it_were_true": "Тогда запись `spring.cache.redis.time-to-live=30m` роняла бы контекст на старте.",
-                "how_it_should_be": "Значение указывают в `Duration`-формате (`30m`, `1h`) либо простым числом миллисекунд."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "TTL для `Redis`-кэша указывают прямо в аннотации: атрибут `ttl` у `@Cacheable(value = \"products\", ttl = \"30m\")` принимает `Duration`-строку и задаёт время жизни записи.",
+              "text": "TTL для `Redis`-кэша указывают прямо в аннотации: атрибут `ttl` у `@Cacheable(value = \"products\", ttl = \"30m\")` принимает `Duration`-строку и задаёт время жизни записи прямо рядом с методом, без правки конфигурации.",
               "correct": false,
               "sections": {
                 "what_actually": "У `@Cacheable` нет атрибута `ttl` — время жизни настраивается на уровне `RedisCacheConfiguration`, а не аннотации.",
@@ -851,18 +851,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Cacheable` не срабатывает при self-invocation, потому что обращение через `this` подсовывает Spring новый, непроксированный экземпляр бина; на этой сырой копии advice отсутствует, и вызов `getProduct(id)` каждый раз уходит в репозиторий.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`this` указывает на тот же target-объект, никакого нового экземпляра не создаётся — вызов просто минует прокси.",
-                "source_of_confusion": "Раз advice не срабатывает, кажется, будто работает другой, не-Spring объект.",
-                "if_it_were_true": "Тогда состояние и зависимости у «второго» экземпляра отличались бы от бина из контекста.",
-                "how_it_should_be": "Метод вызывают через прокси-ссылку (self-инъекция `@Lazy` или отдельный бин), объект при этом один."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Spring Cache` работает через AOP-прокси, а вызов метода из того же класса (`this.method()`) идёт напрямую к target-объекту мимо прокси, поэтому advice кэша не выполняется; лечится выносом метода в отдельный бин или self-инъекцией через `@Lazy`.",
               "correct": true,
               "sections": {
@@ -874,9 +862,21 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "`@Cacheable` не срабатывает при self-invocation, потому что обращение через `this` подсовывает Spring новый, непроксированный экземпляр бина; на этой сырой копии advice отсутствует, и вызов `getProduct(id)` каждый раз уходит в репозиторий.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`this` указывает на тот же target-объект, никакого нового экземпляра не создаётся — вызов просто минует прокси.",
+                "source_of_confusion": "Раз advice не срабатывает, кажется, будто работает другой, не-Spring объект.",
+                "if_it_were_true": "Тогда состояние и зависимости у «второго» экземпляра отличались бы от бина из контекста.",
+                "how_it_should_be": "Метод вызывают через прокси-ссылку (self-инъекция `@Lazy` или отдельный бин), объект при этом один."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
-              "text": "`@Cacheable` ломается при self-invocation, потому что кэш-обёртка применяется лишь к `public`-методам бина; приватный метод, вызванный внутри класса, остаётся вне advice, и каждое обращение идёт в источник мимо `CacheManager`.",
+              "text": "`@Cacheable` ломается при self-invocation, потому что кэш-обёртка применяется к `public`-методам бина, но не к приватным; приватный метод, вызванный внутри класса, остаётся вне advice, и каждое обращение идёт в источник мимо `CacheManager`.",
               "correct": false,
               "sections": {
                 "what_actually": "Причина не в модификаторе доступа, а в обходе прокси; `public`-метод при self-invocation тоже не кэшируется.",
@@ -911,50 +911,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Аннотация `@Cacheable` полноценно работает в `WebFlux`: на методе с `Mono<Product>` или `Flux<Product>` она сама подписывается на `Publisher`; она кэширует эмитируемое значение, и повторный `getProduct(id)` затем отдаёт готовый `Mono` прямо из `CacheManager`.",
-              "correct": false,
+              "text": "`ConcurrentMapCacheManager` без TTL и eviction; распределённость требует `Redis`/`Hazelcast`; реактивные `Mono`/`Flux` кэшируются грубо; сериализация в `Redis` хрупка к смене структуры; `null` кэшируется по умолчанию; ломается self-invocation.",
+              "correct": true,
               "sections": {
-                "what_actually": "`@Cacheable` кэширует сам объект `Mono`/`Flux`, а не его результат, поэтому повторный вызов вернёт неотработанный издатель.",
-                "source_of_confusion": "Метод возвращает значение, и кажется, что абстракция умеет реактивные типы так же, как блокирующие.",
-                "if_it_were_true": "Тогда реактивные и блокирующие сервисы кэшировались бы одинаково без дополнительных обёрток.",
-                "how_it_should_be": "В реактивном стеке кэшируют вручную через `Mono.cache()` или `CacheMono` из Reactor Addons."
+                "explanation": "Это набор практических границ: in-memory дефолт растёт без вытеснения, распределённость требует внешнего провайдера, реактивные типы кэшируются грубо (одно значение у `Mono`, список у `Flux`), а прокси-механика порождает проблему self-invocation.",
+                "example": "На `ConcurrentMapCacheManager` забытый `@CacheEvict` ведёт к бесконечному росту памяти, а закэшированный по умолчанию `null` может залипнуть в кэше до явного evict.",
+                "when_to_apply": "Эти ограничения учитывают при выборе провайдера и проектировании кэш-слоя под прод-нагрузку.",
+                "edge_cases": "Кэширование `null` отключают через `setAllowNullValues(false)` или `disableCachingNullValues()` у `Redis`; реактивные `Mono`/`Flux` поддержаны с `Spring` 6.1, но грубо; для распределённого stampede — внешние локи (`Redisson`).",
+                "related": "[[spring-cache-interview#Q11]] провайдеры и их возможности; [[spring-cache-interview#Q15]] self-invocation; [[spring-cache-interview#Q18]] stampede и `sync`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Значения `null` аннотация `@Cacheable` кэширует по умолчанию; повторный `getProduct(id)` с тем же ключом отдаёт сохранённый `null` из `ConcurrentMapCacheManager` или `Redis`, пока запись не уберёт вызов `@CacheEvict` либо `@CachePut`.",
+              "text": "В `WebFlux` `@Cacheable` кэширует сам `Publisher`: объект `Mono<Product>` или `Flux<Product>` кладётся в кэш как есть, поэтому повторный `getProduct(id)` отдаёт неотработанный издатель, а данные достают вручную через `Mono.cache()`.",
               "correct": false,
               "sections": {
-                "what_actually": "По умолчанию результат `null` не кладётся в кэш, и каждый такой вызов снова идёт в источник.",
-                "source_of_confusion": "Некоторые менеджеры допускают `null` при `allowNullValues`, и это принимают за общее правило.",
-                "if_it_were_true": "Тогда отрицательный ответ кэшировался бы сам собой и защищал источник от повторных промахов.",
-                "how_it_should_be": "Кэширование `null` включают явно через `allowNullValues` и управляют им с помощью `unless`."
+                "what_actually": "С `Spring` 6.1 `@Cacheable` кэширует эмитированное значение `Mono`/`Flux` (у `Flux` элементы собираются в `List`), а не сам издатель, и на попадании отдаёт `Mono`/`Flux` поверх готового значения.",
+                "source_of_confusion": "До `Spring` 6.1 реактивные типы штатно не поддерживались, и это устаревшее поведение по инерции переносят на актуальные версии.",
+                "if_it_were_true": "Тогда на попадании возвращался бы уже отработанный издатель без нового значения, и `Mono.cache()` был бы обязателен для каждого вызова.",
+                "how_it_should_be": "В актуальных версиях `@Cacheable` сам кэширует значение `Mono`/`Flux`, но для сложных реактивных потоков с backpressure это грубо и подходит не всегда."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Дефолтный `ConcurrentMapCacheManager` из коробки умеет и `TTL`, и eviction; он вытесняет записи по `expireAfterWrite`, `expireAfterAccess` и `maximumSize`, как `Caffeine`, поэтому ни `Redis`, ни `Hazelcast` для контроля памяти не нужны.",
+              "text": "Значения `null` аннотация `@Cacheable` по умолчанию не кэширует; повторный `getProduct(id)` с тем же ключом каждый раз снова идёт в источник, ведь отрицательный результат без явного `allowNullValues` в кэше не сохраняется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию `null` как раз кладётся в кэш (`allowNullValues=true` у стандартных менеджеров), обёрнутый в `NullValue`, и повторный вызов по тому же ключу в источник не идёт.",
+                "source_of_confusion": "Кэшировать «пустой» ответ кажется бессмысленным, поэтому дефолт ошибочно считают отключённым для `null`.",
+                "if_it_were_true": "Тогда идиома `unless = \"#result == null\"` была бы не нужна, а она существует как раз чтобы не класть `null`, который иначе попадёт в кэш.",
+                "how_it_should_be": "Чтобы `null` не кэшировался, его отключают через `setAllowNullValues(false)` или отсекают через `unless`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Дефолтный `ConcurrentMapCacheManager` сам умеет и `TTL`, и eviction; он вытесняет записи по `expireAfterWrite`, `expireAfterAccess` и `maximumSize`, как `Caffeine`, поэтому ни `Redis`, ни `Hazelcast` для контроля памяти не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "`ConcurrentMapCacheManager` — простая обёртка над `ConcurrentHashMap` без TTL и eviction, память растёт неограниченно.",
                 "source_of_confusion": "TTL и eviction есть у `Caffeine`/`Redis`, и их по инерции приписывают дефолтному менеджеру.",
                 "if_it_were_true": "Тогда долгоживущее приложение не текло бы по памяти на стандартном кэше без вытеснения.",
                 "how_it_should_be": "Для TTL и eviction подключают `Caffeine` или `Redis`, а не полагаются на дефолт."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Дефолтный `ConcurrentMapCacheManager` без TTL и eviction; нет распределённого кэша (нужен `Redis`/`Hazelcast`); нет реактивной поддержки (`@Cacheable` не работает с `Mono`/`Flux`); сериализация для `Redis` хрупка к смене структуры; `null` по умолчанию не кэшируется; ломается self-invocation.",
-              "correct": true,
-              "sections": {
-                "explanation": "Это набор практических границ: in-memory дефолт растёт без вытеснения, распределённость требует внешнего провайдера, реактивный стек не поддержан штатно, а прокси-механика порождает проблему self-invocation.",
-                "example": "На `ConcurrentMapCacheManager` забытый `@CacheEvict` ведёт к бесконечному росту памяти, а в `WebFlux` `@Cacheable` на `Mono<Product>` закэширует издателя, а не данные.",
-                "when_to_apply": "Эти ограничения учитывают при выборе провайдера и проектировании кэш-слоя под прод-нагрузку.",
-                "edge_cases": "Для `null` есть `allowCachingNullValues()`; для реактива — `Mono.cache()`; для распределённого stampede — внешние локи (`Redisson`).",
-                "related": "[[spring-cache-interview#Q11]] провайдеры и их возможности; [[spring-cache-interview#Q15]] self-invocation; [[spring-cache-interview#Q18]] stampede и `sync`."
               }
             }
           ]
@@ -971,19 +971,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `@SpringBootTest` мокают репозиторий через `@MockBean`, очищают кэши в `@BeforeEach`, дважды вызывают кэшируемый метод и проверяют `verify(repository, times(1))`, а после `@CacheEvict` — `times(2)`, подтверждая попадание/инвалидацию кэша.",
-              "correct": true,
-              "sections": {
-                "explanation": "Кэш проверяют косвенно — по числу обращений к источнику. Если второй вызов не дошёл до `repository.findById`, значит был cache hit; рост счётчика после evict подтверждает инвалидацию.",
-                "example": "`getProduct(1L)` дважды при `verify(repository, times(1)).findById(1L)`; затем `deleteProduct(1L)` и снова `getProduct(1L)` дают `times(2)` — запись была удалена из кэша.",
-                "when_to_apply": "Применяют, когда нужно подтвердить, что аннотации кэша реально перехватывают вызовы в собранном контексте.",
-                "edge_cases": "Очистка кэшей в `@BeforeEach` обязательна — иначе соседние тесты делятся состоянием; `@MockBean` пересоздаёт контекст, что замедляет прогон.",
-                "related": "[[spring-cache-interview#Q3]] поведение `@Cacheable`; [[spring-cache-interview#Q5]] `@CacheEvict`; [[spring-cache-interview#Q11]] выбор провайдера (`type: none` в тестах)."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Достоверный тест кэша пишут интеграционно, с реальным `Redis` и поднятым `@Testcontainers`: `ConcurrentMapCacheManager` не воспроизводит `TTL`, `RedisSerializer` и реальное поведение боевого `RedisCacheManager` под высокой нагрузкой.",
               "correct": false,
               "sections": {
@@ -994,15 +981,28 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Достаточно проверить `cacheManager.getCache(\"products\").get(1L)` после вызова `getProduct(1L)`: раз `Product` лежит в `Cache` по ключу `1L`, кэш сработал, а `verify(repository)` уже избыточен.",
+              "order": 1,
+              "label": "B",
+              "text": "Хватает проверить `cacheManager.getCache(\"products\").get(1L)` после вызова `getProduct(1L)`: раз `Product` лежит в `Cache` по ключу `1L`, кэш сработал, а `verify(repository)` уже не нужен для доказательства.",
               "correct": false,
               "sections": {
                 "what_actually": "Наличие значения в `Cache` не доказывает, что второй вызов не сходил в источник — это показывает только `verify(times(1))`.",
                 "source_of_confusion": "Объект в кэше выглядит достаточным доказательством, ведь он там есть.",
                 "if_it_were_true": "Тогда тест не отличал бы реальный cache-hit от повторного обращения к репозиторию.",
                 "how_it_should_be": "Дважды зовут метод и проверяют `verify(repository, times(1))`, а после evict — `times(2)`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "В `@SpringBootTest` мокают репозиторий через `@MockBean`, чистят кэши в `@BeforeEach`, дважды зовут кэшируемый метод и проверяют `verify(repository, times(1))`, а после `@CacheEvict` — `times(2)`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Кэш проверяют косвенно — по числу обращений к источнику. Если второй вызов не дошёл до `repository.findById`, значит был cache hit; рост счётчика после evict подтверждает инвалидацию.",
+                "example": "`getProduct(1L)` дважды при `verify(repository, times(1)).findById(1L)`; затем `deleteProduct(1L)` и снова `getProduct(1L)` дают `times(2)` — запись была удалена из кэша.",
+                "when_to_apply": "Применяют, когда нужно подтвердить, что аннотации кэша реально перехватывают вызовы в собранном контексте.",
+                "edge_cases": "Очистка кэшей в `@BeforeEach` обязательна — иначе соседние тесты делятся состоянием; `@MockBean` пересоздаёт контекст, что замедляет прогон.",
+                "related": "[[spring-cache-interview#Q3]] поведение `@Cacheable`; [[spring-cache-interview#Q5]] `@CacheEvict`; [[spring-cache-interview#Q11]] выбор провайдера (`type: none` в тестах)."
               }
             },
             {
@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Защита от stampede достигается увеличением TTL кэша; чем дольше живут записи под `expireAfterWrite` и `entryTtl`, тем реже они истекают и тем реже параллельные промахи по одному ключу разом уходят в источник, поэтому вместо `sync = true` и локов достаточно поднять `entryTtl` до большого значения в `RedisCacheConfiguration`.",
+              "text": "Защита от stampede достигается увеличением TTL кэша; чем дольше живут записи под `expireAfterWrite` и `entryTtl`, тем реже они истекают и тем реже параллельные промахи по одному ключу разом уходят в источник, поэтому вместо `sync = true` и локов хватает поднять `entryTtl` до большого значения в `RedisCacheConfiguration`, растягивая интервал между всплесками.",
               "correct": false,
               "sections": {
                 "what_actually": "Большой TTL лишь оттягивает промах, но в момент истечения ключа stampede всё равно случится.",
@@ -1043,19 +1043,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Cache stampede — всплеск нагрузки, когда множество параллельных промахов по одному ключу разом идут в источник; `sync = true` оборачивает доступ в `Cache.get(key, valueLoader)`, чтобы loader для ключа вызвался ровно один раз (single-flight), но защита локальна на узле, не сочетается с `unless`/`condition`/реактивными типами и не покрывает распределённый случай — там нужны `Redisson RLock` или CAS.",
-              "correct": true,
-              "sections": {
-                "explanation": "`sync = true` решает локальный thundering herd: при параллельных miss один поток вычисляет значение, остальные ждут его результат. В кластере это не координирует узлы, поэтому для полной защиты берут распределённые локи или версионирование в `Redis`.",
-                "example": "`@Cacheable(value = \"products\", sync = true)` на `getProduct(id)`: 100 одновременных запросов по `id=42` дадут один поход в БД на узле. В кластере на каждом узле — свой одиночный поход, что лечат `RLock lock = redisson.getLock(\"product:\" + id)`.",
-                "when_to_apply": "Берут `sync = true` на дорогих загрузках с горячими ключами в пределах одного инстанса; распределённые локи — когда узлов много и важна глобальная защита.",
-                "edge_cases": "`sync = true` несовместим с `unless`, `condition`, `CompletableFuture`/`Mono` (будет `IllegalStateException` на старте) и с несколькими кэшами сразу; поддержка зависит от провайдера (`Caffeine`/`ConcurrentMap` — да, `Redis` — только локально).",
-                "related": "[[spring-cache-interview#Q3]] базовое поведение `@Cacheable`; [[spring-cache-interview#Q9]] несовместимость с `unless`/`condition`; [[spring-cache-interview#Q13]] `Redis` и распределённость."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Флаг `sync = true` распространяет защиту от stampede на весь кластер; `@Cacheable` через `RedisCacheManager` берёт распределённый лок по ключу и координирует загрузку между узлами, так что при одновременном промахе по `getProduct(id)` ровно один инстанс идёт в источник, а прочие ждут готовое значение из общего `Cache`, не обращаясь к базе данных.",
               "correct": false,
               "sections": {
@@ -1066,12 +1053,25 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "Cache stampede — всплеск нагрузки, когда множество параллельных промахов по одному ключу разом идут в источник; `sync = true` оборачивает доступ в `Cache.get(key, valueLoader)`, чтобы loader для ключа вызвался ровно один раз (single-flight), но защита локальна на узле, не сочетается с `unless`, ограничена одним кэшем и не покрывает распределённый случай — там нужны `Redisson RLock` или CAS.",
+              "correct": true,
+              "sections": {
+                "explanation": "`sync = true` решает локальный thundering herd: при параллельных miss один поток вычисляет значение, остальные ждут его результат. В кластере это не координирует узлы, поэтому для полной защиты берут распределённые локи или версионирование в `Redis`.",
+                "example": "`@Cacheable(value = \"products\", sync = true)` на `getProduct(id)`: 100 одновременных запросов по `id=42` дадут один поход в БД на узле. В кластере на каждом узле — свой одиночный поход, что лечат `RLock lock = redisson.getLock(\"product:\" + id)`.",
+                "when_to_apply": "Берут `sync = true` на дорогих загрузках с горячими ключами в пределах одного инстанса; распределённые локи — когда узлов много и важна глобальная защита.",
+                "edge_cases": "`sync = true` несовместим с `unless` и с несколькими кэшами сразу, не комбинируется с другими кэш-операциями (иначе `IllegalStateException`); при этом с `Spring` 6.1 поддерживает `CompletableFuture` и реактивные типы; поддержка зависит от провайдера (`Caffeine`/`ConcurrentMap` — да, `Redis` — в пределах узла).",
+                "related": "[[spring-cache-interview#Q3]] базовое поведение `@Cacheable`; [[spring-cache-interview#Q9]] несовместимость с `unless`; [[spring-cache-interview#Q13]] `Redis` и распределённость."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
               "text": "Атрибут `sync = true` спокойно сочетается с `unless` и `condition`, позволяя разом защищаться от stampede и фильтровать запись результата; сначала single-flight гарантирует один поход в источник, затем `unless = \"#result == null\"` в `@Cacheable(value = \"products\", sync = true)` решает не класть пустой `#result`, и контекст при такой комбинации стартует без единой ошибки на этапе поднятия приложения.",
               "correct": false,
               "sections": {
-                "what_actually": "`sync = true` не сочетается с `unless`, `condition` и реактивными типами — контекст падает при старте.",
+                "what_actually": "`sync = true` несовместим с `unless` и не комбинируется с другими кэш-операциями — иначе `IllegalStateException`; совместить single-flight и `unless`-фильтр в одной аннотации нельзя.",
                 "source_of_confusion": "Оба атрибута управляют записью в кэш, и кажется естественным использовать их вместе.",
                 "if_it_were_true": "Тогда можно было бы одной аннотацией делать single-flight и отбрасывать пустой результат.",
                 "how_it_should_be": "С `sync = true` фильтрацию выносят в сам `valueLoader`, а не в `unless`/`condition`."
