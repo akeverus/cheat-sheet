@@ -1438,6 +1438,10 @@
     // чтобы при ошибке вернуть её, а не хардкод «Ответить» (рассинхрон меток).
     const originalSubmitText = (submitBtn.textContent || '').trim() || 'Проверить ответ';
     submitBtn.disabled = true;
+    // P0.3: submitting — отдельное видимое состояние (акцентная кнопка со
+    // спиннером), а НЕ бледный disabled. Класс снимаем на error-ветках ниже;
+    // на success кнопка прячется (showResult), сбрасывать не нужно.
+    submitBtn.classList.add('is-submitting');
     submitBtn.textContent = 'Проверяю…';
     submitBtn.setAttribute('aria-busy', 'true');
     setInteractionBusy(true);
@@ -1455,6 +1459,7 @@
         const err = await parseApiError(response);
         answered = false;
         submitBtn.disabled = false;
+        submitBtn.classList.remove('is-submitting');
         submitBtn.textContent = originalSubmitText;
         submitBtn.removeAttribute('aria-busy');
         setInteractionBusy(false);
@@ -1480,6 +1485,7 @@
       console.error('AJAX answer failed:', err);
       answered = false;
       submitBtn.disabled = false;
+      submitBtn.classList.remove('is-submitting');
       submitBtn.textContent = originalSubmitText;
       submitBtn.removeAttribute('aria-busy');
       setInteractionBusy(false);

@@ -7,14 +7,14 @@
 <main id="main-content" class="ed-page" tabindex="-1">
 <div class="app-layout">
 <div class="main-content">
-<!-- Общая статистика: на дашборде данные должны идти до фильтров, иначе первый экран
-     расходуется на вторичные controls. -->
-<section th:replace="~{fragments/stats-grid :: stats-grid(stats=${stats})}"></section>
-
-<!-- Метрики обучения с ЯВНЫМИ знаменателями (Фаза 4). Раньше числа смешивали
-     знаменатели: total=карточки, correct/wrong=суммы попыток. Здесь группы
-     разведены — у каждой доли свой знаменатель, «нет данных» показываем как «—»,
-     а не «0 %». -->
+<!-- P0.4: свод аналитики — ЕДИНЫЙ источник (LearningMetricsService, лог попыток).
+     Раньше сверху стоял stats-grid из review_state (SUM(correct_count)/SUM(wrong_count)),
+     и его «Точность 50 %» противоречила «Все попытки 33,3 %» из этой же секции: два
+     разных знаменателя на одном экране. Верхнюю плитку убрали — «Метрики обучения»
+     ниже покрывают всё (карточки/попытки/точность/удержание/расписание), у каждой
+     доли свой явный знаменатель, «нет данных» показываем как «—», а не «0 %».
+     Фильтр темы/группы управляет таблицей тем и блоком «Что делать дальше»; свод
+     метрик — глобальная картина обучения (как и было в этой секции). -->
 <section class="card learning-metrics" aria-labelledby="learning-metrics-title"
          th:if="${metrics != null}">
     <div class="learning-metrics-head">
@@ -37,16 +37,28 @@
             </dl>
         </article>
         <article class="metric-group">
+            <h3 class="metric-group-title">Попытки</h3>
+            <dl class="metric-list">
+                <div class="metric-row"><dt>Всего</dt>
+                    <dd th:text="${metrics.attemptsTotal}">0</dd></div>
+                <div class="metric-row"><dt>Верных</dt>
+                    <dd><span th:text="${metrics.attemptsCorrect}">0</span>
+                        <span class="metric-denom" th:text="'из ' + ${metrics.attemptsTotal}">из 0</span></dd></div>
+                <div class="metric-row"><dt>Ошибочных</dt>
+                    <dd><span th:text="${metrics.attemptsIncorrect}">0</span>
+                        <span class="metric-denom" th:text="'из ' + ${metrics.attemptsTotal}">из 0</span></dd></div>
+            </dl>
+        </article>
+        <article class="metric-group">
             <h3 class="metric-group-title">Точность</h3>
             <dl class="metric-list">
                 <div class="metric-row"><dt>Первая попытка</dt>
                     <dd th:text="${metrics.hasFirstAttemptAccuracy()} ? ${#numbers.formatDecimal(metrics.firstAttemptAccuracy, 1, 1)} + ' %' : '—'">—</dd></div>
                 <div class="metric-row"><dt>Все попытки</dt>
                     <dd th:text="${metrics.hasOverallAccuracy()} ? ${#numbers.formatDecimal(metrics.overallAccuracy, 1, 1)} + ' %' : '—'">—</dd></div>
-                <div class="metric-row"><dt>Верных ответов</dt>
-                    <dd><span th:text="${metrics.attemptsCorrect}">0</span>
-                        <span class="metric-denom" th:text="'из ' + ${metrics.attemptsTotal}">из 0</span></dd></div>
             </dl>
+            <p class="metric-note">Доля верных: первая попытка — только первые ответы,
+               все попытки — включая повторные (знаменатель: верных + ошибочных).</p>
         </article>
         <article class="metric-group">
             <h3 class="metric-group-title">Удержание</h3>

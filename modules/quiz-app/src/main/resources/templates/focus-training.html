@@ -32,6 +32,17 @@
              DEC-003=B (переподтв. 2026-07-16) статус сессии вынесен в отдельный
              .focus-aside — на >=1080px он становится правым рельсом grid'а, на узких
              стекается в потоке (см. base.css, PROC-07). -->
+        <!-- P0.1: левая колонка split-раскладки как ОДИН grid-элемент (.focus-rail).
+             Раньше topbar/рельс/тема/причина/вопрос/код/диаграмма были плоскими прямыми
+             детьми .focus-training; в split высокая форма (col2) через grid-ряды
+             раздувала первый ряд и отрывала топбар от остального стека (~500px зазор),
+             а span-подход ломался на коротких вопросах (форма выше стека → лента
+             наезжала). Обёртка делает col1 и col2 полностью независимыми колонками:
+             рейка сама стекается flex-column, форма — своя колонка, лента — под обеими.
+             ВНЕ split (flow/grid/PROC-07) .focus-rail = display:contents → прозрачна,
+             дети хойстятся как прямые grid-элементы .focus-training (существующие
+             descendant-селекторы продолжают матчить). -->
+        <div class="focus-rail">
         <div class="focus-topbar">
             <div class="question-zone-head">
                 <span class="zone-chip" th:text="${focusModeChipText}">Тренировка</span>
@@ -121,6 +132,7 @@
              th:if="${current.question.diagramMermaid() != null and !current.question.diagramMermaid().isBlank()}">
             <pre class="mermaid" th:text="${current.question.diagramMermaid()}"></pre>
         </div>
+        </div><!-- /.focus-rail : конец левой колонки split -->
 
         <div th:if="${flashcardMode}" class="flashcard-phase"
              th:with="sessionFlashcard=${interviewSession != null and interviewSession.mode != null and interviewSession.mode.name() == 'FLASHCARD'}">
