@@ -11,31 +11,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring Boot` отличается от Spring только языком: он требует писать код на `Kotlin` вместо `Java`, а во всём остальном — автоконфигурации, стартерах, сервере — идентичен Spring.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Boot` работает на Java, Kotlin и Groovy; язык ни при чём — отличие в автоконфигурации, стартерах и встроенном сервере.",
-                "source_of_confusion": "Boot-документация часто показывает Kotlin-примеры.",
-                "if_it_were_true": "Тогда `Boot` нельзя было бы использовать на чистой Java, что неверно.",
-                "how_it_should_be": "Язык произволен; суть `Boot` — opinionated-настройка поверх Spring."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`Spring Boot` — это IDE-плагин для генерации проектов: он создаёт каркас в редакторе, но не попадает в зависимости и никак не влияет на runtime готового приложения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Spring Boot` — runtime-фреймворк и набор библиотек; генерацией каркаса занимается отдельный `Spring Initializr`.",
-                "source_of_confusion": "Путают `Boot` со `Spring Initializr` и поддержкой в IDE.",
-                "if_it_were_true": "Тогда в итоговом артефакте не было бы зависимостей `spring-boot-*`, но они есть.",
-                "how_it_should_be": "`Initializr` генерирует каркас; `Boot` работает в рантайме."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`Spring Boot` — надстройка над `Spring Framework`, решающая boilerplate-конфигурацию, управление зависимостями и развёртывание; ядро `Spring` остаётся тем же.",
+              "text": "`Spring Boot` — надстройка над `Spring Framework`: убирает boilerplate-конфигурацию через автоконфигурацию, подтягивает совместимые версии стартерами и упрощает развёртывание; ядро `Spring` то же.",
               "correct": true,
               "sections": {
                 "explanation": "`Spring Boot` не заменяет Spring, а упрощает его opinionated-настройкой. Три решённые проблемы: автоконфигурация бинов по classpath вместо XML/`@Configuration`; стартеры подтягивают совместимые версии; встроенный сервер позволяет запускать `JAR` без внешнего контейнера. Под капотом — тот же `Spring Context`, `DI`, `AOP`. Точка входа — класс с `@SpringBootApplication` и `SpringApplication.run()`.",
@@ -46,9 +22,33 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Boot` отличается от Spring выбором языка: он требует писать код на `Kotlin` вместо `Java`, тогда как автоконфигурация, стартеры и встроенный сервер остаются такими же, как в обычном Spring.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Boot` работает на Java, Kotlin и Groovy; язык ни при чём — отличие в автоконфигурации, стартерах и встроенном сервере.",
+                "source_of_confusion": "Boot-документация часто показывает Kotlin-примеры.",
+                "if_it_were_true": "Тогда `Boot` нельзя было бы использовать на чистой Java, что неверно.",
+                "how_it_should_be": "Язык произволен; суть `Boot` — opinionated-настройка поверх Spring."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Boot` — это IDE-плагин для генерации проектов: он создаёт каркас прямо в редакторе, но сам не попадает в зависимости артефакта и не влияет на runtime готового приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring Boot` — runtime-фреймворк и набор библиотек; генерацией каркаса занимается отдельный `Spring Initializr`.",
+                "source_of_confusion": "Путают `Boot` со `Spring Initializr` и поддержкой в IDE.",
+                "if_it_were_true": "Тогда в итоговом артефакте не было бы зависимостей `spring-boot-*`, но они есть.",
+                "how_it_should_be": "`Initializr` генерирует каркас; `Boot` работает в рантайме."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "`Spring Boot` — полностью переписанный с нуля фреймворк, не использующий код `Spring Framework`; он несёт собственный IoC-контейнер и собственную реализацию AOP, несовместимую со Spring.",
+              "text": "`Spring Boot` — переписанный с нуля фреймворк, не использующий код `Spring Framework`: он несёт собственный IoC-контейнер и собственную реализацию AOP, несовместимую с бинами Spring.",
               "correct": false,
               "sections": {
                 "what_actually": "`Spring Boot` зависит от `Spring Framework` и переиспользует его контейнер, AOP и MVC; это надстройка, а не замена.",
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring Boot` отказался от Dependency Injection и `@Transactional` в пользу собственного механизма внедрения, поэтому код с `@Autowired` приходится переписывать при переходе на Boot.",
+              "text": "`Spring Boot` отказался от Dependency Injection и `@Transactional` в пользу собственного механизма внедрения бинов, поэтому код с `@Autowired` приходится переписывать при переходе с классического `Spring`.",
               "correct": false,
               "sections": {
                 "what_actually": "DI, AOP и `@Transactional` — это ядро Spring, которое Boot полностью переиспользует без изменений.",
@@ -83,7 +83,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Spring` и `Spring Boot` — независимые конкурирующие фреймворки с разными ядрами и разной моделью программирования; `@Transactional` и MVC у них работают по-разному, поэтому код несовместим.",
+              "text": "`Spring Boot` использует `Spring Framework` как ядро и добавляет поверх три слоя: автоконфигурацию по classpath, стартеры с общим BOM и встроенный сервер (`java -jar`); ядро `DI`, `AOP`, MVC остаётся тем же.",
+              "correct": true,
+              "sections": {
+                "explanation": "Различие — в эргономике, а не в фундаменте. Слои поверх Spring: автоконфигурация (по classpath вместо явных XML/`@Configuration`), стартеры с BOM (вместо ручного подбора версий) и встроенный сервер (`java -jar` вместо WAR на внешний контейнер); плюс `Actuator` из коробки и профили через `application-{profile}.yml`. `DI`, `AOP`, `@Transactional`, MVC работают идентично — код Spring без изменений работает в Boot.",
+                "example": "Spring: явный `web.xml` + `DispatcherServlet` + внешний Tomcat. Boot: `spring-boot-starter-web` + `java -jar` — то же, но без ручной обвязки.",
+                "when_to_apply": "Boot выбирают для новых проектов; чистый Spring — в legacy или при полном контроле над конфигурацией.",
+                "edge_cases": "Автоконфигурация может конфликтовать с ручной — тогда её отключают через `exclude` или переопределяют бины.",
+                "related": "[[spring-boot-interview#Q1]] что такое Boot; [[spring-boot-interview#Q9]] автоконфигурация; [[spring-boot-interview#Q33]] миграция со Spring."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring` и `Spring Boot` — независимые конкурирующие фреймворки с разными ядрами и разной моделью программирования; `@Transactional` и MVC у них устроены по-разному, поэтому код между ними напрямую несовместим.",
               "correct": false,
               "sections": {
                 "what_actually": "`Spring Boot` использует `Spring Framework` как ядро (DI, AOP, `@Transactional`, MVC) и лишь добавляет слои поверх.",
@@ -93,28 +106,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`Spring Boot` требует внешний сервер приложений для запуска, точно так же, как и классический `Spring`: исполняемого fat-JAR он не собирает, нужен установленный Tomcat.",
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Boot`, как и классический `Spring`, для запуска рассчитывает на внешний сервер приложений: исполняемый fat-JAR он не собирает, поэтому нужен заранее установленный Tomcat или другой сервлет-контейнер.",
               "correct": false,
               "sections": {
                 "what_actually": "Boot встраивает сервер (Tomcat/Jetty/Undertow) и запускается как `java -jar`; внешний контейнер нужен только при WAR-деплое.",
                 "source_of_confusion": "Опыт WAR-деплоя классического Spring переносят на Boot.",
                 "if_it_were_true": "Тогда не было бы исполняемого fat-JAR, но это стандарт Boot.",
                 "how_it_should_be": "Boot встраивает сервер; внешний контейнер опционален (WAR)."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Spring Boot` использует `Spring Framework` как ядро и добавляет три слоя: автоконфигурацию, стартеры с BOM и встроенный сервер; ядро (`DI`, `AOP`, MVC) одинаково.",
-              "correct": true,
-              "sections": {
-                "explanation": "Различие — в эргономике, а не в фундаменте. Слои поверх Spring: автоконфигурация (по classpath вместо явных XML/`@Configuration`), стартеры с BOM (вместо ручного подбора версий) и встроенный сервер (`java -jar` вместо WAR на внешний контейнер); плюс `Actuator` из коробки и профили через `application-{profile}.yml`. `DI`, `AOP`, `@Transactional`, MVC работают идентично — код Spring без изменений работает в Boot.",
-                "example": "Spring: явный `web.xml` + `DispatcherServlet` + внешний Tomcat. Boot: `spring-boot-starter-web` + `java -jar` — то же, но без ручной обвязки.",
-                "when_to_apply": "Boot выбирают для новых проектов; чистый Spring — в legacy или при полном контроле над конфигурацией.",
-                "edge_cases": "Автоконфигурация может конфликтовать с ручной — тогда её отключают через `exclude` или переопределяют бины.",
-                "related": "[[spring-boot-interview#Q1]] что такое Boot; [[spring-boot-interview#Q9]] автоконфигурация; [[spring-boot-interview#Q33]] миграция со Spring."
               }
             }
           ]
@@ -131,7 +131,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@SpringBootApplication` только помечает main-класс как точку входа и не запускает никакой автоконфигурации; это чистый маркер, без вложенных аннотаций и без сканирования компонентов.",
+              "text": "`@SpringBootApplication` — мета-аннотация, объединяющая `@SpringBootConfiguration`, `@EnableAutoConfiguration` и `@ComponentScan`; main-класс кладут в корневой пакет, чтобы сканирование его охватило.",
+              "correct": true,
+              "sections": {
+                "explanation": "Три аннотации в одной задают типичную точку входа: бины из автоконфигурации + бины приложения из сканирования пакета. `@SpringBootConfiguration` == `@Configuration` (класс — источник бинов); `@EnableAutoConfiguration` запускает автоконфигурацию; `@ComponentScan` сканирует пакет класса и вложенные — поэтому main-класс размещают в корневом пакете. Атрибуты: `exclude` (исключить автоконфигурации) и `scanBasePackages` (переопределить корень сканирования).",
+                "example": "`@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)` отключает автонастройку датасорса.",
+                "when_to_apply": "Используют на единственном main-классе; для нестандартной структуры пакетов задают `scanBasePackages`.",
+                "edge_cases": "Класс в глубоком пакете «не увидит» компоненты в соседних ветках — частая причина «бин не найден».",
+                "related": "[[spring-boot-interview#Q9]] что делает @EnableAutoConfiguration; [[spring-boot-interview#Q11]] exclude автоконфигурации; [[spring-boot-interview#Q30]] обзор аннотаций."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`@SpringBootApplication` — маркер точки входа, а не мета-аннотация: он не включает `@EnableAutoConfiguration` и `@ComponentScan`, поэтому автоконфигурацию и сканирование подключают отдельными аннотациями.",
               "correct": false,
               "sections": {
                 "what_actually": "Это мета-аннотация, объединяющая `@SpringBootConfiguration`, `@EnableAutoConfiguration` и `@ComponentScan` — она запускает автоконфигурацию и сканирование.",
@@ -141,9 +154,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`@SpringBootApplication` нельзя комбинировать с дополнительными аннотациями `@Enable*` на main-классе: `@EnableScheduling` или `@EnableCaching` рядом с ней вызовут конфликт мета-аннотаций.",
+              "order": 2,
+              "label": "C",
+              "text": "`@SpringBootApplication` уже содержит набор мета-аннотаций, поэтому ставить рядом `@EnableScheduling` или `@EnableCaching` на том же main-классе не следует — это вызывает конфликт мета-аннотаций.",
               "correct": false,
               "sections": {
                 "what_actually": "На main-класс свободно добавляют `@EnableScheduling`, `@EnableCaching` и др. — это обычная практика.",
@@ -153,28 +166,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`@ComponentScan` внутри `@SpringBootApplication` сканирует весь classpath целиком, включая подключённые библиотеки, поэтому бины из сторонних jar подхватываются как `@Component` автоматически.",
+              "order": 3,
+              "label": "D",
+              "text": "`@ComponentScan` внутри `@SpringBootApplication` сканирует весь classpath, включая подключённые библиотеки, поэтому классы с `@Component` из сторонних jar регистрируются как бины автоматически.",
               "correct": false,
               "sections": {
                 "what_actually": "Сканирование начинается с пакета main-класса и его подпакетов, а не всего classpath; поэтому класс кладут в корневой пакет.",
                 "source_of_confusion": "Кажется, что сканируется всё приложение целиком.",
                 "if_it_were_true": "Тогда бины из произвольных библиотек подхватывались бы автоматически, но сканируется только дерево пакета.",
                 "how_it_should_be": "`@ComponentScan` сканирует пакет main-класса и вложенные."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`@SpringBootApplication` — мета-аннотация, объединяющая `@SpringBootConfiguration`, `@EnableAutoConfiguration` и `@ComponentScan`; main-класс кладут в корневой пакет.",
-              "correct": true,
-              "sections": {
-                "explanation": "Три аннотации в одной задают типичную точку входа: бины из автоконфигурации + бины приложения из сканирования пакета. `@SpringBootConfiguration` == `@Configuration` (класс — источник бинов); `@EnableAutoConfiguration` запускает автоконфигурацию; `@ComponentScan` сканирует пакет класса и вложенные — поэтому main-класс размещают в корневом пакете. Атрибуты: `exclude` (исключить автоконфигурации) и `scanBasePackages` (переопределить корень сканирования).",
-                "example": "`@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)` отключает автонастройку датасорса.",
-                "when_to_apply": "Используют на единственном main-классе; для нестандартной структуры пакетов задают `scanBasePackages`.",
-                "edge_cases": "Класс в глубоком пакете «не увидит» компоненты в соседних ветках — частая причина «бин не найден».",
-                "related": "[[spring-boot-interview#Q9]] что делает @EnableAutoConfiguration; [[spring-boot-interview#Q11]] exclude автоконфигурации; [[spring-boot-interview#Q30]] обзор аннотаций."
               }
             }
           ]
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В Gradle для Spring Boot достаточно добавить зависимость без подключения каких-либо плагинов: задача `bootJar` и управление версиями работают сами, без `org.springframework.boot`.",
+              "text": "В Gradle для Spring Boot подключают зависимости стартеров, и задача `bootJar` вместе с согласованием версий приходит со `spring-boot-starter`; плагин `org.springframework.boot` добавлять не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Нужны плагины `org.springframework.boot` и `io.spring.dependency-management` — они дают `bootJar` и управление версиями.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В Maven единственный способ подключить Spring Boot — наследование от `spring-boot-starter-parent`; проекты с корпоративным parent POM использовать Boot не могут, импорт BOM не предусмотрен.",
+              "text": "В Maven Spring Boot подключают наследованием от `spring-boot-starter-parent`, и при занятом корпоративном parent POM согласовать версии стартеров нельзя: импорт BOM `spring-boot-dependencies` не предусмотрен.",
               "correct": false,
               "sections": {
                 "what_actually": "Если parent занят корпоративным POM, версии подключают через BOM `spring-boot-dependencies` в `dependencyManagement` со `scope=import`.",
@@ -215,19 +215,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Версии всех зависимостей Spring Boot нужно прописывать вручную в каждой зависимости проекта, потому что общего BOM, согласующего версии стартеров между собой, у Boot нет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Версии управляются централизованно через `spring-boot-starter-parent` (Maven) или BOM `spring-boot-dependencies`; в стартерах версии не указывают.",
-                "source_of_confusion": "Привычка явно версионировать каждую зависимость.",
-                "if_it_were_true": "Тогда теряся бы смысл BOM, но именно он согласует версии.",
-                "how_it_should_be": "Версии задаёт parent/BOM; в стартерах их опускают."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "В Maven наследуются от `spring-boot-starter-parent` (или импортируют BOM), в Gradle подключают плагины `spring-boot` и `dependency-management`; версии в стартерах не указывают.",
+              "text": "В Maven наследуют `spring-boot-starter-parent` или импортируют BOM `spring-boot-dependencies`, в Gradle подключают плагины `spring-boot` и `dependency-management`; версии в стартерах не указывают.",
               "correct": true,
               "sections": {
                 "explanation": "Централизованное управление версиями устраняет конфликты совместимости. Parent даёт управление версиями и плагин; если parent занят корпоративным POM — импортируют BOM `spring-boot-dependencies` в `dependencyManagement` (`type=pom`, `scope=import`). В Gradle подключают `org.springframework.boot` и `io.spring.dependency-management`. Версии библиотек в стартерах задаёт BOM, а не разработчик.",
@@ -235,6 +223,18 @@
                 "when_to_apply": "Parent — для типовых проектов; BOM-импорт — когда уже есть корпоративный parent POM.",
                 "edge_cases": "Ручное переопределение версии одной Spring-зависимости может рассогласовать набор и вызвать `NoSuchMethodError`.",
                 "related": "[[spring-boot-interview#Q6]] стартеры; [[spring-boot-interview#Q1]] что такое Boot; [[spring-boot-interview#Q5]] Spring Initializr."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В Spring Boot версию каждой зависимости прописывают в её объявлении: общего BOM, согласующего версии стартеров между собой, у Boot не поставляется, и за совместимость версий отвечает разработчик.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Версии управляются централизованно через `spring-boot-starter-parent` (Maven) или BOM `spring-boot-dependencies`; в стартерах версии не указывают.",
+                "source_of_confusion": "Привычка явно версионировать каждую зависимость.",
+                "if_it_were_true": "Тогда теряся бы смысл BOM, но именно он согласует версии.",
+                "how_it_should_be": "Версии задаёт parent/BOM; в стартерах их опускают."
               }
             }
           ]
@@ -251,20 +251,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring Initializr` — веб-инструмент (и API) для генерации каркаса проекта Spring Boot: сборка, язык, версия Boot и стартеры на выходе дают готовый ZIP.",
-              "correct": true,
-              "sections": {
-                "explanation": "Это разовый генератор стартового проекта (start.spring.io), а не runtime-компонент: он создаёт корректный `pom.xml`/`build.gradle` и структуру. На сайте выбирают систему сборки (Maven/Gradle), язык (Java/Kotlin/Groovy), версию Boot и зависимости-стартеры. IDE (IntelliJ, VS Code) используют его API под капотом, есть и CLI: `spring init --dependencies=web,data-jpa my-project`.",
-                "example": "`spring init --dependencies=web,data-jpa,actuator demo` создаёт проект с этими стартерами.",
-                "when_to_apply": "Используют в начале нового проекта, чтобы не собирать конфигурацию сборки вручную.",
-                "edge_cases": "Initializr не управляет проектом после генерации — обновление версий/зависимостей далее делают вручную.",
-                "related": "[[spring-boot-interview#Q1]] что такое Boot; [[spring-boot-interview#Q4]] настройка сборки; [[spring-boot-interview#Q6]] стартеры."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`Spring Initializr` — это runtime-библиотека, которая входит в зависимости каждого Spring Boot проекта и работает в рантайме вместе с приложением, как и `spring-core`.",
+              "text": "`Spring Initializr` — это runtime-библиотека, которая входит в зависимости Spring Boot проекта наравне со `spring-core` и `spring-context` и продолжает работать в рантайме вместе с приложением после старта.",
               "correct": false,
               "sections": {
                 "what_actually": "Initializr — внешний генератор каркаса; в зависимостях приложения его нет.",
@@ -274,9 +261,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`Spring Initializr` поддерживает только систему сборки Maven и только язык Java: сгенерировать проект на Gradle или Kotlin через него нельзя, для этого нужны другие инструменты.",
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Initializr` ограничен системой сборки Maven и языком Java: сгенерировать проект на Gradle или Kotlin через него нельзя, и для такого стека приходится брать сторонние генераторы каркаса.",
               "correct": false,
               "sections": {
                 "what_actually": "Поддерживаются Maven и Gradle, а также Java, Kotlin и Groovy.",
@@ -286,15 +273,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`Spring Initializr` генерирует полный код приложения с готовой бизнес-логикой по текстовому описанию: контроллеры и сервисы создаются автоматически, писать их не нужно.",
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Initializr` генерирует полный код приложения с готовой бизнес-логикой по текстовому описанию задачи: контроллеры, сервисы и репозитории он создаёт сам, и писать их разработчику не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Он создаёт только каркас (сборка, структура, main-класс, выбранные стартеры) — без бизнес-логики.",
                 "source_of_confusion": "«Генератор проекта» трактуют как генератор кода.",
                 "if_it_were_true": "Тогда не нужно было бы писать контроллеры/сервисы, но их пишет разработчик.",
                 "how_it_should_be": "Initializr даёт пустой каркас; логику пишут сами."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Initializr` — веб-инструмент и API (`start.spring.io`) для генерации каркаса проекта Spring Boot: выбирают сборку, язык, версию Boot и стартеры, а на выходе получают готовый ZIP-архив проекта.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это разовый генератор стартового проекта (start.spring.io), а не runtime-компонент: он создаёт корректный `pom.xml`/`build.gradle` и структуру. На сайте выбирают систему сборки (Maven/Gradle), язык (Java/Kotlin/Groovy), версию Boot и зависимости-стартеры. IDE (IntelliJ, VS Code) используют его API под капотом, есть и CLI: `spring init --dependencies=web,data-jpa my-project`.",
+                "example": "`spring init --dependencies=web,data-jpa,actuator demo` создаёт проект с этими стартерами.",
+                "when_to_apply": "Используют в начале нового проекта, чтобы не собирать конфигурацию сборки вручную.",
+                "edge_cases": "Initializr не управляет проектом после генерации — обновление версий/зависимостей далее делают вручную.",
+                "related": "[[spring-boot-interview#Q1]] что такое Boot; [[spring-boot-interview#Q4]] настройка сборки; [[spring-boot-interview#Q6]] стартеры."
               }
             }
           ]
@@ -311,7 +311,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Starter` — Maven/Gradle-артефакт без своего кода: агрегатор, транзитивно подтягивающий совместимые библиотеки и включающий автоконфигурацию.",
+              "text": "Starter — это библиотека с готовым кодом бизнес-логики, который подключается и сразу работает в проекте: например, `spring-boot-starter-web` содержит готовые классы контроллеров и сервисов приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Starter — POM-агрегатор зависимостей (без своего кода) + автоконфигурация; собственной бизнес-логики он не содержит.",
+                "source_of_confusion": "Слово «стартер» наводит на мысль о готовом коде.",
+                "if_it_were_true": "Тогда `spring-boot-starter-web` содержал бы классы приложения, но это лишь агрегатор.",
+                "how_it_should_be": "Starter = агрегатор зависимостей + автоконфигурация, без кода."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Starter` — Maven/Gradle-артефакт без собственного кода: POM-агрегатор, который транзитивно подтягивает набор совместимых библиотек и активирует автоконфигурацию по условиям classpath.",
               "correct": true,
               "sections": {
                 "explanation": "Без автоконфигурации starter был бы просто BOM. Связка «зависимости + условные бины» даёт эффект «подключил — заработало»: при появлении нужных классов в classpath Boot создаёт бины по условиям. Именование: официальные `spring-boot-starter-{name}`, сторонние `{name}-spring-boot-starter`.",
@@ -322,21 +334,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Starter — это библиотека с готовым кодом бизнес-логики, который подключается и работает в проекте: например, `spring-boot-starter-web` содержит готовые классы контроллеров и сервисов приложения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Starter — POM-агрегатор зависимостей (без своего кода) + автоконфигурация; собственной бизнес-логики он не содержит.",
-                "source_of_confusion": "Слово «стартер» наводит на мысль о готовом коде.",
-                "if_it_were_true": "Тогда `spring-boot-starter-web` содержал бы классы приложения, но это лишь агрегатор.",
-                "how_it_should_be": "Starter = агрегатор зависимостей + автоконфигурация, без кода."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "Официальные стартеры именуются по схеме `{name}-spring-boot-starter` (имя в начале артефакта), а сторонние — с префиксом `spring-boot-starter-{name}`, то есть наоборот.",
+              "text": "Официальные стартеры именуются по схеме `{name}-spring-boot-starter`, где имя стоит в начале артефакта, а сторонние — с префиксом `spring-boot-starter-{name}`, то есть ровно наоборот.",
               "correct": false,
               "sections": {
                 "what_actually": "Официальные — `spring-boot-starter-{name}` (префикс); суффиксное `{name}-spring-boot-starter` — конвенция для сторонних.",
@@ -348,7 +348,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Starter не влияет на создание бинов — он только добавляет jar-файлы зависимостей в classpath; `DispatcherServlet` и прочие бины после этого настраивают вручную.",
+              "text": "Starter не влияет на создание бинов: он добавляет jar-файлы зависимостей в classpath, а `DispatcherServlet` и прочие бины разработчик после этого регистрирует и настраивает вручную.",
               "correct": false,
               "sections": {
                 "what_actually": "Помимо зависимостей starter активирует автоконфигурацию, которая и создаёт бины по условиям classpath.",
@@ -371,7 +371,31 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Популярные стартеры: `web` (MVC+Tomcat), `data-jpa` (Hibernate), `security`, `test` (в test-scope), `actuator`, `validation`, `webflux` (реактивный), `data-redis`.",
+              "text": "Среди популярных стартеров `starter-web` подключает реактивный неблокирующий стек на сервере Netty, тогда как `starter-webflux` даёт классический сервлетный Spring MVC на встроенном Tomcat с Jackson.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`starter-web` — это сервлетный стек (Spring MVC + встроенный Tomcat + Jackson); реактивный стек на Netty даёт `starter-webflux`.",
+                "source_of_confusion": "Оба стартера про «веб», поэтому их сервлетный и реактивный стеки легко смешать.",
+                "if_it_were_true": "Тогда `starter-web` и `starter-webflux` были бы взаимозаменяемы, но это разные модели.",
+                "how_it_should_be": "`starter-web` — MVC/Tomcat; `starter-webflux` — реактивный/Netty."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Среди популярных `starter-data-jpa`, но он не включает саму реализацию JPA: Hibernate и пул соединений подключают отдельными зависимостями, иначе Spring Data репозитории не заработают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`starter-data-jpa` тянет Hibernate (реализация JPA) и пул соединений транзитивно — отдельно добавлять не нужно.",
+                "source_of_confusion": "Кажется, что нужна явная JPA-реализация.",
+                "if_it_were_true": "Тогда после подключения стартера репозитории не работали бы, но они работают сразу.",
+                "how_it_should_be": "`starter-data-jpa` уже включает Hibernate и пул соединений."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Популярные стартеры: `starter-web` (Spring MVC + Tomcat), `starter-data-jpa` (Hibernate), `starter-security`, `starter-test` (test-scope), `starter-actuator`, `starter-webflux` (Netty).",
               "correct": true,
               "sections": {
                 "explanation": "Каждый стартер — связка «зависимости + автоконфигурация» под конкретную задачу; подключают ровно нужные. Подробнее: `starter-web` (Spring MVC + Tomcat + Jackson), `starter-data-jpa` (Spring Data JPA + Hibernate + пул соединений), `starter-test` (JUnit 5 + Mockito + MockMvc + AssertJ, в test-scope), `starter-actuator` (мониторинг + Micrometer), `starter-webflux` (реактивный/Netty), `starter-data-redis` (Lettuce).",
@@ -382,33 +406,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`spring-boot-starter-web` подключает реактивный неблокирующий стек на сервере Netty, а `starter-webflux` — наоборот, классический Spring MVC на Tomcat.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`starter-web` — это сервлетный стек (Spring MVC + встроенный Tomcat + Jackson); реактивный стек на Netty даёт `starter-webflux`.",
-                "source_of_confusion": "Оба стартера про «веб», поэтому их сервлетный и реактивный стеки легко смешать.",
-                "if_it_were_true": "Тогда `starter-web` и `starter-webflux` были бы взаимозаменяемы, но это разные модели.",
-                "how_it_should_be": "`starter-web` — MVC/Tomcat; `starter-webflux` — реактивный/Netty."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`spring-boot-starter-data-jpa` не включает реализацию JPA — Hibernate и пул соединений приходится добавлять отдельными зависимостями, иначе репозитории не заработают.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`starter-data-jpa` тянет Hibernate (реализация JPA) и пул соединений транзитивно — отдельно добавлять не нужно.",
-                "source_of_confusion": "Кажется, что нужна явная JPA-реализация.",
-                "if_it_were_true": "Тогда после подключения стартера репозитории не работали бы, но они работают сразу.",
-                "how_it_should_be": "`starter-data-jpa` уже включает Hibernate и пул соединений."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "`spring-boot-starter-test` нужно подключать в обычный (`implementation`) scope приложения, иначе JUnit и Mockito будут недоступны в коде продакшена.",
+              "text": "Среди популярных `starter-test`, который подключают в обычный `implementation`-scope приложения рядом с `starter-web`, иначе JUnit 5 и Mockito окажутся недоступны в коде продакшена.",
               "correct": false,
               "sections": {
                 "what_actually": "`starter-test` подключают в test-scope (`testImplementation`), он не нужен в рантайме приложения.",
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Автоконфигурацию своего стартера регистрируют, просто пометив её класс аннотацией `@Configuration`: из чужого jar она подхватится автоматически, отдельный файл-индекс не нужен.",
+              "text": "Свой стартер разбивают на два модуля, но класс автоконфигурации в `*-autoconfigure` помечают `@Configuration`: из чужого jar его подхватит сканирование контекста, файл `.imports` заводить не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Класс помечают `@AutoConfiguration` и регистрируют в файле `META-INF/spring/...AutoConfiguration.imports`; одного `@Configuration` недостаточно.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В Spring Boot 3.x автоконфигурацию своего стартера регистрируют в файле `META-INF/spring.factories` с ключом `EnableAutoConfiguration`, как и в версии 2.x.",
+              "text": "Свой стартер — два модуля: `*-autoconfigure` и пустой `*-starter` POM. В Spring Boot 3.x класс автоконфигурации регистрируют в `META-INF/spring.factories` под ключом `EnableAutoConfiguration`, как и в версии 2.x.",
               "correct": false,
               "sections": {
                 "what_actually": "В 3.x используют `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`; `spring.factories` — это 2.x.",
@@ -455,19 +455,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Свой стартер — это один модуль, содержащий бизнес-логику и её автоконфигурацию вместе в одном артефакте; разделения на `*-autoconfigure` и `*-starter` конвенция не предусматривает.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Принято два модуля: `*-autoconfigure` (автоконфигурация + properties) и пустой `*-starter` (POM, тянущий autoconfigure + нужные библиотеки).",
-                "source_of_confusion": "Кажется проще держать всё в одном модуле.",
-                "if_it_were_true": "Тогда не было бы конвенции разделения autoconfigure/starter, но она стандартна.",
-                "how_it_should_be": "Разделяют на модуль автоконфигурации и модуль-агрегатор (starter)."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Свой стартер — два модуля: `*-autoconfigure` с классом `@AutoConfiguration` в файле `.imports`, и пустой `*-starter` POM, тянущий autoconfigure и библиотеки.",
+              "text": "Свой стартер — два модуля: `*-autoconfigure` с `@AutoConfiguration`, зарегистрированным в файле `META-INF/spring/...AutoConfiguration.imports`, и пустой `*-starter` POM, тянущий autoconfigure и библиотеки.",
               "correct": true,
               "sections": {
                 "explanation": "Разделение позволяет подключать автоконфигурацию и без «удобного» агрегатора. Класс автоконфигурации часто несёт `@ConditionalOnClass` + `@EnableConfigurationProperties` + `@Bean @ConditionalOnMissingBean` (последняя даёт пользователю переопределить бин) и регистрируется в `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` (в 2.x — `spring.factories`). Второй модуль — пустой `*-starter` POM.",
@@ -475,6 +463,18 @@
                 "when_to_apply": "Свой стартер делают для переиспользуемой библиотеки/инфраструктуры между сервисами компании.",
                 "edge_cases": "Забытая регистрация в `.imports` — автоконфигурация молча не сработает; в 3.x путают с `spring.factories`.",
                 "related": "[[spring-boot-interview#Q6]] что такое стартер; [[spring-boot-interview#Q12]] регистрация автоконфигурации; [[spring-boot-interview#Q10]] @Conditional."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Свой стартер — это один модуль, где бизнес-логика и её `@AutoConfiguration` с файлом `.imports` лежат в одном артефакте; разделять на `*-autoconfigure` и агрегатор `*-starter` конвенция не предусматривает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Принято два модуля: `*-autoconfigure` (автоконфигурация + properties) и пустой `*-starter` (POM, тянущий autoconfigure + нужные библиотеки).",
+                "source_of_confusion": "Кажется проще держать всё в одном модуле.",
+                "if_it_were_true": "Тогда не было бы конвенции разделения autoconfigure/starter, но она стандартна.",
+                "how_it_should_be": "Разделяют на модуль автоконфигурации и модуль-агрегатор (starter)."
               }
             }
           ]
@@ -491,7 +491,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Поток: `run()` → контекст → `AutoConfigurationImportSelector` собирает кандидатов из `.imports` → фильтр по classpath → условная регистрация по `@Conditional` → упорядочивание.",
+              "text": "`AutoConfigurationImportSelector` регистрирует все ~150 автоконфигураций из `.imports` независимо от `@Conditional`, поэтому подключение `starter-web` тянет в контекст вместе с MVC ещё и JPA-бины.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Кандидаты фильтруются по `@Conditional` (наличие классов, отсутствие бина и т.д.) — большинство пропускается.",
+                "source_of_confusion": "Кажется, что все автоконфигурации применяются.",
+                "if_it_were_true": "Тогда подключение `starter-web` тащило бы и JPA-бины, но без JPA в classpath они пропускаются.",
+                "how_it_should_be": "Применяются только автоконфигурации, прошедшие условия."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Поток: `run()` → контекст → `AutoConfigurationImportSelector` собирает кандидатов из `.imports` → отсев по classpath → условная регистрация по `@Conditional` → упорядочивание через `@AutoConfigureAfter`.",
               "correct": true,
               "sections": {
                 "explanation": "Ключевая идея: кандидаты сначала дёшево отфильтровываются по classpath, и лишь оставшиеся проверяются условиями на уровне бинов. Запускает поток `@EnableAutoConfiguration` через `@SpringBootApplication`. Кандидаты берутся из `META-INF/spring/...AutoConfiguration.imports` (3.x) / `spring.factories` (2.x) — ~150 шт. в Boot 3.3. Каждый `@AutoConfiguration` проходит `@Conditional`, затем упорядочивается через `@AutoConfigureBefore/After/Order`. Отладка: `--debug` печатает `CONDITIONS EVALUATION REPORT`.",
@@ -502,21 +514,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`AutoConfigurationImportSelector` создаёт ВСЕ ~150 автоконфигураций сразу, без фильтрации по условиям, поэтому подключение `starter-web` тащит в контекст и JPA-бины.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Кандидаты фильтруются по `@Conditional` (наличие классов, отсутствие бина и т.д.) — большинство пропускается.",
-                "source_of_confusion": "Кажется, что все автоконфигурации применяются.",
-                "if_it_were_true": "Тогда подключение `starter-web` тащило бы и JPA-бины, но без JPA в classpath они пропускаются.",
-                "how_it_should_be": "Применяются только автоконфигурации, прошедшие условия."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "Порядок применения автоконфигураций определяется случайно, и повлиять на него из приложения нельзя; зависимые конфигурации вроде datasource→jpa могут срабатывать в любом порядке.",
+              "text": "Порядок применения автоконфигураций Spring Boot не определяет, а переопределить его из приложения нельзя, поэтому связки вроде `datasource` → `jpa` инициализируются в непредсказуемой последовательности.",
               "correct": false,
               "sections": {
                 "what_actually": "Порядок управляется `@AutoConfigureOrder`/`@AutoConfigureBefore`/`@AutoConfigureAfter`.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Автоконфигурация выполняется во время компиляции и зашивает готовые бины прямо в байткод приложения, поэтому отчёт условий в рантайме (`--debug`) не нужен и не печатается.",
+              "text": "Автоконфигурация выполняется во время компиляции: `@AutoConfiguration`-классы превращаются в определения бинов и вшиваются в байткод fat-jar, поэтому `CONDITIONS EVALUATION REPORT` по `--debug` не печатается.",
               "correct": false,
               "sections": {
                 "what_actually": "Автоконфигурация работает в рантайме при старте контекста (в обычной JVM); compile-time обработка — это отдельный AOT в 3.x.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@ConditionalOnMissingBean` регистрирует бин, только если такой бин УЖЕ присутствует в контексте, а `@ConditionalOnBean` — наоборот, когда бина ещё нет; имена работают зеркально.",
+              "text": "Ключевая пара — `@ConditionalOnBean` и `@ConditionalOnMissingBean`: `@ConditionalOnMissingBean` регистрирует бин, когда такой бин УЖЕ есть в контексте, а `@ConditionalOnBean` — когда бина ещё нет; имена зеркальны.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `@ConditionalOnMissingBean` срабатывает, когда бина ещё НЕТ (принцип «user wins»); «уже есть» — это `@ConditionalOnBean`.",
@@ -563,20 +563,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@ConditionalOnClass`/`OnMissingClass`, `@ConditionalOnBean`/`OnMissingBean` (самая частая, «user wins»), `@ConditionalOnProperty`, `@ConditionalOnWebApplication`, `@ConditionalOnExpression`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`@ConditionalOnMissingBean` реализует «user wins»: если разработчик объявил свой бин, автоконфигурация его не перекрывает. Семантика: `OnClass`/`OnMissingClass` — наличие/отсутствие класса в classpath; `OnBean`/`OnMissingBean` — бин зарегистрирован/нет; `OnProperty` — значение свойства; `OnExpression` — SpEL. Есть ещё `@ConditionalOnResource`, `NotWebApplication`, `@ConditionalOnJava`, `@ConditionalOnCloudPlatform`. Условия ставят и на класс, и на `@Bean`-методы.",
-                "example": "`@AutoConfiguration @ConditionalOnClass(DataSource.class) @ConditionalOnProperty(prefix=\"spring.datasource\", name=\"url\") class DataSourceAutoConfiguration { @Bean @ConditionalOnMissingBean DataSource ds(...){...} }`.",
-                "when_to_apply": "Условные аннотации используют при написании автоконфигураций, чтобы бины создавались только в подходящем окружении.",
-                "edge_cases": "Порядок проверки важен: class-level условия вычисляются раньше bean-level, иначе возможен `NoSuchBeanDefinitionException`.",
-                "related": "[[spring-boot-interview#Q9]] поток автоконфигурации; [[spring-boot-interview#Q38]] условные аннотации детально; [[spring-boot-interview#Q8]] @ConditionalOnMissingBean в своём стартере."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Условные аннотации работают только на уровне класса конфигурации, но не на отдельных `@Bean`-методах, поэтому `@Bean @ConditionalOnMissingBean` на методе поставить нельзя.",
+              "text": "Условные аннотации рассчитаны на уровень класса конфигурации и не распространяются на отдельные `@Bean`-методы, поэтому пометить конкретный `@Bean` через `@ConditionalOnMissingBean` не выйдет.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Conditional`-аннотации применяются и к классам автоконфигурации, и к отдельным `@Bean`-методам.",
@@ -586,15 +573,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`@ConditionalOnProperty` проверяет только наличие свойства в конфигурации, но не его конкретное значение.",
+              "order": 2,
+              "label": "C",
+              "text": "`@ConditionalOnProperty` проверяет присутствие указанного свойства в `application.yml`/`.properties` и включает конфигурацию по факту его наличия, не сравнивая конкретное значение свойства.",
               "correct": false,
               "sections": {
                 "what_actually": "`@ConditionalOnProperty` умеет проверять и значение через `havingValue`, и поведение при отсутствии через `matchIfMissing`.",
                 "source_of_confusion": "Из примеров `@ConditionalOnProperty` видна только проверка существования свойства, а не сравнение значения.",
                 "if_it_were_true": "Тогда нельзя было бы включать бин по `enabled=true`, но это типовой приём.",
                 "how_it_should_be": "`@ConditionalOnProperty` сверяет значение (`havingValue`) и `matchIfMissing`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@ConditionalOnClass`/`OnMissingClass`, `@ConditionalOnBean`/`OnMissingBean` (принцип «user wins»), `@ConditionalOnProperty`, `@ConditionalOnWebApplication`, `@ConditionalOnExpression` (SpEL).",
+              "correct": true,
+              "sections": {
+                "explanation": "`@ConditionalOnMissingBean` реализует «user wins»: если разработчик объявил свой бин, автоконфигурация его не перекрывает. Семантика: `OnClass`/`OnMissingClass` — наличие/отсутствие класса в classpath; `OnBean`/`OnMissingBean` — бин зарегистрирован/нет; `OnProperty` — значение свойства; `OnExpression` — SpEL. Есть ещё `@ConditionalOnResource`, `NotWebApplication`, `@ConditionalOnJava`, `@ConditionalOnCloudPlatform`. Условия ставят и на класс, и на `@Bean`-методы.",
+                "example": "`@AutoConfiguration @ConditionalOnClass(DataSource.class) @ConditionalOnProperty(prefix=\"spring.datasource\", name=\"url\") class DataSourceAutoConfiguration { @Bean @ConditionalOnMissingBean DataSource ds(...){...} }`.",
+                "when_to_apply": "Условные аннотации используют при написании автоконфигураций, чтобы бины создавались только в подходящем окружении.",
+                "edge_cases": "Порядок проверки важен: class-level условия вычисляются раньше bean-level, иначе возможен `NoSuchBeanDefinitionException`.",
+                "related": "[[spring-boot-interview#Q9]] поток автоконфигурации; [[spring-boot-interview#Q38]] условные аннотации детально; [[spring-boot-interview#Q8]] @ConditionalOnMissingBean в своём стартере."
               }
             }
           ]
@@ -611,31 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Атрибут `exclude` принимает только одну автоконфигурацию за раз, для нескольких нужно дублировать аннотацию — передать массив классов он не позволяет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`exclude` принимает массив — можно отключить сразу несколько (`exclude = {DataSourceAutoConfiguration.class, SecurityAutoConfiguration.class}`).",
-                "source_of_confusion": "Кажется, что параметр принимает одно значение, как обычное поле.",
-                "if_it_were_true": "Тогда для нескольких пришлось бы дублировать аннотацию, но достаточно массива.",
-                "how_it_should_be": "`exclude` — массив; перечисляют несколько автоконфигураций сразу."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Свойство `spring.autoconfigure.exclude` принимает короткое имя класса автоконфигурации, без пакета — например, просто `DataSourceAutoConfiguration` вместо полного имени с пакетом.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Оно требует полное (fully-qualified) имя класса, например `org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration`.",
-                "source_of_confusion": "Короткое имя класса в коде встречается чаще, поэтому кажется, что его хватит и в свойстве.",
-                "if_it_were_true": "Тогда `DataSourceAutoConfiguration` без пакета сработал бы, но нужно полное имя.",
-                "how_it_should_be": "Указывают полное имя класса в `spring.autoconfigure.exclude`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Отключают тремя способами: `@SpringBootApplication(exclude=...)`, свойством `spring.autoconfigure.exclude`, `@EnableAutoConfiguration(exclude=...)`; зависимости остаются в classpath.",
+              "text": "Отключают тремя способами без удаления зависимостей: атрибут `exclude` в `@SpringBootApplication` или `@EnableAutoConfiguration`, либо свойство `spring.autoconfigure.exclude`; классы остаются в classpath.",
               "correct": true,
               "sections": {
                 "explanation": "Полезно, когда библиотека в classpath, но её автонастройка не нужна (например, JDBC есть, а датасорс конфигурируется вручную). Атрибут `exclude` принимает массив, поэтому можно отключить несколько сразу: `exclude = {DataSourceAutoConfiguration.class, SecurityAutoConfiguration.class}`. Свойство `spring.autoconfigure.exclude` требует полное имя класса.",
@@ -646,9 +622,33 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Автоконфигурацию отключают атрибутом `exclude` в `@SpringBootApplication`, но он принимает одну автоконфигурацию за вызов: чтобы погасить несколько, аннотацию дублируют, передать массив классов он не поддерживает.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`exclude` принимает массив — можно отключить сразу несколько (`exclude = {DataSourceAutoConfiguration.class, SecurityAutoConfiguration.class}`).",
+                "source_of_confusion": "Кажется, что параметр принимает одно значение, как обычное поле.",
+                "if_it_were_true": "Тогда для нескольких пришлось бы дублировать аннотацию, но достаточно массива.",
+                "how_it_should_be": "`exclude` — массив; перечисляют несколько автоконфигураций сразу."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Автоконфигурацию отключают свойством `spring.autoconfigure.exclude` в `application.yml`; оно принимает короткое имя класса без пакета, например `DataSourceAutoConfiguration`, а не полное имя с пакетом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оно требует полное (fully-qualified) имя класса, например `org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration`.",
+                "source_of_confusion": "Короткое имя класса в коде встречается чаще, поэтому кажется, что его хватит и в свойстве.",
+                "if_it_were_true": "Тогда `DataSourceAutoConfiguration` без пакета сработал бы, но нужно полное имя.",
+                "how_it_should_be": "Указывают полное имя класса в `spring.autoconfigure.exclude`."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "Конкретную автоконфигурацию можно отключить только удалив соответствующий стартер из зависимостей; держать JDBC в classpath и при этом гасить `DataSourceAutoConfiguration` нельзя.",
+              "text": "Конкретную автоконфигурацию отключают, убирая соответствующий стартер из зависимостей: пока JDBC остаётся в classpath, погасить `DataSourceAutoConfiguration` через `exclude` не выйдет, датасорс всё равно поднимется.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть три способа без удаления стартера: `@SpringBootApplication(exclude=...)`, свойство `spring.autoconfigure.exclude`, `@EnableAutoConfiguration(exclude=...)`.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В Spring Boot 3.x регистрируют в файле `META-INF/spring/...AutoConfiguration.imports` (по классу на строку), в 2.x — в `spring.factories`; класс помечают `@AutoConfiguration`.",
+              "text": "Класс помечают `@AutoConfiguration` и заносят полное имя в индекс-файл: в 3.x это `META-INF/spring/...AutoConfiguration.imports` (по классу на строку), в 2.x — ключ `EnableAutoConfiguration` в `spring.factories`.",
               "correct": true,
               "sections": {
                 "explanation": "Файл-индекс позволяет Boot найти автоконфигурацию в чужом jar без сканирования пакетов; `@AutoConfiguration` отличает её от обычной `@Configuration` и обеспечивает корректный порядок и фильтрацию. В 3.x — файл `.imports` (полное имя `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`) с полными именами классов; в 2.x — `spring.factories` с ключом `EnableAutoConfiguration`.",
@@ -684,7 +684,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Регистрация пользовательской автоконфигурации одинакова в Spring Boot 2.x и 3.x — файл не менялся, поэтому миграция между версиями автоконфигурацию не ломает.",
+              "text": "Автоконфигурацию регистрируют одинаково в 2.x и 3.x: класс помечают `@AutoConfiguration` и перечисляют в `META-INF/spring.factories` — формат этого файла между версиями не менялся, миграция автоконфигурацию не ломает.",
               "correct": false,
               "sections": {
                 "what_actually": "В 2.x — `META-INF/spring.factories` с ключом `EnableAutoConfiguration`; в 3.x — `META-INF/spring/...AutoConfiguration.imports`.",
@@ -696,7 +696,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Класс автоконфигурации в Spring Boot 3.x помечают `@Configuration`, а не `@AutoConfiguration` — на упорядочивание через `@AutoConfigureBefore/After` это никак не влияет.",
+              "text": "В Spring Boot 3.x класс помечают обычной `@Configuration` и регистрируют в `.imports`; аннотация `@AutoConfiguration` не обязательна, порядок задаётся через `@AutoConfigureBefore` и `@AutoConfigureAfter`.",
               "correct": false,
               "sections": {
                 "what_actually": "В 3.x рекомендуют `@AutoConfiguration` — она корректно участвует в упорядочивании и фильтрации автоконфигураций.",
@@ -708,7 +708,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Достаточно пометить класс `@Configuration` — Spring Boot подхватит его из любого jar автоматически, даже без сканирования пакета приложения и без файла-индекса.",
+              "text": "Класс помечают `@Configuration`, и Spring Boot подхватывает его из подключённого стартового jar — регистрация в индекс-файле `.imports` не нужна, компонентное сканирование находит конфигурацию в зависимости.",
               "correct": false,
               "sections": {
                 "what_actually": "Автоконфигурацию из стороннего jar регистрируют в файле `.imports` (3.x) / `spring.factories` (2.x); `@Configuration` подхватывается только при сканировании пакета приложения.",
@@ -731,7 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Сменить встроенный сервер можно только пересборкой `Spring Boot` из исходников вручную — готовых `starter-jetty`/`starter-undertow` для замены через зависимости не существует.",
+              "text": "Сменить встроенный сервер нельзя: готовых `starter-jetty` и `starter-undertow` для замены через зависимости не поставляют, а выбор сервера зашит в `Spring Boot` и требует ручной пересборки из исходников.",
               "correct": false,
               "sections": {
                 "what_actually": "Сервер меняют обычным управлением зависимостями: исключают `starter-tomcat`, добавляют `starter-jetty`/`starter-undertow`.",
@@ -743,7 +743,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Netty` можно использовать как встроенный сервер для обычного блокирующего Spring MVC: `starter-web` спокойно работает поверх Netty без сервлет-контейнера.",
+              "text": "`Netty` можно взять как встроенный сервер и для обычного блокирующего `Spring MVC`: `starter-web` поднимается поверх `Netty` без сервлет-контейнера, а запросы к `DispatcherServlet` идут через его событийный цикл.",
               "correct": false,
               "sections": {
                 "what_actually": "`Netty` — для реактивного стека (`starter-webflux`); для сервлетного MVC берут Tomcat/Jetty/Undertow.",
@@ -755,7 +755,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Три Servlet-сервера — `Tomcat` (дефолт в `starter-web`), `Jetty`, `Undertow` — плюс `Netty` для реактивного `starter-webflux`; смена через исключение `starter-tomcat`.",
+              "text": "Три Servlet-сервера — `Tomcat` (дефолт в `starter-web`), `Jetty` и `Undertow` — плюс `Netty` для реактивного `starter-webflux`; сервер меняют, исключив `starter-tomcat` и добавив выбранный starter.",
               "correct": true,
               "sections": {
                 "explanation": "Все три Servlet-сервера встраиваются как обычные библиотеки и запускаются в том же JVM; выбор влияет на память/производительность, но не на код. `Tomcat` — по умолчанию, самый зрелый; `Jetty` — HTTP/2, хорош для WebSocket; `Undertow` — низкое потребление памяти, высокая производительность; `Netty` — только для WebFlux. Смену делают, исключив `starter-tomcat` и добавив нужный starter.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "По умолчанию `spring-boot-starter-web` использует встроенный сервер `Undertow`, а не `Tomcat`; чтобы получить Tomcat, его подключают вручную с исключением Undertow.",
+              "text": "По умолчанию `spring-boot-starter-web` поднимает встроенный `Undertow`, а не `Tomcat`, ради экономии памяти; чтобы получить Tomcat, его подключают вручную с исключением `starter-undertow`.",
               "correct": false,
               "sections": {
                 "what_actually": "Дефолт `starter-web` — `Tomcat` (через `starter-tomcat`); `Undertow` подключают вручную с исключением Tomcat.",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Встроенный Tomcat запускается отдельным процессом ОС и общается с приложением по сети, поэтому падение приложения не останавливает сам сервер.",
+              "text": "Встроенный Tomcat поднимается как отдельный процесс операционной системы и общается с приложением по локальному сетевому соединению, поэтому сбой приложения не останавливает работающий сервер.",
               "correct": false,
               "sections": {
                 "what_actually": "Встроенный Tomcat работает в ТОМ ЖЕ JVM-процессе, что и приложение, без отдельного процесса/сетевого моста.",
@@ -803,20 +803,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Через бин `ServletWebServerFactory` (`TomcatServletWebServerFactory`) Boot программно создаёт инстанс Tomcat, регистрирует `DispatcherServlet` и стартует сервер в том же JVM.",
-              "correct": true,
-              "sections": {
-                "explanation": "Tomcat встраивается как библиотека, а не используется как внешний контейнер. `run()` определяет тип приложения (SERVLET/REACTIVE/NONE) и создаёт `ServletWebServerApplicationContext`; при refresh берётся бин `ServletWebServerFactory`. Ключевые классы: `ServletWebServerFactoryAutoConfiguration` (выбор сервера по `@ConditionalOnClass`), `WebServerFactoryCustomizer` (настройка порта/SSL/потоков до старта), `DispatcherServletAutoConfiguration`. Поток: `factory.getWebServer(...)` → создание Tomcat → регистрация `DispatcherServlet` → `Tomcat.start()`.",
-                "example": "`WebServerFactoryCustomizer` позволяет программно задать порт и параметры коннектора (`maxThreads`, `acceptCount`) до создания сервера.",
-                "when_to_apply": "Понимание нужно для кастомизации сервера и диагностики проблем старта/портов.",
-                "edge_cases": "Тип приложения определяется по classpath: лишний реактивный/сервлетный стек может переключить контекст не туда.",
-                "related": "[[spring-boot-interview#Q13]] какие серверы поддерживаются; [[spring-boot-interview#Q9]] автоконфигурация; [[spring-boot-interview#Q19]] настройка порта."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Spring Boot при запуске деплоит собранный WAR во внешний предустановленный сервер Tomcat, поэтому без установленного контейнера запустить `java -jar` не получится.",
+              "text": "При запуске Spring Boot деплоит собранный WAR в предустановленный внешний сервер Tomcat через его менеджер приложений, поэтому без развёрнутого контейнера команда `java -jar` не поднимет веб-приложение.",
               "correct": false,
               "sections": {
                 "what_actually": "Boot ВСТРАИВАЕТ Tomcat как Java-библиотеку и создаёт его программно в том же JVM-процессе; внешний Tomcat не нужен.",
@@ -826,15 +813,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`DispatcherServlet` в Spring Boot регистрируется вручную в `web.xml`, как в классическом Spring MVC; без этого файла маршрутизация запросов работать не будет.",
+              "order": 2,
+              "label": "C",
+              "text": "`DispatcherServlet` в Spring Boot нужно регистрировать вручную в дескрипторе `web.xml`, как в классическом Spring MVC, и без описания этого сервлета маршрутизация входящих HTTP-запросов работать не будет.",
               "correct": false,
               "sections": {
                 "what_actually": "В Boot `DispatcherServlet` регистрируется автоматически (`DispatcherServletAutoConfiguration`) в программно созданном сервере, без `web.xml`.",
                 "source_of_confusion": "Опыт ручной регистрации сервлетов в `web.xml` из не-Boot проектов.",
                 "if_it_were_true": "Тогда нужен был бы `web.xml`, но Boot обходится без него.",
                 "how_it_should_be": "`DispatcherServlet` регистрируется автоконфигурацией, без `web.xml`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Бин `ServletWebServerFactory` (например `TomcatServletWebServerFactory`) программно создаёт инстанс встроенного Tomcat, регистрирует `DispatcherServlet` и запускает сервер в том же JVM-процессе.",
+              "correct": true,
+              "sections": {
+                "explanation": "Tomcat встраивается как библиотека, а не используется как внешний контейнер. `run()` определяет тип приложения (SERVLET/REACTIVE/NONE) и создаёт `ServletWebServerApplicationContext`; при refresh берётся бин `ServletWebServerFactory`. Ключевые классы: `ServletWebServerFactoryAutoConfiguration` (выбор сервера по `@ConditionalOnClass`), `WebServerFactoryCustomizer` (настройка порта/SSL/потоков до старта), `DispatcherServletAutoConfiguration`. Поток: `factory.getWebServer(...)` → создание Tomcat → регистрация `DispatcherServlet` → `Tomcat.start()`.",
+                "example": "`WebServerFactoryCustomizer` позволяет программно задать порт и параметры коннектора (`maxThreads`, `acceptCount`) до создания сервера.",
+                "when_to_apply": "Понимание нужно для кастомизации сервера и диагностики проблем старта/портов.",
+                "edge_cases": "Тип приложения определяется по classpath: лишний реактивный/сервлетный стек может переключить контекст не туда.",
+                "related": "[[spring-boot-interview#Q13]] какие серверы поддерживаются; [[spring-boot-interview#Q9]] автоконфигурация; [[spring-boot-interview#Q19]] настройка порта."
               }
             }
           ]
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Profile-specific файлы (`application-prod.yml`) не имеют приоритета над базовым `application.yml`, поэтому при активном профиле prod базовые значения остаются в силе.",
+              "text": "Profile-specific файлы (`application-prod.yml`) подключаются как дополнение, но не перекрывают базовый `application.yml`, поэтому при активном профиле `prod` значения из базового файла остаются в силе.",
               "correct": false,
               "sections": {
                 "what_actually": "Profile-файлы имеют ПРИОРИТЕТ над базовым `application.yml` (перекрывают его значения при активном профиле).",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Spring Boot` объединяет 14+ источников по приоритету: CLI-аргументы → env/system properties → файлы вне JAR → файлы внутри JAR → `@PropertySource` → defaults.",
+              "text": "`Spring Boot` объединяет 14+ источников по приоритету: CLI-аргументы → переменные окружения/system properties → файлы вне и внутри JAR → `@PropertySource` → defaults; верхний перекрывает нижний.",
               "correct": true,
               "sections": {
                 "explanation": "Полный порядок (от высшего): аргументы командной строки (`--key=value`) → `SPRING_APPLICATION_JSON` → system properties (`-D`) → переменные окружения ОС → profile-specific файлы вне JAR → `application.yml` вне JAR → profile-файлы внутри JAR → `application.yml` внутри JAR → `@PropertySource` → defaultProperties; приоритетный источник перекрывает менее приоритетный. Маппинг имён: `spring.datasource.url` → `SPRING_DATASOURCE_URL` (точки → подчёркивания, верхний регистр).",
@@ -876,7 +876,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`application.yml` имеет наивысший приоритет и перекрывает аргументы командной строки и переменные окружения, поэтому `--server.port=9090` не способен переопределить порт, заданный в файле.",
+              "text": "`application.yml` имеет наивысший приоритет и перекрывает аргументы командной строки и переменные окружения, поэтому `--server.port=9090` не переопределяет порт, заданный в yml-файле.",
               "correct": false,
               "sections": {
                 "what_actually": "Наивысший приоритет у аргументов командной строки, затем env/system properties; файлы `application.yml` — ниже.",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Переменные окружения и файлы `application.yml` имеют одинаковый приоритет при разрешении свойств, поэтому `SPRING_DATASOURCE_URL` не перекрывает значение из yml.",
+              "text": "Переменные окружения и файлы `application.yml` разрешаются с одинаковым приоритетом в общем `Environment`, поэтому `SPRING_DATASOURCE_URL` не перекрывает значение того же свойства из yml.",
               "correct": false,
               "sections": {
                 "what_actually": "Переменные окружения ВЫШЕ файлов `application.yml` — это и делает контейнерную конфигурацию через env удобной.",
@@ -911,31 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "YAML и properties — это разные по возможностям форматы с разным набором настраиваемых свойств, поэтому часть настроек доступна только в одном из них.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Оба формата эквивалентны по возможностям; различие только в синтаксисе (иерархия vs плоские ключи).",
-                "source_of_confusion": "Разный вид файлов наводит на мысль о разных возможностях.",
-                "if_it_were_true": "Тогда часть свойств была бы доступна только в одном формате, но это не так.",
-                "how_it_should_be": "Форматы эквивалентны; отличается лишь синтаксис."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Подстановка переменных `${ENV_VAR:default}` работает только в `.properties`, но не в файлах `.yml`, поэтому env-значения в YAML подставить нельзя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Подстановка `${VAR:default}` работает в обоих форматах одинаково.",
-                "source_of_confusion": "Кажется, что синтаксис подстановки привязан к формату.",
-                "if_it_were_true": "Тогда в YAML нельзя было бы подставить env-переменную, но это штатно.",
-                "how_it_should_be": "`${VAR:default}` работает и в yml, и в properties."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`application.properties` и `.yml` — основные файлы конфигурации; оба эквивалентны, при их сочетании `.properties` приоритетнее, подстановка `${ENV_VAR:default}` работает в обоих.",
+              "text": "`application.properties` и `.yml` — эквивалентные по возможностям форматы конфигурации; при одновременном наличии `.properties` перекрывает `.yml`, а `${ENV_VAR:default}` работает в обоих.",
               "correct": true,
               "sections": {
                 "explanation": "Выбор формата — вопрос вкуса и читаемости; на поведение приложения он не влияет, кроме правила приоритета при наличии обоих. Файлы лежат в `src/main/resources`. Различие лишь в синтаксисе: YAML иерархический и удобен для вложенных свойств, properties — плоский. `${ENV_VAR:default}` берёт значение из env-переменной или дефолт.",
@@ -946,9 +922,33 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "`application.yml` и `application.properties` поддерживают разные наборы свойств: часть настроек, например вложенные структуры, задаётся в одном формате и не имеет эквивалента в другом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Оба формата эквивалентны по возможностям; различие только в синтаксисе (иерархия vs плоские ключи).",
+                "source_of_confusion": "Разный вид файлов наводит на мысль о разных возможностях.",
+                "if_it_were_true": "Тогда часть свойств была бы доступна только в одном формате, но это не так.",
+                "how_it_should_be": "Форматы эквивалентны; отличается лишь синтаксис."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подстановка плейсхолдеров `${ENV_VAR:default}` со значением по умолчанию поддерживается в `application.properties`, но не срабатывает в файлах `application.yml`, поэтому env-значения выносят в properties.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Подстановка `${VAR:default}` работает в обоих форматах одинаково.",
+                "source_of_confusion": "Кажется, что синтаксис подстановки привязан к формату.",
+                "if_it_were_true": "Тогда в YAML нельзя было бы подставить env-переменную, но это штатно.",
+                "how_it_should_be": "`${VAR:default}` работает и в yml, и в properties."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "`application.yml` имеет приоритет над `application.properties` при их совместном использовании.",
+              "text": "При одновременном наличии `application.yml` и `application.properties` в одном каталоге значения из `.yml` перекрывают одноимённые ключи из `.properties`, поэтому YAML приоритетнее.",
               "correct": false,
               "sections": {
                 "what_actually": "При совместном использовании приоритет у `.properties` (он перекрывает `.yml`).",
@@ -971,7 +971,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Profile` нельзя ставить на `@Configuration`-классы целиком, только на отдельные `@Bean`-методы, поэтому отключить весь `ProdCacheConfig` одной аннотацией не выйдет.",
+              "text": "Профили переключают конфигурацию через `spring.profiles.active`; условное включение бинов задают `@Profile` на `@Bean`-методах, а на класс `@Configuration` не распространяется — `ProdCacheConfig` гейтят по бинам.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Profile` применяется и к классам `@Configuration` (включает/выключает весь набор бинов), и к отдельным `@Bean`.",
@@ -983,7 +983,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Profile-specific файлы (`application-dev.yml`) загружаются всегда, независимо от активного профиля, поэтому dev- и prod-настройки постоянно перемешиваются.",
+              "text": "Профиль активируют через `spring.profiles.active`, но profile-specific файлы вроде `application-dev.yml` подхватываются независимо от активного профиля, из-за чего dev- и prod-значения накладываются.",
               "correct": false,
               "sections": {
                 "what_actually": "`application-{profile}.yml` загружается ТОЛЬКО при активном соответствующем профиле.",
@@ -995,7 +995,19 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Профили переключают конфигурацию по окружению без правки кода: активируют через `spring.profiles.active` (yml/CLI/env/`@ActiveProfiles`); есть группы и условные бины `@Profile`.",
+              "text": "Профиль задают в `application.yml` через `spring.profiles.active`; это и есть путь активации, а `SPRING_PROFILES_ACTIVE` в контейнере или CLI-флаг `--spring.profiles.active` профиль не переключают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Активаций несколько: yml, `--spring.profiles.active`, env `SPRING_PROFILES_ACTIVE`, `@ActiveProfiles` в тестах.",
+                "source_of_confusion": "Знакомство только с yml ограничивает картину.",
+                "if_it_were_true": "Тогда нельзя было бы задать профиль через env в контейнере, но это основной способ в проде.",
+                "how_it_should_be": "Профиль активируют через yml/CLI/env/`@ActiveProfiles`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Профили переключают конфигурацию по окружению без правки кода: активируют через `spring.profiles.active` (yml, CLI, env `SPRING_PROFILES_ACTIVE`, `@ActiveProfiles`); `@Profile` гейтит бины и классы.",
               "correct": true,
               "sections": {
                 "explanation": "Профиль добавляет/переопределяет конфигурацию поверх базовой. Активация: `spring.profiles.active` в yml, `--spring.profiles.active=prod`, env `SPRING_PROFILES_ACTIVE`, `@ActiveProfiles` в тестах. Profile-specific файлы (`application-prod.yml`) загружаются при активном профиле; группы профилей (`spring.profiles.group`, 2.4+) объединяют несколько под одним псевдонимом; `@Profile` включает/выключает бины и `@Configuration`-классы.",
@@ -1003,18 +1015,6 @@
                 "when_to_apply": "Профили применяют для dev/test/prod-различий: уровни логов, БД, security.",
                 "edge_cases": "Секреты не держат в profile-файлах в Git — берут из env/Vault; неактивированный профиль = молча используются дефолты.",
                 "related": "[[spring-boot-interview#Q15]] иерархия конфигурации; [[spring-boot-interview#Q41]] несколько профилей сразу; [[spring-boot-interview#Q18]] @ConfigurationProperties."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Профиль можно активировать только в файле `application.yml`, других способов нет: задать его через env-переменную в контейнере или CLI-аргументом невозможно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Активаций несколько: yml, `--spring.profiles.active`, env `SPRING_PROFILES_ACTIVE`, `@ActiveProfiles` в тестах.",
-                "source_of_confusion": "Знакомство только с yml ограничивает картину.",
-                "if_it_were_true": "Тогда нельзя было бы задать профиль через env в контейнере, но это основной способ в проде.",
-                "how_it_should_be": "Профиль активируют через yml/CLI/env/`@ActiveProfiles`."
               }
             }
           ]
@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@ConfigurationProperties` привязывает только плоские свойства; вложенные объекты, коллекции и типы вроде `Duration` не поддерживаются — `retry.max-attempts` к вложенному классу не привязать.",
+              "text": "`@ConfigurationProperties` привязывает плоские скалярные поля POJO, но вложенные объекты, коллекции и типы вроде `Duration` он пропускает — значение `retry.max-attempts` к вложенному классу `Retry` не привязать.",
               "correct": false,
               "sections": {
                 "what_actually": "Поддерживаются вложенные объекты (nested POJO), коллекции, `Duration`, и валидация через `@Validated`.",
@@ -1043,19 +1043,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@ConfigurationProperties` не поддерживает валидацию значений свойств даже с аннотацией `@Validated`, поэтому упасть на старте при пустом обязательном свойстве нельзя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Валидация поддержана: добавляют `@Validated` на класс и Jakarta-аннотации (`@NotBlank`, `@Min`) на поля — невалидные значения валят старт.",
-                "source_of_confusion": "Кажется, что биндинг не проверяет данные.",
-                "if_it_were_true": "Тогда нельзя было бы упасть на старте при пустом обязательном свойстве, но с `@Validated` это работает.",
-                "how_it_should_be": "С `@Validated` свойства валидируются при старте."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`@ConfigurationProperties(prefix=...)` — типобезопасная привязка группы свойств к POJO (вложенные объекты, `Duration`, валидация); регистрируют через `@EnableConfigurationProperties`/`@ConfigurationPropertiesScan`.",
+              "text": "`@ConfigurationProperties(prefix=...)` — типобезопасная привязка группы свойств к POJO (вложенные объекты, `Duration`); регистрируют через `@EnableConfigurationProperties`/`@ConfigurationPropertiesScan`.",
               "correct": true,
               "sections": {
                 "explanation": "В отличие от `@Value`, это связывает целую группу свойств в один объект с проверкой типов и валидацией на старте — relaxed binding мапит `max-attempts` ↔ `maxAttempts`. Поддерживаются вложенные POJO, коллекции, `Duration`, валидация `@Validated`/`@NotBlank`. Регистрация — `@EnableConfigurationProperties(MailProperties.class)` или `@ConfigurationPropertiesScan`; `spring-boot-configuration-processor` генерирует метаданные для автодополнения в IDE.",
@@ -1066,9 +1054,21 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "`@ConfigurationProperties` привязывает значения, но не проверяет их: даже с `@Validated` и `@NotBlank`/`@Min` на полях старт не упадёт при пустом обязательном свойстве — валидация к нему не подключается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Валидация поддержана: добавляют `@Validated` на класс и Jakarta-аннотации (`@NotBlank`, `@Min`) на поля — невалидные значения валят старт.",
+                "source_of_confusion": "Кажется, что биндинг не проверяет данные.",
+                "if_it_were_true": "Тогда нельзя было бы упасть на старте при пустом обязательном свойстве, но с `@Validated` это работает.",
+                "how_it_should_be": "С `@Validated` свойства валидируются при старте."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "`@ConfigurationProperties` работает без какой-либо регистрации, просто по наличию аннотации на классе: бин properties создаётся сам, `@EnableConfigurationProperties` не требуется.",
+              "text": "`@ConfigurationProperties` на классе создаёт бин properties сам, по факту наличия аннотации: контекст подхватит POJO без `@EnableConfigurationProperties`, отдельная регистрация не нужна.",
               "correct": false,
               "sections": {
                 "what_actually": "POJO нужно зарегистрировать: `@EnableConfigurationProperties` или `@ConfigurationPropertiesScan` (либо `@Component`).",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Значение `server.port=0` запускает приложение вообще без встроенного веб-сервера, поэтому интеграционные тесты на random-порту сервер не поднимают.",
+              "text": "Порт меняют свойством `server.port` или аргументом `--server.port`; но `server.port=0` не выбирает свободный порт, а стартует приложение без веб-сервера, поэтому тесты на random-порту сервер не поднимают.",
               "correct": false,
               "sections": {
                 "what_actually": "`server.port=0` — это СЛУЧАЙНЫЙ свободный порт; отключение веб-сервера — это `spring.main.web-application-type=none`.",
@@ -1103,7 +1103,19 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Порт меняют тремя способами: свойством `server.port`, программно через `WebServerFactoryCustomizer`, или CLI-аргументом `--server.port`; значение `0` — случайный свободный порт.",
+              "text": "Порт задают свойством `server.port`, но аргумент `--server.port` и system property `-Dserver.port` имеют одинаковый приоритет, поэтому при одновременном указании обоих итоговое значение оказывается неопределённым.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`--server.port` (аргумент приложения) приоритетнее `-Dserver.port` (system property) — это разные источники с разным приоритетом.",
+                "source_of_confusion": "`--server.port` и `-Dserver.port` оба меняют порт и выглядят одинаково, поэтому кажутся равными по приоритету.",
+                "if_it_were_true": "Тогда при одновременном указании результат был бы неопределён, но побеждает `--`.",
+                "how_it_should_be": "`--`-аргумент приоритетнее `-D`-system property."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Порт задают тремя способами: свойством `server.port` в `application.yml`/`properties`, программно через `WebServerFactoryCustomizer` или аргументом `--server.port`; значение `0` — случайный свободный порт.",
               "correct": true,
               "sections": {
                 "explanation": "Способы подчиняются общей иерархии конфигурации: CLI-аргумент перекрывает значение из файла. Свойство — `server.port: 9090` в yml/properties; программный способ — `factory.setPort(9090)`; CLI — `java -jar app.jar --server.port=9090` (либо `-Dserver.port=9090`). `server.port=0` (случайный порт) полезен для тестов (`RANDOM_PORT`) и микросервисов с service discovery.",
@@ -1114,21 +1126,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Аргумент `--server.port` и system property `-Dserver.port` полностью эквивалентны по приоритету, поэтому при одновременном указании результат не определён.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`--server.port` (аргумент приложения) приоритетнее `-Dserver.port` (system property) — это разные источники с разным приоритетом.",
-                "source_of_confusion": "`--server.port` и `-Dserver.port` оба меняют порт и выглядят одинаково, поэтому кажутся равными по приоритету.",
-                "if_it_were_true": "Тогда при одновременном указании результат был бы неопределён, но побеждает `--`.",
-                "how_it_should_be": "`--`-аргумент приоритетнее `-D`-system property."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "Порт встроенного сервера можно задать только программно через `WebServerFactoryCustomizer`; свойством `server.port` или аргументом `--server.port` его поменять нельзя.",
+              "text": "Порт встроенного сервера задают программно через бин `WebServerFactoryCustomizer`; свойство `server.port` в `application.yml` и аргумент `--server.port` на встроенный сервер не влияют и порт запуска не меняют.",
               "correct": false,
               "sections": {
                 "what_actually": "Помимо программного способа порт задают свойством `server.port` (yml/properties) и аргументом командной строки `--server.port`.",
@@ -1151,7 +1151,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring Boot Actuator` — модуль мониторинга и управления в production: HTTP-эндпоинты и JMX-бины для health checks, метрик и инфо об окружении; по дефолту открыт только `/health`.",
+              "text": "`Actuator` включает встроенный веб-дашборд для визуального мониторинга: графики метрик, health и состояние бинов рисуются самим модулем, поэтому Prometheus и Grafana для их просмотра подключать не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Actuator даёт HTTP-эндпоинты и JMX-бины (сырые данные); визуализацию делают Prometheus+Grafana или Spring Boot Admin.",
+                "source_of_confusion": "Слово «мониторинг» ассоциируется с готовым дашбордом.",
+                "if_it_were_true": "Тогда не нужны были бы Grafana/SBA, но именно они визуализируют метрики Actuator.",
+                "how_it_should_be": "Actuator отдаёт данные; UI — внешние инструменты."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Boot Actuator` — модуль production-мониторинга и управления: HTTP-эндпоинты и JMX-бины для health checks, метрик через Micrometer и инфо об окружении; по дефолту по HTTP отдаётся только `/health`.",
               "correct": true,
               "sections": {
                 "explanation": "Actuator отдаёт сырые данные для внешних систем (Prometheus/Grafana/K8s probes), а не готовый UI; экспозицию расширяют осознанно через `management.endpoints.web.exposure.include`. Подключается `spring-boot-starter-actuator`. Health checks показывают состояние приложения и зависимостей (БД, Redis, Kafka); метрики — через Micrometer; инфо об окружении — `/env`, `/configprops`, `/beans`; управление — уровни логирования, thread/heap dump.",
@@ -1162,21 +1174,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`Actuator` сам по себе предоставляет готовый UI-дашборд для визуального мониторинга приложения, поэтому Prometheus и Grafana для просмотра метрик не нужны.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Actuator даёт HTTP-эндпоинты и JMX-бины (сырые данные); визуализацию делают Prometheus+Grafana или Spring Boot Admin.",
-                "source_of_confusion": "Слово «мониторинг» ассоциируется с готовым дашбордом.",
-                "if_it_were_true": "Тогда не нужны были бы Grafana/SBA, но именно они визуализируют метрики Actuator.",
-                "how_it_should_be": "Actuator отдаёт данные; UI — внешние инструменты."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "`Actuator` работает только в связке со Spring Security и без неё вообще не запускается: даже `/health` без Security не отвечает.",
+              "text": "`Actuator` работает в связке со Spring Security как обязательной зависимостью: пока в classpath нет `spring-boot-starter-security`, автоконфигурация эндпоинтов не поднимается и `/health` не отвечает.",
               "correct": false,
               "sections": {
                 "what_actually": "Actuator работает и без Security; Security лишь рекомендуется для защиты эндпоинтов в проде.",
@@ -1188,7 +1188,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Actuator` по умолчанию открывает по HTTP все диагностические эндпоинты приложения сразу, включая `/env` и `/heapdump`, без дополнительной настройки экспозиции.",
+              "text": "`Actuator` по умолчанию публикует по HTTP весь набор диагностических эндпоинтов, включая `/env`, `/beans` и `/heapdump`, ещё до какой-либо правки `management.endpoints.web.exposure.include`.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию по HTTP доступны только `/health`; остальные открывают явно через `management.endpoints.web.exposure.include`.",
@@ -1211,7 +1211,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Метрики в формате Prometheus отдаёт эндпоинт `/actuator/metrics`, отдельного эндпоинта нет, поэтому Prometheus скрейпит именно `/metrics`.",
+              "text": "Метрики в формате Prometheus отдаёт `/actuator/metrics`: он сериализует показатели `Micrometer` в текстовый формат экспозиции, поэтому отдельного `/prometheus` под это заводить не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "`/actuator/metrics` отдаёт JSON; формат Prometheus — на отдельном `/actuator/prometheus` (нужен `micrometer-registry-prometheus`).",
@@ -1223,20 +1223,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Категории: Health (`/health`, liveness/readiness), Метрики (`/metrics`, `/prometheus`), Информация (`/info`, `/env`, `/beans`), Диагностика (`/threaddump`, `/heapdump`), Управление (`/shutdown`).",
-              "correct": true,
-              "sections": {
-                "explanation": "Большинство эндпоинтов по HTTP закрыты по умолчанию; их открывают точечно белым списком через `management.endpoints.web.exposure.include/exclude`. `show-details: when-authorized` скрывает детали health от анонимов. Полнее: Health — `/health/liveness`, `/health/readiness` для K8s; Информация — `/info`, `/env`, `/configprops`, `/beans`, `/mappings`, `/conditions`; Диагностика — `/threaddump`, `/heapdump`, `/loggers`, `/caches`; Управление — `/shutdown` (по умолчанию выключен), `/refresh` (Spring Cloud).",
-                "example": "`management.endpoints.web.exposure.include: health,info,metrics,prometheus` открывает только нужное.",
-                "when_to_apply": "Список используют, решая, что выставить наружу и что закрыть в production.",
-                "edge_cases": "`/shutdown` опасен (останавливает приложение) и выключен по дефолту; `/heapdump`/`/env` раскрывают чувствительные данные.",
-                "related": "[[spring-boot-interview#Q20]] что такое Actuator; [[spring-boot-interview#Q42]] ограничение экспозиции; [[spring-boot-interview#Q24]] liveness/readiness для K8s."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Все Actuator-эндпоинты открыты по HTTP по умолчанию, сразу после подключения стартера, включая `/beans` и `/env` — без явной настройки экспозиции.",
+              "text": "После подключения `spring-boot-starter-actuator` эндпоинты `/beans`, `/env` и `/mappings` доступны по HTTP по умолчанию наравне с `/health`, а `exposure.include` нужен, чтобы сузить набор.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию по HTTP открыты только `/health`; остальные включают через `exposure.include`.",
@@ -1246,15 +1233,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Эндпоинт `/actuator/shutdown` включён по умолчанию и сразу доступен по HTTP без настройки, поэтому остановить приложение можно одним внешним запросом.",
+              "order": 2,
+              "label": "C",
+              "text": "Эндпоинт `/actuator/shutdown` включён по умолчанию (`management.endpoint.shutdown.enabled=true`) и после добавления в `exposure.include` останавливает приложение обычным `POST`-запросом на этот путь.",
               "correct": false,
               "sections": {
                 "what_actually": "`/shutdown` ОТКЛЮЧЁН по умолчанию (`management.endpoint.shutdown.enabled=false`) — иначе любой смог бы остановить приложение.",
                 "source_of_confusion": "Кажется, что все эндпоинты доступны сразу.",
                 "if_it_were_true": "Тогда открытый Actuator позволял бы класть сервис одним запросом, но дефолт это запрещает.",
                 "how_it_should_be": "`/shutdown` по умолчанию выключен; включают осознанно и защищают."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Категории: Health (`/health`, liveness/readiness), Метрики (`/metrics`, `/prometheus`), Информация (`/info`, `/env`, `/beans`), Диагностика (`/threaddump`, `/heapdump`), Управление (`/shutdown`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Большинство эндпоинтов по HTTP закрыты по умолчанию; их открывают точечно белым списком через `management.endpoints.web.exposure.include/exclude`. `show-details: when-authorized` скрывает детали health от анонимов. Полнее: Health — `/health/liveness`, `/health/readiness` для K8s; Информация — `/info`, `/env`, `/configprops`, `/beans`, `/mappings`, `/conditions`; Диагностика — `/threaddump`, `/heapdump`, `/loggers`, `/caches`; Управление — `/shutdown` (по умолчанию выключен), `/refresh` (Spring Cloud).",
+                "example": "`management.endpoints.web.exposure.include: health,info,metrics,prometheus` открывает только нужное.",
+                "when_to_apply": "Список используют, решая, что выставить наружу и что закрыть в production.",
+                "edge_cases": "`/shutdown` опасен (останавливает приложение) и выключен по дефолту; `/heapdump`/`/env` раскрывают чувствительные данные.",
+                "related": "[[spring-boot-interview#Q20]] что такое Actuator; [[spring-boot-interview#Q42]] ограничение экспозиции; [[spring-boot-interview#Q24]] liveness/readiness для K8s."
               }
             }
           ]
@@ -1271,7 +1271,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Custom-эндпоинт автоматически доступен по HTTP без какой-либо настройки экспозиции, в отличие от встроенных он не подчиняется правилам `exposure.include`.",
+              "text": "Два пути: добавить проверку в агрегированный `/health` бином `HealthIndicator` либо создать самостоятельный эндпоинт классом с `@Endpoint(id=...)` и методами `@ReadOperation`/`@WriteOperation`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`HealthIndicator` встраивается в агрегированный `/health`: метод `health()` возвращает `Health.up()/down()` с деталями. `@Endpoint` создаёт самостоятельный управляющий эндпоинт (`/actuator/features`). `@ReadOperation` → GET, `@WriteOperation` → POST (с `@Selector` для path-переменных). Оба автоматически обнаруживаются как бины.",
+                "example": "`@Endpoint(id=\"features\") class FeaturesEndpoint { @ReadOperation Map<String,Boolean> features(){...} @WriteOperation void toggle(@Selector String name, boolean enabled){...} }`.",
+                "when_to_apply": "`HealthIndicator` — для проверок зависимостей; `@Endpoint` — для кастомного управления/диагностики (feature flags, состояние).",
+                "edge_cases": "Свой `@Endpoint` тоже подчиняется `exposure.include` и должен быть защищён в проде, особенно `@WriteOperation`.",
+                "related": "[[spring-boot-interview#Q40]] кастомный HealthIndicator; [[spring-boot-interview#Q20]] Actuator; [[spring-boot-interview#Q21]] список эндпоинтов."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Свой эндпоинт с `@Endpoint(id=...)` регистрируется как бин и открыт по HTTP сразу после старта: в отличие от встроенных, он не подчиняется свойству `management.endpoints.web.exposure.include`.",
               "correct": false,
               "sections": {
                 "what_actually": "Свой `@Endpoint` подчиняется тем же правилам `exposure.include`, что и встроенные — его нужно явно открыть.",
@@ -1281,9 +1294,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Кастомный Actuator-эндпоинт создают, реализуя интерфейс `HealthIndicator` с методом `health()`; собственный эндпоинт вроде `/actuator/features` через `@Endpoint` создать нельзя.",
+              "order": 2,
+              "label": "C",
+              "text": "Кастомный Actuator-эндпоинт создают, реализуя интерфейс `HealthIndicator` с методом `health()`, который возвращает объект `Health`; отдельный эндпоинт вроде `/actuator/features` через `@Endpoint` завести нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "`HealthIndicator` добавляет проверку в `/health`; полностью свой эндпоинт делают классом с `@Endpoint(id=...)` и `@ReadOperation`/`@WriteOperation`.",
@@ -1293,28 +1306,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Аннотация `@WriteOperation` на методе эндпоинта соответствует HTTP-методу GET, поэтому изменение состояния идёт через GET-запрос, а не POST.",
+              "order": 3,
+              "label": "D",
+              "text": "Аннотация `@WriteOperation` на методе эндпоинта отображается Actuator на HTTP-метод GET, поэтому изменяющая состояние операция, например переключение флага, вызывается обычным GET-запросом, а не POST.",
               "correct": false,
               "sections": {
                 "what_actually": "`@ReadOperation` → GET, `@WriteOperation` → POST (и DELETE для `@DeleteOperation`).",
                 "source_of_confusion": "Названия операций путают с HTTP-методами.",
                 "if_it_were_true": "Тогда изменение состояния шло бы через GET, что нарушало бы семантику HTTP.",
                 "how_it_should_be": "`@ReadOperation`=GET, `@WriteOperation`=POST."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Два способа: добавить проверку в `/health` бином `HealthIndicator` либо создать свой эндпоинт классом с `@Endpoint(id=...)` и `@ReadOperation`/`@WriteOperation`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`HealthIndicator` встраивается в агрегированный `/health`: метод `health()` возвращает `Health.up()/down()` с деталями. `@Endpoint` создаёт самостоятельный управляющий эндпоинт (`/actuator/features`). `@ReadOperation` → GET, `@WriteOperation` → POST (с `@Selector` для path-переменных). Оба автоматически обнаруживаются как бины.",
-                "example": "`@Endpoint(id=\"features\") class FeaturesEndpoint { @ReadOperation Map<String,Boolean> features(){...} @WriteOperation void toggle(@Selector String name, boolean enabled){...} }`.",
-                "when_to_apply": "`HealthIndicator` — для проверок зависимостей; `@Endpoint` — для кастомного управления/диагностики (feature flags, состояние).",
-                "edge_cases": "Свой `@Endpoint` тоже подчиняется `exposure.include` и должен быть защищён в проде, особенно `@WriteOperation`.",
-                "related": "[[spring-boot-interview#Q40]] кастомный HealthIndicator; [[spring-boot-interview#Q20]] Actuator; [[spring-boot-interview#Q21]] список эндпоинтов."
               }
             }
           ]
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Micrometer` — это система хранения метрик, заменяющая Prometheus.",
+              "text": "`Micrometer` — это встроенное хранилище метрик, заменяющее Prometheus: Actuator пишет в него `Counter` и `Timer`, а `/actuator/metrics` отдаёт накопленные ряды напрямую, без внешнего бэкенда.",
               "correct": false,
               "sections": {
                 "what_actually": "`Micrometer` — это фасад (аналог SLF4J для логов): он отдаёт метрики в registry (Prometheus, Graphite и др.), но сам их не хранит.",
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Кастомные метрики создаются аннотацией `@Metric` на методе.",
+              "text": "Кастомные метрики создают декларативно: аннотация `@Metric` на методе бина регистрирует его в `MeterRegistry`, задавая имя и теги, а Actuator затем собирает такие счётчики.",
               "correct": false,
               "sections": {
                 "what_actually": "Кастомные метрики пишут программно через `MeterRegistry` (`registry.counter(...)`, `registry.timer(...)`); аннотации `@Metric` нет (есть `@Timed`, но это про время).",
@@ -1355,7 +1355,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Micrometer` — фасад для метрик, а бэкенд подключают зависимостью registry.",
+              "text": "`Micrometer` — фасад для метрик (аналог SLF4J): Actuator интегрирует его автоматически, а конкретный бэкенд подключают зависимостью-registry, например `micrometer-registry-prometheus`.",
               "correct": true,
               "sections": {
                 "explanation": "Фасад — аналог SLF4J для логов. Actuator интегрирует `Micrometer` автоматически; бэкенд подключают зависимостью (`micrometer-registry-prometheus`) и открывают `/actuator/prometheus`. Типы метрик: `Counter` (монотонный счётчик), `Gauge` (текущее значение), `Timer` (длительность+счётчик), `DistributionSummary` (распределение). JVM-метрики (`jvm.memory.used`, `jvm.gc.pause`) регистрируются сами; кастомные пишут через `MeterRegistry`. Фасадная модель позволяет менять бэкенд без изменения кода метрик. Критично ограничивать кардинальность тегов.",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Кардинальность тегов метрик не имеет значения — можно ставить `userId` тегом.",
+              "text": "Теги метрик выбирают свободно: `userId` как тег детализирует `Counter` по пользователям, а `Micrometer` и Prometheus справляются с ростом числа временных рядов при разумном retention.",
               "correct": false,
               "sections": {
                 "what_actually": "Высокая кардинальность тегов (`userId` при миллионах пользователей) взрывает число временных рядов и убивает мониторинг-систему.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Probes в Spring Boot включены по умолчанию и не требуют настройки.",
+              "text": "Probes в Spring Boot активны по умолчанию: эндпоинты `/actuator/health/liveness` и `/actuator/health/readiness` доступны сразу, поэтому в `Deployment` остаётся сослаться на них в `livenessProbe` и `readinessProbe`.",
               "correct": false,
               "sections": {
                 "what_actually": "K8s probes включают явно (`management.endpoint.health.probes.enabled` и `health.livenessState/readinessState.enabled`), особенно вне K8s-среды.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`startupProbe` не нужен — `livenessProbe` сам подождёт завершения старта.",
+              "text": "`startupProbe` не обязателен: `livenessProbe` учитывает время старта через `initialDelaySeconds` и дожидается конца инициализации, поэтому под не перезапускается при прогреве кэшей и миграциях.",
               "correct": false,
               "sections": {
                 "what_actually": "Без `startupProbe` `livenessProbe` может убить под во время долгой инициализации (прогрев кэшей, миграции).",
@@ -1415,19 +1415,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Liveness и readiness probes в Spring Boot — это один и тот же эндпоинт с одинаковым смыслом.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это разные эндпоинты (`/health/liveness`, `/health/readiness`) с разным смыслом: liveness → перезапуск пода, readiness → исключение из Service.",
-                "source_of_confusion": "Оба эндпоинта про «здоровье» пода, отсюда смешение, хотя их последствия в K8s разные.",
-                "if_it_were_true": "Тогда не было бы двух отдельных probe, но K8s различает их по последствиям.",
-                "how_it_should_be": "Liveness (перезапуск) и readiness (трафик) — разные probes."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Включают probes свойствами, получая `/actuator/health/liveness` и `/readiness`.",
+              "text": "Probes включают свойствами `management.endpoint.health.probes.enabled`, после чего появляются `/actuator/health/liveness` и `/actuator/health/readiness`, на которые ссылаются `livenessProbe` и `readinessProbe`.",
               "correct": true,
               "sections": {
                 "explanation": "Spring Boot 2.3+ поддерживает Kubernetes probes из коробки: `management.endpoint.health.probes.enabled` и `health.livenessState/readinessState.enabled` добавляют `/actuator/health/liveness` и `/actuator/health/readiness`. В Deployment задают `livenessProbe` (при провале под перезапускается), `readinessProbe` (при провале под исключается из Service) и `startupProbe` (для приложений с долгим стартом, чтобы liveness не убил под до инициализации).",
@@ -1435,6 +1423,18 @@
                 "when_to_apply": "Probes настраивают при деплое в K8s; startupProbe — обязателен при прогреве кэшей/миграциях.",
                 "edge_cases": "Слишком агрессивный `livenessProbe` (малый initialDelay) перезапускает под в цикле во время старта.",
                 "related": "[[spring-boot-interview#Q20]] Actuator; [[spring-boot-interview#Q21]] liveness/readiness эндпоинты; [[spring-boot-interview#Q35]] graceful shutdown."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Liveness и readiness в Spring Boot — по сути один эндпоинт `/actuator/health` с одинаковым смыслом, поэтому обе probe в `Deployment` ссылаются на него, и K8s реагирует на них одинаково.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это разные эндпоинты (`/health/liveness`, `/health/readiness`) с разным смыслом: liveness → перезапуск пода, readiness → исключение из Service.",
+                "source_of_confusion": "Оба эндпоинта про «здоровье» пода, отсюда смешение, хотя их последствия в K8s разные.",
+                "if_it_were_true": "Тогда не было бы двух отдельных probe, но K8s различает их по последствиям.",
+                "how_it_should_be": "Liveness (перезапуск) и readiness (трафик) — разные probes."
               }
             }
           ]
@@ -1451,31 +1451,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Executable JAR — это обычный JAR, который требует распаковки зависимостей перед запуском.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Fat JAR запускается как есть через `java -jar`; `JarLauncher` грузит вложенные jar без распаковки.",
-                "source_of_confusion": "Опыт classpath из распакованных библиотек.",
-                "if_it_were_true": "Тогда нельзя было бы запустить одним `java -jar`, но это и есть его суть.",
-                "how_it_should_be": "Fat JAR самодостаточен; распаковка не требуется."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Зависимости в executable JAR лежат в `WEB-INF/lib`, как в WAR.",
-              "correct": false,
-              "sections": {
-                "what_actually": "В Boot fat JAR зависимости лежат в `BOOT-INF/lib/`, а классы — в `BOOT-INF/classes/`; `WEB-INF/lib` — это структура WAR.",
-                "source_of_confusion": "Опыт WAR-структуры переносят на fat JAR.",
-                "if_it_were_true": "Тогда `JarLauncher` искал бы `WEB-INF/lib`, но он работает с `BOOT-INF`.",
-                "how_it_should_be": "Структура fat JAR — `BOOT-INF/lib` и `BOOT-INF/classes`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Один файл со всеми зависимостями, который `JarLauncher` грузит без распаковки.",
+              "text": "Самодостаточный fat JAR со всеми зависимостями внутри: в `MANIFEST.MF` задан `Main-Class: JarLauncher`, который загружает вложенные jar из `BOOT-INF/lib/` и запускает ваш `Start-Class` без распаковки.",
               "correct": true,
               "sections": {
                 "explanation": "Executable JAR (fat JAR) запускается через `java -jar`: в `MANIFEST.MF` указан `Main-Class: JarLauncher` (Spring Boot Launcher), который настраивает ClassLoader для вложенных JAR из `BOOT-INF/lib/`, загружает классы приложения из `BOOT-INF/classes/` и запускает ваш `Start-Class` (`@SpringBootApplication`). Вложенные JAR не распаковываются. Опционально `layers.idx` группирует содержимое по слоям для кэширования Docker — от стабильных зависимостей к изменчивому коду.",
@@ -1486,9 +1462,33 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Executable JAR — это обычный JAR-архив, и перед запуском его зависимости нужно распаковать в отдельную папку и вручную добавить в classpath через `-cp`, поскольку вложенные jar сама JVM загружать не умеет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Fat JAR запускается как есть через `java -jar`; `JarLauncher` грузит вложенные jar без распаковки.",
+                "source_of_confusion": "Опыт classpath из распакованных библиотек.",
+                "if_it_were_true": "Тогда нельзя было бы запустить одним `java -jar`, но это и есть его суть.",
+                "how_it_should_be": "Fat JAR самодостаточен; распаковка не требуется."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Зависимости в executable JAR Spring Boot размещаются во вложенной папке `WEB-INF/lib`, точно как в традиционном WAR, а `JarLauncher` при старте подхватывает эти вложенные jar в classpath без распаковки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "В Boot fat JAR зависимости лежат в `BOOT-INF/lib/`, а классы — в `BOOT-INF/classes/`; `WEB-INF/lib` — это структура WAR.",
+                "source_of_confusion": "Опыт WAR-структуры переносят на fat JAR.",
+                "if_it_were_true": "Тогда `JarLauncher` искал бы `WEB-INF/lib`, но он работает с `BOOT-INF`.",
+                "how_it_should_be": "Структура fat JAR — `BOOT-INF/lib` и `BOOT-INF/classes`."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "`Main-Class` в executable JAR — это ваш класс с `@SpringBootApplication`.",
+              "text": "В `MANIFEST.MF` executable JAR атрибут `Main-Class` указывает на ваш класс с `@SpringBootApplication`, и его метод `main` JVM вызывает при `java -jar`, поднимая контекст Spring и встроенный сервер.",
               "correct": false,
               "sections": {
                 "what_actually": "`Main-Class` — это `JarLauncher` (Boot loader); ваш класс указан в `Start-Class` и запускается лаунчером.",
@@ -1511,7 +1511,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В WAR-режиме встроенный Tomcat нужно оставить в обычном (`implementation`) scope.",
+              "text": "JAR запускают через `java -jar` со встроенным сервером; для WAR наследуют `SpringBootServletInitializer` и меняют `packaging` на `war`, а встроенный Tomcat оставляют в обычном `implementation`-scope.",
               "correct": false,
               "sections": {
                 "what_actually": "Встроенный Tomcat переводят в `providedRuntime`/`provided` — его предоставит внешний контейнер, иначе будет конфликт.",
@@ -1523,7 +1523,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "WAR — рекомендуемый способ деплоя Spring Boot для микросервисов и контейнеров.",
+              "text": "Рекомендуемый способ для микросервисов и контейнеров — WAR-деплой: `packaging war` и наследование `SpringBootServletInitializer`; JAR через `java -jar` применяют реже, в основном для standalone-запуска.",
               "correct": false,
               "sections": {
                 "what_actually": "Рекомендуемый стандарт — JAR с встроенным сервером (`java -jar`); WAR нужен лишь когда инфраструктура требует деплой на общий сервер приложений.",
@@ -1535,7 +1535,19 @@
             {
               "order": 2,
               "label": "C",
-              "text": "JAR (рекомендуется) — `java -jar`; WAR — наследование `SpringBootServletInitializer`.",
+              "text": "JAR запускают через `java -jar` со встроенным сервером; для WAR-деплоя на внешний контейнер меняют `packaging` на `war` и подключают `providedRuntime`-Tomcat, а править main-класс не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужно ещё унаследовать `SpringBootServletInitializer` и переопределить `configure(...)`, иначе внешний контейнер не найдёт точку входа.",
+                "source_of_confusion": "Кажется, что смена `packaging` на `war` решает всё, без правок main-класса.",
+                "if_it_were_true": "Тогда WAR разворачивался бы без изменения main-класса, но контейнеру нужен `SpringBootServletInitializer`.",
+                "how_it_should_be": "WAR требует `SpringBootServletInitializer` + `configure(...)`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "JAR со встроенным сервером запускают через `java -jar` — стандарт для контейнеров; для WAR главный класс наследует `SpringBootServletInitializer` с `configure(...)`, а `packaging` меняют на `war`.",
               "correct": true,
               "sections": {
                 "explanation": "JAR со встроенным сервером (`<packaging>jar</packaging>`, `java -jar`) — стандарт для микросервисов/контейнеров. WAR — для деплоя на внешний сервер (Tomcat/WildFly): главный класс наследует `SpringBootServletInitializer` и переопределяет `configure(...)`, встроенный Tomcat переводят в `providedRuntime`/`provided`, `<packaging>war</packaging>`. WAR-режим отдаёт управление жизненным циклом внешнему контейнеру, поэтому встроенный сервер исключают из рантайма.",
@@ -1543,18 +1555,6 @@
                 "when_to_apply": "JAR — для облака/контейнеров; WAR — когда корпоративная политика требует общий сервер приложений.",
                 "edge_cases": "Забыть `providedRuntime` для встроенного Tomcat в WAR → конфликт встроенного и внешнего контейнера.",
                 "related": "[[spring-boot-interview#Q25]] executable JAR; [[spring-boot-interview#Q27]] Docker; [[spring-boot-interview#Q14]] встроенный сервер."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Для WAR-деплоя ничего менять в коде не нужно — достаточно сменить packaging на war.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Нужно ещё унаследовать `SpringBootServletInitializer` и переопределить `configure(...)`, иначе внешний контейнер не найдёт точку входа.",
-                "source_of_confusion": "Кажется, что смена `packaging` на `war` решает всё, без правок main-класса.",
-                "if_it_were_true": "Тогда WAR разворачивался бы без изменения main-класса, но контейнеру нужен `SpringBootServletInitializer`.",
-                "how_it_should_be": "WAR требует `SpringBootServletInitializer` + `configure(...)`."
               }
             }
           ]
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Buildpacks (`bootBuildImage`) требуют написания собственного Dockerfile.",
+              "text": "Через Cloud Native Buildpacks: `./gradlew bootBuildImage` формирует OCI-образ, но опирается на написанный вручную `Dockerfile` в корне проекта, откуда берёт базовый образ и порядок слоёв перед пушем в реестр.",
               "correct": false,
               "sections": {
                 "what_actually": "Buildpacks собирают образ БЕЗ Dockerfile — `./gradlew bootBuildImage` создаёт оптимизированный образ автоматически.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Multi-stage Dockerfile: `-jdk` собирает, `-jre` запускает от non-root пользователя.",
+              "text": "Multi-stage Dockerfile: стадия `-jdk` собирает `bootJar`, финальная `-jre` копирует артефакт и запускает его от непривилегированного пользователя (`USER appuser`); без Dockerfile образ соберут Buildpacks.",
               "correct": true,
               "sections": {
                 "explanation": "Стадия `-jdk` собирает `bootJar`, финальная `-jre` копирует артефакт; запуск от непривилегированного пользователя (`adduser appuser` + `USER appuser`), `-jre` в проде, JVM-флаги для контейнеров (`-XX:MaxRAMPercentage=75.0`). Альтернатива без Dockerfile — Buildpacks (`./gradlew bootBuildImage`); для кэширования слоёв применяют layers (`-Djarmode=tools ... extract --layers`). Multi-stage уменьшает образ (без JDK и исходников), layers/Buildpacks улучшают кэширование Docker.",
@@ -1596,7 +1596,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В Docker-образе Spring Boot принято запускать приложение от root для простоты.",
+              "text": "Внутри образа приложение принято запускать от пользователя root, добавляя `USER root` перед `ENTRYPOINT`, чтобы у процесса `java` не возникало проблем с правами на запись логов и доступ к смонтированным томам.",
               "correct": false,
               "sections": {
                 "what_actually": "Запуск от root — анти-паттерн безопасности; создают непривилегированного пользователя (`adduser appuser` + `USER appuser`).",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для production-образа используют `-jdk`, а не `-jre`.",
+              "text": "Для финального production-образа базовым слоём берут `eclipse-temurin:21-jdk`, а не `-jre`: полный JDK держат в рантайме, чтобы утилита `jcmd` была доступна для профилирования прямо в контейнере.",
               "correct": false,
               "sections": {
                 "what_actually": "В production берут `-jre` (только рантайм, меньше размер/поверхность атаки); `-jdk` нужен лишь на этапе сборки.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`DevTools` ускоряет работу и в production, и в разработке одинаково.",
+              "text": "`DevTools` — набор ускоряющих разработку инструментов (Automatic Restart, LiveReload), которые повышают скорость обратной связи и в среде разработки, и в production-развёртывании одинаково.",
               "correct": false,
               "sections": {
                 "what_actually": "`DevTools` предназначен только для разработки и автоматически деактивируется в production.",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`developmentOnly`-инструмент: Automatic Restart, LiveReload; в проде отключается.",
+              "text": "`DevTools` — набор инструментов для разработки (зависимость `developmentOnly`): Automatic Restart через два ClassLoader, LiveReload браузера и dev-настройки по умолчанию; в production отключается автоматически.",
               "correct": true,
               "sections": {
                 "explanation": "Automatic Restart перезапускает приложение при изменении классов через два ClassLoader — `base` для неизменных зависимостей и `restart` для кода, перезагружается только последний (быстрее полного рестарта). Плюс LiveReload (авто-обновление браузера), property defaults (отключение кэша шаблонов, DEBUG-логи), Remote DevTools (не для prod). Разделение на два ClassLoader — ключ к скорости: зависимости не перечитываются. В production деактивируется автоматически.",
@@ -1656,7 +1656,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Automatic Restart в `DevTools` — это полный перезапуск JVM при изменении кода.",
+              "text": "`DevTools` предоставляет Automatic Restart и LiveReload: при изменении файлов классов на classpath он полностью перезапускает JVM-процесс приложения, автоматически подхватывая обновлённый код без ручного рестарта.",
               "correct": false,
               "sections": {
                 "what_actually": "Это НЕ полный рестарт JVM: используются два ClassLoader (`base` для зависимостей, `restart` для кода), перезагружается только `restart` — быстрее.",
@@ -1668,7 +1668,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`DevTools` нужно подключать в production для удалённой отладки.",
+              "text": "`DevTools` — инструмент разработки с Automatic Restart и LiveReload, а через Remote DevTools его подключают и в production-среде для удалённой отладки работающего приложения по HTTP.",
               "correct": false,
               "sections": {
                 "what_actually": "`DevTools` — для разработки (`developmentOnly`); в production он автоматически отключается, remote-режим в проде небезопасен.",
@@ -1691,7 +1691,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@WebMvcTest` поднимает полный контекст приложения, включая сервисы и БД.",
+              "text": "Через тестовые срезы: `@WebMvcTest` поднимает полный контекст приложения вместе с сервисами и слоем БД, а лишние зависимости затем подменяют моками через `@MockBean` и `@SpyBean` прямо в тесте.",
               "correct": false,
               "sections": {
                 "what_actually": "`@WebMvcTest` грузит ТОЛЬКО MVC-слой (контроллеры, фильтры); сервисы мокируют через `@MockBean`, БД не поднимается.",
@@ -1703,7 +1703,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В `@SpringBootTest` нельзя исключить отдельные автоконфигурации.",
+              "text": "Опираться на тестовые срезы: в `@SpringBootTest` отдельные автоконфигурации через `exclude` не отключаются, поскольку полный контекст поднимается как есть, без точечной настройки.",
               "correct": false,
               "sections": {
                 "what_actually": "Можно: `@EnableAutoConfiguration(exclude={...})` поверх `@SpringBootTest` отключает конкретные автоконфигурации.",
@@ -1715,7 +1715,19 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Тестовыми срезами вроде `@WebMvcTest`/`@DataJpaTest` либо `exclude` в `@SpringBootTest`.",
+              "text": "Подменять зависимости через `@MockBean`: он создаёт в контексте теста реальный бин с настоящей реализацией вместо автоконфигурируемого, изолируя проверяемый слой от остальных.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@MockBean` подставляет Mockito-мок вместо реального бина в контекст теста.",
+                "source_of_confusion": "Слово «Bean» наводит на мысль о реальном объекте.",
+                "if_it_were_true": "Тогда тесты зависели бы от настоящей реализации, теряя изоляцию.",
+                "how_it_should_be": "`@MockBean` — это мок в контексте, не реальная реализация."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Тестовыми срезами вроде `@WebMvcTest`/`@DataJpaTest`, поднимающими только нужный слой, либо через `@EnableAutoConfiguration(exclude={...})` в `@SpringBootTest` для точечного отключения.",
               "correct": true,
               "sections": {
                 "explanation": "Срезы урезают контекст: `@WebMvcTest` — только MVC без сервиса/БД, `@DataJpaTest` — только JPA с embedded-БД, плюс `@WebFluxTest`, `@JsonTest`, `@RestClientTest`. Либо исключают конкретные автоконфигурации в `@SpringBootTest` через `@EnableAutoConfiguration(exclude={DataSourceAutoConfiguration.class, ...})`. Зависимости подменяют `@MockBean`, свойства — `@TestPropertySource`. Срез загружает только нужный слой, что ускоряет тест и снижает связанность.",
@@ -1723,18 +1735,6 @@
                 "when_to_apply": "Срезы берут для быстрых слоевых тестов; `exclude` в `@SpringBootTest` — когда нужен почти полный контекст без конкретной автоконфигурации.",
                 "edge_cases": "`@MockBean`/`@SpyBean` инвалидируют кэш контекста — их избыток замедляет весь набор тестов.",
                 "related": "[[spring-boot-interview#Q36]] тестовые срезы детально; [[spring-boot-interview#Q37]] @SpringBootTest; [[spring-boot-interview#Q11]] exclude автоконфигурации."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`@MockBean` создаёт реальный бин с настоящей реализацией.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@MockBean` подставляет Mockito-мок вместо реального бина в контекст теста.",
-                "source_of_confusion": "Слово «Bean» наводит на мысль о реальном объекте.",
-                "if_it_were_true": "Тогда тесты зависели бы от настоящей реализации, теряя изоляцию.",
-                "how_it_should_be": "`@MockBean` — это мок в контексте, не реальная реализация."
               }
             }
           ]
@@ -1751,7 +1751,31 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@SpringBootApplication`, `@EnableAutoConfiguration`, `@ConfigurationProperties`, условные `@ConditionalOn*`.",
+              "text": "Основные: `@SpringBootApplication`, `@EnableAutoConfiguration`, `@ConfigurationProperties`, а `@AutoConfiguration` ставят на пользовательские `@Configuration`-классы приложения вместо `@Configuration`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@AutoConfiguration` — для классов АВТОКОНФИГУРАЦИИ (библиотек/стартеров, 3.x), участвующих в упорядочивании; обычные конфиги приложения помечают `@Configuration`.",
+                "source_of_confusion": "Похожие имена `@AutoConfiguration` и `@Configuration` легко перепутать.",
+                "if_it_were_true": "Тогда каждый `@Configuration` стал бы автоконфигурацией, но это для стартеров.",
+                "how_it_should_be": "`@AutoConfiguration` — для стартеров; конфиги приложения — `@Configuration`."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Основные: `@ConfigurationProperties`, `@ConditionalOnProperty`, `@WebMvcTest`, а `@SpringBootApplication` и `@EnableAutoConfiguration` — по сути одна аннотация под разными именами на точке входа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@SpringBootApplication` ШИРЕ: она включает `@EnableAutoConfiguration` плюс `@Configuration` и `@ComponentScan`.",
+                "source_of_confusion": "Обе аннотации про запуск, отсюда смешение, хотя одна шире другой.",
+                "if_it_were_true": "Тогда `@SpringBootApplication` не сканировал бы компоненты, но он это делает через `@ComponentScan`.",
+                "how_it_should_be": "`@SpringBootApplication` = `@EnableAutoConfiguration` + `@Configuration` + `@ComponentScan`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Ключевые: `@SpringBootApplication` (точка входа), `@EnableAutoConfiguration`, `@ConfigurationProperties` для привязки свойств, условные `@ConditionalOn*` и тестовые срезы `@WebMvcTest`/`@DataJpaTest`.",
               "correct": true,
               "sections": {
                 "explanation": "`@SpringBootApplication` (точка входа = `@Configuration` + `@EnableAutoConfiguration` + `@ComponentScan`), `@EnableAutoConfiguration` (включить автоконфигурацию), `@ConfigurationProperties` (типобезопасная привязка свойств), условные `@ConditionalOnClass`/`@ConditionalOnMissingBean`/`@ConditionalOnProperty`, `@AutoConfiguration` (класс автоконфигурации, 3.x), тестовые `@SpringBootTest`/`@WebMvcTest`/`@DataJpaTest`. Аннотации покрывают три области: запуск/автоконфигурацию, конфигурацию свойств и тестирование.",
@@ -1762,33 +1786,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`@AutoConfiguration` — это аннотация для обычных пользовательских `@Configuration`-классов приложения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@AutoConfiguration` — для классов АВТОКОНФИГУРАЦИИ (библиотек/стартеров, 3.x), участвующих в упорядочивании; обычные конфиги приложения помечают `@Configuration`.",
-                "source_of_confusion": "Похожие имена `@AutoConfiguration` и `@Configuration` легко перепутать.",
-                "if_it_were_true": "Тогда каждый `@Configuration` стал бы автоконфигурацией, но это для стартеров.",
-                "how_it_should_be": "`@AutoConfiguration` — для стартеров; конфиги приложения — `@Configuration`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`@SpringBootApplication` и `@EnableAutoConfiguration` — это одно и то же.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@SpringBootApplication` ШИРЕ: она включает `@EnableAutoConfiguration` плюс `@Configuration` и `@ComponentScan`.",
-                "source_of_confusion": "Обе аннотации про запуск, отсюда смешение, хотя одна шире другой.",
-                "if_it_were_true": "Тогда `@SpringBootApplication` не сканировал бы компоненты, но он это делает через `@ComponentScan`.",
-                "how_it_should_be": "`@SpringBootApplication` = `@EnableAutoConfiguration` + `@Configuration` + `@ComponentScan`."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "`@DataJpaTest` загружает полный контекст приложения с веб-слоем.",
+              "text": "Основные: `@SpringBootApplication`, `@EnableAutoConfiguration`, `@ConfigurationProperties`, а тестовый `@DataJpaTest` поднимает полный контекст приложения вместе с веб-слоем и MVC-контроллерами.",
               "correct": false,
               "sections": {
                 "what_actually": "`@DataJpaTest` — срез только для JPA-слоя (репозитории + embedded-БД), без веб-слоя и сервисов.",
@@ -1811,7 +1811,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для CLI-приложения нужно убрать `@SpringBootApplication` и `SpringApplication.run()`.",
+              "text": "Реализуют интерфейс `CommandLineRunner` или `ApplicationRunner`: их метод `run` вызывается после старта контекста, а встроенный веб-сервер отключают свойством `spring.main.web-application-type=none`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`CommandLineRunner` (метод `run(String... args)`) или `ApplicationRunner` (`run(ApplicationArguments)` — с парсингом `--key=value`) выполняются после старта контекста. Встроенный веб-сервер отключают через `spring.main.web-application-type=none` (или `WebApplicationType.NONE`), сохраняя DI, контекст и автоконфигурацию. Это позволяет писать batch/утилиты на полном стеке Spring (DI, транзакции) без поднятия HTTP-сервера.",
+                "example": "`@SpringBootApplication class BatchApp implements CommandLineRunner { public void run(String... a){ /* логика */ } }` + `web-application-type: none`.",
+                "when_to_apply": "Подход берут для batch-задач, миграционных утилит, разовых джоб на инфраструктуре Spring.",
+                "edge_cases": "Несколько runner-ов выполняются по порядку (`@Order`); забытое отключение веб-сервера оставит висеть ненужный порт.",
+                "related": "[[spring-boot-interview#Q35]] жизненный цикл и runners; [[spring-boot-interview#Q1]] точка входа; [[spring-boot-interview#Q13]] web-application-type."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Аннотацию `@SpringBootApplication` и вызов `SpringApplication.run()` из точки входа убирают, а CLI-логику размещают в обычном `main`, который сам инстанцирует нужные классы и завершает работу.",
               "correct": false,
               "sections": {
                 "what_actually": "Они остаются; добавляют реализацию `CommandLineRunner`/`ApplicationRunner`, а веб-сервер при необходимости отключают свойством.",
@@ -1821,9 +1834,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`CommandLineRunner` и `ApplicationRunner` получают одинаковый тип аргументов.",
+              "order": 2,
+              "label": "C",
+              "text": "Оба интерфейса, `CommandLineRunner` и `ApplicationRunner`, объявляют метод `run` с одинаковым типом аргумента — массивом `String[]` сырых токенов, поэтому опции вида `--key=value` разбирают вручную в обоих случаях.",
               "correct": false,
               "sections": {
                 "what_actually": "`CommandLineRunner.run(String... args)` получает сырые строки; `ApplicationRunner.run(ApplicationArguments)` — разобранные аргументы с поддержкой `--key=value`.",
@@ -1833,28 +1846,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "CLI-приложение на Spring Boot не имеет доступа к DI и бинам контекста.",
+              "order": 3,
+              "label": "D",
+              "text": "В режиме командной строки контекст поднимается частично, без веб-слоя, из-за чего в самом runner-е бины приложения и внедрение зависимостей оказываются недоступны, а объекты создают вручную оператором `new`.",
               "correct": false,
               "sections": {
                 "what_actually": "Контекст создаётся полностью, поэтому в runner доступны все бины через DI.",
                 "source_of_confusion": "«Командная строка» ассоциируется с простым скриптом без контекста.",
                 "if_it_were_true": "Тогда не было бы смысла в Boot для CLI, но именно DI/контекст и дают преимущество.",
                 "how_it_should_be": "CLI-runner работает в полном контексте с DI."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Реализуют `CommandLineRunner`/`ApplicationRunner`; веб-сервер отключают свойством.",
-              "correct": true,
-              "sections": {
-                "explanation": "`CommandLineRunner` (метод `run(String... args)`) или `ApplicationRunner` (`run(ApplicationArguments)` — с парсингом `--key=value`) выполняются после старта контекста. Встроенный веб-сервер отключают через `spring.main.web-application-type=none` (или `WebApplicationType.NONE`), сохраняя DI, контекст и автоконфигурацию. Это позволяет писать batch/утилиты на полном стеке Spring (DI, транзакции) без поднятия HTTP-сервера.",
-                "example": "`@SpringBootApplication class BatchApp implements CommandLineRunner { public void run(String... a){ /* логика */ } }` + `web-application-type: none`.",
-                "when_to_apply": "Подход берут для batch-задач, миграционных утилит, разовых джоб на инфраструктуре Spring.",
-                "edge_cases": "Несколько runner-ов выполняются по порядку (`@Order`); забытое отключение веб-сервера оставит висеть ненужный порт.",
-                "related": "[[spring-boot-interview#Q35]] жизненный цикл и runners; [[spring-boot-interview#Q1]] точка входа; [[spring-boot-interview#Q13]] web-application-type."
               }
             }
           ]
@@ -1871,31 +1871,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для замены Logback на Log4j2 достаточно добавить `starter-log4j2`, ничего не исключая.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Нужно ещё исключить `spring-boot-starter-logging` (Logback), иначе два фреймворка конфликтуют.",
-                "source_of_confusion": "Кажется, что добавления зависимости хватит.",
-                "if_it_were_true": "Тогда в classpath были бы и Logback, и Log4j2 — конфликт привязки SLF4J.",
-                "how_it_should_be": "Log4j2 подключают, исключив `starter-logging`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "По умолчанию Spring Boot использует Log4j2.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По умолчанию — `Logback`; на Log4j2 переходят, исключив `starter-logging` и добавив `starter-log4j2`.",
-                "source_of_confusion": "Log4j2 на слуху, кажется дефолтом.",
-                "if_it_were_true": "Тогда не нужно было бы исключать `starter-logging` для Log4j2, но это обязательный шаг.",
-                "how_it_should_be": "Дефолт — Logback; Log4j2 подключают вручную."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "По умолчанию `Logback`, настраиваемый через `application.yml`; уровень меняют рантайм.",
+              "text": "По умолчанию `Logback`, настраиваемый через `application.yml` (`logging.level.*`, `logging.file.name`, `logging.pattern.*`); уровень пакета меняют в рантайме через Actuator `POST /actuator/loggers/{name}`.",
               "correct": true,
               "sections": {
                 "explanation": "`Logback` настраивают через `application.yml` (`logging.level.*` по пакетам, `logging.file.name`, `logging.pattern.*`, rolling policy). Замена на `Log4j2` — исключить `spring-boot-starter-logging` и добавить `starter-log4j2`. Уровень меняют в рантайме через Actuator `/actuator/loggers/{name}`. В Kubernetes логи пишут в stdout, собирая их DaemonSet-ом (Fluentd/Filebeat). YAML покрывает типовые нужды без отдельного `logback.xml`.",
@@ -1906,9 +1882,33 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "По умолчанию `Logback`, настраиваемый через `application.yml`. Для перехода на `Log4j2` добавляют `spring-boot-starter-log4j2`, а исключать `spring-boot-starter-logging` не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужно ещё исключить `spring-boot-starter-logging` (Logback), иначе два фреймворка конфликтуют.",
+                "source_of_confusion": "Кажется, что добавления зависимости хватит.",
+                "if_it_were_true": "Тогда в classpath были бы и Logback, и Log4j2 — конфликт привязки SLF4J.",
+                "how_it_should_be": "Log4j2 подключают, исключив `starter-logging`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Настраивается через `application.yml`: `logging.level.<package>` задаёт уровни, `logging.pattern.console` — формат вывода. По умолчанию Spring Boot использует `Log4j2` как реализацию за фасадом SLF4J.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По умолчанию — `Logback`; на Log4j2 переходят, исключив `starter-logging` и добавив `starter-log4j2`.",
+                "source_of_confusion": "Log4j2 на слуху, кажется дефолтом.",
+                "if_it_were_true": "Тогда не нужно было бы исключать `starter-logging` для Log4j2, но это обязательный шаг.",
+                "how_it_should_be": "Дефолт — Logback; Log4j2 подключают вручную."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "Уровень логирования нельзя изменить без перезапуска приложения.",
+              "text": "Настраивается через `application.yml` (`logging.level.*` по пакетам). Значения читаются при старте контекста, поэтому смена уровня требует перезапуска приложения — рантайм-правка через Actuator не предусмотрена.",
               "correct": false,
               "sections": {
                 "what_actually": "Уровень меняют в рантайме через Actuator `/actuator/loggers/{name}` POST-запросом.",
@@ -1931,7 +1931,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "После миграции внешний сервер приложений остаётся обязательным.",
+              "text": "Миграцию делают по модулям через BOM и `spring-boot-starter-*`, но embedded-Tomcat рассчитан на локальную разработку, поэтому в продакшене приложение собирают в WAR и разворачивают на внешнем сервере приложений.",
               "correct": false,
               "sections": {
                 "what_actually": "Boot встраивает сервер; внешний контейнер убирают (кроме случая осознанного WAR-деплоя).",
@@ -1943,7 +1943,19 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Инкрементально по модулям: BOM/стартеры, конфиг в `application.yml`, `@SpringBootApplication`.",
+              "text": "Миграцию выполняют единым большим переходом: всё приложение переводят на BOM, стартеры и `application.yml` в рамках одного релиза, а не по модулям, чтобы не поддерживать одновременно две модели сборки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Рекомендуется инкрементальная миграция по модулям с тестами на каждом шаге — big-bang рискован.",
+                "source_of_confusion": "Кажется, что переход проще сделать разом.",
+                "if_it_were_true": "Тогда регрессии было бы невозможно локализовать, но пошаговый подход их ловит.",
+                "how_it_should_be": "Мигрируют по модулям, прогоняя тесты на каждом шаге."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Мигрируют по модулям: подключают BOM/`starter-parent`, заменяют зависимости на `spring-boot-starter-*`, переносят настройки в `application.yml`, добавляют `@SpringBootApplication` и `SpringApplication.run()`.",
               "correct": true,
               "sections": {
                 "explanation": "Шаги: (1) подключить BOM/parent (`spring-boot-dependencies`/`starter-parent`); (2) заменить ручные зависимости на `spring-boot-starter-*`; (3) перенести XML/Java-config в `application.yml`; (4) создать `@SpringBootApplication` + `SpringApplication.run()`; (5) убрать внешний сервер, использовать embedded Tomcat; (6) мигрировать тесты на `@SpringBootTest`; (7) разрешить конфликты через `exclude`. Делают по модулям с прогоном тестов. Главные риски — конфликты версий (решает BOM) и дублирование бинов.",
@@ -1954,21 +1966,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Миграцию на Spring Boot нужно делать целиком за один шаг, переписав всё приложение сразу.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Рекомендуется инкрементальная миграция по модулям с тестами на каждом шаге — big-bang рискован.",
-                "source_of_confusion": "Кажется, что переход проще сделать разом.",
-                "if_it_were_true": "Тогда регрессии было бы невозможно локализовать, но пошаговый подход их ловит.",
-                "how_it_should_be": "Мигрируют по модулям, прогоняя тесты на каждом шаге."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "При миграции код с `@Autowired`/`@Transactional` нужно полностью переписать.",
+              "text": "Мигрируют по модулям с BOM и стартерами, но программную модель Boot считают новой, поэтому бизнес-код с `@Autowired` и `@Transactional` переписывают, заменяя аннотации DI и управления транзакциями.",
               "correct": false,
               "sections": {
                 "what_actually": "DI/AOP/`@Transactional` — ядро Spring, которое Boot переиспользует; этот код переписывать не нужно.",
@@ -1991,7 +1991,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Native Image поддерживает динамическую загрузку классов и неограниченную рефлексию.",
+              "text": "Нативный бинарник GraalVM с AOT-компиляцией, сохраняющий динамическую загрузку классов и рефлексию без reachability-хинтов: код с `Class.forName` и прокси работает как на обычной JVM.",
               "correct": false,
               "sections": {
                 "what_actually": "Native Image работает в «закрытом мире»: динамической загрузки классов нет, рефлексия требует явных hints.",
@@ -2003,20 +2003,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Компиляция в самостоятельный нативный бинарник: старт за 50-100 мс, мало памяти.",
-              "correct": true,
-              "sections": {
-                "explanation": "`GraalVM Native Image` (Spring Boot 3.x, `./gradlew nativeCompile`) компилирует приложение в нативный бинарник: старт за 50-100 мс (вместо секунд), потребление памяти в 3-5 раз меньше — идеально для serverless и short-lived контейнеров. Ограничения: рефлексия требует явных hints (reachability metadata), длительная компиляция (минуты), не все библиотеки поддержаны, нет динамической загрузки классов. Основан на AOT-обработке; быстрый старт — следствие отсутствия JVM-прогрева и закрытого мира классов.",
-                "example": "`./gradlew nativeCompile` → бинарник в `build/native/nativeCompile/`; стартует за ~50 мс.",
-                "when_to_apply": "Native Image берут для serverless/FaaS и масштабируемых контейнеров, где важен мгновенный старт и низкая память.",
-                "edge_cases": "Рефлексия/динамические прокси требуют `@RegisterReflectionForBinding`/`RuntimeHintsRegistrar`; несовместимые библиотеки выявляются только при native-сборке.",
-                "related": "[[spring-boot-interview#Q39]] AOT-обработка; [[spring-boot-interview#Q1]] что такое Boot; [[spring-boot-interview#Q27]] контейнеры."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Native Image — это просто оптимизированный JVM-байткод, запускаемый обычной JVM.",
+              "text": "Формат оптимизированного JVM-байткода: GraalVM переупаковывает классы приложения в ускоренный образ, который запускается поверх обычной JVM и стартует быстрее за счёт предварительной оптимизации.",
               "correct": false,
               "sections": {
                 "what_actually": "Native Image — это самостоятельный нативный бинарник (AOT-компиляция GraalVM), не требующий JVM в рантайме.",
@@ -2026,15 +2013,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Компиляция в Native Image занимает столько же времени, сколько обычная сборка JAR.",
+              "order": 2,
+              "label": "C",
+              "text": "AOT-компиляция в нативный бинарник, по длительности сопоставимая с обычной сборкой fat-jar: анализ достижимости и генерация образа укладываются в те же секунды, что и упаковка через Gradle.",
               "correct": false,
               "sections": {
                 "what_actually": "Native-компиляция длится минуты (анализ достижимости + генерация бинарника) — значительно дольше сборки JAR.",
                 "source_of_confusion": "Кажется, что это обычная сборка.",
                 "if_it_were_true": "Тогда её не упоминали бы как ограничение, но долгая компиляция — известный минус.",
                 "how_it_should_be": "Native-компиляция заметно дольше обычной сборки JAR."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Компиляция приложения в самостоятельный нативный бинарник через AOT-обработку GraalVM: старт за 50-100 мс без прогрева JVM, памяти в разы меньше — удобно для serverless и коротких контейнеров.",
+              "correct": true,
+              "sections": {
+                "explanation": "`GraalVM Native Image` (Spring Boot 3.x, `./gradlew nativeCompile`) компилирует приложение в нативный бинарник: старт за 50-100 мс (вместо секунд), потребление памяти в 3-5 раз меньше — идеально для serverless и short-lived контейнеров. Ограничения: рефлексия требует явных hints (reachability metadata), длительная компиляция (минуты), не все библиотеки поддержаны, нет динамической загрузки классов. Основан на AOT-обработке; быстрый старт — следствие отсутствия JVM-прогрева и закрытого мира классов.",
+                "example": "`./gradlew nativeCompile` → бинарник в `build/native/nativeCompile/`; стартует за ~50 мс.",
+                "when_to_apply": "Native Image берут для serverless/FaaS и масштабируемых контейнеров, где важен мгновенный старт и низкая память.",
+                "edge_cases": "Рефлексия/динамические прокси требуют `@RegisterReflectionForBinding`/`RuntimeHintsRegistrar`; несовместимые библиотеки выявляются только при native-сборке.",
+                "related": "[[spring-boot-interview#Q39]] AOT-обработка; [[spring-boot-interview#Q1]] что такое Boot; [[spring-boot-interview#Q27]] контейнеры."
               }
             }
           ]
@@ -2051,7 +2051,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ApplicationReadyEvent` публикуется до запуска встроенного сервера.",
+              "text": "`run()` готовит `Environment` и рефрешит `ApplicationContext`, после чего публикует `ApplicationReadyEvent` как сигнал готовности контекста, а затем запускает встроенный сервер и вызывает runners.",
               "correct": false,
               "sections": {
                 "what_actually": "`ApplicationReadyEvent` — самое позднее: после refresh, старта сервера и вызова runners, когда приложение готово к трафику.",
@@ -2063,7 +2063,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`run()` → контекст → refresh → старт сервера → runners → `ApplicationReadyEvent`.",
+              "text": "`SpringApplication.run()` готовит `Environment`, рефрешит `ApplicationContext` (создание бинов), запускает встроенный сервер, вызывает runners и публикует `ApplicationReadyEvent` — готов к трафику.",
               "correct": true,
               "sections": {
                 "explanation": "Полный цикл: `main()`→`SpringApplication.run()` → подготовка `Environment` (загрузка property sources) → создание `ApplicationContext` → загрузка `@Configuration`/автоконфигурации → refresh (создание бинов) → запуск встроенного сервера → вызов `CommandLineRunner`/`ApplicationRunner` → `ApplicationReadyEvent` (готов к трафику). При `SIGTERM` — graceful shutdown → закрытие контекста (`@PreDestroy`). Ключевые события: `ApplicationStartingEvent`, `EnvironmentPreparedEvent`, `ContextInitializedEvent`, `PreparedEvent`, `StartedEvent`, `ReadyEvent`, `FailedEvent` — позволяют подключаться к нужной фазе.",
@@ -2076,7 +2076,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Graceful shutdown включён в Spring Boot по умолчанию.",
+              "text": "`run()` рефрешит контекст, запускает сервер и runners до `ApplicationReadyEvent`; при `SIGTERM` контекст закрывается через graceful shutdown, который в Spring Boot включён по умолчанию и ждёт активные запросы.",
               "correct": false,
               "sections": {
                 "what_actually": "Graceful shutdown нужно включить явно (`server.shutdown: graceful`); по умолчанию shutdown немедленный (рвёт активные запросы).",
@@ -2088,7 +2088,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`CommandLineRunner` вызывается ДО создания и refresh контекста.",
+              "text": "`SpringApplication.run()` вызывает `CommandLineRunner`/`ApplicationRunner` ещё до создания и рефреша `ApplicationContext`, а затем поднимает контекст, сервер и публикует `ApplicationReadyEvent`.",
               "correct": false,
               "sections": {
                 "what_actually": "Runners вызываются ПОСЛЕ refresh контекста и старта сервера, но до `ApplicationReadyEvent`.",
@@ -2111,7 +2111,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Аннотации, загружающие ТОЛЬКО слой: `@WebMvcTest` — MVC, `@DataJpaTest` — JPA с H2.",
+              "text": "Аннотации Spring Boot Test, поднимающие лишь нужный слой контекста: `@WebMvcTest` — веб-слой MVC (контроллеры, фильтры), сервисы через `@MockBean`; `@DataJpaTest` — JPA-слой на embedded-H2 с откатом транзакции.",
               "correct": true,
               "sections": {
                 "explanation": "Срезы — аннотации Spring Boot Test, поднимающие только часть контекста: `@WebMvcTest` (MVC: контроллеры, фильтры, DispatcherServlet; сервисы — `@MockBean`), `@DataJpaTest` (JPA: репозитории, EntityManager, H2 in-memory, `@Transactional` с откатом), `@WebFluxTest`, `@JsonTest`, `@RestClientTest`. Это ускоряет тесты и снижает связанность; реальную БД подключают через `@AutoConfigureTestDatabase(replace=NONE)` + Testcontainers.",
@@ -2124,7 +2124,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Тестовые срезы загружают полный контекст приложения, как `@SpringBootTest`.",
+              "text": "Тестовые срезы поднимают полный контекст приложения так же, как `@SpringBootTest`: регистрируются все бины, автоконфигурации и слои, а отличие сводится к более удобным именам аннотаций вроде `@WebMvcTest`.",
               "correct": false,
               "sections": {
                 "what_actually": "Срезы грузят ТОЛЬКО нужный слой (MVC/JPA/JSON), что быстрее и изолированнее полного контекста.",
@@ -2136,7 +2136,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@DataJpaTest` по умолчанию использует production-базу данных.",
+              "text": "`@DataJpaTest` по умолчанию подключается к production-базе через сконфигурированный `DataSource` и оборачивает тест в `@Transactional` с откатом; для embedded-H2 приходится указывать `@AutoConfigureTestDatabase`.",
               "correct": false,
               "sections": {
                 "what_actually": "`@DataJpaTest` по умолчанию заменяет DataSource на H2 in-memory и оборачивает тест в `@Transactional` с откатом.",
@@ -2148,7 +2148,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`@WebMvcTest` поднимает реальные сервисы вместо их моков.",
+              "text": "`@WebMvcTest` поднимает веб-слой MVC вместе с реальными бинами сервисов из нижних слоёв, поэтому их поведение в тесте настоящее, а `@MockBean` применяют, когда сервис хочется подменить заглушкой.",
               "correct": false,
               "sections": {
                 "what_actually": "`@WebMvcTest` грузит только MVC-слой; сервисы подставляют как `@MockBean`, реальные бины сервисов не создаются.",
@@ -2171,7 +2171,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@SpringBootTest(webEnvironment = MOCK)` запускает реальный встроенный сервер на порту.",
+              "text": "`@SpringBootTest(webEnvironment = MOCK)` поднимает реальный встроенный сервер на сетевом порту, и обратиться к нему можно через `TestRestTemplate` с внедрённым `@LocalServerPort` в интеграционном тесте.",
               "correct": false,
               "sections": {
                 "what_actually": "`MOCK` (дефолт) НЕ поднимает реальный сервер — он использует mock-сервлет-окружение; реальный порт даёт `RANDOM_PORT`/`DEFINED_PORT`.",
@@ -2183,7 +2183,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@SpringBootTest` загружает только веб-слой, как `@WebMvcTest`.",
+              "text": "`@SpringBootTest` поднимает веб-слой приложения — контроллеры и MVC-инфраструктуру, аналогично срезу `@WebMvcTest`, оставляя сервисы и репозитории за пределами тестового контекста.",
               "correct": false,
               "sections": {
                 "what_actually": "`@SpringBootTest` грузит ПОЛНЫЙ контекст (все слои); только веб-слой — это срез `@WebMvcTest`.",
@@ -2195,19 +2195,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Spring не кэширует контекст между тестами — каждый тест поднимает его заново.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Spring КЭШИРУЕТ контекст между тестами при совпадении конфигурации — это главная оптимизация скорости набора.",
-                "source_of_confusion": "Кажется, что каждый тест изолирован полным пересозданием.",
-                "if_it_were_true": "Тогда большие наборы тестов были бы катастрофически медленными, но кэш это спасает.",
-                "how_it_should_be": "Контекст кэшируется при одинаковой конфигурации; `@MockBean` инвалидирует кэш."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Загружает ПОЛНЫЙ контекст; режим задаёт `webEnvironment` (`MOCK`, `RANDOM_PORT`, …).",
+              "text": "Поднимает ПОЛНЫЙ контекст приложения; режим веб-окружения задаёт `webEnvironment`: `MOCK` (mock-сервлет, без порта), `RANDOM_PORT`/`DEFINED_PORT` (реальный сервер), `NONE` (без сервлет-окружения).",
               "correct": true,
               "sections": {
                 "explanation": "`webEnvironment`: `MOCK` (по умолчанию — WebApplicationContext с mock-сервлет-окружением, без реального порта), `RANDOM_PORT` (реальный сервер на случайном порту — для end-to-end через `TestRestTemplate`/`@LocalServerPort`), `DEFINED_PORT` (порт из конфигурации), `NONE` (контекст без веб-окружения). Spring кэширует контекст между тестами при совпадении конфигурации — ключ к скорости набора; `@MockBean`/`@SpyBean` инвалидируют кэш.",
@@ -2215,6 +2203,18 @@
                 "when_to_apply": "`@SpringBootTest` берут для интеграционных проверок полного стека; срезы — для отдельных слоёв.",
                 "edge_cases": "Разнообразие `@MockBean` по тестам плодит разные контексты и ломает кэш — общие моки выносят в базовый класс.",
                 "related": "[[spring-boot-interview#Q36]] тестовые срезы; [[spring-boot-interview#Q29]] отключение автоконфигурации; [[spring-boot-interview#Q19]] RANDOM_PORT и порт."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Spring не переиспользует контекст между тестами — каждый тестовый класс поднимает его заново, поэтому набор из сотен тестов последовательно пересоздаёт `ApplicationContext` с нуля.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Spring КЭШИРУЕТ контекст между тестами при совпадении конфигурации — это главная оптимизация скорости набора.",
+                "source_of_confusion": "Кажется, что каждый тест изолирован полным пересозданием.",
+                "if_it_were_true": "Тогда большие наборы тестов были бы катастрофически медленными, но кэш это спасает.",
+                "how_it_should_be": "Контекст кэшируется при одинаковой конфигурации; `@MockBean` инвалидирует кэш."
               }
             }
           ]
@@ -2231,20 +2231,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Каждая реализует `Condition` и вычисляется при загрузке контекста; порядок: class- до bean-level.",
-              "correct": true,
-              "sections": {
-                "explanation": "`@ConditionalOnProperty` (свойство задано/имеет значение — `havingValue`, `matchIfMissing`), `@ConditionalOnMissingBean` (бин ещё не зарегистрирован — «user wins»), `@ConditionalOnBean`, `@ConditionalOnClass`/`@ConditionalOnMissingClass`, `@ConditionalOnWebApplication`, `@ConditionalOnExpression` (SpEL). Порядок: сначала class-level (`OnClass`), затем bean-level (`OnBean`/`OnMissingBean`), иначе возможен `NoSuchBeanDefinitionException` — classpath-условия дешевле и проверяются раньше.",
-                "example": "`@ConditionalOnProperty(prefix=\"app.cache\", name=\"enabled\", havingValue=\"true\", matchIfMissing=false)` + `@Bean @ConditionalOnMissingBean(CacheManager.class)`.",
-                "when_to_apply": "Используют при написании автоконфигураций для активации бинов только в подходящих условиях.",
-                "edge_cases": "Неверный порядок условий (`OnBean` раньше `OnClass`) ведёт к ошибкам отсутствующего бина — Spring это и упорядочивает.",
-                "related": "[[spring-boot-interview#Q10]] список @Conditional; [[spring-boot-interview#Q9]] поток автоконфигурации; [[spring-boot-interview#Q12]] своя автоконфигурация."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Условные аннотации вычисляются во время компиляции и фиксируют решение в байткоде.",
+              "text": "Каждая реализует `Condition`, но результат определяет annotation processor во время компиляции и фиксирует его в байткоде, поэтому при старте контекста условия повторно не вычисляются.",
               "correct": false,
               "sections": {
                 "what_actually": "Они вычисляются при загрузке контекста (в обычной JVM): каждая реализует `Condition` и проверяется в рантайме старта.",
@@ -2254,9 +2241,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`@ConditionalOnMissingBean` перекрывает пользовательский бин своей реализацией.",
+              "order": 1,
+              "label": "B",
+              "text": "Каждая реализует `Condition`; `@ConditionalOnMissingBean` при уже зарегистрированном пользовательском бине перекрывает его бином автоконфигурации, заменяя пользовательскую реализацию своей.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `@ConditionalOnMissingBean` уступает пользователю — автоконфигурация создаёт бин, только если его ещё нет («user wins»).",
@@ -2266,15 +2253,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`@ConditionalOnProperty` всегда активна, если свойство отсутствует.",
+              "order": 2,
+              "label": "C",
+              "text": "Каждая реализует `Condition`; `@ConditionalOnProperty` при отсутствии указанного свойства считает условие выполненным и по умолчанию регистрирует бин, независимо от `matchIfMissing`.",
               "correct": false,
               "sections": {
                 "what_actually": "Поведение при отсутствии задаёт `matchIfMissing` (по умолчанию `false` — НЕ активна, если свойства нет).",
                 "source_of_confusion": "Кажется, что отсутствие свойства = условие выполнено.",
                 "if_it_were_true": "Тогда `matchIfMissing` был бы не нужен, но он именно это и контролирует.",
                 "how_it_should_be": "При отсутствии свойства поведение задаёт `matchIfMissing` (дефолт false)."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Каждая реализует `Condition`, вычисляемый при загрузке контекста; сначала class-level (`OnClass`), затем bean-level (`OnBean`/`OnMissingBean`), classpath-условия дешевле и идут раньше.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@ConditionalOnProperty` (свойство задано/имеет значение — `havingValue`, `matchIfMissing`), `@ConditionalOnMissingBean` (бин ещё не зарегистрирован — «user wins»), `@ConditionalOnBean`, `@ConditionalOnClass`/`@ConditionalOnMissingClass`, `@ConditionalOnWebApplication`, `@ConditionalOnExpression` (SpEL). Порядок: сначала class-level (`OnClass`), затем bean-level (`OnBean`/`OnMissingBean`), иначе возможен `NoSuchBeanDefinitionException` — classpath-условия дешевле и проверяются раньше.",
+                "example": "`@ConditionalOnProperty(prefix=\"app.cache\", name=\"enabled\", havingValue=\"true\", matchIfMissing=false)` + `@Bean @ConditionalOnMissingBean(CacheManager.class)`.",
+                "when_to_apply": "Используют при написании автоконфигураций для активации бинов только в подходящих условиях.",
+                "edge_cases": "Неверный порядок условий (`OnBean` раньше `OnClass`) ведёт к ошибкам отсутствующего бина — Spring это и упорядочивает.",
+                "related": "[[spring-boot-interview#Q10]] список @Conditional; [[spring-boot-interview#Q9]] поток автоконфигурации; [[spring-boot-interview#Q12]] своя автоконфигурация."
               }
             }
           ]
@@ -2291,7 +2291,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "AOT генерирует код в рантайме при старте приложения.",
+              "text": "AOT-обработка в момент старта приложения генерирует Java-код создания бинов и метаданные `reflect-config.json`, заменяя рефлексию сгенерированными фабриками, чтобы ускорить прогрев контекста после запуска JVM.",
               "correct": false,
               "sections": {
                 "what_actually": "AOT — это этап СБОРКИ (`processAot`): код для создания бинов и метаданные генерируются до запуска, не в рантайме.",
@@ -2303,7 +2303,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "AOT-обработка устраняет необходимость в условных аннотациях `@Conditional`.",
+              "text": "AOT-обработка на этапе сборки вычисляет условия автоконфигурации и генерирует Java-код создания бинов, устраняя необходимость в аннотациях `@Conditional`: их результаты уже вшиты в сгенерированные `BeanDefinitions`.",
               "correct": false,
               "sections": {
                 "what_actually": "AOT не отменяет `@Conditional`: она вычисляет условия на этапе сборки и фиксирует результат, но сами аннотации остаются основой автоконфигурации.",
@@ -2315,7 +2315,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "AOT-обработка нужна только для обычной JVM и не связана с Native Image.",
+              "text": "AOT-обработка — это оптимизация запуска на обычной JVM: на этапе сборки она генерирует код создания бинов, ускоряя старт, и работает как самостоятельный механизм, не связанный с GraalVM Native Image.",
               "correct": false,
               "sections": {
                 "what_actually": "AOT ОБЯЗАТЕЛЬНА для GraalVM Native Image (где рефлексия ограничена) и дополнительно ускоряет старт на обычной JVM.",
@@ -2327,7 +2327,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Этап СБОРКИ: генерирует Java-код создания бинов без рефлексии в рантайме.",
+              "text": "AOT (Ahead-Of-Time) — этап сборки (`processAot`): анализирует контекст и генерирует Java-код создания бинов вместо рефлексии в рантайме, что ускоряет старт и требуется для сборки GraalVM Native Image.",
               "correct": true,
               "sections": {
                 "explanation": "AOT (Ahead-Of-Time Processing, Spring Boot 3.x) анализирует приложение и генерирует Java-код для создания бинов БЕЗ рефлексии и динамических прокси в рантайме (`reflect-config.json`). Зачем: обязателен для GraalVM Native Image (рефлексия ограничена), ускоряет старт и на обычной JVM, выявляет ошибки конфигурации на сборке. Запуск `./gradlew processAot`/`nativeCompile`. Динамические `@Bean` с рефлексией требуют hints (`@RegisterReflectionForBinding`, `RuntimeHintsRegistrar`).",
@@ -2351,7 +2351,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для реактивного приложения используют тот же синхронный `HealthIndicator`.",
+              "text": "В реактивном WebFlux-приложении отдельного реактивного health-интерфейса нет: индикатор реализуют тем же блокирующим `HealthIndicator`, а `Actuator` включает его в общий `/actuator/health`.",
               "correct": false,
               "sections": {
                 "what_actually": "В WebFlux реализуют `ReactiveHealthIndicator` с методом `Mono<Health> health()`, а не блокирующий `HealthIndicator`.",
@@ -2363,7 +2363,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Бин с методом `health()`, реализующий `HealthIndicator`; Spring обнаруживает его сам.",
+              "text": "Объявляют бин, реализующий `HealthIndicator` с методом `health()`, возвращающим `Health.up()/down()` с деталями через `.withDetail(...)`; Spring Boot сам обнаруживает их и добавляет в `/actuator/health`.",
               "correct": true,
               "sections": {
                 "explanation": "Метод `health()` возвращает `Health.up()/down()` с деталями через `.withDetail(...)`. Spring Boot автоматически обнаруживает все такие бины и добавляет их в агрегированный `/actuator/health`. Для реактивного стека реализуют `ReactiveHealthIndicator` (`Mono<Health> health()`). Группировку настраивают через `management.endpoint.health.group.*`. Имя в JSON выводится из имени бина; общий статус `/health` = DOWN, если хотя бы один индикатор DOWN.",
@@ -2376,7 +2376,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`HealthIndicator` может возвращать только статусы UP или DOWN, без деталей.",
+              "text": "Бин `HealthIndicator` в методе `health()` возвращает `Health.up()` или `Health.down()` — это статусный флаг для `/actuator/health`, а произвольные детали через `.withDetail(...)` в ответ не добавляются.",
               "correct": false,
               "sections": {
                 "what_actually": "Метод `health()` возвращает `Health` с произвольными деталями через `.withDetail(...)` (url, время ответа, причина).",
@@ -2388,7 +2388,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Кастомный `HealthIndicator` нужно вручную регистрировать в конфигурации Actuator.",
+              "text": "Бин, реализующий `HealthIndicator` с `health()`, нужно вручную зарегистрировать в конфигурации Actuator — например, перечислить через `management.endpoint.health.*`, иначе он не попадёт в `/actuator/health`.",
               "correct": false,
               "sections": {
                 "what_actually": "Spring Boot АВТОМАТИЧЕСКИ обнаруживает все бины, реализующие `HealthIndicator`, и включает их в `/health`.",
@@ -2411,7 +2411,31 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Несколько профилей через запятую в `profiles.active`; каждый переопределяет предыдущий.",
+              "text": "Профили перечисляют через запятую в `spring.profiles.active`, но при пересечении ключей значения из первого профиля в списке перекрывают значения из идущих следом `application-{profile}.yml`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: последующий профиль в списке перекрывает предыдущий (`application-{profile2}.yml` поверх `profile1`).",
+                "source_of_confusion": "Путают направление приоритета.",
+                "if_it_were_true": "Тогда порядок профилей не имел бы значения, но он определяет, кто победит.",
+                "how_it_should_be": "Перекрывает ПОСЛЕДНИЙ профиль в списке."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "В `spring.profiles.active` за запуск указывают один профиль, а для смены окружения приложение перезапускают с другим значением; объединить `dev` и `metrics` в одной активации не выйдет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Профилей можно активировать несколько через запятую (`active: dev,metrics`); они складываются.",
+                "source_of_confusion": "Кажется, что профиль — единственный режим.",
+                "if_it_were_true": "Тогда нельзя было бы комбинировать `prod` + `metrics`, но это типовой приём.",
+                "how_it_should_be": "Активируют несколько профилей сразу, перечисляя через запятую."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Профили активируют через запятую в `spring.profiles.active` (`dev,metrics`); каждый последующий переопределяет предыдущий, а `spring.profiles.group` объединяет набор под одним псевдонимом.",
               "correct": true,
               "sections": {
                 "explanation": "Активируют несколько профилей через запятую (`spring.profiles.active: dev,metrics` или через `-D`/env), и каждый добавляет/переопределяет конфигурацию поверх базовой. Profile Groups (2.4+, `spring.profiles.group`) — псевдоним для набора профилей. Порядок: `application.yml` → `application-{profile1}.yml` → `application-{profile2}.yml` (последний перекрывает). На бинах работают `@Profile(\"!prod\")`, `@Profile(\"prod & metrics\")`; в тестах — `@ActiveProfiles({\"test\",\"h2\"})`.",
@@ -2422,33 +2446,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "При нескольких профилях значения из первого перекрывают значения из последующих.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: последующий профиль в списке перекрывает предыдущий (`application-{profile2}.yml` поверх `profile1`).",
-                "source_of_confusion": "Путают направление приоритета.",
-                "if_it_were_true": "Тогда порядок профилей не имел бы значения, но он определяет, кто победит.",
-                "how_it_should_be": "Перекрывает ПОСЛЕДНИЙ профиль в списке."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Можно активировать только один профиль за раз.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Профилей можно активировать несколько через запятую (`active: dev,metrics`); они складываются.",
-                "source_of_confusion": "Кажется, что профиль — единственный режим.",
-                "if_it_were_true": "Тогда нельзя было бы комбинировать `prod` + `metrics`, но это типовой приём.",
-                "how_it_should_be": "Активируют несколько профилей сразу, перечисляя через запятую."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "Profile Groups позволяют активировать только один профиль из группы.",
+              "text": "`spring.profiles.group` описывает группу профилей, но при активации имени группы Spring Boot поднимает один выбранный профиль из набора, а прочие оставляет неактивными до отдельного запроса.",
               "correct": false,
               "sections": {
                 "what_actually": "Profile Group — это псевдоним, активация которого включает ВЕСЬ набор профилей сразу, а не один.",
@@ -2471,7 +2471,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Белым списком `exposure.include`, защитой через Security и отдельным портом management.",
+              "text": "Через белый список `management.endpoints.web.exposure.include`, защиту эндпоинтов Spring Security (`EndpointRequest.toAnyEndpoint()`) и вынос management на отдельный порт `management.server.port`.",
               "correct": true,
               "sections": {
                 "explanation": "Экспозицию ограничивают: белым списком `management.endpoints.web.exposure.include` (или `exclude`), `management.endpoint.health.show-details: when-authorized` (детали только авторизованным), отключением опасных эндпоинтов (`shutdown.enabled: false`). Защищают через Spring Security (`EndpointRequest.toAnyEndpoint()` + роль `ACTUATOR_ADMIN`, `/health`+`/info` — `permitAll`) и/или выносят на отдельный порт `management.server.port: 9090`, закрытый в Ingress. Особенно чувствительны `/heapdump` (память процесса) и `/env` (секреты).",
@@ -2484,7 +2484,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "По умолчанию Actuator открывает все эндпоинты по HTTP, поэтому ограничивать ничего не нужно.",
+              "text": "По умолчанию Actuator публикует по HTTP полный набор эндпоинтов, включая `/env` и `/heapdump`, поэтому дополнительная настройка `exposure.include` в production не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию открыты только `/health`; в проде их состав контролируют через `exposure.include/exclude` и защищают Security.",
@@ -2496,7 +2496,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`management.endpoint.health.show-details` не влияет на безопасность — детали health видны всем всегда.",
+              "text": "Свойство `management.endpoint.health.show-details` отвечает за детализацию вывода, но к безопасности отношения не имеет: полные детали `/health` возвращаются любому клиенту независимо от аутентификации.",
               "correct": false,
               "sections": {
                 "what_actually": "`show-details: when-authorized` (или `never`) скрывает детали health от неавторизованных — это часть харднинга.",
@@ -2508,7 +2508,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Вынести Actuator на отдельный порт невозможно — он всегда на основном порту приложения.",
+              "text": "Actuator привязан к контексту приложения на уровне встроенного сервера, поэтому management-порт совпадает с серверным `server.port`; разделение management-трафика достигается внешними средствами вроде Ingress.",
               "correct": false,
               "sections": {
                 "what_actually": "`management.server.port: 9090` выносит Actuator на отдельный порт, который можно закрыть в Ingress/LoadBalancer.",
@@ -2531,7 +2531,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "SSL Bundles (`Spring Boot 3.1+`) группируют связанные TLS-материалы (keystore, truststore, сертификат, ключ) в именованный бандл, который можно применить только на встроенном сервере через `server.ssl.bundle`, но не в клиентах.",
+              "text": "SSL Bundles (`Spring Boot 3.1+`) группируют keystore, truststore, сертификат и ключ в именованный бандл, применяемый на сервере через `server.ssl.bundle`, но недоступный клиентам вроде `RestClient`/`WebClient`.",
               "correct": false,
               "sections": {
                 "what_actually": "Бандл применяется и на сервере (`server.ssl.bundle`), и в клиентах — `RestClient`/`WebClient`/`RestTemplate`, `DataSource`, `Kafka` через свойство `*.ssl.bundle`. Именно переиспользование на обеих сторонах и убирает дублирование.",
@@ -2543,7 +2543,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "SSL Bundles (`Spring Boot 3.1+`) группируют связанные TLS-материалы (keystore, truststore, сертификат, ключ) в именованный бандл, но при обновлении файлов сертификатов всегда требуется полный рестарт приложения, чтобы изменения подхватились.",
+              "text": "SSL Bundles (`Spring Boot 3.1+`) группируют keystore, truststore, сертификат и ключ в именованный бандл, применяемый по имени и на сервере, и в клиентах `RestClient`/`WebClient` без дублирования.",
+              "correct": true,
+              "sections": {
+                "explanation": "Главная идея SSL Bundles — собрать связанные TLS-материалы в единый именованный бандл и применять его по имени в разных местах приложения. Это устраняет дублирование TLS-конфигурации, потому что один и тот же бандл подключается и к встроенному серверу через `server.ssl.bundle`, и к клиентам вроде `RestClient`/`WebClient`. За бандлом стоит абстракция `SslBundle`, которая сама строит `KeyStore`/`KeyManager`/`SSLContext`.",
+                "example": "spring:\n  ssl:\n    bundle:\n      pem:\n        myservice:\n          keystore:\n            certificate: \"classpath:cert.pem\"\n            private-key: \"classpath:key.pem\"\n\n# применение: server.ssl.bundle=myservice",
+                "when_to_apply": "Применяй, когда одни и те же TLS-материалы нужны сразу в нескольких компонентах (встроенный сервер + клиенты `RestClient`/`WebClient`/`RestTemplate`, `DataSource`, `Kafka`) и хочется задать их один раз. Для `jks`-хранилищ используй `spring.ssl.bundle.jks.*`, для PEM — `spring.ssl.bundle.pem.*`.",
+                "edge_cases": "Ключевой подвох — hot-reload (`reload-on-update`, `Spring Boot 3.2+`): при обновлении файлов сертификатов бандл перечитывается без рестарта приложения, что критично для коротко-живущих сертификатов от `cert-manager` или `Vault`. Actuator при этом показывает информацию об истечении сертификатов бандла.",
+                "related": "Тесно связано с абстракцией `SslBundle`, которая берёт на себя построение `KeyStore`/`KeyManager`/`SSLContext` — вручную их создавать не нужно. Применяется как на стороне встроенного сервера (`server.ssl.bundle`), так и в клиентах через свойство `*.ssl.bundle`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "SSL Bundles (`Spring Boot 3.1+`) группируют keystore, truststore, сертификат и ключ в именованный бандл, но обновление файлов сертификатов требует полного рестарта приложения для подхвата новых ключей.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть фича hot-reload (`reload-on-update`, `Spring Boot 3.2+`): при обновлении файлов сертификатов бандл перечитывается без рестарта приложения. Это и есть одна из ключевых ценностей механизма.",
@@ -2553,28 +2566,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "SSL Bundles (`Spring Boot 3.1+`) группируют связанные TLS-материалы (keystore, truststore, сертификат, ключ), но разработчик обязан вручную собрать из них `KeyStore`, `KeyManager` и `SSLContext`, прежде чем бандл начнёт работать.",
+              "order": 3,
+              "label": "D",
+              "text": "SSL Bundles (`Spring Boot 3.1+`) группируют keystore, truststore, сертификат и ключ в именованный бандл, из которого `KeyStore`, `KeyManager` и `SSLContext` разработчик обязан собрать вручную.",
               "correct": false,
               "sections": {
                 "what_actually": "За бандлом стоит абстракция `SslBundle`, которая сама строит `KeyStore`/`KeyManager`/`SSLContext` — руками их создавать не нужно. Достаточно описать материалы и применить бандл по имени.",
                 "source_of_confusion": "До SSL Bundles настройка TLS в Java действительно требовала ручного создания `SSLContext` и менеджеров, и этот опыт переносят на новый механизм.",
                 "if_it_were_true": "Тогда бандлы не упрощали бы конфигурацию, а лишь добавляли ещё один слой поверх того же ручного кода.",
                 "how_it_should_be": "Достаточно объявить бандл в свойствах и сослаться на него по имени — построение `KeyStore`/`KeyManager`/`SSLContext` берёт на себя `SslBundle`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "SSL Bundles (`Spring Boot 3.1+`) группируют связанные TLS-материалы (keystore, truststore, сертификат, ключ) в именованный бандл, который переиспользуется и на сервере, и в клиентах без дублирования конфигурации.",
-              "correct": true,
-              "sections": {
-                "explanation": "Главная идея SSL Bundles — собрать связанные TLS-материалы в единый именованный бандл и применять его по имени в разных местах приложения. Это устраняет дублирование TLS-конфигурации, потому что один и тот же бандл подключается и к встроенному серверу через `server.ssl.bundle`, и к клиентам вроде `RestClient`/`WebClient`. За бандлом стоит абстракция `SslBundle`, которая сама строит `KeyStore`/`KeyManager`/`SSLContext`.",
-                "example": "spring:\n  ssl:\n    bundle:\n      pem:\n        myservice:\n          keystore:\n            certificate: \"classpath:cert.pem\"\n            private-key: \"classpath:key.pem\"\n\n# применение: server.ssl.bundle=myservice",
-                "when_to_apply": "Применяй, когда одни и те же TLS-материалы нужны сразу в нескольких компонентах (встроенный сервер + клиенты `RestClient`/`WebClient`/`RestTemplate`, `DataSource`, `Kafka`) и хочется задать их один раз. Для `jks`-хранилищ используй `spring.ssl.bundle.jks.*`, для PEM — `spring.ssl.bundle.pem.*`.",
-                "edge_cases": "Ключевой подвох — hot-reload (`reload-on-update`, `Spring Boot 3.2+`): при обновлении файлов сертификатов бандл перечитывается без рестарта приложения, что критично для коротко-живущих сертификатов от `cert-manager` или `Vault`. Actuator при этом показывает информацию об истечении сертификатов бандла.",
-                "related": "Тесно связано с абстракцией `SslBundle`, которая берёт на себя построение `KeyStore`/`KeyManager`/`SSLContext` — вручную их создавать не нужно. Применяется как на стороне встроенного сервера (`server.ssl.bundle`), так и в клиентах через свойство `*.ssl.bundle`."
               }
             }
           ]
