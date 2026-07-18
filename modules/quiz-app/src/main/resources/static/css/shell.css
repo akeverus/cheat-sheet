@@ -15,9 +15,13 @@
 html[data-design] body {
   margin: 0;
   min-height: 100vh;
+  /* «Терминальная» глубина макетов handoff-3: диагональный градиент холста
+     (bg-0→bg-1, prototype .shell) + мягкое teal-свечение в правом верхнем углу.
+     Оба слоя theme-safe: тянут --color-bg-primary/-canvas-2 текущей темы. */
   background:
     radial-gradient(circle at 78% -18%, rgba(88, 212, 208, 0.06), transparent 34%),
-    var(--color-bg-primary);
+    linear-gradient(135deg, var(--color-bg-primary), var(--color-bg-canvas-2));
+  background-attachment: fixed;
   color: var(--color-text-primary);
   font-family: var(--font-family-body);
   -webkit-font-smoothing: antialiased;
@@ -69,7 +73,11 @@ html[data-design] .sidebar {
   padding: 18px 14px;
   display: flex;
   flex-direction: column;
-  background: var(--color-bg-secondary);
+  /* Стеклянная панель макетов: полупрозрачный surface + blur (терминальная
+     глубина). color-mix тянет surface текущей темы → theme-safe. */
+  background: color-mix(in srgb, var(--color-bg-secondary) 92%, transparent);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 html[data-design] .sidebar .brand {
   display: flex;
@@ -142,7 +150,11 @@ html[data-design] .topbar {
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
-  background: var(--color-bg-secondary);
+  /* Стеклянная полоса (макеты): полупрозрачный холст + blur — контент проступает
+     под ней при скролле. theme-safe через color-mix холста текущей темы. */
+  background: color-mix(in srgb, var(--color-bg-primary) 84%, transparent);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 html[data-design] .crumb {
   display: flex;
