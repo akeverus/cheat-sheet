@@ -31,6 +31,7 @@ public class SessionSummary implements Serializable {
     List<MistakeDetail> mistakes;
     List<String> recommendations;
     List<NextAction> nextActions;
+    Gamification gamification;
 
     private SessionSummary(Builder builder) {
         this.totalQuestions = builder.totalQuestions;
@@ -53,6 +54,7 @@ public class SessionSummary implements Serializable {
         this.mistakes = List.copyOf(builder.mistakes);
         this.recommendations = List.copyOf(builder.recommendations);
         this.nextActions = List.copyOf(builder.nextActions);
+        this.gamification = builder.gamification;
     }
 
     public int getTotalQuestions() { return totalQuestions; }
@@ -67,6 +69,7 @@ public class SessionSummary implements Serializable {
     public List<MistakeDetail> getMistakes() { return mistakes; }
     public List<String> getRecommendations() { return recommendations; }
     public List<NextAction> getNextActions() { return nextActions; }
+    public Gamification getGamification() { return gamification; }
 
     public String getFormattedDuration() {
         if (duration == null) return "—";
@@ -112,6 +115,26 @@ public class SessionSummary implements Serializable {
         }
     }
 
+    /**
+     * Геймификация итогов (Этап 5, handoff-3): опыт за сессию и серия дней. Все
+     * значения — реальные (sessionXp суммируется из истории ответов той же
+     * {@code xpFor}-функцией, что и начисление; streak/record — из
+     * ExperienceService). {@code null} когда геймификация недоступна — шаблон тогда
+     * не рендерит KPI «Опыт»/«Серия», не фабрикуя чисел.
+     *
+     * @param sessionXp      опыт, заработанный в ЭТОЙ сессии
+     * @param totalXp        общий накопленный опыт
+     * @param level          текущий уровень
+     * @param currentStreak  текущая серия активных дней
+     * @param bestStreak     рекорд серии
+     * @param newStreakRecord серия достигла/обновила рекорд в этой сессии
+     */
+    @lombok.Builder(toBuilder = true)
+    public record Gamification(long sessionXp, long totalXp, int level,
+                               int currentStreak, int bestStreak,
+                               boolean newStreakRecord) implements Serializable {
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -128,6 +151,7 @@ public class SessionSummary implements Serializable {
         private final List<MistakeDetail> mistakes = new ArrayList<>();
         private final List<String> recommendations = new ArrayList<>();
         private final List<NextAction> nextActions = new ArrayList<>();
+        private Gamification gamification;
 
         public Builder totalQuestions(int val) { this.totalQuestions = val; return this; }
         public Builder correctCount(int val) { this.correctCount = val; return this; }
@@ -156,6 +180,8 @@ public class SessionSummary implements Serializable {
             this.nextActions.add(action);
             return this;
         }
+
+        public Builder gamification(Gamification val) { this.gamification = val; return this; }
 
         public SessionSummary build() {
             Objects.requireNonNull(mode, "mode");

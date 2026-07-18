@@ -6,6 +6,7 @@ import com.cheatsheet.quiz.domain.InterviewSession;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.SessionSummary;
 import com.cheatsheet.quiz.domain.NextActionType;
+import com.cheatsheet.quiz.domain.UserExperience;
 import com.cheatsheet.quiz.feature.interview.service.flow.SessionSummaryService;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
 import com.cheatsheet.quiz.persistence.QuestionStatsRepository;
@@ -25,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,12 +38,15 @@ class SessionSummaryServiceTest {
     @Mock
     QuestionStatsRepository questionStatsRepository;
 
+    @Mock
+    com.cheatsheet.quiz.feature.interview.service.progress.ExperienceService experienceService;
+
     private final Clock clock = Clock.fixed(Instant.ofEpochSecond(1_700_000_000L), ZoneOffset.UTC);
     SessionSummaryService service;
 
     @BeforeEach
     void setUp() {
-        service = new SessionSummaryService(questionRepository, questionStatsRepository, clock);
+        service = new SessionSummaryService(questionRepository, questionStatsRepository, experienceService, clock);
     }
 
     @Test
@@ -65,6 +70,33 @@ class SessionSummaryServiceTest {
         assertThat(summary.getTopicResults().get(0).topic()).isEqualTo("java");
         assertThat(summary.getMistakes()).isEmpty();
         assertThat(summary.getRecommendations()).anyMatch(r -> r.contains("Отличный результат"));
+    }
+
+    @Test
+    void buildSummaryComputesRealSessionXpAndStreak() {
+        Question q1 = aQuestion().withId(1).withTopic("java").build();
+        when(questionRepository.findByIds(anyList())).thenReturn(List.of(q1));
+        // sessionXp суммируется той же xpFor: 2 верных по 15 + 1 неверный по 2 = 32.
+        when(experienceService.xpFor(eq(true), any())).thenReturn(15L);
+        when(experienceService.xpFor(eq(false), any())).thenReturn(2L);
+        when(experienceService.snapshot()).thenReturn(new UserExperience(240, 7, 0));
+        when(experienceService.currentStreak()).thenReturn(7);
+
+        InterviewSession session = new InterviewSession(
+                InterviewMode.TRAINING, List.of(1L, 2L, 3L), "java", false, false, false);
+        session.registerAnswer(true, "java");
+        session.registerAnswer(true, "java");
+        session.registerAnswer(false, "java");
+
+        SessionSummary summary = service.buildSummary(session);
+
+        SessionSummary.Gamification g = summary.getGamification();
+        assertThat(g).isNotNull();
+        assertThat(g.sessionXp()).isEqualTo(32L);
+        assertThat(g.totalXp()).isEqualTo(240L);
+        assertThat(g.currentStreak()).isEqualTo(7);
+        assertThat(g.bestStreak()).isEqualTo(7);
+        assertThat(g.newStreakRecord()).isTrue();
     }
 
     @Test

@@ -1,9 +1,12 @@
 package com.cheatsheet.quiz.feature.interview.service.flow;
 
+import com.cheatsheet.quiz.domain.Difficulty;
 import com.cheatsheet.quiz.domain.InterviewSession;
 import com.cheatsheet.quiz.domain.NextActionType;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.SessionSummary;
+import com.cheatsheet.quiz.domain.UserExperience;
+import com.cheatsheet.quiz.feature.interview.service.progress.ExperienceService;
 import com.cheatsheet.quiz.common.constants.QuizConstants;
 import lombok.AccessLevel;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
@@ -34,6 +37,7 @@ public class SessionSummaryService {
 
     private final QuestionRepository questionRepository;
     private final QuestionStatsRepository questionStatsRepository;
+    private final ExperienceService experienceService;
     private final Clock clock;
 
     /**
@@ -65,8 +69,37 @@ public class SessionSummaryService {
         addMistakes(builder, mistakes);
         addFinalRecommendationIfAllGood(builder, topicResults);
         addNextActions(builder, topicResults, mistakes, dueCount);
+        builder.gamification(buildGamification(session));
 
         return builder.build();
+    }
+
+    /**
+     * Собирает геймификацию итогов (Этап 5): опыт ЗА СЕССИЮ + серия/рекорд.
+     * sessionXp суммируется из истории ответов той же {@link ExperienceService#xpFor}
+     * функцией, что и начисление в {@code onAnswer} — число честное, а не оценочное.
+     * Любая ошибка (нет истории, сбой репозитория) → {@code null}: KPI «Опыт»/«Серия»
+     * просто не рендерятся, итоги не падают.
+     */
+    private SessionSummary.Gamification buildGamification(InterviewSession session) {
+        try {
+            long sessionXp = 0;
+            for (InterviewSession.AnswerRecord answer : session.getAnswerHistory()) {
+                Difficulty difficulty = questionRepository.findById(answer.questionId())
+                        .map(Question::difficulty)
+                        .orElse(Difficulty.MEDIUM);
+                sessionXp += experienceService.xpFor(answer.correct(), difficulty);
+            }
+            UserExperience snapshot = experienceService.snapshot();
+            int currentStreak = experienceService.currentStreak();
+            boolean newRecord = currentStreak > 0 && currentStreak >= snapshot.bestStreak();
+            return new SessionSummary.Gamification(
+                    sessionXp, snapshot.xp(), snapshot.level(),
+                    currentStreak, snapshot.bestStreak(), newRecord);
+        } catch (RuntimeException e) {
+            log.warn("Не удалось собрать геймификацию итогов сессии: {}", e.getMessage());
+            return null;
+        }
     }
 
     /**

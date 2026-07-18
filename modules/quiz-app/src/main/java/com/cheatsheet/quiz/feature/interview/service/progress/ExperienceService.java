@@ -94,6 +94,14 @@ public class ExperienceService {
                 : experience;
     }
 
+    /**
+     * Текущая серия активных дней (для KPI итогов/аналитики). Ошибка чтения → 0,
+     * геймификация не должна ронять показ.
+     */
+    public int currentStreak() {
+        return safeStreak();
+    }
+
     private int safeStreak() {
         try {
             return dailyActivityRepository.findStreak().currentStreak();

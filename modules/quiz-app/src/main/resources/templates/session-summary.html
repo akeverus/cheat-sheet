@@ -46,7 +46,39 @@
            th:with="needs=${summary.wrongCount + summary.unknownCount},
                     w=${needs % 10 == 1 and needs % 100 != 11 ? 'вопрос требует' : ((needs % 10 >= 2 and needs % 10 <= 4) and (needs % 100 &lt; 12 or needs % 100 &gt; 14) ? 'вопроса требуют' : 'вопросов требуют')}"
            th:text="${needs > 0 ? needs + ' ' + w + ' разбора' : 'Без ошибок — отличный результат'}">Итог</p>
-        <div class="summary-metrics">
+        <!-- Этап 5 (handoff-3): 4 KPI сессии — Опыт / Время / Ошибки / Серия.
+             Опыт и Серия — из реальной геймификации (summary.gamification, XP
+             суммирован из истории ответов). Когда геймификации нет (null) —
+             откат на прежний набор Время/Среднее/На повторение, без фабрикации. -->
+        <div class="summary-kpis" th:if="${summary.gamification != null}"
+             th:with="g=${summary.gamification},
+                      errs=${summary.wrongCount + summary.unknownCount},
+                      avg=${summary.duration != null and summary.totalQuestions > 0 ? summary.duration.toSeconds() / summary.totalQuestions : 0},
+                      st=${g.currentStreak()},
+                      dw=${st % 10 == 1 and st % 100 != 11 ? 'день' : ((st % 10 >= 2 and st % 10 <= 4) and (st % 100 &lt; 12 or st % 100 &gt; 14) ? 'дня' : 'дней')}">
+            <div class="summary-kpi">
+                <span class="summary-kpi-label">Опыт</span>
+                <b class="summary-kpi-value text-success" th:text="'+' + ${g.sessionXp()} + ' XP'">+0 XP</b>
+                <span class="summary-kpi-sub" th:text="${g.newStreakRecord()} ? 'Новый рекорд' : ('Уровень ' + ${g.level()})">Уровень 1</span>
+            </div>
+            <div class="summary-kpi">
+                <span class="summary-kpi-label">Время</span>
+                <b class="summary-kpi-value summary-duration" th:text="${summary.formattedDuration}">—</b>
+                <span class="summary-kpi-sub" th:if="${avg > 0}"
+                      th:text="'Среднее ' + ${(avg / 60) + ':' + (avg % 60 < 10 ? '0' + (avg % 60) : (avg % 60))}">Среднее 0:00</span>
+            </div>
+            <div class="summary-kpi">
+                <span class="summary-kpi-label">Ошибки</span>
+                <b class="summary-kpi-value" th:classappend="${errs > 0} ? ' text-danger' : ' text-success'" th:text="${errs}">0</b>
+                <span class="summary-kpi-sub" th:text="${errs > 0} ? 'Нужен разбор' : 'Без ошибок'">Нужен разбор</span>
+            </div>
+            <div class="summary-kpi">
+                <span class="summary-kpi-label">Серия</span>
+                <b class="summary-kpi-value" th:text="${st} + ' ' + ${dw}">0 дней</b>
+                <span class="summary-kpi-sub" th:text="'Рекорд ' + ${g.bestStreak()}">Рекорд 0</span>
+            </div>
+        </div>
+        <div class="summary-metrics" th:if="${summary.gamification == null}">
             <div class="metric">
                 <span class="metric-label">Время</span>
                 <span class="metric-value summary-duration" th:text="${summary.formattedDuration}">—</span>
@@ -175,6 +207,11 @@
       document.querySelectorAll('.summary-metrics .metric').forEach(function (s) {
         var label = txt('.metric-label', s), val = txt('.metric-value', s);
         if (label && val) lines.push(label + ': ' + val);
+      });
+      // Этап 5: KPI-плитки (Опыт/Время/Ошибки/Серия) в шеринг-текст.
+      document.querySelectorAll('.summary-kpi').forEach(function (s) {
+        var label = txt('.summary-kpi-label', s), val = txt('.summary-kpi-value', s), sub = txt('.summary-kpi-sub', s);
+        if (label && val) lines.push(label + ': ' + val + (sub ? ' (' + sub + ')' : ''));
       });
       var rows = document.querySelectorAll('.summary-table tbody tr');
       if (rows.length) {
