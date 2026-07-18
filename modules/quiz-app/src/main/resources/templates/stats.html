@@ -411,6 +411,32 @@
         </div>
     </section>
 
+    <!-- Этап 6 (handoff-3): донат «Сложность вопросов». Легенда — SSR (несёт
+         данные доступно: число+процент по уровню), донат-канвас дорисовывает
+         stats.js из JSON #difficulty-data. Если Chart.js недоступен — канвас
+         пуст, но легенда полностью коммуницирует распределение (fallback не нужен). -->
+    <section class="card difficulty-card" th:if="${difficultyDistribution != null and !difficultyDistribution.isEmpty()}">
+        <h2 class="mt-0">Сложность вопросов</h2>
+        <p class="chart-subtitle">Как распределён банк вопросов по статической сложности.</p>
+        <div class="difficulty-row">
+            <div class="difficulty-donut-wrap">
+                <canvas id="difficultyDonut" role="img"
+                        aria-label="Донат распределения вопросов по сложности. Полные данные — в легенде рядом."></canvas>
+            </div>
+            <ul class="difficulty-legend">
+                <li th:each="slice : ${difficultyDistribution}" class="difficulty-legend-item"
+                    th:classappend="'difficulty-' + ${#strings.toLowerCase(slice.level())}">
+                    <span class="difficulty-dot" aria-hidden="true"></span>
+                    <span class="difficulty-legend-label" th:text="${slice.label()}">Уровень</span>
+                    <span class="difficulty-legend-value">
+                        <b th:text="${slice.count()}">0</b>
+                        <span class="difficulty-legend-pct" th:text="'· ' + ${#numbers.formatDecimal(slice.percent(), 1, 0)} + '%'">· 0%</span>
+                    </span>
+                </li>
+            </ul>
+        </div>
+    </section>
+
     <section class="card review-forecast" th:if="${reviewForecast != null and !reviewForecast.isEmpty()}">
         <h2>Прогноз повторений на 7 дней</h2>
         <p class="review-forecast-hint">Сколько вопросов прилетит в каждый день. Помогает распределить нагрузку.</p>
@@ -521,6 +547,7 @@
      JSON.parse в stats.js. [(...)] (unescaped) кладёт literal-JSON,
      который Chart.js потом успешно парсит. -->
 <script type="application/json" id="topic-stats-data" th:inline="text">[(${topicStatsJson})]</script>
-<script th:src="@{/js/stats.js(v=16)}"></script>
+<script type="application/json" id="difficulty-data" th:inline="text">[(${difficultyJson})]</script>
+<script th:src="@{/js/stats.js(v=17)}"></script>
 </body>
 </html>

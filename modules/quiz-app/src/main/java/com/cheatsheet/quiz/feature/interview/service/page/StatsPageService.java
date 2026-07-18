@@ -19,7 +19,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import lombok.Builder;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * Сервис подготовки модели страницы статистики (`stats`).
@@ -68,6 +72,13 @@ public class StatsPageService {
         List<QuestionStatsRepository.ForecastDay> forecast =
                 questionStatsRepository.findReviewForecast(nowEpoch, FORECAST_DAYS);
         LearningMetrics metrics = learningMetricsService.compute();
+        List<DifficultySlice> difficultyDistribution = buildDifficultyDistribution();
+        String difficultyJson = "[]";
+        try {
+            difficultyJson = escapeForHtmlScript(objectMapper.writeValueAsString(difficultyDistribution));
+        } catch (JsonProcessingException e) {
+            log.error("stats_page_difficulty_json_failed", e);
+        }
         return new StatsPageState(
                 stats,
                 topics,
@@ -80,8 +91,47 @@ public class StatsPageService {
                 topicStatsJson,
                 coverageGaps,
                 forecast,
-                metrics
+                metrics,
+                difficultyDistribution,
+                difficultyJson
         );
+    }
+
+    /** Порядок и русские подписи уровней сложности для доната (Этап 6). */
+    private static final Map<String, String> DIFFICULTY_LABELS = new LinkedHashMap<>() {{
+        put("EASY", "Лёгкие");
+        put("MEDIUM", "Средние");
+        put("HARD", "Сложные");
+    }};
+
+    /**
+     * Нормализует сырое распределение сложности в фиксированный порядок
+     * EASY→MEDIUM→HARD с русскими подписями и процентами. Неизвестные/пустые уровни
+     * отбрасываются; проценты считаются от суммы известных. Пустой результат
+     * (нет данных) → шаблон не рендерит донат.
+     */
+    private List<DifficultySlice> buildDifficultyDistribution() {
+        Map<String, Long> byLevel = new LinkedHashMap<>();
+        for (QuestionStatsRepository.DifficultyBucket bucket : questionStatsRepository.findDifficultyDistribution()) {
+            if (bucket.difficulty() == null) {
+                continue;
+            }
+            String level = bucket.difficulty().toUpperCase(Locale.ROOT);
+            if (DIFFICULTY_LABELS.containsKey(level)) {
+                byLevel.merge(level, bucket.count(), Long::sum);
+            }
+        }
+        long total = byLevel.values().stream().mapToLong(Long::longValue).sum();
+        if (total == 0) {
+            return List.of();
+        }
+        List<DifficultySlice> slices = new ArrayList<>();
+        for (Map.Entry<String, String> entry : DIFFICULTY_LABELS.entrySet()) {
+            long count = byLevel.getOrDefault(entry.getKey(), 0L);
+            double percent = count * 100.0 / total;
+            slices.add(new DifficultySlice(entry.getKey(), entry.getValue(), count, percent));
+        }
+        return slices;
     }
 
     /**
@@ -93,6 +143,9 @@ public class StatsPageService {
      * бин objectMapper — чтобы не менять формат прочих JSON-ответов. См. round-01 C35.
      */
     private static String escapeForHtmlScript(String json) {
+        if (json == null) {
+            return "[]";
+        }
         return json
                 .replace("<", "\\u003C")
                 .replace(">", "\\u003E")
@@ -112,14 +165,23 @@ public class StatsPageService {
             String topicStatsJson,
             List<QuestionStatsRepository.TopicCoverage> coverageGaps,
             List<QuestionStatsRepository.ForecastDay> reviewForecast,
-            LearningMetrics metrics
+            LearningMetrics metrics,
+            List<DifficultySlice> difficultyDistribution,
+            String difficultyJson
     ) {
         public StatsPageState(InterviewStats stats, List<String> topics, List<?> groups,
                               String selectedGroup, InterviewFilter filter, String searchQuery,
                               List<SearchService.SearchItem> searchResults,
                               List<TopicStats> topicStats, String topicStatsJson) {
             this(stats, topics, groups, selectedGroup, filter, searchQuery, searchResults,
-                    topicStats, topicStatsJson, List.of(), List.of(), LearningMetrics.EMPTY);
+                    topicStats, topicStatsJson, List.of(), List.of(), LearningMetrics.EMPTY,
+                    List.of(), "[]");
         }
     }
+
+    /**
+     * Слайс доната «Сложность вопросов»: уровень (как в БД), русская подпись,
+     * число вопросов и доля в процентах.
+     */
+    public record DifficultySlice(String level, String label, long count, double percent) {}
 }

@@ -455,10 +455,65 @@
     activate(initial, false);
   }
 
+  // Этап 6 (handoff-3): донат «Сложность вопросов». Данные — #difficulty-data
+  // (EASY/MEDIUM/HARD со счётчиками+процентами). Легенда SSR уже несёт данные
+  // доступно; канвас — только визуальное дополнение. Guard на Chart/данные/пустоту.
+  function initDifficultyDonut() {
+    var canvas = document.getElementById('difficultyDonut');
+    if (!canvas || typeof Chart === 'undefined') return;
+    var el = document.getElementById('difficulty-data');
+    if (!el) return;
+    var slices;
+    try { slices = JSON.parse(el.textContent || '[]'); } catch (e) { return; }
+    if (!Array.isArray(slices) || !slices.length) return;
+    if (!slices.some(function (s) { return s.count > 0; })) return;
+
+    var cs = getComputedStyle(document.documentElement);
+    function tok(name, fb) { var v = cs.getPropertyValue(name); return v && v.trim() ? v.trim() : fb; }
+    var colorByLevel = {
+      EASY: tok('--color-accent-primary', '#39d0c7'),
+      MEDIUM: tok('--color-status-warning', '#9A6B00'),
+      HARD: tok('--color-status-error', '#B3261E')
+    };
+    var motionAttr = document.documentElement.getAttribute('data-motion');
+    var animate = motionAttr === 'on' ? true
+      : motionAttr === 'off' ? false
+      : !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    try {
+      new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+          labels: slices.map(function (s) { return s.label; }),
+          datasets: [{
+            data: slices.map(function (s) { return s.count; }),
+            backgroundColor: slices.map(function (s) { return colorByLevel[s.level] || tok('--color-text-tertiary', '#8A8073'); }),
+            borderColor: tok('--color-bg-secondary', '#0d1b22'),
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '62%',
+          animation: animate ? {} : false,
+          plugins: {
+            legend: { display: false }, // легенда — SSR-список рядом
+            tooltip: {
+              callbacks: {
+                label: function (ctx) { return ctx.label + ': ' + ctx.parsed; }
+              }
+            }
+          }
+        }
+      });
+    } catch (e) { /* канвас пуст, легенда всё показывает */ }
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     hydrateProgressBarsFromData();
     initNextActions();
     initCharts();
+    initDifficultyDonut();
     initTableSort();
     initKeyboardHelp();
     initStatsTabs();

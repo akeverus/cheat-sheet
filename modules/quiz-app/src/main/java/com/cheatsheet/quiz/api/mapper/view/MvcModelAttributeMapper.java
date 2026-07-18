@@ -215,6 +215,8 @@ public class MvcModelAttributeMapper {
         model.addAttribute("coverageGaps", state.coverageGaps());
         model.addAttribute("reviewForecast", state.reviewForecast());
         model.addAttribute("metrics", state.metrics());
+        model.addAttribute("difficultyDistribution", state.difficultyDistribution());
+        model.addAttribute("difficultyJson", state.difficultyJson());
         // Передаём max(count) уже вычисленный — Thymeleaf 3.1 запрещает
         // T(java.util.Collections) в SpEL, считать в шаблоне нельзя.
         long maxForecast = state.reviewForecast() == null ? 1L
