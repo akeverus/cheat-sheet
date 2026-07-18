@@ -292,32 +292,34 @@ class TemplateFragmentContractTest {
 
     @Test
     void tokensCssDefinesSingleInstrumentDesign() throws IOException {
-        // tokens.css — токен-слой. SINGLE-SOURCE (DEADCODE-1, 2026-07-16): Instrument-
-        // значения живут ПРЯМО в :root/:root[data-theme="dark"], без html[data-design]
-        // override-слоя. Контракт:
-        // (1) :root несёт Instrument light OKLCH-значения (не warm editorial-базу),
-        // (2) :root[data-theme="dark"] несёт Instrument dark,
+        // tokens.css — токен-слой. SINGLE-SOURCE + DARK-DEFAULT (реставр handoff-3,
+        // 2026-07-18): Instrument-значения живут ПРЯМО в :root/:root[data-theme="light"],
+        // без html[data-design] override-слоя. Дефолт ИНВЕРТИРОВАН — макеты handoff-3
+        // все тёмные, поэтому dark в :root (безусловная база), а light — явный тумблер.
+        // Контракт:
+        // (1) :root несёт Instrument DARK-значения макетов (canvas #071116),
+        // (2) :root[data-theme="light"] несёт light-палитру (вторичный тумблер),
         // (3) НИ ОДНОГО html[data-design="X"] scoped-цветоблока (промоут удалил и
-        //     instrument-override, и роестр удалённых дизайнов),
+        //     instrument-override, и реестр удалённых дизайнов),
         // (4) warm ivory/clay editorial-наследие (#FAF9F5 / #D97757) не рендерится.
         String css = readTemplate("static/css/tokens.css");
 
-        // База: :root с Instrument-значениями (cool paper + teal-signal, OKLCH).
+        // База: :root с Instrument DARK-значениями (canvas #071116 + teal-signal).
         assertThat(css).contains(":root");
         assertThat(css).contains("--color-bg-primary");
         assertThat(css).contains("--color-accent-primary");
         assertThat(css)
-            .as(":root несёт синтезированную светлую палитру редизайна (cool near-white)")
-            .contains("--color-bg-primary:   #eef2f2");
+            .as(":root несёт тёмный canvas макетов handoff-3 (dark-default #071116)")
+            .contains("--color-bg-primary:   #071116");
         assertThat(css)
-            .as(":root[data-theme=\"dark\"] несёт тёмный canvas редизайна (#071016)")
-            .contains(":root[data-theme=\"dark\"]");
+            .as(":root[data-theme=\"light\"] несёт вторичную светлую тему")
+            .contains(":root[data-theme=\"light\"]");
         assertThat(css)
-            .as("dark canvas — точный из ui-redesign-handoff")
-            .contains("--color-bg-primary:   #071016");
+            .as("light canvas — из assets/tokens/tokens.css макетов (#f5f8f8)")
+            .contains("--color-bg-primary:   #f5f8f8");
         assertThat(css)
-            .as("teal-accent редизайна присутствует")
-            .contains("#58d4d0");
+            .as("teal-accent макетов handoff-3 присутствует")
+            .contains("#39d0c7");
 
         // SINGLE-SOURCE: НИ ОДНОГО html[data-design="X"] цвето-override-блока —
         // включая instrument (промоут DEADCODE-1 перенёс его в :root).
