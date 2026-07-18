@@ -11,18 +11,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring for GraphQL` — это REST-фреймворк поверх `spring-web`, который автоматически строит `OpenAPI`-спецификацию из аннотированных `@RestController`-бинов и отдаёт её через встроенный Swagger UI; к самому языку запросов `GraphQL` и схемам `SDL` этот стартер отношения не имеет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Spring for GraphQL` реализует именно протокол `GraphQL` со схемой `SDL` и резолверами `@QueryMapping`, а не REST-эндпоинты с `OpenAPI` и Swagger.",
-                "source_of_confusion": "И REST через `spring-web`, и GraphQL в Spring объявляются аннотированными бинами-контроллерами, отсюда путаница в их назначении.",
-                "if_it_were_true": "Будь это REST-стартер, в нём были бы `@GetMapping`/`@PostMapping` и генерация Swagger, но он оперирует `@QueryMapping` и файлом `schema.graphqls`.",
-                "how_it_should_be": "REST с `OpenAPI` описывают `springdoc` и `spring-web`; `Spring for GraphQL` — отдельный стартер про язык запросов `GraphQL` и схему `SDL`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "`Spring for GraphQL` — официальная интеграция `GraphQL` в экосистему Spring (с Spring Boot 2.7+) поверх `GraphQL Java`; её плюс перед `REST` в том, что клиент сам запрашивает только нужные поля, избегая over-fetching и under-fetching, а схема эволюционирует без версий `/v1`, `/v2`.",
               "correct": true,
               "sections": {
@@ -31,6 +19,18 @@
                 "when_to_apply": "Подходит, когда клиентов много и у каждого свои нужды по полям, когда болезненны over/under-fetching, или нужны подписки и строгая типизация через `SDL`.",
                 "edge_cases": "GraphQL хуже кэшируется на уровне `HTTP` (единый `POST`-endpoint), поэтому для простого read-heavy API с CDN-кэшем REST порой выгоднее.",
                 "related": "[[spring-graphql-interview#Q2]] как подключить стартер; [[spring-graphql-interview#Q5]] проблема N+1; [[spring-graphql-interview#Q12]] разница mapping-аннотаций."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring for GraphQL` — это REST-фреймворк поверх `spring-web`, который автоматически строит `OpenAPI`-спецификацию из аннотированных `@RestController`-бинов и отдаёт её через встроенный Swagger UI; к самому языку запросов `GraphQL` и схемам `SDL` этот стартер отношения не имеет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Spring for GraphQL` реализует именно протокол `GraphQL` со схемой `SDL` и резолверами `@QueryMapping`, а не REST-эндпоинты с `OpenAPI` и Swagger.",
+                "source_of_confusion": "И REST через `spring-web`, и GraphQL в Spring объявляются аннотированными бинами-контроллерами, отсюда путаница в их назначении.",
+                "if_it_were_true": "Будь это REST-стартер, в нём были бы `@GetMapping`/`@PostMapping` и генерация Swagger, но он оперирует `@QueryMapping` и файлом `schema.graphqls`.",
+                "how_it_should_be": "REST с `OpenAPI` описывают `springdoc` и `spring-web`; `Spring for GraphQL` — отдельный стартер про язык запросов `GraphQL` и схему `SDL`."
               }
             },
             {
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно `spring-boot-starter-web`, а схему `GraphQL` Spring сгенерирует из `@Entity`-классов `JPA` и `Hibernate` (как REST-проекции), не требуя ни `schema.graphqls`, ни `@QueryMapping`.",
+              "text": "Подключают `spring-boot-starter-web`, и схему `GraphQL` Spring генерирует автоматически из `@Entity`-классов `JPA`/`Hibernate` как проекции модели, поэтому отдельный файл `schema.graphqls` и резолверы `@QueryMapping` не заводят — типы выводятся из сущностей.",
               "correct": false,
               "sections": {
                 "what_actually": "Нужен именно стартер `spring-boot-starter-graphql`, и схему `schema.graphqls` пишут руками: автогенерации из `@Entity`-классов в Spring for GraphQL нет.",
@@ -83,7 +83,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Дефолтный endpoint `GraphQL` — это `/graphql-ws` по `WebSocket`, а `HTTP` на `/graphql` через `POST` включают отдельно явным флагом `spring.graphql.http.enabled`.",
+              "text": "Дефолтный endpoint `GraphQL` — это `/graphql-ws` поверх `WebSocket`, а привычный `HTTP` на `/graphql` через `POST` включают отдельно явным флагом `spring.graphql.http.enabled: true` в `application.yml`; без него `GraphiQL` не сможет слать обычные запросы.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию HTTP-endpoint — это `/graphql`, а `/graphql-ws` — отдельный путь для подписок по `WebSocket`, включаемый при необходимости.",
@@ -95,18 +95,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Панель `GraphiQL` остаётся включённой и активной и в `production`, и в `dev`, вопреки `spring.graphql.graphiql.enabled`, `spring.graphql.graphiql.path` и `spring.profiles.active` в `application.yml`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`GraphiQL` по умолчанию выключен и включается флагом `spring.graphql.graphiql.enabled: true`; в `production` его обычно держат отключённым.",
-                "source_of_confusion": "Многие dev-инструменты кажутся включёнными по умолчанию, и это ложное представление переносят на `GraphiQL`.",
-                "if_it_were_true": "Будь `GraphiQL` включён и неотключаем, это была бы дыра безопасности с открытой интроспекцией схемы прямо в проде.",
-                "how_it_should_be": "`GraphiQL` управляется флагом `spring.graphql.graphiql.enabled`; в `production` панель держат выключенной."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "Добавляют стартер `spring-boot-starter-graphql` плюс `spring-boot-starter-web` (или `webflux`), описывают схему в `src/main/resources/graphql/schema.graphqls` и настраивают через `spring.graphql.*` (например `path: /graphql`, `graphiql.enabled: true`).",
               "correct": true,
               "sections": {
@@ -115,6 +103,18 @@
                 "when_to_apply": "Так настраивают любой новый GraphQL-сервис на Spring Boot: один раз подключают стартер, кладут схему в стандартный путь и описывают резолверы.",
                 "edge_cases": "Если схема лежит вне `src/main/resources/graphql/`, её нужно явно указать через `spring.graphql.schema.locations`, иначе Spring её не найдёт.",
                 "related": "[[spring-graphql-interview#Q1]] что такое Spring for GraphQL; [[spring-graphql-interview#Q3]] реализация Query resolver; [[spring-graphql-interview#Q13]] introspection и GraphiQL."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Панель `GraphiQL` остаётся включённой и в `production`, и в `dev`: флаги `spring.graphql.graphiql.enabled` и `spring.graphql.graphiql.path` меняют её адрес, но не саму доступность, поэтому даже при активном prod-профиле UI открыт по умолчанию.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`GraphiQL` по умолчанию выключен и включается флагом `spring.graphql.graphiql.enabled: true`; в `production` его обычно держат отключённым.",
+                "source_of_confusion": "Многие dev-инструменты кажутся включёнными по умолчанию, и это ложное представление переносят на `GraphiQL`.",
+                "if_it_were_true": "Будь `GraphiQL` включён и неотключаем, это была бы дыра безопасности с открытой интроспекцией схемы прямо в проде.",
+                "how_it_should_be": "`GraphiQL` управляется флагом `spring.graphql.graphiql.enabled`; в `production` панель держат выключенной."
               }
             }
           ]
@@ -131,6 +131,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Резолвер `Query` объявляют через `@GetMapping` в обычном `@RestController`, как REST-эндпоинт; путь метода становится именем поля схемы. Дальше `GraphQL Java` сам подберёт этот метод по URL-маршруту без `@QueryMapping`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "GraphQL-резолверы пишут через `@QueryMapping`/`@SchemaMapping` в `@Controller`, а не через REST-аннотации `@GetMapping` в `@RestController`.",
+                "source_of_confusion": "Привычка к REST-контроллерам в Spring MVC толкает разработчиков использовать `@GetMapping` и URL-маршрутизацию здесь.",
+                "if_it_were_true": "Если бы работал `@GetMapping`, у GraphQL не было бы единого `POST /graphql` и связывания резолверов по полям схемы.",
+                "how_it_should_be": "Поле `type Query` реализуют методом с `@QueryMapping` в `@Controller`; URL-маршрутизация `REST` тут не используется."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Создают `@Controller`-бин и помечают метод аннотацией `@QueryMapping` — имя метода соответствует полю в `type Query`; аргументы схемы получают через `@Argument`. Для вложенных полей типа используют `@SchemaMapping(typeName=..., field=...)`.",
               "correct": true,
               "sections": {
@@ -139,18 +151,6 @@
                 "when_to_apply": "Так пишут любой read-резолвер: корневые запросы через `@QueryMapping`, а ленивые/вычисляемые поля вложенных типов через `@SchemaMapping`.",
                 "edge_cases": "Если имя метода не совпадает с полем схемы, нужно явно задать `field` в аннотации, иначе Spring не свяжет резолвер с полем.",
                 "related": "[[spring-graphql-interview#Q4]] реализация Mutation; [[spring-graphql-interview#Q5]] устранение N+1 через BatchMapping; [[spring-graphql-interview#Q12]] чем SchemaMapping отличается от QueryMapping."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Резолвер `Query` объявляют через `@GetMapping` в обычном `@RestController`, как REST-эндпоинт; путь метода становится именем поля схемы. Дальше `GraphQL Java` сам подберёт этот метод по URL-маршруту без `@QueryMapping`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "GraphQL-резолверы пишут через `@QueryMapping`/`@SchemaMapping` в `@Controller`, а не через REST-аннотации `@GetMapping` в `@RestController`.",
-                "source_of_confusion": "Привычка к REST-контроллерам в Spring MVC толкает разработчиков использовать `@GetMapping` и URL-маршрутизацию здесь.",
-                "if_it_were_true": "Если бы работал `@GetMapping`, у GraphQL не было бы единого `POST /graphql` и связывания резолверов по полям схемы.",
-                "how_it_should_be": "Поле `type Query` реализуют методом с `@QueryMapping` в `@Controller`; URL-маршрутизация `REST` тут не используется."
               }
             },
             {
@@ -168,7 +168,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Вложенные поля типа, например `items` у `Order`, резолвят лишь внутри корневого `@QueryMapping`; отдельных резолверов под них нет. Связанные данные подгружают там же вручную, без `@SchemaMapping` или `@BatchMapping`.",
+              "text": "Вложенные поля типа, например `items` у `Order`, резолвят внутри самого корневого `@QueryMapping`; отдельных резолверов под них нет. Связанные данные подгружают там же вручную, без `@SchemaMapping` или `@BatchMapping`.",
               "correct": false,
               "sections": {
                 "what_actually": "Для вложенных полей есть отдельная аннотация `@SchemaMapping(typeName, field)`, разрешающая поле конкретного типа независимо от корневого метода.",
@@ -215,6 +215,18 @@
             {
               "order": 2,
               "label": "C",
+              "text": "В `Spring for GraphQL` поля `type Mutation` резолверы `@MutationMapping` выполняют параллельно, как и поля `type Query`; поэтому итоговый порядок вызовов `createOrder` в одном `POST /graphql` заранее не гарантируется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "По спецификации GraphQL поля верхнего уровня `type Mutation` выполняются строго последовательно, в порядке их перечисления в запросе.",
+                "source_of_confusion": "Поля `type Query` действительно могут резолвиться параллельно, и это свойство ошибочно переносят на `type Mutation`.",
+                "if_it_were_true": "Если бы мутации шли параллельно, нельзя было бы полагаться на порядок «создать, затем подтвердить» в одном `POST /graphql`.",
+                "how_it_should_be": "Поля `type Mutation` верхнего уровня резолвятся последовательно; параллельность спецификация допускает только для полей `type Query`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
               "text": "В `@Controller` метод помечают аннотацией `@MutationMapping`, имя метода соответствует полю в `type Mutation`; входные данные принимают через `@Argument`, удобно в виде `record`-объекта `input`-типа.",
               "correct": true,
               "sections": {
@@ -223,18 +235,6 @@
                 "when_to_apply": "Так реализуют любые изменяющие операции: создание, отмену, обновление; каждая мутация — отдельный метод с `@MutationMapping`.",
                 "edge_cases": "Имена полей `input`-типа должны совпадать с полями `record`/класса, иначе биндинг вернёт `null` в части полей.",
                 "related": "[[spring-graphql-interview#Q3]] реализация Query resolver; [[spring-graphql-interview#Q7]] обработка ошибок мутаций; [[spring-graphql-interview#Q12]] mapping-аннотации и их различия."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "В `Spring for GraphQL` поля `type Mutation` резолверы `@MutationMapping` выполняют параллельно, как и поля `type Query`; поэтому итоговый порядок вызовов `createOrder` в одном `POST /graphql` заранее не гарантируется.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По спецификации GraphQL поля верхнего уровня `type Mutation` выполняются строго последовательно, в порядке их перечисления в запросе.",
-                "source_of_confusion": "Поля `type Query` действительно могут резолвиться параллельно, и это свойство ошибочно переносят на `type Mutation`.",
-                "if_it_were_true": "Если бы мутации шли параллельно, нельзя было бы полагаться на порядок «создать, затем подтвердить» в одном `POST /graphql`.",
-                "how_it_should_be": "Поля `type Mutation` верхнего уровня резолвятся последовательно; параллельность спецификация допускает только для полей `type Query`."
               }
             }
           ]
@@ -263,6 +263,18 @@
             {
               "order": 1,
               "label": "B",
+              "text": "Метод `@BatchMapping` принимает один родительский объект `Order` и возвращает его `List<OrderItem>`, как и `@SchemaMapping`; Spring сам вызывает такой резолвер по разу на каждый заказ, но делает это эффективно, оптимизируя обращения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@BatchMapping` принимает сразу `List<Order>` и возвращает `Map<Order, List<OrderItem>>`, выполняя один батч-запрос за позициями всех заказов; на каждый родитель отдельно он не вызывается.",
+                "source_of_confusion": "Сигнатура визуально похожа на `@SchemaMapping` с одним родителем, поэтому разницу в коллекции родителей упускают.",
+                "if_it_were_true": "Если бы метод брал один `Order` и вызывался N раз, это был бы обычный `@SchemaMapping` с той же проблемой N+1.",
+                "how_it_should_be": "Батч-метод работает со списком родителей за один вызов и раздаёт результаты через `Map`; это и устраняет N+1."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
               "text": "N+1 — когда при запросе N родительских объектов для каждого делается отдельный запрос за связанными данными, итого N+1 обращений к БД; в `Spring for GraphQL` её решают батчингом — `@BatchMapping` (идиоматично) или низкоуровневым `DataLoader` через `BatchLoaderRegistry`.",
               "correct": true,
               "sections": {
@@ -271,18 +283,6 @@
                 "when_to_apply": "Применяют всегда, где вложенное поле тянет данные на каждый родитель: списки заказов с позициями, авторы у постов, и так далее.",
                 "edge_cases": "`DataLoader` гибче (поддерживает per-request кэш и работу из нескольких полей), но требует ручной регистрации; `@BatchMapping` проще, но менее настраиваемый.",
                 "related": "[[spring-graphql-interview#Q3]] где возникает N+1 при SchemaMapping; [[spring-graphql-interview#Q12]] чем BatchMapping отличается от SchemaMapping; [[spring-graphql-interview#Q15]] мониторинг числа запросов."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Метод `@BatchMapping` принимает один родительский объект `Order` и возвращает его `List<OrderItem>`, как и `@SchemaMapping`; Spring сам вызывает такой резолвер по разу на каждый заказ, но делает это эффективно, оптимизируя обращения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@BatchMapping` принимает сразу `List<Order>` и возвращает `Map<Order, List<OrderItem>>`, выполняя один батч-запрос за позициями всех заказов; на каждый родитель отдельно он не вызывается.",
-                "source_of_confusion": "Сигнатура визуально похожа на `@SchemaMapping` с одним родителем, поэтому разницу в коллекции родителей упускают.",
-                "if_it_were_true": "Если бы метод брал один `Order` и вызывался N раз, это был бы обычный `@SchemaMapping` с той же проблемой N+1.",
-                "how_it_should_be": "Батч-метод работает со списком родителей за один вызов и раздаёт результаты через `Map`; это и устраняет N+1."
               }
             },
             {
@@ -311,6 +311,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Объявляют `type Subscription` в схеме и резолвер с `@SubscriptionMapping`, возвращающий поток `Flux<T>`; транспорт — `WebSocket` (`spring-boot-starter-websocket`, путь `spring.graphql.websocket.path`), а клиент подписывается по протоколу `graphql-ws`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Подписка — это длительный поток событий: метод с `@SubscriptionMapping` возвращает `Flux<Order>`, и каждый новый элемент потока уходит подписчику по WebSocket.",
+                "example": "`@SubscriptionMapping public Flux<Order> orderStatusChanged(@Argument String orderId)` фильтрует общий поток событий по `orderId` и шлёт обновления статуса заказа.",
+                "when_to_apply": "Применяют для real-time сценариев: уведомления, статусы заказов, ленты событий, чаты — там, где клиенту нужны push-обновления.",
+                "edge_cases": "Subscriptions требуют WebSocket-транспорта и реактивного источника; обычный синхронный сервис без `Flux`/`Reactor` для них не годится.",
+                "related": "[[spring-graphql-interview#Q2]] настройка путей graphql и websocket; [[spring-graphql-interview#Q12]] SubscriptionMapping среди mapping-аннотаций; [[spring-graphql-interview#Q1]] subscriptions как преимущество над REST."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Резолвер подписки помечают `@QueryMapping`, принимают `@Argument` и возвращают обычный `List<Order>` по `HTTP POST` на `/graphql`; Spring периодически перезапрашивает метод, сериализует через `Jackson` и отдаёт свежий `data` клиенту.",
               "correct": false,
               "sections": {
@@ -321,9 +334,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Подписки в `Spring for GraphQL` работают поверх обычного `HTTP POST` на `/graphql` тем же `HttpHandler`, что и query; отдельный `WebSocket`-транспорт со `spring-boot-starter-websocket` и протоколом `graphql-ws` не нужен.",
+              "order": 2,
+              "label": "C",
+              "text": "Подписки в `Spring for GraphQL` работают поверх обычного `HTTP POST` на `/graphql` тем же `HttpHandler`, что и query; отдельный `WebSocket`-транспорт со `spring-boot-starter-websocket` и протоколом `graphql-ws` при этом не нужен, клиент читает поток событий тем же `POST`.",
               "correct": false,
               "sections": {
                 "what_actually": "Подписки требуют `WebSocket`-транспорта (`spring-boot-starter-websocket`) и пути `spring.graphql.websocket.path`; по обычному `HTTP POST` их держать нельзя.",
@@ -333,28 +346,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Метод с `@SubscriptionMapping` и `@Argument` должен возвращать единичный `Order`; `Spring for GraphQL` сам превратит его в `Publisher` по `WebSocket`, повторно вызывая резолвер на каждое событие `graphql-ws`.",
+              "order": 3,
+              "label": "D",
+              "text": "Метод с `@SubscriptionMapping` и `@Argument` должен возвращать единичный `Order`, а не поток; `Spring for GraphQL` сам превратит это значение в `Publisher` по `WebSocket`, повторно вызывая резолвер на каждое новое событие `graphql-ws`.",
               "correct": false,
               "sections": {
                 "what_actually": "Метод подписки сразу возвращает поток `Flux<Order>`; сам этот поток и есть последовательность событий, резолвер не вызывается заново на каждое событие.",
                 "source_of_confusion": "Привычка возвращать одно значение из `@QueryMapping`/`@MutationMapping` сбивает с толку и переносится на подписки.",
                 "if_it_were_true": "Если бы возвращалось единичное значение, нечем было бы выразить непрерывную последовательность обновлений по `WebSocket`.",
                 "how_it_should_be": "Subscription-резолвер один раз возвращает `Flux<T>`; элементы потока доставляются подписчику по `graphql-ws` по мере появления."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Объявляют `type Subscription` в схеме и резолвер с `@SubscriptionMapping`, возвращающий реактивный поток `Flux<T>`; транспорт — `WebSocket` (нужен `spring-boot-starter-websocket`), путь задаётся `spring.graphql.websocket.path`, а клиент подписывается по протоколу `graphql-ws`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Подписка — это длительный поток событий: метод с `@SubscriptionMapping` возвращает `Flux<Order>`, и каждый новый элемент потока уходит подписчику по WebSocket.",
-                "example": "`@SubscriptionMapping public Flux<Order> orderStatusChanged(@Argument String orderId)` фильтрует общий поток событий по `orderId` и шлёт обновления статуса заказа.",
-                "when_to_apply": "Применяют для real-time сценариев: уведомления, статусы заказов, ленты событий, чаты — там, где клиенту нужны push-обновления.",
-                "edge_cases": "Subscriptions требуют WebSocket-транспорта и реактивного источника; обычный синхронный сервис без `Flux`/`Reactor` для них не годится.",
-                "related": "[[spring-graphql-interview#Q2]] настройка путей graphql и websocket; [[spring-graphql-interview#Q12]] SubscriptionMapping среди mapping-аннотаций; [[spring-graphql-interview#Q1]] subscriptions как преимущество над REST."
               }
             }
           ]
@@ -371,19 +371,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Ошибки резолверов перехватывают через `DataFetcherExceptionResolver` (или адаптер `DataFetcherExceptionResolverAdapter`) либо локально через `@GraphQlExceptionHandler` в контроллере; исключение маппят в `GraphQLError` с подходящим `ErrorType` (`NOT_FOUND`, `FORBIDDEN` и т.д.).",
-              "correct": true,
-              "sections": {
-                "explanation": "GraphQL не отдаёт HTTP-статусы как REST: ошибки кладутся в массив `errors` ответа. Резолвер исключений превращает Java-исключение в `GraphQLError` с типом и сообщением.",
-                "example": "`DataFetcherExceptionResolverAdapter.resolveToSingleError` ловит `OrderNotFoundException` и возвращает `GraphQLError` с `ErrorType.NOT_FOUND`; вернуть `null` означает «передать дальше».",
-                "when_to_apply": "Применяют, чтобы клиент получал осмысленные коды (`NOT_FOUND`, `FORBIDDEN`) вместо generic `INTERNAL_ERROR`, и чтобы не утекали стек-трейсы.",
-                "edge_cases": "Если резолвер исключений вернёт `null`, ошибка уходит в дефолтный обработчик и становится `INTERNAL_ERROR` без деталей; нужно покрыть все ожидаемые исключения.",
-                "related": "[[spring-graphql-interview#Q4]] где возникают ошибки мутаций; [[spring-graphql-interview#Q11]] обработка AccessDenied из Security; [[spring-graphql-interview#Q8]] проверка errors в тестах."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Ошибки в `GraphQL` по аналогии с REST передаются HTTP-статусами через `ResponseStatusException` (как в обычном Spring MVC); `OrderNotFoundException` даёт `404 Not Found`, `AccessDeniedException` — `403 Forbidden`, а массив `errors` в теле ответа при этом не заполняется.",
               "correct": false,
               "sections": {
@@ -394,8 +381,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Для обработки ошибок резолверов используют глобальный `@ControllerAdvice` с `@ExceptionHandler`, ловят `OrderNotFoundException` и `AccessDeniedException`, как в `Spring MVC`, и отдают `ResponseEntity` с `HttpStatus`; отдельного GraphQL-механизма не требуется.",
               "correct": false,
               "sections": {
@@ -406,8 +393,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Любое необработанное исключение резолвера `DataFetcher` фреймворк `graphql-java` автоматически кладёт в `errors` ответа с полным `stackTrace`; клиент видит оригинальное `message`, класс `RuntimeException` и `extensions` без очистки деталей.",
               "correct": false,
               "sections": {
@@ -415,6 +402,19 @@
                 "source_of_confusion": "В dev-логах виден полный `stackTrace`, и кажется, что он же уходит клиенту в `errors`.",
                 "if_it_were_true": "Если бы `stackTrace` и `message` уходили клиенту, это раскрывало бы внутренности приложения и классы исключений наружу.",
                 "how_it_should_be": "Чтобы клиент получил осмысленную ошибку вместо `INTERNAL_ERROR`, исключение явно маппят в `GraphQLError` через `DataFetcherExceptionResolver`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Ошибки резолверов перехватывают через `DataFetcherExceptionResolver` (или адаптер `DataFetcherExceptionResolverAdapter`) либо локально через `@GraphQlExceptionHandler` в контроллере; исключение маппят в `GraphQLError` с подходящим `ErrorType` (`NOT_FOUND`, `FORBIDDEN` и т.д.).",
+              "correct": true,
+              "sections": {
+                "explanation": "GraphQL не отдаёт HTTP-статусы как REST: ошибки кладутся в массив `errors` ответа. Резолвер исключений превращает Java-исключение в `GraphQLError` с типом и сообщением.",
+                "example": "`DataFetcherExceptionResolverAdapter.resolveToSingleError` ловит `OrderNotFoundException` и возвращает `GraphQLError` с `ErrorType.NOT_FOUND`; вернуть `null` означает «передать дальше».",
+                "when_to_apply": "Применяют, чтобы клиент получал осмысленные коды (`NOT_FOUND`, `FORBIDDEN`) вместо generic `INTERNAL_ERROR`, и чтобы не утекали стек-трейсы.",
+                "edge_cases": "Если резолвер исключений вернёт `null`, ошибка уходит в дефолтный обработчик и становится `INTERNAL_ERROR` без деталей; нужно покрыть все ожидаемые исключения.",
+                "related": "[[spring-graphql-interview#Q4]] где возникают ошибки мутаций; [[spring-graphql-interview#Q11]] обработка AccessDenied из Security; [[spring-graphql-interview#Q8]] проверка errors в тестах."
               }
             }
           ]
@@ -443,19 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Аннотация `@GraphQlTest` работает как `@SpringBootTest`: она поднимает полный контекст со всеми `@Service`, `@Repository` и `@Component`, включая `DataSource`, `@Controller` и `@Configuration`. Поэтому мокать коллабораторов через `@MockBean` не нужно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@GraphQlTest` — это слайс: он поднимает только GraphQL-слой (`@Controller`, схему), а сервисы и репозитории подменяют через `@MockBean`.",
-                "source_of_confusion": "Слово «Test» с автоконфигом ассоциируется с полным контекстом `@SpringBootTest`.",
-                "if_it_were_true": "Если бы поднимался весь контекст с `DataSource` и всеми бинами, слайс-тест терял бы скорость и изоляцию.",
-                "how_it_should_be": "Слайс грузит `@Controller` и схему, а зависимости вроде `@Service`/`@Repository` подставляют через `@MockBean`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Используют слайс `@GraphQlTest(Controller.class)` и инжектят `GraphQlTester`: задают документ (`document`/`documentName`), переменные через `variable`, выполняют `execute()` и проверяют ответ через `path(...).entity(...)` или ошибки через `errors().expect(...)`. Зависимости мокают через `@MockBean`.",
+              "text": "Используют слайс `@GraphQlTest(Controller.class)` и инжектят `GraphQlTester`: задают документ (`documentName`), переменные через `variable`, выполняют `execute()` и проверяют ответ через `path(...).entity(...)` или ошибки через `errors().expect(...)`. Зависимости мокают через `@MockBean`.",
               "correct": true,
               "sections": {
                 "explanation": "`@GraphQlTest` поднимает только GraphQL-слой (контроллеры, схему), а не весь контекст, что делает тесты быстрыми. `GraphQlTester` — fluent-API для выполнения запросов и ассертов.",
@@ -466,9 +454,21 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "Аннотация `@GraphQlTest` работает как `@SpringBootTest`: она поднимает полный контекст со всеми `@Service`, `@Repository` и `@Component`, включая `DataSource`, `@Controller` и `@Configuration`. Поэтому мокать коллабораторов через `@MockBean` не нужно.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@GraphQlTest` — это слайс: он поднимает только GraphQL-слой (`@Controller`, схему), а сервисы и репозитории подменяют через `@MockBean`.",
+                "source_of_confusion": "Слово «Test» с автоконфигом ассоциируется с полным контекстом `@SpringBootTest`.",
+                "if_it_were_true": "Если бы поднимался весь контекст с `DataSource` и всеми бинами, слайс-тест терял бы скорость и изоляцию.",
+                "how_it_should_be": "Слайс грузит `@Controller` и схему, а зависимости вроде `@Service`/`@Repository` подставляют через `@MockBean`."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "У `GraphQlTester` нет проверки ошибок: методы `path`, `entity`, `execute` работают лишь с успешным `data`, а `errors` они не читают. Значит `ErrorType` и `message` достают вручную из JSON через `jsonPath`.",
+              "text": "У `GraphQlTester` нет отдельной проверки ошибок: методы `path`, `entity`, `execute` работают с успешным блоком `data`, а массив `errors` не читают. Поэтому `ErrorType` и `message` в негативных тестах достают вручную из JSON через `jsonPath`, как в REST.",
               "correct": false,
               "sections": {
                 "what_actually": "У `GraphQlTester` есть `errors().expect(...)` для ассертов по ошибкам, включая проверку `ErrorType` и `message`.",
@@ -491,19 +491,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Директивы GraphQL — это HTTP-заголовки запроса вроде `Cache-Control` и `Authorization`, которыми клиент управляет кэшированием и авторизацией ответа; сервлет читает их из `HttpServletRequest` ещё до вызова `DataFetcher`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Директивы — это конструкции языка схемы/запроса GraphQL (`@deprecated`, `@auth`), а не HTTP-заголовки; сервер обрабатывает их через `SchemaDirectiveWiring`, а не читая `HttpServletRequest`.",
-                "source_of_confusion": "Слово «directive» в вебе ассоциируется с заголовками вроде `Cache-Control`, отсюда и подмена понятий.",
-                "if_it_were_true": "Если бы директивы были заголовками из `HttpServletRequest`, их нельзя было бы привязать к конкретному полю схемы.",
-                "how_it_should_be": "Директивы объявляют в схеме (`directive @x on ...`) и навешивают на поля/типы; обрабатывает их `SchemaDirectiveWiring`, а не HTTP-слой."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Директивы — это аннотации в схеме, меняющие поведение схемы или выполнения; есть встроенные (например `@deprecated(reason:...)`) и кастомные, объявляемые `directive @auth(role:String!) on FIELD_DEFINITION`; кастомную логику подключают через `SchemaDirectiveWiring`, оборачивая `DataFetcher` поля.",
+              "text": "Директивы — это аннотации в схеме, меняющие поведение схемы или выполнения: есть встроенные (`@deprecated(reason:...)`) и кастомные, объявляемые `directive @auth(role:String!) on FIELD_DEFINITION`; их логику подключают через `SchemaDirectiveWiring`, оборачивая `DataFetcher` поля.",
               "correct": true,
               "sections": {
                 "explanation": "Директива применяется к элементу схемы (полю, типу) и может, например, пометить поле устаревшим или навесить проверку прав. Обработчик `SchemaDirectiveWiring` перехватывает её на этапе сборки схемы.",
@@ -514,9 +502,21 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Директивы GraphQL — это HTTP-заголовки запроса вроде `Cache-Control` и `Authorization`, которыми клиент управляет кэшированием и авторизацией ответа; сервлет читает их из `HttpServletRequest` ещё до вызова `DataFetcher`, а в схеме `SDL` они не объявляются.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Директивы — это конструкции языка схемы/запроса GraphQL (`@deprecated`, `@auth`), а не HTTP-заголовки; сервер обрабатывает их через `SchemaDirectiveWiring`, а не читая `HttpServletRequest`.",
+                "source_of_confusion": "Слово «directive» в вебе ассоциируется с заголовками вроде `Cache-Control`, отсюда и подмена понятий.",
+                "if_it_were_true": "Если бы директивы были заголовками из `HttpServletRequest`, их нельзя было бы привязать к конкретному полю схемы.",
+                "how_it_should_be": "Директивы объявляют в схеме (`directive @x on ...`) и навешивают на поля/типы; обрабатывает их `SchemaDirectiveWiring`, а не HTTP-слой."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
-              "text": "Кастомную директиву достаточно просто объявить в схеме как `directive @auth(role:String!) on FIELD_DEFINITION`, и Spring сам свяжет её с `@PreAuthorize` (по имени директивы); писать `SchemaDirectiveWiring` и оборачивать `DataFetcher` руками уже не нужно.",
+              "text": "Кастомную директиву объявляют в схеме как `directive @auth(role:String!) on FIELD_DEFINITION`, и Spring сам свяжет её с `@PreAuthorize` по имени директивы; писать `SchemaDirectiveWiring` и оборачивать `DataFetcher` руками при этом не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Объявление директивы только описывает её синтаксис; поведение даёт обработчик `SchemaDirectiveWiring`, который надо написать и зарегистрировать, — со `@PreAuthorize` она сама не связывается.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Стандартный стиль пагинации в GraphQL — это классический offset/limit: сервер принимает `page`/`size` и отдаёт `items` вместе с `totalCount`; курсорные `Connection`/`Edge`/`PageInfo` и `first`/`after` — лишь опциональная надстройка сверху.",
+              "text": "Стандартный стиль пагинации в GraphQL — это классический offset/limit: сервер принимает `page`/`size` и отдаёт `items` вместе с `totalCount`; курсорные `Connection`/`Edge`/`PageInfo` и `first`/`after` идут опциональной надстройкой сверху.",
               "correct": false,
               "sections": {
                 "what_actually": "Рекомендуемый стиль — cursor-based (Relay Connection) с `first/after`; offset/limit возможен, но не является идиоматичным стандартом GraphQL.",
@@ -563,7 +563,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Курсор в Relay Connection — это числовой индекс записи: клиент берёт `cursor` из `Edge` внутри `Connection` и вручную инкрементирует его для `after`; `PageInfo`, `startCursor` и `endCursor` просто хранят целочисленный `offset`.",
+              "text": "Курсор в Relay Connection — это числовой индекс записи: клиент берёт `cursor` из `Edge` внутри `Connection` и вручную инкрементирует его для `after`; `PageInfo`, `startCursor` и `endCursor` хранят обычный целочисленный `offset`.",
               "correct": false,
               "sections": {
                 "what_actually": "Курсор — непрозрачная (часто base64) строка-указатель на позицию, а не целочисленный `offset`; клиент не должен интерпретировать или инкрементировать его.",
@@ -575,19 +575,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В Relay Connection объект `PageInfo` несёт общий счётчик `totalCount`: сколько записей всего в `Connection`; полей `hasNextPage`, `hasPreviousPage`, `startCursor` и `endCursor` у него нет, границы страницы клиент считает по `Edge` сам.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`PageInfo` содержит `hasNextPage`/`hasPreviousPage` и `startCursor`/`endCursor`; `totalCount` обычно лежит на самом `Connection`, а не в `PageInfo`.",
-                "source_of_confusion": "Кажется, что вся метаинформация о странице собрана в одном поле.",
-                "if_it_were_true": "Если бы не было `hasNextPage`, клиент не знал бы, когда прекращать листание.",
-                "how_it_should_be": "`PageInfo` отвечает за признаки границ и курсоры страницы; общий счётчик — отдельное поле `totalCount` у `Connection`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Рекомендуемый стиль — cursor-based по спецификации Relay Connection: типы `Connection`/`Edge`/`PageInfo` с аргументами `first/after` (и `last/before`); в Spring это поддерживается через `ScrollPosition`, `Window` и `Connection`/`CursorStrategy` для кодирования курсоров.",
+              "text": "Рекомендуемый стиль — cursor-based по спецификации Relay Connection: типы `Connection`/`Edge`/`PageInfo` с аргументами `first/after`; в Spring это поддерживается через `ScrollPosition`, `Window` и `CursorStrategy` для кодирования курсоров.",
               "correct": true,
               "sections": {
                 "explanation": "Relay Connection описывает страницу как `edges` (узел + курсор) и `pageInfo` (`hasNextPage`, `endCursor`). Курсор — непрозрачный указатель на позицию, устойчивый к вставкам в отличие от offset.",
@@ -595,6 +583,18 @@
                 "when_to_apply": "Применяют для списков, которые растут и листаются: ленты, каталоги, история заказов — везде, где offset-пагинация даёт сдвиги и дубли.",
                 "edge_cases": "Cursor-based сложнее offset и плохо подходит для «прыжка на страницу N»; для админок с номерами страниц иногда оставляют offset-пагинацию.",
                 "related": "[[spring-graphql-interview#Q3]] резолвер списка как основа пагинации; [[spring-graphql-interview#Q5]] N+1 при подгрузке вложенных полей страницы; [[spring-graphql-interview#Q1]] точечная выборка полей в GraphQL."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В Relay Connection объект `PageInfo` несёт общий счётчик `totalCount`: сколько записей всего в `Connection`; полей `hasNextPage`, `hasPreviousPage`, `startCursor` и `endCursor` у него нет, границы страницы клиент считает по `Edge` сам.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`PageInfo` содержит `hasNextPage`/`hasPreviousPage` и `startCursor`/`endCursor`; `totalCount` обычно лежит на самом `Connection`, а не в `PageInfo`.",
+                "source_of_confusion": "Кажется, что вся метаинформация о странице собрана в одном поле.",
+                "if_it_were_true": "Если бы не было `hasNextPage`, клиент не знал бы, когда прекращать листание.",
+                "how_it_should_be": "`PageInfo` отвечает за признаки границ и курсоры страницы; общий счётчик — отдельное поле `totalCount` у `Connection`."
               }
             }
           ]
@@ -611,6 +611,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Spring Security не применима к GraphQL-резолверам: единый endpoint `/graphql` (один POST-путь) защищают URL-правилами в `SecurityFilterChain` через `authorizeHttpRequests`, а `@PreAuthorize`/`@Secured` и `Authentication` на методах резолверов игнорируются в отличие от MVC-контроллеров; отдельное поле разрешить нельзя.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Method-level security (`@PreAuthorize`) работает на GraphQL-резолверах из коробки, поскольку это обычные бины; защита не сводится к URL в `SecurityFilterChain`.",
+                "source_of_confusion": "Единый POST-endpoint `/graphql` создаёт впечатление, что field-level контроль невозможен.",
+                "if_it_were_true": "Если бы защищали только URL, нельзя было бы разрешить одни поля и запретить другие в одном запросе.",
+                "how_it_should_be": "На резолверы вешают `@PreAuthorize`/`@Secured`; URL-based правила покрывают лишь сам endpoint, а не отдельные поля."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Method-level security работает из коробки: на резолверах ставят `@PreAuthorize`/`@Secured` (например `@PreAuthorize(\"hasRole('ADMIN')\")`), а `Principal`/`Authentication` доступны через `SecurityContextHolder` и могут инжектиться в метод; Spring Security перехватывает запрос до резолвера.",
               "correct": true,
               "sections": {
@@ -619,18 +631,6 @@
                 "when_to_apply": "Применяют, чтобы разграничить доступ к конкретным полям/мутациям: публичные query доступны всем, админские — только по роли.",
                 "edge_cases": "`AccessDeniedException` от Security нужно смаппить в `GraphQLError` (`FORBIDDEN`), иначе клиент получит generic `INTERNAL_ERROR` вместо понятного отказа.",
                 "related": "[[spring-graphql-interview#Q7]] маппинг AccessDenied в GraphQLError; [[spring-graphql-interview#Q9]] авторизация через кастомную директиву; [[spring-graphql-interview#Q8]] тестирование защищённых резолверов."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Spring Security не применима к GraphQL-резолверам: единый endpoint `/graphql` (один POST-путь) защищают лишь URL-правилами в `SecurityFilterChain` через `authorizeHttpRequests`, а `@PreAuthorize`/`@Secured` и `Authentication` на методах резолверов игнорируются (в отличие от MVC-контроллеров); отдельное поле разрешить нельзя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Method-level security (`@PreAuthorize`) работает на GraphQL-резолверах из коробки, поскольку это обычные бины; защита не сводится к URL в `SecurityFilterChain`.",
-                "source_of_confusion": "Единый POST-endpoint `/graphql` создаёт впечатление, что field-level контроль невозможен.",
-                "if_it_were_true": "Если бы защищали только URL, нельзя было бы разрешить одни поля и запретить другие в одном запросе.",
-                "how_it_should_be": "На резолверы вешают `@PreAuthorize`/`@Secured`; URL-based правила покрывают лишь сам endpoint, а не отдельные поля."
               }
             },
             {
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@SchemaMapping` работает лишь с корневыми `Query` и `Mutation` через `typeName`; вложенные поля типов вроде `Order` или `Customer` разрешают отдельной `@FieldMapping` (по одному резолверу на тип) с параметрами `typeName` и `field`.",
+              "text": "`@SchemaMapping` покрывает корневые `Query` и `Mutation` через `typeName`, но не вложенные типы; поля типов вроде `Order` или `Customer` разрешают отдельной аннотацией `@FieldMapping` (по одному резолверу на тип) с параметрами `typeName` и `field`.",
               "correct": false,
               "sections": {
                 "what_actually": "`@SchemaMapping` универсален и работает с любым типом схемы, включая вложенные `Order`/`Customer`; аннотации `@FieldMapping` в Spring for GraphQL нет.",
@@ -695,19 +695,6 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@QueryMapping`, `@MutationMapping` и `@SubscriptionMapping` — это специализированные сокращения `@SchemaMapping` с фиксированным `typeName` (`Query`/`Mutation`/`Subscription`); сам же `@SchemaMapping(typeName=..., field=...)` универсален и применяется к полям любых типов, включая вложенные.",
-              "correct": true,
-              "sections": {
-                "explanation": "`@QueryMapping` ≡ `@SchemaMapping(typeName=\"Query\")`, `@MutationMapping` ≡ `typeName=\"Mutation\"`. Для вложенных полей (например `customer` у `Order`) берут именно общий `@SchemaMapping`.",
-                "example": "`@SchemaMapping(typeName=\"Order\", field=\"customer\") public Customer customer(Order order)` разрешает поле `customer` типа `Order`, чего короткие аннотации сделать не могут.",
-                "when_to_apply": "Короткие аннотации используют для корневых операций ради читаемости; `@SchemaMapping` — когда нужен вложенный резолвер или нестандартный `typeName`.",
-                "edge_cases": "Если имя метода не совпадает с полем схемы, в `@SchemaMapping` явно указывают `field`; у `@QueryMapping` поле тоже можно задать параметром.",
-                "related": "[[spring-graphql-interview#Q3]] Query и SchemaMapping на практике; [[spring-graphql-interview#Q4]] MutationMapping; [[spring-graphql-interview#Q6]] SubscriptionMapping для подписок."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
               "text": "`@SchemaMapping` к корневому полю типа `Query` не применяется; для корневых операций есть выделенные `@QueryMapping` и `@MutationMapping`, а `@SchemaMapping` с `typeName` `Query` или `Mutation` отклоняется при регистрации `RuntimeWiring`.",
               "correct": false,
               "sections": {
@@ -715,6 +702,19 @@
                 "source_of_confusion": "Раз для Query есть своя аннотация, кажется, что общий вариант для неё запрещён и отклоняется при `RuntimeWiring`.",
                 "if_it_were_true": "Если бы `@SchemaMapping` не работал для `Query`, `@QueryMapping` не мог бы быть его синонимом.",
                 "how_it_should_be": "Корневое поле `Query` можно объявить и через `@SchemaMapping(typeName=\"Query\")`, и через `@QueryMapping`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`@QueryMapping`, `@MutationMapping` и `@SubscriptionMapping` — это сокращения `@SchemaMapping` с фиксированным `typeName` (`Query`/`Mutation`/`Subscription`); сам `@SchemaMapping(typeName=..., field=...)` универсален и применяется к полям любых типов, включая вложенные.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@QueryMapping` ≡ `@SchemaMapping(typeName=\"Query\")`, `@MutationMapping` ≡ `typeName=\"Mutation\"`. Для вложенных полей (например `customer` у `Order`) берут именно общий `@SchemaMapping`.",
+                "example": "`@SchemaMapping(typeName=\"Order\", field=\"customer\") public Customer customer(Order order)` разрешает поле `customer` типа `Order`, чего короткие аннотации сделать не могут.",
+                "when_to_apply": "Короткие аннотации используют для корневых операций ради читаемости; `@SchemaMapping` — когда нужен вложенный резолвер или нестандартный `typeName`.",
+                "edge_cases": "Если имя метода не совпадает с полем схемы, в `@SchemaMapping` явно указывают `field`; у `@QueryMapping` поле тоже можно задать параметром.",
+                "related": "[[spring-graphql-interview#Q3]] Query и SchemaMapping на практике; [[spring-graphql-interview#Q4]] MutationMapping; [[spring-graphql-interview#Q6]] SubscriptionMapping для подписок."
               }
             }
           ]
@@ -731,6 +731,18 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Introspection — это механизм серверного кэширования результатов GraphQL-запросов по ключу операции, наполняющий служебные поля `__schema` и `__type` готовыми ответами; в production его отключают флагом `spring.graphql.schema.introspection.enabled: false`, чтобы не расходовать память на устаревшие данные.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Introspection — это запрос метаданных о схеме через `__schema` и `__type`, а не серверное кэширование результатов запросов.",
+                "source_of_confusion": "Незнакомый термин ассоциируют с любой серверной оптимизацией вроде кэша ответов.",
+                "if_it_were_true": "Если бы introspection кэшировал ответы, его отключение замедляло бы повторные вызовы, а не закрывало схему от разведки.",
+                "how_it_should_be": "Introspection раскрывает структуру схемы для инструментов; кэширование результатов — отдельная задача, не связанная с этим флагом."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Introspection — встроенный механизм GraphQL, позволяющий запросить описание самой схемы через служебные поля `__schema` и `__type`; в production его обычно отключают (`spring.graphql.schema.introspection.enabled: false`) ради защиты от разведки API, но тогда перестают работать GraphiQL и Apollo Sandbox.",
               "correct": true,
               "sections": {
@@ -742,21 +754,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Introspection — это механизм серверного кэширования результатов GraphQL-запросов по ключу операции, который наполняет служебные поля `__schema` и `__type` готовыми ответами; в production его отключают флагом `spring.graphql.schema.introspection.enabled: false`, чтобы не расходовать память на хранение устаревших данных.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Introspection — это запрос метаданных о схеме через `__schema` и `__type`, а не серверное кэширование результатов запросов.",
-                "source_of_confusion": "Незнакомый термин ассоциируют с любой серверной оптимизацией вроде кэша ответов.",
-                "if_it_were_true": "Если бы introspection кэшировал ответы, его отключение замедляло бы повторные вызовы, а не закрывало схему от разведки.",
-                "how_it_should_be": "Introspection раскрывает структуру схемы для инструментов; кэширование результатов — отдельная задача, не связанная с этим флагом."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "Introspection нельзя отключить в Spring for GraphQL — служебные поля `__schema` и `__type` обязательны по спецификации и открыты по умолчанию; флаг `spring.graphql.schema.introspection.enabled` управляет лишь показом схемы в GraphiQL, но не доступностью самого механизма.",
+              "text": "Introspection нельзя отключить в Spring for GraphQL — служебные поля `__schema` и `__type` обязательны по спецификации и открыты по умолчанию; флаг `spring.graphql.schema.introspection.enabled` управляет показом схемы в GraphiQL, но не доступностью самого механизма.",
               "correct": false,
               "sections": {
                 "what_actually": "Introspection отключается флагом `spring.graphql.schema.introspection.enabled: false` (Spring Boot 3.x); это штатная настройка, а не намертво включённая часть механизма.",
@@ -791,19 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Файлы в GraphQL передают как обычное строковое поле `String` прямо в теле запроса `application/json`: клиент кодирует байты в base64 (без multipart), а мутация `uploadDocument(file: String!)` принимает их через `@Argument String`; ни скаляр `Upload`, ни `multipart/form-data` тут не нужны.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Для загрузки объявляют скаляр `Upload` и шлют `multipart/form-data`; base64-строка `String` в JSON для бинарных файлов не подходит.",
-                "source_of_confusion": "GraphQL-запросы обычно JSON, и кажется, что файл тоже можно вписать строкой.",
-                "if_it_were_true": "Если бы хватало `String` в JSON, не нужны были бы скаляр `Upload` и multipart upload spec.",
-                "how_it_should_be": "Файл передают через скаляр `Upload` и multipart-запрос, а в резолвере принимают как `Part`/`MultipartFile`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Используют GraphQL multipart upload spec: объявляют скаляр `Upload` и поле мутации `uploadDocument(file: Upload!, ...)`, в резолвере принимают файл через `@Argument` (`Part`/`MultipartFile`); клиенту при этом нужна спец-библиотека (`apollo-upload-client`), и часто проще сделать отдельный REST-endpoint для загрузки.",
+              "text": "Используют GraphQL multipart upload spec: объявляют скаляр `Upload` и поле мутации `uploadDocument(file: Upload!, ...)`, в резолвере принимают файл через `@Argument` (`Part`/`MultipartFile`); клиенту нужна спец-библиотека (`apollo-upload-client`), и часто проще сделать отдельный REST-endpoint.",
               "correct": true,
               "sections": {
                 "explanation": "Загрузка файлов не входит в core GraphQL: её добавляет неофициальный multipart upload spec через кастомный скаляр `Upload` и multipart/form-data запрос.",
@@ -814,9 +802,21 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Файлы в GraphQL передают как обычное строковое поле `String` прямо в теле запроса `application/json`: клиент кодирует байты в base64 (без multipart), а мутация `uploadDocument(file: String!)` принимает их через `@Argument String`; ни скаляр `Upload`, ни `multipart/form-data` тут не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Для загрузки объявляют скаляр `Upload` и шлют `multipart/form-data`; base64-строка `String` в JSON для бинарных файлов не подходит.",
+                "source_of_confusion": "GraphQL-запросы обычно JSON, и кажется, что файл тоже можно вписать строкой.",
+                "if_it_were_true": "Если бы хватало `String` в JSON, не нужны были бы скаляр `Upload` и multipart upload spec.",
+                "how_it_should_be": "Файл передают через скаляр `Upload` и multipart-запрос, а в резолвере принимают как `Part`/`MultipartFile`."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
-              "text": "Файловый upload — часть официальной спецификации GraphQL: скаляр `Upload` встроен наравне со `String` и `Int`, поэтому мутацию `uploadDocument(file: Upload!)` с `@Argument Part` понимает любой клиент вроде `graphql-request` из коробки; отдельные клиентские библиотеки не требуются.",
+              "text": "Файловый upload — часть официальной спецификации GraphQL: скаляр `Upload` встроен наравне со `String` и `Int`, поэтому мутацию `uploadDocument(file: Upload!)` с `@Argument Part` понимает любой клиент вроде `graphql-request` без настройки; отдельные клиентские библиотеки не требуются.",
               "correct": false,
               "sections": {
                 "what_actually": "Upload не входит в core-спецификацию GraphQL; это неофициальный multipart upload spec, требующий клиента вроде `apollo-upload-client`.",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Мониторинг GraphQL невозможен в принципе: все запросы идут POST на единый `/graphql` (один endpoint), поэтому `Instrumentation` в хуке `beginExecution` видит лишь общий HTTP-вызов; таймеры `graphql.*` из `spring-boot-starter-actuator` сводят операции в одну серию (без разбивки по операциям).",
+              "text": "Мониторинг GraphQL по операциям недостижим: все запросы идут POST на единый `/graphql` (один endpoint), поэтому `Instrumentation` в хуке `beginExecution` видит общий HTTP-вызов; таймеры `graphql.*` из `spring-boot-starter-actuator` сводят все операции в одну серию без разбивки.",
               "correct": false,
               "sections": {
                 "what_actually": "Метрики собирают через `Instrumentation` и Actuator (серия `graphql.*` в Micrometer), различая операции, несмотря на единый endpoint.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для логирования каждого запроса вешают `@Around`-аспект AOP на методы-резолверы `@QueryMapping`: своего хука `Instrumentation` в выполнение у Spring for GraphQL нет, поэтому время меряют вокруг каждого `DataFetcher`; серию `graphql.*` собирают вручную.",
+              "text": "Для логирования каждого запроса вешают `@Around`-аспект AOP на методы-резолверы `@QueryMapping`: собственного хука `Instrumentation` в выполнение у Spring for GraphQL нет, поэтому время меряют вокруг каждого `DataFetcher`, а серию метрик `graphql.*` собирают и публикуют вручную через `MeterRegistry`.",
               "correct": false,
               "sections": {
                 "what_actually": "У Spring for GraphQL есть штатный хук `Instrumentation` в жизненный цикл выполнения; AOP-аспект на резолверах для этого не нужен и видит лишь отдельные поля.",
@@ -875,7 +875,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для отладки включают логирование (`logging.level.org.springframework.graphql: DEBUG`, `graphql.execution: DEBUG`) и пишут кастомный `Instrumentation` (например на базе `SimplePerformantInstrumentation`), замеряющий время выполнения; для production Spring Boot Actuator через Micrometer выставляет метрики `graphql.*` (время, число ошибок).",
+              "text": "Для отладки включают логирование (`logging.level.org.springframework.graphql: DEBUG`) и пишут кастомный `Instrumentation` (например на базе `SimplePerformantInstrumentation`), замеряющий время выполнения; в production Spring Boot Actuator через Micrometer выставляет метрики `graphql.*` (время, число ошибок).",
               "correct": true,
               "sections": {
                 "explanation": "`Instrumentation` — это хук в жизненный цикл выполнения запроса (`beginExecution` и т.п.), куда можно вшить логирование, тайминги и трассировку каждого GraphQL-вызова.",
