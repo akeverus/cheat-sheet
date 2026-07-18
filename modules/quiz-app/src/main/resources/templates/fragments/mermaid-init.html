@@ -8,11 +8,28 @@
     // Guard: если mermaid не загрузился (offline, CSP, ad-blocker), убираем
     // блоки .mermaid вместо падения с ReferenceError.
     (function() {
+        // Этап 3 редизайна (DiagramBlock, docs 3.5/8.3): при невозможности
+        // отрисовать диаграмму НЕ удаляем контент, если есть вкладка «Исходник»
+        // (.diagram-source-details) — вместо этого прячем неотрисованный .mermaid
+        // (data-render-failed) и принудительно раскрываем исходник. Так вопрос со
+        // схемой остаётся осмысленным даже когда mermaid недоступен/упал. Для
+        // легаси-диаграмм без исходника (напр. внутри .markdown-content разбора)
+        // поведение прежнее — удаляем блок, чтобы не показывать сырой граф.
+        function failDiagram(el) {
+            var qd = el.closest('.question-diagram');
+            var details = qd ? qd.querySelector('.diagram-source-details') : null;
+            if (qd && details) {
+                qd.setAttribute('data-render-failed', 'true');
+                el.textContent = '';
+                details.open = true;
+            } else if (qd) {
+                qd.remove();
+            } else {
+                el.remove();
+            }
+        }
         function dropAllDiagrams() {
-            document.querySelectorAll('.mermaid').forEach(function(el) {
-                var qd = el.closest('.question-diagram');
-                if (qd) qd.remove(); else el.remove();
-            });
+            document.querySelectorAll('.mermaid').forEach(failDiagram);
         }
         if (typeof mermaid === 'undefined') {
             document.addEventListener('DOMContentLoaded', dropAllDiagrams);
@@ -40,8 +57,7 @@
                         svg.style.maxHeight = '100%';
                     }
                 } catch (e) {
-                    var qd = els[i].closest('.question-diagram');
-                    if (qd) qd.remove(); else els[i].remove();
+                    failDiagram(els[i]);
                     document.querySelectorAll('[id^="dmmd-"]').forEach(function(n){n.remove()});
                     document.querySelectorAll('.error-icon').forEach(function(n){
                         var p = n.closest('div'); if(p) p.remove();

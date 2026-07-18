@@ -269,6 +269,71 @@ html[data-design] .focus-training .question-meta {
   margin-bottom: var(--space-4);
 }
 
+/* ===========================================================================
+   Этап 3 редизайна — content-box (CodeBlock / DiagramBlock) по макету codeBox.
+   Рамочный контейнер с toolbar-заголовком; код и диаграмма живут внутри.
+   ========================================================================== */
+html[data-design] .content-box {
+  margin: var(--space-5) 0 0;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+  background: var(--color-bg-primary);
+}
+html[data-design] .content-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border-primary);
+  background: var(--color-bg-secondary);
+}
+html[data-design] .content-box-title {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+/* Код внутри content-box: details/pre без внешних отступов (рамку даёт box). */
+html[data-design] .question-code-wrap.content-box .question-code-details > pre,
+html[data-design] .question-code-wrap.content-box .question-code { margin: 0; }
+/* Диаграмма внутри content-box: отбивка вокруг SVG/исходной разметки mermaid. */
+html[data-design] .question-diagram.content-box .mermaid { margin: 0; padding: var(--space-4); }
+
+/* DiagramBlock: вкладка «Исходник» — низкоэмфазный <details> под диаграммой.
+   Всегда доступна (docs 3.5), а при ошибке рендера раскрывается принудительно. */
+html[data-design] .diagram-source-details { border-top: 1px solid var(--color-border-primary); }
+html[data-design] .diagram-source-summary {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  list-style: none;
+}
+html[data-design] .diagram-source-summary::-webkit-details-marker { display: none; }
+html[data-design] .diagram-source-summary .ed-icon { width: 1em; height: 1em; }
+html[data-design] .diagram-source-summary:hover { color: var(--color-text-secondary); }
+html[data-design] .diagram-source {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  overflow-x: auto;
+  border-top: 1px solid var(--color-border-primary);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-text-secondary);
+}
+/* Диаграмма, не сумевшая отрендериться (mermaid error): mermaid-init/app.js
+   ставит data-render-failed → скрываем неотрисованный .mermaid, исходник
+   остаётся видимым через раскрытый .diagram-source-details. */
+html[data-design] .question-diagram[data-render-failed] .mermaid { display: none; }
+
 /* Типо-утилиты (общие для новых страниц). */
 html[data-design] .page-title { font-size: 32px; line-height: 1.15; margin: 0 0 8px; letter-spacing: var(--letter-spacing-tight); }
 html[data-design] .muted { color: var(--color-text-secondary); }

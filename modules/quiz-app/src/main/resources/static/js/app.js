@@ -1385,6 +1385,23 @@
   // ПОСЛЕ DOMContentLoaded (ответ/пояснения приходят через AJAX, и начальные
   // инициализаторы mermaid/hljs их уже не трогают). Без этого диаграмма
   // оставалась сырым `graph TD ...`, а код — без подсветки.
+  // Этап 3 редизайна: при провале рендера AJAX-диаграммы сохраняем исходник, если
+  // рядом есть вкладка «Исходник» (.diagram-source-details) — так же, как в
+  // mermaid-init для серверных диаграмм. Иначе (легаси .markdown-content без
+  // исходника) удаляем блок, чтобы не показывать сырой граф.
+  function failDynamicDiagram(el) {
+    const qd = el.closest('.question-diagram');
+    const details = qd ? qd.querySelector('.diagram-source-details') : null;
+    if (qd && details) {
+      qd.setAttribute('data-render-failed', 'true');
+      el.textContent = '';
+      details.open = true;
+    } else if (qd) {
+      qd.remove();
+    } else {
+      el.remove();
+    }
+  }
   function renderDynamicContent(container) {
     if (!container) return;
     enhanceOptionExplanationDisclosure(container);
@@ -1410,10 +1427,10 @@
             el.replaceChildren(document.importNode(svg, true));
             el.setAttribute('data-rendered', 'true');
           } else {
-            el.remove();
+            failDynamicDiagram(el);
           }
         } catch (_) {
-          el.remove();
+          failDynamicDiagram(el);
         }
       });
     }

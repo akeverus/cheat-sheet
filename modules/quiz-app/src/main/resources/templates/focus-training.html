@@ -125,7 +125,7 @@
              <details open> (раскрыт по умолчанию, свернуть можно), а summary — код-
              аффорданс (mono + иконка ⟨⟩), НЕ нейтральная secondary-кнопка. Нативный
              <details> раскрывается без JS; ▸/▾ показывают состояние. -->
-        <div class="question-code-wrap"
+        <div class="question-code-wrap content-box"
              th:if="${current.question.codeSnippet() != null and !current.question.codeSnippet().isBlank()}">
             <details class="question-code-details" open>
                 <summary class="question-code-summary">
@@ -144,9 +144,25 @@
              нужна guard-логике mermaid-init: при ошибке рендера снимается весь блок, а
              не остаётся сырой код. th:text (не th:utext) — mermaid читает textContent,
              экранирование корректно. -->
-        <div class="question-diagram question-diagram-wrap"
+        <!-- Этап 3 редизайна (DiagramBlock, docs 3.5/8.3): блок-диаграмма с
+             toolbar-заголовком и вкладкой «Исходник». Ключевое изменение — при
+             ошибке mermaid блок больше НЕ удаляется целиком (раньше пользователь
+             терял контент): mermaid-init/renderDynamicContent прячут .mermaid и
+             раскрывают .diagram-source-details, так что исходник виден всегда.
+             Отдельная escaped-копия исходника в <details> переживает подмену
+             textContent .mermaid на SVG при успешном рендере. -->
+        <div class="question-diagram question-diagram-wrap content-box"
              th:if="${current.question.diagramMermaid() != null and !current.question.diagramMermaid().isBlank()}">
+            <div class="content-toolbar">
+                <span class="content-box-title">Схема</span>
+            </div>
             <pre class="mermaid" th:text="${current.question.diagramMermaid()}"></pre>
+            <details class="diagram-source-details">
+                <summary class="diagram-source-summary">
+                    <svg class="ed-icon" aria-hidden="true"><use href="#i-code"></use></svg><span>Исходник</span>
+                </summary>
+                <pre class="diagram-source"><code th:text="${current.question.diagramMermaid()}"></code></pre>
+            </details>
         </div>
         </div><!-- /.focus-rail : конец левой колонки split -->
 
