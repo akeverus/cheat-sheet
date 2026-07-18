@@ -231,7 +231,7 @@ class InterviewFlowMvcServiceTest {
     void answerBuildsPageStateAndAppliesModelAttributes() {
         SubmitAnswerRequest request = new SubmitAnswerRequest();
         InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
-                10L, 2L, "java", "core", true, false, true, false, 4
+                10L, 2L, "java", "core", true, false, true, false, 4, null
         );
         AnswerResult answerResult = org.mockito.Mockito.mock(AnswerResult.class);
         InterviewFilter filter = new InterviewFilter("java", "core", true, false, true, false);

@@ -81,7 +81,7 @@ class InterviewSessionSupportTest {
         when(interviewSession.getMode()).thenReturn(InterviewMode.EXAM);
         when(interviewService.submitAnswer(eq(10L), eq(3L), any(InterviewFilter.class), eq(4))).thenReturn(answerResult);
         InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
-                10L, 3L, null, null, null, null, null, null, 4
+                10L, 3L, null, null, null, null, null, null, 4, "ca-1"
         );
 
         InterviewSessionSupport.AnswerContext context = support.processAnswer(submission, session);
@@ -92,7 +92,8 @@ class InterviewSessionSupportTest {
         verify(interviewService).addExamPenaltyQuestions(interviewSession);
         verify(httpSessionStateService).setInterviewSession(session, interviewSession);
         // Фаза 2: реальный сабмит пишет попытку (WRONG, грейд=уверенность, выбранный вариант).
-        verify(attemptRecorder).record(eq(10L), eq(AttemptOutcome.WRONG), eq(4), eq(3L), isNull(), any());
+        // BE-003: clientAttemptId прокидывается до AttemptRecorder без изменений.
+        verify(attemptRecorder).record(eq(10L), eq(AttemptOutcome.WRONG), eq(4), eq(3L), isNull(), any(), eq("ca-1"));
     }
 
     @Test
@@ -113,12 +114,12 @@ class InterviewSessionSupportTest {
         when(interviewService.submitAnswer(eq(10L), eq(3L), any(InterviewFilter.class), eq(null)))
                 .thenReturn(answerResult);
         InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
-                10L, 3L, null, null, null, null, null, null, null
+                10L, 3L, null, null, null, null, null, null, null, null
         );
 
         support.processAnswer(submission, session);
 
-        verify(attemptRecorder).record(eq(10L), eq(AttemptOutcome.CORRECT), isNull(), eq(3L), eq(4200), any());
+        verify(attemptRecorder).record(eq(10L), eq(AttemptOutcome.CORRECT), isNull(), eq(3L), eq(4200), any(), isNull());
     }
 
     @Test
@@ -150,6 +151,7 @@ class InterviewSessionSupportTest {
                 false,
                 true,
                 true,
+                null,
                 null
         );
 
@@ -176,7 +178,7 @@ class InterviewSessionSupportTest {
         when(interviewSession.isFinished()).thenReturn(true);
         when(interviewService.submitAnswer(eq(11L), eq(2L), any(InterviewFilter.class), eq(3))).thenReturn(answerResult);
         InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
-                11L, 2L, null, null, null, null, null, null, 3
+                11L, 2L, null, null, null, null, null, null, 3, null
         );
 
         support.processAnswer(submission, session);
@@ -201,7 +203,7 @@ class InterviewSessionSupportTest {
         when(interviewSession.getMode()).thenReturn(InterviewMode.STUDY);
         when(interviewService.submitAnswer(eq(31L), eq(9L), any(InterviewFilter.class), eq(5))).thenReturn(answerResult);
         InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
-                31L, 9L, null, null, null, null, null, null, 5
+                31L, 9L, null, null, null, null, null, null, 5, null
         );
 
         support.processAnswer(submission, session);
@@ -222,7 +224,7 @@ class InterviewSessionSupportTest {
         when(interviewSession.currentQuestionId()).thenReturn(99L);
         when(interviewService.evaluateAnswer(10L, 3L)).thenReturn(replay);
         InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
-                10L, 3L, null, null, null, null, null, null, 4
+                10L, 3L, null, null, null, null, null, null, 4, null
         );
 
         InterviewSessionSupport.AnswerContext context = support.processAnswer(submission, session);
@@ -235,7 +237,7 @@ class InterviewSessionSupportTest {
         verify(interviewService, never()).addExamPenaltyQuestions(any());
         verify(httpSessionStateService, never()).setInterviewSession(any(), any());
         // FLOW-02: устаревший дубль НЕ пишет вторую попытку.
-        verify(attemptRecorder, never()).record(anyLong(), any(), any(), any(), any(), any());
+        verify(attemptRecorder, never()).record(anyLong(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -256,7 +258,8 @@ class InterviewSessionSupportTest {
         verify(interviewService).addExamPenaltyQuestions(interviewSession);
         verify(httpSessionStateService).setInterviewSession(session, interviewSession);
         // «Не знаю» логируется как UNKNOWN, грейд 0, без выбранного варианта.
-        verify(attemptRecorder).record(eq(10L), eq(AttemptOutcome.UNKNOWN), eq(0), isNull(), isNull(), any());
+        // Skip не несёт клиентского ключа → clientAttemptId=null.
+        verify(attemptRecorder).record(eq(10L), eq(AttemptOutcome.UNKNOWN), eq(0), isNull(), isNull(), any(), isNull());
     }
 
     @Test
@@ -290,7 +293,7 @@ class InterviewSessionSupportTest {
         verify(interviewSession, never()).registerUnknown(anyString());
         verify(interviewService, never()).addExamPenaltyQuestions(any());
         verify(httpSessionStateService, never()).setInterviewSession(any(), any());
-        verify(attemptRecorder, never()).record(anyLong(), any(), any(), any(), any(), any());
+        verify(attemptRecorder, never()).record(anyLong(), any(), any(), any(), any(), any(), any());
     }
 
     @Test

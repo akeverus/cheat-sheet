@@ -6,10 +6,13 @@ import com.cheatsheet.quiz.domain.QuestionRevision;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.dao.DuplicateKeyException;
+
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Тесты {@link AttemptRepository} на реальном PostgreSQL через Testcontainers.
@@ -114,6 +117,29 @@ class AttemptRepositoryTest extends AbstractPostgresRepositoryTest {
         assertThat(found.get().idempotencyKey()).isEqualTo("key-abc");
         assertThat(repository.findByIdempotencyKey("no-such-key")).isEmpty();
         assertThat(repository.findByIdempotencyKey(null)).isEmpty();
+    }
+
+    @Test
+    void partialUniqueIndexRejectsDuplicateIdempotencyKeyButAllowsManyNulls() {
+        // BE-003: uq_attempt_idempotency_key — partial unique (WHERE idempotency_key IS NOT NULL).
+        // Дубликат непустого ключа отвергается на уровне БД (страховка поверх lookup-guard
+        // в AttemptRecorder), но множественные NULL-ключи (skip/no-JS) сосуществуют.
+        repository.insert(Attempt.builder()
+                .questionId(1L).outcome(AttemptOutcome.CORRECT).firstAttempt(true)
+                .idempotencyKey("dup-key").createdAt(1000L).build());
+
+        assertThatThrownBy(() -> repository.insert(Attempt.builder()
+                .questionId(1L).outcome(AttemptOutcome.CORRECT).firstAttempt(false)
+                .idempotencyKey("dup-key").createdAt(1001L).build()))
+                .isInstanceOf(DuplicateKeyException.class);
+
+        // Два NULL-ключа не конфликтуют (partial-index не покрывает NULL).
+        repository.insert(Attempt.builder()
+                .questionId(1L).outcome(AttemptOutcome.SKIP).firstAttempt(false).createdAt(1002L).build());
+        repository.insert(Attempt.builder()
+                .questionId(1L).outcome(AttemptOutcome.SKIP).firstAttempt(false).createdAt(1003L).build());
+
+        assertThat(repository.findByQuestionId(1L)).hasSize(3);
     }
 
     @Test

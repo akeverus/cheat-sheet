@@ -22,6 +22,7 @@ class MvcAnswerRequestMapperTest {
         request.setShuffle(true);
         request.setOrdered(false);
         request.setConfidence(4);
+        request.setClientAttemptId("ca-7");
 
         InterviewSessionSupport.AnswerSubmission submission = mapper.toSubmission(request);
 
@@ -34,5 +35,6 @@ class MvcAnswerRequestMapperTest {
         assertThat(submission.shuffle()).isTrue();
         assertThat(submission.ordered()).isFalse();
         assertThat(submission.confidence()).isEqualTo(4);
+        assertThat(submission.clientAttemptId()).isEqualTo("ca-7");
     }
 }

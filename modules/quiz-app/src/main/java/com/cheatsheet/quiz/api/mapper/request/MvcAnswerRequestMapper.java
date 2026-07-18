@@ -23,7 +23,8 @@ public class MvcAnswerRequestMapper {
                 request.getOnlyWrong(),
                 request.getShuffle(),
                 request.getOrdered(),
-                request.getConfidence()
+                request.getConfidence(),
+                request.getClientAttemptId()
         );
     }
 }

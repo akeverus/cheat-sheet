@@ -1055,6 +1055,24 @@
   let answered = false;
   let timerInterval = null;
 
+  // BE-003: клиентский ключ идемпотентности. Один UUID на вопрос, тот же при retry
+  // после сетевой ошибки (ветки !response.ok/catch сбрасывают answered=false, но ключ
+  // сохраняется) → сервер дедуплицирует запись попытки. Привязка к текущему questionId,
+  // а не к жизненному циклу замыкания: при смене вопроса (навигация/динамическая замена)
+  // ключ перегенерируется, повторный ответ на новый вопрос не глушится.
+  let clientAttemptId = null;
+  let clientAttemptQuestionId = null;
+  function currentClientAttemptId() {
+    const qid = (form.querySelector('input[name="questionId"]') || {}).value || '';
+    if (clientAttemptId === null || clientAttemptQuestionId !== qid) {
+      clientAttemptId = (window.crypto && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : 'ca-' + qid + '-' + Date.now().toString(36) + Math.floor(Math.random() * 1e9).toString(36);
+      clientAttemptQuestionId = qid;
+    }
+    return clientAttemptId;
+  }
+
   function updateAnswerLayoutMode() {
     const labels = Array.from(optionsContainer.querySelectorAll('label[data-option-id]'));
     if (labels.length < 2) return;
@@ -1465,6 +1483,7 @@
     clearInlineAlert();
 
     const formData = new FormData(form);
+    formData.set('clientAttemptId', currentClientAttemptId());
     try {
       const response = await apiFetch(API.ANSWER, {
         method: 'POST',

@@ -45,6 +45,9 @@ public class AttemptRecorder {
      * @param selectedOptionId выбранный вариант ({@code null} для флешкарт/«не знаю»)
      * @param responseTimeMs   время ответа в мс ({@code null} если не измерено)
      * @param sessionToken     токен HTTP-сессии тренажёра ({@code null} допустим)
+     * @param clientAttemptId  клиентский ключ идемпотентности (BE-003): один на вопрос,
+     *                         тот же при retry после сетевой ошибки; {@code null} допустим
+     *                         (skip/флешкарта/no-JS) — тогда дедупликация не применяется
      */
     @Transactional
     public void record(long questionId,
@@ -52,7 +55,17 @@ public class AttemptRecorder {
                        Integer memoryGrade,
                        Long selectedOptionId,
                        Integer responseTimeMs,
-                       String sessionToken) {
+                       String sessionToken,
+                       String clientAttemptId) {
+        // BE-003: если попытка с этим клиентским ключом уже записана (retry после
+        // сетевой ошибки, двойной submit в обход клиентского guard) — не дублируем.
+        // Ключ null/blank (skip, no-JS-фоллбэк) дедупликацию отключает: journal тогда
+        // ведёт себя как раньше. Дополняет сессионный FLOW-02 (InterviewSessionSupport)
+        // на путях без активной сессии (TRAINING) и finished-сессии.
+        if (clientAttemptId != null && !clientAttemptId.isBlank()
+                && attemptRepository.findByIdempotencyKey(clientAttemptId).isPresent()) {
+            return;
+        }
         boolean firstAttempt = !attemptRepository.existsByQuestionId(questionId);
         Long revisionId = questionRevisionRepository.findLatest(questionId)
                 .map(QuestionRevision::id)
@@ -66,9 +79,18 @@ public class AttemptRecorder {
                 .responseTimeMs(responseTimeMs)
                 .memoryGrade(memoryGrade)
                 .sessionToken(sessionToken)
-                .idempotencyKey(null)
+                .idempotencyKey(normalizeKey(clientAttemptId))
                 .createdAt(clock.instant().getEpochSecond())
                 .build();
         attemptRepository.insert(attempt);
+    }
+
+    /**
+     * Нормализует клиентский ключ: blank → {@code null}, чтобы в БД не попадали
+     * пустые строки (partial unique index {@code uq_attempt_idempotency_key}
+     * покрывает только {@code idempotency_key IS NOT NULL}).
+     */
+    private String normalizeKey(String clientAttemptId) {
+        return clientAttemptId == null || clientAttemptId.isBlank() ? null : clientAttemptId;
     }
 }

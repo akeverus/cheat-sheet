@@ -103,7 +103,8 @@ public class InterviewSessionSupport {
                 submission.confidence(),
                 submission.optionId(),
                 responseTimeMs,
-                session);
+                session,
+                submission.clientAttemptId());
 
         return new AnswerContext(result, filter, interviewSession);
     }
@@ -154,7 +155,9 @@ public class InterviewSessionSupport {
         Integer responseTimeMs = interviewSession.takeResponseTimeMs(clock.millis());
         httpSessionStateService.setInterviewSession(session, interviewSession);
         // Лог попытки «не знаю» (UNKNOWN, грейд 0, без выбранного варианта).
-        recordAttempt(questionId, AttemptOutcome.UNKNOWN, 0, null, responseTimeMs, session);
+        // Skip не несёт клиентского ключа (нет выбранного варианта, retry по нему не
+        // ожидается) → clientAttemptId=null, дедупликация по ключу не применяется.
+        recordAttempt(questionId, AttemptOutcome.UNKNOWN, 0, null, responseTimeMs, session, null);
         return interviewSession;
     }
 
@@ -163,7 +166,8 @@ public class InterviewSessionSupport {
      * ответ уже применён (SM-2 + сессия), поэтому исключение журнала лишь логируем.
      */
     private void recordAttempt(long questionId, AttemptOutcome outcome, Integer memoryGrade,
-                               Long selectedOptionId, Integer responseTimeMs, HttpSession session) {
+                               Long selectedOptionId, Integer responseTimeMs, HttpSession session,
+                               String clientAttemptId) {
         try {
             attemptRecorder.record(
                     questionId,
@@ -171,7 +175,8 @@ public class InterviewSessionSupport {
                     memoryGrade,
                     selectedOptionId,
                     responseTimeMs,
-                    session.getId());
+                    session.getId(),
+                    clientAttemptId);
         } catch (Exception e) {
             log.warn("Не удалось записать attempt для вопроса id={}: {}", questionId, e.getMessage());
         }
@@ -234,7 +239,8 @@ public class InterviewSessionSupport {
             Boolean onlyWrong,
             Boolean shuffle,
             Boolean ordered,
-            Integer confidence
+            Integer confidence,
+            String clientAttemptId
     ) {
     }
 }

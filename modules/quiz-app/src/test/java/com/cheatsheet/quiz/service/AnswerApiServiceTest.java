@@ -81,7 +81,7 @@ class AnswerApiServiceTest {
                 interviewSession
         );
         AnswerApiService.AnswerCommand command = new AnswerApiService.AnswerCommand(
-                questionId, selectedOptionId, "java", "core", true, false, true, false, 4
+                questionId, selectedOptionId, "java", "core", true, false, true, false, 4, null
         );
 
         when(sessionSupport.processAnswer(any(InterviewSessionSupport.AnswerSubmission.class), eq(session)))
@@ -109,7 +109,7 @@ class AnswerApiServiceTest {
         assertThat(body.session().total()).isEqualTo(2);
         verify(sessionSupport).processAnswer(
                 new InterviewSessionSupport.AnswerSubmission(
-                        questionId, selectedOptionId, "java", "core", true, false, true, false, 4
+                        questionId, selectedOptionId, "java", "core", true, false, true, false, 4, null
                 ),
                 session
         );
@@ -140,7 +140,7 @@ class AnswerApiServiceTest {
                 null
         );
         AnswerApiService.AnswerCommand command = new AnswerApiService.AnswerCommand(
-                questionId, selectedOptionId, "java", "core", true, false, true, false, 3
+                questionId, selectedOptionId, "java", "core", true, false, true, false, 3, null
         );
 
         when(sessionSupport.processAnswer(any(InterviewSessionSupport.AnswerSubmission.class), eq(session)))
@@ -182,7 +182,7 @@ class AnswerApiServiceTest {
                 null
         );
         AnswerApiService.AnswerCommand command = new AnswerApiService.AnswerCommand(
-                questionId, selectedOptionId, "java", "core", true, false, true, false, 4
+                questionId, selectedOptionId, "java", "core", true, false, true, false, 4, null
         );
         when(sessionSupport.processAnswer(any(InterviewSessionSupport.AnswerSubmission.class), eq(session)))
                 .thenReturn(context);

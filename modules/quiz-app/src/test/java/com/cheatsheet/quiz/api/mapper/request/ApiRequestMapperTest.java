@@ -24,6 +24,7 @@ class ApiRequestMapperTest {
         request.setShuffle(true);
         request.setOrdered(false);
         request.setConfidence(4);
+        request.setClientAttemptId("ca-42");
 
         AnswerApiService.AnswerCommand command = mapper.toAnswerCommand(request);
 
@@ -36,6 +37,7 @@ class ApiRequestMapperTest {
         assertThat(command.shuffle()).isTrue();
         assertThat(command.ordered()).isFalse();
         assertThat(command.confidence()).isEqualTo(4);
+        assertThat(command.clientAttemptId()).isEqualTo("ca-42");
     }
 
     @Test

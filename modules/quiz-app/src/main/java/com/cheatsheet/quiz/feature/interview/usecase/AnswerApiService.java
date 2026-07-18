@@ -86,7 +86,8 @@ public class AnswerApiService {
                 command.onlyWrong(),
                 command.shuffle(),
                 command.ordered(),
-                command.confidence()
+                command.confidence(),
+                command.clientAttemptId()
         );
     }
 
@@ -128,7 +129,8 @@ public class AnswerApiService {
             Boolean onlyWrong,
             Boolean shuffle,
             Boolean ordered,
-            Integer confidence
+            Integer confidence,
+            String clientAttemptId
     ) {
     }
 }
