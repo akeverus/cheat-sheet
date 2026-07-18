@@ -1,81 +1,76 @@
 /* =============================================================================
    tokens.css — TOKEN-DEFINITION LAYER.
    --------------------------------------------------------------------------
-   Этот файл ОПРЕДЕЛЯЕТ все дизайн-токены; base.css их только ПОТРЕБЛЯЕТ
-   (var(--token)) и никогда не определяет. Грузится ПЕРЕД base.css (токены до
-   структуры) — порядок задаётся в fragments/head.html.
+   Этот файл ОПРЕДЕЛЯЕТ все дизайн-токены; base.css / shell.css их только
+   ПОТРЕБЛЯЮТ (var(--token)) и никогда не определяют. Грузится ПЕРЕД base.css
+   (токены до структуры) — порядок задаётся в fragments/head.html.
 
-   Архитектура (SINGLE-SOURCE после DEADCODE-1, 2026-07-16): «Instrument» —
-   единственный дизайн (прежние 10 удалены в полной замене 2026-07-14, DEC-002).
-   • Токены-значения (цвет/шрифт/радиус/тень + структура) живут ПРЯМО в `:root`
-     (light) и `:root[data-theme="dark"]` (dark, + зеркало в prefers-color-scheme).
-     Нет отдельного html[data-design="…"] override-слоя — промоут DEADCODE-1
-     перенёс инструментальные OKLCH-значения в :root и удалил инертную
-     editorial-цветобазу (наследие #FAF9F5/Clay), которая никогда не рендерилась.
-   • Палитра «Instrument»: прохладные нейтралы (hue ~262), teal-signal как
-     единственный коммитнутый интерактив (hue 205), амбер-spark для микро-акцентов
-     (hue 62/75). OKLCH, WCAG AA by-construction: ЗАЛИВКИ берут signal-STRONG
-     (≥4.5 с near-white -on), ТЕКСТ-варианты (ссылки/статусы) — signal/-ink
-     уровня ~5.2–5.6:1. Шрифты: Newsreader (display) / Space Grotesk (UI/body) /
-     JetBrains Mono (код). Соответствует design/mockups/DESIGN.md.
-   • Ортогональные оверрайды data-reading-width / data-density СТОЯТ ПОСЛЕ :root
-     и переопределяют только --measure / --space-* (специфичность 0,1,1 > 0,1,0).
-   • Все SSR-шаблоны по-прежнему несут <html data-design="instrument"> — как
-     маркер для scoped-структуры в base.css (html[data-design] .page …); сами
-     значения токенов теперь от него не зависят.
+   Палитра (РЕДИЗАЙН 2026-07-18, ui-redesign-handoff.zip): «терминальная»
+   тёмная эстетика — dark PRIMARY (макеты все тёмные, canvas #071016), teal
+   #58d4d0 как единственный коммитнутый интерактив, амбер/success/danger
+   разведены. Семантические имена токенов (--color-*) СОХРАНЕНЫ (мост к
+   существующему base.css на время поэтапной замены), но ЗНАЧЕНИЯ переведены на
+   палитру архива:
+     • :root                      — light (СИНТЕЗ, AA-совместимый: архив даёт
+                                     только dark, светлая тема выведена вручную);
+     • :root[data-theme="dark"]   — dark (ТОЧНО из design-tokens.css архива) +
+                                     зеркало в prefers-color-scheme для no-JS.
+   Шрифты: Inter (UI/display/body) + JetBrains Mono (код/эйбрау). Newsreader/
+   Space Grotesk убраны (см. head.html). Структурные shell-токены
+   (--sidebar-width / --content-max / --header-height / --mobile-nav-height) —
+   из архива. Источник: assets/tokens/design-tokens.css + docs/04_DESIGN_SYSTEM.md.
+
+   Ортогональные оси (data-reading-width / data-density) — legacy Instrument,
+   удаляются на Этапе 10 финализации редизайна; пока оставлены рабочими.
    ========================================================================== */
 
 :root {
-  /* Сообщаем UA активную схему, чтобы нативный хром (scrollbar, popup <select>,
-     спиннеры number, текстовая каретка) совпадал с темой. База — light; для
-     тёмной темы переопределяем в [data-theme="dark"] и в prefers-color-scheme. */
+  /* Схема для нативного хрома (scrollbar, <select>, каретка). База — light;
+     dark переопределяется в [data-theme="dark"] и prefers-color-scheme. */
   color-scheme: light;
 
-  /* ---- Цвет — Instrument light (OKLCH, cool neutrals + teal-signal) ---- */
-  --color-bg-primary:   oklch(0.985 0.003 262); /* cool near-white paper */
-  --color-bg-secondary: oklch(0.958 0.004 262); /* surface-ступень */
-  --color-bg-tertiary:  oklch(0.998 0.002 262); /* приподнятая карта — светлее фона */
-  --color-bg-inverse:   oklch(0.245 0.015 264);
+  /* ---- Цвет — light (синтез из архивной teal-палитры, WCAG AA) ---- */
+  --color-bg-primary:   #eef2f2; /* прохладный near-white холст */
+  --color-bg-secondary: #f6f9f9; /* surface-ступень */
+  --color-bg-tertiary:  #ffffff; /* приподнятая карта / input-well */
+  --color-surface-soft: #e7eded; /* мягкая ступень (тулбары, код-фон) */
+  --color-bg-inverse:   #0b151c;
 
-  --color-text-primary:   oklch(0.245 0.015 264); /* ink ~13:1 */
-  --color-text-secondary: oklch(0.430 0.013 264); /* ~7.2:1 */
-  --color-text-tertiary:  oklch(0.500 0.012 264); /* ~5.4:1 (AA) */
-  --color-text-inverse:   oklch(0.985 0.003 262);
-  --color-text-link:      oklch(0.435 0.105 205); /* signal-ink ~5.4:1 */
+  --color-text-primary:   #0c1a1f; /* ink ~15:1 */
+  --color-text-secondary: #3d4f56; /* ~8:1 */
+  --color-text-tertiary:  #5a6d74; /* ~4.8:1 (AA) */
+  --color-text-inverse:   #eef5f5;
+  --color-text-link:      #0c6360; /* тёмный teal ~5.2:1 */
 
-  --color-border-primary:   oklch(0.876 0.007 262); /* line */
-  --color-border-secondary: oklch(0.912 0.006 262); /* тоньше hairline */
-  --color-border-focus:     oklch(0.550 0.110 205); /* signal */
-  /* Кольцо клавиатурного фокуса (#4): ОТДЕЛЬНЫЙ токен, заметно сильнее рамки
-     выбора (darker+chroma) — фокус и выбор различимы не только цветом, но и
-     формой: фокус = ОТСТУПАЮЩИЙ (offset) контур без заливки, выбор = flush-рамка
-     с wash-заливкой, action = сплошная заливка. ≥3:1 к фону (AA). */
-  --color-focus-ring:       oklch(0.480 0.140 205);
+  --color-border-primary:   #c5d2d5;
+  --color-border-secondary: #d8e2e4;
+  --color-border-focus:     #0d7a76;
+  /* Кольцо клавиатурного фокуса — отдельный токен, сильнее рамки выбора. */
+  --color-focus-ring:       #0a6360;
 
-  --color-accent-primary:        oklch(0.470 0.115 205); /* signal-strong — заливка (AA с -on) */
-  --color-accent-strong:         oklch(0.435 0.105 205); /* signal-ink — как текст */
-  --color-accent-primary-hover:  oklch(0.435 0.105 205);
-  --color-accent-primary-active: oklch(0.400 0.100 205);
-  --color-accent-on:             oklch(0.990 0.010 205); /* near-white на заливке */
-  --color-accent-secondary:      oklch(0.500 0.120 62);  /* spark-ink амбер */
-  --color-accent-wash:           oklch(0.963 0.020 205); /* signal-wash (выбранный) */
+  --color-accent-primary:        #0f726e; /* teal-fill (белый текст AA) */
+  --color-accent-strong:         #0d6b67; /* teal-as-text */
+  --color-accent-primary-hover:  #0b615d;
+  --color-accent-primary-active: #094f4c;
+  --color-accent-on:             #ffffff; /* текст на teal-fill */
+  --color-accent-secondary:      #8a5a00; /* амбер-ink */
+  --color-accent-wash:           #d9f0ef; /* teal-wash (выбранный) */
 
-  --color-status-success:      oklch(0.470 0.120 150); /* success-ink: текст ~5.6:1 + заливка с -on */
-  --color-status-success-on:   oklch(0.990 0.010 150);
-  --color-status-success-wash: oklch(0.945 0.045 150);
-  --color-status-warning:      oklch(0.500 0.120 62);  /* spark-ink */
-  --color-status-error:        oklch(0.500 0.200 27);  /* error-ink ~5.2:1 */
-  --color-status-error-on:     oklch(0.990 0.010 27);
-  --color-status-error-wash:   oklch(0.950 0.045 27);
-  --color-status-info:         oklch(0.435 0.105 205); /* signal-ink */
+  --color-status-success:      #157f52;
+  --color-status-success-on:   #ffffff;
+  --color-status-success-wash: #dcf1e7;
+  --color-status-warning:      #8a6500;
+  --color-status-error:        #c0392b;
+  --color-status-error-on:     #ffffff;
+  --color-status-error-wash:   #f7e0dc;
+  --color-status-info:         #1466a8;
 
-  --color-surface-overlay: oklch(0.245 0.015 264 / 0.42);
+  --color-surface-overlay: rgba(11, 21, 28, 0.42);
 
-  /* Типографика — Instrument: Newsreader (serif-display) / Space Grotesk
-     (UI/body) / JetBrains Mono (код). Семейства совпадают с загружаемыми из
-     Google Fonts (см. head.html). */
-  --font-family-display: 'Newsreader', Georgia, 'Times New Roman', serif;
-  --font-family-body:    'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
+  /* Типографика — Inter (UI/display/body) + JetBrains Mono (код/эйбрау).
+     Семейства совпадают с загружаемыми из Google Fonts (см. head.html). */
+  --font-family-display: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-family-body:    'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-family-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
   --font-size-xs:   0.75rem;
@@ -98,19 +93,14 @@
   --line-height-relaxed: 1.7;
 
   --letter-spacing-tight: -0.02em;
-  --letter-spacing-wide:   0.02em; /* instrument не «трекает» широко — держим сдержанно */
+  --letter-spacing-wide:   0.08em; /* эйбрау (mono, uppercase) */
 
   --rule-weight: 1px;
   --rule-weight-strong: 2px;
-  /* Мера строки ТОЛЬКО для прозы (p / li / settings-текст) — НЕ для шелла, кода,
-     таблиц, mermaid-диаграмм и MCQ (они меру не потребляют). Раскладка остаётся
-     полностраничной: .markdown-content КОНТЕЙНЕР полноширинный (диаграммы/код/таблицы
-     тянутся на всю ширину, см. base.css ~778), меру держат сами абзацы внутри.
-     72ch ≈ ~80 факт. символов: ШИРЕ прежних 68ch (уважение к full-width-предпочтению),
-     но в пределах читаемости (frontend-design skill: 45-75 симв/строку). */
+  /* Мера строки ТОЛЬКО для прозы (p / li / пояснения). */
   --measure: 72ch;
 
-  /* Spacing — база 8px */
+  /* Spacing — база 8px (сохранена из прежней системы; base.css зависит) */
   --space-0: 0;
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -125,59 +115,50 @@
   --space-11: 12rem;
   --space-12: 16rem;
 
-  /* Layout */
+  /* Layout (legacy per-page меры Instrument — потребляются старым base.css до
+     поэтапной замены страниц; новый шелл использует --content-max ниже). */
   --max-width-content: 68ch;
   --max-width-wide:    1080px;
-  /* Контейнированные «сцены» вместо прежнего full-bleed. Шапка (chrome) — ЕДИНОЙ
-     ширины на всех страницах (--max-width-page): при навигации хедер не прыгает,
-     бренд-тайтл+nav всегда в один ряд. КОНТЕНТ — уже и per-page через токены ниже,
-     центрирован под шапкой. Меры под тип контента: фокус-квиз/итоги узкие и
-     собранные, разбор и дашборд — шире. */
-  --max-width-page:    80rem;   /* шапка + дефолт-страница (1280px): бренд-тайтл+nav в один ряд */
-  --max-width-focus:    60rem;  /* фокус-квиз (960px) + error (узкая карточка внутри) */
-  --max-width-reading:  56rem;  /* итоги сессии — режим чтения (896px) */
-  --max-width-result:   72rem;  /* разбор + рейка «похожие вопросы» (1152px) */
-  --max-width-settings: 64rem;  /* формы настройки сессии (1024px) */
-  --max-width-data:     none;   /* аналитика — дашборд во всю меру страницы (75rem) */
-  /* Колонка MCQ-опций — ЕДИНСТВЕННОЕ исключение из full-width: у коротких вариантов
-     при ширине экрана справа зиял пустой хвост. Прижата к комфортной ширине и
-     left-aligned (левый край совпадает с заголовком/гуттером). Запрос пользователя. */
-  --max-width-options: 60rem;
-  /* Единый горизонтальный жёлоб страницы: им дышат .ed-page, .ed-masthead-inner,
-     .ed-masthead-progress и .ed-noscript — менять ТОЛЬКО здесь, иначе шапка и
-     контент разъедутся по краям. На широких экранах (>=1200, см. WIDE LAYOUT)
-     растёт до clamp 4vw: full-width контент не липнет к кромке стекла. */
+  --max-width-page:    80rem;
+  --max-width-focus:    60rem;
+  --max-width-reading:  56rem;
+  --max-width-result:   72rem;
+  --max-width-settings: 64rem;
+  --max-width-data:     none;
+  --max-width-options:  60rem;
   --page-gutter: var(--space-5);
 
-  /* Радиусы Instrument: мягкие скругления (кольца/границы — основной приём). */
+  /* ---- Структурные shell-токены (редизайн, из архива) ---- */
+  --sidebar-width:     232px;
+  --content-max:       1560px;
+  --header-height:     64px;
+  --mobile-nav-height: 64px;
+
+  /* Радиусы (архив: sm6 / md10 / lg14 / xl20). */
   --border-radius-sm:   6px;
   --border-radius-md:  10px;
-  --border-radius-lg:  16px;
+  --border-radius-lg:  14px;
+  --border-radius-xl:  20px;
   --border-radius-full: 999px;
 
-  /* Instrument предпочитает кольца/границы; тень — скупо. */
-  --shadow-sm: 0 1px 2px oklch(0.24 0.02 264 / 0.06), 0 2px 8px oklch(0.24 0.02 264 / 0.05);
-  --shadow-md: 0 4px 14px oklch(0.24 0.02 264 / 0.10);
-  --shadow-lg: 0 4px 14px oklch(0.24 0.02 264 / 0.10), 0 12px 32px oklch(0.24 0.02 264 / 0.08);
-  /* Solid double-ring (2px bg-gap + 4px signal): непрозрачный, ≥3:1 (WCAG
-     1.4.11/2.4.11). Заменил alpha-ring — тот давал ~1.4:1 на box-shadow-only
-     контролах (.settings-tab/.seg-btn). R1.48. */
+  /* Тени — скупо (терминальная эстетика опирается на границы/кольца). */
+  --shadow-sm: 0 1px 2px rgba(4, 10, 14, 0.06), 0 2px 8px rgba(4, 10, 14, 0.05);
+  --shadow-md: 0 4px 14px rgba(4, 10, 14, 0.10);
+  --shadow-lg: 0 4px 14px rgba(4, 10, 14, 0.10), 0 12px 32px rgba(4, 10, 14, 0.08);
   --shadow-focus: 0 0 0 2px var(--color-bg-primary), 0 0 0 4px var(--color-border-focus);
 
   /* Motion */
   --duration-instant: 50ms;
-  --duration-fast:    150ms;
-  --duration-normal:  250ms;
-  --duration-slow:    400ms;
-  --duration-slower:  600ms;
-  --easing-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast:    120ms;
+  --duration-normal:  180ms;
+  --duration-slow:    240ms;
+  --duration-slower:  400ms;
+  --easing-default: cubic-bezier(0.2, 0.8, 0.2, 1);
   --easing-in:      cubic-bezier(0.4, 0, 1, 1);
   --easing-out:     cubic-bezier(0, 0, 0.2, 1);
   --easing-bounce:  cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* Лестница z-слоёв — система стекинга. Потребляются --z-dropdown, --z-modal
-     (.kbd-help-overlay), --z-toast; --z-base/--z-sticky/--z-overlay держим
-     намеренно как полную шкалу — НЕ удалять как «мёртвые» (round-01 C5). */
+  /* Лестница z-слоёв. */
   --z-base: 0;
   --z-sticky: 10;
   --z-dropdown: 20;
@@ -187,52 +168,52 @@
 }
 
 /* ===========================================================================
-   Instrument dark — прохладная тёмная база (hue ~264), teal-signal осветлён.
-   Явный тумблер: [data-theme="dark"] (head.html ставит pre-paint из
-   localStorage/prefers-color-scheme). Ниже — зеркало для no-JS OS-dark.
-   Наследует структуру (--space-*, --measure, --max-width-*, motion, z) из :root.
+   Dark — ТОЧНАЯ палитра архива (design-tokens.css). Явный тумблер
+   [data-theme="dark"] (head.html ставит pre-paint). Ниже — зеркало для no-JS
+   OS-dark. Наследует структуру (spacing/radius/shell/motion/z) из :root.
    ========================================================================== */
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --color-bg-primary:   oklch(0.190 0.012 264);
-  --color-bg-secondary: oklch(0.224 0.014 264);
-  --color-bg-tertiary:  oklch(0.262 0.016 264); /* приподнятая — светлее фона */
-  --color-bg-inverse:   oklch(0.940 0.008 258);
+  --color-bg-primary:   #071016; /* canvas */
+  --color-bg-secondary: #0b151c; /* surface */
+  --color-bg-tertiary:  #101c24; /* surface-raised */
+  --color-surface-soft: #13222b; /* surface-soft */
+  --color-bg-inverse:   #eef5f5;
 
-  --color-text-primary:   oklch(0.940 0.008 258); /* off-white ~13:1 */
-  --color-text-secondary: oklch(0.780 0.010 258); /* ~7.4:1 */
-  --color-text-tertiary:  oklch(0.710 0.010 258); /* ~5.7:1 */
-  --color-text-inverse:   oklch(0.190 0.012 264);
-  --color-text-link:      oklch(0.760 0.110 205); /* signal-ink ~7:1 */
+  --color-text-primary:   #eef5f5; /* ~16:1 */
+  --color-text-secondary: #a8b6bb; /* ~9:1 */
+  --color-text-tertiary:  #7f9199; /* ~6:1 */
+  --color-text-inverse:   #071016;
+  --color-text-link:      #7ce6df;
 
-  --color-border-primary:   oklch(0.360 0.015 264);
-  --color-border-secondary: oklch(0.310 0.014 264);
-  --color-border-focus:     oklch(0.720 0.115 205);
-  --color-focus-ring:       oklch(0.820 0.140 205); /* #4: сильнее рамки выбора, ≥3:1 на тёмном */
+  --color-border-primary:   #2a3b45;
+  --color-border-secondary: #1b2a33;
+  --color-border-focus:     #58d4d0;
+  --color-focus-ring:       #7ce6df;
 
-  --color-accent-primary:        oklch(0.800 0.115 205); /* signal-strong — заливка (AA с dark -on) */
-  --color-accent-strong:         oklch(0.760 0.110 205); /* signal-ink — текст ~7:1 */
-  --color-accent-primary-hover:  oklch(0.760 0.110 205);
-  --color-accent-primary-active: oklch(0.720 0.115 205);
-  --color-accent-on:             oklch(0.170 0.020 258);
-  --color-accent-secondary:      oklch(0.820 0.120 75); /* spark */
-  --color-accent-wash:           oklch(0.285 0.038 205);
+  --color-accent-primary:        #58d4d0; /* teal-fill (dark ink AA) */
+  --color-accent-strong:         #7ce6df; /* teal-as-text */
+  --color-accent-primary-hover:  #7ce6df;
+  --color-accent-primary-active: #42c3bf;
+  --color-accent-on:             #062126;
+  --color-accent-secondary:      #ffc552;
+  --color-accent-wash:           #16333a;
 
-  --color-status-success:      oklch(0.760 0.120 150);
-  --color-status-success-on:   oklch(0.170 0.020 150);
-  --color-status-success-wash: oklch(0.300 0.050 150);
-  --color-status-warning:      oklch(0.820 0.120 75);
-  --color-status-error:        oklch(0.720 0.175 27);
-  --color-status-error-on:     oklch(0.170 0.020 27);
-  --color-status-error-wash:   oklch(0.300 0.070 27);
-  --color-status-info:         oklch(0.760 0.110 205);
+  --color-status-success:      #4fd58a;
+  --color-status-success-on:   #06231a;
+  --color-status-success-wash: #103b2a;
+  --color-status-warning:      #ffc552;
+  --color-status-error:        #ff765f;
+  --color-status-error-on:     #2a0d09;
+  --color-status-error-wash:   #3a1b1c;
+  --color-status-info:         #64b8ff;
 
-  --color-surface-overlay: oklch(0 0 0 / 0.55);
+  --color-surface-overlay: rgba(0, 0, 0, 0.55);
 
-  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.30), 0 2px 10px oklch(0 0 0 / 0.28);
-  --shadow-md: 0 4px 14px oklch(0 0 0 / 0.35);
-  --shadow-lg: 0 6px 20px oklch(0 0 0 / 0.40);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30), 0 2px 10px rgba(0, 0, 0, 0.28);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 6px 20px rgba(0, 0, 0, 0.40);
   --shadow-focus: 0 0 0 2px var(--color-bg-primary), 0 0 0 4px var(--color-border-focus);
 }
 
@@ -242,44 +223,45 @@
   :root:not([data-theme="light"]) {
     color-scheme: dark;
 
-    --color-bg-primary:   oklch(0.190 0.012 264);
-    --color-bg-secondary: oklch(0.224 0.014 264);
-    --color-bg-tertiary:  oklch(0.262 0.016 264);
-    --color-bg-inverse:   oklch(0.940 0.008 258);
+    --color-bg-primary:   #071016;
+    --color-bg-secondary: #0b151c;
+    --color-bg-tertiary:  #101c24;
+    --color-surface-soft: #13222b;
+    --color-bg-inverse:   #eef5f5;
 
-    --color-text-primary:   oklch(0.940 0.008 258);
-    --color-text-secondary: oklch(0.780 0.010 258);
-    --color-text-tertiary:  oklch(0.710 0.010 258);
-    --color-text-inverse:   oklch(0.190 0.012 264);
-    --color-text-link:      oklch(0.760 0.110 205);
+    --color-text-primary:   #eef5f5;
+    --color-text-secondary: #a8b6bb;
+    --color-text-tertiary:  #7f9199;
+    --color-text-inverse:   #071016;
+    --color-text-link:      #7ce6df;
 
-    --color-border-primary:   oklch(0.360 0.015 264);
-    --color-border-secondary: oklch(0.310 0.014 264);
-    --color-border-focus:     oklch(0.720 0.115 205);
-    --color-focus-ring:       oklch(0.820 0.140 205); /* #4: сильнее рамки выбора, ≥3:1 на тёмном */
+    --color-border-primary:   #2a3b45;
+    --color-border-secondary: #1b2a33;
+    --color-border-focus:     #58d4d0;
+    --color-focus-ring:       #7ce6df;
 
-    --color-accent-primary:        oklch(0.800 0.115 205);
-    --color-accent-strong:         oklch(0.760 0.110 205);
-    --color-accent-primary-hover:  oklch(0.760 0.110 205);
-    --color-accent-primary-active: oklch(0.720 0.115 205);
-    --color-accent-on:             oklch(0.170 0.020 258);
-    --color-accent-secondary:      oklch(0.820 0.120 75);
-    --color-accent-wash:           oklch(0.285 0.038 205);
+    --color-accent-primary:        #58d4d0;
+    --color-accent-strong:         #7ce6df;
+    --color-accent-primary-hover:  #7ce6df;
+    --color-accent-primary-active: #42c3bf;
+    --color-accent-on:             #062126;
+    --color-accent-secondary:      #ffc552;
+    --color-accent-wash:           #16333a;
 
-    --color-status-success:      oklch(0.760 0.120 150);
-    --color-status-success-on:   oklch(0.170 0.020 150);
-    --color-status-success-wash: oklch(0.300 0.050 150);
-    --color-status-warning:      oklch(0.820 0.120 75);
-    --color-status-error:        oklch(0.720 0.175 27);
-    --color-status-error-on:     oklch(0.170 0.020 27);
-    --color-status-error-wash:   oklch(0.300 0.070 27);
-    --color-status-info:         oklch(0.760 0.110 205);
+    --color-status-success:      #4fd58a;
+    --color-status-success-on:   #06231a;
+    --color-status-success-wash: #103b2a;
+    --color-status-warning:      #ffc552;
+    --color-status-error:        #ff765f;
+    --color-status-error-on:     #2a0d09;
+    --color-status-error-wash:   #3a1b1c;
+    --color-status-info:         #64b8ff;
 
-    --color-surface-overlay: oklch(0 0 0 / 0.55);
+    --color-surface-overlay: rgba(0, 0, 0, 0.55);
 
-    --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.30), 0 2px 10px oklch(0 0 0 / 0.28);
-    --shadow-md: 0 4px 14px oklch(0 0 0 / 0.35);
-    --shadow-lg: 0 6px 20px oklch(0 0 0 / 0.40);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.30), 0 2px 10px rgba(0, 0, 0, 0.28);
+    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 6px 20px rgba(0, 0, 0, 0.40);
     --shadow-focus: 0 0 0 2px var(--color-bg-primary), 0 0 0 4px var(--color-border-focus);
   }
 }
@@ -295,37 +277,26 @@
 }
 
 /* ===========================================================================
-   Ширина чтения (data-reading-width, ставит head.html). Ортогональна дизайну:
-   переопределяет ТОЛЬКО меру прозы --measure. Селектор html[data-reading-width]
-   (0,1,1) > :root (0,1,0), поэтому override работает поверх базы.
-   - standard (атрибута нет): мера остаётся 72ch (комфортная длина строки);
-   - wide: 100ch — заметно шире (видно больше текста на больших экранах), но всё
-     ещё ограничено (не «бесконечная» строка на 2560).
+   Ширина чтения (data-reading-width) — legacy-ось Instrument, удаляется на
+   Этапе 10; пока оставлена рабочей. Переопределяет только меру прозы.
    ========================================================================== */
 html[data-reading-width="wide"] {
   --measure: 100ch;
 }
 
 /* ===========================================================================
-   Плотность интерфейса (data-density, ставит head.html). Ортогональна дизайну:
-   переопределяет шкалу отступов --space-*. Селектор html[data-density="compact"]
-   (0,1,1) > :root (0,1,0) → override компактит базу.
-   - spacious (атрибута нет): полная «воздушная» шкала (см. :root).
-   - compact: ~0.7–0.75× на средних/крупных ступенях (где живёт вертикальный
-     воздух), мягче на мелких; шкала остаётся строго монотонной. Мелкие атомарные
-     зазоры (--space-0..2) и --page-gutter НЕ трогаем (типографика/safe-area не
-     должны схлопываться). line-height не трогаем — за длину строки отвечает
-     reading-width, плотность = только spacing.
+   Плотность интерфейса (data-density) — legacy-ось Instrument, удаляется на
+   Этапе 10; пока оставлена рабочей. Компактит шкалу --space-*.
    ========================================================================== */
 html[data-density="compact"] {
-  --space-3: 0.625rem;  /* 12 → 10px */
-  --space-4: 0.875rem;  /* 16 → 14px */
-  --space-5: 1.125rem;  /* 24 → 18px */
-  --space-6: 1.5rem;    /* 32 → 24px */
-  --space-7: 2.25rem;   /* 48 → 36px */
-  --space-8: 3rem;      /* 64 → 48px */
-  --space-9: 4.25rem;   /* 96 → 68px */
-  --space-10: 5.5rem;   /* 128 → 88px */
-  --space-11: 8rem;     /* 192 → 128px */
-  --space-12: 11rem;    /* 256 → 176px */
+  --space-3: 0.625rem;
+  --space-4: 0.875rem;
+  --space-5: 1.125rem;
+  --space-6: 1.5rem;
+  --space-7: 2.25rem;
+  --space-8: 3rem;
+  --space-9: 4.25rem;
+  --space-10: 5.5rem;
+  --space-11: 8rem;
+  --space-12: 11rem;
 }

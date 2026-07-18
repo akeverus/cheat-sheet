@@ -1,0 +1,336 @@
+/* =============================================================================
+   shell.css — КАРКАС РЕДИЗАЙНА (ui-redesign-handoff).
+   --------------------------------------------------------------------------
+   AppShell: постоянный левый sidebar (232px) + topbar (desktop) и mobile-header
+   + bottom-nav (mobile), плюс базовые компоненты (кнопки, бейджи, эйбрау,
+   icon-button, типо-утилиты). Грузится ПОСЛЕ base.css: все селекторы скоуплены
+   под html[data-design] — та же конвенция, что в base.css, поэтому при равной
+   специфичности выигрывает порядок (shell перекрывает element-level правила
+   base.css вроде `html[data-design] a`). Потребляет ТОЛЬКО var(--token) из
+   tokens.css. Компоненты страниц (вопрос/аналитика/итоги/настройки) приедут со
+   своими этапами; здесь — общий хром.
+   ========================================================================== */
+
+/* ---- Холст + типографика документа ------------------------------------- */
+html[data-design] body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 78% -18%, rgba(88, 212, 208, 0.06), transparent 34%),
+    var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: var(--font-family-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+html[data-design] .icon {
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  flex: 0 0 auto;
+  vertical-align: middle;
+}
+
+/* Skip-link: виден только при фокусе клавиатурой. */
+html[data-design] .skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: var(--z-toast);
+}
+html[data-design] .skip-link:focus {
+  left: 12px;
+  top: 12px;
+  padding: 10px 14px;
+  background: var(--color-accent-primary);
+  color: var(--color-accent-on);
+  border-radius: var(--border-radius-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+/* ---- App grid ---------------------------------------------------------- */
+html[data-design] .app {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+}
+html[data-design] .shell-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Sidebar ----------------------------------------------------------- */
+html[data-design] .sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  border-right: 1px solid var(--color-border-secondary);
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-secondary);
+}
+html[data-design] .sidebar .brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 6px 8px 22px;
+  font-weight: 750;
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+html[data-design] .avatar {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  background: var(--color-surface-soft);
+  font-size: 18px;
+}
+html[data-design] .nav {
+  display: grid;
+  gap: 5px;
+}
+html[data-design] .nav a,
+html[data-design] .nav .nav-link,
+html[data-design] .side-action {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 8px;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--easing-default),
+              color var(--duration-fast) var(--easing-default);
+}
+html[data-design] .nav a:hover,
+html[data-design] .side-action:hover {
+  color: var(--color-text-primary);
+  background: var(--color-surface-soft);
+}
+html[data-design] .nav a.active {
+  color: var(--color-accent-on);
+  background: var(--color-accent-primary);
+  font-weight: var(--font-weight-bold);
+}
+html[data-design] .nav .is-disabled {
+  color: var(--color-text-tertiary);
+  opacity: 0.55;
+  cursor: default;
+}
+html[data-design] .sidebar-spacer { flex: 1; }
+html[data-design] .sidebar-footer { display: grid; gap: 4px; }
+
+/* ---- Topbar + mobile-header ------------------------------------------- */
+html[data-design] .topbar {
+  height: var(--header-height);
+  border-bottom: 1px solid var(--color-border-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  background: var(--color-bg-secondary);
+}
+html[data-design] .crumb {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 24px;
+  color: var(--color-text-secondary);
+}
+html[data-design] .eyebrow {
+  font-family: var(--font-family-mono);
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+html[data-design] .progress-mini {
+  height: 5px;
+  width: 270px;
+  max-width: 40vw;
+  background: var(--color-surface-soft);
+  border-radius: var(--border-radius-full);
+  overflow: hidden;
+}
+html[data-design] .progress-mini > span {
+  display: block;
+  height: 100%;
+  background: var(--color-accent-primary);
+}
+html[data-design] .top-actions { display: flex; gap: 8px; }
+html[data-design] .icon-button {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border-secondary);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--easing-default),
+              border-color var(--duration-fast) var(--easing-default);
+}
+html[data-design] .icon-button:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-border-primary);
+}
+html[data-design] .mobile-header { display: none; }
+
+/* ---- Content column ---------------------------------------------------- */
+html[data-design] .content {
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 28px;
+}
+
+/* ---- Базовые компоненты ------------------------------------------------ */
+html[data-design] .button {
+  min-height: 44px;
+  border: 1px solid var(--color-border-primary);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+  border-radius: 8px;
+  padding: 0 17px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font: inherit;
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--duration-fast) var(--easing-default),
+              background var(--duration-fast) var(--easing-default),
+              border-color var(--duration-fast) var(--easing-default);
+}
+html[data-design] .button:hover { transform: translateY(-1px); border-color: var(--color-border-primary); }
+html[data-design] .button.primary {
+  background: var(--color-accent-primary);
+  border-color: var(--color-accent-primary);
+  color: var(--color-accent-on);
+}
+html[data-design] .button.primary:hover { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); }
+html[data-design] .button.ghost { background: transparent; }
+html[data-design] .button.danger { color: var(--color-status-error); }
+html[data-design] .button:disabled,
+html[data-design] .button[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+html[data-design] .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 9px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--border-radius-full);
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-mono);
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+}
+html[data-design] .badge.accent {
+  color: var(--color-accent-strong);
+  border-color: var(--color-accent-primary);
+  background: var(--color-accent-wash);
+}
+
+/* Типо-утилиты (общие для новых страниц). */
+html[data-design] .page-title { font-size: 32px; line-height: 1.15; margin: 0 0 8px; letter-spacing: var(--letter-spacing-tight); }
+html[data-design] .muted { color: var(--color-text-secondary); }
+html[data-design] .tiny { font-size: 12px; }
+html[data-design] .mono { font-family: var(--font-family-mono); }
+
+/* ---- Кнопка «наверх»: позиционирование берём из base.css, здесь только
+        размер новой пиксельной иконки внутри. -------------------------- */
+html[data-design] .back-to-top .icon { width: 1.25rem; height: 1.25rem; }
+
+/* ---- Bottom-nav (mobile) — на десктопе скрыт ------------------------- */
+html[data-design] .mobile-nav { display: none; }
+
+/* ---- Клавиатурный фокус для новых интерактивных элементов ------------ */
+html[data-design] .nav a:focus-visible,
+html[data-design] .side-action:focus-visible,
+html[data-design] .icon-button:focus-visible,
+html[data-design] .button:focus-visible,
+html[data-design] .mobile-nav a:focus-visible,
+html[data-design] .brand:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+/* ===========================================================================
+   Mobile (<=900px): sidebar/topbar скрыты, наверху mobile-header, внизу
+   bottom-nav (safe-area). Контент — узкий паддинг.
+   ========================================================================== */
+@media (max-width: 900px) {
+  html[data-design] body { padding-bottom: var(--mobile-nav-height); }
+  html[data-design] .app { display: block; }
+  html[data-design] .sidebar,
+  html[data-design] .topbar { display: none; }
+  html[data-design] .mobile-header {
+    height: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--color-border-secondary);
+    position: sticky;
+    top: 0;
+    z-index: var(--z-dropdown);
+    background: var(--color-bg-secondary);
+  }
+  html[data-design] .mobile-header .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0;
+    font-weight: 750;
+    color: var(--color-text-primary);
+    text-decoration: none;
+  }
+  html[data-design] .content { padding: 14px; }
+  html[data-design] .mobile-nav {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    height: var(--mobile-nav-height);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: var(--z-overlay);
+    background: var(--color-bg-secondary);
+    border-top: 1px solid var(--color-border-secondary);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  html[data-design] .mobile-nav a {
+    color: var(--color-text-tertiary);
+    text-decoration: none;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 3px;
+    font-size: 9px;
+  }
+  html[data-design] .mobile-nav a.active { color: var(--color-accent-strong); }
+  html[data-design] .mobile-nav .icon { width: 17px; height: 17px; }
+  html[data-design] .page-title { font-size: 28px; }
+}

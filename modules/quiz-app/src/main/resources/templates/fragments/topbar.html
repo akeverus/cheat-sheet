@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Topbar (редизайн): верхняя полоса колонки контента на десктопе (прогресс
+     сессии слева + icon-действия справа) и mobile-header на мобильном (бренд +
+     тоггл темы). Прогресс показывается только когда идёт сессия/повторение;
+     на аналитике/настройках слева пусто. -->
+<th:block th:fragment="topbar">
+    <noscript>
+        <div class="inline-alert ed-noscript" role="alert">
+            <strong>JavaScript отключён.</strong> Без него часть интерактивных элементов
+            (раскрытие подсказок, hotkey-навигация, графики на Аналитике) работать не будут.
+            Базовый flow (вопрос → ответ → результат) останется доступен через формы.
+        </div>
+    </noscript>
+    <header class="topbar">
+        <div class="crumb" th:if="${(interviewSession != null or (reviewMode != null and reviewMode)) and progressPercent != null}">
+            <span class="eyebrow">Прогресс в сессии</span>
+            <div class="progress-mini" role="progressbar"
+                 th:attr="aria-valuenow=${#numbers.formatDecimal(progressPercent, 1, 0)},aria-valuemin=0,aria-valuemax=100">
+                <span th:style="'width:' + ${#numbers.formatDecimal(progressPercent, 1, 1)} + '%'"></span>
+            </div>
+            <b class="mono tiny" th:if="${interviewSession != null}">
+                <span th:text="${interviewSession.getIndex() + 1}">1</span>&nbsp;/&nbsp;<span th:text="${interviewSession.getTotal()}">10</span>
+            </b>
+        </div>
+        <div class="crumb" th:unless="${(interviewSession != null or (reviewMode != null and reviewMode)) and progressPercent != null}"></div>
+        <div class="top-actions">
+            <a class="icon-button" th:href="@{/stats(important=true)}" aria-label="Закладки" title="Закладки">
+                <svg class="icon" aria-hidden="true"><use href="#bookmark"></use></svg>
+            </a>
+            <a class="icon-button" th:href="@{/settings}" aria-label="Настройки" title="Настройки">
+                <svg class="icon" aria-hidden="true"><use href="#settings"></use></svg>
+            </a>
+        </div>
+    </header>
+    <header class="mobile-header">
+        <a class="brand" th:href="@{/}">
+            <span class="avatar" aria-hidden="true">🧑‍💻</span>
+            <span>Cheat&nbsp;Sheet</span>
+        </a>
+        <div class="top-actions">
+            <button type="button" class="icon-button hidden" data-theme-toggle
+                    aria-pressed="false" aria-label="Переключить тему" title="Светлая / тёмная тема">
+                <svg class="icon" aria-hidden="true"><use href="#theme"></use></svg>
+            </button>
+        </div>
+    </header>
+</th:block>
+</body>
+</html>

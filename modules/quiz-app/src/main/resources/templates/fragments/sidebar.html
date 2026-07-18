@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Sidebar (редизайн ui-redesign-handoff): постоянная левая колонка 232px на
+     десктопе (на мобильном скрыта — см. shell.css, там работает mobile-nav).
+     8 пунктов из макета; разделы без страниц (Вопросы, Достижения) показаны
+     неактивными (aria-disabled) — новые разделы не строим (вне 6 экранов).
+     active ∈ {focus, analytics, review, settings}. -->
+<aside th:fragment="sidebar(active)" class="sidebar">
+    <a class="brand" th:href="@{/}">
+        <span class="avatar" aria-hidden="true">🧑‍💻</span>
+        <span>Cheat&nbsp;Sheet</span>
+    </a>
+    <nav class="nav" aria-label="Основная навигация">
+        <a th:href="@{/}" th:classappend="${active == 'focus'} ? 'active'"
+           th:attr="aria-current=${active == 'focus'} ? 'page' : null">
+            <svg class="icon" aria-hidden="true"><use href="#training"></use></svg><span>Тренировка</span>
+        </a>
+        <span class="nav-link is-disabled" aria-disabled="true" title="Раздел в разработке">
+            <svg class="icon" aria-hidden="true"><use href="#questions"></use></svg><span>Вопросы</span>
+        </span>
+        <a th:href="@{/stats} + '#topics'">
+            <svg class="icon" aria-hidden="true"><use href="#topics"></use></svg><span>Темы</span>
+        </a>
+        <a th:href="@{/stats}" th:classappend="${active == 'analytics'} ? 'active'"
+           th:attr="aria-current=${active == 'analytics'} ? 'page' : null">
+            <svg class="icon" aria-hidden="true"><use href="#analytics"></use></svg><span>Аналитика</span>
+        </a>
+        <a th:href="@{/review}" th:classappend="${active == 'review'} ? 'active'"
+           th:attr="aria-current=${active == 'review'} ? 'page' : null">
+            <svg class="icon" aria-hidden="true"><use href="#repeat"></use></svg><span>Повторение</span>
+        </a>
+        <a th:href="@{/stats(important=true)}">
+            <svg class="icon" aria-hidden="true"><use href="#bookmark"></use></svg><span>Закладки</span>
+        </a>
+        <span class="nav-link is-disabled" aria-disabled="true" title="Раздел в разработке">
+            <svg class="icon" aria-hidden="true"><use href="#trophy"></use></svg><span>Достижения</span>
+        </span>
+        <a th:href="@{/settings}" th:classappend="${active == 'settings'} ? 'active'"
+           th:attr="aria-current=${active == 'settings'} ? 'page' : null">
+            <svg class="icon" aria-hidden="true"><use href="#settings"></use></svg><span>Настройки</span>
+        </a>
+    </nav>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-footer">
+        <!-- PE: тоггл темы раскрывается только при работающем JS (shell-scripts
+             снимает hidden). Без JS мёртвого контрола нет. -->
+        <button type="button" class="side-action hidden" data-theme-toggle
+                aria-pressed="false" aria-label="Переключить тему">
+            <svg class="icon" aria-hidden="true"><use href="#theme"></use></svg>
+            <span data-theme-label>Тема</span>
+        </button>
+    </div>
+</aside>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Скрипты shell (редизайн): переносят из прежнего masthead жизненно нужное —
+     (1) тоггл темы (все [data-theme-toggle] в sidebar-футере и mobile-header),
+     (2) кнопку «наверх». Оба — прогрессивное улучшение: без JS контролы скрыты.
+     Включается один раз на страницу (после mobile-nav). -->
+<th:block th:fragment="shell-scripts">
+    <script>
+      (function () {
+        // ---- Тоггл темы: раскрываем hidden-контролы и синхроним подпись/aria ----
+        var toggles = document.querySelectorAll('[data-theme-toggle]');
+        if (toggles.length && window.__theme) {
+          function sync() {
+            var resolved = window.__theme.resolved();
+            var toDark = resolved === 'light';
+            var label = toDark ? 'Тёмная тема' : 'Светлая тема';
+            toggles.forEach(function (btn) {
+              btn.classList.remove('hidden');
+              btn.setAttribute('aria-pressed', resolved === 'light' ? 'true' : 'false');
+              btn.setAttribute('aria-label', 'Включить ' + (toDark ? 'тёмную' : 'светлую') + ' тему');
+              var lbl = btn.querySelector('[data-theme-label]');
+              if (lbl) lbl.textContent = label;
+            });
+          }
+          sync();
+          toggles.forEach(function (btn) {
+            btn.addEventListener('click', function () { window.__theme.toggle(); });
+          });
+          document.addEventListener('themechange', sync);
+        }
+
+        // ---- Кнопка «наверх» ----
+        if (document.body) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'back-to-top';
+          btn.setAttribute('aria-label', 'Наверх');
+          btn.setAttribute('title', 'Наверх');
+          btn.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#arrow"></use></svg>';
+          document.body.appendChild(btn);
+          function motionReduced() {
+            var dm = document.documentElement.getAttribute('data-motion');
+            if (dm === 'off') return true;
+            if (dm === 'on') return false;
+            return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          }
+          var shown = false, ticking = false;
+          function threshold() { return Math.max(400, window.innerHeight * 1.5); }
+          function update() {
+            ticking = false;
+            var should = window.pageYOffset > threshold();
+            if (should === shown) return;
+            shown = should;
+            btn.classList.toggle('is-visible', should);
+          }
+          window.addEventListener('scroll', function () {
+            if (ticking) return;
+            ticking = true;
+            window.requestAnimationFrame(update);
+          }, { passive: true });
+          btn.addEventListener('click', function () {
+            window.scrollTo({ top: 0, behavior: motionReduced() ? 'auto' : 'smooth' });
+            var anchor = document.getElementById('main-content') || document.querySelector('h1, h2');
+            if (anchor && typeof anchor.focus === 'function') {
+              anchor.setAttribute('tabindex', '-1');
+              anchor.focus({ preventScroll: true });
+            }
+          });
+          update();
+        }
+      })();
+    </script>
+</th:block>
+</body>
+</html>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Цвет браузерного chrome для мобильных (Android Chrome, iOS Safari). -->
-    <meta name="theme-color" content="#262624">
+    <meta name="theme-color" content="#071016">
     <meta name="color-scheme" content="dark light">
     <!-- Тема + размер шрифта: применяем на <html> ДО первого кадра (без вспышки
          белым и без скачка размера). Здесь же центральный API персонализации
@@ -26,7 +26,7 @@
         // Мульти-дизайн-движок (11 вариантов, переключатель, window.__design,
         // ось в /settings) удалён в FE-CMP-1 — токены только instrument (tokens.css
         // light+dark). theme-color instrument×тема:
-        var THEME_COLORS = { light: '#FAFAFB', dark: '#1B1B21' };
+        var THEME_COLORS = { light: '#eef2f2', dark: '#071016' };
         root.setAttribute('data-design', 'instrument');
         // CLS-резерв (R0.64): метка «JS работает» + сохранённая вкладка /settings
         // ДО первого кадра — base.css рисует вкладочное состояние сразу, и
@@ -257,8 +257,8 @@
          экрана (render-blocking <link> ждёт таймаута недоступного хоста). display=swap
          и так допускает FOUT — поведение консистентно. CSP script-src содержит
          'unsafe-inline' → инлайновый onload разрешён. <noscript> — фоллбэк для no-JS. -->
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400..600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Space+Grotesk:wght@400..700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-    <noscript><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400..600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Space+Grotesk:wght@400..700&display=swap" rel="stylesheet"></noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&family=JetBrains+Mono:wght@400..600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&family=JetBrains+Mono:wght@400..600&display=swap" rel="stylesheet"></noscript>
     <!-- Двухслойная архитектура (единственный дизайн — Instrument, DEC-002):
          tokens.css — ВСЕ токены single-source (DEADCODE-1): Instrument-значения
            живут прямо в :root (light) + :root[data-theme="dark"] (dark); нет
@@ -271,8 +271,12 @@
          того же URL строкой выше ничего не ускорял (no-op для same-origin CSS,
          которая и так грузится с наивысшим приоритетом) и был удалён — не
          возвращать. См. docs/design/DESIGN.md + docs/design/systems/*.md. -->
-    <link rel="stylesheet" th:href="@{/css/tokens.css(v=67)}">
+    <link rel="stylesheet" th:href="@{/css/tokens.css(v=68)}">
     <link rel="stylesheet" th:href="@{/css/base.css(v=113)}">
+    <!-- shell.css — каркас редизайна (ui-redesign-handoff): sidebar/topbar/
+         mobile-nav + базовые компоненты. Грузится ПОСЛЕ base.css (перекрывает
+         element-level правила при равной специфичности html[data-design]). -->
+    <link rel="stylesheet" th:href="@{/css/shell.css(v=1)}">
     <!-- SRI (integrity) + crossorigin: защита от компрометации CDN — браузер
          выполнит ресурс, только если его sha512 совпадает. Хэши пересчитаны из
          самих файлов (openssl dgst -sha512). ВСЕ CDN-ресурсы пиннятся на ТОЧНУЮ

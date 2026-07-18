@@ -82,9 +82,12 @@ class TemplateFragmentContractTest {
         assertThat(stats).contains("stats-search-action");
 
         assertThat(focusTraining).contains("fragments/training-actions :: training-actions");
-        // Editorial IA: единая навигация в шапке на всех страницах (showPrimaryNav=true),
-        // дубль-навигация focus-surface-tabs удалена.
-        assertThat(focusTraining).contains("showPrimaryNav=true");
+        // Редизайн (ui-redesign-handoff): masthead заменён каркасом shell —
+        // sidebar (левая нав) + topbar + bottom-nav. Все страницы подключают их.
+        assertThat(focusTraining).contains("fragments/sidebar :: sidebar");
+        assertThat(focusTraining).contains("fragments/topbar :: topbar");
+        assertThat(focusTraining).contains("fragments/mobile-nav :: mobile-nav");
+        assertThat(focusTraining).contains("href=\"#main-content\"");
         assertThat(focusTraining).contains("fragments/result-zone-head :: result-zone-head");
         assertThat(focusTraining).contains("fragments/post-answer-controls :: post-answer-controls");
         assertThat(focusTraining).doesNotContain("focus-surface-tabs");
@@ -121,7 +124,7 @@ class TemplateFragmentContractTest {
         assertThat(focusTraining).doesNotContain("tabindex=\"0\"");
 
         assertThat(result).contains("fragments/result-zone-head :: result-zone-head");
-        assertThat(result).contains("showPrimaryNav=true");
+        assertThat(result).contains("fragments/sidebar :: sidebar");
         assertThat(result).contains("class=\"question-main flow-stack-md\"");
         assertThat(result).contains("class=\"result-actions\"");
         assertThat(result).contains("th:if=\"${interviewSession != null and interviewSession.finished}\"");
@@ -145,8 +148,8 @@ class TemplateFragmentContractTest {
         assertThat(relatedAnchor.find()).as("related-question-item <a> присутствует").isTrue();
         assertThat(relatedAnchor.group())
                 .as("link-роль сохранена — нет ARIA role= на <a>").doesNotContain("role=");
-        assertThat(stats).contains("showPrimaryNav=true");
-        assertThat(settings).contains("showPrimaryNav=true");
+        assertThat(stats).contains("fragments/sidebar :: sidebar");
+        assertThat(settings).contains("fragments/sidebar :: sidebar");
         assertThat(result).contains("fragments/inline-alert :: inline-alert");
     }
 
@@ -304,11 +307,17 @@ class TemplateFragmentContractTest {
         assertThat(css).contains("--color-bg-primary");
         assertThat(css).contains("--color-accent-primary");
         assertThat(css)
-            .as(":root несёт Instrument cool-paper (light), не warm ivory")
-            .contains("--color-bg-primary:   oklch(0.985 0.003 262)");
+            .as(":root несёт синтезированную светлую палитру редизайна (cool near-white)")
+            .contains("--color-bg-primary:   #eef2f2");
         assertThat(css)
-            .as(":root[data-theme=\"dark\"] несёт Instrument dark")
+            .as(":root[data-theme=\"dark\"] несёт тёмный canvas редизайна (#071016)")
             .contains(":root[data-theme=\"dark\"]");
+        assertThat(css)
+            .as("dark canvas — точный из ui-redesign-handoff")
+            .contains("--color-bg-primary:   #071016");
+        assertThat(css)
+            .as("teal-accent редизайна присутствует")
+            .contains("#58d4d0");
 
         // SINGLE-SOURCE: НИ ОДНОГО html[data-design="X"] цвето-override-блока —
         // включая instrument (промоут DEADCODE-1 перенёс его в :root).
@@ -396,19 +405,28 @@ class TemplateFragmentContractTest {
     }
 
     @Test
-    void headerFragmentExposesSingleNavLandmarkAndActivePageContract() throws IOException {
-        String header = readTemplate("templates/fragments/header.html");
+    void shellFragmentsExposeNavLandmarksAndActiveContract() throws IOException {
+        // Редизайн (ui-redesign-handoff): masthead → каркас shell. Контракт:
+        // sidebar — nav-landmark с меткой + aria-current на активном пункте;
+        // topbar — прогресс-progressbar сессии + тоггл темы (aria-pressed);
+        // mobile-nav — nav-landmark нижней навигации.
+        String sidebar = readTemplate("templates/fragments/sidebar.html");
+        String topbar = readTemplate("templates/fragments/topbar.html");
+        String mobileNav = readTemplate("templates/fragments/mobile-nav.html");
 
-        assertThat(header).contains("th:fragment=\"header(pageTitle, statsPage, activePage, showPrimaryNav)\"");
-        assertThat(header).contains("class=\"ed-masthead\"");
-        // Единственный h1 страницы — заголовок в шапке.
-        assertThat(header).contains("<h1 class=\"ed-masthead-title\" th:text=\"${pageTitle}\">");
-        // Единая nav-landmark с меткой (дубль focus-surface-tabs удалён).
-        assertThat(header).contains("<nav class=\"ed-nav\" aria-label=\"Основная навигация\">");
-        // aria-current=page на активной ссылке (не только is-active классом).
-        assertThat(header).contains("aria-current=${activePage == 'focus'} ? 'page' : null");
-        // Тумблер темы несёт aria-pressed.
-        assertThat(header).contains("aria-pressed=\"false\"");
+        assertThat(sidebar).contains("th:fragment=\"sidebar(active)\"");
+        assertThat(sidebar).contains("<nav class=\"nav\" aria-label=\"Основная навигация\">");
+        assertThat(sidebar).contains("aria-current=${active == 'focus'} ? 'page' : null");
+        // Тоггл темы — aria-pressed; PE: раскрывается только при JS (класс hidden).
+        assertThat(sidebar).contains("data-theme-toggle");
+        assertThat(sidebar).contains("aria-pressed=\"false\"");
+
+        assertThat(topbar).contains("th:fragment=\"topbar\"");
+        assertThat(topbar).contains("role=\"progressbar\"");
+
+        assertThat(mobileNav).contains("th:fragment=\"mobile-nav(active)\"");
+        assertThat(mobileNav).contains("class=\"mobile-nav\" aria-label=\"Мобильная навигация\"");
+        assertThat(mobileNav).contains("aria-current=${active == 'focus'} ? 'page' : null");
     }
 
     @Test
@@ -439,7 +457,8 @@ class TemplateFragmentContractTest {
         // изменились и тест молча пустой — false-negative на orphan).
         assertThat(fragmentNames)
             .as("объявленные th:fragment под templates/")
-            .contains("head", "header", "sprite", "inline-alert", "post-answer-controls",
+            .contains("head", "sprite", "sidebar", "topbar", "mobile-nav", "shell-scripts",
+                      "inline-alert", "post-answer-controls",
                       "result-zone-head", "stats-grid", "stats-grid-content",
                       "today-hero", "today-chip", "training-actions", "mermaid-init");
 
