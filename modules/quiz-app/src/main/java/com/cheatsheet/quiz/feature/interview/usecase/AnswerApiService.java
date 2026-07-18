@@ -8,7 +8,9 @@ import com.cheatsheet.quiz.feature.interview.dto.response.answer.SessionInfoDto;
 import com.cheatsheet.quiz.domain.AnswerOption;
 import com.cheatsheet.quiz.domain.AnswerResult;
 import com.cheatsheet.quiz.domain.RelatedQuestion;
+import com.cheatsheet.quiz.domain.UserExperience;
 import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
+import com.cheatsheet.quiz.feature.interview.service.progress.ExperienceService;
 import com.cheatsheet.quiz.infrastructure.render.AnswerHtmlSplitter;
 import jakarta.servlet.http.HttpSession;
 import lombok.AccessLevel;
@@ -30,6 +32,7 @@ import java.util.Optional;
 public class AnswerApiService {
     InterviewSessionSupport sessionSupport;
     InterviewFacade facade;
+    ExperienceService experienceService;
 
     public AnswerResponse buildAnswerResponse(AnswerCommand command, HttpSession session) {
         InterviewSessionSupport.AnswerSubmission submission = toSubmission(command);
@@ -41,8 +44,16 @@ public class AnswerApiService {
         String answerHtml = facade.renderMarkdown(ctx.result().question().answerMarkdown());
         AnswerHtmlSplitter.Split split = AnswerHtmlSplitter.split(answerHtml);
 
+        // XP уже начислен листенером ExperienceService на AnswerEvent во время
+        // processAnswer; здесь считаем ту же величину чистой формулой для показа
+        // «+N XP», а snapshot() даёт актуальные суммарные XP/уровень (без двойного
+        // учёта). Следующий интервал повторения — из обновлённого ReviewState (UI-013).
+        boolean correct = ctx.result().correctAnswer();
+        long xpAwarded = experienceService.xpFor(correct, ctx.result().question().difficulty());
+        UserExperience experience = experienceService.snapshot();
+
         return new AnswerResponse(
-                ctx.result().correctAnswer(),
+                correct,
                 ctx.result().correct().id(),
                 ctx.result().selected().id(),
                 correctOptionLetter(ctx.result()),
@@ -53,7 +64,12 @@ public class AnswerApiService {
                 ctx.result().answerDisplayMode().name(),
                 ctx.result().updatedState().repetitions(),
                 relatedQuestions,
-                sessionInfo
+                sessionInfo,
+                ctx.result().updatedState().nextReviewAt(),
+                ctx.result().updatedState().intervalDays(),
+                xpAwarded,
+                experience.xp(),
+                experience.level()
         );
     }
 
@@ -87,7 +103,8 @@ public class AnswerApiService {
                 command.shuffle(),
                 command.ordered(),
                 command.confidence(),
-                command.clientAttemptId()
+                command.clientAttemptId(),
+                command.openedContentBlockIds()
         );
     }
 
@@ -130,7 +147,15 @@ public class AnswerApiService {
             Boolean shuffle,
             Boolean ordered,
             Integer confidence,
-            String clientAttemptId
+            String clientAttemptId,
+            String openedContentBlockIds
     ) {
+        /** Обратная совместимость: без {@code openedContentBlockIds}. */
+        public AnswerCommand(long questionId, long optionId, String topic, String group,
+                             Boolean important, Boolean onlyWrong, Boolean shuffle, Boolean ordered,
+                             Integer confidence, String clientAttemptId) {
+            this(questionId, optionId, topic, group, important, onlyWrong, shuffle, ordered,
+                    confidence, clientAttemptId, null);
+        }
     }
 }

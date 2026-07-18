@@ -180,9 +180,9 @@ class InterviewControllerApiTest {
         mockMvc.perform(get("/api/next")
                         .param("excludeQuestionId", "not-a-number"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Некорректные параметры запроса"))
-                .andExpect(jsonPath("$.details").isArray());
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.detail").value("Некорректные параметры запроса"))
+                .andExpect(jsonPath("$.errors").isArray());
     }
 
     @Test
@@ -205,9 +205,9 @@ class InterviewControllerApiTest {
                         .param("questionId", String.valueOf(q.id()))
                         .param("grade", "0"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Некорректные параметры запроса"))
-                .andExpect(jsonPath("$.details").isArray());
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.detail").value("Некорректные параметры запроса"))
+                .andExpect(jsonPath("$.errors").isArray());
     }
 
     @Test
@@ -218,9 +218,9 @@ class InterviewControllerApiTest {
                         .param("questionId", String.valueOf(q.id()))
                         .param("grade", "abc"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Некорректные параметры запроса"))
-                .andExpect(jsonPath("$.details").isArray());
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.detail").value("Некорректные параметры запроса"))
+                .andExpect(jsonPath("$.errors").isArray());
     }
 
     @Test
@@ -229,9 +229,9 @@ class InterviewControllerApiTest {
                         .param("questionId", "abc")
                         .param("grade", "5"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Некорректные параметры запроса"))
-                .andExpect(jsonPath("$.details").isArray());
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.detail").value("Некорректные параметры запроса"))
+                .andExpect(jsonPath("$.errors").isArray());
     }
 
     @Test
@@ -240,9 +240,9 @@ class InterviewControllerApiTest {
                         .param("questionId", "0")
                         .param("grade", "5"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Некорректные параметры запроса"))
-                .andExpect(jsonPath("$.details").isArray());
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.detail").value("Некорректные параметры запроса"))
+                .andExpect(jsonPath("$.errors").isArray());
     }
 
     @Test
@@ -251,7 +251,7 @@ class InterviewControllerApiTest {
                         .param("questionId", "999999")
                         .param("optionId", "1"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.type").value("QUESTION_NOT_FOUND"));
+                .andExpect(jsonPath("$.errorCode").value("QUESTION_NOT_FOUND"));
     }
 
     @Test
@@ -262,9 +262,9 @@ class InterviewControllerApiTest {
                         .param("questionId", String.valueOf(q.id()))
                         .param("optionId", "0"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("Некорректные параметры запроса"))
-                .andExpect(jsonPath("$.details").isArray());
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.detail").value("Некорректные параметры запроса"))
+                .andExpect(jsonPath("$.errors").isArray());
     }
 
     @Test

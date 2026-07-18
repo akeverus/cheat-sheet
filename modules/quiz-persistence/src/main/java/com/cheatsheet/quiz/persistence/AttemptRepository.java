@@ -30,7 +30,7 @@ public class AttemptRepository {
     private static final String COLUMNS =
             "id, question_id, question_revision_id, selected_option_id, outcome, " +
                     "is_first_attempt, response_time_ms, memory_grade, session_token, " +
-                    "idempotency_key, created_at";
+                    "idempotency_key, opened_content_block_ids, created_at";
 
     /**
      * Сохраняет попытку и возвращает присвоенный идентификатор.
@@ -40,8 +40,8 @@ public class AttemptRepository {
                 "INSERT INTO attempt " +
                         "(question_id, question_revision_id, selected_option_id, outcome, " +
                         "is_first_attempt, response_time_ms, memory_grade, session_token, " +
-                        "idempotency_key, created_at) " +
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id",
+                        "idempotency_key, opened_content_block_ids, created_at) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id",
                 Long.class,
                 attempt.questionId(),
                 attempt.questionRevisionId(),
@@ -52,6 +52,7 @@ public class AttemptRepository {
                 attempt.memoryGrade(),
                 attempt.sessionToken(),
                 attempt.idempotencyKey(),
+                attempt.openedContentBlockIds(),
                 attempt.createdAt());
         return id == null ? 0L : id;
     }
@@ -157,6 +158,51 @@ public class AttemptRepository {
                 new AttemptAggregate(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1.0);
     }
 
+    /**
+     * Последние ошибочные попытки ({@code WRONG}/{@code UNKNOWN}) с текстом вопроса,
+     * темой и вариантами — для drill-down в аналитике (UI-012, хендофф-3). Верный
+     * вариант берётся как первый {@code is_correct = 1} по вопросу (LATERAL).
+     *
+     * @param limit максимум строк
+     */
+    public List<MistakeAttempt> findRecentMistakes(int limit) {
+        return jdbcTemplate.query(
+                "SELECT a.question_id, a.created_at, a.response_time_ms, a.outcome, " +
+                        "q.question_text, q.topic, " +
+                        "sel.option_text AS selected_text, cor.option_text AS correct_text " +
+                        "FROM attempt a " +
+                        "JOIN questions q ON q.id = a.question_id " +
+                        "LEFT JOIN answer_options sel ON sel.id = a.selected_option_id " +
+                        "LEFT JOIN LATERAL (" +
+                        "  SELECT option_text FROM answer_options " +
+                        "  WHERE question_id = a.question_id AND is_correct = 1 LIMIT 1" +
+                        ") cor ON true " +
+                        "WHERE a.outcome IN ('WRONG', 'UNKNOWN') " +
+                        "ORDER BY a.created_at DESC, a.id DESC LIMIT ?",
+                (rs, rowNum) -> new MistakeAttempt(
+                        rs.getLong("question_id"),
+                        rs.getString("question_text"),
+                        rs.getString("topic"),
+                        rs.getString("selected_text"),
+                        rs.getString("correct_text"),
+                        rs.getString("outcome"),
+                        getNullableInt(rs, "response_time_ms"),
+                        rs.getLong("created_at")),
+                limit);
+    }
+
+    /** Строка drill-down ошибок: вопрос, тема, выбранный/верный вариант, время. */
+    public record MistakeAttempt(
+            long questionId,
+            String questionText,
+            String topic,
+            String selectedOptionText,
+            String correctOptionText,
+            String outcome,
+            Integer responseTimeMs,
+            long createdAt
+    ) {}
+
     private static Attempt mapRow(ResultSet rs) throws SQLException {
         return new Attempt(
                 rs.getLong("id"),
@@ -169,6 +215,7 @@ public class AttemptRepository {
                 getNullableInt(rs, "memory_grade"),
                 rs.getString("session_token"),
                 rs.getString("idempotency_key"),
+                rs.getString("opened_content_block_ids"),
                 rs.getLong("created_at"));
     }
 

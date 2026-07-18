@@ -57,6 +57,25 @@ public class AttemptRecorder {
                        Integer responseTimeMs,
                        String sessionToken,
                        String clientAttemptId) {
+        record(questionId, outcome, memoryGrade, selectedOptionId, responseTimeMs,
+                sessionToken, clientAttemptId, null);
+    }
+
+    /**
+     * То же, что {@link #record(long, AttemptOutcome, Integer, Long, Integer, String, String)},
+     * но дополнительно фиксирует {@code openedContentBlockIds} — id блоков контента
+     * (код/схема/доп-материал), раскрытых пользователем перед ответом (телеметрия
+     * REST-пути, хендофф-3). Comma-separated список; {@code null} допустим.
+     */
+    @Transactional
+    public void record(long questionId,
+                       AttemptOutcome outcome,
+                       Integer memoryGrade,
+                       Long selectedOptionId,
+                       Integer responseTimeMs,
+                       String sessionToken,
+                       String clientAttemptId,
+                       String openedContentBlockIds) {
         // BE-003: если попытка с этим клиентским ключом уже записана (retry после
         // сетевой ошибки, двойной submit в обход клиентского guard) — не дублируем.
         // Ключ null/blank (skip, no-JS-фоллбэк) дедупликацию отключает: journal тогда
@@ -80,6 +99,7 @@ public class AttemptRecorder {
                 .memoryGrade(memoryGrade)
                 .sessionToken(sessionToken)
                 .idempotencyKey(normalizeKey(clientAttemptId))
+                .openedContentBlockIds(normalizeKey(openedContentBlockIds))
                 .createdAt(clock.instant().getEpochSecond())
                 .build();
         attemptRepository.insert(attempt);

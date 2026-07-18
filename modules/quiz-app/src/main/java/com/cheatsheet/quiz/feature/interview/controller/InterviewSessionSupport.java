@@ -104,7 +104,8 @@ public class InterviewSessionSupport {
                 submission.optionId(),
                 responseTimeMs,
                 session,
-                submission.clientAttemptId());
+                submission.clientAttemptId(),
+                submission.openedContentBlockIds());
 
         return new AnswerContext(result, filter, interviewSession);
     }
@@ -157,7 +158,7 @@ public class InterviewSessionSupport {
         // Лог попытки «не знаю» (UNKNOWN, грейд 0, без выбранного варианта).
         // Skip не несёт клиентского ключа (нет выбранного варианта, retry по нему не
         // ожидается) → clientAttemptId=null, дедупликация по ключу не применяется.
-        recordAttempt(questionId, AttemptOutcome.UNKNOWN, 0, null, responseTimeMs, session, null);
+        recordAttempt(questionId, AttemptOutcome.UNKNOWN, 0, null, responseTimeMs, session, null, null);
         return interviewSession;
     }
 
@@ -167,7 +168,7 @@ public class InterviewSessionSupport {
      */
     private void recordAttempt(long questionId, AttemptOutcome outcome, Integer memoryGrade,
                                Long selectedOptionId, Integer responseTimeMs, HttpSession session,
-                               String clientAttemptId) {
+                               String clientAttemptId, String openedContentBlockIds) {
         try {
             attemptRecorder.record(
                     questionId,
@@ -176,7 +177,8 @@ public class InterviewSessionSupport {
                     selectedOptionId,
                     responseTimeMs,
                     session.getId(),
-                    clientAttemptId);
+                    clientAttemptId,
+                    openedContentBlockIds);
         } catch (Exception e) {
             log.warn("Не удалось записать attempt для вопроса id={}: {}", questionId, e.getMessage());
         }
@@ -240,7 +242,15 @@ public class InterviewSessionSupport {
             Boolean shuffle,
             Boolean ordered,
             Integer confidence,
-            String clientAttemptId
+            String clientAttemptId,
+            String openedContentBlockIds
     ) {
+        /** Обратная совместимость: без {@code openedContentBlockIds} (no-JS/старые вызовы). */
+        public AnswerSubmission(long questionId, long optionId, String topic, String group,
+                                Boolean important, Boolean onlyWrong, Boolean shuffle, Boolean ordered,
+                                Integer confidence, String clientAttemptId) {
+            this(questionId, optionId, topic, group, important, onlyWrong, shuffle, ordered,
+                    confidence, clientAttemptId, null);
+        }
     }
 }

@@ -93,7 +93,7 @@ class InterviewSessionSupportTest {
         verify(httpSessionStateService).setInterviewSession(session, interviewSession);
         // Фаза 2: реальный сабмит пишет попытку (WRONG, грейд=уверенность, выбранный вариант).
         // BE-003: clientAttemptId прокидывается до AttemptRecorder без изменений.
-        verify(attemptRecorder).record(eq(10L), eq(AttemptOutcome.WRONG), eq(4), eq(3L), isNull(), any(), eq("ca-1"));
+        verify(attemptRecorder).record(eq(10L), eq(AttemptOutcome.WRONG), eq(4), eq(3L), isNull(), any(), eq("ca-1"), isNull());
     }
 
     @Test
@@ -119,7 +119,7 @@ class InterviewSessionSupportTest {
 
         support.processAnswer(submission, session);
 
-        verify(attemptRecorder).record(eq(10L), eq(AttemptOutcome.CORRECT), isNull(), eq(3L), eq(4200), any(), isNull());
+        verify(attemptRecorder).record(eq(10L), eq(AttemptOutcome.CORRECT), isNull(), eq(3L), eq(4200), any(), isNull(), isNull());
     }
 
     @Test
@@ -237,7 +237,7 @@ class InterviewSessionSupportTest {
         verify(interviewService, never()).addExamPenaltyQuestions(any());
         verify(httpSessionStateService, never()).setInterviewSession(any(), any());
         // FLOW-02: устаревший дубль НЕ пишет вторую попытку.
-        verify(attemptRecorder, never()).record(anyLong(), any(), any(), any(), any(), any(), any());
+        verify(attemptRecorder, never()).record(anyLong(), any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
@@ -259,7 +259,7 @@ class InterviewSessionSupportTest {
         verify(httpSessionStateService).setInterviewSession(session, interviewSession);
         // «Не знаю» логируется как UNKNOWN, грейд 0, без выбранного варианта.
         // Skip не несёт клиентского ключа → clientAttemptId=null.
-        verify(attemptRecorder).record(eq(10L), eq(AttemptOutcome.UNKNOWN), eq(0), isNull(), isNull(), any(), isNull());
+        verify(attemptRecorder).record(eq(10L), eq(AttemptOutcome.UNKNOWN), eq(0), isNull(), isNull(), any(), isNull(), isNull());
     }
 
     @Test
@@ -293,7 +293,7 @@ class InterviewSessionSupportTest {
         verify(interviewSession, never()).registerUnknown(anyString());
         verify(interviewService, never()).addExamPenaltyQuestions(any());
         verify(httpSessionStateService, never()).setInterviewSession(any(), any());
-        verify(attemptRecorder, never()).record(anyLong(), any(), any(), any(), any(), any(), any());
+        verify(attemptRecorder, never()).record(anyLong(), any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test

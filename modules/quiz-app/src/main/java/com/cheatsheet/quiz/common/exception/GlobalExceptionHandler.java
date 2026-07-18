@@ -1,7 +1,7 @@
 package com.cheatsheet.quiz.common.exception;
 
 import com.cheatsheet.quiz.common.constants.ApiErrorTypes;
-import com.cheatsheet.quiz.common.model.ApiError;
+import com.cheatsheet.quiz.common.web.CorrelationIdFilter;
 import com.cheatsheet.quiz.domain.exception.OptionNotFoundException;
 import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
@@ -165,11 +166,38 @@ public class GlobalExceptionHandler {
         return redirectToHome();
     }
 
-    private ResponseEntity<ApiError> apiErrorResponse(HttpStatus status, String type, String message, List<String> details) {
-        ApiError error = new ApiError(status.value(), type, message, details);
+    /**
+     * Ответ об ошибке API в формате RFC-7807 {@link ProblemDetail} (хендофф-3,
+     * Этап 9). Помимо стандартных полей несёт машиночитаемый {@code errorCode}
+     * (из {@link ApiErrorTypes}), {@code correlationId} (для сопоставления с логами)
+     * и {@code errors} (список деталей валидации).
+     */
+    private ResponseEntity<ProblemDetail> apiErrorResponse(HttpStatus status, String type, String message, List<String> details) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                status, message == null ? status.getReasonPhrase() : message);
+        problem.setTitle(status.getReasonPhrase());
+        problem.setProperty("errorCode", type);
+        String correlationId = currentCorrelationId();
+        if (correlationId != null) {
+            problem.setProperty("correlationId", correlationId);
+        }
+        if (details != null && !details.isEmpty()) {
+            problem.setProperty("errors", details);
+        }
         return ResponseEntity.status(status)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(error);
+                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
+                .body(problem);
+    }
+
+    /** Correlation-id текущего запроса (проставлен {@link CorrelationIdFilter}), либо {@code null}. */
+    private String currentCorrelationId() {
+        org.springframework.web.context.request.RequestAttributes attrs =
+                org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+        if (attrs instanceof org.springframework.web.context.request.ServletRequestAttributes servletAttrs) {
+            Object cid = servletAttrs.getRequest().getAttribute(CorrelationIdFilter.REQUEST_ATTRIBUTE);
+            return cid == null ? null : cid.toString();
+        }
+        return null;
     }
 
     private String toConstraintMessage(ConstraintViolation<?> violation) {

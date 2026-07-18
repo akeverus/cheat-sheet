@@ -19,6 +19,8 @@ import lombok.Builder;
  * @param memoryGrade        SM-2 grade 0–5 (может быть {@code null})
  * @param sessionToken       токен сессии тренажёра (может быть {@code null})
  * @param idempotencyKey     ключ идемпотентности для дедупа двойного POST (может быть {@code null})
+ * @param openedContentBlockIds id блоков контента (код/схема/доп), раскрытых перед ответом;
+ *                              comma-separated список (может быть {@code null})
  * @param createdAt          момент попытки, epoch-секунды
  */
 @Builder(toBuilder = true)
@@ -33,5 +35,6 @@ public record Attempt(
         Integer memoryGrade,
         String sessionToken,
         String idempotencyKey,
+        String openedContentBlockIds,
         long createdAt
 ) {}

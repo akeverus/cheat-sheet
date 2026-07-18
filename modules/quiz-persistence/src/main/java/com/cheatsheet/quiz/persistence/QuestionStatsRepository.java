@@ -39,6 +39,22 @@ public class QuestionStatsRepository {
     }
 
     /**
+     * Распределение вопросов банка по статической сложности ({@code EASY/MEDIUM/HARD})
+     * для доната «Сложность вопросов» в аналитике (хендофф-3, Этап 6). Возвращает по
+     * одной строке на встреченный уровень; нормализацию/сортировку делает слой выше.
+     */
+    public List<DifficultyBucket> findDifficultyDistribution() {
+        return jdbcTemplate.query(
+                "SELECT difficulty, COUNT(*) AS cnt FROM questions GROUP BY difficulty",
+                (rs, rowNum) -> new DifficultyBucket(
+                        rs.getString("difficulty"),
+                        rs.getLong("cnt")));
+    }
+
+    /** Число вопросов заданной сложности. {@code difficulty} — как хранится в БД. */
+    public record DifficultyBucket(String difficulty, long count) {}
+
+    /**
      * Подсчитывает количество вопросов с применением фильтра.
      *
      * @param topic     тема (null — все)

@@ -44,4 +44,10 @@ public class SubmitAnswerRequest {
      * (no-JS-фоллбэк формы) — тогда дедупликация по ключу не применяется.
      */
     private String clientAttemptId;
+
+    /**
+     * Comma-separated id блоков контента (код/схема/доп), которые пользователь
+     * раскрывал перед ответом (телеметрия, хендофф-3). Может отсутствовать.
+     */
+    private String openedContentBlockIds;
 }

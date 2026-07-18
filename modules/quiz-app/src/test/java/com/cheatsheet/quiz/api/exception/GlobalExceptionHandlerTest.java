@@ -61,8 +61,8 @@ class GlobalExceptionHandlerTest {
         mockMvc.perform(post("/api/test/validation").param("questionId", "0"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.type").value(ApiErrorTypes.VALIDATION_ERROR))
-                .andExpect(jsonPath("$.message").isNotEmpty());
+                .andExpect(jsonPath("$.errorCode").value(ApiErrorTypes.VALIDATION_ERROR))
+                .andExpect(jsonPath("$.detail").isNotEmpty());
     }
 
     @Test
@@ -77,8 +77,8 @@ class GlobalExceptionHandlerTest {
         mockMvc.perform(post("/api/test/type-mismatch").param("questionId", "not-a-number"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.type").value(ApiErrorTypes.VALIDATION_ERROR))
-                .andExpect(jsonPath("$.details[0]").value("questionId: unsupported format"));
+                .andExpect(jsonPath("$.errorCode").value(ApiErrorTypes.VALIDATION_ERROR))
+                .andExpect(jsonPath("$.errors[0]").value("questionId: unsupported format"));
     }
 
     @Test
@@ -86,8 +86,8 @@ class GlobalExceptionHandlerTest {
         mockMvc.perform(post("/api/test/conflict"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409))
-                .andExpect(jsonPath("$.type").value(ApiErrorTypes.CONFLICT))
-                .andExpect(jsonPath("$.message").value("Конфликт данных, обновите страницу и повторите действие"));
+                .andExpect(jsonPath("$.errorCode").value(ApiErrorTypes.CONFLICT))
+                .andExpect(jsonPath("$.detail").value("Конфликт данных, обновите страницу и повторите действие"));
     }
 
     @Test
@@ -104,7 +104,7 @@ class GlobalExceptionHandlerTest {
         mockMvc.perform(get("/api/test/missing-resource"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.type").value(ApiErrorTypes.RESOURCE_NOT_FOUND));
+                .andExpect(jsonPath("$.errorCode").value(ApiErrorTypes.RESOURCE_NOT_FOUND));
     }
 
     @Test
@@ -119,7 +119,7 @@ class GlobalExceptionHandlerTest {
         mockMvc.perform(get("/api/test/q-not-found"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.type").value(ApiErrorTypes.QUESTION_NOT_FOUND));
+                .andExpect(jsonPath("$.errorCode").value(ApiErrorTypes.QUESTION_NOT_FOUND));
     }
 
     @Test
@@ -133,21 +133,21 @@ class GlobalExceptionHandlerTest {
     void apiOptionNotFoundReturns404WithType() throws Exception {
         mockMvc.perform(get("/api/test/o-not-found"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.type").value(ApiErrorTypes.OPTION_NOT_FOUND));
+                .andExpect(jsonPath("$.errorCode").value(ApiErrorTypes.OPTION_NOT_FOUND));
     }
 
     @Test
     void apiConstraintViolationReturnsValidationError() throws Exception {
         mockMvc.perform(get("/api/test/constraint-violation"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.type").value(ApiErrorTypes.VALIDATION_ERROR));
+                .andExpect(jsonPath("$.errorCode").value(ApiErrorTypes.VALIDATION_ERROR));
     }
 
     @Test
     void apiIllegalStateReturnsConflict() throws Exception {
         mockMvc.perform(post("/api/test/illegal-state"))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.type").value(ApiErrorTypes.QUESTION_STATE_INVALID));
+                .andExpect(jsonPath("$.errorCode").value(ApiErrorTypes.QUESTION_STATE_INVALID));
     }
 
     @Test

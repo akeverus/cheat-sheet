@@ -39,13 +39,19 @@ class AnswerApiServiceTest {
     @Mock
     private InterviewFacade facade;
     @Mock
+    private com.cheatsheet.quiz.feature.interview.service.progress.ExperienceService experienceService;
+    @Mock
     private HttpSession session;
 
     private AnswerApiService service;
 
     @BeforeEach
     void setUp() {
-        service = new AnswerApiService(sessionSupport, facade);
+        service = new AnswerApiService(sessionSupport, facade, experienceService);
+        // XP-снимок для обогащённого ответа (хендофф-3); xpFor по умолчанию возвращает 0.
+        org.mockito.Mockito.lenient()
+                .when(experienceService.snapshot())
+                .thenReturn(com.cheatsheet.quiz.domain.UserExperience.EMPTY);
     }
 
     @Test

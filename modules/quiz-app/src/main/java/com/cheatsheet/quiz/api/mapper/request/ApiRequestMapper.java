@@ -23,7 +23,8 @@ public class ApiRequestMapper {
                 request.getShuffle(),
                 request.getOrdered(),
                 request.getConfidence(),
-                request.getClientAttemptId()
+                request.getClientAttemptId(),
+                request.getOpenedContentBlockIds()
         );
     }
 

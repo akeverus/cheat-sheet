@@ -1,5 +1,7 @@
 package com.cheatsheet.quiz.api.dto.request.interview;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -32,4 +34,12 @@ public class StartSessionRequest {
     private Boolean onlyWrong;
     private Boolean shuffle;
     private Boolean ordered;
+
+    /**
+     * Лимит времени на вопрос в секундах (хендофф-3, настройка «Таймер»). {@code null}
+     * или 0 — без таймера. Обратный отсчёт ведёт клиент; поле принимается для
+     * полноты контракта конструктора сессии.
+     */
+    @Min(0) @Max(600)
+    private Integer timerSeconds;
 }
