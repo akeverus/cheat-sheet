@@ -400,11 +400,67 @@
     });
   }
 
+  // Вкладки аналитики (Обзор | По темам | Динамика | Ошибки). Тот же ARIA-паттерн,
+  // что и /settings (roving tabindex, ←→↑↓/Home/End, aria-selected), но /stats не
+  // подключает app.js — держим свою копию здесь. PE: без JS все панели в стопке
+  // (весь контент доступен); тут ставим .js-tabs на <body> (CSS прячет неактивные)
+  // и раскрываем tablist. Вызывать ПОСЛЕ initCharts — Chart.js читает размер канваса
+  // при создании, пока панель «По темам» ещё видима (иначе 0×0). На переключении
+  // дополнительно шлём resize, чтобы responsive-графики пересчитались под показ.
+  function initStatsTabs() {
+    var tablist = document.getElementById('stats-tablist');
+    if (!tablist) return;
+    var tabs = Array.prototype.slice.call(tablist.querySelectorAll('[role="tab"]'));
+    if (!tabs.length) return;
+    var panels = tabs.map(function (t) { return document.getElementById(t.getAttribute('aria-controls')); });
+    if (panels.some(function (p) { return !p; })) return;
+
+    document.body.classList.add('js-tabs');
+    tablist.classList.remove('hidden');
+
+    var STORAGE_KEY = 'statsTab';
+    function activate(idx, focusTab) {
+      tabs.forEach(function (t, i) {
+        var on = i === idx;
+        t.setAttribute('aria-selected', on ? 'true' : 'false');
+        t.tabIndex = on ? 0 : -1;
+        panels[i].classList.toggle('is-active', on);
+      });
+      if (focusTab) tabs[idx].focus();
+      // Показанная панель могла содержать графики, отрисованные в скрытом (0×0)
+      // контейнере — responsive-Chart.js подхватит новый размер по resize-событию.
+      if (window.dispatchEvent) { try { window.dispatchEvent(new Event('resize')); } catch (e) { /* старый IE */ } }
+      try { localStorage.setItem(STORAGE_KEY, tabs[idx].id); } catch (e) { /* приватный режим */ }
+    }
+
+    tabs.forEach(function (tab, i) {
+      tab.addEventListener('click', function () { activate(i, false); });
+      tab.addEventListener('keydown', function (e) {
+        var idx = -1;
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') idx = (i + 1) % tabs.length;
+        else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') idx = (i - 1 + tabs.length) % tabs.length;
+        else if (e.key === 'Home') idx = 0;
+        else if (e.key === 'End') idx = tabs.length - 1;
+        if (idx < 0) return;
+        e.preventDefault();
+        activate(idx, true);
+      });
+    });
+
+    var initial = 0;
+    try {
+      var saved = localStorage.getItem(STORAGE_KEY);
+      for (var i = 0; i < tabs.length; i++) { if (tabs[i].id === saved) { initial = i; break; } }
+    } catch (e) { /* приватный режим */ }
+    activate(initial, false);
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     hydrateProgressBarsFromData();
     initNextActions();
     initCharts();
     initTableSort();
     initKeyboardHelp();
+    initStatsTabs();
   });
 })();

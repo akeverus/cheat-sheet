@@ -599,3 +599,77 @@ html[data-design] .summary-accuracy-num {
   html[data-design] .summary-hero-body { align-items: center; }
   html[data-design] .summary-metrics { justify-content: center; }
 }
+
+/* ==========================================================================
+   Этап 7 — аналитика (ui-redesign-handoff docs/2.4): 4 ключевые MetricCard со
+   знаменателями + вкладки Обзор/По темам/Динамика/Ошибки. Хиро (карточки) всегда
+   виден, панели переключаются (PE — см. stats.js). Детальные метрики/таблица тем
+   переиспользуют .learning-metrics/.topic-table из base.css (не дублируем).
+   ========================================================================== */
+
+/* Интро страницы аналитики. */
+html[data-design] .stats-intro { margin: 0 0 var(--space-6); }
+html[data-design] .stats-title {
+  font-family: var(--font-family-display); font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold); color: var(--color-text-primary);
+  margin: var(--space-2) 0 var(--space-2); overflow-wrap: break-word;
+}
+html[data-design] .stats-intro-lead { max-width: 62ch; margin: 0; }
+
+/* Четыре ключевые метрики. Карточка = .card (base) + вертикальный стек;
+   значение крупное mono, знаменатель — .muted.tiny под ним. Тир-цвет значения
+   только через классы accent/good/bad (не инлайн-стиль — /stats под inline-scan). */
+html[data-design] .dashboard-grid {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4); margin: 0 0 var(--space-7);
+}
+html[data-design] .dashboard-grid .metric {
+  display: flex; flex-direction: column; gap: var(--space-1); min-width: 0;
+}
+html[data-design] .dashboard-grid .metric-value {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary); line-height: 1.1;
+  font-variant-numeric: tabular-nums; margin: var(--space-1) 0 0;
+}
+html[data-design] .dashboard-grid .metric.accent .metric-value { color: var(--color-accent-strong); }
+html[data-design] .dashboard-grid .metric.good .metric-value { color: var(--color-status-success); }
+html[data-design] .dashboard-grid .metric.bad .metric-value { color: var(--color-status-error); }
+
+@media (max-width: 900px) {
+  html[data-design] .dashboard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  html[data-design] .dashboard-grid { grid-template-columns: 1fr; }
+}
+
+/* Вкладки аналитики — нижняя линейка с акцент-подчёркиванием активной (как
+   .settings-tab, но свой скоуп .stats-page). */
+html[data-design] .stats-page .section-tabs {
+  display: flex; flex-wrap: wrap; gap: var(--space-1);
+  margin: 0 0 var(--space-6);
+  border-bottom: var(--rule-weight) solid var(--color-border-primary);
+}
+html[data-design] .stats-page .section-tab {
+  appearance: none; -webkit-appearance: none;
+  min-height: 44px; padding: var(--space-3) var(--space-5);
+  font-family: var(--font-family-body); font-size: var(--font-size-md); font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary); background: transparent;
+  border: 0; border-bottom: var(--rule-weight-strong) solid transparent;
+  margin-bottom: calc(-1 * var(--rule-weight));
+  cursor: pointer; touch-action: manipulation;
+  transition: color var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
+}
+html[data-design] .stats-page .section-tab:hover { color: var(--color-text-primary); }
+html[data-design] .stats-page .section-tab[aria-selected="true"] {
+  color: var(--color-text-primary); border-bottom-color: var(--color-accent-primary);
+}
+html[data-design] .stats-page .section-tab:focus-visible {
+  outline: none; box-shadow: var(--shadow-focus); border-radius: var(--border-radius-sm);
+}
+
+/* Панели. Без JS все стопкой (display:block); под .js-tabs видна только .is-active. */
+html[data-design] .stats-page .stats-panel { margin: 0 0 var(--space-8); }
+html[data-design] .stats-page .stats-panel:last-child { margin-bottom: 0; }
+html[data-design] .stats-page.js-tabs .stats-panel { display: none; margin: 0; }
+html[data-design] .stats-page.js-tabs .stats-panel.is-active { display: block; }

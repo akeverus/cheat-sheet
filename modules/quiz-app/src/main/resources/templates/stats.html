@@ -13,401 +13,502 @@
 <main id="main-content" class="ed-page" tabindex="-1">
 <div class="app-layout">
 <div class="main-content">
-<!-- P0.4: свод аналитики — ЕДИНЫЙ источник (LearningMetricsService, лог попыток).
-     Раньше сверху стоял stats-grid из review_state (SUM(correct_count)/SUM(wrong_count)),
-     и его «Точность 50 %» противоречила «Все попытки 33,3 %» из этой же секции: два
-     разных знаменателя на одном экране. Верхнюю плитку убрали — «Метрики обучения»
-     ниже покрывают всё (карточки/попытки/точность/удержание/расписание), у каждой
-     доли свой явный знаменатель, «нет данных» показываем как «—», а не «0 %».
-     Фильтр темы/группы управляет таблицей тем и блоком «Что делать дальше»; свод
-     метрик — глобальная картина обучения (как и было в этой секции). -->
-<section class="card learning-metrics" aria-labelledby="learning-metrics-title"
-         th:if="${metrics != null}">
-    <div class="learning-metrics-head">
-        <h2 id="learning-metrics-title">Метрики обучения</h2>
-        <p>Каждая доля — со своим знаменателем: точность первой попытки честнее
-           отражает память, чем общая (все попытки, включая повторные).</p>
-    </div>
-    <div class="learning-metrics-grid">
-        <article class="metric-group">
-            <h3 class="metric-group-title">Карточки</h3>
-            <dl class="metric-list">
-                <div class="metric-row"><dt>Всего</dt>
-                    <dd th:text="${metrics.cardsTotal}">0</dd></div>
-                <div class="metric-row"><dt>Начато</dt>
-                    <dd><span th:text="${metrics.cardsSeen}">0</span>
-                        <span class="metric-denom" th:text="'из ' + ${metrics.cardsTotal}">из 0</span></dd></div>
-                <div class="metric-row"><dt>Выучено</dt>
-                    <dd><span th:text="${metrics.cardsMastered}">0</span>
-                        <span class="metric-denom" th:text="'из ' + ${metrics.cardsTotal}">из 0</span></dd></div>
-            </dl>
-        </article>
-        <article class="metric-group">
-            <h3 class="metric-group-title">Попытки</h3>
-            <dl class="metric-list">
-                <div class="metric-row"><dt>Всего</dt>
-                    <dd th:text="${metrics.attemptsTotal}">0</dd></div>
-                <div class="metric-row"><dt>Верных</dt>
-                    <dd><span th:text="${metrics.attemptsCorrect}">0</span>
-                        <span class="metric-denom" th:text="'из ' + ${metrics.attemptsTotal}">из 0</span></dd></div>
-                <div class="metric-row"><dt>Ошибочных</dt>
-                    <dd><span th:text="${metrics.attemptsIncorrect}">0</span>
-                        <span class="metric-denom" th:text="'из ' + ${metrics.attemptsTotal}">из 0</span></dd></div>
-            </dl>
-        </article>
-        <article class="metric-group">
-            <h3 class="metric-group-title">Точность</h3>
-            <dl class="metric-list">
-                <div class="metric-row"><dt>Первая попытка</dt>
-                    <dd th:text="${metrics.hasFirstAttemptAccuracy()} ? ${#numbers.formatDecimal(metrics.firstAttemptAccuracy, 1, 1)} + ' %' : '—'">—</dd></div>
-                <div class="metric-row"><dt>Все попытки</dt>
-                    <dd th:text="${metrics.hasOverallAccuracy()} ? ${#numbers.formatDecimal(metrics.overallAccuracy, 1, 1)} + ' %' : '—'">—</dd></div>
-            </dl>
-            <p class="metric-note">Доля верных: первая попытка — только первые ответы,
-               все попытки — включая повторные (знаменатель: верных + ошибочных).</p>
-        </article>
-        <article class="metric-group">
-            <h3 class="metric-group-title">Удержание</h3>
-            <dl class="metric-list">
-                <div class="metric-row"><dt>За 7 дней</dt>
-                    <dd th:text="${metrics.hasRetention7d()} ? ${#numbers.formatDecimal(metrics.retention7d, 1, 1)} + ' %' : '—'">—</dd></div>
-                <div class="metric-row"><dt>За 30 дней</dt>
-                    <dd th:text="${metrics.hasRetention30d()} ? ${#numbers.formatDecimal(metrics.retention30d, 1, 1)} + ' %' : '—'">—</dd></div>
-            </dl>
-            <p class="metric-note">Доля верных среди повторений в окне.</p>
-        </article>
-        <article class="metric-group">
-            <h3 class="metric-group-title">Расписание</h3>
-            <dl class="metric-list">
-                <div class="metric-row"><dt>Готовы сейчас</dt>
-                    <dd th:text="${metrics.dueNow}">0</dd></div>
-                <div class="metric-row"><dt>Просрочено</dt>
-                    <dd th:text="${metrics.overdue}">0</dd></div>
-                <div class="metric-row"><dt>Ср. время ответа</dt>
-                    <dd th:text="${metrics.hasAverageResponse()} ? ${#numbers.formatDecimal(metrics.averageResponseMs / 1000.0, 1, 1)} + ' с' : '—'">—</dd></div>
-            </dl>
-        </article>
-    </div>
-</section>
 
-<!-- Следующее действие: аналитика должна сразу подсказывать учебный шаг, а не
-     только показывать числа. Блок использует уже существующие маршруты/флаги:
-     / — повторение due, onlyWrong — разбор ошибок, weakTopics — стратегия слабых тем. -->
-<section class="card stats-next-actions" aria-labelledby="stats-next-actions-title">
-    <div class="stats-next-actions-head">
-        <h2 id="stats-next-actions-title">Что делать дальше</h2>
-        <p>Выбери короткую следующую сессию по текущему состоянию банка.</p>
-    </div>
-    <div class="stats-next-actions-grid">
-        <a class="stats-next-action stats-next-action-primary"
-           th:href="@{/}"
-           th:classappend="${stats.due > 0} ? ' is-recommended'">
-            <span class="stats-next-action-label">Повторить сегодня</span>
-            <strong th:text="${stats.due}">0</strong>
-            <span class="stats-next-action-detail"
-                  th:text="${stats.due > 0 ? @plural.pick(stats.due, 'вопрос к повтору', 'вопроса к повтору', 'вопросов к повтору') : 'всё повторено'}">вопросов к повтору</span>
-        </a>
-        <a class="stats-next-action"
-           th:href="@{/(onlyWrong=true, ordered=true)}"
-           th:classappend="${stats.due == 0 and stats.wrong > 0} ? ' is-recommended'">
-            <span class="stats-next-action-label">Разобрать ошибки</span>
-            <strong th:text="${stats.wrong}">0</strong>
-            <span class="stats-next-action-detail"
-                  th:text="${stats.wrong > 0 ? @plural.pick(stats.wrong, 'ошибка в истории', 'ошибки в истории', 'ошибок в истории') : 'ошибок пока нет'}">ошибок в истории</span>
-        </a>
-        <a class="stats-next-action stats-next-action-weak"
-           th:href="@{/(weakTopics=true, ordered=true)}"
-           th:classappend="${stats.due == 0 and stats.wrong == 0 and topicStats != null and !topicStats.isEmpty()} ? ' is-recommended'">
-            <span class="stats-next-action-label">Тренировать слабые темы</span>
-            <span class="stats-next-action-topic" data-weak-topic-summary
-                  th:text="${topicStats != null and !topicStats.isEmpty()} ? 'Самая слабая тема — по данным ниже' : 'Тем пока нет'">Самая слабая тема</span>
-            <strong th:text="${topicStats != null ? topicStats.size() : 0}">0</strong>
-            <span class="stats-next-action-detail">тем в аналитике</span>
-        </a>
-    </div>
-</section>
-
-<!-- Поиск + фильтр -->
-<section class="card stats-filter-card">
-    <div class="stats-filter-row stats-filter-separated">
-        <div class="stats-filter-pane">
-            <h2 class="stats-pane-label">Фильтры</h2>
-            <form method="get" th:action="@{/stats}" class="filter-row stats-filters-form flex-1"
-                  aria-label="Фильтры статистики">
-                <input type="hidden" name="q" th:value="${searchQuery}">
-                <label>
-                    Группа:
-                    <select name="group">
-                        <option value="">Все</option>
-                        <option th:each="group : ${groups != null ? groups : T(java.util.Collections).emptyList()}"
-                                th:value="${group.id()}"
-                                th:text="${group.title() + ' - ' + group.description() + ' (' + group.topicCount() + ')'}"
-                                th:selected="${selectedGroup != null and selectedGroup == group.id()}"></option>
-                    </select>
-                </label>
-                <label>
-                    Тема:
-                    <select name="topic">
-                        <option value="">Все</option>
-                        <option th:each="topic : ${topics != null ? topics : T(java.util.Collections).emptyList()}" th:value="${topic}"
-                                th:text="${#strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(topic), '-', ' '), '_', ' '))}" th:title="${topic}"
-                                th:selected="${filter != null and filter.topic != null and filter.topic == topic}"></option>
-                    </select>
-                </label>
-                <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
-                <label><input type="checkbox" name="important" value="true" th:checked="${filter?.importantOnly}"> <svg class="ed-icon" aria-hidden="true"><use href="#i-star"></use></svg> Избранные</label>
-                <label><input type="checkbox" name="onlyWrong" value="true" th:checked="${filter?.onlyWrong}"> Ошибки</label>
-                <button type="submit" class="stats-action-btn stats-apply-action" aria-label="Применить фильтры статистики">Применить фильтры</button>
-            </form>
-        </div>
-        <div class="stats-search-pane">
-            <h2 class="stats-pane-label">Поиск</h2>
-            <form method="get" th:action="@{/stats}" class="search-form stats-search-form flex-1"
-                  role="search" aria-label="Поиск по вопросам">
-                <input type="hidden" name="topic" th:value="${filter?.topic}">
-                <input type="hidden" name="group" th:value="${selectedGroup}">
-                <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
-                <input type="hidden" name="important" th:value="${filter?.importantOnly != null ? filter.importantOnly : false}">
-                <input type="hidden" name="onlyWrong" th:value="${filter?.onlyWrong != null ? filter.onlyWrong : false}">
-                <!-- type=search → нативный крестик-очистка + семантика поиска; enterkeyhint=search —
-                     клавиша Enter экранной клавы как «Поиск»; spellcheck/autocorrect/autocapitalize off —
-                     ищут по слагам/техтерминам (spring-boot, hikaricp), не словарным словам.
-                     CSS уже целит .search-input (input[type=search] перечислен в base.css:1456/1654). -->
-                <input type="search" name="q" placeholder="Поиск по вопросам…" th:value="${searchQuery}" class="search-input" aria-label="Поиск по вопросам"
-                       enterkeyhint="search" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off">
-                <button type="submit" class="stats-action-btn stats-search-action" aria-label="Искать по вопросам">Искать</button>
-            </form>
-        </div>
-    </div>
-</section>
-
-<!-- Поиск без результатов: раньше секция просто исчезала, и было непонятно,
-     выполнился ли поиск. Показываем явное «ничего не найдено». -->
-<section class="card" th:if="${searchQuery != null and !#strings.isEmpty(searchQuery) and (searchResults == null or #lists.isEmpty(searchResults))}">
-    <h2 class="mt-0">Результаты поиска</h2>
-    <p class="muted">По запросу «<span th:text="${searchQuery}">…</span>» ничего не найдено. Измени запрос или <a th:href="@{/stats}">сбрось поиск и фильтры</a>.</p>
-</section>
-
-<!-- Результаты поиска -->
-<section class="card" th:if="${searchResults != null and !#lists.isEmpty(searchResults)}">
-    <h2 class="mt-0">Результаты поиска</h2>
-    <ul class="search-results">
-        <li th:each="item : ${searchResults}" class="search-result-item">
-            <div class="search-question"><strong th:utext="${@markdownRenderService.toInlineHtml(item.questionText)}">Вопрос</strong></div>
-            <div class="muted" th:text="${#strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(item.topic), '-', ' '), '_', ' '))}" th:title="${item.topic}">Тема</div>
-            <div class="search-answer-preview" th:text="${item.answerPreview}">Превью</div>
-            <a th:href="@{/(topic=${item.topic != null ? item.topic : ''}, group=${selectedGroup != null ? selectedGroup : ''}, ordered=${filter == null or filter.ordered != false}, important=${filter != null and filter.importantOnly == true}, onlyWrong=${filter != null and filter.onlyWrong == true})}">Перейти к теме<span aria-hidden="true"> →</span></a>
-        </li>
-    </ul>
-</section>
-
-<!-- Нет данных по темам: все секции ниже (графики/таблица/прогноз/пробелы)
-     гейтятся на непустой topicStats. При пустом (новый пользователь без ответов
-     либо фильтр без совпадений) страница раньше показывала лишь фильтр + сетку
-     нулей и пустоту — без объяснения и пути дальше. Даём явный empty-state.
-     Условие — ТОЧНАЯ инверсия гейтов секций ниже (topicStats != null and
-     !isEmpty); показываем только когда НЕ активен поиск (у поиска свой empty
-     выше, иначе два «пусто» подряд). Все под-выражения reused из этого же
-     шаблона (searchQuery/#strings.isEmpty — стр.64; filter?./selectedGroup —
-     стр.33/37/38/45). Чисто аддитивно, без CSS/JS. -->
-<section class="card stats-empty"
-         th:if="${(topicStats == null or topicStats.isEmpty()) and (searchQuery == null or #strings.isEmpty(searchQuery))}">
-    <h2 class="mt-0">Пока нет данных по темам</h2>
-    <p class="muted">Ответь на несколько вопросов — и здесь появятся прогресс по темам, точность ответов и прогноз повторений на неделю.</p>
-    <p>
-        <a class="btn next-btn" th:href="@{/}">Начать тренировку<span aria-hidden="true"> →</span></a>
-        <a class="btn secondary-btn"
-           th:if="${selectedGroup != null or filter?.topic != null or filter?.importantOnly or filter?.onlyWrong}"
-           th:href="@{/stats}">Сбросить фильтры</a>
-    </p>
-</section>
-
-<!-- Графики -->
-<div class="charts-row" th:if="${topicStats != null and !topicStats.isEmpty()}">
-    <section class="card chart-card">
-        <h2 class="mt-0">Прогресс по темам</h2>
-        <p class="chart-subtitle">Самые активные темы</p>
-        <div class="chart-wrapper">
-            <canvas id="topicProgressChart" role="img"
-                    aria-label="Гистограмма прогресса по самым активным темам: выучено и осталось. Полные данные — в таблице ниже."></canvas>
-            <p id="topicProgressChartFallback" class="chart-fallback hidden" role="status" aria-live="polite">
-                График временно недоступен. Таблица ниже содержит те же данные.
-            </p>
-        </div>
-    </section>
-    <section class="card chart-card">
-        <h2 class="mt-0">Точность по темам</h2>
-        <p class="chart-subtitle">Сначала самые слабые</p>
-        <div class="chart-wrapper">
-            <canvas id="topicAccuracyChart" role="img"
-                    aria-label="Гистограмма точности по темам, от слабых к сильным, в процентах. Полные данные — в таблице ниже."></canvas>
-            <p id="topicAccuracyChartFallback" class="chart-fallback hidden" role="status" aria-live="polite">
-                График временно недоступен. Таблица ниже содержит те же данные.
-            </p>
-        </div>
-    </section>
+<!-- Интро аналитики (docs 2.4). -->
+<div class="stats-intro">
+    <span class="eyebrow">Учебная аналитика</span>
+    <h1 class="stats-title">Ваш прогресс</h1>
+    <p class="muted stats-intro-lead">Метрики с явными знаменателями — и одно рекомендованное действие.
+       «—» значит «пока нет данных для этой доли», а не «ноль».</p>
 </div>
 
-<!-- Таблица тем -->
-<section class="card overflow-x-auto" th:if="${topicStats != null and !topicStats.isEmpty()}">
-    <h2 class="mt-0">Детализация по темам</h2>
-    <!-- C30: контейнер несёт overflow-x:auto для wide-table режима; на мобильной
-         ширине CSS переводит tbody rows в stacked-card режим по data-label. -->
-    <div class="topic-table-wrap" id="topic-table-wrap" data-collapse-rows="12"
-         tabindex="0" role="region" aria-label="Детализация по темам">
-    <table class="topic-table" id="topic-table">
-        <caption class="visually-hidden">Статистика по темам</caption>
-        <thead>
-        <tr>
-            <!-- C28: имя колонки = чистый текст th, состояние сортировки несёт
-                 aria-sort (ставит stats.js), транзиентный анонс — #table-sort-status
-                 live-region. role="columnheader" у <th> в <thead> избыточен. Раньше
-                 aria-label «Сортировать по колонке: …» подменял имя в каждой ячейке. -->
-            <th scope="col" class="sortable" data-col="0" data-sort-label="Тема">Тема</th>
-            <th scope="col" class="sortable w-60 text-center" data-col="1" data-sort-label="Всего">Всего</th>
-            <th scope="col" class="min-w-140">Прогресс</th>
-            <th scope="col" class="sortable w-80 text-center" data-col="3" data-sort-label="Точность" title="Доля верных ответов среди отвеченных (не из всех вопросов темы)">Точность</th>
-            <th scope="col" class="sortable w-80 text-center" data-col="4" data-sort-label="Зрелость" title="Среднее ease×interval — показатель глубины запоминания">Зрелость</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="item : ${topicStats}">
-            <th scope="row" class="topic-name" data-label="Тема">
-                <a th:href="@{/(topic=${item.topic}, group=${selectedGroup != null ? selectedGroup : ''}, ordered=${filter == null or filter.ordered != false})}"
-                   th:text="${#strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(item.topic), '-', ' '), '_', ' '))}"
-                   th:title="${item.topic}">topic</a>
-            </th>
-            <td th:text="${item.total}" class="text-center" data-label="Всего">0</td>
-            <td data-label="Прогресс">
-                <div class="topic-progress-bar">
-                    <div class="topic-progress-learned"
-                         th:attr="data-progress=${item.total != 0 ? (item.learned * 100.0 / item.total) : 0}"
-                         th:title="'Выучено: ' + ${item.learned}"></div>
-                    <div class="topic-progress-due"
-                         th:attr="data-progress=${item.total != 0 ? (item.due * 100.0 / item.total) : 0}"
-                         th:title="'К повтору: ' + ${item.due}"></div>
-                </div>
-                <span class="topic-progress-label"
-                      th:text="${item.learned} + '/' + ${item.total}">0/0</span>
-            </td>
-            <td class="accuracy-cell text-center"
-                data-label="Точность"
-                th:classappend="${(item.correct + item.wrong) > 0 ?
-                    ((item.correct * 100.0 / (item.correct + item.wrong)) >= 80 ? 'accuracy-high' :
-                     ((item.correct * 100.0 / (item.correct + item.wrong)) >= 50 ? 'accuracy-mid' : 'accuracy-low'))
-                    : ''}"
-                th:title="${(item.correct + item.wrong) == 0 ? 'Пока нет ответов по этой теме' : 'Верных ответов: ' + item.correct + ' · Отвечено: ' + (item.correct + item.wrong)}">
-                <span th:text="${(item.correct + item.wrong) == 0 ? '—' : #numbers.formatDecimal((item.correct * 100.0) / (item.correct + item.wrong), 1, 1) + '%'}">0%</span>
-            </td>
-            <td class="text-center" data-label="Зрелость">
-                <span th:with="m=${item.maturityScore}"
-                      th:class="'maturity-badge ' + (${m} >= 10 ? 'maturity-high' : (${m} >= 3 ? 'maturity-mid' : 'maturity-low'))"
-                      th:text="${m == 0 ? '—' : #numbers.formatDecimal(m, 1, 1)}">—</span>
-            </td>
-        </tr>
-        </tbody>
-    </table>
+<!-- Четыре ключевые метрики (docs 2.4/14: «четыре ключевые метрики вместо
+     повторяющихся карточек»). Источник — LearningMetricsService (глобально по
+     всей БД, лог попыток + review_state). У каждой доли явный знаменатель;
+     NO_DATA (нет знаменателя) показываем как «—», а не «0 %». Подробная
+     разбивка (первая попытка/удержание) — во вкладке «Динамика» ниже. -->
+<section class="dashboard-grid" th:if="${metrics != null}" aria-label="Ключевые метрики обучения">
+    <article class="card metric accent">
+        <span class="eyebrow">Точность попыток</span>
+        <div class="metric-value"
+             th:text="${metrics.hasOverallAccuracy()} ? ${#numbers.formatDecimal(metrics.overallAccuracy, 1, 1)} + '%' : '—'">—</div>
+        <span class="muted tiny"
+              th:text="${metrics.attemptsCorrect} + ' верно из ' + ${metrics.attemptsTotal}">0 верно из 0</span>
+    </article>
+    <article class="card metric good"
+             th:with="masteredPct=${metrics.cardsTotal > 0 ? (metrics.cardsMastered * 100.0 / metrics.cardsTotal) : -1}">
+        <span class="eyebrow">Освоено</span>
+        <div class="metric-value"
+             th:text="${masteredPct < 0 ? '—' : #numbers.formatDecimal(masteredPct, 1, 0) + '%'}">—</div>
+        <span class="muted tiny"
+              th:text="${metrics.cardsMastered} + ' из ' + ${metrics.cardsTotal} + ' карточек'">0 из 0 карточек</span>
+    </article>
+    <article class="card metric">
+        <span class="eyebrow">Среднее время</span>
+        <div class="metric-value"
+             th:text="${metrics.hasAverageResponse()} ? ${#numbers.formatDecimal(metrics.averageResponseMs / 1000.0, 1, 1)} + ' с' : '—'">—</div>
+        <span class="muted tiny">на один ответ</span>
+    </article>
+    <article class="card metric" th:classappend="${metrics.dueNow > 0} ? ' bad'">
+        <span class="eyebrow">К повторению</span>
+        <div class="metric-value" th:text="${metrics.dueNow}">0</div>
+        <span class="muted tiny"
+              th:text="${metrics.overdue > 0 ? metrics.overdue + ' просрочено' : 'нет просроченных'}">нет просроченных</span>
+    </article>
+</section>
+
+<!-- Вкладки аналитики (docs 2.4): Обзор | По темам | Динамика | Ошибки.
+     PE: tablist скрыт без JS (.hidden); stats.js раскрывает его и ставит .js-tabs
+     на <body> → видна одна панель. Без JS все панели в стопке (весь контент
+     доступен). Полный ARIA tabs-паттерн (roving tabindex, ←→↑↓/Home/End) — в
+     stats.js (на /stats нет app.js). -->
+<div class="section-tabs hidden" role="tablist" id="stats-tablist" aria-label="Разделы аналитики">
+    <button type="button" class="section-tab" role="tab" id="stats-tab-overview"
+            aria-controls="stats-panel-overview" aria-selected="true" tabindex="0">Обзор</button>
+    <button type="button" class="section-tab" role="tab" id="stats-tab-topics"
+            aria-controls="stats-panel-topics" aria-selected="false" tabindex="-1">По темам</button>
+    <button type="button" class="section-tab" role="tab" id="stats-tab-dynamics"
+            aria-controls="stats-panel-dynamics" aria-selected="false" tabindex="-1">Динамика</button>
+    <button type="button" class="section-tab" role="tab" id="stats-tab-mistakes"
+            aria-controls="stats-panel-mistakes" aria-selected="false" tabindex="-1">Ошибки</button>
+</div>
+
+<!-- ================= Панель: Обзор ================= -->
+<section class="stats-panel is-active" role="tabpanel" id="stats-panel-overview"
+         aria-labelledby="stats-tab-overview" tabindex="0">
+    <h2 class="stats-panel-title visually-hidden">Обзор</h2>
+
+    <!-- Следующее действие: аналитика должна сразу подсказывать учебный шаг, а не
+         только показывать числа. Блок использует уже существующие маршруты/флаги:
+         / — повторение due, onlyWrong — разбор ошибок, weakTopics — стратегия слабых тем. -->
+    <section class="card stats-next-actions" aria-labelledby="stats-next-actions-title">
+        <div class="stats-next-actions-head">
+            <h2 id="stats-next-actions-title">Что делать дальше</h2>
+            <p>Выбери короткую следующую сессию по текущему состоянию банка.</p>
+        </div>
+        <div class="stats-next-actions-grid">
+            <a class="stats-next-action stats-next-action-primary"
+               th:href="@{/}"
+               th:classappend="${stats.due > 0} ? ' is-recommended'">
+                <span class="stats-next-action-label">Повторить сегодня</span>
+                <strong th:text="${stats.due}">0</strong>
+                <span class="stats-next-action-detail"
+                      th:text="${stats.due > 0 ? @plural.pick(stats.due, 'вопрос к повтору', 'вопроса к повтору', 'вопросов к повтору') : 'всё повторено'}">вопросов к повтору</span>
+            </a>
+            <a class="stats-next-action"
+               th:href="@{/(onlyWrong=true, ordered=true)}"
+               th:classappend="${stats.due == 0 and stats.wrong > 0} ? ' is-recommended'">
+                <span class="stats-next-action-label">Разобрать ошибки</span>
+                <strong th:text="${stats.wrong}">0</strong>
+                <span class="stats-next-action-detail"
+                      th:text="${stats.wrong > 0 ? @plural.pick(stats.wrong, 'ошибка в истории', 'ошибки в истории', 'ошибок в истории') : 'ошибок пока нет'}">ошибок в истории</span>
+            </a>
+            <a class="stats-next-action stats-next-action-weak"
+               th:href="@{/(weakTopics=true, ordered=true)}"
+               th:classappend="${stats.due == 0 and stats.wrong == 0 and topicStats != null and !topicStats.isEmpty()} ? ' is-recommended'">
+                <span class="stats-next-action-label">Тренировать слабые темы</span>
+                <span class="stats-next-action-topic" data-weak-topic-summary
+                      th:text="${topicStats != null and !topicStats.isEmpty()} ? 'Самая слабая тема — по данным ниже' : 'Тем пока нет'">Самая слабая тема</span>
+                <strong th:text="${topicStats != null ? topicStats.size() : 0}">0</strong>
+                <span class="stats-next-action-detail">тем в аналитике</span>
+            </a>
+        </div>
+    </section>
+</section>
+
+<!-- ================= Панель: По темам ================= -->
+<section class="stats-panel" role="tabpanel" id="stats-panel-topics"
+         aria-labelledby="stats-tab-topics" tabindex="0">
+    <h2 class="stats-panel-title visually-hidden">По темам</h2>
+
+    <!-- Поиск + фильтр -->
+    <section class="card stats-filter-card">
+        <div class="stats-filter-row stats-filter-separated">
+            <div class="stats-filter-pane">
+                <h3 class="stats-pane-label">Фильтры</h3>
+                <form method="get" th:action="@{/stats}" class="filter-row stats-filters-form flex-1"
+                      aria-label="Фильтры статистики">
+                    <input type="hidden" name="q" th:value="${searchQuery}">
+                    <label>
+                        Группа:
+                        <select name="group">
+                            <option value="">Все</option>
+                            <option th:each="group : ${groups != null ? groups : T(java.util.Collections).emptyList()}"
+                                    th:value="${group.id()}"
+                                    th:text="${group.title() + ' - ' + group.description() + ' (' + group.topicCount() + ')'}"
+                                    th:selected="${selectedGroup != null and selectedGroup == group.id()}"></option>
+                        </select>
+                    </label>
+                    <label>
+                        Тема:
+                        <select name="topic">
+                            <option value="">Все</option>
+                            <option th:each="topic : ${topics != null ? topics : T(java.util.Collections).emptyList()}" th:value="${topic}"
+                                    th:text="${#strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(topic), '-', ' '), '_', ' '))}" th:title="${topic}"
+                                    th:selected="${filter != null and filter.topic != null and filter.topic == topic}"></option>
+                        </select>
+                    </label>
+                    <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
+                    <label><input type="checkbox" name="important" value="true" th:checked="${filter?.importantOnly}"> <svg class="ed-icon" aria-hidden="true"><use href="#i-star"></use></svg> Избранные</label>
+                    <label><input type="checkbox" name="onlyWrong" value="true" th:checked="${filter?.onlyWrong}"> Ошибки</label>
+                    <button type="submit" class="stats-action-btn stats-apply-action" aria-label="Применить фильтры статистики">Применить фильтры</button>
+                </form>
+            </div>
+            <div class="stats-search-pane">
+                <h3 class="stats-pane-label">Поиск</h3>
+                <form method="get" th:action="@{/stats}" class="search-form stats-search-form flex-1"
+                      role="search" aria-label="Поиск по вопросам">
+                    <input type="hidden" name="topic" th:value="${filter?.topic}">
+                    <input type="hidden" name="group" th:value="${selectedGroup}">
+                    <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
+                    <input type="hidden" name="important" th:value="${filter?.importantOnly != null ? filter.importantOnly : false}">
+                    <input type="hidden" name="onlyWrong" th:value="${filter?.onlyWrong != null ? filter.onlyWrong : false}">
+                    <!-- type=search → нативный крестик-очистка + семантика поиска; enterkeyhint=search —
+                         клавиша Enter экранной клавы как «Поиск»; spellcheck/autocorrect/autocapitalize off —
+                         ищут по слагам/техтерминам (spring-boot, hikaricp), не словарным словам.
+                         CSS уже целит .search-input (input[type=search] перечислен в base.css:1456/1654). -->
+                    <input type="search" name="q" placeholder="Поиск по вопросам…" th:value="${searchQuery}" class="search-input" aria-label="Поиск по вопросам"
+                           enterkeyhint="search" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off">
+                    <button type="submit" class="stats-action-btn stats-search-action" aria-label="Искать по вопросам">Искать</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Поиск без результатов: раньше секция просто исчезала, и было непонятно,
+         выполнился ли поиск. Показываем явное «ничего не найдено». -->
+    <section class="card" th:if="${searchQuery != null and !#strings.isEmpty(searchQuery) and (searchResults == null or #lists.isEmpty(searchResults))}">
+        <h2 class="mt-0">Результаты поиска</h2>
+        <p class="muted">По запросу «<span th:text="${searchQuery}">…</span>» ничего не найдено. Измени запрос или <a th:href="@{/stats}">сбрось поиск и фильтры</a>.</p>
+    </section>
+
+    <!-- Результаты поиска -->
+    <section class="card" th:if="${searchResults != null and !#lists.isEmpty(searchResults)}">
+        <h2 class="mt-0">Результаты поиска</h2>
+        <ul class="search-results">
+            <li th:each="item : ${searchResults}" class="search-result-item">
+                <div class="search-question"><strong th:utext="${@markdownRenderService.toInlineHtml(item.questionText)}">Вопрос</strong></div>
+                <div class="muted" th:text="${#strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(item.topic), '-', ' '), '_', ' '))}" th:title="${item.topic}">Тема</div>
+                <div class="search-answer-preview" th:text="${item.answerPreview}">Превью</div>
+                <a th:href="@{/(topic=${item.topic != null ? item.topic : ''}, group=${selectedGroup != null ? selectedGroup : ''}, ordered=${filter == null or filter.ordered != false}, important=${filter != null and filter.importantOnly == true}, onlyWrong=${filter != null and filter.onlyWrong == true})}">Перейти к теме<span aria-hidden="true"> →</span></a>
+            </li>
+        </ul>
+    </section>
+
+    <!-- Нет данных по темам: все секции ниже (графики/таблица/пробелы) гейтятся на
+         непустой topicStats. При пустом (новый пользователь без ответов либо фильтр
+         без совпадений) даём явный empty-state. Условие — ТОЧНАЯ инверсия гейтов
+         секций ниже; показываем только когда НЕ активен поиск (у поиска свой empty
+         выше, иначе два «пусто» подряд). Чисто аддитивно. -->
+    <section class="card stats-empty"
+             th:if="${(topicStats == null or topicStats.isEmpty()) and (searchQuery == null or #strings.isEmpty(searchQuery))}">
+        <h2 class="mt-0">Пока нет данных по темам</h2>
+        <p class="muted">Ответь на несколько вопросов — и здесь появятся прогресс по темам, точность ответов и прогноз повторений на неделю.</p>
+        <p>
+            <a class="btn next-btn" th:href="@{/}">Начать тренировку<span aria-hidden="true"> →</span></a>
+            <a class="btn secondary-btn"
+               th:if="${selectedGroup != null or filter?.topic != null or filter?.importantOnly or filter?.onlyWrong}"
+               th:href="@{/stats}">Сбросить фильтры</a>
+        </p>
+    </section>
+
+    <!-- Графики -->
+    <div class="charts-row" th:if="${topicStats != null and !topicStats.isEmpty()}">
+        <section class="card chart-card">
+            <h2 class="mt-0">Прогресс по темам</h2>
+            <p class="chart-subtitle">Самые активные темы</p>
+            <div class="chart-wrapper">
+                <canvas id="topicProgressChart" role="img"
+                        aria-label="Гистограмма прогресса по самым активным темам: выучено и осталось. Полные данные — в таблице ниже."></canvas>
+                <p id="topicProgressChartFallback" class="chart-fallback hidden" role="status" aria-live="polite">
+                    График временно недоступен. Таблица ниже содержит те же данные.
+                </p>
+            </div>
+        </section>
+        <section class="card chart-card">
+            <h2 class="mt-0">Точность по темам</h2>
+            <p class="chart-subtitle">Сначала самые слабые</p>
+            <div class="chart-wrapper">
+                <canvas id="topicAccuracyChart" role="img"
+                        aria-label="Гистограмма точности по темам, от слабых к сильным, в процентах. Полные данные — в таблице ниже."></canvas>
+                <p id="topicAccuracyChartFallback" class="chart-fallback hidden" role="status" aria-live="polite">
+                    График временно недоступен. Таблица ниже содержит те же данные.
+                </p>
+            </div>
+        </section>
     </div>
-    <!-- Без статичного aria-label (WCAG 2.5.3, R0.59): скрипт ниже живёт textContent-ом
-         («Показать все темы (N ниже)» / «Свернуть таблицу») — статичное имя перекрывало
-         видимый текст и голосовое управление не находило кнопку. Имя = видимый текст. -->
-    <button type="button" class="btn secondary-btn table-expander hidden" id="topic-table-expander"
-            aria-expanded="false" aria-controls="topic-table-wrap"></button>
-    <p id="table-sort-status" class="visually-hidden" aria-live="polite" aria-atomic="true"></p>
-</section>
-<!-- B6: длинная таблица тем сворачивается по числу строк. Скоупится на /stats.
-     Строки за лимитом получают hidden: они недоступны и визуально, и для Tab/SR.
-     PE: таблица рендерится РАЗВЁРНУТОЙ (no-JS видит все строки). is-collapsed
-     навешивает этот скрипт — иначе без JS строки скрылись бы, а
-     кнопка-разворот остаётся hidden → данные были бы недоступны. Скрипт
-     инлайновый сразу после таблицы → сворачивает до первой отрисовки (без FOUC). -->
-<script>
-  (function () {
-    var wrap = document.getElementById('topic-table-wrap');
-    var btn = document.getElementById('topic-table-expander');
-    var table = document.getElementById('topic-table');
-    if (!wrap || !btn || !table || !table.tBodies[0]) return;
-    var tbody = table.tBodies[0];
-    var rowCount = tbody.rows.length;
-    var limit = parseInt(wrap.getAttribute('data-collapse-rows'), 10) || 12;
-    if (rowCount <= limit) return; // короткие таблицы не сворачиваем
-    var hidden = rowCount - limit;
-    wrap.classList.add('is-collapsed');
-    function sync() {
-      var collapsed = wrap.classList.contains('is-collapsed');
-      Array.prototype.forEach.call(tbody.rows, function (row, index) {
-        row.hidden = collapsed && index >= limit;
-      });
-      if (collapsed) wrap.scrollTop = 0;
-      btn.textContent = collapsed ? ('Показать все темы (' + hidden + ' ниже)') : 'Свернуть таблицу';
-      btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-    }
-    // Сортировка переставляет строки в tbody. После неё заново оставляем видимыми
-    // первые limit строк уже в новом порядке.
-    new MutationObserver(sync).observe(tbody, { childList: true });
-    btn.classList.remove('hidden');
-    sync();
-    btn.addEventListener('click', function () { wrap.classList.toggle('is-collapsed'); sync(); });
-  })();
-</script>
 
-<section class="card review-forecast" th:if="${reviewForecast != null and !reviewForecast.isEmpty()}">
-    <h2>Прогноз повторений на 7 дней</h2>
-    <p class="review-forecast-hint">Сколько вопросов прилетит в каждый день. Помогает распределить нагрузку.</p>
-    <ul class="forecast-list" th:with="maxCnt=${reviewForecastMax}">
-        <li th:each="day : ${reviewForecast}" class="forecast-row">
-            <time class="forecast-day" th:datetime="${day.day()}" th:text="${day.day()}">2026-04-20</time>
-            <span class="forecast-bar" role="img" th:aria-label="${day.count() + ' ' + @plural.pick(day.count(), 'вопрос', 'вопроса', 'вопросов')}">
-                <span class="forecast-bar-fill"
-                      th:attr="data-progress=${day.count() * 100 / (maxCnt > 0 ? maxCnt : 1)}"></span>
-            </span>
-            <span class="forecast-count" aria-hidden="true" th:text="${day.count()}">0</span>
-        </li>
-    </ul>
+    <!-- Таблица тем -->
+    <section class="card overflow-x-auto" th:if="${topicStats != null and !topicStats.isEmpty()}">
+        <h2 class="mt-0">Детализация по темам</h2>
+        <!-- C30: контейнер несёт overflow-x:auto для wide-table режима; на мобильной
+             ширине CSS переводит tbody rows в stacked-card режим по data-label. -->
+        <div class="topic-table-wrap" id="topic-table-wrap" data-collapse-rows="12"
+             tabindex="0" role="region" aria-label="Детализация по темам">
+        <table class="topic-table" id="topic-table">
+            <caption class="visually-hidden">Статистика по темам</caption>
+            <thead>
+            <tr>
+                <!-- C28: имя колонки = чистый текст th, состояние сортировки несёт
+                     aria-sort (ставит stats.js), транзиентный анонс — #table-sort-status
+                     live-region. role="columnheader" у <th> в <thead> избыточен. Раньше
+                     aria-label «Сортировать по колонке: …» подменял имя в каждой ячейке. -->
+                <th scope="col" class="sortable" data-col="0" data-sort-label="Тема">Тема</th>
+                <th scope="col" class="sortable w-60 text-center" data-col="1" data-sort-label="Всего">Всего</th>
+                <th scope="col" class="min-w-140">Прогресс</th>
+                <th scope="col" class="sortable w-80 text-center" data-col="3" data-sort-label="Точность" title="Доля верных ответов среди отвеченных (не из всех вопросов темы)">Точность</th>
+                <th scope="col" class="sortable w-80 text-center" data-col="4" data-sort-label="Зрелость" title="Среднее ease×interval — показатель глубины запоминания">Зрелость</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${topicStats}">
+                <th scope="row" class="topic-name" data-label="Тема">
+                    <a th:href="@{/(topic=${item.topic}, group=${selectedGroup != null ? selectedGroup : ''}, ordered=${filter == null or filter.ordered != false})}"
+                       th:text="${#strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(item.topic), '-', ' '), '_', ' '))}"
+                       th:title="${item.topic}">topic</a>
+                </th>
+                <td th:text="${item.total}" class="text-center" data-label="Всего">0</td>
+                <td data-label="Прогресс">
+                    <div class="topic-progress-bar">
+                        <div class="topic-progress-learned"
+                             th:attr="data-progress=${item.total != 0 ? (item.learned * 100.0 / item.total) : 0}"
+                             th:title="'Выучено: ' + ${item.learned}"></div>
+                        <div class="topic-progress-due"
+                             th:attr="data-progress=${item.total != 0 ? (item.due * 100.0 / item.total) : 0}"
+                             th:title="'К повтору: ' + ${item.due}"></div>
+                    </div>
+                    <span class="topic-progress-label"
+                          th:text="${item.learned} + '/' + ${item.total}">0/0</span>
+                </td>
+                <td class="accuracy-cell text-center"
+                    data-label="Точность"
+                    th:classappend="${(item.correct + item.wrong) > 0 ?
+                        ((item.correct * 100.0 / (item.correct + item.wrong)) >= 80 ? 'accuracy-high' :
+                         ((item.correct * 100.0 / (item.correct + item.wrong)) >= 50 ? 'accuracy-mid' : 'accuracy-low'))
+                        : ''}"
+                    th:title="${(item.correct + item.wrong) == 0 ? 'Пока нет ответов по этой теме' : 'Верных ответов: ' + item.correct + ' · Отвечено: ' + (item.correct + item.wrong)}">
+                    <span th:text="${(item.correct + item.wrong) == 0 ? '—' : #numbers.formatDecimal((item.correct * 100.0) / (item.correct + item.wrong), 1, 1) + '%'}">0%</span>
+                </td>
+                <td class="text-center" data-label="Зрелость">
+                    <span th:with="m=${item.maturityScore}"
+                          th:class="'maturity-badge ' + (${m} >= 10 ? 'maturity-high' : (${m} >= 3 ? 'maturity-mid' : 'maturity-low'))"
+                          th:text="${m == 0 ? '—' : #numbers.formatDecimal(m, 1, 1)}">—</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        </div>
+        <!-- Без статичного aria-label (WCAG 2.5.3, R0.59): скрипт ниже живёт textContent-ом
+             («Показать все темы (N ниже)» / «Свернуть таблицу») — статичное имя перекрывало
+             видимый текст и голосовое управление не находило кнопку. Имя = видимый текст. -->
+        <button type="button" class="btn secondary-btn table-expander hidden" id="topic-table-expander"
+                aria-expanded="false" aria-controls="topic-table-wrap"></button>
+        <p id="table-sort-status" class="visually-hidden" aria-live="polite" aria-atomic="true"></p>
+    </section>
+    <!-- B6: длинная таблица тем сворачивается по числу строк. Скоупится на /stats.
+         Строки за лимитом получают hidden: они недоступны и визуально, и для Tab/SR.
+         PE: таблица рендерится РАЗВЁРНУТОЙ (no-JS видит все строки). is-collapsed
+         навешивает этот скрипт — иначе без JS строки скрылись бы, а
+         кнопка-разворот остаётся hidden → данные были бы недоступны. Скрипт
+         инлайновый сразу после таблицы → сворачивает до первой отрисовки (без FOUC). -->
+    <script>
+      (function () {
+        var wrap = document.getElementById('topic-table-wrap');
+        var btn = document.getElementById('topic-table-expander');
+        var table = document.getElementById('topic-table');
+        if (!wrap || !btn || !table || !table.tBodies[0]) return;
+        var tbody = table.tBodies[0];
+        var rowCount = tbody.rows.length;
+        var limit = parseInt(wrap.getAttribute('data-collapse-rows'), 10) || 12;
+        if (rowCount <= limit) return; // короткие таблицы не сворачиваем
+        var hidden = rowCount - limit;
+        wrap.classList.add('is-collapsed');
+        function sync() {
+          var collapsed = wrap.classList.contains('is-collapsed');
+          Array.prototype.forEach.call(tbody.rows, function (row, index) {
+            row.hidden = collapsed && index >= limit;
+          });
+          if (collapsed) wrap.scrollTop = 0;
+          btn.textContent = collapsed ? ('Показать все темы (' + hidden + ' ниже)') : 'Свернуть таблицу';
+          btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+        }
+        // Сортировка переставляет строки в tbody. После неё заново оставляем видимыми
+        // первые limit строк уже в новом порядке.
+        new MutationObserver(sync).observe(tbody, { childList: true });
+        btn.classList.remove('hidden');
+        sync();
+        btn.addEventListener('click', function () { wrap.classList.toggle('is-collapsed'); sync(); });
+      })();
+    </script>
+
+    <section class="card coverage-gaps" th:if="${coverageGaps != null and !coverageGaps.isEmpty()}">
+        <h2>Пробелы в банке вопросов</h2>
+        <p class="coverage-gaps-hint">Темы, где меньше 5 вопросов — сгенерируй ещё, чтобы банк был равномерным.</p>
+        <table class="data-table">
+            <caption class="visually-hidden">Темы с неполным банком вопросов</caption>
+            <thead>
+            <tr><th scope="col">Тема</th><th scope="col" class="text-center">Вопросов</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="gap : ${coverageGaps}">
+                <td th:text="${#strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(gap.topic()), '-', ' '), '_', ' '))}">тема</td>
+                <td class="text-center" th:text="${gap.total()}">0</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
 </section>
 
-<!-- Гуманизация дат прогноза: сервер отдаёт ISO-строки («2026-07-01») — это
-     машинный формат, человеку он мало что говорит. Машинное значение остаётся в
-     <time datetime> (семантика + сортируемость для AT/парсеров), а видимый текст
-     превращаем в «Сегодня» / «Завтра» / «6 июля» через Intl с явной ru-RU локалью
-     (не зависим от локали сервера). title даёт полную дату с днём недели. PE: без
-     JS остаётся ISO — не идеально, но однозначно; ничего не ломается. -->
-<script>
-  (function () {
-    var days = document.querySelectorAll('.review-forecast .forecast-day');
-    if (!days.length || !window.Intl) return;
-    var today = new Date(); today.setHours(0, 0, 0, 0);
-    var fmtDate = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' });
-    var fmtFull = new Intl.DateTimeFormat('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
-    days.forEach(function (el) {
-      var iso = el.getAttribute('datetime') || el.textContent.trim();
-      var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
-      if (!m) return;
-      var d = new Date(+m[1], +m[2] - 1, +m[3]); d.setHours(0, 0, 0, 0);
-      if (isNaN(d.getTime())) return;
-      var diff = Math.round((d - today) / 86400000);
-      el.textContent = diff === 0 ? 'Сегодня' : diff === 1 ? 'Завтра' : fmtDate.format(d);
-      el.setAttribute('title', fmtFull.format(d));
-    });
-  })();
-</script>
+<!-- ================= Панель: Динамика ================= -->
+<section class="stats-panel" role="tabpanel" id="stats-panel-dynamics"
+         aria-labelledby="stats-tab-dynamics" tabindex="0">
+    <h2 class="stats-panel-title visually-hidden">Динамика</h2>
 
-<section class="card coverage-gaps" th:if="${coverageGaps != null and !coverageGaps.isEmpty()}">
-    <h2>Пробелы в банке вопросов</h2>
-    <p class="coverage-gaps-hint">Темы, где меньше 5 вопросов — сгенерируй ещё, чтобы банк был равномерным.</p>
-    <table class="data-table">
-        <caption class="visually-hidden">Темы с неполным банком вопросов</caption>
-        <thead>
-        <tr><th scope="col">Тема</th><th scope="col" class="text-center">Вопросов</th></tr>
-        </thead>
-        <tbody>
-        <tr th:each="gap : ${coverageGaps}">
-            <td th:text="${#strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(gap.topic()), '-', ' '), '_', ' '))}">тема</td>
-            <td class="text-center" th:text="${gap.total()}">0</td>
-        </tr>
-        </tbody>
-    </table>
+    <!-- Подробная точность и удержание: честная разбивка, которую 4 верхние
+         карточки не показывают. Первая попытка отражает память вернее общей;
+         удержание — доля верных среди повторений в окне. NO_DATA → «—». -->
+    <section class="card learning-metrics" th:if="${metrics != null}"
+             aria-labelledby="learning-detail-title">
+        <div class="learning-metrics-head">
+            <h2 id="learning-detail-title">Точность и удержание</h2>
+            <p>Точность первой попытки честнее отражает память, чем общая (все попытки,
+               включая повторные). Удержание — доля верных среди повторений в окне.</p>
+        </div>
+        <div class="learning-metrics-grid">
+            <article class="metric-group">
+                <h3 class="metric-group-title">Точность</h3>
+                <dl class="metric-list">
+                    <div class="metric-row"><dt>Первая попытка</dt>
+                        <dd th:text="${metrics.hasFirstAttemptAccuracy()} ? ${#numbers.formatDecimal(metrics.firstAttemptAccuracy, 1, 1)} + ' %' : '—'">—</dd></div>
+                    <div class="metric-row"><dt>Все попытки</dt>
+                        <dd th:text="${metrics.hasOverallAccuracy()} ? ${#numbers.formatDecimal(metrics.overallAccuracy, 1, 1)} + ' %' : '—'">—</dd></div>
+                </dl>
+                <p class="metric-note">Знаменатель общей — верных + ошибочных (без пропусков).</p>
+            </article>
+            <article class="metric-group">
+                <h3 class="metric-group-title">Удержание</h3>
+                <dl class="metric-list">
+                    <div class="metric-row"><dt>За 7 дней</dt>
+                        <dd th:text="${metrics.hasRetention7d()} ? ${#numbers.formatDecimal(metrics.retention7d, 1, 1)} + ' %' : '—'">—</dd></div>
+                    <div class="metric-row"><dt>За 30 дней</dt>
+                        <dd th:text="${metrics.hasRetention30d()} ? ${#numbers.formatDecimal(metrics.retention30d, 1, 1)} + ' %' : '—'">—</dd></div>
+                </dl>
+                <p class="metric-note">Доля верных среди повторений в окне.</p>
+            </article>
+            <article class="metric-group">
+                <h3 class="metric-group-title">Карточки и попытки</h3>
+                <dl class="metric-list">
+                    <div class="metric-row"><dt>Начато</dt>
+                        <dd><span th:text="${metrics.cardsSeen}">0</span>
+                            <span class="metric-denom" th:text="'из ' + ${metrics.cardsTotal}">из 0</span></dd></div>
+                    <div class="metric-row"><dt>Всего попыток</dt>
+                        <dd th:text="${metrics.attemptsTotal}">0</dd></div>
+                    <div class="metric-row"><dt>Ошибочных</dt>
+                        <dd><span th:text="${metrics.attemptsIncorrect}">0</span>
+                            <span class="metric-denom" th:text="'из ' + ${metrics.attemptsTotal}">из 0</span></dd></div>
+                </dl>
+            </article>
+        </div>
+    </section>
+
+    <section class="card review-forecast" th:if="${reviewForecast != null and !reviewForecast.isEmpty()}">
+        <h2>Прогноз повторений на 7 дней</h2>
+        <p class="review-forecast-hint">Сколько вопросов прилетит в каждый день. Помогает распределить нагрузку.</p>
+        <ul class="forecast-list" th:with="maxCnt=${reviewForecastMax}">
+            <li th:each="day : ${reviewForecast}" class="forecast-row">
+                <time class="forecast-day" th:datetime="${day.day()}" th:text="${day.day()}">2026-04-20</time>
+                <span class="forecast-bar" role="img" th:aria-label="${day.count() + ' ' + @plural.pick(day.count(), 'вопрос', 'вопроса', 'вопросов')}">
+                    <span class="forecast-bar-fill"
+                          th:attr="data-progress=${day.count() * 100 / (maxCnt > 0 ? maxCnt : 1)}"></span>
+                </span>
+                <span class="forecast-count" aria-hidden="true" th:text="${day.count()}">0</span>
+            </li>
+        </ul>
+    </section>
+
+    <!-- Пусто в «Динамике»: если и метрик нет, и прогноз пуст. -->
+    <section class="card stats-empty"
+             th:if="${(metrics == null) and (reviewForecast == null or reviewForecast.isEmpty())}">
+        <h2 class="mt-0">Пока нет динамики</h2>
+        <p class="muted">Ответь на вопросы и вернись к повторениям — здесь появятся точность, удержание и прогноз нагрузки.</p>
+    </section>
+
+    <!-- Гуманизация дат прогноза: сервер отдаёт ISO-строки («2026-07-01») — это
+         машинный формат, человеку он мало что говорит. Машинное значение остаётся в
+         <time datetime> (семантика + сортируемость для AT/парсеров), а видимый текст
+         превращаем в «Сегодня» / «Завтра» / «6 июля» через Intl с явной ru-RU локалью
+         (не зависим от локали сервера). title даёт полную дату с днём недели. PE: без
+         JS остаётся ISO — не идеально, но однозначно; ничего не ломается. -->
+    <script>
+      (function () {
+        var days = document.querySelectorAll('.review-forecast .forecast-day');
+        if (!days.length || !window.Intl) return;
+        var today = new Date(); today.setHours(0, 0, 0, 0);
+        var fmtDate = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' });
+        var fmtFull = new Intl.DateTimeFormat('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
+        days.forEach(function (el) {
+          var iso = el.getAttribute('datetime') || el.textContent.trim();
+          var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+          if (!m) return;
+          var d = new Date(+m[1], +m[2] - 1, +m[3]); d.setHours(0, 0, 0, 0);
+          if (isNaN(d.getTime())) return;
+          var diff = Math.round((d - today) / 86400000);
+          el.textContent = diff === 0 ? 'Сегодня' : diff === 1 ? 'Завтра' : fmtDate.format(d);
+          el.setAttribute('title', fmtFull.format(d));
+        });
+      })();
+    </script>
 </section>
+
+<!-- ================= Панель: Ошибки ================= -->
+<section class="stats-panel" role="tabpanel" id="stats-panel-mistakes"
+         aria-labelledby="stats-tab-mistakes" tabindex="0">
+    <h2 class="stats-panel-title visually-hidden">Ошибки</h2>
+
+    <section class="card">
+        <div class="stats-next-actions-head">
+            <h2 class="mt-0">Где чаще ошибаешься</h2>
+            <p>Темы, где уже были неверные ответы. Собери короткую сессию по ним —
+               или пройди все ошибки из истории.</p>
+        </div>
+
+        <p class="muted" th:if="${topicStats == null or topicStats.isEmpty()}">
+            Пока нет отвеченных вопросов — ответь на несколько, и здесь появятся темы с ошибками.</p>
+
+        <table class="data-table" th:if="${topicStats != null and !topicStats.isEmpty()}">
+            <caption class="visually-hidden">Темы с ошибками: количество ошибок и точность</caption>
+            <thead>
+            <tr>
+                <th scope="col">Тема</th>
+                <th scope="col" class="text-center">Ошибок</th>
+                <th scope="col" class="text-center">Точность</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${topicStats}" th:if="${item.wrong > 0}">
+                <td>
+                    <a th:href="@{/(topic=${item.topic}, onlyWrong=true, ordered=true)}"
+                       th:text="${#strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(item.topic), '-', ' '), '_', ' '))}"
+                       th:title="${item.topic}">тема</a>
+                </td>
+                <td class="text-center" th:text="${item.wrong}">0</td>
+                <td class="text-center accuracy-cell"
+                    th:classappend="${(item.correct * 100.0 / (item.correct + item.wrong)) >= 80 ? ' accuracy-high' :
+                        ((item.correct * 100.0 / (item.correct + item.wrong)) >= 50 ? ' accuracy-mid' : ' accuracy-low')}"
+                    th:text="${#numbers.formatDecimal(item.correct * 100.0 / (item.correct + item.wrong), 1, 0) + '%'}">0%</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <p>
+            <a class="btn next-btn" th:href="@{/(onlyWrong=true, ordered=true)}"
+               th:if="${stats.wrong > 0}">Разобрать все ошибки<span aria-hidden="true"> →</span></a>
+            <span class="muted" th:if="${topicStats != null and !topicStats.isEmpty() and stats.wrong == 0}">
+                Ошибок в истории нет — так держать!</span>
+        </p>
+    </section>
+</section>
+
 </div>
 </div>
 </main>
@@ -420,6 +521,6 @@
      JSON.parse в stats.js. [(...)] (unescaped) кладёт literal-JSON,
      который Chart.js потом успешно парсит. -->
 <script type="application/json" id="topic-stats-data" th:inline="text">[(${topicStatsJson})]</script>
-<script th:src="@{/js/stats.js(v=15)}"></script>
+<script th:src="@{/js/stats.js(v=16)}"></script>
 </body>
 </html>
