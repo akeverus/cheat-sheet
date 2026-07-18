@@ -1604,76 +1604,94 @@
     return icon('circle-x', 'ed-icon-lead') + 'Неверно' + letter;
   }
 
-  // UX-13: содержимое «Подробнее» — полный остаток разбора (после лид-абзаца) +
-  // разбор вариантов (буква + тег «верный/ваш ответ» + пояснение из сида).
-  function buildResultDetail(data, restHtml) {
-    let html = '';
-    if (restHtml && restHtml.trim().length) {
-      html += `<div class="answer markdown-content">${restHtml}</div>`;
-    }
+  // Хендофф-3, Этап 4: «+N XP» в баннере результата (data.xpAwarded из
+  // AnswerResponse; 0 → бейдж не рисуем). Начислено ExperienceService на сабмите.
+  function buildXpBadge(data) {
+    const xp = Number(data.xpAwarded || 0);
+    if (!(xp > 0)) return '';
+    return `<span class="result-xp" aria-label="Начислено ${xp} XP">+${xp} XP</span>`;
+  }
+
+  // Русская форма слова «день» по числу (1 день / 2 дня / 5 дней; 11–14 → дней).
+  function pluralDays(n) {
+    const mod10 = n % 10;
+    const mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return 'день';
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return 'дня';
+    return 'дней';
+  }
+
+  // Хендофф-3, UI-013: показать следующий интервал повторения после ответа
+  // (data.intervalDays из AnswerResponse; SM-2/FSRS посчитан на сабмите). 0 → скрыто.
+  function buildNextReviewLine(data) {
+    const days = Number(data.intervalDays || 0);
+    if (!(days > 0)) return '';
+    const when = days === 1 ? 'завтра' : 'через ' + days + ' ' + pluralDays(days);
+    return `<p class="next-review">`
+      + `<span class="next-review-eyebrow">Следующее повторение</span> `
+      + `<span class="next-review-when">${when}</span></p>`;
+  }
+
+  // Хендофф-3, Этап 4: distractor-анализ НА ПОВЕРХНОСТИ (не под «Подробнее») —
+  // компактные строки «B — неверно. <причина>» по каждому НЕверному варианту.
+  function buildDistractorPanel(data) {
     const opts = data.optionExplanations || [];
-    const hasAnyExpl = opts.some(oe => oe.explanationHtml && oe.explanationHtml.trim().length);
-    if (hasAnyExpl) {
-      let list = '<div class="option-breakdown">';
-      opts.forEach((oe, i) => {
-        if (!oe.explanationHtml || !oe.explanationHtml.trim().length) return;
-        const letter = String.fromCharCode(65 + i);
-        let tag = '';
-        let cls = 'explanation-other';
-        if (oe.id === data.correctOptionId) { tag = 'верный ответ'; cls = 'explanation-correct'; }
-        else if (oe.id === data.selectedOptionId) { tag = 'ваш ответ'; cls = 'explanation-wrong'; }
-        const tagHtml = tag ? `<span class="option-breakdown-tag">${tag}</span>` : '';
-        list += `<div class="option-breakdown-item ${cls}">`
-          + `<div class="option-breakdown-head"><span class="option-breakdown-letter">${letter}</span>${tagHtml}</div>`
-          + `<div class="option-explanation markdown-content ${cls}">${sanitizeHtml(oe.explanationHtml)}</div>`
-          + `</div>`;
-      });
-      list += '</div>';
-      html += list;
-    }
-    return html;
+    let rows = '';
+    opts.forEach((oe, i) => {
+      if (oe.id === data.correctOptionId) return; // только дистракторы
+      if (!oe.explanationHtml || !oe.explanationHtml.trim().length) return;
+      const letter = String.fromCharCode(65 + i);
+      const mine = oe.id === data.selectedOptionId ? ' distractor-row-mine' : '';
+      rows += `<div class="distractor-row${mine}">`
+        + `<strong class="distractor-letter">${letter} — неверно.</strong> `
+        + `<span class="distractor-reason markdown-content">${sanitizeHtml(oe.explanationHtml)}</span>`
+        + `</div>`;
+    });
+    if (!rows) return '';
+    return `<div class="explanation-panel distractor-panel">`
+      + `<span class="explanation-eyebrow">Почему другие варианты не подходят</span>`
+      + `<div class="distractor-list">${rows}</div>`
+      + `</div>`;
   }
 
   function renderFeedbackHtml(data) {
     const isCorrect = data.correct;
-    // UX-13 иерархия (макет Instrument result): вердикт+буква → краткий лид видим →
-    // «Подробнее» (полный остаток + разбор вариантов). Лид деривит сервер
-    // (AnswerHtmlSplitter, первый <p>); если лид не выделился — показываем полный
-    // ответ как лид, чтобы разбор не потерялся, и «Подробнее» несёт только варианты.
+    // Хендофф-3, Этап 4 (главная UX-дельта): весь разбор НА ПОВЕРХНОСТИ, без
+    // «Подробнее». Иерархия макета Answered: банер (вердикт + буква + XP) →
+    // «Почему это так?» (лид) → следующий интервал → «Почему другие варианты не
+    // подходят» (компактные строки дистракторов) → «Дополнительно» (остаток разбора).
+    // Лид деривит сервер (AnswerHtmlSplitter, первый <p>); если не выделился —
+    // показываем полный answerHtml, чтобы разбор не потерялся.
     const leadHtml = sanitizeHtml(data.answerLeadHtml || '');
     const restHtml = sanitizeHtml(data.answerRestHtml || '');
     const hasLead = leadHtml.trim().length > 0;
     const visibleLead = hasLead ? leadHtml : sanitizeHtml(data.answerHtml || '');
-    const leadBlock = visibleLead.trim().length
-      ? `<div class="result-lead answer markdown-content">${visibleLead}</div>`
+    const explanationPanel = visibleLead.trim().length
+      ? `<div class="explanation-panel">`
+        + `<span class="explanation-eyebrow">Почему это так?</span>`
+        + `<div class="result-lead answer markdown-content">${visibleLead}</div>`
+        + `</div>`
       : '';
 
-    const detailBody = buildResultDetail(data, hasLead ? restHtml : '');
-    const detailBlock = detailBody
-      ? `<details class="result-detail-disclosure">
-           <summary class="result-detail-summary">Подробнее</summary>
-           <div class="result-detail-body">${detailBody}</div>
-         </details>`
+    const nextReview = buildNextReviewLine(data);
+    const distractorPanel = buildDistractorPanel(data);
+    // «Дополнительно» — остаток разбора (после лид-абзаца) как info-поверхность.
+    const additionalPanel = (hasLead && restHtml.trim().length)
+      ? `<div class="explanation-panel additional-panel">`
+        + `<span class="explanation-eyebrow">Дополнительно</span>`
+        + `<div class="answer markdown-content">${restHtml}</div>`
+        + `</div>`
       : '';
 
-    // Этап 4 редизайна (docs 3.6/3.7): разделяем компактный ResultBanner (только
-    // статус — peak-end момент) и нейтральный ExplanationPanel (объяснение +
-    // «Подробнее»). Раньше вердикт и стена объяснения жили в одном цветном боксе,
-    // из-за чего статус тонул в тексте. Банер сохраняет тестированный стиль
-    // .result-correct/.result-wrong; объяснение уезжает в сиблинг .explanation-panel
-    // с нейтральным фоном и эйбрау «Почему это так?».
-    const explanationBody = `${leadBlock}${detailBlock}`;
-    const explanationPanel = explanationBody.trim().length
-      ? `<div class="explanation-panel">
-           <span class="explanation-eyebrow">Почему это так?</span>
-           ${explanationBody}
-         </div>`
-      : '';
     feedbackDiv.innerHTML = `
       <div class="${isCorrect ? 'result-correct' : 'result-wrong'} result-banner">
         <strong class="result-verdict">${buildVerdictLine(data)}</strong>
+        ${buildXpBadge(data)}
       </div>
       ${explanationPanel}
+      ${nextReview}
+      ${distractorPanel}
+      ${additionalPanel}
     `;
     feedbackDiv.classList.remove('hidden');
     renderDynamicContent(feedbackDiv);

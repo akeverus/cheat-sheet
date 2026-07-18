@@ -153,11 +153,19 @@ public class MvcModelAttributeMapper {
             boolean restPresent = leadPresent && !answerSplit.restHtml().isBlank();
             boolean anyOptionExplanation = state.result().options().stream()
                     .anyMatch(o -> o.explanation() != null && !o.explanation().isBlank());
+            // Хендофф-3, Этап 4: distractor-панель («Почему другие варианты не подходят»)
+            // показываем, только если хотя бы у одного НЕверного варианта есть пояснение.
+            // Флаг из Java, а не Thymeleaf-проекции (ссылка на correct.id внутри ?[] —
+            // хрупкий скоуп элемента).
+            long correctOptionId = state.result().correct() != null ? state.result().correct().id() : -1L;
+            boolean anyDistractorExplanation = state.result().options().stream()
+                    .anyMatch(o -> o.id() != correctOptionId && o.explanation() != null && !o.explanation().isBlank());
             model.addAttribute("answerLeadHtml", answerSplit.leadHtml());
             model.addAttribute("answerRestHtml", answerSplit.restHtml());
             // «Подробнее» показываем, только если под ним реально что-то есть:
             // остаток разбора (после лид-абзаца) или пояснения вариантов.
             model.addAttribute("answerHasDetail", restPresent || anyOptionExplanation);
+            model.addAttribute("hasDistractorAnalysis", anyDistractorExplanation);
             model.addAttribute("correctOptionLetter", correctOptionLetter(state.result()));
         }
         model.addAttribute("answerDisplayMode", state.answerDisplayMode());

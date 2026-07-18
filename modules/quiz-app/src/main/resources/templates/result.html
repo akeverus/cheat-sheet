@@ -81,36 +81,44 @@
                 </div>
             </div>
 
-            <!-- UX-13: краткий лид (первый абзац разбора) виден сразу под вердиктом.
-                 Если сервер не выделил лид (ответ не с абзаца) — как лид показываем
-                 весь answerHtml, чтобы разбор не пропал. -->
-            <div th:if="${answerLeadHtml != null and !answerLeadHtml.isBlank()}"
-                 class="result-lead answer markdown-content" th:utext="${answerLeadHtml}"></div>
-            <div th:if="${(answerLeadHtml == null or answerLeadHtml.isBlank()) and answerHtml != null and !answerHtml.isBlank()}"
-                 class="result-lead answer markdown-content" th:utext="${answerHtml}"></div>
+            <!-- Хендофф-3, Этап 4: разбор НА ПОВЕРХНОСТИ (зеркалит JS-путь
+                 renderFeedbackHtml). «Почему это так?» — краткий лид (первый абзац);
+                 если сервер не выделил лид, как лид показываем весь answerHtml. -->
+            <div th:if="${answerLeadHtml != null and !answerLeadHtml.isBlank()}" class="explanation-panel">
+                <span class="explanation-eyebrow">Почему это так?</span>
+                <div class="result-lead answer markdown-content" th:utext="${answerLeadHtml}"></div>
+            </div>
+            <div th:if="${(answerLeadHtml == null or answerLeadHtml.isBlank()) and answerHtml != null and !answerHtml.isBlank()}" class="explanation-panel">
+                <span class="explanation-eyebrow">Почему это так?</span>
+                <div class="result-lead answer markdown-content" th:utext="${answerHtml}"></div>
+            </div>
 
-            <!-- «Подробнее»: остаток разбора (после лид-абзаца) + разбор вариантов.
-                 answerHasDetail (mapper) гарантирует непустое тело. Консистентно с
-                 JS-путём (renderFeedbackHtml → buildResultDetail). -->
-            <details class="result-detail-disclosure" th:if="${answerHasDetail}">
-                <summary class="result-detail-summary">Подробнее</summary>
-                <div class="result-detail-body">
-                    <div th:if="${answerRestHtml != null and !answerRestHtml.isBlank() and answerLeadHtml != null and !answerLeadHtml.isBlank()}"
-                         class="answer markdown-content" th:utext="${answerRestHtml}"></div>
-                    <div class="option-breakdown">
-                        <div th:each="opt,it : ${result.options}" th:if="${opt.explanation != null and !opt.explanation.isBlank()}"
-                             th:class="${'option-breakdown-item ' + (opt.id == result.correct.id ? 'explanation-correct' : (opt.id == result.selected.id ? 'explanation-wrong' : 'explanation-other'))}">
-                            <div class="option-breakdown-head">
-                                <span class="option-breakdown-letter" th:text="${'ABCDEFGH'.substring(it.index, it.index + 1)}">A</span>
-                                <span th:if="${opt.id == result.correct.id}" class="option-breakdown-tag">верный ответ</span>
-                                <span th:if="${opt.id == result.selected.id and opt.id != result.correct.id}" class="option-breakdown-tag">ваш ответ</span>
-                            </div>
-                            <div th:class="${'option-explanation markdown-content ' + (opt.correct ? 'explanation-correct' : 'explanation-wrong')}"
-                                 th:utext="${@markdownRenderService.toHtml(opt.explanation)}">Объяснение</div>
-                        </div>
+            <!-- UI-013: следующий интервал повторения (SM-2) на поверхности. -->
+            <p th:if="${reviewState != null and reviewState.intervalDays() > 0}" class="next-review">
+                <span class="next-review-eyebrow">Следующее повторение</span>
+                <span class="next-review-when">через <span th:text="${reviewState.intervalDays()}">1</span> дн.</span>
+            </p>
+
+            <!-- Хендофф-3, Этап 4: distractor-анализ НА ПОВЕРХНОСТИ — компактные строки
+                 «B — неверно. <причина>» по каждому НЕверному варианту (не под «Подробнее»). -->
+            <div class="explanation-panel distractor-panel" th:if="${hasDistractorAnalysis}">
+                <span class="explanation-eyebrow">Почему другие варианты не подходят</span>
+                <div class="distractor-list">
+                    <div th:each="opt,it : ${result.options}"
+                         th:if="${opt.explanation != null and !opt.explanation.isBlank() and opt.id != result.correct.id}"
+                         th:class="${opt.id == result.selected.id ? 'distractor-row distractor-row-mine' : 'distractor-row'}">
+                        <strong class="distractor-letter" th:text="${'ABCDEFGH'.substring(it.index, it.index + 1)} + ' — неверно.'">B — неверно.</strong>
+                        <span class="distractor-reason markdown-content" th:utext="${@markdownRenderService.toInlineHtml(opt.explanation)}">причина</span>
                     </div>
                 </div>
-            </details>
+            </div>
+
+            <!-- «Дополнительно»: остаток разбора (после лид-абзаца) как info-поверхность. -->
+            <div th:if="${answerRestHtml != null and !answerRestHtml.isBlank() and answerLeadHtml != null and !answerLeadHtml.isBlank()}"
+                 class="explanation-panel additional-panel">
+                <span class="explanation-eyebrow">Дополнительно</span>
+                <div class="answer markdown-content" th:utext="${answerRestHtml}"></div>
+            </div>
 
             <details th:if="${reviewState != null}" class="sm2-details">
                 <summary>SM-2 состояние</summary>
