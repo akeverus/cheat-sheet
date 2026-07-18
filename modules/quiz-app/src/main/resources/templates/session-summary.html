@@ -11,48 +11,58 @@
     <div class="shell-main">
         <th:block th:replace="~{fragments/topbar :: topbar}"></th:block>
 <main id="main-content" class="ed-page" tabindex="-1">
-<section class="card summary-score">
-    <!-- Заголовок карточки счёта: скрыт визуально (число + подпись «Точность
-         сессии» несут смысл на экране), но даёт SR-навигации по заголовкам якорь
-         на главный результат — паритет с h2 секций «Результаты по темам»/«Ошибки»/
-         «Рекомендации». Без него навигация по H перепрыгивала счёт (самое важное).
-         Только h2 (без aria-label на section) — точный паритет с секциями-сёстрами,
-         не плодим region-landmark на одной карточке из четырёх. -->
+<!-- Этап 6: hero-карточка итогов. Слева — score-ring (SSR-дуга по accuracy,
+     без инлайн-style: длина дуги задаётся presentation-атрибутом stroke-dasharray),
+     справа — режим-бейдж + «N из M верных» + actionable-итог + 3 метрики
+     (Время/Среднее/На повторение). XP и «новый рекорд» из прототипа НЕ рендерим:
+     таких данных в SessionSummary нет — не фабрикуем. Среднее время вычисляется
+     из duration/totalQuestions (готового поля нет, но арифметика честная). -->
+<section class="card summary-hero"
+         th:with="accInt=${#numbers.formatDecimal(summary.accuracy, 1, 0)}">
+    <!-- Заголовок карточки счёта: скрыт визуально (ring-число + метки несут смысл
+         на экране), но даёт SR-навигации по заголовкам якорь на главный результат —
+         паритет с h2 секций «Результаты по темам»/«Ошибки». -->
     <h2 class="summary-section-title visually-hidden">Результат сессии</h2>
-    <div class="summary-mode-line" th:text="${@modeUtils.displayName(summary.mode)}"></div>
-    <div class="summary-score-value"
-         th:classappend="${summary.accuracy >= 80} ? 'text-success' : (${summary.accuracy >= 50} ? 'text-warning' : 'text-danger')"
-         th:text="${summary.accuracyFormatted + '%'}">0%</div>
-    <div class="summary-score-label">Точность сессии</div>
-    <!-- FLOW-SUMMARY-b: краткий actionable-итог под числом. «Требуют разбора» =
-         неверные + «не знаю» (unknownCount появится в UI с FLOW-03b, сейчас 0 —
-         rollup корректен). Русская форма склоняется по mod-10/mod-100. -->
-    <div class="summary-headline"
-         th:with="needs=${summary.wrongCount + summary.unknownCount},
-                  w=${needs % 10 == 1 and needs % 100 != 11 ? 'вопрос требует' : ((needs % 10 >= 2 and needs % 10 <= 4) and (needs % 100 &lt; 12 or needs % 100 &gt; 14) ? 'вопроса требуют' : 'вопросов требуют')}"
-         th:text="${needs > 0 ? needs + ' ' + w + ' разбора' : 'Без ошибок — отличный результат'}">Итог</div>
-    <!-- FLOW-03b: 4-я плитка «Не знаю» (unknownCount) появляется только когда
-         были честные пропуски (>0) — постоянный «0» был бы шумом. Класс
-         has-unknown переключает сетку на 2×2 / 4-в-ряд (см. base.css). -->
-    <div class="stats-grid" th:classappend="${summary.unknownCount > 0} ? ' has-unknown'">
-        <div class="stat-item">
-            <span class="stat-label">Всего</span>
-            <div class="stat-value" th:text="${summary.totalQuestions}">0</div>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">Верно</span>
-            <div class="stat-value" th:text="${summary.correctCount}">0</div>
-        </div>
-        <div class="stat-item">
-            <span class="stat-label">Ошибки</span>
-            <div class="stat-value" th:text="${summary.wrongCount}">0</div>
-        </div>
-        <div class="stat-item" th:if="${summary.unknownCount > 0}">
-            <span class="stat-label">Не знаю</span>
-            <div class="stat-value" th:text="${summary.unknownCount}">0</div>
+    <div class="score-ring"
+         th:classappend="${summary.accuracy >= 80} ? ' ring-success' : (${summary.accuracy >= 50} ? ' ring-warning' : ' ring-danger')">
+        <svg class="score-ring-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+            <circle class="score-ring-track" cx="60" cy="60" r="52"></circle>
+            <circle class="score-ring-value" cx="60" cy="60" r="52"
+                    th:attr="stroke-dasharray=${#numbers.formatDecimal(summary.accuracy * 3.26726, 1, 2) + ' 400'}"></circle>
+        </svg>
+        <strong class="summary-score-value"
+                th:classappend="${summary.accuracy >= 80} ? ' text-success' : (${summary.accuracy >= 50} ? ' text-warning' : ' text-danger')"
+                th:text="${summary.accuracyFormatted + '%'}">0%</strong>
+    </div>
+    <div class="summary-hero-body">
+        <span class="badge summary-mode-line" th:text="${@modeUtils.displayName(summary.mode)}">Режим</span>
+        <p class="summary-hero-count">
+            <strong th:text="${summary.correctCount}">0</strong> из
+            <strong th:text="${summary.totalQuestions}">0</strong> верных ответов
+        </p>
+        <!-- FLOW-SUMMARY-b: краткий actionable-итог. «Требуют разбора» = неверные +
+             «не знаю». Русская форма склоняется по mod-10/mod-100. -->
+        <p class="summary-headline"
+           th:with="needs=${summary.wrongCount + summary.unknownCount},
+                    w=${needs % 10 == 1 and needs % 100 != 11 ? 'вопрос требует' : ((needs % 10 >= 2 and needs % 10 <= 4) and (needs % 100 &lt; 12 or needs % 100 &gt; 14) ? 'вопроса требуют' : 'вопросов требуют')}"
+           th:text="${needs > 0 ? needs + ' ' + w + ' разбора' : 'Без ошибок — отличный результат'}">Итог</p>
+        <div class="summary-metrics">
+            <div class="metric">
+                <span class="metric-label">Время</span>
+                <span class="metric-value summary-duration" th:text="${summary.formattedDuration}">—</span>
+            </div>
+            <div class="metric" th:if="${summary.duration != null and summary.totalQuestions > 0}"
+                 th:with="avg=${summary.duration.toSeconds() / summary.totalQuestions}">
+                <span class="metric-label">Среднее</span>
+                <span class="metric-value"
+                      th:text="${(avg / 60) + ':' + (avg % 60 < 10 ? '0' + (avg % 60) : (avg % 60))}">0:00</span>
+            </div>
+            <div class="metric metric-due" th:if="${summary.dueCount > 0}">
+                <span class="metric-label">На повторение</span>
+                <span class="metric-value" th:text="${summary.dueCount}">0</span>
+            </div>
         </div>
     </div>
-    <div class="summary-duration" th:text="'Время: ' + ${summary.formattedDuration}"></div>
 </section>
 
 <!-- Тулбар «поделиться/печать»: инжектится скриптом ниже (PE — без JS нет
@@ -105,9 +115,18 @@
             <td class="summary-td-center" role="cell" data-label="Всего" th:text="${tr.total()}">0</td>
             <td class="summary-td-center summary-td-correct" role="cell" data-label="Верно" th:text="${tr.correct()}">0</td>
             <td class="summary-td-center summary-td-wrong" role="cell" data-label="Ошибки" th:text="${tr.wrong()}">0</td>
+            <!-- Этап 6: topic progress-bar. Ширина заливки задаётся data-progress +
+                 гидрацией скриптом (SSR без инлайн-style), цвет-тир — классом на
+                 сервере. Число сохранено рядом для точности и SR. -->
             <td class="summary-td-center summary-td-accuracy" role="cell" data-label="Точность"
-                th:classappend="${tr.accuracy() >= 80} ? 'text-success' : (${tr.accuracy() >= 50} ? 'text-warning' : 'text-danger')"
-                th:text="${#numbers.formatDecimal(tr.accuracy(), 1, 1) + '%'}">0%</td>
+                th:classappend="${tr.accuracy() >= 80} ? 'text-success' : (${tr.accuracy() >= 50} ? 'text-warning' : 'text-danger')">
+                <span class="topic-bar" aria-hidden="true">
+                    <span class="topic-bar-fill"
+                          th:classappend="${tr.accuracy() >= 80} ? ' fill-success' : (${tr.accuracy() >= 50} ? ' fill-warning' : ' fill-danger')"
+                          th:attr="data-progress=${#numbers.formatDecimal(tr.accuracy(), 1, 1)}"></span>
+                </span>
+                <span class="summary-accuracy-num" th:text="${#numbers.formatDecimal(tr.accuracy(), 1, 1) + '%'}">0%</span>
+            </td>
         </tr>
         </tbody>
     </table>
@@ -139,19 +158,24 @@
      + @media print в base.css прячет навигацию и делает чистый лист. -->
 <script>
   (function () {
-    var scoreCard = document.querySelector('.summary-score');
+    var scoreCard = document.querySelector('.summary-hero');
     if (!scoreCard) return;
     function clean(s) { return (s || '').trim().replace(/\s+/g, ' '); }
     function txt(sel, root) { var e = (root || document).querySelector(sel); return e ? clean(e.textContent) : ''; }
+    // Гидрация topic-bar: ширина заливки из data-progress (SSR не пишет инлайн-style).
+    document.querySelectorAll('.topic-bar-fill[data-progress]').forEach(function (el) {
+      var p = parseFloat(el.getAttribute('data-progress'));
+      if (!isNaN(p)) el.style.width = Math.max(0, Math.min(100, p)) + '%';
+    });
     function buildShareText() {
       var lines = ['Итоги сессии — Подготовка к собеседованию'];
       var mode = txt('.summary-mode-line'); if (mode) lines.push('Режим: ' + mode);
       var acc = txt('.summary-score-value'); if (acc) lines.push('Точность сессии: ' + acc);
-      document.querySelectorAll('.summary-score .stat-item').forEach(function (s) {
-        var label = txt('.stat-label', s), val = txt('.stat-value', s);
+      var count = txt('.summary-hero-count'); if (count) lines.push(count);
+      document.querySelectorAll('.summary-metrics .metric').forEach(function (s) {
+        var label = txt('.metric-label', s), val = txt('.metric-value', s);
         if (label && val) lines.push(label + ': ' + val);
       });
-      var dur = txt('.summary-duration'); if (dur) lines.push(dur);
       var rows = document.querySelectorAll('.summary-table tbody tr');
       if (rows.length) {
         lines.push('', 'По темам:');

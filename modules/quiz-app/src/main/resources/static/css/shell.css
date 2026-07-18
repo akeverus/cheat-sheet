@@ -449,3 +449,153 @@ html[data-design] .brand:focus-visible {
   html[data-design] .mobile-nav .icon { width: 17px; height: 17px; }
   html[data-design] .page-title { font-size: 28px; }
 }
+
+/* ===========================================================================
+   Этап 6 редизайна: hero-итог сессии (session-summary.html)
+   Ринг accuracy слева + режим/счёт/метрики справа. Грузится после base.css,
+   перекрывает старую центрированную .summary-score-раскладку (элементы .summary-score
+   /.stats-grid удалены из шаблона; их правила в base.css теперь мертвы — уберутся
+   в Этапе 10 при чистке legacy). Все селекторы под html[data-design].
+   =========================================================================== */
+html[data-design] .summary-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-6);
+  text-align: left;
+  padding: var(--space-6);
+}
+/* score-ring: SVG-дуга, заполнение задаётся stroke-dasharray (SSR-атрибут). */
+html[data-design] .score-ring {
+  position: relative;
+  flex: none;
+  width: 128px;
+  height: 128px;
+  display: grid;
+  place-items: center;
+}
+html[data-design] .score-ring-svg { grid-area: 1 / 1; width: 100%; height: 100%; transform: rotate(-90deg); }
+html[data-design] .score-ring-track {
+  fill: none;
+  stroke: var(--color-border-secondary);
+  stroke-width: 8;
+}
+html[data-design] .score-ring-value {
+  fill: none;
+  stroke: var(--color-accent-primary);
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dasharray var(--duration-slow, 400ms) var(--easing-standard, ease);
+}
+html[data-design] .score-ring.ring-success .score-ring-value { stroke: var(--color-status-success); }
+html[data-design] .score-ring.ring-warning .score-ring-value { stroke: var(--color-status-warning); }
+html[data-design] .score-ring.ring-danger  .score-ring-value { stroke: var(--color-status-error); }
+/* Центр-число: в той же grid-ячейке 1/1, что и SVG → накладывается по центру
+   (place-items:center на .score-ring). Перекрываем base .summary-score-value
+   (равная спец., shell грузится позже — выигрывает по порядку). */
+html[data-design] .score-ring .summary-score-value {
+  grid-area: 1 / 1;
+  z-index: 1;
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  margin: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-design] .score-ring-value { transition: none; }
+}
+
+html[data-design] .summary-hero-body {
+  flex: 1 1 260px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+/* Режим-бейдж: гасим base .summary-mode-line (mono-caps без фона), оставляем pill. */
+html[data-design] .summary-hero .summary-mode-line {
+  margin-bottom: 0;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+}
+html[data-design] .summary-hero-count {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-xl);
+  color: var(--color-text-primary);
+  margin: var(--space-1) 0 0;
+}
+html[data-design] .summary-hero-count strong { font-weight: var(--font-weight-bold); }
+html[data-design] .summary-hero .summary-headline {
+  margin-top: 0;
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
+}
+/* 3 метрики: Время / Среднее / На повторение */
+html[data-design] .summary-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+html[data-design] .summary-metrics .metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) var(--space-4);
+  border: var(--rule-weight, 1px) solid var(--color-border-primary);
+  border-radius: var(--border-radius-md);
+  background: var(--color-bg-primary);
+  min-width: 0;
+}
+html[data-design] .summary-metrics .metric-label {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+html[data-design] .summary-metrics .metric-value {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+html[data-design] .summary-metrics .metric.metric-due .metric-value { color: var(--color-accent-strong); }
+
+/* Topic progress-bar в ячейке точности summary-table. */
+html[data-design] .summary-td-accuracy { min-width: 120px; }
+html[data-design] .topic-bar {
+  display: block;
+  height: 6px;
+  border-radius: var(--border-radius-full);
+  background: var(--color-border-secondary);
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+html[data-design] .topic-bar-fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: var(--color-accent-primary);
+  transition: width var(--duration-slow, 400ms) var(--easing-standard, ease);
+}
+html[data-design] .topic-bar-fill.fill-success { background: var(--color-status-success); }
+html[data-design] .topic-bar-fill.fill-warning { background: var(--color-status-warning); }
+html[data-design] .topic-bar-fill.fill-danger  { background: var(--color-status-error); }
+html[data-design] .summary-accuracy-num {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-design] .topic-bar-fill { transition: none; }
+}
+/* На мобиле (card-view summary-table) бар растягиваем на всю ширину строки. */
+@media (max-width: 640px) {
+  html[data-design] .summary-hero { justify-content: center; text-align: center; }
+  html[data-design] .summary-hero-body { align-items: center; }
+  html[data-design] .summary-metrics { justify-content: center; }
+}
