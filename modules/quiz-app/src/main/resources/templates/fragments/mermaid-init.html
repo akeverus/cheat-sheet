@@ -39,7 +39,56 @@
         // включает AI-вывод (недоверенные данные). 'antiscript' рендерит HTML в
         // label-ах (диаграммы используют <b>/<br/>), но вырезает <script> и
         // обработчики событий → XSS-поверхность 'loose' закрыта, формат сохранён.
-        mermaid.initialize({startOnLoad: false, theme: 'neutral', securityLevel: 'antiscript'});
+        //
+        // Тема mermaid = 'base' + themeVariables из ЖИВЫХ CSS-токенов текущей темы
+        // (реставр handoff-3): диаграммы вписаны в «терминальную» палитру —
+        // surface-soft узлы с border-strong, teal-акцент, тёмный фон — вместо
+        // белых боксов 'neutral', выбивавшихся из тёмного дефолта. data-theme уже
+        // разрешён pre-paint-скриптом (head.html) до DOMContentLoaded, поэтому по
+        // умолчанию (dark) берутся тёмные токены. Смена темы после рендера цвета не
+        // перекрашивает (SVG запечён) — как и раньше; дефолт-dark это покрывает.
+        var mmStyle = getComputedStyle(document.documentElement);
+        function mmTok(name, fb) { return (mmStyle.getPropertyValue(name) || '').trim() || fb; }
+        var mmBg      = mmTok('--color-bg-secondary', '#0d1b22');
+        var mmSurface = mmTok('--color-surface-soft', '#102029');
+        var mmRaised  = mmTok('--color-bg-tertiary', '#12252e');
+        var mmBorder  = mmTok('--color-border-strong', '#335463');
+        var mmText    = mmTok('--color-text-primary', '#eef6f5');
+        var mmText2   = mmTok('--color-text-secondary', '#a8b9bd');
+        var mmLine    = mmTok('--color-text-tertiary', '#8397a0');
+        var mmAccent  = mmTok('--color-accent-primary', '#39d0c7');
+        var mmFont    = mmTok('--font-family-body', 'Inter, system-ui, sans-serif');
+        mermaid.initialize({
+            startOnLoad: false,
+            securityLevel: 'antiscript',
+            theme: 'base',
+            themeVariables: {
+                darkMode: document.documentElement.getAttribute('data-theme') !== 'light',
+                background: mmBg,
+                fontFamily: mmFont,
+                primaryColor: mmSurface,
+                primaryTextColor: mmText,
+                primaryBorderColor: mmBorder,
+                secondaryColor: mmRaised,
+                secondaryTextColor: mmText,
+                secondaryBorderColor: mmBorder,
+                tertiaryColor: mmRaised,
+                tertiaryTextColor: mmText,
+                tertiaryBorderColor: mmBorder,
+                mainBkg: mmSurface,
+                nodeBorder: mmBorder,
+                nodeTextColor: mmText,
+                lineColor: mmLine,
+                edgeLabelBackground: mmBg,
+                clusterBkg: mmBg,
+                clusterBorder: mmBorder,
+                titleColor: mmText,
+                labelColor: mmText,
+                labelTextColor: mmText,
+                textColor: mmText2,
+                accent: mmAccent
+            }
+        });
         document.addEventListener('DOMContentLoaded', async function() {
             var els = document.querySelectorAll('.mermaid');
             for (var i = 0; i < els.length; i++) {

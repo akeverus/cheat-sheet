@@ -957,9 +957,27 @@ html[data-design="instrument"] #interview-options label:hover {
    после generic-правила (как это делает swiss). Найдено live-QA R0.54. */
 
 /* Ring-бейдж буквы: тише (tertiary); при выборе общий checked::before зальёт
-   его accent-ом — не дублируем. */
+   его accent-ом — не дублируем.
+   Реставр handoff-3 (макет question-desktop): буква-чип КВАДРАТНАЯ (border-radius
+   sm, не круг), фикс 26px, mono 12px — «терминальные» letter-chips прототипа
+   (.letter 26px, radius 7px). При выборе общий checked::before красит фон teal. */
 html[data-design="instrument"] #interview-options label::before {
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
+  border-color: var(--color-border-strong);
+  border-radius: var(--border-radius-sm);
+  width: 26px; height: 26px;
+  font-size: 12px;
+  align-self: start;
+}
+
+/* Компактные строки-варианты (макет): меньше воздуха и кегль ближе к базовому,
+   чтобы 4 варианта читались как список выбора, а не как крупные карточки. */
+html[data-design="instrument"] #interview-options label {
+  padding: 15px 16px;
+  gap: 12px;
+  font-size: var(--font-size-base);
+  line-height: 1.48;
+  align-items: start;
 }
 
 /* Объяснения вариантов (app.js/result.html: .option-explanation +
@@ -1077,6 +1095,38 @@ html[data-design] .focus-page #interview-submit.is-submitting::after {
 @keyframes btn-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) {
   html[data-design] .focus-page #interview-submit.is-submitting::after { animation: none; }
+}
+
+/* Реставр handoff-3 (макет): primary-CTA «Проверить ответ» — teal-градиент
+   (.btn.primary прототипа: linear-gradient(90deg, accent-2, accent)) + мягкое
+   teal-свечение. Специфичность равна базовому правилу (1,2,1) — выигрыш по
+   порядку (это правило ниже). Тот же язык применяем к .flashcard-reveal-btn
+   (reveal/study-confirm) и #next-question, чтобы главные действия флоу были
+   визуально едины. Ховер — сдвиг градиента ярче; глушим у is-disabled ниже. */
+html[data-design="instrument"] .focus-page #interview-submit,
+html[data-design="instrument"] .flashcard-reveal-btn,
+html[data-design="instrument"] .focus-page .next-btn {
+  background: linear-gradient(90deg, var(--color-accent-2), var(--color-accent-primary));
+  border-color: transparent;
+  box-shadow: 0 10px 24px rgba(57, 208, 199, 0.15);
+  font-weight: var(--font-weight-bold);
+}
+html[data-design="instrument"] .focus-page #interview-submit:hover:not(:disabled),
+html[data-design="instrument"] .flashcard-reveal-btn:hover:not(:disabled),
+html[data-design="instrument"] .focus-page .next-btn:hover:not(:disabled) {
+  background: linear-gradient(90deg, var(--color-accent-primary), var(--color-accent-primary-hover));
+  border-color: transparent;
+}
+/* disabled/submitting теряют градиент-glow — не обещаем «готово к клику»,
+   когда кнопка недоступна (правило ниже базового submitting, побеждает порядком). */
+html[data-design="instrument"] .focus-page #interview-submit:disabled,
+html[data-design="instrument"] .focus-page #interview-submit.is-disabled {
+  background: var(--color-bg-tertiary);
+  box-shadow: none;
+}
+html[data-design="instrument"] .focus-page #interview-submit.is-submitting {
+  background: linear-gradient(90deg, var(--color-accent-2), var(--color-accent-primary));
+  box-shadow: none;
 }
 
 /* Зона действия как СОБРАННЫЙ футер сцены, а не сиротливая кнопка в нижнем левом
