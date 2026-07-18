@@ -11,31 +11,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Actuator` — это библиотека логирования, заменяющая `Logback` и `SLF4J` собственной реализацией записи логов в файлы.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Логирование остаётся на `Logback`/`SLF4J`; Actuator лишь даёт эндпоинт `/loggers` для просмотра и смены уровней на лету.",
-                "source_of_confusion": "Эндпоинт `/actuator/loggers` создаёт впечатление, что Actuator сам пишет логи.",
-                "if_it_were_true": "Тогда удаление `Logback` ничего бы не ломало, но без бэкенда логирования приложение писать логи не сможет.",
-                "how_it_should_be": "Actuator управляет уровнями существующего логгера, а запись делает `Logback`/`SLF4J`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`Actuator` — это встроенный в `Spring Boot` web-фреймворк для написания REST-контроллеров бизнес-логики вместо `Spring MVC`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "REST-контроллеры пишут на `Spring MVC`/`WebFlux`; Actuator добавляет лишь технические management-эндпоинты под `/actuator/*`.",
-                "source_of_confusion": "Actuator-эндпоинты тоже отвечают по HTTP, и их путают с пользовательским API.",
-                "if_it_were_true": "Тогда `@RestController` был бы не нужен, но именно он, а не Actuator, обслуживает бизнес-запросы.",
-                "how_it_should_be": "Actuator — для операционных эндпоинтов; бизнес-API остаётся на `Spring MVC`/`WebFlux`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`Spring Boot Actuator` — модуль `Spring Boot`, добавляющий production-ready возможности для мониторинга и управления приложением через HTTP-эндпоинты и `JMX`: health checks зависимостей, метрики производительности, аудит событий и управление на лету (уровни логирования, graceful shutdown). Это ключевой элемент observability-стека микросервиса.",
+              "text": "`Spring Boot Actuator` — модуль `Spring Boot` с production-ready эндпоинтами для мониторинга и управления через HTTP и `JMX`: health-пробы, метрики, аудит событий и смена уровней логирования на лету.",
               "correct": true,
               "sections": {
                 "explanation": "Actuator поставляет данные о состоянии приложения наружу: `/actuator/health` для проб `Kubernetes`, `/actuator/metrics` и `/actuator/prometheus` для систем мониторинга, `/actuator/loggers` для динамического управления логами.",
@@ -46,9 +22,33 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "`Spring Boot Actuator` — подсистема логирования `Spring Boot`, которая заменяет `Logback` и `SLF4J` собственной реализацией записи логов в файлы и через эндпоинт `/actuator/loggers` даёт менять уровни на лету.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Логирование остаётся на `Logback`/`SLF4J`; Actuator лишь даёт эндпоинт `/loggers` для просмотра и смены уровней на лету.",
+                "source_of_confusion": "Эндпоинт `/actuator/loggers` создаёт впечатление, что Actuator сам пишет логи.",
+                "if_it_were_true": "Тогда удаление `Logback` ничего бы не ломало, но без бэкенда логирования приложение писать логи не сможет.",
+                "how_it_should_be": "Actuator управляет уровнями существующего логгера, а запись делает `Logback`/`SLF4J`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`Spring Boot Actuator` — встроенный в `Spring Boot` web-фреймворк для написания REST-контроллеров бизнес-логики вместо `Spring MVC`, обслуживающий пользовательские HTTP-запросы под своим базовым путём.",
+              "correct": false,
+              "sections": {
+                "what_actually": "REST-контроллеры пишут на `Spring MVC`/`WebFlux`; Actuator добавляет лишь технические management-эндпоинты под `/actuator/*`.",
+                "source_of_confusion": "Actuator-эндпоинты тоже отвечают по HTTP, и их путают с пользовательским API.",
+                "if_it_were_true": "Тогда `@RestController` был бы не нужен, но именно он, а не Actuator, обслуживает бизнес-запросы.",
+                "how_it_should_be": "Actuator — для операционных эндпоинтов; бизнес-API остаётся на `Spring MVC`/`WebFlux`."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "`Actuator` — это система сборки `Spring Boot`, которая компилирует проект и собирает исполняемый JAR вместо `Gradle` или `Maven`.",
+              "text": "`Spring Boot Actuator` — система сборки `Spring Boot`, которая компилирует проект и собирает исполняемый fat-JAR вместо `Gradle` или `Maven`, подготавливая приложение к запуску одной командой.",
               "correct": false,
               "sections": {
                 "what_actually": "Сборку выполняют `Gradle`/`Maven` со `spring-boot-gradle-plugin`; Actuator же предоставляет runtime-эндпоинты мониторинга и управления.",
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "После подключения стартера через HTTP сразу открыты все эндпоинты, включая `/env`, `/beans` и `/heapdump`.",
+              "text": "Подключают стартер `spring-boot-starter-actuator`, и через HTTP тут же становятся доступны все эндпоинты, включая `/env`, `/beans` и `/heapdump`, — отдельная настройка экспозиции для этого не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию через HTTP экспонирован только `health`; остальные нужно явно добавить в `exposure.include`.",
@@ -83,7 +83,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Нужно вручную написать `@RestController` с методами `/health` и `/metrics` — Actuator не поставляет готовых эндпоинтов, а лишь даёт интерфейсы.",
+              "text": "Подключают стартер `org.springframework.boot:spring-boot-starter-actuator` (в `Maven` — `<dependency>`); эндпоинты регистрирует автоконфигурация, но по HTTP по умолчанию открыт только `/actuator/health`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Стартер тянет автоконфигурацию, которая поднимает management-эндпоинты. Дополнительные эндпоинты нужно явно экспонировать через `management.endpoints.web.exposure.include`.",
+                "example": "В `build.gradle`: `implementation 'org.springframework.boot:spring-boot-starter-actuator'` — после рестарта доступен `GET /actuator/health`.",
+                "when_to_apply": "Используют при старте любого сервиса, которому нужны health-пробы или метрики.",
+                "edge_cases": "Для формата `Prometheus` одного стартера мало — нужен ещё `micrometer-registry-prometheus`, иначе `/actuator/prometheus` не появится.",
+                "related": "[[spring-boot-actuator-interview#Q1]] что такое Actuator; [[spring-boot-actuator-interview#Q5]] экспозиция эндпоинтов; [[spring-boot-actuator-interview#Q24]] интеграция с Prometheus."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Стартер `spring-boot-starter-actuator` поставляет одни интерфейсы без реализации, поэтому `/health` и `/metrics` придётся вручную написать методами `@RestController`: готовых эндпоинтов модуль сам не поднимает.",
               "correct": false,
               "sections": {
                 "what_actually": "Эндпоинты `/health`, `/metrics`, `/info` создаются автоконфигурацией стартера автоматически — писать контроллеры не нужно.",
@@ -93,28 +106,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Actuator нельзя подключить стартером — его включают флагом `spring.actuator.enabled=true` в `application.yml` без добавления зависимости.",
+              "order": 3,
+              "label": "D",
+              "text": "Стартер для этого не нужен: Actuator включают флагом `spring.actuator.enabled=true` в `application.yml`, и автоконфигурация поднимает эндпоинты без добавления зависимости в classpath приложения.",
               "correct": false,
               "sections": {
                 "what_actually": "Без зависимости `spring-boot-starter-actuator` в classpath никакого флага достаточно не будет — классы Actuator просто отсутствуют.",
                 "source_of_confusion": "Многие фичи Spring включаются property-флагом, и это правило ошибочно распространяют на Actuator.",
                 "if_it_were_true": "Тогда флаг работал бы в пустом проекте, но без зависимости автоконфигурация Actuator не запустится.",
                 "how_it_should_be": "Сначала добавляют стартер в зависимости, и только потом настраивают поведение через `management.*`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Достаточно добавить один стартер — `org.springframework.boot:spring-boot-starter-actuator` (в `Gradle`) или соответствующую `<dependency>` в `Maven`; после этого Actuator автоматически регистрирует эндпоинты, но через HTTP по умолчанию открыт только `/actuator/health`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Стартер тянет автоконфигурацию, которая поднимает management-эндпоинты. Дополнительные эндпоинты нужно явно экспонировать через `management.endpoints.web.exposure.include`.",
-                "example": "В `build.gradle`: `implementation 'org.springframework.boot:spring-boot-starter-actuator'` — после рестарта доступен `GET /actuator/health`.",
-                "when_to_apply": "Используют при старте любого сервиса, которому нужны health-пробы или метрики.",
-                "edge_cases": "Для формата `Prometheus` одного стартера мало — нужен ещё `micrometer-registry-prometheus`, иначе `/actuator/prometheus` не появится.",
-                "related": "[[spring-boot-actuator-interview#Q1]] что такое Actuator; [[spring-boot-actuator-interview#Q5]] экспозиция эндпоинтов; [[spring-boot-actuator-interview#Q24]] интеграция с Prometheus."
               }
             }
           ]
@@ -131,7 +131,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Actuator предоставляет ровно три эндпоинта — `health`, `info` и `metrics`; всё остальное нужно писать самостоятельно как кастомные эндпоинты.",
+              "text": "Actuator даёт готовые эндпоинты (`health`, `info`, `metrics`, `env`, `beans`, `loggers` и др.); они делятся на technology-agnostic (по HTTP и `JMX`) и web-only (`heapdump`, `logfile`, `prometheus`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Большинство эндпоинтов работают и через HTTP, и через JMX. Web-only существуют только по HTTP, потому что отдают бинарные данные или текст, неудобные для JMX.",
+                "example": "`GET /actuator/beans` вернёт список бинов контекста, `GET /actuator/mappings` — все `@RequestMapping`, а `GET /actuator/heapdump` отдаст HPROF-файл (только web).",
+                "when_to_apply": "Перечень используют при выборе минимального production-набора для экспозиции (обычно `health,info,metrics,prometheus`).",
+                "edge_cases": "`shutdown` по умолчанию выключен (не только не экспонирован) — его нужно явно включить через `management.endpoint.shutdown.enabled=true`.",
+                "related": "[[spring-boot-actuator-interview#Q4]] discovery endpoint; [[spring-boot-actuator-interview#Q5]] экспозиция; [[spring-boot-actuator-interview#Q38]] heapdump и threaddump."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Actuator поставляет три эндпоинта — `health`, `info` и `metrics`; остальное (`env`, `beans`, `loggers`, `threaddump`) в комплект не входит и реализуется самостоятельно как кастомные `@Endpoint`-классы.",
               "correct": false,
               "sections": {
                 "what_actually": "Встроенных эндпоинтов десятки: `env`, `beans`, `mappings`, `loggers`, `threaddump`, `prometheus` и другие идут из коробки.",
@@ -141,9 +154,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`heapdump` и `prometheus` — это technology-agnostic эндпоинты, одинаково доступные и через HTTP, и через `JMX`.",
+              "order": 2,
+              "label": "C",
+              "text": "Эндпоинты `heapdump` и `prometheus` — technology-agnostic: как `health` и `metrics`, они доступны и по HTTP, и через `JMX`-консоль, так что HPROF-дамп можно снять по любому из двух каналов.",
               "correct": false,
               "sections": {
                 "what_actually": "`heapdump`, `logfile` и `prometheus` — web-only: они отдают бинарные/текстовые данные и через JMX недоступны.",
@@ -153,28 +166,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Все встроенные эндпоинты доступны только через `JMX` и не имеют HTTP-представления — для HTTP их нужно оборачивать вручную.",
+              "order": 3,
+              "label": "D",
+              "text": "Встроенные эндпоинты Actuator экспонируются по каналу `JMX` и собственного HTTP-представления не имеют; чтобы дойти до них по HTTP, поверх `MBean`-сервера пишут ручную web-обёртку на контроллере.",
               "correct": false,
               "sections": {
                 "what_actually": "Большинство эндпоинтов technology-agnostic и работают и по HTTP, и по JMX; часть (`prometheus`, `heapdump`) — вообще только web.",
                 "source_of_confusion": "JMX исторически ассоциируется с management, и его считают единственным каналом.",
                 "if_it_were_true": "Тогда `GET /actuator/health` по HTTP не отвечал бы, но это самый используемый HTTP-эндпоинт.",
                 "how_it_should_be": "Эндпоинты доступны по обоим каналам; web-only существуют именно для HTTP."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Actuator поставляет набор готовых эндпоинтов: `health`, `info`, `metrics`, `env`, `beans`, `mappings`, `loggers`, `threaddump`, `heapdump`, `prometheus`, `shutdown` и др.; они делятся на technology-agnostic (доступны и по HTTP, и по `JMX`) и web-only (`heapdump`, `logfile`, `prometheus`).",
-              "correct": true,
-              "sections": {
-                "explanation": "Большинство эндпоинтов работают и через HTTP, и через JMX. Web-only существуют только по HTTP, потому что отдают бинарные данные или текст, неудобные для JMX.",
-                "example": "`GET /actuator/beans` вернёт список бинов контекста, `GET /actuator/mappings` — все `@RequestMapping`, а `GET /actuator/heapdump` отдаст HPROF-файл (только web).",
-                "when_to_apply": "Перечень используют при выборе минимального production-набора для экспозиции (обычно `health,info,metrics,prometheus`).",
-                "edge_cases": "`shutdown` по умолчанию выключен (не только не экспонирован) — его нужно явно включить через `management.endpoint.shutdown.enabled=true`.",
-                "related": "[[spring-boot-actuator-interview#Q4]] discovery endpoint; [[spring-boot-actuator-interview#Q5]] экспозиция; [[spring-boot-actuator-interview#Q38]] heapdump и threaddump."
               }
             }
           ]
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Discovery endpoint — это эндпоинт `/actuator/health/discovery`, проверяющий доступность всех зарегистрированных HealthIndicator.",
+              "text": "Discovery endpoint — это подпуть `/actuator/health/discovery`, который агрегирует статусы всех зарегистрированных `HealthIndicator` и отдаёт общий `UP`/`DOWN` по внешним зависимостям инстанса.",
               "correct": false,
               "sections": {
                 "what_actually": "Такого пути нет; discovery — это корневой `/actuator` со ссылками, а агрегация индикаторов делается в `/actuator/health`.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Discovery endpoint автоматически находит и подключает к приложению все микросервисы в кластере по их health-статусу.",
+              "text": "Discovery endpoint автоматически находит другие микросервисы в кластере по их health-статусу и подключает их к приложению, поддерживая актуальный список инстансов для маршрутизации запросов.",
               "correct": false,
               "sections": {
                 "what_actually": "Он ничего не подключает: это просто `GET /actuator` со ссылками на эндпоинты текущего инстанса.",
@@ -215,19 +215,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Discovery endpoint — это механизм `Spring Cloud`, который регистрирует приложение в `Eureka` или `Consul` и не имеет отношения к Actuator.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Service discovery (`Eureka`/`Consul`) — отдельная тема; discovery endpoint Actuator — это корневой `/actuator` со списком эндпоинтов.",
-                "source_of_confusion": "Слово «discovery» сильно ассоциируется со service discovery в `Spring Cloud`.",
-                "if_it_were_true": "Тогда `GET /actuator` обращался бы к реестру сервисов, но он лишь перечисляет локальные эндпоинты.",
-                "how_it_should_be": "Discovery endpoint Actuator перечисляет management-эндпоинты; регистрацию в реестре делает `Spring Cloud`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Discovery endpoint — это корневой эндпоинт `/actuator`, который возвращает список всех доступных эндпоинтов с HATEOAS-ссылками (`_links`); его можно отключить через `management.endpoints.web.discovery.enabled=false`.",
+              "text": "Discovery endpoint — это корневой `/actuator`, возвращающий список доступных эндпоинтов с HATEOAS-ссылками (`_links`); отключается через `management.endpoints.web.discovery.enabled=false`.",
               "correct": true,
               "sections": {
                 "explanation": "При запросе `GET /actuator` отдаётся JSON с блоком `_links`, где каждый ключ — имя эндпоинта, а значение — объект с `href`. Это удобно для навигации инструментами и UI.",
@@ -235,6 +223,18 @@
                 "when_to_apply": "Полезен для автоматического обнаружения доступных эндпоинтов клиентами и панелями вроде `Spring Boot Admin`.",
                 "edge_cases": "На production discovery иногда отключают, чтобы не раскрывать перечень доступных management-эндпоинтов потенциальному злоумышленнику.",
                 "related": "[[spring-boot-actuator-interview#Q3]] список эндпоинтов; [[spring-boot-actuator-interview#Q5]] экспозиция; [[spring-boot-actuator-interview#Q29]] Spring Boot Admin."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Discovery endpoint — это механизм `Spring Cloud`, регистрирующий приложение в реестре `Eureka` или `Consul` и рассылающий его health-статус; к самому `Actuator` он отношения не имеет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Service discovery (`Eureka`/`Consul`) — отдельная тема; discovery endpoint Actuator — это корневой `/actuator` со списком эндпоинтов.",
+                "source_of_confusion": "Слово «discovery» сильно ассоциируется со service discovery в `Spring Cloud`.",
+                "if_it_were_true": "Тогда `GET /actuator` обращался бы к реестру сервисов, но он лишь перечисляет локальные эндпоинты.",
+                "how_it_should_be": "Discovery endpoint Actuator перечисляет management-эндпоинты; регистрацию в реестре делает `Spring Cloud`."
               }
             }
           ]
@@ -251,20 +251,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Экспозицией управляют свойствами `management.endpoints.web.exposure.include`/`exclude` (для HTTP) и `management.endpoints.jmx.exposure.include` (для JMX); по умолчанию через HTTP открыт только `health`, а значение `\"*\"` (в кавычках в `YAML`) открывает все.",
-              "correct": true,
-              "sections": {
-                "explanation": "`include` задаёт явный список или `*`, `exclude` убирает отдельные эндпоинты из набора. Типичная production-конфигурация — `include: \"health,info,metrics,prometheus\"`.",
-                "example": "`management.endpoints.web.exposure.include: \"health,info,metrics,prometheus\"` откроет именно эти четыре эндпоинта, остальные останутся недоступны по HTTP.",
-                "when_to_apply": "Настраивают на старте каждого сервиса, чтобы наружу торчал только необходимый минимум эндпоинтов.",
-                "edge_cases": "В `YAML` символ `*` без кавычек воспринимается как якорь и ломает парсинг — поэтому его всегда заключают в кавычки.",
-                "related": "[[spring-boot-actuator-interview#Q3]] список эндпоинтов; [[spring-boot-actuator-interview#Q7]] включение эндпоинта; [[spring-boot-actuator-interview#Q41]] whitelist на production."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Экспозиция настраивается одним глобальным флагом `management.exposure=all|none`, отдельный список эндпоинтов задать нельзя.",
+              "text": "Экспозицией заведует один глобальный флаг `management.exposure=all|none`: он разом открывает или закрывает эндпоинты и по HTTP, и по JMX, а перечислить набор `health,info,metrics` через него нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "Экспозиция гибкая: `include`/`exclude` принимают список имён или `*`, причём раздельно для web и JMX.",
@@ -274,9 +261,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "По умолчанию через HTTP открыты все эндпоинты, а через `JMX` — ни одного; чтобы что-то закрыть, используют `exclude`.",
+              "order": 1,
+              "label": "B",
+              "text": "По умолчанию через HTTP экспонированы все эндпоинты — `health`, `env`, `beans`, `mappings` и прочие, — а через JMX не открыт ни один; чтобы убрать лишнее из HTTP, их перечисляют в `exposure.exclude`.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию по HTTP открыт лишь `health`, а через JMX в новых версиях экспозиция тоже ограничена; всё лишнее открывают явно.",
@@ -286,15 +273,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Свойство `exposure.include` управляет включённостью эндпоинта (создаётся ли бин), а не его доступностью по HTTP.",
+              "order": 2,
+              "label": "C",
+              "text": "Свойство `management.endpoints.web.exposure.include` управляет тем, создаётся ли бин эндпоинта в контексте, то есть его включённостью, а не доступностью по HTTP; без записи в `include` бин не создаётся.",
               "correct": false,
               "sections": {
                 "what_actually": "`exposure.include` управляет именно экспозицией (доступностью по каналу); включённость — это отдельное `management.endpoint.<id>.enabled`.",
                 "source_of_confusion": "Понятия «включён» и «экспонирован» близки и их легко перепутать.",
                 "if_it_were_true": "Тогда исключённый из exposure эндпоинт переставал бы существовать как бин, но он остаётся включённым.",
                 "how_it_should_be": "Экспозиция — про доступность по web/JMX; включённость — про создание бина эндпоинта."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Экспозицию задают свойствами `management.endpoints.web.exposure.include`/`exclude` (HTTP) и `management.endpoints.jmx.exposure.include` (JMX); по HTTP по умолчанию открыт `health`, `\"*\"` открывает все.",
+              "correct": true,
+              "sections": {
+                "explanation": "`include` задаёт явный список или `*`, `exclude` убирает отдельные эндпоинты из набора. Типичная production-конфигурация — `include: \"health,info,metrics,prometheus\"`.",
+                "example": "`management.endpoints.web.exposure.include: \"health,info,metrics,prometheus\"` откроет именно эти четыре эндпоинта, остальные останутся недоступны по HTTP.",
+                "when_to_apply": "Настраивают на старте каждого сервиса, чтобы наружу торчал только необходимый минимум эндпоинтов.",
+                "edge_cases": "В `YAML` символ `*` без кавычек воспринимается как alias-узел (ссылка на якорь, а сам якорь задаётся через `&`) и ломает парсинг — поэтому его заключают в кавычки.",
+                "related": "[[spring-boot-actuator-interview#Q3]] список эндпоинтов; [[spring-boot-actuator-interview#Q7]] включение эндпоинта; [[spring-boot-actuator-interview#Q41]] whitelist на production."
               }
             }
           ]
@@ -311,7 +311,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Базовый путь меняют свойством `management.endpoints.web.base-path` (например, `/management` вместо `/actuator`), а путь отдельного эндпоинта — через `management.endpoints.web.path-mapping.<id>` (например, `health: healthcheck`).",
+              "text": "Префикс `/actuator` задаётся маршрутизацией `DispatcherServlet` во фреймворке, поэтому сменить его можно, зарегистрировав собственный маппинг сервлета, а не свойством `management.endpoints.web.base-path`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Путь меняется одним свойством `management.endpoints.web.base-path` без всякого вмешательства в `DispatcherServlet`.",
+                "source_of_confusion": "`/actuator` встречается во всех примерах, и кажется захардкоженным.",
+                "if_it_were_true": "Тогда свойство `base-path` не существовало бы, но оно официально документировано и работает.",
+                "how_it_should_be": "Достаточно задать `management.endpoints.web.base-path`, переопределять сервлет не нужно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Базовый путь всех эндпоинтов задаёт свойство `management.endpoints.web.base-path` (например, `/management` вместо `/actuator`), а путь отдельного эндпоинта — `management.endpoints.web.path-mapping.<id>`.",
               "correct": true,
               "sections": {
                 "explanation": "`base-path` переименовывает префикс для всех эндпоинтов сразу. `path-mapping` точечно переименовывает конкретный эндпоинт под новым сегментом.",
@@ -322,21 +334,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Базовый путь Actuator зашит в фреймворк как `/actuator` и не может быть изменён без переопределения `DispatcherServlet`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Путь меняется одним свойством `management.endpoints.web.base-path` без всякого вмешательства в `DispatcherServlet`.",
-                "source_of_confusion": "`/actuator` встречается во всех примерах, и кажется захардкоженным.",
-                "if_it_were_true": "Тогда свойство `base-path` не существовало бы, но оно официально документировано и работает.",
-                "how_it_should_be": "Достаточно задать `management.endpoints.web.base-path`, переопределять сервлет не нужно."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "Чтобы переименовать путь одного эндпоинта, нужно создать кастомный `@WebEndpoint` с новым `id` — встроенного способа нет.",
+              "text": "Чтобы переименовать путь отдельного эндпоинта, регистрируют кастомный `@WebEndpoint` с нужным `id`: встроенные эндпоинты берут URL-сегмент напрямую из `id`, поэтому новый путь задаётся кодом эндпоинта.",
               "correct": false,
               "sections": {
                 "what_actually": "Для переименования есть `management.endpoints.web.path-mapping.<id>`; кастомный эндпоинт писать не требуется.",
@@ -348,7 +348,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Свойство `management.endpoints.web.base-path` меняет порт Actuator, а не префикс пути эндпоинтов.",
+              "text": "Свойство `management.endpoints.web.base-path` переносит эндпоинты Actuator на отдельный порт управления, а сам префикс пути `/actuator` остаётся неизменным сегментом перед идентификатором каждого эндпоинта.",
               "correct": false,
               "sections": {
                 "what_actually": "`base-path` меняет именно префикс пути; за порт отвечает отдельное `management.server.port`.",
@@ -371,7 +371,31 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Включённость и экспозиция — разные вещи: эндпоинт может быть включён (бин создан) через `management.endpoint.<id>.enabled`, но не экспонирован (недоступен по HTTP/JMX); можно выключить всё через `management.endpoints.enabled-by-default: false` и включить только нужное (opt-in).",
+              "text": "Включённость и экспозиция — синонимы: стоит добавить эндпоинт в `management.endpoints.web.exposure.include`, как он считается включённым, и наоборот; свойство `enabled` дублирует тот же флаг видимости по каналу.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Это два независимых механизма: `enabled` управляет существованием бина, `exposure` — его видимостью по каналу.",
+                "source_of_confusion": "Оба свойства про «доступность» эндпоинта, и их легко слить в одно понятие.",
+                "if_it_were_true": "Тогда выключенный `enabled: false` эндпоинт всё равно открывался бы через exposure, но он не появится.",
+                "how_it_should_be": "Сначала эндпоинт должен быть включён, и только потом экспозиция делает его видимым."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Глобального переключателя нет: свойства `management.endpoints.enabled-by-default` не существует, эндпоинты настраиваются по одному через `management.endpoint.<id>.enabled`, стратегию opt-in так не собрать.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`management.endpoints.enabled-by-default: false` отключает все эндпоинты, после чего нужные включают точечно (opt-in).",
+                "source_of_confusion": "Кажется, что управление возможно только поэндпоинтно, без глобального переключателя.",
+                "if_it_were_true": "Тогда opt-in стратегию нельзя было бы реализовать, но она прямо документирована.",
+                "how_it_should_be": "Используют `enabled-by-default: false` и затем `endpoint.<id>.enabled: true` для нужных."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Включённость и экспозиция независимы: `management.endpoint.<id>.enabled` определяет, создан ли бин, а `exposure.include` — виден ли он по HTTP/JMX; всё гасят через `enabled-by-default: false` и включают нужные.",
               "correct": true,
               "sections": {
                 "explanation": "`enabled` управляет тем, существует ли бин эндпоинта вообще. Экспозиция (`exposure.include`) — отдельно управляет тем, виден ли он по каналу.",
@@ -382,33 +406,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Включённость и экспозиция — синонимы: если эндпоинт добавлен в `exposure.include`, он автоматически считается включённым, и наоборот.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Это два независимых механизма: `enabled` управляет существованием бина, `exposure` — его видимостью по каналу.",
-                "source_of_confusion": "Оба свойства про «доступность» эндпоинта, и их легко слить в одно понятие.",
-                "if_it_were_true": "Тогда выключенный `enabled: false` эндпоинт всё равно открывался бы через exposure, но он не появится.",
-                "how_it_should_be": "Сначала эндпоинт должен быть включён, и только потом экспозиция делает его видимым."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Свойства `enabled-by-default` не существует — выключить все эндпоинты разом и включить нужные невозможно.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`management.endpoints.enabled-by-default: false` отключает все эндпоинты, после чего нужные включают точечно (opt-in).",
-                "source_of_confusion": "Кажется, что управление возможно только поэндпоинтно, без глобального переключателя.",
-                "if_it_were_true": "Тогда opt-in стратегию нельзя было бы реализовать, но она прямо документирована.",
-                "how_it_should_be": "Используют `enabled-by-default: false` и затем `endpoint.<id>.enabled: true` для нужных."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "Эндпоинт `shutdown` включён по умолчанию, его достаточно лишь добавить в `exposure.include`, чтобы вызвать перезапуск.",
+              "text": "Эндпоинт `shutdown` включён по умолчанию наравне с прочими, поэтому для его вызова нужно добавить его в `management.endpoints.web.exposure.include`, и POST на `/actuator/shutdown` остановит приложение.",
               "correct": false,
               "sections": {
                 "what_actually": "`shutdown` выключен по умолчанию из соображений безопасности; его нужно явно включить через `enabled: true`.",
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Уровни доступа полностью заменяют `Spring Security` — при их настройке аутентификация и роли больше не нужны.",
+              "text": "Уровни доступа задают через `management.endpoints.access.default` и заменяют собой `Spring Security`: когда они настроены, отдельная аутентификация и проверка ролей для Actuator-эндпоинтов уже не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Access levels — дополнительный слой поверх Security; они ограничивают тип операций, но не выполняют аутентификацию пользователей.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Уровень `read-only` разрешает и `@ReadOperation`, и `@WriteOperation`, запрещая только `@DeleteOperation`.",
+              "text": "Уровень `read-only` разрешает и `@ReadOperation`, и `@WriteOperation`, закрывая доступ к `@DeleteOperation`; удаляющие операции открывает уже уровень `unrestricted`, снимающий это ограничение.",
               "correct": false,
               "sections": {
                 "what_actually": "`read-only` разрешает исключительно `@ReadOperation`; и write, и delete блокируются — для них нужен `unrestricted`.",
@@ -455,19 +455,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Уровни доступа определяют, по какому порту доступен эндпоинт: `none` — закрыт, `read-only` — основной порт, `unrestricted` — management-порт.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Уровни доступа управляют типом разрешённых операций (чтение/запись/удаление), а не портом; порт задаётся `management.server.port`.",
-                "source_of_confusion": "И порт, и access — про ограничение доступа, поэтому их функции смешивают.",
-                "if_it_were_true": "Тогда смена access меняла бы порт эндпоинта, но порт настраивается совершенно отдельным свойством.",
-                "how_it_should_be": "Access — про разрешённые операции; маршрутизация по портам — это `management.server.port`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "С `Spring Boot 3.4` введены уровни доступа: `none` (запрещён), `read-only` (только `@ReadOperation`) и `unrestricted` (полный доступ — чтение, запись, удаление); их задают через `management.endpoints.access.default`, `max-permitted` и `management.endpoint.<id>.access`.",
+              "text": "С `Spring Boot 3.4` введены уровни доступа: `none` (закрыт), `read-only` (`@ReadOperation`) и `unrestricted` (чтение, запись, удаление); дефолт для всех задаёт `management.endpoints.access.default`.",
               "correct": true,
               "sections": {
                 "explanation": "Уровни доступа — дополнительный слой защиты поверх `Spring Security`: даже экспонированный эндпоинт можно ограничить только чтением. `max-permitted` ставит верхний предел для всех.",
@@ -475,6 +463,18 @@
                 "when_to_apply": "Применяют, чтобы запретить write/delete-операции на эндпоинтах в production, оставив их read-only.",
                 "edge_cases": "Если `max-permitted: read-only`, то локальная настройка `access: unrestricted` для эндпоинта будет урезана до read-only — верхний предел сильнее.",
                 "related": "[[spring-boot-actuator-interview#Q7]] включение эндпоинта; [[spring-boot-actuator-interview#Q26]] защита через Spring Security; [[spring-boot-actuator-interview#Q17]] write/delete-операции."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Уровни доступа определяют, по какому порту виден эндпоинт: `none` закрывает его, `read-only` оставляет на основном порту, а `unrestricted` выносит на отдельный management-порт `management.server.port`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Уровни доступа управляют типом разрешённых операций (чтение/запись/удаление), а не портом; порт задаётся `management.server.port`.",
+                "source_of_confusion": "И порт, и access — про ограничение доступа, поэтому их функции смешивают.",
+                "if_it_were_true": "Тогда смена access меняла бы порт эндпоинта, но порт настраивается совершенно отдельным свойством.",
+                "how_it_should_be": "Access — про разрешённые операции; маршрутизация по портам — это `management.server.port`."
               }
             }
           ]
@@ -491,7 +491,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`/health` агрегирует статусы всех `HealthIndicator` в общий `status` (`UP`/`DOWN`/`OUT_OF_SERVICE`/`UNKNOWN`); детализацию задают `show-details` (`always`/`when-authorized`/`never`); `UP` и `UNKNOWN` отдают HTTP 200, а `DOWN` и `OUT_OF_SERVICE` — 503. В `Kubernetes` пробы liveness/readiness регистрируются автоматически.",
+              "text": "`/health` агрегирует `HealthIndicator` в `status` и возвращает 503 при `DOWN`; режим `show-details` (`never`/`when-authorized`/`always`) переключает формат JSON-вывода, а не видимость деталей компонентов.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`show-details` напрямую управляет видимостью деталей: `never` скрывает их, `always` показывает всем, `when-authorized` — только авторизованным.",
+                "source_of_confusion": "Свойство звучит как косметическое («показывать детали»), и его роль недооценивают.",
+                "if_it_were_true": "Тогда `show-details: never` всё равно раскрывал бы имя БД, но он намеренно прячет детали.",
+                "how_it_should_be": "`show-details` решает, видны ли детали и кому; по умолчанию для безопасности их часто скрывают."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`/health` агрегирует `HealthIndicator` в общий `status` (`UP`/`DOWN`/`OUT_OF_SERVICE`/`UNKNOWN`); `show-details` задаёт видимость деталей, а `UP`/`UNKNOWN` дают 200, `DOWN`/`OUT_OF_SERVICE` — 503.",
               "correct": true,
               "sections": {
                 "explanation": "Общий статус — это агрегация дочерних компонентов: если хоть один критичный `DOWN`, корневой статус тоже `DOWN` и HTTP 503. `show-details` контролирует, видны ли детали зависимостей.",
@@ -502,21 +514,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Детали компонентов в `/health` показываются всегда, потому что `show-details` управляет только форматом JSON, а не видимостью.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`show-details` напрямую управляет видимостью деталей: `never` скрывает их, `always` показывает всем, `when-authorized` — только авторизованным.",
-                "source_of_confusion": "Свойство звучит как косметическое («показывать детали»), и его роль недооценивают.",
-                "if_it_were_true": "Тогда `show-details: never` всё равно раскрывал бы имя БД, но он намеренно прячет детали.",
-                "how_it_should_be": "`show-details` решает, видны ли детали и кому; по умолчанию для безопасности их часто скрывают."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "В `Kubernetes` пробы liveness и readiness нужно реализовать вручную как кастомные эндпоинты — Actuator их не предоставляет.",
+              "text": "`/health` сводит `HealthIndicator` в общий `status` и маппит `DOWN` на HTTP 503; но пробы liveness и readiness для `Kubernetes` Actuator не поставляет — их пишут вручную отдельными эндпоинтами.",
               "correct": false,
               "sections": {
                 "what_actually": "Actuator сам регистрирует `/health/liveness` и `/health/readiness` при обнаружении Kubernetes-среды или при `health.probes.enabled: true`.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`/health` всегда возвращает HTTP 200 с телом `{\"status\":\"DOWN\"}`, если что-то сломалось; код 503 для health не используется.",
+              "text": "`/health` агрегирует `HealthIndicator` в `status` и учитывает `show-details`; при сбое тело содержит `{\"status\":\"DOWN\"}`, но HTTP-код остаётся 200 — статус читают из тела, а 503 не задействуется.",
               "correct": false,
               "sections": {
                 "what_actually": "При статусе `DOWN`/`OUT_OF_SERVICE` `/health` отдаёт именно HTTP 503, а не 200 — это нужно пробам для снятия pod с трафика.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Нужно расширить класс `AbstractHealthCheck` и переопределить метод `check()`, возвращающий boolean — интерфейса `HealthIndicator` в Actuator нет.",
+              "text": "Создают класс-наследник `AbstractHealthCheck` и переопределяют метод `check()`, возвращающий `boolean`; Spring оборачивает результат в `Health.up()`/`Health.down()` и включает его в агрегацию `/actuator/health`.",
               "correct": false,
               "sections": {
                 "what_actually": "Контракт — это именно интерфейс `HealthIndicator` с методом `Health health()`; никакого `AbstractHealthCheck` с boolean в Actuator нет.",
@@ -563,20 +563,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Нужно создать `@Component`, реализующий интерфейс `HealthIndicator` с методом `Health health()`, возвращающим `Health.up()`/`Health.down()` с деталями через `.withDetail(...)`; имя в `/health` берётся из класса без суффикса `HealthIndicator`. Для реактивных приложений используют `ReactiveHealthIndicator`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Spring сам подхватит бин `HealthIndicator` и включит его в агрегацию `/health`. Класс `ExternalServiceHealthIndicator` появится как компонент `externalService`.",
-                "example": "В методе `health()` пингуют внешний API: при успехе — `Health.up().withDetail(\"responseTime\",\"45ms\").build()`, при ошибке — `Health.down(e).build()`.",
-                "when_to_apply": "Применяют для проверки зависимостей, которых нет среди встроенных индикаторов: сторонний API, очередь, файловая система.",
-                "edge_cases": "Если в `health()` бросить исключение и не поймать его, индикатор станет `DOWN`, утянув общий статус — тяжёлые проверки лучше делать с таймаутом.",
-                "related": "[[spring-boot-actuator-interview#Q9]] эндпоинт health; [[spring-boot-actuator-interview#Q31]] детальная диагностика; [[spring-boot-actuator-interview#Q39]] CompositeHealthContributor."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Имя индикатора в `/health` всегда совпадает с полным именем класса, включая суффикс `HealthIndicator`.",
+              "text": "Создают `@Component`, реализующий `HealthIndicator` с методом `Health health()`; имя в `/health` берётся из имени класса с суффиксом: `ExternalServiceHealthIndicator` даёт ключ `externalServiceHealthIndicator`.",
               "correct": false,
               "sections": {
                 "what_actually": "Имя берётся из класса с отброшенным суффиксом `HealthIndicator`: `ExternalServiceHealthIndicator` → `externalService`.",
@@ -586,15 +573,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Кастомный индикатор нужно вручную зарегистрировать в `/health`, добавив его имя в `management.health.custom.include`.",
+              "order": 2,
+              "label": "C",
+              "text": "Создают `@Component`, реализующий `HealthIndicator`, но бин не подхватывается автоматически: имя индикатора добавляют в список `management.health.custom.include`, иначе он не войдёт в агрегацию `/health`.",
               "correct": false,
               "sections": {
                 "what_actually": "Spring автоматически подхватывает любой бин `HealthIndicator` из контекста; вручную регистрировать его не требуется.",
                 "source_of_confusion": "Экспозиция эндпоинтов настраивается списком, и эту логику переносят на индикаторы.",
                 "if_it_were_true": "Тогда `@Component`-индикатор без записи в include не появлялся бы, но он появляется сам.",
                 "how_it_should_be": "Достаточно объявить бин `@Component`; Spring сам включит его в агрегацию."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Создают `@Component`, реализующий `HealthIndicator` с методом `Health health()`, возвращающим `Health.up()`/`Health.down(e)` с деталями через `.withDetail(...)`; имя — класс без суффикса `HealthIndicator`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring сам подхватит бин `HealthIndicator` и включит его в агрегацию `/health`. Класс `ExternalServiceHealthIndicator` появится как компонент `externalService`.",
+                "example": "В методе `health()` пингуют внешний API: при успехе — `Health.up().withDetail(\"responseTime\",\"45ms\").build()`, при ошибке — `Health.down(e).build()`.",
+                "when_to_apply": "Применяют для проверки зависимостей, которых нет среди встроенных индикаторов: сторонний API, очередь, файловая система.",
+                "edge_cases": "Если в `health()` бросить исключение и не поймать его, индикатор станет `DOWN`, утянув общий статус — тяжёлые проверки лучше делать с таймаутом.",
+                "related": "[[spring-boot-actuator-interview#Q9]] эндпоинт health; [[spring-boot-actuator-interview#Q31]] детальная диагностика; [[spring-boot-actuator-interview#Q39]] CompositeHealthContributor."
               }
             }
           ]
@@ -611,31 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Группа `readiness` обязана включать все зарегистрированные `HealthIndicator`, иначе readiness-проба не будет валидной.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Состав группы произвольный: в readiness обычно кладут `readinessState` и критичные зависимости, а не все индикаторы подряд.",
-                "source_of_confusion": "Кажется, что readiness должна проверять «всё», чтобы быть надёжной.",
-                "if_it_were_true": "Тогда нельзя было бы исключить некритичный индикатор из readiness, но именно выборочность и есть смысл групп.",
-                "how_it_should_be": "В группу включают только нужные индикаторы через `include`; остальное игнорируется."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Каждая `Health Group` требует отдельного `@Endpoint`-класса в коде, конфигурацией её создать нельзя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Группы создаются чисто декларативно через `management.endpoint.health.group.<name>` в `application.yml`, без написания кода.",
-                "source_of_confusion": "Кастомные эндпоинты пишут классами, и это правило переносят на группы health.",
-                "if_it_were_true": "Тогда без Java-класса путь `/health/readiness` не появился бы, но он создаётся одной настройкой.",
-                "how_it_should_be": "Группу задают свойством `group.<name>.include`; код для этого не требуется."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`Health Groups` позволяют группировать `HealthIndicator` под отдельными путями вроде `/actuator/health/liveness` и `/actuator/health/readiness`; группа задаётся через `management.endpoint.health.group.<name>.include` со списком индикаторов. Это критично для `Kubernetes`, где liveness и readiness проверяют разные аспекты.",
+              "text": "`Health Groups` объединяют `HealthIndicator` под подпутём `/actuator/health/<name>` через `management.endpoint.health.group.<name>.include`, разделяя пробы liveness и readiness для `Kubernetes`.",
               "correct": true,
               "sections": {
                 "explanation": "Liveness обычно проверяет только `livenessState` (приложение живо), а readiness — `readinessState` плюс критичные зависимости (`db`, `redis`). Каждая группа доступна по своему подпути.",
@@ -646,9 +622,33 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Группа `readiness` формируется из полного набора зарегистрированных `HealthIndicator` и агрегирует их статусы; сузить её состав до `readinessState` и критичных зависимостей через `include` фреймворк не даёт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Состав группы произвольный: в readiness обычно кладут `readinessState` и критичные зависимости, а не все индикаторы подряд.",
+                "source_of_confusion": "Кажется, что readiness должна проверять «всё», чтобы быть надёжной.",
+                "if_it_were_true": "Тогда нельзя было бы исключить некритичный индикатор из readiness, но именно выборочность и есть смысл групп.",
+                "how_it_should_be": "В группу включают только нужные индикаторы через `include`; остальное игнорируется."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Каждую `Health Group` объявляют отдельным классом с аннотацией `@Endpoint` в коде приложения; свойством `management.endpoint.health.group.<name>` путь вроде `/health/readiness` создать не выйдет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Группы создаются чисто декларативно через `management.endpoint.health.group.<name>` в `application.yml`, без написания кода.",
+                "source_of_confusion": "Кастомные эндпоинты пишут классами, и это правило переносят на группы health.",
+                "if_it_were_true": "Тогда без Java-класса путь `/health/readiness` не появился бы, но он создаётся одной настройкой.",
+                "how_it_should_be": "Группу задают свойством `group.<name>.include`; код для этого не требуется."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "`Health Groups` группируют метрики `Micrometer` по тегам для удобного отображения в `Grafana`-дашбордах.",
+              "text": "`Health Groups` объединяют метрики `Micrometer` по общим тегам и публикуют их под `/actuator/metrics`, чтобы `Grafana`-дашборды строили по такой группе готовые панели состояния сервиса.",
               "correct": false,
               "sections": {
                 "what_actually": "Health Groups группируют health-индикаторы под отдельными путями `/health/<group>`; к метрикам Micrometer и Grafana они отношения не имеют.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring Boot` автоматически регистрирует индикаторы при наличии соответствующих зависимостей: `DataSourceHealthIndicator` (есть `DataSource`), `RedisHealthIndicator` (`RedisConnectionFactory`), `KafkaHealthIndicator` (`KafkaAdmin`), `MongoHealthIndicator`, `RabbitHealthIndicator` и др.; `DiskSpaceHealthIndicator` активен всегда. Любой можно отключить через `management.health.<name>.enabled: false`.",
+              "text": "Автоконфигурация включает индикатор при наличии бина: `DataSource` даёт проверку `db`, так же Redis и MongoDB; `DiskSpaceHealthIndicator` активен, любой снимается через `management.health.<name>.enabled`.",
               "correct": true,
               "sections": {
                 "explanation": "Активация условная — индикатор включается, только если в контексте есть нужный бин. Это часть автоконфигурации: подключил `spring-boot-starter-data-redis` — получил health-проверку Redis.",
@@ -684,7 +684,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Встроенные индикаторы нельзя отключить — если зависимость в classpath, её health-проверка обязательна.",
+              "text": "Встроенные индикаторы включает автоконфигурация по зависимости в classpath, и проверка входит в агрегированный статус `/health`; свойства для точечного отключения индикатора в Actuator не предусмотрено.",
               "correct": false,
               "sections": {
                 "what_actually": "Любой автоматический индикатор отключается свойством `management.health.<name>.enabled: false`.",
@@ -696,7 +696,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`DiskSpaceHealthIndicator` активируется только при наличии специальной зависимости `spring-boot-starter-disk`.",
+              "text": "`DiskSpaceHealthIndicator` регистрируется автоконфигурацией при подключении стартера `spring-boot-starter-disk` с классом проверки свободного места; без него компонент `diskSpace` в `/health` не появляется.",
               "correct": false,
               "sections": {
                 "what_actually": "`DiskSpaceHealthIndicator` встроен в ядро Actuator и активен всегда; никакого стартера `spring-boot-starter-disk` не существует.",
@@ -708,7 +708,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Все встроенные индикаторы активны всегда, независимо от наличия зависимостей — `RedisHealthIndicator` работает даже без Redis в classpath.",
+              "text": "Встроенные индикаторы поднимает пакет автоконфигурации Actuator независимо от клиентских бинов: `RedisHealthIndicator` попадает в `/health` и опрашивает соединение даже без `RedisConnectionFactory` в контексте.",
               "correct": false,
               "sections": {
                 "what_actually": "Большинство индикаторов условные: `RedisHealthIndicator` появляется только при наличии `RedisConnectionFactory`; без зависимости его нет.",
@@ -731,7 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Чтобы добавить кастомные поля в `/info`, нужно переопределить класс `InfoEndpoint` и его метод `info()`.",
+              "text": "`/info` отдаёт метаданные приложения, а чтобы добавить собственные поля, переопределяют класс `InfoEndpoint` и его метод `info()`; блоки `build` и `git` при этом подхватываются из сгенерированных плагинами файлов.",
               "correct": false,
               "sections": {
                 "what_actually": "Достаточно объявить бин, реализующий `InfoContributor.contribute(Info.Builder)`; переопределять `InfoEndpoint` не нужно.",
@@ -743,7 +743,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Build-информация попадает в `/info` автоматически без плагина — Spring Boot сам читает `build.gradle` в рантайме.",
+              "text": "`/info` собирает данные из нескольких `InfoContributor`, и блок `build` появляется автоматически: Spring Boot в рантайме читает `build.gradle` и берёт оттуда версию и группу артефакта, плагин настраивать не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "Данные сборки берутся из `META-INF/build-info.properties`, который генерирует `springBoot { buildInfo() }`; `build.gradle` в рантайме не читается.",
@@ -755,11 +755,11 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`/info` отдаёт произвольную информацию о приложении из нескольких источников: блок `info:` в `application.yml`, build-информация (`springBoot { buildInfo() }` → `build-info.properties`), git-данные (плагин `gradle-git-properties` → `git.properties`) и кастомный бин `InfoContributor`.",
+              "text": "`/info` агрегирует данные из нескольких `InfoContributor`: блок `info:` в `application.yml`, build-информация из `build-info.properties`, git-данные из `git.properties` и кастомный бин для своих полей.",
               "correct": true,
               "sections": {
                 "explanation": "Каждый источник — это `InfoContributor`. `BuildInfoContributor` и `GitInfoContributor` подхватывают сгенерированные плагинами файлы, а свой бин позволяет добавить любые поля.",
-                "example": "В `application.yml`: `info.app.version: \"2.1.0\"` появится в ответе как `{\"app\":{\"version\":\"2.1.0\"}}`; с плагином git добавится блок `git` с коммитом и веткой.",
+                "example": "В `application.yml` значения `info.app.version: \"2.1.0\"` попадут в `/info` только при `management.info.env.enabled: true` — с `Boot 2.6` env-контрибьютор по умолчанию отключён; build- и git-данные из сгенерированных файлов включены по умолчанию.",
                 "when_to_apply": "Используют для отображения версии, коммита и метаданных сборки в дашбордах и при диагностике, какая именно сборка крутится.",
                 "edge_cases": "Блок `git` показывается полностью только при `management.info.git.mode: full`; по умолчанию (`simple`) видны лишь ветка и id коммита.",
                 "related": "[[spring-boot-actuator-interview#Q32]] info с версией из Git и Gradle; [[spring-boot-actuator-interview#Q5]] экспозиция; [[spring-boot-actuator-interview#Q1]] что такое Actuator."
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`/info` отдаёт только данные из `git.properties` — добавить произвольные поля из `application.yml` нельзя.",
+              "text": "`/info` наполняется из файла `git.properties`: коммит, ветку и время сборки добавляет `GitInfoContributor`; произвольные поля из блока `info:` в `application.yml` в этот эндпоинт не попадают.",
               "correct": false,
               "sections": {
                 "what_actually": "Источников несколько: блок `info:` из YAML, build-info, git-info и кастомный `InfoContributor`; git — лишь один из них.",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Sanitization включается только вручную: без явной настройки `/env` всегда показывает пароли в открытом виде.",
+              "text": "Механизм sanitization в `/env` по умолчанию не активен: пока в `application.yml` не задан режим `management.endpoint.env.show-values: never`, ключи с `password` и `secret` возвращаются в ответе открытым текстом.",
               "correct": false,
               "sections": {
                 "what_actually": "Маскирование чувствительных ключей (`password`, `secret`, `token` и т.д.) работает по умолчанию; `show-values` лишь меняет режим.",
@@ -803,20 +803,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`/env` показывает все свойства из `ConfigurableEnvironment` (системные переменные, `application.yml`, профили); чувствительные значения скрываются механизмом sanitization, управляемым через `management.endpoint.env.show-values` (`never`/`when-authorized`/`always`). По умолчанию маскируются ключи с `password`, `secret`, `key`, `token`, `credential`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Sanitization заменяет значение на `******`. Режим `when-authorized` показывает значения только пользователям с заданной ролью (`roles: ADMIN`), `always` показывает всем (опасно для prod).",
-                "example": "При `show-values: never` свойство `spring.datasource.password` в ответе будет `\"******\"`, а не реальный пароль.",
-                "when_to_apply": "Используют для диагностики итоговой конфигурации (какой профиль активен, откуда пришло свойство), сохраняя секреты скрытыми.",
-                "edge_cases": "Свой кастомный ключ (например `my.api.token2`) маскируется только если попадает под предикат маскирования; нестандартные имена секретов могут утечь при `always`.",
-                "related": "[[spring-boot-actuator-interview#Q15]] beans и mappings; [[spring-boot-actuator-interview#Q5]] экспозиция; [[spring-boot-actuator-interview#Q41]] whitelist на production."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`/env` показывает только переменные окружения ОС и не видит свойства из `application.yml` и активных профилей.",
+              "text": "Эндпоинт `/env` отражает содержимое `System.getenv()` — переменные окружения процесса и JVM; свойства из `application.yml` и активных профилей туда не попадают, служа отдельным источником конфигурации.",
               "correct": false,
               "sections": {
                 "what_actually": "`/env` отражает весь `ConfigurableEnvironment`: и переменные ОС, и `application.yml`, и профили, и аргументы командной строки.",
@@ -826,15 +813,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Режим `show-values: when-authorized` показывает значения всем по HTTP, а скрывает их только в JMX-консоли.",
+              "order": 2,
+              "label": "C",
+              "text": "Режим `management.endpoint.env.show-values: when-authorized` раскрывает реальные значения свойств по HTTP, а по каналу `JMX` те же значения приходят замаскированными как `******` — разделение идёт по типу канала.",
               "correct": false,
               "sections": {
                 "what_actually": "`when-authorized` показывает значения только аутентифицированным пользователям с нужной ролью; к JMX это не привязано.",
                 "source_of_confusion": "Слово «authorized» путают с разделением каналов HTTP/JMX.",
                 "if_it_were_true": "Тогда любой анонимный HTTP-запрос видел бы секреты, но `when-authorized` именно их и закрывает.",
                 "how_it_should_be": "`when-authorized` раскрывает значения по факту аутентификации и роли, независимо от канала."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`/env` отражает содержимое `ConfigurableEnvironment` — переменные ОС, `application.yml`, профили; секреты маскирует sanitization через `management.endpoint.env.show-values` (`never`/`when-authorized`/`always`).",
+              "correct": true,
+              "sections": {
+                "explanation": "Sanitization заменяет значение на `******`. Режим `when-authorized` показывает значения только пользователям с заданной ролью (`roles: ADMIN`), `always` показывает всем (опасно для prod).",
+                "example": "При `show-values: never` свойство `spring.datasource.password` в ответе будет `\"******\"`, а не реальный пароль.",
+                "when_to_apply": "Используют для диагностики итоговой конфигурации (какой профиль активен, откуда пришло свойство), сохраняя секреты скрытыми.",
+                "edge_cases": "Свой кастомный ключ (например `my.api.token2`) маскируется только если попадает под предикат маскирования; нестандартные имена секретов могут утечь при `always`.",
+                "related": "[[spring-boot-actuator-interview#Q15]] beans и mappings; [[spring-boot-actuator-interview#Q5]] экспозиция; [[spring-boot-actuator-interview#Q41]] whitelist на production."
               }
             }
           ]
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Эндпоинты `/beans` и `/mappings` безопасны для открытого доступа на production, так как не раскрывают чувствительных данных.",
+              "text": "`/beans` и `/mappings` возвращают техническую карту бинов и маршрутов без паролей и токенов, поэтому их безопасно оставлять в открытой `management.endpoints.web.exposure.include` на production.",
               "correct": false,
               "sections": {
                 "what_actually": "Они раскрывают внутреннюю структуру (пакеты, классы, все маршруты), что помогает атакующему — на production их обычно закрывают.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`/beans` отдаёт полный список бинов `ApplicationContext` с их scope, типом, ресурсом и зависимостями; `/mappings` показывает все зарегистрированные `@RequestMapping`-маршруты (handler, predicate, HTTP-методы и паттерны URL). Оба полезны для отладки автоконфигурации и маршрутизации.",
+              "text": "`/beans` отдаёт полный список бинов `ApplicationContext` со scope, типом, ресурсом и зависимостями, а `/mappings` — все маршруты с handler, predicate, HTTP-методами и паттернами URL.",
               "correct": true,
               "sections": {
                 "explanation": "`/beans` помогает понять, какие бины реально создались и как они связаны. `/mappings` показывает, какой контроллер обслуживает какой URL и метод — удобно при конфликтах маршрутов.",
@@ -876,7 +876,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`/beans` показывает только бины, помеченные `@Component`, и не включает бины из `@Configuration`-методов и автоконфигурации.",
+              "text": "`/beans` перечисляет бины, объявленные через `@Component` и стереотипы `@Service`/`@Repository`, но `@Bean`-методы `@Configuration` и бины автоконфигурации в выдачу не попадают.",
               "correct": false,
               "sections": {
                 "what_actually": "`/beans` перечисляет все бины контекста: и `@Component`, и `@Bean`-методы, и бины автоконфигурации.",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`/mappings` показывает только пути, а HTTP-методы и условия (consumes/produces) в ответе не отражаются.",
+              "text": "`/mappings` перечисляет паттерны URL и обслуживающий их handler-метод, однако HTTP-методы и условия `consumes`/`produces` из блока `requestMappingConditions` в ответе не отражаются.",
               "correct": false,
               "sections": {
                 "what_actually": "`/mappings` отдаёт полный predicate: HTTP-методы, паттерны URL и условия маппинга в `requestMappingConditions`.",
@@ -911,31 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Изменения уровня логирования через `/loggers` персистируются и сохраняются после перезапуска приложения.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Изменения хранятся только в памяти и сбрасываются при рестарте — после перезапуска уровни берутся из конфигурации.",
-                "source_of_confusion": "Эффект изменения мгновенный и стойкий в рамках сессии, и кажется постоянным.",
-                "if_it_were_true": "Тогда DEBUG, включённый на инцидент, остался бы навсегда, но рестарт его сбрасывает.",
-                "how_it_should_be": "Для постоянного уровня правят `application.yml`; `/loggers` даёт лишь временное изменение."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Чтобы вернуть логгер к уровню по умолчанию, нужно отправить POST с телом `{\"configuredLevel\":\"DEFAULT\"}`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Сброс делается значением `null` (`{\"configuredLevel\":null}`); строки `DEFAULT` среди допустимых уровней нет.",
-                "source_of_confusion": "Слово «default» интуитивно кажется валидным значением уровня.",
-                "if_it_were_true": "Тогда `\"DEFAULT\"` сбрасывал бы уровень, но Actuator ждёт именно `null` для возврата к исходному.",
-                "how_it_should_be": "Для сброса передают `configuredLevel: null`; допустимые уровни — TRACE…OFF."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`/loggers` позволяет на лету менять уровень логирования без перезапуска: `GET /actuator/loggers/<имя>` показывает `configuredLevel`/`effectiveLevel`, а `POST` с телом `{\"configuredLevel\":\"DEBUG\"}` меняет уровень; `{\"configuredLevel\":null}` сбрасывает к значению по умолчанию.",
+              "text": "`/loggers` меняет уровень на лету: `GET /actuator/loggers/<имя>` отдаёт `configuredLevel`, а `POST {\"configuredLevel\":\"DEBUG\"}` задаёт уровень; тело `{\"configuredLevel\":null}` сбрасывает уровень к исходному.",
               "correct": true,
               "sections": {
                 "explanation": "Это незаменимо при диагностике на production: включаешь `DEBUG` для конкретного пакета, собираешь логи и возвращаешь обратно. Изменения не персистируются и сбрасываются после рестарта.",
@@ -946,9 +922,33 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "`/loggers` меняет уровень на лету: `GET /actuator/loggers/<имя>` отдаёт `configuredLevel`, а `POST {\"configuredLevel\":\"DEBUG\"}` задаёт уровень, и это изменение сохраняется после перезапуска приложения.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Изменения хранятся только в памяти и сбрасываются при рестарте — после перезапуска уровни берутся из конфигурации.",
+                "source_of_confusion": "Эффект изменения мгновенный и стойкий в рамках сессии, и кажется постоянным.",
+                "if_it_were_true": "Тогда DEBUG, включённый на инцидент, остался бы навсегда, но рестарт его сбрасывает.",
+                "how_it_should_be": "Для постоянного уровня правят `application.yml`; `/loggers` даёт лишь временное изменение."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`/loggers` меняет уровень на лету: `GET /actuator/loggers/<имя>` отдаёт `configuredLevel`, а `POST {\"configuredLevel\":\"DEBUG\"}` задаёт уровень; для сброса к уровню по умолчанию шлют `{\"configuredLevel\":\"DEFAULT\"}`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Сброс делается значением `null` (`{\"configuredLevel\":null}`); строки `DEFAULT` среди допустимых уровней нет.",
+                "source_of_confusion": "Слово «default» интуитивно кажется валидным значением уровня.",
+                "if_it_were_true": "Тогда `\"DEFAULT\"` сбрасывал бы уровень, но Actuator ждёт именно `null` для возврата к исходному.",
+                "how_it_should_be": "Для сброса передают `configuredLevel: null`; допустимые уровни — TRACE…OFF."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "`/loggers` можно использовать только для чтения текущих уровней — менять уровень логирования через него нельзя.",
+              "text": "`/loggers` служит для чтения уровней: `GET /actuator/loggers/<имя>` отдаёт `configuredLevel` и `effectiveLevel`, а сам уровень меняют правкой `application.yml` с последующим рестартом приложения.",
               "correct": false,
               "sections": {
                 "what_actually": "`/loggers` поддерживает `@WriteOperation`: POST с `{\"configuredLevel\":\"DEBUG\"}` динамически меняет уровень логгера.",
@@ -971,7 +971,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Аннотация `@ReadOperation` маппится на POST, а `@WriteOperation` — на GET, потому что чтение требует тела запроса.",
+              "text": "Компонент с `@Endpoint(id=\"...\")` объявляет операции, но `@ReadOperation` маппится на POST, а `@WriteOperation` — на GET; аргумент с `@Selector` кладёт значение в путь `/actuator/features/{name}`.",
               "correct": false,
               "sections": {
                 "what_actually": "Маппинг ровно обратный: `@ReadOperation` → GET, `@WriteOperation` → POST, `@DeleteOperation` → DELETE.",
@@ -983,7 +983,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Параметр, помеченный `@Selector`, становится query-параметром запроса (`?name=...`), а не частью пути.",
+              "text": "Компонент помечают `@Endpoint(id=\"...\")` с операциями `@ReadOperation`→GET и `@WriteOperation`→POST, но аргумент с `@Selector` становится query-параметром `?name=...`, а не сегментом пути.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Selector` превращает аргумент именно в path-переменную: `/actuator/features/{name}`, а не в query-параметр.",
@@ -995,7 +995,19 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Создают `@Component` с аннотацией `@Endpoint(id = \"...\")` и методами-операциями: `@ReadOperation` (маппится на GET), `@WriteOperation` (POST), `@DeleteOperation` (DELETE); параметр с `@Selector` становится path-переменной (`/actuator/features/{name}`).",
+              "text": "Кастомный эндпоинт создают обычным `@RestController` с маппингом на `/actuator/...`; методы размечают `@GetMapping`/`@PostMapping`, а специальных аннотаций Actuator вроде `@Endpoint` не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Нужны именно `@Endpoint` и `@ReadOperation`/`@WriteOperation`/`@DeleteOperation`; `@RestController` не интегрируется с инфраструктурой Actuator.",
+                "source_of_confusion": "Раз эндпоинты отвечают по HTTP, кажется логичным писать их как обычные контроллеры.",
+                "if_it_were_true": "Тогда такой `@RestController` подчинялся бы exposure и access levels, но эти механизмы работают только с `@Endpoint`.",
+                "how_it_should_be": "Используют `@Endpoint` с операциями — так эндпоинт попадает в дискавери, exposure и JMX."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Создают `@Component` с `@Endpoint(id=\"...\")`: `@ReadOperation`→GET, `@WriteOperation`→POST, `@DeleteOperation`→DELETE; аргумент с `@Selector` даёт сегмент пути `/actuator/features/{name}`.",
               "correct": true,
               "sections": {
                 "explanation": "`@Endpoint` делает компонент доступным и по HTTP, и по JMX. Тип операции определяет HTTP-метод, а `@Selector` превращает аргумент в сегмент пути.",
@@ -1003,18 +1015,6 @@
                 "when_to_apply": "Применяют для специфичных операционных нужд: управление фича-флагами, ручной сброс кэша, диагностические команды.",
                 "edge_cases": "Кастомный эндпоинт всё равно нужно экспонировать через `exposure.include`, и на него действуют access levels — write/delete заблокируются при `access: read-only`.",
                 "related": "[[spring-boot-actuator-interview#Q18]] Endpoint vs WebEndpoint vs JmxEndpoint; [[spring-boot-actuator-interview#Q19]] расширение эндпоинта; [[spring-boot-actuator-interview#Q34]] read и write операции."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Кастомный эндпоинт создают обычным `@RestController` с маппингом на `/actuator/...` — специальных аннотаций Actuator не требуется.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Нужны именно `@Endpoint` и `@ReadOperation`/`@WriteOperation`/`@DeleteOperation`; `@RestController` не интегрируется с инфраструктурой Actuator.",
-                "source_of_confusion": "Раз эндпоинты отвечают по HTTP, кажется логичным писать их как обычные контроллеры.",
-                "if_it_were_true": "Тогда такой `@RestController` подчинялся бы exposure и access levels, но эти механизмы работают только с `@Endpoint`.",
-                "how_it_should_be": "Используют `@Endpoint` с операциями — так эндпоинт попадает в дискавери, exposure и JMX."
               }
             }
           ]
@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Endpoint` доступен только по HTTP, `@WebEndpoint` — только по `JMX`, а `@JmxEndpoint` — по обоим каналам сразу.",
+              "text": "`@Endpoint` отвечает по HTTP, `@WebEndpoint` работает через канал `JMX`, а `@JmxEndpoint` — универсальная аннотация: она регистрирует эндпоинт сразу по обоим каналам, и по HTTP, и по JMX-консоли управления.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `@Endpoint` — HTTP+JMX, `@WebEndpoint` — только HTTP, `@JmxEndpoint` — только JMX.",
@@ -1043,19 +1043,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Все три аннотации полностью взаимозаменяемы и различаются только именем — поведение и каналы доступа одинаковые.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Они задают разные каналы: `@Endpoint` — оба, `@WebEndpoint` — только HTTP, `@JmxEndpoint` — только JMX.",
-                "source_of_confusion": "Все три помечают эндпоинт операциями, и кажется, что разница чисто косметическая.",
-                "if_it_were_true": "Тогда `@JmxEndpoint` отвечал бы по HTTP, но по HTTP он недоступен принципиально.",
-                "how_it_should_be": "Аннотацию выбирают по нужным каналам доступа — это влияет на доступность по HTTP/JMX."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`@Endpoint` — универсальный эндпоинт, доступный и по HTTP, и по `JMX`; `@WebEndpoint` — только по HTTP (например, отдача файлов); `@JmxEndpoint` — только по `JMX` (системное управление). Дополнительно `@EndpointWebExtension` расширяет существующий эндпоинт web-специфичными данными.",
+              "text": "`@Endpoint` доступен и по HTTP, и по JMX; `@WebEndpoint` — только по HTTP (HTTP-коды, медиатипы); `@JmxEndpoint` — только по JMX. А расширяет существующий эндпоинт отдельная `@EndpointWebExtension`.",
               "correct": true,
               "sections": {
                 "explanation": "Выбор аннотации определяет каналы доступа. `@WebEndpoint` нужен, когда логика имеет смысл лишь по HTTP (HTTP-коды, медиатипы), а `@JmxEndpoint` — для чисто JMX-управления.",
@@ -1066,9 +1054,21 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "Три аннотации взаимозаменяемы и различаются именем: каждая помечает операции эндпоинта, а каналы доступа по HTTP и JMX у них одинаковы, поэтому выбор диктуется стилем кода, а не доступностью.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Они задают разные каналы: `@Endpoint` — оба, `@WebEndpoint` — только HTTP, `@JmxEndpoint` — только JMX.",
+                "source_of_confusion": "Все три помечают эндпоинт операциями, и кажется, что разница чисто косметическая.",
+                "if_it_were_true": "Тогда `@JmxEndpoint` отвечал бы по HTTP, но по HTTP он недоступен принципиально.",
+                "how_it_should_be": "Аннотацию выбирают по нужным каналам доступа — это влияет на доступность по HTTP/JMX."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "Чтобы расширить существующий эндпоинт web-специфичными данными, используют `@JmxEndpoint`, а не отдельную аннотацию-расширение.",
+              "text": "Чтобы расширить существующий эндпоинт web-специфичными данными, поверх него навешивают `@JmxEndpoint` со ссылкой на базовый эндпоинт, добавляя HTTP-коды и медиатипы, вместо аннотации-расширения.",
               "correct": false,
               "sections": {
                 "what_actually": "Для расширения есть `@EndpointWebExtension`; `@JmxEndpoint` создаёт новый JMX-эндпоинт, а не расширяет существующий.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Расширить можно только кастомные эндпоинты, объявленные через `@Endpoint`; встроенные вроде `InfoEndpoint` расширению не поддаются.",
+              "text": "Расширять обёрткой через `@EndpointWebExtension` можно кастомные эндпоинты, объявленные своим `@Endpoint`, а встроенные вроде `InfoEndpoint` расширению не поддаются — их поведение фиксировано автоконфигурацией.",
               "correct": false,
               "sections": {
                 "what_actually": "`@EndpointWebExtension` штатно расширяет и встроенные эндпоинты — `InfoEndpoint` является типичным примером расширения.",
@@ -1103,7 +1103,19 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Используют `@EndpointWebExtension(endpoint = InfoEndpoint.class)` на `@Component`: внутри инжектят делегат (`InfoEndpoint`), вызывают его операцию, дополняют результат своими данными и оборачивают в `WebEndpointResponse`, чтобы добавить web-специфичное поведение (например, HTTP-код).",
+              "text": "Расширение через `@EndpointWebExtension(endpoint = InfoEndpoint.class)` дополняет результат делегата, и добавленные поля приходят одинаково и в HTTP-ответ `/info`, и в JMX-представление эндпоинта.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@EndpointWebExtension` влияет только на web-канал (HTTP); для JMX нужен отдельный `@EndpointJmxExtension`.",
+                "source_of_confusion": "Кажется, что расширение касается эндпоинта целиком, без привязки к каналу.",
+                "if_it_were_true": "Тогда добавленное поле появлялось бы и в JMX-консоли, но web-расширение туда не попадает.",
+                "how_it_should_be": "Web-расширение дополняет HTTP-ответ; для JMX применяют отдельное расширение."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Используют `@EndpointWebExtension(endpoint = InfoEndpoint.class)` на `@Component`: инжектят делегат `InfoEndpoint`, дополняют его результат своими полями и оборачивают ответ в `WebEndpointResponse`.",
               "correct": true,
               "sections": {
                 "explanation": "Расширение не заменяет эндпоинт, а оборачивает его: получает стандартный результат от делегата и добавляет к нему дополнительные поля или меняет статус ответа.",
@@ -1114,21 +1126,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Расширение через `@EndpointWebExtension` добавляет данные и в HTTP-, и в JMX-ответ существующего эндпоинта.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@EndpointWebExtension` влияет только на web-канал (HTTP); для JMX нужен отдельный `@EndpointJmxExtension`.",
-                "source_of_confusion": "Кажется, что расширение касается эндпоинта целиком, без привязки к каналу.",
-                "if_it_were_true": "Тогда добавленное поле появлялось бы и в JMX-консоли, но web-расширение туда не попадает.",
-                "how_it_should_be": "Web-расширение дополняет HTTP-ответ; для JMX применяют отдельное расширение."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "Чтобы расширить эндпоинт, нужно унаследоваться от `InfoEndpoint` и переопределить метод `info()` через `@Override`.",
+              "text": "Расширяют наследованием: создают класс-наследник `InfoEndpoint`, помечают его `@Component` и переопределяют метод `info()` через `@Override`, дополняя результат родителя своими полями.",
               "correct": false,
               "sections": {
                 "what_actually": "Расширение делают композицией через `@EndpointWebExtension` с делегатом, а не наследованием; `InfoEndpoint` не предназначен для override.",
@@ -1151,7 +1151,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Micrometer` — фасад для метрик (аналог `SLF4J` для логирования): даёт единый API записи метрик, а конкретный бэкенд определяется зарегистрированным `MeterRegistry` (`PrometheusMeterRegistry`, `DatadogMeterRegistry` и т.д.); `Actuator` автоматически настраивает `Micrometer` и регистрирует метрики JVM, HTTP, DataSource, Cache и системы.",
+              "text": "`Micrometer` — фасад для метрик, но встроенный экспорт у него один — в формате `Prometheus` через `/actuator/prometheus`; готовых `MeterRegistry` для `Datadog`, `InfluxDB` или `JMX` в составе `Micrometer` нет.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Micrometer поддерживает множество бэкендов через разные `MeterRegistry`: Prometheus, Datadog, InfluxDB, JMX и др.",
+                "source_of_confusion": "Prometheus — самая частая связка, и её принимают за единственную.",
+                "if_it_were_true": "Тогда `DatadogMeterRegistry` не существовал бы, но он есть и активно используется.",
+                "how_it_should_be": "Бэкенд выбирается подключением нужного registry; Micrometer ими не ограничен."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Micrometer` — фасад для метрик (аналог `SLF4J`): единый API записи, а бэкенд задаёт подключённый `MeterRegistry` (`Prometheus`, `Datadog`); `Actuator` сам настраивает его и регистрирует метрики JVM и HTTP.",
               "correct": true,
               "sections": {
                 "explanation": "Код пишет метрику через единый API `Micrometer`, не зная, куда она уйдёт. Сменить бэкенд (Prometheus → Datadog) можно заменой зависимости registry, не трогая код.",
@@ -1162,21 +1174,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`Micrometer` жёстко привязан к `Prometheus` и не умеет экспортировать метрики в `Datadog`, `InfluxDB` или `JMX`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Micrometer поддерживает множество бэкендов через разные `MeterRegistry`: Prometheus, Datadog, InfluxDB, JMX и др.",
-                "source_of_confusion": "Prometheus — самая частая связка, и её принимают за единственную.",
-                "if_it_were_true": "Тогда `DatadogMeterRegistry` не существовал бы, но он есть и активно используется.",
-                "how_it_should_be": "Бэкенд выбирается подключением нужного registry; Micrometer ими не ограничен."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "Чтобы метрики JVM и HTTP собирались, их нужно регистрировать вручную — `Actuator` не настраивает `Micrometer` автоматически.",
+              "text": "`Micrometer` — фасад для метрик, но `Actuator` его не автоконфигурирует: чтобы получить `jvm_memory_used_bytes` и HTTP-тайминги, соответствующие `MeterBinder` регистрируют в `MeterRegistry` вручную.",
               "correct": false,
               "sections": {
                 "what_actually": "`Actuator` автоконфигурирует `Micrometer` и сам регистрирует метрики JVM, HTTP, DataSource, Cache и системы.",
@@ -1188,7 +1188,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Micrometer` — это конкретная система хранения метрик (time-series база) вроде `Prometheus`, встроенная в `Spring Boot`.",
+              "text": "`Micrometer` — встроенная в `Spring Boot` система хранения метрик (time-series база) вроде `Prometheus`: `Actuator` пишет в неё замеры JVM и HTTP, а `/actuator/prometheus` отдаёт их прямо из этого хранилища.",
               "correct": false,
               "sections": {
                 "what_actually": "`Micrometer` — фасад/API записи метрик, а не хранилище; хранят данные внешние системы (`Prometheus`, `Datadog`) через соответствующий `MeterRegistry`.",
@@ -1211,7 +1211,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Timer` измеряет только количество вызовов метода и не записывает их длительность.",
+              "text": "`Micrometer` поддерживает `Counter`, `Gauge`, `Timer` и `DistributionSummary`; при этом `Timer` работает счётчиком обращений к методу, фиксируя число вызовов, но не записывая их длительность и перцентили.",
               "correct": false,
               "sections": {
                 "what_actually": "`Timer` измеряет именно длительность (плюс число вызовов и суммарное время), а перцентили задаются через `publishPercentiles`.",
@@ -1223,20 +1223,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Micrometer` поддерживает: `Counter` (монотонно растущий счётчик), `Gauge` (текущее значение, может расти и падать), `Timer` (время выполнения + число вызовов), `DistributionSummary` (распределение значений), `LongTaskTimer` (время длительных задач), а также `FunctionCounter`/`FunctionTimer` на основе функций.",
-              "correct": true,
-              "sections": {
-                "explanation": "`Counter` — для подсчёта событий (число заказов), `Gauge` — для мгновенного состояния (размер очереди), `Timer` — для замера длительности с перцентилями.",
-                "example": "`Counter.builder(\"orders.created\").register(registry).increment()` считает заказы; `Gauge.builder(\"queue.size\", queue, Queue::size)` отдаёт текущий размер очереди.",
-                "when_to_apply": "Тип выбирают по природе величины: события → Counter, мгновенное значение → Gauge, длительность → Timer.",
-                "edge_cases": "`Counter` нельзя уменьшать — для значения, которое растёт и падает (число активных сессий), берут `Gauge`, иначе график будет некорректным.",
-                "related": "[[spring-boot-actuator-interview#Q20]] что такое Micrometer; [[spring-boot-actuator-interview#Q22]] кастомные метрики; [[spring-boot-actuator-interview#Q23]] аннотация Timed."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`Gauge` — это монотонно растущий тип, значение которого может только увеличиваться, как у `Counter`.",
+              "text": "`Micrometer` поддерживает `Counter`, `Gauge`, `Timer` и `DistributionSummary`; при этом `Gauge` — монотонно растущий показатель, значение которого способно увеличиваться, но не убывать, подобно `Counter`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Gauge` отражает текущее значение и может и расти, и падать — этим он и отличается от монотонного `Counter`.",
@@ -1246,15 +1233,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`Counter` можно как инкрементировать, так и декрементировать — это универсальный счётчик для любых растущих и падающих величин.",
+              "order": 2,
+              "label": "C",
+              "text": "`Micrometer` поддерживает `Counter`, `Gauge`, `Timer` и `DistributionSummary`; при этом `Counter` допускает и инкремент, и декремент, служа универсальным счётчиком растущих и падающих величин.",
               "correct": false,
               "sections": {
                 "what_actually": "`Counter` монотонно растёт и предназначен только для инкремента; для растущих и падающих значений используют `Gauge`.",
                 "source_of_confusion": "Слово «счётчик» наводит на мысль, что считать можно в обе стороны.",
                 "if_it_were_true": "Тогда `Gauge` был бы не нужен, но именно он, а не Counter, отражает падающие значения.",
                 "how_it_should_be": "Counter — только вверх; для двунаправленных величин берут Gauge."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Micrometer` поддерживает `Counter`, `Gauge`, `Timer`, `DistributionSummary` и `LongTaskTimer`; `Counter` монотонно растёт, а `Gauge` показывает текущее значение, которое может и расти, и падать.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Counter` — для подсчёта событий (число заказов), `Gauge` — для мгновенного состояния (размер очереди), `Timer` — для замера длительности с перцентилями.",
+                "example": "`Counter.builder(\"orders.created\").register(registry).increment()` считает заказы; `Gauge.builder(\"queue.size\", queue, Queue::size)` отдаёт текущий размер очереди.",
+                "when_to_apply": "Тип выбирают по природе величины: события → Counter, мгновенное значение → Gauge, длительность → Timer.",
+                "edge_cases": "`Counter` нельзя уменьшать — для значения, которое растёт и падает (число активных сессий), берут `Gauge`, иначе график будет некорректным.",
+                "related": "[[spring-boot-actuator-interview#Q20]] что такое Micrometer; [[spring-boot-actuator-interview#Q22]] кастомные метрики; [[spring-boot-actuator-interview#Q23]] аннотация Timed."
               }
             }
           ]
@@ -1271,7 +1271,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`MeterRegistry` нельзя инжектить в обычный `@Service` — метрики регистрируют только в классах конфигурации `@Configuration`.",
+              "text": "Кастомные метрики создают тремя способами: программно через `MeterRegistry` (строят `Counter`/`Timer`/`Gauge` и регистрируют), декларативно через `@Timed` и через `MeterBinder`, привязывающий метрики в `bindTo`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`MeterRegistry` инжектят в сервис и строят метрики билдерами с тегами. `MeterBinder` удобен для группировки связанных метрик в отдельном бине, отделяя их от бизнес-логики.",
+                "example": "`Counter.builder(\"orders.total\").tag(\"status\",\"created\").register(registry)` — счётчик заказов; затем `orderCounter.increment()` в `createOrder()`.",
+                "when_to_apply": "Применяют для бизнес-метрик, которых нет среди автоматических: число заказов, время обработки, размер кэша.",
+                "edge_cases": "Высококардинальный тег (например `userId`) порождает отдельную time-series на каждое значение и взрывает память Prometheus — теги держат низкокардинальными.",
+                "related": "[[spring-boot-actuator-interview#Q21]] типы метрик; [[spring-boot-actuator-interview#Q23]] аннотация Timed; [[spring-boot-actuator-interview#Q40]] Timed и MeterRegistry."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Кастомные метрики объявляют в классах `@Configuration`, куда внедряют `MeterRegistry`: это инфраструктурный бин автоконфигурации, а в обычный `@Service` его инжектить нельзя, поэтому счётчики держат в конфигурации.",
               "correct": false,
               "sections": {
                 "what_actually": "`MeterRegistry` — обычный бин и инжектится в любой компонент, включая `@Service`, где метрики и создают через конструктор.",
@@ -1281,9 +1294,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Кастомные метрики создают только аннотацией `@Counted` на поле класса — программный API `MeterRegistry` для этого не используется.",
+              "order": 2,
+              "label": "C",
+              "text": "Кастомные метрики создают декларативно, аннотацией `@Counted` на поле счётчика в бине: Micrometer сам инкрементирует его при вызовах, а к программному API `MeterRegistry` для этого обращаться не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "Основной способ — программный `MeterRegistry` (builder-ы `Counter`/`Timer`/`Gauge`); есть ещё `@Timed` и `MeterBinder`, но не аннотация на поле.",
@@ -1293,28 +1306,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`MeterBinder` — это эндпоинт Actuator для просмотра метрик, а не способ их создания.",
+              "order": 3,
+              "label": "D",
+              "text": "Кастомные метрики строят через `MeterRegistry`, а `MeterBinder` — это встроенный эндпоинт Actuator `/actuator/metrics` для просмотра уже собранных метрик, а не механизм их регистрации в коде.",
               "correct": false,
               "sections": {
                 "what_actually": "`MeterBinder` — интерфейс для регистрации набора метрик (метод `bindTo(MeterRegistry)`), а не эндпоинт; просмотр метрик делает `/actuator/metrics`.",
                 "source_of_confusion": "Слово «binder» звучит как часть инфраструктуры просмотра/привязки эндпоинтов.",
                 "if_it_were_true": "Тогда `implements MeterBinder` давал бы HTTP-эндпоинт, но он лишь регистрирует метрики в registry.",
                 "how_it_should_be": "`MeterBinder` группирует и регистрирует метрики; смотрят их через `/actuator/metrics`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Кастомные метрики создают тремя способами: через `MeterRegistry` (явно строят `Counter`/`Timer`/`Gauge` и регистрируют), через аннотацию `@Timed` (декларативный замер времени метода) и через `MeterBinder` (бин, привязывающий набор метрик к registry в методе `bindTo`).",
-              "correct": true,
-              "sections": {
-                "explanation": "`MeterRegistry` инжектят в сервис и строят метрики билдерами с тегами. `MeterBinder` удобен для группировки связанных метрик в отдельном бине, отделяя их от бизнес-логики.",
-                "example": "`Counter.builder(\"orders.total\").tag(\"status\",\"created\").register(registry)` — счётчик заказов; затем `orderCounter.increment()` в `createOrder()`.",
-                "when_to_apply": "Применяют для бизнес-метрик, которых нет среди автоматических: число заказов, время обработки, размер кэша.",
-                "edge_cases": "Высококардинальный тег (например `userId`) порождает отдельную time-series на каждое значение и взрывает память Prometheus — теги держат низкокардинальными.",
-                "related": "[[spring-boot-actuator-interview#Q21]] типы метрик; [[spring-boot-actuator-interview#Q23]] аннотация Timed; [[spring-boot-actuator-interview#Q40]] Timed и MeterRegistry."
               }
             }
           ]
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Timed` создаёт метрику типа `Counter`, считая количество вызовов метода без замера их длительности.",
+              "text": "`@Timed` навешивается на метод и регистрирует метрику типа `Counter`: при каждом вызове счётчик увеличивается на единицу, а длительность выполнения аспект не фиксирует и в `/actuator/metrics` не отдаёт.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Timed` создаёт `Timer`: фиксирует и количество вызовов, и их длительность с перцентилями.",
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Метрику от `@Timed` можно увидеть только в логах приложения; через `/actuator/metrics` она недоступна.",
+              "text": "`@Timed` регистрирует `Timer`, но его замеры аспект пишет в лог приложения строкой на каждый вызов; в `/actuator/metrics` такая метрика не появляется, и построить по ней дашборд в Grafana не выйдет.",
               "correct": false,
               "sections": {
                 "what_actually": "Метрика доступна именно через `/actuator/metrics/<имя>` (и экспортируется в Prometheus); в логи она не пишется.",
@@ -1355,7 +1355,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@Timed` декларативно замеряет время выполнения метода и регистрирует `Timer`-метрику с заданным именем, описанием и перцентилями; для работы на сервисах и обычных бинах нужен бин `TimedAspect` (AOP). Для контроллеров `@Timed` работает из коробки через `WebMvcMetricsFilter`.",
+              "text": "`@Timed` замеряет время метода и регистрирует `Timer` с перцентилями; для сервисов и обычных бинов нужен бин `TimedAspect` (AOP), а HTTP-запросы контроллеров инструментируются через Observation API.",
               "correct": true,
               "sections": {
                 "explanation": "`@Timed` навешивается на метод, и AOP-аспект оборачивает вызов таймером. Результат доступен через `/actuator/metrics/<имя>` со статистиками COUNT, TOTAL_TIME, MAX и тегами class/method.",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`@Timed` работает на любых бинах сразу после импорта стартера Actuator — никакого `TimedAspect` регистрировать не нужно.",
+              "text": "`@Timed` регистрирует `Timer` и начинает замерять время на любом бине сразу после подключения стартера Actuator и Micrometer; отдельный бин `TimedAspect` для сервисов регистрировать не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Для методов сервисов и обычных бинов нужен бин `TimedAspect`; из коробки `@Timed` работает только для контроллеров через `WebMvcMetricsFilter`.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Эндпоинт для Prometheus называется `/actuator/metrics` и отдаёт JSON, который Prometheus парсит напрямую.",
+              "text": "Prometheus scrape-ит `/actuator/metrics`: этот эндпоинт отдаёт метрики в JSON, который сервер Prometheus парсит напрямую по заданному `scrape_interval`, если добавить `micrometer-registry-prometheus`.",
               "correct": false,
               "sections": {
                 "what_actually": "Prometheus scrape-ит отдельный `/actuator/prometheus` в текстовом формате `text/plain; version=0.0.4`, а не JSON `/actuator/metrics`.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для экспорта в Prometheus достаточно стартера Actuator — отдельная зависимость registry не нужна.",
+              "text": "Стартер `spring-boot-starter-actuator` сам регистрирует `PrometheusMeterRegistry` и поднимает `/actuator/prometheus` в exposition-формате, поэтому зависимость `micrometer-registry-prometheus` подключать не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "Нужен ещё `micrometer-registry-prometheus`; без него эндпоинт `/actuator/prometheus` не появится.",
@@ -1415,19 +1415,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Prometheus работает по push-модели: приложение само отправляет метрики на сервер Prometheus по расписанию.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Prometheus использует pull-модель — он сам периодически scrape-ит `/actuator/prometheus`; приложение ничего не отправляет.",
-                "source_of_confusion": "Многие системы мониторинга (Datadog, OTLP) работают по push, и это переносят на Prometheus.",
-                "if_it_were_true": "Тогда в приложении настраивали бы URL сервера Prometheus, но настраивают scrape на стороне Prometheus.",
-                "how_it_should_be": "Prometheus pull-ит метрики; приложение лишь экспонирует эндпоинт для scraping."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Нужно: 1) добавить зависимость `io.micrometer:micrometer-registry-prometheus`; 2) открыть `prometheus` в `exposure.include`; 3) настроить scrape в `prometheus.yml` (`metrics_path: '/actuator/prometheus'`, `targets`). После этого `/actuator/prometheus` отдаёт метрики в формате `Prometheus`, который сервер периодически scrape-ит.",
+              "text": "Добавляют зависимость `micrometer-registry-prometheus` и включают `prometheus` в `exposure.include`; тогда `/actuator/prometheus` отдаёт метрики в exposition-формате, который Prometheus scrape-ит по pull-модели.",
               "correct": true,
               "sections": {
                 "explanation": "Зависимость registry включает `PrometheusMeterRegistry` и эндпоинт `/actuator/prometheus`. Prometheus работает по pull-модели: сам опрашивает эндпоинт с заданным `scrape_interval`.",
@@ -1435,6 +1423,18 @@
                 "when_to_apply": "Применяют как стандартный путь к мониторингу: метрики в Prometheus, графики и алерты в Grafana.",
                 "edge_cases": "Без зависимости `micrometer-registry-prometheus` эндпоинт `/actuator/prometheus` не появится, даже если добавить его в exposure — частая ошибка.",
                 "related": "[[spring-boot-actuator-interview#Q20]] что такое Micrometer; [[spring-boot-actuator-interview#Q25]] дашборд Grafana; [[spring-boot-actuator-interview#Q33]] как работает prometheus-эндпоинт."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Prometheus работает по push-модели: приложение с `micrometer-registry-prometheus` само отправляет метрики на сервер Prometheus по расписанию, указывая в конфигурации URL сервера и интервал публикации `step`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Prometheus использует pull-модель — он сам периодически scrape-ит `/actuator/prometheus`; приложение ничего не отправляет.",
+                "source_of_confusion": "Многие системы мониторинга (Datadog, OTLP) работают по push, и это переносят на Prometheus.",
+                "if_it_were_true": "Тогда в приложении настраивали бы URL сервера Prometheus, но настраивают scrape на стороне Prometheus.",
+                "how_it_should_be": "Prometheus pull-ит метрики; приложение лишь экспонирует эндпоинт для scraping."
               }
             }
           ]
@@ -1451,31 +1451,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Grafana строит дашборды напрямую из `/actuator/metrics`, обращаясь к приложению без промежуточного Prometheus.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Grafana визуализирует данные из источника (обычно Prometheus), который и хранит метрики; напрямую к `/actuator/metrics` она не ходит.",
-                "source_of_confusion": "Кажется логичным, что дашборд читает метрики прямо с приложения.",
-                "if_it_were_true": "Тогда Prometheus был бы не нужен для Grafana, но без time-series базы строить графики во времени нельзя.",
-                "how_it_should_be": "Grafana читает из Prometheus (или иного datasource), который scrape-ит приложение."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Для p95-латентности достаточно запроса `avg(http_server_requests_seconds)` — отдельные histogram-buckets не нужны.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Перцентили считают через `histogram_quantile` по `_bucket`-метрикам; среднее (`avg`) перцентиль не даёт.",
-                "source_of_confusion": "Среднее путают с перцентилем как «типичным» значением латентности.",
-                "if_it_were_true": "Тогда `avg` показывал бы p95, но среднее и 95-й перцентиль — разные величины.",
-                "how_it_should_be": "Для p95 используют `histogram_quantile(0.95, rate(..._bucket[5m]))` при включённых buckets."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Импортируют готовые дашборды по ID (4701 — JVM Micrometer, 12900 — Spring Boot Statistics, 11378 — Spring Boot Observability) и/или строят панели на `PromQL`-запросах: `histogram_quantile(0.95, rate(http_server_requests_seconds_bucket[5m]))` для p95-латентности, `rate(http_server_requests_seconds_count[1m])` для RPS.",
+              "text": "Импортируют готовые дашборды по ID с `grafana.com` (4701 — JVM Micrometer) и/или строят панели на `PromQL`: `histogram_quantile(0.95, rate(http_server_requests_seconds_bucket[5m]))` для p95.",
               "correct": true,
               "sections": {
                 "explanation": "Готовые дашборды импортируются по ID из grafana.com и сразу строят графики из стандартных метрик Micrometer. Кастомные панели пишут на PromQL поверх тех же time-series.",
@@ -1486,9 +1462,33 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Grafana обращается напрямую к `/actuator/metrics` приложения и рисует графики по этим данным, обходясь без Prometheus как промежуточного хранилища time-series между приложением и дашбордом.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Grafana визуализирует данные из источника (обычно Prometheus), который и хранит метрики; напрямую к `/actuator/metrics` она не ходит.",
+                "source_of_confusion": "Кажется логичным, что дашборд читает метрики прямо с приложения.",
+                "if_it_were_true": "Тогда Prometheus был бы не нужен для Grafana, но без time-series базы строить графики во времени нельзя.",
+                "how_it_should_be": "Grafana читает из Prometheus (или иного datasource), который scrape-ит приложение."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для p95-латентности берут `avg(http_server_requests_seconds)` по эндпоинту: среднее по времени ответа и есть 95-й перцентиль, а histogram-buckets и `_bucket`-метрики для такого графика не задействуют.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Перцентили считают через `histogram_quantile` по `_bucket`-метрикам; среднее (`avg`) перцентиль не даёт.",
+                "source_of_confusion": "Среднее путают с перцентилем как «типичным» значением латентности.",
+                "if_it_were_true": "Тогда `avg` показывал бы p95, но среднее и 95-й перцентиль — разные величины.",
+                "how_it_should_be": "Для p95 используют `histogram_quantile(0.95, rate(..._bucket[5m]))` при включённых buckets."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "Готовые дашборды Spring Boot нельзя импортировать по ID — каждую панель приходится создавать вручную с нуля.",
+              "text": "Готовые дашборды Spring Boot по ID через `grafana.com` импортировать нельзя: панели p95-латентности и RPS под метрики Micrometer каждый раз собирают в Grafana вручную и настраивают `PromQL`-запросы.",
               "correct": false,
               "sections": {
                 "what_actually": "Дашборды импортируются по ID с grafana.com (4701, 12900, 11378) одним действием; вручную можно лишь дополнять.",
@@ -1511,7 +1511,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Spring Security и access levels Actuator — это одно и то же; настроив `access: read-only`, аутентификацию настраивать не нужно.",
+              "text": "То же самое, что access levels: у эндпоинта есть уровень доступа, а `Spring Security` — тот же механизм ограничения, поэтому, выставив у `/health` `access=read-only`, аутентификацию отдельно настраивать не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные слои: access levels ограничивают тип операций, а Spring Security выполняет аутентификацию и проверку ролей.",
@@ -1523,7 +1523,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "При наличии `spring-boot-starter-security` в classpath все Actuator-эндпоинты, включая `/health`, становятся полностью закрытыми без какой-либо настройки.",
+              "text": "С `spring-boot-starter-security` в classpath auto-configuration закрывает все Actuator-эндпоинты по HTTP Basic, включая `/health`, который тоже начинает требовать логин, так что свой `SecurityFilterChain` не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию защищаются все эндпоинты, кроме `/health`, который остаётся доступен (он нужен пробам); остальное закрывается.",
@@ -1535,7 +1535,19 @@
             {
               "order": 2,
               "label": "C",
-              "text": "При наличии `spring-boot-starter-security` все эндпоинты, кроме `/health`, автоматически защищены; кастомную защиту настраивают через `SecurityFilterChain` с `securityMatcher(EndpointRequest.toAnyEndpoint())` и правилами `EndpointRequest.to(\"health\",\"info\").permitAll()`, `EndpointRequest.to(\"shutdown\").hasRole(\"ADMIN\")` и т.д.",
+              "text": "Защиту настраивают, перечисляя URL эндпоинтов строками (`/actuator/**`) в `requestMatchers` внутри `SecurityFilterChain`; специального matcher под Actuator во фреймворке нет, поэтому пути задают руками.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Есть `EndpointRequest.toAnyEndpoint()` и `EndpointRequest.to(...)`, которые матчат эндпоинты по id и устойчивы к смене base-path.",
+                "source_of_confusion": "Привычка матчить по URL-паттернам в Spring Security переносится на Actuator.",
+                "if_it_were_true": "Тогда смена `base-path` не ломала бы хардкод путей, но именно поэтому и нужен `EndpointRequest`.",
+                "how_it_should_be": "Используют `EndpointRequest` по id эндпоинта вместо хардкода URL."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "По умолчанию все эндпоинты, кроме `/health`, защищены; кастомные правила задают в `SecurityFilterChain` через `securityMatcher(EndpointRequest.toAnyEndpoint())`, разграничивая доступ к эндпоинтам по их id.",
               "correct": true,
               "sections": {
                 "explanation": "`EndpointRequest` — специальный matcher, понимающий Actuator-эндпоинты по их id, что устойчивее к смене base-path, чем хардкод путей. Правила задают разные роли разным эндпоинтам.",
@@ -1543,18 +1555,6 @@
                 "when_to_apply": "Применяют, когда Actuator доступен по сети и нужно разграничить, кто читает метрики, а кто может дёргать опасные операции.",
                 "edge_cases": "Если хардкодить пути (`/actuator/health`) вместо `EndpointRequest`, смена `base-path` сломает правила безопасности — поэтому используют matcher по id.",
                 "related": "[[spring-boot-actuator-interview#Q27]] отдельный порт; [[spring-boot-actuator-interview#Q41]] whitelist на production; [[spring-boot-actuator-interview#Q8]] уровни доступа."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Для защиты эндпоинтов нужно перечислить их URL строками (`/actuator/**`) в `requestMatchers` — специального matcher для Actuator не существует.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Есть `EndpointRequest.toAnyEndpoint()` и `EndpointRequest.to(...)`, которые матчат эндпоинты по id и устойчивы к смене base-path.",
-                "source_of_confusion": "Привычка матчить по URL-паттернам в Spring Security переносится на Actuator.",
-                "if_it_were_true": "Тогда смена `base-path` не ломала бы хардкод путей, но именно поэтому и нужен `EndpointRequest`.",
-                "how_it_should_be": "Используют `EndpointRequest` по id эндпоинта вместо хардкода URL."
               }
             }
           ]
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "При отдельном порте Actuator использует тот же embedded-сервер и SSL-конфигурацию, что и основное приложение, без возможности отдельной настройки.",
+              "text": "При отдельном порте Actuator задействует тот же embedded-сервер и SSL-конфигурацию из `server.ssl`, что и основное приложение, поэтому свой адрес или сертификат management-эндпоинтам задать не выйдет.",
               "correct": false,
               "sections": {
                 "what_actually": "Management-порт поднимает собственный сервер с независимыми настройками адреса и SSL (`management.server.ssl`).",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Задают `management.server.port` (например 9090), отличный от `server.port`; можно ограничить адрес через `management.server.address: 127.0.0.1` и настроить отдельный SSL. Это лучшая практика для production — отдельный порт закрывают файрволом от внешнего трафика.",
+              "text": "Задают `management.server.port` (например 9090), отличный от `server.port`; доступ сужают через `management.server.address: 127.0.0.1` и отдельный SSL, а порт закрывают файрволом.",
               "correct": true,
               "sections": {
                 "explanation": "При отдельном порте Actuator поднимает собственный embedded-сервер с независимой конфигурацией адресов и SSL. Бизнес-трафик идёт на основной порт, management — на закрытый.",
@@ -1596,7 +1596,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Чтобы вынести Actuator на отдельный порт, нужно запустить второй экземпляр приложения с другим `server.port`.",
+              "text": "Actuator выносят на отдельный порт запуском второго экземпляра приложения со своим `server.port`: первый процесс обслуживает бизнес-трафик, второй отдаёт management-эндпоинты Actuator.",
               "correct": false,
               "sections": {
                 "what_actually": "Достаточно одного приложения с `management.server.port` — Actuator сам поднимет дополнительный embedded-сервер на этом порту.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Свойство `management.server.port` лишь меняет base-path эндпоинтов, фактически оставляя их на основном порту приложения.",
+              "text": "Свойство `management.server.port` меняет base-path management-эндпоинтов, но сами `/actuator/*` остаются на основном `server.port` приложения и слушаются его embedded-сервером.",
               "correct": false,
               "sections": {
                 "what_actually": "`management.server.port` действительно переносит эндпоинты на отдельный порт с собственным сервером; base-path задаётся другим свойством.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Graceful shutdown включается само по себе при наличии Actuator — отдельной настройки `server.shutdown=graceful` не требуется.",
+              "text": "Наличие `Actuator` само активирует graceful shutdown: сервер дожидается in-flight запросов при остановке, поэтому `server.shutdown: graceful` и таймаут фазы завершения задавать не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Graceful shutdown включают явно через `server.shutdown: graceful` (и таймаут фазы); по умолчанию завершение немедленное.",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Production readiness` — набор практик подготовки приложения к промышленной эксплуатации, где `Actuator` центральный инструмент: health checks с кастомными индикаторами, health groups для liveness/readiness, метрики (Micrometer + Prometheus + Grafana), безопасность (отдельный порт/Security), graceful shutdown, минимальная exposure (`health,info,metrics,prometheus`), `show-values: never` для `/env`, алерты.",
+              "text": "`Production readiness` — чеклист подготовки к эксплуатации, где `Actuator` закрывает каждый аспект: health-группы liveness/readiness, метрики Micrometer/Prometheus, безопасность и graceful shutdown.",
               "correct": true,
               "sections": {
                 "explanation": "Это чеклист: каждый аспект эксплуатации (health, метрики, безопасность, завершение) закрывается соответствующей настройкой Actuator. Цель — наблюдаемость и управляемость без рисков утечки данных.",
@@ -1656,7 +1656,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для production достаточно health-проб; метрики, graceful shutdown и sanitization секретов к production readiness не относятся.",
+              "text": "`Production readiness` сводится к настройке health-проб `/actuator/health` с группами liveness/readiness; метрики Micrometer, graceful shutdown и sanitization `/env` считаются отдельными задачами вне чеклиста.",
               "correct": false,
               "sections": {
                 "what_actually": "Чеклист охватывает всё: health, метрики (Micrometer/Prometheus), graceful shutdown, sanitization `/env`, безопасность и алерты.",
@@ -1668,7 +1668,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Production readiness означает открыть все Actuator-эндпоинты через `exposure.include: \"*\"`, чтобы мониторинг имел максимум данных.",
+              "text": "`Production readiness` — это открыть все эндпоинты через `management.endpoints.web.exposure.include: \"*\"`, чтобы мониторинг и Grafana получали максимум данных по `/env`, `/beans` и `/heapdump`.",
               "correct": false,
               "sections": {
                 "what_actually": "Рекомендуется минимальная exposure (`health,info,metrics,prometheus`); открывать всё на production опасно (`/env`, `/heapdump`, `/beans`).",
@@ -1691,7 +1691,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring Boot Admin` — это собственная система сбора и хранения метрик от Pivotal, заменяющая Prometheus и Micrometer.",
+              "text": "`Spring Boot Admin` — это система сбора и хранения метрик от Codecentric со своей time-series базой: она снимает показатели с приложений и заменяет связку `Micrometer` + `Prometheus` как источник и хранилище.",
               "correct": false,
               "sections": {
                 "what_actually": "SBA — лишь UI поверх Actuator-эндпоинтов; метрики собирает Micrometer, хранит Prometheus — SBA их не заменяет.",
@@ -1703,7 +1703,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "SBA умеет находить клиентов только по жёстко прописанному `client.url` и не интегрируется со service discovery.",
+              "text": "SBA регистрирует клиентов по вручную прописанному `spring.boot.admin.client.url` и не интегрируется со `Spring Cloud Discovery`, так что `Eureka` или `Consul` для обнаружения сервисов он не задействует.",
               "correct": false,
               "sections": {
                 "what_actually": "SBA поддерживает обнаружение через `Spring Cloud Discovery` (`Eureka`, `Consul`, `Kubernetes`) и сам находит зарегистрированные сервисы.",
@@ -1715,7 +1715,19 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Spring Boot Admin` (SBA) — open-source UI для мониторинга `Spring Boot`-приложений поверх Actuator-эндпоинтов: показывает health, метрики, логи, environment, меняет уровни логирования и шлёт уведомления. Сервер помечают `@EnableAdminServer`, клиент подключают через `spring.boot.admin.client.url` или обнаруживают через `Spring Cloud Discovery`.",
+              "text": "Чтобы приложение появилось в `Spring Boot Admin`, на нём нужно повесить аннотацию `@EnableAdminServer` и добавить стартер `spring-boot-admin-starter-client` — тогда оно само зарегистрируется на сервере.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@EnableAdminServer` ставят на сервере SBA; клиентское приложение лишь подключает стартер `...-client` и указывает URL сервера.",
+                "source_of_confusion": "Аннотацию `@EnableAdminServer` ошибочно навешивают на каждый мониторируемый сервис.",
+                "if_it_were_true": "Тогда каждый клиент сам становился бы admin-сервером, но сервер должен быть один.",
+                "how_it_should_be": "`@EnableAdminServer` — на сервере; клиенты регистрируются через client-стартер."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Boot Admin` (SBA) — open-source UI поверх Actuator-эндпоинтов: показывает health и метрики. Сервер помечают `@EnableAdminServer`, клиент — через `spring.boot.admin.client.url` или service discovery.",
               "correct": true,
               "sections": {
                 "explanation": "SBA — это визуальная надстройка: сам он данных не собирает, а опрашивает Actuator-эндпоинты зарегистрированных клиентов и красиво их отображает.",
@@ -1723,18 +1735,6 @@
                 "when_to_apply": "Применяют, когда нужен готовый UI для группы сервисов без построения собственного дашборда.",
                 "edge_cases": "SBA требует доступа к Actuator-эндпоинтам клиента; если они закрыты Security или на отдельном порту, нужно дать SBA соответствующие креды/доступ.",
                 "related": "[[spring-boot-actuator-interview#Q1]] что такое Actuator; [[spring-boot-actuator-interview#Q16]] эндпоинт loggers; [[spring-boot-actuator-interview#Q30]] CORS для Actuator."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Чтобы приложение появилось в `Spring Boot Admin`, на нём нужно поставить аннотацию `@EnableAdminServer`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@EnableAdminServer` ставят на сервере SBA; клиентское приложение лишь подключает стартер `...-client` и указывает URL сервера.",
-                "source_of_confusion": "Аннотацию `@EnableAdminServer` ошибочно навешивают на каждый мониторируемый сервис.",
-                "if_it_were_true": "Тогда каждый клиент сам становился бы admin-сервером, но сервер должен быть один.",
-                "how_it_should_be": "`@EnableAdminServer` — на сервере; клиенты регистрируются через client-стартер."
               }
             }
           ]
@@ -1751,7 +1751,31 @@
             {
               "order": 0,
               "label": "A",
-              "text": "CORS для Actuator-эндпоинтов настраивают отдельно от основного приложения через `management.endpoints.web.cors.*`: `allowed-origins`, `allowed-methods`, `allowed-headers`, `allow-credentials`, `max-age`. CORS работает только при заданном `allowed-origins` — без него заголовки не отправляются и кросс-доменные запросы блокируются.",
+              "text": "Свойство `allowed-origins` для Actuator-CORS принимает значение-wildcard `*` и не поддерживает перечисление конкретных доменов вроде `https://admin.example.com` в `management.endpoints.web.cors`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`allowed-origins` принимает конкретные домены (например `https://admin.example.com`); ограничение одним `*` отсутствует.",
+                "source_of_confusion": "Wildcard `*` — частый пример в туториалах, и его принимают за единственный вариант.",
+                "if_it_were_true": "Тогда нельзя было бы сузить доступ до одного origin, но именно это и рекомендуется для prod.",
+                "how_it_should_be": "В `allowed-origins` перечисляют конкретные доверенные домены."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "CORS для Actuator наследуется от глобальной CORS-конфигурации приложения (`@CrossOrigin`, `WebMvcConfigurer`), поэтому свойства `management.endpoints.web.cors` для него задавать не требуется.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Actuator-CORS настраивается отдельно через `management.endpoints.web.cors.*`; глобальная CORS-конфигурация приложения на эндпоинты Actuator не распространяется.",
+                "source_of_confusion": "Кажется естественным, что одна CORS-политика покрывает весь сервер.",
+                "if_it_were_true": "Тогда `@CrossOrigin` на контроллерах открывал бы и Actuator, но для него нужны свои свойства.",
+                "how_it_should_be": "CORS для Actuator задают свойствами `management.endpoints.web.cors`."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "CORS для Actuator настраивают отдельно свойствами `management.endpoints.web.cors.*` (`allowed-origins`, `allowed-methods`). По умолчанию он выключен и активируется при заданном `allowed-origins`.",
               "correct": true,
               "sections": {
                 "explanation": "Actuator-CORS не зависит от CORS основного приложения. Это нужно, когда к эндпоинтам обращается браузерный UI (`Spring Boot Admin`, кастомные панели) с другого origin.",
@@ -1762,33 +1786,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Свойство `allowed-origins` для Actuator-CORS принимает только значение `\"*\"` — указать конкретный домен нельзя.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`allowed-origins` принимает конкретные домены (например `https://admin.example.com`); ограничение одним `*` отсутствует.",
-                "source_of_confusion": "Wildcard `*` — частый пример в туториалах, и его принимают за единственный вариант.",
-                "if_it_were_true": "Тогда нельзя было бы сузить доступ до одного origin, но именно это и рекомендуется для prod.",
-                "how_it_should_be": "В `allowed-origins` перечисляют конкретные доверенные домены."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "CORS для Actuator наследуется от глобальной CORS-конфигурации приложения (`@CrossOrigin` / `WebMvcConfigurer`) и отдельно не настраивается.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Actuator-CORS настраивается отдельно через `management.endpoints.web.cors.*`; глобальная CORS-конфигурация приложения на эндпоинты Actuator не распространяется.",
-                "source_of_confusion": "Кажется естественным, что одна CORS-политика покрывает весь сервер.",
-                "if_it_were_true": "Тогда `@CrossOrigin` на контроллерах открывал бы и Actuator, но для него нужны свои свойства.",
-                "how_it_should_be": "CORS для Actuator задают свойствами `management.endpoints.web.cors`."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "CORS для Actuator включается автоматически с дефолтным `allowed-origins: \"*\"`, разрешая запросы с любого домена.",
+              "text": "CORS для Actuator включается автоматически с дефолтным `allowed-origins: \"*\"`: management-эндпоинты сразу отвечают на кросс-доменный fetch из браузера с любого домена без дополнительной настройки.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию CORS выключен: без явного `allowed-origins` заголовки не отправляются и кросс-доменные запросы блокируются.",
@@ -1811,7 +1811,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Детали диагностики добавляют, возвращая из `health()` обычную `Map<String,Object>` — метод `withDetail` в API `Health` отсутствует.",
+              "text": "Реализуют `HealthIndicator` (в WebFlux — `ReactiveHealthIndicator` с `Mono<Health>`), проверяют ресурс и возвращают `Health.up()`/`Health.down()` с деталями через `.withDetail(...)`: статус, латентность.",
+              "correct": true,
+              "sections": {
+                "explanation": "Детальная диагностика — это богатый набор `withDetail`: не просто UP/DOWN, а конкретные значения (latency, код ответа), которые видны в `/health` при `show-details` и ускоряют разбор инцидента.",
+                "example": "При успехе: `Health.up().withDetail(\"url\",apiUrl).withDetail(\"latencyMs\",measureLatency()).build()`; при ошибке: `Health.down(e).withDetail(\"error\",e.getMessage()).build()`.",
+                "when_to_apply": "Применяют для критичных внешних зависимостей, где важно видеть не только факт сбоя, но и детали (где и почему).",
+                "edge_cases": "Детали видны лишь при `show-details: always`/`when-authorized`; для реактивного стека обязателен `ReactiveHealthIndicator`, иначе блокирующий вызов нарушит event loop.",
+                "related": "[[spring-boot-actuator-interview#Q10]] кастомный индикатор; [[spring-boot-actuator-interview#Q9]] эндпоинт health; [[spring-boot-actuator-interview#Q39]] CompositeHealthContributor."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Детали диагностики возвращают из метода `health()` как `Map<String,Object>` с парами ключ-значение (`url`, `status`, `latencyMs`); билдер `Health` метода `withDetail` для добавления деталей не предоставляет.",
               "correct": false,
               "sections": {
                 "what_actually": "`Health.up()/down()` предоставляет билдер с `withDetail(key, value)`; метод `health()` возвращает объект `Health`, а не Map.",
@@ -1821,9 +1834,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "В реактивном приложении на WebFlux кастомный health реализуют тем же блокирующим `HealthIndicator`, что и в MVC.",
+              "order": 2,
+              "label": "C",
+              "text": "В реактивном приложении на WebFlux кастомную проверку регистрируют тем же блокирующим `HealthIndicator` с методом `Health health()`, что и в MVC; отдельный `ReactiveHealthIndicator` тут не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Для WebFlux используют `ReactiveHealthIndicator` с `Mono<Health>`; блокирующий `HealthIndicator` нарушит неблокирующий event loop.",
@@ -1833,28 +1846,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Детали, добавленные через `withDetail`, видны в `/health` всегда, независимо от настройки `show-details`.",
+              "order": 3,
+              "label": "D",
+              "text": "Детали, добавленные индикатором через `.withDetail(...)`, отображаются в теле ответа эндпоинта `/health` независимо от значения свойства `management.endpoint.health.show-details` в конфигурации.",
               "correct": false,
               "sections": {
                 "what_actually": "Видимость деталей контролирует `show-details`: при `never` детали скрыты даже если индикатор их добавил.",
                 "source_of_confusion": "Раз детали записаны в `Health`, кажется, что они обязательно отобразятся.",
                 "if_it_were_true": "Тогда `show-details: never` всё равно показывал бы latency и URL, но он их прячет.",
                 "how_it_should_be": "Детали отображаются только при `show-details: always`/`when-authorized`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Реализуют `HealthIndicator` (или `ReactiveHealthIndicator` для WebFlux), внутри проверяют ресурс (например внешний API через `RestTemplate`), и в зависимости от результата возвращают `Health.up()`/`Health.down()` с диагностическими деталями через `.withDetail(...)`: URL, HTTP-статус, латентность, текст ошибки.",
-              "correct": true,
-              "sections": {
-                "explanation": "Детальная диагностика — это богатый набор `withDetail`: не просто UP/DOWN, а конкретные значения (latency, код ответа), которые видны в `/health` при `show-details` и ускоряют разбор инцидента.",
-                "example": "При успехе: `Health.up().withDetail(\"url\",apiUrl).withDetail(\"latencyMs\",measureLatency()).build()`; при ошибке: `Health.down(e).withDetail(\"error\",e.getMessage()).build()`.",
-                "when_to_apply": "Применяют для критичных внешних зависимостей, где важно видеть не только факт сбоя, но и детали (где и почему).",
-                "edge_cases": "Детали видны лишь при `show-details: always`/`when-authorized`; для реактивного стека обязателен `ReactiveHealthIndicator`, иначе блокирующий вызов нарушит event loop.",
-                "related": "[[spring-boot-actuator-interview#Q10]] кастомный индикатор; [[spring-boot-actuator-interview#Q9]] эндпоинт health; [[spring-boot-actuator-interview#Q39]] CompositeHealthContributor."
               }
             }
           ]
@@ -1871,31 +1871,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`management.info.git.mode: full` и `mode: simple` отличаются лишь форматированием JSON, набор полей одинаков.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`simple` показывает базовые поля (ветка, id коммита), а `full` — все доступные поля из `git.properties`; набор данных разный.",
-                "source_of_confusion": "Слова full/simple воспринимают как форматирование, а не как объём данных.",
-                "if_it_were_true": "Тогда `simple` и `full` давали бы одинаковый блок git, но full добавляет много дополнительных полей.",
-                "how_it_should_be": "`simple` — краткий набор полей, `full` — полный; это объём, а не формат."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Версия и git-коммит попадают в `/actuator/info` автоматически — Spring Boot читает их из системы контроля версий в рантайме.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Данные берутся из сгенерированных при сборке файлов `build-info.properties` и `git.properties`; в рантайме репозиторий не читается.",
-                "source_of_confusion": "Кажется, что приложение «само знает» свой коммит и версию.",
-                "if_it_were_true": "Тогда блоки `build`/`git` появлялись бы без плагинов, но без сгенерированных файлов их нет.",
-                "how_it_should_be": "Включают генерацию `build-info.properties` и `git.properties` плагинами сборки."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Включают info-контрибьюторы в `application.yml` (`management.info.git.mode: full`, `build.enabled`, `env`, `java`, `os`), генерируют `build-info.properties` через `springBoot { buildInfo {...} }` и `git.properties` через плагин `com.gorylenko.gradle-git-properties`; при необходимости добавляют кастомный `InfoContributor`.",
+              "text": "Включают info-контрибьюторы в `application.yml`, генерируют `build-info.properties` через `springBoot buildInfo` и `git.properties` плагином `gradle-git-properties`; из них контрибьюторы берут версию и коммит.",
               "correct": true,
               "sections": {
                 "explanation": "`BuildInfoContributor` читает `build-info.properties` (версия, время, артефакт), `GitInfoContributor` — `git.properties` (ветка, коммит). `mode: full` показывает все git-поля, `simple` — только базовые.",
@@ -1906,9 +1882,33 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Info-контрибьюторы подключают в `application.yml`, а `management.info.git.mode: full` и `mode: simple` возвращают одинаковый набор git-полей и различаются форматированием JSON-блока `git` в `/actuator/info`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`simple` показывает базовые поля (ветка, id коммита), а `full` — все доступные поля из `git.properties`; набор данных разный.",
+                "source_of_confusion": "Слова full/simple воспринимают как форматирование, а не как объём данных.",
+                "if_it_were_true": "Тогда `simple` и `full` давали бы одинаковый блок git, но full добавляет много дополнительных полей.",
+                "how_it_should_be": "`simple` — краткий набор полей, `full` — полный; это объём, а не формат."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Версия и git-коммит попадают в блоки `build` и `git` эндпоинта `/actuator/info` автоматически: `BuildInfoContributor` и `GitInfoContributor` в рантайме читают систему контроля версий и метаданные Gradle-сборки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Данные берутся из сгенерированных при сборке файлов `build-info.properties` и `git.properties`; в рантайме репозиторий не читается.",
+                "source_of_confusion": "Кажется, что приложение «само знает» свой коммит и версию.",
+                "if_it_were_true": "Тогда блоки `build`/`git` появлялись бы без плагинов, но без сгенерированных файлов их нет.",
+                "how_it_should_be": "Включают генерацию `build-info.properties` и `git.properties` плагинами сборки."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "Git-информацию в `/info` показывает встроенный контрибьютор без всякого плагина — достаточно `management.info.git.mode: full`.",
+              "text": "Git-информацию в блок `git` эндпоинта `/actuator/info` выводит встроенный `GitInfoContributor` без подключения плагина сборки — включается она свойством `management.info.git.mode: full` в `application.yml`.",
               "correct": false,
               "sections": {
                 "what_actually": "`GitInfoContributor` читает файл `git.properties`, который генерирует плагин (`gradle-git-properties`); без файла `mode: full` ничего не покажет.",
@@ -1931,7 +1931,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Глобальный тег `application` добавляется в метрики сам по себе и отдельной настройки `management.metrics.tags` не требует.",
+              "text": "`/actuator/prometheus` через `micrometer-registry-prometheus` отдаёт метрики в Prometheus exposition format, а тег `application` добавляется автоконфигурацией — `management.metrics.tags` настраивать не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "Общие теги вроде `application` задают явно через `management.metrics.tags.application`; по умолчанию их в метриках нет.",
@@ -1943,7 +1943,19 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`/actuator/prometheus` отдаёт метрики в текстовом формате `Prometheus` (`text/plain; version=0.0.4`), который сервер periodically scrape-ит в time-series базу; подключается зависимостью `micrometer-registry-prometheus`. Автоматически экспортируются JVM (`jvm_memory_*`, `jvm_gc_*`), HTTP (`http_server_requests_seconds`), JDBC (`hikaricp_*`), Cache, Spring Batch, Tomcat.",
+              "text": "`/actuator/prometheus` через `micrometer-registry-prometheus` сериализует метрики Micrometer в JSON, который Prometheus периодически scrape-ит и разбирает встроенным JSON-декодером в свои time-series.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Эндпоинт отдаёт текстовый Prometheus exposition format (`text/plain; version=0.0.4`), а не JSON.",
+                "source_of_confusion": "Большинство Actuator-эндпоинтов отдают JSON, и это обобщают на prometheus.",
+                "if_it_were_true": "Тогда Prometheus парсил бы JSON, но он ожидает свой текстовый формат с `# HELP`/`# TYPE`.",
+                "how_it_should_be": "Формат — текстовый Prometheus exposition; JSON для него не подходит."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`/actuator/prometheus` отдаёт метрики в Prometheus exposition format (`text/plain; version=0.0.4`); подключается зависимостью `micrometer-registry-prometheus` и экспортирует JVM, HTTP, HikariCP, Tomcat.",
               "correct": true,
               "sections": {
                 "explanation": "Эндпоинт сериализует все метрики Micrometer в формат экспозиции Prometheus с метками. Глобальные теги (`application`, `environment`) задают через `management.metrics.tags`.",
@@ -1954,21 +1966,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`/actuator/prometheus` возвращает метрики в формате JSON, который Prometheus парсит своим JSON-декодером.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Эндпоинт отдаёт текстовый Prometheus exposition format (`text/plain; version=0.0.4`), а не JSON.",
-                "source_of_confusion": "Большинство Actuator-эндпоинтов отдают JSON, и это обобщают на prometheus.",
-                "if_it_were_true": "Тогда Prometheus парсил бы JSON, но он ожидает свой текстовый формат с `# HELP`/`# TYPE`.",
-                "how_it_should_be": "Формат — текстовый Prometheus exposition; JSON для него не подходит."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "На `/actuator/prometheus` нужно вручную регистрировать каждую JVM- и HTTP-метрику — автоматически они не экспортируются.",
+              "text": "`/actuator/prometheus` отдаёт текстовый Prometheus exposition format, но каждую JVM- и HTTP-метрику приходится регистрировать в `MeterRegistry` вручную — автоконфигурация Micrometer их не подключает.",
               "correct": false,
               "sections": {
                 "what_actually": "Метрики JVM, HTTP, JDBC, Cache, Tomcat экспортируются автоматически через автоконфигурацию Micrometer.",
@@ -1991,7 +1991,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Параметры `@WriteOperation` передаются как query-параметры (`?enabled=true`), а не в теле запроса.",
+              "text": "Объявляют `@Component @Endpoint(id = \"...\")` с `@ReadOperation` и `@WriteOperation`; `@Selector` кладёт аргумент в путь, а прочие параметры write-операции передаются как query-параметры (`?enabled=true`).",
               "correct": false,
               "sections": {
                 "what_actually": "Не-селекторные параметры write-операции приходят в теле POST (JSON), а не в query-строке.",
@@ -2003,20 +2003,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Объявляют `@Component @Endpoint(id = \"...\")` и определяют операции: `@ReadOperation` (GET, в т.ч. с `@Selector` для пути), `@WriteOperation` (POST, с телом-параметрами), `@DeleteOperation` (DELETE); тело POST передают как `application/vnd.spring-boot.actuator.v3+json`. Для HTTP-only берут `@WebEndpoint`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Один `@Endpoint` может совмещать read/write/delete-операции. `@Selector` делает аргумент сегментом пути, остальные параметры write-операции приходят в теле запроса.",
-                "example": "`@WriteOperation void toggleFeature(@Selector String name, boolean enabled)` вызывается как `POST /actuator/features/newUI` с телом `{\"enabled\": true}`.",
-                "when_to_apply": "Применяют для интерактивных операционных эндпоинтов: управление фича-флагами, очистка кэша, переключение режимов.",
-                "edge_cases": "Тело POST к Actuator ожидается в специальном медиатипе `application/vnd.spring-boot.actuator.v3+json`; обычный `application/json` тоже работает, но об этом часто забывают при curl.",
-                "related": "[[spring-boot-actuator-interview#Q17]] создание эндпоинта; [[spring-boot-actuator-interview#Q18]] Endpoint vs WebEndpoint; [[spring-boot-actuator-interview#Q8]] уровни доступа."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Один `@Endpoint` может содержать только одну операцию — для чтения и записи нужно создавать два отдельных эндпоинт-класса.",
+              "text": "В одном классе `@Endpoint(id = \"...\")` размещают одну операцию, поэтому для чтения и записи объявляют два отдельных эндпоинт-класса — с `@ReadOperation` и `@WriteOperation` соответственно.",
               "correct": false,
               "sections": {
                 "what_actually": "В одном `@Endpoint` совмещают `@ReadOperation`, `@WriteOperation` и `@DeleteOperation`; делить на классы не нужно.",
@@ -2026,15 +2013,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`@WebEndpoint` отличается от `@Endpoint` тем, что доступен и по HTTP, и по JMX, тогда как `@Endpoint` — только по HTTP.",
+              "order": 2,
+              "label": "C",
+              "text": "Объявляют `@Component @Endpoint(id = \"...\")` с `@ReadOperation` и `@WriteOperation`; `@WebEndpoint` при этом доступен и по HTTP, и по JMX, тогда как `@Endpoint` публикуется по HTTP-каналу.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `@Endpoint` доступен по обоим каналам, а `@WebEndpoint` — только по HTTP.",
                 "source_of_confusion": "Названия `Web`/`Endpoint` интуитивно меняют местами с их каналами.",
                 "if_it_were_true": "Тогда `@WebEndpoint` появлялся бы в JMX-консоли, но он строго web-only.",
                 "how_it_should_be": "`@Endpoint` — HTTP+JMX; `@WebEndpoint` — только HTTP."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Объявляют `@Component @Endpoint(id = \"...\")` с операциями `@ReadOperation` (GET), `@WriteOperation` (POST, параметры в теле) и `@DeleteOperation` (DELETE); для HTTP-only берут `@WebEndpoint`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Один `@Endpoint` может совмещать read/write/delete-операции. `@Selector` делает аргумент сегментом пути, остальные параметры write-операции приходят в теле запроса.",
+                "example": "`@WriteOperation void toggleFeature(@Selector String name, boolean enabled)` вызывается как `POST /actuator/features/newUI` с телом `{\"enabled\": true}`.",
+                "when_to_apply": "Применяют для интерактивных операционных эндпоинтов: управление фича-флагами, очистка кэша, переключение режимов.",
+                "edge_cases": "Тело POST к Actuator ожидается в специальном медиатипе `application/vnd.spring-boot.actuator.v3+json`; обычный `application/json` тоже работает, но об этом часто забывают при curl.",
+                "related": "[[spring-boot-actuator-interview#Q17]] создание эндпоинта; [[spring-boot-actuator-interview#Q18]] Endpoint vs WebEndpoint; [[spring-boot-actuator-interview#Q8]] уровни доступа."
               }
             }
           ]
@@ -2051,7 +2051,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Пробы в Spring Boot нужно включать всегда вручную — автоматического определения Kubernetes-среды нет.",
+              "text": "Автоопределения `Kubernetes`-среды у Spring Boot нет: пробы включают вручную через `management.endpoint.health.probes.enabled: true`, после чего появляются `/actuator/health/liveness` и `/actuator/health/readiness`.",
               "correct": false,
               "sections": {
                 "what_actually": "Spring сам активирует пробы при обнаружении K8s (`KUBERNETES_SERVICE_HOST`/`KUBERNETES_SERVICE_PORT`); вручную их включают вне кластера.",
@@ -2063,7 +2063,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Включают пробы через `management.endpoint.health.probes.enabled: true` (плюс `health.livenessState.enabled`/`readinessState.enabled`), что создаёт `/actuator/health/liveness` и `/actuator/health/readiness`; в `Kubernetes` deployment настраивают `livenessProbe`/`readinessProbe` на эти пути. Spring сам активирует пробы при обнаружении K8s-среды (`KUBERNETES_SERVICE_HOST`).",
+              "text": "Пробы включают через `management.endpoint.health.probes.enabled: true`, что публикует `/actuator/health/liveness` и `/actuator/health/readiness`; на эти пути в deployment вешают `livenessProbe`/`readinessProbe`.",
               "correct": true,
               "sections": {
                 "explanation": "Liveness отвечает на вопрос «приложение живо?» (иначе pod перезапускается), readiness — «готово принимать трафик?» (иначе pod снимается с балансировки). Состояния можно менять из кода через `ApplicationAvailability`.",
@@ -2076,7 +2076,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Провал liveness-пробы приводит к исключению pod'а из трафика, а readiness — к его перезапуску.",
+              "text": "Пробы вешают на `/actuator/health/liveness` и `/actuator/health/readiness`; при этом провал liveness-пробы исключает pod из балансировки трафика, а провал readiness заставляет `kubelet` перезапустить pod.",
               "correct": false,
               "sections": {
                 "what_actually": "Ровно наоборот: провал liveness перезапускает pod, провал readiness — снимает его с трафика без перезапуска.",
@@ -2088,7 +2088,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Liveness и readiness пробы — это один и тот же эндпоинт `/actuator/health`, отличающийся лишь HTTP-методом запроса.",
+              "text": "Обе пробы бьют в один эндпоинт `/actuator/health`, а `Kubernetes` различает liveness и readiness по HTTP-методу запроса; в deployment `livenessProbe` и `readinessProbe` указывают на этот путь.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные подпути: `/actuator/health/liveness` и `/actuator/health/readiness`, с разным составом индикаторов и разной семантикой.",
@@ -2111,7 +2111,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`/actuator/loggers` динамически меняет уровни без рестарта: `GET /actuator/loggers` отдаёт все логгеры, `GET /actuator/loggers/<имя>` — конкретный, `POST` с `{\"configuredLevel\":\"DEBUG\"}` меняет уровень, `null` сбрасывает. В production эндпоинт защищают через Security (POST — только ADMIN), а изменения не персистируются.",
+              "text": "`/actuator/loggers` меняет уровни без рестарта: `POST` с `{\"configuredLevel\":\"DEBUG\"}` поднимает уровень пакета, `null` сбрасывает к дефолту. На production POST закрывают ролью, изменения хранятся в памяти.",
               "correct": true,
               "sections": {
                 "explanation": "Это основной инструмент диагностики на production: точечно поднимаешь уровень для пакета, собираешь логи и возвращаешь. POST-операцию закрывают ролью, чтобы менять уровни могли только операторы.",
@@ -2124,7 +2124,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В production `/actuator/loggers` можно использовать только для просмотра уровней; менять их разрешено лишь правкой `application.yml` и рестартом.",
+              "text": "В production `/actuator/loggers` отдаёт по `GET` текущие уровни логгеров; чтобы поменять уровень пакета, правят `logging.level.*` в `application.yml` и перезапускают приложение, а `POST` конфигурацию не изменяет.",
               "correct": false,
               "sections": {
                 "what_actually": "POST на `/actuator/loggers/<имя>` меняет уровень на лету без рестарта — это и есть его главная польза в production.",
@@ -2136,7 +2136,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Изменения уровней через `/loggers` сохраняются в файле и применяются после перезапуска приложения.",
+              "text": "Изменения уровней через `POST /actuator/loggers/<имя>` записываются в файл конфигурации и вступают в силу после перезапуска, поэтому поднятый для инцидента `DEBUG` переживает рестарт процесса.",
               "correct": false,
               "sections": {
                 "what_actually": "Изменения только в памяти и теряются при рестарте; после перезапуска уровни берутся из конфигурации.",
@@ -2148,7 +2148,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "POST на `/actuator/loggers` безопасен и не требует защиты Security, так как меняет лишь уровень логов, а не данные.",
+              "text": "`POST` на `/actuator/loggers` не нуждается в защите Spring Security: он меняет уровень логирования пакета, а не бизнес-данные, поэтому его оставляют доступным наравне с `GET` на этом эндпоинте.",
               "correct": false,
               "sections": {
                 "what_actually": "Незащищённый POST позволяет любому, кто достучался до эндпоинта, включать TRACE на чувствительных пакетах и менять поведение логов — его закрывают ролью.",
@@ -2171,7 +2171,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Spring Boot 3` распределённая трассировка по-прежнему строится на `Spring Cloud Sleuth`, а `Micrometer Tracing` — это лишь его внутренняя зависимость.",
+              "text": "В `Spring Boot 3` распределённая трассировка по-прежнему опирается на `Spring Cloud Sleuth`, а `Micrometer Tracing` — внутренняя зависимость самого Sleuth, подключаемого стартером `spring-cloud-starter-sleuth`.",
               "correct": false,
               "sections": {
                 "what_actually": "Spring Boot 3 отказался от Sleuth в пользу `Micrometer Tracing` (мост к OTel/Brave); Sleuth для Boot 3 не поддерживается.",
@@ -2183,7 +2183,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@Observed` работает без какой-либо конфигурации — бин `ObservedAspect` регистрировать не нужно.",
+              "text": "Аннотация `@Observed` активируется автоконфигурацией `Micrometer Observation`: спан и метрика пишутся сразу при наличии бина `ObservationRegistry`, регистрировать аспект `ObservedAspect` вручную не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Для срабатывания `@Observed` через AOP нужен бин `ObservedAspect` (аналогично `TimedAspect` для `@Timed`).",
@@ -2195,19 +2195,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Аннотация `@Observed` создаёт только метрику-таймер и не порождает трейс-спан — для спанов нужен отдельный `@NewSpan`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`@Observed` через Observation API создаёт и спан (для трейсинга), и метрику одновременно — в этом её ключевое преимущество.",
-                "source_of_confusion": "`@Observed` похожа на `@Timed`, и её роль сводят только к метрике.",
-                "if_it_were_true": "Тогда трейсинг требовал бы отдельной аннотации, но `@Observed` покрывает и спан, и метрику.",
-                "how_it_should_be": "Один `@Observed` даёт и trace-span, и timer-метрику из единого наблюдения."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Spring Boot 3` перешёл от `Spring Cloud Sleuth` к `Micrometer Tracing` как стандарту распределённой трассировки: вместо `spring-cloud-starter-sleuth` подключают `micrometer-tracing-bridge-otel`, а вместо ручной инструментации используют аннотацию `@Observed` + AOP (бин `ObservedAspect`). Каждый `@Observed`-метод создаёт и трейс-спан, и метрику.",
+              "text": "`Spring Boot 3` заменил `Spring Cloud Sleuth` на `Micrometer Tracing`: вместо `spring-cloud-starter-sleuth` подключают `micrometer-tracing-bridge-otel`, а `@Observed` с `ObservedAspect` даёт и спан, и метрику.",
               "correct": true,
               "sections": {
                 "explanation": "`Micrometer Observation API` объединяет метрики и трейсинг: одно наблюдение порождает и span (в Jaeger/Zipkin), и timer-метрику (в Prometheus). `@Observed` делает это декларативно.",
@@ -2215,6 +2203,18 @@
                 "when_to_apply": "Применяют для распределённой трассировки в Spring Boot 3 без ручного создания span'ов в коде.",
                 "edge_cases": "Для работы `@Observed` нужен бин `ObservedAspect` (как `TimedAspect` для `@Timed`); high-cardinality ключи (id заказа) кладут в `highCardinalityKeyValue`, иначе раздувают метрики.",
                 "related": "[[spring-boot-actuator-interview#Q23]] аннотация Timed; [[spring-boot-actuator-interview#Q43]] OTLP exporter; [[spring-boot-actuator-interview#Q20]] что такое Micrometer."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Аннотация `@Observed` через `Observation API` регистрирует таймер-метрику наблюдаемого метода, но трейс-спан из неё не рождается — для спана метод дополнительно помечают `@NewSpan` из `Micrometer Tracing`.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`@Observed` через Observation API создаёт и спан (для трейсинга), и метрику одновременно — в этом её ключевое преимущество.",
+                "source_of_confusion": "`@Observed` похожа на `@Timed`, и её роль сводят только к метрике.",
+                "if_it_were_true": "Тогда трейсинг требовал бы отдельной аннотации, но `@Observed` покрывает и спан, и метрику.",
+                "how_it_should_be": "Один `@Observed` даёт и trace-span, и timer-метрику из единого наблюдения."
               }
             }
           ]
@@ -2231,20 +2231,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`/actuator/heapdump` отдаёт бинарный HPROF-дамп кучи (для анализа в MAT/VisualVM), его применяют при OOM или подозрении на memory leak — но он останавливает JVM (STW), весит гигабайты и содержит чувствительные данные. `/actuator/threaddump` отдаёт снапшот потоков (аналог `jstack`) — он безопаснее, не останавливает приложение и не содержит данных пользователей.",
-              "correct": true,
-              "sections": {
-                "explanation": "Heapdump — тяжёлая операция с риском паузы и утечки секретов из памяти; threaddump — лёгкая диагностика deadlock/busy-spin, которую можно снимать несколько раз подряд.",
-                "example": "При подозрении на deadlock: `curl .../actuator/threaddump | grep -A5 \"BLOCKED\"` найдёт заблокированные потоки без остановки сервиса.",
-                "when_to_apply": "Heapdump — при OOM/утечках памяти; threaddump — при зависании, deadlock или высоком CPU при малой нагрузке.",
-                "edge_cases": "Heapdump на production защищают (роль ADMIN) и снимают осторожно: пауза STW и гигабайтный файл с паролями/токенами в памяти — реальные риски.",
-                "related": "[[spring-boot-actuator-interview#Q3]] список эндпоинтов; [[spring-boot-actuator-interview#Q41]] whitelist на production; [[spring-boot-actuator-interview#Q26]] безопасность Actuator."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`/actuator/threaddump` опаснее `/actuator/heapdump`, потому что останавливает приложение надолго и содержит пароли пользователей.",
+              "text": "`/actuator/threaddump` опаснее `/actuator/heapdump`: снапшот потоков надолго останавливает приложение и содержит пароли пользователей из стеков, тогда как HPROF-дамп кучи снимается быстро и без паузы сервиса.",
               "correct": false,
               "sections": {
                 "what_actually": "Опаснее именно heapdump: он вызывает STW-паузу и содержит чувствительные данные из памяти; threaddump лёгкий и безопасный.",
@@ -2254,9 +2241,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Оба эндпоинта по умолчанию открыты и безопасны на production, так как отдают лишь техническую информацию о JVM.",
+              "order": 1,
+              "label": "B",
+              "text": "Оба эндпоинта по умолчанию доступны наружу и безопасны на production, поскольку отдают техническую информацию о JVM — состояние потоков и разметку кучи — без пользовательских данных, а роль `ADMIN` для них не нужна.",
               "correct": false,
               "sections": {
                 "what_actually": "Heapdump содержит чувствительные данные из памяти и тяжёл; на production его закрывают ролью и снимают осторожно.",
@@ -2266,15 +2253,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`/actuator/heapdump` возвращает текстовый отчёт об использовании памяти, который читается прямо в браузере.",
+              "order": 2,
+              "label": "C",
+              "text": "`/actuator/heapdump` возвращает человекочитаемый текстовый отчёт об использовании памяти по областям кучи, который открывается прямо в браузере, а `/actuator/threaddump` показывает список активных потоков.",
               "correct": false,
               "sections": {
                 "what_actually": "Heapdump — бинарный HPROF-файл (часто гигабайты), анализируемый в Eclipse MAT или VisualVM, а не текст для браузера.",
                 "source_of_confusion": "Слово «dump» путают с человекочитаемым отчётом.",
                 "if_it_were_true": "Тогда heapdump открывался бы в браузере как текст, но это бинарный файл для специальных инструментов.",
                 "how_it_should_be": "Heapdump скачивают как HPROF и анализируют в MAT/VisualVM."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`/actuator/heapdump` отдаёт бинарный HPROF-дамп кучи для анализа в MAT/VisualVM — тяжёлая операция с паузой JVM и секретами в памяти. `/actuator/threaddump` даёт снапшот потоков (`jstack`) — лёгкий, безопасный.",
+              "correct": true,
+              "sections": {
+                "explanation": "Heapdump — тяжёлая операция с риском паузы и утечки секретов из памяти; threaddump — лёгкая диагностика deadlock/busy-spin, которую можно снимать несколько раз подряд.",
+                "example": "При подозрении на deadlock: `curl .../actuator/threaddump | grep -A5 \"BLOCKED\"` найдёт заблокированные потоки без остановки сервиса.",
+                "when_to_apply": "Heapdump — при OOM/утечках памяти; threaddump — при зависании, deadlock или высоком CPU при малой нагрузке.",
+                "edge_cases": "Heapdump на production защищают (роль ADMIN) и снимают осторожно: пауза STW и гигабайтный файл с паролями/токенами в памяти — реальные риски.",
+                "related": "[[spring-boot-actuator-interview#Q3]] список эндпоинтов; [[spring-boot-actuator-interview#Q41]] whitelist на production; [[spring-boot-actuator-interview#Q26]] безопасность Actuator."
               }
             }
           ]
@@ -2291,7 +2291,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Родительский компонент composite всегда показывает статус `UP`, пока хотя бы один дочерний индикатор `UP`.",
+              "text": "Реализуют `CompositeHealthContributor`, собирая дочерние `HealthContributor` в `Map` и отдавая через `getContributor` и `iterator()`; родительский статус становится `UP`, если `UP` хотя бы один дочерний индикатор.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию родитель `DOWN`, если хоть один дочерний `DOWN` (`StatusAggregator` ставит DOWN выше UP).",
@@ -2303,7 +2303,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Стратегию агрегации статусов в composite изменить нельзя — порядок `DOWN > UP` зашит в Actuator.",
+              "text": "Реализуют `CompositeHealthContributor` с `Map` дочерних `HealthContributor` и методами `getContributor`, `iterator`; порядок агрегации `DOWN > UP` закреплён в Actuator и своим `StatusAggregator` не переопределяется.",
               "correct": false,
               "sections": {
                 "what_actually": "Стратегию переопределяют бином `StatusAggregator` (например `new SimpleStatusAggregator(...)` со своим порядком).",
@@ -2315,7 +2315,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`CompositeHealthContributor` и `Health Groups` — это одно и то же: composite задаётся свойством `management.endpoint.health.group`.",
+              "text": "Группировку задают свойством `management.endpoint.health.group`: `CompositeHealthContributor` — это и есть Health Group, декларативный подпуть `/health/<group>`, а не отдельный Java-класс с иерархией.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные механизмы: composite — Java-класс, строящий вложенную структуру в `/health`; группы — декларативные подпути `/health/<group>` из конфигурации.",
@@ -2327,7 +2327,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Реализуют `CompositeHealthContributor`, который объединяет несколько `HealthContributor` под одним именем в иерархию: в конструкторе собирают `Map<String, HealthContributor>`, реализуют `getContributor(name)` и `iterator()` через `NamedContributor.of(...)`. Родительский компонент автоматически агрегирует статус дочерних (если хоть один `DOWN` — родитель `DOWN`).",
+              "text": "Реализуют интерфейс `CompositeHealthContributor`: в конструкторе собирают `Map<String, HealthContributor>`, отдавая их через `getContributor(name)` и `iterator()`; статус дочерних агрегирует `StatusAggregator`.",
               "correct": true,
               "sections": {
                 "explanation": "Composite создаёт вложенную структуру в `/health`: например `paymentSystem` с дочерними `gateway`, `fraud`, `database`. Агрегацию делает `StatusAggregator`, которую можно переопределить.",
@@ -2351,7 +2351,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Histogram-buckets для перцентилей создаются автоматически для всех метрик — настройка `management.metrics.distribution` не нужна.",
+              "text": "`@Timed` и `MeterRegistry` пишут в общий registry, а Prometheus scrape-ит `/actuator/prometheus`; histogram-buckets создаются автоматически, настройка `management.metrics.distribution` не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Percentile-histogram buckets включают явно через `management.metrics.distribution.percentiles-histogram` для нужных метрик.",
@@ -2363,7 +2363,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@Timed` декларативно замеряет время метода (с `percentiles`, `histogram`, `extraTags`) — для бинов нужен `TimedAspect`; `MeterRegistry` даёт программный API (`counter`, `Timer.builder`, `Gauge.builder`). Метрики автоматически экспортируются на `/actuator/prometheus`, откуда их scrape-ит Prometheus; histogram-buckets и SLO задают через `management.metrics.distribution`.",
+              "text": "`@Timed` замеряет время метода (нужен бин `TimedAspect`), `MeterRegistry` даёт программный API (`counter`, `Timer`, `Gauge`); оба пишут в общий registry и scrape-ятся Prometheus с `/actuator/prometheus`.",
               "correct": true,
               "sections": {
                 "explanation": "`@Timed` удобен для точечного замера методов, `MeterRegistry` — для счётчиков, gauge и метрик с динамическими тегами. Оба пишут в один registry, который сериализуется в формат Prometheus.",
@@ -2376,7 +2376,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Чтобы метрики `@Timed` и `MeterRegistry` попали в Prometheus, их нужно вручную push-ить на сервер Prometheus после каждого замера.",
+              "text": "`@Timed` замеряет латентность методов, `MeterRegistry` копит счётчики и gauge в общий registry; чтобы метрики попали в Prometheus, приложение push-ит их на сервер Prometheus после каждого замера.",
               "correct": false,
               "sections": {
                 "what_actually": "Prometheus сам pull-ит метрики с `/actuator/prometheus`; приложение лишь экспонирует registry, ничего не отправляя.",
@@ -2388,7 +2388,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`@Timed` и `MeterRegistry` пишут в разные несовместимые хранилища, поэтому одновременно использовать их в одном приложении нельзя.",
+              "text": "`@Timed` замеряет методы через `TimedAspect`, `MeterRegistry` даёт программный API; они пишут в разные несовместимые registry, поэтому совмещать оба подхода с экспортом на `/actuator/prometheus` не выйдет.",
               "correct": false,
               "sections": {
                 "what_actually": "Обе техники пишут в один и тот же `MeterRegistry` и спокойно сосуществуют; `@Timed` — декларативная обёртка над тем же API.",
@@ -2411,7 +2411,31 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Стратегия whitelist — открывать только нужные эндпоинты: `exposure.include: health, info, prometheus, loggers` и НЕ открывать `env, beans, mappings, heapdump, shutdown, configprops`; добавляют `show-details: when-authorized`, отдельный management-порт, `SecurityFilterChain` с `EndpointRequest` (пробы — `permitAll`, prometheus — роль, POST loggers — ADMIN) и сетевые NetworkPolicy.",
+              "text": "Whitelist сводится к выносу эндпоинтов на management-порт `management.server.port`: сетевая изоляция закрывает доступ снаружи, поэтому `SecurityFilterChain` и роли для проб в production не настраивают.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Отдельный порт изолирует на сетевом уровне, но внутри кластера эндпоинты доступны; Security и NetworkPolicy остаются нужны.",
+                "source_of_confusion": "Отдельный порт ощущается как достаточная граница безопасности.",
+                "if_it_were_true": "Тогда любой pod в кластере читал бы `/env` без аутентификации, но Security это запрещает.",
+                "how_it_should_be": "Порт, Security и NetworkPolicy складываются в эшелонированную защиту."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Whitelist настраивают через `exposure.include: \"*\"`, открывая все эндпоинты, а затем убирают опасные `env, beans, heapdump, shutdown` через `exposure.exclude`; набор мониторинга остаётся полным, а риск прикрыт.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Whitelist — обратный подход: открывают только нужный минимум через `include`, а не открывают всё с последующим `exclude`.",
+                "source_of_confusion": "Blacklist (открыть всё, убрать лишнее) и whitelist путают местами.",
+                "if_it_were_true": "Тогда новый опасный эндпоинт был бы открыт по умолчанию, но whitelist его не пускает без явного include.",
+                "how_it_should_be": "Открывают только перечисленные эндпоинты; всё неперечисленное закрыто."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Whitelist — открывать через `exposure.include` минимум (`health, info, prometheus, loggers`) и закрывать `env, heapdump, shutdown`; сверху `show-details: when-authorized`, management-порт и `SecurityFilterChain`.",
               "correct": true,
               "sections": {
                 "explanation": "Whitelist — это принцип минимальной поверхности атаки: что не нужно мониторингу, то закрыто. Слои защиты складываются: exposure + Security + отдельный порт + network policy.",
@@ -2422,33 +2446,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Отдельный management-порт сам по себе полностью защищает эндпоинты, и Spring Security в production уже не нужен.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Отдельный порт изолирует на сетевом уровне, но внутри кластера эндпоинты доступны; Security и NetworkPolicy остаются нужны.",
-                "source_of_confusion": "Отдельный порт ощущается как достаточная граница безопасности.",
-                "if_it_were_true": "Тогда любой pod в кластере читал бы `/env` без аутентификации, но Security это запрещает.",
-                "how_it_should_be": "Порт, Security и NetworkPolicy складываются в эшелонированную защиту."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Whitelist означает открыть все эндпоинты и затем точечно закрыть опасные через `exposure.exclude`.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Whitelist — обратный подход: открывают только нужный минимум через `include`, а не открывают всё с последующим `exclude`.",
-                "source_of_confusion": "Blacklist (открыть всё, убрать лишнее) и whitelist путают местами.",
-                "if_it_were_true": "Тогда новый опасный эндпоинт был бы открыт по умолчанию, но whitelist его не пускает без явного include.",
-                "how_it_should_be": "Открывают только перечисленные эндпоинты; всё неперечисленное закрыто."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "В whitelist для production рекомендуется включать `heapdump` и `shutdown`, так как они полезны для эксплуатации.",
+              "text": "Whitelist открывает через `exposure.include` набор `health, info, prometheus`, куда добавляют `heapdump` и `shutdown` как полезные для эксплуатации: снять дамп памяти и мягко остановить приложение под ролью ADMIN.",
               "correct": false,
               "sections": {
                 "what_actually": "`heapdump`, `shutdown`, `env`, `beans` намеренно НЕ включают в whitelist — они опасны (утечка памяти, остановка сервиса).",
@@ -2471,7 +2471,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Liveness отвечает «жив ли контейнер?» — при провале pod перезапускается; Readiness — «готов ли принимать трафик?» — при провале pod исключается из Service endpoints (без рестарта); Startup — «запустился ли?» — даёт время на инициализацию, при провале pod перезапускается, и проверяется только при старте. Spring Boot отдаёт `/health/liveness` и `/health/readiness` автоматически.",
+              "text": "Liveness («жив ли контейнер?») при провале рестартит pod; readiness («готов к трафику?») снимает pod с трафика без рестарта; startup («запустился ли?») даёт время на инициализацию и работает при старте.",
               "correct": true,
               "sections": {
                 "explanation": "Три пробы разводят понятия: startup защищает медленный старт, liveness ловит зависшие процессы, readiness — временную неготовность. Это предотвращает преждевременный рестарт и отправку трафика в неготовый pod.",
@@ -2484,7 +2484,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Liveness, readiness и startup — это три синонима одной и той же проверки готовности, отличающиеся только названием в манифесте.",
+              "text": "Liveness, readiness и startup — три названия одной и той же проверки готовности; они возвращают один статус и различаются именем ключа в манифесте `Kubernetes`, а реакция оркестратора на их провал одинакова.",
               "correct": false,
               "sections": {
                 "what_actually": "Это три разные пробы с разной семантикой и разным действием при провале (restart vs снятие с трафика vs защита старта).",
@@ -2496,7 +2496,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Провал readiness-пробы приводит к перезапуску pod'а, а провал liveness — к исключению из балансировки.",
+              "text": "Провал readiness-пробы перезапускает контейнер pod'а, а провал liveness-пробы исключает pod из Service endpoints, снимая его с балансировки без влияния на сам процесс контейнера.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: readiness fail снимает pod с трафика (без рестарта), liveness fail перезапускает контейнер.",
@@ -2508,7 +2508,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Startup-проба проверяется на протяжении всей жизни pod'а наравне с liveness и readiness.",
+              "text": "Startup-проба продолжает выполняться на протяжении всей жизни pod'а наравне с liveness и readiness, периодически подтверждая, что приложение всё ещё корректно инициализировано после запуска.",
               "correct": false,
               "sections": {
                 "what_actually": "Startup-проба активна только во время запуска: как только она прошла, проверка прекращается и эстафету берут liveness/readiness.",
@@ -2531,7 +2531,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "OTLP, как и Prometheus, использует pull-модель: Collector сам scrape-ит эндпоинт приложения по расписанию.",
+              "text": "OTLP работает по pull-модели, как `prometheus`-эндпоинт: путь задают в `management.otlp`, а Collector по расписанию scrape-ит приложение и сам забирает с него трейсы и метрики через OTLP.",
               "correct": false,
               "sections": {
                 "what_actually": "OTLP — push-модель: приложение само отправляет телеметрию на Collector по настроенному endpoint; Collector ничего не scrape-ит.",
@@ -2543,7 +2543,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В production значение `management.tracing.sampling.probability` следует ставить 1.0, чтобы собирать 100% трейсов для полной картины.",
+              "text": "OTLP — push-протокол телеметрии на Collector. Подключают `micrometer-registry-otlp` и `micrometer-tracing-bridge-otel`, задают `management.otlp.metrics.export.url` и `management.otlp.tracing.endpoint`.",
+              "correct": true,
+              "sections": {
+                "explanation": "В отличие от pull-модели Prometheus, OTLP — push: приложение само отправляет метрики и трейсы на Collector. Sampling (`probability`) в production обычно 1-10%, чтобы не перегружать бэкенд.",
+                "example": "`management.otlp.metrics.export.url: http://otel-collector:4318/v1/metrics`, `management.otlp.tracing.endpoint: http://otel-collector:4318/v1/traces`, `management.tracing.sampling.probability: 0.1`.",
+                "when_to_apply": "Применяют, когда телеметрия централизуется через OpenTelemetry Collector с push-моделью и единым протоколом для трейсов/метрик/логов.",
+                "edge_cases": "Sampling 1.0 (100% трейсов) допустим в dev, но в production перегрузит Collector; для корреляции логов с трейсами добавляют `traceId`/`spanId` в паттерн logback.",
+                "related": "[[spring-boot-actuator-interview#Q37]] Micrometer Tracing и Observed; [[spring-boot-actuator-interview#Q33]] prometheus-эндпоинт; [[spring-boot-actuator-interview#Q24]] интеграция с Prometheus."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Подключают `micrometer-registry-otlp` и задают `management.otlp.metrics.export.url`; в production `management.tracing.sampling.probability` ставят 1.0, чтобы собирать 100% трейсов и видеть полную наблюдаемость.",
               "correct": false,
               "sections": {
                 "what_actually": "В production sampling обычно 1-10% (0.01-0.1), чтобы не перегружать Collector и бэкенд; 1.0 оставляют для dev.",
@@ -2553,28 +2566,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "OTLP exporter полностью заменяет Prometheus и Micrometer, делая их зависимости в проекте ненужными.",
+              "order": 3,
+              "label": "D",
+              "text": "Добавляют `opentelemetry-exporter-otlp`, указывают `otel.exporter.otlp.endpoint`; OTLP-экспортер берёт на себя роль Micrometer и Prometheus, так что эти зависимости из проекта можно убрать.",
               "correct": false,
               "sections": {
                 "what_actually": "OTLP — лишь транспорт телеметрии; Micrometer остаётся фасадом метрик/наблюдений, а Prometheus можно использовать параллельно (pull) или вместо OTLP.",
                 "source_of_confusion": "OTLP воспринимают как самодостаточную замену всему observability-стеку.",
                 "if_it_were_true": "Тогда `micrometer-tracing-bridge-otel` был бы не нужен, но именно мост Micrometer связывает код с OTel.",
                 "how_it_should_be": "OTLP — канал экспорта поверх Micrometer; Prometheus остаётся валидной альтернативой/дополнением."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`OTLP` (OpenTelemetry Protocol) — стандарт push-отправки телеметрии в OpenTelemetry Collector. Подключают `micrometer-tracing-bridge-otel`, `opentelemetry-exporter-otlp` и/или `micrometer-registry-otlp`; настраивают `management.otlp.metrics.export.url`, `management.tracing.sampling.probability` и `otel.exporter.otlp.endpoint` (gRPC 4317 или HTTP 4318). Collector раздаёт данные в Jaeger, Prometheus, Loki.",
-              "correct": true,
-              "sections": {
-                "explanation": "В отличие от pull-модели Prometheus, OTLP — push: приложение само отправляет метрики и трейсы на Collector. Sampling (`probability`) в production обычно 1-10%, чтобы не перегружать бэкенд.",
-                "example": "`management.otlp.metrics.export.url: http://otel-collector:4318/v1/metrics`, `otel.exporter.otlp.endpoint: http://otel-collector:4317`, `management.tracing.sampling.probability: 0.1`.",
-                "when_to_apply": "Применяют, когда телеметрия централизуется через OpenTelemetry Collector с push-моделью и единым протоколом для трейсов/метрик/логов.",
-                "edge_cases": "Sampling 1.0 (100% трейсов) допустим в dev, но в production перегрузит Collector; для корреляции логов с трейсами добавляют `traceId`/`spanId` в паттерн logback.",
-                "related": "[[spring-boot-actuator-interview#Q37]] Micrometer Tracing и Observed; [[spring-boot-actuator-interview#Q33]] prometheus-эндпоинт; [[spring-boot-actuator-interview#Q24]] интеграция с Prometheus."
               }
             }
           ]
