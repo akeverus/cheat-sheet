@@ -29,7 +29,8 @@ class HandoffThreeParityContractTest {
 
         String sprite = resource("templates/fragments/pixel-sprite.html");
         assertThat(sprite).contains(
-                "id=\"flame\"", "id=\"target\"", "id=\"more\"",
+                "id=\"flame\"", "id=\"target\"", "id=\"more\"", "id=\"fullscreen\"",
+                "id=\"search\"", "id=\"filter\"", "id=\"clock\"", "id=\"pause\"",
                 "id=\"face-unknown\"", "id=\"face-guess\"", "id=\"face-hard\"",
                 "id=\"face-remembered\"", "id=\"face-great\"");
     }
@@ -71,5 +72,19 @@ class HandoffThreeParityContractTest {
 
         assertThat(summary).contains("Сессия завершена без ответов");
         assertThat(summary).contains("ring-neutral", "Ответов не было");
+    }
+
+    @Test
+    void pixelMotionIsSteppedAndRespectsReducedMotion() throws IOException {
+        String css = resource("static/css/handoff-three.css");
+        String shell = resource("templates/fragments/shell-scripts.html");
+
+        assertThat(css).contains(
+                "shape-rendering: crispEdges", "@keyframes pixel-reveal",
+                "@keyframes pixel-spin", "steps(4, end)",
+                "@media (prefers-reduced-motion: reduce)", "data-motion=\"off\"");
+        assertThat(shell).contains(
+                "function motionReduced()", "pixel-motion-ready",
+                "is-pixel-pressed", "motionchange");
     }
 }

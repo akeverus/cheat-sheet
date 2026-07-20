@@ -8,6 +8,13 @@
 <th:block th:fragment="shell-scripts">
     <script>
       (function () {
+        function motionReduced() {
+          var dm = document.documentElement.getAttribute('data-motion');
+          if (dm === 'off') return true;
+          if (dm === 'on') return false;
+          return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        }
+
         // ---- Тоггл темы: раскрываем hidden-контролы и синхроним подпись/aria ----
         var toggles = document.querySelectorAll('[data-theme-toggle]');
         if (toggles.length && window.__theme) {
@@ -39,12 +46,6 @@
           btn.setAttribute('title', 'Наверх');
           btn.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#arrow"></use></svg>';
           document.body.appendChild(btn);
-          function motionReduced() {
-            var dm = document.documentElement.getAttribute('data-motion');
-            if (dm === 'off') return true;
-            if (dm === 'on') return false;
-            return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-          }
           var shown = false, ticking = false;
           function threshold() { return Math.max(400, window.innerHeight * 1.5); }
           function update() {
@@ -69,6 +70,83 @@
           });
           update();
         }
+
+        // ---- Pixel motion: единый ступенчатый язык для всех экранов ----
+        var motionInitialized = false;
+        function restartMotion(el, className, lifetime) {
+          if (!el || motionReduced()) return;
+          el.classList.remove(className);
+          void el.offsetWidth;
+          el.classList.add(className);
+          window.setTimeout(function () { el.classList.remove(className); }, lifetime || 620);
+        }
+
+        function initPixelMotion() {
+          if (motionReduced() || motionInitialized) return;
+          motionInitialized = true;
+          var root = document.documentElement;
+          var selector = [
+            'body.focus-page .resume-banner',
+            'body.focus-page .focus-training > *',
+            'body.result-page .ed-page > *',
+            'body.settings-page .handoff-page-head',
+            'body.settings-page .settings-tablist',
+            'body.settings-page .settings-panel.is-active .builder-main > *',
+            'body.settings-page .settings-panel.is-active .builder-aside > *',
+            'body.stats-page .stats-intro',
+            'body.stats-page .dashboard-grid > *',
+            'body.stats-page .section-tabs',
+            'body.stats-page .stats-panel.is-active > *',
+            'body.summary-page .summary-hero',
+            'body.summary-page .summary-actions',
+            'body.summary-page .summary-detail-grid > *',
+            'body.error-page .error-card > *'
+          ].join(',');
+          var targets = Array.prototype.slice.call(document.querySelectorAll(selector), 0, 28);
+          targets.forEach(function (el, index) {
+            el.classList.add('pixel-reveal');
+            el.style.setProperty('--pixel-order', String(index % 7));
+          });
+          root.classList.add('pixel-motion-ready');
+          window.requestAnimationFrame(function () {
+            window.requestAnimationFrame(function () {
+              targets.forEach(function (el) { el.classList.add('is-revealed'); });
+            });
+          });
+        }
+
+        document.addEventListener('pointerdown', function (event) {
+          var control = event.target.closest('button, a, summary');
+          if (control) restartMotion(control, 'is-pixel-pressed', 220);
+        });
+
+        document.addEventListener('change', function (event) {
+          var control = event.target.closest('label, .segment-chip, .switch-row');
+          if (control) restartMotion(control, 'is-pixel-updated', 340);
+        });
+
+        document.addEventListener('click', function (event) {
+          var tab = event.target.closest('[role="tab"][aria-controls]');
+          if (!tab) return;
+          window.setTimeout(function () {
+            restartMotion(document.getElementById(tab.getAttribute('aria-controls')), 'pixel-panel-enter', 460);
+          }, 0);
+        });
+
+        document.addEventListener('themechange', function () {
+          restartMotion(document.body, 'pixel-theme-swap', 560);
+        });
+
+        document.addEventListener('motionchange', function () {
+          if (motionReduced()) {
+            document.documentElement.classList.remove('pixel-motion-ready');
+          } else {
+            motionInitialized = false;
+            initPixelMotion();
+          }
+        });
+
+        initPixelMotion();
       })();
     </script>
 </th:block>

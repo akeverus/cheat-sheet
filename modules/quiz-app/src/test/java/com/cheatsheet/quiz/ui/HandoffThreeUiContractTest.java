@@ -54,7 +54,7 @@ class HandoffThreeUiContractTest {
 
         assertThat(summary).contains("class=\"summary-primary-action");
         assertThat(summary).contains("class=\"btn secondary-btn summary-share-action\"");
-        assertThat(summary).contains(">Продолжить тренировку</a>");
+        assertThat(summary).contains("#play\"></use></svg>Продолжить тренировку</a>");
         assertThat(summary).contains("<span>Поделиться</span>");
         assertThat(summary).doesNotContain("class=\"summary-more-actions\"");
         assertThat(summary).doesNotContain("class=\"btn secondary-btn\" th:href=\"@{/settings}\"");

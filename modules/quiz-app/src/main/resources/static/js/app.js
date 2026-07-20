@@ -233,6 +233,7 @@
     const countField = document.getElementById('session-count-field');
     const startBtn = document.getElementById('session-start-btn');
     if (!modeSelect || !countField || !startBtn) return;
+    const startLabel = startBtn.querySelector('span');
     // CTA называет КОНКРЕТНЫЙ режим (винительный падеж), а не дженерик «Начать
     // сессию» — кнопка обещает ровно то, что произойдёт после клика. Ключи = enum
     // SessionMode; «Начать сессию» остаётся defensive-фоллбэком для неизвестного
@@ -270,7 +271,9 @@
     const sync = () => {
       const isTraining = modeSelect.value === 'TRAINING';
       countField.classList.toggle('is-unlimited', isTraining);
-      startBtn.textContent = MODE_CTA[modeSelect.value] || 'Начать сессию';
+      const cta = MODE_CTA[modeSelect.value] || 'Начать сессию';
+      if (startLabel) startLabel.textContent = cta;
+      else startBtn.textContent = cta;
       document.querySelectorAll('[data-count-preset]').forEach((item) => {
         const active = isTraining
           ? item.getAttribute('data-count-preset') === 'unlimited'
@@ -1225,6 +1228,16 @@
   const adaptiveModeToggle = document.getElementById('adaptive-mode-toggle');
   const timerSelect = document.getElementById('timer-select');
   const timerBadge = document.getElementById('question-timer');
+  const submitLabel = submitBtn && submitBtn.querySelector('span');
+  const nextLabel = nextLink && nextLink.querySelector('[data-next-label]');
+  const setSubmitText = (text) => {
+    if (submitLabel) submitLabel.textContent = text;
+    else if (submitBtn) submitBtn.textContent = text;
+  };
+  const setNextText = (text) => {
+    if (nextLabel) nextLabel.textContent = text;
+    else if (nextLink) nextLink.textContent = text;
+  };
 
   if (feedbackDiv) feedbackDiv.setAttribute('aria-live', 'polite');
 
@@ -1653,13 +1666,13 @@
     stopQuestionTimer();
     // Запоминаем реальную подпись кнопки (шаблон рендерит «Проверить ответ»),
     // чтобы при ошибке вернуть её, а не хардкод «Ответить» (рассинхрон меток).
-    const originalSubmitText = (submitBtn.textContent || '').trim() || 'Проверить ответ';
+    const originalSubmitText = ((submitLabel || submitBtn).textContent || '').trim() || 'Проверить ответ';
     submitBtn.disabled = true;
     // P0.3: submitting — отдельное видимое состояние (акцентная кнопка со
     // спиннером), а НЕ бледный disabled. Класс снимаем на error-ветках ниже;
     // на success кнопка прячется (showResult), сбрасывать не нужно.
     submitBtn.classList.add('is-submitting');
-    submitBtn.textContent = 'Проверяю…';
+    setSubmitText('Проверяю…');
     submitBtn.setAttribute('aria-busy', 'true');
     setInteractionBusy(true);
     clearInlineAlert();
@@ -1678,7 +1691,7 @@
         answered = false;
         submitBtn.disabled = false;
         submitBtn.classList.remove('is-submitting');
-        submitBtn.textContent = originalSubmitText;
+        setSubmitText(originalSubmitText);
         submitBtn.removeAttribute('aria-busy');
         setInteractionBusy(false);
         updateSubmitAvailability();
@@ -1704,7 +1717,7 @@
       answered = false;
       submitBtn.disabled = false;
       submitBtn.classList.remove('is-submitting');
-      submitBtn.textContent = originalSubmitText;
+      setSubmitText(originalSubmitText);
       submitBtn.removeAttribute('aria-busy');
       setInteractionBusy(false);
       updateSubmitAvailability();
@@ -2036,7 +2049,7 @@
 
     applyOptionStyles(data);
     submitBtn.classList.add('hidden');
-    nextLink.textContent = 'Следующий вопрос';
+    setNextText('Следующий вопрос');
     nextLink.href = buildNextQuestionHref(questionId);
     delete nextLink.dataset.finishSession;
     renderFeedbackHtml(data);
@@ -2059,7 +2072,7 @@
       // Последний вопрос отвечен: «Следующего вопроса» не существует — кнопка
       // честно ведёт к итогам (POST /finish в onclick). round-01 C-live-2.
       if (data.session.finished) {
-        nextLink.textContent = 'Итоги сессии';
+        setNextText('Итоги сессии');
         nextLink.dataset.finishSession = 'true';
       }
     }

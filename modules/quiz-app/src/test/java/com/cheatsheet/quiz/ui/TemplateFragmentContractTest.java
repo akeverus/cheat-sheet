@@ -517,6 +517,10 @@ class TemplateFragmentContractTest {
         while (helperMatcher.find()) {
             referenced.add(helperMatcher.group(1));
         }
+        Matcher dynamicToolbarMatcher = Pattern.compile("(?:makeButton\\([^,]+|button\\([^,]+,[^,]+),\\s*[\"']([a-z0-9-]+)[\"']").matcher(refs);
+        while (dynamicToolbarMatcher.find()) {
+            referenced.add(dynamicToolbarMatcher.group(1));
+        }
 
         // Санити: спрайт непустой и известные живые иконки на месте.
         assertThat(declared).contains("star", "check", "copy", "report", "download", "face-great");
@@ -526,6 +530,26 @@ class TemplateFragmentContractTest {
                 .as("иконка '%s' объявлена в pixel-sprite, но не используется (<use href=#%s> или icon('%s')) — orphan/dead payload", id, id, id)
                 .contains(id);
         }
+
+        // Обратный инвариант: статическая ссылка <use href="#X"> и icon-id,
+        // переданный фабрике динамического toolbar, обязаны существовать в sprite.
+        // Иначе браузер молча рисует пустое место (как было с #fullscreen).
+        Set<String> directReferences = new LinkedHashSet<>();
+        Matcher useMatcher = Pattern.compile("<use\\b[^>]*href=\\\"#([a-z0-9-]+)\\\"").matcher(refs);
+        while (useMatcher.find()) {
+            directReferences.add(useMatcher.group(1));
+        }
+        Matcher makeButtonMatcher = Pattern.compile("makeButton\\([^,]+,\\s*[\\\"']([a-z0-9-]+)[\\\"']").matcher(refs);
+        while (makeButtonMatcher.find()) {
+            directReferences.add(makeButtonMatcher.group(1));
+        }
+        Matcher toolbarButtonMatcher = Pattern.compile("button\\([^,]+,[^,]+,\\s*[\\\"']([a-z0-9-]+)[\\\"']").matcher(refs);
+        while (toolbarButtonMatcher.find()) {
+            directReferences.add(toolbarButtonMatcher.group(1));
+        }
+        assertThat(directReferences)
+            .as("все прямые ссылки на pixel-иконки объявлены в sprite")
+            .isSubsetOf(declared);
     }
 
     @Test
