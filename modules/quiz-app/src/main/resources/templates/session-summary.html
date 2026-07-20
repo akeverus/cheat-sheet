@@ -3,7 +3,6 @@
 <head th:replace="~{fragments/head :: head(title='Итоги сессии — Подготовка к собеседованию', includeMermaid=false, includeChart=false)}"></head>
 <body class="summary-page">
 <a class="skip-link" href="#main-content">Перейти к итогам сессии</a>
-<a class="skip-link" href="#main-content">К содержимому</a>
 <svg th:replace="~{fragments/pixel-sprite :: sprite}"></svg>
 <svg th:replace="~{fragments/icons :: sprite}"></svg>
 <div class="app">
@@ -108,15 +107,28 @@
      навигация, чтобы не было тупика IA даже при пустом плане. -->
 <nav class="summary-actions" aria-label="Что дальше">
     <a th:each="na,it : ${summary.nextActions}" th:with="t=${na.type().name()}"
-       class="btn" th:classappend="${it.first} ? ' next-btn' : ' secondary-btn'"
+       th:if="${it.first}"
+       class="summary-primary-action btn next-btn"
        th:href="${t == 'PRACTICE_WEAK_TOPIC'} ? @{/(topic=${na.target()})} : (${t == 'KEEP_GOING'} ? @{/} : @{/review})">
         <svg class="ed-icon ed-icon-lead" aria-hidden="true">
             <use th:attr="href=${t == 'REVIEW_MISTAKES' ? '#i-target' : (t == 'PRACTICE_WEAK_TOPIC' ? '#i-book-open' : (t == 'REVIEW_DUE' ? '#i-flag' : '#i-flame'))}"></use>
         </svg><span class="summary-next-label" th:text="${na.label()}">Действие</span>
     </a>
-    <a class="btn secondary-btn" th:href="@{/}">Продолжить тренировку</a>
-    <a class="btn secondary-btn" th:href="@{/settings}">Новая сессия</a>
-    <a class="btn secondary-btn" th:href="@{/stats}">Аналитика</a>
+    <a class="summary-primary-action btn next-btn"
+       th:if="${summary.nextActions == null or #lists.isEmpty(summary.nextActions)}"
+       th:href="@{/}">Продолжить тренировку</a>
+    <details class="summary-more-actions">
+        <summary class="btn secondary-btn">Дополнительные действия</summary>
+        <div class="summary-more-menu">
+            <a th:each="na,it : ${summary.nextActions}" th:if="${!it.first}"
+               th:with="t=${na.type().name()}"
+               th:href="${t == 'PRACTICE_WEAK_TOPIC'} ? @{/(topic=${na.target()})} : (${t == 'KEEP_GOING'} ? @{/} : @{/review})"
+               th:text="${na.label()}">Действие</a>
+            <a th:href="@{/}">Продолжить тренировку</a>
+            <a th:href="@{/settings}">Новая сессия</a>
+            <a th:href="@{/stats}">Аналитика</a>
+        </div>
+    </details>
 </nav>
 
 <!-- Результаты по темам -->

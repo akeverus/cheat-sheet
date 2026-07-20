@@ -3,7 +3,6 @@
 <head th:replace="~{fragments/head :: head(title='Аналитика — Подготовка к собеседованию', includeMermaid=false, includeChart=true)}"></head>
 <body class="stats-page">
 <a class="skip-link" href="#main-content">Перейти к аналитике</a>
-<a class="skip-link" href="#main-content">К содержимому</a>
 <svg th:replace="~{fragments/pixel-sprite :: sprite}"></svg>
 <svg th:replace="~{fragments/icons :: sprite}"></svg>
 <div class="app">
@@ -81,37 +80,33 @@
     <!-- Следующее действие: аналитика должна сразу подсказывать учебный шаг, а не
          только показывать числа. Блок использует уже существующие маршруты/флаги:
          / — повторение due, onlyWrong — разбор ошибок, weakTopics — стратегия слабых тем. -->
-    <section class="card stats-next-actions" aria-labelledby="stats-next-actions-title">
-        <div class="stats-next-actions-head">
+    <section class="card recommended-session" aria-labelledby="stats-next-actions-title">
+        <div class="recommended-session-main">
+            <span class="eyebrow">Рекомендация</span>
             <h2 id="stats-next-actions-title">Что делать дальше</h2>
-            <p>Выбери короткую следующую сессию по текущему состоянию банка.</p>
+            <p>Короткая сессия собрана по текущему состоянию знаний.</p>
+            <a class="btn next-btn" th:if="${stats.due > 0}" th:href="@{/review}">Начать рекомендованную сессию</a>
+            <a class="btn next-btn" th:if="${stats.due == 0 and stats.wrong > 0}"
+               th:href="@{/(onlyWrong=true, ordered=true)}">Начать рекомендованную сессию</a>
+            <a class="btn next-btn" th:if="${stats.due == 0 and stats.wrong == 0}"
+               th:href="@{/(weakTopics=true, ordered=true)}">Начать рекомендованную сессию</a>
         </div>
-        <div class="stats-next-actions-grid">
-            <a class="stats-next-action stats-next-action-primary"
-               th:href="@{/}"
-               th:classappend="${stats.due > 0} ? ' is-recommended'">
-                <span class="stats-next-action-label">Повторить сегодня</span>
+        <div class="recommended-session-facts">
+            <div class="recommendation-fact">
+                <span class="eyebrow">Сегодня</span>
                 <strong th:text="${stats.due}">0</strong>
-                <span class="stats-next-action-detail"
-                      th:text="${stats.due > 0 ? @plural.pick(stats.due, 'вопрос к повтору', 'вопроса к повтору', 'вопросов к повтору') : 'всё повторено'}">вопросов к повтору</span>
-            </a>
-            <a class="stats-next-action"
-               th:href="@{/(onlyWrong=true, ordered=true)}"
-               th:classappend="${stats.due == 0 and stats.wrong > 0} ? ' is-recommended'">
-                <span class="stats-next-action-label">Разобрать ошибки</span>
+                <span class="muted tiny">повторений</span>
+            </div>
+            <div class="recommendation-fact">
+                <span class="eyebrow">Ошибки</span>
                 <strong th:text="${stats.wrong}">0</strong>
-                <span class="stats-next-action-detail"
-                      th:text="${stats.wrong > 0 ? @plural.pick(stats.wrong, 'ошибка в истории', 'ошибки в истории', 'ошибок в истории') : 'ошибок пока нет'}">ошибок в истории</span>
-            </a>
-            <a class="stats-next-action stats-next-action-weak"
-               th:href="@{/(weakTopics=true, ordered=true)}"
-               th:classappend="${stats.due == 0 and stats.wrong == 0 and topicStats != null and !topicStats.isEmpty()} ? ' is-recommended'">
-                <span class="stats-next-action-label">Тренировать слабые темы</span>
-                <span class="stats-next-action-topic" data-weak-topic-summary
-                      th:text="${topicStats != null and !topicStats.isEmpty()} ? 'Самая слабая тема — по данным ниже' : 'Тем пока нет'">Самая слабая тема</span>
+                <span class="muted tiny">в истории</span>
+            </div>
+            <div class="recommendation-fact">
+                <span class="eyebrow">Темы</span>
                 <strong th:text="${topicStats != null ? topicStats.size() : 0}">0</strong>
-                <span class="stats-next-action-detail">тем в аналитике</span>
-            </a>
+                <span class="muted tiny">в аналитике</span>
+            </div>
         </div>
     </section>
 </section>
@@ -213,7 +208,15 @@
     </section>
 
     <!-- Графики -->
-    <div class="charts-row" th:if="${topicStats != null and !topicStats.isEmpty()}">
+    <section class="card compact-data-note"
+             th:if="${topicStats != null and !topicStats.isEmpty() and #lists.size(topicStats) < 4}">
+        <h2 class="mt-0">Данные по темам</h2>
+        <p class="muted">Для небольшого набора таблица ниже точнее и компактнее большого графика.</p>
+    </section>
+    <div class="charts-row"
+         th:if="${topicStats != null and !topicStats.isEmpty()}"
+         th:classappend="${#lists.size(topicStats) >= 4} ? '' : ' charts-suppressed'"
+         th:hidden="${#lists.size(topicStats) < 4}">
         <section class="card chart-card">
             <h2 class="mt-0">Прогресс по темам</h2>
             <p class="chart-subtitle">Самые активные темы</p>

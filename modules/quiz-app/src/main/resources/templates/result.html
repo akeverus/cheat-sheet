@@ -3,7 +3,6 @@
 <head th:replace="~{fragments/head :: head(title='Результат — Подготовка к собеседованию', includeMermaid=true, includeChart=false)}"></head>
 <body class="result-page">
 <a class="skip-link" href="#main-content">Перейти к результату</a>
-<a class="skip-link" href="#main-content">К содержимому</a>
 <svg th:replace="~{fragments/pixel-sprite :: sprite}"></svg>
 <svg th:replace="~{fragments/icons :: sprite}"></svg>
 <div class="app">
@@ -32,7 +31,7 @@
 </div>
 
 <!-- Result card — fills remaining space -->
-<section class="card" id="interview-card">
+<section class="card review-workspace" id="interview-card">
     <!-- Одноколоночный layout. Раньше грид становился двухколонным через
          :has(.question-side) (правый code-сайд AI-режима); .question-side удалён
          вместе с мёртвым AI-путём (R0.126, aiEnabled=false), :has()-правила сняты.
@@ -160,6 +159,27 @@
                 <strong><svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-flag"></use></svg>Сессия завершена!</strong>
             </div>
         </div>
+        <aside class="review-materials"
+               th:if="${(result.question.codeSnippet() != null and !result.question.codeSnippet().isBlank()) or (result.question.diagramMermaid() != null and !result.question.diagramMermaid().isBlank())}"
+               aria-label="Материалы вопроса">
+            <h3 class="review-materials-title">Код и схема</h3>
+            <div class="question-code-wrap content-box"
+                 th:if="${result.question.codeSnippet() != null and !result.question.codeSnippet().isBlank()}">
+                <div class="content-toolbar"><span class="content-box-title">Пример кода</span></div>
+                <pre class="question-code"><code th:text="${result.question.codeSnippet()}"></code></pre>
+            </div>
+            <div class="question-diagram content-box"
+                 th:if="${result.question.diagramMermaid() != null and !result.question.diagramMermaid().isBlank()}">
+                <div class="content-toolbar"><span class="content-box-title">Схема</span></div>
+                <pre class="mermaid" th:text="${result.question.diagramMermaid()}"></pre>
+                <details class="diagram-source-details">
+                    <summary class="diagram-source-summary">
+                        <svg class="ed-icon" aria-hidden="true"><use href="#i-code"></use></svg><span>Исходник</span>
+                    </summary>
+                    <pre class="diagram-source"><code th:text="${result.question.diagramMermaid()}"></code></pre>
+                </details>
+            </div>
+        </aside>
     </div>
 </section>
 

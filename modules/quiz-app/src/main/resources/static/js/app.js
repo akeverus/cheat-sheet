@@ -900,6 +900,7 @@
     initKeyboardHelp();
     enhanceOptionExplanationDisclosure(document);
     initCopyCode();
+    initDiagramTools();
   });
 
   function apiGet(url) {
@@ -1511,6 +1512,7 @@
             svg.style.height = 'auto';
             el.replaceChildren(document.importNode(svg, true));
             el.setAttribute('data-rendered', 'true');
+            initDiagramTools();
           } else {
             failDynamicDiagram(el);
           }
@@ -1677,8 +1679,8 @@
       + `<span class="next-review-when">${when}</span></p>`;
   }
 
-  // Хендофф-3, Этап 4: distractor-анализ НА ПОВЕРХНОСТИ (не под «Подробнее») —
-  // компактные строки «B — неверно. <причина>» по каждому НЕверному варианту.
+  // Хендофф-3, Этап 4: короткая причина каждого дистрактора остаётся на
+  // поверхности; полный обучающий разбор доступен без раздувания review mode.
   function buildDistractorPanel(data) {
     const opts = data.optionExplanations || [];
     let rows = '';
@@ -1687,9 +1689,18 @@
       if (!oe.explanationHtml || !oe.explanationHtml.trim().length) return;
       const letter = String.fromCharCode(65 + i);
       const mine = oe.id === data.selectedOptionId ? ' distractor-row-mine' : '';
+      const explanation = sanitizeHtml(oe.explanationHtml);
+      const parsed = new DOMParser().parseFromString(explanation, 'text/html');
+      const firstParagraph = parsed.body.querySelector('p');
+      const summary = firstParagraph ? firstParagraph.innerHTML : explanation;
+      const hasMore = parsed.body.querySelectorAll('p, ul, ol, pre, table').length > 1;
       rows += `<div class="distractor-row${mine}">`
         + `<strong class="distractor-letter">${letter} — неверно.</strong> `
-        + `<span class="distractor-reason markdown-content">${sanitizeHtml(oe.explanationHtml)}</span>`
+        + `<span class="distractor-reason markdown-content"><p>${summary}</p></span>`
+        + (hasMore
+          ? `<details class="distractor-details"><summary>Полный разбор</summary>`
+            + `<div class="markdown-content">${explanation}</div></details>`
+          : '')
         + `</div>`;
     });
     if (!rows) return '';
@@ -1701,8 +1712,7 @@
 
   function renderFeedbackHtml(data) {
     const isCorrect = data.correct;
-    // Хендофф-3, Этап 4 (главная UX-дельта): весь разбор НА ПОВЕРХНОСТИ, без
-    // «Подробнее». Иерархия макета Answered: банер (вердикт + буква + XP) →
+    // Хендофф-3, Этап 4. Иерархия макета Answered: банер (вердикт + буква + XP) →
     // «Почему это так?» (лид) → следующий интервал → «Почему другие варианты не
     // подходят» (компактные строки дистракторов) → «Дополнительно» (остаток разбора).
     // Лид деривит сервер (AnswerHtmlSplitter, первый <p>); если не выделился —
@@ -1756,7 +1766,7 @@
     confidenceDiv.setAttribute('role', 'group');
     confidenceDiv.setAttribute('aria-labelledby', 'confidence-label');
     // aria-live=polite: группа вставляется ПОСЛЕ того как фокус уже ушёл в
-    // #result-feedback (showResult → feedbackDiv.focus()), поэтому сама себя
+    // result banner, поэтому сама себя
     // озвучивает при появлении — иначе SR-пользователь не узнал бы о появлении
     // запроса «оцени уверенность» без ручного таб-обхода.
     confidenceDiv.setAttribute('aria-live', 'polite');
@@ -1928,6 +1938,14 @@
     // JS-only состояние (no-JS уходит POST-ом на /answer → result.html), id и стили
     // (.next-btn глобальный) сохраняются. Действие читается завершением сцены.
     const postAnswerZone = document.querySelector('[data-ui-fragment="post-answer-controls"]');
+    const resultHeadRegion = answerFlowHint && answerFlowHint.parentElement;
+    if (resultHeadRegion && resultHeadRegion.parentElement !== form) {
+      form.appendChild(resultHeadRegion);
+    }
+    if (postAnswerZone && postAnswerZone.parentElement !== form) {
+      form.appendChild(postAnswerZone);
+    }
+    form.classList.add('is-reviewed');
     if (postAnswerZone && nextLink.parentElement !== postAnswerZone) {
       postAnswerZone.appendChild(nextLink);
       // После переноса next блок training-actions полностью опустел (submit скрыт,
@@ -1938,8 +1956,11 @@
       if (trainingActions) trainingActions.classList.add('is-answered');
     }
     setInteractionBusy(false);
-    feedbackDiv.setAttribute('tabindex', '-1');
-    feedbackDiv.focus();
+    const resultBanner = feedbackDiv.querySelector('.result-banner');
+    if (resultBanner) {
+      resultBanner.setAttribute('tabindex', '-1');
+      resultBanner.focus();
+    }
     // AI-разбор (feedback/comparison/takeaway/трейс кода) удалён вместе с
     // провайдерами. Единственное живое наполнение «доп. анализа» — похожие вопросы
     // для закрепления (приходят в ответе /api/answer, рендерятся без сети). Кнопка =
@@ -2175,23 +2196,23 @@ function initKeyboardHelp() {
   });
 }
 
-// Кнопка «копировать» на код-блоках: ответы (.markdown-content pre), пример кода
-// фокуса (.question-code-details pre), код-сниппет результата (pre.question-code).
-// Оборачиваем <pre> в .code-copy-wrap (position:relative) и вешаем кнопку в угол.
-// Запускается ПОСЛЕ hljs (DOMContentLoaded в head.html зарегистрирован раньше) —
-// подсветка уже на <code>, перенос узла её сохраняет. navigator.clipboard нет в
-// insecure-context (http не-localhost) → просто не добавляем кнопку (не дразним).
+// Инструменты CodeBlock: копирование, перенос длинных строк и полноэкранный режим.
+// Обёртка не меняет текст кода и ставится после highlight.js, поэтому подсветка
+// сохраняется. Копирование добавляется только в secure context; остальные
+// инструменты доступны всегда. Escape закрывает полноэкранный режим.
 function initCopyCode() {
-  if (!navigator.clipboard || !navigator.clipboard.writeText) return;
-  // Локальный icon-хелпер: эта функция объявлена вне IIFE (рядом с
-  // initKeyboardHelp/initFlashcardShortcuts), поэтому приватный icon() из IIFE
-  // здесь недоступен — собираем тот же <svg><use> сами.
-  const svgIcon = (name) => '<svg class="ed-icon" aria-hidden="true"><use href="#i-' + name + '"></use></svg>';
   const blocks = document.querySelectorAll('.markdown-content pre, .question-code-details pre, pre.question-code');
   if (!blocks.length) return;
-  // Общий live-region на результат копирования. Смена innerHTML на сфокусированной
-  // кнопке скринридерами озвучивается ненадёжно (NVDA/VoiceOver по-разному), поэтому
-  // исход дублируем в role=status — единый на все блоки кода. Критика round-01 C19.
+
+  const canCopy = !!(navigator.clipboard && navigator.clipboard.writeText);
+  const legacyIcons = {
+    copy: '<svg class="ed-icon" aria-hidden="true"><use href="#i-copy"></use></svg>',
+    check: '<svg class="ed-icon" aria-hidden="true"><use href="#i-check"></use></svg>',
+    error: '<svg class="ed-icon" aria-hidden="true"><use href="#i-x"></use></svg>'
+  };
+  const iconMarkup = (id, legacy) => legacy
+    ? (legacyIcons[id] || legacyIcons.error)
+    : '<svg class="icon" aria-hidden="true"><use href="#' + id + '"></use></svg>';
   let copyStatus = document.getElementById('code-copy-status');
   if (!copyStatus) {
     copyStatus = document.createElement('div');
@@ -2203,45 +2224,167 @@ function initCopyCode() {
   }
   const announceCopy = (msg) => {
     if (!copyStatus) return;
-    // Пусто → текст на следующем кадре: гарантирует переобъявление даже при
-    // повторном копировании того же блока (идентичный textContent иначе нем).
     copyStatus.textContent = '';
     requestAnimationFrame(() => { copyStatus.textContent = msg; });
   };
+
+  const makeButton = (label, iconId, legacyIcon) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'code-tool-btn';
+    button.setAttribute('aria-label', label);
+    button.title = label;
+    button.innerHTML = iconMarkup(iconId, legacyIcon);
+    return button;
+  };
+
   blocks.forEach((pre) => {
     if (pre.parentElement && pre.parentElement.classList.contains('code-copy-wrap')) return;
     const wrap = document.createElement('div');
     wrap.className = 'code-copy-wrap';
     pre.parentNode.insertBefore(wrap, pre);
     wrap.appendChild(pre);
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'code-copy-btn';
-    btn.setAttribute('aria-label', 'Копировать код');
-    btn.title = 'Копировать код';
-    const idle = svgIcon('copy') + '<span class="code-copy-label">Копировать</span>';
-    btn.innerHTML = idle;
-    wrap.appendChild(btn);
-    let resetTimer = null;
-    const flash = (cls, html) => {
-      btn.classList.remove('is-copied', 'is-error');
-      if (cls) btn.classList.add(cls);
-      btn.innerHTML = html;
-      if (resetTimer) clearTimeout(resetTimer);
-      resetTimer = setTimeout(() => { btn.classList.remove('is-copied', 'is-error'); btn.innerHTML = idle; }, 2000);
-    };
-    btn.addEventListener('click', () => {
-      const codeEl = pre.querySelector('code') || pre;
-      navigator.clipboard.writeText(codeEl.innerText)
-        .then(() => {
-          flash('is-copied', svgIcon('check') + '<span class="code-copy-label">Скопировано</span>');
-          announceCopy('Код скопирован в буфер обмена');
-        })
-        .catch(() => {
-          flash('is-error', svgIcon('x') + '<span class="code-copy-label">Ошибка</span>');
-          announceCopy('Не удалось скопировать код');
-        });
+
+    const toolbar = document.createElement('div');
+    toolbar.className = 'code-tools';
+    toolbar.setAttribute('role', 'toolbar');
+    toolbar.setAttribute('aria-label', 'Инструменты блока кода');
+
+    if (canCopy) {
+      const copyButton = makeButton('Копировать код', 'copy', true);
+      copyButton.addEventListener('click', () => {
+        const codeEl = pre.querySelector('code') || pre;
+        navigator.clipboard.writeText(codeEl.innerText)
+          .then(() => {
+            copyButton.classList.add('is-copied');
+            copyButton.innerHTML = iconMarkup('check', true);
+            announceCopy('Код скопирован в буфер обмена');
+            setTimeout(() => {
+              copyButton.classList.remove('is-copied');
+              copyButton.innerHTML = iconMarkup('copy', true);
+            }, 2000);
+          })
+          .catch(() => {
+            copyButton.classList.add('is-error');
+            copyButton.innerHTML = iconMarkup('error', true);
+            announceCopy('Не удалось скопировать код');
+            setTimeout(() => {
+              copyButton.classList.remove('is-error');
+              copyButton.innerHTML = iconMarkup('copy', true);
+            }, 2000);
+          });
+      });
+      toolbar.appendChild(copyButton);
+    }
+
+    const wrapButton = makeButton('Переносить длинные строки', 'code', false);
+    wrapButton.setAttribute('aria-pressed', 'false');
+    wrapButton.addEventListener('click', () => {
+      const enabled = wrap.classList.toggle('is-wrapped');
+      wrapButton.setAttribute('aria-pressed', String(enabled));
+      wrapButton.setAttribute('aria-label', enabled ? 'Не переносить длинные строки' : 'Переносить длинные строки');
     });
+    toolbar.appendChild(wrapButton);
+
+    const fullscreenButton = makeButton('Развернуть код на весь экран', 'fullscreen', false);
+    let previousFocus = null;
+    const closeFullscreen = () => {
+      if (!wrap.classList.contains('is-fullscreen')) return;
+      wrap.classList.remove('is-fullscreen');
+      document.body.classList.remove('has-content-fullscreen');
+      fullscreenButton.setAttribute('aria-label', 'Развернуть код на весь экран');
+      fullscreenButton.title = 'Развернуть код на весь экран';
+      if (previousFocus) previousFocus.focus();
+    };
+    fullscreenButton.addEventListener('click', () => {
+      if (wrap.classList.contains('is-fullscreen')) {
+        closeFullscreen();
+        return;
+      }
+      previousFocus = document.activeElement;
+      wrap.classList.add('is-fullscreen');
+      document.body.classList.add('has-content-fullscreen');
+      fullscreenButton.setAttribute('aria-label', 'Закрыть полноэкранный код');
+      fullscreenButton.title = 'Закрыть полноэкранный код';
+      fullscreenButton.focus();
+    });
+    wrap.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeFullscreen();
+    });
+    toolbar.appendChild(fullscreenButton);
+    wrap.appendChild(toolbar);
+  });
+}
+
+// DiagramBlock: масштаб, сброс и fullscreen. Панорамирование остаётся нативным
+// скроллом контейнера, исходник доступен через соседний <details>.
+function initDiagramTools() {
+  const diagrams = document.querySelectorAll('.question-diagram');
+  diagrams.forEach((diagram) => {
+    if (diagram.querySelector('.diagram-tools')) return;
+    const mermaidBlock = diagram.querySelector('.mermaid');
+    if (!mermaidBlock) return;
+
+    const toolbar = document.createElement('div');
+    toolbar.className = 'diagram-tools';
+    toolbar.setAttribute('role', 'toolbar');
+    toolbar.setAttribute('aria-label', 'Инструменты схемы');
+
+    const button = (label, text, iconId) => {
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'diagram-tool-btn';
+      el.setAttribute('aria-label', label);
+      el.title = label;
+      if (iconId) {
+        el.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#' + iconId + '"></use></svg>';
+      } else {
+        el.textContent = text;
+      }
+      return el;
+    };
+
+    let scale = 1;
+    const applyScale = () => {
+      const svg = mermaidBlock.querySelector('svg');
+      if (svg) svg.style.transform = 'scale(' + scale.toFixed(2) + ')';
+    };
+    const zoomOut = button('Уменьшить схему', '−');
+    const reset = button('Сбросить масштаб схемы', '100%');
+    const zoomIn = button('Увеличить схему', '+');
+    const fullscreen = button('Развернуть схему на весь экран', '', 'fullscreen');
+
+    zoomOut.addEventListener('click', () => { scale = Math.max(0.5, scale - 0.25); applyScale(); });
+    reset.addEventListener('click', () => { scale = 1; applyScale(); });
+    zoomIn.addEventListener('click', () => { scale = Math.min(2.5, scale + 0.25); applyScale(); });
+
+    let previousFocus = null;
+    const close = () => {
+      if (!diagram.classList.contains('is-fullscreen')) return;
+      diagram.classList.remove('is-fullscreen');
+      document.body.classList.remove('has-content-fullscreen');
+      fullscreen.setAttribute('aria-label', 'Развернуть схему на весь экран');
+      if (previousFocus) previousFocus.focus();
+    };
+    fullscreen.addEventListener('click', () => {
+      if (diagram.classList.contains('is-fullscreen')) {
+        close();
+        return;
+      }
+      previousFocus = document.activeElement;
+      diagram.classList.add('is-fullscreen');
+      document.body.classList.add('has-content-fullscreen');
+      fullscreen.setAttribute('aria-label', 'Закрыть полноэкранную схему');
+      fullscreen.focus();
+    });
+    diagram.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') close();
+    });
+
+    toolbar.append(zoomOut, reset, zoomIn, fullscreen);
+    const contentToolbar = diagram.querySelector('.content-toolbar');
+    if (contentToolbar) contentToolbar.after(toolbar);
+    else diagram.insertBefore(toolbar, mermaidBlock);
   });
 }
 

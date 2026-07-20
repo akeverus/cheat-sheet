@@ -83,7 +83,7 @@
         // Применяем выбранный data-layout на <html> ДО первого кадра (как тему и
         // дизайн) — без вспышки чужой композиции. Каждая страница (focus/settings)
         // интерпретирует режим по-своему (см. base.css, секция [data-layout]):
-        //   flow  — одноколоночный поток чтения (ДЕФОЛТ): focus вопрос-герой +
+        //   flow  — одноколоночный поток чтения: focus вопрос-герой +
         //           ответы единым полноширинным столбцом; settings одна колонка.
         //   split — два пейна: focus вопрос/мета слева ↔ ответы справа;
         //           settings конфиг-сессии слева ↔ управление/оформление справа.
@@ -93,14 +93,14 @@
         // страница падает на негейтнутые wide-правила (= grid) — рабочий фоллбэк.
         var LAYOUTS = ['flow', 'split', 'grid'];
         function readLayout() {
-          try { var l = localStorage.getItem('layout'); return LAYOUTS.indexOf(l) >= 0 ? l : 'flow'; }
-          catch (e) { return 'flow'; }
+          try { var l = localStorage.getItem('layout'); return LAYOUTS.indexOf(l) >= 0 ? l : 'split'; }
+          catch (e) { return 'split'; }
         }
         var layout = readLayout();
         root.setAttribute('data-layout', layout);
         function setLayout(next) {
-          layout = (LAYOUTS.indexOf(next) >= 0) ? next : 'flow';
-          try { if (layout === 'flow') localStorage.removeItem('layout'); else localStorage.setItem('layout', layout); } catch (e) {}
+          layout = (LAYOUTS.indexOf(next) >= 0) ? next : 'split';
+          try { if (layout === 'split') localStorage.removeItem('layout'); else localStorage.setItem('layout', layout); } catch (e) {}
           root.setAttribute('data-layout', layout);
           try { document.dispatchEvent(new CustomEvent('layoutchange', { detail: { layout: layout } })); } catch (e) {}
         }
@@ -280,7 +280,7 @@
     <!-- shell.css — каркас редизайна (ui-redesign-handoff): sidebar/topbar/
          mobile-nav + базовые компоненты. Грузится ПОСЛЕ base.css (перекрывает
          element-level правила при равной специфичности html[data-design]). -->
-    <link rel="stylesheet" th:href="@{/css/shell.css(v=12)}">
+    <link rel="stylesheet" th:href="@{/css/shell.css(v=15)}">
     <!-- SRI (integrity) + crossorigin: защита от компрометации CDN — браузер
          выполнит ресурс, только если его sha512 совпадает. Хэши пересчитаны из
          самих файлов (openssl dgst -sha512). ВСЕ CDN-ресурсы пиннятся на ТОЧНУЮ
