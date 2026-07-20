@@ -1756,12 +1756,19 @@
   // варианта («Неверно — правильный ответ A»); при верном — просто «Верно».
   function buildVerdictLine(data) {
     if (data.correct) {
-      return icon('check', 'ed-icon-lead') + 'Верно';
+      return icon('check', 'ed-icon-lead') + 'Верно! Отличная работа';
     }
     const letter = data.correctOptionLetter
       ? ' — правильный ответ ' + escapeHtml(data.correctOptionLetter)
       : '';
     return icon('close', 'ed-icon-lead') + 'Неверно' + letter;
+  }
+
+  function buildVerdictSubtitle(data) {
+    if (data.correct) {
+      return 'Вы выбрали правильный ответ без подсказки.';
+    }
+    return 'Разберём ошибку и закрепим правильный ход мысли.';
   }
 
   // Хендофф-3, Этап 4: «+N XP» в баннере результата (data.xpAwarded из
@@ -1870,7 +1877,10 @@
 
     feedbackDiv.innerHTML = `
       <div class="${isCorrect ? 'result-correct' : 'result-wrong'} result-banner">
-        <strong class="result-verdict">${buildVerdictLine(data)}</strong>
+        <span class="result-copy">
+          <strong class="result-verdict">${buildVerdictLine(data)}</strong>
+          <span class="result-subtitle">${buildVerdictSubtitle(data)}</span>
+        </span>
         ${buildXpBadge(data)}
       </div>
       ${correctAnswerPanel}

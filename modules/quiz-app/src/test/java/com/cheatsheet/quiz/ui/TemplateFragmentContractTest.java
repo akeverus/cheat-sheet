@@ -378,9 +378,9 @@ class TemplateFragmentContractTest {
         assertThat(summary).contains("<caption class=\"visually-hidden\">");
         assertThat(summary).contains("scope=\"col\" role=\"columnheader\"");
         assertThat(summary).contains("role=\"rowheader\"");
-        // Share/print-тулбар инжектится PE-скриптом; статус-регион вежливый.
-        assertThat(summary).contains("'role', 'status'");
-        assertThat(summary).contains("'aria-live', 'polite'");
+        // Share-действие видно сразу; результат операции сообщает вежливый status-регион.
+        assertThat(summary).contains("class=\"summary-tools-status\" role=\"status\"");
+        assertThat(summary).contains("aria-live=\"polite\"");
     }
 
     @Test
@@ -409,7 +409,7 @@ class TemplateFragmentContractTest {
     void shellFragmentsExposeNavLandmarksAndActiveContract() throws IOException {
         // Редизайн (ui-redesign-handoff): masthead → каркас shell. Контракт:
         // sidebar — nav-landmark с меткой + aria-current на активном пункте;
-        // topbar — контекст страницы + тоггл темы (aria-pressed);
+        // topbar — контекст страницы + быстрый переход в настройки;
         // mobile-nav — nav-landmark нижней навигации.
         String sidebar = readTemplate("templates/fragments/sidebar.html");
         String topbar = readTemplate("templates/fragments/topbar.html");
@@ -424,7 +424,8 @@ class TemplateFragmentContractTest {
 
         assertThat(topbar).contains("th:fragment=\"topbar\"");
         assertThat(topbar).contains("class=\"crumb-label\"");
-        assertThat(topbar).contains("data-theme-toggle");
+        assertThat(topbar).contains("aria-label=\"Настройки\"");
+        assertThat(topbar).contains("<use href=\"#settings\"></use>");
 
         assertThat(mobileNav).contains("th:fragment=\"mobile-nav(active)\"");
         assertThat(mobileNav).contains("class=\"mobile-nav\" aria-label=\"Мобильная навигация\"");

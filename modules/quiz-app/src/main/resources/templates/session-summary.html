@@ -100,9 +100,6 @@
     </div>
 </section>
 
-<!-- Тулбар «поделиться/печать»: инжектится скриптом ниже (PE — без JS нет
-     мёртвых кнопок). Сюда вставляется .summary-tools сразу после карточки счёта. -->
-
 <!-- Что дальше — типизированный «короткий план» (FLOW-SUMMARY): сервер отдаёт
      summary.nextActions (NextActionType), шаблон рендерит кнопку по типу
      (иконка + ссылка), фронт НЕ парсит текст. Заменяет прежний ad-hoc
@@ -121,18 +118,17 @@
     <a class="summary-primary-action btn next-btn"
        th:if="${summary.nextActions == null or #lists.isEmpty(summary.nextActions)}"
        th:href="@{/}">Продолжить тренировку</a>
-    <details class="summary-more-actions">
-        <summary class="btn secondary-btn">Дополнительные действия</summary>
-        <div class="summary-more-menu">
-            <a th:each="na,it : ${summary.nextActions}" th:if="${!it.first}"
-               th:with="t=${na.type().name()}"
-               th:href="${t == 'PRACTICE_WEAK_TOPIC'} ? @{/(topic=${na.target()})} : (${t == 'KEEP_GOING'} ? @{/} : @{/review})"
-               th:text="${na.label()}">Действие</a>
-            <a th:href="@{/}">Продолжить тренировку</a>
-            <a th:href="@{/settings}">Новая сессия</a>
-            <a th:href="@{/stats}">Аналитика</a>
-        </div>
-    </details>
+    <a class="btn secondary-btn"
+       th:if="${summary.nextActions == null or #lists.isEmpty(summary.nextActions) or summary.nextActions[0].type().name() != 'KEEP_GOING'}"
+       th:href="@{/}">Продолжить тренировку</a>
+    <a class="btn secondary-btn"
+       th:if="${summary.nextActions != null and !#lists.isEmpty(summary.nextActions) and summary.nextActions[0].type().name() == 'KEEP_GOING'}"
+       th:href="@{/settings}">Новая сессия</a>
+    <button type="button" class="btn secondary-btn summary-share-action">
+        <svg class="icon" aria-hidden="true"><use href="#copy"></use></svg>
+        <span>Поделиться</span>
+    </button>
+    <span class="summary-tools-status" role="status" aria-live="polite"></span>
 </nav>
 
 <div class="summary-detail-grid">
@@ -202,10 +198,8 @@
 <nav th:replace="~{fragments/mobile-nav :: mobile-nav(active='focus')}"></nav>
 <th:block th:replace="~{fragments/shell-scripts :: shell-scripts}"></th:block>
 
-<!-- Шеринг и печать итогов. /session-summary НЕ грузит app.js, поэтому скрипт
-     самодостаточный. Текст итога собираем из уже отрендеренного DOM (не дублируем
-     данные на сервере). Кнопки инжектим (PE: без JS их нет). Печать — window.print
-     + @media print в base.css прячет навигацию и делает чистый лист. -->
+<!-- Шеринг итогов. /session-summary НЕ грузит app.js, поэтому скрипт
+     самодостаточный. Текст собираем из уже отрендеренного DOM. -->
 <script>
   (function () {
     var scoreCard = document.querySelector('.summary-hero');
@@ -246,38 +240,26 @@
       }
       return lines.join('\n');
     }
-    var tools = document.createElement('div');
-    tools.className = 'summary-tools';
-    var status = document.createElement('span');
-    status.className = 'summary-tools-status';
-    status.setAttribute('role', 'status');
-    status.setAttribute('aria-live', 'polite');
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      var copyBtn = document.createElement('button');
-      copyBtn.type = 'button';
-      copyBtn.className = 'btn secondary-btn';
-      copyBtn.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#copy"></use></svg> Скопировать итог';
-      var resetTimer = null;
-      copyBtn.addEventListener('click', function () {
-        navigator.clipboard.writeText(buildShareText()).then(function () {
-          status.textContent = 'Итог скопирован в буфер обмена.';
-        }).catch(function () {
-          status.textContent = 'Не удалось скопировать — выдели текст вручную.';
+    var shareBtn = document.querySelector('.summary-share-action');
+    var status = document.querySelector('.summary-tools-status');
+    var resetTimer = null;
+    if (shareBtn && status) {
+      shareBtn.addEventListener('click', function () {
+        var text = buildShareText();
+        var share = navigator.share ? navigator.share({ title: 'Итоги сессии', text: text }) : null;
+        var operation = share || (navigator.clipboard && navigator.clipboard.writeText
+          ? navigator.clipboard.writeText(text)
+          : Promise.reject(new Error('share unavailable')));
+        operation.then(function () {
+          status.textContent = share ? 'Системное меню отправки открыто.' : 'Итог скопирован в буфер обмена.';
+        }).catch(function (error) {
+          if (error && error.name === 'AbortError') return;
+          status.textContent = 'Не удалось поделиться итогом.';
         });
         if (resetTimer) clearTimeout(resetTimer);
         resetTimer = setTimeout(function () { status.textContent = ''; }, 4000);
       });
-      tools.appendChild(copyBtn);
     }
-    var printBtn = document.createElement('button');
-    printBtn.type = 'button';
-    printBtn.className = 'btn secondary-btn';
-    printBtn.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#printer"></use></svg> Печать / PDF';
-    printBtn.addEventListener('click', function () { window.print(); });
-    tools.appendChild(printBtn);
-    tools.appendChild(status);
-    var overflowMenu = document.querySelector('.summary-more-menu');
-    if (overflowMenu) overflowMenu.appendChild(tools);
   })();
 </script>
 </body>

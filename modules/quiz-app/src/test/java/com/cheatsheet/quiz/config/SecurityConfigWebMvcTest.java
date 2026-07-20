@@ -1,15 +1,20 @@
 package com.cheatsheet.quiz.config;
 
+import jakarta.servlet.http.Cookie;
+import org.jsoup.Jsoup;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(properties = "app.admin-token=test-admin-token")
@@ -27,6 +32,28 @@ class SecurityConfigWebMvcTest {
         mockMvc.perform(MockMvcRequestBuilders.post("/start")
                         .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andExpect(result -> assertThat(result.getResponse().getStatus()).isNotEqualTo(403));
+    }
+
+    @Test
+    void firstRenderedFormCanBeSubmittedWithoutAnInitialForbiddenResponse() throws Exception {
+        MvcResult settings = mockMvc.perform(MockMvcRequestBuilders.get("/settings"))
+                .andExpect(status().isOk())
+                .andExpect(cookie().exists("XSRF-TOKEN"))
+                .andReturn();
+
+        String renderedToken = Jsoup.parse(settings.getResponse().getContentAsString())
+                .selectFirst("input[name=_csrf]")
+                .val();
+        Cookie tokenCookie = settings.getResponse().getCookie("XSRF-TOKEN");
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/start")
+                        .cookie(tokenCookie)
+                        .param("_csrf", renderedToken)
+                        .param("mode", "MARATHON")
+                        .param("count", "1")
+                        .param("ordered", "true"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/"));
     }
 
     @Test

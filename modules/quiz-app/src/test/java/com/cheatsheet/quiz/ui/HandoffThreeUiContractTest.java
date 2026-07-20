@@ -23,7 +23,8 @@ class HandoffThreeUiContractTest {
 
         assertThat(sidebar).contains("class=\"brand-mark\"");
         assertThat(sidebar).doesNotContain("🧑‍💻");
-        assertThat(topbar).contains("class=\"brand-mark\"");
+        assertThat(topbar).contains("class=\"crumb-label\"");
+        assertThat(topbar).contains("aria-label=\"Настройки\"");
         assertThat(topbar).doesNotContain("🧑‍💻");
 
         for (String page : new String[] {
@@ -48,12 +49,14 @@ class HandoffThreeUiContractTest {
     }
 
     @Test
-    void summaryKeepsOnePrimaryRecommendationAndMovesOtherActionsToOverflow() throws IOException {
+    void summaryKeepsOnePrimaryRecommendationAndVisibleFollowUpActions() throws IOException {
         String summary = resource("templates/session-summary.html");
 
         assertThat(summary).contains("class=\"summary-primary-action");
-        assertThat(summary).contains("class=\"summary-more-actions\"");
-        assertThat(summary).contains("Дополнительные действия");
+        assertThat(summary).contains("class=\"btn secondary-btn summary-share-action\"");
+        assertThat(summary).contains(">Продолжить тренировку</a>");
+        assertThat(summary).contains("<span>Поделиться</span>");
+        assertThat(summary).doesNotContain("class=\"summary-more-actions\"");
         assertThat(summary).doesNotContain("class=\"btn secondary-btn\" th:href=\"@{/settings}\"");
     }
 

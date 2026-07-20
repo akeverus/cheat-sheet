@@ -18,11 +18,20 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -49,6 +58,7 @@ public class SecurityConfig {
                                 new AntPathRequestMatcher("/export"),
                                 new AntPathRequestMatcher("/actuator/**")
                         ))
+                .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/admin/**", "/api/regenerate", "/export")
@@ -89,6 +99,22 @@ public class SecurityConfig {
                 .rememberMe(AbstractHttpConfigurer::disable)
                 .anonymous(Customizer.withDefaults());
         return http.build();
+    }
+
+    /** Forces the deferred token to be saved before the first form is submitted. */
+    private static final class CsrfCookieFilter extends OncePerRequestFilter {
+        @Override
+        protected void doFilterInternal(
+                HttpServletRequest request,
+                HttpServletResponse response,
+                FilterChain filterChain
+        ) throws ServletException, IOException {
+            CsrfToken token = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+            if (token != null) {
+                token.getToken();
+            }
+            filterChain.doFilter(request, response);
+        }
     }
 
     @Bean

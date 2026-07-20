@@ -169,7 +169,7 @@ class InterviewControllerTest {
         if (result.getStatus() == 200) {
             assertThat(body).doesNotContain("id=\"left-sidebar-card\"");
             assertThat(body).contains("aria-label=\"Основная навигация\"");
-            assertThat(body).contains(">Фокус<");
+            assertThat(body).contains(">Тренировка<");
             assertThat(body).contains(">Аналитика<");
             assertThat(body).contains(">Настройки<");
             if (body.contains("id=\"interview-card\"")) {
