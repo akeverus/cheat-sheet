@@ -19,6 +19,8 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 
+import java.util.Locale;
+
 /**
  * Use-case orchestration для MVC page endpoint-ов.
  */
@@ -104,6 +106,7 @@ public class InterviewPageMvcService {
             Boolean shuffle,
             Boolean weakTopics,
             Boolean ordered,
+            String difficulty,
             String mode,
             HttpSession session,
             Model model
@@ -118,16 +121,49 @@ public class InterviewPageMvcService {
                 shuffle,
                 ordered,
                 weakTopics,
+                difficulty,
                 mode
         );
+        return renderSettings(context, interviewSession, difficulty, model);
+    }
+
+    public String settings(
+            String topic,
+            String group,
+            Boolean important,
+            Boolean onlyWrong,
+            Boolean shuffle,
+            Boolean weakTopics,
+            Boolean ordered,
+            String mode,
+            HttpSession session,
+            Model model
+    ) {
+        InterviewSession interviewSession = sessionSupport.getSession(session);
+        MvcRequestMapper.SettingsRequestContext context = requestMapper.resolveSettingsContext(
+                interviewSession, topic, group, important, onlyWrong, shuffle, ordered, weakTopics, mode
+        );
+        return renderSettings(context, interviewSession, null, model);
+    }
+
+    private String renderSettings(
+            MvcRequestMapper.SettingsRequestContext context,
+            InterviewSession interviewSession,
+            String difficulty,
+            Model model
+    ) {
         FocusTrainingPageService.SurfaceState surfaceState =
                 focusTrainingPageService.buildSurfaceState(
                         context.filter(),
                         context.selectedMode(),
                         interviewSession,
                         context.weakTopicsPriority()
-                );
+        );
         modelAttributeMapper.applySurfaceState(model, surfaceState);
+        String selectedDifficulty = difficulty == null
+                ? context.filter().difficulty() == null ? "MEDIUM" : context.filter().difficulty().name()
+                : difficulty.isBlank() ? "ANY" : difficulty.strip().toUpperCase(Locale.ROOT);
+        model.addAttribute("selectedDifficulty", selectedDifficulty);
         return navigationService.settingsView();
     }
 

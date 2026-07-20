@@ -4,11 +4,12 @@
 <body class="summary-page">
 <a class="skip-link" href="#main-content">Перейти к итогам сессии</a>
 <svg th:replace="~{fragments/pixel-sprite :: sprite}"></svg>
-<svg th:replace="~{fragments/icons :: sprite}"></svg>
 <div class="app">
     <aside th:replace="~{fragments/sidebar :: sidebar(active='focus')}"></aside>
     <div class="shell-main">
-        <th:block th:replace="~{fragments/topbar :: topbar}"></th:block>
+        <th:block th:with="topbarLabel='Результаты сессии'">
+            <th:block th:replace="~{fragments/topbar :: topbar}"></th:block>
+        </th:block>
 <main id="main-content" class="ed-page" tabindex="-1">
 <!-- Этап 6: hero-карточка итогов. Слева — score-ring (SSR-дуга по accuracy,
      без инлайн-style: длина дуги задаётся presentation-атрибутом stroke-dasharray),
@@ -23,28 +24,31 @@
          паритет с h2 секций «Результаты по темам»/«Ошибки». -->
     <h2 class="summary-section-title visually-hidden">Результат сессии</h2>
     <div class="score-ring"
-         th:classappend="${summary.accuracy >= 80} ? ' ring-success' : (${summary.accuracy >= 50} ? ' ring-warning' : ' ring-danger')">
+         th:classappend="${summary.totalQuestions == 0} ? ' ring-neutral' : (${summary.accuracy >= 80} ? ' ring-success' : (${summary.accuracy >= 50} ? ' ring-warning' : ' ring-danger'))">
         <svg class="score-ring-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
             <circle class="score-ring-track" cx="60" cy="60" r="52"></circle>
             <circle class="score-ring-value" cx="60" cy="60" r="52"
                     th:attr="stroke-dasharray=${#numbers.formatDecimal(summary.accuracy * 3.26726, 1, 2) + ' 400'}"></circle>
         </svg>
         <strong class="summary-score-value"
-                th:classappend="${summary.accuracy >= 80} ? ' text-success' : (${summary.accuracy >= 50} ? ' text-warning' : ' text-danger')"
+                th:classappend="${summary.totalQuestions == 0} ? ' summary-score-empty' : (${summary.accuracy >= 80} ? ' text-success' : (${summary.accuracy >= 50} ? ' text-warning' : ' text-danger'))"
                 th:text="${summary.accuracyFormatted + '%'}">0%</strong>
     </div>
     <div class="summary-hero-body">
-        <span class="badge summary-mode-line" th:text="${@modeUtils.displayName(summary.mode)}">Режим</span>
+        <div class="summary-badges">
+            <span class="badge accent summary-complete-badge">Сессия завершена</span>
+            <span class="badge summary-mode-line" th:text="${@modeUtils.displayName(summary.mode)}">Режим</span>
+        </div>
+        <!-- FLOW-SUMMARY-b: краткий actionable-итог. «Требуют разбора» = неверные +
+             «не знаю». Русская форма склоняется по mod-10/mod-100. -->
+        <h1 class="summary-headline"
+           th:with="needs=${summary.wrongCount + summary.unknownCount},
+                    w=${needs % 10 == 1 and needs % 100 != 11 ? 'вопрос требует' : ((needs % 10 >= 2 and needs % 10 <= 4) and (needs % 100 &lt; 12 or needs % 100 &gt; 14) ? 'вопроса требуют' : 'вопросов требуют')}"
+           th:text="${summary.totalQuestions == 0 ? 'Сессия завершена без ответов' : (needs > 0 ? needs + ' ' + w + ' разбора' : 'Без ошибок — отличный результат')}">Итог</h1>
         <p class="summary-hero-count">
             <strong th:text="${summary.correctCount}">0</strong> из
             <strong th:text="${summary.totalQuestions}">0</strong> верных ответов
         </p>
-        <!-- FLOW-SUMMARY-b: краткий actionable-итог. «Требуют разбора» = неверные +
-             «не знаю». Русская форма склоняется по mod-10/mod-100. -->
-        <p class="summary-headline"
-           th:with="needs=${summary.wrongCount + summary.unknownCount},
-                    w=${needs % 10 == 1 and needs % 100 != 11 ? 'вопрос требует' : ((needs % 10 >= 2 and needs % 10 <= 4) and (needs % 100 &lt; 12 or needs % 100 &gt; 14) ? 'вопроса требуют' : 'вопросов требуют')}"
-           th:text="${needs > 0 ? needs + ' ' + w + ' разбора' : 'Без ошибок — отличный результат'}">Итог</p>
         <!-- Этап 5 (handoff-3): 4 KPI сессии — Опыт / Время / Ошибки / Серия.
              Опыт и Серия — из реальной геймификации (summary.gamification, XP
              суммирован из истории ответов). Когда геймификации нет (null) —
@@ -69,7 +73,7 @@
             <div class="summary-kpi">
                 <span class="summary-kpi-label">Ошибки</span>
                 <b class="summary-kpi-value" th:classappend="${errs > 0} ? ' text-danger' : ' text-success'" th:text="${errs}">0</b>
-                <span class="summary-kpi-sub" th:text="${errs > 0} ? 'Нужен разбор' : 'Без ошибок'">Нужен разбор</span>
+                <span class="summary-kpi-sub" th:text="${summary.totalQuestions == 0} ? 'Ответов не было' : (${errs > 0} ? 'Нужен разбор' : 'Без ошибок')">Нужен разбор</span>
             </div>
             <div class="summary-kpi">
                 <span class="summary-kpi-label">Серия</span>
@@ -110,8 +114,8 @@
        th:if="${it.first}"
        class="summary-primary-action btn next-btn"
        th:href="${t == 'PRACTICE_WEAK_TOPIC'} ? @{/(topic=${na.target()})} : (${t == 'KEEP_GOING'} ? @{/} : @{/review})">
-        <svg class="ed-icon ed-icon-lead" aria-hidden="true">
-            <use th:attr="href=${t == 'REVIEW_MISTAKES' ? '#i-target' : (t == 'PRACTICE_WEAK_TOPIC' ? '#i-book-open' : (t == 'REVIEW_DUE' ? '#i-flag' : '#i-flame'))}"></use>
+        <svg class="icon ed-icon-lead" aria-hidden="true">
+            <use th:attr="href=${t == 'REVIEW_MISTAKES' ? '#target' : (t == 'PRACTICE_WEAK_TOPIC' ? '#book-open' : (t == 'REVIEW_DUE' ? '#report' : '#flame'))}"></use>
         </svg><span class="summary-next-label" th:text="${na.label()}">Действие</span>
     </a>
     <a class="summary-primary-action btn next-btn"
@@ -131,6 +135,7 @@
     </details>
 </nav>
 
+<div class="summary-detail-grid">
 <!-- Результаты по темам -->
 <section class="card" th:if="${!summary.topicResults.isEmpty()}">
     <h2 class="summary-section-title">Результаты по темам</h2>
@@ -189,6 +194,7 @@
         </li>
     </ul>
 </section>
+</div>
 
 </main>
     </div>
@@ -250,7 +256,7 @@
       var copyBtn = document.createElement('button');
       copyBtn.type = 'button';
       copyBtn.className = 'btn secondary-btn';
-      copyBtn.innerHTML = '<svg class="ed-icon" aria-hidden="true"><use href="#i-copy"></use></svg> Скопировать итог';
+      copyBtn.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#copy"></use></svg> Скопировать итог';
       var resetTimer = null;
       copyBtn.addEventListener('click', function () {
         navigator.clipboard.writeText(buildShareText()).then(function () {
@@ -266,11 +272,12 @@
     var printBtn = document.createElement('button');
     printBtn.type = 'button';
     printBtn.className = 'btn secondary-btn';
-    printBtn.innerHTML = '<svg class="ed-icon" aria-hidden="true"><use href="#i-printer"></use></svg> Печать / PDF';
+    printBtn.innerHTML = '<svg class="icon" aria-hidden="true"><use href="#printer"></use></svg> Печать / PDF';
     printBtn.addEventListener('click', function () { window.print(); });
     tools.appendChild(printBtn);
     tools.appendChild(status);
-    scoreCard.insertAdjacentElement('afterend', tools);
+    var overflowMenu = document.querySelector('.summary-more-menu');
+    if (overflowMenu) overflowMenu.appendChild(tools);
   })();
 </script>
 </body>

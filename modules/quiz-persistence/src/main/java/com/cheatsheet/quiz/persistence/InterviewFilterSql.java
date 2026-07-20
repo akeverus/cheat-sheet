@@ -1,5 +1,6 @@
 package com.cheatsheet.quiz.persistence;
 
+import com.cheatsheet.quiz.domain.Difficulty;
 import lombok.experimental.UtilityClass;
 
 import java.util.List;
@@ -61,5 +62,14 @@ public class InterviewFilterSql {
             params.add(topics.get(i));
         }
         sql.append(") ");
+    }
+
+    /** Добавляет фильтр по статической сложности вопроса. */
+    public static void appendDifficultyFilter(StringBuilder sql, List<Object> params, Difficulty difficulty) {
+        if (difficulty == null) {
+            return;
+        }
+        sql.append(" AND q.difficulty = ? ");
+        params.add(difficulty.name());
     }
 }

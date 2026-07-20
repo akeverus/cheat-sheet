@@ -4,11 +4,12 @@
 <body class="result-page">
 <a class="skip-link" href="#main-content">Перейти к результату</a>
 <svg th:replace="~{fragments/pixel-sprite :: sprite}"></svg>
-<svg th:replace="~{fragments/icons :: sprite}"></svg>
 <div class="app">
     <aside th:replace="~{fragments/sidebar :: sidebar(active='focus')}"></aside>
     <div class="shell-main">
-        <th:block th:replace="~{fragments/topbar :: topbar}"></th:block>
+        <th:block th:with="topbarLabel='Разбор ответа'">
+            <th:block th:replace="~{fragments/topbar :: topbar}"></th:block>
+        </th:block>
 <main id="main-content" class="ed-page" tabindex="-1">
 <!-- Stats + Session — compact top row -->
 <div class="top-row">
@@ -21,8 +22,8 @@
                  = число отвеченных = 1-based номер только что отвеченного вопроса.
                  БЕЗ +1 (на странице-вопроса +1 верен, тут переполнял бы: «11/10»). -->
             <span>Прогресс: <span th:text="${interviewSession.getIndex()}">1</span>/<span th:text="${interviewSession.getTotal()}">0</span></span>
-            <span><svg class="ed-icon ed-icon-success" aria-hidden="true"><use href="#i-circle-check"></use></svg> <span class="visually-hidden">Верно:</span> <span th:text="${interviewSession.getCorrect()}">0</span></span>
-            <span><svg class="ed-icon ed-icon-error" aria-hidden="true"><use href="#i-circle-x"></use></svg> <span class="visually-hidden">Неверно:</span> <span th:text="${interviewSession.getWrong()}">0</span></span>
+            <span><svg class="icon ed-icon-success" aria-hidden="true"><use href="#check"></use></svg> <span class="visually-hidden">Верно:</span> <span th:text="${interviewSession.getCorrect()}">0</span></span>
+            <span><svg class="icon ed-icon-error" aria-hidden="true"><use href="#close"></use></svg> <span class="visually-hidden">Неверно:</span> <span th:text="${interviewSession.getWrong()}">0</span></span>
             <form method="post" th:action="@{/finish}" class="d-inline">
                 <button type="submit" class="btn-finish">Завершить сессию</button>
             </form>
@@ -48,7 +49,7 @@
                             th:data-question-id="${result.question.id}"
                             th:attr="aria-pressed=${result.question.important}"
                             th:title="${result.question.important} ? 'Убрать из избранного' : 'Добавить в избранное'"
-                            th:aria-label="${result.question.important} ? 'Убрать из избранного' : 'Добавить в избранное'"><svg class="ed-icon" aria-hidden="true"><use href="#i-star"></use></svg></button>
+                            th:aria-label="${result.question.important} ? 'Убрать из избранного' : 'Добавить в избранное'"><svg class="icon" aria-hidden="true"><use href="#star"></use></svg></button>
                     <span class="topic-badge" th:if="${result.question.topic != null}"
                           th:text="${#strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(result.question.topic), '-', ' '), '_', ' '))}">topic</span>
                 </div>
@@ -58,10 +59,15 @@
                  правильного варианта («Неверно — правильный ответ A»). correctOptionLetter
                  зеркалит API-путь (MvcModelAttributeMapper.correctOptionLetter). -->
             <p class="status" th:with="ok=${result.correctAnswer}" th:classappend="${ok} ? ' status-correct' : ' status-wrong'">
-                <svg class="ed-icon ed-icon-lead" th:classappend="${ok} ? 'ed-icon-success' : 'ed-icon-error'" aria-hidden="true">
-                    <use th:attr="href=${ok} ? '#i-circle-check' : '#i-circle-x'"></use>
+                <svg class="icon ed-icon-lead" th:classappend="${ok} ? 'ed-icon-success' : 'ed-icon-error'" aria-hidden="true">
+                    <use th:attr="href=${ok} ? '#check' : '#close'"></use>
                 </svg><span th:text="${ok ? 'Верно!' : (correctOptionLetter != null and !correctOptionLetter.isEmpty() ? 'Неверно — правильный ответ ' + correctOptionLetter : 'Неверно')}">Статус</span>
             </p>
+
+            <section class="explanation-panel correct-answer-panel">
+                <span class="explanation-eyebrow" th:text="${correctOptionLetter != null and !correctOptionLetter.isEmpty() ? 'Правильный ответ · ' + correctOptionLetter : 'Правильный ответ'}">Правильный ответ</span>
+                <h2 th:utext="${@markdownRenderService.toInlineHtml(result.correct.optionText)}">Правильный вариант</h2>
+            </section>
 
             <!-- UX-13: опции = только марка состояния + тег (макет Instrument), БЕЗ
                  inline-пояснений — они переехали в «Подробнее» (.option-breakdown ниже),
@@ -143,12 +149,6 @@
                 hidden=false
             )}"></div>
             <div th:replace="~{fragments/inline-alert :: inline-alert(id='interview-alert', hidden=true)}"></div>
-            <div class="result-actions">
-                <a class="btn next-btn"
-                   th:href="@{/(topic=${filter?.topic},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}">
-                    Следующий вопрос<span aria-hidden="true"> →</span>
-                </a>
-            </div>
             <!-- «Похожие вопросы» рендерятся сервером ниже (#result-related-questions,
                  th:if relatedQuestions). AI-разбор (feedback/comparison/takeaway/трейс)
                  вырезан вместе с провайдерами — кнопка «доп. анализ» и её пустой
@@ -156,12 +156,12 @@
 
 
             <div th:if="${interviewSession != null and interviewSession.finished}" class="mt-3 text-center">
-                <strong><svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-flag"></use></svg>Сессия завершена!</strong>
+                <strong><svg class="icon ed-icon-lead" aria-hidden="true"><use href="#report"></use></svg>Сессия завершена!</strong>
             </div>
         </div>
-        <aside class="review-materials"
-               th:if="${(result.question.codeSnippet() != null and !result.question.codeSnippet().isBlank()) or (result.question.diagramMermaid() != null and !result.question.diagramMermaid().isBlank())}"
-               aria-label="Материалы вопроса">
+        <aside class="review-materials" aria-label="Материалы и следующий шаг">
+            <section class="review-side-panel review-side-materials"
+                     th:if="${(result.question.codeSnippet() != null and !result.question.codeSnippet().isBlank()) or (result.question.diagramMermaid() != null and !result.question.diagramMermaid().isBlank())}">
             <h3 class="review-materials-title">Код и схема</h3>
             <div class="question-code-wrap content-box"
                  th:if="${result.question.codeSnippet() != null and !result.question.codeSnippet().isBlank()}">
@@ -174,11 +174,29 @@
                 <pre class="mermaid" th:text="${result.question.diagramMermaid()}"></pre>
                 <details class="diagram-source-details">
                     <summary class="diagram-source-summary">
-                        <svg class="ed-icon" aria-hidden="true"><use href="#i-code"></use></svg><span>Исходник</span>
+                        <svg class="icon" aria-hidden="true"><use href="#code"></use></svg><span>Исходник</span>
                     </summary>
                     <pre class="diagram-source"><code th:text="${result.question.diagramMermaid()}"></code></pre>
                 </details>
             </div>
+            </section>
+            <section class="review-side-panel review-confidence-panel hidden" data-static-confidence
+                     th:attr="data-question-id=${result.question.id}">
+                <div class="confidence-buttons" role="group" aria-labelledby="static-confidence-label">
+                    <span class="confidence-label" id="static-confidence-label">Насколько хорошо ты это знал?</span>
+                    <div class="confidence-scale">
+                        <button type="button" class="confidence-btn" data-grade="1" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#face-unknown"></use></svg><span>Не знал</span></button>
+                        <button type="button" class="confidence-btn" data-grade="2" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#face-guess"></use></svg><span>Угадал</span></button>
+                        <button type="button" class="confidence-btn" data-grade="3" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#face-hard"></use></svg><span>С трудом</span></button>
+                        <button type="button" class="confidence-btn" data-grade="4" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#face-remembered"></use></svg><span>Помнил</span></button>
+                        <button type="button" class="confidence-btn" data-grade="5" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#face-great"></use></svg><span>Отлично</span></button>
+                    </div>
+                </div>
+            </section>
+            <a class="btn next-btn review-next-action"
+               th:href="@{/(topic=${filter?.topic},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}">
+                Следующий вопрос<svg class="icon" aria-hidden="true"><use href="#arrow"></use></svg>
+            </a>
         </aside>
     </div>
 </section>
@@ -189,7 +207,7 @@
      .card сломала бы грид. Поэтому тег меняем div→section + aria-labelledby (region-
      лендмарк с доступным именем), но БЕЗ card-класса. Критика round-01 C31. -->
 <section th:if="${relatedQuestions != null and !relatedQuestions.isEmpty()}" id="result-related-questions" class="related-questions related-questions-block" aria-labelledby="related-questions-heading">
-    <h3 id="related-questions-heading" class="related-questions-title"><svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-link"></use></svg>Похожие вопросы для закрепления:</h3>
+    <h3 id="related-questions-heading" class="related-questions-title"><svg class="icon ed-icon-lead" aria-hidden="true"><use href="#link"></use></svg>Похожие вопросы для закрепления:</h3>
     <!-- RES-16 (R0.145): role=listitem на ОБЁРТКЕ-div, не на <a>. Раньше <a role=listitem>
          перекрывал нативную link-роль → SR анонсировал «элемент списка», не «ссылка», и
          не находил в rotor'е ссылок (WCAG 4.1.2 role≠function). Канон списка-ссылок:

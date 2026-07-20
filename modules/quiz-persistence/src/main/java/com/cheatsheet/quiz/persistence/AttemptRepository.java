@@ -191,6 +191,22 @@ public class AttemptRepository {
                 limit);
     }
 
+    /** Дневная точность попыток в окне, старые дни первыми. */
+    public List<DailyAccuracy> findDailyAccuracy(long cutoffEpoch) {
+        return jdbcTemplate.query(
+                "SELECT to_char(to_timestamp(created_at) AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day, " +
+                        "COUNT(*) AS total, " +
+                        "SUM(CASE WHEN outcome = 'CORRECT' THEN 1 ELSE 0 END) AS correct " +
+                        "FROM attempt " +
+                        "WHERE created_at >= ? AND outcome IN ('CORRECT', 'WRONG', 'UNKNOWN') " +
+                        "GROUP BY day ORDER BY day",
+                (rs, rowNum) -> new DailyAccuracy(
+                        rs.getString("day"),
+                        rs.getLong("correct"),
+                        rs.getLong("total")),
+                cutoffEpoch);
+    }
+
     /** Строка drill-down ошибок: вопрос, тема, выбранный/верный вариант, время. */
     public record MistakeAttempt(
             long questionId,
@@ -202,6 +218,12 @@ public class AttemptRepository {
             Integer responseTimeMs,
             long createdAt
     ) {}
+
+    public record DailyAccuracy(String day, long correct, long total) {
+        public double percent() {
+            return total == 0 ? 0.0 : correct * 100.0 / total;
+        }
+    }
 
     private static Attempt mapRow(ResultSet rs) throws SQLException {
         return new Attempt(

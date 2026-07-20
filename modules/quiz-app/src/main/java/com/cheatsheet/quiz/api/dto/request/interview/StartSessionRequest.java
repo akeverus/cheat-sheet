@@ -35,6 +35,9 @@ public class StartSessionRequest {
     private Boolean shuffle;
     private Boolean ordered;
 
+    @Pattern(regexp = "(?i)EASY|MEDIUM|HARD", message = "difficulty must be EASY, MEDIUM or HARD")
+    private String difficulty;
+
     /**
      * Лимит времени на вопрос в секундах (хендофф-3, настройка «Таймер»). {@code null}
      * или 0 — без таймера. Обратный отсчёт ведёт клиент; поле принимается для

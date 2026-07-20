@@ -4,11 +4,12 @@
 <body class="error-page">
 <a class="skip-link" href="#main-content">Перейти к сообщению об ошибке</a>
 <svg th:replace="~{fragments/pixel-sprite :: sprite}"></svg>
-<svg th:replace="~{fragments/icons :: sprite}"></svg>
 <div class="app">
     <aside th:replace="~{fragments/sidebar :: sidebar(active='focus')}"></aside>
     <div class="shell-main">
-        <th:block th:replace="~{fragments/topbar :: topbar}"></th:block>
+        <th:block th:with="topbarLabel='Cheat Sheet'">
+            <th:block th:replace="~{fragments/topbar :: topbar}"></th:block>
+        </th:block>
 <main id="main-content" class="ed-page" tabindex="-1">
 <section class="error-card" aria-labelledby="error-heading">
     <p class="error-eyebrow" aria-hidden="true">Ошибка</p>
@@ -24,7 +25,7 @@
 
     <h2 id="error-heading" class="error-title"
         th:with="code=${status != null ? status : 500}"
-        th:text="${code == 404 ? 'Такой страницы нет' :
+        th:text="${code == 404 ? 'Страница не найдена' :
                   (code == 403 ? 'Доступ запрещён' :
                   (code == 401 ? 'Требуется авторизация' :
                   (code == 400 ? 'Некорректный запрос' :
@@ -34,7 +35,7 @@
 
     <p class="error-body"
        th:with="code=${status != null ? status : 500}"
-       th:text="${code == 404 ? 'Возможно, ссылка устарела или ты свернул не туда. Загляни на главную и продолжи тренировку.' :
+       th:text="${code == 404 ? 'Похоже, ссылка устарела или вопрос был перемещён.' :
                  (code == 403 ? 'Похоже, защитный токен формы устарел — так бывает, если страница была открыта долго, открыта в нескольких вкладках или сессия сбросилась. Обнови страницу и повтори действие.' :
                  (code == 401 ? 'Нужно представиться, чтобы продолжить.' :
                  (code == 400 ? 'Запрос составлен неверно — проверь введённые данные и попробуй ещё раз.' :
@@ -62,11 +63,12 @@
     <nav class="error-actions" aria-label="Что дальше">
         <a th:href="@{/}" class="btn next-btn"
            th:text="${status == 404 ? 'Вернуться к тренировке' : 'На главную'}">На главную</a>
-        <a th:href="@{/stats}" class="btn secondary-btn">Аналитика</a>
-        <a th:href="@{/settings}" class="btn secondary-btn">Настроить сессию</a>
+        <a th:if="${status == 404}" th:href="@{/settings}" class="btn secondary-btn">Настроить сессию</a>
+        <a th:if="${status != 404}" th:href="@{/stats}" class="btn secondary-btn">Аналитика</a>
+        <a th:if="${status != 404}" th:href="@{/settings}" class="btn secondary-btn">Настроить сессию</a>
     </nav>
     <a class="broken-link-report" th:if="${status == 404}"
-       href="mailto:?subject=Cheat%20Sheet%3A%20битая%20ссылка">Сообщить о битой ссылке</a>
+       href="mailto:?subject=Cheat%20Sheet%3A%20битая%20ссылка"><svg class="icon" aria-hidden="true"><use href="#report"></use></svg>Сообщить о битой ссылке</a>
 </section>
 </main>
     </div>

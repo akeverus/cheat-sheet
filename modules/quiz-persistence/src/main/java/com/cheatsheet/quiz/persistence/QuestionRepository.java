@@ -339,17 +339,27 @@ public class QuestionRepository {
      * Находит ID вопросов для новой сессии.
      */
     public List<Long> findQuestionIdsForSession(String topic, Boolean important, Boolean onlyWrong, long nowEpoch, int limit) {
-        return findQuestionIdsExcluding(List.of(), topic, important, onlyWrong, nowEpoch, limit);
+        return findQuestionIdsForSession(topic, important, onlyWrong, null, nowEpoch, limit);
+    }
+
+    public List<Long> findQuestionIdsForSession(String topic, Boolean important, Boolean onlyWrong,
+                                                Difficulty difficulty, long nowEpoch, int limit) {
+        return findQuestionIdsExcluding(List.of(), topic, important, onlyWrong, difficulty, nowEpoch, limit);
     }
 
     /**
      * Находит ID вопросов для новой сессии по списку тем в заданном порядке.
      */
     public List<Long> findQuestionIdsForSessionByTopics(List<String> topics, Boolean important, Boolean onlyWrong, long nowEpoch, int limit) {
+        return findQuestionIdsForSessionByTopics(topics, important, onlyWrong, null, nowEpoch, limit);
+    }
+
+    public List<Long> findQuestionIdsForSessionByTopics(List<String> topics, Boolean important, Boolean onlyWrong,
+                                                        Difficulty difficulty, long nowEpoch, int limit) {
         if (topics == null || topics.isEmpty()) {
             return List.of();
         }
-        return findQuestionIdsExcludingByTopics(List.of(), topics, important, onlyWrong, nowEpoch, limit);
+        return findQuestionIdsExcludingByTopics(List.of(), topics, important, onlyWrong, difficulty, nowEpoch, limit);
     }
 
     /**
@@ -357,6 +367,11 @@ public class QuestionRepository {
      */
     public List<Long> findQuestionIdsExcluding(List<Long> excludeIds, String topic, Boolean important,
                                                 Boolean onlyWrong, long nowEpoch, int limit) {
+        return findQuestionIdsExcluding(excludeIds, topic, important, onlyWrong, null, nowEpoch, limit);
+    }
+
+    public List<Long> findQuestionIdsExcluding(List<Long> excludeIds, String topic, Boolean important,
+                                               Boolean onlyWrong, Difficulty difficulty, long nowEpoch, int limit) {
         StringBuilder sql = new StringBuilder(
                 "SELECT q.id FROM questions q " +
                         "JOIN review_state rs ON rs.question_id = q.id WHERE 1=1 ");
@@ -370,6 +385,7 @@ public class QuestionRepository {
             params.addAll(excludeIds);
         }
         InterviewFilterSql.appendFilters(sql, params, topic, important, onlyWrong);
+        InterviewFilterSql.appendDifficultyFilter(sql, params, difficulty);
         sql.append(" ORDER BY CASE WHEN rs.next_review_at <= ? THEN 0 ELSE 1 END, rs.next_review_at ASC, RANDOM() LIMIT ?");
         params.add(nowEpoch);
         params.add(limit);
@@ -381,6 +397,11 @@ public class QuestionRepository {
      */
     public List<Long> findQuestionIdsExcludingByTopics(List<Long> excludeIds, List<String> topics, Boolean important,
                                                        Boolean onlyWrong, long nowEpoch, int limit) {
+        return findQuestionIdsExcludingByTopics(excludeIds, topics, important, onlyWrong, null, nowEpoch, limit);
+    }
+
+    public List<Long> findQuestionIdsExcludingByTopics(List<Long> excludeIds, List<String> topics, Boolean important,
+                                                       Boolean onlyWrong, Difficulty difficulty, long nowEpoch, int limit) {
         if (topics == null || topics.isEmpty()) {
             return List.of();
         }
@@ -398,6 +419,7 @@ public class QuestionRepository {
         }
         InterviewFilterSql.appendTopicsFilter(sql, params, topics);
         InterviewFilterSql.appendFilters(sql, params, null, important, onlyWrong);
+        InterviewFilterSql.appendDifficultyFilter(sql, params, difficulty);
         sql.append(" ORDER BY ");
         appendTopicOrderCase(sql, params, topics);
         sql.append(", CASE WHEN rs.next_review_at <= ? THEN 0 ELSE 1 END, rs.next_review_at ASC, RANDOM() LIMIT ?");
@@ -416,12 +438,17 @@ public class QuestionRepository {
      * @return список ID в случайном порядке
      */
     public List<Long> findShuffledQuestionIds(Boolean important, Boolean onlyWrong, int limit) {
+        return findShuffledQuestionIds(important, onlyWrong, null, limit);
+    }
+
+    public List<Long> findShuffledQuestionIds(Boolean important, Boolean onlyWrong, Difficulty difficulty, int limit) {
         StringBuilder sql = new StringBuilder(
                 "SELECT q.id FROM questions q " +
                         "JOIN review_state rs ON rs.question_id = q.id WHERE 1=1 ");
         var params = new ArrayList<Object>();
         // topic = null — все темы
         InterviewFilterSql.appendFilters(sql, params, null, important, onlyWrong);
+        InterviewFilterSql.appendDifficultyFilter(sql, params, difficulty);
         sql.append(" ORDER BY RANDOM() LIMIT ?");
         params.add(limit);
         return jdbcTemplate.query(sql.toString(), (rs, rowNum) -> rs.getLong("id"), params.toArray());

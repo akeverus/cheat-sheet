@@ -4,11 +4,12 @@
 <body class="stats-page">
 <a class="skip-link" href="#main-content">Перейти к аналитике</a>
 <svg th:replace="~{fragments/pixel-sprite :: sprite}"></svg>
-<svg th:replace="~{fragments/icons :: sprite}"></svg>
 <div class="app">
     <aside th:replace="~{fragments/sidebar :: sidebar(active='analytics')}"></aside>
     <div class="shell-main">
-        <th:block th:replace="~{fragments/topbar :: topbar}"></th:block>
+        <th:block th:with="topbarLabel='Аналитика обучения'">
+            <th:block th:replace="~{fragments/topbar :: topbar}"></th:block>
+        </th:block>
 <main id="main-content" class="ed-page" tabindex="-1">
 <div class="app-layout">
 <div class="main-content">
@@ -16,7 +17,7 @@
 <!-- Интро аналитики (docs 2.4). -->
 <div class="stats-intro">
     <span class="eyebrow">Учебная аналитика</span>
-    <h1 class="stats-title">Ваш прогресс</h1>
+    <h1 class="stats-title">Прогресс и рекомендации</h1>
     <p class="muted stats-intro-lead">Метрики с явными знаменателями — и одно рекомендованное действие.
        «—» значит «пока нет данных для этой доли», а не «ноль».</p>
 </div>
@@ -109,6 +110,35 @@
             </div>
         </div>
     </section>
+
+    <div class="overview-chart-grid">
+        <section class="card overview-chart-card">
+            <h2>Динамика точности</h2>
+            <p class="chart-subtitle">Доля верных попыток по дням за последние 30 дней.</p>
+            <div class="overview-line-wrap" th:if="${accuracyTrend != null and !accuracyTrend.isEmpty()}">
+                <canvas id="overviewAccuracyChart" role="img"
+                        aria-label="Динамика точности по дням. Точные значения доступны в подсказках графика."></canvas>
+            </div>
+            <p class="chart-fallback" th:if="${accuracyTrend == null or accuracyTrend.isEmpty()}">
+                Пока нет дневной динамики. Ответьте на несколько вопросов, и здесь появится график.
+            </p>
+        </section>
+        <section class="card overview-chart-card" th:if="${difficultyDistribution != null and !difficultyDistribution.isEmpty()}">
+            <h2>Сложность вопросов</h2>
+            <p class="chart-subtitle">Распределение банка по статической сложности.</p>
+            <div class="overview-difficulty-row">
+                <div class="overview-donut-wrap"><canvas id="overviewDifficultyDonut" role="img" aria-label="Распределение вопросов по сложности"></canvas></div>
+                <ul class="difficulty-legend">
+                    <li th:each="slice : ${difficultyDistribution}" class="difficulty-legend-item"
+                        th:classappend="'difficulty-' + ${#strings.toLowerCase(slice.level())}">
+                        <span class="difficulty-dot" aria-hidden="true"></span>
+                        <span class="difficulty-legend-label" th:text="${slice.label()}">Уровень</span>
+                        <span class="difficulty-legend-value" th:text="${#numbers.formatDecimal(slice.percent(), 1, 0)} + '%'">0%</span>
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </div>
 </section>
 
 <!-- ================= Панель: По темам ================= -->
@@ -144,7 +174,7 @@
                         </select>
                     </label>
                     <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
-                    <label><input type="checkbox" name="important" value="true" th:checked="${filter?.importantOnly}"> <svg class="ed-icon" aria-hidden="true"><use href="#i-star"></use></svg> Избранные</label>
+                    <label><input type="checkbox" name="important" value="true" th:checked="${filter?.importantOnly}"> <svg class="icon" aria-hidden="true"><use href="#star"></use></svg> Избранные</label>
                     <label><input type="checkbox" name="onlyWrong" value="true" th:checked="${filter?.onlyWrong}"> Ошибки</label>
                     <button type="submit" class="stats-action-btn stats-apply-action" aria-label="Применить фильтры статистики">Применить фильтры</button>
                 </form>
@@ -536,6 +566,27 @@
                 Ошибок в истории нет — так держать!</span>
         </p>
     </section>
+
+    <section class="card recent-attempts" th:if="${recentMistakes != null and !recentMistakes.isEmpty()}">
+        <div class="stats-next-actions-head">
+            <h2 class="mt-0">Последние ошибочные попытки</h2>
+            <p>Конкретные ответы для разбора, без смешивания с количеством карточек.</p>
+        </div>
+        <div class="attempt-list" role="list">
+            <article class="attempt-row" role="listitem" th:each="attempt : ${recentMistakes}">
+                <div class="attempt-row-head">
+                    <strong th:utext="${@markdownRenderService.toInlineHtml(attempt.questionText())}">Вопрос</strong>
+                    <time data-attempt-time th:attr="data-epoch=${attempt.createdAt()}" th:text="${attempt.createdAt()}">дата</time>
+                </div>
+                <span class="attempt-topic" th:text="${#strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(attempt.topic()), '-', ' '), '_', ' '))}">Тема</span>
+                <dl class="attempt-answer-grid">
+                    <div><dt>Выбран ответ</dt><dd th:text="${attempt.selectedOptionText() != null ? attempt.selectedOptionText() : 'Не знаю'}">Ответ</dd></div>
+                    <div><dt>Правильный ответ</dt><dd th:text="${attempt.correctOptionText() != null ? attempt.correctOptionText() : '—'}">Ответ</dd></div>
+                </dl>
+                <a class="attempt-review-link" th:href="@{/(topic=${attempt.topic()},onlyWrong=true,ordered=true)}">Повторить тему<svg class="icon" aria-hidden="true"><use href="#arrow"></use></svg></a>
+            </article>
+        </div>
+    </section>
 </section>
 
 </div>
@@ -551,6 +602,7 @@
      который Chart.js потом успешно парсит. -->
 <script type="application/json" id="topic-stats-data" th:inline="text">[(${topicStatsJson})]</script>
 <script type="application/json" id="difficulty-data" th:inline="text">[(${difficultyJson})]</script>
-<script th:src="@{/js/stats.js(v=17)}"></script>
+<script type="application/json" id="accuracy-trend-data" th:inline="text">[(${accuracyTrendJson})]</script>
+<script th:src="@{/js/stats.js(v=18)}"></script>
 </body>
 </html>

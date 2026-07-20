@@ -1,10 +1,9 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-<!-- Topbar (редизайн): верхняя полоса колонки контента на десктопе (прогресс
-     сессии слева + icon-действия справа) и mobile-header на мобильном (бренд +
-     тоггл темы). Прогресс показывается только когда идёт сессия/повторение;
-     на аналитике/настройках слева пусто. -->
+<!-- Topbar (редизайн): контекст страницы слева + icon-действия справа на desktop;
+     mobile-header на мобильном (бренд + тоггл темы). Прогресс сессии живёт внутри
+     question workspace, как в handoff-макете. -->
 <th:block th:fragment="topbar">
     <noscript>
         <div class="inline-alert ed-noscript" role="alert">
@@ -14,17 +13,9 @@
         </div>
     </noscript>
     <header class="topbar">
-        <div class="crumb" th:if="${(interviewSession != null or (reviewMode != null and reviewMode)) and progressPercent != null}">
-            <span class="eyebrow">Прогресс в сессии</span>
-            <div class="progress-mini" role="progressbar"
-                 th:attr="aria-valuenow=${#numbers.formatDecimal(progressPercent, 1, 0)},aria-valuemin=0,aria-valuemax=100">
-                <span th:attr="data-progress=${#numbers.formatDecimal(progressPercent, 1, 1)}"></span>
-            </div>
-            <b class="mono tiny" th:if="${interviewSession != null}">
-                <span th:text="${interviewSession.getIndex() + 1}">1</span>&nbsp;/&nbsp;<span th:text="${interviewSession.getTotal()}">10</span>
-            </b>
+        <div class="crumb">
+            <span class="crumb-label" th:text="${topbarLabel != null ? topbarLabel : 'Технический тренажёр'}">Технический тренажёр</span>
         </div>
-        <div class="crumb" th:unless="${(interviewSession != null or (reviewMode != null and reviewMode)) and progressPercent != null}"></div>
         <div class="top-actions">
             <a class="icon-button" th:href="@{/stats(important=true)}" aria-label="Закладки" title="Закладки">
                 <svg class="icon" aria-hidden="true"><use href="#bookmark"></use></svg>

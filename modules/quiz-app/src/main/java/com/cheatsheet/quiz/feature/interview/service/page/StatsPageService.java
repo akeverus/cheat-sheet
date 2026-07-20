@@ -1,23 +1,25 @@
 package com.cheatsheet.quiz.feature.interview.service.page;
 
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewStats;
 import com.cheatsheet.quiz.domain.LearningMetrics;
 import com.cheatsheet.quiz.domain.TopicStats;
 import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
-import com.cheatsheet.quiz.feature.interview.usecase.stats.LearningMetricsService;
 import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
+import com.cheatsheet.quiz.feature.interview.usecase.stats.LearningMetricsService;
 import com.cheatsheet.quiz.infrastructure.search.SearchService;
+import com.cheatsheet.quiz.persistence.AttemptRepository;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
 import com.cheatsheet.quiz.persistence.QuestionStatsRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import lombok.Builder;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -30,7 +32,7 @@ import java.util.Map;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class StatsPageService {
     private static final int COVERAGE_GAP_THRESHOLD = 5;
@@ -43,7 +45,19 @@ public class StatsPageService {
     SearchService searchService;
     ObjectMapper objectMapper;
     QuestionStatsRepository questionStatsRepository;
+    AttemptRepository attemptRepository;
     LearningMetricsService learningMetricsService;
+
+    public StatsPageService(InterviewFacade facade,
+                            QuestionRepository questionRepository,
+                            TopicCatalogService topicCatalogService,
+                            SearchService searchService,
+                            ObjectMapper objectMapper,
+                            QuestionStatsRepository questionStatsRepository,
+                            LearningMetricsService learningMetricsService) {
+        this(facade, questionRepository, topicCatalogService, searchService, objectMapper,
+                questionStatsRepository, null, learningMetricsService);
+    }
 
     /**
      * Строит state страницы статистики по фильтру и поисковому запросу.
@@ -79,6 +93,18 @@ public class StatsPageService {
         } catch (JsonProcessingException e) {
             log.error("stats_page_difficulty_json_failed", e);
         }
+        List<AttemptRepository.DailyAccuracy> accuracyTrend = attemptRepository == null
+                ? List.of()
+                : attemptRepository.findDailyAccuracy(nowEpoch - 30L * 24L * 60L * 60L);
+        String accuracyTrendJson = "[]";
+        try {
+            accuracyTrendJson = escapeForHtmlScript(objectMapper.writeValueAsString(accuracyTrend));
+        } catch (JsonProcessingException e) {
+            log.error("stats_page_accuracy_trend_json_failed", e);
+        }
+        List<AttemptRepository.MistakeAttempt> recentMistakes = attemptRepository == null
+                ? List.of()
+                : attemptRepository.findRecentMistakes(20);
         return new StatsPageState(
                 stats,
                 topics,
@@ -93,7 +119,10 @@ public class StatsPageService {
                 forecast,
                 metrics,
                 difficultyDistribution,
-                difficultyJson
+                difficultyJson,
+                accuracyTrend,
+                accuracyTrendJson,
+                recentMistakes
         );
     }
 
@@ -167,7 +196,10 @@ public class StatsPageService {
             List<QuestionStatsRepository.ForecastDay> reviewForecast,
             LearningMetrics metrics,
             List<DifficultySlice> difficultyDistribution,
-            String difficultyJson
+            String difficultyJson,
+            List<AttemptRepository.DailyAccuracy> accuracyTrend,
+            String accuracyTrendJson,
+            List<AttemptRepository.MistakeAttempt> recentMistakes
     ) {
         public StatsPageState(InterviewStats stats, List<String> topics, List<?> groups,
                               String selectedGroup, InterviewFilter filter, String searchQuery,
@@ -175,7 +207,7 @@ public class StatsPageService {
                               List<TopicStats> topicStats, String topicStatsJson) {
             this(stats, topics, groups, selectedGroup, filter, searchQuery, searchResults,
                     topicStats, topicStatsJson, List.of(), List.of(), LearningMetrics.EMPTY,
-                    List.of(), "[]");
+                    List.of(), "[]", List.of(), "[]", List.of());
         }
     }
 

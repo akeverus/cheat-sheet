@@ -1,12 +1,15 @@
 package com.cheatsheet.quiz.api.mapper.request;
 
 import com.cheatsheet.quiz.api.dto.request.interview.StartSessionRequest;
+import com.cheatsheet.quiz.domain.Difficulty;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewSession;
 import com.cheatsheet.quiz.common.util.FilterUtils;
 import lombok.Builder;
 import org.springframework.stereotype.Component;
+
+import java.util.Locale;
 
 /**
  * Mapper request-параметров MVC в доменные объекты фильтрации/режимов.
@@ -86,8 +89,16 @@ public class MvcRequestMapper {
                 request.getImportant(),
                 request.getOnlyWrong(),
                 request.getShuffle(),
-                request.getOrdered()
+                request.getOrdered(),
+                parseDifficulty(request.getDifficulty())
         );
+    }
+
+    private static Difficulty parseDifficulty(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        return Difficulty.valueOf(raw.strip().toUpperCase(Locale.ROOT));
     }
 
     /**
@@ -111,8 +122,29 @@ public class MvcRequestMapper {
             Boolean weakTopics,
             String modeRaw
     ) {
-        InterviewMode selectedMode = resolveMode(interviewSession, modeRaw);
+        return resolveSettingsContext(interviewSession, topic, group, important, onlyWrong,
+                shuffle, ordered, weakTopics, null, modeRaw);
+    }
+
+    public SettingsRequestContext resolveSettingsContext(
+            InterviewSession interviewSession,
+            String topic,
+            String group,
+            Boolean important,
+            Boolean onlyWrong,
+            Boolean shuffle,
+            Boolean ordered,
+            Boolean weakTopics,
+            String difficultyRaw,
+            String modeRaw
+    ) {
+        InterviewMode selectedMode = interviewSession == null && (modeRaw == null || modeRaw.isBlank())
+                ? InterviewMode.MARATHON
+                : resolveMode(interviewSession, modeRaw);
         InterviewFilter filter = resolveFilter(interviewSession, topic, group, important, onlyWrong, shuffle, ordered);
+        if (interviewSession == null) {
+            filter = filter.toBuilder().difficulty(parseDifficulty(difficultyRaw)).build();
+        }
         boolean weakTopicsPriority = Boolean.TRUE.equals(weakTopics);
         return new SettingsRequestContext(selectedMode, filter, weakTopicsPriority);
     }

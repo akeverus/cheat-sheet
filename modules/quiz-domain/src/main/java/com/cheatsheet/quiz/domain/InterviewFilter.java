@@ -10,6 +10,7 @@ import lombok.Builder;
  * @param onlyWrong только вопросы с ошибками
  * @param shuffle перемешать порядок (при true тема игнорируется для выбора)
  * @param ordered использовать учебный порядок тем (по умолчанию true)
+ * @param difficulty статическая сложность вопроса (null — любая)
  */
 @Builder(toBuilder = true)
 public record InterviewFilter(
@@ -18,28 +19,34 @@ public record InterviewFilter(
         Boolean importantOnly,
         Boolean onlyWrong,
         Boolean shuffle,
-        Boolean ordered
+        Boolean ordered,
+        Difficulty difficulty
 ) {
+
+    public InterviewFilter(String topic, String group, Boolean importantOnly, Boolean onlyWrong,
+                           Boolean shuffle, Boolean ordered) {
+        this(topic, group, importantOnly, onlyWrong, shuffle, ordered, null);
+    }
 
     /**
      * Конструктор без shuffle (по умолчанию null).
      */
     public InterviewFilter(String topic, Boolean importantOnly, Boolean onlyWrong) {
-        this(topic, null, importantOnly, onlyWrong, null, true);
+        this(topic, null, importantOnly, onlyWrong, null, true, null);
     }
 
     /**
      * Конструктор без ordered/group (обратная совместимость).
      */
     public InterviewFilter(String topic, Boolean importantOnly, Boolean onlyWrong, Boolean shuffle) {
-        this(topic, null, importantOnly, onlyWrong, shuffle, true);
+        this(topic, null, importantOnly, onlyWrong, shuffle, true, null);
     }
 
     /**
      * Конструктор без ordered (по умолчанию true).
      */
     public InterviewFilter(String topic, String group, Boolean importantOnly, Boolean onlyWrong, Boolean shuffle) {
-        this(topic, group, importantOnly, onlyWrong, shuffle, true);
+        this(topic, group, importantOnly, onlyWrong, shuffle, true, null);
     }
 
     public InterviewFilter {

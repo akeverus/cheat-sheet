@@ -48,16 +48,27 @@ public class TrainingSessionService {
         List<Long> ids;
 
         if (filter.isShuffled()) {
-            ids = questionRepository.findShuffledQuestionIds(
-                    filter.importantOnly(), filter.onlyWrong(), limit);
+            ids = filter.difficulty() == null
+                    ? questionRepository.findShuffledQuestionIds(
+                            filter.importantOnly(), filter.onlyWrong(), limit)
+                    : questionRepository.findShuffledQuestionIds(
+                            filter.importantOnly(), filter.onlyWrong(), filter.difficulty(), limit);
         } else if (filter.effectiveTopic() != null) {
-            ids = questionRepository.findQuestionIdsForSession(
-                    filter.effectiveTopic(), filter.importantOnly(), filter.onlyWrong(), now, limit);
+            ids = filter.difficulty() == null
+                    ? questionRepository.findQuestionIdsForSession(
+                            filter.effectiveTopic(), filter.importantOnly(), filter.onlyWrong(), now, limit)
+                    : questionRepository.findQuestionIdsForSession(
+                            filter.effectiveTopic(), filter.importantOnly(), filter.onlyWrong(),
+                            filter.difficulty(), now, limit);
         } else {
             List<String> topics = topicCatalogService.topicsForFilter(filter, questionRepository.findTopics());
             List<String> prioritizedTopics = prioritizeTopicsByMastery(topics);
-            ids = questionRepository.findQuestionIdsForSessionByTopics(
-                    prioritizedTopics, filter.importantOnly(), filter.onlyWrong(), now, limit);
+            ids = filter.difficulty() == null
+                    ? questionRepository.findQuestionIdsForSessionByTopics(
+                            prioritizedTopics, filter.importantOnly(), filter.onlyWrong(), now, limit)
+                    : questionRepository.findQuestionIdsForSessionByTopics(
+                            prioritizedTopics, filter.importantOnly(), filter.onlyWrong(),
+                            filter.difficulty(), now, limit);
         }
 
         log.info("training_session_started mode={} requestedCount={} loadedQuestions={} topic={} group={} onlyWrong={}",

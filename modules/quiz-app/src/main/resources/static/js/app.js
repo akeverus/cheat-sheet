@@ -8,7 +8,7 @@
     // прятал confidence-кнопки (L1825) и доп.анализ (L1832), timerSeconds>0 запускал
     // неотключаемый таймер. Бамп ключа осиротляет старые v2-данные (их больше не читают),
     // а v3 никто не пишет (onLearningPrefChange недостижим) → prefs всегда = defaults.
-    LEARNING_PREFS_STORAGE_KEY: 'quiz.learning.prefs.v3'
+    LEARNING_PREFS_STORAGE_KEY: 'quiz.learning.prefs.v5'
   });
   const API = {
     ANSWER: '/api/answer',
@@ -28,17 +28,18 @@
     hardMode: false,
     reviewMode: false,
     adaptiveMode: false,
-    timerSeconds: 0
+    timerSeconds: 60,
+    showExplanations: true
   });
   let learningPrefs = { ...defaultLearningPrefs };
   const OPTION_EXPLANATION_COLLAPSE_QUERY = '(max-width: 760px)';
 
-  // Иконка из SVG-спрайта (fragments/icons.html) как строка для innerHTML —
-  // те же Lucide-символы, что в шаблонах. Монохром через currentColor, вставляем
+  // Иконка из единого пиксельного SVG-спрайта как строка для innerHTML.
+  // Монохром через currentColor, вставляем
   // только в наш литеральный markup (не через sanitizeHtml, который вырезал бы svg).
   function icon(name, extraClass) {
-    return '<svg class="ed-icon' + (extraClass ? ' ' + extraClass : '') +
-      '" aria-hidden="true"><use href="#i-' + name + '"></use></svg>';
+    return '<svg class="icon' + (extraClass ? ' ' + extraClass : '') +
+      '" aria-hidden="true"><use href="#' + name + '"></use></svg>';
   }
 
   function setProgressValue(element, value) {
@@ -242,7 +243,7 @@
       STUDY: 'Начать изучение',
       FLASHCARD: 'Начать флешкарты',
       EXAM: 'Начать экзамен',
-      MARATHON: 'Начать интенсив',
+      MARATHON: 'Начать тренировку',
     };
     const countInput = countField.querySelector('input[name="count"]');
     // Предпросмотр набора (конструктор сессии, Этап 8): показывает объём и грубую
@@ -252,23 +253,31 @@
     const preview = document.getElementById('session-preview');
     const previewCount = preview && preview.querySelector('[data-preview-count]');
     const previewTime = preview && preview.querySelector('[data-preview-time]');
-    const SECONDS_PER_Q = 45;
+    const SECONDS_PER_Q = 75;
     const updatePreview = () => {
       if (!preview) return;
       if (modeSelect.value === 'TRAINING') {
-        if (previewCount) previewCount.textContent = 'Без ограничения по числу';
-        if (previewTime) previewTime.textContent = 'сессия идёт, пока не остановишь';
+        if (previewCount) previewCount.textContent = '∞';
+        if (previewTime) previewTime.textContent = 'без ограничения по числу';
         return;
       }
       const n = countInput ? (Number.parseInt(countInput.value || '', 10) || 0) : 0;
       const mins = Math.max(1, Math.round((n * SECONDS_PER_Q) / 60));
-      if (previewCount) previewCount.textContent = n + ' ' + pluralRu(n, 'вопрос', 'вопроса', 'вопросов');
-      if (previewTime) previewTime.textContent = '≈ ' + mins + ' ' + pluralRu(mins, 'минута', 'минуты', 'минут');
+      if (previewCount) previewCount.textContent = String(n);
+      if (previewTime) previewTime.textContent = pluralRu(n, 'вопрос', 'вопроса', 'вопросов') +
+        ' · около ' + mins + ' ' + pluralRu(mins, 'минута', 'минуты', 'минут');
     };
     const sync = () => {
       const isTraining = modeSelect.value === 'TRAINING';
-      countField.classList.toggle('hidden', isTraining);
+      countField.classList.toggle('is-unlimited', isTraining);
       startBtn.textContent = MODE_CTA[modeSelect.value] || 'Начать сессию';
+      document.querySelectorAll('[data-count-preset]').forEach((item) => {
+        const active = isTraining
+          ? item.getAttribute('data-count-preset') === 'unlimited'
+          : item.getAttribute('data-count-preset') === countInput?.value;
+        item.classList.toggle('active', active);
+        item.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
       updatePreview();
     };
     if (countInput) countInput.addEventListener('input', updatePreview);
@@ -312,7 +321,9 @@
       });
     }
 
-    const getFilterField = (name) => filtersForm.querySelector('[name="' + name + '"]');
+    const getFilterField = (name) => filtersForm.querySelector(
+      'select[name="' + name + '"], input[name="' + name + '"]:checked, input[name="' + name + '"]'
+    ) || filtersForm.elements.namedItem(name);
     const upsertHidden = (name, value) => {
       let hidden = sessionForm.querySelector('input[type="hidden"][name="' + name + '"]');
       if (value == null || value === '') {
@@ -341,7 +352,74 @@
       upsertHidden('onlyWrong', getFilterField('onlyWrong')?.checked ? 'true' : '');
       upsertHidden('shuffle', getFilterField('shuffle')?.checked ? 'true' : '');
       upsertHidden('weakTopics', getFilterField('weakTopics')?.checked ? 'true' : '');
+      upsertHidden('difficulty', getFilterField('difficulty')?.value || '');
     });
+  }
+
+  function initSessionBuilderControls() {
+    const filtersForm = document.getElementById('filters-form');
+    const topicSelect = filtersForm?.querySelector('select[name="topic"]');
+    document.querySelectorAll('[data-topic-preset]').forEach((button) => {
+      button.addEventListener('click', () => {
+        if (!filtersForm || !topicSelect) return;
+        topicSelect.value = button.getAttribute('data-topic-preset') || '';
+        filtersForm.requestSubmit();
+      });
+    });
+
+    const countInput = document.querySelector('#session-count-field input[name="count"]');
+    const modeSelect = document.getElementById('session-mode-select');
+    document.querySelectorAll('[data-count-preset]').forEach((button) => {
+      button.addEventListener('click', () => {
+        if (!countInput) return;
+        const preset = button.getAttribute('data-count-preset') || '10';
+        if (preset === 'unlimited') {
+          if (modeSelect) {
+            modeSelect.value = 'TRAINING';
+            modeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          return;
+        }
+        if (modeSelect?.value === 'TRAINING') {
+          modeSelect.value = 'MARATHON';
+          modeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        countInput.value = preset;
+        countInput.dispatchEvent(new Event('input', { bubbles: true }));
+        countInput.dispatchEvent(new Event('change', { bubbles: true }));
+        document.querySelectorAll('[data-count-preset]').forEach((item) => {
+          item.classList.toggle('active', item === button);
+          item.setAttribute('aria-pressed', item === button ? 'true' : 'false');
+        });
+      });
+    });
+
+    const timerToggle = document.querySelector('[data-learning-pref="timer"]');
+    const timerField = document.querySelector('[data-timer-duration]');
+    const timerSelect = timerField?.querySelector('select');
+    const explanationsToggle = document.querySelector('[data-learning-pref="explanations"]');
+    if (!timerToggle && !explanationsToggle) return;
+
+    let prefs = { timerSeconds: 60, showExplanations: true };
+    try {
+      prefs = { ...prefs, ...JSON.parse(localStorage.getItem(LEARNING_PREFS_STORAGE_KEY) || '{}') };
+    } catch (_) { /* storage may be unavailable */ }
+    if (timerToggle) timerToggle.checked = Number(prefs.timerSeconds || 0) > 0;
+    if (timerSelect && Number(prefs.timerSeconds || 0) > 0) timerSelect.value = String(prefs.timerSeconds);
+    if (explanationsToggle) explanationsToggle.checked = prefs.showExplanations !== false;
+
+    const syncTimerVisibility = () => {
+      if (timerField) timerField.classList.toggle('hidden', !timerToggle?.checked);
+    };
+    const save = () => {
+      prefs.timerSeconds = timerToggle?.checked ? Number.parseInt(timerSelect?.value || '60', 10) : 0;
+      prefs.showExplanations = explanationsToggle ? explanationsToggle.checked : true;
+      try { localStorage.setItem(LEARNING_PREFS_STORAGE_KEY, JSON.stringify(prefs)); } catch (_) { /* ignore */ }
+      syncTimerVisibility();
+    };
+    [timerToggle, timerSelect, explanationsToggle].filter(Boolean)
+      .forEach((control) => control.addEventListener('change', save));
+    syncTimerVisibility();
   }
 
   // --- Экспорт прогресса (/export) ---------------------------------------
@@ -879,6 +957,38 @@
     });
   }
 
+  function initStaticConfidence() {
+    document.querySelectorAll('[data-static-confidence]').forEach((panel) => {
+      const questionId = panel.getAttribute('data-question-id') || '';
+      const buttons = Array.from(panel.querySelectorAll('[data-grade]'));
+      if (!questionId || !buttons.length) return;
+      panel.classList.remove('hidden');
+      let submitted = false;
+      buttons.forEach((button) => {
+        button.addEventListener('click', async () => {
+          if (submitted) return;
+          submitted = true;
+          buttons.forEach((item) => { item.disabled = true; });
+          try {
+            const response = await apiFetch(API.CONFIDENCE, {
+              method: 'POST',
+              body: new URLSearchParams({ questionId, grade: button.getAttribute('data-grade') || '' }),
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            });
+            if (!response.ok) throw await parseApiError(response);
+            button.classList.add('selected');
+            button.setAttribute('aria-pressed', 'true');
+          } catch (error) {
+            console.error('Confidence update failed:', error);
+            submitted = false;
+            buttons.forEach((item) => { item.disabled = false; });
+            setInlineAlert('Не удалось сохранить оценку знания. Попробуй ещё раз.');
+          }
+        });
+      });
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     hydrateProgressBarsFromData();
     document.querySelectorAll('.btn-favorite').forEach((button) => {
@@ -890,10 +1000,12 @@
     initShuffleTopic();
     initSessionFormSync();
     initSessionModeForm();
+    initSessionBuilderControls();
     initExportButtons();
     initPersonalization();
     initSettingsTabs();
     initContentTabs();
+    initStaticConfidence();
     initDangerousFormGuard(confirmModal);
     initSubmitOnceGuard();
     initFlashcardShortcuts();
@@ -1196,7 +1308,8 @@
       learningPrefs = {
         ...defaultLearningPrefs,
         ...parsed,
-        timerSeconds: Number.isFinite(parsed?.timerSeconds) ? Math.max(0, Number(parsed.timerSeconds)) : 0
+        timerSeconds: Number.isFinite(parsed?.timerSeconds) ? Math.max(0, Number(parsed.timerSeconds)) : 0,
+        showExplanations: parsed?.showExplanations !== false
       };
     } catch (_) {
       learningPrefs = { ...defaultLearningPrefs };
@@ -1643,12 +1756,12 @@
   // варианта («Неверно — правильный ответ A»); при верном — просто «Верно».
   function buildVerdictLine(data) {
     if (data.correct) {
-      return icon('circle-check', 'ed-icon-lead') + 'Верно';
+      return icon('check', 'ed-icon-lead') + 'Верно';
     }
     const letter = data.correctOptionLetter
       ? ' — правильный ответ ' + escapeHtml(data.correctOptionLetter)
       : '';
-    return icon('circle-x', 'ed-icon-lead') + 'Неверно' + letter;
+    return icon('close', 'ed-icon-lead') + 'Неверно' + letter;
   }
 
   // Хендофф-3, Этап 4: «+N XP» в баннере результата (data.xpAwarded из
@@ -1677,6 +1790,17 @@
     return `<p class="next-review">`
       + `<span class="next-review-eyebrow">Следующее повторение</span> `
       + `<span class="next-review-when">${when}</span></p>`;
+  }
+
+  function buildCorrectAnswerPanel(data) {
+    const correctLabel = optionsContainer.querySelector('label[data-option-id="' + data.correctOptionId + '"]');
+    const correctText = correctLabel?.querySelector('span')?.textContent?.trim() || '';
+    if (!correctText) return '';
+    const letter = data.correctOptionLetter ? ' · ' + escapeHtml(data.correctOptionLetter) : '';
+    return `<section class="explanation-panel correct-answer-panel">`
+      + `<span class="explanation-eyebrow">Правильный ответ${letter}</span>`
+      + `<h2>${escapeHtml(correctText)}</h2>`
+      + `</section>`;
   }
 
   // Хендофф-3, Этап 4: короткая причина каждого дистрактора остаётся на
@@ -1730,6 +1854,7 @@
 
     const nextReview = buildNextReviewLine(data);
     const distractorPanel = buildDistractorPanel(data);
+    const correctAnswerPanel = buildCorrectAnswerPanel(data);
     // «Дополнительно» — остаток разбора (после лид-абзаца) как info-поверхность.
     const additionalPanel = (hasLead && restHtml.trim().length)
       ? `<div class="explanation-panel additional-panel">`
@@ -1738,24 +1863,24 @@
         + `</div>`
       : '';
 
+    const learningPanels = explanationPanel + nextReview + distractorPanel + additionalPanel;
+    const visibleLearningPanels = learningPrefs.showExplanations !== false
+      ? learningPanels
+      : `<details class="review-explanation-details"><summary>Показать разбор</summary>${learningPanels}</details>`;
+
     feedbackDiv.innerHTML = `
       <div class="${isCorrect ? 'result-correct' : 'result-wrong'} result-banner">
         <strong class="result-verdict">${buildVerdictLine(data)}</strong>
         ${buildXpBadge(data)}
       </div>
-      ${explanationPanel}
-      ${nextReview}
-      ${distractorPanel}
-      ${additionalPanel}
+      ${correctAnswerPanel}
+      ${visibleLearningPanels}
     `;
     feedbackDiv.classList.remove('hidden');
     renderDynamicContent(feedbackDiv);
   }
 
   function attachConfidenceButtons(data) {
-    const isCorrect = data.correct;
-    if (!isCorrect) return;
-
     const confidenceDiv = document.createElement('div');
     confidenceDiv.className = 'confidence-buttons';
     // role=group + aria-labelledby — как у .flashcard-grade-buttons в шаблоне:
@@ -1771,10 +1896,14 @@
     // запроса «оцени уверенность» без ручного таб-обхода.
     confidenceDiv.setAttribute('aria-live', 'polite');
     confidenceDiv.innerHTML = `
-      <span class="confidence-label" id="confidence-label">Насколько ты уверен по этому вопросу?</span>
-      <button type="button" class="confidence-btn confidence-guess" data-grade="3" aria-pressed="false" aria-label="Уровень уверенности: угадал">Угадал</button>
-      <button type="button" class="confidence-btn confidence-hard" data-grade="4" aria-pressed="false" aria-label="Уровень уверенности: с трудом">С трудом</button>
-      <button type="button" class="confidence-btn confidence-sure" data-grade="5" aria-pressed="false" aria-label="Уровень уверенности: знал точно">Знал точно</button>
+      <span class="confidence-label" id="confidence-label">Насколько хорошо ты это знал?</span>
+      <div class="confidence-scale">
+        <button type="button" class="confidence-btn confidence-missed" data-grade="1" aria-pressed="false">${icon('face-unknown')}<span>Не знал</span></button>
+        <button type="button" class="confidence-btn confidence-guess" data-grade="2" aria-pressed="false">${icon('face-guess')}<span>Угадал</span></button>
+        <button type="button" class="confidence-btn confidence-hard" data-grade="3" aria-pressed="false">${icon('face-hard')}<span>С трудом</span></button>
+        <button type="button" class="confidence-btn confidence-remembered" data-grade="4" aria-pressed="false">${icon('face-remembered')}<span>Помнил</span></button>
+        <button type="button" class="confidence-btn confidence-sure" data-grade="5" aria-pressed="false">${icon('face-great')}<span>Отлично</span></button>
+      </div>
     `;
     feedbackDiv.after(confidenceDiv);
 
@@ -1930,30 +2059,51 @@
       attachConfidenceButtons(data);
     }
     nextLink.classList.remove('hidden');
-    // IA-фикс: после ответа «Следующий вопрос» переезжает в САМЫЙ низ пост-разбора —
-    // под вердикт, пояснения и доп. анализ. Иначе primary-CTA «дальше» стоит ВЫШЕ
-    // итога/объяснения (во всех трёх раскладках: в форме, над зоной разбора), и
-    // вопрос можно перескочить, не прочитав разбор — прямой повод к «забыли про
-    // удобство». Узел (со слушателями onclick/onkeydown) просто перемещаем: это
-    // JS-only состояние (no-JS уходит POST-ом на /answer → result.html), id и стили
-    // (.next-btn глобальный) сохраняются. Действие читается завершением сцены.
     const postAnswerZone = document.querySelector('[data-ui-fragment="post-answer-controls"]');
-    const resultHeadRegion = answerFlowHint && answerFlowHint.parentElement;
-    if (resultHeadRegion && resultHeadRegion.parentElement !== form) {
-      form.appendChild(resultHeadRegion);
-    }
-    if (postAnswerZone && postAnswerZone.parentElement !== form) {
-      form.appendChild(postAnswerZone);
-    }
     form.classList.add('is-reviewed');
-    if (postAnswerZone && nextLink.parentElement !== postAnswerZone) {
-      postAnswerZone.appendChild(nextLink);
-      // После переноса next блок training-actions полностью опустел (submit скрыт,
-      // клавиатурная подсказка «1–9 — выбор…» уже неактуальна). Помечаем его
-      // is-answered и прячем целиком (CSS): иначе пустой flex-контейнер со своим
-      // margin-top оставил бы фантомный ~37px зазор между вариантами и зоной разбора.
+    const workspace = form.closest('.focus-training');
+    if (workspace && postAnswerZone) {
+      const reviewGrid = document.createElement('div');
+      reviewGrid.className = 'dynamic-review-grid';
+
+      const reviewMain = document.createElement('section');
+      reviewMain.className = 'dynamic-review-main';
+      if (answerFlowHint) reviewMain.appendChild(answerFlowHint);
+      reviewMain.appendChild(postAnswerZone);
+
+      const reviewAside = document.createElement('aside');
+      reviewAside.className = 'dynamic-review-aside';
+      reviewAside.setAttribute('aria-label', 'Материалы и следующий шаг');
+      const materials = workspace.querySelector('.question-materials');
+      if (materials) {
+        const materialPanel = document.createElement('section');
+        materialPanel.className = 'review-side-panel review-side-materials';
+        const title = document.createElement('h2');
+        title.textContent = 'Код и схема';
+        materialPanel.appendChild(title);
+        materialPanel.appendChild(materials);
+        reviewAside.appendChild(materialPanel);
+      }
+      const confidence = postAnswerZone.querySelector('.confidence-buttons');
+      if (confidence) {
+        const confidencePanel = document.createElement('section');
+        confidencePanel.className = 'review-side-panel review-confidence-panel';
+        confidencePanel.appendChild(confidence);
+        reviewAside.appendChild(confidencePanel);
+      }
+      reviewAside.appendChild(nextLink);
+      reviewGrid.appendChild(reviewMain);
+      reviewGrid.appendChild(reviewAside);
+      workspace.appendChild(reviewGrid);
+      workspace.classList.add('is-review-mode');
+
+      const focusRail = workspace.querySelector('.focus-rail');
+      if (focusRail) focusRail.classList.add('review-source');
+      form.classList.add('review-source');
       const trainingActions = document.querySelector('[data-ui-fragment="training-actions"]');
       if (trainingActions) trainingActions.classList.add('is-answered');
+    } else if (postAnswerZone && nextLink.parentElement !== postAnswerZone) {
+      postAnswerZone.appendChild(nextLink);
     }
     setInteractionBusy(false);
     const resultBanner = feedbackDiv.querySelector('.result-banner');
@@ -2206,9 +2356,9 @@ function initCopyCode() {
 
   const canCopy = !!(navigator.clipboard && navigator.clipboard.writeText);
   const legacyIcons = {
-    copy: '<svg class="ed-icon" aria-hidden="true"><use href="#i-copy"></use></svg>',
-    check: '<svg class="ed-icon" aria-hidden="true"><use href="#i-check"></use></svg>',
-    error: '<svg class="ed-icon" aria-hidden="true"><use href="#i-x"></use></svg>'
+    copy: '<svg class="icon" aria-hidden="true"><use href="#copy"></use></svg>',
+    check: '<svg class="icon" aria-hidden="true"><use href="#check"></use></svg>',
+    error: '<svg class="icon" aria-hidden="true"><use href="#close"></use></svg>'
   };
   const iconMarkup = (id, legacy) => legacy
     ? (legacyIcons[id] || legacyIcons.error)

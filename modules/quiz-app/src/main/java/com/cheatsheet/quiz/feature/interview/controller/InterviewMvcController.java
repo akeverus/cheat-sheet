@@ -128,6 +128,7 @@ public class InterviewMvcController {
             @RequestParam(value = "shuffle", required = false) Boolean shuffle,
             @RequestParam(value = "weakTopics", required = false) Boolean weakTopics,
             @RequestParam(value = "ordered", required = false) Boolean ordered,
+            @RequestParam(value = "difficulty", required = false) String difficulty,
             @RequestParam(value = "mode", required = false) String mode,
             HttpSession session,
             Model model
@@ -140,6 +141,7 @@ public class InterviewMvcController {
                 shuffle,
                 weakTopics,
                 ordered,
+                difficulty,
                 mode,
                 session,
                 model

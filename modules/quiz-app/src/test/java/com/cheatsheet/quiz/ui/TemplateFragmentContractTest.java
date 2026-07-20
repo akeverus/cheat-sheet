@@ -94,11 +94,9 @@ class TemplateFragmentContractTest {
         assertThat(focusTraining).contains("chipText='Пост-разбор'");
         assertThat(focusTraining).contains("hintText='Сначала итог, затем объяснение и дополнительные блоки'");
         assertThat(focusTraining).contains("extraButtonText='Похожие вопросы'");
-        // Трек гейтится th:if="${interviewSession != null}" (вне сессии пустой
-        // progressbar 0/0 не рендерится) → null-ветки тернарников не нужны.
-        assertThat(focusTraining).contains("aria-valuemax=${interviewSession.getTotal()}");
-        assertThat(focusTraining).contains("aria-valuenow=${interviewSession.getIndex() + 1}");
-        assertThat(focusTraining).contains("data-progress=${#numbers.formatDecimal(progressPercent, 1, 1)}");
+        assertThat(focusTraining).contains("aria-valuemax=${interviewSession != null ? interviewSession.getTotal() : 1}");
+        assertThat(focusTraining).contains("aria-valuenow=${interviewSession != null ? interviewSession.getIndex() + 1 : 0}");
+        assertThat(focusTraining).contains("data-progress=${interviewSession != null ? #numbers.formatDecimal(progressPercent, 1, 1) : 0}");
         assertThat(focusTraining).contains("th:text=\"${focusModeChipText}\"");
         assertThat(focusTraining).contains("th:text=\"${focusModeHintText}\"");
         assertThat(focusTraining).doesNotContain("aria-valuemax=\"100\"");
@@ -109,8 +107,8 @@ class TemplateFragmentContractTest {
         assertThat(focusTraining).contains("th:if=\"${!reviewMode and interviewSession != null and !interviewSession.finished}\"");
         assertThat(focusTraining).contains("th:if=\"${!reviewMode and interviewSession != null and interviewSession.finished}\"");
         assertThat(focusTraining).contains("Сессия запущена, но вопрос пока недоступен. Попробуй обновить тренировку.");
-        // Эмодзи 🏁 заменён монохромной Lucide-иконкой #i-flag (система иконок).
-        assertThat(focusTraining).contains("#i-flag");
+        assertThat(focusTraining).contains("#report");
+        assertThat(focusTraining).doesNotContain("href=\"#i-");
         assertThat(focusTraining).contains("Сессия завершена.");
         assertThat(focusTraining).doesNotContain("chipText='Результат'");
         assertThat(focusTraining).doesNotContain("extraButtonText='Подробнее'");
@@ -126,7 +124,8 @@ class TemplateFragmentContractTest {
         assertThat(result).contains("fragments/result-zone-head :: result-zone-head");
         assertThat(result).contains("fragments/sidebar :: sidebar");
         assertThat(result).contains("class=\"question-main flow-stack-md\"");
-        assertThat(result).contains("class=\"result-actions\"");
+        assertThat(result).contains("class=\"card review-workspace\"");
+        assertThat(result).contains("class=\"confidence-scale\"");
         assertThat(result).contains("th:if=\"${interviewSession != null and interviewSession.finished}\"");
         // Кнопка «доп. анализ» (#extra-analysis-toggle-result) удалена вместе с
         // AI-провайдерами (AIR-1) — на result.html остаётся только серверный блок
@@ -410,7 +409,7 @@ class TemplateFragmentContractTest {
     void shellFragmentsExposeNavLandmarksAndActiveContract() throws IOException {
         // Редизайн (ui-redesign-handoff): masthead → каркас shell. Контракт:
         // sidebar — nav-landmark с меткой + aria-current на активном пункте;
-        // topbar — прогресс-progressbar сессии + тоггл темы (aria-pressed);
+        // topbar — контекст страницы + тоггл темы (aria-pressed);
         // mobile-nav — nav-landmark нижней навигации.
         String sidebar = readTemplate("templates/fragments/sidebar.html");
         String topbar = readTemplate("templates/fragments/topbar.html");
@@ -424,7 +423,8 @@ class TemplateFragmentContractTest {
         assertThat(sidebar).contains("aria-pressed=\"false\"");
 
         assertThat(topbar).contains("th:fragment=\"topbar\"");
-        assertThat(topbar).contains("role=\"progressbar\"");
+        assertThat(topbar).contains("class=\"crumb-label\"");
+        assertThat(topbar).contains("data-theme-toggle");
 
         assertThat(mobileNav).contains("th:fragment=\"mobile-nav(active)\"");
         assertThat(mobileNav).contains("class=\"mobile-nav\" aria-label=\"Мобильная навигация\"");
@@ -462,7 +462,7 @@ class TemplateFragmentContractTest {
             .contains("head", "sprite", "sidebar", "topbar", "mobile-nav", "shell-scripts",
                       "inline-alert", "post-answer-controls",
                       "result-zone-head", "stats-grid", "stats-grid-content",
-                      "today-hero", "today-chip", "training-actions", "mermaid-init");
+                      "training-actions", "mermaid-init");
 
         for (String name : fragmentNames) {
             // Ссылка — либо параметризованная `:: name(`, либо bare `:: name}`.
@@ -478,17 +478,15 @@ class TemplateFragmentContractTest {
 
     @Test
     void iconSpriteHasNoOrphanSymbols() throws IOException {
-        // Регресс-гвард против «сироты-иконки»: каждый <symbol id="i-X"> в спрайте
-        // (fragments/icons.html) обязан использоваться хотя бы одной ссылкой — либо
-        // <use href="#i-X"> в шаблоне, либо JS-хелпером icon('X')/svgIcon('X')
-        // (аргумент БЕЗ префикса i-, хелпер сам добавляет #i-, см. app.js:38/1876).
+        // Регресс-гвард против «сироты-иконки»: каждый symbol единственного
+        // pixel-sprite обязан использоваться шаблоном или JS-хелпером icon().
         // Неиспользуемый символ грузится на КАЖДОЙ странице (спрайт инлайнится через
         // header-фрагмент) = мёртвый payload. App не нужен: чтение ресурсов.
         // Ручной orphan-аудит R0.137 (снял i-bot/chart/lightbulb/refresh/search,
         // осиротевшие после AI/regenerate-removal) → инвариант.
-        String sprite = readTemplate("templates/fragments/icons.html");
+        String sprite = readTemplate("templates/fragments/pixel-sprite.html");
 
-        Matcher symbolMatcher = Pattern.compile("<symbol id=\"(i-[a-z0-9-]+)\"").matcher(sprite);
+        Matcher symbolMatcher = Pattern.compile("<symbol id=\"([a-z0-9-]+)\"").matcher(sprite);
         Set<String> declared = new LinkedHashSet<>();
         while (symbolMatcher.find()) {
             declared.add(symbolMatcher.group(1));
@@ -508,24 +506,23 @@ class TemplateFragmentContractTest {
         }
         String refs = corpusBuilder.toString();
 
-        // Использованные = прямые #i-X (шаблонный <use>) + аргументы хелперов
-        // icon('X')/svgIcon('X') (в них имя без i-, добавляем префикс).
+        // Использованные = прямые #X (шаблонный <use>) + аргументы icon('X').
         Set<String> referenced = new LinkedHashSet<>();
-        Matcher hrefMatcher = Pattern.compile("#(i-[a-z0-9-]+)").matcher(refs);
+        Matcher hrefMatcher = Pattern.compile("#([a-z0-9-]+)").matcher(refs);
         while (hrefMatcher.find()) {
             referenced.add(hrefMatcher.group(1));
         }
         Matcher helperMatcher = Pattern.compile("(?:svgIcon|icon)\\([\"']([a-z0-9-]+)").matcher(refs);
         while (helperMatcher.find()) {
-            referenced.add("i-" + helperMatcher.group(1));
+            referenced.add(helperMatcher.group(1));
         }
 
         // Санити: спрайт непустой и известные живые иконки на месте.
-        assertThat(declared).contains("i-star", "i-check", "i-copy", "i-flag", "i-download");
+        assertThat(declared).contains("star", "check", "copy", "report", "download", "face-great");
 
         for (String id : declared) {
             assertThat(referenced)
-                .as("иконка '%s' объявлена в спрайте, но не используется (<use href=#%s> или icon('%s')) — orphan/dead payload", id, id, id.substring(2))
+                .as("иконка '%s' объявлена в pixel-sprite, но не используется (<use href=#%s> или icon('%s')) — orphan/dead payload", id, id, id)
                 .contains(id);
         }
     }

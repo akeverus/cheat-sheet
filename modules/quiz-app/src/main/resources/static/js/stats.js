@@ -459,8 +459,8 @@
   // (EASY/MEDIUM/HARD со счётчиками+процентами). Легенда SSR уже несёт данные
   // доступно; канвас — только визуальное дополнение. Guard на Chart/данные/пустоту.
   function initDifficultyDonut() {
-    var canvas = document.getElementById('difficultyDonut');
-    if (!canvas || typeof Chart === 'undefined') return;
+    var canvases = Array.from(document.querySelectorAll('#difficultyDonut, #overviewDifficultyDonut'));
+    if (!canvases.length || typeof Chart === 'undefined') return;
     var el = document.getElementById('difficulty-data');
     if (!el) return;
     var slices;
@@ -479,8 +479,9 @@
     var animate = motionAttr === 'on' ? true
       : motionAttr === 'off' ? false
       : !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    try {
-      new Chart(canvas, {
+    canvases.forEach(function (canvas) {
+      try {
+        new Chart(canvas, {
         type: 'doughnut',
         data: {
           labels: slices.map(function (s) { return s.label; }),
@@ -505,8 +506,70 @@
             }
           }
         }
+        });
+      } catch (e) { /* канвас пуст, легенда всё показывает */ }
+    });
+  }
+
+  function initAccuracyTrend() {
+    var canvas = document.getElementById('overviewAccuracyChart');
+    var source = document.getElementById('accuracy-trend-data');
+    if (!canvas || !source || typeof Chart === 'undefined') return;
+    var points;
+    try { points = JSON.parse(source.textContent || '[]'); } catch (e) { return; }
+    if (!Array.isArray(points) || !points.length) return;
+    var cs = getComputedStyle(document.documentElement);
+    function tok(name, fb) { var v = cs.getPropertyValue(name); return v && v.trim() ? v.trim() : fb; }
+    var formatter = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' });
+    var labels = points.map(function (p) {
+      var d = new Date(String(p.day) + 'T00:00:00Z');
+      return Number.isNaN(d.getTime()) ? p.day : formatter.format(d);
+    });
+    var values = points.map(function (p) {
+      var total = Number(p.total || 0);
+      return total > 0 ? Math.round(Number(p.correct || 0) * 1000 / total) / 10 : 0;
+    });
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    try {
+      new Chart(canvas, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Точность попыток',
+            data: values,
+            borderColor: tok('--color-accent-primary', '#39d0c7'),
+            backgroundColor: tok('--color-accent-wash', '#12302f'),
+            pointBackgroundColor: tok('--color-accent-primary', '#39d0c7'),
+            pointRadius: points.length > 18 ? 2 : 4,
+            borderWidth: 3,
+            tension: 0.28,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: reduceMotion ? false : {},
+          scales: {
+            y: { min: 0, max: 100, ticks: { callback: function (v) { return v + '%'; } } },
+            x: { grid: { display: false }, ticks: { maxTicksLimit: 7 } }
+          },
+          plugins: { legend: { display: false } }
+        }
       });
-    } catch (e) { /* канвас пуст, легенда всё показывает */ }
+    } catch (e) { /* текстовый fallback остаётся доступен */ }
+  }
+
+  function formatAttemptTimes() {
+    var formatter = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    document.querySelectorAll('[data-attempt-time]').forEach(function (el) {
+      var epoch = Number(el.getAttribute('data-epoch') || 0);
+      if (!epoch) return;
+      var date = new Date(epoch * 1000);
+      el.textContent = formatter.format(date);
+      el.setAttribute('datetime', date.toISOString());
+    });
   }
 
   document.addEventListener('DOMContentLoaded', function () {
@@ -514,6 +577,8 @@
     initNextActions();
     initCharts();
     initDifficultyDonut();
+    initAccuracyTrend();
+    formatAttemptTimes();
     initTableSort();
     initKeyboardHelp();
     initStatsTabs();
