@@ -1,0 +1,465 @@
+/* Wave C split from base.css — @pages layer */
+@layer pages {
+/* ===========================================================================
+   WIDE LAYOUT (>=1200px) — full-width использование широких экранов.
+   Запрос пользователя: «все окна на всю ширину экрана + пересмотреть взаимное
+   расположение блоков». Принципы:
+   - НИЖЕ 1200px ничего не меняется (все правила в @media min-width).
+   - DOM-порядок не трогаем: раскладка через grid-плейсмент по колонкам/рядам
+     (auto-flow row); скринридеры и no-JS читают страницу как раньше.
+   - Условные секции гейтятся :has() — прецедент в файле уже есть (L1300, L1732);
+     браузер без :has() остаётся на полноширинном стеке (progressive enhancement).
+   - row-gap НЕ задаём: вертикальный ритм несут существующие margin-bottom
+     карточек/блоков — обнуление маржинов слепит ряды.
+   - СТРАЖ: новая секция в шаблоне без явного grid-column-правила упадёт
+     в первую свободную ячейку сетки — при добавлении секций прописывать area.
+   =========================================================================== */
+
+/* ===========================================================================
+   PROC-07 (DEC-003=B) — FOCUS full-width + правый рельс .focus-aside (брейк 1080px).
+   Мандат mockup DESIGN.md: хром/структура тянутся край-в-край (только --page-gutter,
+   без центрирующих max-width-пустот); ширину крупных экранов наполняет РЕАЛЬНЫЙ
+   контент рельса (сессия/прогресс/стрик/завершить), а НЕ растянутая проза. Проза
+   держит меру по ch внутри главной зоны. Узкий экран (<1080) не трогаем — там рельс
+   обычный блок в потоке (head → рельс → вопрос), стек как раньше.
+   Переподтверждено пользователем 2026-07-16 с полным контекстом истории.
+   =========================================================================== */
+@media (min-width: 1080px) {
+  /* ГЕЙТ :has(.session-progress-track) — правая колонка включается ТОЛЬКО в
+     активной сессии (progressbar рендерится th:if interviewSession!=null). Вне
+     сессии (TRAINING browse) рельс содержит лишь today-chip → правая колонка
+     выродилась бы в «одинокую фишку в мёртвом жёлобе» (ровно прежняя претензия
+     пользователя). Там страница остаётся как была (focus-training центрирован
+     на --max-width-focus, рельс — тонкий блок в потоке сверху). Браузер без
+     :has() тоже остаётся на прежнем стеке (PE).
+
+     Ширина: НЕ уходим в edge-to-edge (иначе опции капятся на --max-width-options,
+     а между ними и рельсом зияет мёртвый центр на >1900px). Вместо этого наполняем
+     уже-капнутый на --max-width-page (1280) .ed-page: focus-training тянется на всю
+     его ширину и делится на главную зону (~800) + рельс (~288). Это шире прежних
+     960 (одобренное превью B: «шире + рельс»), но без симметричных воидов сверх
+     общей app-ширины 1280 и без сплошной растяжки прозы. Проза держит меру внутри
+     зоны; структура (опции-ряды) наполняет главную колонку до рельса. */
+  html[data-design] .focus-page .focus-training:has(.session-progress-track) {
+    max-width: none;
+    margin: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 18rem);
+    column-gap: clamp(1.5rem, 3vw, 3rem);
+    align-items: start;
+  }
+  html[data-design] .focus-page .focus-training:has(.session-progress-track) > :not(.focus-aside) {
+    grid-column: 1;
+    min-width: 0;
+  }
+
+  /* Правый рельс: вертикальная карта (прогресс + стрик + завершить), hairline
+     слева, sticky при прокрутке — наполняет правый жёлоб реальным контентом. */
+  html[data-design] .focus-page .focus-training:has(.session-progress-track) .focus-aside {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+    position: sticky;
+    top: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin: 0;
+    padding-left: clamp(1.5rem, 2vw, 2.5rem);
+    border-left: var(--rule-weight, 1px) solid var(--color-border-primary);
+  }
+  html[data-design] .focus-page .focus-training:has(.session-progress-track) .focus-aside > * { margin: 0; }
+  html[data-design] .focus-page .focus-training:has(.session-progress-track) .focus-aside .session-progress-track { width: 100%; }
+  html[data-design] .focus-page .focus-training:has(.session-progress-track) .focus-aside .focus-session-more-summary { width: 100%; }
+
+  /* Проза (hero-вопрос) держит меру ВНУТРИ главной зоны — крупный сериф не должен
+     тянуться на все ~800px. Опции/структура наполняют главную колонку до рельса
+     (их --max-width-options > ширины колонки → cap не срабатывает, мёртвого поля
+     справа нет). */
+  html[data-design] .focus-page .focus-training:has(.session-progress-track) .focus-question { max-width: var(--measure); }
+}
+
+@media (min-width: 1200px) {
+  /* Жёлоб страницы растёт с экраном: 48px на 1200 → ~69px на 1728 → 80px cap.
+     Един для шапки/прогресса/контента (см. --page-gutter в :root). */
+  html[data-design] { --page-gutter: clamp(2rem, 4vw, 5rem); }
+
+  /* FOCUS wide-layout — правый рельс .focus-aside (PROC-07, DEC-003=B, переподтверждено
+     пользователем 2026-07-16 с полным контекстом истории) — реализован в отдельном
+     @media (min-width: 1080px) ВЫШЕ (grid на --max-width-page, БЕЗ edge-to-edge). Здесь
+     .focus-topbar остаётся лишь узкой мета-полосой головы вопроса (chip+hint) в главной
+     колонке. */
+  html[data-design] .focus-page .focus-topbar { margin-bottom: var(--space-5); }
+
+  /* Опции по умолчанию остаются одноколоночными: для обучающих MCQ это честнее,
+     потому что длинный вариант не получает лишнюю визуальную важность в 2×2.
+     app.js ставит data-answer-layout="balanced" только когда варианты близки по
+     длине и inline-code не сконцентрирован в одной карточке. */
+  html[data-design] .focus-page #interview-options {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+    max-width: var(--max-width-options);
+  }
+  /* 2×2 разрешён только для сопоставимых по длине вариантов и только в wide/grid
+     композиции. Flow/split ниже всё равно перебивают в один столбец. */
+  html[data-design] .focus-page #interview-options[data-answer-layout="balanced"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-width: none;
+  }
+  /* После ответа app.js дорисовывает в каждый вариант .option-explanation —
+     раскрытые объяснения удобнее читать вертикальным сканом (как на result-
+     странице /answer), а не сравнивать в 2×2 с рваными по высоте ячейками.
+     Возвращаем одну колонку с читаемым капом измерения. */
+  html[data-design] .focus-page #interview-options:has(.option-explanation) {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: var(--max-width-options);
+  }
+
+  /* Пустое состояние фокуса: «окно» тянется на всю ширину (карточка-сообщение
+     остаётся центрированной композицией внутри). */
+  html[data-design] .focus-page .empty-card-inner { max-width: none; }
+
+  /* --- RESULT (no-JS разбор /answer): сетка на main — карточка разбора в 1fr,
+     «Похожие вопросы» уезжают в правую sticky-рейку. Грид включён ВСЕГДА
+     (ширина карточки не прыгает между вопросами с related и без): без related
+     карточка просто спанит обе колонки. */
+  /* Грид включаем ТОЛЬКО когда есть related-рейка (:has-гейт на самом гриде) —
+     браузер без :has() остаётся на полноширинном блочном стеке (PE, как обещает
+     шапка секции), а не получает 2-колонку с мёртвым жёлобом справа. Round-01 C2.
+     Прежний :not(:has(...)) -> full-width больше не нужен: без related грид просто
+     не применяется. */
+  html[data-design] .result-page .ed-page:has(> #result-related-questions) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+    column-gap: var(--space-7);
+    align-items: start;
+  }
+  html[data-design] .result-page .ed-page > * { grid-column: 1 / -1; min-width: 0; }
+  html[data-design] .result-page .ed-page > #interview-card { grid-column: 1; }
+  /* Рейка related: из «блока после карточки» (border-top + отступ) превращается
+     в editorial-панель; при длинном списке скроллится внутри вьюпорта. */
+  html[data-design] .result-page .ed-page > #result-related-questions {
+    grid-column: 2;
+    align-self: start;
+    position: sticky;
+    top: var(--space-5);
+    margin-top: 0;
+    border-top: 0;
+    border: var(--rule-weight) solid var(--color-border-primary);
+    border-radius: var(--border-radius-lg);
+    background: var(--color-bg-secondary);
+    padding: var(--space-5);
+    max-height: calc(100dvh - var(--space-7));
+    overflow-y: auto;
+  }
+  /* --- STATS: дашборд-сетка. Фильтры/KPI/графики — полноширинные ряды;
+     ниже таблица тем (2/3, спанит два ряда) + правая колонка: прогноз 7 дней
+     и пробелы банка (1/3). Грид включается только когда есть и таблица,
+     и хотя бы одна правая карта. */
+  html[data-design] .stats-page .main-content:has(> .overflow-x-auto):has(> .review-forecast, > .coverage-gaps) {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    column-gap: var(--space-6);
+    align-items: start;
+  }
+  html[data-design] .stats-page .main-content > * { grid-column: 1 / -1; min-width: 0; }
+  html[data-design] .stats-page .main-content > .overflow-x-auto { grid-column: 1; grid-row: span 2; }
+  /* forecast и gaps кладутся auto-flow'ом в соседние ряды 2-й колонки; если
+     прогноза нет — gaps сам займёт верхний ряд (auto-placement, не areas). */
+  html[data-design] .stats-page .main-content > .review-forecast,
+  html[data-design] .stats-page .main-content > .coverage-gaps { grid-column: 2; }
+
+  /* Поля группа/тема — одно под другим (в широкой колонке два селекта в ряд
+     смотрелись бы рыхло). */
+  html[data-design] .settings-page .filters-fields { grid-template-columns: 1fr; }
+
+  /* --- SUMMARY: геро-итог — слева режим/процент/подпись, справа время; краткий
+     итог и плитки — полноширинными строками ниже. Раньше плитки жили в средней
+     колонке 3-колоночной ленты (auto|1fr|auto), но при капнутой ширине страницы
+     (~896px) «0,0%» (xl-serif ~274px) + время съедали ряд, и средняя колонка
+     схлопывалась до ~99px — плитки крошились (FLOW-03b обнажил это 4-й плиткой
+     «Не знаю», дефект был и на 3). На своей строке плитки получают всю ширину
+     карточки; ниже таблица тем и ошибки бок о бок. */
+  html[data-design] .summary-page .summary-score {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "mode     duration"
+      "value    duration"
+      "label    duration"
+      "headline headline"
+      "grid     grid";
+    align-items: center;
+    column-gap: var(--space-8);
+    text-align: left;
+    padding: var(--space-6) var(--space-7);
+  }
+  html[data-design] .summary-page .summary-mode-line { grid-area: mode; align-self: end; margin-bottom: var(--space-2); }
+  html[data-design] .summary-page .summary-score-value { grid-area: value; }
+  html[data-design] .summary-page .summary-score-label { grid-area: label; align-self: start; }
+  html[data-design] .summary-page .summary-headline { grid-area: headline; }
+  /* Плитки — своя полноширинная строка; ширину/центрирование и число колонок
+     (3 или 4 c .has-unknown) наследуем из базового правила, здесь только место. */
+  html[data-design] .summary-page .summary-score .stats-grid { grid-area: grid; }
+  html[data-design] .summary-page .summary-duration { grid-area: duration; margin-top: 0; align-self: center; }
+  /* Таблица тем + ошибки в два столбца — только когда есть блок ошибок.
+     .summary-tools (вставляет JS после геро) и actions остаются полноширинными. */
+  html[data-design] .summary-page .ed-page:has(> section .summary-mistakes) {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    column-gap: var(--space-6);
+    align-items: start;
+  }
+  html[data-design] .summary-page .ed-page:has(> section .summary-mistakes) > * { grid-column: 1 / -1; min-width: 0; }
+  html[data-design] .summary-page .ed-page > section:has(.summary-table) { grid-column: 1; }
+  html[data-design] .summary-page .ed-page > section:has(.summary-mistakes) { grid-column: 2; }
+  /* Рекомендации — полноширинная лента-подвал. Раньше жались в колонку 1 под
+     таблицей → справа под «Ошибками» зиял мёртвый жёлоб. Спан на всю ширину
+     убирает дыру и читается как футер итогов. */
+  html[data-design] .summary-page .ed-page > section.summary-recommendations { grid-column: 1 / -1; }
+}
+
+/* ===========================================================================
+   РАСКЛАДКИ СТРАНИЦ (data-layout: flow | split | grid) — переключаемая композиция
+   focus и settings. Ортогональна дизайну/теме. Движок: window.__layout (head.html);
+   контролы: тоггл в шапке (#layout-toggle) + сегмент «Раскладка» в Персонализации
+   (/settings). Запрос пользователя: «реализуй все форматы с переключением».
+
+   Стратегия — АДДИТИВНАЯ (никаких правок в секции WIDE LAYOUT выше): негейтнутые
+   wide-правила остаются «grid»-композицией и срабатывают, когда активна раскладка
+   grid ЛИБО когда атрибута нет вовсе (no-JS → рабочий фоллбэк). Блоки flow/split
+   ниже перебивают их бóльшей специфичностью ([data-layout="X"] добавляет +0,1,0).
+   Ниже 1200px все три раскладки совпадают — общий вертикальный стек (базовые
+   правила focus/settings). Дефолт — flow (см. head.html): спокойный одноколоночный
+   поток чтения, прямой ответ на претензию «ответы расположены плохо» (2×2 жали
+   длинные варианты) и «настройки — накидали блоков».
+   =========================================================================== */
+
+/* P0.1: обёртка левой колонки split. По умолчанию (flow/grid/PROC-07 и любая
+   ширина <1200px) — display:contents: бокс исчезает, дети хойстятся и участвуют в
+   раскладке .focus-training как прямые grid/flow-элементы. Существующие descendant-
+   селекторы (.focus-page .focus-aside, .focus-training .focus-question и т.п.)
+   продолжают матчить. Реальным flex-боксом рейка становится ТОЛЬКО в split ≥1200px
+   (правило внутри медиазапроса ниже). */
+html[data-design] .focus-rail { display: contents; }
+
+@media (min-width: 1200px) {
+  /* ---- FOCUS / flow: ответы единым полноширинным столбцом (не 2×2). Длинные
+     варианты (с кодом) дышат на всю ширину колонки чтения, а не зажаты вдвое. */
+  html[data-design][data-layout="flow"] .focus-page #interview-options {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: var(--max-width-options);
+  }
+  /* Мета-бар: левый КЛАСТЕР вместо space-between край-в-край. В WIDE базе бар
+     растянут на всю меру (eyebrow слева ↔ стат-чип у правого края) — в потоке без
+     сессии это два осиротевших кластера с большой мёртвой зоной, не привязанных к
+     колонке вопроса/ответов (адверсари-ревью p1 focus-flow). Стягиваем мету влево к
+     одной кромке с вопросом; стат-чип идёт сразу за лидом, воздух — справа. */
+  html[data-design][data-layout="flow"] .focus-page .focus-topbar {
+    justify-content: flex-start;
+    gap: var(--space-4) var(--space-7);
+  }
+
+  /* ---- FOCUS / split: два пейна. Слева — мета-рейка + вопрос-герой + код/диаграмма;
+     справа — ответы единым столбцом и кнопка действия. Пост-ответный вердикт/анализ —
+     полноширинной лентой внизу. */
+  /* Два пейна: левая колонка (.focus-rail: мета+рельс+вопрос+код+диаграмма)
+     фиксированной ширины, правая (форма/флешкарта) — гибкая. P0.1 (финал): раньше
+     все элементы левой колонки были ПЛОСКИМИ прямыми детьми .focus-training и
+     размещались grid-ами. Любой подход через grid-ряды связывал высоты колонок:
+     grid-row:1 → высокая форма раздувала первый ряд и отрывала топбар (~500px
+     зазор); grid-row:1/span-N → на КОРОТКОМ вопросе форма выше стека, не могла
+     растянуть min-content ряды, оверфлоу вниз, и пост-ответная лента наезжала.
+     Решение — обернуть левую колонку в ОДИН grid-элемент .focus-rail (в шаблоне).
+     Теперь col1 (рейка) и col2 (форма) — независимые grid-элементы одного ряда,
+     каждый своей натуральной высоты, оба у верха; лента идёт полной шириной под
+     обеими. Ни одна высота не связана. */
+  html[data-design][data-layout="split"] .focus-page .focus-training {
+    display: grid;
+    grid-template-columns: minmax(0, 20rem) minmax(0, 1fr);
+    grid-auto-rows: min-content;
+    align-content: start;
+    column-gap: var(--space-8);
+    align-items: start;
+    max-width: var(--max-width-result);
+  }
+  /* Левая колонка: реальный flex-бокс (перебивает базовый display:contents),
+     стек в DOM-порядке. Первый ряд, первая колонка, у верха. */
+  html[data-design][data-layout="split"] .focus-page .focus-rail {
+    display: flex; flex-direction: column;
+    grid-column: 1; grid-row: 1; align-self: start; min-width: 0;
+  }
+  /* Мета — вертикальная рейка. */
+  html[data-design][data-layout="split"] .focus-page .focus-topbar {
+    flex-direction: column; align-items: stretch; justify-content: flex-start;
+    gap: var(--space-3);
+    border-bottom: 0; padding-bottom: 0; margin-bottom: 0;
+  }
+  /* Рельс сессии — вертикальный, внутри рейки. */
+  html[data-design][data-layout="split"] .focus-page .focus-session-rail {
+    flex-direction: column; align-items: stretch; gap: var(--space-3);
+  }
+  html[data-design][data-layout="split"] .focus-page .focus-session-rail .session-progress-track { width: 100%; }
+  /* Вопрос-герой: рамку-снизу убираем (в узкой рейке висела бы поперёк колонки),
+     компактный отступ к мете. sticky не нужен — колонки развязаны обёрткой.
+
+     Кегль: базовый герой clamp(...,3xl) (~48–56px на 1440) в 20rem-рейке (~300px)
+     не помещал длинные технические термины («консистентность» = 15 симв.,
+     «сериализация», «идемпотентность») → hyphens:auto рвал их по слогам на КАЖДОМ
+     нормальном вопросе («консистент-ность», «кон-тексте») — читается как сломанная
+     вёрстка. Уменьшаем кегль ПОД ширину рейки: типичные термины встают в строку
+     целиком, переносов на обычных словах больше нет. hyphens:auto остаётся мягкой
+     страховкой лишь для сверхдлинных слов; break-word — для неразрывных токенов
+     (URL/идентификаторы). text-wrap:balance наследуется из базового правила. */
+  html[data-design][data-layout="split"] .focus-page .focus-question {
+    border-bottom: 0; padding-bottom: 0; margin: var(--space-5) 0 0;
+    font-size: clamp(1.5rem, 1.05rem + 1.15vw, 2.15rem);
+    hyphens: auto; overflow-wrap: break-word;
+  }
+  html[data-design][data-layout="split"] .focus-page .question-code-wrap {
+    margin-top: var(--space-4);
+  }
+  /* Правый пейн: форма/флешкарта/изучение — col2, первый ряд, у верха.
+     Никакого span — высота колонок больше не связана (см. .focus-rail). */
+  html[data-design][data-layout="split"] .focus-page #interview-form,
+  html[data-design][data-layout="split"] .focus-page .flashcard-phase,
+  html[data-design][data-layout="split"] .focus-page .study-learn-phase {
+    grid-column: 2; grid-row: 1; align-self: start;
+  }
+  /* Ответы — один столбец на всю ширину правого пейна (не 2×2). */
+  html[data-design][data-layout="split"] .focus-page #interview-options {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: none;
+  }
+  /* Вердикт/разбор, его «голова», пост-ответные кнопки и зона репорта —
+     полноширинной лентой ПОД обоими пейнами. grid-column: 1/-1 при auto-row
+     всплывает в первый полностью свободный ряд (ниже рейки col1 и формы col2).
+     Скрытые (.hidden=display:none) до ответа не резервируют ячейку. Обёртка
+     result-zone-head несёт маркер на ВНУТРЕННЕМ div — таргетим через
+     :has(> [marker]); у post-answer-controls маркер на самой обёртке; .report-zone
+     — прямой класс. */
+  html[data-design][data-layout="split"] .focus-page .focus-training > :has(> [data-ui-fragment="result-zone-head"]),
+  html[data-design][data-layout="split"] .focus-page .focus-training > [data-ui-fragment="post-answer-controls"],
+  html[data-design][data-layout="split"] .focus-page .focus-training > .report-zone {
+    grid-column: 1 / -1;
+  }
+
+  /* ---- SETTINGS: композицией теперь управляют ВКЛАДКИ (редизайн 2026-06-25), а
+     не ось data-layout. Прежние flow/split-правила настройки таргетили удалённый
+     sidebar-каркас (#left-sidebar-*, .app-layout) и стали мёртвыми — убраны.
+     Ось «Раскладка» по-прежнему меняет композицию страницы «Фокус» (правила выше). */
+}
+
+/* Печать / сохранение в PDF: прячем навигацию/кнопки/хром, лист — чистый.
+   Браузеры по умолчанию не печатают фоновые цвета — поэтому форсим белый фон и
+   тёмный текст, чтобы тёмная тема не давала серую кашу с потерей контраста. */
+@media print {
+  html[data-design],
+  html[data-design] body { background: #fff !important; color: #141413 !important; }
+  html[data-design] .skip-link,
+  html[data-design] .ed-masthead-actions,
+  html[data-design] .ed-masthead-progress,
+  html[data-design] .back-to-top,
+  html[data-design] .summary-actions,
+  html[data-design] .summary-tools,
+  html[data-design] .result-page .result-actions,
+  html[data-design] .result-page .session-bar form,
+  html[data-design] .result-page .btn-favorite,
+  html[data-design] .kbd-help-overlay,
+  html[data-design] .prompt-overlay,
+  html[data-design] noscript { display: none !important; }
+  /* Страница вопроса (фокус): интерактивный хром на бумаге бессмыслен — топбар
+     сессии (прогресс/чип/«Завершить»), submit-футер с таймером, клавиатурная
+     подсказка, reveal/оценочные формы флешкарты, кнопка-summary «Пример кода»
+     (открытый <details> печатает код и без неё), пост-ответные кнопки
+     (уверенность, «Похожие вопросы») и CTA пустого состояния. Сам вопрос,
+     радио-варианты и вердикт #result-feedback остаются — печать вопроса для
+     офлайн-разбора. */
+  html[data-design] .focus-topbar,
+  html[data-design] .action-footer,
+  html[data-design] .keyboard-hint,
+  html[data-design] .flashcard-badge,
+  html[data-design] .flashcard-phase form,
+  html[data-design] .flashcard-grade-buttons,
+  html[data-design] .flashcard-reveal-summary,
+  html[data-design] .question-code-summary,
+  html[data-design] .confidence-buttons,
+  html[data-design] #extra-analysis-toggle,
+  html[data-design] .empty-actions { display: none !important; }
+  html[data-design] .ed-masthead { border-bottom: 1px solid #ccc; }
+  html[data-design] .card {
+    box-shadow: none !important; border: 1px solid #ccc !important;
+    break-inside: avoid; background: #fff !important;
+  }
+  html[data-design] .summary-score-value,
+  html[data-design] .summary-table .text-success,
+  html[data-design] .summary-table .text-warning,
+  html[data-design] .summary-table .text-danger,
+  html[data-design] .summary-td-correct,
+  html[data-design] .summary-td-wrong { color: #141413 !important; }
+  html[data-design] a { color: #141413 !important; text-decoration: none; }
+  /* /stats: JS скрывает строки после лимита атрибутом hidden. На печать
+     разворачиваем их обратно; thead длинной таблицы повторяется на каждой
+     странице нативно при разрыве по страницам. */
+  html[data-design] .stats-page .topic-table tr[hidden] { display: table-row !important; }
+  html[data-design] .table-expander { display: none !important; }
+  /* Код-блоки печатаются на белом листе (браузер не печатает фоны). В тёмной теме
+     --color-text-primary = светлый крем (#F0EEE6) → светлый-по-белому, контраст
+     ~1.2:1, невидимо. Форсим серый фон + чернильный текст для pre/inline-code/
+     question-code и нейтрализуем токены подсветки atom-one-dark (.hljs + потомки).
+     Чинит печать вопроса-с-кодом (focus/result) для офлайн-изучения. */
+  html[data-design] pre,
+  html[data-design] code,
+  html[data-design] .result-page .question-code,
+  html[data-design] .result-page .question-code code,
+  html[data-design] .result-page .sm2-grid dd {
+    background: #f5f5f5 !important;
+    color: #141413 !important;
+    border-color: #ccc !important;
+  }
+  html[data-design] :not(pre) > code {
+    background: #f0f0f0 !important;
+    color: #141413 !important;
+  }
+  html[data-design] pre code.hljs,
+  html[data-design] pre code[class*="hljs"],
+  html[data-design] pre code.hljs * {
+    background: transparent !important;
+    color: #141413 !important;
+  }
+  /* /stats: графики Chart.js рисуются в <canvas>-битмап; в тёмной теме оси и
+     легенда запекаются светло-кремовым (--color-text-secondary #C5C1B4) — на
+     печати фон форсится белым, но битмап не перекрашивается → светлый текст на
+     белом (невидим). Таблица «Детализация по темам» ниже несёт те же данные и
+     при печати разворачивается полностью, поэтому графики на печать прячем. */
+  html[data-design] .stats-page .chart-card { display: none !important; }
+  /* Карточка фильтров/поиска — чистый интерактив (селекты, чекбоксы, кнопки,
+     поле поиска): на бумаге это пустые рамки без функции, а сама таблица
+     печатается полностью (tr[hidden] разворачиваются выше). */
+  html[data-design] .stats-page .stats-filter-card { display: none !important; }
+  /* Разрыв по страницам: блоки разбора ответа (варианты, SM-2 сетка, эталон-
+     ответ) и строки таблиц не должны рваться пополам между листами. Браузеры
+     соблюдают break-inside на flow-блоках и table-row при печати. orphans/
+     widows держат минимум по 2 строки абзаца на стыке листов — без одиночек. */
+  html[data-design] .result-page .option-explanation,
+  html[data-design] .result-page .sm2-grid,
+  html[data-design] .result-page .answer {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  html[data-design] .result-page .answer p { orphans: 2; widows: 2; }
+  html[data-design] .stats-page .topic-table tbody tr,
+  html[data-design] .stats-page .data-table tbody tr,
+  html[data-design] .stats-page .forecast-row {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  html[data-design] .summary-page .summary-table tbody tr,
+  html[data-design] .summary-page .summary-mistakes li,
+  html[data-design] .summary-page .summary-recommendation-item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
+}

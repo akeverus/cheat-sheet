@@ -13,6 +13,7 @@
             Базовый flow (вопрос → ответ → результат) останется доступен через формы.
         </div>
     </noscript>
+    <div th:replace="~{fragments/recoverable-banners :: recoverable-banners}"></div>
     <header class="topbar">
         <div class="crumb" th:if="${(interviewSession != null or (reviewMode != null and reviewMode)) and progressPercent != null}">
             <span class="eyebrow">Прогресс в сессии</span>
@@ -26,24 +27,49 @@
         </div>
         <div class="crumb" th:unless="${(interviewSession != null or (reviewMode != null and reviewMode)) and progressPercent != null}"></div>
         <div class="top-actions">
-            <a class="icon-button" th:href="@{/stats(important=true)}" aria-label="Закладки" title="Закладки">
+            <a class="icon-button" th:href="@{/}" aria-label="Фокус" title="Фокус">
+                <svg class="icon" aria-hidden="true"><use href="#home"></use></svg>
+            </a>
+            <a class="icon-button" th:href="@{/stats}" aria-label="Аналитика" title="Аналитика">
+                <svg class="icon" aria-hidden="true"><use href="#analytics"></use></svg>
+            </a>
+            <a class="icon-button" th:href="@{/review}" aria-label="Разбор ошибок" title="Разбор ошибок">
+                <svg class="icon" aria-hidden="true"><use href="#repeat"></use></svg>
+            </a>
+            <a class="icon-button" th:href="@{/bookmarks}" aria-label="Закладки" title="Закладки">
                 <svg class="icon" aria-hidden="true"><use href="#bookmark"></use></svg>
             </a>
             <a class="icon-button" th:href="@{/settings}" aria-label="Настройки" title="Настройки">
                 <svg class="icon" aria-hidden="true"><use href="#settings"></use></svg>
             </a>
+            <form th:if="${multiSecurityMode}" class="topbar-logout" th:action="@{/logout}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <button type="submit" class="icon-button" aria-label="Выйти"
+                        th:title="${currentUsername != null ? ('Выйти (' + currentUsername + ')') : 'Выйти'}">
+                    <svg class="icon" aria-hidden="true"><use href="#logout"></use></svg>
+                </button>
+            </form>
         </div>
     </header>
     <header class="mobile-header">
         <a class="brand" th:href="@{/}">
-            <span class="avatar" aria-hidden="true">🧑‍💻</span>
-            <span>Cheat&nbsp;Sheet</span>
+            <span class="avatar" aria-hidden="true">
+                <img th:src="@{/img/pixel/mascot.png}" width="22" height="22" alt="" decoding="async">
+            </span>
+            <span class="brand-label">Cheat&nbsp;Sheet</span>
         </a>
         <div class="top-actions">
             <button type="button" class="icon-button hidden" data-theme-toggle
                     aria-pressed="false" aria-label="Переключить тему" title="Светлая / тёмная тема">
                 <svg class="icon" aria-hidden="true"><use href="#theme"></use></svg>
             </button>
+            <form th:if="${multiSecurityMode}" class="topbar-logout" th:action="@{/logout}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <button type="submit" class="icon-button" aria-label="Выйти"
+                        th:title="${currentUsername != null ? ('Выйти (' + currentUsername + ')') : 'Выйти'}">
+                    <svg class="icon" aria-hidden="true"><use href="#logout"></use></svg>
+                </button>
+            </form>
         </div>
     </header>
 </th:block>

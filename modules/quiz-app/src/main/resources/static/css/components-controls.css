@@ -1,0 +1,84 @@
+/* @layer components — shared control state matrix (P1-08).
+   Base geometry for .btn still lives in pages-focus / pixel-fx; this file
+   fills hover/focus/active/disabled/loading/error across the app. */
+@layer components {
+
+html[data-design] .btn:focus-visible,
+html[data-design] .secondary-btn:focus-visible,
+html[data-design] .next-btn:focus-visible,
+html[data-design] .primary-btn:focus-visible,
+html[data-design] a.btn:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Native :disabled only — .is-disabled on #interview-submit is an "unarmed"
+   training state styled in pages-focus, not a global inert control. */
+html[data-design] .btn:disabled,
+html[data-design] .btn[aria-disabled="true"],
+html[data-design] .secondary-btn:disabled,
+html[data-design] .secondary-btn[aria-disabled="true"],
+html[data-design] .next-btn:disabled,
+html[data-design] .primary-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Loading: block double-submit. Exclude focus submit — pages-focus owns
+   #interview-submit.is-submitting visuals. */
+html[data-design] .btn[aria-busy="true"]:not(#interview-submit),
+html[data-design] .secondary-btn[aria-busy="true"]:not(#interview-submit),
+html[data-design] .next-btn[aria-busy="true"]:not(#interview-submit),
+html[data-design] .primary-btn[aria-busy="true"]:not(#interview-submit),
+html[data-design] button[aria-busy="true"]:not(#interview-submit) {
+  cursor: progress;
+  opacity: 0.82;
+  pointer-events: none;
+}
+
+/* Form fields: shared states for .field controls. */
+html[data-design] .field input,
+html[data-design] .field select,
+html[data-design] .field textarea {
+  transition: border-color var(--duration-fast) var(--easing-default),
+              box-shadow var(--duration-fast) var(--easing-default);
+}
+
+html[data-design] .field input:hover:not(:disabled):not([aria-invalid="true"]),
+html[data-design] .field select:hover:not(:disabled):not([aria-invalid="true"]),
+html[data-design] .field textarea:hover:not(:disabled):not([aria-invalid="true"]) {
+  border-color: var(--color-text-secondary);
+}
+
+html[data-design] .field input:focus-visible,
+html[data-design] .field select:focus-visible,
+html[data-design] .field textarea:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 1px;
+}
+
+html[data-design] .field input:disabled,
+html[data-design] .field select:disabled,
+html[data-design] .field textarea:disabled,
+html[data-design] .field input[readonly],
+html[data-design] .field textarea[readonly] {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background: var(--color-bg-tertiary);
+}
+
+html[data-design] .field input[aria-invalid="true"],
+html[data-design] .field select[aria-invalid="true"],
+html[data-design] .field textarea[aria-invalid="true"] {
+  border-color: var(--color-status-error, #B3261E);
+  box-shadow: 0 0 0 1px var(--color-status-error, #B3261E);
+}
+
+html[data-design] .field-error {
+  color: var(--color-status-error, #B3261E);
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+}

@@ -1,0 +1,328 @@
+/* Wave C split from base.css — @utilities layer */
+@layer utilities {
+/* ===========================================================================
+   UX REVIEW PASS — 2026-07-01.
+   Точечные исправления после просмотра реальных desktop/mobile скриншотов:
+   приоритет данных над фильтрами, компактнее mobile chrome, меньше шума в MCQ.
+   ========================================================================== */
+html[data-design] .stats-page .stats-filter-card {
+  padding: var(--space-5);
+}
+
+html[data-design] .stats-page .stats-grid {
+  margin-bottom: var(--space-5);
+}
+
+html[data-design] .stats-page .stats-grid + .stats-filter-card {
+  margin-top: 0;
+}
+
+html[data-design] #interview-options label {
+  text-align: left;
+}
+
+html[data-design] #interview-options label:has(input:checked) {
+  border-color: var(--color-text-secondary);
+  background: var(--color-bg-tertiary);
+  box-shadow: inset 0 0 0 1px var(--color-border-secondary);
+}
+
+html[data-design] #interview-options label:has(input:checked)::before {
+  background: var(--color-text-primary);
+  border-color: var(--color-text-primary);
+  color: var(--color-bg-primary);
+  box-shadow: none;
+}
+
+/* Instrument (C1-i, перенос из зоны опций — R0.54): generic-правило выше глушило
+   checked-teal C1-i (равная специфичность, позже по порядку). Механику прода
+   сохраняем (raised bg-tertiary + double-ring + ink-чип буквы), но кольцо —
+   accent-strong: «прибор защёлкнут», selected ≠ hover (у hover фон paper). */
+html[data-design="instrument"] #interview-options label:has(input:checked) {
+  border-color: var(--color-accent-strong);
+  box-shadow: inset 0 0 0 1px var(--color-accent-strong);
+}
+
+html[data-design] #interview-options label.option-correct:has(input:checked),
+html[data-design] #interview-options label.option-wrong:has(input:checked) {
+  box-shadow: none;
+}
+
+@media (max-width: 1000px) {
+  /* Метрики: 4 группы → 2 колонки на планшете. */
+  html[data-design] .stats-page .learning-metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  html[data-design] .stats-page .stats-next-actions,
+  html[data-design] .stats-page .stats-next-actions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Метрики: на телефоне — одна колонка. */
+  html[data-design] .stats-page .learning-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  html[data-design] .stats-page .stats-filter-card {
+    padding: var(--space-4);
+  }
+
+  html[data-design] .stats-page .stats-filter-pane,
+  html[data-design] .stats-page .stats-search-pane {
+    flex: 0 1 auto;
+  }
+
+  html[data-design] .stats-page .search-input {
+    flex: 0 1 auto;
+  }
+
+  html[data-design] .stats-page .search-form {
+    gap: var(--space-3);
+  }
+
+  html[data-design] .stats-page .topic-table-wrap {
+    overflow-x: visible;
+  }
+
+  html[data-design] .stats-page .topic-table,
+  html[data-design] .stats-page .topic-table thead,
+  html[data-design] .stats-page .topic-table tbody,
+  html[data-design] .stats-page .topic-table tr,
+  html[data-design] .stats-page .topic-table th,
+  html[data-design] .stats-page .topic-table td {
+    display: block;
+  }
+
+  html[data-design] .stats-page .topic-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* Сортируемые th (tabindex=0) остаются в tab-порядке и внутри клипнутого
+     thead: клавиатурный фокус попадал на невидимый элемент — 5 фокус-стопов
+     без видимого кольца (2.4.7). Паттерн skip-link: пока внутри thead фокус,
+     возвращаем ему видимость — заголовки встают стопкой блоков, текущий
+     носит своё фокус-кольцо; при уходе фокуса thead снова скрыт. Сама
+     сортировка и так работала (live-анонс #table-sort-status). */
+  html[data-design] .stats-page .topic-table thead:focus-within {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    clip-path: none;
+    white-space: normal;
+  }
+
+  html[data-design] .stats-page .topic-table tbody {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  html[data-design] .stats-page .topic-table tbody tr {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    border: var(--rule-weight) solid var(--color-border-primary);
+    border-radius: var(--border-radius-md);
+    background: var(--color-bg-primary);
+  }
+
+  html[data-design] .stats-page .topic-table th,
+  html[data-design] .stats-page .topic-table td {
+    padding: 0;
+    border-bottom: 0;
+    text-align: left;
+  }
+
+  html[data-design] .stats-page .topic-table .topic-name {
+    padding-bottom: var(--space-2);
+    border-bottom: var(--rule-weight) solid var(--color-border-secondary);
+  }
+
+  html[data-design] .stats-page .topic-table .topic-name a {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+    overflow-wrap: anywhere;
+  }
+
+  html[data-design] .stats-page .topic-table td[data-label] {
+    display: grid;
+    grid-template-columns: minmax(90px, 0.42fr) minmax(0, 1fr);
+    gap: var(--space-3);
+    align-items: center;
+    color: var(--color-text-primary);
+  }
+
+  html[data-design] .stats-page .topic-table td[data-label]::before {
+    content: attr(data-label);
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+  }
+
+  html[data-design] .stats-page .topic-table td[data-label] > * {
+    justify-self: end;
+  }
+
+  html[data-design] .stats-page .topic-table td[data-label="Прогресс"] {
+    grid-template-columns: minmax(90px, 0.42fr) minmax(0, 1fr) auto;
+  }
+
+  html[data-design] .stats-page .topic-table td[data-label="Прогресс"] .topic-progress-bar {
+    width: 100%;
+    min-width: 0;
+  }
+
+  html[data-design] .stats-page .topic-table td[data-label="Прогресс"] .topic-progress-label {
+    justify-self: end;
+  }
+
+  html[data-design] .focus-page #interview-options .option-other .option-explanation,
+  html[data-design] .focus-page #interview-options .option-other .option-explanation-disclosure,
+  html[data-design] .focus-page #interview-options .option-other .option-status-muted {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  html[data-design] .ed-masthead-inner {
+    row-gap: var(--space-2);
+  }
+
+  html[data-design] .ed-masthead-title {
+    font-size: clamp(1.15rem, 5vw, 1.35rem);
+    line-height: 1.12;
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: auto;
+  }
+
+  /* HDR-1: без этого focus-page title (0,3,1) перебивает compact-clamp выше
+     и оставляет ~25px рядом с вопросом ~26px (ratio ≈1.05). */
+  html[data-design] .focus-page .ed-masthead-title {
+    font-size: clamp(1.15rem, 5vw, 1.35rem);
+    line-height: 1.12;
+  }
+
+  html[data-design] .focus-page .ed-masthead:has(.ed-masthead-progress) .ed-masthead-inner {
+    padding-block: var(--space-2);
+    row-gap: var(--space-1);
+  }
+
+  html[data-design] .ed-masthead-kicker {
+    font-size: 0.68rem;
+  }
+
+  html[data-design] .ed-masthead-toggles {
+    gap: var(--space-2);
+  }
+
+  html[data-design] .ed-theme-toggle {
+    width: 40px;
+    height: 40px;
+  }
+
+  html[data-design] .ed-nav-link {
+    min-height: 40px;
+  }
+
+  html[data-design] .ed-page {
+    padding-top: var(--space-5);
+  }
+
+  html[data-design] .focus-question {
+    min-height: 0;
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-4);
+    font-size: clamp(1.55rem, 7.2vw, 2rem);
+  }
+
+  html[data-design] .focus-topbar {
+    margin-bottom: var(--space-4);
+  }
+
+  html[data-design] #interview-options {
+    gap: var(--space-2);
+    margin-bottom: var(--space-5);
+  }
+
+  html[data-design] #interview-options label {
+    align-items: start;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    font-size: var(--font-size-base);
+    line-height: 1.55;
+  }
+
+  html[data-design] #interview-options label::before {
+    margin-top: 0.08em;
+    width: 2rem;
+    height: 2rem;
+    font-size: var(--font-size-xs);
+  }
+
+  html[data-design] #interview-options label > span:not([class]) {
+    max-width: none;
+  }
+
+  html[data-design] .option-explanation {
+    padding: var(--space-3);
+    font-size: var(--font-size-sm);
+    line-height: 1.55;
+  }
+
+  html[data-design] .result-correct,
+  html[data-design] .result-wrong {
+    padding: var(--space-3);
+  }
+
+  html[data-design] [data-ui-fragment="post-answer-controls"] > #next-question {
+    width: 100%;
+    margin-top: var(--space-5);
+  }
+
+  html[data-design] .keyboard-hint {
+    display: none;
+  }
+
+  html[data-design] .today-hero-head {
+    margin-bottom: var(--space-3);
+  }
+
+  html[data-design] .today-hero-body {
+    gap: var(--space-4);
+  }
+
+  html[data-design] .today-hero-figure {
+    display: block;
+  }
+
+  html[data-design] .today-hero-due-label {
+    display: block;
+    margin-top: var(--space-2);
+  }
+}
+
+/* P0.4: свод «Метрики обучения» получил 5-ю группу «Попытки» (всего/верных/ошибочных).
+   Прежний фиксированный repeat(4) (стр. ~1913) + брейкпоинт-правила 4→2→1 (стр.
+   ~3888/3900) оставляли 5-ю карточку «сиротой» на своей строке. auto-fit + minmax
+   само-балансируют раскладку на любой ширине (широкий экран → сколько влезет,
+   узкий → 1 колонка), поэтому переопределяем их одним правилом в конце файла —
+   отдельным помеченным блоком, чтобы не пересекаться с параллельными правками
+   base.css. Правило без @media: минимальная колонка 190px, min(100%,…) даёт
+   корректный single-column на телефоне без горизонтального переполнения. */
+html[data-design] .stats-page .learning-metrics-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+}
+}

@@ -3,7 +3,6 @@
 <head th:replace="~{fragments/head :: head(title='Итоги сессии — Подготовка к собеседованию', includeMermaid=false, includeChart=false)}"></head>
 <body class="summary-page">
 <a class="skip-link" href="#main-content">Перейти к итогам сессии</a>
-<a class="skip-link" href="#main-content">К содержимому</a>
 <svg th:replace="~{fragments/pixel-sprite :: sprite}"></svg>
 <svg th:replace="~{fragments/icons :: sprite}"></svg>
 <div class="app">
@@ -18,7 +17,9 @@
      таких данных в SessionSummary нет — не фабрикуем. Среднее время вычисляется
      из duration/totalQuestions (готового поля нет, но арифметика честная). -->
 <section class="card summary-hero"
-         th:with="accInt=${#numbers.formatDecimal(summary.accuracy, 1, 0)}">
+         th:with="accInt=${#numbers.formatDecimal(summary.accuracy, 1, 0)},
+                  summaryTone=${summary.accuracy >= 80 ? 'great' : (summary.accuracy >= 50 ? 'ok' : 'low')}"
+         th:attr="data-summary-tone=${summaryTone}">
     <!-- Заголовок карточки счёта: скрыт визуально (ring-число + метки несут смысл
          на экране), но даёт SR-навигации по заголовкам якорь на главный результат —
          паритет с h2 секций «Результаты по темам»/«Ошибки». -->
@@ -106,17 +107,39 @@
      mistakes-условный nav + свободные строки-рекомендации (тот же источник
      данных). Первое действие — primary, остальные — secondary; ниже общая
      навигация, чтобы не было тупика IA даже при пустом плане. -->
-<nav class="summary-actions" aria-label="Что дальше">
-    <a th:each="na,it : ${summary.nextActions}" th:with="t=${na.type().name()}"
-       class="btn" th:classappend="${it.first} ? ' next-btn' : ' secondary-btn'"
-       th:href="${t == 'PRACTICE_WEAK_TOPIC'} ? @{/(topic=${na.target()})} : (${t == 'KEEP_GOING'} ? @{/} : @{/review})">
+<nav class="summary-actions" aria-label="Что дальше"
+     th:with="hasPlan=${summary.nextActions != null and !summary.nextActions.isEmpty()},
+              primaryType=${hasPlan ? summary.nextActions[0].type().name() : ''}">
+    <!-- Primary: первое nextAction (обычно «Разобрать ошибки»). Пустой план → продолжить. -->
+    <a th:if="${hasPlan}" th:with="na=${summary.nextActions[0]}, t=${primaryType}"
+       class="btn next-btn"
+       th:href="${t == 'PRACTICE_WEAK_TOPIC'} ? @{/(topic=${na.target()})}
+                : (${t == 'REVIEW_MISTAKES'} ? @{/review}
+                : @{/})">
         <svg class="ed-icon ed-icon-lead" aria-hidden="true">
             <use th:attr="href=${t == 'REVIEW_MISTAKES' ? '#i-target' : (t == 'PRACTICE_WEAK_TOPIC' ? '#i-book-open' : (t == 'REVIEW_DUE' ? '#i-flag' : '#i-flame'))}"></use>
         </svg><span class="summary-next-label" th:text="${na.label()}">Действие</span>
     </a>
-    <a class="btn secondary-btn" th:href="@{/}">Продолжить тренировку</a>
-    <a class="btn secondary-btn" th:href="@{/settings}">Новая сессия</a>
-    <a class="btn secondary-btn" th:href="@{/stats}">Аналитика</a>
+    <a th:if="${!hasPlan}" class="btn next-btn" th:href="@{/}">
+        <svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-flame"></use></svg>
+        <span class="summary-next-label">Продолжить тренировку</span>
+    </a>
+    <!-- Secondary — продолжить, только если primary уже не «продолжить» (KEEP_GOING). -->
+    <a th:if="${hasPlan and primaryType != 'KEEP_GOING'}" class="btn secondary-btn" th:href="@{/}">Продолжить тренировку</a>
+    <details class="summary-more">
+        <summary class="summary-more-summary">Ещё</summary>
+        <div class="summary-more-menu" role="group" aria-label="Дополнительные действия">
+            <a th:each="na,it : ${summary.nextActions}" th:unless="${it.first}" th:with="t=${na.type().name()}"
+               class="summary-more-link"
+               th:href="${t == 'PRACTICE_WEAK_TOPIC'} ? @{/(topic=${na.target()})}
+                        : (${t == 'REVIEW_MISTAKES'} ? @{/review}
+                        : @{/})"
+               th:text="${na.label()}">Действие</a>
+            <a class="summary-more-link" th:href="@{/settings}">Новая сессия</a>
+            <a class="summary-more-link" th:href="@{/stats}">Аналитика</a>
+            <a th:if="${hasPlan and primaryType == 'KEEP_GOING'}" class="summary-more-link" th:href="@{/}">Продолжить тренировку</a>
+        </div>
+    </details>
 </nav>
 
 <!-- Результаты по темам -->
@@ -188,7 +211,7 @@
      самодостаточный. Текст итога собираем из уже отрендеренного DOM (не дублируем
      данные на сервере). Кнопки инжектим (PE: без JS их нет). Печать — window.print
      + @media print в base.css прячет навигацию и делает чистый лист. -->
-<script>
+<script th:attr="nonce=${cspNonce}">
   (function () {
     var scoreCard = document.querySelector('.summary-hero');
     if (!scoreCard) return;

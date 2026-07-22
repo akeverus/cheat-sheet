@@ -3,35 +3,52 @@
 <head th:fragment="head(title, includeMermaid, includeChart)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- CSP nonce for scripts + dynamically injected <style> (Mermaid/hljs). -->
+    <meta name="csp-nonce" th:content="${cspNonce}">
     <!-- Цвет браузерного chrome для мобильных (Android Chrome, iOS Safari). -->
     <meta name="theme-color" content="#071116">
     <meta name="color-scheme" content="dark light">
-    <!-- Тема + размер шрифта: применяем на <html> ДО первого кадра (без вспышки
-         белым и без скачка размера). Здесь же центральный API персонализации
-         (window.__theme / window.__fontScale) — им пользуются и header-тоггл, и
-         блок «Персонализация» на /settings, чтобы не плодить конкурирующие скрипты.
-         Тема: сохранённый выбор (auto|light|dark) → 'auto' = системная
-         prefers-color-scheme, причём в режиме auto мы ЖИВО следим за сменой
-         системной темы. Инлайн — осознанно: внешний скрипт дал бы FOUC. -->
-    <script>
+    <!-- FOUC bootstrap: только theme / pixel / motion (+ маркеры JS/settings-tab).
+         Layout, reading-width, density, fontScale — settings/personalization-bootstrap.js -->
+    <script th:attr="nonce=${cspNonce}">
       (function () {
+        // Stamp CSP nonce on createElement('style') so Mermaid/hljs work without style unsafe-inline.
+        (function installStyleNonce() {
+          var meta = document.querySelector('meta[name="csp-nonce"]');
+          var nonce = meta && meta.getAttribute('content');
+          if (!nonce) return;
+          function stamp(node) {
+            if (!node || node.nodeType !== 1) return;
+            if (node.tagName === 'STYLE' && !node.getAttribute('nonce')) {
+              node.setAttribute('nonce', nonce);
+            }
+            if (node.querySelectorAll) {
+              node.querySelectorAll('style:not([nonce])').forEach(function (el) {
+                el.setAttribute('nonce', nonce);
+              });
+            }
+          }
+          var createElement = Document.prototype.createElement;
+          Document.prototype.createElement = function (tagName, options) {
+            var el = createElement.call(this, tagName, options);
+            if (String(tagName).toLowerCase() === 'style') stamp(el);
+            return el;
+          };
+          if (typeof MutationObserver !== 'undefined') {
+            new MutationObserver(function (records) {
+              for (var i = 0; i < records.length; i++) {
+                var nodes = records[i].addedNodes;
+                for (var j = 0; j < nodes.length; j++) stamp(nodes[j]);
+              }
+            }).observe(document.documentElement, { childList: true, subtree: true });
+          }
+        })();
         var root = document.documentElement;
         function metaEl() { return document.querySelector('meta[name="theme-color"]'); }
         var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
         function systemTheme() { return (mq && mq.matches) ? 'light' : 'dark'; }
-
-        // Дизайн: Instrument — ЕДИНСТВЕННЫЙ дизайн (DEC-002 «полная замена»).
-        // SSR уже рендерит <html data-design="instrument">; дублируем до первого
-        // кадра как страховку (анти-FOUC) и фиксируем theme-color хрома браузера.
-        // Мульти-дизайн-движок (11 вариантов, переключатель, window.__design,
-        // ось в /settings) удалён в FE-CMP-1 — токены только instrument (tokens.css
-        // light+dark). theme-color instrument×тема:
         var THEME_COLORS = { light: '#f5f8f8', dark: '#071116' };
         root.setAttribute('data-design', 'instrument');
-        // CLS-резерв (R0.64): метка «JS работает» + сохранённая вкладка /settings
-        // ДО первого кадра — base.css рисует вкладочное состояние сразу, и
-        // initSettingsTabs после DOMContentLoaded ничего не сдвигает (под
-        // троттлингом стопка панелей давала CLS ~0.28). Без JS атрибутов нет.
         root.setAttribute('data-js', '');
         try {
           var st = localStorage.getItem('settingsTab');
@@ -39,17 +56,12 @@
             root.setAttribute('data-settings-tab', st);
           }
         } catch (e) { /* приватный режим */ }
-        function metaColor(resolved) {
-          return THEME_COLORS[resolved] || THEME_COLORS.dark;
-        }
-
-        // ДЕФОЛТ = 'dark' (решение пользователя 2026-07-18: «Тёмная по умолчанию,
-        // как макеты»; светлая остаётся явным тумблером/выбором 'light', follow-OS —
-        // явный выбор 'auto'). Первый визит без сохранённого выбора → тёмная тема
-        // макетов handoff-3, а не системная.
+        function metaColor(resolved) { return THEME_COLORS[resolved] || THEME_COLORS.dark; }
         function readPref() {
-          try { var p = localStorage.getItem('theme'); return (p === 'light' || p === 'dark' || p === 'auto') ? p : 'dark'; }
-          catch (e) { return 'dark'; }
+          try {
+            var p = localStorage.getItem('theme');
+            return (p === 'light' || p === 'dark' || p === 'auto') ? p : 'dark';
+          } catch (e) { return 'dark'; }
         }
         function resolve(pref) { return pref === 'auto' ? systemTheme() : pref; }
         function applyResolved(resolved) {
@@ -78,46 +90,6 @@
           set: setPref,
           toggle: function () { setPref(resolve(pref) === 'light' ? 'dark' : 'light'); }
         };
-
-        // Раскладка страниц (ортогональна теме): flow | split | grid.
-        // Применяем выбранный data-layout на <html> ДО первого кадра (как тему и
-        // дизайн) — без вспышки чужой композиции. Каждая страница (focus/settings)
-        // интерпретирует режим по-своему (см. base.css, секция [data-layout]):
-        //   flow  — одноколоночный поток чтения (ДЕФОЛТ): focus вопрос-герой +
-        //           ответы единым полноширинным столбцом; settings одна колонка.
-        //   split — два пейна: focus вопрос/мета слева ↔ ответы справа;
-        //           settings конфиг-сессии слева ↔ управление/оформление справа.
-        //   grid  — плотная сетка (прежняя композиция): focus 2×2 экзамен-бланк,
-        //           settings асимметричная панель. Сохранена, не потеряна.
-        // No-JS: атрибут не ставится → CSS [data-layout]-оверрайды не применяются,
-        // страница падает на негейтнутые wide-правила (= grid) — рабочий фоллбэк.
-        var LAYOUTS = ['flow', 'split', 'grid'];
-        function readLayout() {
-          try { var l = localStorage.getItem('layout'); return LAYOUTS.indexOf(l) >= 0 ? l : 'flow'; }
-          catch (e) { return 'flow'; }
-        }
-        var layout = readLayout();
-        root.setAttribute('data-layout', layout);
-        function setLayout(next) {
-          layout = (LAYOUTS.indexOf(next) >= 0) ? next : 'flow';
-          try { if (layout === 'flow') localStorage.removeItem('layout'); else localStorage.setItem('layout', layout); } catch (e) {}
-          root.setAttribute('data-layout', layout);
-          try { document.dispatchEvent(new CustomEvent('layoutchange', { detail: { layout: layout } })); } catch (e) {}
-        }
-        window.__layout = {
-          current: function () { return layout; },
-          list: LAYOUTS.slice(),
-          set: setLayout
-        };
-
-        // Движение интерфейса (ортогонально дизайну/теме/раскладке): auto | on | off.
-        //   auto (ДЕФОЛТ) — уважать системную «Уменьшить движение»
-        //     (prefers-reduced-motion); атрибут не ставится, работает @media в base.css.
-        //   off — принудительно гасить анимации/переходы даже если система их разрешает
-        //     (меньше отвлечений, вестибулярный комфорт).
-        //   on — принудительно ОСТАВИТЬ движение, даже когда система просит уменьшить.
-        // Применяем data-motion на <html> ДО первого кадра (как тему/дизайн) — без
-        // вспышки лишней анимации. No-JS → атрибута нет → поведение = auto.
         var MOTIONS = ['auto', 'on', 'off'];
         function readMotion() {
           try { var m = localStorage.getItem('motion'); return MOTIONS.indexOf(m) >= 0 ? m : 'auto'; }
@@ -140,92 +112,30 @@
           list: MOTIONS.slice(),
           set: setMotion
         };
-
-        // Ширина колонки чтения (ортогонально дизайну/теме): standard | wide.
-        //   standard (ДЕФОЛТ) — мера прозы 72ch (комфортная длина строки); атрибут
-        //     не ставится.
-        //   wide — расширенная мера (см. tokens.css, --measure override): текст прозы
-        //     тянется шире для больших экранов / личных предпочтений.
-        // Ортогонально раскладке: layout управляет КОМПОЗИЦИЕЙ страницы, reading-width —
-        // длиной строки внутри текстовых блоков (абзацы ответов/пояснений). No-JS →
-        // атрибута нет → standard.
-        var READING_WIDTHS = ['standard', 'wide'];
-        function readReadingWidth() {
-          try { var w = localStorage.getItem('readingWidth'); return READING_WIDTHS.indexOf(w) >= 0 ? w : 'standard'; }
-          catch (e) { return 'standard'; }
+        var PIXEL_LEVELS = ['low', 'med', 'high'];
+        function readPixelIntensity() {
+          try {
+            var p = localStorage.getItem('pixelIntensity');
+            return PIXEL_LEVELS.indexOf(p) >= 0 ? p : 'med';
+          } catch (e) { return 'med'; }
         }
-        var readingWidth = readReadingWidth();
-        function applyReadingWidth(w) {
-          if (w === 'standard') root.removeAttribute('data-reading-width');
-          else root.setAttribute('data-reading-width', w);
+        var pixelIntensity = readPixelIntensity();
+        root.setAttribute('data-pixel', pixelIntensity);
+        function setPixelIntensity(next) {
+          pixelIntensity = (PIXEL_LEVELS.indexOf(next) >= 0) ? next : 'med';
+          try {
+            if (pixelIntensity === 'med') localStorage.removeItem('pixelIntensity');
+            else localStorage.setItem('pixelIntensity', pixelIntensity);
+          } catch (e) {}
+          root.setAttribute('data-pixel', pixelIntensity);
+          try {
+            document.dispatchEvent(new CustomEvent('pixelintensitychange', { detail: { pixelIntensity: pixelIntensity } }));
+          } catch (e) {}
         }
-        applyReadingWidth(readingWidth);
-        function setReadingWidth(next) {
-          readingWidth = (READING_WIDTHS.indexOf(next) >= 0) ? next : 'standard';
-          try { if (readingWidth === 'standard') localStorage.removeItem('readingWidth'); else localStorage.setItem('readingWidth', readingWidth); } catch (e) {}
-          applyReadingWidth(readingWidth);
-          try { document.dispatchEvent(new CustomEvent('readingwidthchange', { detail: { readingWidth: readingWidth } })); } catch (e) {}
-        }
-        window.__readingWidth = {
-          current: function () { return readingWidth; },
-          list: READING_WIDTHS.slice(),
-          set: setReadingWidth
-        };
-
-        // Плотность интерфейса (ортогональна дизайну/теме/раскладке): spacious | compact.
-        //   spacious (ДЕФОЛТ) — текущий «воздушный» ритм; атрибут не ставится.
-        //   compact — сжатая шкала отступов --space-* (см. tokens.css): плотнее
-        //     вертикальный ритм и паддинги, больше контента на экране. Меняет ТОЛЬКО
-        //     spacing (не межстрочный — за длину строки отвечает reading-width).
-        // Применяем data-density на <html> ДО первого кадра (как тему/дизайн) — без
-        // вспышки прежней плотности. No-JS → атрибута нет → spacious.
-        var DENSITIES = ['spacious', 'compact'];
-        function readDensity() {
-          try { var d = localStorage.getItem('density'); return DENSITIES.indexOf(d) >= 0 ? d : 'spacious'; }
-          catch (e) { return 'spacious'; }
-        }
-        var density = readDensity();
-        function applyDensity(d) {
-          if (d === 'spacious') root.removeAttribute('data-density');
-          else root.setAttribute('data-density', d);
-        }
-        applyDensity(density);
-        function setDensity(next) {
-          density = (DENSITIES.indexOf(next) >= 0) ? next : 'spacious';
-          try { if (density === 'spacious') localStorage.removeItem('density'); else localStorage.setItem('density', density); } catch (e) {}
-          applyDensity(density);
-          try { document.dispatchEvent(new CustomEvent('densitychange', { detail: { density: density } })); } catch (e) {}
-        }
-        window.__density = {
-          current: function () { return density; },
-          list: DENSITIES.slice(),
-          set: setDensity
-        };
-
-        // Размер шрифта: масштаб root font-size (токены в rem → тянется весь UI).
-        var FONT_MIN = 0.85, FONT_MAX = 1.4, FONT_STEP = 0.1;
-        function clampFont(v) { v = Math.round(v * 100) / 100; return Math.min(FONT_MAX, Math.max(FONT_MIN, v)); }
-        function readFont() {
-          try { var f = parseFloat(localStorage.getItem('fontScale')); return isFinite(f) ? clampFont(f) : 1; }
-          catch (e) { return 1; }
-        }
-        var fontScale = readFont();
-        function applyFont(v) {
-          fontScale = clampFont(v);
-          root.style.fontSize = (fontScale === 1) ? '' : (fontScale * 100) + '%';
-        }
-        applyFont(fontScale);
-        function setFont(v) {
-          applyFont(v);
-          try { if (fontScale === 1) localStorage.removeItem('fontScale'); else localStorage.setItem('fontScale', String(fontScale)); } catch (e) {}
-          try { document.dispatchEvent(new CustomEvent('fontscalechange', { detail: { scale: fontScale } })); } catch (e) {}
-        }
-        window.__fontScale = {
-          get: function () { return fontScale; },
-          min: FONT_MIN, max: FONT_MAX, STEP: FONT_STEP,
-          set: setFont,
-          stepBy: function (delta) { setFont(fontScale + delta); },
-          reset: function () { setFont(1); }
+        window.__pixelIntensity = {
+          current: function () { return pixelIntensity; },
+          list: PIXEL_LEVELS.slice(),
+          set: setPixelIntensity
         };
       })();
     </script>
@@ -238,75 +148,41 @@
          data: URL — для совместимости с CSP default-src 'self'. -->
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}" href="/favicon.svg">
     <title th:text="${title}">Подготовка к собеседованию</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- DNS-prefetch для CDN-источников, чтобы first-byte highlight.js / chart.js
-         пришёл быстрее (TCP-handshake идёт параллельно с парсингом HTML). -->
-    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-    <!-- Загружаемые семейства (единственный дизайн — Instrument, DEC-002) —
-         ровно 3: Newsreader (serif-display), Space Grotesk (UI/body),
-         JetBrains Mono (код/эйбрау + mono). :root в tokens.css теперь тоже
-         объявляет эти 3 (FE-CMP-1 убрал editorial-фолбэк Lora/Inter) — нет
-         недостижимых семейств. Ранее убраны из загрузки: Geist/Geist Mono/
-         Source Serif 4 (R0.168), Inter/Lora (R0.172, PERF-02(a2)). -->
-    <!-- ВАРИАТИВНЫЕ оси wght (а не дискретные ступени) — Newsreader/Space Grotesk
-         вариативны по wght; диапазон wght@400..700 рендерит промежуточные веса
-         точно. Бонус: один variable-файл на семейство легче набора инстансов. -->
-    <!-- НЕ render-blocking: media="print" → стиль не применяется к screen на этапе
-         загрузки, поэтому браузер НЕ блокирует первый кадр в ожидании этого CSS;
-         onload флипает media на 'all', когда файл пришёл. Критично для устойчивости:
-         если шрифт-CDN недоступен (корпоративный proxy/VPN, geo-блок, offline),
-         страница рендерится СРАЗУ в fallback-шрифтах вместо многосекундного белого
-         экрана (render-blocking <link> ждёт таймаута недоступного хоста). display=swap
-         и так допускает FOUT — поведение консистентно. CSP script-src содержит
-         'unsafe-inline' → инлайновый onload разрешён. <noscript> — фоллбэк для no-JS. -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&family=JetBrains+Mono:wght@400..600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&family=JetBrains+Mono:wght@400..600&display=swap" rel="stylesheet"></noscript>
-    <!-- Двухслойная архитектура (единственный дизайн — Instrument, DEC-002):
-         tokens.css — ВСЕ токены single-source (DEADCODE-1): Instrument-значения
-           живут прямо в :root (light) + :root[data-theme="dark"] (dark); нет
-           отдельного html[data-design] override-слоя (промоут его удалил);
-         base.css   — design-agnostic структура (reset, типошкала, утилиты,
-           вёрстка всех страниц), потребляет ТОЛЬКО var(--token).
-         Порядок строгий: tokens ПЕРЕД base (переменные определены до
-         использования). Оба — render-blocking <link> в <head>: preload-сканер
-         находит их немедленно при парсинге, поэтому отдельный <link rel=preload>
-         того же URL строкой выше ничего не ускорял (no-op для same-origin CSS,
-         которая и так грузится с наивысшим приоритетом) и был удалён — не
-         возвращать. См. docs/design/DESIGN.md + docs/design/systems/*.md. -->
-    <link rel="stylesheet" th:href="@{/css/tokens.css(v=69)}">
-    <link rel="stylesheet" th:href="@{/css/base.css(v=118)}">
-    <!-- shell.css — каркас редизайна (ui-redesign-handoff): sidebar/topbar/
-         mobile-nav + базовые компоненты. Грузится ПОСЛЕ base.css (перекрывает
-         element-level правила при равной специфичности html[data-design]). -->
-    <link rel="stylesheet" th:href="@{/css/shell.css(v=12)}">
-    <!-- SRI (integrity) + crossorigin: защита от компрометации CDN — браузер
-         выполнит ресурс, только если его sha512 совпадает. Хэши пересчитаны из
-         самих файлов (openssl dgst -sha512). ВСЕ CDN-ресурсы пиннятся на ТОЧНУЮ
-         версию с immutable-URL (cache-control: immutable) → SRI стабилен, хэш не
-         «плывёт» при обновлении CDN. highlight.js — cdnjs; chart.js —
-         jsdelivr (оба отдают access-control-allow-origin:* для crossorigin). -->
-    <!-- НЕ render-blocking (см. шрифты выше): подсветка кода — прогрессивное
-         улучшение, atom-one-dark красит только .hljs-токены, FOUT на коде незаметен.
-         Если cdnjs недоступен — код просто без подсветки (guard typeof hljs ниже).
-         integrity/crossorigin/referrerpolicy сохранены, SRI проверяется до onload. -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"
-          integrity="sha512-Jk4AqjWsdSzSWCSuQTfYRIF84Rq/eV0G2+tu07byYwHcbTGfdmLrHjUSwvzp5HvbiqK4ibmNwdcG49Y5RGYPTg=="
-          crossorigin="anonymous" referrerpolicy="no-referrer"
-          media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"
-          integrity="sha512-Jk4AqjWsdSzSWCSuQTfYRIF84Rq/eV0G2+tu07byYwHcbTGfdmLrHjUSwvzp5HvbiqK4ibmNwdcG49Y5RGYPTg=="
-          crossorigin="anonymous" referrerpolicy="no-referrer"></noscript>
-    <!-- defer: highlight.js нужен только в DOMContentLoaded-листенере ниже (и в
-         app.js на AJAX-контенте) — оба срабатывают ПОСЛЕ парсинга. defer-скрипты
-         исполняются по порядку до DOMContentLoaded, поэтому hljs гарантированно
-         готов к подсветке, но больше НЕ блокирует первый рендер (render-blocking).
-         Guard `typeof hljs === 'undefined'` ниже всё равно деградирует мягко. -->
-    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
-            integrity="sha512-D9gUyxqja7hBtkWpPWGt9wfbfaMGVt9gnyCvYa+jojwwPHLCzUm5i8rpk7vD7wNee9bA35eYIjobYPaQuKS1MQ=="
-            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script>
+    <!-- OPS-005: Inter + JetBrains Mono self-hosted (static/fonts + css/fonts-local.css).
+         Семейства совпадают с --font-family-* в tokens.css; pixel-слой body не подменяет. -->
+    <link rel="stylesheet" th:href="@{/css/fonts-local.css}">
+    <!-- Cascade layers (Wave C): tokens → reset → shell → components → pages →
+         utilities → pixel. Порядок <link> = порядок внутри слоя; @layer в
+         tokens.css задаёт приоритет слоёв. Structural CSS split из бывшего
+         monolith base.css; агрегатор base.css (@import) — для dev-only. -->
+    <link rel="stylesheet" th:href="@{/css/tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/reset.css}">
+    <link rel="stylesheet" th:href="@{/css/utilities-core.css}">
+    <link rel="stylesheet" th:href="@{/css/reset-layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components-masthead.css}">
+    <link rel="stylesheet" th:href="@{/css/components-controls.css}">
+    <link rel="stylesheet" th:href="@{/css/pages-focus.css}">
+    <link rel="stylesheet" th:href="@{/css/pages-settings.css}">
+    <link rel="stylesheet" th:href="@{/css/pages-stats.css}">
+    <link rel="stylesheet" th:href="@{/css/pages-bookmarks.css}">
+    <link rel="stylesheet" th:href="@{/css/pages-summary.css}">
+    <link rel="stylesheet" th:href="@{/css/pages-error.css}">
+    <link rel="stylesheet" th:href="@{/css/pages-login.css}">
+    <link rel="stylesheet" th:href="@{/css/pages-result.css}">
+    <link rel="stylesheet" th:href="@{/css/components-widgets.css}">
+    <link rel="stylesheet" th:href="@{/css/pages-layout.css}">
+    <link rel="stylesheet" th:href="@{/css/components-signatures.css}">
+    <link rel="stylesheet" th:href="@{/css/utilities-overrides.css}">
+    <!-- shell.css — AppShell (sidebar/topbar/mobile-nav). @layer shell. -->
+    <link rel="stylesheet" th:href="@{/css/shell.css}">
+    <!-- pixel-fx — @layer pixel: декор/FX; не трогает skip-link и MCQ-grid. -->
+    <link rel="stylesheet" th:href="@{/css/pixel-fx.css}">
+    <link rel="stylesheet" th:href="@{/css/pixel/sprite-anim.css}">
+    <!-- OPS-005: highlight.js 11.9.0 self-hosted. -->
+    <link rel="stylesheet" th:href="@{/vendor/hljs/styles/atom-one-dark.min.css}">
+    <!-- defer: highlight.js — DOMContentLoaded ниже и app-entry на AJAX-контенте. -->
+    <script defer th:src="@{/vendor/hljs/highlight.min.js}" th:attr="nonce=${cspNonce}"></script>
+    <script th:attr="nonce=${cspNonce}">
         document.addEventListener('DOMContentLoaded', function() {
             // Guard: hljs может не подгрузиться (CSP, offline) — оставляем код без подсветки, без падения.
             if (typeof hljs === 'undefined') return;
@@ -314,26 +190,14 @@
         });
     </script>
     <th:block th:if="${includeMermaid}">
-        <!-- mermaid НЕ deferим (mermaid-init вызывает initialize() инлайн во время
-             парсинга, и рендерит .mermaid-блоки в DOMContentLoaded). Exact-pin
-             11.12.0 (= то, что отдавал диапазон @11) + SRI. securityLevel задаёт
-             mermaid-init: 'antiscript' (round-01 C21). -->
-        <script src="https://cdn.jsdelivr.net/npm/mermaid@11.12.0/dist/mermaid.min.js"
-                integrity="sha512-5TKaYvhenABhlGIKSxAWLFJBZCSQw7HTV7aL1dJcBokM/+3PNtfgJFlv8E6Us/B1VMlQ4u8sPzjudL9TEQ06ww=="
-                crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <!-- mermaid 11.12.0 self-hosted (OPS-005). НЕ deferим: mermaid-renderer.js
+             инициализирует во время парсинга. securityLevel: 'antiscript'. -->
+        <script th:src="@{/vendor/mermaid/mermaid.min.js}" th:attr="nonce=${cspNonce}"></script>
         <script th:replace="~{fragments/mermaid-init :: mermaid-init}"></script>
     </th:block>
     <th:block th:if="${includeChart}">
-        <!-- Exact-pin 4.5.0 UMD-min (раньше был unversioned /npm/chart.js = latest:
-             авто-обновлялся, мог сломать графики без предупреждения) + SRI.
-             chart.umd.min.js экспортит глобал Chart, который зовёт stats.js.
-             defer: stats.js — end-of-body, инициализирует графики в DOMContentLoaded
-             (typeof Chart-guard). defer-скрипт исполняется после парсинга, но ДО
-             DOMContentLoaded → Chart готов к initCharts(), а первый рендер /stats
-             больше не блокируется загрузкой Chart.js (был render-blocking). -->
-        <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"
-                integrity="sha512-Y51n9mtKTVBh3Jbx5pZSJNDDMyY+yGe77DGtBPzRlgsf/YLCh13kSZ3JmfHGzYFCmOndraf0sQgfM654b7dJ3w=="
-                crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <!-- chart.js 4.5.0 UMD self-hosted (OPS-005). defer → Chart готов до DOMContentLoaded. -->
+        <script defer th:src="@{/vendor/chart/chart.umd.min.js}" th:attr="nonce=${cspNonce}"></script>
     </th:block>
 </head>
 </html>

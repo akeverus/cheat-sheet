@@ -2,7 +2,7 @@
    tokens.css — TOKEN-DEFINITION LAYER.
    --------------------------------------------------------------------------
    Этот файл ОПРЕДЕЛЯЕТ все дизайн-токены; base.css / shell.css их только
-   ПОТРЕБЛЯЮТ (var(--token)) и никогда не определяют. Грузится ПЕРЕД base.css
+   ПОТРЕБЛЯЮТ (var(--token)) и никогда не определяют. Cascade: @layer tokens (см. head.html). Грузится ПЕРЕД structural CSS
    (токены до структуры) — порядок задаётся в fragments/head.html.
 
    Палитра (РЕДИЗАЙН 2026-07-18, ui-redesign-handoff.zip): «терминальная»
@@ -28,6 +28,9 @@
    удаляются на Этапе 10 финализации редизайна; пока оставлены рабочими.
    ========================================================================== */
 
+@layer tokens, reset, shell, components, pages, utilities, pixel;
+
+@layer tokens {
 :root {
   /* Схема для нативного хрома (scrollbar, <select>, каретка). База — DARK
      (реставр 2026-07-18: макеты handoff-3 все тёмные, dark — дефолт по решению
@@ -142,7 +145,7 @@
   /* ---- Структурные shell-токены (ТОЧНО из prototype/styles.css handoff-3) ---- */
   --sidebar-width:     220px;  /* .shell grid-template-columns: 220px 1fr */
   --content-max:       1220px; /* .content max-width */
-  --header-height:     64px;   /* .topbar height (mobile 54px) */
+  --header-height:     64px;   /* .topbar height (mobile-header 44px) */
   --mobile-nav-height: 64px;   /* .mobile-nav height */
 
   /* Радиусы (макеты handoff-3: sm8 / md12 / lg18; xl24 — для крупных карт). */
@@ -176,6 +179,36 @@
   --z-overlay: 40;
   --z-modal: 100;
   --z-toast: 1000;
+
+  /* ---- Kit aliases (Wave 4–7, cheat-sheet-complete-redesign-kit) ----
+     Короткие имена из kit tokens.css / tokens.json → существующие семантические
+     --color-* и layout-токены Instrument (teal-направление сохранено). */
+  --color-bg900: var(--color-bg-primary);
+  --color-bg800: var(--color-bg-secondary);
+  --color-bg700: var(--color-bg-tertiary);
+  --color-surface: var(--color-bg-secondary);
+  --color-border: var(--color-border-primary);
+  --color-text: var(--color-text-primary);
+  --color-muted: var(--color-text-secondary);
+  --color-teal: var(--color-accent-primary);
+  --color-cyan: var(--color-status-info);
+  --color-green: var(--color-status-success);
+  --color-amber: var(--color-accent-secondary);
+  --color-orange: var(--color-status-warning);
+  --color-red: var(--color-status-error);
+  --color-purple: var(--color-status-purple);
+  --color-blue: var(--color-status-info);
+  --color-white: var(--color-bg-secondary);
+  --color-ink: var(--color-accent-on);
+  --radius-sm: var(--border-radius-sm);
+  --radius-md: var(--border-radius-md);
+  --radius-lg: var(--border-radius-lg);
+  --radius-xl: var(--border-radius-xl);
+  --font-body: var(--font-family-body);
+  --font-mono: var(--font-family-mono);
+  --motion-fast: var(--duration-fast);
+  --motion-normal: var(--duration-normal);
+  --motion-slow: var(--duration-slow);
 }
 
 /* ===========================================================================
@@ -268,4 +301,6 @@ html[data-density="compact"] {
   --space-10: 5.5rem;
   --space-11: 8rem;
   --space-12: 11rem;
+}
+
 }

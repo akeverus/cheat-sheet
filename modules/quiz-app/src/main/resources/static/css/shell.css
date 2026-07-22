@@ -1,3 +1,4 @@
+@layer shell {
 /* =============================================================================
    shell.css — КАРКАС РЕДИЗАЙНА (ui-redesign-handoff).
    --------------------------------------------------------------------------
@@ -35,22 +36,8 @@ html[data-design] .icon {
   vertical-align: middle;
 }
 
-/* Skip-link: виден только при фокусе клавиатурой. */
-html[data-design] .skip-link {
-  position: absolute;
-  left: -9999px;
-  top: 0;
-  z-index: var(--z-toast);
-}
-html[data-design] .skip-link:focus {
-  left: 12px;
-  top: 12px;
-  padding: 10px 14px;
-  background: var(--color-accent-primary);
-  color: var(--color-accent-on);
-  border-radius: var(--border-radius-sm);
-  font-weight: var(--font-weight-bold);
-}
+/* Skip-link: канон в reset-layout.css (transform off-screen → :focus on-screen).
+   Здесь НЕ дублируем left:-9999 — иначе конфликтуют два паттерна скрытия. */
 
 /* ---- App grid ---------------------------------------------------------- */
 html[data-design] .app {
@@ -191,7 +178,12 @@ html[data-design] .progress-mini > span {
   background: var(--color-accent-primary);
   transition: width var(--duration-slow) var(--easing-out);
 }
-html[data-design] .top-actions { display: flex; gap: 8px; }
+html[data-design] .top-actions { display: flex; gap: 8px; align-items: center; }
+html[data-design] .topbar-logout,
+html[data-design] .sidebar-logout {
+  margin: 0;
+  display: contents;
+}
 html[data-design] .icon-button {
   width: 38px;
   height: 38px;
@@ -467,16 +459,22 @@ html[data-design] .brand:focus-visible {
    bottom-nav (safe-area). Контент — узкий паддинг.
    ========================================================================== */
 @media (max-width: 900px) {
-  html[data-design] body { padding-bottom: var(--mobile-nav-height); }
+  /* nav height + safe-area: у .mobile-nav высота = --mobile-nav-height, плюс
+     padding-bottom: env(safe-area-inset-bottom) — иначе низ метрик/кнопок
+     остаётся под таббаром (live UI: /stats cards clipped). */
+  html[data-design] body {
+    padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-4));
+  }
   html[data-design] .app { display: block; }
   html[data-design] .sidebar,
   html[data-design] .topbar { display: none; }
+  /* P1.5: компактный mobile-header — меньше высота/бренд/иконки. */
   html[data-design] .mobile-header {
-    height: 54px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 16px;
+    padding: 0 12px;
     border-bottom: 1px solid var(--color-border-secondary);
     position: sticky;
     top: 0;
@@ -486,21 +484,43 @@ html[data-design] .brand:focus-visible {
   html[data-design] .mobile-header .brand {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     padding: 0;
-    font-weight: 750;
+    font-size: 0.92rem;
+    font-weight: 700;
     color: var(--color-text-primary);
     text-decoration: none;
+  }
+  html[data-design] .mobile-header .avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+  }
+  html[data-design] .mobile-header .avatar img {
+    width: 22px;
+    height: 22px;
+    display: block;
+  }
+  html[data-design] .mobile-header .icon-button {
+    width: 32px;
+    height: 32px;
+  }
+  html[data-design] .mobile-header .icon {
+    width: 16px;
+    height: 16px;
   }
   html[data-design] .content { padding: 14px; }
   html[data-design] .mobile-nav {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     height: var(--mobile-nav-height);
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
+    width: 100%;
+    max-width: 100vw;
+    box-sizing: border-box;
     z-index: var(--z-overlay);
     background: var(--color-bg-secondary);
     border-top: 1px solid var(--color-border-secondary);
@@ -512,12 +532,21 @@ html[data-design] .brand:focus-visible {
     display: grid;
     place-items: center;
     align-content: center;
-    gap: 3px;
+    gap: 2px;
     font-size: 9px;
+    min-width: 0;
+    overflow: hidden;
   }
   html[data-design] .mobile-nav a.active { color: var(--color-accent-strong); }
-  html[data-design] .mobile-nav .icon { width: 17px; height: 17px; }
-  html[data-design] .page-title { font-size: 28px; }
+  html[data-design] .mobile-nav .icon { width: 16px; height: 16px; }
+  /* P1.6: компактные заголовки stats/settings/summary на узких экранах. */
+  html[data-design] .page-title,
+  html[data-design] .stats-title,
+  html[data-design] .builder-title,
+  html[data-design] .summary-page .summary-section-title {
+    font-size: clamp(1.1rem, 4.2vw, 1.4rem);
+    line-height: 1.2;
+  }
 }
 
 /* ===========================================================================
@@ -817,7 +846,7 @@ html[data-design] .builder-section-title {
   border-bottom: var(--rule-weight) solid var(--color-border-secondary);
 }
 
-/* Предпросмотр набора: две метрики в ряд, значения — mono. Значения ставит app.js. */
+/* Предпросмотр набора: метрики в ряд, значения — mono. Значения ставит app.js. */
 html[data-design] .session-preview {
   display: flex;
   flex-wrap: wrap;
@@ -832,6 +861,10 @@ html[data-design] .session-preview .preview-metric {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  min-width: 0;
+}
+html[data-design] .session-preview .preview-filters-metric {
+  flex: 1 1 100%;
 }
 html[data-design] .session-preview .preview-label {
   font-size: var(--font-size-xs);
@@ -844,6 +877,65 @@ html[data-design] .session-preview .preview-value {
   font-size: var(--font-size-md);
   color: var(--color-text-primary);
   font-variant-numeric: tabular-nums;
+}
+html[data-design] .builder-start-cta {
+  width: 100%;
+  justify-content: center;
+  min-height: 48px;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Filter chips (settings охват): checkbox → chip с опциональным счётчиком. */
+html[data-design] .settings-page .filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+html[data-design] .settings-page .filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  margin: 0;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--border-radius-full);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--duration-fast) var(--easing-default),
+              border-color var(--duration-fast) var(--easing-default),
+              color var(--duration-fast) var(--easing-default);
+}
+html[data-design] .settings-page .filter-chip:has(input:checked) {
+  background: color-mix(in srgb, var(--color-accent-primary) 16%, var(--color-bg-secondary));
+  border-color: var(--color-accent-primary);
+  color: var(--color-text-primary);
+}
+html[data-design] .settings-page .filter-chip input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+html[data-design] .settings-page .filter-chip-count {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-tertiary);
+  background: var(--color-surface-soft);
+  border-radius: var(--border-radius-full);
+  padding: 1px 7px;
+  min-width: 1.4em;
+  text-align: center;
+}
+html[data-design] .settings-page .filter-chip:has(input:checked) .filter-chip-count {
+  color: var(--color-accent-strong);
 }
 
 /* Правая колонка: карточки-сводки. Значение крупное mono. */
@@ -863,4 +955,6 @@ html[data-design] .builder-card .builder-card-value {
 
 @media (max-width: 900px) {
   html[data-design] .session-builder { grid-template-columns: 1fr; gap: var(--space-6); }
+}
+
 }

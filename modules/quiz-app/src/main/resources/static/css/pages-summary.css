@@ -1,0 +1,303 @@
+/* Wave C split from base.css — @pages layer */
+@layer pages {
+/* ==========================================================================
+   C6 — SESSION SUMMARY / Итоги сессии (editorial). Scoped .summary-page
+   ========================================================================== */
+html[data-design] .summary-page .ed-page { max-width: var(--max-width-reading); }
+
+html[data-design] .summary-page .card {
+  background: var(--color-bg-secondary);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-lg);
+  box-shadow: none; backdrop-filter: none;
+  padding: var(--space-6); margin: 0 0 var(--space-6);
+}
+
+/* Геро-итог */
+html[data-design] .summary-page .summary-score { text-align: center; padding: var(--space-8) var(--space-6); }
+html[data-design] .summary-page .summary-mode-line {
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+  color: var(--color-text-secondary); margin-bottom: var(--space-3);
+  overflow-wrap: break-word;
+}
+html[data-design] .summary-page .summary-hero[data-summary-tone="low"] .score-ring.is-muted {
+  opacity: 0.92;
+}
+html[data-design] .summary-page .summary-hero[data-summary-tone="low"].is-celebrating {
+  animation: none;
+}
+/* Гасим градиент-текст из старого CSS, цвет даём через .text-* */
+html[data-design] .summary-page .summary-score-value {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-4xl); font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight); margin: 0;
+  background: none; -webkit-background-clip: border-box; background-clip: border-box;
+  -webkit-text-fill-color: currentColor; color: var(--color-text-primary);
+}
+html[data-design] .summary-page .summary-score-value.text-success { color: var(--color-status-success); }
+html[data-design] .summary-page .summary-score-value.text-warning { color: var(--color-status-warning); }
+html[data-design] .summary-page .summary-score-value.text-danger { color: var(--color-status-error); }
+html[data-design] .summary-page .summary-score-label {
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+  color: var(--color-text-secondary); margin-top: var(--space-2);
+}
+/* FLOW-SUMMARY-b: краткий actionable-подзаголовок под числом точности */
+html[data-design] .summary-page .summary-headline {
+  font-family: var(--font-family-display); font-size: var(--font-size-lg);
+  color: var(--color-text-primary); margin-top: var(--space-3);
+}
+html[data-design] .summary-page .summary-score .stats-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3);
+  max-width: 460px; margin: var(--space-6) auto 0;
+}
+/* FLOW-03b: с 4-й плиткой «Не знаю» сетка идёт 2×2 на узком экране и 4-в-ряд от
+   560px — repeat(4,1fr) на ~320px распирал бы 4 значения (тот же res, что у
+   базовой repeat(3,1fr) с её min-width:0 на .stat-item). */
+html[data-design] .summary-page .summary-score .stats-grid.has-unknown {
+  grid-template-columns: repeat(2, 1fr);
+}
+@media (min-width: 560px) {
+  html[data-design] .summary-page .summary-score .stats-grid.has-unknown {
+    grid-template-columns: repeat(4, 1fr); max-width: 620px;
+  }
+}
+html[data-design] .summary-page .stat-item {
+  padding: var(--space-3) var(--space-4); border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-md); background: var(--color-bg-primary); text-align: center;
+  /* min-width:0 даёт 1fr-треку ужиматься ниже min-content — иначе на ~320-375px
+     трёхзначные «200»/«100%» (Fraunces xl) распирали карту/страницу вправо.
+     Этого достаточно: repeat(3,1fr) держит 3 ровные колонки до ~300px без
+     переполнения и без переноса лейблов (замерено). Тот же приём, что у
+     .result-page .stat-item. Отдельный узкий @media-override не нужен. */
+  min-width: 0;
+}
+html[data-design] .summary-page .stat-value { font-family: var(--font-family-display); font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); display: block; }
+html[data-design] .summary-page .stat-label { font-family: var(--font-family-mono); font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary); }
+html[data-design] .summary-page .summary-duration { font-family: var(--font-family-mono); font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-top: var(--space-5); }
+
+/* Действия */
+html[data-design] .summary-page .summary-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin: 0 0 var(--space-7); align-items: center; }
+html[data-design] .summary-page .summary-actions .btn {
+  /* C3: дельты к .btn (class="btn next-btn|secondary-btn") — крупнее прочих primary (48px,
+     C8) и не тянуться в ряду; радиус md сохранён как было (specificity бьёт editorial-
+     сигнатуру — отдельный known-smell, фиксить осознанно). Заливка/цвет/рамка/ховер
+     next- и secondary-вариантов — из глобальных .next-btn/.secondary-btn (раньше
+     дословно дублировались здесь). */
+  min-height: 48px; padding: var(--space-3) var(--space-6);
+  flex: 0 0 auto;
+  border-radius: var(--border-radius-md);
+  /* inline-flex+center: типизированные nextActions несут иконку слева от подписи
+     (ed-icon-lead), выравниваем по центру; текстовые кнопки не задеты. */
+  display: inline-flex; align-items: center; justify-content: center;
+}
+/* «Ещё» — низкоэмфазный disclosure, не конкурирует с primary/secondary. */
+html[data-design] .summary-page .summary-more-summary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  background: transparent;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+html[data-design] .summary-page .summary-more-summary:hover {
+  color: var(--color-text-primary);
+}
+html[data-design] .summary-page .summary-more[open] > .summary-more-summary {
+  color: var(--color-text-primary);
+}
+
+/* Заголовки секций */
+html[data-design] .summary-page .summary-section-title {
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary); margin: 0 0 var(--space-4);
+}
+
+/* Таблица результатов по темам. display:block + overflow-x:auto — широкая
+   5-колоночная таблица скроллится ВНУТРИ карточки, а не растягивает страницу
+   на мобиле (тот же приём, что и для markdown-таблиц и stats .topic-table). */
+html[data-design] .summary-page .summary-table { display: block; overflow-x: auto; width: 100%; border-collapse: collapse; font-size: var(--font-size-sm); }
+html[data-design] .summary-page .summary-table th,
+html[data-design] .summary-page .summary-table td { padding: var(--space-3); border-bottom: var(--rule-weight) solid var(--color-border-secondary); text-align: left; vertical-align: middle; }
+html[data-design] .summary-page .summary-table thead th {
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+  color: var(--color-text-secondary); font-weight: var(--font-weight-medium);
+  border-bottom: var(--rule-weight-strong) solid var(--color-border-primary);
+}
+html[data-design] .summary-page .summary-th-center,
+html[data-design] .summary-page .summary-td-center { text-align: center; }
+html[data-design] .summary-page .summary-table td:not(:first-child) { font-variant-numeric: tabular-nums; }
+html[data-design] .summary-page .summary-topic-link { color: var(--color-text-link); text-decoration: none; }
+html[data-design] .summary-page .summary-topic-link:hover { text-decoration: underline; }
+html[data-design] .summary-page .summary-td-correct { color: var(--color-status-success); }
+html[data-design] .summary-page .summary-td-wrong { color: var(--color-status-error); }
+html[data-design] .summary-page .text-success { color: var(--color-status-success); }
+html[data-design] .summary-page .text-warning { color: var(--color-status-warning); }
+html[data-design] .summary-page .text-danger { color: var(--color-status-error); }
+
+/* Ошибки */
+html[data-design] .summary-page .summary-mistakes-hint { color: var(--color-text-secondary); font-size: var(--font-size-sm); margin: 0 0 var(--space-4); }
+html[data-design] .summary-page .summary-mistakes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+html[data-design] .summary-page .summary-mistake-item {
+  display: block; padding: var(--space-4);
+  border: var(--rule-weight) solid var(--color-border-secondary); border-radius: var(--border-radius-md);
+  text-decoration: none; color: inherit;
+  transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
+}
+html[data-design] .summary-page .summary-mistake-item:hover { background: var(--color-bg-tertiary); border-color: var(--color-accent-primary); }
+html[data-design] .summary-page .summary-mistake-question { display: block; color: var(--color-text-primary); margin-bottom: var(--space-2); overflow-wrap: break-word; word-break: break-word; }
+html[data-design] .summary-page .summary-mistake-meta { display: block; font-family: var(--font-family-mono); font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary); }
+
+/* Рекомендации */
+html[data-design] .summary-page .summary-recommendations-list { margin: 0; padding-left: var(--space-5); display: flex; flex-direction: column; gap: var(--space-2); }
+html[data-design] .summary-page .summary-recommendation-item { color: var(--color-text-primary); }
+
+@media (max-width: 600px) {
+  html[data-design] .summary-page .summary-actions .btn { width: 100%; }
+  html[data-design] .summary-page .summary-more { width: 100%; }
+  html[data-design] .summary-page .summary-more-summary { width: 100%; }
+  html[data-design] .summary-page .summary-score-value { font-size: var(--font-size-3xl); }
+}
+
+/* Wave 4–7: один явный primary CTA в блоке «Что дальше» */
+html[data-design] .summary-page .summary-actions .btn.next-btn:first-of-type,
+html[data-design] .summary-page .summary-actions .btn.btn-primary {
+  min-width: 12rem;
+  font-weight: var(--font-weight-semibold);
+  box-shadow: var(--shadow-sm);
+}
+html[data-design] .summary-page .summary-actions .btn.secondary-btn {
+  font-weight: var(--font-weight-medium);
+  opacity: 0.92;
+}
+html[data-design] .summary-page .summary-actions .btn.secondary-btn:hover {
+  opacity: 1;
+}
+
+/* =============================================================================
+   C6-i — Instrument: итоги сессии. CSS-only рестайл СУЩЕСТВУЮЩИХ прод-хуков
+   (DOM session-summary.html не меняется): приподнятые line-карты вместо
+   утопленных, mono-цифры плиток, тихие body-заголовки секций вместо display-xl,
+   строчный mono-шёпот метаданных. Тон-классы точности (.text-success/…)
+   работают сами — instrument переопределяет статус-токены в tokens.css.
+   Двухколоночный грид main+aside и вердикт-headline макета требуют правок
+   шаблона — отложены на шаг 2 Фазы E (см. port-drafts/README, PORT_MAPPING
+   п.32/39). Специфичность равна общему §C6 — блок стоит ПОСЛЕ него. ========= */
+
+/* Карты: instrument держит секции на приподнятой tertiary с полноценной
+   line-границей (кольца/границы вместо теней и утопленных фонов). */
+html[data-design="instrument"] .summary-page .card {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-border-primary);
+}
+
+/* Мета-строка режима: строчный mono-шёпот (подпись instrument), не upper-акцент. */
+html[data-design="instrument"] .summary-page .summary-mode-line {
+  text-transform: lowercase;
+  color: var(--color-text-tertiary);
+}
+
+/* Крупный счёт: Newsreader medium — instrument не кричит болдом. */
+html[data-design="instrument"] .summary-page .summary-score-value {
+  font-weight: var(--font-weight-medium);
+}
+
+/* Плитки метрик: paper-фон под приподнятой картой (инверсия слоёв),
+   цифры — mono с табличными цифрами (плитки читаются как приборная панель). */
+html[data-design="instrument"] .summary-page .stat-item {
+  background: var(--color-bg-primary);
+  border-color: var(--color-border-primary);
+}
+html[data-design="instrument"] .summary-page .stat-value {
+  font-family: var(--font-family-mono);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Заголовки секций: тихий body-семиболд вместо display-xl — иерархию держит
+   контент (таблица/список), а не размер заголовка. */
+html[data-design="instrument"] .summary-page .summary-section-title {
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-md);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+/* Шапка таблицы тем: приглушить до tertiary (5.4:1 AA на light). */
+html[data-design="instrument"] .summary-page .summary-table thead th {
+  color: var(--color-text-tertiary);
+}
+
+/* Карточки ошибок: тот же слой, что секции; hover — paper + акцентная граница
+   (щелчок прибора, не заливка). */
+html[data-design="instrument"] .summary-page .summary-mistake-item {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-border-primary);
+}
+html[data-design="instrument"] .summary-page .summary-mistake-item:hover {
+  background: var(--color-bg-primary);
+  border-color: var(--color-accent-strong);
+}
+
+/* #6 — итоги по темам на мобиле: horizontal-scroll таблица → stacked-карточки
+   (тот же паттерн, что topic-table в аналитике). Каждая строка — карточка: тема-
+   заголовок сверху, метрики строками «ЛЕЙБЛ значение» через data-label. На 375px
+   overflow-x:auto резал колонку «Точность» за краем. Блок стоит ПОСЛЕ десктопных
+   правил .summary-table (C6, выше) — при равной специфичности выигрывает по
+   порядку; иначе десктопные padding/border/text-align перебили бы стопку. */
+@media (max-width: 760px) {
+  html[data-design] .summary-page .summary-table { display: block; overflow-x: visible; }
+  html[data-design] .summary-page .summary-table thead,
+  html[data-design] .summary-page .summary-table tbody,
+  html[data-design] .summary-page .summary-table tr,
+  html[data-design] .summary-page .summary-table th,
+  html[data-design] .summary-page .summary-table td { display: block; }
+  /* thead с подписями клипаем — их несут data-label ячеек. */
+  html[data-design] .summary-page .summary-table thead {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+  }
+  html[data-design] .summary-page .summary-table tbody {
+    display: grid; gap: var(--space-3);
+  }
+  html[data-design] .summary-page .summary-table tbody tr {
+    display: grid; gap: var(--space-2); padding: var(--space-4);
+    border: var(--rule-weight) solid var(--color-border-primary);
+    border-radius: var(--border-radius-md); background: var(--color-bg-primary);
+  }
+  html[data-design] .summary-page .summary-table th,
+  html[data-design] .summary-page .summary-table td {
+    padding: 0; border-bottom: 0; text-align: left;
+  }
+  /* Тема (role=rowheader, первая ячейка) — заголовок карточки с разделителем. */
+  html[data-design] .summary-page .summary-table td[role="rowheader"] {
+    padding-bottom: var(--space-2);
+    border-bottom: var(--rule-weight) solid var(--color-border-secondary);
+  }
+  html[data-design] .summary-page .summary-table td[role="rowheader"] .summary-topic-link {
+    font-weight: var(--font-weight-semibold); overflow-wrap: anywhere;
+  }
+  /* Метрики: «ЛЕЙБЛ  значение» в две колонки, значение прижато вправо. */
+  html[data-design] .summary-page .summary-table td[data-label] {
+    display: grid; grid-template-columns: minmax(90px, 0.42fr) minmax(0, 1fr);
+    gap: var(--space-3); align-items: baseline; text-align: right;
+  }
+  html[data-design] .summary-page .summary-table td[data-label]::before {
+    content: attr(data-label);
+    font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+    letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+    color: var(--color-text-secondary); text-align: left;
+  }
+}
+
+}

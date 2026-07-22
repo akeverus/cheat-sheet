@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru" data-design="instrument" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(title='Вход — Подготовка к собеседованию', includeMermaid=false, includeChart=false)}"></head>
+<body class="login-page">
+<a class="skip-link" href="#main-content">Перейти к форме входа</a>
+<svg th:replace="~{fragments/pixel-sprite :: sprite}"></svg>
+<svg th:replace="~{fragments/icons :: sprite}"></svg>
+<div class="app app-login">
+<main id="main-content" class="ed-page login-main" tabindex="-1">
+    <section class="login-card" aria-labelledby="login-heading">
+        <p class="login-eyebrow">Multi-режим</p>
+        <h1 id="login-heading" class="login-title">Вход</h1>
+        <p class="login-lead muted">Войдите, чтобы сохранять прогресс отдельно от других пользователей.</p>
+
+        <div class="login-alert login-alert-error" role="alert" id="login-error"
+             th:if="${loginError}">
+            Неверный логин или пароль.
+        </div>
+        <div class="login-alert" role="status"
+             th:if="${loginLogout}">
+            Вы вышли из аккаунта.
+        </div>
+
+        <form class="login-form" th:action="@{/login}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <label class="field">
+                <span class="field-label">Логин</span>
+                <input type="text" name="username" autocomplete="username" required autofocus
+                       th:aria-invalid="${loginError}"
+                       th:attr="aria-describedby=${loginError} ? 'login-error' : null">
+            </label>
+            <label class="field">
+                <span class="field-label">Пароль</span>
+                <input type="password" name="password" autocomplete="current-password" required
+                       th:aria-invalid="${loginError}"
+                       th:attr="aria-describedby=${loginError} ? 'login-error' : null">
+            </label>
+            <button type="submit" class="btn next-btn primary-btn login-submit">Войти</button>
+        </form>
+
+        <div class="login-oauth" th:if="${oauthLoginUrl != null}">
+            <p class="login-divider muted tiny" aria-hidden="true">или</p>
+            <a class="btn next-btn login-oauth-btn" th:href="${oauthLoginUrl}"
+               th:text="|Войти через ${oauthDisplayName}|">Войти через OIDC</a>
+        </div>
+
+        <p class="login-hint muted tiny">
+            API-клиенты могут использовать HTTP Basic с теми же учётными данными.
+        </p>
+        <p class="login-back">
+            <a th:href="@{/}" class="btn secondary-btn">На главную</a>
+        </p>
+    </section>
+</main>
+</div>
+<th:block th:replace="~{fragments/shell-scripts :: shell-scripts}"></th:block>
+</body>
+</html>

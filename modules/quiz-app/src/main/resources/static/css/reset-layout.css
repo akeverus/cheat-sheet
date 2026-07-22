@@ -1,0 +1,262 @@
+/* Wave C split from base.css — @reset layer */
+@layer reset {
+
+html[data-design] code,
+html[data-design] kbd,
+html[data-design] samp {
+  font-family: var(--font-family-mono);
+  font-size: 0.92em;
+}
+html[data-design] :not(pre) > code {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+  padding: 0.1em 0.38em;
+  border-radius: var(--border-radius-sm);
+  /* Длинные неразрывные токены (method-chain в `code`, напр.
+     enableStompBrokerRelay(...).setRelay(...) — до 137 симв.) рвут страницу на
+     узких экранах: инлайн-код по умолчанию НЕ переносится. anywhere ломает токен
+     только когда он иначе не влезает в строку — короткие чипы (`O(1)`, `HashMap`)
+     не трогает. Снимает горизонтальный скролл на 375px в вариантах/пояснениях. */
+  overflow-wrap: anywhere;
+}
+/* старый .markdown-content code красит инлайн-код холодным индиго — перебиваем.
+   ВАЖНО: только :not(pre) > code (инлайн). Широкий `.markdown-content code` (без
+   :not(pre)) перекрывал и БЛОЧНЫЙ `pre code.hljs` (специфичность выше, чем у
+   atom-one-dark `.hljs{color:#abb2bf}`), перекрашивая базовый текст подсветки в
+   --color-text-primary. В тёмной теме это светлый цвет (читаемо), но в СВЕТЛОЙ —
+   тёмный (#211C15) поверх тёмного фона hljs (#282c34) → код-блок становился
+   нечитаемым (контраст ~1.1). Оставляем подсветке её собственный базовый цвет. */
+html[data-design] .markdown-content :not(pre) > code { color: var(--color-text-primary); }
+html[data-design] pre {
+  font-family: var(--font-family-mono);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+  padding: var(--space-4);
+  border-radius: var(--border-radius-md);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  overflow-x: auto;
+  line-height: var(--line-height-normal);
+  font-size: var(--font-size-sm);
+}
+
+html[data-design] img,
+html[data-design] svg { max-width: 100%; height: auto; }
+/* Спрайт иконок = только <defs>/<symbol>, не контент. hidden-атрибут на <svg>
+   в Chrome НЕ скрывает (SVG-namespace не наследует HTML-[hidden]) → спрайт
+   рендерился боксом 300×150 = ~159px мёртвого отступа сверху на КАЖДОЙ странице.
+   Зануляем безопасно (НЕ display:none — тот рвёт <use> в части браузеров). */
+html[data-design] svg.icon-sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+html[data-design] hr {
+  border: 0;
+  border-top: var(--rule-weight) solid var(--color-border-primary);
+  margin: var(--space-6) 0;
+}
+
+html[data-design] strong,
+html[data-design] b { font-weight: var(--font-weight-semibold); }
+
+html[data-design] ::selection {
+  background: var(--color-accent-wash);
+  color: var(--color-text-primary);
+}
+
+/* Видимый фокус только для клавиатуры. #4: отдельный --color-focus-ring (сильнее
+   рамки выбора) + отступающий контур (outline-offset) — фокус отличается от
+   выбранного MCQ (flush-рамка + wash) и от action-кнопки (заливка) формой, не
+   только цветом. */
+html[data-design] :focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+html[data-design] :focus:not(:focus-visible) { outline: none; }
+
+/* skip-link — скрыта до фокуса */
+html[data-design] .skip-link {
+  position: absolute;
+  left: var(--space-3);
+  top: var(--space-3);
+  z-index: var(--z-toast);
+  transform: translateY(-150%);
+  background: var(--color-accent-primary);
+  color: var(--color-accent-on);
+  /* 44px touch/click-таргет (WCAG 2.5.5 / конвенция проекта — тогглы, back-to-top,
+     seg-опции тоже 44px). Было 40px: единственный недомерный контрол на всех
+     страницах (замерено live на /, /settings, /stats). inline-flex центрирует
+     текст по вертикали при min-height. Визуально +4px, в фокусе выглядит так же. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--border-radius-md);
+  text-decoration: none;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  transition: transform var(--duration-fast) var(--easing-out);
+}
+html[data-design] .skip-link:focus { transform: translateY(0); }
+/* Цель skip-link — <main id=main-content tabindex=-1>. tabindex=-1 делает <main>
+   программно фокусируемым: без него клавиатурная активация skip-link ПРОКРУЧИВАЛА
+   к контенту, но фокус оставался на ссылке → следующий Tab возвращал в шапку (то,
+   что хотели пропустить) = провал WCAG 2.4.1 Bypass Blocks (замерено live: main.focus()
+   не двигал фокус). Кольцо на целом регионе глушим — это точка приземления навигации,
+   а не интерактивный контрол; визуальный фидбэк = сам скролл к контенту (тот же
+   приём, что .settings-panel:focus / .settings-tab-panel). */
+html[data-design] #main-content:focus,
+html[data-design] #main-content:focus-visible { outline: none; }
+
+html[data-design] .visually-hidden,
+html[data-design] .sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%);
+  white-space: nowrap; border: 0;
+}
+
+/* Управление движением (data-motion на <html>, ставит head.html):
+   - auto (атрибута нет) — уважаем системный prefers-reduced-motion (media ниже);
+   - on  — пользователь ПРИНУДИТЕЛЬНО оставил движение → media-правило его НЕ
+           гасит (селектор :not([data-motion="on"]));
+   - off — пользователь ПРИНУДИТЕЛЬНО убрал движение → отдельный always-on kill-блок,
+           вне media (работает даже когда система движение разрешает).
+   Один и тот же набор «гасящих» деклараций, два пути активации. */
+@media (prefers-reduced-motion: reduce) {
+  html[data-design]:not([data-motion="on"]) { scroll-behavior: auto; }
+  html[data-design]:not([data-motion="on"]) *,
+  html[data-design]:not([data-motion="on"]) *::before,
+  html[data-design]:not([data-motion="on"]) *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+html[data-design][data-motion="off"] { scroll-behavior: auto; }
+html[data-design][data-motion="off"] *,
+html[data-design][data-motion="off"] *::before,
+html[data-design][data-motion="off"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Усиление контраста (OS-настройка «Increase contrast» / «Увеличить контраст» в
+   macOS·iOS·Windows·браузере → prefers-contrast: more). До этого приложение её
+   игнорировало: пользователь явно просит больше контраста, а получал тот же AA.
+   Блок ТОЛЬКО усиливает и срабатывает лишь когда ОС просит → дефолтный рендер
+   нетронут, сдержанные пер-дизайн палитры не конфликтуют. Алиасим блёклые токены
+   на уже определённые (пер-дизайн × пер-тема) более контрастные — один блок
+   покрывает все 10 дизайнов и обе темы, остаётся theme-correct (не хардкодим цвет).
+   Парный к prefers-reduced-motion выше: ещё один OS-pref, который теперь уважаем. */
+@media (prefers-contrast: more) {
+  /* !important обязателен: токены задаются пер-дизайн×пер-тема селекторами вида
+     html[data-design="x"][data-theme="dark"] (специфичность 0,2,1) — они бьют
+     обобщённый html[data-design] (0,1,1) по специфичности, и без !important
+     наш override молча не сработал бы в тёмной теме (проверено live). Тот же
+     приём, что в блоке prefers-reduced-motion выше — это OS-pref-перебивка. */
+  html[data-design] {
+    --color-text-tertiary:    var(--color-text-secondary) !important; /* блёклые маркеры/лейблы → как вторичный текст */
+    --color-border-primary:   var(--color-text-secondary) !important; /* hairline-рамки/shadow-ring → отчётливо видимы */
+    --color-border-secondary: var(--color-text-secondary) !important;
+  }
+  /* Кольцо фокуса заметно толще (цвет --color-border-focus уже ≥3:1, не трогаем) */
+  html[data-design] :focus-visible {
+    outline-width: 3px !important;
+    outline-offset: 3px !important;
+  }
+  /* Все ссылки подчёркнуты, не только прозовые: убираем опору на цвет/контекст.
+     .btn-ссылки (кнопки-as-<a>) исключаем — подчёркивание кнопки выглядит чужеродно. */
+  html[data-design] a:not(.btn) { text-decoration: underline !important; }
+}
+
+/* Windows High Contrast / forced-colors: active (CSS MQ5) — браузер заменяет
+   авторские цвета системными и УБИРАЕТ box-shadow. Парный к prefers-contrast выше:
+   ещё один OS-pref, который теперь уважаем. Без блока: (1) фокус-кольца
+   .settings-tab/.seg-btn/селектов — box-shadow-only (outline:none) → в High Contrast
+   невидимы; возвращаем системный outline (Highlight — системный цвет, не стрипается).
+   (2) активный сегмент .seg-btn.is-active помечен ТОЛЬКО фоном accent → перетирается
+   системным цветом, выбранный дизайн/тема/раскладка неразличимы; кодируем системной
+   парой Highlight/HighlightText (гарантированный контраст). !important — как в
+   prefers-contrast: бьём более поздние по источнику не-!important правила
+   (outline:none на 1167/1249/1484/2577, background accent на 2574). */
+@media (forced-colors: active) {
+  html[data-design] .settings-page .settings-tab:focus-visible,
+  html[data-design] .settings-page select:focus,
+  html[data-design] .settings-page input[type="number"]:focus,
+  html[data-design] .stats-page select:focus,
+  html[data-design] .stats-page input:focus,
+  html[data-design] .seg-btn:focus-visible {
+    outline: 2px solid Highlight !important; outline-offset: 2px !important;
+  }
+  html[data-design] .seg-btn.is-active {
+    background: Highlight !important; color: HighlightText !important;
+  }
+  /* (3) Выбранный MCQ-вариант: нативный radio спрятан (sr-only, L784), состояние
+     кодируется ТОЛЬКО цветом (border/wash/бейдж accent) → в HC все рамки одинаково
+     CanvasText, фоны — Canvas: выбранное неотличимо. Критично — это ДО-ответный
+     основной интеракшн. Бейдж-буква и рамка — системной парой (как seg-btn). */
+  html[data-design] #interview-options label:has(input:checked) {
+    border-color: Highlight !important;
+  }
+  html[data-design] #interview-options label:has(input:checked)::before {
+    background: Highlight !important; border-color: Highlight !important;
+    color: HighlightText !important;
+  }
+  /* (4) Той же болезнью — выбранная confidence-кнопка (.selected = border+wash). */
+  html[data-design] .confidence-btn.selected {
+    background: Highlight !important; color: HighlightText !important;
+    border-color: Highlight !important;
+  }
+  /* (5) Прогресс сессии: track и fill — чистые background'ы без рамок → в HC оба
+     принудительно Canvas, полоса исчезает целиком (текст «N/M» рядом остаётся,
+     но видимый индикатор терять незачем). Track очерчиваем, fill — системным. */
+  html[data-design] .session-progress-track { border: 1px solid CanvasText; }
+  html[data-design] .session-progress-fill { background: Highlight !important; }
+}
+
+/* prefers-reduced-transparency: reduce (CSS MQ5) — OS-настройка «Уменьшить
+   прозрачность». Единственная значимая полупрозрачность — скрим модалок
+   (--color-surface-overlay, alpha до 0.32 в superhuman/stripe): сквозь него видна
+   страница за диалогом, что эта настройка просит убрать. Делаем скрим практически
+   непрозрачным. Декоративные *-wash/тени/фокус-кольца не трогаем — они не заслоняют
+   контент. !important — пер-дизайн×тема токены (0,2,1)/(0,3,1) бьют обобщённый
+   html[data-design] (0,1,1), как и в prefers-contrast. Парный к OS-prefs выше. */
+@media (prefers-reduced-transparency: reduce) {
+  html[data-design] { --color-surface-overlay: rgba(0, 0, 0, 0.95) !important; }
+}
+
+/* ===========================================================================
+   ПРИМИТИВЫ ВЁРСТКИ (ed-*) — стилизуются глобально (новые имена, без коллизий
+   со старым styles.css). Используются и в shell, и в страницах.
+   ========================================================================== */
+.ed-page {
+  max-width: var(--max-width-page);
+  margin: 0 auto;
+  padding: var(--space-6) var(--page-gutter) var(--space-9);
+}
+
+/* Шапка (chrome) — ОДНА ширина на всех страницах (--max-width-page, дефолт 75rem):
+   при навигации хедер не прыгает по ширине, бренд-тайтл (≈665px) всегда умещается
+   с навигацией в один ряд (на узкой 60rem-мере он переносил nav на 2-ю строку —
+   выглядело незавершённо). Ширину КОНТЕНТА держим уже и per-page — через
+   --max-width-focus/-reading/-result/-settings/-data на самих слоях страниц
+   (см. tokens.css + .focus-training/.app-layout/.main-content). Контент центрирован
+   под шапкой: фокус-квиз узкий и собранный, дашборд — во всю меру страницы. */
+
+/* Eyebrow — mono caps подпись (FOCUS, Q14/50, лейблы) */
+.ed-eyebrow {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+/* Примечание: библиотека ed-* примитивов (.ed-btn/.ed-field/.ed-chip/.ed-stack/…)
+   удалена как мёртвая — шаблоны её не используют. Реальные кнопки/поля стилизуются
+   по своим классам ниже; :active press-feedback перенесён туда (см. .btn:active). */
+
+}

@@ -1,0 +1,612 @@
+/* Wave C split from base.css — @pages layer */
+@layer pages {
+/* =============================================================================
+   C3 — Результат ответа (.result-page, no-JS полностраничный POST /answer).
+   Делит карточку вопроса с фокусом, но через .result-page-скоуп (фокус-правила
+   привязаны к #interview-options/.focus-page). Старый styles.css тянет холодный
+   navy/лаванду — приводим к editorial тёплой палитре. Состояния вариантов
+   (.option-correct/.option-wrong/.explanation-*) уже глобальные — не дублируем. */
+html[data-design] .result-page .ed-page { max-width: var(--max-width-result); }
+
+/* Карточки — тёплые плоские панели (гасим navy-border + cold shadow). */
+html[data-design] .result-page .card {
+  background: var(--color-bg-secondary);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-lg); box-shadow: none;
+  padding: var(--space-6);
+}
+
+/* Верхняя строка: stats-grid + session-bar — слим editorial-полоса. */
+html[data-design] .result-page .top-row { display: flex; flex-wrap: wrap; align-items: stretch; gap: var(--space-4); margin-bottom: var(--space-5); }
+html[data-design] .result-page .top-row > * { flex: 1 1 320px; min-width: 0; }
+html[data-design] .result-page .top-row .card { padding: var(--space-4) var(--space-5); }
+/* Слим-полоса прогресса: 6 ячеек в один ряд, разделённые border-right у .stat-item.
+   Без display:grid .stats-grid падал в block → 6 ячеек вставали столбиком, и
+   карточка вытягивалась до ~470px вместо тонкой editorial-полосы (latent-баг:
+   .stat-item был стилизован под горизонтальный ряд, но раскладку не задавали). */
+html[data-design] .result-page .stats-grid {
+  display: grid; grid-template-columns: repeat(6, 1fr); align-items: center;
+}
+html[data-design] .result-page .stat-item {
+  min-width: 0;
+  background: transparent; border: 0; border-right: var(--rule-weight) solid var(--color-border-secondary);
+  padding: 0 var(--space-4); text-align: center;
+}
+html[data-design] .result-page .stat-item:last-child { border-right: 0; }
+html[data-design] .result-page .stat-value { font-family: var(--font-family-display); font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); }
+html[data-design] .result-page .stat-label { font-family: var(--font-family-mono); font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary); }
+html[data-design] .result-page .session-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4);
+  font-family: var(--font-family-mono); font-size: var(--font-size-sm); color: var(--color-text-secondary);
+}
+html[data-design] .result-page .session-bar strong { color: var(--color-text-primary); }
+/* .btn-finish: старый styles.css даёт white-on-white (невидимо на light) — чиним. */
+html[data-design] .result-page .btn-finish {
+  display: inline-flex; align-items: center; min-height: 44px; padding: var(--space-1) var(--space-4); touch-action: manipulation;
+  font-family: var(--font-family-body); font-size: var(--font-size-sm); font-weight: var(--font-weight-medium);
+  background: transparent; color: var(--color-status-error);
+  border: var(--rule-weight) solid var(--color-status-error); border-radius: 0; /* B5: danger-утилитарная → плоская */
+  cursor: pointer; box-shadow: none; transition: background var(--duration-fast) var(--easing-default);
+}
+html[data-design] .result-page .btn-finish:hover { background: var(--color-status-error-wash); }
+
+/* Заголовок вопроса */
+html[data-design] .result-page .question-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
+html[data-design] .result-page .question-header h2 {
+  font-family: var(--font-family-display); font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-2xl); line-height: var(--line-height-tight);
+  color: var(--color-text-primary); margin: 0; flex: 1 1 60%; min-width: 0; overflow-wrap: break-word; text-wrap: balance;
+}
+/* Инлайн-код в ТЕКСТЕ ВОПРОСА (display-заголовки + титулы-ссылки) — без «чипа».
+   Глобальный :not(pre) > code даёт beige-бокс с em-паддингом: в 48px Fraunces-
+   заголовке это 44px моно в бежевой плашке, доминирует над display-типографикой
+   и распирает заголовок (см. `O(1)?`). Оставляем моноширинный шрифт, но прозрачный
+   фон, без паддинга и чуть мельче — код читается как код, не ломая элегантность
+   заголовка. В тексте ВАРИАНТОВ (body-проза) чип ОСТАВЛЯЕМ — там он читается. */
+html[data-design] .focus-question code,
+html[data-design] .result-page .question-header h2 code,
+html[data-design] .related-question-item code,
+html[data-design] .summary-mistake-question code,
+html[data-design] .search-question code {
+  background: transparent;
+  padding: 0;
+  font-size: 0.84em;
+  font-weight: inherit;
+  color: inherit;
+}
+/* Инлайн-`code` в ТЕКСТЕ ВАРИАНТА ответа — честность важнее «чипа» (AF-5).
+   Глобальный :not(pre) > code даёт залитый beige-бокс. Если правильный вариант
+   несёт `code` (а в технических MCQ верный термин ЧАСТО в бэктиках), залитая
+   плашка «выпрыгивает» и подсвечивает correct ещё ДО проверки — UI усиливает
+   контентный перекос (задача UI — НЕ усиливать). Гасим ТОЛЬКО заливку/паддинг в
+   тексте выбора (моноширинный шрифт остаётся — код читается формой, не плашкой;
+   color: inherit → ноль цвет-сдвига, максимально нейтрально между вариантами).
+   Прицел узкий: `.options label code` (фокус, до проверки — критичный кейс) и
+   прямой текст-span результата — НЕ трогаем `.option-explanation` (там проза,
+   чип помогает читать) и не переопределяем overflow-wrap (long-token guard цел). */
+html[data-design] .options label code,
+html[data-design] .options > [role="listitem"] > span code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
+html[data-design] .result-page .question-meta { display: inline-flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+html[data-design] .result-page .topic-badge {
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+  color: var(--color-text-secondary); background: transparent;
+  border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-full);
+  padding: 0.25em 0.75em;
+  /* Капсула (radius-full) держим в одну строку: при длинном топике (напр.
+     «AUTHENTICATION AUTHORIZATION PATTERNS») на 320-375px текст переносился на 2
+     строки ВНУТРИ пилюли и полукруглые торцы деформировались. nowrap + flex-wrap
+     родителя уводят весь бейдж на свою строку; ellipsis — страховка на самом узком. */
+  white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+}
+html[data-design] .result-page .btn-favorite {
+  background: transparent; border: 0; color: var(--color-text-tertiary); cursor: pointer;
+  font-size: var(--font-size-md); line-height: 1; padding: var(--space-1);
+  min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;
+  /* Тот же fade, что у всех hover-меняющих-цвет контролов (a:145, back-to-top,
+     code-copy) — иначе она была единственной, кто РЕЗКО переключал цвет
+     на hover/.active среди визуально идентичных соседей. --duration-fast→0ms под
+     reduced-motion/data-motion=off, так что fade гаснет автоматически. */
+  transition: color var(--duration-fast) var(--easing-default);
+}
+html[data-design] .result-page .btn-favorite.active { color: var(--color-accent-primary); }
+/* Hover-аффорданс: иконка-кнопка избранного сидела статичным
+   tertiary-серым без :hover — единственный интерактивный контрол без pre-click
+   сигнала (tap-highlight убран глобально, :active добавлен выше). Темним до
+   primary-чернил на hover; :not(.active) не трогает акцент активной звезды. */
+html[data-design] .result-page .btn-favorite:hover:not(.active) { color: var(--color-text-primary); }
+
+/* Вердикт. SVG-иконка (circle-check/x) в статус-цвете + слово несут смысл
+   (не только цвет — слово «Верно»/«Неверно» дублирует для дальтоников). */
+html[data-design] .result-page .status {
+  font-family: var(--font-family-display); font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-xl); color: var(--color-text-primary);
+  /* Тот же вертикальный ритм (space-5 над/под линией), что у .question-main h3 ниже,
+     чтобы два секционных разделителя в одной карте стояли на общей сетке. Иерархию
+     «вердикт громче пояснения» несёт цвет линии (primary ↔ secondary) и размер xl. */
+  margin: var(--space-5) 0 0; padding-top: var(--space-5);
+  border-top: var(--rule-weight) solid var(--color-border-primary);
+}
+/* Семантический цвет вердикта в no-JS фоллбэке (/answer без JS): иконка уже
+   красится через .ed-icon-success/error, но само слово «Верно!/Неверно» сидело
+   нейтральным --color-text-primary — единственный пост-ответный сигнал нёс только
+   мелкий значок. Красим слово статус-чернилами, как делает primary JS-флоу для
+   .result-correct/.result-wrong > strong (см. ~844). Тона restrained (forest/brick),
+   AA-проверены — честно, без наказывающего alarm-red. .status.status-* = (0,4,1),
+   перебивает базовое .result-page .status (0,3,1). */
+html[data-design] .result-page .status.status-correct { color: var(--color-status-success); }
+html[data-design] .result-page .status.status-wrong { color: var(--color-status-error); }
+
+/* Варианты-результат (.options[role=list], элементы — div[role=listitem],
+   без #interview-options-маркера). */
+html[data-design] .result-page .options { display: flex; flex-direction: column; gap: var(--space-3); max-width: var(--max-width-options); margin-top: var(--space-5); }
+html[data-design] .result-page .options > div {
+  display: block; padding: var(--space-4);
+  border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-md);
+  background: var(--color-bg-primary); color: var(--color-text-primary);
+  font-size: var(--font-size-md); box-shadow: none;
+  min-width: 0; overflow-wrap: break-word; word-break: break-word;
+}
+/* option-other = невыбранный неправильный вариант ПОСЛЕ проверки. Un-scope из
+   `.result-page` (тот же паритет-фикс, что у `.option-status-label` ниже): app.js
+   на focus-page ТОЖЕ вешает `.option-other` — когда у варианта есть пояснение, он
+   снимает `.option-dimmed` (0.55) и ставит `.option-other`. Без общего правила на
+   focus-page вариант прыгал обратно на полную непрозрачность 1.0 → наличие
+   пояснения делало неверный вариант ЗАМЕТНЕЕ (назад к шуму, ломает иерархию
+   «вот правильный / вот твой выбор»). 0.85: с контентом-пояснением чуть читаемее
+   пустого `.option-dimmed` 0.55, но всё равно рецессивно к correct/your-wrong
+   (1.0 + цвет-wash). result.html (no-JS) поведение не меняется — там и было 0.85. */
+html[data-design] .option-other { opacity: 0.85; }
+/* Чип статуса варианта — ОБЩИЙ для result.html (no-JS фоллбэк) и JS-флоу focus-
+   страницы (app.js инжектит те же классы option-status-*). Раньше визуальные правила
+   (mono / рамка / капс) жили только под .result-page → на focus-page чип оставался
+   голым текстом без рамки, а .option-status-muted не имел НИ ОДНОГО правила (критика
+   round-01 B4). Сняли .result-page-скоуп — один источник стиля для обоих путей. */
+html[data-design] .option-status-label {
+  display: inline-block; margin-top: var(--space-2);
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+  padding: 0.15em var(--space-2); border-radius: var(--border-radius-sm); background: transparent;
+}
+html[data-design] .option-status-correct { color: var(--color-status-success); border: var(--rule-weight) solid var(--color-status-success); }
+html[data-design] .option-status-selected { color: var(--color-status-error); border: var(--rule-weight) solid var(--color-status-error); }
+/* muted — невыбранный неправильный вариант (только JS-флоу focus, текст «Не выбран»):
+   нейтральная рамка/текст, без статус-цвета (это не «правильный» и не «твой выбор»). */
+html[data-design] .option-status-muted { color: var(--color-text-tertiary); border: var(--rule-weight) solid var(--color-border-secondary); }
+
+/* «📖 Пояснение» */
+html[data-design] .result-page .question-main h3 {
+  font-family: var(--font-family-display); font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-lg); color: var(--color-text-primary);
+  margin: var(--space-5) 0 var(--space-3); padding-top: var(--space-5);
+  border-top: var(--rule-weight) solid var(--color-border-secondary);
+}
+
+/* SM-2 details — как dev-панель ошибки */
+html[data-design] .result-page .sm2-details {
+  border: var(--rule-weight) solid var(--color-border-secondary); border-radius: var(--border-radius-md);
+  background: var(--color-bg-primary); margin-top: var(--space-5);
+}
+html[data-design] .result-page .sm2-details summary {
+  cursor: pointer; padding: var(--space-3) var(--space-4); list-style: none;
+  font-family: var(--font-family-mono); font-size: var(--font-size-sm); color: var(--color-text-secondary);
+}
+html[data-design] .result-page .sm2-details summary::-webkit-details-marker { display: none; }
+html[data-design] .result-page .sm2-details summary::before { content: "▸ "; color: var(--color-text-tertiary); }
+html[data-design] .result-page .sm2-details[open] summary::before { content: "▾ "; }
+html[data-design] .result-page .sm2-grid {
+  display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-4);
+  margin: 0; padding: var(--space-4); border-top: var(--rule-weight) solid var(--color-border-secondary);
+}
+html[data-design] .result-page .sm2-grid dt { font-family: var(--font-family-mono); font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-tertiary); margin: 0; }
+html[data-design] .result-page .sm2-grid dd { margin: 0; font-size: var(--font-size-sm); color: var(--color-text-primary); }
+
+/* ===========================================================================
+   UX-13 — иерархия пост-разбора (Wave 4–7, content-first):
+   вердикт → правильный ответ → ключевое отличие → пояснение → XP/интервал.
+   Общий scope: JS #result-feedback и no-JS result.html.
+   =========================================================================== */
+html[data-design] .feedback-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+html[data-design] .feedback-verdict { order: 1; }
+html[data-design] .feedback-correct-answer { order: 2; margin-top: var(--space-3); }
+html[data-design] .feedback-key-difference { order: 3; }
+html[data-design] .feedback-explanation { order: 4; }
+html[data-design] .feedback-flow > .distractor-panel { order: 5; }
+html[data-design] .feedback-meta {
+  order: 6;
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: var(--rule-weight) solid var(--color-border-secondary);
+}
+html[data-design] .feedback-meta .result-xp {
+  display: inline-block;
+  margin-bottom: var(--space-2);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-accent-secondary);
+}
+html[data-design] .feedback-block-eyebrow {
+  display: block;
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-2);
+}
+html[data-design] .feedback-correct-answer-line {
+  margin: 0;
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+}
+html[data-design] .feedback-option-letter {
+  font-family: var(--font-family-mono);
+  color: var(--color-status-success);
+}
+
+/* Краткий лид — первый абзац разбора, показан сразу под вердиктом (.explain макета) */
+html[data-design] .result-lead { margin-top: var(--space-3); }
+html[data-design] .result-lead > :last-child { margin-bottom: 0; }
+
+/* «Подробнее» — раскрытие глубокого разбора */
+html[data-design] .result-detail-disclosure {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: var(--rule-weight) solid var(--color-border-secondary);
+}
+html[data-design] .result-detail-summary {
+  cursor: pointer; list-style: none;
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  font-family: var(--font-family-mono); font-size: var(--font-size-sm);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+html[data-design] .result-detail-summary:hover { color: var(--color-text-primary); }
+html[data-design] .result-detail-summary::-webkit-details-marker { display: none; }
+html[data-design] .result-detail-summary::before { content: "▸"; color: var(--color-text-tertiary); }
+html[data-design] .result-detail-disclosure[open] > .result-detail-summary::before { content: "▾"; }
+html[data-design] .result-detail-disclosure[open] > .result-detail-summary { margin-bottom: var(--space-3); }
+html[data-design] .result-detail-body { display: flow-root; }
+
+/* Разбор вариантов внутри «Подробнее»: по букве + тег «верный/ваш ответ» */
+html[data-design] .option-breakdown {
+  margin-top: var(--space-4);
+  display: flex; flex-direction: column; gap: var(--space-3);
+}
+html[data-design] .option-breakdown-item {
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--color-border-secondary);
+}
+html[data-design] .option-breakdown-item.explanation-correct { border-left-color: var(--color-status-success); }
+html[data-design] .option-breakdown-item.explanation-wrong { border-left-color: var(--color-status-error); }
+html[data-design] .option-breakdown-head {
+  display: flex; align-items: center; gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+html[data-design] .option-breakdown-letter {
+  font-family: var(--font-family-mono); font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm); color: var(--color-text-primary);
+}
+html[data-design] .option-breakdown-tag {
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+html[data-design] .option-breakdown-item .option-explanation { margin: 0; }
+
+/* Код вопроса (CODE-тип) */
+html[data-design] .result-page .question-code {
+  background: var(--color-bg-tertiary); color: var(--color-text-primary);
+  border: var(--rule-weight) solid var(--color-border-secondary); border-radius: var(--border-radius-md);
+  padding: var(--space-4); overflow-x: auto;
+}
+html[data-design] .result-page .question-code code { font-family: var(--font-family-mono); font-size: var(--font-size-sm); background: transparent; }
+
+/* Действия результата. Старый styles.css даёт flex-direction:column → кнопки
+   во всю ширину; форсим row (на мобиле media ниже возвращает column). */
+html[data-design] .result-page .result-actions { display: flex; flex-direction: row; align-items: center; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-6); }
+
+/* Похожие вопросы — тёплый блок-список (гасим indigo).
+   ВАЖНО: блок инжектится JS-ом (app.js) в пост-ответный фидбэк и на .result-page
+   (мёртвый result.html), и на ЖИВОЙ .focus-page. Раньше правила были только под
+   .result-page → на focus-page .related-question-item оставались дефолтными inline
+   <a> и слипались в одну строку («…Phone Number?Шаблон backtracking?Rat in a Maze?»).
+   Дублируем селекторы под .focus-page — та же специфичность, без регрессий. */
+html[data-design] .result-page #result-related-questions,
+html[data-design] .result-page .related-questions,
+html[data-design] .focus-page #result-related-questions,
+html[data-design] .focus-page .related-questions {
+  background: transparent; border: 0; border-top: var(--rule-weight-strong) solid var(--color-border-primary);
+  margin-top: var(--space-7); padding-top: var(--space-5);
+}
+html[data-design] .result-page .related-questions-title,
+html[data-design] .focus-page .related-questions-title {
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+  color: var(--color-accent-strong); margin: 0 0 var(--space-3);
+}
+html[data-design] .result-page .related-question-item,
+html[data-design] .focus-page .related-question-item {
+  /* overflow-wrap: длинные неразрывные токены в заголовках похожих вопросов
+     (camelCase «SecurityMockMvcRequestPostProcessors», слэш-ран «Cloudflare/
+     Akamai/CloudFront») переполняли sticky-рейку (≥1200px) и узкий стек (320px) —
+     этот контейнер не в глобальном overflow-wrap списке (1005). Как .options>div. */
+  display: block; padding: var(--space-3) var(--space-4); margin: 0 0 var(--space-2); overflow-wrap: break-word; word-break: break-word;
+  font-family: var(--font-family-body); font-size: var(--font-size-base);
+  color: var(--color-text-primary); text-decoration: none; background: transparent;
+  border: var(--rule-weight) solid var(--color-border-secondary); border-radius: var(--border-radius-md);
+  transition: background var(--duration-fast) var(--easing-default);
+}
+html[data-design] .result-page .related-question-item:hover,
+html[data-design] .focus-page .related-question-item:hover { background: var(--color-bg-tertiary); }
+
+@media (max-width: 600px) {
+  html[data-design] .result-page .result-actions { flex-direction: column; }
+  html[data-design] .result-page .result-actions .btn { width: 100%; }
+  html[data-design] .result-page .question-header h2 { flex-basis: 100%; }
+}
+
+/* Слим-полоса с вертикальными разделителями держит 6 ячеек в ряд только при
+   ширине грида ~690px+. Ниже (планшет/телефон) ячейки теснятся, «К ПОВТОРУ»
+   переносится на 2 строки и из-за align-items:center числа теряют общую базовую
+   линию, а border-right у крайних ячеек повисает на краю ряда. Поэтому ниже 880px
+   показываем сводку карточками — ровно тем же паттерном auto-fit, что stats-grid
+   на страницах статистики/настроек: единый вид сводки по всему приложению, и
+   auto-fit сам аккуратно раскладывает 6 карточек на любой ширине без сирот-рядов.
+   Скоуп .stats-grid .stat-item (0,4,0) перекрывает базовый border-right и :last-child. */
+@media (max-width: 880px) {
+  html[data-design] .result-page .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: var(--space-2);
+  }
+  html[data-design] .result-page .stats-grid .stat-item {
+    border: var(--rule-weight) solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    padding: var(--space-3) var(--space-2);
+  }
+}
+
+/* Модалка горячих клавиш (app.js initKeyboardHelp, открывается по «?», role=dialog).
+   Классов kbd-help-* в CSS не было → оверлей раскрывался как обычный блок в конце
+   страницы (position:static, без подложки, y≈1158 под сгибом) — нажатие «?» по сути
+   ничего видимого не показывало. Делаем настоящую модалку: fixed-оверлей с подложкой,
+   карточка по центру. .hidden (global, display:none !important) гасит её → отдельное
+   правило на .hidden не нужно. Подложка/тень/z — из общих токенов. */
+html[data-design] .kbd-help-overlay {
+  /* role=dialog — единственная модалка приложения; место ей на modal-слое.
+     Раньше сидела на --z-overlay (40), а семантический --z-modal (100) был мёртв
+     (round-01 C5): любой будущий элемент на overlay-слое встал бы поверх диалога. */
+  position: fixed; inset: 0; z-index: var(--z-modal);
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--space-4); background: var(--color-surface-overlay);
+}
+html[data-design] .kbd-help-modal {
+  position: relative; width: 100%; max-width: 420px;
+  /* overscroll-behavior:contain — на коротких экранах список шорткатов скроллится
+     внутри карточки; без contain докрутка до края цепляет скролл страницы под
+     диалогом (фон не залочен, open() ставит только inert/aria-hidden). */
+  max-height: calc(100dvh - var(--space-7)); overflow-y: auto; overscroll-behavior: contain;
+  padding: var(--space-6);
+  background: var(--color-bg-primary);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-lg); box-shadow: var(--shadow-lg);
+}
+html[data-design] .kbd-help-modal h3 {
+  font-family: var(--font-family-display); font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold); color: var(--color-text-primary);
+  margin: 0 0 var(--space-4); padding-right: var(--space-6);
+}
+html[data-design] .kbd-help-list {
+  display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-4); margin: 0;
+}
+html[data-design] .kbd-help-list dt {
+  margin: 0; display: flex; gap: var(--space-1); flex-wrap: wrap; align-items: center;
+}
+html[data-design] .kbd-help-list dd {
+  margin: 0; align-self: center; color: var(--color-text-secondary); font-size: var(--font-size-sm);
+}
+html[data-design] .kbd-help-close {
+  position: absolute; top: var(--space-3); right: var(--space-3);
+  min-width: 44px; min-height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: 0; color: var(--color-text-secondary);
+  font-size: var(--font-size-xl); line-height: 1; cursor: pointer;
+  border-radius: var(--border-radius-md); transition: background var(--duration-fast) var(--easing-default), color var(--duration-fast) var(--easing-default);
+}
+html[data-design] .kbd-help-close:hover { color: var(--color-text-primary); background: var(--color-bg-secondary); }
+
+/* Модалка ввода (promptModal в app.js) — доступная замена window.prompt для
+   admin-токена (native prompt() при вводе учётных данных выглядит фишингово и
+   не стилизуется). Отдельные классы (не kbd-help), тот же визуальный язык/токены.
+   Фокус-кольцо инпута — от глобального :focus-visible. */
+html[data-design] .prompt-overlay {
+  position: fixed; inset: 0; z-index: var(--z-modal);
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--space-4); background: var(--color-surface-overlay);
+}
+html[data-design] .prompt-modal {
+  position: relative; width: 100%; max-width: 420px;
+  /* overscroll-behavior:contain — тот же scroll-chaining-фикс, что у .kbd-help-modal. */
+  max-height: calc(100dvh - var(--space-7)); overflow-y: auto; overscroll-behavior: contain;
+  display: flex; flex-direction: column; gap: var(--space-3);
+  padding: var(--space-6);
+  background: var(--color-bg-primary);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-lg); box-shadow: var(--shadow-lg);
+}
+
+/* Mobile: fixed .mobile-nav (z=40) остаётся под оверлеем (z=100), но карточка
+   модалки без учёта nav-height садилась в зону таббара — «Отправить» report-
+   модалки на 320×568 пересекала navTop (live: sendUnderNav=true).
+   flex-start + max-height: при center высокая карточка всё равно вылезала
+   в padding-bottom (live после 1-го фикса: gap=-28). */
+@media (max-width: 900px) {
+  html[data-design] .prompt-overlay,
+  html[data-design] .kbd-help-overlay {
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: var(--space-4);
+    padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-4));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  html[data-design] .prompt-modal,
+  html[data-design] .kbd-help-modal {
+    max-height: calc(
+      100dvh - var(--mobile-nav-height) - env(safe-area-inset-bottom, 0px)
+      - var(--space-4) - var(--space-4)
+    );
+  }
+}
+html[data-design] .prompt-modal-title {
+  font-family: var(--font-family-display); font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold); color: var(--color-text-primary); margin: 0;
+}
+html[data-design] .prompt-modal-label {
+  color: var(--color-text-secondary); font-size: var(--font-size-sm); margin: 0;
+}
+/* Сообщение confirm-режима (alertdialog, R0.66): читаемый абзац вместо label. */
+html[data-design] .prompt-modal-message {
+  color: var(--color-text-secondary); font-size: var(--font-size-md); margin: 0;
+}
+html[data-design] .prompt-modal-input {
+  width: 100%; padding: var(--space-3);
+  font-family: var(--font-family-mono); font-size: var(--font-size-base);
+  color: var(--color-text-primary); background: var(--color-bg-secondary);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-md);
+}
+/* Браузер/менеджер паролей перекрашивает автозаполненный input своим бледным фоном
+   (UA-стили :-webkit-autofill бьют author background/color) → в тёмной теме
+   token-поле превращается в яркую коробку с инверсным контрастом. autocomplete=off
+   на type=password браузеры ИГНОРИРУЮТ + предлагают сохранить токен → при повторном
+   открытии модалки (obtainAdminToken) срабатывает autofill. Перекрашиваем inset-тенью
+   (UA её не перебивает) на token-фон + -webkit-text-fill-color; transition 600000s
+   гасит вспышку UA-цвета. Каждое поле — на СВОЁМ фоне (prompt = bg-secondary,
+   search = bg-primary). Покрывает все 10 дизайнов × 2 темы. */
+html[data-design] .prompt-modal-input:-webkit-autofill,
+html[data-design] .prompt-modal-input:-webkit-autofill:hover,
+html[data-design] .prompt-modal-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--color-bg-secondary) inset;
+  box-shadow: 0 0 0 1000px var(--color-bg-secondary) inset;
+  -webkit-text-fill-color: var(--color-text-primary);
+  caret-color: var(--color-text-primary);
+  transition: background-color 600000s 0s, color 600000s 0s;
+}
+html[data-design] .stats-page .search-input:-webkit-autofill,
+html[data-design] .stats-page .search-input:-webkit-autofill:hover,
+html[data-design] .stats-page .search-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--color-bg-primary) inset;
+  box-shadow: 0 0 0 1000px var(--color-bg-primary) inset;
+  -webkit-text-fill-color: var(--color-text-primary);
+  caret-color: var(--color-text-primary);
+  transition: background-color 600000s 0s, color 600000s 0s;
+}
+html[data-design] .prompt-modal-actions {
+  display: flex; gap: var(--space-3); justify-content: flex-end; margin-top: var(--space-2);
+}
+
+/* FLOW-REPORT-b: тихий триггер + модалка «Сообщить о проблеме». Overlay/модалка
+   переиспользуют .prompt-overlay/.prompt-modal (та же геометрия/тень/скролл);
+   здесь только специфика radiogroup/comment/фидбэка. */
+html[data-design] .focus-training .report-zone { margin-top: var(--space-5); }
+html[data-design] .focus-training .report-trigger {
+  appearance: none; background: none; border: none; cursor: pointer;
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  font-family: var(--font-family-mono); font-size: var(--font-size-sm);
+  color: var(--color-text-secondary); padding: var(--space-2) 0;
+  border-radius: var(--border-radius-sm);
+}
+html[data-design] .focus-training .report-trigger:hover,
+html[data-design] .focus-training .report-trigger:focus-visible { color: var(--color-text-primary); }
+html[data-design] .report-fieldset { border: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+html[data-design] .report-legend { padding: 0; margin-bottom: var(--space-1); color: var(--color-text-secondary); font-size: var(--font-size-sm); }
+html[data-design] .report-cat { display: flex; align-items: center; gap: var(--space-2); font-size: var(--font-size-base); color: var(--color-text-primary); cursor: pointer; }
+html[data-design] .report-cat input[type="radio"] { flex: 0 0 auto; accent-color: var(--color-accent-primary); }
+html[data-design] .report-comment {
+  width: 100%; padding: var(--space-3); resize: vertical; min-height: 3.5rem;
+  font: inherit; color: var(--color-text-primary); background: var(--color-bg-secondary);
+  border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-md);
+}
+html[data-design] .report-error { margin: 0; color: var(--color-status-error); font-size: var(--font-size-sm); }
+html[data-design] .report-success { margin: 0; color: var(--color-text-secondary); font-size: var(--font-size-md); }
+
+/* Кнопки самооценки уверенности (app.js attachConfidenceButtons — показываются
+   ПОСЛЕ верного ответа в обычном режиме, шлют grade в /api/confidence для SM-2;
+   это не AI-вызов, поэтому доступны и без AI). Классов confidence-* в CSS не было
+   → рендерились нативные серые кнопки (#efefef на тёмной теме, без паддингов).
+   Стилизуем единообразно с .flashcard-grade-* (та же суть — самооценка после ответа).
+   Выбранную кнопку (app.js вешает .selected + disabled на все) НЕ гасим: она
+   остаётся выделенной accent-wash, остальные disabled — приглушаются. */
+html[data-design] .confidence-buttons {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin-top: var(--space-5);
+}
+html[data-design] .confidence-label {
+  grid-column: 1 / -1; font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary);
+}
+html[data-design] .confidence-btn {
+  min-height: 48px; padding: var(--space-2) var(--space-4);
+  font-family: var(--font-family-body); font-size: var(--font-size-base);
+  background: var(--color-bg-secondary); color: var(--color-text-primary);
+  border: var(--rule-weight) solid var(--color-border-primary); border-radius: 0; /* B5: единообразно с плоской .flashcard-grade-btn */
+  cursor: pointer; touch-action: manipulation;
+  transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
+}
+html[data-design] .confidence-btn:hover:not(:disabled) { border-color: var(--color-text-secondary); background: var(--color-bg-tertiary); }
+/* Низкая/высокая уверенность — те же edge-washes, что у .flashcard-grade-btn
+   grade-1/grade-4: «угадал» тонирован ошибкой, «знал точно» — успехом. Текст
+   несёт смысл, цвет лишь подсказывает полюс (раньше его несли эмодзи 🎲/💪). */
+html[data-design] .confidence-btn.confidence-guess:hover:not(:disabled) { border-color: var(--color-status-error); background: var(--color-status-error-wash); }
+html[data-design] .confidence-btn.confidence-sure:hover:not(:disabled) { border-color: var(--color-status-success); background: var(--color-status-success-wash); }
+html[data-design] .confidence-btn.selected { border-color: var(--color-accent-primary); background: var(--color-accent-wash); }
+html[data-design] .confidence-btn:disabled { cursor: default; }
+html[data-design] .confidence-btn:disabled:not(.selected) { opacity: 0.5; }
+@media (max-width: 600px) {
+  html[data-design] .confidence-buttons { grid-template-columns: 1fr; }
+}
+
+/* =============================================================================
+   C3-i — Instrument: результат ответа (.result-page, no-JS фоллбэк /answer).
+   CSS-only рестайл СУЩЕСТВУЮЩИХ хуков (DOM result.html не меняется), та же
+   линия, что C1-i/C6-i/C7-i: строчный mono-шёпот бейджа темы, medium-вердикт
+   (семантические цвета status-correct/wrong работают через статус-токены),
+   mono/tabular цифры топ-плиток, sm2-панель на приподнятой tertiary-карте.
+   Пост-ответные состояния опций/объяснений — глобальные, наследуются.
+   Специфичность равна generic-правилам §C3 выше — выигрыш по порядку. ======= */
+
+/* Бейдж темы: строчный шёпот-капсула (та же подпись, что focus-тема в C1-i). */
+html[data-design="instrument"] .result-page .topic-badge {
+  text-transform: lowercase;
+  color: var(--color-text-tertiary);
+}
+
+/* Вердикт: display medium — не кричит болдом; цвет несут status-правила (0,4,1). */
+html[data-design="instrument"] .result-page .status {
+  font-weight: var(--font-weight-medium);
+}
+
+/* Цифры топ-плиток: mono/tabular — приборная панель (линия C6-i плиток). */
+html[data-design="instrument"] .result-page .stat-value {
+  font-family: var(--font-family-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* SM-2 панель: приподнятая tertiary-карта с line-границей (как error-details
+   в C7-i), а не paper с secondary-рамкой. */
+html[data-design="instrument"] .result-page .sm2-details {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-border-primary);
+}
+html[data-design="instrument"] .result-page .sm2-grid {
+  border-top-color: var(--color-border-primary);
+}
+
+}

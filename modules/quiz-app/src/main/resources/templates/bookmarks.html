@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ru" data-design="instrument" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(title='Закладки — Подготовка к собеседованию', includeMermaid=false, includeChart=false)}"></head>
+<body class="bookmarks-page">
+<a class="skip-link" href="#main-content">Перейти к закладкам</a>
+<svg th:replace="~{fragments/pixel-sprite :: sprite}"></svg>
+<svg th:replace="~{fragments/icons :: sprite}"></svg>
+<div class="app">
+    <aside th:replace="~{fragments/sidebar :: sidebar(active='bookmarks')}"></aside>
+    <div class="shell-main">
+        <th:block th:replace="~{fragments/topbar :: topbar}"></th:block>
+<main id="main-content" class="ed-page" tabindex="-1">
+<div class="app-layout">
+<div class="main-content">
+
+<div class="bookmarks-intro">
+    <span class="eyebrow">Личная коллекция</span>
+    <h1 class="bookmarks-title">Закладки</h1>
+    <p class="muted bookmarks-intro-lead">
+        Вопросы со звездой и ваши заметки. Откройте вопрос в тренировке или сохраните подсказку на потом.
+        <span class="kpi-role" th:if="${bookmarksTotal != null}"
+              th:text="${bookmarksTotal + ' ' + @plural.pick(bookmarksTotal, 'закладка', 'закладки', 'закладок')}">0 закладок</span>
+    </p>
+</div>
+
+<p th:if="${bookmarkSaved}" class="toast toast-success" role="status">Заметка сохранена.</p>
+<p th:if="${bookmarkRemoved}" class="toast toast-success" role="status">Закладка удалена.</p>
+
+<section class="card bookmarks-toolbar" aria-label="Действия">
+    <p>
+        <a class="btn next-btn primary-btn" th:href="@{/(important=true, ordered=true)}"
+           th:if="${bookmarksTotal != null and bookmarksTotal > 0}">
+            Тренировать избранные<span aria-hidden="true"> →</span>
+        </a>
+        <a class="btn secondary-btn" th:href="@{/}">К тренировке</a>
+    </p>
+</section>
+
+<section class="card" th:if="${bookmarks != null and !bookmarks.isEmpty()}"
+         aria-labelledby="bookmarks-list-title">
+    <h2 id="bookmarks-list-title" class="mt-0">Список</h2>
+    <p class="muted chart-subtitle">Новые сверху. Заметка сохраняется без JS через форму; с JS — мгновенно.</p>
+    <ul class="bookmark-list">
+        <li th:each="item : ${bookmarks}" class="bookmark-item"
+            th:id="${'q-' + item.questionId}">
+            <div class="bookmark-main">
+                <div class="bookmark-text" th:text="${item.questionPreview}">Текст вопроса</div>
+                <div class="bookmark-meta muted">
+                    <span th:text="${#strings.capitalize(#strings.replace(#strings.replace(item.topicDisplayName, '-', ' '), '_', ' '))}"
+                          th:title="${item.topic}">Тема</span>
+                    <span aria-hidden="true">·</span>
+                    <span class="bookmark-note-status"
+                          th:text="${item.note != null and !item.note.isBlank()} ? 'есть заметка' : 'без заметки'">без заметки</span>
+                </div>
+                <form class="bookmark-note-form" method="post" th:action="@{/bookmarks/note}"
+                      th:attr="data-question-id=${item.questionId}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <input type="hidden" name="questionId" th:value="${item.questionId}">
+                    <label class="field bookmark-note-field">
+                        <span class="field-label visually-hidden">Заметка</span>
+                        <textarea name="note" rows="3" maxlength="2000"
+                                  placeholder="Короткая заметка к вопросу…"
+                                  th:text="${item.note}">Заметка</textarea>
+                    </label>
+                    <div class="bookmark-note-actions">
+                        <button type="submit" class="btn secondary-btn">Сохранить заметку</button>
+                        <span class="bookmark-save-status muted tiny" aria-live="polite"></span>
+                    </div>
+                </form>
+            </div>
+            <div class="bookmark-actions">
+                <a class="btn next-btn"
+                   th:href="@{/(questionId=${item.questionId})}"
+                   th:aria-label="${'Открыть вопрос: ' + item.questionPreview}">Открыть</a>
+                <form method="post" th:action="@{/bookmarks/remove}" class="bookmark-remove-form"
+                      th:attr="data-question-id=${item.questionId}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <input type="hidden" name="questionId" th:value="${item.questionId}">
+                    <button type="submit" class="btn secondary-btn bookmark-remove-btn"
+                            th:aria-label="${'Убрать закладку: ' + item.questionPreview}">Убрать</button>
+                </form>
+            </div>
+        </li>
+    </ul>
+</section>
+
+<section class="card bookmarks-empty"
+         th:if="${bookmarks == null or bookmarks.isEmpty()}">
+    <div class="bookmarks-empty-visual" aria-hidden="true">
+        <svg class="icon bookmarks-empty-icon"><use href="#bookmark"></use></svg>
+    </div>
+    <h2 class="mt-0">Пока нет закладок</h2>
+    <p class="muted">Отметьте вопрос звездой на экране ответа — он появится здесь, и к нему можно добавить заметку.</p>
+    <p><a class="btn next-btn" th:href="@{/}">Начать тренировку<span aria-hidden="true"> →</span></a></p>
+</section>
+
+</div>
+</div>
+</main>
+<th:block th:replace="~{fragments/shell-scripts :: shell-scripts}"></th:block>
+</div>
+</div>
+<nav th:replace="~{fragments/mobile-nav :: mobile-nav(active='bookmarks')}"></nav>
+</body>
+</html>

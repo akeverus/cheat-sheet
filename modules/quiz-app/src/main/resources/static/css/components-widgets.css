@@ -1,0 +1,234 @@
+/* Wave C split from base.css — @components layer */
+@layer components {
+/* ===========================================================================
+   Утилиты чтения и навигации (Bundle: back-to-top + копирование кода)
+   =========================================================================== */
+
+/* Кнопка «наверх»: инжектится из header-фрагмента (на всех страницах, в т.ч.
+   /stats без app.js). Круглая bordered-кнопка в editorial-стиле (не material-FAB
+   с заливкой). Скрыта по умолчанию, .is-visible (JS, после ~1.5 экрана прокрутки)
+   проявляет. z ниже модалок/оверлеев, выше контента. */
+html[data-design] .back-to-top {
+  position: fixed; right: var(--space-5); bottom: var(--space-5);
+  z-index: var(--z-dropdown);
+  width: 44px; height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--color-bg-primary); color: var(--color-text-secondary);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-full); box-shadow: var(--shadow-md);
+  cursor: pointer; touch-action: manipulation;
+  opacity: 0; visibility: hidden; transform: translateY(8px);
+  transition: opacity var(--duration-fast) var(--easing-default),
+              transform var(--duration-fast) var(--easing-default),
+              visibility var(--duration-fast) var(--easing-default),
+              color var(--duration-fast) var(--easing-default),
+              border-color var(--duration-fast) var(--easing-default);
+}
+html[data-design] .back-to-top.is-visible { opacity: 1; visibility: visible; transform: translateY(0); }
+html[data-design] .back-to-top:hover { color: var(--color-accent-primary); border-color: var(--color-accent-primary); }
+html[data-design] .back-to-top .ed-icon { width: 1.25rem; height: 1.25rem; }
+/* Над fixed mobile-nav: иначе «наверх» попадает под таббар (live a11y: under-nav). */
+@media (max-width: 900px) {
+  html[data-design] .back-to-top {
+    bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-4));
+  }
+}
+
+/* Копирование код-блоков: app.js оборачивает <pre> в .code-copy-wrap и вешает
+   кнопку в верхний-правый угол. Кнопка проявляется на hover/focus-within (десктоп)
+   и всегда видна на touch (нет hover). Не перекрывает скролл — сидит в паддинге pre. */
+html[data-design] .code-copy-wrap { position: relative; }
+html[data-design] .code-copy-btn {
+  position: absolute; top: var(--space-2); right: var(--space-2);
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  padding: var(--space-1) var(--space-2); min-height: 32px;
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide);
+  background: var(--color-bg-primary); color: var(--color-text-secondary);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-sm); cursor: pointer; touch-action: manipulation;
+  opacity: 0; transition: opacity var(--duration-fast) var(--easing-default),
+              color var(--duration-fast) var(--easing-default),
+              border-color var(--duration-fast) var(--easing-default);
+}
+html[data-design] .code-copy-wrap:hover .code-copy-btn,
+html[data-design] .code-copy-wrap:focus-within .code-copy-btn { opacity: 1; }
+html[data-design] .code-copy-btn:hover { color: var(--color-accent-primary); border-color: var(--color-accent-primary); }
+html[data-design] .code-copy-btn.is-copied { color: var(--color-status-success); border-color: var(--color-status-success); }
+html[data-design] .code-copy-btn.is-error { color: var(--color-status-error); border-color: var(--color-status-error); }
+html[data-design] .code-copy-btn .ed-icon { width: 0.875rem; height: 0.875rem; }
+/* Touch (нет hover) — кнопка всегда видна, иначе её не вызвать. */
+@media (hover: none) {
+  /* На тач кнопка всегда видима (нет hover) → это реальная тап-цель: тянем до
+     44×44px (WCAG 2.5.5). Десктопный компактный hover-аффорданс (32px) не трогаем.
+     C1: min-width нужен наравне с min-height — на <=600px лейбл скрыт, остаётся
+     иконка 14px + padding ~16px ≈ 32px по горизонтали; без min-width цель 32×44. */
+  html[data-design] .code-copy-btn { opacity: 1; min-height: 44px; min-width: 44px; justify-content: center; }
+}
+/* Узкие экраны — только иконка, текст прячем (экономим место над кодом). */
+@media (max-width: 600px) {
+  html[data-design] .code-copy-label { display: none; }
+}
+
+/* ===========================================================================
+   Виджет «Сегодня к повтору» (Bundle: today-hero на /settings, today-chip на /focus)
+   =========================================================================== */
+
+/* Инлайн-стрик: 🔥 + «N дней». Скрыт без JS (.hidden), app.js снимает после /api/streak. */
+html[data-design] .streak-inline {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); color: var(--color-text-secondary);
+}
+html[data-design] .streak-inline .ed-icon { width: 0.875rem; height: 0.875rem; color: var(--color-accent-strong); }
+html[data-design] .streak-inline.streak-goal-reached { color: var(--color-accent-strong); }
+
+/* Hero на /settings: крупный due + CTA. .card даёт рамку/паддинг/фон. */
+html[data-design] .today-hero { margin-bottom: var(--space-5); }
+/* Выравниваем hero с колонкой настроек: .app-layout центрируется на
+   max-width-settings, а hero лежит ВНЕ него и без ограничения тянулся на всю
+   ширину main → левый/правый край не совпадал с контентом под ним (jut наружу). */
+html[data-design] .settings-page .today-hero {
+  max-width: var(--max-width-settings); margin-left: auto; margin-right: auto;
+  /* Поверхность карты: на /stats/.summary/.result есть page-scoped `.card`, а
+     `.settings-page .card` НЕТ (generic `.card` выжил только под @media print при
+     split editorial.css→base.css). Без этого hero-блок «N к повтору / Начать» висел
+     голым текстом на фоне страницы. Те же 4 свойства, что у .stats/.summary/.result .card. */
+  background: var(--color-bg-secondary);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-lg);
+  padding: var(--space-6);
+}
+html[data-design] .today-hero-head {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+/* Тело hero — КОНТЕЙНИРОВАННЫЙ левый кластер (число+подпись ↔ CTA), НЕ space-between
+   край-в-край: на широкой карточке (=ширине настроек) space-between разрывал hero
+   на два осиротевших края с ~700px мёртвой зоны между ними (адверсари-ревью p1:
+   settings-flow/split/grid). Кластеризуем слева у читательской кромки, воздух
+   справа — спокойно и намеренно, без «дыры». */
+html[data-design] .today-hero-body {
+  display: flex; align-items: center; justify-content: flex-start;
+  gap: var(--space-6) var(--space-8); flex-wrap: wrap;
+}
+html[data-design] .today-hero-figure { display: flex; align-items: baseline; gap: var(--space-3); }
+/* Число due понижено с hero-кегля (4xl) до стат-кегля (2xl): на странице НАСТРОЕК
+   гигантское «9676» перебивало и H1 «Настройки сессии», и сами контролы —
+   инверсия иерархии (адверсари-ревью p0 ×2). Теперь информативная стат-цифра,
+   подчинённая заголовку страницы, не «дашборд-герой». accent-strong (не primary):
+   Clay на ivory — 2.96:1 < 3.0 (AA large). */
+html[data-design] .today-hero-due {
+  font-family: var(--font-family-display); font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold); line-height: 1; color: var(--color-accent-strong);
+  font-variant-numeric: tabular-nums;
+}
+html[data-design] .today-hero-due-label {
+  font-family: var(--font-family-body); font-size: var(--font-size-md); color: var(--color-text-secondary);
+}
+html[data-design] .today-hero-cta { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
+html[data-design] .today-hero-hint { margin: 0; font-size: var(--font-size-sm); color: var(--color-text-secondary); }
+
+@media (max-width: 600px) {
+  html[data-design] .today-hero-body { flex-direction: column; align-items: flex-start; gap: var(--space-4); }
+  /* Число НЕ переопределяем — наследует стат-кегль 2xl (раньше тут стоял 3xl/48px,
+     что после понижения десктопа до 2xl/36px давало мобайл КРУПНЕЕ десктопа). */
+  html[data-design] .today-hero-cta { align-self: stretch; }
+  html[data-design] .today-hero-cta .btn { width: 100%; text-align: center; }
+}
+
+/* Компактный чип на /focus: тонкая строка стрик + due, не спорит с вопросом. */
+html[data-design] .today-chip {
+  display: flex; align-items: center; gap: var(--space-4);
+  margin-bottom: var(--space-4); min-height: 1.25rem;
+}
+html[data-design] .today-chip:empty { display: none; }
+html[data-design] .today-chip-due {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); color: var(--color-text-secondary);
+}
+html[data-design] .today-chip-due .ed-icon { width: 0.875rem; height: 0.875rem; color: var(--color-text-tertiary); }
+
+/* --- Instrument: /settings (C4-i, порт Фазы E — только дельты голоса) ---------
+   Специфичность равна общим правилам (атрибут с/без значения — одинаковый вес),
+   блок обязан стоять ПОСЛЕ всех перебиваемых правил (панель-тайтл ~1311,
+   launcher-subtitle ~1327, today-hero ~2959, today-hero-due ~2993) — выигрывает
+   по порядку. Вкладки/seg-controls/danger-zone/toggles несут instrument-токены
+   без правок (baseline R0.36). Карточная сетка осей и switch-вид тогглов —
+   структурный рестайл ВСЕХ дизайнов, не instrument-scoped → отложено (README). */
+/* Карта hero: приподнятая поверхность instrument (bg-tertiary светлее фона). */
+html[data-design="instrument"] .settings-page .today-hero {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-border-primary);
+}
+/* Цифра due — приборная: mono вместо display, semibold вместо bold (как .stat-value C6-i). */
+html[data-design="instrument"] .settings-page .today-hero-due {
+  font-family: var(--font-family-mono);
+  font-weight: var(--font-weight-semibold);
+}
+/* Заголовок панели (виден только без JS): medium вместо semibold. */
+html[data-design="instrument"] .settings-page .settings-panel-title {
+  font-weight: var(--font-weight-medium);
+}
+
+/* ===========================================================================
+   ПЕРСОНАЛИЗАЦИЯ (Bundle 4) — тема (авто/светлая/тёмная) + размер шрифта.
+   Клиентский блок на /settings; раскрывается app.js (initPersonalization).
+   =========================================================================== */
+html[data-design] .personalization-row { margin-bottom: var(--space-5); }
+html[data-design] .personalization-row:last-child { margin-bottom: 0; }
+html[data-design] .personalization-card .field-label { display: block; margin-bottom: var(--space-2); }
+
+/* Сегментированный контрол темы (radiogroup) */
+html[data-design] .seg-control {
+  display: inline-flex; max-width: 100%; flex-wrap: wrap;
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-md); overflow: hidden; background: var(--color-bg-secondary);
+}
+html[data-design] .seg-btn {
+  appearance: none; -webkit-appearance: none;
+  min-height: 44px; padding: var(--space-2) var(--space-5);
+  font-family: var(--font-family-body); font-size: var(--font-size-base);
+  color: var(--color-text-secondary); background: transparent; border: 0;
+  border-right: var(--rule-weight) solid var(--color-border-primary);
+  cursor: pointer; touch-action: manipulation;
+  transition: background var(--duration-fast) var(--easing-default), color var(--duration-fast) var(--easing-default);
+}
+html[data-design] .seg-btn:last-child { border-right: 0; }
+html[data-design] .seg-btn:hover { background: var(--color-bg-tertiary); color: var(--color-text-primary); }
+html[data-design] .seg-btn.is-active {
+  background: var(--color-accent-primary); color: var(--color-accent-on); font-weight: var(--font-weight-medium);
+}
+html[data-design] .seg-btn:focus-visible { outline: none; box-shadow: var(--shadow-focus); position: relative; z-index: 1; }
+
+/* #design-pref-control удалён (FE-CMP-1): ось «Дизайн» упразднена (DEC-002),
+   переносящегося 10-опционного пикера больше нет. Прочие 5 seg-control несут
+   2–3 опции и живут в один ряд — общих правил .seg-control выше достаточно. */
+
+/* Степпер размера шрифта */
+html[data-design] .font-stepper { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+html[data-design] .font-step-btn {
+  min-width: 44px; min-height: 44px; padding: var(--space-2) var(--space-3);
+  font-weight: var(--font-weight-semibold); font-variant-numeric: tabular-nums;
+}
+html[data-design] .font-scale-value {
+  font-family: var(--font-family-mono); font-size: var(--font-size-base); font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary); min-width: 4ch; text-align: center;
+}
+html[data-design] .font-step-btn[aria-disabled="true"],
+html[data-design] .font-reset-btn[aria-disabled="true"] { opacity: 0.4; cursor: not-allowed; }
+
+/* ===========================================================================
+   Шеринг и печать итогов сессии (Bundle: .summary-tools + @media print)
+   =========================================================================== */
+html[data-design] .summary-tools {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+html[data-design] .summary-tools .btn { display: inline-flex; align-items: center; gap: var(--space-2); }
+html[data-design] .summary-tools .ed-icon { width: 1rem; height: 1rem; }
+html[data-design] .summary-tools-status {
+  font-size: var(--font-size-sm); color: var(--color-text-secondary);
+}
+}

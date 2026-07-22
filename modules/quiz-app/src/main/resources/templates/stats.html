@@ -3,7 +3,6 @@
 <head th:replace="~{fragments/head :: head(title='Аналитика — Подготовка к собеседованию', includeMermaid=false, includeChart=true)}"></head>
 <body class="stats-page">
 <a class="skip-link" href="#main-content">Перейти к аналитике</a>
-<a class="skip-link" href="#main-content">К содержимому</a>
 <svg th:replace="~{fragments/pixel-sprite :: sprite}"></svg>
 <svg th:replace="~{fragments/icons :: sprite}"></svg>
 <div class="app">
@@ -19,7 +18,8 @@
     <span class="eyebrow">Учебная аналитика</span>
     <h1 class="stats-title">Ваш прогресс</h1>
     <p class="muted stats-intro-lead">Метрики с явными знаменателями — и одно рекомендованное действие.
-       «—» значит «пока нет данных для этой доли», а не «ноль».</p>
+       «—» значит «пока нет данных для этой доли», а не «ноль».
+       <span class="kpi-role">Источник: LearningMetrics · весь банк</span></p>
 </div>
 
 <!-- Четыре ключевые метрики (docs 2.4/14: «четыре ключевые метрики вместо
@@ -33,7 +33,11 @@
         <div class="metric-value"
              th:text="${metrics.hasOverallAccuracy()} ? ${#numbers.formatDecimal(metrics.overallAccuracy, 1, 1)} + '%' : '—'">—</div>
         <span class="muted tiny"
-              th:text="${metrics.attemptsCorrect} + ' верно из ' + ${metrics.attemptsTotal}">0 верно из 0</span>
+              th:with="nonSkip=${metrics.attemptsCorrect + metrics.attemptsIncorrect}"
+              th:text="${metrics.attemptsCorrect} + ' верных попыток из ' + ${nonSkip} + ' (без пропусков)'">0 верных попыток из 0</span>
+        <span class="muted tiny metric-formula"
+              th:if="${metricDefinitions != null and metricDefinitions['overallAccuracy'] != null}"
+              th:text="${metricDefinitions['overallAccuracy'].formula} + ' · период: ' + ${metricDefinitions['overallAccuracy'].period}">formula</span>
     </article>
     <article class="card metric good"
              th:with="masteredPct=${metrics.cardsTotal > 0 ? (metrics.cardsMastered * 100.0 / metrics.cardsTotal) : -1}">
@@ -42,35 +46,48 @@
              th:text="${masteredPct < 0 ? '—' : #numbers.formatDecimal(masteredPct, 1, 0) + '%'}">—</div>
         <span class="muted tiny"
               th:text="${metrics.cardsMastered} + ' из ' + ${metrics.cardsTotal} + ' карточек'">0 из 0 карточек</span>
+        <span class="muted tiny metric-formula"
+              th:if="${metricDefinitions != null and metricDefinitions['cardsMastered'] != null}"
+              th:text="${metricDefinitions['cardsMastered'].formula} + ' · период: ' + ${metricDefinitions['cardsMastered'].period}">formula</span>
     </article>
     <article class="card metric">
         <span class="eyebrow">Среднее время</span>
         <div class="metric-value"
              th:text="${metrics.hasAverageResponse()} ? ${#numbers.formatDecimal(metrics.averageResponseMs / 1000.0, 1, 1)} + ' с' : '—'">—</div>
         <span class="muted tiny">на один ответ</span>
+        <span class="muted tiny metric-formula"
+              th:if="${metricDefinitions != null and metricDefinitions['averageResponseMs'] != null}"
+              th:text="${metricDefinitions['averageResponseMs'].formula} + ' · период: ' + ${metricDefinitions['averageResponseMs'].period}">formula</span>
     </article>
     <article class="card metric" th:classappend="${metrics.dueNow > 0} ? ' bad'">
         <span class="eyebrow">К повторению</span>
         <div class="metric-value" th:text="${metrics.dueNow}">0</div>
         <span class="muted tiny"
               th:text="${metrics.overdue > 0 ? metrics.overdue + ' просрочено' : 'нет просроченных'}">нет просроченных</span>
+        <span class="muted tiny metric-formula"
+              th:if="${metricDefinitions != null and metricDefinitions['dueNow'] != null}"
+              th:text="${metricDefinitions['dueNow'].formula} + ' · период: ' + ${metricDefinitions['dueNow'].period}">formula</span>
     </article>
 </section>
 
-<!-- Вкладки аналитики (docs 2.4): Обзор | По темам | Динамика | Ошибки.
+<!-- Вкладки аналитики (docs 2.4 / UI-012): Обзор | Темы | Динамика | Ошибки.
      PE: tablist скрыт без JS (.hidden); stats.js раскрывает его и ставит .js-tabs
      на <body> → видна одна панель. Без JS все панели в стопке (весь контент
-     доступен). Полный ARIA tabs-паттерн (roving tabindex, ←→↑↓/Home/End) — в
-     stats.js (на /stats нет app.js). -->
+     доступен). Полный ARIA tabs-паттерн (roving tabindex, ←→↑↓/Home/End) +
+     hash deep-link (#topics/#dynamics/#errors) — в stats.js. -->
 <div class="section-tabs hidden" role="tablist" id="stats-tablist" aria-label="Разделы аналитики">
     <button type="button" class="section-tab" role="tab" id="stats-tab-overview"
-            aria-controls="stats-panel-overview" aria-selected="true" tabindex="0">Обзор</button>
+            aria-controls="stats-panel-overview" aria-selected="true" tabindex="0"
+            data-tab-hash="overview">Обзор</button>
     <button type="button" class="section-tab" role="tab" id="stats-tab-topics"
-            aria-controls="stats-panel-topics" aria-selected="false" tabindex="-1">По темам</button>
+            aria-controls="stats-panel-topics" aria-selected="false" tabindex="-1"
+            data-tab-hash="topics">Темы</button>
     <button type="button" class="section-tab" role="tab" id="stats-tab-dynamics"
-            aria-controls="stats-panel-dynamics" aria-selected="false" tabindex="-1">Динамика</button>
-    <button type="button" class="section-tab" role="tab" id="stats-tab-mistakes"
-            aria-controls="stats-panel-mistakes" aria-selected="false" tabindex="-1">Ошибки</button>
+            aria-controls="stats-panel-dynamics" aria-selected="false" tabindex="-1"
+            data-tab-hash="dynamics">Динамика</button>
+    <button type="button" class="section-tab" role="tab" id="stats-tab-errors"
+            aria-controls="stats-panel-errors" aria-selected="false" tabindex="-1"
+            data-tab-hash="errors">Ошибки</button>
 </div>
 
 <!-- ================= Панель: Обзор ================= -->
@@ -104,11 +121,13 @@
                       th:text="${stats.wrong > 0 ? @plural.pick(stats.wrong, 'ошибка в истории', 'ошибки в истории', 'ошибок в истории') : 'ошибок пока нет'}">ошибок в истории</span>
             </a>
             <a class="stats-next-action stats-next-action-weak"
-               th:href="@{/(weakTopics=true, ordered=true)}"
+               th:href="@{/(weakTopics=true, ordered=true, topic=${weakestTopic})}"
                th:classappend="${stats.due == 0 and stats.wrong == 0 and topicStats != null and !topicStats.isEmpty()} ? ' is-recommended'">
                 <span class="stats-next-action-label">Тренировать слабые темы</span>
                 <span class="stats-next-action-topic" data-weak-topic-summary
-                      th:text="${topicStats != null and !topicStats.isEmpty()} ? 'Самая слабая тема — по данным ниже' : 'Тем пока нет'">Самая слабая тема</span>
+                      th:text="${weakestTopic != null
+                        ? ('Слабее всего: ' + #strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(weakestTopic), '-', ' '), '_', ' ')))
+                        : (topicStats != null and !topicStats.isEmpty() ? 'Слабая тема появится после первых ответов' : 'Тем пока нет')}">Самая слабая тема</span>
                 <strong th:text="${topicStats != null ? topicStats.size() : 0}">0</strong>
                 <span class="stats-next-action-detail">тем в аналитике</span>
             </a>
@@ -119,7 +138,7 @@
 <!-- ================= Панель: По темам ================= -->
 <section class="stats-panel" role="tabpanel" id="stats-panel-topics"
          aria-labelledby="stats-tab-topics" tabindex="0">
-    <h2 class="stats-panel-title visually-hidden">По темам</h2>
+    <h2 class="stats-panel-title visually-hidden">Темы</h2>
 
     <!-- Поиск + фильтр -->
     <section class="card stats-filter-card">
@@ -219,7 +238,9 @@
             <p class="chart-subtitle">Самые активные темы</p>
             <div class="chart-wrapper">
                 <canvas id="topicProgressChart" role="img"
+                        aria-describedby="topicProgressChartTable"
                         aria-label="Гистограмма прогресса по самым активным темам: выучено и осталось. Полные данные — в таблице ниже."></canvas>
+                <table id="topicProgressChartTable" class="chart-adjacent-table data-table hidden" aria-label="Данные графика прогресса"></table>
                 <p id="topicProgressChartFallback" class="chart-fallback hidden" role="status" aria-live="polite">
                     График временно недоступен. Таблица ниже содержит те же данные.
                 </p>
@@ -230,7 +251,9 @@
             <p class="chart-subtitle">Сначала самые слабые</p>
             <div class="chart-wrapper">
                 <canvas id="topicAccuracyChart" role="img"
+                        aria-describedby="topicAccuracyChartTable"
                         aria-label="Гистограмма точности по темам, от слабых к сильным, в процентах. Полные данные — в таблице ниже."></canvas>
+                <table id="topicAccuracyChartTable" class="chart-adjacent-table data-table hidden" aria-label="Данные графика точности"></table>
                 <p id="topicAccuracyChartFallback" class="chart-fallback hidden" role="status" aria-live="polite">
                     График временно недоступен. Таблица ниже содержит те же данные.
                 </p>
@@ -258,6 +281,7 @@
                 <th scope="col" class="min-w-140">Прогресс</th>
                 <th scope="col" class="sortable w-80 text-center" data-col="3" data-sort-label="Точность" title="Доля верных ответов среди отвеченных (не из всех вопросов темы)">Точность</th>
                 <th scope="col" class="sortable w-80 text-center" data-col="4" data-sort-label="Зрелость" title="Среднее ease×interval — показатель глубины запоминания">Зрелость</th>
+                <th scope="col" class="topic-actions-col">Действие</th>
             </tr>
             </thead>
             <tbody>
@@ -294,6 +318,14 @@
                           th:class="'maturity-badge ' + (${m} >= 10 ? 'maturity-high' : (${m} >= 3 ? 'maturity-mid' : 'maturity-low'))"
                           th:text="${m == 0 ? '—' : #numbers.formatDecimal(m, 1, 1)}">—</span>
                 </td>
+                <td class="topic-actions" data-label="Действие">
+                    <a class="topic-action-link"
+                       th:href="@{/(topic=${item.topic}, ordered=true)}"
+                       th:classappend="${(item.correct + item.wrong) > 0 and (item.correct * 100.0 / (item.correct + item.wrong)) < 50} ? ' is-weak'">Тренировать</a>
+                    <a class="topic-action-link topic-action-wrong"
+                       th:if="${item.wrong > 0}"
+                       th:href="@{/(topic=${item.topic}, onlyWrong=true, ordered=true)}">Ошибки</a>
+                </td>
             </tr>
             </tbody>
         </table>
@@ -302,7 +334,7 @@
              («Показать все темы (N ниже)» / «Свернуть таблицу») — статичное имя перекрывало
              видимый текст и голосовое управление не находило кнопку. Имя = видимый текст. -->
         <button type="button" class="btn secondary-btn table-expander hidden" id="topic-table-expander"
-                aria-expanded="false" aria-controls="topic-table-wrap"></button>
+                aria-expanded="false" aria-controls="topic-table-wrap">Показать все темы</button>
         <p id="table-sort-status" class="visually-hidden" aria-live="polite" aria-atomic="true"></p>
     </section>
     <!-- B6: длинная таблица тем сворачивается по числу строк. Скоупится на /stats.
@@ -311,7 +343,7 @@
          навешивает этот скрипт — иначе без JS строки скрылись бы, а
          кнопка-разворот остаётся hidden → данные были бы недоступны. Скрипт
          инлайновый сразу после таблицы → сворачивает до первой отрисовки (без FOUC). -->
-    <script>
+    <script th:attr="nonce=${cspNonce}">
       (function () {
         var wrap = document.getElementById('topic-table-wrap');
         var btn = document.getElementById('topic-table-expander');
@@ -364,9 +396,7 @@
          aria-labelledby="stats-tab-dynamics" tabindex="0">
     <h2 class="stats-panel-title visually-hidden">Динамика</h2>
 
-    <!-- Подробная точность и удержание: честная разбивка, которую 4 верхние
-         карточки не показывают. Первая попытка отражает память вернее общей;
-         удержание — доля верных среди повторений в окне. NO_DATA → «—». -->
+    <!-- Подробная точность и удержание -->
     <section class="card learning-metrics" th:if="${metrics != null}"
              aria-labelledby="learning-detail-title">
         <div class="learning-metrics-head">
@@ -459,13 +489,56 @@
         <p class="muted">Ответь на вопросы и вернись к повторениям — здесь появятся точность, удержание и прогноз нагрузки.</p>
     </section>
 
+    <!-- Тренд точности 14 дней (Этап 6 / UI-012): SSR bars + JSON для Chart.js. -->
+    <section class="card accuracy-trend-card"
+             th:if="${accuracyTrend != null and !accuracyTrend.isEmpty()}"
+             aria-labelledby="accuracy-trend-title">
+        <h2 id="accuracy-trend-title" class="mt-0">Динамика точности</h2>
+        <p class="chart-subtitle">Доля верных ответов по дням за последние 14 дней. Дни без ответов — пустые столбики.</p>
+        <div class="accuracy-trend-row">
+            <div class="accuracy-trend-chart-wrap">
+                <canvas id="accuracyTrendChart" role="img"
+                        aria-describedby="accuracyTrendTable"
+                        aria-label="Столбчатый график точности по дням. Полные данные — в таблице ниже."></canvas>
+            </div>
+            <ul class="accuracy-trend-bars" aria-hidden="true">
+                <li th:each="day : ${accuracyTrend}" class="accuracy-trend-bar-item"
+                    th:classappend="${day.answered == 0} ? ' is-empty'">
+                    <span class="accuracy-trend-fill"
+                          th:attr="data-progress=${day.accuracyPercent != null ? day.accuracyPercent : 0}"></span>
+                    <span class="accuracy-trend-day" th:text="${#strings.substring(day.day, 8)}">01</span>
+                </li>
+            </ul>
+        </div>
+        <table id="accuracyTrendTable" class="chart-adjacent-table data-table" aria-label="Точность по дням">
+            <caption class="visually-hidden">Точность по дням за 14 дней</caption>
+            <thead>
+            <tr>
+                <th scope="col">День</th>
+                <th scope="col" class="text-center">Ответов</th>
+                <th scope="col" class="text-center">Верных</th>
+                <th scope="col" class="text-center">Точность</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="day : ${accuracyTrend}">
+                <td><time th:datetime="${day.day}" th:text="${day.day}">2026-07-01</time></td>
+                <td class="text-center" th:text="${day.answered}">0</td>
+                <td class="text-center" th:text="${day.correct}">0</td>
+                <td class="text-center"
+                    th:text="${day.accuracyPercent != null ? #numbers.formatDecimal(day.accuracyPercent, 1, 0) + '%' : '—'}">—</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
     <!-- Гуманизация дат прогноза: сервер отдаёт ISO-строки («2026-07-01») — это
          машинный формат, человеку он мало что говорит. Машинное значение остаётся в
          <time datetime> (семантика + сортируемость для AT/парсеров), а видимый текст
          превращаем в «Сегодня» / «Завтра» / «6 июля» через Intl с явной ru-RU локалью
          (не зависим от локали сервера). title даёт полную дату с днём недели. PE: без
          JS остаётся ISO — не идеально, но однозначно; ничего не ломается. -->
-    <script>
+    <script th:attr="nonce=${cspNonce}">
       (function () {
         var days = document.querySelectorAll('.review-forecast .forecast-day');
         if (!days.length || !window.Intl) return;
@@ -486,16 +559,70 @@
     </script>
 </section>
 
-<!-- ================= Панель: Ошибки ================= -->
-<section class="stats-panel" role="tabpanel" id="stats-panel-mistakes"
-         aria-labelledby="stats-tab-mistakes" tabindex="0">
+<!-- ================= Панель: Ошибки (UI-012 drill-down) ================= -->
+<section class="stats-panel" role="tabpanel" id="stats-panel-errors"
+         aria-labelledby="stats-tab-errors" tabindex="0">
     <h2 class="stats-panel-title visually-hidden">Ошибки</h2>
+
+    <section class="card stats-errors-actions" aria-labelledby="stats-errors-cta-title">
+        <div class="stats-next-actions-head">
+            <h2 id="stats-errors-cta-title" class="mt-0">Разбор ошибок</h2>
+            <p>Список вопросов, где уже были неверные ответы. Собери сессию только по ним
+               или открой конкретную тему.</p>
+        </div>
+        <p>
+            <a class="btn next-btn primary-btn" th:href="@{/(onlyWrong=true, ordered=true)}"
+               th:if="${stats != null and stats.wrong > 0}">Разобрать все ошибки<span aria-hidden="true"> →</span></a>
+            <a class="btn secondary-btn" th:href="@{/review}"
+               th:if="${stats != null and stats.wrong > 0}">Открыть режим «Ошибки»</a>
+            <span class="muted" th:if="${stats == null or stats.wrong == 0}">
+                Ошибок в истории нет — так держать!</span>
+        </p>
+    </section>
+
+    <section class="card" th:if="${recentWrongQuestions != null and !recentWrongQuestions.isEmpty()}"
+             aria-labelledby="wrong-questions-title">
+        <h2 id="wrong-questions-title" class="mt-0">Последние ошибки</h2>
+        <p class="muted chart-subtitle">До 30 вопросов с ошибками в истории, свежие сверху.
+           «Тренировать» открывает сессию по теме с фильтром ошибок.</p>
+        <ul class="wrong-question-list">
+            <li th:each="item : ${recentWrongQuestions}" class="wrong-question-item">
+                <div class="wrong-question-main">
+                    <div class="wrong-question-text" th:text="${item.questionPreview}">Текст вопроса</div>
+                    <div class="wrong-question-meta muted">
+                        <span th:text="${#strings.capitalize(#strings.replace(#strings.replace(item.topicDisplayName, '-', ' '), '_', ' '))}"
+                              th:title="${item.topic}">Тема</span>
+                        <span aria-hidden="true">·</span>
+                        <span>
+                            <span th:text="${item.wrongCount}">1</span>
+                            <span th:text="${@plural.pick(item.wrongCount, 'ошибка', 'ошибки', 'ошибок')}">ошибка</span>
+                        </span>
+                        <th:block th:if="${item.correctCount > 0}">
+                            <span aria-hidden="true">·</span>
+                            <span th:text="${item.correctCount + ' верн.'}">0 верн.</span>
+                        </th:block>
+                    </div>
+                </div>
+                <div class="wrong-question-actions">
+                    <a class="btn secondary-btn"
+                       th:href="@{/(topic=${item.topic}, onlyWrong=true, ordered=true)}"
+                       th:aria-label="${'Тренировать ошибки: ' + item.topicDisplayName}">Тренировать</a>
+                </div>
+            </li>
+        </ul>
+    </section>
+
+    <section class="card stats-empty"
+             th:if="${(recentWrongQuestions == null or recentWrongQuestions.isEmpty()) and (stats == null or stats.wrong == 0)}">
+        <h2 class="mt-0">Пока нет ошибок</h2>
+        <p class="muted">После первых неверных ответов здесь появится список вопросов для разбора.</p>
+        <p><a class="btn next-btn" th:href="@{/}">Начать тренировку<span aria-hidden="true"> →</span></a></p>
+    </section>
 
     <section class="card">
         <div class="stats-next-actions-head">
             <h2 class="mt-0">Где чаще ошибаешься</h2>
-            <p>Темы, где уже были неверные ответы. Собери короткую сессию по ним —
-               или пройди все ошибки из истории.</p>
+            <p>Темы, где уже были неверные ответы. Собери короткую сессию по ним.</p>
         </div>
 
         <p class="muted" th:if="${topicStats == null or topicStats.isEmpty()}">
@@ -514,7 +641,7 @@
             <tr th:each="item : ${topicStats}" th:if="${item.wrong > 0}">
                 <td>
                     <a th:href="@{/(topic=${item.topic}, onlyWrong=true, ordered=true)}"
-                       th:text="${#strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(item.topic), '-', ' '), '_', ' '))}"
+                       th:text="${@topicUtils.displayName(item.topic)}"
                        th:title="${item.topic}">тема</a>
                 </td>
                 <td class="text-center" th:text="${item.wrong}">0</td>
@@ -525,13 +652,6 @@
             </tr>
             </tbody>
         </table>
-
-        <p>
-            <a class="btn next-btn" th:href="@{/(onlyWrong=true, ordered=true)}"
-               th:if="${stats.wrong > 0}">Разобрать все ошибки<span aria-hidden="true"> →</span></a>
-            <span class="muted" th:if="${topicStats != null and !topicStats.isEmpty() and stats.wrong == 0}">
-                Ошибок в истории нет — так держать!</span>
-        </p>
     </section>
 </section>
 
@@ -546,8 +666,9 @@
 <!-- Thymeleaf: [[...]] HTML-escape'ит вывод (кавычки → &quot;) что ломает
      JSON.parse в stats.js. [(...)] (unescaped) кладёт literal-JSON,
      который Chart.js потом успешно парсит. -->
-<script type="application/json" id="topic-stats-data" th:inline="text">[(${topicStatsJson})]</script>
-<script type="application/json" id="difficulty-data" th:inline="text">[(${difficultyJson})]</script>
-<script th:src="@{/js/stats.js(v=17)}"></script>
+<script type="application/json" id="topic-stats-data" th:inline="text" th:attr="nonce=${cspNonce}">[(${topicStatsJson})]</script>
+<script type="application/json" id="difficulty-data" th:inline="text" th:attr="nonce=${cspNonce}">[(${difficultyJson})]</script>
+<script type="application/json" id="accuracy-trend-data" th:inline="text" th:attr="nonce=${cspNonce}">[(${accuracyTrendJson})]</script>
+<script th:src="@{/js/stats.js}"></script>
 </body>
 </html>

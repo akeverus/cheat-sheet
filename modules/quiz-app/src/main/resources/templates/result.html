@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="ru" data-design="instrument" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head(title='Результат — Подготовка к собеседованию', includeMermaid=true, includeChart=false)}"></head>
+<head th:replace="~{fragments/head :: head(title='Результат — Подготовка к собеседованию', includeMermaid=${needsMermaid == true}, includeChart=false)}"></head>
 <body class="result-page">
 <a class="skip-link" href="#main-content">Перейти к результату</a>
-<a class="skip-link" href="#main-content">К содержимому</a>
 <svg th:replace="~{fragments/pixel-sprite :: sprite}"></svg>
 <svg th:replace="~{fragments/icons :: sprite}"></svg>
 <div class="app">
-    <aside th:replace="~{fragments/sidebar :: sidebar(active='focus')}"></aside>
+    <aside th:replace="~{fragments/sidebar :: sidebar(active=${filter != null and filter.onlyWrong} ? 'review' : 'focus')}"></aside>
     <div class="shell-main">
         <th:block th:replace="~{fragments/topbar :: topbar}"></th:block>
 <main id="main-content" class="ed-page" tabindex="-1">
@@ -51,7 +50,8 @@
                             th:title="${result.question.important} ? 'Убрать из избранного' : 'Добавить в избранное'"
                             th:aria-label="${result.question.important} ? 'Убрать из избранного' : 'Добавить в избранное'"><svg class="ed-icon" aria-hidden="true"><use href="#i-star"></use></svg></button>
                     <span class="topic-badge" th:if="${result.question.topic != null}"
-                          th:text="${#strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(result.question.topic), '-', ' '), '_', ' '))}">topic</span>
+                          th:attr="data-topic-slug=${@topicUtils.slug(result.question.topic)}"
+                          th:text="${@topicUtils.displayName(result.question.topic)}">topic</span>
                 </div>
             </div>
 
@@ -93,10 +93,16 @@
                 <div class="result-lead answer markdown-content" th:utext="${answerHtml}"></div>
             </div>
 
-            <!-- UI-013: следующий интервал повторения (SM-2) на поверхности. -->
-            <p th:if="${reviewState != null and reviewState.intervalDays() > 0}" class="next-review">
-                <span class="next-review-eyebrow">Следующее повторение</span>
-                <span class="next-review-when">через <span th:text="${reviewState.intervalDays()}">1</span> дн.</span>
+            <!-- UI-013 / P2: всегда строка интервала (N дн. или —) + политика повторений. -->
+            <p class="next-review">
+                <span class="next-review-eyebrow">Следующее повторение:</span>
+                <span class="next-review-when"
+                      th:text="${reviewState != null and reviewState.intervalDays() > 0
+                          ? ('через ' + reviewState.intervalDays() + ' дн.')
+                          : '—'}">—</span>
+            </p>
+            <p class="review-policy muted tiny">
+                Интервальные повторения: верный ответ отодвигает карточку, ошибка возвращает её раньше.
             </p>
 
             <!-- Хендофф-3, Этап 4: distractor-анализ НА ПОВЕРХНОСТИ — компактные строки
@@ -113,11 +119,13 @@
                 </div>
             </div>
 
-            <!-- «Дополнительно»: остаток разбора (после лид-абзаца) как info-поверхность. -->
+            <!-- «Подробнее»: остаток разбора (после лид-абзаца). -->
             <div th:if="${answerRestHtml != null and !answerRestHtml.isBlank() and answerLeadHtml != null and !answerLeadHtml.isBlank()}"
-                 class="explanation-panel additional-panel">
-                <span class="explanation-eyebrow">Дополнительно</span>
-                <div class="answer markdown-content" th:utext="${answerRestHtml}"></div>
+                 class="explanation-panel additional-panel explanation-more">
+                <details>
+                    <summary class="explanation-eyebrow">Подробнее</summary>
+                    <div class="answer markdown-content" th:utext="${answerRestHtml}"></div>
+                </details>
             </div>
 
             <details th:if="${reviewState != null}" class="sm2-details">
@@ -146,7 +154,10 @@
             <div th:replace="~{fragments/inline-alert :: inline-alert(id='interview-alert', hidden=true)}"></div>
             <div class="result-actions">
                 <a class="btn next-btn"
-                   th:href="@{/(topic=${filter?.topic},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}">
+                   th:with="nextBase=${filter != null and filter.onlyWrong}"
+                   th:href="${nextBase}
+                       ? @{/review(topic=${filter?.topic},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}
+                       : @{/(topic=${filter?.topic},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}">
                     Следующий вопрос<span aria-hidden="true"> →</span>
                 </a>
             </div>
@@ -187,7 +198,7 @@
 </main>
     </div>
 </div>
-<nav th:replace="~{fragments/mobile-nav :: mobile-nav(active='focus')}"></nav>
+<nav th:replace="~{fragments/mobile-nav :: mobile-nav(active=${filter != null and filter.onlyWrong} ? 'review' : 'focus')}"></nav>
 <th:block th:replace="~{fragments/shell-scripts :: shell-scripts}"></th:block>
 <!-- app.js перенесён в конец body (был внутри main между секциями — структурная
      аномалия, см. остальные страницы: focus-training/settings). Критика C31. -->

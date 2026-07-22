@@ -1,0 +1,367 @@
+/* Wave C split from base.css — @pages layer */
+@layer pages {
+/* ===========================================================================
+   SETTINGS (C4) — «Настроить сессию». Старый .app-layout — сломанный sidebar-rail
+   (всё в 230px). В editorial разворачиваем в чистую читаемую колонку. Структуру и
+   ID шаблона сохраняем (app.js: #filter-mode-hint, #shuffle-checkbox,
+   streak-*, data-sidebar-form) — только relayout+restyle.
+   Гейт под .settings-page, чтобы не задеть .app-layout на ещё не мигрированных
+   страницах (stats/result, если используют).
+   ========================================================================== */
+/* --------------------------------------------------------------------------
+   Вкладочный каркас (редизайн 2026-06-25). Прежняя одноколоночная стопка из 4
+   разнородных карточек давала ~3.6 экрана вертикального скролла и «кашу»
+   (прямая претензия пользователя). Теперь — ARIA-вкладки: Сессия | Оформление |
+   Данные, видна одна за раз. Структура/ID форм сохранены (relayout, не смена
+   поведения). PE: tablist скрыт без JS, app.js (initSettingsTabs) раскрывает его
+   и ставит .js-tabs на <body> → панели переключаемы; без JS все три в стопке.
+   -------------------------------------------------------------------------- */
+html[data-design] .settings-page .settings-shell { max-width: var(--max-width-settings); margin: 0 auto; }
+
+/* Tablist — нижняя линейка с акцент-подчёркиванием активной вкладки (editorial). */
+html[data-design] .settings-page .settings-tablist {
+  display: flex; flex-wrap: wrap; gap: var(--space-1);
+  margin: 0 0 var(--space-7);
+  border-bottom: var(--rule-weight) solid var(--color-border-primary);
+}
+html[data-design] .settings-page .settings-tab {
+  appearance: none; -webkit-appearance: none;
+  min-height: 44px; padding: var(--space-3) var(--space-5);
+  font-family: var(--font-family-body); font-size: var(--font-size-md); font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary); background: transparent;
+  border: 0; border-bottom: var(--rule-weight-strong) solid transparent;
+  margin-bottom: calc(-1 * var(--rule-weight)); /* подчёркивание садится на линейку tablist */
+  cursor: pointer; touch-action: manipulation;
+  transition: color var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
+}
+html[data-design] .settings-page .settings-tab:hover { color: var(--color-text-primary); }
+html[data-design] .settings-page .settings-tab[aria-selected="true"] {
+  color: var(--color-text-primary); border-bottom-color: var(--color-accent-primary);
+}
+html[data-design] .settings-page .settings-tab:focus-visible {
+  outline: none; box-shadow: var(--shadow-focus); border-radius: var(--border-radius-sm);
+}
+
+/* Панели. Без JS все display:block (стопка); под .js-tabs видна только .is-active. */
+html[data-design] .settings-page .settings-panel { margin: 0 0 var(--space-9); }
+html[data-design] .settings-page .settings-panel:last-child { margin-bottom: 0; }
+/* Панель (tabpanel, tabindex=0) — БЕЗ локального гашения фокуса (R0.68):
+   старое `.settings-panel:focus { outline: none }` глушило и КЛАВИАТУРНЫЙ фокус
+   (специфичность выше глобального :focus-visible-ринга) → Tab из tablist
+   приземлялся на панель невидимо (WCAG 2.4.7). Мышиный фокус и так тихий —
+   глобальное правило `:focus:not(:focus-visible)` это уже покрывает. */
+html[data-design] .settings-page.js-tabs .settings-panel { display: none; margin: 0; }
+html[data-design] .settings-page.js-tabs .settings-panel.is-active { display: block; }
+/* Заголовок панели дублирует активную вкладку → под js-tabs прячем визуально,
+   но оставляем в a11y-дереве (sr-only): без JS он — заголовок секции в стопке. */
+html[data-design] .settings-page .settings-panel-title {
+  font-family: var(--font-family-display); font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold); color: var(--color-text-primary);
+  margin: 0 0 var(--space-6); overflow-wrap: break-word; word-break: break-word;
+}
+html[data-design] .settings-page.js-tabs .settings-panel-title {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* CLS-резерв (R0.64): data-js и data-settings-tab ставит pre-paint скрипт head
+   ДО первого кадра → вкладочное состояние (tablist виден, открыта одна панель —
+   сохранённая или Сессия) рисуется сразу, и initSettingsTabs после
+   DOMContentLoaded ничего не сдвигает: под троттлингом стопка→вкладки давала
+   CLS ~0.28 (сдвигал restore сохранённой вкладки). Без JS атрибутов нет —
+   стопка, PE-контракт не тронут. !important — единственный способ перебить
+   утилиту .hidden (она сама !important). ID-правила гейтованы :not(.js-tabs):
+   после DOMContentLoaded панелями правит обычная is-active-механика. */
+html[data-design][data-js] .settings-page .settings-tablist { display: flex !important; }
+html[data-design][data-js] .settings-page .settings-panel { display: none; margin: 0; }
+html[data-design][data-js] .settings-page .settings-panel-title {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+html[data-design][data-js]:not([data-settings-tab]) .settings-page:not(.js-tabs) #panel-session,
+html[data-design][data-js][data-settings-tab="tab-session"] .settings-page:not(.js-tabs) #panel-session,
+html[data-design][data-js][data-settings-tab="tab-appearance"] .settings-page:not(.js-tabs) #panel-appearance,
+html[data-design][data-js][data-settings-tab="tab-data"] .settings-page:not(.js-tabs) #panel-data { display: block; }
+
+/* --------------------------------------------------------------------------
+   Вкладки «Пример кода / Схема» на экране вопроса (Этап 3, handoff-3).
+   Когда у вопроса есть И код, И диаграмма — макет показывает их вкладками, а
+   не двумя блоками стопкой. PE: tablist в разметке с [hidden], панели видны
+   обе (стопка) без JS. app.js (initContentTabs) снимает [hidden], ставит
+   .js-content-tabs на .question-materials → видна одна .is-active панель.
+   Стиль вкладок наследует editorial-линейку settings-tab (подчёркивание). */
+html[data-design] .question-materials { margin: 0; }
+html[data-design] .content-tablist {
+  display: flex; flex-wrap: wrap; gap: var(--space-1);
+  margin: 0 0 var(--space-4);
+  border-bottom: var(--rule-weight) solid var(--color-border-primary);
+}
+html[data-design] .content-tablist[hidden] { display: none; }
+html[data-design] .content-tab {
+  appearance: none; -webkit-appearance: none;
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  min-height: 40px; padding: var(--space-2) var(--space-4);
+  font-family: var(--font-family-body); font-size: var(--font-size-md); font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary); background: transparent;
+  border: 0; border-bottom: var(--rule-weight-strong) solid transparent;
+  margin-bottom: calc(-1 * var(--rule-weight));
+  cursor: pointer; touch-action: manipulation;
+  transition: color var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
+}
+html[data-design] .content-tab .ed-icon { width: 15px; height: 15px; }
+html[data-design] .content-tab:hover { color: var(--color-text-primary); }
+html[data-design] .content-tab[aria-selected="true"] {
+  color: var(--color-text-primary); border-bottom-color: var(--color-accent-primary);
+}
+html[data-design] .content-tab:focus-visible {
+  outline: none; box-shadow: var(--shadow-focus); border-radius: var(--border-radius-sm);
+}
+/* Панели: без JS обе видны (стопка). Под .js-content-tabs — только активная. */
+html[data-design] .question-materials.js-content-tabs .content-tabpanel { display: none; }
+html[data-design] .question-materials.js-content-tabs .content-tabpanel.is-active { display: block; }
+/* Под вкладками прячем дублирующий chrome: summary «Код к вопросу» и заголовок
+   «Схема» повторяют подпись вкладки. Оставляем в a11y-дереве (sr-only). */
+html[data-design] .question-materials.js-content-tabs .question-code-details > summary,
+html[data-design] .question-materials.js-content-tabs .content-toolbar {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* Сетка персонализации: 7 настроек в адаптивных колонках вместо стопки 1410px. */
+html[data-design] .settings-page .personalization-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+  gap: var(--space-6) var(--space-7); align-items: start;
+}
+html[data-design] .settings-page .personalization-grid .personalization-row { margin-bottom: 0; min-width: 0; }
+html[data-design] .settings-page .personalization-row--wide { grid-column: 1 / -1; }
+
+html[data-design] .settings-page .control-inline-hint {
+  color: var(--color-text-secondary); font-size: var(--font-size-sm); margin: var(--space-3) 0 0; max-width: var(--measure);
+}
+
+/* Поля */
+html[data-design] .settings-page .filters-fields { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-bottom: var(--space-4); }
+html[data-design] .settings-page .field { display: flex; flex-direction: column; align-items: stretch; text-align: left; gap: var(--space-2); margin-bottom: var(--space-4); min-width: 0; }
+html[data-design] .settings-page .field-inline { max-width: 220px; align-items: flex-start; }
+html[data-design] .settings-page .field-label {
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary);
+}
+html[data-design] .settings-page select,
+html[data-design] .settings-page input[type="number"] {
+  width: 100%; max-width: 100%; min-height: 44px; padding: var(--space-2) var(--space-3);
+  font-family: var(--font-family-body); font-size: var(--font-size-base);
+  color: var(--color-text-primary); background: var(--color-bg-secondary);
+  border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-sm);
+  transition: border-color var(--duration-fast) var(--easing-default), box-shadow var(--duration-fast) var(--easing-default);
+}
+/* C6: рецепт кастомной select-стрелки (appearance + два gradient + позиции) был
+   продублирован дословно тут и на .stats-page. Объединён в один селектор НИЖЕ
+   (после base-правила обеих страниц — иначе их `background`-shorthand перетёр бы
+   background-image стрелки). Здесь оставлена только базовая коробка settings-select. */
+html[data-design] .settings-page select:focus,
+html[data-design] .settings-page input[type="number"]:focus {
+  outline: none; border-color: var(--color-border-focus); box-shadow: var(--shadow-focus);
+}
+/* FB-1 (FEEDBACK-парити, R0.163): нативная валидация count-инпута (min=1/max=200)
+   показывала лишь браузерный bubble при сабмите — постоянного inline-состояния
+   ошибки, заданного в feedback-атласе, в проде не было. Красим :user-invalid
+   (ТОЛЬКО после взаимодействия — нетронутое поле value=5 не «грязним»); error-тон
+   разведён с signal (hue27 vs teal205). При фокусе error-ринг перебивает --shadow-focus
+   (специфичность :user-invalid:focus (0,5,2) > :focus (0,4,2)). Нативный bubble
+   остаётся как доп. канал. */
+html[data-design] .settings-page input[type="number"]:user-invalid {
+  border-color: var(--color-status-error);
+  background: var(--color-status-error-wash);
+}
+html[data-design] .settings-page input[type="number"]:user-invalid:focus {
+  border-color: var(--color-status-error);
+  box-shadow: 0 0 0 var(--rule-weight-strong) var(--color-status-error);
+}
+/* Disabled-состояние селектов (app.js вешает .is-disabled-control). background-color,
+   не background — сохраняет custom dropdown-arrow; opacity гасит стрелку и текст вместе. */
+html[data-design] .settings-page select:disabled,
+html[data-design] .stats-page select:disabled,
+html[data-design] .is-disabled-control {
+  opacity: 0.5; cursor: not-allowed; background-color: var(--color-bg-tertiary);
+}
+
+/* Переключатели / filter chips */
+html[data-design] .settings-page .filters-toggles:not(.filter-chips) {
+  display: grid; width: 100%; grid-template-columns: 1fr 1fr; justify-items: start; gap: var(--space-2) var(--space-4); margin-bottom: var(--space-5);
+}
+html[data-design] .settings-page .toggle-item:not(.filter-chip) {
+  display: flex; align-items: center; justify-content: flex-start; gap: var(--space-2); min-height: 44px; cursor: pointer;
+  color: var(--color-text-primary); background: transparent; border: 0; padding: 0; font-size: var(--font-size-base);
+}
+html[data-design] .settings-page .toggle-item:not(.filter-chip) input[type="checkbox"] {
+  width: 18px; height: 18px; accent-color: var(--color-accent-primary); cursor: pointer;
+}
+
+/* Кнопки форм */
+html[data-design] .settings-page #filters-form button[type="submit"],
+html[data-design] .settings-page .btn-finish-small {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; padding: var(--space-2) var(--space-5);
+  font-family: var(--font-family-body); font-size: var(--font-size-base); font-weight: var(--font-weight-medium);
+  background: transparent; color: var(--color-text-primary);
+  /* B5: утилитарная (transparent) → плоская 0 по editorial-сигнатуре. Правим
+     радиус здесь (0,3,1/1,3,2), а не во flat-списке L2613 (0,2,1) — page-правило
+     перебивало бы сигнатуру по специфичности. */
+  border: var(--rule-weight) solid var(--color-border-primary); border-radius: 0;
+  cursor: pointer; box-shadow: none; text-transform: none; letter-spacing: 0; touch-action: manipulation;
+  transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
+}
+html[data-design] .settings-page #filters-form button[type="submit"]:hover,
+html[data-design] .settings-page .btn-finish-small:hover { background: var(--color-bg-tertiary); border-color: var(--color-text-secondary); }
+/* «Начать тренировку/сессию» — accent-ОБВОДКА (ghost), НЕ вторая сплошная заливка.
+   Раньше она была filled-accent, как и геройский «Начать повторение →» в
+   today-hero → два идентичных оранжевых primary конкурировали на одном экране
+   (адверсари-ревью p0 settings-grid). Теперь единственный filled-primary — hero
+   (быстрый путь к due-карточкам), а «собрать свою сессию» — акцент-ринг: прозрачный
+   фон + чернильный текст (AA-safe в любом дизайне) + accent-рамка, на hover
+   заливается акцентом. Чёткое «go», но визуально подчинён hero. */
+html[data-design] .settings-page #session-form button[type="submit"] {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 48px; padding: var(--space-3) var(--space-6); margin-top: var(--space-2);
+  font-family: var(--font-family-body); font-size: var(--font-size-md); font-weight: var(--font-weight-medium);
+  background: transparent; color: var(--color-text-primary);
+  /* Симметричный радиус токена (как у всех кнопок). Асимметричная editorial-форма
+     удалена вместе с editorial-SIGNATURES (FE-CMP-1) — Instrument держит md. */
+  border: var(--rule-weight) solid var(--color-accent-primary); border-radius: var(--border-radius-md);
+  cursor: pointer; box-shadow: none; text-transform: none; letter-spacing: 0; touch-action: manipulation;
+  transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default), color var(--duration-fast) var(--easing-default);
+}
+html[data-design] .settings-page #session-form button[type="submit"]:hover { background: var(--color-accent-primary); border-color: var(--color-accent-primary); color: var(--color-accent-on); }
+html[data-design] .settings-page .btn-finish-small { margin-top: var(--space-3); }
+
+/* Данные: экспорт + опасный сброс */
+html[data-design] .settings-page .data-export-block { margin: var(--space-3) 0 var(--space-5); }
+html[data-design] .settings-page .data-export-actions { display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-3); }
+html[data-design] .settings-page .data-export-actions .btn {
+  /* C3: только дельты к глобальному .btn (кнопка несёт class="btn secondary-btn") —
+     не растягиваться в ряду экспорта + плоский радиус (B5, глобальный .btn даёт md).
+     Размер/цвет/рамка/шрифт/ховер — из .btn/.secondary-btn (раньше дублировались здесь). */
+  flex: 0 0 auto;
+  border-radius: 0;
+}
+html[data-design] .settings-page .data-export-actions .btn:hover:not([aria-busy="true"]) { background: var(--color-bg-tertiary); border-color: var(--color-text-secondary); }
+/* «занято» во время fetch — aria-busy (не native disabled: тот выбрасывает фокус). */
+html[data-design] .settings-page .data-export-actions .btn[aria-busy="true"] { opacity: 0.7; cursor: progress; pointer-events: none; }
+/* Статус экспорта — inline-фидбэк (готовлю / готово / ошибка) вместо raw-JSON 403. */
+html[data-design] .settings-page .export-status { margin-top: var(--space-3); font-size: var(--font-size-sm); color: var(--color-text-secondary); }
+html[data-design] .settings-page .export-status-error { color: var(--color-status-error); }
+html[data-design] .settings-page .data-management-form { padding-top: var(--space-5); border-top: var(--rule-weight) solid var(--color-border-primary); }
+html[data-design] .settings-page .data-management-form p { color: var(--color-text-secondary); max-width: var(--measure); }
+/* Опасная зона: контейнер деструктивного действия (error-wash + ПОЛНАЯ error-рамка,
+   не side-stripe) — отделяет необратимый сброс от безопасного экспорта выше. */
+html[data-design] .settings-page .danger-zone {
+  margin-top: var(--space-5);
+  padding: var(--space-4);
+  background: var(--color-status-error-wash);
+  border: var(--rule-weight) solid var(--color-status-error);
+  border-radius: var(--border-radius-md);
+}
+html[data-design] .settings-page .danger-zone-title {
+  display: flex; align-items: center; gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-base); font-weight: var(--font-weight-semibold);
+  color: var(--color-status-error);
+}
+html[data-design] .settings-page .danger-zone-title .ed-icon { width: 1em; height: 1em; }
+/* внутри danger-zone форма уже отделена рамкой зоны → гасим её собственный divider */
+html[data-design] .settings-page .danger-zone .data-management-form { padding-top: 0; border-top: none; }
+html[data-design] .settings-page .danger-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; padding: var(--space-2) var(--space-5);
+  font-family: var(--font-family-body); font-size: var(--font-size-base); font-weight: var(--font-weight-medium);
+  background: transparent; color: var(--color-status-error);
+  border: var(--rule-weight) solid var(--color-status-error); border-radius: 0; /* B5: danger-утилитарная → плоская */
+  cursor: pointer; box-shadow: none; text-transform: none; letter-spacing: 0; touch-action: manipulation;
+  transition: background var(--duration-fast) var(--easing-default), color var(--duration-fast) var(--easing-default);
+}
+html[data-design] .settings-page .danger-btn:hover { background: var(--color-status-error); color: var(--color-status-error-on); }
+
+/* Прогресс: streak + stats-grid */
+html[data-design] .settings-page .streak-bar {
+  display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
+  padding: var(--space-3) var(--space-4); margin-bottom: var(--space-4);
+  border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-md);
+  background: var(--color-bg-secondary);
+}
+/* Иконка огонька серии — акцентом (тёплая терракота вместо нейтрального текста). */
+html[data-design] .settings-page .streak-fire { display: inline-flex; color: var(--color-accent-primary); font-size: var(--font-size-md); }
+/* Огонёк в launcher-баре уравниваем по размеру с hero-огоньком (.streak-inline
+   .ed-icon = 14px): без этого правила он наследовал .ed-icon 1em = 18px и был на
+   ~29% крупнее того же значка той же роли на той же странице. Цвет НЕ трогаем —
+   accent-primary специально матчит соседний .streak-progress-fill. */
+html[data-design] .settings-page .streak-fire .ed-icon { width: 0.875rem; height: 0.875rem; }
+html[data-design] .settings-page .streak-days,
+html[data-design] .settings-page .streak-count-text { font-family: var(--font-family-mono); font-size: var(--font-size-sm); color: var(--color-text-secondary); }
+html[data-design] .settings-page .streak-progress { flex: 1; min-width: 80px; height: 4px; background: var(--color-bg-tertiary); border-radius: var(--border-radius-full); overflow: hidden; }
+html[data-design] .settings-page .streak-progress-fill { height: 100%; background: var(--color-accent-primary); }
+
+/* minmax(min(120px,100%)) + min-width:0 — без них при крупном масштабе шрифта
+   (Персонализация A+) min-content плиток распирал треки шире контейнера → гориз.
+   скролл на 375. min(…,100%) не даёт колонке быть шире контейнера, min-width:0
+   позволяет 1fr-треку ужаться под доступную ширину. */
+html[data-design] .settings-page .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr)); gap: var(--space-3); }
+html[data-design] .settings-page .stat-item {
+  min-width: 0;
+  padding: var(--space-3) var(--space-4); border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-md); background: var(--color-bg-secondary); text-align: left;
+}
+/* Цифры stat-плиток — табличные фигуры: значения обновляются на лету (data-stat-field,
+   refreshStatsFromServer), а Fraunces пропорциональный → без tnum цифры «прыгают» по
+   ширине при апдейте. Покрывает все page-scoped варианты (.settings/.stats/.summary/.result). */
+html[data-design] .stat-value { font-variant-numeric: tabular-nums; }
+html[data-design] .settings-page .stat-value { font-family: var(--font-family-display); font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); display: block; }
+html[data-design] .settings-page .stat-label { font-family: var(--font-family-mono); font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary); }
+
+html[data-design] .settings-page .toast { padding: var(--space-3) var(--space-4); border-radius: var(--border-radius-md); margin-bottom: var(--space-4); }
+html[data-design] .settings-page .toast-success { background: var(--color-status-success-wash); border: var(--rule-weight) solid var(--color-status-success); color: var(--color-text-primary); }
+
+@media (max-width: 600px) {
+  html[data-design] .settings-page .filters-fields,
+  html[data-design] .settings-page .filters-toggles:not(.filter-chips) { grid-template-columns: 1fr; }
+  html[data-design] .settings-page #session-form button[type="submit"] { width: 100%; }
+  /* Узкие вкладки садятся в один ряд (3 шт), а не переносятся на две строки. */
+  html[data-design] .settings-page .settings-tab { padding-left: var(--space-3); padding-right: var(--space-3); font-size: var(--font-size-base); }
+  /* scrollIntoView / якоря: кликабельные контролы не оставлять под fixed
+     mobile-nav (live 390: #font-reset bottom≈802 при navTop=780 → hit=mobile-nav;
+     320: Экспорт JSON gap=-2). Раньше margin был только у select/submit/danger. */
+  html[data-design] .settings-page {
+    scroll-padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-6));
+  }
+  html[data-design] .settings-page select,
+  html[data-design] .settings-page button,
+  html[data-design] .settings-page .btn,
+  html[data-design] .settings-page .seg-btn,
+  html[data-design] .settings-page .font-stepper,
+  html[data-design] .settings-page .danger-btn,
+  html[data-design] .settings-page [data-export-format],
+  html[data-design] .settings-page #session-form button[type="submit"] {
+    scroll-margin-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-4));
+  }
+}
+
+@media (max-width: 768px) {
+  html[data-design] .settings-page .settings-tablist {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    border-bottom: 0;
+  }
+  html[data-design] .settings-page .settings-tab {
+    width: 100%;
+    justify-content: flex-start;
+    border-bottom: var(--rule-weight) solid var(--color-border-secondary);
+    border-radius: 0;
+  }
+  html[data-design] .settings-page .settings-tab[aria-selected="true"] {
+    border-left: 3px solid var(--color-accent-primary);
+    background: var(--color-accent-wash);
+  }
+}
+
+}

@@ -4,7 +4,12 @@
       var raw = (el.getAttribute('data-progress') || '0').replace(',', '.');
       var numeric = parseFloat(raw);
       var safe = isNaN(numeric) ? 0 : Math.max(0, Math.min(100, numeric));
-      el.style.width = safe.toFixed(1) + '%';
+      el.style.setProperty('--progress', String(safe));
+      // Горизонтальные бары (прогресс темы / прогноз) — width; вертикальные
+      // (accuracy-trend-fill) опираются на --progress в CSS height.
+      if (!el.classList.contains('accuracy-trend-fill')) {
+        el.style.width = safe.toFixed(1) + '%';
+      }
     });
   }
 
@@ -21,14 +26,75 @@
   }
 
   function shortName(t) {
+    if (t.displayName && String(t.displayName).trim()) return String(t.displayName).trim();
     var name = t.topic || 'Без темы';
     var parts = name.split('/');
     return parts[parts.length - 1].replace(/-interview$/, '');
   }
 
   function displayTopicName(t) {
+    if (t.displayName && String(t.displayName).trim()) return String(t.displayName).trim();
     var name = shortName(t).replace(/[-_]+/g, ' ').trim();
-    return name ? name.charAt(0).toUpperCase() + name.slice(1) : 'Без темы';
+    if (!name) return 'Без темы';
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  }
+
+  function renderChartAdjacentTable(tableId, caption, headers, rows) {
+    var table = document.getElementById(tableId);
+    if (!table || !rows.length) return;
+    var thead = '<thead><tr>' + headers.map(function (h) {
+      return '<th scope="col">' + escapeHtml(h) + '</th>';
+    }).join('') + '</tr></thead>';
+    var tbody = '<tbody>' + rows.map(function (row) {
+      return '<tr>' + row.map(function (cell) {
+        return '<td>' + escapeHtml(String(cell)) + '</td>';
+      }).join('') + '</tr>';
+    }).join('') + '</tbody>';
+    table.innerHTML = '<caption>' + escapeHtml(caption) + '</caption>' + thead + tbody;
+    // Visible data table for a11y / no-JS chart consumers (not only SR-hidden).
+    table.classList.remove('hidden', 'visually-hidden');
+  }
+
+  /** P1.4: для 1–3 тем — карточки с progress bars вместо Chart.js. */
+  function renderCompactTopicCards(topicStats, el1, el2, progressFallback, accuracyFallback) {
+    if (el1) el1.classList.add('hidden');
+    if (el2) el2.classList.add('hidden');
+    function fill(fallback, title) {
+      if (!fallback) return;
+      fallback.classList.remove('hidden');
+      var rows = topicStats.map(function (t) {
+        var attempts = (t.correct || 0) + (t.wrong || 0);
+        var learned = t.learned || 0;
+        var total = Math.max(1, t.total || 1);
+        var masteredPct = Math.round((learned / total) * 100);
+        var accuracy = attempts === 0 ? null : Math.round(((t.correct || 0) / attempts) * 100);
+        return '<div class="topic-compact-card">'
+          + '<a class="topic-compact-name" href="/?topic=' + encodeURIComponent(t.topic || '') + '&amp;ordered=true">'
+          + escapeHtml(displayTopicName(t)) + '</a>'
+          + '<div class="topic-compact-bar" aria-hidden="true"><span class="topic-compact-bar-fill" data-bar-pct="' + masteredPct + '"></span></div>'
+          + '<span class="muted tiny">Освоено ' + learned + ' из ' + total
+          + (accuracy == null ? '' : ' · точность ' + accuracy + '%')
+          + '</span>'
+          + (t.topic
+            ? '<a class="topic-compact-action" href="/?topic=' + encodeURIComponent(t.topic) + '&amp;ordered=true">Тренировать</a>'
+            : '')
+          + '</div>';
+      }).join('');
+      fallback.innerHTML = '<p class="muted tiny">' + title + '</p><div class="topic-compact-list">' + rows + '</div>';
+    }
+    fill(progressFallback, 'Прогресс по темам');
+    fill(accuracyFallback, 'Точность по темам');
+    document.querySelectorAll('.topic-compact-bar-fill[data-bar-pct]').forEach(function (el) {
+      var pct = Number(el.getAttribute('data-bar-pct'));
+      if (!Number.isFinite(pct)) return;
+      el.style.width = Math.max(0, Math.min(100, pct)) + '%';
+    });
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
   function topicAccuracyItem(t) {
@@ -65,6 +131,18 @@
     if (action) {
       action.setAttribute('aria-label', 'Тренировать слабые темы. Слабее всего: '
         + weakest.name + ', точность ' + weakest.accuracy + '%.');
+      if (weakest.rawName) {
+        try {
+          var url = new URL(action.getAttribute('href') || '/?weakTopics=true&ordered=true', window.location.origin);
+          url.searchParams.set('topic', weakest.rawName);
+          url.searchParams.set('weakTopics', 'true');
+          url.searchParams.set('ordered', 'true');
+          action.setAttribute('href', url.pathname + url.search);
+        } catch (e) {
+          action.setAttribute('href', '/?topic=' + encodeURIComponent(weakest.rawName)
+            + '&weakTopics=true&ordered=true');
+        }
+      }
     }
   }
 
@@ -103,22 +181,35 @@
 
     var progressFallback = document.getElementById('topicProgressChartFallback');
     var accuracyFallback = document.getElementById('topicAccuracyChartFallback');
-    function showChartFallback(canvas, fallback, message) {
+    var el1 = document.getElementById('topicProgressChart');
+    var el2 = document.getElementById('topicAccuracyChart');
+
+    function showChartFallback(canvas, fallback, message, tableId) {
       if (canvas) canvas.classList.add('hidden');
       if (fallback) {
         fallback.classList.remove('hidden');
         fallback.textContent = message || fallback.textContent;
       }
+      if (tableId) {
+        var table = document.getElementById(tableId);
+        if (table) {
+          table.classList.remove('hidden', 'visually-hidden');
+        }
+      }
     }
 
     // Канвасы рендерятся сервером только когда темы ЕСТЬ (th:if в шаблоне), и мы
     // попадаем сюда лишь при непустом JSON-блоке. Значит пустой topicStats тут =
-    // сбой парсинга встроенного JSON: показываем понятный fallback на оставшихся
-    // в DOM канвасах вместо немой пустой области. В истинно-пустом случае канвасов
-    // в DOM нет — getElementById вернёт null и showChartFallback просто ничего не сделает.
+    // сбой парсинга встроенного JSON.
     if (topicStats.length === 0) {
-      showChartFallback(document.getElementById('topicProgressChart'), progressFallback, 'Не удалось загрузить данные графика. Используй таблицу ниже.');
-      showChartFallback(document.getElementById('topicAccuracyChart'), accuracyFallback, 'Не удалось загрузить данные графика. Используй таблицу ниже.');
+      showChartFallback(el1, progressFallback, 'Не удалось загрузить данные графика. Используй таблицу ниже.', 'topicProgressChartTable');
+      showChartFallback(el2, accuracyFallback, 'Не удалось загрузить данные графика. Используй таблицу ниже.', 'topicAccuracyChartTable');
+      return;
+    }
+
+    // P1.4: 1–3 темы → компактные progress bars вместо огромных координатных плоскостей.
+    if (topicStats.length <= 3) {
+      renderCompactTopicCards(topicStats, el1, el2, progressFallback, accuracyFallback);
       return;
     }
 
@@ -128,7 +219,7 @@
     var enriched = topicStats.map(function (t) {
       var attempts = (t.correct || 0) + (t.wrong || 0);
       return {
-        name: shortName(t),
+        name: displayTopicName(t),
         learned: t.learned || 0,
         total: t.total || 1,
         attempts: attempts,
@@ -152,8 +243,6 @@
       .sort(function (a, b) { return a.accuracy - b.accuracy || b.attempts - a.attempts; })
       .slice(0, MAX_BARS);
 
-    var el1 = document.getElementById('topicProgressChart');
-    var el2 = document.getElementById('topicAccuracyChart');
     var charts = [];
 
     // Полная перерисовка под текущую тему: уничтожаем старые инстансы, читаем
@@ -192,6 +281,14 @@
       if (el1 && typeof Chart !== 'undefined' && progressData.length > 0) {
         el1.classList.remove('hidden');
         if (progressFallback) progressFallback.classList.add('hidden');
+        renderChartAdjacentTable(
+          'topicProgressChartTable',
+          'Табличное представление прогресса по темам',
+          ['Тема', 'Выучено', 'Осталось'],
+          progressData.map(function (t) {
+            return [displayTopicName({ topic: t.name, displayName: t.name }), t.learned, Math.max(0, t.total - t.learned)];
+          })
+        );
         try {
           charts.push(new Chart(el1, {
             type: 'bar',
@@ -205,17 +302,25 @@
             options: { animation: anim, scales: { x: Object.assign({}, commonOpts.scales.x, { stacked: true }), y: Object.assign({}, commonOpts.scales.y, { stacked: true }) }, responsive: commonOpts.responsive, maintainAspectRatio: commonOpts.maintainAspectRatio, plugins: commonOpts.plugins }
           }));
         } catch (_) {
-          showChartFallback(el1, progressFallback, 'Не удалось отрисовать график прогресса. Используй таблицу ниже.');
+          showChartFallback(el1, progressFallback, 'Не удалось отрисовать график прогресса. Используй таблицу ниже.', 'topicProgressChartTable');
         }
       } else if (el1 && typeof Chart !== 'undefined') {
         showChartFallback(el1, progressFallback, 'Пока нет активных тем. Начни отвечать — и здесь появится твой прогресс.');
       } else {
-        showChartFallback(el1, progressFallback, 'График прогресса недоступен в текущем окружении. Используй таблицу ниже.');
+        showChartFallback(el1, progressFallback, 'График прогресса недоступен в текущем окружении. Используй таблицу ниже.', 'topicProgressChartTable');
       }
 
       if (el2 && typeof Chart !== 'undefined' && accuracyData.length > 0) {
         el2.classList.remove('hidden');
         if (accuracyFallback) accuracyFallback.classList.add('hidden');
+        renderChartAdjacentTable(
+          'topicAccuracyChartTable',
+          'Табличное представление точности по темам',
+          ['Тема', 'Точность %', 'Попыток'],
+          accuracyData.map(function (t) {
+            return [displayTopicName({ topic: t.name, displayName: t.name }), t.accuracy, t.attempts];
+          })
+        );
         try {
           var accVals = accuracyData.map(function (t) { return t.accuracy; });
           charts.push(new Chart(el2, {
@@ -232,12 +337,12 @@
             options: { animation: anim, scales: { x: commonOpts.scales.x, y: Object.assign({}, commonOpts.scales.y, { max: 100 }) }, responsive: commonOpts.responsive, maintainAspectRatio: commonOpts.maintainAspectRatio, plugins: commonOpts.plugins }
           }));
         } catch (_) {
-          showChartFallback(el2, accuracyFallback, 'Не удалось отрисовать график точности. Используй таблицу ниже.');
+          showChartFallback(el2, accuracyFallback, 'Не удалось отрисовать график точности. Используй таблицу ниже.', 'topicAccuracyChartTable');
         }
       } else if (el2 && typeof Chart !== 'undefined') {
         showChartFallback(el2, accuracyFallback, 'Пока нет отвеченных вопросов. Ответь на несколько — и увидишь точность по темам.');
       } else {
-        showChartFallback(el2, accuracyFallback, 'График точности недоступен в текущем окружении. Используй таблицу ниже.');
+        showChartFallback(el2, accuracyFallback, 'График точности недоступен в текущем окружении. Используй таблицу ниже.', 'topicAccuracyChartTable');
       }
     }
 
@@ -400,12 +505,13 @@
     });
   }
 
-  // Вкладки аналитики (Обзор | По темам | Динамика | Ошибки). Тот же ARIA-паттерн,
+  // Вкладки аналитики (Обзор | Темы | Динамика | Ошибки). Тот же ARIA-паттерн,
   // что и /settings (roving tabindex, ←→↑↓/Home/End, aria-selected), но /stats не
   // подключает app.js — держим свою копию здесь. PE: без JS все панели в стопке
   // (весь контент доступен); тут ставим .js-tabs на <body> (CSS прячет неактивные)
-  // и раскрываем tablist. Вызывать ПОСЛЕ initCharts — Chart.js читает размер канваса
-  // при создании, пока панель «По темам» ещё видима (иначе 0×0). На переключении
+  // и раскрываем tablist. Hash deep-link: #topics / #dynamics / #errors / #overview
+  // (compat: #history → dynamics). Вызывать ПОСЛЕ initCharts — Chart.js читает размер
+  // канваса при создании, пока панель «Темы» ещё видима (иначе 0×0). На переключении
   // дополнительно шлём resize, чтобы responsive-графики пересчитались под показ.
   function initStatsTabs() {
     var tablist = document.getElementById('stats-tablist');
@@ -419,7 +525,21 @@
     tablist.classList.remove('hidden');
 
     var STORAGE_KEY = 'statsTab';
-    function activate(idx, focusTab) {
+    var HASH_ALIASES = { history: 'dynamics' };
+
+    function tabIndexByHash(raw) {
+      var hash = (raw || '').replace(/^#/, '').toLowerCase();
+      if (!hash) return -1;
+      if (HASH_ALIASES[hash]) hash = HASH_ALIASES[hash];
+      for (var i = 0; i < tabs.length; i++) {
+        var h = (tabs[i].getAttribute('data-tab-hash') || '').toLowerCase();
+        if (h === hash) return i;
+        if (tabs[i].id === 'stats-tab-' + hash) return i;
+      }
+      return -1;
+    }
+
+    function activate(idx, focusTab, syncHash) {
       tabs.forEach(function (t, i) {
         var on = i === idx;
         t.setAttribute('aria-selected', on ? 'true' : 'false');
@@ -431,10 +551,18 @@
       // контейнере — responsive-Chart.js подхватит новый размер по resize-событию.
       if (window.dispatchEvent) { try { window.dispatchEvent(new Event('resize')); } catch (e) { /* старый IE */ } }
       try { localStorage.setItem(STORAGE_KEY, tabs[idx].id); } catch (e) { /* приватный режим */ }
+      if (syncHash && history.replaceState) {
+        var hash = tabs[idx].getAttribute('data-tab-hash') || '';
+        var next = hash && hash !== 'overview' ? '#' + hash : (location.pathname + location.search);
+        try {
+          if (hash && hash !== 'overview') history.replaceState(null, '', '#' + hash);
+          else if (location.hash) history.replaceState(null, '', next);
+        } catch (e) { /* ignore */ }
+      }
     }
 
     tabs.forEach(function (tab, i) {
-      tab.addEventListener('click', function () { activate(i, false); });
+      tab.addEventListener('click', function () { activate(i, false, true); });
       tab.addEventListener('keydown', function (e) {
         var idx = -1;
         if (e.key === 'ArrowRight' || e.key === 'ArrowDown') idx = (i + 1) % tabs.length;
@@ -443,16 +571,26 @@
         else if (e.key === 'End') idx = tabs.length - 1;
         if (idx < 0) return;
         e.preventDefault();
-        activate(idx, true);
+        activate(idx, true, true);
       });
     });
 
-    var initial = 0;
-    try {
-      var saved = localStorage.getItem(STORAGE_KEY);
-      for (var i = 0; i < tabs.length; i++) { if (tabs[i].id === saved) { initial = i; break; } }
-    } catch (e) { /* приватный режим */ }
-    activate(initial, false);
+    window.addEventListener('hashchange', function () {
+      var fromHash = tabIndexByHash(location.hash);
+      if (fromHash >= 0) activate(fromHash, false, false);
+    });
+
+    var initial = tabIndexByHash(location.hash);
+    if (initial < 0) {
+      initial = 0;
+      try {
+        var saved = localStorage.getItem(STORAGE_KEY);
+        // Compat: старый id stats-tab-history → dynamics
+        if (saved === 'stats-tab-history') saved = 'stats-tab-dynamics';
+        for (var i = 0; i < tabs.length; i++) { if (tabs[i].id === saved) { initial = i; break; } }
+      } catch (e) { /* приватный режим */ }
+    }
+    activate(initial, false, false);
   }
 
   // Этап 6 (handoff-3): донат «Сложность вопросов». Данные — #difficulty-data
@@ -509,11 +647,85 @@
     } catch (e) { /* канвас пуст, легенда всё показывает */ }
   }
 
+  // Тренд точности 14 дней (вкладка «Динамика»). Таблица SSR — a11y fallback;
+  // SSR bars — визуальный fallback без Chart.js. Guard на Chart/данные.
+  function initAccuracyTrendChart() {
+    var canvas = document.getElementById('accuracyTrendChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+    var el = document.getElementById('accuracy-trend-data');
+    if (!el) return;
+    var days;
+    try { days = JSON.parse(el.textContent || '[]'); } catch (e) { return; }
+    if (!Array.isArray(days) || !days.length) return;
+    function tok(name, fallback) {
+      try {
+        var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        return v || fallback;
+      } catch (e) { return fallback; }
+    }
+    var motionAttr = document.documentElement.getAttribute('data-motion');
+    var animate = motionAttr === 'on' ? true
+      : motionAttr === 'off' ? false
+      : !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    var labels = days.map(function (d) {
+      var m = /-(\d{2})-(\d{2})$/.exec(d.day || '');
+      return m ? (m[2] + '.' + m[1]) : (d.day || '');
+    });
+    var values = days.map(function (d) {
+      return d.accuracyPercent == null ? null : d.accuracyPercent;
+    });
+    try {
+      new Chart(canvas, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Точность %',
+            data: values,
+            backgroundColor: tok('--color-accent-primary', '#2EC4B6'),
+            borderRadius: 2,
+            maxBarThickness: 18
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: animate ? {} : false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: { callback: function (v) { return v + '%'; } },
+              grid: { color: tok('--color-border-secondary', 'rgba(255,255,255,0.08)') }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 7 }
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function (ctx) {
+                  var day = days[ctx.dataIndex];
+                  if (!day || day.answered === 0) return 'нет ответов';
+                  return Math.round(ctx.parsed.y) + '% · ' + day.correct + '/' + day.answered;
+                }
+              }
+            }
+          }
+        }
+      });
+    } catch (e) { /* таблица и SSR bars остаются */ }
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     hydrateProgressBarsFromData();
     initNextActions();
     initCharts();
     initDifficultyDonut();
+    initAccuracyTrendChart();
     initTableSort();
     initKeyboardHelp();
     initStatsTabs();

@@ -3,7 +3,6 @@
 <head th:replace="~{fragments/head :: head(title='Ошибка — Подготовка к собеседованию', includeMermaid=false, includeChart=false)}"></head>
 <body class="error-page">
 <a class="skip-link" href="#main-content">Перейти к сообщению об ошибке</a>
-<a class="skip-link" href="#main-content">К содержимому</a>
 <svg th:replace="~{fragments/pixel-sprite :: sprite}"></svg>
 <svg th:replace="~{fragments/icons :: sprite}"></svg>
 <div class="app">
@@ -12,6 +11,7 @@
         <th:block th:replace="~{fragments/topbar :: topbar}"></th:block>
 <main id="main-content" class="ed-page" tabindex="-1">
 <section class="error-card" aria-labelledby="error-heading">
+    <img class="error-pixel-art" th:src="@{/img/pixel/mascot.png}" width="96" height="108" alt="" decoding="async">
     <p class="error-eyebrow" aria-hidden="true">Ошибка</p>
 
     <!-- Большой статус-номер как editorial-композиция (декоративный, реальный
@@ -31,7 +31,7 @@
     <p class="error-body"
        th:with="code=${status != null ? status : 500}"
        th:text="${code == 404 ? 'Возможно, ссылка устарела или ты свернул не туда. Загляни на главную и продолжи тренировку.' :
-                 (code == 403 ? 'Похоже, защитный токен формы устарел — так бывает, если страница была открыта долго, открыта в нескольких вкладках или сессия сбросилась. Обнови страницу и повтори действие.' :
+                 (code == 403 ? 'Нет прав на это действие. Обнови страницу и повтори; если снова отказ — проверь admin-токен в настройках или войди заново.' :
                  (code == 401 ? 'Нужно представиться, чтобы продолжить.' :
                  (code == 400 ? 'Запрос составлен неверно — проверь введённые данные и попробуй ещё раз.' :
                   'Запрос не дошёл до результата. Попробуй обновить страницу или вернуться на главную — если повторится, посмотри в логи приложения.')))}">
@@ -56,6 +56,10 @@
 
     <nav class="error-actions" aria-label="Что дальше">
         <a th:href="@{/}" class="btn next-btn">На главную<span aria-hidden="true"> →</span></a>
+        <!-- multiSecurityMode может быть null на /error вне ControllerAdvice —
+             сравниваем с true, иначе SpEL EL1001E (null→boolean) валит весь error.html. -->
+        <a th:if="${multiSecurityMode == true and status != null and (status == 401 or status == 403)}"
+           th:href="@{/login}" class="btn next-btn">Войти<span aria-hidden="true"> →</span></a>
         <a th:href="@{/stats}" class="btn secondary-btn">Аналитика</a>
         <a th:href="@{/settings}" class="btn secondary-btn">Настроить сессию</a>
     </nav>
