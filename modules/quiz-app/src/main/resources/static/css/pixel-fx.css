@@ -46,8 +46,6 @@ html[data-design] [class*="pixel-"] img {
 html[data-design] .pixel-sprite-frame,
 html[data-design] .pixel-portal-wipe-glyph,
 html[data-design] .pixel-coin-pickup,
-html[data-design] .pixel-hud-lives img,
-html[data-design] .pixel-hud-lives .pixel-heart-css,
 html[data-design] .session-progress-fill::after,
 html[data-design] .progress-mini span::after,
 html[data-design] .streak-progress-fill::after {
@@ -806,33 +804,12 @@ html[data-design] .result-verdict {
 @keyframes coinSpinSheet {
   to { background-position: -16px 0; }
 }
-@keyframes heartSheet {
-  to { background-position: -16px 0; }
-}
 @keyframes fireSheet {
   to { background-position: -32px 0; }
 }
 @keyframes fireBob {
   0%, 100% { transform: translateY(-50%) scale(1); }
   50% { transform: translateY(calc(-50% - 2px)) scale(1.1); }
-}
-
-/* Miss feedback: overlay flash — NOT body transform (breaks position:fixed). */
-html[data-design] .px-shake-layer {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 90;
-  opacity: 0;
-}
-html[data-design] .px-shake-layer.is-on {
-  animation: missFlash 0.45s steps(4);
-}
-@keyframes missFlash {
-  0%, 100% { opacity: 0; box-shadow: inset 0 0 0 0 transparent; }
-  25% { opacity: 1; box-shadow: inset 0 0 48px 12px rgba(255, 113, 95, 0.4); }
-  50% { opacity: 1; box-shadow: inset 0 0 24px 4px rgba(255, 113, 95, 0.25); }
-  75% { opacity: 0.6; box-shadow: inset 0 0 32px 8px rgba(255, 113, 95, 0.3); }
 }
 
 /* ---- Burst / confetti ---- */
@@ -1077,89 +1054,6 @@ html[data-design] .focus-question {
   /* no pixel font / hard shadow on copy */
 }
 
-/* ---- ARCADE HUD ---- */
-html[data-design] .pixel-hud {
-  position: fixed;
-  top: 56px;
-  right: 12px;
-  z-index: 80;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-  pointer-events: none;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 700;
-}
-html[data-design] .pixel-hud-lives {
-  display: flex;
-  gap: 4px;
-}
-html[data-design] .pixel-hud-lives img {
-  width: var(--px-m);
-  height: var(--px-m);
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  animation: heartBeat 0.7s steps(2) infinite;
-  filter: drop-shadow(0 0 6px rgba(255, 113, 95, 0.55));
-}
-/* Non-exam hearts: CSS background frame cycle (heart-1 / heart-2) */
-html[data-design] .pixel-hud:not(.is-exam) .pixel-hud-lives .pixel-heart-css {
-  display: block;
-  width: var(--px-m);
-  height: var(--px-m);
-  background: url("/img/pixel/heart-sheet.png") 0 0 / 32px 16px no-repeat;
-  animation: heartSheet 0.7s steps(2) infinite, heartBeat 0.7s steps(2) infinite;
-  filter: drop-shadow(0 0 6px rgba(255, 113, 95, 0.55));
-}
-html[data-design] .pixel-hud:not(.is-exam) .pixel-hud-lives .pixel-heart-css:nth-child(2) { animation-delay: 0.15s, 0.15s; }
-html[data-design] .pixel-hud:not(.is-exam) .pixel-hud-lives .pixel-heart-css:nth-child(3) { animation-delay: 0.3s, 0.3s; }
-html[data-design] .pixel-hud-lives img:nth-child(2) { animation-delay: 0.15s; }
-html[data-design] .pixel-hud-lives img:nth-child(3) { animation-delay: 0.3s; }
-@keyframes heartBeat {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.12); }
-}
-html[data-design] .pixel-hud-combo {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--px-amber);
-  background: rgba(8, 20, 26, 0.85);
-  padding: 6px 10px;
-  box-shadow: var(--px-edge);
-  min-width: 88px;
-  text-align: center;
-}
-html[data-design] .pixel-hud-combo.is-hot {
-  color: var(--px-yellow);
-  animation: comboPop 0.35s steps(3);
-}
-html[data-design] .pixel-hud-combo.is-on-fire {
-  color: var(--px-red);
-  background: linear-gradient(90deg, rgba(255,113,95,0.25), rgba(247,184,63,0.25));
-  box-shadow: 3px 0 0 var(--px-red), -3px 0 0 var(--px-amber), 0 3px 0 var(--px-red), 0 -3px 0 var(--px-amber);
-}
-@keyframes comboPop {
-  0% { transform: scale(1); }
-  40% { transform: scale(1.25); }
-  100% { transform: scale(1); }
-}
-html[data-design] .pixel-hud-xp {
-  width: 96px;
-  height: 10px;
-  background: #0a1a20;
-  box-shadow: var(--px-edge);
-  overflow: hidden;
-}
-html[data-design] .pixel-hud-xp-fill {
-  display: block;
-  height: 100%;
-  width: 0;
-  background: repeating-linear-gradient(90deg, var(--px-teal) 0 4px, var(--px-green) 4px 8px);
-  transition: width 0.25s steps(4);
-  box-shadow: inset 0 2px 0 rgba(255,255,255,0.35);
-}
 
 /* Floating arcade text */
 html[data-design] .pixel-float-text {
@@ -1362,50 +1256,6 @@ html[data-design] .rail-pause-btn::before {
   image-rendering: crisp-edges;
 }
 
-/* XP bar decorative HUD styles */
-html[data-design] .pixel-hud-xp {
-  width: 96px;
-  height: 12px;
-  background: #0a1a20;
-  box-shadow: var(--px-edge);
-  overflow: hidden;
-  position: relative;
-  image-rendering: pixelated;
-}
-html[data-design] .pixel-hud-xp::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: url("/img/pixel/bar-l.png") center / cover no-repeat;
-  z-index: 1;
-  pointer-events: none;
-}
-html[data-design] .pixel-hud-xp::after {
-  content: "";
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: url("/img/pixel/bar-r.png") center / cover no-repeat;
-  z-index: 1;
-  pointer-events: none;
-}
-html[data-design] .pixel-hud-xp-fill {
-  display: block;
-  height: 100%;
-  width: 0;
-  background:
-    url("/img/pixel/xp-bar-fill.png") center / auto 100% repeat-x,
-    repeating-linear-gradient(90deg, var(--px-teal) 0 4px, var(--px-green) 4px 8px);
-  transition: width 0.25s steps(4);
-  box-shadow: inset 0 2px 0 rgba(255,255,255,0.35);
-  image-rendering: pixelated;
-}
-
 /* Stage intro overlay */
 html[data-design] .pixel-stage-intro {
   position: fixed;
@@ -1515,7 +1365,6 @@ html[data-design][data-pixel="low"] .summary-kpi::before,
 html[data-design][data-pixel="low"] .summary-kpi::after,
 html[data-design][data-pixel="low"] .explanation-panel::after,
 html[data-design][data-pixel="low"] .question-stage::after,
-html[data-design][data-pixel="low"] .pixel-hud,
 html[data-design][data-pixel="low"] .session-progress-fill::after,
 html[data-design][data-pixel="low"] .progress-mini span::after {
   display: none !important;
@@ -1602,24 +1451,6 @@ html[data-design] img.pixel-mascot-anim {
   0%, 100% { filter: none; transform: translateY(0); }
   50% { filter: brightness(1.08); transform: translateY(-1px); }
 }
-html[data-design] .pixel-hud-xp-fill.is-pulse {
-  filter: brightness(1.35);
-  box-shadow: 0 0 10px rgba(247, 184, 63, 0.9);
-}
-html[data-design] .pixel-hud.is-exam .pixel-hud-lives img.is-lost {
-  opacity: 0.35;
-  filter: grayscale(1);
-}
-html[data-design] .pixel-hud.is-hit {
-  animation: hudHit 0.4s steps(4);
-}
-@keyframes hudHit {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  50% { transform: translateX(4px); }
-  75% { transform: translateX(-2px); }
-}
-
 /* Filter chips / skip / grade — ensure checkbox/radio chrome + press affordance */
 html[data-design] .settings-page .filter-chip {
   position: relative;
@@ -1658,9 +1489,8 @@ html[data-design] #interview-options label:has(input:checked)::before {
   100% { transform: scale(1) rotate(0); opacity: 1; }
 }
 
-/* Hide HUD on tiny screens a bit */
+/* Tiny screens: smaller float text */
 @media (max-width: 480px) {
-  html[data-design] .pixel-hud { top: 48px; right: 6px; transform: scale(0.85); transform-origin: top right; }
   html[data-design] .pixel-float-text { font-size: 11px; }
 }
 
@@ -1670,7 +1500,6 @@ html[data-design] #interview-options label:has(input:checked)::before {
   html[data-design] .pixel-burst,
   html[data-design] .pixel-floater,
   html[data-design] .pixel-trail-dot,
-  html[data-design] .pixel-hud,
   html[data-design] .pixel-coin-rain,
   html[data-design] .pixel-float-text,
   html[data-design] .pixel-screen-flash,
@@ -1696,7 +1525,6 @@ html[data-design] #interview-options label:has(input:checked)::before {
   html[data-design] .streak-progress-fill,
   html[data-design] .accuracy-bar-fill,
   html[data-design] .summary-page .score-ring.is-portal::before,
-  html[data-design] .pixel-hud-lives .pixel-heart-css,
   html[data-design] .session-progress-fill::after,
   html[data-design] .mobile-nav a.active .icon {
     animation: none !important;
@@ -1706,7 +1534,6 @@ html[data-design][data-motion="off"] .pixel-ambient,
 html[data-design][data-motion="off"] .pixel-burst,
 html[data-design][data-motion="off"] .pixel-floater,
 html[data-design][data-motion="off"] .pixel-trail-dot,
-html[data-design][data-motion="off"] .pixel-hud,
 html[data-design][data-motion="off"] .pixel-coin-rain,
 html[data-design][data-motion="off"] .pixel-float-text,
 html[data-design][data-motion="off"] .pixel-screen-flash,
@@ -1732,7 +1559,6 @@ html[data-design][data-motion="off"] .progress-mini span,
 html[data-design][data-motion="off"] .streak-progress-fill,
 html[data-design][data-motion="off"] .accuracy-bar-fill,
 html[data-design][data-motion="off"] .summary-page .score-ring.is-portal::before,
-html[data-design][data-motion="off"] .pixel-hud-lives .pixel-heart-css,
 html[data-design][data-motion="off"] .mobile-nav a.active .icon {
   animation: none !important;
 }

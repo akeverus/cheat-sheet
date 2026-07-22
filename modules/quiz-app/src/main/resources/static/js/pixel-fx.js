@@ -671,19 +671,14 @@
     }, 420);
   }
 
-  /** Coin-spin flies toward HUD XP bar when xpAwarded > 0. */
-  function coinSpinPickup(xp) {
+  /** Сдержанный reward-жест при начислении реального XP (xpAwarded > 0):
+   *  монета всплывает над вердиктом и гаснет. §12: HUD XP-бара больше нет,
+   *  поэтому монета никуда не «летит к бару» — просто короткий позитив. */
+  function coinSpinPickup() {
     if (!allowFx()) return;
-    var bar = document.querySelector('.pixel-hud-xp');
     var startX = window.innerWidth / 2;
     var startY = window.innerHeight * 0.36;
-    var endX = startX;
     var endY = 72;
-    if (bar) {
-      var r = bar.getBoundingClientRect();
-      endX = r.left + r.width / 2;
-      endY = r.top + r.height / 2;
-    }
     var coin = document.createElement('span');
     coin.className = 'pixel-coin-pickup pixel-coin-spin-css';
     coin.setAttribute('aria-hidden', 'true');
@@ -691,19 +686,10 @@
     coin.style.top = startY + 'px';
     document.body.appendChild(coin);
     requestAnimationFrame(function () {
-      coin.style.transform = 'translate(' + (endX - startX) + 'px,' + (endY - startY) + 'px) scale(0.55)';
+      coin.style.transform = 'translate(0px,' + (endY - startY) + 'px) scale(0.55)';
       coin.style.opacity = '0.15';
     });
-    later(function () {
-      coin.remove();
-      var fill = document.querySelector('.pixel-hud-xp-fill');
-      if (fill) {
-        var cur = parseFloat(fill.style.width) || 0;
-        fill.style.width = Math.min(100, cur + Math.min(36, xp * 3)) + '%';
-        fill.classList.add('is-pulse');
-        later(function () { fill.classList.remove('is-pulse'); }, 400);
-      }
-    }, 520);
+    later(function () { coin.remove(); }, 520);
   }
 
   window.__pixelFx = {
