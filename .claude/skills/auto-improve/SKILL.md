@@ -88,6 +88,14 @@ description: "Автономный бесконечный цикл улучше�
   Это главное: `test` пропускает coverage-gates, которые тоже валят CI.
   Цикл 2 в истории родился именно из coverage-gate, незамеченного на этапе `test`.
 - `./gradlew jacocoTestReport` — генерация HTML-отчёта (для анализа per-package coverage)
+- **Прогнать `references/backend-best-practices.md`** — ОСНОВНОЙ источник кодовых задач:
+  готовый набор детерминированных grep-сигналов, дающих находку БЕЗ запуска приложения
+  (важно, когда `./gradlew` недоступен — напр. при живом devtools-bootRun). Примеры сигналов:
+  `@Transactional` на классах `..persistence..`; `orElse(` с вызовом/`new`/`clock` на hot-path;
+  счётчик `JdbcTemplate` vs `JdbcClient`; `getParameter("adminToken")`; owner-scoped SQL без
+  `owner_key`/RLS-backstop; CSP без `object-src/base-uri/frame-ancestors/form-action`;
+  `@ConfigurationProperties` с сеттерами; `Collectors.toList()`; `SET NOT NULL` на существующей
+  колонке; `CREATE INDEX` без `CONCURRENTLY` в новом V-файле; правка уже применённой миграции.
 - Поискать TODO/FIXME/HACK в коде
 - Проверить наличие дизайн-спеков в `docs/superpowers/specs/` — есть ли нереализованные фичи?
 - Если падают тесты или гейты — **сразу разобраться в корневой причине** через
@@ -113,6 +121,16 @@ description: "Автономный бесконечный цикл улучше�
 2. **Высокий импакт** — что принесёт максимум пользы для обучения backend-разработчика
 3. **Быстрый результат** — предпочитать задачи, которые можно завершить за один цикл
 4. **Ротация областей** — не зацикливаться на одной области, чередовать контент/код/UI/тесты
+
+Для **кода** детальная worst-first лестница (impact × безопасность правки ÷ стоимость)
+и раздел «Что НЕ делать» — в `references/backend-best-practices.md`. Порядок эшелонов:
+(1) security/correctness с риском утечки данных (owner_key без RLS, `adminToken` в query,
+публичный `/actuator/prometheus`, XFF-spoof обход rate-limit) — берётся первым независимо
+от стоимости → (2) скрытые рантайм-дефекты (`orElse` с side-effect, correlation-id не в логах,
+нет Hikari-таймаутов) → (3) worst-first по метрикам (god-nodes из `GRAPH_REPORT.md` × churn ×
+сложность) → (4) guardrail-долг по одному правилу за цикл (ArchUnit `freeze()`, ratchet JaCoCo,
+`JdbcTemplate→JdbcClient`, `orElse→orElseGet`) → (5) структурные апгрейды платформы дроблением
+на микрошаги. Метрика успеха цикла — **снятый measurable smell**, а не «красивее по вкусу».
 
 Задача должна быть конкретной и завершаемой. Примеры хороших задач:
 - "Углубить cheatsheets/databases/relational/postgresql/postgres-indexes.md — добавить практические примеры B-tree vs GIN vs GiST"
