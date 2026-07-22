@@ -18,16 +18,21 @@ public class FilterUtils {
      * @return нормализованная тема или {@code null}
      */
     public static String normalizeTopic(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        return value.strip();
+        return normalize(value);
     }
 
     /**
      * Нормализует значение группы тем из HTTP-параметра.
      */
     public static String normalizeGroup(String value) {
+        return normalize(value);
+    }
+
+    /**
+     * Общая нормализация фильтр-значения из HTTP-параметра: обрезает пробелы по краям,
+     * пустое/{@code null} → {@code null} (означает «без ограничения»).
+     */
+    private static String normalize(String value) {
         if (value == null || value.isBlank()) {
             return null;
         }
