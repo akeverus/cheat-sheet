@@ -6,11 +6,11 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Каковы functional и non-functional requirements для дизайна Instagram?",
+          "question_text": "Какие требования задать Instagram-подобной системе?",
           "options": [
             {
               "label": "A",
-              "text": "Ключевой non-functional requirement — strong consistency: пользователь должен видеть одинаковые лайки и ленту с любого устройства и в любом регионе, поэтому её ставят выше доступности и low-latency.",
+              "text": "Ключевой non-functional requirement — strong consistency: пользователь должен видеть одинаковые лайки и ленту с любого устройства и в любом регионе, поэтому её ставят выше доступности и low-latency. При 870k reads/sec пришлось бы синхронно реплицировать каждый лайк cross-region, и feed p99 < 200ms стал бы недостижим.",
               "correct": false,
               "sections": {
                 "what_actually": "Instagram выбирает AP-модель: eventual consistency для ленты и лайков допустима, strong нужна лишь точечно (пароль, уникальность username).",
@@ -22,7 +22,7 @@
             },
             {
               "label": "B",
-              "text": "Соотношение чтение/запись для Instagram составляет примерно 1:1, потому что почти каждый пользователь и постит, и смотрит ленту в равной мере.",
+              "text": "Соотношение чтение/запись для Instagram составляет примерно 1:1, потому что почти каждый пользователь и постит, и смотрит ленту в равной мере. Не было бы смысла в тяжёлом precompute ленты и многоуровневом кэшировании ради чтения. Интуиция «каждый и читает, и пишет» подсказывает баланс.",
               "correct": false,
               "sections": {
                 "what_actually": "Read:write ≈ 100:1 — пользователи смотрят ленту в разы чаще, чем постят; это read-heavy система.",
@@ -34,7 +34,7 @@
             },
             {
               "label": "C",
-              "text": "Functional-ядро — это загрузка и просмотр фото с лайками и комментариями; stories, DM и explore выносят во вторую фазу как отдельные продуктовые направления, чтобы не раздувать первичный scope.",
+              "text": "Functional-ядро — это загрузка и просмотр фото с лайками и комментариями; stories, DM и explore выносят во вторую фазу как отдельные продуктовые направления, чтобы не раздувать первичный scope. Не пришлось бы проектировать ни TTL для stories, ни WebSocket для DM, и дизайн оказался бы тривиальным фотохостингом.",
               "correct": false,
               "sections": {
                 "what_actually": "Stories, DM, search и explore входят в functional scope Instagram; out of scope обычно лишь реклама, IGTV/Reels-специфика и Shop.",
@@ -46,13 +46,13 @@
             },
             {
               "label": "D",
-              "text": "Functional: загрузка photo/video (carousel до 10 media), просмотр ranked-ленты, асимметричный follow-граф, like/comment/save, Stories с TTL 24h, Direct Messages, поиск по hashtag/username/location, explore-рекомендации, нотификации. Non-functional: 2B users, 500M DAU, 100M фото/день, read:write ≈ 100:1, доступность 99.95%, feed p99 < 200ms, durability 11 девяток для media в `S3`.",
+              "text": "Functional: загрузка фото/видео и carousel, ranked feed, asymmetric follow graph, reactions/comments/saves, Stories с ограниченным сроком жизни, Direct Messages, поиск и рекомендации. Non-functional: read-heavy профиль, высокая durability media, низкая feed latency, глобальная availability, privacy и moderation. Числа DAU, uploads/day и SLO задают как входные допущения, а не как неизменные показатели Instagram.",
               "correct": true,
               "sections": {
                 "explanation": "Requirements делятся на functional (что система делает: upload, feed, stories, DM) и non-functional (масштаб и SLA: QPS, latency, доступность, durability). Именно read-heavy паттерн 100:1 и media-нагрузка диктуют всю последующую архитектуру.",
                 "example": "Из non-functional «feed p99 < 200ms при 500M DAU» сразу вытекает precompute ленты в `Redis`, а «durability 11 девяток» — хранение media в `S3`, а не в БД.",
                 "when_to_apply": "Requirements проговаривают первыми на любом system design интервью, чтобы зафиксировать scope и не проектировать лишнего; out of scope здесь — реклама, IGTV/Reels, Shop.",
-                "edge_cases": "Consistency смешанная: eventual для ленты (отставание 1-2 сек допустимо), но strong (read-your-writes) для лайков самого пользователя — это важно явно обозначить.",
+                "edge_cases": "Media, feed, Stories и DM имеют разные consistency и retention требования; объединение их в одно хранилище обычно ухудшает и стоимость, и отказоустойчивость.",
                 "related": "[[design-instagram-interview#Q2]] capacity estimation из этих чисел; [[design-instagram-interview#Q25]] почему выбран AP-trade-off; [[design-instagram-interview#Q27]] итоговые lessons дизайна."
               },
               "order": 3
@@ -70,7 +70,7 @@
           "options": [
             {
               "label": "A",
-              "text": "Read QPS считается напрямую как число DAU: 500M DAU = 500M reads/sec, поэтому пиковая нагрузка чтения ленты ровно полмиллиарда запросов в секунду.",
+              "text": "Read QPS считается напрямую как число DAU: 500M DAU = 500M reads/sec, поэтому пиковая нагрузка чтения ленты ровно полмиллиарда запросов в секунду. Понадобилось бы в ~600 раз больше серверов, чем реально, и оценка стала бы абсурдно завышенной.",
               "correct": false,
               "sections": {
                 "what_actually": "DAU — это пользователи за сутки, а не запросы в секунду; read QPS = 25B views/day / 86400 ≈ 290k/sec, peak ≈ 870k/sec.",
@@ -82,7 +82,7 @@
             },
             {
               "label": "B",
-              "text": "Storage для media разумнее всего хранить в самой реляционной БД как BLOB, и тогда capacity по диску совпадает с размером Postgres-кластера.",
+              "text": "Storage для media разумнее всего хранить в самой реляционной БД как BLOB, и тогда capacity по диску совпадает с размером Postgres-кластера. Postgres вырос бы до десятков петабайт, и любой запрос конкурировал бы с прокачкой бинарников за I/O.",
               "correct": false,
               "sections": {
                 "what_actually": "Media хранят в `S3` (object storage, 11 девяток), а в Postgres — только метаданные ~1 KB/photo; BLOB в БД убил бы I/O.",
@@ -94,7 +94,7 @@
             },
             {
               "label": "C",
-              "text": "Peak-нагрузку учитывать не нужно: достаточно среднего QPS, потому что трафик Instagram равномерен в течение суток без выраженных пиков.",
+              "text": "Peak-нагрузку учитывать не нужно: достаточно среднего QPS, потому что трафик Instagram равномерен в течение суток без выраженных пиков. В часы пик и при celebrity-публикациях система не выдержала бы 10× обычной нагрузки и легла бы. Усреднение упрощает расчёт, поэтому возникает желание игнорировать суточные и виральные всплески.",
               "correct": false,
               "sections": {
                 "what_actually": "Трафик неравномерен: peak берут как ×3 от среднего (3500 uploads/sec, 870k reads/sec), плюс закладывают headroom на виральные события.",
@@ -106,7 +106,7 @@
             },
             {
               "label": "D",
-              "text": "Write QPS: 100M uploads/day / 86400 ≈ 1157/sec, peak ×3 ≈ 3500/sec. Read QPS (feed): 500M DAU × ~50 photos = 25B views/day ≈ 290k/sec, peak ≈ 870k/sec. Storage media: ~350 KB/photo (original + thumbnails) × 100M ≈ 35 TB/day ≈ 12.7 PB/year, с видео ≈ 20 PB/year, с репликацией 3× ≈ 60-80 PB/year. Egress через CDN ≈ 120 Gbps среднее, peak 300-400 Gbps.",
+              "text": "Write QPS: 100M uploads/day / 86400 ≈ 1157/sec, peak ×3 ≈ 3500/sec; Read QPS (feed): 500M DAU × ~50 photos = 25B views/day ≈ 290k/sec, peak ≈ 870k/sec; Storage media: ~350 KB/photo (original + thumbnails) × 100M ≈ 35 TB/day ≈ 12.7 PB/year, с видео ≈ 20 PB/year, с репликацией 3× ≈ 60-80 PB/year.",
               "correct": true,
               "sections": {
                 "explanation": "Capacity считают из верхнеуровневых чисел: делят дневной объём на 86400 секунд для QPS, умножают размер артефакта на количество для storage, а peak берут как ×3 от среднего. Это даёт обоснование под выбор инфраструктуры.",
@@ -130,20 +130,20 @@
           "options": [
             {
               "label": "A",
-              "text": "Upload двухэтапный: `POST /api/v1/photos/upload-url` отдаёт presigned URL и photoId, затем `POST /photos/{photoId}/finalize` с caption/tags. Feed: `GET /api/v1/feed?cursor=<token>&limit=20` с cursor-based пагинацией. Stories: `POST /stories`, `GET /stories/feed`, `POST /stories/{id}/view`. Social: follow/unfollow, like, comments. DM: `POST /conversations/{id}/messages` плюс `WS /ws/dm` для realtime. Search/explore: `GET /search?q=&type=` и `GET /explore`. Auth: OAuth 2.0 bearer + refresh в HttpOnly cookie.",
+              "text": "API разделяют по пользовательским потокам; Upload обычно двухэтапный: получить короткоживущий upload URL, загрузить media напрямую в object storage и финализировать metadata; feed использует cursor pagination; Stories, social actions, search и DM имеют отдельные endpoints, а realtime DM — WebSocket или другой push-channel.",
               "correct": true,
               "sections": {
                 "explanation": "API проектируют вокруг ключевых сценариев: upload через presigned URL (двухэтапно), чтение ленты курсором, realtime DM через WebSocket. Каждый endpoint отражает свой access pattern и storage за ним.",
                 "example": "Пагинация ленты — cursor-based: `GET /feed?cursor=eyJ0..&limit=20` возвращает `{items, nextCursor}`; курсор устойчив к вставкам новых постов, в отличие от offset.",
                 "when_to_apply": "Хотя бы 5 endpoints проговаривают на интервью в начале, чтобы показать понимание контрактов; детали (поля тела, коды ответов) добавляют по запросу интервьюера.",
-                "edge_cases": "Pagination именно cursor-based, а не offset: при постоянно меняющемся датасете offset «съезжает» (дубли/пропуски), а cursor по ts стабилен.",
+                "edge_cases": "HttpOnly cookie подходит browser/BFF-сценарию, но не является универсальным способом хранения refresh token для native mobile clients. Presigned URL ограничивают key, method, content type/size и TTL.",
                 "related": "[[design-instagram-interview#Q4]] upload flow за upload-url endpoint; [[design-instagram-interview#Q14]] WebSocket за /ws/dm; [[design-instagram-interview#Q23]] rate limiting на endpoints."
               },
               "order": 0
             },
             {
               "label": "B",
-              "text": "Direct Messages надёжнее реализовать обычным HTTP-поллингом `GET /messages` каждые несколько секунд, без WebSocket, чтобы не держать соединения открытыми.",
+              "text": "Direct Messages надёжнее реализовать обычным HTTP-поллингом `GET /messages` каждые несколько секунд, без WebSocket, чтобы не держать соединения открытыми. При 150M concurrent пользователях поллинг каждые N секунд генерировал бы лавину пустых запросов.",
               "correct": false,
               "sections": {
                 "what_actually": "Realtime DM строят на `WS /ws/dm` (WebSocket): push доставляет сообщение мгновенно, поллинг же создаёт лишнюю нагрузку и задержку.",
@@ -155,7 +155,7 @@
             },
             {
               "label": "C",
-              "text": "Для пагинации ленты используют offset-based: `GET /feed?offset=40&limit=20`, что проще и стабильнее при активно меняющемся датасете.",
+              "text": "Для пагинации ленты используют offset-based: `GET /feed?offset=40&limit=20`, что проще и стабильнее при активно меняющемся датасете. При добавлении свежих постов между запросами пользователь видел бы повторы или терял элементы ленты.",
               "correct": false,
               "sections": {
                 "what_actually": "Используется cursor-based пагинация (`cursor=<token>`), потому что offset «съезжает» при вставке новых постов, давая дубли и пропуски.",
@@ -167,7 +167,7 @@
             },
             {
               "label": "D",
-              "text": "Загрузку фото правильнее делать одним endpoint `POST /photos` с бинарным телом через app server, который сам кладёт байты в S3 и возвращает 201.",
+              "text": "Загрузку фото правильнее делать одним endpoint `POST /photos` с бинарным телом через app server, который сам кладёт байты в S3 и возвращает 201. App tier прокачивал бы терабайты в час и удваивал egress (client→server + server→S3).",
               "correct": false,
               "sections": {
                 "what_actually": "Upload двухэтапный через presigned URL: клиент шлёт байты напрямую в S3, минуя app server, иначе тот станет bottleneck на media-bandwidth.",
@@ -190,7 +190,7 @@
           "options": [
             {
               "label": "A",
-              "text": "Presigned URL должен жить бессрочно и переиспользоваться для всех загрузок пользователя, чтобы не дёргать backend на каждый upload.",
+              "text": "Presigned URL должен жить бессрочно и переиспользоваться для всех загрузок пользователя, чтобы не дёргать backend на каждый upload. Утёкший URL позволил бы кому угодно бесконтрольно заливать объекты в bucket неограниченно долго. Экономия запросов к backend подталкивает к идее «один долгоживущий URL на всё».",
               "correct": false,
               "sections": {
                 "what_actually": "Presigned URL короткоживущий (exp ~10 мин) и одноразовый под конкретный photoId; бессрочный URL — дыра в безопасности.",
@@ -202,7 +202,7 @@
             },
             {
               "label": "B",
-              "text": "Клиент шлёт `POST /upload-url`, Upload Service валидирует юзера, rate-limit, выделяет photoId и генерирует presigned `S3` URL (PUT, exp 10 мин). Клиент PUT'ит бинарник напрямую в S3, затем `POST /finalize` сохраняет метаданные (status=PROCESSING) и эмитит `PhotoUploaded` в `Kafka`. Media-worker асинхронно делает thumbnails, HEIC→JPEG, EXIF strip, модерацию. App server обрабатывает только small JSON, не байты — поэтому в ~100× меньше CPU/RAM.",
+              "text": "Клиент шлёт `POST /upload-url`, Upload Service валидирует юзера, rate-limit, выделяет photoId и генерирует presigned `S3` URL (PUT, exp 10 мин); Клиент PUT'ит бинарник напрямую в S3, затем `POST /finalize` сохраняет метаданные (status=PROCESSING) и эмитит `PhotoUploaded` в `Kafka`.",
               "correct": true,
               "sections": {
                 "explanation": "Presigned URL разрывает поток media-байт от app server: клиент грузит напрямую в S3, а сервер видит только метаданные. Это снимает bottleneck на bandwidth и убирает двойной egress.",
@@ -215,7 +215,7 @@
             },
             {
               "label": "C",
-              "text": "Bad design — клиент → app server → S3 — на самом деле предпочтителен: проксирование через сервер даёт централизованную валидацию контента и единую точку логирования байт.",
+              "text": "Клиент должен загружать media только через app server: проксирование через сервер даёт централизованную валидацию контента и единую точку логирования байт. При 3500 uploads/sec app tier тратил бы CPU на прокачку бинарников и не масштабировался бы. Желание контролировать каждый байт на сервере выглядит как плюс безопасности и наблюдаемости.",
               "correct": false,
               "sections": {
                 "what_actually": "Проксирование делает app server bottleneck на media-bandwidth (терабайты/час) и удваивает egress; валидацию контента делают асинхронно в worker.",
@@ -227,7 +227,7 @@
             },
             {
               "label": "D",
-              "text": "Тяжёлую обработку (thumbnails, транскодинг, модерацию) надо делать синхронно внутри finalize, чтобы клиент сразу получил готовые URL всех размеров.",
+              "text": "Тяжёлую обработку (thumbnails, транскодинг, модерацию) надо делать синхронно внутри finalize, чтобы клиент сразу получил готовые URL всех размеров. Finalize блокировался бы на секунды CPU-работы, и upload p99 < 2s стал бы недостижим. Хочется отдать клиенту готовый результат в одном ответе.",
               "correct": false,
               "sections": {
                 "what_actually": "Обработка асинхронна: finalize лишь эмитит `PhotoUploaded` в Kafka, а media-worker делает thumbnails/модерацию в фоне (status=PROCESSING→READY).",
@@ -250,7 +250,7 @@
           "options": [
             {
               "label": "A",
-              "text": "Базовые thumbnails дешевле генерировать lazy на CDN-edge при первом запросе, а не пачкой заранее — тогда media-pipeline занимается только модерацией, и предварительный ресайз всех размеров становится лишней работой.",
+              "text": "Базовые thumbnails дешевле генерировать lazy на CDN-edge при первом запросе, а не пачкой заранее; тогда media-pipeline занимается только модерацией, и предварительный ресайз всех размеров становится лишней работой. NSFW-модерация и EXIF strip никогда бы не выполнялись, и приватные GPS-данные утекли бы в публичный доступ.",
               "correct": false,
               "sections": {
                 "what_actually": "Базовые размеры генерируют заранее в worker после upload; edge-resize дополняет их, но не заменяет async-пайплайн модерации, EXIF strip и embeddings.",
@@ -262,7 +262,7 @@
             },
             {
               "label": "B",
-              "text": "Отдельная идемпотентность в worker избыточна: включённый exactly-once semantics в Kafka снимает дубли на уровне брокера, поэтому проверять status фото перед обработкой не требуется.",
+              "text": "Отдельная идемпотентность в worker избыточна: включённый exactly-once semantics в Kafka снимает дубли на уровне брокера, поэтому проверять status фото перед обработкой не требуется. При rebalance/retry одно фото обработалось бы дважды, породив дублирующие thumbnails и двойную ML-нагрузку.",
               "correct": false,
               "sections": {
                 "what_actually": "На практике доставка at-least-once, поэтому worker сам обеспечивает идемпотентность: ключует job по photoId и проверяет status перед обработкой.",
@@ -274,7 +274,7 @@
             },
             {
               "label": "C",
-              "text": "После upload событие падает в `Kafka`, media-worker обрабатывает асинхронно: decode (libjpeg/libheif для HEIC из iOS), resize в 4 размера через `libvips` (быстрее ImageMagick в ~5×), encode в JPEG/WebP/AVIF, EXIF strip (GPS, серийник камеры), ML-модерация (NSFW/violence/spam) через `TensorFlow Serving`, OCR (Tesseract), CLIP-embedding для explore. Video — тяжелее: транскодинг в несколько битрейтов под HLS через `ffmpeg`, отдельный GPU-пул. Idempotency: job ключуется по photoId, worker проверяет status.",
+              "text": "После upload событие падает в `Kafka`, media-worker обрабатывает асинхронно: decode (libjpeg/libheif для HEIC из iOS), resize в 4 размера через `libvips` (быстрее ImageMagick в ~5×), encode в JPEG/WebP/AVIF, EXIF strip (GPS, серийник камеры), ML-модерация (NSFW/violence/spam) через `TensorFlow Serving`, OCR (Tesseract), CLIP-embedding для explore.",
               "correct": true,
               "sections": {
                 "explanation": "Media processing выносят в async-worker'ы за Kafka, потому что resize/transcode/ML — CPU-heavy и не должны блокировать upload. Каждый этап независим и масштабируется отдельным пулом.",
@@ -287,7 +287,7 @@
             },
             {
               "label": "D",
-              "text": "ImageMagick и libvips по скорости ресайза практически равнозначны, поэтому берут привычный ImageMagick, а выбор библиотеки на масштабе пайплайна ощутимой разницы не даёт.",
+              "text": "ImageMagick и libvips по скорости ресайза практически равнозначны, поэтому берут привычный ImageMagick, а выбор библиотеки на масштабе пайплайна ощутимой разницы не даёт. Не было бы смысла менять библиотеку.",
               "correct": false,
               "sections": {
                 "what_actually": "`libvips` обрабатывает изображения примерно в 5× быстрее ImageMagick при меньшем потреблении памяти — это заметная экономия на 100M фото/день.",
@@ -310,7 +310,7 @@
           "options": [
             {
               "label": "A",
-              "text": "Минимальный размер части в S3 Multipart — 1 байт, поэтому этот же механизм идеально подходит и для крошечных превью, и для мелких фото.",
+              "text": "Минимальный размер части в S3 Multipart — 1 байт, поэтому этот же механизм идеально подходит и для крошечных превью, и для мелких фото. Фото на 200 KB дробилось бы на множество частей с overhead'ом, что бессмысленно и дороже.",
               "correct": false,
               "sections": {
                 "what_actually": "Минимум части (кроме последней) — 5 MB, поэтому для мелких фото multipart избыточен, и их грузят одиночным PUT.",
@@ -322,20 +322,20 @@
             },
             {
               "label": "B",
-              "text": "Стандарт — `S3 Multipart Upload` (или TUS protocol). Клиент делает `createMultipartUpload` и получает uploadId, затем грузит части по >= 5 MB (кроме последней) через `uploadPart`, собирая ETag'и, и завершает `completeMultipartUpload` со списком частей. При обрыве WiFi клиент дозагружает только оставшиеся parts по локальному списку ETag, а части можно слать параллельно для ускорения. Для незавершённых uploads — TTL 7 дней (lifecycle rule), потом auto-cleanup. Trade-off: минимум 5 MB на part, поэтому мелкие фото грузят одиночным PUT.",
+              "text": "Для больших видео применяют resumable multipart protocol, например S3 Multipart Upload или TUS; Клиент создаёт upload session, отправляет части параллельно, сохраняет номера частей и ETag/checksum, а затем завершает сборку; после сбоя повторяются только недостающие части.",
               "correct": true,
               "sections": {
                 "explanation": "Multipart upload разбивает большой файл на части с независимыми ETag, что даёт resume после обрыва и параллельную загрузку. Незавершённые сессии чистятся по TTL, чтобы не копить мусор в bucket.",
                 "example": "При обрыве на 4-й из 10 частей клиент по сохранённому списку ETag дозагружает только parts 4-10, а не весь файл заново — это спасает мобильных пользователей со слабым WiFi.",
                 "when_to_apply": "Resumable/multipart применяют для файлов больше ~5 MB (видео, длинные ролики), где single PUT рискует оборваться; для маленьких фото он избыточен.",
-                "edge_cases": "Незавершённые multipart-uploads молча занимают место и стоят денег — обязателен lifecycle rule на abort incomplete multipart upload (например, через 7 дней).",
+                "edge_cases": "ETag не всегда является checksum содержимого, особенно при multipart и шифровании, поэтому при необходимости используют явные checksum-поля. TTL незавершённой сессии — продуктовая настройка, а не требование S3.",
                 "related": "[[design-instagram-interview#Q4]] single PUT для мелких фото; [[design-instagram-interview#Q24]] orphaned uploads и cleanup; [[design-instagram-interview#Q5]] транскодинг видео после загрузки."
               },
               "order": 1
             },
             {
               "label": "C",
-              "text": "Resumable upload реализуют, держа TCP-соединение открытым на всё время загрузки видео; при обрыве сессия восстанавливается тем же сокетом и продолжает с места разрыва.",
+              "text": "Resumable upload реализуют, держа TCP-соединение открытым на всё время загрузки видео; при обрыве сессия восстанавливается тем же сокетом и продолжает с места разрыва. Любой разрыв TCP (смена сети на мобильном) терял бы весь прогресс, ведь сокет восстановить нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "Resume даёт не «то же соединение», а multipart: файл бьётся на части с ETag, и после обрыва клиент дозагружает недостающие parts новыми запросами.",
@@ -347,7 +347,7 @@
             },
             {
               "label": "D",
-              "text": "Незавершённые multipart-uploads S3 удаляет автоматически сразу после обрыва, поэтому никакой lifecycle-политики настраивать не требуется.",
+              "text": "Незавершённые multipart-uploads S3 удаляет автоматически сразу после обрыва, поэтому никакой lifecycle-политики настраивать не требуется. Биллинг за storage не рос бы от брошенных загрузок. Ожидание «облако само приберёт мусор» создаёт ложную уверенность в автоочистке.",
               "correct": false,
               "sections": {
                 "what_actually": "S3 НЕ чистит брошенные части сам — они занимают место и стоят денег, пока их не уберёт явный lifecycle rule (abort incomplete multipart).",
@@ -394,7 +394,7 @@
             },
             {
               "label": "C",
-              "text": "Проще и надёжнее держать всё в одной шардированной `PostgreSQL`: метаданные, media-бинарники как `bytea`, ленту и сообщения. Единое хранилище даёт сквозные ACID-транзакции (фото и его caption коммитятся атомарно), один механизм бэкапа и point-in-time recovery, а вертикального масштабирования с read-репликами хватает до десятков миллионов пользователей. Разносить storage стоит уже потом, когда упрёшься в потолок одного кластера.",
+              "text": "Проще и надёжнее держать всё в одной шардированной `PostgreSQL`: метаданные, media-бинарники как `bytea`, ленту и сообщения; Единое хранилище даёт сквозные ACID-транзакции (фото и его caption коммитятся атомарно), один механизм бэкапа и point-in-time recovery, а вертикального масштабирования с read-репликами хватает до десятков миллионов пользователей.",
               "correct": false,
               "sections": {
                 "what_actually": "Используют polyglot persistence: media в S3, лента в Redis, DM в Cassandra, search в Elasticsearch — каждый storage под свой access pattern.",
@@ -406,7 +406,7 @@
             },
             {
               "label": "D",
-              "text": "Принцип — разделять storage по access pattern, не по domain entity. Photo metadata (id, user, caption, tags) → sharded `PostgreSQL` (ACID, индексы, joins). Original + transcoded media → `S3` + `CloudFront` (cheap object storage, 11 девяток). Precomputed feed → `Redis` ZSET (O(log N) range). Stories → Redis с TTL 24h. DMs → `Cassandra` (write-heavy, partition по conversation_id). Search index → `Elasticsearch`. Embeddings → Faiss/Milvus/pgvector (ANN). Likes counter → Redis INCR + Kafka→Postgres async.",
+              "text": "Принцип — разделять storage по access pattern, не по domain entity; Photo metadata (id, user, caption, tags) → sharded `PostgreSQL` (ACID, индексы, joins); Original + transcoded media → `S3` + `CloudFront` (cheap object storage, 11 девяток); Precomputed feed → `Redis` ZSET (O(log N) range); Stories → Redis с TTL 24h.",
               "correct": true,
               "sections": {
                 "explanation": "Гетерогенный storage: каждый тип данных кладут в хранилище под его access pattern. Метаданные требуют ACID и joins (Postgres), бинарники — дешёвой durability (S3), лента — быстрых range-запросов (Redis ZSET).",
@@ -442,7 +442,7 @@
             },
             {
               "label": "B",
-              "text": "Для celebrity с 600M подписчиков fan-out on write остаётся рабочим вариантом: hot shard problem снимают, добавив пул fan-out-worker'ов и увеличив параллелизм записи в Redis.",
+              "text": "Для celebrity с 600M подписчиков fan-out on write остаётся рабочим вариантом: hot shard problem снимают, добавив пул fan-out-worker'ов и увеличив параллелизм записи в Redis. Один пост celebrity порождал бы 600M ZADD-операций, забивая Redis и fan-out очередь.",
               "correct": false,
               "sections": {
                 "what_actually": "Naive fan-out на 600M followers недопустим (миллионы записей на один пост); для топ-аккаунтов переходят на pull-модель.",
@@ -454,7 +454,7 @@
             },
             {
               "label": "C",
-              "text": "Photos — shard by `user_id`: `shard_id = hash(user_id) % N` (N=1024 логических на 16 физических хостах). Запрос «фото пользователя X» идёт в один shard. Feed — shard by `follower_id`: timeline хранится в `Redis` ZSET `feed:{follower_id}`, чтение = ZREVRANGE на одном ноде. Hot shard problem: celebrity (@cristiano, 600M followers) не делает fan-out по всем shards — для top-1000 users применяют pull-модель (на read обращаются к их inbox), для остальных push (fan-out on write). Resharding — consistent hashing с 1024 virtual buckets: перемещается лишь 1/1024 при добавлении ноды.",
+              "text": "Photos — shard by `user_id`: `shard_id = hash(user_id) % N` (N=1024 логических на 16 физических хостах); Запрос «фото пользователя X» идёт в один shard; Feed — shard by `follower_id`: timeline хранится в `Redis` ZSET `feed:{follower_id}`, чтение = ZREVRANGE на одном ноде.",
               "correct": true,
               "sections": {
                 "explanation": "Sharding ключуют по тому полю, по которому идёт основной запрос: фото — по user_id (профиль = один shard), лента — по follower_id (чтение ленты = один Redis-нод). Это локализует горячие запросы.",
@@ -467,7 +467,7 @@
             },
             {
               "label": "D",
-              "text": "Resharding при добавлении ноды перемещает примерно половину данных: `hash(key) % N` меняет остаток почти для всех ключей, и с ростом кластера этот overhead приходится закладывать заранее.",
+              "text": "Resharding при добавлении ноды перемещает примерно половину данных: `hash(key) % N` меняет остаток почти для всех ключей, и с ростом кластера этот overhead приходится закладывать заранее. Каждое масштабирование вызывало бы массовую миграцию и простой, что недопустимо на петабайтах.",
               "correct": false,
               "sections": {
                 "what_actually": "Consistent hashing с 1024 virtual buckets перемещает лишь ~1/1024 данных при добавлении ноды, а не половину.",
@@ -490,7 +490,7 @@
           "options": [
             {
               "label": "A",
-              "text": "В `PostgreSQL`: `users` (user_id PK, username UNIQUE, is_private, is_verified). `photos` (photo_id UUID PK, user_id, s3_key, caption, status PROCESSING/READY/FAILED/DELETED) с индексом `(user_id, created_at DESC)`. `photo_hashtags` — junction many-to-many с индексом `(hashtag, photo_id)`. `follows` (follower_id, followee_id) PK — асимметрично, плюс обратный индекс `(followee_id, follower_id)`. `likes` (photo_id, user_id) PK — write-heavy. `comments` с parent_id для nested. DMs — отдельно в Cassandra: `messages` partition по conversation_id, CLUSTERING ORDER msg_id DESC.",
+              "text": "В `PostgreSQL`: `users` (user_id PK, username UNIQUE, is_private, is_verified); `photos` (photo_id UUID PK, user_id, s3_key, caption, status PROCESSING/READY/FAILED/DELETED) с индексом `(user_id, created_at DESC)`; `photo_hashtags`; junction many-to-many с индексом `(hashtag, photo_id)`; `follows` (follower_id, followee_id) PK.",
               "correct": true,
               "sections": {
                 "explanation": "Схема отражает асимметричный граф (follows раздельно follower/followee), write-heavy сущности (likes с композитным PK) и индексы под конкретные запросы (профиль, лента хэштега). DM выносят в Cassandra.",
@@ -503,7 +503,7 @@
             },
             {
               "label": "B",
-              "text": "Таблица `likes` не нуждается в композитном первичном ключе (photo_id, user_id) — достаточно автоинкрементного id, ведь дубликаты лайков встречаются редко.",
+              "text": "Таблица `likes` не нуждается в композитном первичном ключе (photo_id, user_id) — достаточно автоинкрементного id, ведь дубликаты лайков встречаются редко. Двойной клик или retry порождал бы два лайка от одного юзера, и counter завышался бы.",
               "correct": false,
               "sections": {
                 "what_actually": "PK именно `(photo_id, user_id)` гарантирует идемпотентность: повторный лайк не создаёт дубль, а конфликтует на уникальном ключе.",
@@ -515,7 +515,7 @@
             },
             {
               "label": "C",
-              "text": "Таблица `follows` должна хранить симметричную связь дружбы (одна строка на пару пользователей), как в Facebook, потому что подписки взаимны.",
+              "text": "Таблица `follows` должна хранить симметричную связь дружбы (одна строка на пару пользователей), как в Facebook, потому что подписки взаимны. Нельзя было бы выразить «я подписан на celebrity, а он на меня нет» — основной кейс соцсети сломался бы.",
               "correct": false,
               "sections": {
                 "what_actually": "Подписки в Instagram асимметричны: A может фолловить B без обратной связи, поэтому ребро однонаправленное `(follower_id, followee_id)`.",
@@ -527,7 +527,7 @@
             },
             {
               "label": "D",
-              "text": "Direct Messages логично держать в той же PostgreSQL рядом с photos и comments — отдельная Cassandra для сообщений только усложняет систему.",
+              "text": "Direct Messages логично держать в той же PostgreSQL рядом с photos и comments — отдельная Cassandra для сообщений только усложняет систему. Write-heavy поток сообщений конкурировал бы с метаданными за ресурсы и упёрся бы в single-leader запись Postgres.",
               "correct": false,
               "sections": {
                 "what_actually": "DM выносят в `Cassandra`: они write-heavy (миллионы msg/sec), партиционируются по conversation_id и требуют multi-DC репликации — не профиль Postgres.",
@@ -550,7 +550,7 @@
           "options": [
             {
               "label": "A",
-              "text": "Слои: Edge (Anycast/GeoDNS направляет в ближайший регион, `CloudFront` раздаёт media), API Gateway (OAuth2 auth, rate-limit, routing), stateless микросервисы по доменам (Upload, Feed, Story, Social Graph, Search, Explore, Notification, DM/WebSocket). Async-bus — `Kafka` (события PhotoUploaded, UserFollowed, MessageSent) питает Media Workers, ML Workers, Fan-out Workers. Гетерогенный storage: sharded Postgres (метаданные, граф), S3 (media), Redis (feed/stories/counters), Cassandra (DM), Elasticsearch (search), Faiss/pgvector (embeddings).",
+              "text": "Слои: Edge (Anycast/GeoDNS направляет в ближайший регион, `CloudFront` раздаёт media), API Gateway (OAuth2 auth, rate-limit, routing), stateless микросервисы по доменам (Upload, Feed, Story, Social Graph, Search, Explore, Notification, DM/WebSocket); Async-bus — `Kafka` (события PhotoUploaded, UserFollowed, MessageSent) питает Media Workers, ML Workers, Fan-out Workers.",
               "correct": true,
               "sections": {
                 "explanation": "Архитектура — слоистая: edge/CDN, API gateway, stateless-сервисы по доменам, Kafka как async-bus и гетерогенный storage. Тяжёлые задачи (thumbnails, fan-out, ML) уходят в worker'ы за Kafka.",
@@ -563,7 +563,7 @@
             },
             {
               "label": "B",
-              "text": "Kafka в этой архитектуре не нужна: все действия (thumbnails, fan-out, нотификации) лучше выполнять синхронно в request-цикле сервиса для простоты и предсказуемости.",
+              "text": "Kafka в этой архитектуре не нужна: все действия (thumbnails, fan-out, нотификации) лучше выполнять синхронно в request-цикле сервиса для простоты и предсказуемости. Finalize ждал бы транскодинга и fan-out на сотни тысяч followers, и upload p99 взлетел бы.",
               "correct": false,
               "sections": {
                 "what_actually": "Kafka — центральный async-bus: тяжёлые операции (обработка media, fan-out ленты, push) уходят в worker'ы, не блокируя request.",
@@ -575,7 +575,7 @@
             },
             {
               "label": "C",
-              "text": "Микросервисы Instagram должны быть stateful — каждый держит пользовательские сессии и часть ленты в своей памяти, чтобы не ходить во внешний Redis.",
+              "text": "Микросервисы Instagram должны быть stateful — каждый держит пользовательские сессии и часть ленты в своей памяти, чтобы не ходить во внешний Redis. При падении ноды терялись бы сессии и часть ленты, а добавление инстансов не балансировало бы нагрузку.",
               "correct": false,
               "sections": {
                 "what_actually": "Сервисы делают stateless, а состояние (сессии, лента, counters) держат во внешних storage (Redis), иначе auto-scale и failover невозможны.",
@@ -587,7 +587,7 @@
             },
             {
               "label": "D",
-              "text": "Архитектура строится как единый монолитный сервис со всей логикой (upload, feed, DM, search) в одном процессе — так проще деплоить и не нужны Kafka и отдельные worker'ы.",
+              "text": "Архитектура строится как единый монолитный сервис со всей логикой (upload, feed, DM, search) в одном процессе — так проще деплоить и не нужны Kafka и отдельные worker'ы. CPU-heavy транскодинг видео делил бы ресурсы с low-latency feed-чтением, и SLA нарушались бы.",
               "correct": false,
               "sections": {
                 "what_actually": "Используют stateless микросервисы по доменам + Kafka как async-bus + worker-пулы; монолит не выдержал бы разнородную нагрузку и независимое масштабирование.",
@@ -622,7 +622,7 @@
             },
             {
               "label": "B",
-              "text": "Три подхода: Push (fan-out on write) — read O(1), но дорого для celebrities (write × N followers); Pull (fan-out on read) — дёшев write, но read дорогой (join по N followees); Hybrid — лучшее из обоих. Instagram использует hybrid: если followers_count(X) < 100k — fan-out on write (ZADD feed:{F} для каждого follower), иначе celebrity — pull (celeb_inbox:{X}.append). На read viewer берёт base = ZREVRANGE feed:{F} плюс recent_inbox каждого celebrity, затем merge_and_rank. Redis ZSET: score=ts_micros, member=photo_id, TTL 30 дней, trim до ~1000 элементов.",
+              "text": "Три подхода: Push (fan-out on write) — read O(1), но дорого для celebrities (write × N followers); Pull (fan-out on read) — дёшев write, но read дорогой (join по N followees); Hybrid — лучшее из обоих.",
               "correct": true,
               "sections": {
                 "explanation": "Hybrid комбинирует push для обычных авторов (дёшево разослать на немного followers) и pull для celebrity (нельзя разослать на миллионы), смешивая оба источника на чтении с ранжированием.",
@@ -635,7 +635,7 @@
             },
             {
               "label": "C",
-              "text": "Ленту в Redis держат целиком, со всей историей постов подписок, чтобы глубокий скролл обслуживался из кэша и не упирался в запросы к Postgres.",
+              "text": "Ленту в Redis держат целиком, со всей историей постов подписок, чтобы глубокий скролл обслуживался из кэша и не упирался в запросы к Postgres. 500M лент × тысячи элементов заняли бы сотни TB в Redis, и hot-кэш стал бы неоправданно дорогим.",
               "correct": false,
               "sections": {
                 "what_actually": "ZSET ленты trim'ят до ~1000 элементов с TTL 30 дней; более старое отдают пагинацией из Postgres, иначе hot-кэш раздувается до неприемлемых размеров.",
@@ -670,20 +670,20 @@
           "options": [
             {
               "label": "A",
-              "text": "Stories — read-heavy (~2.5B reads/day) с TTL ровно 24h от publish. Storage в `Redis`: `SET story:{id} ... EX 86400`, активные stories юзера в ZSET `user_stories:{userId}` с EXPIRE 86400. Stories-feed считается lazy на read из user_stories каждого followee. Watched flag: `SADD story_viewers:{storyId} viewerId`; при celebrity (viewers > 100k) переход на HyperLogLog (`PFADD`/`PFCOUNT`, ~0.81% error). Edge case: time skew между Redis-нодами может «съесть» story раньше 24h — решается хранением explicit `expires_at` и фильтрацией на read.",
+              "text": "Story media хранят в durable object storage, metadata и `expires_at` — в основной БД, а Redis используют как ускоряющий индекс активных stories и cache; На read система фильтрует `expires_at`, поэтому задержка фонового удаления не продлевает видимость; Точный seen-state пользователя хранится отдельно идемпотентно.",
               "correct": true,
               "sections": {
-                "explanation": "Stories кладут в Redis с авто-expire по TTL (ephemeral by design), feed собирают lazy из активных stories подписок, а счётчик зрителей для популярных аккаунтов аппроксимируют HyperLogLog'ом ради экономии памяти.",
+                "explanation": "TTL в кэше удобен, но Redis не должен быть единственным durable источником media/metadata. Разделение exact membership и approximate cardinality сохраняет корректность UI и экономит память на больших аудиториях.",
                 "example": "Для обычной story «кто смотрел» хранят точно через `SADD story_viewers:{id}`, но для celebrity с миллионами зрителей переходят на `PFADD`/`PFCOUNT` (HyperLogLog), где ошибка ~0.81% при крошечной памяти.",
                 "when_to_apply": "Такой TTL-подход применяют для любого ephemeral-контента (stories, временные ссылки), где данные сами истекают и точный персональный счётчик не всегда обязателен.",
-                "edge_cases": "Из-за time skew между нодами Redis TTL может удалить story чуть раньше или позже 24h — поэтому надёжнее хранить explicit `expires_at` и фильтровать просроченные на чтении, не полагаясь только на EX.",
+                "edge_cases": "Удаление через 24 часа требует учёта legal hold, moderation и backup policy. Clock skew нейтрализуют server-side `expires_at` и единым временем принятия решения.",
                 "related": "[[design-instagram-interview#Q7]] Redis как storage для stories; [[design-instagram-interview#Q13]] HyperLogLog для approximate count; [[design-instagram-interview#Q1]] TTL 24h в requirements."
               },
               "order": 0
             },
             {
               "label": "B",
-              "text": "Счётчик «кто смотрел story» держат точным множеством через `SADD` даже для крупных аккаунтов: продукту нужен поимённый список зрителей, поэтому приближённые структуры вроде HyperLogLog здесь не подходят.",
+              "text": "Счётчик «кто смотрел story» держат точным множеством через `SADD` даже для крупных аккаунтов: продукту нужен поимённый список зрителей, поэтому приближённые структуры вроде HyperLogLog здесь не подходят. Story celebrity хранила бы миллионы id в SET, и память Redis на популярные stories взлетела бы.",
               "correct": false,
               "sections": {
                 "what_actually": "Для viewers > 100k переходят на HyperLogLog (`PFADD`/`PFCOUNT`, ~0.81% error), потому что точное множество на миллионы id съело бы много памяти.",
@@ -695,7 +695,7 @@
             },
             {
               "label": "C",
-              "text": "Истечение stories через 24h надёжнее реализовать ежечасным cron-джобом, который сканирует все stories в Postgres и удаляет просроченные.",
+              "text": "Истечение stories через 24h надёжнее реализовать ежечасным cron-джобом, который сканирует все stories в Postgres и удаляет просроченные. Между запусками cron'а просроченные stories ещё час висели бы видимыми, нарушая 24h-семантику.",
               "correct": false,
               "sections": {
                 "what_actually": "Stories кладут в Redis с TTL (`EX 86400`) — авто-expire без сканирования; cron по всей таблице был бы тяжёлым и неточным по времени.",
@@ -707,7 +707,7 @@
             },
             {
               "label": "D",
-              "text": "Для точности 24h достаточно самого TTL в Redis (`EX 86400`): ключ истекает автоматически, а рассинхрон часов между нодами настолько мал, что хранить отдельный `expires_at` смысла нет.",
+              "text": "Для точности 24h достаточно самого TTL в Redis (`EX 86400`): ключ истекает автоматически, а рассинхрон часов между нодами настолько мал, что хранить отдельный `expires_at` смысла нет. Все ноды истекали бы ключ в один и тот же миг.",
               "correct": false,
               "sections": {
                 "what_actually": "Time skew между нодами Redis может «съесть» story раньше или позже 24h, поэтому хранят explicit `expires_at` и фильтруют на read.",
@@ -730,7 +730,7 @@
           "options": [
             {
               "label": "A",
-              "text": "После флаша в Postgres счётчик пользователям надо показывать именно из Postgres, потому что Redis-значение считается ненадёжным черновиком.",
+              "text": "После флаша в Postgres счётчик пользователям надо показывать именно из Postgres, потому что Redis-значение считается ненадёжным черновиком. Пользователь, только что лайкнувший, видел бы устаревшее число (ещё не сфлашенное), что путает. Реляционная БД воспринимается как «истина», а Redis — как временный кэш, отсюда выбор Postgres для чтения.",
               "correct": false,
               "sections": {
                 "what_actually": "Пользователям показывают свежий счётчик из Redis; Postgres отстаёт на ~5 сек и служит durable-снимком, а не источником для UI.",
@@ -742,7 +742,7 @@
             },
             {
               "label": "B",
-              "text": "Лайки надо писать сразу синхронным `UPDATE photos SET like_count = like_count + 1` в Postgres — это даёт мгновенную точность и не требует Redis или Kafka.",
+              "text": "Лайки надо писать сразу синхронным `UPDATE photos SET like_count = like_count + 1` в Postgres — это даёт мгновенную точность и не требует Redis или Kafka. Тысячи транзакций/сек дрались бы за один row-lock, и запись в БД стала бы узким местом.",
               "correct": false,
               "sections": {
                 "what_actually": "Синхронный UPDATE одной строки на viral-фото даёт lock contention и replication lag при 10k лайков/sec; используют write-behind через Redis + Kafka.",
@@ -754,20 +754,20 @@
             },
             {
               "label": "C",
-              "text": "Проблема: viral photo набирает 10k лайков/sec → UPDATE одной строки в Postgres = lock contention и replication lag. Решение — write-behind через `Redis`: на лайк делаем `SADD likers:{photoId} userId` (идемпотентность) и `INCR like_count:{photoId}`, эмитим LikeEvent в `Kafka`. Flusher (раз в 5 сек или 100 событий) батчит и делает `batchUpdate` в Postgres с max-count. Trade-off: eventual consistency — Postgres отстаёт от Redis на ~5 сек, но пользователи видят свежий счётчик из Redis. Для approximate (top hashtags) — HyperLogLog/Count-Min Sketch.",
+              "text": "Hot likes принимают идемпотентно: уникальность `(photo_id, user_id)` проверяется в durable/event log или атомарным Redis script, который увеличивает counter только когда `SADD` действительно добавил нового пользователя. Событие публикуют через outbox/stream, а batch consumer обновляет durable aggregates. UI может читать свежий cache, но ledger-like факт лайка и counter периодически сверяют.",
               "correct": true,
               "sections": {
-                "explanation": "Write-behind буферизует записи в Redis и асинхронно флашит батчами в Postgres, убирая hot-row contention. Счётчик читают из Redis (свежий), а БД догоняет с задержкой.",
+                "explanation": "Отдельные `SADD` и `INCR` без проверки результата дают overcount на retry. Atomic script или dedup consumer связывает membership и изменение счётчика.",
                 "example": "`SADD likers:{photoId} userId` сначала проверяет, не лайкал ли юзер (идемпотентность), и только при первом лайке делает `INCR`; Flusher раз в 5 сек собирает max-count по photoId и делает один batchUpdate.",
                 "when_to_apply": "Write-behind применяют для high-frequency счётчиков (лайки, просмотры) на горячих ключах, где синхронная запись в БД создала бы contention.",
-                "edge_cases": "При сбое Redis счётчик в нём теряется, но восстанавливается из Postgres-снимка + replay Kafka-событий — поэтому Kafka здесь не только буфер, но и источник восстановления.",
+                "edge_cases": "Огромный set для celebrity может потребовать sharding/bitmap и отдельный persistent store. HyperLogLog годится для приблизительной уникальной аудитории, но не для reversible unlike и точной дедупликации.",
                 "related": "[[design-instagram-interview#Q12]] HyperLogLog для approximate count; [[design-instagram-interview#Q11]] write-behind в feed-пайплайне; [[design-instagram-interview#Q20]] hot key и viral нагрузка."
               },
               "order": 2
             },
             {
               "label": "D",
-              "text": "Идемпотентность лайка обеспечивать не обязательно: повторный INCR на тот же photoId безвреден, ведь пользователь редко лайкает дважды.",
+              "text": "Идемпотентность лайка обеспечивать не обязательно: повторный INCR на тот же photoId безвреден, ведь пользователь редко лайкает дважды. Retry клиента или двойной тап накручивал бы счётчик, и like_count расходился бы с реальным числом лайкнувших. Повторные лайки — редкость, и защищаться от них не стоит усилий.",
               "correct": false,
               "sections": {
                 "what_actually": "Перед INCR делают `SADD likers:{photoId} userId` и инкрементят только при первом лайке — иначе двойной клик/retry завысил бы счётчик.",
@@ -790,7 +790,7 @@
           "options": [
             {
               "label": "A",
-              "text": "WebSocket-gateway можно делать stateless и сажать за обычный round-robin LB, потому что любое сообщение любая нода отдаст любому клиенту.",
+              "text": "WebSocket-gateway можно делать stateless и сажать за обычный round-robin LB, потому что любое сообщение любая нода отдаст любому клиенту. Исходящий push не нашёл бы, на какой ноде висит получатель, ведь его сокет физически на одной конкретной ноде.",
               "correct": false,
               "sections": {
                 "what_actually": "Соединение привязано к конкретной ноде (stateful), поэтому нужен sticky routing через consistent hash на userId и session-map в Redis.",
@@ -802,7 +802,7 @@
             },
             {
               "label": "B",
-              "text": "Сообщения DM достаточно хранить в Postgres: реляционная модель с foreign keys на пользователей удобнее, чем Cassandra, и легко масштабируется вертикально.",
+              "text": "Сообщения DM достаточно хранить в Postgres: реляционная модель с foreign keys на пользователей удобнее, чем Cassandra, и легко масштабируется вертикально. Поток в миллионы сообщений/сек упёрся бы в один primary Postgres и replication lag, не масштабируясь горизонтально по записи.",
               "correct": false,
               "sections": {
                 "what_actually": "DM держат в `Cassandra`: write-heavy (миллионы msg/sec), partition по (conv_id, bucket), multi-DC репликация — Postgres упёрся бы в single-leader запись.",
@@ -814,7 +814,7 @@
             },
             {
               "label": "C",
-              "text": "Архитектура чата: клиент A делает WS Upgrade, LB маршрутизирует по hash(userA) на Gateway-1, тот пишет `session:A → GW1` в `Redis`. Сообщение: GW1 продьюсит ChatMessage в `Kafka` и INSERT в `Cassandra`, шлёт ack. Kafka доставляет на gateway-шард B, тот ищет `session:B` в Redis и push'ит через WS. Cassandra-схема: partition по `(conv_id, bucket)`, clustering по msg_id DESC. Cassandra выбрана из-за write-heavy (миллионы msg/sec), TTL-retention и multi-DC. WebSocket scaling: ~150M concurrent / 100k на инстанс = ~1500 gateway-нод, sticky routing через consistent hash на userId.",
+              "text": "Архитектура чата: клиент A делает WS Upgrade, LB маршрутизирует по hash(userA) на Gateway-1, тот пишет `session:A → GW1` в `Redis`; Сообщение: GW1 продьюсит ChatMessage в `Kafka` и INSERT в `Cassandra`, шлёт ack; Kafka доставляет на gateway-шард B, тот ищет `session:B` в Redis и push'ит через WS.",
               "correct": true,
               "sections": {
                 "explanation": "DM строят на stateful WebSocket-gateway'ях с маршрутизацией через session-map в Redis и Kafka как мост между шардами, а сообщения персистят в write-optimized Cassandra.",
@@ -827,7 +827,7 @@
             },
             {
               "label": "D",
-              "text": "Чтобы доставить сообщение получателю B, gateway просто рассылает (broadcast) его всем gateway-нодам, и нужная нода сама отдаёт сообщение в свой WebSocket.",
+              "text": "Чтобы доставить сообщение получателю B, gateway просто рассылает (broadcast) его всем gateway-нодам, и нужная нода сама отдаёт сообщение в свой WebSocket. Каждое сообщение порождало бы рассылку на 1500 gateway-нод, умножая внутренний трафик в тысячи раз.",
               "correct": false,
               "sections": {
                 "what_actually": "Gateway ищет `session:B` в Redis (на какой ноде висит B) и адресно доставляет туда; broadcast по всем 1500 нодам был бы расточительным.",
@@ -850,7 +850,7 @@
           "options": [
             {
               "label": "A",
-              "text": "На ответ APNs `BadDeviceToken` применяют exponential backoff и повторную отправку через `outgoing-push`, а сам токен удаляют лишь после ответа `Unregistered` от FCM, до этого считая его временно недоступным.",
+              "text": "На ответ APNs `BadDeviceToken` применяют exponential backoff и повторную отправку через `outgoing-push`, а сам токен удаляют лишь после ответа `Unregistered` от FCM, до этого считая его временно недоступным. Система бесконечно долбила бы APNs по невалидному токену, расходуя квоту и connection-пул впустую.",
               "correct": false,
               "sections": {
                 "what_actually": "`BadDeviceToken` означает мёртвый токен — его удаляют из БД и НЕ ретраят; ретраи с backoff применяют лишь на rate limit от Apple.",
@@ -862,7 +862,7 @@
             },
             {
               "label": "B",
-              "text": "Pipeline: событие (like/comment/follow/dm) → Kafka topic `user-events` → NotificationService (фильтр по preferences/mute/batching) → Kafka topic `outgoing-push` → Push-Dispatcher → `APNs` (iOS) / `FCM` (Android) / WebPush. Batching для лайков: вместо 1000 уведомлений за минуту агрегируют в одно «N человек лайкнули ваше фото». APNs работает по HTTP/2 multiplexed persistent-соединению, 100-1000 нотификаций/sec на connection → пул соединений. Failure: `BadDeviceToken` → удалить token, не ретраить; rate limit от Apple → exponential backoff.",
+              "text": "Pipeline: событие (like/comment/follow/dm) → Kafka topic `user-events` → NotificationService (фильтр по preferences/mute/batching) → Kafka topic `outgoing-push` → Push-Dispatcher → `APNs` (iOS) / `FCM` (Android) / WebPush; Batching для лайков: вместо 1000 уведомлений за минуту агрегируют в одно «N человек лайкнули ваше фото»; APNs работает по HTTP/2 multiplexed persistent-соединению, 100-1000 нотификаций/sec на connection → пул соединений.",
               "correct": true,
               "sections": {
                 "explanation": "Нотификации идут через Kafka-конвейер с фильтрацией по предпочтениям и батчингом высокочастотных событий, а доставка — через persistent HTTP/2 к APNs/FCM с обработкой ошибок токенов.",
@@ -875,7 +875,7 @@
             },
             {
               "label": "C",
-              "text": "К APNs держат пул постоянных HTTP/2-соединений, но каждое соединение обрабатывает одно уведомление за раз, поэтому пропускную способность наращивают только числом соединений в пуле, а не мультиплексированием стримов.",
+              "text": "К APNs держат пул постоянных HTTP/2-соединений, но каждое соединение обрабатывает одно уведомление за раз, поэтому пропускную способность наращивают только числом соединений в пуле, а не мультиплексированием стримов. На миллионы push в секунду тратилось бы столько же TCP/TLS-хендшейков, и накладные расходы убили бы throughput.",
               "correct": false,
               "sections": {
                 "what_actually": "APNs работает по persistent HTTP/2 multiplexed-соединению (100-1000 нотификаций/sec на connection) с пулом соединений, а не connection-per-message.",
@@ -887,7 +887,7 @@
             },
             {
               "label": "D",
-              "text": "Событие лайка идёт через Kafka-топик `user-events` в NotificationService и сразу превращается в индивидуальный push через `outgoing-push`, а агрегацию «N человек лайкнули» применяют только к комментариям — по лайкам батчинг размывает real-time реакции.",
+              "text": "Событие лайка идёт через Kafka-топик `user-events` в NotificationService и сразу превращается в индивидуальный push через `outgoing-push`, а агрегацию «N человек лайкнули» применяют только к комментариям — по лайкам батчинг размывает real-time реакции. При 1000 лайков/минуту телефон получал бы 1000 уведомлений, и пользователь отключил бы push вовсе.",
               "correct": false,
               "sections": {
                 "what_actually": "Высокочастотные лайки батчат в одно агрегированное уведомление («N человек лайкнули»), иначе виральное фото заспамило бы юзера тысячами push.",
@@ -910,7 +910,7 @@
           "options": [
             {
               "label": "A",
-              "text": "Для автокомплита username достаточно `LIKE 'crist%'` по индексу в Postgres — отдельный Elasticsearch с edge-ngram только усложняет систему.",
+              "text": "Для автокомплита username достаточно `LIKE 'crist%'` по индексу в Postgres — отдельный Elasticsearch с edge-ngram только усложняет систему. Нельзя было бы ранжировать результаты по популярности и обрабатывать опечатки, а поиск не масштабировался бы.",
               "correct": false,
               "sections": {
                 "what_actually": "Используют Elasticsearch с edge_ngram-токенизатором и relevance-ранжированием; `LIKE` не даёт ни fuzzy-матч, ни буст по followers, ни масштаб поиска.",
@@ -922,7 +922,7 @@
             },
             {
               "label": "B",
-              "text": "Используют `Elasticsearch`. Для username — `edge_ngram` tokenizer (min_gram 2, max_gram 20) + lowercase, чтобы auto-complete срабатывал на префиксы. Запрос — `function_score`: `match` по username × `field_value_factor` по followers с `modifier: log1p`, что даёт relevance-boost популярным аккаунтам. Hashtag search: отдельный index с counter posts, trending через Kafka + Count-Min Sketch для top-K за час. Indexing pipeline: Postgres CDC (`Debezium`) → Kafka → ES indexer, latency ~1 сек (eventually consistent).",
+              "text": "Используют `Elasticsearch`; Для username — `edge_ngram` tokenizer (min_gram 2, max_gram 20) + lowercase, чтобы auto-complete срабатывал на префиксы; Запрос — `function_score`: `match` по username × `field_value_factor` по followers с `modifier: log1p`, что даёт relevance-boost популярным аккаунтам.",
               "correct": true,
               "sections": {
                 "explanation": "Поиск строят на Elasticsearch: edge-ngram для префиксного автокомплита и function_score с log(followers) для буста популярных аккаунтов; индекс наполняется из БД через CDC eventually.",
@@ -935,7 +935,7 @@
             },
             {
               "label": "C",
-              "text": "Результаты поиска по username сортируют по алфавиту префикса: пользователь обычно знает точный ник, поэтому ранжирование по популярности усложняет индекс без заметной пользы.",
+              "text": "Результаты поиска по username сортируют по алфавиту префикса: пользователь обычно знает точный ник, поэтому ранжирование по популярности усложняет индекс без заметной пользы. На запрос `crist` пользователь сначала видел бы случайные мелкие аккаунты, а не искомую знаменитость.",
               "correct": false,
               "sections": {
                 "what_actually": "Результаты бустят по популярности через `function_score` × log1p(followers): на `crist` сверху должен быть @cristiano, а не алфавитно первый малоизвестный аккаунт.",
@@ -947,7 +947,7 @@
             },
             {
               "label": "D",
-              "text": "Search-индекс должен обновляться строго синхронно в той же транзакции, что и запись в Postgres, иначе пользователь не найдёт только что созданный контент.",
+              "text": "Search-индекс должен обновляться строго синхронно в той же транзакции, что и запись в Postgres, иначе пользователь не найдёт только что созданный контент. Падение или замедление Elasticsearch блокировало бы любую запись в Postgres, роняя основной write-path.",
               "correct": false,
               "sections": {
                 "what_actually": "Индекс наполняют async через CDC (`Debezium`→Kafka→ES) с latency ~1 сек; синхронное обновление связало бы запись в БД с доступностью ES.",
@@ -970,7 +970,7 @@
           "options": [
             {
               "label": "A",
-              "text": "Explore — двухступенчатая модель. Candidate generation (offline, ночью): collaborative filtering (ALS/matrix factorization → user embedding) + content-based (CLIP/ResNet embedding → ANN-поиск похожих на залайканные); топ-500 кандидатов на юзера в `explore:{userId}` (Redis). Online ranking (real-time на каждый GET /explore): GBDT (XGBoost/LightGBM) или DNN по фичам recency, engagement rate, interaction history, location, time-of-day, device → сортирует 500 кандидатов в топ-30. Cold start: trending content по региону и языку. Diversity: MMR-reranker, чтобы не показывать 20 фото кошек подряд.",
+              "text": "Explore строят в два этапа. Offline pipeline рассчитывает collaborative и content embeddings, выполняет ANN retrieval и сохраняет несколько сотен кандидатов на пользователя. Online ranking добавляет свежие признаки, фильтрует недоступный контент и выбирает top-K в пределах latency budget; cold start закрывают trending и onboarding-сигналами.",
               "correct": true,
               "sections": {
                 "explanation": "Explore разделяют на тяжёлый offline candidate generation (ночной Spark/Flink, embeddings, ANN) и лёгкий online ranking (GBDT по свежим фичам), что даёт и масштаб, и персонализацию в реальном времени.",
@@ -983,7 +983,7 @@
             },
             {
               "label": "B",
-              "text": "Для нового пользователя explore целиком строят на интересах, выбранных им при регистрации: показывают контент только по этим темам, пока не накопится история взаимодействий для персонализации.",
+              "text": "Для нового пользователя explore целиком строят на интересах, выбранных им при регистрации: показывают контент только по этим темам, пока не накопится история взаимодействий для персонализации. Новый пользователь видел бы пустую страницу и не получал бы повода вовлечься в продукт.",
               "correct": false,
               "sections": {
                 "what_actually": "При cold start новичку показывают trending content по его региону и языку — пустой explore оттолкнул бы пользователя на старте.",
@@ -1030,7 +1030,7 @@
           "options": [
             {
               "label": "A",
-              "text": "Многоуровневая модерация. L1 hash-match: PhotoDNA для известных CSAM/terrorist content (< 1 сек). L2 ML-классификатор: NSFW, violence, hate speech, spam (100-500 мс). L3 OCR + text-classifier: текст в картинках → toxic language (1-2 сек). L4 human reviewer: если confidence 0.5-0.9, в очередь (минуты—часы). Pipeline: если max_score > 0.95 → BLOCK + notify; если > 0.5 → SHADOW (видно только автору) + human queue; иначе PUBLISH. Human queue — Kafka topic `moderation-queue`, 50000+ модераторов, SLA 95% за 24h. False positives — appeals flow со вторым reviewer.",
+              "text": "Многоуровневая модерация; L1 hash-match: PhotoDNA для известных CSAM/terrorist content (< 1 сек); L2 ML-классификатор: NSFW, violence, hate speech, spam (100-500 мс).",
               "correct": true,
               "sections": {
                 "explanation": "Модерация каскадная: дешёвые быстрые проверки (hash, ML) фильтруют очевидное, а пограничные случаи (confidence 0.5-0.9) уходят людям. Пороги делят на block / shadow / publish.",
@@ -1067,7 +1067,7 @@
             },
             {
               "label": "D",
-              "text": "Appeals flow для оспаривания блокировок не нужен: если ML уверенно заблокировала контент, решение окончательно и пересмотру не подлежит.",
+              "text": "Appeals flow для оспаривания блокировок не нужен: если ML уверенно заблокировала контент, решение окончательно и пересмотру не подлежит. Любая ошибка классификатора навсегда банила бы легитимный контент без шанса на исправление.",
               "correct": false,
               "sections": {
                 "what_actually": "False positives неизбежны, поэтому есть appeals flow: пользователь оспаривает, второй reviewer пересматривает решение.",
@@ -1090,7 +1090,7 @@
           "options": [
             {
               "label": "A",
-              "text": "Resize под нужный размер лучше делать на app server по запросу и класть результат в CDN: edge-слой рассматривают как кэш готовых байт, а трансформацию оставляют backend'у, где её проще контролировать.",
+              "text": "Resize под нужный размер лучше делать на app server по запросу и класть результат в CDN: edge-слой рассматривают как кэш готовых байт, а трансформацию оставляют backend'у, где её проще контролировать. Каждый размер картинки генерировал бы запрос к origin/app, перегружая backend и теряя выгоду CDN.",
               "correct": false,
               "sections": {
                 "what_actually": "Resize делают на edge через CloudFront Functions/Lambda@Edge (на `?w=320`) и кэшируют результат; гонять resize через app server вернуло бы bottleneck.",
@@ -1102,7 +1102,7 @@
             },
             {
               "label": "B",
-              "text": "Photo flow: запрос `GET /p/abc123_320.jpg` идёт в `CloudFront` edge (POP в 300+ городах) — HIT за ~20-50 мс, MISS → Origin Shield (regional cache) → `S3`. Edge image optimization: CloudFront Functions/Lambda@Edge на `?w=320` делают resize на edge и кешируют результат; `Accept: image/avif` → перенаправляют на .avif вариант (50% меньше). HTTP/3 (QUIC) уменьшает head-of-line blocking на mobile и даёт 0-RTT для возвратных клиентов. Cache key: `Host + URI + Accept-Header`, cookies игнорируются (картинки не персонализированы). TTL: media 30 дней (immutable, hash в URL), API responses NO-CACHE или 5-30 сек.",
+              "text": "Photo flow: запрос `GET /p/abc123_320.jpg` идёт в `CloudFront` edge (POP в 300+ городах) — HIT за ~20-50 мс, MISS → Origin Shield (regional cache) → `S3`; Edge image optimization: CloudFront Functions/Lambda@Edge на `?w=320` делают resize на edge и кешируют результат; `Accept: image/avif` → перенаправляют на .avif вариант (50% меньше).",
               "correct": true,
               "sections": {
                 "explanation": "CDN раздаёт media с edge-POP'ов близко к пользователю, делает resize/format-negotiation прямо на edge и использует HTTP/3 для устойчивости на мобильных сетях.",
@@ -1115,7 +1115,7 @@
             },
             {
               "label": "C",
-              "text": "Media-файлам нужно ставить короткий TTL (несколько секунд) на CDN, чтобы при изменении фото пользователи сразу видели обновлённую версию.",
+              "text": "Media-файлам задают короткий CDN TTL в несколько секунд, чтобы любое изменение изображения немедленно появлялось во всех POP. Versioned URLs и длительное immutable caching не используют, а edge регулярно перепроверяет origin даже для неизменяемых объектов.",
               "correct": false,
               "sections": {
                 "what_actually": "Media отдают immutable URL с hash контента и TTL 30 дней; изменение = новый URL, поэтому короткий TTL не нужен и лишь снижал бы hit rate.",
@@ -1127,7 +1127,7 @@
             },
             {
               "label": "D",
-              "text": "Cookies обязательно включать в cache key для media, чтобы каждому пользователю отдавалась его персональная версия картинки.",
+              "text": "Cookies обязательно включают в CDN cache key для media, чтобы каждому пользователю формировалась персональная версия изображения. Один и тот же object URL хранится отдельным cache entry для каждого session cookie независимо от того, меняется ли содержимое.",
               "correct": false,
               "sections": {
                 "what_actually": "Cookies из cache key для media исключают: картинки не персонализированы, и включение cookies раздробило бы кэш и обрушило hit rate.",
@@ -1150,7 +1150,7 @@
           "options": [
             {
               "label": "A",
-              "text": "Горячие metadata в Redis надо обслуживать с одного master-нода, ведь репликация только усложняет систему и вносит рассинхрон.",
+              "text": "Горячие metadata в Redis надо обслуживать с одного master-нода, ведь репликация только усложняет систему и вносит рассинхрон. Один Redis-нод принимал бы всю viral-нагрузку на hot key и стал бы узким местом.",
               "correct": false,
               "sections": {
                 "what_actually": "Hot metadata читают с read replicas + local L1-кэш (Caffeine, 30 сек TTL), чтобы снять нагрузку с одного нода на viral-ключах.",
@@ -1162,7 +1162,7 @@
             },
             {
               "label": "B",
-              "text": "Чтобы виральное фото быстро раздавалось, достаточно положиться на естественное наполнение CDN-кэша: первые пользователи получат MISS, дальше всё закэшируется само.",
+              "text": "Чтобы виральное фото быстро раздавалось, достаточно положиться на естественное наполнение CDN-кэша: первые пользователи получат MISS, дальше всё закэшируется само. В первые секунды миллионы MISS одновременно ударили бы по Origin Shield и S3, вызвав перегрузку.",
               "correct": false,
               "sections": {
                 "what_actually": "Применяют predictive warming: при публикации celebrity worker заранее прогревает все 300+ POPs, чтобы первые миллионы зрителей не били в origin одновременно.",
@@ -1174,7 +1174,7 @@
             },
             {
               "label": "C",
-              "text": "Для viral фото проблем с S3 нет: один объект можно читать неограниченно часто, поэтому random suffix на ключах и распределение по prefix'ам не требуются.",
+              "text": "Для viral фото проблем с S3 нет: один объект можно читать неограниченно часто, поэтому random suffix на ключах и распределение по prefix'ам не требуются. 1M views/минуту в один prefix не вызывали бы throttling.",
               "correct": false,
               "sections": {
                 "what_actually": "S3 троттлит на уровне prefix (~5500 GET/sec на prefix), поэтому ключи распределяют random suffix'ом по разным физическим shards.",
@@ -1186,7 +1186,7 @@
             },
             {
               "label": "D",
-              "text": "Когда celebrity публикует фото и за минуту прилетает 1M views, проблемы: один S3 prefix троттлится (limit 5500 GET/sec на prefix), Origin Shield перегружен, cold POPs далеко от региона. Решения: random suffix на S3 keys (распределение по физическим shards внутри S3); CloudFront Origin Shield + multi-region origins; predictive warming — при публикации celebrity background-worker делает GET по всем 300+ POPs; adaptive caching — фото с > 1000 RPS получает longer TTL и replication по соседним POPs. Для metadata в Redis — read replicas + local L1 cache (Caffeine, 30 сек TTL).",
+              "text": "Когда celebrity публикует фото и за минуту прилетает 1M views, проблемы: один S3 prefix троттлится (limit 5500 GET/sec на prefix), Origin Shield перегружен, cold POPs далеко от региона.",
               "correct": true,
               "sections": {
                 "explanation": "Viral hot key решают распределением (random suffix, multi-region origin), упреждающим прогревом всех POP при публикации гиганта и адаптивным кэшированием горячего контента.",
@@ -1210,7 +1210,7 @@
           "options": [
             {
               "label": "A",
-              "text": "При delete запускают `create-invalidation --paths /p/abc123.jpg` в CloudFront: операция отрабатывает за 10-15 минут и стоит $0.005 за путь, и именно её делают основным механизмом на каждое удаление фото.",
+              "text": "При delete запускают `create-invalidation --paths /p/abc123.jpg` в CloudFront: операция отрабатывает за 10-15 минут и стоит $0.005 за путь, и именно её делают основным механизмом на каждое удаление фото. Массовые удаления стоили бы целое состояние и занимали бы минуты на каждый объект.",
               "correct": false,
               "sections": {
                 "what_actually": "CloudFront Invalidation дорогая ($0.005/path сверх 1000/мес) и медленная (10-15 мин); основной механизм — immutable URL и soft delete в metadata.",
@@ -1222,7 +1222,7 @@
             },
             {
               "label": "B",
-              "text": "URL содержит content-hash, поэтому при обновлении фото путь остаётся прежним `/p/abc123.jpg`, а старую версию убирают из 300+ POP точечной CloudFront-инвалидацией этого пути.",
+              "text": "URL содержит content-hash, поэтому при обновлении фото путь остаётся прежним `/p/abc123.jpg`, а старую версию убирают из 300+ POP точечной CloudFront-инвалидацией этого пути. Каждое изменение фото требовало бы дорогой CDN-инвалидации того же пути по всем POP.",
               "correct": false,
               "sections": {
                 "what_actually": "Best practice — immutable URL с hash контента: новая версия = новый URL, поэтому инвалидация не нужна, а старый просто перестаёт раздаваться.",
@@ -1234,7 +1234,7 @@
             },
             {
               "label": "C",
-              "text": "Проблема: 300+ POPs закешировали `/p/abc123.jpg`, user нажал Delete. Стратегии: (1) Immutable URLs (best practice) — URL содержит hash контента, при delete просто перестают раздаваться; (2) CloudFront Invalidation — `create-invalidation --paths` дорого ($0.005/path > 1000/мес) и медленно (10-15 мин), для редких случаев; (3) Origin-side soft delete — `deleted=true` в metadata, при GET через app → 404, CDN кеширует 404 на короткий TTL; (4) Versioned путь `/v2/p/...`. Реально Instagram: soft delete в metadata, контент остаётся в CDN, но feed/profile не показывают; полное удаление с S3 через batch lifecycle через 30 дней (GDPR).",
+              "text": "Проблема: 300+ POPs закешировали `/p/abc123.jpg`, user нажал Delete; Стратегии: (1) Immutable URLs (best practice) — URL содержит hash контента, при delete просто перестают раздаваться; (2) CloudFront Invalidation — `create-invalidation --paths` дорого ($0.005/path > 1000/мес) и медленно (10-15 мин), для редких случаев.",
               "correct": true,
               "sections": {
                 "explanation": "Инвалидацию решают преимущественно дизайном (immutable URL и soft delete в metadata), а дорогую CloudFront Invalidation держат для редких случаев; физическое удаление с S3 откладывают для GDPR-compliance.",
@@ -1247,7 +1247,7 @@
             },
             {
               "label": "D",
-              "text": "Delete помечает объект `deleted=true` в metadata, но физическое `DeleteObject` из S3 выполняют синхронно в том же запросе, чтобы соответствие GDPR достигалось прямо в момент нажатия Delete.",
+              "text": "Delete помечает объект `deleted=true` в metadata, но физическое `DeleteObject` из S3 выполняют синхронно в том же запросе, чтобы соответствие GDPR достигалось прямо в момент нажатия Delete. Каждое удаление требовало бы синхронного стирания по всем репликам и POP, что хрупко и дорого.",
               "correct": false,
               "sections": {
                 "what_actually": "Сразу делают soft delete (`deleted=true`, фото скрыто), а hard delete с S3 — отложенно batch-job'ом через 30 дней; GDPR этому не противоречит.",
@@ -1306,7 +1306,7 @@
             },
             {
               "label": "D",
-              "text": "Подход — geo-partitioning по home region пользователя: каждый user приписан к региону при регистрации (по IP), все writes для него идут в home region (low latency), reads предпочитают local replica, между регионами — async-репликация (Postgres logical replication, ~100ms-1s lag). Consistency: AP/eventual для feed (отставание 1-2 сек ОК), CP-like read-your-own-writes для лайков через session affinity к home region, strong для финансовых операций (single region per transaction). S3 — cross-region replication. Failover: при падении us-east DNS (Route53 health check) переключает на us-west, writes очередят в Kafka или promote реплику.",
+              "text": "Подход; geo-partitioning по home region пользователя: каждый user приписан к региону при регистрации (по IP), все writes для него идут в home region (low latency), reads предпочитают local replica, между регионами.",
               "correct": true,
               "sections": {
                 "explanation": "Multi-region строят как geo-partitioning: данные пользователя живут в его home region, writes локальны, cross-region репликация async, а consistency смешанная (eventual для ленты, read-your-writes через session affinity).",
@@ -1330,7 +1330,7 @@
           "options": [
             {
               "label": "A",
-              "text": "Многоуровневое: per-IP global 1000 req/min (Token bucket в Redis), per-user upload photo 100/day и story 50/day (counter + TTL), per-user like 60/min (sliding window), per-user follow 200/day (anti-spam), per-IP search 100/min (на edge, CloudFront). Реализация — `INCR` ключа с временным окном в Redis + `EXPIRE` при первом инкременте, сравнение с лимитом. Защита от ботов: ML-классификатор поведения (скорость лайков/follow, UA-паттерн), CAPTCHA на повторных нарушениях, IP reputation. Soft vs hard: soft — warning и throttle на 1 сек, hard — 429 Too Many Requests и временный shadow ban.",
+              "text": "Многоуровневое: per-IP global 1000 req/min (Token bucket в Redis), per-user upload photo 100/day и story 50/day (counter + TTL), per-user like 60/min (sliding window), per-user follow 200/day (anti-spam), per-IP search 100/min (на edge, CloudFront).",
               "correct": true,
               "sections": {
                 "explanation": "Rate limiting делают многоуровневым (per-IP, per-user, per-action) с разными алгоритмами и окнами в Redis, дополняя ML-детектом ботов и градацией soft/hard реакций.",
@@ -1355,7 +1355,7 @@
             },
             {
               "label": "C",
-              "text": "Различают soft и hard: soft-нарушение сразу отдаёт `429 Too Many Requests` и временный shadow ban, а hard-нарушение ограничивается throttle на 1 секунду с warning.",
+              "text": "Различают soft и hard: soft-нарушение сразу отдаёт `429 Too Many Requests` и временный shadow ban, а hard-нарушение ограничивается throttle на 1 секунду с warning. Легитимный пользователь, случайно превысивший лимит, сразу получал бы бан, что недопустимо для UX.",
               "correct": false,
               "sections": {
                 "what_actually": "Реакции градуируют: soft (warning, throttle 1 сек) для случайных всплесков, hard (429, временный shadow ban) для устойчивого abuse — жёсткий бан на любой всплеск бил бы по легитимным пользователям.",
@@ -1367,7 +1367,7 @@
             },
             {
               "label": "D",
-              "text": "Счётчики держат в Redis через `INCR`+`EXPIRE`, но per-user upload-лимит дополнительно подтверждают транзакционным `UPDATE ... RETURNING` в Postgres на каждый запрос — ради абсолютной точности лимита.",
+              "text": "Счётчики держат в Redis через `INCR`+`EXPIRE`, но per-user upload-лимит дополнительно подтверждают транзакционным `UPDATE ... RETURNING` в Postgres на каждый запрос — ради абсолютной точности лимита. Каждый из тысяч req/sec писал бы в Postgres, и сам rate limiter положил бы базу contention'ом.",
               "correct": false,
               "sections": {
                 "what_actually": "Счётчики держат в Redis (`INCR` + `EXPIRE`): rate limiting — high-frequency путь, и транзакционный UPDATE в Postgres на каждый запрос стал бы bottleneck.",
@@ -1390,7 +1390,7 @@
           "options": [
             {
               "label": "A",
-              "text": "Orphaned uploads (файл в S3 без finalize) удалять не нужно — они никому не мешают, ведь без метаданных фото всё равно не отображается в ленте.",
+              "text": "Orphaned uploads (файл в S3 без finalize) удалять не нужно — они никому не мешают, ведь без метаданных фото всё равно не отображается в ленте. Биллинг за storage не рос бы от брошенных загрузок.",
               "correct": false,
               "sections": {
                 "what_actually": "Orphan'ы занимают место и стоят денег, накапливаясь незаметно; их чистит S3 lifecycle rule по префиксу `uploads/` старше 24 часов.",
@@ -1402,7 +1402,7 @@
             },
             {
               "label": "B",
-              "text": "Exactly-once при крахе worker'а гарантирует сама Kafka, поэтому идемпотентный INSERT и проверка offset в обработчике не требуются.",
+              "text": "Exactly-once при крахе worker'а гарантирует сама Kafka, поэтому идемпотентный INSERT и проверка offset в обработчике не требуются. При rebalance после краха worker переобработал бы сообщение и вставил бы дубль метаданных. Маркетинговое «exactly-once» Kafka создаёт ложную уверенность в полной защите от повторов.",
               "correct": false,
               "sections": {
                 "what_actually": "Exactly-once достигается комбинацией Kafka offset + идемпотентный `INSERT ... ON CONFLICT DO NOTHING`; одна Kafka без идемпотентности приложения дублей не исключает.",
@@ -1414,7 +1414,7 @@
             },
             {
               "label": "C",
-              "text": "Сценарии: (1) network drop посередине upload → multipart resume; (2) worker crash при processing → exactly-once через Kafka offset + idempotent INSERT с `ON CONFLICT DO NOTHING`; (3) двойной finalize (retry) → Idempotency-Key: `INSERT ... ON CONFLICT (photo_id) DO NOTHING`, если запись есть — вернуть существующую; (4) дубликат загрузки того же фото → perceptual hash, `findByUserAndPHash`, при совпадении вернуть существующее; (5) orphaned uploads (файл в S3, finalize не пришёл) → S3 lifecycle rule удаляет `uploads/...` старше 24 часов.",
+              "text": "Сценарии: (1) network drop посередине upload → multipart resume; (2) worker crash при processing → exactly-once через Kafka offset + idempotent INSERT с `ON CONFLICT DO NOTHING`; (3) двойной finalize (retry) → Idempotency-Key: `INSERT ... ON CONFLICT (photo_id) DO NOTHING`, если запись есть — вернуть существующую.",
               "correct": true,
               "sections": {
                 "explanation": "Надёжность upload держится на идемпотентности на каждом entry point: Idempotency-Key и natural-key конфликты делают повторы безопасными, а multipart и lifecycle-cleanup закрывают обрывы и orphan'ы.",
@@ -1427,7 +1427,7 @@
             },
             {
               "label": "D",
-              "text": "Повторный finalize одного фото безопасен и без специальных мер: достаточно обычного `INSERT`, ведь второй вызов просто перезапишет ту же строку теми же данными.",
+              "text": "Повторный finalize одного фото безопасен и без специальных мер: достаточно обычного `INSERT`, ведь второй вызов просто перезапишет ту же строку теми же данными. Одинаковые данные при повторе ничего не ломают, и явная идемпотентность не нужна.",
               "correct": false,
               "sections": {
                 "what_actually": "Обычный INSERT на ретрае либо упадёт на PK, либо создаст дубль; нужен `ON CONFLICT (photo_id) DO NOTHING` + Idempotency-Key, чтобы повтор был no-op.",
@@ -1474,7 +1474,7 @@
             },
             {
               "label": "C",
-              "text": "Instagram — AP (Availability + Partition tolerance): feed может показать stale данные на секунды (OK), лайки видны не мгновенно во всех регионах (OK), counter приближённый (OK для UI). Когда CP всё-таки нужен: смена пароля / 2FA → strong (один регион), уникальность username → distributed lock или single-region write, финансовые операции (Shop, реклама) → ACID. Practical mix: read-your-own-writes через session sticky к home-region реплике, monotonic reads через метки в Redis (last_write_ts), causal consistency через vector clock в metadata. Trade-off: denormalize feed даёт read O(1), но storage 1000× и дорогой fan-out.",
+              "text": "Instagram — AP (Availability + Partition tolerance): feed может показать stale данные на секунды (OK), лайки видны не мгновенно во всех регионах (OK), counter приближённый (OK для UI).",
               "correct": true,
               "sections": {
                 "explanation": "Instagram выбирает AP по умолчанию (доступность важнее мгновенной консистентности для соцконтента), но точечно включает CP для критичных операций (пароль, username, деньги).",
@@ -1487,7 +1487,7 @@
             },
             {
               "label": "D",
-              "text": "Instagram выбирает CP (Consistency + Partition tolerance): каждый лайк и пост обязаны быть строго консистентны во всех регионах, даже ценой временной недоступности.",
+              "text": "Instagram выбирает CP (Consistency + Partition tolerance): каждый лайк и пост обязаны быть строго консистентны во всех регионах, даже ценой временной недоступности. При сетевом разделении система отказывала бы в чтении ленты ради консистентности, теряя доступность 99.95%.",
               "correct": false,
               "sections": {
                 "what_actually": "Instagram — AP: доступность важнее мгновенной консистентности для ленты и лайков; strong-консистентность применяют лишь точечно (пароль, username, деньги).",
@@ -1510,7 +1510,7 @@
           "options": [
             {
               "label": "A",
-              "text": "Число серверов выводят из единого RPS: app tier, media workers и ML workers масштабируют пропорционально общему трафику одним auto-scale-правилом в Kubernetes, раз все они обрабатывают один и тот же поток запросов.",
+              "text": "Число серверов выводят из единого RPS: app tier, media workers и ML workers масштабируют пропорционально общему трафику одним auto-scale-правилом в Kubernetes, раз все они обрабатывают один и тот же поток запросов. Либо app tier был бы недомасштабирован, либо дорогих GPU-нод закупили бы в 50 раз больше нужного.",
               "correct": false,
               "sections": {
                 "what_actually": "Числа узлов сильно различаются: ~10000 app-инстансов, но лишь ~200 GPU ML-workers и ~500 media-workers — у каждого компонента свой профиль нагрузки.",
@@ -1522,7 +1522,7 @@
             },
             {
               "label": "B",
-              "text": "Приближение: App tier (stateless) ~10000 (auto-scale Kubernetes), Media workers ~500 (CPU-heavy resize/transcode), ML workers (GPU) ~200, Postgres 1024 logical / 64 physical, Cassandra ~500 (multi-DC RF=3), Redis ~1000 (100 TB hot), Elasticsearch ~200, Kafka ~100 brokers (RF=3, 30d retention), S3/Glacier 500+ PB, CDN 300+ POPs. Рост: users ~10% YoY, storage ~30% YoY (видео), compute ~25% YoY. Cost optimization: tiered storage (hot S3 Standard, cold > 90d → Glacier Deep Archive, -90%), spot для async workers, reserved для baseline app tier, edge compression WebP/AVIF (-30-50% egress). Headroom: всегда +50% от peak под виральные события.",
+              "text": "Приближение: App tier (stateless) ~10000 (auto-scale Kubernetes), Media workers ~500 (CPU-heavy resize/transcode), ML workers (GPU) ~200, Postgres 1024 logical / 64 physical, Cassandra ~500 (multi-DC RF=3), Redis ~1000 (100 TB hot), Elasticsearch ~200, Kafka ~100 brokers (RF=3, 30d retention), S3/Glacier 500+ PB, CDN 300+ POPs.",
               "correct": true,
               "sections": {
                 "explanation": "Capacity planning расписывает число узлов по компонентам, темпы роста по осям (users/storage/compute) и приёмы экономии (tiered storage, spot/reserved, edge-сжатие), закладывая headroom на пики.",
@@ -1535,7 +1535,7 @@
             },
             {
               "label": "C",
-              "text": "Cost optimization строят на tiered storage: горячее в S3 Standard, а холоднее 90 дней уходит в Glacier Deep Archive — включая оригиналы и часто запрашиваемые thumbnails, чтобы срезать стоимость хранения по максимуму.",
+              "text": "Cost optimization строят на tiered storage: горячее в S3 Standard, а холоднее 90 дней уходит в Glacier Deep Archive — включая оригиналы и часто запрашиваемые thumbnails, чтобы срезать стоимость хранения по максимуму. Петабайты редко читаемого старого media стоили бы как горячие данные, раздувая storage-бюджет.",
               "correct": false,
               "sections": {
                 "what_actually": "Tiered storage даёт огромную экономию: контент старше 90 дней уезжает в Glacier Deep Archive (~90% дешевле), что критично на 500+ PB.",
@@ -1547,7 +1547,7 @@
             },
             {
               "label": "D",
-              "text": "Headroom +50% над peak закладывают для stateless app tier под виральные события, а stateful-компоненты — Postgres, Cassandra, Kafka — держат ровно под текущий peak, раз доскейлить их быстро всё равно нельзя.",
+              "text": "Headroom +50% над peak закладывают для stateless app tier под виральные события, а stateful-компоненты — Postgres, Cassandra, Kafka — держат ровно под текущий peak, раз доскейлить их быстро всё равно нельзя. При celebrity-публикации (10× трафик) или суточном пике система не имела бы запаса и деградировала бы.",
               "correct": false,
               "sections": {
                 "what_actually": "Закладывают +50% headroom от peak, потому что виральные события дают 10× обычной нагрузки, и без запаса система упадёт в пик.",
@@ -1570,7 +1570,7 @@
           "options": [
             {
               "label": "A",
-              "text": "Async по умолчанию: thumbnails, модерацию и fan-out выносят в Kafka + worker; идемпотентность при этом навешивают только на платёжные entry point, ведь повторная доставка лайка или комментария из Kafka безвредна.",
+              "text": "Async по умолчанию: thumbnails, модерацию и fan-out выносят в Kafka + worker; идемпотентность при этом навешивают только на платёжные entry point, ведь повторная доставка лайка или комментария из Kafka безвредна. Finalize ждал бы транскодинга и fan-out на сотни тысяч followers, и upload p99 взлетел бы.",
               "correct": false,
               "sections": {
                 "what_actually": "Lesson — async по умолчанию: любое тяжёлое действие уходит в Kafka + worker, иначе upload-latency и доступность пострадают.",
@@ -1582,7 +1582,7 @@
             },
             {
               "label": "B",
-              "text": "Среди pitfalls — media как BLOB в Postgres и наивный fan-out для celebrity; а вот стоимость 9× репликации media считают несущественной, ведь S3 cross-region replication дёшева относительно самого хранения.",
+              "text": "Среди pitfalls — media как BLOB в Postgres и наивный fan-out для celebrity; а вот стоимость 9× репликации media считают несущественной, ведь S3 cross-region replication дёшева относительно самого хранения. Дизайн был бы технически полным.",
               "correct": false,
               "sections": {
                 "what_actually": "Игнор модерации — серьёзный pitfall: без неё продукт не пройдёт legal/compliance, поэтому её обязательно проговаривают.",
@@ -1594,7 +1594,7 @@
             },
             {
               "label": "C",
-              "text": "Урок: read и write разносят на разные системы, но подсчёт лайков и комментариев держат в одной строго консистентной БД, поскольку для счётчиков eventual consistency недопустима.",
+              "text": "Урок: read и write разносят на разные системы, но подсчёт лайков и комментариев держат в одной строго консистентной БД, поскольку для счётчиков eventual consistency недопустима. Read-heavy лента, write-heavy DM и search делили бы один движок, и каждый workload страдал бы.",
               "correct": false,
               "sections": {
                 "what_actually": "Ключевой lesson обратный: read и write — разные системы (Redis для ленты, S3 для media, Cassandra для DM); одна БД на всё не выдержит смешанную нагрузку.",
@@ -1606,7 +1606,7 @@
             },
             {
               "label": "D",
-              "text": "Lessons: (1) read и write — разные системы, не одна БД на всё; (2) async по умолчанию (thumbnails, moderation, fan-out → Kafka + worker); (3) презагрузка важнее cache invalidation (push свежее в Redis на write); (4) geo-locality важнее консистентности (eventual cross-region — acceptable); (5) idempotency везде (Idempotency-Key/natural key на каждом entry point). Pitfalls: забыть celebrity problem (наивный fan-out не масштабируется), media в Postgres BLOB (I/O killer), один storage на всё, игнорировать cold start, не учесть стоимость 9× репликации, strong consistency для лайков, игнорировать модерацию (legal/compliance). На интервью обязательно: API, capacity math, один deep-dive, 2-3 trade-off, failure modes.",
+              "text": "Lessons: (1) read и write; разные системы, не одна БД на всё; (2) async по умолчанию (thumbnails, moderation, fan-out → Kafka + worker); (3) презагрузка важнее cache invalidation (push свежее в Redis на write). Главные уроки сводятся к разделению read/write-систем, async-по-умолчанию, гео-локальности и тотальной идемпотентности.",
               "correct": true,
               "sections": {
                 "explanation": "Главные уроки сводятся к разделению read/write-систем, async-по-умолчанию, гео-локальности и тотальной идемпотентности; ключевые pitfalls — celebrity problem, BLOB в БД и игнор модерации.",

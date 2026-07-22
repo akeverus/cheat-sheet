@@ -42,7 +42,7 @@
                 "example": "Маршрут `from(\"file:/in\").to(\"kafka:orders\")` забирает файл, конвертирует тело и кладёт в Kafka; чтобы добавить новый протокол, меняют URI эндпоинта, а не инфраструктурный код.",
                 "when_to_apply": "Когда нужно склеить разнородные системы (файлы, HTTP/REST, JMS, Kafka, БД, облако) единообразно и применить готовые паттерны интеграции вместо ручного кода транспорта.",
                 "edge_cases": "Долговременное хранение и гарантию доставки обеспечивает не Camel, а подключённый брокер или БД; Camel лишь проносит `Exchange` через маршрут от источника к получателю.",
-                "related": "Camel — исполняемая версия каталога Enterprise Integration Patterns (Hohpe & Woolf): Content-Based Router, Splitter, Aggregator доступны как DSL-конструкции поверх 300+ компонентов."
+                "related": "[[apache-camel-interview#Q2]] основные abstractions Camel; [[apache-camel-interview#Q4]] описание маршрутов; [[apache-camel-interview#Q6]] Content-Based Router."
               }
             },
             {
@@ -102,7 +102,7 @@
                 "example": "Компонент `kafka` (один на `CamelContext`) создаёт отдельный `Endpoint` для `kafka:orders` и ещё один для `kafka:payments` — каждый топик это свой эндпоинт, но фабрика-компонент одна.",
                 "when_to_apply": "Различать уровни нужно при настройке коннекторов: общие свойства протокола задают на уровне компонента (один раз), а адрес и query-опции — на уровне конкретного эндпоинта.",
                 "edge_cases": "Опции в URI влияют на идентичность эндпоинта: `kafka:orders?groupId=a` и `kafka:orders?groupId=b` — разные `Endpoint`, но оба создаются одним компонентом `kafka`.",
-                "related": "Component и Endpoint живут внутри `CamelContext`; эндпоинт из фабрики затем подставляют в `from(...)`/`to(...)` маршрута `Route`."
+                "related": "[[apache-camel-interview#Q1]] назначение Camel; [[apache-camel-interview#Q4]] RouteBuilder и DSL; [[apache-camel-interview#Q5]] структура endpoint URI."
               }
             },
             {
@@ -162,7 +162,7 @@
                 "example": "`exchange.getIn().setHeader(\"orderId\", id)` кладёт значение в Message; `exchange.setProperty(\"startedAt\", System.currentTimeMillis())` — сквозной флаг уровня Exchange, доступный до самого конца маршрута.",
                 "when_to_apply": "Headers — для маршрутизации и метаданных, которые часто маппятся в транспортные заголовки (HTTP/JMS). Properties — для временных флагов и сквозного контекста, который должен пережить весь маршрут.",
                 "edge_cases": "При неаккуратном использовании legacy-`getOut()` можно потерять headers текущего Message; properties это не затрагивает, так как они хранятся отдельно на Exchange.",
-                "related": "`body`, `headers` и `attachments` — части `Message`; `properties` и `exchangePattern` (MEP: `InOnly`/`InOut`) — уровня `Exchange`, контейнера, который Camel проносит через весь маршрут."
+                "related": "[[apache-camel-interview#Q2]] Exchange и Message; [[apache-camel-interview#Q6]] условия по headers; [[apache-camel-interview#Q10]] обработка исключений."
               }
             },
             {
@@ -210,7 +210,7 @@
                 "example": "public class OrderRoute extends RouteBuilder {\n  @Override public void configure() {\n    from(\"file:/data/in?noop=true\").routeId(\"order-import\").unmarshal().json(Order.class).to(\"kafka:orders\");\n  }\n}",
                 "when_to_apply": "Любой маршрут на Java DSL пишется так: для приложений на JVM это вариант по умолчанию, потому что доступны все фичи Camel, рефакторинг и типобезопасность. В Spring Boot такой класс помечают @Component, и camel-spring-boot-starter автоматически подхватывает все RouteBuilder-бины.",
                 "edge_cases": "Маршруты можно описывать не только на Java: XML DSL (<route>...</route>) и YAML DSL дают декларативную конфигурацию без перекомпиляции (YAML популярен в Camel K). Эти DSL не используют configure() — там определение маршрута задаётся структурой документа, а не переопределением Java-метода.",
-                "related": "configure() работает поверх CamelContext (Q2): зарегистрированные в нём RouteBuilder-ы собираются в маршруты, каждый из которых — это from(...) → шаги → to(...). Внутри цепочки уже применяются EIP вроде choice/split и обработчики ошибок onException."
+                "related": "[[apache-camel-interview#Q2]] CamelContext и Route; [[apache-camel-interview#Q5]] endpoint URI; [[apache-camel-interview#Q10]] error handling."
               }
             },
             {
@@ -251,20 +251,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Это схема URI, и она равна имени `Component` — фабрики эндпоинтов для протокола",
+              "text": "Часть `file` — имя Camel component и схема endpoint URI; component создаёт endpoint для конкретного протокола или интеграции.",
               "correct": true,
               "sections": {
                 "explanation": "Первая часть URI до двоеточия — это схема, и в Camel она совпадает с именем компонента. Компонент — это фабрика эндпоинтов для конкретного протокола (`file`, `http`, `kafka`), и именно по схеме Camel выбирает, какой компонент создаст эндпоинт.",
                 "example": "В `kafka:orders?groupId=a` схема `kafka` указывает на компонент `camel-kafka`, контекстный путь `orders` — это топик, а `groupId=a` — опция эндпоинта.",
                 "when_to_apply": "Когда нужно подключить новый протокол: меняешь схему URI (и подключаешь нужный `camel-<component>-starter`), а не переписываешь инфраструктурный код маршрута.",
                 "edge_cases": "Опции входят в идентичность эндпоинта: `kafka:orders?groupId=a` и `kafka:orders?groupId=b` — это разные эндпоинты, Camel кэширует их по полному URI.",
-                "related": "Один `Component` (например `kafka`) — singleton-фабрика, порождающая много `Endpoint` (по одному на топик/настройку); см. Q2 про CamelContext/Route/Endpoint/Component."
+                "related": "[[apache-camel-interview#Q2]] Component и Endpoint; [[apache-camel-interview#Q4]] маршруты DSL; [[apache-camel-interview#Q14]] Kafka component."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Это схема URI, и она равна имени `CamelContext` — runtime-контейнера маршрутов",
+              "text": "Это единая схема всего `CamelContext`, поэтому приложение не может одновременно использовать `file:`, `kafka:` и `http:` endpoints.",
               "correct": false,
               "sections": {
                 "what_actually": "`CamelContext` — это runtime-система Camel, контейнер, который связывает маршруты, компоненты, эндпоинты и error handlers; его жизненный цикл — `start()`/`stop()`.",
@@ -276,7 +276,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Это схема URI, и она равна имени `Route` — цепочки обработки от `from` до `to`",
+              "text": "Это уникальное имя маршрута: два endpoint URI с одинаковой первой частью автоматически объединяются в один route.",
               "correct": false,
               "sections": {
                 "what_actually": "`Route` — это маршрут, цепочка обработки от одного `from(...)` через шаги до одного или нескольких `to(...)`; у него есть `routeId`, но он не задаётся схемой URI.",
@@ -288,7 +288,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Это схема URI, и она равна имени `Endpoint` — конкретного канала входа или выхода",
+              "text": "Это полный адрес канала; `file:/data/in` и `file:/data/out` используют разные схемы, поскольку указывают разные каталоги.",
               "correct": false,
               "sections": {
                 "what_actually": "`Endpoint` — это конкретный канал, заданный полным URI (`file:/data/in`, `kafka:orders`); он создаётся компонентом, но сам именем схемы не является.",
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Сработает ветка `otherwise()`, потому что условий несколько",
+              "text": "Когда истинны несколько `when`, Camel пропускает их все и выполняет только `otherwise()`, потому что совпадение считается неоднозначным.",
               "correct": false,
               "sections": {
                 "what_actually": "`otherwise()` — это ветка по умолчанию, она выполняется только когда НИ один `when` не истинен, а не когда их истинно несколько.",
@@ -323,7 +323,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Сработает последний по порядку подошедший `when`, остальные пропускаются",
+              "text": "Camel выбирает последний совпавший `when`: более поздняя ветка имеет больший приоритет и заменяет результат предыдущих условий.",
               "correct": false,
               "sections": {
                 "what_actually": "Camel оценивает `when` сверху вниз и останавливается на первом истинном; до последнего истинного он просто не доходит.",
@@ -335,7 +335,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Сработают все подошедшие `when` по порядку, как при проваливании в `switch`",
+              "text": "Camel выполняет каждый совпавший `when` по порядку, поэтому одно сообщение проходит через несколько веток как при fall-through в `switch`.",
               "correct": false,
               "sections": {
                 "what_actually": "Проваливание (fall-through) — это поведение `switch` в C/Java без `break`; в Camel `choice` его нет, выполняется только первая истинная ветка.",
@@ -347,14 +347,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Сработает первый по порядку подошедший `when`, остальные пропускаются",
+              "text": "Camel проверяет `when` сверху вниз и выполняет первую совпавшую ветку; остальные условия и `otherwise()` после выбора не выполняются.",
               "correct": true,
               "sections": {
                 "explanation": "`choice` ведёт себя как `switch` без проваливания: Camel проверяет `when` сверху вниз и выполняет ровно первую ветку, чьё условие истинно, не оценивая дальнейшие. Поэтому порядок `when` определяет приоритет правил.",
                 "example": "При `when(${body.amount} > 10000)` и `when(header(country) == RU)` сообщение с amount=20000 и country=RU уйдёт только в `kafka:orders-vip`, потому что первый `when` сработал раньше второго.",
                 "when_to_apply": "Когда нужна маршрутизация по содержимому с приоритетом правил: VIP-заказы важнее регионального роутинга, поэтому более специфичное условие ставят выше по списку.",
                 "edge_cases": "Если ни один `when` не истинен, выполняется `otherwise()`; без `otherwise()` сообщение просто идёт дальше по маршруту после `.end()`. Забытый `.end()` затянет последующие шаги внутрь блока.",
-                "related": "Условия задаются языками выражений (`simple`, `jsonpath`, `xpath`, `groovy`); это отличается от Multicast, который шлёт копию во все ветки сразу."
+                "related": "[[apache-camel-interview#Q3]] headers и properties; [[apache-camel-interview#Q8]] динамическая маршрутизация; [[apache-camel-interview#Q9]] Wire Tap."
               }
             }
           ]
@@ -414,7 +414,7 @@
                 "example": "`from(\"kafka:events\").aggregate(header(\"orderId\"), new GroupedBodyAggregationStrategy()).completionSize(10).to(\"bean:batchProcessor\")` — отдаёт пачку, как только по одному orderId пришло 10 сообщений.",
                 "when_to_apply": "Батчинг фиксированными порциями: вставка в БД пачками по 10, формирование bulk-запросов в Elasticsearch, группировка позиций заказа по известному количеству.",
                 "edge_cases": "`completionSize` обычно комбинируют с `completionTimeout`, иначе неполная группа (меньше 10) зависнет навсегда. Срабатывает первое наступившее условие. Буфер по умолчанию в памяти — для переживания рестарта нужен персистентный `AggregationRepository`.",
-                "related": "Aggregator парен Splitter'у (N→1 против 1→N) и в отличие от него stateful: требует `correlationExpression` и хранит буфер до выполнения условия завершения."
+                "related": "[[apache-camel-interview#Q6]] выбор ветки маршрута; [[apache-camel-interview#Q8]] routing EIP; [[apache-camel-interview#Q10]] ошибки агрегирования."
               }
             }
           ]
@@ -438,7 +438,7 @@
                 "example": "`Multicast`: `multicast().to(\"kafka:audit\").to(\"http:billing\")`. `Recipient List`: `recipientList(header(\"recipients\"))`, где header содержит строку `\"kafka:a,kafka:b\"`. `Dynamic Router`: `dynamicRouter(method(SlipRouter.class, \"route\"))`, и бин вызывается повторно, пока не вернёт `null`.",
                 "when_to_apply": "`Multicast` — когда получатели известны на этапе написания маршрута; `Recipient List` — когда список зависит от содержимого сообщения; `Dynamic Router` — когда следующий получатель зависит от результата обработки предыдущим.",
                 "edge_cases": "`Multicast` по умолчанию отдаёт наружу последний ответ — для сборки нескольких ответов нужен `aggregationStrategy`; при этом он не меняет исходное сообщение, каждому получателю уходит копия. `Recipient List` разбирает строку получателей по настраиваемому разделителю.",
-                "related": "`Dynamic Router` — это вариант Routing Slip с обратной связью. От Splitter эти паттерны отличаются тем, что Splitter дробит сообщение на части, а они рассылают сообщение целиком."
+                "related": "[[apache-camel-interview#Q6]] Content-Based Router; [[apache-camel-interview#Q7]] Aggregator; [[apache-camel-interview#Q9]] Wire Tap."
               }
             },
             {
@@ -498,7 +498,7 @@
                 "example": "`from(\"kafka:orders\").wireTap(\"kafka:audit\").to(\"bean:orderProcessor\")` — копия уходит в `kafka:audit`, а основной поток сразу идёт в `orderProcessor`, не дожидаясь записи аудита.",
                 "when_to_apply": "Аудит, мониторинг, отправка метрик или нотификаций «в сторону» — когда нужна копия события для побочной обработки, но эта обработка не должна влиять на скорость и успех основного маршрута.",
                 "edge_cases": "Поскольку tap получает отдельный `Exchange`, изменение body в side-канале не затрагивает основной поток. Ошибка или задержка в аудит-канале не валит и не тормозит основную обработку именно из-за InOnly и асинхронности.",
-                "related": "Связано с Message Filter (Q9): Filter синхронно отбрасывает сообщения по предикату прямо в основном маршруте, тогда как Wire Tap асинхронно дублирует их в сторону, ничего не отбрасывая."
+                "related": "[[apache-camel-interview#Q6]] фильтрация и ветвление; [[apache-camel-interview#Q8]] Recipient List; [[apache-camel-interview#Q10]] обработка ошибок."
               }
             },
             {
@@ -582,7 +582,7 @@
                 "example": "`onException(IOException.class).maximumRedeliveries(3).handled(true).to(\"kafka:orders-dlq\")` — после исчерпания ретраев сообщение кладётся в DLQ, а исключение наружу не пробрасывается.",
                 "when_to_apply": "Когда ошибку нужно зафиксировать (отправить в DLQ, залогировать, вернуть фоллбэк-ответ) и считать сообщение «закрытым», чтобы исходный consumer не получил исключение и не откатил транзакцию.",
                 "edge_cases": "Если не выставить `handled` (дефолт), исключение пробросится дальше согласно error handler. `handled(true)` не возобновляет маршрут с точки сбоя — для этого нужен `continued(true)`.",
-                "related": "Связано с `DeadLetterChannel` (куда часто уходит handled-сообщение) и `RedeliveryPolicy` (ретраи отрабатывают до того, как сработает handled)."
+                "related": "[[apache-camel-interview#Q11]] политика redelivery; [[apache-camel-interview#Q7]] ошибки Aggregator; [[apache-camel-interview#Q12]] Saga compensation."
               }
             },
             {
@@ -654,7 +654,7 @@
                 "example": "`onException(ConnectException.class).maximumRedeliveries(-1).redeliveryDelay(1000)` будет ретраить соединение бесконечно с паузой 1с; смена -1 на 0 убрала бы ретраи целиком.",
                 "when_to_apply": "-1 берут для idempotent-операций, которые обязаны рано или поздно пройти (запись в надёжный брокер); 0 — когда ретрай бессмыслен (валидационная ошибка) и сообщение сразу должно уйти в DLQ.",
                 "edge_cases": "Бесконечный ретрай (-1) при синхронном redelivery держит поток занятым на каждой паузе и быстро исчерпывает thread pool; для длинных задержек добавляют asyncDelayedRedelivery().",
-                "related": "maximumRedeliveries работает в паре с redeliveryDelay и backOffMultiplier/useExponentialBackOff; вместе они задают и число, и тайминг повторов в onException, DeadLetterChannel и defaultErrorHandler."
+                "related": "[[apache-camel-interview#Q10]] onException и handled; [[apache-camel-interview#Q12]] Saga; [[apache-camel-interview#Q15]] тестирование маршрутов."
               }
             }
           ]
@@ -690,7 +690,7 @@
                 "example": "Контекст передаётся между сервисами через HTTP-заголовок `Long-Running-Action`; в роли координатора обычно выступает Narayana LRA Coordinator, который и вызывает compensation/completion-эндпоинты.",
                 "when_to_apply": "Берут, когда saga охватывает несколько микросервисов и нужно надёжно распространять её контекст с гарантиями при падении приложения, а не просто оркестрировать шаги внутри одного процесса.",
                 "edge_cases": "Компенсирующие действия обязаны быть идемпотентными: координатор может вызвать их более одного раза при аномальном завершении saga, и неидемпотентная компенсация испортит данные.",
-                "related": "Альтернатива — `InMemorySagaService` для простых локальных сценариев; режимы propagation (`REQUIRED`, `MANDATORY`, `REQUIRES_NEW` и т.д.) совпадают с транзакционными."
+                "related": "[[apache-camel-interview#Q10]] обработка исключений; [[apache-camel-interview#Q11]] redelivery; [[apache-camel-interview#Q4]] RouteBuilder."
               }
             },
             {
@@ -738,7 +738,7 @@
                 "example": "В pom добавляют `org.apache.camel.springboot:camel-spring-boot-starter`, после чего любой `@Component extends RouteBuilder` с методом `configure()` регистрируется сам, а `CamelContext` настраивается свойствами `camel.*` в `application.yml`.",
                 "when_to_apply": "Базовая зависимость для любого Camel-приложения на Spring Boot 3.x: с неё начинают, а коннекторы добавляют отдельными `camel-<component>-starter` (например `camel-kafka-starter`).",
                 "edge_cases": "Версии Camel и Spring Boot должны быть совместимы — это фиксируют через BOM `camel-spring-boot-bom`; Camel 4.x требует JDK 17+ и идёт в паре со Spring Boot 3.x.",
-                "related": "Стартер также отдаёт `ProducerTemplate` как бин для `@Autowired`-отправки и интегрируется со Spring Boot Actuator: состояние контекста и маршрутов попадает в `/actuator/health`."
+                "related": "[[apache-camel-interview#Q4]] Camel RouteBuilder; [[apache-camel-interview#Q14]] Kafka integration; [[apache-camel-interview#Q15]] тестирование Spring Boot маршрутов."
               }
             },
             {
@@ -834,7 +834,7 @@
                 "example": "`from(\"kafka:orders?brokers=localhost:9092\").to(\"bean:processOrder\")` — Camel читает из топика `orders` и передаёт сообщение в бин; для записи `.to(\"kafka:audit?brokers=...\")`.",
                 "when_to_apply": "Когда нужен durable event streaming с реплеем как транспорт, а вокруг — маршрутизация по EIP, обогащение и подключение других протоколов (HTTP, файлы, БД), которые Camel несёт из коробки.",
                 "edge_cases": "`camel-kafka` базируется на kafka-clients и пробрасывает нативные настройки (consumer groups, offset, partitioning). Это не делает Camel брокером: сам durable-лог с ретеншеном и реплеем держит Kafka, Camel сообщения не хранит.",
-                "related": "То же справедливо для остальных 300+ компонентов Camel: брокер/протокол остаётся внешним, Camel лишь маршрутизирует. Spring Integration решает ту же задачу интеграции, но «по-спринговому»."
+                "related": "[[apache-camel-interview#Q5]] component URI; [[kafka-interview#Q1]] модель Kafka; [[apache-camel-interview#Q13]] Spring Boot starter."
               }
             }
           ]
@@ -870,7 +870,7 @@
                 "example": "`AdviceWith.adviceWith(context, \"order-import\", in -> in.mockEndpointsAndSkip(\"kafka:orders\"));` — после этого `getMockEndpoint(\"mock:kafka:orders\")` ловит сообщение, а брокер не трогается.",
                 "when_to_apply": "Когда продьюсер-эндпоинт обращается к внешней системе (Kafka, HTTP, JMS, файлам), которую в unit-тесте поднимать нельзя или нежелательно, но нужно проверить, что и с каким телом туда ушло бы.",
                 "edge_cases": "Маршрут надо «адвайзить» до старта контекста (или с `isUseAdviceWith()` → `true` в JUnit 5), иначе подмена не применится. Имя mock-эндпоинта получает префикс `mock:` к исходному URI.",
-                "related": "Без `AndSkip` — `mockEndpoints()` — реальный эндпоинт всё равно вызывается; mock лишь дублирует поток. Оба приёма опираются на `MockEndpoint` как «шпиона», записывающего прошедшие сообщения."
+                "related": "[[apache-camel-interview#Q4]] маршруты DSL; [[apache-camel-interview#Q10]] error handling; [[apache-camel-interview#Q14]] Kafka endpoint."
               }
             },
             {
@@ -930,7 +930,7 @@
                 "example": "`@Converter public static Order toOrder(String json) { return parse(json); }` — после регистрации вызов `exchange.getIn().getBody(Order.class)` на сообщении с телом `String` сам прогонит JSON через этот метод.",
                 "when_to_apply": "Когда между шагами маршрута body нужно приводить к доменному типу (JSON-строка → POJO, `InputStream` → `String`), и хочется, чтобы Camel делал это автоматически по сигнатуре метода, а не явным `unmarshal`/`process`.",
                 "edge_cases": "Метод обычно статический; класс-конвертер должен попасть в сканирование (например через `META-INF/services` или Spring-бин). Если зарегистрированного пути преобразования нет, Camel бросит `NoTypeConversionAvailableException`.",
-                "related": "Type converters работают в паре с observability: метрики `camel-micrometer` и трейсинг через Micrometer Observation / OpenTelemetry показывают, на каком шаге маршрута происходит преобразование и сколько оно стоит."
+                "related": "[[apache-camel-interview#Q3]] Message и Exchange; [[apache-camel-interview#Q5]] endpoint types; [[apache-camel-interview#Q15]] тестирование преобразований."
               }
             },
             {

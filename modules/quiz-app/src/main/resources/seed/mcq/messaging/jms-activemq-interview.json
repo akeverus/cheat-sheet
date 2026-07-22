@@ -42,7 +42,7 @@
                 "example": "`ConnectionFactory factory = /* ActiveMQ или IBM MQ */;` далее `factory.createContext()`, `ctx.createQueue(\"orders\")` и `send(...)` — один и тот же код работает поверх любого JMS-брокера; меняется только реализация `ConnectionFactory` и конфигурация.",
                 "when_to_apply": "Когда нужно изолировать бизнес-логику от конкретного вендора (ActiveMQ, IBM MQ, Artemis, Solace), чтобы смена брокера сводилась к замене `ConnectionFactory` и настроек, а не к переписыванию кода отправки/приёма.",
                 "edge_cases": "Переносимость только на уровне исходников. «По проводу» сообщения между брокерами не переносятся: у ActiveMQ Classic свой OpenWire, у Artemis — CORE, и напрямую по сети они несовместимы. Также непереносимы вендор-специфичные расширения вне спецификации.",
-                "related": "Связано с Q2 (смена namespace `javax.jms` → `jakarta.jms` — это переименование, а не новый функционал) и с упрощённым API `JMSContext`, объединившим `Connection` и `Session`."
+                "related": "[[jms-activemq-interview#Q2]] namespace Jakarta Messaging; [[jms-activemq-interview#Q3]] Queue и Topic; [[jms-activemq-interview#Q15]] JMS и Kafka."
               }
             },
             {
@@ -66,12 +66,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "В чём состоит главное различие между `jakarta.jms` (JMS 3.0) и `javax.jms` (JMS 2.0)?",
+          "question_text": "В чём различие между `jakarta.jms` и прежним пространством имён `javax.jms`?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Это добавление упрощённого `JMSContext` и shared subscriptions при сохранении пакетов",
+              "text": "`jakarta.jms` является реактивным API, а `javax.jms` — блокирующим; миграция требует переписать consumers на `Publisher` и `Subscriber`.",
               "correct": false,
               "sections": {
                 "what_actually": "Упрощённый API `JMSContext`, shared subscriptions и delivery delay действительно появились, но ещё в JMS 2.0, а не в Jakarta Messaging 3.0; пакеты при этом как раз сменили имена.",
@@ -83,7 +83,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Это переход с блокирующего I/O на асинхронный при сохранении имён пакетов",
+              "text": "Новый namespace поддерживается только Artemis, тогда как современные Jakarta EE контейнеры и остальные provider-ы требуют `javax.jms`.",
               "correct": false,
               "sections": {
                 "what_actually": "Блокирующая против асинхронной I/O-модели — это различие реализаций брокеров (ActiveMQ Classic против Artemis), а не версий спецификации JMS.",
@@ -95,20 +95,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Это переименование пакетов под Jakarta EE при функциональной эквивалентности API",
+              "text": "Современная Jakarta Messaging использует `jakarta.jms`, старые JMS API — `javax.jms`; миграция требует совместимых imports, зависимостей, provider-а и контейнера.",
               "correct": true,
               "sections": {
-                "explanation": "Oracle сохранил права на бренд `javax`, поэтому при передаче спецификации в Eclipse Foundation все пакеты переименовали в `jakarta`. Jakarta Messaging 3.0 функционально равна JMS 2.0 — изменились только имена пакетов и констант, а не семантика API.",
-                "example": "`javax.jms.Connection` стал `jakarta.jms.Connection`; артефакт `javax.jms:javax.jms-api` заменился на `jakarta.jms:jakarta.jms-api:3.0.x`. При миграции обычно достаточно переписать `import`-ы рецептом OpenRewrite `javax.jms` → `jakarta.jms` и обновить зависимости.",
-                "when_to_apply": "Когда переезжаете со Spring Boot 2.x (старый Java EE) на Spring Boot 3.x / Jakarta EE 9+ — нужно поменять namespace в импортах и версию артефакта, бизнес-логику переписывать не приходится.",
-                "edge_cases": "Реальная функциональная веха была раньше — в JMS 2.0: упрощённый `JMSContext` (объединил `Connection` + `Session`), shared subscriptions, delivery delay. Версия 3.0 этих новшеств не приносит.",
-                "related": "Та же история с namespace `javax → jakarta` затронула все Jakarta EE API (Servlet, JPA, Bean Validation), а не только messaging."
+                "explanation": "После перехода Java EE в Jakarta EE API был перенесён из `javax.jms` в `jakarta.jms`. Контракты очередей, topics, sessions и acknowledgements сохранились, но библиотеки должны быть совместимы с новым namespace.",
+                "example": "Код меняет `import javax.jms.Message;` на `import jakarta.jms.Message;` и использует Jakarta Messaging 3.1 API вместе с совместимым application server или клиентской библиотекой.",
+                "when_to_apply": "Учитывайте namespace при миграции на Jakarta EE 9+ и Spring Framework 6/Spring Boot 3, чтобы не смешать несовместимые API и реализации.",
+                "edge_cases": "Простая замена import не гарантирует миграцию: сторонние библиотеки, сервер, provider и сериализуемые типы должны поддерживать Jakarta namespace.",
+                "related": "[[jms-activemq-interview#Q1]] назначение JMS API; [[jms-activemq-interview#Q13]] Spring JMS; [[jms-activemq-interview#Q11]] Artemis protocol model."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Это смена wire-протокола брокера при сохранении прежних имён пакетов",
+              "text": "Изменился только Maven groupId, а Java packages и бинарные имена классов остались `javax.jms`, поэтому исходный код не затрагивается.",
               "correct": false,
               "sections": {
                 "what_actually": "JMS вообще не определяет wire-протокол — это спецификация уровня API; протокол задаёт брокер (OpenWire, CORE, AMQP), и версия JMS его не меняет.",
@@ -162,7 +162,7 @@
                 "example": "На очередь orders подписаны Consumer A и Consumer B. Продюсер шлёт order-1, order-2, order-3 — брокер раздаёт их по одному: например order-1 уходит A, order-2 — B, order-3 — A. Ни одно сообщение не приходит обоим консьюмерам сразу.",
                 "when_to_apply": "Очереди задач и команд, work queue, горизонтальное масштабирование обработки: добавляешь консьюмеров к одной очереди, чтобы распараллелить разбор задач без дублирования работы.",
                 "edge_cases": "Если консьюмеров нет вообще, сообщение остаётся лежать в очереди и ждёт, пока кто-то его заберёт (в отличие от topic, где оно потерялось бы). При нескольких competing consumers строгий FIFO-порядок нарушается — для строгого порядка нужен один консьюмер или message groups.",
-                "related": "Контрастирует с Topic (pub-sub), где сообщение доставляется всем активным подписчикам (fan-out). Тема накопления сообщений для отключённого подписчика раскрывается через durable subscription (Q8)."
+                "related": "[[jms-activemq-interview#Q8]] durable subscription; [[jms-activemq-interview#Q6]] acknowledgement; [[jms-activemq-interview#Q15]] сравнение с Kafka."
               }
             },
             {
@@ -210,7 +210,7 @@
                 "example": "Один общий `Connection connection = factory.createConnection()` на приложение, но в каждом рабочем потоке свой `Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)`. Шарить одну `Session` между потоками нельзя.",
                 "when_to_apply": "При написании многопоточного консьюмера/продюсера: держать пул соединений (`PooledConnectionFactory`/`CachingConnectionFactory`) и заводить сессию-на-поток, чтобы не нарушить контракт thread-safety и не убить throughput созданием соединения на каждое сообщение.",
                 "edge_cases": "`Connection` по умолчанию создаётся в режиме stopped — на стороне приёма обязателен `connection.start()`, иначе консьюмер молча ничего не получает. В JMS 2.0 иерархия упрощается до `JMSContext` (объединяет `Connection` и `Session`).",
-                "related": "Это прямо связано с антипаттернами Q16: шаринг `Session` между потоками и создание `Connection`/`Session` на каждое сообщение — частые ошибки lifecycle/thread-safety."
+                "related": "[[jms-activemq-interview#Q16]] thread-safety Session; [[jms-activemq-interview#Q6]] acknowledgement modes; [[jms-activemq-interview#Q13]] Spring listener containers."
               }
             },
             {
@@ -258,7 +258,7 @@
                 "example": "Самый частый выбор — `TextMessage` с JSON-строкой внутри: `session.createTextMessage(\"{\\\"id\\\":42}\")`. Для бинарных данных берут `BytesMessage`, для структурированных полей без общего класса — `MapMessage`.",
                 "when_to_apply": "`TextMessage` (JSON/XML/текст) подходит в ~90% случаев и переносим между языками; `BytesMessage` — для бинарной интеграции с внешним форматом; `MapMessage` — когда нужен доступ к полям по имени без общего DTO-класса.",
                 "edge_cases": "`StreamMessage` похож на `BytesMessage`, но дополнительно хранит порядок и типы записанных примитивов и читается строго по порядку и типам; у `MapMessage` доступ по имени, а порядок записей не определён.",
-                "related": "`ObjectMessage` завязан на Java-сериализацию: требует одинаковых классов на обеих сторонах и опасен при десериализации недоверенного payload, поэтому на практике предпочитают `TextMessage` с JSON."
+                "related": "[[jms-activemq-interview#Q9]] selectors и properties; [[jms-activemq-interview#Q14]] request-reply; [[jms-activemq-interview#Q1]] portability JMS."
               }
             },
             {
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Подтверждает все сообщения, полученные с момента создания этой сессии",
+              "text": "`acknowledge()` подтверждает только сообщения, полученные после предыдущего вызова, а более ранние deliveries остаются неподтверждёнными до закрытия session.",
               "correct": false,
               "sections": {
                 "what_actually": "Точкой отсчёта служит не создание `Session`, а предыдущий вызов `acknowledge()`: уже квитированные ранее сообщения повторно не подтверждаются.",
@@ -323,7 +323,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Подтверждает только первое неподтверждённое сообщение в данной сессии",
+              "text": "Вызов подтверждает только конкретный объект `Message`; для пяти сообщений приложение обязано вызвать метод пять раз по одному.",
               "correct": false,
               "sections": {
                 "what_actually": "Никакого «подтверждения только первого» в JMS нет: ack всегда накопительный и закрывает всю партию доставленных сессии сообщений до текущего момента.",
@@ -335,7 +335,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Подтверждает только то одно сообщение, на котором он был вызван явно",
+              "text": "Приложение может подтверждать произвольные сообщения выборочно, оставляя соседние deliveries той же session для отдельного redelivery.",
               "correct": false,
               "sections": {
                 "what_actually": "Пообъектного подтверждения в JMS вообще нет: вызов `acknowledge()` на одном `Message` всё равно квитирует всю накопленную партию, а не только этот объект.",
@@ -347,14 +347,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Подтверждает все сообщения, полученные с момента прошлого вызова `acknowledge()`",
+              "text": "В `CLIENT_ACKNOWLEDGE` один вызов подтверждает все сообщения, доставленные consumer-ам этой `Session`, а не только объект, на котором вызван метод.",
               "correct": true,
               "sections": {
-                "explanation": "В `CLIENT_ACKNOWLEDGE` подтверждение работает не пообъектно, а накопительно: один вызов `acknowledge()` на любом сообщении квитирует весь блок сообщений, доставленных сессии после предыдущего ack. Метод вызывается на конкретном `Message`, но эффект распространяется на всю накопленную партию.",
-                "example": "Консьюмер вызвал `receive()` пять раз, обработал все пять и вызвал `acknowledge()` только на пятом сообщении — брокер пометит обработанными все пять, а не одно.",
-                "when_to_apply": "Когда нужно отложить подтверждение до конца обработки логической группы сообщений и квитировать их разом одним вызовом, экономя round-trip к брокеру.",
-                "edge_cases": "Если упасть после обработки трёх из пяти и до `acknowledge()`, при `recover()`/переподключении переедут заново все пять, а не два оставшихся — поэтому накопительный ack плохо сочетается с частичной обработкой.",
-                "related": "За счёт этого нюанса `CLIENT_ACKNOWLEDGE` не даёт атомарности «обработал → подтвердил» по одному сообщению; для этого берут transacted session (Q7), где commit/rollback покрывают всю единицу работы."
+                "explanation": "Acknowledgement привязан к session: один вызов подтверждает накопленные доставки этой session. Поэтому ошибка после обработки части batch может повлиять на повторную доставку нескольких сообщений.",
+                "example": "Consumer получил сообщения M1, M2 и M3 через одну `Session`; вызов `M3.acknowledge()` подтверждает также M1 и M2, если они ещё не были подтверждены.",
+                "when_to_apply": "Используйте режим, когда приложение само определяет границу подтверждения и понимает session-wide семантику; для независимого подтверждения сообщений выбирайте другой механизм provider/framework.",
+                "edge_cases": "Точная redelivery-практика зависит от provider и транзакционности session. Нельзя трактовать `acknowledge()` как per-message ack только из-за вызова на конкретном объекте.",
+                "related": "[[jms-activemq-interview#Q7]] transacted Session; [[jms-activemq-interview#Q12]] redelivery policy; [[jms-activemq-interview#Q16]] Session lifecycle."
               }
             }
           ]
@@ -414,7 +414,7 @@
                 "example": "Session session = connection.createSession(true, Session.SESSION_TRANSACTED); затем consumer.receive(); producer.send(reply); saveToDb(); session.commit(); — всё или ничего одной атомарной единицей.",
                 "when_to_apply": "Когда нужно объединить приём и отправку (или несколько операций) в одну атомарную единицу на стороне брокера, чтобы нельзя было «случайно» отправить ответ, но не подтвердить вход.",
                 "edge_cases": "Это локальная JMS-транзакция (один ресурс). Для атомарности вместе с БД нужны XA/распределённые транзакции через `JtaTransactionManager` — дороже и сложнее.",
-                "related": "В отличие от `CLIENT_ACKNOWLEDGE` (Q6), который управляет только моментом ack приёма, transacted session охватывает и приём, и отправку; `rollback()` инициирует redelivery всех полученных сообщений."
+                "related": "[[jms-activemq-interview#Q6]] CLIENT_ACKNOWLEDGE; [[jms-activemq-interview#Q12]] redelivery; [[jms-activemq-interview#Q14]] request-reply."
               }
             }
           ]
@@ -438,7 +438,7 @@
                 "example": "`connection.setClientID(\"billing-service\")`, затем `session.createDurableSubscriber(topic, \"price-sub\")` — пара `billing-service` + `price-sub` и есть ключ подписки; `session.unsubscribe(\"price-sub\")` удаляет её.",
                 "when_to_apply": "Когда подписчик topic не должен терять события во время простоя: биллинг, репликация конфигов, аудит — любой потребитель broadcast-событий, переживающий рестарты.",
                 "edge_cases": "В JMS 1.1 эта пара эксклюзивна — одно активное соединение на `clientID`/`subscriptionName`, без балансировки. JMS 2.0 добавил shared durable subscriptions (`createSharedDurableConsumer`), снимающие это ограничение.",
-                "related": "Без `clientID` durable-подписку вообще не создать (в отличие от non-durable). Связано с Q3: на обычном topic сообщения для offline-подписчика теряются."
+                "related": "[[jms-activemq-interview#Q3]] Queue и Topic; [[jms-activemq-interview#Q9]] selectors; [[jms-activemq-interview#Q14]] correlation ID."
               }
             },
             {
@@ -491,20 +491,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Подмножество условных выражений `SQL92`: сравнения, `AND`/`OR`/`NOT`, `BETWEEN`, `IN`, `LIKE`, `IS NULL` по заголовкам и свойствам сообщения",
+              "text": "Selector использует подмножество условных выражений SQL92 над message headers и properties, например `priority > 5 AND region = 'EU'`.",
               "correct": true,
               "sections": {
                 "explanation": "JMS-спецификация определяет синтаксис селектора как подмножество условных выражений SQL92. Брокер вычисляет это выражение по JMS-заголовкам (`JMSPriority`, `JMSType` и т.д.) и пользовательским свойствам сообщения и доставляет консьюмеру только подходящие сообщения — фильтрация идёт на стороне брокера.",
                 "example": "`\"JMSPriority > 4 AND type = 'urgent' AND region IN ('eu','us')\"` — селектор пропустит лишь сообщения с приоритетом выше 4, свойством `type='urgent'` и `region` из списка eu/us.",
                 "when_to_apply": "Когда несколько типов сообщений идут в одну очередь/топик и разные консьюмеры должны разбирать только свою долю по значению свойства — маршрутизация без отдельных destination.",
                 "edge_cases": "Селектор не видит тело сообщения, поэтому всё, по чему фильтруете, кладите в свойства при отправке. Тяжёлые селекторы на больших очередях нагружают брокер, а сообщения queue, не подошедшие ни под один селектор, остаются лежать и забивают очередь.",
-                "related": "Заголовки вроде `JMSPriority` задаются параметрами доставки (Q10), а сами свойства — это пары имя-значение, доступные и через `MapMessage` (Q5)."
+                "related": "[[jms-activemq-interview#Q5]] message types/properties; [[jms-activemq-interview#Q10]] priority; [[jms-activemq-interview#Q14]] correlation selector."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Синтаксис регулярных выражений `regex`: классы символов, квантификаторы `*`/`+`/`?`, группы `()`, якоря `^`/`$` по значениям свойств сообщения",
+              "text": "Selector поддерживает полноценные регулярные выражения Java, lookbehind и произвольные вызовы методов над строковыми свойствами.",
               "correct": false,
               "sections": {
                 "what_actually": "Регулярные выражения описывают шаблоны в строках и используются для поиска по тексту, но JMS-спецификация не закладывает regex в синтаксис селекторов.",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Подмножество выражений `JSONPath`: корень `$`, обращение к полям через `.`, фильтры `[?()]`, обход массивов `[*]` по полям тела сообщения",
+              "text": "Selector автоматически парсит JSON или XML body и фильтрует по вложенным полям без дублирования значений в message properties.",
               "correct": false,
               "sections": {
                 "what_actually": "JSONPath — язык адресации полей внутри JSON-документа. JMS-селектор его не использует и в принципе не разбирает тело сообщения, какого бы формата оно ни было.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Подмножество выражений `XPath`: `child`/`descendant`, предикаты `[]`, `and`/`or`, функции `contains()`, `text()` по узлам тела сообщения",
+              "text": "Selector выполняется как JavaScript на стороне consumer-а после доставки, поэтому broker всегда передаёт клиенту все сообщения.",
               "correct": false,
               "sections": {
                 "what_actually": "XPath — язык навигации по узлам XML-документа. Некоторые брокеры предлагают отдельные XPath/XQuery-селекторы как нестандартное расширение, но это не базовый JMS message selector.",
@@ -582,7 +582,7 @@
                 "example": "`producer.send(message, DeliveryMode.PERSISTENT, 7, 60_000L)` отправит сообщение с приоритетом 7 (выше дефолтных 4), TTL 60 секунд.",
                 "when_to_apply": "Когда нужно, чтобы срочные сообщения (alert, urgent-команды) имели шанс обогнать рутину в очереди, не выделяя под них отдельный Destination.",
                 "edge_cases": "Так как упорядоченность best-effort, не закладывайтесь на строгий порядок по приоритету; при нескольких competing consumers приоритет тем более размывается.",
-                "related": "Приоритет можно фильтровать селектором через заголовок `JMSPriority` (Q9); вместе с TTL и delivery mode это три параметра уровня `send`."
+                "related": "[[jms-activemq-interview#Q9]] message selectors; [[jms-activemq-interview#Q6]] acknowledgement; [[jms-activemq-interview#Q12]] redelivery."
               }
             },
             {
@@ -654,7 +654,7 @@
                 "example": "AMQP-сообщение в Artemis остаётся AMQP на всём жизненном цикле, тогда как `CORE` используется для нативного JVM-клиента; в Classic любой протокол транслируется в `OpenWire` и обратно.",
                 "when_to_apply": "Когда выбираете брокер под низкую латентность для чисто Java-клиентов или строите мультипротокольную интеграцию без потери свойств сообщений между протоколами.",
                 "edge_cases": "Artemis всё равно поддерживает AMQP, MQTT, STOMP и даже OpenWire ради совместимости, но именно `CORE` минимизирует накладные расходы для JVM-JVM; плохо затюненный Artemis может проиграть хорошо настроенному Classic.",
-                "related": "Связано с различием I/O-моделей (async non-blocking у Artemis vs блокирующая у Classic) и хранилища (append-only journal vs KahaDB), а также с полной поддержкой JMS 2.0 в Artemis."
+                "related": "[[jms-activemq-interview#Q2]] Jakarta Messaging versions; [[jms-activemq-interview#Q12]] ActiveMQ redelivery; [[jms-activemq-interview#Q15]] broker semantics."
               }
             }
           ]
@@ -666,12 +666,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "В ActiveMQ Classic при сбое обработки брокер повторяет доставку согласно `RedeliveryPolicy`. Какое значение по умолчанию у `maximumRedeliveries` — числа попыток, после которого сообщение признаётся poison и уходит в DLQ?",
+          "question_text": "Как трактовать `maximumRedeliveries` в `RedeliveryPolicy` ActiveMQ Classic?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "После исчерпания `maximumRedeliveries` (по умолчанию 3) сообщение признаётся poison и уходит в DLQ",
+              "text": "`maximumRedeliveries` — обязательное число из Jakarta Messaging, одинаковое для любого provider и неизменяемое в client или destination policy.",
               "correct": false,
               "sections": {
                 "what_actually": "3 — это распространённый дефолт числа попыток в других стеках (например, типичные настройки Spring Retry или RabbitMQ-консьюмеров), но не значение `maximumRedeliveries` в `RedeliveryPolicy` ActiveMQ Classic.",
@@ -683,20 +683,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "После исчерпания `maximumRedeliveries` (по умолчанию 6) сообщение признаётся poison и уходит в DLQ",
+              "text": "Это provider-specific лимит повторных доставок poison message; default, задержки и DLQ-поведение зависят от версии и конфигурации ActiveMQ Classic.",
               "correct": true,
               "sections": {
-                "explanation": "В `RedeliveryPolicy` ActiveMQ Classic параметр `maximumRedeliveries` по умолчанию равен 6: брокер повторяет доставку до шести раз, и только после превышения этого лимита делает poison ACK и перекладывает сообщение в Dead Letter Queue (`ActiveMQ.DLQ`).",
-                "example": "`policy.setMaximumRedeliveries(5)` явно сужает лимит до пяти повторов; если строку не писать, действует дефолт 6. Сочетание с `setUseExponentialBackOff(true)` и `setBackOffMultiplier(2)` даёт растущие задержки между этими повторами.",
-                "when_to_apply": "Знать дефолт важно при настройке отказоустойчивого консьюмера: оставляете 6 для типовых транзиентных ошибок или уменьшаете, чтобы сообщение быстрее попало в DLQ и не блокировало очередь долгими ретраями.",
-                "edge_cases": "`maximumRedeliveries = -1` означает бесконечные повторы; без задержки это даёт tight loop и 100% CPU, поэтому бесконечные ретраи допустимы только с `useExponentialBackOff` и `maximumRedeliveryDelay`.",
-                "related": "Связано с DLQ (`ActiveMQ.DLQ`), poison ACK и backoff-параметрами (`initialRedeliveryDelay`, `backOffMultiplier`, `maximumRedeliveryDelay`); вместе они образуют встроенный механизм отказоустойчивости брокера."
+                "explanation": "Jakarta Messaging не устанавливает универсальное число redelivery. ActiveMQ Classic предоставляет собственную `RedeliveryPolicy`, которую можно настраивать по destination и клиенту.",
+                "example": "Команда задаёт `maximumRedeliveries`, initial delay и exponential backoff явно, а затем проверяет, после какой попытки poison message маршрутизируется в `ActiveMQ.DLQ`.",
+                "when_to_apply": "Фиксируйте retry-политику в конфигурации и тестах, когда важно предсказуемое число попыток, задержки и поведение DLQ.",
+                "edge_cases": "Транзакции, rollback, consumer recovery и broker-side policies могут менять наблюдаемое число доставок. Не полагайтесь на запомненное значение по умолчанию.",
+                "related": "[[jms-activemq-interview#Q6]] acknowledgement; [[jms-activemq-interview#Q7]] transactions; [[rabbitmq-interview#Q23]] DLX и DLQ."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "После исчерпания `maximumRedeliveries` (по умолчанию 10) сообщение признаётся poison и уходит в DLQ",
+              "text": "Параметр ограничивает общее количество сообщений в destination; после превышения старые записи автоматически переносятся в DLQ.",
               "correct": false,
               "sections": {
                 "what_actually": "10 не является дефолтом `maximumRedeliveries`; это просто правдоподобно крупное «круглое» число, которое можно встретить как лимит ретраев в кастомных конфигурациях.",
@@ -708,7 +708,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "После исчерпания `maximumRedeliveries` (по умолчанию 5) сообщение признаётся poison и уходит в DLQ",
+              "text": "Параметр определяет число broker replicas, которые должны подтвердить запись до возврата producer acknowledgement.",
               "correct": false,
               "sections": {
                 "what_actually": "5 — это значение из примера кода в шпаргалке (`policy.setMaximumRedeliveries(5)`), то есть явно выставленный лимит, а не дефолт политики.",
@@ -738,7 +738,7 @@
                 "example": "@Configuration @EnableJms class JmsConfig { ... } и рядом @Component class OrderListener { @JmsListener(destination=\"orders\") void onOrder(String body){...} }. В Spring Boot `@EnableJms` фактически уже активирована авто-конфигурацией при наличии ActiveMQ/Artemis на classpath.",
                 "when_to_apply": "Нужна при ручной (не-Boot) конфигурации Spring JMS, либо когда в Boot-приложении хочется явно держать конфиг контейнеров; вместе с ней обычно объявляют свой `DefaultJmsListenerContainerFactory` с `concurrency` и транзакциями.",
                 "edge_cases": "В чистом Spring Boot отдельный `@EnableJms` чаще избыточен — `JmsAnnotationDrivenConfiguration` включает её автоматически; двойное включение безвредно. Если объявить кастомную фабрику бином `jmsListenerContainerFactory`, Boot подхватит её.",
-                "related": "Связана с `@JmsListener`, `DefaultMessageListenerContainer` (DMLC) и `DefaultJmsListenerContainerFactory` — это приёмная половина Spring JMS; отправляющая половина — `JmsTemplate.convertAndSend()` с `MessageConverter`."
+                "related": "[[jms-activemq-interview#Q4]] Connection и Session; [[jms-activemq-interview#Q14]] request-reply; [[jms-activemq-interview#Q16]] Spring lifecycle pitfalls."
               }
             },
             {
@@ -834,7 +834,7 @@
                 "example": "Клиент создаёт TemporaryQueue, кладёт её в request.setJMSReplyTo(replyTo) и ставит request.setJMSCorrelationID(UUID.randomUUID().toString()). Сервис читает запрос, шлёт ответ в очередь из JMSReplyTo, копируя тот же JMSCorrelationID. Клиент слушает с селектором \"JMSCorrelationID = '...'\".",
                 "when_to_apply": "Когда поверх очередей нужна синхронная семантика «запрос → ждём ответ»: вызов внешней системы через брокер, RPC-подобное взаимодействие, обращение к replier-сервису с ожиданием результата.",
                 "edge_cases": "Одну TemporaryQueue держат на клиента, а не на запрос (переиспользуют, пока живо Connection). На receive обязателен таймаут (например receive(5000)), иначе клиент зависнет навсегда, если ответ не придёт.",
-                "related": "В Spring этот рецепт инкапсулирован в JmsTemplate.sendAndReceive(...) и JmsMessagingTemplate.convertSendAndReceive(...). Селектор по JMSCorrelationID — частный случай message selectors (Q9)."
+                "related": "[[jms-activemq-interview#Q8]] durable subscriptions; [[jms-activemq-interview#Q9]] selectors; [[jms-activemq-interview#Q13]] Spring JMS listeners."
               }
             }
           ]
@@ -870,7 +870,7 @@
                 "example": "В ActiveMQ забранное и подтверждённое из очереди orders сообщение пропадает из брокера. В Kafka запись в топике orders при retention=7d доступна неделю, и консьюмер может перемотать offset назад и перечитать её повторно.",
                 "when_to_apply": "JMS-брокер выбирают для enterprise-команд, транзакционных систем, очередей задач с приоритетами и TTL. Kafka — для event streaming, лог-агрегации и сценариев, где нужен replay и несколько независимых consumer groups на один поток.",
                 "edge_cases": "PERSISTENT в JMS — это про переживание рестарта брокера, а не про долгое хранение прочитанного: подтверждённое сообщение всё равно исчезает. В Kafka даже прочитанная запись остаётся до истечения retention, поэтому replay штатный.",
-                "related": "Связано с consumer-centric offset в Kafka (Q15 таблица), durable subscription в JMS (Q8) и acknowledgement modes (Q6) — именно ack у JMS-брокера служит сигналом к удалению."
+                "related": "[[kafka-interview#Q1]] Kafka retained log; [[jms-activemq-interview#Q6]] acknowledgement; [[jms-activemq-interview#Q8]] durable subscription."
               }
             },
             {
@@ -930,7 +930,7 @@
                 "example": "Пул потоков по 10 воркеров на одной общей `Session` даёт гонки и порчу состояния. Правильно: каждый воркер берёт свою `Session` из `Connection`, либо использует `PooledConnectionFactory`/`CachingConnectionFactory`, которые кэшируют сессии безопасно.",
                 "when_to_apply": "Любой многопоточный консьюмер/продюсер: web-приложение с пулом запросов, batch-обработка, несколько `@JmsListener`. Везде, где параллелизм — сессия должна быть локальной для потока.",
                 "edge_cases": "`Connection` создавать на каждое сообщение тоже нельзя (дорого), но по другой причине — не из-за thread-safety, а из-за стоимости TCP-соединения. Кэширование решает обе проблемы.",
-                "related": "Связано с Q4 (иерархия объектов и их thread-safety) и с антипаттерном создания `Connection`/`Session` на каждое сообщение из этого же вопроса."
+                "related": "[[jms-activemq-interview#Q4]] Connection/Session thread-safety; [[jms-activemq-interview#Q6]] acknowledgement scope; [[jms-activemq-interview#Q13]] listener container."
               }
             },
             {

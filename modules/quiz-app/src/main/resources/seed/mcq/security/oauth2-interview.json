@@ -11,7 +11,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`OAuth2` — это протокол аутентификации, который сам по себе проверяет личность пользователя по логину и паролю и возвращает приложению `ID Token`.",
+              "text": "`OAuth2` — это протокол аутентификации, который сам по себе проверяет личность пользователя по логину и паролю и возвращает приложению `ID Token`. `OIDC` был бы не нужен как отдельный слой.",
               "correct": false,
               "sections": {
                 "what_actually": "`OAuth2` отвечает за авторизацию (доступ к ресурсам), а проверку личности и `ID Token` добавляет надстройка `OIDC`.",
@@ -23,20 +23,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`OAuth2` (`RFC 6749`) — протокол авторизации, который даёт приложению ограниченный доступ к ресурсам пользователя на другом сервисе без передачи логина и пароля: пользователь выдаёт клиенту `access token` с конкретным `scope` и сроком жизни.",
+              "text": "`OAuth 2.0` (`RFC 6749`) — фреймворк делегированной авторизации: клиент получает ограниченный доступ к защищённому ресурсу от имени владельца ресурса либо от собственного имени, не принимая пароль пользователя. Права выражаются токеном и согласованным набором `scope`.",
               "correct": true,
               "sections": {
-                "explanation": "Идея делегирования: пользователь не отдаёт пароль стороннему приложению, а авторизует выдачу токена с ограниченными правами. Это снижает blast radius утечки и позволяет в любой момент отозвать доступ конкретного клиента.",
+                "explanation": "OAuth разделяет владельца ресурса, клиент, authorization server и resource server. Клиент получает не пароль, а ограниченный credential, который можно выдать на конкретные ресурсы, срок и операции.",
                 "example": "Нажимая «Войти через Google» в стороннем сервисе, вы не сообщаете ему пароль Google: `Google` выдаёт токен с `scope=profile email`, и сервис видит только то, что разрешено.",
                 "when_to_apply": "Модель применяют, когда нужен делегированный доступ third-party приложения к API: интеграции, межсервисные вызовы, SSO. Это базовый протокол для любой схемы с внешними клиентами.",
-                "edge_cases": "`OAuth2` — это про авторизацию (доступ к ресурсам), а не про аутентификацию (кто пользователь). Подтверждение личности добавляет `OIDC` поверх `OAuth2`, выдавая `ID Token`.",
+                "edge_cases": "`OAuth 2.0` не определяет способ подтверждения личности конечного пользователя. Для аутентификации поверх него обычно применяют `OpenID Connect`; для M2M клиент может действовать от собственного имени.",
                 "related": "[[oauth2-interview#Q3]] разница authN и authZ; [[oauth2-interview#Q20]] OIDC поверх OAuth2; [[oauth2-interview#Q6]] основной flow."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`OAuth2` — это формат шифрования паролей при их передаче от приложения к серверу, заменяющий `Basic Auth`.",
+              "text": "`OAuth2` — это формат шифрования паролей при их передаче от приложения к серверу, заменяющий `Basic Auth`. Клиент по-прежнему видел бы пароль (в зашифрованном виде). И `Basic Auth`, и `OAuth2` относятся к безопасности доступа.",
               "correct": false,
               "sections": {
                 "what_actually": "`OAuth2` не шифрует и не передаёт пароли вовсе: его суть в том, чтобы пароль пользователя клиенту не попадал.",
@@ -48,7 +48,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`OAuth2` — это библиотека для хранения сессий пользователя на сервере, аналог серверной `HTTP`-сессии с cookie.",
+              "text": "`OAuth2` — это библиотека для хранения сессий пользователя на сервере, аналог серверной `HTTP`-сессии с cookie. `OAuth2` был бы привязан к одному серверу с session store. Серверные сессии и токены оба решают «как помнить вошедшего пользователя».",
               "correct": false,
               "sections": {
                 "what_actually": "`OAuth2` — это спецификация протокола делегированного доступа, а не библиотека серверных сессий.",
@@ -71,20 +71,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `RFC 6749` определены 4 роли: `Resource Owner` (владелец ресурса, пользователь), `Client` (приложение, запрашивающее доступ), `Authorization Server` (выдаёт токены после аутентификации) и `Resource Server` (хранит ресурсы и проверяет токены).",
+              "text": "OAuth определяет четыре роли: `Resource Owner` разрешает доступ к ресурсу, `Client` запрашивает его, `Authorization Server` аутентифицирует стороны и выдаёт токены, `Resource Server` принимает токен и применяет политику доступа. Владельцем ресурса может быть человек или другая сущность.",
               "correct": true,
               "sections": {
                 "explanation": "Разделение ролей позволяет вынести выдачу токенов в один сервис (`Keycloak`, `Okta`), а проверку — в каждый `Resource Server`. `Authorization Server` и `Resource Server` могут совпадать в монолите или быть разными в микросервисах.",
                 "example": "Например: пользователь (`Resource Owner`) разрешает веб-приложению (`Client`) доступ к `Google Drive`; `Google OAuth` (`Authorization Server`) выдаёт токен, а `Drive API` (`Resource Server`) его проверяет.",
                 "when_to_apply": "Знание ролей нужно при проектировании: понять, кто выдаёт, кто хранит и кто проверяет токены, и как они взаимодействуют. Это основа для выбора flow и архитектуры.",
-                "edge_cases": "В монолите `Authorization Server` и `Resource Server` — один процесс; в микросервисах их разделяют, и каждый сервис валидирует токен по общему `JWKS`.",
+                "edge_cases": "Один компонент может совмещать роли authorization server и resource server, но их обязанности остаются разными. `Resource Owner` называют end user только когда владельцем является человек.",
                 "related": "[[oauth2-interview#Q1]] что такое OAuth2; [[oauth2-interview#Q4]] типы клиентов; [[oauth2-interview#Q25]] роли в микросервисах."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "В `OAuth2` есть единственная роль — `Identity Provider`, который одновременно и логинит пользователя, и хранит все ресурсы.",
+              "text": "В `OAuth2` есть единственная роль — `Identity Provider`, который одновременно и логинит пользователя, и хранит все ресурсы. Любой `Resource Server` должен был бы сам аутентифицировать пользователя. В готовых решениях вроде `Keycloak` IdP и AS совпадают.",
               "correct": false,
               "sections": {
                 "what_actually": "`Identity Provider` — это термин из `OIDC/SSO`; в `OAuth2` участников четыре, и хранение ресурсов — задача `Resource Server`, а не одного IdP.",
@@ -96,7 +96,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Роли `OAuth2` — это `Admin`, `User` и `Guest`, то есть уровни прав доступа внутри приложения.",
+              "text": "Роли `OAuth2` — это `Admin`, `User` и `Guest`, то есть уровни прав доступа внутри приложения. `OAuth2` диктовал бы конкретные права пользователей. Слово «роль» в `OAuth2` и «роль» в `RBAC` совпадают по названию.",
               "correct": false,
               "sections": {
                 "what_actually": "Это роли уровня приложения (`RBAC`), а не роли протокола `OAuth2`; протокол оперирует `Resource Owner`, `Client`, AS и RS.",
@@ -108,7 +108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В `OAuth2` определены ровно 2 роли: клиент и сервер; всё остальное — детали реализации конкретного провайдера.",
+              "text": "В `OAuth2` определены ровно 2 роли: клиент и сервер; всё остальное — детали реализации конкретного провайдера. Нельзя было бы разделить выдачу и проверку токенов между разными сервисами. В простых случаях `Authorization Server` и `Resource Server` объединены.",
               "correct": false,
               "sections": {
                 "what_actually": "`RFC 6749` чётко определяет 4 роли: `Resource Owner`, `Client`, `Authorization Server`, `Resource Server`.",
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`OAuth2` сам аутентифицирует пользователя по `access token`, а авторизацию выполняет внешний `OIDC`-слой.",
+              "text": "`OAuth2` сам аутентифицирует пользователя по `access token`, а авторизацию выполняет внешний `OIDC`-слой. `Resource Server` мог бы по `access token` достоверно узнать, кто пользователь. `access token` приходит первым и считается главным «пропуском».",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот по назначению токенов: `access token` нужен для доступа (авторизация), а аутентификацию даёт `ID Token` из `OIDC`.",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Аутентификация и авторизация в `OAuth2` — синонимы: оба термина означают проверку, что пользователь имеет право войти в систему.",
+              "text": "Аутентификация и авторизация в `OAuth2` — синонимы: оба термина означают проверку, что пользователь имеет право войти в систему. Не понадобился бы отдельный `ID Token` рядом с `access token`. В обиходе «авторизоваться» часто говорят в смысле «войти».",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные шаги: аутентификация устанавливает личность, авторизация — набор прав; `OAuth2` занимается именно авторизацией.",
@@ -155,7 +155,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Авторизация — это шифрование токена, а аутентификация — его подпись; разница чисто криптографическая.",
+              "text": "Авторизация — это шифрование токена, а аутентификация — его подпись; разница чисто криптографическая. Любой подписанный токен автоматически идентифицировал бы пользователя. Подпись `JWT` действительно есть. В этой модели подписанный токен одновременно служит удостоверением личности и разрешением доступа.",
               "correct": false,
               "sections": {
                 "what_actually": "AuthN и AuthZ — это смысловые этапы доступа (личность и права), а не криптографические операции над токеном.",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`OAuth2` делит клиентов на `web`, `mobile` и `desktop` — по платформе, на которой они работают.",
+              "text": "`OAuth2` делит клиентов на `web`, `mobile` и `desktop` — по платформе, на которой они работают. Мобильный backend-сервис нельзя было бы считать confidential. Платформа коррелирует с типом (мобильные обычно public). Платформа полностью определяет client type.",
               "correct": false,
               "sections": {
                 "what_actually": "Деление в `OAuth2` идёт по способности хранить секрет (`confidential` vs `public`), а не по платформе.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Тип клиента определяется тем, использует ли он `JWT` или opaque token: `JWT`-клиенты — public, opaque — confidential.",
+              "text": "Тип клиента определяется тем, использует ли он `JWT` или opaque token: `JWT`-клиенты — public, opaque — confidential. Выбор `JWT` менял бы метод аутентификации клиента. Формат токена и тип клиента — оба про `OAuth2`. Storage capability игнорировалась бы.",
               "correct": false,
               "sections": {
                 "what_actually": "Тип клиента не зависит от формата токена; он определяется способностью хранить `client_secret`.",
@@ -228,7 +228,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Все клиенты `OAuth2` считаются `confidential`, потому что любой клиент при желании может зашифровать `client_secret` в коде.",
+              "text": "Все клиенты `OAuth2` считаются `confidential`, потому что любой клиент при желании может зашифровать `client_secret` в коде. `PKCE` был бы не нужен публичным клиентам. Public и confidential различаются только способом упаковки секрета в приложение, а не возможностью безопасно сохранить его после распространения клиента.",
               "correct": false,
               "sections": {
                 "what_actually": "`SPA` и мобильные клиенты — `public`: их код доступен пользователю, и зашифрованный секрет всё равно можно извлечь.",
@@ -251,7 +251,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Scope` проверяется только на `Authorization Server` при выдаче токена, а `Resource Server` его игнорирует и доверяет любому валидному токену.",
+              "text": "`Scope` проверяется только на `Authorization Server` при выдаче токена, а `Resource Server` его игнорирует и доверяет любому валидному токену. Токен с `scope=read` давал бы и запись.",
               "correct": false,
               "sections": {
                 "what_actually": "`Resource Server` обязан проверять `scope`: валидная подпись не значит, что у токена есть право на конкретную операцию.",
@@ -263,7 +263,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Scope` — это идентификатор пользователя внутри токена, аналог claim `sub`, по которому `Resource Server` узнаёт владельца.",
+              "text": "`Scope` — это идентификатор пользователя внутри токена, аналог claim `sub`, по которому `Resource Server` узнаёт владельца. У каждого пользователя был бы уникальный `scope`. Оба значения лежат в payload токена.",
               "correct": false,
               "sections": {
                 "what_actually": "Идентификатор пользователя — это `sub`, а `scope` описывает разрешённые действия, а не личность.",
@@ -275,20 +275,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Scope` — механизм ограничения доступа: клиент при запросе указывает, какие именно разрешения ему нужны (например `scope=openid profile email read:repos`). `Resource Server` обязан проверять `scope` перед выдачей данных, следуя принципу least privilege.",
+              "text": "`Scope` — строковый способ выразить запрашиваемый предел доступа, например `read:repos` или `openid profile`. Authorization server согласует итоговый набор, а resource server сопоставляет его с политикой конкретной операции; одних scope недостаточно для объектной авторизации и проверки ownership.",
               "correct": true,
               "sections": {
                 "explanation": "`Scope` реализует least privilege: запрашивается только минимально необходимый набор прав. На `Resource Server` проверка идёт через authorities вида `SCOPE_read:repos`.",
                 "example": "В `Spring Security`: `@PreAuthorize(\"hasAuthority('SCOPE_read:repos')\")` на эндпоинте `/api/repos` пропустит только токен, в котором есть `scope` `read:repos`.",
                 "when_to_apply": "`Scope` определяют при регистрации клиента и запрашивают в `/authorize`; используется для согласия пользователя (consent) и для ограничения того, что клиент может сделать с токеном.",
-                "edge_cases": "Стандартные scopes: `openid` (получить `ID Token`), `profile` (имя, аватар), `email`, `offline_access` (получить `refresh token`). Не запрашивайте больше, чем нужно.",
+                "edge_cases": "Значения scope определяет конкретный authorization server или профиль протокола. `openid` относится к OIDC, а не к базовому OAuth; resource server может дополнительно учитывать audience, роли, tenant и атрибуты ресурса.",
                 "related": "[[oauth2-interview#Q1]] OAuth2 и делегирование доступа; [[oauth2-interview#Q27]] scope escalation как угроза; [[oauth2-interview#Q42]] OIDC scopes и claims."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`Scope` — это срок жизни `access token` в секундах, который клиент запрашивает у `Authorization Server`.",
+              "text": "`Scope` — это срок жизни `access token` в секундах, который клиент запрашивает у `Authorization Server`. `scope=openid profile` означал бы какое-то время в секундах. И `scope`, и время жизни ограничивают токен.",
               "correct": false,
               "sections": {
                 "what_actually": "Срок жизни токена задаётся claim `exp` и настройками сервера, а `scope` — это набор разрешений, а не время.",
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Authorization Code Flow` `access token` возвращается прямо в URL редиректа сразу после логина пользователя, без отдельного запроса к token endpoint.",
+              "text": "В `Authorization Code Flow` `access token` возвращается прямо в URL редиректа сразу после логина пользователя, без отдельного запроса к token endpoint. Токен попадал бы в историю браузера и `Referer`, что и есть причина отказа от `Implicit Flow`.",
               "correct": false,
               "sections": {
                 "what_actually": "В URL возвращается одноразовый `code`, а токен backend получает отдельным `POST /token`; токен в URL — это поведение устаревшего `Implicit Flow`.",
@@ -323,7 +323,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В `Authorization Code Flow` `redirect_uri` сопоставляется по префиксу, поэтому достаточно зарегистрировать только домен приложения.",
+              "text": "В `Authorization Code Flow` `redirect_uri` сопоставляется по префиксу, поэтому достаточно зарегистрировать только домен приложения. Злоумышленник мог бы подставить `https://app.example.com.evil.com` и увести code. Раньше допускалось частичное совпадение, и эта практика по инерции считается нормой.",
               "correct": false,
               "sections": {
                 "what_actually": "`redirect_uri` должен совпадать точно (exact match); сопоставление по префиксу открывает open redirect.",
@@ -335,20 +335,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Authorization Code Flow` — основной и самый безопасный flow для веб-приложений с backend: браузер получает одноразовый `authorization code`, а обмен code на токен идёт server-to-server с `client_secret`, поэтому токен никогда не виден браузеру.",
+              "text": "В `Authorization Code Flow` клиент сначала получает через браузер короткоживущий одноразовый `authorization code`, затем меняет его на токены в token endpoint. Confidential web-client аутентифицируется там своим методом, а public client доказывает связь с исходным запросом через `PKCE`.",
               "correct": true,
               "sections": {
-                "explanation": "Ключевая идея — двухшаговость: сначала короткоживущий code через браузер, потом backend меняет его на токены напрямую у `Authorization Server`. Это исключает попадание токена в историю браузера.",
+                "explanation": "Code отделяет front-channel от выдачи токенов: authorization response несёт временный артефакт, а токены выдаются через token endpoint после проверки клиента и `code_verifier`.",
                 "example": "Браузер редиректит на `/authorize?response_type=code&...&state=abc`, после логина приходит `?code=AUTH_CODE&state=abc`; backend проверяет `state` и шлёт `POST /token` с `code` и `client_secret`, получая `access_token` и `refresh_token`.",
                 "when_to_apply": "Применяют для confidential-клиентов с backend, а с `PKCE` — и для public-клиентов. Это рекомендованный flow по умолчанию в `OAuth 2.1`.",
-                "edge_cases": "`authorization code` одноразовый и короткоживущий (~10 минут), `redirect_uri` должен совпадать точно (exact match), а `state` защищает от `CSRF`.",
+                "edge_cases": "В BFF токены остаются на сервере, но в browser-based public client access token может находиться в памяти браузера. Поэтому утверждение «токен никогда не виден браузеру» верно только для серверной архитектуры, а не для flow вообще.",
                 "related": "[[oauth2-interview#Q7]] PKCE поверх этого flow; [[oauth2-interview#Q10]] отличие от Implicit; [[oauth2-interview#Q28]] роль state parameter."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "В `Authorization Code Flow` `authorization code` можно использовать многократно, пока не истечёт его срок жизни.",
+              "text": "В `Authorization Code Flow` `authorization code` можно использовать многократно, пока не истечёт его срок жизни. Перехваченный code можно было бы переиспользовать. У code есть TTL (~10 минут). Token endpoint принимает один и тот же code повторно до окончания его TTL и выдаёт независимые наборы токенов.",
               "correct": false,
               "sections": {
                 "what_actually": "`authorization code` одноразовый: после первого обмена на токен он немедленно инвалидируется.",
@@ -371,20 +371,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`PKCE` (`Proof Key for Code Exchange`, `RFC 7636`) защищает от перехвата `authorization code`: клиент генерирует случайный `code_verifier`, отправляет `code_challenge = BASE64URL(SHA256(code_verifier))` в `/authorize`, а при обмене code предъявляет `code_verifier`, который сервер проверяет.",
+              "text": "`PKCE` (`RFC 7636`) связывает authorization request и обмен code: клиент создаёт случайный `code_verifier`, отправляет `code_challenge = BASE64URL(SHA256(code_verifier))`, а в token endpoint раскрывает verifier. Перехваченный code без него нельзя обменять на токены.",
               "correct": true,
               "sections": {
                 "explanation": "Даже если злоумышленник перехватит `authorization code`, он не знает `code_verifier` и не сможет обменять code на токен. `PKCE` обязателен для public clients и рекомендован для всех в `OAuth 2.1`.",
                 "example": "Клиент шлёт `/authorize?...&code_challenge=HASH&code_challenge_method=S256`, затем `POST /token { code, code_verifier }`; AS проверяет `SHA256(code_verifier) == code_challenge` и только тогда выдаёт токен.",
                 "when_to_apply": "Применяют для `SPA` и мобильных приложений, где нет `client_secret`, а в `OAuth 2.1` — и для confidential-клиентов как дополнительный барьер против перехвата code.",
-                "edge_cases": "Метод `S256` (хэш) предпочтителен; `plain` (без хэширования) допускается лишь для legacy и небезопасен, так как `code_challenge` равен `code_verifier`.",
+                "edge_cases": "Используют метод `S256`; `plain` оставлен в RFC для совместимости и не должен быть обычным выбором. В актуальном draft OAuth 2.1 PKCE является частью стандартного Authorization Code Flow.",
                 "related": "[[oauth2-interview#Q6]] базовый Authorization Code Flow; [[oauth2-interview#Q37]] детали генерации verifier/challenge; [[oauth2-interview#Q4]] почему public clients обязаны применять PKCE."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`PKCE` шифрует `access token` симметричным ключом `code_verifier`, чтобы перехваченный токен нельзя было расшифровать.",
+              "text": "`PKCE` шифрует `access token` симметричным ключом `code_verifier`, чтобы перехваченный токен нельзя было расшифровать. `PKCE` защищал бы уже выданный токен. `Proof Key` означает симметричное шифрование access token.",
               "correct": false,
               "sections": {
                 "what_actually": "`PKCE` не шифрует токен: он привязывает обмен `code` на токен к секрету `code_verifier`, защищая именно code, а не сам токен.",
@@ -396,7 +396,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`PKCE` заменяет `client_secret` тем, что клиент отправляет `code_verifier` в открытом виде уже в запросе `/authorize`.",
+              "text": "`PKCE` заменяет `client_secret` тем, что клиент отправляет `code_verifier` в открытом виде уже в запросе `/authorize`. Перехватчик `/authorize`-запроса узнал бы `code_verifier` и обошёл защиту.",
               "correct": false,
               "sections": {
                 "what_actually": "В `/authorize` уходит только `code_challenge` (хэш); `code_verifier` отправляется позже, в `POST /token`.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`PKCE` нужен только confidential-клиентам с backend, а для `SPA` и мобильных он бесполезен из-за отсутствия секрета.",
+              "text": "`PKCE` нужен только confidential-клиентам с backend, а для `SPA` и мобильных он бесполезен из-за отсутствия секрета. Public clients остались бы без защиты от перехвата code.",
               "correct": false,
               "sections": {
                 "what_actually": "`PKCE` создан в первую очередь для public clients (`SPA`, mobile), которые не могут хранить `client_secret`.",
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Client Credentials Flow` используется, когда пользователь логинится в `SPA` без backend, передавая свои логин и пароль клиенту.",
+              "text": "`Client Credentials Flow` используется, когда пользователь логинится в `SPA` без backend, передавая свои логин и пароль клиенту. `Client Credentials` выдавал бы токен от имени пользователя. Оба сценария «получают токен напрямую от token endpoint».",
               "correct": false,
               "sections": {
                 "what_actually": "В `Client Credentials Flow` пользователя нет вовсе; передача пароля клиенту — это устаревший `ROPC`, убранный в `OAuth 2.1`.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Client Credentials Flow` подходит для public clients, так как `client_secret` в нём не используется.",
+              "text": "`Client Credentials Flow` подходит для public clients, так как `client_secret` в нём не используется. Любой `SPA` мог бы получать M2M-токены. Machine-to-machine flow считается совместимым с клиентом без секрета.",
               "correct": false,
               "sections": {
                 "what_actually": "Flow требует `client_secret` и пригоден только для confidential-клиентов; public client секрет хранить не может.",
@@ -455,7 +455,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Client Credentials Flow` всегда возвращает `refresh_token`, чтобы сервис мог продлевать доступ без повторной аутентификации.",
+              "text": "`Client Credentials Flow` всегда возвращает `refresh_token`, чтобы сервис мог продлевать доступ без повторной аутентификации. Хранение `refresh_token` усложняло бы M2M без всякой пользы, ведь у сервиса и так есть `client_secret`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Client Credentials Flow` не выдаёт `refresh_token`: при истечении токена сервис заново запрашивает новый своими credentials.",
@@ -491,7 +491,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Device Authorization Flow` устройство получает токен мгновенно в ответ на первый запрос, без какого-либо ожидания подтверждения.",
+              "text": "В `Device Authorization Flow` устройство получает токен мгновенно в ответ на первый запрос, без какого-либо ожидания подтверждения. Любой запросивший device_code сразу получал бы доступ без согласия пользователя. Polling и user consent не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Устройство опрашивает token endpoint в цикле (polling) и получает токен только после того, как пользователь подтвердил доступ.",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Device Authorization Flow` предназначен для веб-приложений с полноценным браузером и заменяет в них `Authorization Code Flow`.",
+              "text": "`Device Authorization Flow` предназначен для веб-приложений с полноценным браузером и заменяет в них `Authorization Code Flow`. Обычные веб-приложения заставляли бы пользователя вводить код на другом устройстве без нужды. Оба flow про получение токена для устройства.",
               "correct": false,
               "sections": {
                 "what_actually": "Flow создан для устройств без браузера или с ограниченным вводом; в обычном вебе используют `Authorization Code` + `PKCE`.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В `Device Authorization Flow` пользователь вводит логин и пароль прямо на устройстве (Smart TV), а оно само отправляет их `Authorization Server`.",
+              "text": "В `Device Authorization Flow` пользователь вводит логин и пароль прямо на устройстве (Smart TV), а оно само отправляет их `Authorization Server`. Не нужен был бы `verification_uri` и `user_code`. Второе устройство считается лишним посредником.",
               "correct": false,
               "sections": {
                 "what_actually": "Смысл flow в том, чтобы НЕ вводить пароль на устройстве: пользователь авторизуется на отдельном устройстве по `user_code`.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Implicit Flow` безопаснее `Authorization Code Flow`, потому что не требует хранения `client_secret` на сервере.",
+              "text": "`Implicit Flow` безопаснее `Authorization Code Flow`, потому что не требует хранения `client_secret` на сервере. Стандарт рекомендовал бы `Implicit` для `SPA`. Access token можно безопасно возвращать прямо через front channel браузера.",
               "correct": false,
               "sections": {
                 "what_actually": "`Implicit` менее безопасен: токен оказывается в URL и истории браузера, и именно поэтому он deprecated.",
@@ -563,7 +563,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Authorization Code Flow` устарел в `OAuth 2.1`, а `Implicit Flow` остаётся рекомендованным для современных `SPA`.",
+              "text": "`Authorization Code Flow` устарел в `OAuth 2.1`, а `Implicit Flow` остаётся рекомендованным для современных `SPA`. Новые `SPA` строили бы на токене в URL-фрагменте. Знание о том, что «что-то устарело», применяют не к тому flow.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `Implicit` удалён в `OAuth 2.1`, а `Authorization Code` + `PKCE` — рекомендованный flow для `SPA`.",
@@ -575,7 +575,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Authorization Code Flow` и `Implicit Flow` отличаются только названием; технически они идентичны и оба возвращают токен в URL.",
+              "text": "`Authorization Code Flow` и `Implicit Flow` отличаются только названием; технически они идентичны и оба возвращают токен в URL. Не было бы причины удалять `Implicit` в `OAuth 2.1`. Оба flow начинаются с редиректа на `/authorize`.",
               "correct": false,
               "sections": {
                 "what_actually": "Они существенно различаются: `Authorization Code` не отдаёт токен в URL и поддерживает `refresh token`, `Implicit` — отдаёт и не поддерживает.",
@@ -587,13 +587,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В `Authorization Code Flow` браузер получает `code`, а токен — backend через защищённый обмен, поэтому токен не попадает в URL; есть `refresh token`, и flow актуален. В `Implicit Flow` токен возвращался прямо в URL-фрагменте, без `refresh token`, и был признан небезопасным — он deprecated в `OAuth 2.1`.",
+              "text": "`Authorization Code Flow` возвращает во front-channel одноразовый code и затем выдаёт токены через token endpoint с `PKCE`. `Implicit Grant` возвращал access token прямо в authorization response, поэтому хуже защищался от утечки и injection; `response_type=token` отсутствует в актуальном draft `OAuth 2.1`.",
               "correct": true,
               "sections": {
-                "explanation": "Главное отличие — где появляется токен. В `Authorization Code` он никогда не виден браузеру; в `Implicit` он сразу в `#access_token=...`, попадая в историю и `Referer`. Поэтому `Implicit` удалён.",
+                "explanation": "Ключевое различие — артефакт во front-channel. Code можно безопасно связать с клиентом через PKCE и обменять один раз, тогда как bearer token из implicit response уже является готовым credential.",
                 "example": "`Implicit`: `redirect → #access_token=...` сразу в браузере. `Authorization Code`: браузер отдаёт `code` backend, тот меняет его на токен server-to-server — токен в URL не появляется.",
                 "when_to_apply": "Различие важно при выборе flow для `SPA`: раньше брали `Implicit`, теперь — всегда `Authorization Code` + `PKCE`, даже без backend.",
-                "edge_cases": "`Implicit` не поддерживал `refresh token` и `PKCE` к нему неприменим; `Authorization Code` поддерживает и то, и другое, что делает его универсальным выбором.",
+                "edge_cases": "URL fragment обычно не отправляется серверу как HTTP Referer, но остаётся доступен user agent и клиентскому JavaScript и подвержен утечкам и injection. Для SPA применяют Authorization Code + PKCE.",
                 "related": "[[oauth2-interview#Q6]] как устроен Authorization Code Flow; [[oauth2-interview#Q11]] какие гранты убраны в OAuth 2.1; [[oauth2-interview#Q7]] PKCE как замена."
               }
             }
@@ -606,12 +606,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие гранты убраны в `OAuth 2.1`?",
+          "question_text": "Какие гранты отсутствуют в актуальном draft `OAuth 2.1`?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "В `OAuth 2.1` убран `Authorization Code Flow`, так как он считается устаревшим и заменён на `Client Credentials`.",
+              "text": "В `OAuth 2.1` убран `Authorization Code Flow`, так как он считается устаревшим и заменён на `Client Credentials`. Интерактивных пользователей нечем было бы авторизовывать, ведь `Client Credentials` для M2M. Факт «что-то убрали» применяют к самому известному flow.",
               "correct": false,
               "sections": {
                 "what_actually": "`Authorization Code Flow` — основной и рекомендованный flow в `OAuth 2.1`; убраны `Implicit` и `ROPC`.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В `OAuth 2.1` убран `Client Credentials Flow`, поскольку межсервисное взаимодействие теперь идёт только через mTLS.",
+              "text": "В `OAuth 2.1` убран `Client Credentials Flow`, поскольку межсервисное взаимодействие теперь идёт только через mTLS. Сервисы не могли бы получать токены от своего имени. MTLS действительно используют для M2M. Public clients используют только Authorization Code и не получают собственные machine-to-machine grants.",
               "correct": false,
               "sections": {
                 "what_actually": "`Client Credentials Flow` сохранён для M2M; `OAuth 2.1` убрал `Implicit` и `ROPC`, а не его.",
@@ -635,20 +635,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`OAuth 2.1` убирает два небезопасных гранта: `Implicit Grant` (токен в URL небезопасен — замена `Authorization Code` + `PKCE`) и `Resource Owner Password Credentials` (`ROPC`, клиент получает пароль пользователя — замена `Authorization Code Flow`). Дополнительно `PKCE` и exact match для `redirect_uri` стали обязательными.",
+              "text": "В актуальном draft `OAuth 2.1` отсутствуют `Implicit Grant` (`response_type=token`) и `Resource Owner Password Credentials Grant`. Вместо них используют Authorization Code + `PKCE`; redirect URI сравнивают точным совпадением, а refresh token публичного клиента должен быть одноразовым либо sender-constrained.",
               "correct": true,
               "sections": {
-                "explanation": "Оба удалённых гранта нарушали базовые принципы: `Implicit` светил токен в URL, а `ROPC` отдавал пароль пользователя клиенту. `OAuth 2.1` консолидирует best practices и закрывает эти векторы.",
+                "explanation": "OAuth 2.1 консолидирует OAuth 2.0 и накопленные security practices: исключает режимы, в которых токен выдаётся во front-channel или клиент получает пароль пользователя, и делает Authorization Code с PKCE базовым вариантом.",
                 "example": "Вместо `Implicit` для `SPA` теперь `Authorization Code` + `PKCE`; вместо `ROPC` для интерактивных клиентов — тот же `Authorization Code`, а для CLI/IoT — `Device Authorization Flow`.",
                 "when_to_apply": "Знание удалённых грантов нужно при миграции legacy-систем: если код использует `Implicit` или `ROPC`, его придётся переписать под `Authorization Code` + `PKCE`.",
-                "edge_cases": "Помимо удаления грантов, `OAuth 2.1` сделал обязательными `PKCE` для всех клиентов, exact match `redirect_uri` и rotation/sender-constrained tokens для refresh.",
+                "edge_cases": "На июль 2026 года OAuth 2.1 остаётся Internet-Draft, а не опубликованным RFC. Для production нормативной опорой также служит `RFC 9700` (`BCP 240`) по безопасности OAuth 2.0.",
                 "related": "[[oauth2-interview#Q10]] почему удалён Implicit; [[oauth2-interview#Q31]] полный список изменений OAuth 2.1; [[oauth2-interview#Q36]] детали спецификации."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "В `OAuth 2.1` убран `Refresh Token`, чтобы пользователи каждый раз проходили полную авторизацию заново.",
+              "text": "В `OAuth 2.1` убран `Refresh Token`, чтобы пользователи каждый раз проходили полную авторизацию заново. UX резко ухудшился бы из-за постоянных повторных логинов, что не входило в цели `OAuth 2.1`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Refresh Token` не убран; `OAuth 2.1` лишь требует его rotation или sender-constrained tokens для безопасности.",
@@ -671,20 +671,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Access token` — короткоживущий токен (15–60 мин) для доступа к ресурсам, предъявляется `Resource Server`. `Refresh token` — долгоживущий (дни–месяцы) токен для получения нового `access token` без повторного логина, предъявляется только `Authorization Server`.",
+              "text": "`Access token` предъявляют resource server для доступа к API и обычно делают короткоживущим. `Refresh token` предъявляют только authorization server, чтобы получить новый access token без повторной интерактивной авторизации; его выдача, срок жизни и ротация зависят от политики сервера и типа клиента.",
               "correct": true,
               "sections": {
                 "explanation": "Разделение минимизирует окно компрометации: украденный `access token` живёт недолго, а `refresh token` хранится в безопасном месте и используется лишь для обновления. Так баланс между UX и безопасностью.",
                 "example": "При `401` от API клиент шлёт `POST /token` с `grant_type=refresh_token`, получает новый `access_token` (и при rotation — новый `refresh_token`), и повторяет запрос к ресурсу с обновлённым токеном.",
                 "when_to_apply": "`access token` нужен при каждом вызове API, `refresh token` — только когда `access token` истёк. Хранить `refresh token` следует в `httpOnly` cookie с `Secure` и `SameSite=Strict`.",
-                "edge_cases": "`Client Credentials Flow` не выдаёт `refresh token`; формат `access token` может быть `JWT` или opaque, а `refresh token` обычно opaque.",
+                "edge_cases": "Стандарты не задают универсальные TTL вроде «15 минут» или «30 дней». Для public clients refresh token защищают rotation/reuse detection либо sender-constraining; некоторым flow и клиентам refresh token вообще не выдают.",
                 "related": "[[oauth2-interview#Q16]] refresh token rotation; [[oauth2-interview#Q13]] структура JWT access token; [[oauth2-interview#Q8]] почему M2M без refresh token."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Refresh token` должен быть короткоживущим (несколько минут), а `access token` — долгоживущим (месяцы), чтобы реже обращаться к API.",
+              "text": "`Refresh token` должен быть короткоживущим (несколько минут), а `access token` — долгоживущим (месяцы), чтобы реже обращаться к API. Долгоживущий `access token` при утечке давал бы доступ месяцами. Refresh endpoint вызывается только один раз за пользовательскую сессию.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `access token` делают короткоживущим (15–60 мин), а `refresh token` — долгоживущим.",
@@ -696,7 +696,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Access token` всегда хранится в `localStorage` браузера, а `refresh token` вообще не нужно хранить — он генерируется на лету.",
+              "text": "`Access token` всегда хранится в `localStorage` браузера, а `refresh token` вообще не нужно хранить — он генерируется на лету. `XSS` мгновенно крал бы токены из `localStorage`, что и является известной уязвимостью. `localStorage` удобен для SPA, и его считают безопасным хранилищем.",
               "correct": false,
               "sections": {
                 "what_actually": "`refresh token` обязательно хранят (безопасно, в `httpOnly` cookie), а `localStorage` уязвим к `XSS` и не рекомендуется.",
@@ -708,7 +708,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Access token` и `refresh token` взаимозаменяемы: любой из них можно предъявлять `Resource Server` для доступа к API.",
+              "text": "`Access token` и `refresh token` взаимозаменяемы: любой из них можно предъявлять `Resource Server` для доступа к API. Долгоживущий `refresh token` гулял бы по всем `Resource Server`, резко расширяя поверхность атаки. Оба токена выдаются вместе в одном ответе token endpoint.",
               "correct": false,
               "sections": {
                 "what_actually": "`Refresh token` предъявляется только `Authorization Server` для обновления; `Resource Server` принимает лишь `access token`.",
@@ -731,7 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Payload в `JWT` зашифрован, поэтому в него безопасно класть пароли и другие секреты пользователя.",
+              "text": "Payload в `JWT` зашифрован, поэтому в него безопасно класть пароли и другие секреты пользователя. Любой, кто перехватил токен, не смог бы прочитать claims. `Base64`-строка считается как нечитаемый набор символов.",
               "correct": false,
               "sections": {
                 "what_actually": "Payload лишь закодирован `Base64URL` (не зашифрован) и легко читается; класть туда секреты нельзя.",
@@ -743,7 +743,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Подпись `JWT` всегда вычисляется алгоритмом `HS256`, а асимметричные `RS256`/`ES256` стандартом не поддерживаются.",
+              "text": "Подпись `JWT` всегда вычисляется алгоритмом `HS256`, а асимметричные `RS256`/`ES256` стандартом не поддерживаются. `Resource Server` должен был бы знать симметричный секрет подписи, что небезопасно при множестве сервисов. `HS256` часто встречается в туториалах как самый простой пример.",
               "correct": false,
               "sections": {
                 "what_actually": "`JWT` поддерживает и асимметричные алгоритмы (`RS256`, `ES256`), которые рекомендованы для production; `HS256` — лишь один из вариантов.",
@@ -755,20 +755,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`JWT` (`RFC 7519`) состоит из трёх частей через точку: `header.payload.signature`. `Header` содержит `alg` и `kid`, `payload` — claims (`iss`, `sub`, `aud`, `exp`, `iat`, `scope` и кастомные), `signature` — подпись header+payload приватным ключом для проверки целостности.",
+              "text": "`JWT` (`RFC 7519`) — формат набора claims, который представляют как `JWS` или `JWE`. Подписанный compact JWS обычно имеет три части `header.payload.signature`; зашифрованный compact JWE — пять частей. Payload кодируется Base64url и не становится конфиденциальным без JWE.",
               "correct": true,
               "sections": {
-                "explanation": "Самодостаточность `JWT`: `Resource Server` проверяет токен локально по подписи, без обращения к `Authorization Server`. Payload закодирован `Base64URL`, а не зашифрован — данные видны всем.",
+                "explanation": "JWT задаёт claims container, а криптографическую оболочку дают JOSE-форматы: JWS обеспечивает подпись или MAC, JWE — шифрование. Поэтому «JWT всегда состоит из трёх частей и подписан» слишком узко.",
                 "example": "Реальный `JWT`: header `{\"alg\":\"RS256\",\"typ\":\"JWT\",\"kid\":\"key-1\"}`, payload с `iss`, `sub:\"user-123\"`, `exp`, `scope:\"openid profile email\"`, и подпись `RSASHA256(base64(header)+\".\"+base64(payload), privateKey)`.",
                 "when_to_apply": "Структуру `JWT` нужно понимать при валидации и отладке: декодировать payload, проверить `alg` и `kid`, найти нужный публичный ключ в `JWKS`.",
-                "edge_cases": "Алгоритмы: `RS256`/`ES256` (асимметричные, для production), `HS256` (симметричный, только для доверенных сервисов), `none` — никогда не использовать. Payload не шифрование — секреты в него класть нельзя.",
+                "edge_cases": "Access token не обязан быть JWT: OAuth допускает opaque token. Даже подписанный JWT не скрывает claims, поэтому в payload не кладут секреты и всегда фиксируют допустимые алгоритмы при валидации.",
                 "related": "[[oauth2-interview#Q15]] как Resource Server валидирует JWT; [[oauth2-interview#Q32]] стандартные JWT claims; [[oauth2-interview#Q14]] JWT против opaque token."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`JWT` состоит из двух частей — `payload` и `signature`; отдельного `header` с алгоритмом подписи в нём нет.",
+              "text": "`JWT` состоит из двух частей — `payload` и `signature`; отдельного `header` с алгоритмом подписи в нём нет. `Resource Server` не знал бы, каким алгоритмом проверять подпись и какой ключ из `JWKS` брать.",
               "correct": false,
               "sections": {
                 "what_actually": "`JWT` состоит из трёх частей: `header.payload.signature`; `header` несёт `alg` и `kid`, без которых неясно, чем и каким ключом проверять подпись.",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`JWT` отзывается мгновенно простым удалением из хранилища, поэтому короткий TTL и blacklist ему не нужны.",
+              "text": "`JWT` отзывается мгновенно простым удалением из хранилища, поэтому короткий TTL и blacklist ему не нужны. Не понадобились бы blacklist в `Redis` и короткие TTL. Resource server удаляет идентификатор токена из общего хранилища, и локальная проверка JWT сразу учитывает это отсутствие без introspection.",
               "correct": false,
               "sections": {
                 "what_actually": "Отзыв `JWT` сложен: он самодостаточен и остаётся валидным до `exp`; для отзыва нужен короткий TTL или blacklist по `jti`.",
@@ -803,7 +803,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Claims внутри `JWT` зашифрованы, поэтому, в отличие от opaque token, `JWT` гарантированно не раскрывает данные пользователя.",
+              "text": "Claims внутри `JWT` зашифрованы, поэтому, в отличие от opaque token, `JWT` гарантированно не раскрывает данные пользователя. `JWT` был бы безопаснее opaque по утечке данных. Подпись и Base64url трактуются как встроенное шифрование payload, поэтому отдельный JWE для конфиденциальности не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Claims в `JWT` лишь закодированы `Base64URL` и видны; именно opaque token не несёт данных вовсе.",
@@ -815,20 +815,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`JWT` самодостаточен (`header.payload.signature`) и валидируется локально по подписи, что даёт высокую масштабируемость, но усложняет отзыв (нужен blacklist или короткий TTL) и раскрывает claims. `Opaque token` — случайная строка, валидируется запросом introspection к `Authorization Server`, легко отзывается, но требует сетевого запроса.",
+              "text": "JWT access token несёт claims и обычно валидируется локально по подписи и ограничениям, уменьшая зависимость от authorization server, но усложняя немедленный отзыв. Opaque token не раскрывает структуру клиенту и обычно проверяется через introspection или gateway, что упрощает централизованный контроль ценой сетевой зависимости.",
               "correct": true,
               "sections": {
                 "explanation": "Ключевой trade-off: `JWT` экономит запросы (валидация локальная), opaque даёт мгновенный отзыв (статус хранится централизованно). Выбор зависит от того, что важнее — масштаб или контроль над отзывом.",
                 "example": "В микросервисах берут `JWT` (каждый сервис валидирует по `JWKS` без запросов к AS); для админ-доступа с требованием мгновенного отзыва или чувствительных данных — opaque с introspection.",
                 "when_to_apply": "Выбор делают на этапе проектирования `Authorization Server`: формат токена влияет на масштабируемость, отзыв и утечку данных через claims.",
-                "edge_cases": "`JWT` остаётся «валидным» до `exp` даже после логической отмены; opaque компактнее и не несёт данных, но создаёт запрос на каждую валидацию.",
+                "edge_cases": "JWT тоже можно проверять через централизованный policy layer, а introspection можно кэшировать. Выбор зависит от требований к отзыву, latency, privacy claims и доступности authorization server, а не от правила «JWT всегда лучше масштабируется».",
                 "related": "[[oauth2-interview#Q13]] структура JWT; [[oauth2-interview#Q18]] token introspection для opaque; [[oauth2-interview#Q17]] сложности отзыва JWT."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`Opaque token` валидируется локально по подписи без обращения к серверу, а `JWT` всегда требует запроса introspection.",
+              "text": "`Opaque token` валидируется локально по подписи без обращения к серверу, а `JWT` всегда требует запроса introspection. `JWT` не давал бы выигрыша в масштабируемости, ради которого его и выбирают. Свойства двух форматов токенов меняют местами.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `JWT` валидируется локально по подписи, а `opaque token` требует introspection-запроса к `Authorization Server`.",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для валидации `JWT` ресурсный сервер использует приватный ключ `Authorization Server`, который он хранит у себя.",
+              "text": "Для валидации `JWT` ресурсный сервер использует приватный ключ `Authorization Server`, который он хранит у себя. Приватный ключ пришлось бы раздать всем `Resource Server`, что мгновенно скомпрометировало бы подпись.",
               "correct": false,
               "sections": {
                 "what_actually": "Подпись проверяется ПУБЛИЧНЫМ ключом из `JWKS`; приватный ключ остаётся только у `Authorization Server`.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Resource Server` валидирует `JWT`, отправляя его на `Authorization Server` через introspection при каждом запросе.",
+              "text": "`Resource Server` валидирует `JWT`, отправляя его на `Authorization Server` через introspection при каждом запросе. `JWT` не давал бы выигрыша в масштабируемости, ведь каждый запрос шёл бы на AS. Оба механизма «проверяют токен».",
               "correct": false,
               "sections": {
                 "what_actually": "`JWT` валидируется локально по подписи и claims; introspection нужен для opaque token, а не для `JWT`.",
@@ -875,7 +875,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Достаточно проверить только подпись `JWT`; claims `exp`, `iss` и `aud` проверять не обязательно, если подпись валидна.",
+              "text": "Достаточно проверить только подпись `JWT`; claims `exp`, `iss` и `aud` проверять не обязательно, если подпись валидна. Истёкший или выданный для другого сервиса токен принимался бы (confused deputy).",
               "correct": false,
               "sections": {
                 "what_actually": "Валидная подпись не отменяет проверку claims: истёкший токен (`exp`) или чужой `aud` должны отклоняться.",
@@ -887,7 +887,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Resource Server` валидирует `JWT` локально по шагам: проверяет подпись публичным ключом из `JWKS`, что `exp > now`, что `iss` совпадает с ожидаемым издателем, что `aud` содержит свой идентификатор, и что `scope` достаточен для операции. Несоответствие даёт `401`, недостаток scope — `403`.",
+              "text": "`Resource Server` валидирует `JWT` локально по шагам: проверяет подпись публичным ключом из `JWKS`, что `exp > now`, что `iss` совпадает с ожидаемым издателем, что `aud` содержит свой идентификатор, и что `scope` достаточен для операции.",
               "correct": true,
               "sections": {
                 "explanation": "Валидация полностью локальная: публичные ключи берутся из `JWKS endpoint` и кэшируются. `Spring Security` обновляет ключи автоматически при появлении неизвестного `kid`.",
@@ -924,7 +924,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Refresh token rotation` отзывает только тот один токен, который был предъявлен повторно, не затрагивая остальные токены пользователя.",
+              "text": "`Refresh token rotation` отзывает только тот один токен, который был предъявлен повторно, не затрагивая остальные токены пользователя. Злоумышленник с украденной веткой токенов сохранял бы доступ, обходя защиту.",
               "correct": false,
               "sections": {
                 "what_actually": "При reuse detection отзывается вся token family пользователя, а не один токен, так как факт reuse сигналит о краже.",
@@ -936,7 +936,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Refresh token rotation` — это периодическая смена signing-ключей `Authorization Server`, при которой старые ключи выводятся из `JWKS`.",
+              "text": "`Refresh token rotation` — это периодическая смена signing-ключей `Authorization Server`, при которой старые ключи выводятся из `JWKS`. Reuse detection и token families были бы ни при чём. Оба механизма называют «ротацией».",
               "correct": false,
               "sections": {
                 "what_actually": "Rotation — это выдача нового `refresh token` при каждом обновлении; смена signing-ключей — отдельная практика (key rotation).",
@@ -948,7 +948,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Refresh token rotation` означает, что один и тот же `refresh token` можно использовать многократно, пока он не истечёт по `exp`.",
+              "text": "`Refresh token rotation` означает, что один и тот же `refresh token` можно использовать многократно, пока он не истечёт по `exp`. Reuse detection не имел бы смысла, ведь повторное использование считалось бы нормой.",
               "correct": false,
               "sections": {
                 "what_actually": "Суть rotation в обратном: старый `refresh token` инвалидируется после первого использования, выдаётся новый.",
@@ -971,7 +971,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Отозвать токен можно только дождавшись его естественного истечения по `exp`; механизма досрочного отзыва в `OAuth2` не существует.",
+              "text": "Отозвать токен можно только дождавшись его естественного истечения по `exp`; механизма досрочного отзыва в `OAuth2` не существует. При логауте или компрометации нельзя было бы прекратить доступ, что недопустимо для безопасности.",
               "correct": false,
               "sections": {
                 "what_actually": "`RFC 7009` определяет endpoint `/revoke` для досрочного отзыва; для `JWT` его дополняют blacklist и короткий TTL.",
@@ -996,7 +996,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Чтобы отозвать токен, достаточно сменить публичный ключ в `JWKS`, и все ранее выданные токены сразу станут невалидными.",
+              "text": "Чтобы отозвать токен, достаточно сменить публичный ключ в `JWKS`, и все ранее выданные токены сразу станут невалидными. Отзыв одного скомпрометированного токена разлогинивал бы всех пользователей сразу. Key rotation действительно влияет на валидность.",
               "correct": false,
               "sections": {
                 "what_actually": "Смена ключа инвалидирует ВСЕ токены, подписанные старым ключом, — это аварийная мера, а не точечный отзыв одного токена.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`JWT` отзывается мгновенно простым вызовом `POST /revoke`: после него `Resource Server` сразу перестаёт принимать токен.",
+              "text": "`JWT` отзывается мгновенно простым вызовом `POST /revoke`: после него `Resource Server` сразу перестаёт принимать токен. Не понадобились бы короткий TTL и blacklist по `jti`.",
               "correct": false,
               "sections": {
                 "what_actually": "Сам по себе `JWT` остаётся валидным до `exp`, так как проверяется локально; для мгновенного эффекта нужен blacklist или introspection.",
@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Token introspection не требует аутентификации: любой клиент может узнать содержимое чужого токена по его значению.",
+              "text": "Token introspection не требует аутентификации: любой клиент может узнать содержимое чужого токена по его значению. Злоумышленник проверял бы украденные токены и собирал данные пользователей без ограничений.",
               "correct": false,
               "sections": {
                 "what_actually": "Endpoint introspection защищён: `Resource Server` аутентифицируется (например `Basic` своими credentials), иначе токены можно было бы массово проверять.",
@@ -1043,20 +1043,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Token introspection (`RFC 7662`) — `Resource Server` запрашивает у `Authorization Server` (`POST /oauth2/introspect`) актуальную информацию о токене, получая в ответе `active`, `scope`, `client_id`, `sub`, `exp`. Это позволяет проверять opaque token и видеть факт отзыва, ценой дополнительного запроса на каждый вызов API.",
+              "text": "Token introspection (`RFC 7662`) позволяет защищённому resource server запросить у authorization server состояние и метаданные токена, включая `active`, `scope`, `client_id`, `sub` и `exp`. Метод особенно полезен для opaque tokens и случаев, где нужен актуальный статус отзыва.",
               "correct": true,
               "sections": {
                 "explanation": "Introspection нужен, когда токен непрозрачен (opaque) или важна актуальность статуса: AS — единственный источник правды о токене. Trade-off — сетевой запрос к AS при каждой проверке.",
                 "example": "`Resource Server` шлёт `POST /oauth2/introspect` с `token=<opaque>` и получает `{ \"active\": true, \"scope\": \"read:orders\", \"sub\": \"user-123\", \"exp\": ... }`. В `Spring` это настраивается через `.opaqueToken().introspectionUri(...)`.",
                 "when_to_apply": "Применяют для opaque token, для централизованной проверки в gateway и там, где нужен мгновенный отзыв, который `JWT` не даёт.",
-                "edge_cases": "Если токен неактивен, ответ `{ \"active\": false }`. Главный минус — дополнительный запрос и нагрузка на AS на каждый вызов API.",
+                "edge_cases": "Introspection не обязан выполняться на каждый API-вызов: допустимы gateway и короткий кэш, но они увеличивают окно между отзывом и фактическим отказом. Endpoint должен аутентифицировать resource server и не раскрывать данные посторонним.",
                 "related": "[[oauth2-interview#Q14]] JWT против opaque; [[oauth2-interview#Q38]] детали RFC 7662; [[oauth2-interview#Q17]] introspection как способ отзыва."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Token introspection ускоряет работу `Resource Server`, потому что заменяет проверку подписи `JWT` одним быстрым локальным вызовом.",
+              "text": "Token introspection ускоряет работу `Resource Server`, потому что заменяет проверку подписи `JWT` одним быстрым локальным вызовом. Его рекомендовали бы для high-load микросервисов. Introspection выполняется внутри процесса resource server и не добавляет сетевой round-trip к authorization server.",
               "correct": false,
               "sections": {
                 "what_actually": "Introspection, наоборот, добавляет сетевой запрос к AS на каждый вызов API — это медленнее локальной проверки подписи `JWT`.",
@@ -1068,7 +1068,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Token introspection — это процесс декодирования `JWT` на клиенте для чтения его claims без обращения к серверу.",
+              "text": "Token introspection — это процесс декодирования `JWT` на клиенте для чтения его claims без обращения к серверу. Introspection не давал бы актуального статуса отзыва, ради которого его и применяют. Оба действия «достают информацию из токена».",
               "correct": false,
               "sections": {
                 "what_actually": "Introspection — это серверный запрос к `Authorization Server` (`RFC 7662`); чтение claims `JWT` на клиенте — это просто `Base64`-декодирование.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`DPoP` шифрует тело каждого HTTP-запроса приватным ключом клиента, чтобы `Resource Server` не мог прочитать данные без расшифровки.",
+              "text": "`DPoP` шифрует тело каждого HTTP-запроса приватным ключом клиента, чтобы `Resource Server` не мог прочитать данные без расшифровки. `Resource Server` не смог бы обрабатывать запросы без приватного ключа клиента.",
               "correct": false,
               "sections": {
                 "what_actually": "`DPoP` не шифрует тело запроса: он прикладывает подписанный proof, доказывающий владение ключом, к которому привязан токен.",
@@ -1116,7 +1116,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`DPoP` делает токен общим для всех клиентов одного приложения, чтобы они могли использовать один и тот же ключ.",
+              "text": "`DPoP` делает токен общим для всех клиентов одного приложения, чтобы они могли использовать один и тот же ключ. Перехват токена и общего ключа давал бы доступ всем, что сводит на нет смысл `DPoP`.",
               "correct": false,
               "sections": {
                 "what_actually": "`DPoP` привязывает токен к индивидуальному ключу конкретного клиента (sender-constrained), а не делает его общим.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`DPoP` нужен только для opaque token; к `JWT access token` он неприменим, так как `JWT` уже подписан.",
+              "text": "`DPoP` нужен только для opaque token; к `JWT access token` он неприменим, так как `JWT` уже подписан. Перехваченный `JWT` нельзя было бы переиспользовать. Подпись JWT связывает bearer token с ключом конкретного клиента и сама предотвращает replay на другом устройстве.",
               "correct": false,
               "sections": {
                 "what_actually": "`DPoP` применим к любым access token, включая `JWT`: подпись `JWT` подтверждает источник, а `DPoP` — владение ключом отправителем.",
@@ -1164,7 +1164,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`OIDC` и `OAuth2` решают одну и ту же задачу — авторизацию доступа к ресурсам, отличаясь лишь форматом токена.",
+              "text": "`OIDC` и `OAuth2` решают одну и ту же задачу — авторизацию доступа к ресурсам, отличаясь лишь форматом токена. Не нужны были бы ни `ID Token`, ни `UserInfo endpoint`. Оба протокола работают с токенами и redirect-flow.",
               "correct": false,
               "sections": {
                 "what_actually": "`OAuth2` решает авторизацию, а `OIDC` добавляет аутентификацию (кто пользователь) через `ID Token`; задачи разные.",
@@ -1176,7 +1176,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`ID Token` в `OIDC` предназначен для `Resource Server`, который по нему даёт доступ к защищённым API.",
+              "text": "`ID Token` в `OIDC` предназначен для `Resource Server`, который по нему даёт доступ к защищённым API. `access token` был бы лишним. Оба — `JWT` с claims. Resource server принимает его как единственный bearer credential для всех API.",
               "correct": false,
               "sections": {
                 "what_actually": "`ID Token` предназначен клиенту для идентификации пользователя; доступ к API даёт `access token`, а не `ID Token`.",
@@ -1188,7 +1188,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`OIDC` — это полная замена `OAuth2`: он отменяет токены доступа и работает только с `ID Token` для всех операций.",
+              "text": "`OIDC` — это полная замена `OAuth2`: он отменяет токены доступа и работает только с `ID Token` для всех операций. Нельзя было бы вызывать API провайдера, ведь `ID Token` для этого не предназначен. `OIDC` часто упоминают вместо `OAuth2` в контексте логина.",
               "correct": false,
               "sections": {
                 "what_actually": "`OIDC` — надстройка над `OAuth2`, а не замена: `access token` для доступа к API остаётся, `ID Token` лишь добавляется для идентификации.",
@@ -1211,7 +1211,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`nonce` в `ID Token` — это срок жизни токена в секундах, аналог `exp`, заданный клиентом.",
+              "text": "`nonce` в `ID Token` — это срок жизни токена в секундах, аналог `exp`, заданный клиентом. `nonce` нельзя было бы использовать против replay, ради чего он и введён. Оба claim относятся к безопасности токена.",
               "correct": false,
               "sections": {
                 "what_actually": "`nonce` — случайное значение для защиты от replay: клиент генерирует его и сверяет в полученном токене; срок жизни задаёт `exp`.",
@@ -1223,7 +1223,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В `ID Token` обязателен claim `scope`, который перечисляет, к каким API клиент получил доступ.",
+              "text": "В `ID Token` обязателен claim `scope`, который перечисляет, к каким API клиент получил доступ. `ID Token` нёс бы права доступа. `scope` важен в `OAuth2`, и его ожидают в любом токене.",
               "correct": false,
               "sections": {
                 "what_actually": "`scope` относится к авторизации и `access token`; обязательные claims `ID Token` — это `iss`, `sub`, `aud`, `exp`, `iat`.",
@@ -1235,7 +1235,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`ID Token` — это случайная opaque-строка без структуры, валидируемая только через introspection на `Authorization Server`.",
+              "text": "`ID Token` — это случайная opaque-строка без структуры, валидируемая только через introspection на `Authorization Server`. Клиент не смог бы прочитать `sub`, `email`, `name` без запроса к AS. Подпись отсутствовала бы.",
               "correct": false,
               "sections": {
                 "what_actually": "`ID Token` — это структурированный `JWT` с claims, валидируемый по подписи локально, а не opaque-строка.",
@@ -1247,13 +1247,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`ID Token` — это `JWT` с обязательными claims для идентификации пользователя: `iss` (издатель), `sub` (уникальный ID пользователя), `aud` (client_id, для которого выдан), `exp`, `iat`, `nonce` (защита от replay) и `at_hash` (привязка к access token). Дополнительно — `name`, `email`, `email_verified`, `picture`.",
+              "text": "`ID Token` — JWT, который подтверждает authentication event для конкретного клиента. Базово обязательны `iss`, `sub`, `aud`, `exp` и `iat`; `nonce` обязателен в ответе, если клиент передал его в запросе, а `at_hash` и `c_hash` требуются только для определённых response types и flow.",
               "correct": true,
               "sections": {
-                "explanation": "`ID Token` отвечает на вопрос «кто пользователь»: его claims описывают личность. `nonce` связывает токен с конкретным запросом клиента, защищая от replay-атак.",
+                "explanation": "Клиент проверяет подпись, issuer, audience, expiration и правила конкретного flow. Дополнительные claims (`auth_time`, `acr`, `amr`, `nonce`, hash-claims) появляются по запросу или требованиям профиля.",
                 "example": "Реальный `ID Token` от Google: `sub: \"110169484474386276334\"`, `aud: \"my-app.apps.googleusercontent.com\"`, `nonce: \"abc123\"`, `email: \"ivan@example.com\"`, `email_verified: true`.",
                 "when_to_apply": "`ID Token` используют на стороне клиента после логина: верифицируют подпись, `iss`, `aud`, `nonce` и достают данные пользователя для создания сессии.",
-                "edge_cases": "`ID Token` предназначен клиенту, не `Resource Server`; `nonce` генерирует клиент и сверяет при получении, `at_hash` привязывает `ID Token` к конкретному `access token`.",
+                "edge_cases": "`ID Token` предназначен клиенту, а не resource server. Профиль пользователя лучше получать через UserInfo; presence `nonce` и `at_hash` нельзя объявлять безусловно обязательным для каждого Code Flow.",
                 "related": "[[oauth2-interview#Q20]] OIDC поверх OAuth2; [[oauth2-interview#Q13]] общая структура JWT; [[oauth2-interview#Q42]] OIDC claims по scope."
               }
             }
@@ -1284,7 +1284,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`OIDC Discovery` — это эндпоинт регистрации новых клиентов, через который приложение получает свой `client_secret`.",
+              "text": "`OIDC Discovery` — это эндпоинт регистрации новых клиентов, через который приложение получает свой `client_secret`. `/.well-known/openid-configuration` раздавал бы секреты всем, что грубо нарушало бы безопасность. Оба относятся к настройке интеграции с провайдером.",
               "correct": false,
               "sections": {
                 "what_actually": "`Discovery` отдаёт публичные метаданные сервера для автоконфигурации; регистрация клиентов — это отдельный механизм (Dynamic Client Registration).",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`OIDC Discovery` требует, чтобы каждый endpoint (`token`, `authorize`, `jwks`) прописывался в конфиге клиента вручную, дублируя метаданные.",
+              "text": "`OIDC Discovery` требует, чтобы каждый endpoint (`token`, `authorize`, `jwks`) прописывался в конфиге клиента вручную, дублируя метаданные. `Discovery` не упрощал бы настройку, а это его единственная цель. Привычка к ручной конфигурации до появления `Discovery`.",
               "correct": false,
               "sections": {
                 "what_actually": "Смысл `Discovery` в обратном: указав один `issuer-uri`, клиент автоматически узнаёт все endpoints из документа конфигурации.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`UserInfo endpoint` вызывается с `ID Token` в заголовке `Authorization`, так как именно `ID Token` содержит данные пользователя.",
+              "text": "`UserInfo endpoint` вызывается с `ID Token` в заголовке `Authorization`, так как именно `ID Token` содержит данные пользователя. `ID Token` пришлось бы пересылать на сервер, нарушая его роль удостоверения для клиента. Оба связаны с данными пользователя.",
               "correct": false,
               "sections": {
                 "what_actually": "`UserInfo` вызывается с `access token`, а не с `ID Token`; `ID Token` предназначен клиенту и не передаётся endpoint-ам.",
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для `OAuth2 Login` обязательно реализовать собственный `Authorization Code Flow` вручную: построить redirect-URL и обработать callback в контроллере.",
+              "text": "Для `OAuth2 Login` обязательно реализовать собственный `Authorization Code Flow` вручную: построить redirect-URL и обработать callback в контроллере. `registration`/`provider` в `application.yml` были бы бесполезны. Понимание механики flow создаёт ощущение, что её надо кодить руками.",
               "correct": false,
               "sections": {
                 "what_actually": "`Spring Security` реализует flow за вас: `.oauth2Login(...)` сам строит redirect, обрабатывает callback и проверяет `state`.",
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`OAuth2 Login` в `Spring Security` настраивается через `.oauth2ResourceServer().jwt()`, так как логин — это валидация входящего `JWT`.",
+              "text": "`OAuth2 Login` в `Spring Security` настраивается через `.oauth2ResourceServer().jwt()`, так как логин — это валидация входящего `JWT`. Spring не редиректил бы пользователя на провайдера для входа, что является сутью login flow.",
               "correct": false,
               "sections": {
                 "what_actually": "Для логина используется `.oauth2Login(...)` (клиентская роль); `.oauth2ResourceServer().jwt()` — это защита API, валидация входящих токенов.",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`OAuth2 Login` нельзя настроить более чем для одного провайдера: на приложение допускается ровно одна `registration`.",
+              "text": "`OAuth2 Login` нельзя настроить более чем для одного провайдера: на приложение допускается ровно одна `registration`. Нельзя было бы предложить «Войти через Google или GitHub» в одном приложении.",
               "correct": false,
               "sections": {
                 "what_actually": "Можно зарегистрировать несколько провайдеров (`google`, `keycloak` и т.д.); Spring сам покажет выбор на странице логина.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для `Resource Server` с `JWT` нужно настроить `.oauth2Login(...)`, чтобы Spring редиректил неаутентифицированные запросы на страницу логина провайдера.",
+              "text": "Для `Resource Server` с `JWT` нужно настроить `.oauth2Login(...)`, чтобы Spring редиректил неаутентифицированные запросы на страницу логина провайдера. Вызов API без токена редиректил бы на HTML-страницу логина вместо ответа `401`.",
               "correct": false,
               "sections": {
                 "what_actually": "Защита API настраивается через `.oauth2ResourceServer().jwt(...)`; `.oauth2Login()` — для интерактивного логина с редиректом, что для stateless API не нужно.",
@@ -1403,20 +1403,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Resource Server` настраивается через `spring.security.oauth2.resourceserver.jwt.issuer-uri` (или `jwk-set-uri`), а в `SecurityFilterChain` — через `.oauth2ResourceServer(oauth2 -> oauth2.jwt(...))` с `JwtAuthenticationConverter` для маппинга claim в authorities, `SessionCreationPolicy.STATELESS` и отключённым `CSRF` для stateless API.",
+              "text": "Spring Resource Server настраивают через `issuer-uri` либо `jwk-set-uri` и `.oauth2ResourceServer(oauth2 -> oauth2.jwt(...))`; `JwtAuthenticationConverter` маппит claims в authorities. Stateless bearer-only API обычно использует `SessionCreationPolicy.STATELESS`, а решение по CSRF зависит от способа доставки credentials.",
               "correct": true,
               "sections": {
-                "explanation": "Spring сам валидирует `JWT` по `JWKS`, проверяет подпись, `exp`, `iss`; `JwtAuthenticationConverter` превращает claim `roles` в `GrantedAuthority` с префиксом `ROLE_`, чтобы работали `hasRole`/`@PreAuthorize`.",
+                "explanation": "Bearer token в заголовке `Authorization` браузер не добавляет автоматически, поэтому чистый bearer-only API обычно не подвержен классическому CSRF. Cookie- или session-based endpoints остаются CSRF-чувствительными.",
                 "example": "В `application.yml` указывают `issuer-uri: https://auth.example.com`; в контроллере `@AuthenticationPrincipal Jwt jwt` даёт доступ к claims, а `@PreAuthorize(\"hasRole('ADMIN')\")` ограничивает эндпоинт.",
                 "when_to_apply": "Используют для защиты REST API, которое принимает `JWT` от внешнего `Authorization Server` (Keycloak, Spring Authorization Server) в микросервисной архитектуре.",
-                "edge_cases": "Для stateless API сессии отключают (`STATELESS`) и `CSRF` не нужен; маппинг ролей зависит от того, в каком claim провайдер кладёт authorities.",
+                "edge_cases": "Не отключайте CSRF только потому, что приложение названо stateless: если browser автоматически отправляет cookie, Basic credentials или клиентский сертификат, CSRF-защита или эквивалентная проверка всё ещё нужна.",
                 "related": "[[oauth2-interview#Q23]] настройка OAuth2 Login; [[oauth2-interview#Q15]] как валидируется JWT; [[oauth2-interview#Q25]] Resource Server в микросервисах."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`Resource Server` обязан сам хранить приватный ключ и сверять им подпись каждого входящего `JWT`.",
+              "text": "`Resource Server` обязан сам хранить приватный ключ и сверять им подпись каждого входящего `JWT`. Раздача приватного ключа всем сервисам мгновенно скомпрометировала бы подпись токенов.",
               "correct": false,
               "sections": {
                 "what_actually": "`Resource Server` проверяет подпись ПУБЛИЧНЫМ ключом из `JWKS` (по `issuer-uri`/`jwk-set-uri`); приватный ключ есть только у AS.",
@@ -1428,7 +1428,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "На `Resource Server` нужно включить серверные сессии (`SessionCreationPolicy.ALWAYS`) и оставить `CSRF`, так как `JWT` хранится в сессии.",
+              "text": "На `Resource Server` нужно включить серверные сессии (`SessionCreationPolicy.ALWAYS`) и оставить `CSRF`, так как `JWT` хранится в сессии. Терялась бы главная выгода `JWT` — отсутствие серверного состояния и горизонтальная масштабируемость.",
               "correct": false,
               "sections": {
                 "what_actually": "`JWT` приходит в заголовке `Authorization` на каждый запрос; API делают stateless (`STATELESS`), а `CSRF` для него не нужен.",
@@ -1451,7 +1451,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В микросервисах у каждого сервиса должен быть свой собственный `Authorization Server` и независимый набор ключей подписи.",
+              "text": "В микросервисах у каждого сервиса должен быть свой собственный `Authorization Server` и независимый набор ключей подписи. Токен от одного сервиса не проходил бы валидацию в другом, ломая token relay. Принцип автономности микросервисов распространяют и на выдачу токенов.",
               "correct": false,
               "sections": {
                 "what_actually": "Типовая схема — один общий `Authorization Server` (один `issuer-uri`) и общий `JWKS`, чтобы любой сервис мог проверить любой токен.",
@@ -1463,7 +1463,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для межсервисных вызовов нужно прокидывать `client_secret` каждого сервиса в заголовке запроса downstream-сервису.",
+              "text": "Для межсервисных вызовов нужно прокидывать `client_secret` каждого сервиса в заголовке запроса downstream-сервису. Утечка одного запроса раскрыла бы секрет сервиса, скомпрометировав весь M2M-доступ. Downstream использует этот secret как bearer credential и не запрашивает отдельный service token с ограниченным audience и scope.",
               "correct": false,
               "sections": {
                 "what_actually": "Межсервисные вызовы идут через `Client Credentials`-токен (или token relay/exchange); `client_secret` никогда не пересылают downstream.",
@@ -1475,7 +1475,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В микросервисах каждый сервис при каждом запросе обращается к `Authorization Server` за валидацией токена через introspection.",
+              "text": "В микросервисах каждый сервис при каждом запросе обращается к `Authorization Server` за валидацией токена через introspection. `Authorization Server` стал бы single point of failure под нагрузкой всех сервисов. Introspection считается «надёжной» централизованной проверкой.",
               "correct": false,
               "sections": {
                 "what_actually": "С `JWT` сервисы валидируют токен ЛОКАЛЬНО по общему `JWKS`; introspection per-request создал бы узкое место на AS.",
@@ -1511,20 +1511,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring Authorization Server` подключается зависимостью `spring-security-oauth2-authorization-server`, а конфигурируется бинами: `SecurityFilterChain` с `applyDefaultSecurity` и `.oidc(...)`, `RegisteredClientRepository` (клиенты, grant types, scopes, `TokenSettings`), `JWKSource` (ключи подписи) и `AuthorizationServerSettings` с `issuer`.",
-              "correct": true,
+              "text": "`RegisteredClient` в `Spring Authorization Server` описывает конечных пользователей и их пароли, а не клиентские приложения. Негде было бы задать `redirect_uri` и grant types приложения. Слово «client» воспринимают как «пользователь-клиент».",
+              "correct": false,
               "sections": {
-                "explanation": "Это полноценный `Authorization Server` на базе Spring Security: он выдаёт токены, публикует `JWKS` и `OIDC Discovery`. Клиенты, их redirect URIs, scopes и TTL описываются в `RegisteredClient`.",
-                "example": "`RegisteredClient.withId(...).clientId(\"web-app\").authorizationGrantType(AUTHORIZATION_CODE).redirectUri(...).scope(OidcScopes.OPENID).tokenSettings(...)`; `JWKSource` отдаёт `RSAKey`, а `AuthorizationServerSettings` задаёт `issuer`.",
-                "when_to_apply": "Используют, когда нужен собственный `Authorization Server` (вместо Keycloak/Okta): внутренний `OIDC`-провайдер, контроль над выдачей токенов и кастомными claims.",
-                "edge_cases": "В production `RegisteredClient` и авторизации хранят в БД (`JdbcRegisteredClientRepository`, `JdbcOAuth2AuthorizationService`), а ключи — в защищённом keystore, а не in-memory.",
-                "related": "[[oauth2-interview#Q41]] детальная настройка SAS с нуля; [[oauth2-interview#Q23]] клиентская сторона OAuth2 Login; [[oauth2-interview#Q31]] обязательный PKCE в OAuth 2.1."
+                "what_actually": "`RegisteredClient` описывает клиентские приложения (`client_id`, grant types, scopes, redirect URIs); пользователей хранит `UserDetailsService`.",
+                "source_of_confusion": "Слово «client» воспринимают как «пользователь-клиент».",
+                "if_it_were_true": "Тогда негде было бы задать `redirect_uri` и grant types приложения, но именно их `RegisteredClient` и содержит.",
+                "how_it_should_be": "`RegisteredClient` — это конфигурация приложения-клиента; пользователи живут в `UserDetailsService`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Spring Authorization Server` — это клиентская библиотека: она нужна приложению, чтобы логиниться через внешний провайдер вроде Google.",
+              "text": "`Spring Authorization Server` — это клиентская библиотека: она нужна приложению, чтобы логиниться через внешний провайдер вроде Google. Не нужны были бы `RegisteredClientRepository` и `JWKSource`. Названия `oauth2-client` и `authorization-server` оба про `OAuth2`.",
               "correct": false,
               "sections": {
                 "what_actually": "Это серверная реализация самого `Authorization Server` (выдаёт токены); за логин через внешнего провайдера отвечает `spring-security-oauth2-client`.",
@@ -1536,19 +1535,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`RegisteredClient` в `Spring Authorization Server` описывает конечных пользователей и их пароли, а не клиентские приложения.",
-              "correct": false,
+              "text": "Spring Authorization Server собирают из `OAuth2AuthorizationServerConfigurer` или минимальной `OAuth2AuthorizationServerConfiguration`, `RegisteredClientRepository`, `AuthorizationServerSettings`, `JWKSource` и сервисов авторизаций/consent. OIDC включают через configurer, а клиентов, grants, scopes и token settings задают в `RegisteredClient`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`RegisteredClient` описывает клиентские приложения (`client_id`, grant types, scopes, redirect URIs); пользователей хранит `UserDetailsService`.",
-                "source_of_confusion": "Слово «client» воспринимают как «пользователь-клиент».",
-                "if_it_were_true": "Тогда негде было бы задать `redirect_uri` и grant types приложения, но именно их `RegisteredClient` и содержит.",
-                "how_it_should_be": "`RegisteredClient` — это конфигурация приложения-клиента; пользователи живут в `UserDetailsService`."
+                "explanation": "Это полноценный `Authorization Server` на базе Spring Security: он выдаёт токены, публикует `JWKS` и `OIDC Discovery`. Клиенты, их redirect URIs, scopes и TTL описываются в `RegisteredClient`.",
+                "example": "`RegisteredClient.withId(...).clientId(\"web-app\").authorizationGrantType(AUTHORIZATION_CODE).redirectUri(...).scope(OidcScopes.OPENID).tokenSettings(...)`; `JWKSource` отдаёт `RSAKey`, а `AuthorizationServerSettings` задаёт `issuer`.",
+                "when_to_apply": "Используют, когда нужен собственный `Authorization Server` (вместо Keycloak/Okta): внутренний `OIDC`-провайдер, контроль над выдачей токенов и кастомными claims.",
+                "edge_cases": "Конкретный DSL меняется между версиями Spring Authorization Server, поэтому конфигурацию сверяют с reference guide используемого релиза. В production клиенты, authorizations и ключи должны быть персистентными и ротируемыми.",
+                "related": "[[oauth2-interview#Q41]] детальная настройка SAS с нуля; [[oauth2-interview#Q23]] клиентская сторона OAuth2 Login; [[oauth2-interview#Q31]] обязательный PKCE в OAuth 2.1."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Для `Spring Authorization Server` не нужен `JWKSource`: ключи подписи он генерирует автоматически на каждый запрос токена.",
+              "text": "Для `Spring Authorization Server` не нужен `JWKSource`: ключи подписи он генерирует автоматически на каждый запрос токена. `Resource Server` не смог бы проверить подпись по `JWKS`, ведь ключ менялся бы каждый раз.",
               "correct": false,
               "sections": {
                 "what_actually": "`JWKSource` обязателен: он задаёт стабильную пару ключей для подписи `JWT` и публикации публичного ключа в `JWKS`.",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Scope escalation невозможен, так как клиент физически не может запросить больше прав, чем ему выдали при регистрации.",
+              "text": "Scope escalation невозможен, так как клиент физически не может запросить больше прав, чем ему выдали при регистрации. Проверка scope на AS была бы избыточной. Регистрацию клиента считают жёстким ограничением на этапе запроса. Запрошенные scopes принимаются без дополнительной policy-проверки authorization server.",
               "correct": false,
               "sections": {
                 "what_actually": "Клиент может ЗАПРОСИТЬ больше scopes, поэтому `Authorization Server` обязан валидировать и урезать их до разрешённых.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Главная и единственная угроза `OAuth2` — это `DDoS` на token endpoint; остальные риски устраняются самим протоколом автоматически.",
+              "text": "Главная и единственная угроза `OAuth2` — это `DDoS` на token endpoint; остальные риски устраняются самим протоколом автоматически. Не нужны были бы `PKCE`, `state` и rotation. `DDoS` — заметная угроза доступности. Secure defaults автоматически закрывают redirect, replay и token theft.",
               "correct": false,
               "sections": {
                 "what_actually": "Угроз много (перехват code, `CSRF`, token leakage, replay, refresh theft и др.), и протокол сам по себе их не устраняет — нужны явные защиты.",
@@ -1595,7 +1595,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Open redirect не относится к угрозам `OAuth2`, потому что `redirect_uri` всегда контролируется браузером пользователя.",
+              "text": "Open redirect не относится к угрозам `OAuth2`, потому что `redirect_uri` всегда контролируется браузером пользователя. Не требовался бы whitelist и exact match `redirect_uri`. Любой URI из браузерного контекста считается доверенным callback. Поддомены и произвольные callback-пути можно принимать по wildcard без предварительной server-side регистрации каждого redirect URI.",
               "correct": false,
               "sections": {
                 "what_actually": "Open redirect — реальная угроза: при нестрогой проверке `redirect_uri` злоумышленник уводит code на свой адрес.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`state` защищает от перехвата authorization code в сети, заменяя собой `PKCE` и `TLS`.",
+              "text": "`state` защищает от перехвата authorization code в сети, заменяя собой `PKCE` и `TLS`. `PKCE` был бы избыточен. Все три относятся к безопасности flow. `state` одновременно шифрует authorization response и привязывает сетевой канал.",
               "correct": false,
               "sections": {
                 "what_actually": "`state` защищает от `CSRF`, а от перехвата code защищают `PKCE` и `HTTPS`; это разные механизмы.",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`state` — это access token, который клиент передаёт в `/authorize`, чтобы `Authorization Server` сразу узнал авторизованного пользователя.",
+              "text": "`state` — это access token, который клиент передаёт в `/authorize`, чтобы `Authorization Server` сразу узнал авторизованного пользователя. Токен светился бы в URL `/authorize`, что само по себе является уязвимостью. Оба передаются в запросах `OAuth2`.",
               "correct": false,
               "sections": {
                 "what_actually": "`state` — это случайное анти-`CSRF` значение, а не токен; на шаге `/authorize` access token ещё не существует.",
@@ -1655,7 +1655,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`state` генерирует `Authorization Server` и хранит у себя, а клиент его не проверяет — только пересылает обратно.",
+              "text": "`state` генерирует `Authorization Server` и хранит у себя, а клиент его не проверяет — только пересылает обратно. `state` не защищал бы клиента от `CSRF`, ведь проверка происходила бы не на его стороне. Клиент лишь отражает значение без проверки.",
               "correct": false,
               "sections": {
                 "what_actually": "`state` генерирует и проверяет КЛИЕНТ: он сохраняет значение в своей сессии и сверяет при callback.",
@@ -1691,7 +1691,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Токены полезно логировать целиком в production — это помогает быстрее расследовать инциденты по логам.",
+              "text": "Токены полезно логировать целиком в production — это помогает быстрее расследовать инциденты по логам. Любой доступ к логам давал бы валидные токены, расширяя поверхность атаки. Польза подробных логов для отладки заслоняет риск утечки.",
               "correct": false,
               "sections": {
                 "what_actually": "Токены в логах — это утечка: логи попадают в системы агрегации и бэкапы; в production токены маскируют.",
@@ -1703,7 +1703,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Access token следует делать долгоживущим (несколько месяцев), чтобы снизить нагрузку на token endpoint в production.",
+              "text": "Access token следует делать долгоживущим (несколько месяцев), чтобы снизить нагрузку на token endpoint в production. Украденный токен давал бы доступ месяцами. Оптимизацию нагрузки ставят выше безопасности. Revocation и rotation при таком TTL не требуются при включённом TLS.",
               "correct": false,
               "sections": {
                 "what_actually": "Production требует короткого TTL access token (15–60 мин) для минимизации окна компрометации; обновление берёт на себя refresh token.",
@@ -1715,7 +1715,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для production достаточно включить HTTPS; `PKCE`, rotation и валидация claims нужны только в dev-окружении.",
+              "text": "Для production достаточно включить HTTPS; `PKCE`, rotation и валидация claims нужны только в dev-окружении. Перехват code или кража refresh token не предотвращались бы, несмотря на HTTPS. HTTPS воспринимают как универсальную защиту, закрывающую все риски.",
               "correct": false,
               "sections": {
                 "what_actually": "HTTPS обязателен, но недостаточен: `PKCE`, rotation, валидация `iss`/`aud`/`exp` и хранение секретов критичны именно в production.",
@@ -1727,11 +1727,11 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Чеклист: HTTPS везде; `PKCE` для всех клиентов; exact match `redirect_uri` без wildcard; криптостойкий одноразовый `state`; короткий TTL access token (15–60 мин); refresh token rotation с reuse detection; хранение секретов в secrets manager; валидация `iss`/`aud`/`exp`/`scope`; токены в `httpOnly`+`Secure`+`SameSite` cookie; мониторинг аномалий; ротация ключей; не логировать токены.",
+              "text": "Чеклист: HTTPS везде; `PKCE` для всех клиентов; exact match `redirect_uri` без wildcard; криптостойкий одноразовый `state`; короткий TTL access token (15–60 мин); refresh token rotation с reuse detection; хранение секретов в secrets manager; валидация `iss`/`aud`/`exp`/`scope`.",
               "correct": true,
               "sections": {
                 "explanation": "Чеклист сводит воедино защиты против всех ключевых угроз: транспорт, перехват code, `CSRF`, leakage, replay, кражу refresh token и утечку секретов. Это операционный минимум для production.",
-                "example": "Например, токены маскируют в логах кастомным фильтром (`MDC.put(\"token_hint\", ...)`), а refresh token кладут в `httpOnly`+`Secure`+`SameSite=Strict` cookie; `redirect_uri` сверяют точно.",
+                "example": "Например, токены маскируют в логах кастомным фильтром (`MDC.put(\"token_hint\"...)`), а refresh token кладут в `httpOnly`+`Secure`+`SameSite=Strict` cookie; `redirect_uri` сверяют точно.",
                 "when_to_apply": "Чеклист применяют при выкатке `OAuth2`-интеграции в production и при периодическом security review, проверяя каждый пункт.",
                 "edge_cases": "Пункты усиливают друг друга: короткий TTL уменьшает ущерб от leakage, rotation — от кражи refresh token; ротация ключей `JWKS` поддерживает несколько `kid` одновременно.",
                 "related": "[[oauth2-interview#Q27]] список угроз; [[oauth2-interview#Q35]] защита от CSRF и token leakage; [[oauth2-interview#Q16]] rotation с reuse detection."
@@ -1764,7 +1764,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для тестирования `OAuth2` в `Spring Boot` нужно поднимать реальный `Google`/`Keycloak` и проходить настоящий логин в каждом unit-тесте.",
+              "text": "Для тестирования `OAuth2` в `Spring Boot` нужно поднимать реальный `Google`/`Keycloak` и проходить настоящий логин в каждом unit-тесте. Unit-тесты были бы медленными и зависели от внешней сети, теряя изоляцию.",
               "correct": false,
               "sections": {
                 "what_actually": "Unit-тесты используют `spring-security-test` (`jwt()`, `@WithMockUser`), который подставляет контекст без внешнего провайдера; реальный AS — только для интеграционных тестов через Testcontainers.",
@@ -1776,7 +1776,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Тестировать `OAuth2` бессмысленно: достаточно протестировать бизнес-логику, ведь Spring Security сам гарантирует безопасность эндпоинтов.",
+              "text": "Тестировать `OAuth2` бессмысленно: достаточно протестировать бизнес-логику, ведь Spring Security сам гарантирует безопасность эндпоинтов. Ошибка в `@PreAuthorize` или маппинге ролей осталась бы незамеченной до прода. Доверие к фреймворку перерастает в отказ от тестов конфигурации безопасности.",
               "correct": false,
               "sections": {
                 "what_actually": "Авторизационные правила (`@PreAuthorize`, маппинг ролей, проверка scope) — часть поведения приложения и требуют тестов на `401`/`403`.",
@@ -1788,7 +1788,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Метод `jwt()` из `spring-security-test` требует валидной криптографической подписи `JWT` настоящим приватным ключом провайдера.",
+              "text": "Метод `jwt()` из `spring-security-test` требует валидной криптографической подписи `JWT` настоящим приватным ключом провайдера. Для каждого теста пришлось бы генерировать и подписывать токен. Раз в проде подпись обязательна, её ожидают и в тестовом помощнике.",
               "correct": false,
               "sections": {
                 "what_actually": "`jwt()` подставляет аутентификацию в `SecurityContext` напрямую, минуя проверку подписи; настоящий ключ для unit-теста не нужен.",
@@ -1811,7 +1811,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`OAuth 2.1` разрешил частичное совпадение `redirect_uri` по wildcard, чтобы упростить регистрацию множества поддоменов.",
+              "text": "`OAuth 2.1` разрешил частичное совпадение `redirect_uri` по wildcard, чтобы упростить регистрацию множества поддоменов. Открылся бы вектор open redirect и увода authorization code. Регистрация одного базового домена автоматически разрешает все его поддомены и callback-пути без точного сравнения строки URI.",
               "correct": false,
               "sections": {
                 "what_actually": "`OAuth 2.1` требует ТОЧНОГО совпадения `redirect_uri` без wildcard для защиты от open redirect.",
@@ -1836,7 +1836,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`OAuth 2.1` ввёл новый grant type `Implicit++`, который безопасно возвращает токен в URL благодаря дополнительной подписи фрагмента.",
+              "text": "`OAuth 2.1` ввёл новый grant type `Implicit++`, который безопасно возвращает токен в URL благодаря дополнительной подписи фрагмента. Токен по-прежнему попадал бы в URL и историю браузера. `OAuth 2.1` сохраняет backward compatibility через улучшенный вариант Implicit. Implicit сохранялся бы.",
               "correct": false,
               "sections": {
                 "what_actually": "`OAuth 2.1`, наоборот, удалил `Implicit Flow` целиком; новых грантов он не добавляет, а только убирает небезопасные.",
@@ -1848,7 +1848,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В `OAuth 2.1` `PKCE` стал опциональным послаблением, чтобы упростить интеграцию для всех типов клиентов.",
+              "text": "В `OAuth 2.1` `PKCE` стал опциональным послаблением, чтобы упростить интеграцию для всех типов клиентов. Защита от перехвата code ослабла бы. Клиенты без PKCE полагаются на короткий TTL authorization code как на достаточную защиту от перехвата.",
               "correct": false,
               "sections": {
                 "what_actually": "`OAuth 2.1` сделал `PKCE` ОБЯЗАТЕЛЬНЫМ для всех публичных клиентов (а рекомендуемым для всех), а не опциональным.",
@@ -1871,7 +1871,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Обязательные claims `JWT` — это `username`, `password` и `role`, по которым `Resource Server` напрямую аутентифицирует пользователя.",
+              "text": "Обязательные claims `JWT` — это `username`, `password` и `role`, по которым `Resource Server` напрямую аутентифицирует пользователя. `JWT` нёс бы пароль в `Base64`, что было бы грубой утечкой при перехвате токена. Привычные поля формы логина ожидают увидеть и в токене.",
               "correct": false,
               "sections": {
                 "what_actually": "Registered claims — это `iss`, `sub`, `aud`, `exp`, `iat` и др.; пароль в токен не кладут вовсе, а роль — нестандартный кастомный claim.",
@@ -1883,7 +1883,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Claim `aud` проверять не обязательно: если подпись валидна, токен можно принимать на любом сервисе.",
+              "text": "Claim `aud` проверять не обязательно: если подпись валидна, токен можно принимать на любом сервисе. Токен для `service-a` открывал бы доступ к `service-b`, что и есть уязвимость confused deputy. Валидную подпись считают достаточной гарантией легитимности токена.",
               "correct": false,
               "sections": {
                 "what_actually": "`aud` обязателен к проверке: без неё токен, выданный для одного сервиса, принимается другим (confused deputy).",
@@ -1908,7 +1908,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Claim `exp` хранит время ВЫДАЧИ токена, а `iat` — время его ИСТЕЧЕНИЯ; они часто путаются местами в реализации.",
+              "text": "Claim `exp` хранит время ВЫДАЧИ токена, а `iat` — время его ИСТЕЧЕНИЯ; они определяются в обратном порядке. Валидатор сравнивал бы `now` не с тем claim и пропускал бы истёкшие токены. Короткие имена `exp`/`iat`.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `exp` — время истечения, `iat` — время выдачи; путаница приводит к неверной проверке срока.",
@@ -1931,7 +1931,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "При обнаружении повторного использования refresh token достаточно отклонить запрос, оставив остальные токены пользователя действующими.",
+              "text": "При обнаружении повторного использования refresh token достаточно отклонить запрос, оставив остальные токены пользователя действующими. Злоумышленник с украденной веткой продолжал бы обновлять токены, обходя защиту. Token family при этом не инвалидируется, а каждый новый refresh token рассматривается как независимая действующая ветка.",
               "correct": false,
               "sections": {
                 "what_actually": "Reuse — сигнал кражи: отзывают всю token family пользователя, а не просто отклоняют один запрос.",
@@ -1943,7 +1943,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для `Refresh Token Rotation` в Spring достаточно выставить `reuseRefreshTokens(true)` — это включает выдачу нового токена при каждом обновлении.",
+              "text": "Для `Refresh Token Rotation` в Spring достаточно выставить `reuseRefreshTokens(true)` — это включает выдачу нового токена при каждом обновлении. Reuse detection не работал бы, ведь повторное использование считалось бы штатным. Имя флага читается «переиспользовать», и `true` связывают с «обновлением».",
               "correct": false,
               "sections": {
                 "what_actually": "Rotation включается значением `reuseRefreshTokens(false)`; `true` оставляет старый токен многоразовым, то есть rotation выключена.",
@@ -1968,7 +1968,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Refresh token нужно хранить в БД в открытом виде, чтобы при обновлении сравнивать его строку напрямую с предъявленной.",
+              "text": "Refresh token нужно хранить в БД в открытом виде, чтобы при обновлении сравнивать его строку напрямую с предъявленной. Дамп таблицы давал бы злоумышленнику готовые валидные refresh token. Прямое строковое сравнение считается более простым хэширования. Открытое хранение считается необходимым для rotation.",
               "correct": false,
               "sections": {
                 "what_actually": "Хранят ХЭШ токена (SHA-256), а не сам токен: утечка БД с открытыми токенами равносильна компрометации всех сессий.",
@@ -1991,7 +1991,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`BFF` следует применять для всех приложений без исключения, так как он строго безопаснее любого другого подхода.",
+              "text": "`BFF` следует применять для всех приложений без исключения, так как он строго безопаснее любого другого подхода. Даже простое внутреннее приложение требовало бы лишнего сервиса и session store. Преимущество в безопасности возводят в универсальное правило.",
               "correct": false,
               "sections": {
                 "what_actually": "`BFF` уместен для публичных `SPA` с чувствительными данными; для внутренних инструментов достаточно `httpOnly` cookie + `PKCE`, а `BFF` добавляет лишнюю сложность.",
@@ -2003,7 +2003,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`BFF` (`Backend for Frontend`) — паттерн, где промежуточный сервер берёт на себя `OAuth2`-flow и хранение токенов вместо браузера: `SPA` общается с `BFF` по `httpOnly` session cookie, а `BFF` хранит токены server-side и проксирует запросы к API, добавляя `Bearer`. Токены вообще не попадают в браузер.",
+              "text": "`BFF` (`Backend for Frontend`) — паттерн, где промежуточный сервер берёт на себя `OAuth2`-flow и хранение токенов вместо браузера: `SPA` общается с `BFF` по `httpOnly` session cookie, а `BFF` хранит токены server-side и проксирует запросы к API, добавляя `Bearer`.",
               "correct": true,
               "sections": {
                 "explanation": "`BFF` устраняет проблему хранения токенов в браузере (`localStorage` уязвим к `XSS`): токены живут на сервере, клиент держит лишь session cookie. Это безопаснее для публичных приложений.",
@@ -2016,7 +2016,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`BFF` — это паттерн, при котором браузер сам хранит access и refresh token в `localStorage`, а сервер лишь раздаёт статику.",
+              "text": "`BFF` — это паттерн, при котором браузер сам хранит access и refresh token в `localStorage`, а сервер лишь раздаёт статику. `BFF` не решал бы проблему `XSS`-кражи токенов, ради которой его и вводят. `localStorage` — привычное место хранения токенов в SPA без BFF.",
               "correct": false,
               "sections": {
                 "what_actually": "Суть `BFF` в обратном: токены хранятся на сервере (`BFF`), а в браузере только session cookie; `localStorage` как раз исключают.",
@@ -2028,7 +2028,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`BFF` делает приложение полностью stateless и не требует никакого серверного хранилища сессий.",
+              "text": "`BFF` делает приложение полностью stateless и не требует никакого серверного хранилища сессий. Негде было бы хранить токены вне браузера. Желание сохранить stateless-преимущества `JWT` и при использовании `BFF`. Токены остаются только в памяти браузера и не создают server-side state.",
               "correct": false,
               "sections": {
                 "what_actually": "`BFF` хранит токены и сессию server-side, поэтому требует session store; это осознанный отказ от полной stateless-модели.",
@@ -2051,7 +2051,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Token leakage невозможен, если использовать `Implicit Flow`, так как токен передаётся в защищённом URL-фрагменте, недоступном серверу.",
+              "text": "Token leakage невозможен, если использовать `Implicit Flow`, так как токен передаётся в защищённом URL-фрагменте, недоступном серверу. `Implicit` не удаляли бы из стандарта. Browser history и `Referer` не могут раскрыть содержимое fragment.",
               "correct": false,
               "sections": {
                 "what_actually": "`Implicit Flow` как раз источник leakage: токен в `#access_token` попадает в историю браузера и `Referer`; именно поэтому он удалён в `OAuth 2.1`.",
@@ -2076,7 +2076,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "От `CSRF` в `OAuth2` защищает шифрование `access token`, а от token leakage — его более длинный срок жизни.",
+              "text": "От `CSRF` в `OAuth2` защищает шифрование `access token`, а от token leakage — его более длинный срок жизни. Длинный TTL «защищал» бы от утечки, хотя именно он расширяет окно компрометации. Меры безопасности перечисляют наугад, не привязывая к конкретной угрозе.",
               "correct": false,
               "sections": {
                 "what_actually": "От `CSRF` защищает `state`, а от leakage — короткий TTL, передача только в заголовке и маскирование в логах; длинный TTL, наоборот, усиливает риск.",
@@ -2088,7 +2088,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Сравнивать вернувшийся `state` с сохранённым нужно как обычные строки через `==`, скорость важнее способа сравнения.",
+              "text": "Сравнивать вернувшийся `state` с сохранённым нужно как обычные строки через `==`, скорость важнее способа сравнения. По времени сравнения можно было бы подбирать `state`, ослабляя защиту от `CSRF`. Обычное сравнение строк считается достаточным для проверки совпадения.",
               "correct": false,
               "sections": {
                 "what_actually": "`state` (и подобные секреты) сверяют constant-time сравнением (`MessageDigest.isEqual`), чтобы не утекало время и не было timing-атак.",
@@ -2106,12 +2106,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что изменилось в `OAuth 2.1` — детали спецификации?",
+          "question_text": "Что консолидирует актуальный draft `OAuth 2.1`?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "В `OAuth 2.1` `ROPC` сохранён и рекомендован как удобный способ логина для мобильных приложений.",
+              "text": "В `OAuth 2.1` `ROPC` сохранён и рекомендован как удобный способ логина для мобильных приложений. Нельзя было бы использовать `MFA`/`WebAuthn`, ведь клиент видел бы пароль напрямую. Простота `ROPC` (логин/пароль напрямую) считается удобной для мобильных.",
               "correct": false,
               "sections": {
                 "what_actually": "`ROPC` УДАЛЁН в `OAuth 2.1`: он требует передачи пароля клиенту и нарушает делегирование; замена — `Authorization Code` + `PKCE`.",
@@ -2123,7 +2123,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В `OAuth 2.1` bearer token разрешено передавать в URL query-параметрах для совместимости со старыми клиентами.",
+              "text": "В `OAuth 2.1` bearer token разрешено передавать в URL query-параметрах для совместимости со старыми клиентами. Токены утекали бы в access-логи и `Referer`, что и пытается исключить `2.1`.",
               "correct": false,
               "sections": {
                 "what_actually": "`OAuth 2.1` ЗАПРЕЩАЕТ bearer token в URL; его передают только в заголовке `Authorization`, чтобы избежать утечки через логи и `Referer`.",
@@ -2135,7 +2135,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`OAuth 2.1` добавил несколько новых grant types для IoT и мобильных устройств, расширив набор flow по сравнению с `OAuth 2.0`.",
+              "text": "`OAuth 2.1` добавил несколько новых grant types для IoT и мобильных устройств, расширив набор flow по сравнению с `OAuth 2.0`. `OAuth 2.1` был бы про новые flow. Новую версию ассоциируют с расширением возможностей.",
               "correct": false,
               "sections": {
                 "what_actually": "`OAuth 2.1` не добавляет новых грантов — он удаляет небезопасные (`Implicit`, `ROPC`); `Device Flow` пришёл отдельным `RFC 8628`, а не из `2.1`.",
@@ -2147,13 +2147,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`OAuth 2.1` (draft) консолидирует `RFC 6749` с security BCP (`RFC 6819`, `BCP 212`), не добавляя новых grant types. Детали: `Implicit` и `ROPC` удалены; `PKCE` обязателен для всех в Authorization Code Flow; `redirect_uri` — exact match; bearer token запрещён в URL; refresh token rotation обязательна для публичных клиентов; `state` рекомендован (часть его функций берёт `PKCE`).",
+              "text": "Актуальный draft `OAuth 2.1` объединяет базовый OAuth с современными security requirements: Authorization Code использует `PKCE`, redirect URI сравнивается точно, implicit и password grants отсутствуют, bearer token не передают в query, а refresh token public client защищают rotation либо sender-constraining.",
               "correct": true,
               "sections": {
-                "explanation": "`OAuth 2.1` — это «уборка»: фиксирует накопленные best practices как обязательные требования. Новых механизмов нет — только закрытие небезопасных опций.",
+                "explanation": "Это не новый набор бизнес-flow, а консолидация безопасного подмножества OAuth 2.0 и рекомендаций, закреплённых в `RFC 9700` и связанных спецификациях.",
                 "example": "Например, `Implicit` возвращал токен в URL hash (попадал в `browser history`, `Referer`, proxy logs) — замена `Authorization Code` + `PKCE`; `ROPC` требовал передачи пароля клиенту — замена тем же Authorization Code Flow.",
                 "when_to_apply": "Эти детали важны на собеседовании и при миграции: нужно знать, что конкретно убрали и какие требования стали обязательными по спецификации.",
-                "edge_cases": "`PKCE` частично замещает функции `state` против подмены, но `state` всё ещё рекомендован; `ROPC` оставался лишь обходным путём для legacy и нарушал делегирование.",
+                "edge_cases": "OAuth 2.1 на июль 2026 года — draft. Детали могут измениться до RFC; внедрение следует проверять по конкретной версии draft и опубликованному `RFC 9700`, а не по старым презентациям.",
                 "related": "[[oauth2-interview#Q31]] обзор изменений OAuth 2.1; [[oauth2-interview#Q11]] какие гранты убраны; [[oauth2-interview#Q37]] PKCE, ставший обязательным."
               }
             }
@@ -2184,7 +2184,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Клиент отправляет `code_verifier` в запросе `/authorize`, а `code_challenge` вычисляет уже `Authorization Server` и возвращает его клиенту.",
+              "text": "Клиент отправляет `code_verifier` в запросе `/authorize`, а `code_challenge` вычисляет уже `Authorization Server` и возвращает его клиенту. `code_verifier` светился бы в `/authorize`, и перехватчик обошёл бы `PKCE`. Порядок и направление передачи `verifier`/`challenge`.",
               "correct": false,
               "sections": {
                 "what_actually": "Клиент вычисляет `code_challenge` сам и шлёт его в `/authorize`; `code_verifier` он раскрывает позже, в `POST /token`.",
@@ -2196,7 +2196,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`code_challenge` вычисляется как `BASE64URL(code_verifier)` без какого-либо хэширования, поэтому из него тривиально получить `code_verifier`.",
+              "text": "`code_challenge` вычисляется как `BASE64URL(code_verifier)` без какого-либо хэширования, поэтому из него тривиально получить `code_verifier`. Перехват `code_challenge` сразу давал бы `code_verifier`, и защита была бы бесполезна. Метод `plain` (без хэша) обобщают на все случаи `PKCE`. Hash отсутствовал бы.",
               "correct": false,
               "sections": {
                 "what_actually": "При методе `S256` `code_challenge = BASE64URL(SHA256(code_verifier))`; хэш необратим, поэтому verifier из challenge не восстановить.",
@@ -2208,7 +2208,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`code_verifier` можно делать коротким и предсказуемым (например, фиксированной строкой), так как защиту полностью обеспечивает `TLS`.",
+              "text": "`code_verifier` можно делать коротким и предсказуемым (например, фиксированной строкой), так как защиту полностью обеспечивает `TLS`. Злоумышленник угадал бы `code_verifier` и обменял перехваченный code на токен. `TLS` делает энтропию `code_verifier` несущественной.",
               "correct": false,
               "sections": {
                 "what_actually": "`code_verifier` должен быть криптостойким случайным значением (32 байта); предсказуемый verifier сводит `PKCE` на нет.",
@@ -2231,7 +2231,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Token Introspection` выполняется клиентом (`SPA`), который запрашивает у `Authorization Server` данные пользователя по `ID Token`.",
+              "text": "`Token Introspection` выполняется клиентом (`SPA`), который запрашивает у `Authorization Server` данные пользователя по `ID Token`. Любой публичный клиент мог бы дёргать introspection без аутентификации RS, что небезопасно. И introspection, и `UserInfo` «достают данные о токене/пользователе».",
               "correct": false,
               "sections": {
                 "what_actually": "Introspection выполняет `Resource Server` (не клиент) для проверки access token; данные пользователя по `ID Token` читает клиент локально или берёт из `UserInfo`.",
@@ -2256,7 +2256,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Endpoint introspection открыт без аутентификации, поэтому проверить токен может любой, кто знает его значение.",
+              "text": "Endpoint introspection открыт без аутентификации, поэтому проверить токен может любой, кто знает его значение. Злоумышленник проверял бы украденные токены и собирал данные пользователей без ограничений. Технический endpoint считают открытым по умолчанию. Endpoint также возвращает user claims любому предъявившему токен.",
               "correct": false,
               "sections": {
                 "what_actually": "Introspection требует аутентификации вызывающего (`Resource Server`): иначе перехваченные токены можно было бы массово валидировать.",
@@ -2268,7 +2268,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Главное преимущество introspection — скорость: он быстрее локальной проверки `JWT`, потому что не считает подпись.",
+              "text": "Главное преимущество introspection — скорость: он быстрее локальной проверки `JWT`, потому что не считает подпись. Его выбирали бы для high-load. «Не считать подпись» считается более лёгкой операцией, чем она есть. Сетевой round trip считается дешевле локальной криптографической проверки.",
               "correct": false,
               "sections": {
                 "what_actually": "Introspection медленнее: он добавляет сетевой HTTP-запрос к AS на каждый вызов, тогда как `JWT` проверяется локально.",
@@ -2291,7 +2291,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Без rotation украденный `refresh token` даёт бесконечный незаметный доступ. С rotation каждое использование выдаёт новый токен и аннулирует старый: легитимный клиент и злоумышленник не могут пользоваться одним токеном — кто-то предъявит уже аннулированный, и AS отзовёт всю token family. Включается через `reuseRefreshTokens(false)`.",
+              "text": "Без rotation украденный `refresh token` даёт бесконечный незаметный доступ. С rotation каждое использование выдаёт новый токен и аннулирует старый: легитимный клиент и злоумышленник не могут пользоваться одним токеном — кто-то предъявит уже аннулированный, и AS отзовёт всю token family.",
               "correct": true,
               "sections": {
                 "explanation": "Rotation + token families превращают кражу в обнаружимое событие. AS отслеживает семьи токенов; повторное использование аннулированного токена отзывает всю семью и принуждает к логину.",
@@ -2304,7 +2304,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Без rotation кража `refresh token` не опасна: AS сам заметит две стороны, использующие токен, и заблокирует чужую без всякой rotation.",
+              "text": "Без rotation кража `refresh token` не опасна: AS сам заметит две стороны, использующие токен, и заблокирует чужую без всякой rotation. Rotation была бы не нужна. Authorization server считает повторные предъявления штатными и не связывает их с единой token family или фактом кражи.",
               "correct": false,
               "sections": {
                 "what_actually": "Без rotation AS не может отличить легитимного клиента от вора (оба шлют один валидный токен); обнаружимость даёт именно rotation + reuse detection.",
@@ -2316,7 +2316,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Refresh token при rotation удобнее всего хранить в `localStorage`, чтобы `SPA` могло переиспользовать его после перезагрузки.",
+              "text": "При rotation refresh token следует хранить в `localStorage`, чтобы SPA могла переживать перезагрузку без повторного входа. Доступ JavaScript к текущему токену считается приемлемым, поскольку выдача нового значения после каждого обмена нейтрализует последствия XSS-кражи.",
               "correct": false,
               "sections": {
                 "what_actually": "`localStorage` уязвим к `XSS`; refresh token хранят в `httpOnly`+`Secure` cookie, недоступной JavaScript.",
@@ -2328,7 +2328,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Rotation реализуется тем, что AS выдаёт один и тот же refresh token, но продлевает его `exp` при каждом использовании.",
+              "text": "Rotation реализуется тем, что AS выдаёт один и тот же refresh token, но продлевает его `exp` при каждом использовании. Reuse detection был бы невозможен, ведь токен оставался бы тем же.",
               "correct": false,
               "sections": {
                 "what_actually": "Rotation выдаёт НОВЫЙ refresh token и аннулирует старый; простое продление `exp` того же токена — это не rotation.",
@@ -2351,7 +2351,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Устройство получает токен сразу в ответ на `POST /device_authorization`, без отдельного polling token endpoint.",
+              "text": "Устройство получает токен сразу в ответ на `POST /device_authorization`, без отдельного polling token endpoint. Токен выдавался бы до согласия пользователя, что нарушало бы модель доступа. Устройство сразу использует полученный bearer token для вызова защищённого API от имени ещё не подтвердившего вход пользователя.",
               "correct": false,
               "sections": {
                 "what_actually": "Первый ответ содержит лишь `device_code`/`user_code`; токен устройство получает позже, опрашивая `/token` (polling), после подтверждения пользователем.",
@@ -2376,7 +2376,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Получив `slow_down` при polling, устройство должно немедленно прекратить попытки и считать авторизацию проваленной.",
+              "text": "Получив `slow_down` при polling, устройство должно немедленно прекратить попытки и считать авторизацию проваленной. Любое замедление обрывало бы вход, хотя пользователь ещё может подтвердить доступ. Клиент удаляет текущий `device_code` и начинает авторизацию заново вместо увеличения интервала следующего polling-запроса.",
               "correct": false,
               "sections": {
                 "what_actually": "`slow_down` означает «уменьши частоту polling», а не «прекрати»; устройство увеличивает интервал и продолжает опрашивать.",
@@ -2388,7 +2388,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В `Device Authorization Grant` пользователь вводит `user_code` прямо на устройстве (Smart TV), а телефон не задействуется.",
+              "text": "В `Device Authorization Grant` пользователь вводит `user_code` прямо на устройстве (Smart TV), а телефон не задействуется. Не нужны были бы `verification_uri` и второе устройство. Раз код показан на TV. `verification_uri` считается необязательным, а весь ввод credentials завершается на экране самого устройства.",
               "correct": false,
               "sections": {
                 "what_actually": "Пользователь вводит `user_code` и логинится на ОТДЕЛЬНОМ устройстве (телефон/ПК) по `verification_uri`; на самом устройстве ввода нет.",
@@ -2411,7 +2411,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В production `RegisteredClient` и активные авторизации обязательно держать только in-memory (`InMemoryRegisteredClientRepository`) ради скорости.",
+              "text": "В production `RegisteredClient` и активные авторизации обязательно держать только in-memory (`InMemoryRegisteredClientRepository`) ради скорости. Рестарт инстанса разлогинивал бы всех, а несколько реплик имели бы разные наборы клиентов. Простота примеров из документации воспринимается как production-подход.",
               "correct": false,
               "sections": {
                 "what_actually": "In-memory годится для примеров; в production используют `JdbcRegisteredClientRepository` и `JdbcOAuth2AuthorizationService`, иначе данные теряются при рестарте и не шарятся между инстансами.",
@@ -2423,7 +2423,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "SAS не публикует `OIDC Discovery`: каждый endpoint (`/oauth2/token`, `/oauth2/jwks`) нужно прописывать и отдавать вручную.",
+              "text": "SAS не публикует `OIDC Discovery`: каждый endpoint (`/oauth2/token`, `/oauth2/jwks`) нужно прописывать и отдавать вручную. Клиенты не могли бы автоконфигурироваться по `issuer-uri`, что ломало бы интеграцию. Привычка к ручной настройке endpoints до автоконфигурации.",
               "correct": false,
               "sections": {
                 "what_actually": "При включённом `.oidc(...)` SAS автоматически публикует `/.well-known/openid-configuration` и все стандартные endpoints.",
@@ -2435,20 +2435,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Spring Authorization Server` (SAS) — официальная реализация `OAuth 2.1`/`OIDC`. Минимальная конфигурация: зависимость `spring-security-oauth2-authorization-server`, `SecurityFilterChain` с `applyDefaultSecurity` и `.oidc(...)` (`@Order(1)`), отдельный chain для формы логина (`@Order(2)`), `RegisteredClientRepository`, `JWKSource` с ключами и `AuthorizationServerSettings` с `issuer`.",
+              "text": "Spring Authorization Server — официальный проект Spring для OAuth 2.0/OIDC, ориентированный на современные security profiles, но не «реализация финального OAuth 2.1 RFC». Минимум: authorization-server `SecurityFilterChain`, login chain, `RegisteredClientRepository`, `JWKSource`, `AuthorizationServerSettings` и при OIDC — `JwtDecoder`.",
               "correct": true,
               "sections": {
                 "explanation": "Два `SecurityFilterChain` разделяют endpoints протокола и форму логина по `@Order`. SAS автоматически публикует `/.well-known/openid-configuration`, `/oauth2/authorize`, `/oauth2/token`, `/oauth2/jwks`, `/userinfo`.",
                 "example": "`RegisteredClient` задаёт `clientId`, `clientSecret` (bcrypt), grant types, `redirectUri`, scopes и `TokenSettings`; `JWKSource` отдаёт сгенерированный `RSAKey`; `JwtDecoder` создаётся через `OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource)`.",
                 "when_to_apply": "Применяют для собственного внутреннего `Authorization Server`/`OIDC`-провайдера, когда не используют Keycloak/Okta и нужен полный контроль над выдачей токенов.",
-                "edge_cases": "В production авторизации и клиентов хранят в БД (`JdbcOAuth2AuthorizationService`, `JdbcRegisteredClientRepository`), а ключи — в persistent keystore, а не in-memory.",
+                "edge_cases": "OAuth 2.1 пока остаётся draft. Конкретные endpoints и DSL зависят от версии Spring Authorization Server; production требует JDBC-хранилищ, ротации ключей, consent, аудита и корректного issuer.",
                 "related": "[[oauth2-interview#Q26]] обзорная настройка Spring Authorization Server; [[oauth2-interview#Q42]] кастомные OIDC claims в SAS; [[oauth2-interview#Q31]] строгий режим OAuth 2.1."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Для `Spring Authorization Server` достаточно одного `SecurityFilterChain`: и протокольные endpoints, и форму логина обслуживает он же без разделения по `@Order`.",
+              "text": "Для `Spring Authorization Server` достаточно одного `SecurityFilterChain`: и протокольные endpoints, и форму логина обслуживает он же без разделения по `@Order`. Правила безопасности для `/oauth2/*` и формы логина пересекались бы и мешали друг другу. Желание упростить конфиг до единственного chain.",
               "correct": false,
               "sections": {
                 "what_actually": "Типовая конфигурация — два chain: `@Order(1)` для endpoints AS (`applyDefaultSecurity`) и `@Order(2)` для формы логина; их разделяют, чтобы правила не конфликтовали.",
@@ -2471,7 +2471,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`OIDC Claims` — атрибуты пользователя в `ID Token` или из `UserInfo endpoint`, сгруппированные по scope: `openid` даёт `sub`/`iss`/`aud`/`exp`/`iat`, `profile` — `name`/`given_name`/`picture`/`locale`, `email` — `email`/`email_verified`, `phone`, `address`. Кастомные claims добавляют через `OAuth2TokenCustomizer`; `UserInfo` отдаёт актуальный профиль по `access token`.",
+              "text": "`OIDC Claims` — атрибуты пользователя в `ID Token` или из `UserInfo endpoint`, сгруппированные по scope: `openid` даёт `sub`/`iss`/`aud`/`exp`/`iat`, `profile` — `name`/`given_name`/`picture`/`locale`, `email` — `email`/`email_verified`, `phone`, `address`.",
               "correct": true,
               "sections": {
                 "explanation": "Scope определяет, какие claims вернутся: запрос `profile email` добавит имя и email. Кастомные claims (`department`, `tenant_id`) добавляют на стороне AS, не ломая стандарт.",
@@ -2484,7 +2484,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Кастомные claims в SAS добавить нельзя: токен жёстко ограничен набором стандартных `OIDC`-полей спецификации.",
+              "text": "Кастомные claims в SAS добавить нельзя: токен жёстко ограничен набором стандартных `OIDC`-полей спецификации. Нельзя было бы положить в токен бизнес-атрибуты вроде `tenant_id`, что на практике делают повсеместно. Наличие списка стандартных claims воспринимают как закрытый и неизменный.",
               "correct": false,
               "sections": {
                 "what_actually": "Кастомные claims добавляют через `OAuth2TokenCustomizer` (`roles`, `department`, `tenant_id`); стандарт это допускает.",
@@ -2496,7 +2496,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Все `OIDC claims` всегда возвращаются в каждом токене независимо от запрошенного scope — scope на состав claims не влияет.",
+              "text": "Все `OIDC claims` всегда возвращаются в каждом токене независимо от запрошенного scope — scope на состав claims не влияет. Принцип least privilege и согласие пользователя на конкретные данные не работали бы.",
               "correct": false,
               "sections": {
                 "what_actually": "Состав claims зависит от scope: `profile` добавляет `name`/`picture`, `email` — `email`/`email_verified`; без нужного scope claim не вернётся.",
@@ -2508,7 +2508,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`UserInfo endpoint` вызывают с `ID Token` в заголовке, потому что именно `ID Token` несёт профиль пользователя.",
+              "text": "`UserInfo endpoint` вызывают с `ID Token` в заголовке, потому что именно `ID Token` несёт профиль пользователя. `ID Token` пришлось бы пересылать на сервер, нарушая его роль удостоверения для клиента. Оба токена связаны с данными пользователя.",
               "correct": false,
               "sections": {
                 "what_actually": "`UserInfo` вызывают с `access token`; `ID Token` предназначен клиенту и не отправляется на endpoint.",

@@ -9,7 +9,7 @@
           "question_text": "Что такое стратегия логирования и из каких решений она состоит?",
           "options": [
             {
-              "text": "Стратегия логирования — это договорённость всегда писать всё на уровне `DEBUG`, чтобы при инциденте была максимальная детализация.",
+              "text": "Стратегия логирования означает всегда включать `DEBUG` и сохранять каждое техническое событие.",
               "correct": false,
               "sections": {
                 "what_actually": "Тотальный `DEBUG` в prod раздувает объём и стоимость и замедляет сервис; стратегия как раз балансирует детализацию против затрат, по умолчанию `INFO`/`WARN`.",
@@ -21,7 +21,7 @@
               "label": "A"
             },
             {
-              "text": "Стратегия логирования — это набор согласованных решений: что и на каком уровне (`DEBUG`/`INFO`/`WARN`/`ERROR`) писать, куда (консоль, файл, `ELK`/`Loki`), в каком формате (текст или `JSON`), какой контекст добавлять (`correlationId`, `traceId`, `MDC`), как ротировать и сколько хранить, и что маскировать (PII, пароли, токены).",
+              "text": "Стратегия согласует уровни, структуру полей, корреляцию, безопасность, доставку, retention и эксплуатацию логов.",
               "correct": true,
               "sections": {
                 "explanation": "Логирование без стратегии деградирует в хаос: разные сервисы пишут по-разному, секреты текут, а в инциденте нечем расследовать. Стратегия делает логи предсказуемым, безопасным и дешёвым в эксплуатации источником данных.",
@@ -34,7 +34,7 @@
               "label": "B"
             },
             {
-              "text": "Стратегия логирования — это исключительно выбор библиотеки логирования (`Logback` против `Log4j2`), а формат, уровни и retention к ней не относятся.",
+              "text": "Стратегия ограничивается выбором logging-библиотеки и не определяет формат или состав событий.",
               "correct": false,
               "sections": {
                 "what_actually": "Выбор библиотеки — лишь одна техническая деталь; стратегия охватывает уровни, формат, контекст, ротацию, retention и маскирование вместе.",
@@ -46,7 +46,7 @@
               "label": "C"
             },
             {
-              "text": "Стратегия логирования — это только настройка ротации лог-файлов (`maxFileSize`, `maxHistory`) на диске сервера.",
+              "text": "Стратегия описывает только ротацию файлов и не затрагивает централизованный сбор или поиск.",
               "correct": false,
               "sections": {
                 "what_actually": "Ротация — лишь один из компонентов; стратегия также включает уровни, формат, контекст, агрегацию и безопасность данных.",
@@ -81,7 +81,7 @@
               "label": "A"
             },
             {
-              "text": "В dev обычно ставят `DEBUG`/`INFO` для детальной отладки с человекочитаемым выводом в консоль, а в prod — `INFO`/`WARN` по умолчанию и `JSON`, чтобы минимизировать объём, стоимость и шум при централизованном сборе.",
+              "text": "В dev включайте DEBUG/TRACE точечно, а в prod используйте INFO/WARN с dynamic overrides, sampling и короткими diagnostic windows.",
               "correct": true,
               "sections": {
                 "explanation": "Уровень — это рычаг между диагностируемостью и стоимостью: подробный dev ускоряет разработку, сдержанный prod экономит хранилище и CPU. Один уровень на оба окружения неизбежно жертвует чем-то одним.",
@@ -94,7 +94,7 @@
               "label": "B"
             },
             {
-              "text": "В prod нужно ставить `DEBUG` по умолчанию, а в dev — `WARN`, чтобы разработчиков не отвлекал шум, а в проде была полная детализация.",
+              "text": "В prod нужно ставить `DEBUG` по умолчанию, а в dev — `WARN`, чтобы разработчиков не отвлекал шум.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: в dev обычно `DEBUG`/`INFO` для отладки, а в prod — `INFO`/`WARN`, чтобы снизить объём, стоимость и шум.",
@@ -153,7 +153,7 @@
               "label": "B"
             },
             {
-              "text": "Структурированное логирование — это запись полей в машиночитаемом формате (`JSON`) вместо одной плоской строки: `{ \"level\":\"INFO\", \"message\":\"Order created\", \"traceId\":\"abc123\", \"orderId\":12345 }`. Это даёт удобный поиск, фильтрацию по полям и агрегацию в `ELK`/`Loki` и связь с метриками.",
+              "text": "Структурированное логирование — это запись полей в машиночитаемом формате (`JSON`) вместо одной плоской строки.",
               "correct": true,
               "sections": {
                 "explanation": "Машиночитаемые поля превращают логи из текста для глаз в данные для запросов: по `traceId` или `orderId` можно мгновенно отфильтровать нужное, а плоскую строку пришлось бы грепать регэкспами.",
@@ -213,7 +213,7 @@
               "label": "B"
             },
             {
-              "text": "Ротация — это смена файла по размеру или времени через `RollingFileAppender` с `SizeAndTimeBasedRollingPolicy`: `fileNamePattern` (с датой и `.gz`), `maxFileSize` (например, 100MB), `maxHistory` (например, 30 дней) и `totalSizeCap` (например, 3GB) на все архивы.",
+              "text": "Ротация — это смена файла по размеру или времени через `RollingFileAppender` с `SizeAndTimeBasedRollingPolicy`: `fileNamePattern` (с датой и `.gz`).",
               "correct": true,
               "sections": {
                 "explanation": "Без ротации лог-файл растёт неограниченно и забивает диск, роняя сервис; политика по размеру/времени и `totalSizeCap` гарантируют предсказуемый расход места при сохранении истории.",
@@ -285,11 +285,11 @@
               "label": "C"
             },
             {
-              "text": "`Correlation ID` — уникальный идентификатор запроса, который пробрасывается по всей цепочке вызовов (от шлюза до всех сервисов) и записывается в логах каждого сервиса одинаковым; в агрегаторе по нему фильтруются все логи одного запроса.",
+              "text": "`Correlation ID` — уникальный идентификатор запроса, который пробрасывается по всей цепочке вызовов и записывается в логах каждого сервиса одинаковым.",
               "correct": true,
               "sections": {
                 "explanation": "Без единого id запрос «теряется» на стыке сервисов, и инцидент собирают по таймстампам вручную. Один сквозной id превращает разрозненные логи в единую трассу одного обращения пользователя.",
-                "example": "В `Spring Boot` его реализуют через `OncePerRequestFilter` с `@Order(HIGHEST_PRECEDENCE)`: читают заголовок `X-Correlation-Id`, при отсутствии генерируют `UUID.randomUUID()`, кладут в `MDC.put(\"correlationId\", ...)` и пробрасывают дальше через `RestClient`-интерсептор.",
+                "example": "В `Spring Boot` его реализуют через `OncePerRequestFilter` с `@Order(HIGHEST_PRECEDENCE)`: читают заголовок `X-Correlation-Id`, при отсутствии генерируют `UUID.randomUUID()`, кладут в `MDC.put(\"correlationId\",...)` и пробрасывают дальше через `RestClient`-интерсептор.",
                 "when_to_apply": "Применяют в распределённых системах, где один пользовательский запрос обходит несколько сервисов, и нужно собрать сквозную картину по одному id без ручного сопоставления таймстампов.",
                 "edge_cases": "Важно очищать `MDC` в `finally` (или использовать `OncePerRequestFilter`), иначе id «протечёт» в следующий запрос на том же потоке из пула; в async-коде контекст нужно копировать вручную.",
                 "related": "[[logging-strategies-interview#Q6]] связь с `traceId`/`spanId`; [[logging-strategies-interview#Q7]] `MDC` и многопоточность; [[logging-strategies-interview#Q29]] correlation id в логах."
@@ -309,7 +309,7 @@
           "question_text": "Как связать логи с распределённой трассировкой (`traceId`, `spanId`)?",
           "options": [
             {
-              "text": "`OpenTelemetry` и `Micrometer Tracing` (замена `Sleuth` в `Spring Boot 3`) автоматически добавляют `traceId` и `spanId` в `MDC`, и при структурированном логировании эти поля попадают в каждую запись; в паттерне их выводят как `[%X{traceId:-},%X{spanId:-}]`.",
+              "text": "Tracing instrumentation распространяет context; logging bridge, pattern или structured encoder читает текущие trace/span IDs и пишет их в logs.",
               "correct": true,
               "sections": {
                 "explanation": "Связь логов и трейсов даёт два взгляда на один запрос: трейс показывает тайминги и топологию вызовов, логи — детали и ошибки; общий `traceId` позволяет мгновенно прыгать между ними.",
@@ -322,7 +322,7 @@
               "label": "A"
             },
             {
-              "text": "Трассировка `traceId`/`spanId` доступна только при использовании `JSON`-логов и не работает с текстовым паттерном.",
+              "text": "Trace/span IDs доступны только в JSON logs: text pattern не может прочитать tracing context или MDC-compatible fields.",
               "correct": false,
               "sections": {
                 "what_actually": "`traceId`/`spanId` доступны в `MDC` независимо от формата; их выводят и в текстовом паттерне через `%X{traceId}`, и в `JSON` через `LogstashEncoder`.",
@@ -334,7 +334,7 @@
               "label": "B"
             },
             {
-              "text": "`traceId` и `spanId` — это синонимы: оба идентифицируют весь распределённый запрос целиком.",
+              "text": "`traceId` и `spanId` являются одним identifier: оба обозначают весь distributed request и не различают operations внутри trace.",
               "correct": false,
               "sections": {
                 "what_actually": "`traceId` идентифицирует весь запрос (общий для всех сервисов), а `spanId` — конкретную операцию/участок внутри трейса; это разные уровни.",
@@ -346,7 +346,7 @@
               "label": "C"
             },
             {
-              "text": "Чтобы `traceId` попал в логи, нужно вручную в каждом методе вызывать `MDC.put(\"traceId\", ...)`, иначе он не появится.",
+              "text": "Каждый method обязан вручную вызывать `MDC.put` с trace ID; instrumentation и framework bridges не умеют связывать logs автоматически.",
               "correct": false,
               "sections": {
                 "what_actually": "В `Spring Boot 3` `Micrometer Tracing`/`OpenTelemetry` автоматически кладут `traceId` и `spanId` в `MDC`, ручной вызов в каждом методе не нужен.",
@@ -369,7 +369,7 @@
           "question_text": "Что такое `MDC` и как применять его в многопоточном коде?",
           "options": [
             {
-              "text": "`MDC` (`Mapped Diagnostic Context`) — потоколокальная карта ключ-значение, доступная логгеру при записи; в неё кладут `correlationId`, `traceId`, `userId`. Поскольку она привязана к потоку, в многопоточном коде её захватывают `MDC.getCopyOfContextMap()` в вызывающем потоке и восстанавливают `MDC.setContextMap(...)` в рабочем.",
+              "text": "`MDC` (`Mapped Diagnostic Context`) — потоколокальная карта ключ-значение, доступная логгеру при записи; в неё кладут `correlationId`, `traceId`, `userId`.",
               "correct": true,
               "sections": {
                 "explanation": "`MDC` решает проблему «как дотащить контекст до логгера, не таская его параметром через все методы»: значение кладут один раз на входе, и оно автоматически попадает в каждую запись потока.",
@@ -429,7 +429,7 @@
           "question_text": "Как не логировать чувствительные данные (пароли, токены)?",
           "options": [
             {
-              "text": "Чувствительные данные защищают слоями: не передавать секрет в сообщение вовсе (логировать лишь факт «авторизация выполнена»); маскировать кастомным `Converter`/`ClassicConverter` или `MaskingJsonGeneratorDecorator`; не включать опасные ключи в структурированные поля; ловить нарушения код-ревью и линтерами.",
+              "text": "Не передавайте secrets в log calls; allow-list fields, redact в encoder/collector, ограничьте access/retention и тестируйте утечки.",
               "correct": true,
               "sections": {
                 "explanation": "Секрет, попавший в лог, мгновенно реплицируется в агрегатор и архивы, откуда его уже не отозвать; поэтому защита строится слоями — не писать, маскировать, исключать поля и проверять автоматикой.",
@@ -442,7 +442,7 @@
               "label": "A"
             },
             {
-              "text": "Достаточно ставить уровень `DEBUG` для пакетов с чувствительными данными, тогда в prod (где `INFO`) пароли и токены в лог не попадут.",
+              "text": "Достаточно перевести packages с credentials на DEBUG: production logger не запишет secrets ни при dynamic override, ни при incident diagnostics.",
               "correct": false,
               "sections": {
                 "what_actually": "Уровень не разделяет содержимое: если сообщение с паролем пишется на `INFO`, понижение чужих пакетов до `DEBUG` его не скроет.",
@@ -454,7 +454,7 @@
               "label": "B"
             },
             {
-              "text": "Чувствительные данные нужно логировать, но в самом конце сообщения, чтобы их было удобно вручную вырезать при инциденте.",
+              "text": "Secrets безопасно писать в конце message, потому что log backends индексируют и отображают только первые fields или первые characters.",
               "correct": false,
               "sections": {
                 "what_actually": "Ручное вырезание не масштабируется и ненадёжно; секрет, единожды попавший в агрегатор, уже скомпрометирован и реплицирован.",
@@ -466,7 +466,7 @@
               "label": "C"
             },
             {
-              "text": "Безопаснее всего шифровать весь лог-файл целиком — тогда пароли в нём не страшны, ведь файл зашифрован.",
+              "text": "Полное encryption log file делает допустимым хранение plaintext passwords и tokens внутри events без redaction, access control или retention limits.",
               "correct": false,
               "sections": {
                 "what_actually": "Шифрование at-rest защищает файл от посторонних, но не мешает оператору с доступом к `Kibana`/логам прочитать пароль в открытом виде.",
@@ -501,14 +501,14 @@
               "label": "A"
             },
             {
-              "text": "`Log sampling` — запись только части сообщений (например, каждое 100-е `DEBUG` или 1% запросов) для снижения объёма при высокой нагрузке. В `Logback` это делает кастомный `TurboFilter`, который пропускает `WARN`/`ERROR` всегда (`FilterReply.NEUTRAL`), а `DEBUG`/`INFO` сэмплирует по счётчику.",
+              "text": "`Log sampling` — запись только части сообщений для снижения объёма при высокой нагрузке.",
               "correct": true,
               "sections": {
-                "explanation": "Под высокой нагрузкой полный поток `DEBUG`/`INFO` неоправданно дорог при низкой ценности каждой записи; sampling сохраняет статистическую картину, отбрасывая основную массу однотипных событий.",
-                "example": "В `decide()` проверяют `level.isGreaterOrEqual(Level.WARN)` — для них `NEUTRAL`; иначе `counter.incrementAndGet() % sampleRate == 0` решает, записать (`NEUTRAL`) или отбросить (`DENY`); `sampleRate` настраивается через `<turboFilter>` в `logback-spring.xml`.",
-                "when_to_apply": "Применяют, когда полный объём логов не нужен или слишком дорог (хранилище, `ELK`), а высокочастотные `DEBUG`/`INFO` дают мало пользы при огромном объёме.",
-                "edge_cases": "Риск sampling — пропуск важного события; поэтому `ERROR`/`WARN` всегда записывают гарантированно, а сэмплируют только низкоприоритетные уровни.",
-                "related": "[[logging-strategies-interview#Q20]] контроль объёма при нагрузке; [[logging-strategies-interview#Q34]] rate-limiting при шторме ошибок; [[logging-strategies-interview#Q16]] retention для контроля стоимости."
+                "explanation": "Sampling уменьшает объём повторяющихся low-value events, но должно быть policy-based: важность определяется не только level, а типом события, audit requirements и incident value.",
+                "example": "TurboFilter оставляет первый event и затем один из N повторов одного key, одновременно увеличивая counter отброшенных records; security/audit events исключаются из sampling policy.",
+                "when_to_apply": "Используйте sampling для высокочастотных DEBUG/INFO или повторяющихся diagnostics, когда полный поток дорог и не нужен для расследования каждого occurrence.",
+                "edge_cases": "Не существует универсального правила «все WARN/ERROR всегда писать»: storm одинаковых errors тоже может требовать rate limit. Сохраняйте representative event, count suppressed records и отдельные critical/audit classes.",
+                "related": "[[logging-strategies-interview#Q20]] объём при нагрузке; [[logging-strategies-interview#Q34]] rate limiting; [[logging-strategies-interview#Q16]] retention."
               },
               "order": 1,
               "label": "B"
@@ -585,7 +585,7 @@
               "label": "C"
             },
             {
-              "text": "В `logback-spring.xml` задают уровень по имени пакета через `<logger name=\"...\" level=\"...\"/>`: свой код `INFO` (или `DEBUG` при отладке), а `org.springframework`, `org.hibernate`, `org.apache.kafka`, `io.netty` — `WARN`. Дочерние пакеты наследуют уровень родителя.",
+              "text": "В `logback-spring.xml` задают уровень по имени пакета через `<logger name=\"...\" level=\"...\"/>`.",
               "correct": true,
               "sections": {
                 "explanation": "Сторонние библиотеки на `INFO`/`DEBUG` заливают логи шумом, в котором тонет полезный сигнал собственного кода; уровень по пакету гасит этот шум, не трогая зависимость.",
@@ -633,7 +633,7 @@
               "label": "B"
             },
             {
-              "text": "Единый формат достигается распространением общей конфигурации: общий `Spring Boot Starter` с `logback-spring.xml` и `LogstashEncoder`; единый `Spring Cloud Config`; документированные соглашения по именам полей и уровням; проверка соответствия на код-ревью. Все сервисы пишут одну `JSON`-схему: `@timestamp`, `level`, `logger`, `message`, `service`, `version`, `env`, `traceId`, `spanId`, `correlationId`.",
+              "text": "Единый формат достигается распространением общей конфигурации: общий `Spring Boot Starter` с `logback-spring.xml` и `LogstashEncoder`.",
               "correct": true,
               "sections": {
                 "explanation": "Разнобой в полях между сервисами ломает кросс-сервисные дашборды и алерты: запрос по `traceId` или фильтр по `level` не сработает, если ключи называются по-разному. Единая схема — основа централизованного анализа.",
@@ -693,11 +693,11 @@
               "label": "B"
             },
             {
-              "text": "`Log aggregation` — сбор логов со всех узлов в единое хранилище для централизованного поиска, анализа и мониторинга. Агенты (`Filebeat`, `Fluentd`, `Promtail`) или прямой вывод приложения отправляют логи в коллектор (`Logstash`/`Fluentd`), оттуда в хранилище (`Elasticsearch`/`Loki`) и в UI (`Kibana`/`Grafana`).",
+              "text": "`Log aggregation` — сбор логов со всех узлов в единое хранилище для централизованного поиска, анализа и мониторинга.",
               "correct": true,
               "sections": {
                 "explanation": "В распределённой системе логи запроса размазаны по десяткам узлов; без централизованного сбора расследование сводится к ручному обходу машин. Агрегация делает их единым поисковым индексом.",
-                "example": "Основные стеки: `ELK` (`Elasticsearch`+`Logstash`+`Kibana`) с мощным полнотекстовым поиском; `PLG` (`Promtail`+`Loki`+`Grafana`), легче и индексирует только метки; облачные — `CloudWatch`, `Datadog`, `Splunk`.",
+                "example": "Основные стеки: `ELK` (`Elasticsearch`+`Logstash`+`Kibana`) с мощным полнотекстовым поиском; `PLG` (`Grafana Alloy`+`Loki`+`Grafana`), легче и индексирует только метки; облачные — `CloudWatch`, `Datadog`, `Splunk`.",
                 "when_to_apply": "Применяют в любой распределённой системе: без централизованного сбора нельзя найти все логи одного запроса по `traceId`/`correlationId` или построить общие дашборды и алерты.",
                 "edge_cases": "Централизация добавляет риски: сетевые потери, стоимость хранения, SPOF агрегатора — их митигируют буфером на агенте, retention/sampling и HA-кластером.",
                 "related": "[[logging-strategies-interview#Q13]] интеграция с `ELK`; [[logging-strategies-interview#Q24]] риски централизованного логирования; [[logging-strategies-interview#Q32]] `Loki` против `ELK`."
@@ -741,12 +741,12 @@
               "label": "A"
             },
             {
-              "text": "Полный пайплайн: приложение пишет `JSON` в stdout/файл → `Filebeat` собирает и шлёт → `Logstash` фильтрует/обогащает → индексирует в `Elasticsearch` → `Kibana` отдаёт поиск и дашборды. `Filebeat` декодирует `JSON` (`decode_json_fields`), `Logstash` парсит и удаляет лишние поля, индекс задают как `logs-%{[service]}-%{+YYYY.MM.dd}`.",
+              "text": "Полный пайплайн: приложение пишет `JSON` в stdout/файл → `Filebeat` собирает и шлёт → `Logstash` фильтрует/обогащает → индексирует в `Elasticsearch` → `Kibana` отдаёт поиск и дашборды.",
               "correct": true,
               "sections": {
                 "explanation": "`ELK` даёт полнотекстовый поиск и сложные агрегации по payload, что незаменимо для аудита и аналитики; цена — высокая стоимость хранения и тяжёлый `Logstash`, поэтому пайплайн строят осознанно.",
                 "example": "В `filebeat.yml` вход `type: container` с `decode_json_fields` и выходом `output.logstash: hosts: [\"logstash:5044\"]`; в pipeline `Logstash` вход `beats { port => 5044 }`, фильтр `json { source => \"message\" }` и выход `elasticsearch { hosts => [\"elasticsearch:9200\"] }`.",
-                "when_to_apply": "Применяют, когда нужен мощный полнотекстовый поиск по payload и сложные агрегации; альтернатива для `Kubernetes` — `Loki` с `Promtail`, который легче и индексирует только метки.",
+                "when_to_apply": "Применяют, когда нужен мощный полнотекстовый поиск по payload и сложные агрегации; альтернатива для `Kubernetes` — `Loki` с `Grafana Alloy`, который легче и индексирует только метки.",
                 "edge_cases": "Рекомендуется писать в stdout (`JSON`) и собирать агентом ради отказоустойчивости: при недоступности `Logstash` `Filebeat` буферизует и дочитывает с сохранённой позиции.",
                 "related": "[[logging-strategies-interview#Q12]] log aggregation; [[logging-strategies-interview#Q16]] retention через `ILM`; [[logging-strategies-interview#Q32]] `Loki` как альтернатива `ELK`."
               },
@@ -789,7 +789,7 @@
           "question_text": "Что такое асинхронный аппендер и когда его использовать?",
           "options": [
             {
-              "text": "Async-аппендер гарантирует, что ни одно событие лога не потеряется даже при аварийном завершении процесса.",
+              "text": "Асинхронный appender гарантирует сохранение каждого события даже при crash процесса или переполнении очереди.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: события в буфере, не успевшие сброситься, теряются при падении процесса — это известный минус async-записи.",
@@ -801,7 +801,7 @@
               "label": "A"
             },
             {
-              "text": "`AsyncAppender` сам по себе записывает логи на диск, поэтому отдельный файловый аппендер ему не нужен.",
+              "text": "`AsyncAppender` самостоятельно записывает данные на диск и не требует вложенного target appender.",
               "correct": false,
               "sections": {
                 "what_actually": "`AsyncAppender` — лишь обёртка-буфер; реальную запись делает вложенный аппендер (`RollingFileAppender`), на который он ссылается через `<appender-ref>`.",
@@ -813,7 +813,7 @@
               "label": "B"
             },
             {
-              "text": "Асинхронный аппендер означает, что логи пишутся в случайном порядке, без сохранения последовательности событий.",
+              "text": "Асинхронный appender намеренно перемешивает события и не сохраняет порядок их постановки в очередь.",
               "correct": false,
               "sections": {
                 "what_actually": "`AsyncAppender` сохраняет порядок: события кладутся в очередь и сбрасываются отдельным потоком по очереди, а не вперемешку.",
@@ -825,7 +825,7 @@
               "label": "C"
             },
             {
-              "text": "Асинхронный аппендер (`ch.qos.logback.classic.AsyncAppender`) кладёт события логирования в буфер, а отдельный поток сбрасывает их в целевой аппендер (файл, сеть), снижая задержку в потоке приложения. Параметры: `queueSize` (1024–4096 в prod), `discardingThreshold` (0 для критичных логов), `neverBlock` (`true`), `includeCallerData` (`false`, так как дорого).",
+              "text": "`AsyncAppender` помещает события в буфер, а worker передаёт их целевому appender вне application thread.",
               "correct": true,
               "sections": {
                 "explanation": "Синхронная запись лога в файл/сеть добавляет блокирующий I/O прямо в бизнес-поток; async-аппендер выносит это в фоновый поток, разменивая риск потери буфера на низкую latency горячего пути.",
@@ -849,7 +849,7 @@
           "question_text": "Как логировать в реактивных стеках (`WebFlux`, `Project Reactor`)?",
           "options": [
             {
-              "text": "В `WebFlux` `MDC` работает так же, как в блокирующем стеке: положил в начале метода — и он доступен во всей реактивной цепочке.",
+              "text": "В WebFlux обычный thread-local MDC автоматически сохраняется во всей reactive chain без propagation.",
               "correct": false,
               "sections": {
                 "what_actually": "В реактивном коде выполнение мигрирует между потоками, а `MDC` привязан к потоку и теряется; контекст нужно нести в `Reactor Context`.",
@@ -861,7 +861,7 @@
               "label": "A"
             },
             {
-              "text": "В `WebFlux` `Micrometer Tracing` всё равно не умеет проставлять `traceId`, поэтому трассировка в реактивном стеке невозможна.",
+              "text": "Micrometer Tracing не добавляет `traceId` в реактивном стеке, поэтому корреляция невозможна.",
               "correct": false,
               "sections": {
                 "what_actually": "`Micrometer Tracing`/`OpenTelemetry` поддерживают `Reactor` и проставляют `traceId` через интеграцию с `Context`; трассировка в `WebFlux` работает.",
@@ -873,7 +873,7 @@
               "label": "B"
             },
             {
-              "text": "Чтобы логировать в `WebFlux`, достаточно вызвать `block()` на каждом `Mono`, тогда `MDC` снова станет потоколокальным и доступным.",
+              "text": "Для сохранения MDC в Reactor достаточно вызывать `block()` на каждом `Mono` или `Flux`.",
               "correct": false,
               "sections": {
                 "what_actually": "`block()` убивает реактивность и неприемлем в `WebFlux`; контекст пробрасывают неблокирующе через `Reactor Context`.",
@@ -885,7 +885,7 @@
               "label": "C"
             },
             {
-              "text": "В реактивном коде выполнение переходит между потоками, и `MDC` (привязанный к потоку) теряется, поэтому контекст несут в `Reactor Context` через `contextWrite(ctx -> ctx.put(\"correlationId\", ...))`, а при логировании извлекают его в `doOnEach`: проверяют `signal`, берут `signal.getContextView().getOrEmpty(\"correlationId\")` и временно кладут в `MDC` вокруг `log.info(...)`.",
+              "text": "Reactive execution меняет потоки, поэтому контекст передают через Reactor Context и поддерживаемые propagation-механизмы.",
               "correct": true,
               "sections": {
                 "explanation": "Реактивная модель не привязана к потоку, поэтому потоколокальный `MDC` в ней теряется; контекст приходится нести в `Reactor Context` и проявлять в `MDC` ровно в точке логирования.",
@@ -909,7 +909,7 @@
           "question_text": "Что такое retention-политика для логов и как её задать?",
           "options": [
             {
-              "text": "`Retention` — это то же самое, что `maxFileSize`: он определяет размер одного лог-файла, а не срок хранения.",
+              "text": "`Retention` — это то же самое, что `maxFileSize`: он определяет размер одного лог-файла.",
               "correct": false,
               "sections": {
                 "what_actually": "`maxFileSize` ограничивает размер файла перед ротацией, а retention — это срок/политика хранения (по времени), это разные параметры.",
@@ -921,11 +921,11 @@
               "label": "A"
             },
             {
-              "text": "`Retention` — это то, как долго хранить логи, и задаётся на нескольких уровнях: локально на узле (`Logback maxHistory`, `totalSizeCap`), в `Elasticsearch` через `ILM` (фазы hot → warm → delete), в `Loki` через `retention_period`, в облаке через политики сервиса (`CloudWatch retention`).",
+              "text": "Retention определяет срок доступности каждого класса logs; применяйте backend lifecycle/compactor policies, bucket safeguards и исключения legal hold.",
               "correct": true,
               "sections": {
                 "explanation": "Retention балансирует стоимость хранения против потребностей расследования и compliance: технические логи дешевле выбрасывать быстро, а audit обязаны хранить долго по регуляторным требованиям.",
-                "example": "Пример `ES ILM`: в фазе hot `rollover` при `max_size: 50gb`/`max_age: 1d`, в warm с `min_age: 7d` делают `shrink` и `forcemerge`, в delete с `min_age: 30d` — `delete`.",
+                "example": "Пример ILM: в hot выполняют rollover по `max_primary_shard_size` и/или `max_age`, в warm при необходимости делают `shrink`/`forcemerge`, затем переводят данные в cold и удаляют после обоснованного retention.",
                 "when_to_apply": "Применяют для баланса между затратами на хранилище и потребностями расследования/compliance: чем дороже хранение, тем агрессивнее удаление старых данных.",
                 "edge_cases": "Учитывают регуляторные требования: критичные audit-логи хранят месяцами-годами, тогда как технические — 7–30 дней; единый короткий срок для всего нарушит compliance.",
                 "related": "[[logging-strategies-interview#Q4]] локальная ротация; [[logging-strategies-interview#Q21]] audit-логи и долгое хранение; [[logging-strategies-interview#Q24]] стоимость как риск централизации."
@@ -981,14 +981,14 @@
               "label": "A"
             },
             {
-              "text": "Исключение передают отдельным параметром логгера: `log.error(\"Failed to process order orderId={}\", orderId, exception)` — тогда `SLF4J` корректно выведет stack trace. Нельзя писать `log.error(\"Failed: \" + e.getMessage())` (теряется trace) или `e.printStackTrace()` (ломает парсинг и идёт мимо логгера).",
+              "text": "Исключение передают отдельным параметром логгера: `log.error` — тогда `SLF4J` корректно выведет stack trace.",
               "correct": true,
               "sections": {
-                "explanation": "Передача исключения параметром сохраняет полный stack trace в структурированном виде; ручная склейка `getMessage()` или `printStackTrace()` теряет причину ошибки и ломает парсинг в агрегаторе.",
-                "example": "Контекст добавляют через `MDC` перед логированием: `MDC.put(\"orderId\", ...)`, `MDC.put(\"userId\", ...)` в `try`, и в `catch` пишут `log.error(\"Payment failed gateway={}\", gateway, e)`; в `finally` — `MDC.clear()`.",
-                "when_to_apply": "Применяют в каждом `catch`-блоке, который логирует ошибку: исключение всегда передают последним аргументом, а не конкатенируют его текст в сообщение.",
-                "edge_cases": "С `LogstashEncoder` stack trace пишется в отдельное поле `stack_trace`, что удобно для поиска в `Kibana`; при двойном логировании одной ошибки (и в catch, и выше) trace дублируется — логируют один раз на границе.",
-                "related": "[[logging-strategies-interview#Q7]] контекст через `MDC`; [[logging-strategies-interview#Q3]] поля `JSON` и `stack_trace`; [[logging-strategies-interview#Q34]] дедупликация при шторме ошибок."
+                "explanation": "Передача `Throwable` отдельным аргументом сохраняет stack trace и causes. Логировать следует на boundary, который добавляет контекст или завершает обработку, чтобы не дублировать одну failure на каждом layer.",
+                "example": "На message-listener boundary пишут `log.error(\"Payment failed gateway={}\", gateway, e)` и добавляют correlation fields; lower layer либо enriches exception, либо propagates без повторного log.",
+                "when_to_apply": "Логируйте exception там, где failure обрабатывается, переводится в внешний outcome или получает существенный context; передавайте `Throwable` отдельным аргументом.",
+                "edge_cases": "В SLF4J varargs последний аргумент распознаётся как `Throwable`, если не потреблён placeholder. Не используйте одновременно `getMessage()` и exception, не вызывайте `printStackTrace()` и избегайте duplicate logging.",
+                "related": "[[logging-strategies-interview#Q7]] MDC context; [[logging-strategies-interview#Q3]] JSON stack trace; [[logging-strategies-interview#Q34]] error storms."
               },
               "order": 1,
               "label": "B"
@@ -1041,10 +1041,10 @@
               "label": "A"
             },
             {
-              "text": "`Markers` хранятся в `MDC` и автоматически попадают во все последующие записи потока, пока их не очистить.",
+              "text": "`Markers` хранятся в `MDC` и автоматически попадают во все последующие записи потока.",
               "correct": false,
               "sections": {
-                "what_actually": "Маркер привязан к конкретному вызову `log.x(marker, ...)`, а не к `MDC`; он не «залипает» на поток и не наследуется следующими записями.",
+                "what_actually": "Маркер привязан к конкретному вызову `log.x(marker,...)`, а не к `MDC`; он не «залипает» на поток и не наследуется следующими записями.",
                 "source_of_confusion": "Сходство с потоколокальным `MDC` создаёт ложное ожидание «липкого» поведения маркера.",
                 "if_it_were_true": "Если бы маркер жил в `MDC`, нельзя было бы пометить одну запись `AUDIT`, не пометив все соседние.",
                 "how_it_should_be": "Маркер указывают точечно в нужном вызове логгера; `MDC` хранит поля контекста, но не маркеры."
@@ -1053,7 +1053,7 @@
               "label": "B"
             },
             {
-              "text": "`Markers` — это уровни логирования выше `ERROR`, например `FATAL` и `AUDIT`, для самых критичных событий.",
+              "text": "`Markers` — это уровни логирования выше `ERROR`, например `FATAL` и `AUDIT`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Markers` — не уровни, а независимые метки-теги для категоризации записей; уровень (`INFO`/`ERROR`) задаётся отдельно.",
@@ -1065,7 +1065,7 @@
               "label": "C"
             },
             {
-              "text": "`Markers` — метки для категоризации записей: `Marker AUDIT = MarkerFactory.getMarker(\"AUDIT\")`, затем `log.info(AUDIT, \"User login userId={}\", id)`. По маркеру логи фильтруют в конфиге или в `ELK`, например направляя записи с `AUDIT` в отдельный файл через `EvaluatorFilter` с `OnMarkerEvaluator`.",
+              "text": "`Markers` — метки для категоризации записей: `Marker AUDIT = MarkerFactory.getMarker(\"AUDIT\")`.",
               "correct": true,
               "sections": {
                 "explanation": "Маркеры дают ортогональную уровню ось категоризации: одну запись можно пометить `AUDIT` или `SECURITY` и маршрутизировать её отдельно, не меняя её уровень и не плодя отдельные логгеры.",
@@ -1101,7 +1101,7 @@
               "label": "A"
             },
             {
-              "text": "В `Logback` уровень задают по имени логгера (обычно имя пакета или класса): `<logger name=\"com.myapp.service\" level=\"INFO\"/>`, точечно `<logger name=\"com.myapp.service.PaymentService\" level=\"DEBUG\"/>`, а сторонние — `org.springframework`/`org.hibernate` на `WARN`. Дочерние пакеты наследуют уровень родителя.",
+              "text": "В `Logback` уровень задают по имени логгера (обычно имя пакета или класса).",
               "correct": true,
               "sections": {
                 "explanation": "Точечная настройка уровня по пакету позволяет включить детализацию там, где идёт расследование, не заливая `DEBUG`-ом весь сервис; иерархия логгеров делает это компактно через наследование.",
@@ -1149,7 +1149,7 @@
           "question_text": "Как не раздувать логи при высокой нагрузке?",
           "options": [
             {
-              "text": "Единственный способ снизить объём — отключить логирование полностью на время пиковой нагрузки.",
+              "text": "При пиковой нагрузке объём логов уменьшают только полным отключением logging во всём приложении.",
               "correct": false,
               "sections": {
                 "what_actually": "Полное отключение лишает наблюдаемости в самый ответственный момент; объём снижают параметризацией, sampling, async и rate-limiting, не теряя `ERROR`.",
@@ -1161,7 +1161,7 @@
               "label": "A"
             },
             {
-              "text": "Конкатенация строк (`log.debug(\"User \" + id)`) безопаснее параметризации, потому что строка собирается только при включённом `DEBUG`.",
+              "text": "Конкатенация строки в `log.debug` дешевле параметризованного вызова, когда уровень отключён.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: при конкатенации строка собирается всегда, ещё до проверки уровня; параметризация (`log.debug(\"User {}\", id)`) откладывает это до момента записи.",
@@ -1173,7 +1173,7 @@
               "label": "B"
             },
             {
-              "text": "Дорогую сериализую payload в `log.debug` можно вызывать без проверок — `DEBUG` всё равно отключён в prod, значит затрат нет.",
+              "text": "Дорогую сериализацию payload можно выполнять без guard, потому что выключенный `DEBUG` устраняет вычисления аргумента.",
               "correct": false,
               "sections": {
                 "what_actually": "Аргумент `serializeToJson(payload)` вычисляется до вызова логгера, даже если `DEBUG` отключён; его оборачивают в `if (log.isDebugEnabled())`.",
@@ -1185,7 +1185,7 @@
               "label": "C"
             },
             {
-              "text": "Меры по приоритету: параметризованные вызовы `log.debug(\"User {} ordered {}\", userId, orderId)` вместо конкатенации; guard `if (log.isDebugEnabled())` для дорогой сериализации; rate-limited логирование повторяющихся ошибок (`RateLimiter.create(1.0)` + `tryAcquire()`); уровни сторонних библиотек на `WARN`; async appender для записи в файл/сеть; sampling для `DEBUG`/`INFO`.",
+              "text": "Используют parameterized logging, guards для дорогих аргументов, sampling/rate limiting и разумные уровни.",
               "correct": true,
               "sections": {
                 "explanation": "Под нагрузкой стоимость логирования из незаметной становится значимой: лишние аллокации строк и блокирующий I/O бьют по latency и хранилищу, поэтому объём режут на нескольких уровнях сразу.",
@@ -1209,14 +1209,14 @@
           "question_text": "Что такое audit log и чем он отличается от application log?",
           "options": [
             {
-              "text": "`Audit log` — запись действий пользователей и системных событий для соответствия и расследований (кто, что, когда). В отличие от application log, его цель — compliance, а не отладка; он содержит действия и изменения данных, имеет строгую схему, immutable (append-only), хранится месяцами-годами и доступен security/compliance, а не только разработчикам.",
+              "text": "Audit logs фиксируют actor, action, target, time и outcome; им нужны усиленные integrity, access control и retention против обычных application logs.",
               "correct": true,
               "sections": {
-                "explanation": "Audit-лог отвечает на вопрос «кто и что сделал» для регулятора и расследований злоупотреблений, а не для отладки; отсюда строгая схема, неизменяемость и длительное хранение, чуждые техническим логам.",
-                "example": "Реализуют отдельным логгером с маркером: `Logger auditLog = LoggerFactory.getLogger(\"AUDIT\")`, метод пишет `userId={} action={} resource={} result={} timestamp={}`; вызов `AuditLogger.log(user.getId(), \"DELETE\", \"order/12345\", \"SUCCESS\")`.",
-                "when_to_apply": "Применяют в системах с регуляторными требованиями (финансы, медицина, доступ к персональным данным), где нужно доказать, кто и когда выполнил действие.",
-                "edge_cases": "Audit-лог нельзя терять и редактировать: его пишут синхронно или в надёжный append-only стор, а retention делают длиннее (год+), в отличие от технических логов (7–30 дней).",
-                "related": "[[logging-strategies-interview#Q18]] маркеры для категории `AUDIT`; [[logging-strategies-interview#Q16]] длинный retention audit-логов; [[logging-strategies-interview#Q37]] `GDPR` и аудит доступа."
+                "explanation": "Audit log фиксирует значимые действия субъекта над ресурсом и нужен для accountability, расследований и compliance. Поэтому для него отдельно проектируют полноту, integrity/tamper evidence, доступ, time synchronization и retention.",
+                "example": "Событие содержит `actorId`, `action`, `target`, `timestamp`, `outcome`, correlation identifier и источник; секреты и лишние payload fields не копируются в audit stream.",
+                "when_to_apply": "Используйте отдельный audit trail для security- и business-critical действий, когда организация должна восстановить последовательность событий и доказать, кто выполнил операцию.",
+                "edge_cases": "Не существует универсального требования писать audit event строго синхронно или хранить ровно год. Выберите durable delivery, tamper-evident/append-oriented storage, access controls и retention из threat model, закона и внутренних policies; контролируемое удаление по окончании retention допустимо.",
+                "related": "[[logging-strategies-interview#Q18]] категории логов; [[logging-strategies-interview#Q16]] retention; [[logging-strategies-interview#Q37]] personal data и access audit."
               },
               "order": 0,
               "label": "A"
@@ -1237,16 +1237,16 @@
               "text": "`Audit log` можно свободно удалять и редактировать, ведь это просто ещё один технический файл.",
               "correct": false,
               "sections": {
-                "what_actually": "Ключевое свойство audit-лога — immutability (append-only): его нельзя править/удалять, иначе он теряет доказательную ценность.",
-                "source_of_confusion": "Привычка чистить технические логи переносится на аудит, где это недопустимо.",
-                "if_it_were_true": "Если бы аудит можно было редактировать, его нельзя было бы использовать в расследованиях и для соответствия регуляторам.",
-                "how_it_should_be": "Audit-лог защищают от изменения (append-only стор, ограниченный доступ), в отличие от перезаписываемых application-логов."
+                "what_actually": "Audit trail защищают от несанкционированного изменения и преждевременного удаления, но authorized lifecycle operations выполняются по документированной retention и legal-hold policy.",
+                "source_of_confusion": "Фраза «immutable audit log» иногда воспринимается как физическая невозможность удалить данные вообще, хотя речь о контроле и обнаружении tampering.",
+                "if_it_were_true": "Любой оператор мог бы переписать историю действий без следа, и audit trail потерял бы доказательную ценность.",
+                "how_it_should_be": "Используйте append-oriented или tamper-evident storage, separation of duties, access audit и управляемое удаление после retention."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "`Audit log` и application log — одно и то же, просто audit пишут на уровне `WARN`, а application на `INFO`.",
+              "text": "`Audit log` и application log — одно и то же, просто audit пишут на уровне `WARN`.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные по назначению логи: audit фиксирует действия для compliance с особыми требованиями к неизменяемости и хранению, а не отличается лишь уровнем.",
@@ -1305,7 +1305,7 @@
               "label": "C"
             },
             {
-              "text": "`MDC` привязан к потоку, и при передаче работы в другой поток контекст не копируется; решают тремя способами: `TaskDecorator` для `@Async` (см. Q7); ручная передача в `CompletableFuture` через `MDC.getCopyOfContextMap()` + `setContextMap()` внутри `supplyAsync`; обёртка `Executor`, которая захватывает карту и восстанавливает её перед `command.run()`, с `MDC.clear()` в `finally`.",
+              "text": "MDC thread-local: capture/restore его вокруг executors, используйте framework context propagation для async/reactive work и всегда очищайте восстановленный context.",
               "correct": true,
               "sections": {
                 "explanation": "Передача работы в пул разрывает потоколокальный `MDC`, и фоновые логи теряют `traceId`/`correlationId`; контекст нужно явно копировать в рабочий поток, иначе сквозная трасса обрывается.",
@@ -1329,7 +1329,7 @@
           "question_text": "Как интегрировать логи с метриками (`Micrometer`, `Prometheus`)?",
           "options": [
             {
-              "text": "Логи и метрики — это один и тот же поток данных, поэтому `Prometheus` хранит сами лог-сообщения вместе со счётчиками.",
+              "text": "Логи и метрики являются одним сигналом, поэтому Prometheus хранит полные log messages.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные каналы: метрики — числовые временные ряды в `Prometheus`, логи — события в `Loki`/`ES`; связывают их по общим полям (`traceId`).",
@@ -1341,7 +1341,7 @@
               "label": "A"
             },
             {
-              "text": "Чтобы получить метрику количества ошибок, нужно периодически парсить лог-файлы внешним скриптом и считать строки `ERROR`.",
+              "text": "Метрики ошибок получают только периодическим парсингом файлов и подсчётом строк уровня `ERROR`.",
               "correct": false,
               "sections": {
                 "what_actually": "Штатно метрику инкрементят прямо в коде логирования через кастомный `Appender`, а не grep-ом файлов постфактум.",
@@ -1353,11 +1353,11 @@
               "label": "B"
             },
             {
-              "text": "Логи и метрики — разные каналы; связь по общим полям (например, `traceId`). Счётчик ошибок реализуют кастомным `AppenderBase<ILoggingEvent>`: в `append()` проверяют `event.getLevel()` и инкрементят `Counter.builder(\"log.events\").tag(\"level\", \"ERROR\")` в `MeterRegistry`. В `Grafana` запросы к логам (`Loki`/`LogQL`) и метрикам (`Prometheus`/`PromQL`) кладут в один дашборд.",
+              "text": "Логи и метрики остаются разными сигналами; их связывают общими dimensions и trace identifiers.",
               "correct": true,
               "sections": {
                 "explanation": "Логи и метрики отвечают на разные вопросы: метрика — «сколько и как часто», лог — «что именно произошло»; связав их общим `traceId`, по аномалии метрики мгновенно проваливаешься в детали логов.",
-                "example": "`PromQL` `rate(log_events_total{level=\"ERROR\", service=\"order-service\"}[5m])` даёт скорость ошибок, а `LogQL` `{service=\"order-service\"} |= \"ERROR\" | json | traceId != \"\"` — сами записи; обе панели рядом в одном дашборде.",
+                "example": "`PromQL` `rate(log_events_total{level=\"ERROR\", service=\"order-service\"}[5m])` даёт скорость ошибок, а `LogQL` `{service=\"order-service\"} |= \"ERROR\" | json | traceId!= \"\"` — сами записи; обе панели рядом в одном дашборде.",
                 "when_to_apply": "Применяют, когда по метрике видно аномалию (рост error rate), и нужно тут же провалиться в соответствующие логи по `service`/`traceId`.",
                 "edge_cases": "Кастомный `Appender` не должен делать тяжёлую работу в `append()` (он в горячем пути логирования); считают только дешёвый инкремент счётчика, без блокирующих вызовов.",
                 "related": "[[logging-strategies-interview#Q30]] связка метрики-трейсы-логи; [[logging-strategies-interview#Q34]] метрика вместо лога при шторме; [[logging-strategies-interview#Q36]] `@Timed` вместо performance-логов."
@@ -1366,7 +1366,7 @@
               "label": "C"
             },
             {
-              "text": "Интеграция логов с метриками означает, что каждое лог-сообщение нужно дублировать как отдельную метрику в `Prometheus`.",
+              "text": "Каждую строку лога необходимо дублировать отдельной Prometheus time series для корреляции.",
               "correct": false,
               "sections": {
                 "what_actually": "Дублировать каждое сообщение метрикой бессмысленно и взрывает кардинальность; метрику заводят на агрегаты (счётчики по уровню/типу), а не на каждую запись.",
@@ -1401,7 +1401,7 @@
               "label": "A"
             },
             {
-              "text": "Централизованное логирование — сбор логов всех узлов в одно хранилище (`ELK`/`Loki`). Риски и меры: сетевые потери → буфер на агенте (`Filebeat` хранит позицию и дочитывает после восстановления сети); стоимость хранения → retention + sampling; SPOF агрегатора → HA-кластер `Elasticsearch` с репликами; безопасность данных → шифрование (in transit и at rest) и `RBAC` в `Kibana`.",
+              "text": "Centralized logging собирает hosts в один queryable backend; риски — loss/backpressure, концентрация secrets, cost, access abuse и pipeline outage.",
               "correct": true,
               "sections": {
                 "explanation": "Централизация даёт сквозной поиск, но превращает агрегатор в критичную зависимость: его падение или сетевой сбой грозит потерей логов, поэтому риски закрывают буфером, HA и продуманной деградацией.",
@@ -1461,7 +1461,7 @@
               "label": "A"
             },
             {
-              "text": "Идут по чеклисту: есть общий `logging-starter` — подключить его, нет — создать `logback-spring.xml`; задать service name; формат `JSON` в prod; `MDC` с `traceId` + `correlationId`; уровни `INFO` в prod / `DEBUG` в dev; маскирование PII; async appender для prod; интеграцию с агрегатором.",
+              "text": "Для нового service определите events/levels, JSON schema, trace correlation, secret policy, stdout/collector path, retention, alerts, ownership и tests.",
               "correct": true,
               "sections": {
                 "explanation": "Логирование закладывают на старте сервиса, а не после первого инцидента: без формата, контекста и агрегации с первого дня сервис выпадает из общей observability и нечем расследовать сбои.",
@@ -1506,7 +1506,7 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое структурированное логирование и зачем нужен `JSON`?",
+          "question_text": "Как поэтапно внедрять единую JSON-схему логов между сервисами?",
           "options": [
             {
               "text": "Структурированное логирование требует переписать все сообщения на английском с заглавной буквы — иначе `JSON` не валиден.",
@@ -1533,7 +1533,7 @@
               "label": "B"
             },
             {
-              "text": "Это продолжение Q3 с акцентом на rollout: `JSON` нужен не ради формата, а для управляемой схемы полей между сервисами — одинаковые ключи, типы и предсказуемые дашборды. Миграцию ведут поэтапно: пилот (1 сервис + `JSON` + `Kibana`), стандарт (обязательные поля `service`/`traceId`/`env`/`version` + общий starter), масштабирование (все сервисы + линтер + мониторинг доли непарсимых событий).",
+              "text": "Версионируйте общую JSON schema/starter, поддержите old/new fields, сначала обновите collectors и dashboards, затем мигрируйте services поэтапно.",
               "correct": true,
               "sections": {
                 "explanation": "Ценность `JSON` не в самом формате, а в управляемой схеме полей между сервисами: одинаковые ключи и типы дают предсказуемые дашборды и кросс-сервисные запросы, ради чего и затевают rollout.",
@@ -1566,10 +1566,10 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как организовать ротацию и хранение логов (в том числе в контейнерах)?",
+          "question_text": "Как организовать ротацию и доставку логов в контейнерах?",
           "options": [
             {
-              "text": "Ротация на узле — `Logback` с `RollingFileAppender` (по размеру или дате). В контейнерных средах приложение пишет в stdout, а ротацией управляет `Docker`/`Kubernetes`: драйвер `json-file` с `log-opts` `max-size: 100m` и `max-file: 5`. Retention в `Loki` задают отдельно: `compactor.retention_enabled: true` и `limits_config.retention_period: 720h` (30 дней).",
+              "text": "Containers пишут stdout/stderr; node agents собирают runtime files, а runtime/backend policies обеспечивают rotation, buffering, retry и retention.",
               "correct": true,
               "sections": {
                 "explanation": "Среда исполнения определяет, кто ротирует логи: на VM это `Logback`, в контейнерах — драйвер платформы и retention агрегатора; путаница в ответственности ведёт к забитым дискам или потерянным логам.",
@@ -1582,7 +1582,7 @@
               "label": "A"
             },
             {
-              "text": "`Loki retention` задаётся в днях прямо в `Logback` через параметр `maxHistory`, а не в конфиге `Loki`.",
+              "text": "Loki retention задают в application `Logback maxHistory`; backend compactor и object-storage lifecycle автоматически наследуют это значение.",
               "correct": false,
               "sections": {
                 "what_actually": "`Loki retention_period` задают в конфиге `Loki` (`limits_config`); `maxHistory` в `Logback` — это локальная ротация файлов, не связанная с `Loki`.",
@@ -1594,7 +1594,7 @@
               "label": "B"
             },
             {
-              "text": "В `Docker` ротацию логов нужно настраивать внутри приложения через `RollingFileAppender`, а драйвер `Docker` за это не отвечает.",
+              "text": "Docker log rotation следует реализовать только `RollingFileAppender` внутри container; runtime logging driver и node collector не должны управлять files.",
               "correct": false,
               "sections": {
                 "what_actually": "В контейнерах приложение пишет в stdout, а ротацией ведает драйвер `Docker` (`json-file` с `max-size`/`max-file`) — внутренний `RollingFileAppender` тут не нужен.",
@@ -1606,7 +1606,7 @@
               "label": "C"
             },
             {
-              "text": "В `Kubernetes` ротацию и хранение логов вообще не настраивают — логи пишутся бесконечно, пока не закончится диск узла.",
+              "text": "Kubernetes гарантирует бесконечное хранение stdout logs, поэтому rotation, node disk limits, collector buffering и backend retention не настраивают.",
               "correct": false,
               "sections": {
                 "what_actually": "В `K8s` ротацией ведает container runtime/драйвер логов, а долгосрочное хранение — агрегатор с retention; бесконечного роста до отказа диска не допускают.",
@@ -1665,7 +1665,7 @@
               "label": "C"
             },
             {
-              "text": "Не включают пароли, токены и PII в сообщения. Маскируют через `LogstashEncoder` с `MaskingJsonGeneratorDecorator`: `RegexValueMasker` по именам полей (`password|token|secret|apiKey|authorization` → `***`) и `pathMasker` по пути (`creditCard` → `****`). На уровне класса защищаются `@ToString.Exclude` (Lombok), чтобы поле не попало в `toString()` и, значит, в лог.",
+              "text": "Не включают пароли, токены и PII в сообщения. Маскируют через `LogstashEncoder` с `MaskingJsonGeneratorDecorator`.",
               "correct": true,
               "sections": {
                 "explanation": "В структурированных логах секрет может утечь не только через `message`, но и через поля `MDC`/DTO; поэтому маскируют значения по имени и пути в `JSON` и исключают опасные поля из сериализации.",
@@ -1689,7 +1689,7 @@
           "question_text": "Что такое correlation ID и зачем он в логах?",
           "options": [
             {
-              "text": "`Correlation ID` (или `traceId`) — идентификатор, передаваемый по цепочке вызовов; в логах каждого сервиса записывается один и тот же `ID`, по которому в агрегаторе собирают все записи одного запроса. В `Spring Boot 3` с `Micrometer Tracing` `traceId` добавляется в `MDC` автоматически.",
+              "text": "Correlation ID передают через цепочку вызовов и добавляют в логи, чтобы собрать события одного запроса.",
               "correct": true,
               "sections": {
                 "explanation": "Один и тот же id во всех записях запроса превращает разрозненные логи сервисов в единую цепочку; в `Spring Boot 3` это `traceId`, который инструментация проставляет автоматически без ручного кода.",
@@ -1702,7 +1702,7 @@
               "label": "A"
             },
             {
-              "text": "`Correlation ID` работает только внутри одного сервиса и теряется при вызове другого микросервиса.",
+              "text": "Correlation ID существует только внутри одного процесса и обязательно теряется при сетевом вызове.",
               "correct": false,
               "sections": {
                 "what_actually": "Главный смысл id — переживать межсервисные вызовы: его пробрасывают в заголовке (`X-Correlation-Id`/`traceparent`) и восстанавливают в следующем сервисе.",
@@ -1714,7 +1714,7 @@
               "label": "B"
             },
             {
-              "text": "В `Spring Boot 3` `traceId` нужно вручную добавлять в паттерн логов через кастомный код — автоматически он не появляется.",
+              "text": "В Spring Boot trace ID всегда требует ручного копирования в каждое log message.",
               "correct": false,
               "sections": {
                 "what_actually": "`Micrometer Tracing` сам кладёт `traceId` в `MDC`; достаточно сослаться на `%X{traceId:-}` в паттерне, ручной код не нужен.",
@@ -1726,7 +1726,7 @@
               "label": "C"
             },
             {
-              "text": "`Correlation ID` уникален для каждой записи лога, то есть у каждой строки свой id.",
+              "text": "Correlation ID уникален для каждой строки, поэтому соседние записи одного запроса имеют разные значения.",
               "correct": false,
               "sections": {
                 "what_actually": "Id един для всего запроса и повторяется во всех его записях; уникальна каждая запись по таймстампу/спану, но не по correlation id.",
@@ -1749,7 +1749,7 @@
           "question_text": "Как связать логи с метриками и трейсами для расследования?",
           "options": [
             {
-              "text": "Связь даёт один `traceId` в логах, в трейсах и (через exemplars) в метриках. Последовательность расследования: метрики (`Prometheus`/`VictoriaMetrics`) показывают аномалию (рост p99, error rate) → трейсы (`Jaeger`/`Tempo`) за период выявляют проблемный трейс → логи (`Loki`/`ES`) по `traceId` дают полную картину по всем сервисам.",
+              "text": "Связь даёт один `traceId` в логах, в трейсах и (через exemplars) в метриках.",
               "correct": true,
               "sections": {
                 "explanation": "Три сигнала observability дополняют друг друга, и связующее звено — общий `traceId`: воронка «метрика → трейс → лог» ведёт от симптома к корню за минуты вместо ручного перебора логов.",
@@ -1833,7 +1833,7 @@
               "label": "B"
             },
             {
-              "text": "В `Kubernetes` приложения пишут в stdout/stderr, container runtime складывает это в `/var/log/containers/*.log`, а `Fluent Bit` (DaemonSet, один на узел) читает файлы, обогащает метаданными `K8s` и отправляет в `Elasticsearch`/`Loki`. Конфиг: `[INPUT] tail` по `/var/log/containers/*.log`, `[FILTER] kubernetes` добавляет namespace/pod/labels, `[OUTPUT] loki`.",
+              "text": "Applications пишут stdout/stderr; DaemonSet Fluent Bit или Alloy читает container logs, добавляет Kubernetes metadata, buffers/retries и отправляет в backend.",
               "correct": true,
               "sections": {
                 "explanation": "В `Kubernetes` ответственность разделена: приложение лишь пишет в stdout, а агент-`DaemonSet` собирает, обогащает метаданными кластера и доставляет логи; это держит контейнер иммутабельным и простым.",
@@ -1869,12 +1869,12 @@
           "question_text": "Что такое `Grafana Loki` и чем он отличается от `ELK`?",
           "options": [
             {
-              "text": "`Grafana Loki` — система хранения логов, оптимизированная под метки (labels), а не под полнотекстовый поиск. Отличия от `ELK`: индексирует только labels (а не полный текст); хранение дешевле (~10x); поиск по содержимому медленнее (grep по чанкам); нативная интеграция с `Grafana`; лёгкий агент `Promtail` (~1–10 MB против ~500 MB `Logstash`); идеален для `Kubernetes`/микросервисов, тогда как `ELK` — для аудита и сложных запросов.",
+              "text": "`Grafana Loki` индексирует labels, а строки хранит сжатыми в chunks.",
               "correct": true,
               "sections": {
-                "explanation": "`Loki` сознательно жертвует полнотекстовым поиском ради дешёвого хранения и лёгкого агента, индексируя только метки; выбор между ним и `ELK` — это компромисс «стоимость против мощности поиска».",
-                "example": "`LogQL` в `Grafana`: `{service=\"order-service\", env=\"prod\"} |= \"ERROR\" | json | traceId != \"\"` фильтрует по меткам и парсит `JSON`; retention задают `compactor.retention_enabled: true` и `limits_config.retention_period: 720h`.",
-                "when_to_apply": "Выбирают `Loki`, когда приоритет — cost-эффективность и интеграция с `Grafana`/`Prometheus`; `ELK` — когда нужен полнотекстовый поиск по payload и сложные агрегации.",
+                "explanation": "Loki индексирует stream labels, а log entries сохраняет в compressed chunks. Это уменьшает index overhead, но broad content queries могут читать больше данных, чем в полноиндексной системе.",
+                "example": "`LogQL` в `Grafana`: `{service=\"order-service\", env=\"prod\"} |= \"ERROR\" | json | traceId!= \"\"` фильтрует по меткам и парсит `JSON`; retention задают `compactor.retention_enabled: true` и `limits_config.retention_period: 720h`.",
+                "when_to_apply": "Выбирайте Loki для label-oriented поиска, object-storage retention и Grafana ecosystem; полноиндексный backend — когда критичен быстрый произвольный поиск по полям и тексту.",
                 "edge_cases": "Метки в `Loki` должны быть низкой кардинальности (`service`, `level`, `env`): label с высокой кардинальностью (`userId`, `traceId`) взрывает число стримов и убивает производительность — такие поля держат в теле, а не в labels.",
                 "related": "[[logging-strategies-interview#Q12]] стеки агрегации; [[logging-strategies-interview#Q13]] `ELK` пайплайн; [[logging-strategies-interview#Q31]] `Fluent Bit` → `Loki` в `K8s`."
               },
@@ -1882,24 +1882,24 @@
               "label": "A"
             },
             {
-              "text": "`Loki` требует тяжёлого агента уровня `Logstash` (~500 MB памяти), как и классический `ELK`.",
+              "text": "`Loki` обязательно требует тяжёлого JVM-agent уровня `Logstash` на каждом host.",
               "correct": false,
               "sections": {
-                "what_actually": "С `Loki` используют лёгкий `Promtail` (~1–10 MB), тогда как ~500 MB — это про `Logstash` в стеке `ELK`.",
-                "source_of_confusion": "Обобщение «агрегатор = тяжёлый агент» переносят с `ELK` на `PLG`.",
-                "if_it_were_true": "Если бы агент `Loki` был таким же тяжёлым, не было бы его преимущества для ресурсо-ограниченных узлов `K8s`.",
-                "how_it_should_be": "Агент `Loki` (`Promtail`/`Fluent Bit`) лёгкий по памяти; тяжёлый `Logstash` — атрибут `ELK`."
+                "what_actually": "Loki принимает данные от разных collectors, включая Grafana Alloy и Fluent Bit; их footprint зависит от enabled components, pipelines и load, а JVM не обязательна.",
+                "source_of_confusion": "Централизованный log processing в ELK часто связан с Logstash, и эту deployment model механически переносят на Loki.",
+                "if_it_were_true": "Каждый Loki deployment требовал бы JVM-based agent на host, но поддерживаемые collectors используют другие runtimes и topologies.",
+                "how_it_should_be": "Выбирайте collector по required integrations и load; Loki не навязывает Logstash-like JVM agent."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "`Loki` индексирует полный текст логов так же, как `Elasticsearch`, поэтому поиск по содержимому в нём одинаково быстрый.",
+              "text": "`Loki` индексирует полный текст логов так же, как `Elasticsearch`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Loki` индексирует только метки (labels), а не полный текст; поиск по содержимому в нём медленнее (grep по чанкам), зато хранение дешевле.",
                 "source_of_confusion": "Сходство задач (хранение логов) создаёт ложное ожидание одинакового индексирования.",
-                "if_it_were_true": "Если бы `Loki` строил полнотекстовый индекс, он не был бы в ~10 раз дешевле `Elasticsearch` по хранению.",
+                "if_it_were_true": "Loki строил бы inverted index по содержимому каждой строки и имел бы близкую к полноиндексным системам storage/query cost model.",
                 "how_it_should_be": "`Loki` индексирует labels и хранит сырые чанки; полнотекстовый поиск — сильная сторона `ES`, а не `Loki`."
               },
               "order": 2,
@@ -1909,10 +1909,10 @@
               "text": "`Loki` дороже `Elasticsearch` в хранении, потому что строит более сложные структуры индексов.",
               "correct": false,
               "sections": {
-                "what_actually": "`Loki` как раз дешевле (~10x) именно потому, что индексирует только метки и хранит чанки в объектном сторе, а не полнотекстовый индекс.",
-                "source_of_confusion": "«Раз это отдельная система, наверное она требовательнее» — неверная интуиция про стоимость.",
-                "if_it_were_true": "Если бы `Loki` был дороже, его не выбирали бы ради cost-эффективности в `Kubernetes`.",
-                "how_it_should_be": "`Loki` дешевле `ES` по хранению; платой за это является более медленный поиск по содержимому."
+                "what_actually": "Loki обычно уменьшает index overhead, поскольку индексирует labels и хранит compressed chunks; реальный TCO зависит от retention, query profile, cardinality и operations.",
+                "source_of_confusion": "Стоимость отдельной системы ошибочно оценивают без учёта её index model и object storage architecture.",
+                "if_it_were_true": "Более сложный full-content index был бы частью Loki architecture, но его index связывает label sets с chunks.",
+                "how_it_should_be": "Сравнивайте полный TCO конкретного workload; преимущество Loki связано с меньшим index overhead, а не с универсальным множителем экономии."
               },
               "order": 3,
               "label": "D"
@@ -1929,7 +1929,7 @@
           "question_text": "Как динамически менять уровень логирования без рестарта (`Actuator`, `JMX`)?",
           "options": [
             {
-              "text": "В production нельзя рестартовать сервис ради `DEBUG`; уровень меняют тремя способами без деплоя: `Spring Boot Actuator` (рекомендуется) — `POST /actuator/loggers/com.myapp.service` с `{\"configuredLevel\": \"DEBUG\"}`, сброс через `null`; `JMX` (`JMXConfigurator` `Logback`, инструменты `jconsole`/`jmxterm`) для не-HTTP приложений; программно через `LoggerContext.getLogger(name).setLevel(...)` как крайний случай.",
+              "text": "Уровень логгера меняют через Actuator `/actuator/loggers` или JMX без рестарта приложения.",
               "correct": true,
               "sections": {
                 "explanation": "В проде рестарт ради `DEBUG` недопустим, а проблема воспроизводится только вживую; `Actuator`/`JMX` дают временно поднять детализацию нужного пакета и вернуть как было без деплоя.",
@@ -1942,7 +1942,7 @@
               "label": "A"
             },
             {
-              "text": "Через `Actuator` можно только посмотреть текущий уровень логгера, но не изменить его — для изменения нужен рестарт.",
+              "text": "Через `Actuator` можно только посмотреть текущий уровень логгера.",
               "correct": false,
               "sections": {
                 "what_actually": "`POST /actuator/loggers/<name>` с `configuredLevel` именно изменяет уровень в рантайме; `GET` лишь показывает текущий.",
@@ -1989,7 +1989,7 @@
           "question_text": "Как реализовать rate-limiting логов при шторме ошибок?",
           "options": [
             {
-              "text": "При шторме ошибок проще всего поднять уровень логгера до `ERROR_ONLY` — тогда повторяющиеся ошибки перестанут писаться.",
+              "text": "Повышение уровня логгера скрывает события, но не ограничивает повторяющиеся ошибки одного уровня.",
               "correct": false,
               "sections": {
                 "what_actually": "Уровень не различает одинаковые `ERROR` между собой: шторм — это много записей одного уровня, их режут rate-limiter или дедупликацией, а не повышением уровня.",
@@ -2001,7 +2001,7 @@
               "label": "A"
             },
             {
-              "text": "Guava `RateLimiter` сам пишет логи и заменяет собой логгер `SLF4J`, поэтому отдельный `log.error` не нужен.",
+              "text": "Guava `RateLimiter` сам записывает логи и полностью заменяет `SLF4J` logger.",
               "correct": false,
               "sections": {
                 "what_actually": "`RateLimiter` лишь решает, разрешить ли действие (`tryAcquire()`); запись по-прежнему делает `log.error(...)` — это разные инструменты.",
@@ -2013,7 +2013,7 @@
               "label": "B"
             },
             {
-              "text": "Rate-limiting логов означает, что после первого `ERROR` приложение перестаёт логировать ошибки до конца своей работы.",
+              "text": "Rate limiting прекращает все error-логи после первого события до рестарта приложения.",
               "correct": false,
               "sections": {
                 "what_actually": "Rate-limiting ограничивает частоту (например, 1/сек) или дедуплицирует на окно (30 сек), а не глушит ошибки навсегда после первой.",
@@ -2025,14 +2025,14 @@
               "label": "C"
             },
             {
-              "text": "При шторме (сотни тысяч однотипных `ERROR`) применяют: `RateLimiter` из Guava (`RateLimiter.create(1.0)` — не более 1 лога/сек на тип, `tryAcquire()` решает писать полный `ERROR` со stack trace или короткий `WARN`); дедупликацию через `TurboFilter` с `Caffeine`-кэшем (ключ `logger+format`, `expireAfterWrite(30s)`, повтор → `FilterReply.DENY`); замену лога на метрику для высокочастотных событий (`meterRegistry.counter(...).increment()`).",
+              "text": "При log storm ограничивают частоту, дедуплицируют повторы и сохраняют representative errors вместе с метриками.",
               "correct": true,
               "sections": {
-                "explanation": "Шторм однотипных ошибок перегружает хранилище и топит реальный сигнал в шуме; rate-limiting и дедупликация сохраняют первое вхождение, а высокочастотные события уводят в дешёвую метрику.",
-                "example": "В `DeduplicatingTurboFilter` для `ERROR` проверяют кэш по ключу `logger.getName()+\"|\"+format`: если запись была недавно — `DENY`, иначе пишут и кладут в кэш; фильтр регистрируют как `<turboFilter>` в `logback-spring.xml`.",
-                "when_to_apply": "Применяют для повторяющихся ошибок одного типа (недоступность внешнего API, отказ БД), когда шторм перегружает хранилище и маскирует реальную проблему.",
-                "edge_cases": "Правило: `ERROR` всегда без rate-limiting, если это уникальное событие; ограничивают только повторы одного типа, иначе можно потерять единственное проявление нового бага.",
-                "related": "[[logging-strategies-interview#Q20]] меры против раздувания логов; [[logging-strategies-interview#Q9]] sampling; [[logging-strategies-interview#Q23]] метрика вместо лога."
+                "explanation": "Rate limiting и deduplication ограничивают повторяющийся noise, сохраняя representative samples и metric количества suppressed events. Policy должна различать event keys и critical classes.",
+                "example": "Фильтр пишет первое occurrence, затем не чаще одного раза за window для `(logger,errorCode)`, добавляет suppressed count и экспортирует counter всего storm.",
+                "when_to_apply": "Используйте при повторяющихся failures внешнего dependency или одинаковых validation errors, когда объём мешает расследованию и угрожает pipeline.",
+                "edge_cases": "Не применяйте один global limiter ко всем ERROR: новый error key должен пройти, а audit/security events могут быть exempt. Даже unique detection требует bounded cache и expiry.",
+                "related": "[[logging-strategies-interview#Q20]] объём логов; [[logging-strategies-interview#Q9]] sampling; [[logging-strategies-interview#Q23]] метрики вместо повторов."
               },
               "order": 3,
               "label": "D"
@@ -2046,7 +2046,7 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как связать distributed tracing с логами через `traceId` в `OpenTelemetry`?",
+          "question_text": "Как OpenTelemetry связывает логи и трейсы через trace context?",
           "options": [
             {
               "text": "`OpenTelemetry` покрывает только трейсы; для логов и метрик он не предназначен и с ними не интегрируется.",
@@ -2073,7 +2073,7 @@
               "label": "B"
             },
             {
-              "text": "`OpenTelemetry` — стандарт для трассировки, метрик и логов; при правильной настройке `traceId` автоматически попадает во все логи. Подключают `micrometer-tracing-bridge-otel` и `opentelemetry-exporter-otlp`, задают `management.tracing.sampling.probability` (0.1 в prod, 1.0 в dev), и `traceId`/`spanId` через `Micrometer` оказываются в `MDC`, а оттуда — в `JSON` через `LogstashEncoder`.",
+              "text": "OpenTelemetry распространяет trace context; logging instrumentation или framework bridge добавляет `trace_id`/`span_id` в records для correlation с traces.",
               "correct": true,
               "sections": {
                 "explanation": "`OpenTelemetry` стандартизирует распространение контекста между сервисами, поэтому `traceId` сам долетает до каждого лога; это превращает разрозненные сервисы в единую трассируемую систему.",
@@ -2109,7 +2109,7 @@
           "question_text": "Как логировать производительность (performance logging) без деградации?",
           "options": [
             {
-              "text": "Performance logging безопасно ставить на каждый вызов в hot path — современный `Logback` достаточно быстр, чтобы это не влияло на latency.",
+              "text": "Performance logging безопасно ставить на каждый вызов в hot path — современный `Logback` достаточно быстр.",
               "correct": false,
               "sections": {
                 "what_actually": "Лог в hot path стоит: вычисление строки, запись в буфер, потенциальный I/O; на горячем пути логируют выборочно (порог latency) или уводят в метрики.",
@@ -2121,7 +2121,7 @@
               "label": "A"
             },
             {
-              "text": "Лучший способ — логировать каждую операцию на уровне `DEBUG`: в prod он отключён, поэтому overhead нулевой при любой реализации.",
+              "text": "Лучший способ — логировать каждую операцию на уровне `DEBUG`: в prod он отключён.",
               "correct": false,
               "sections": {
                 "what_actually": "Нулевой overhead — только при параметризованных вызовах; конкатенация или вызов методов в аргументах считается даже при отключённом `DEBUG` (50–500 нс).",
@@ -2133,7 +2133,7 @@
               "label": "B"
             },
             {
-              "text": "Паттерны безопасного performance logging: логировать только медленные операции по порогу (`if (elapsed > SLOW_QUERY_THRESHOLD_MS) log.warn(\"Slow operation: name={} elapsed={}ms\", ...)`); использовать `@Timed(percentiles={0.5,0.95,0.99})` и метрики вместо логов для деталей; batch logging — агрегировать в памяти и сбрасывать раз в минуту по `@Scheduled`.",
+              "text": "Паттерны безопасного performance logging: логировать только медленные операции по порогу; использовать `@Timed` и метрики вместо логов для деталей.",
               "correct": true,
               "sections": {
                 "explanation": "В горячем пути даже дешёвый лог, помноженный на частоту вызовов, заметно бьёт по latency; поэтому детали производительности уводят в метрики, а логируют лишь аномалии по порогу.",
@@ -2169,50 +2169,50 @@
           "question_text": "Как соблюдать `GDPR` при логировании (PII, маскирование, аудит)?",
           "options": [
             {
-              "text": "`GDPR` касается только баз данных и не распространяется на лог-файлы приложения.",
+              "text": "GDPR применяется только к business databases; email, IP и другие identifiers в application logs никогда не считаются обработкой personal data.",
               "correct": false,
               "sections": {
-                "what_actually": "`GDPR` распространяется на любую обработку PII, включая логи; именно поэтому маскируют и ограничивают retention лог-файлов.",
-                "source_of_confusion": "Кажется, что регуляция «про БД», а логи — это «технические файлы» вне её охвата.",
-                "if_it_were_true": "Если бы логи были исключены, штрафов за PII в логах не существовало бы, но они есть.",
-                "how_it_should_be": "Логи — такой же канал хранения PII, как и БД; к ним применяют минимизацию, маскирование и retention."
+                "what_actually": "Application logs могут содержать personal data и тогда подпадают под те же принципы lawfulness, minimisation, storage limitation и security, что и другие processing systems.",
+                "source_of_confusion": "Логи считают побочным техническим артефактом, хотя юридическая квалификация зависит от содержимого и возможности идентификации, а не от имени хранилища.",
+                "if_it_were_true": "Организация могла бы обойти требования, просто копируя identifiers из базы в log backend, что противоречит технологически нейтральной модели GDPR.",
+                "how_it_should_be": "Инвентаризируйте personal data во всех telemetry stores, включая logs, traces, backups и exported archives."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "`GDPR` требует защиты PII (имена, email, IP, номера карт): их не хранят без необходимости. Стратегии: allowlist полей (логировать `userId`/`orderId`/`traceId`/`action`, но никогда `password`/`email`/`phone`/`SSN`/`creditCard`/`token`); `@ToString.Exclude`/`@JsonIgnore` на уровне класса; маскирование через `MaskingJsonGeneratorDecorator` (по именам полей и по номерам карт); дифференцированный retention и право на удаление.",
+              "text": "Для GDPR определите lawful purpose, минимизируйте и redact personal data до export, ограничьте и audit access, задайте обоснованный retention и deletion process.",
               "correct": true,
               "sections": {
-                "explanation": "`GDPR` штрафует за сам факт хранения PII без основания, а не за утечку; поэтому в логах применяют минимизацию, маскирование и дифференцированный retention, а не полагаются на «никто не прочитает».",
-                "example": "Пример: `log.info(\"User login: userId={} success={}\", user.getId(), success)` вместо `email`/`password`; в `JSON` `RegexValueMasker` с `(?i)(password|token|secret|apiKey|authorization)` → `***MASKED***` и regex `\\b\\d{13,19}\\b` → `****-****-****-XXXX`.",
-                "when_to_apply": "Применяют в любом сервисе, обрабатывающем данные граждан ЕС (и обычно шире — как базовую гигиену), особенно в аутентификации, платежах и профилях.",
-                "edge_cases": "Retention дифференцируют: технические логи без PII — 30 дней, audit (userId/action) — 1 год, логи с PII — минимально необходимо (`GDPR` Art. 5(e)); правило «сомневаешься — не логируй», ведь регулятор штрафует за наличие, а не за отсутствие данных.",
-                "related": "[[logging-strategies-interview#Q28]] маскирование PII в `JSON`; [[logging-strategies-interview#Q21]] audit-логи; [[logging-strategies-interview#Q16]] retention по категориям данных."
+                "explanation": "Personal data внутри логов остаются обработкой данных. Нужны lawful basis и определённый purpose, data minimisation, storage limitation, integrity/confidentiality и accountability; logging pipeline не является исключением из этих принципов.",
+                "example": "Логируйте внутренний `userId` вместо email, удаляйте tokens/passwords до записи, ограничивайте доступ к backend по ролям, audit-ируйте запросы и автоматически пересматривайте или удаляйте данные по documented retention.",
+                "when_to_apply": "Применяйте эти меры ко всем telemetry pipelines, где запись прямо или косвенно относится к идентифицируемому человеку; scope и lawful basis согласуйте с privacy/legal функцией.",
+                "edge_cases": "GDPR не задаёт универсальные 30 дней или один год: срок зависит от purpose и legal obligations. Pseudonymisation и deterministic hashes снижают риск, но данные остаются personal, если человека можно идентифицировать с дополнительной информацией; legal holds и deletion requests требуют отдельной процедуры.",
+                "related": "[[logging-strategies-interview#Q28]] redaction; [[logging-strategies-interview#Q21]] audit trail; [[logging-strategies-interview#Q16]] retention."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "`GDPR` разрешает логировать любые PII при условии, что лог-файл хранится не дольше 30 дней.",
+              "text": "Можно логировать любые personal data без purpose и access controls, если backend автоматически удаляет каждую запись не позднее фиксированных тридцати дней.",
               "correct": false,
               "sections": {
-                "what_actually": "Срок хранения не легализует сам сбор: PII не логируют без необходимости независимо от retention, а минимизация данных — отдельное требование.",
-                "source_of_confusion": "Фокус на retention создаёт иллюзию, что «короткое хранение = можно собирать всё».",
-                "if_it_were_true": "Если бы 30 дней всё легализовали, не было бы принципа минимизации и правила «сомневаешься — не логируй».",
-                "how_it_should_be": "PII не собирают без основания вовсе; retention — дополнительная мера, а не разрешение логировать всё подряд."
+                "what_actually": "Короткий retention не заменяет lawful purpose, minimisation, transparency, security и access controls; хранить ненужные identifiers нельзя только потому, что они удалятся через месяц.",
+                "source_of_confusion": "Storage limitation легко принять за единственное правило и превратить конкретный срок в универсальное разрешение на сбор.",
+                "if_it_were_true": "Любая избыточная telemetry collection становилась бы lawful при достаточно коротком TTL, делая purpose limitation и data minimisation бессмысленными.",
+                "how_it_should_be": "Сначала обоснуйте необходимость каждого поля, затем задайте минимальный retention и защитите доступ."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "Для `GDPR` достаточно хэшировать email в логах — хэш не считается персональными данными.",
+              "text": "Детерминированный hash email всегда превращает запись в anonymous data, поэтому к таким логам не применяются retention, security и data-subject procedures.",
               "correct": false,
               "sections": {
-                "what_actually": "Хэш email при известном алгоритме обратим перебором и считается псевдонимизированными PII, а не анонимными данными — он по-прежнему под `GDPR`.",
-                "source_of_confusion": "«Хэш = анонимно» — распространённое заблуждение про псевдонимизацию.",
-                "if_it_were_true": "Если бы хэш выводил данные из-под `GDPR`, регуляторы не различали бы анонимизацию и псевдонимизацию.",
-                "how_it_should_be": "Email вообще не логируют; при необходимости используют внутренний `userId`, а хэш PII остаётся персональными данными."
+                "what_actually": "Hash или иной pseudonymous identifier обычно остаётся personal data, если его можно связать с человеком с помощью дополнительных данных или разумных средств.",
+                "source_of_confusion": "Pseudonymisation смешивают с irreversible anonymisation и считают любое преобразование автоматическим выходом из GDPR scope.",
+                "if_it_were_true": "Достаточно было бы hash-ировать identifier, чтобы отменить все privacy obligations, хотя контролируемая re-identification часто остаётся возможной.",
+                "how_it_should_be": "Считайте hashing защитной мерой, а не освобождением: сохраняйте purpose, retention, security и access governance."
               },
               "order": 3,
               "label": "D"
@@ -2229,7 +2229,7 @@
           "question_text": "Как тестировать стратегию логирования в `Spring Boot`?",
           "options": [
             {
-              "text": "Логирование — часть контракта сервиса. Способы: `MemoryAppender extends ListAppender<ILoggingEvent>` для unit-тестов — навешивают на логгер класса, потом проверяют `contains(\"Order created\", Level.INFO)` или отсутствие номера карты в `getFormattedMessage()`; `@SpringBootTest` + `OutputCaptureExtension` с `CapturedOutput` для интеграционных (проверка `traceId` в выводе); проверка отсутствия чувствительных полей в `JSON`-логах через `output.getOut().doesNotContain(...)`.",
+              "text": "Проверяйте required events и отсутствие secrets через Logback `ListAppender`; `OutputCaptureExtension` подходит для console JSON, fields, levels и trace context.",
               "correct": true,
               "sections": {
                 "explanation": "Логирование — часть контракта сервиса, особенно для безопасности: тест ловит и пропавший критичный лог, и утёкший секрет до прода, превращая хрупкое поведение в проверяемое регрессией.",
@@ -2242,7 +2242,7 @@
               "label": "A"
             },
             {
-              "text": "`OutputCaptureExtension` перехватывает только `System.out`, поэтому проверить отсутствие пароля в `JSON`-логах с его помощью невозможно.",
+              "text": "`OutputCaptureExtension` перехватывает только direct `System.out`, поэтому Spring Boot console logging и JSON encoder output проверить им невозможно.",
               "correct": false,
               "sections": {
                 "what_actually": "`CapturedOutput` перехватывает stdout/stderr, куда и пишутся `JSON`-логи в контейнерах, так что `doesNotContain(\"my-secret-password\")` отлично работает.",
@@ -2254,7 +2254,7 @@
               "label": "B"
             },
             {
-              "text": "Логирование тестировать не нужно — это вспомогательный механизм, и его поведение не влияет на корректность сервиса.",
+              "text": "Logs не являются observable contract сервиса, поэтому automated tests для required audit events, levels, fields и secret leakage только мешают refactoring.",
               "correct": false,
               "sections": {
                 "what_actually": "Логирование — часть контракта: важно убедиться, что критичные события пишутся, а секреты не утекают; это покрывают тестами.",
@@ -2266,7 +2266,7 @@
               "label": "C"
             },
             {
-              "text": "Единственный способ проверить логи — вручную запустить приложение и глазами прочитать вывод в консоли.",
+              "text": "Единственный надёжный test — вручную запустить application и прочитать console; appenders и captured output не отражают production configuration.",
               "correct": false,
               "sections": {
                 "what_actually": "Логи проверяют автоматизированно: `MemoryAppender` и `OutputCaptureExtension` позволяют ассертить содержимое логов в обычных тестах.",

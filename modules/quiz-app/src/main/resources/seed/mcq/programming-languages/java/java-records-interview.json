@@ -6,12 +6,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое record в Java и зачем он нужен?",
+          "question_text": "Что такое `record` в Java и какую гарантию он даёт компонентам?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "`record` — это мутабельный класс-обёртка с авто-генерируемыми сеттерами для всех полей.",
+              "text": "`record` — mutable wrapper: compiler создаёт getters и setters для каждого component, а поля можно переназначать после construction через обычный bean API.",
               "correct": false,
               "sections": {
                 "what_actually": "record неизменяем: его поля `final`, сеттеров нет — генерируются только accessor'ы для чтения.",
@@ -23,20 +23,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`record` — это компактный синтаксис для неизменяемого носителя данных (immutable data carrier): компилятор сам генерирует canonical-конструктор, accessor'ы по компонентам, а также `equals`/`hashCode`/`toString` на основе всех компонентов. Все поля `final`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Объяснение: record убирает шаблонный код value-объектов — то, что в обычном классе писали руками (геттеры, equals/hashCode), генерируется автоматически.",
-                "example": "Пример: `record Point(int x, int y) {}` сразу даёт неизменяемый класс с `x()`, `y()`, корректными `equals`/`hashCode` и `toString`.",
-                "when_to_apply": "Применять для DTO, value-объектов, ключей map, результатов запросов — там, где нужен простой неизменяемый набор данных.",
-                "edge_cases": "Подводный камень: record не подходит, когда нужна мутабельность, наследование или скрытое внутреннее состояние — он намеренно ограничен.",
-                "related": "[[java-records-interview#Q11]] авто-генерация equals/hashCode; [[java-records-interview#Q14]] когда record не подходит."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`record` — это специальный тип интерфейса для описания контрактов данных без реализации.",
+              "text": "`record` — специальный interface без state, который описывает только signatures accessors и требует отдельной implementation class для хранения component values.",
               "correct": false,
               "sections": {
                 "what_actually": "record — это класс (носитель данных) с состоянием и методами, а не интерфейс.",
@@ -46,9 +33,22 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "`record` — data carrier с generated final fields, canonical constructor, component accessors, `equals`, `hashCode` и `toString`, раскрытыми через component-based public API; immutability shallow.",
+              "correct": true,
+              "sections": {
+                "explanation": "Record declaration фиксирует state description через header components. Сами ссылки компонентов final и дополнительное instance state запрещено, но record не делает defensive copy и не замораживает переданные list/array/object.",
+                "example": "`record UserId(long value) {}` получает `value()`, canonical constructor и value-based methods. `record Tags(List<String> values)` остаётся shallowly immutable, если список не скопировать.",
+                "when_to_apply": "Используйте для DTO, commands, events, query results и value objects, где состояние полностью выражено components и полезна стандартная value semantics.",
+                "edge_cases": "Mutable component может изменить observable state и hash code record после помещения в `HashMap`. Для коллекций и массивов делайте defensive copy и продумывайте equality semantics.",
+                "related": "[[java-records-interview#Q3]] constructors; [[java-records-interview#Q11]] equality; [[java-records-interview#Q15]] best practices."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "`record` — это аннотация из библиотеки Lombok, генерирующая boilerplate во время компиляции.",
+              "text": "`record` — Lombok annotation, обрабатываемая annotation processor; без зависимости Lombok и подключённого compiler plugin такой source code не компилируется.",
               "correct": false,
               "sections": {
                 "what_actually": "record — часть языка Java (с 16), а не аннотация Lombok или сторонний процессор.",
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "record тоже реализован через annotation processor, только встроенный в JDK, а не внешний, как у Lombok; по внутреннему механизму он совпадает с `@Value`, и различие сводится к синтаксису объявления.",
+              "text": "Record реализован скрытым annotation processor JDK и после compilation ничем не отличается от Lombok `@Value`; различие только в ключевом слове.",
               "correct": false,
               "sections": {
                 "what_actually": "record — языковая конструкция Java, а `@Value` — аннотация Lombok; это разные механизмы, не синонимы.",
@@ -83,7 +83,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`record` предоставляет builder и `withX`-методы для копирования-с-изменением из коробки, тогда как в Lombok их приходится подключать отдельно аннотациями `@Builder` и `@With`.",
+              "text": "Record автоматически генерирует fluent builder и `withX` copy methods из коробки; Lombok требует `@Builder` и `@With` annotations отдельно.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `@Builder`/`@With` — это возможности Lombok; record их нативно не предоставляет.",
@@ -95,26 +95,26 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@Value` от Lombok оставляет поля изменяемыми и генерирует сеттеры, тогда как `record` делает все компоненты `final` и сеттеров не создаёт; в этом и состоит ключевое различие двух подходов.",
+              "text": "Record встроен в Java/JVM и имеет fixed components; Lombok `@Value` генерирует ordinary class и предлагает больше annotation-based customization.",
+              "correct": true,
+              "sections": {
+                "explanation": "Lombok меняет обычное class declaration во время compilation, тогда как record имеет специфицированную языком форму, reflection metadata и ограничения. Оба могут моделировать immutable values, но их contracts не идентичны.",
+                "example": "`@Value @Builder class UserDto` может получить builder и скрытые fields с custom names; `record UserDto(String name)` имеет component `name` и accessor `name()` как часть record contract.",
+                "when_to_apply": "Выбирайте record для стандартного прозрачного data carrier; Lombok class — когда нужны builder, inheritance-compatible design, нестандартные fields/accessors или постепенная настройка generated code.",
+                "edge_cases": "Lombok является build dependency и зависит от compiler tooling. Record всё ещё может содержать custom methods/constructors, но не произвольные instance fields или superclass.",
+                "related": "[[java-records-interview#Q4]] допустимые члены; [[java-records-interview#Q5]] inheritance; [[java-records-interview#Q14]] ограничения применения."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Lombok `@Value` оставляет fields mutable и генерирует setters, а record запрещает setters; это единственное существенное различие между механизмами.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба создают неизменяемые классы; `@Value` тоже делает поля `final` и без сеттеров.",
                 "source_of_confusion": "Кажется, что только «нативное» решение может быть по-настоящему immutable.",
                 "if_it_were_true": "Тогда `@Value` не отличался бы от `@Data` по изменяемости.",
                 "how_it_should_be": "И record, и `@Value` дают immutable; различие — в механизме, не в мутабельности."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`@Value` от Lombok даёт похожий неизменяемый класс, но через annotation processor и аннотацию, тогда как record — это языковая конструкция (без зависимостей). Lombok гибче (`@Builder`, `@With`, частичная настройка), record — компактнее, стандартен и интегрирован с pattern matching и сериализацией.",
-              "correct": true,
-              "sections": {
-                "explanation": "Объяснение: оба убирают boilerplate неизменяемых классов, но record — встроенный и стандартный, а Lombok — внешняя библиотека с большим набором опций.",
-                "example": "Пример: `record User(String name)` против `@Value class User { String name; }` — поведение похоже, но record не требует Lombok и работает с record-patterns.",
-                "when_to_apply": "Применять record для стандартных value-объектов; Lombok `@Value` — если уже используете Lombok и нужны его расширения (`@Builder`, `@With`).",
-                "edge_cases": "Подводный камень: смешивать Lombok-аннотации на record нежелательно — многое record уже генерирует сам, и возможны конфликты.",
-                "related": "[[java-records-interview#Q1]] что генерирует record; [[java-records-interview#Q15]] best practices выбора."
               }
             }
           ]
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Canonical-конструктор — это форма без списка параметров, в которой выполняется только валидация, а compact-конструктор принимает все компоненты record и присваивает их полям через `this.field = field`.",
+              "text": "Canonical constructor объявляется без parameter list и содержит только validation; compact constructor принимает все components и вручную присваивает `this.field = field`.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: canonical принимает все компоненты, а compact-форма — без списка параметров.",
@@ -143,7 +143,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Canonical-конструктор принимает все компоненты record в качестве параметров, а compact-конструктор служит для объявления дополнительных полей и их инициализации помимо компонентов.",
+              "text": "Canonical constructor принимает все components; compact form опускает parameter list, валидирует/нормализует values до automatic assignment в component fields.",
+              "correct": true,
+              "sections": {
+                "explanation": "Canonical constructor инициализирует ровно record components. Compact form сокращает declaration: parameters доступны по именам components, их можно валидировать/переназначать, а implicit field assignments выполняются после body.",
+                "example": "`record Email(String value) { Email { value = value.trim(); if (!value.contains(\"@\")) throw new IllegalArgumentException(); } }` нормализует parameter до implicit assignment.",
+                "when_to_apply": "Используйте compact constructor для invariants и normalization, а explicit canonical form — когда нужны annotations/modifiers или более явный control signature.",
+                "edge_cases": "Compact constructor не может явно присваивать component fields. Access level canonical constructor не должен быть более restrictive, чем record. Exception предотвращает создание instance.",
+                "related": "[[java-records-interview#Q4]] additional constructors; [[java-records-interview#Q10]] validation; [[java-records-interview#Q12]] deserialization."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Canonical constructor принимает components, а compact constructor служит для объявления дополнительных instance fields и их отдельной initialization logic.",
               "correct": false,
               "sections": {
                 "what_actually": "record не допускает дополнительных instance-полей; compact-конструктор — лишь для валидации/нормализации компонентов.",
@@ -153,22 +166,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Canonical-конструктор — это конструктор record со всеми компонентами в качестве параметров (генерируется автоматически или объявляется явно). Compact-конструктор — особая форма БЕЗ списка параметров: в нём пишут только валидацию/нормализацию, а присваивание полей компилятор добавляет сам в конце.",
-              "correct": true,
-              "sections": {
-                "explanation": "Объяснение: compact-форма нужна, чтобы вставить проверки/нормализацию входных значений, не повторяя присваивание каждого поля.",
-                "example": "Пример: `record Range(int lo, int hi) { Range { if (lo > hi) throw new IllegalArgumentException(); } }` — это compact-конструктор с валидацией.",
-                "when_to_apply": "Применять compact-конструктор для валидации инвариантов и нормализации (например, обрезка строк) при создании record.",
-                "edge_cases": "Подводный камень: в compact-конструкторе нельзя присваивать `this.x = ...` для подмены — присваивание полей идёт автоматически после тела; менять можно только локальные параметры.",
-                "related": "[[java-records-interview#Q4]] дополнительные конструкторы; [[java-records-interview#Q10]] валидация через compact-конструктор."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "Compact-конструктор объявляется без списка параметров, но каждый компонент в нём нужно присвоить вручную через `this.field = field`, иначе поля останутся неинициализированными.",
+              "text": "Compact constructor не имеет parameter list, но обязан вручную присвоить каждый `this.component`; без assignment fields получают default values.",
               "correct": false,
               "sections": {
                 "what_actually": "В compact-форме присваивание полей добавляет компилятор автоматически; писать его вручную не нужно (и нельзя).",
@@ -191,20 +191,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Да: в record можно добавлять методы (в т.ч. переопределять accessor'ы и `toString`), статические поля/методы и дополнительные конструкторы. Но дополнительный конструктор ОБЯЗАН делегировать canonical-конструктору через `this(...)`, и нельзя добавлять instance-поля помимо компонентов.",
+              "text": "Record допускает methods, static members и additional constructors, но они делегируют canonical constructor; extra instance fields в object state запрещены.",
               "correct": true,
               "sections": {
-                "explanation": "Объяснение: record расширяем по поведению (методы), но его состояние жёстко ограничено компонентами, поэтому любой конструктор сводится к canonical.",
-                "example": "Пример: `record Point(int x,int y){ Point(int v){ this(v,v);} double dist(){return Math.hypot(x,y);} }` — доп. конструктор делегирует, плюс свой метод.",
-                "when_to_apply": "Применять доп. конструкторы для удобных фабричных форм и методы — для поведения поверх данных.",
-                "edge_cases": "Подводный камень: попытка добавить instance-поле или не делегировать canonical из доп. конструктора не скомпилируется.",
-                "related": "[[java-records-interview#Q3]] canonical-конструктор как обязательная цель делегирования; [[java-records-interview#Q1]] что record генерирует сам."
+                "explanation": "Record остаётся class и может иметь поведение, interfaces, static state и constructors. Ограничения защищают state description: instance fields соответствуют header, а все construction paths проходят canonical initialization.",
+                "example": "`record Range(int from,int to){ Range(int end){ this(0,end); } int length(){ return to-from; } }` добавляет convenience constructor и method без нового state.",
+                "when_to_apply": "Добавляйте небольшое поведение, тесно связанное с value, и convenience factories/constructors, сохраняя прозрачность components.",
+                "edge_cases": "Переопределённый accessor должен возвращать component type и не должен скрывать неожиданную expensive operation. Static mutable state не участвует в value semantics и требует обычной synchronization.",
+                "related": "[[java-records-interview#Q3]] canonical constructor; [[java-records-interview#Q5]] finality; [[java-records-interview#Q15]] focused design."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Да: помимо методов и конструкторов в record разрешено объявлять и новые instance-поля сверх компонентов, если инициализировать их прямо в теле класса.",
+              "text": "Помимо methods в record можно объявлять mutable instance cache fields, если они initialized inline и исключены из `equals`/`hashCode`.",
               "correct": false,
               "sections": {
                 "what_actually": "Instance-поля помимо компонентов запрещены; допустимы лишь статические поля.",
@@ -216,7 +216,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Да: методы и дополнительные конструкторы разрешены, причём дополнительный конструктор может инициализировать компоненты напрямую через `this.x = ...`, не делегируя canonical-конструктору через `this(...)`.",
+              "text": "Additional constructor может напрямую присвоить `this.x` и завершиться без delegation canonical constructor, если проинициализированы все fields.",
               "correct": false,
               "sections": {
                 "what_actually": "Любой доп. конструктор обязан делегировать canonical через `this(...)`; прямая инициализация полей запрещена.",
@@ -228,7 +228,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Нет: record разрешает только автоматически сгенерированные accessor'ы, `equals`, `hashCode` и `toString`; добавлять собственные методы, статические члены или дополнительные конструкторы нельзя.",
+              "text": "Record body не допускает собственных methods, overridden accessors, static members или constructors; разрешён только полностью generated compiler API.",
               "correct": false,
               "sections": {
                 "what_actually": "record допускает свои методы, статические члены и доп. конструкторы (с делегированием canonical).",
@@ -251,19 +251,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Да, record может расширять другой record, но не обычный класс.",
-              "correct": false,
+              "text": "Record неявно final и extends `java.lang.Record`, поэтому не наследует другой class и не имеет subclasses, но может implement interfaces.",
+              "correct": true,
               "sections": {
-                "what_actually": "record не может расширять ничего (он уже extends `java.lang.Record`), включая другой record.",
-                "source_of_confusion": "Кажется, что однотипные конструкции наследуются друг от друга.",
-                "if_it_were_true": "Тогда существовала бы иерархия records с общими полями.",
-                "how_it_should_be": "records не наследуются друг от друга; общий контракт задаёт интерфейс."
+                "explanation": "Superclass record фиксирован спецификацией, а finality сохраняет надёжность component state и generated value methods. Java interfaces не добавляют instance state, поэтому их реализация разрешена.",
+                "example": "`record Point(int x,int y) implements Serializable, Comparable<Point>` допустим; `class ColoredPoint extends Point` и `record Child(...) extends Parent` недопустимы.",
+                "when_to_apply": "Используйте interfaces для общего polymorphic contract и sealed interface + records для закрытого набора вариантов вместо class inheritance.",
+                "edge_cases": "Record может быть nested/local и иметь generic parameters. Finality не делает mutable component immutable и не заменяет defensive copying.",
+                "related": "[[java-records-interview#Q9]] generics; [[java-records-interview#Q13]] ADT; [[java-records-interview#Q14]] выбор class."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Record не может ни наследоваться, ни реализовывать интерфейсы — он полностью изолирован.",
+              "text": "Record не может extends class и также не может implements interface, потому что его type hierarchy полностью закрыта compiler-ом.",
               "correct": false,
               "sections": {
                 "what_actually": "Реализация интерфейсов как раз разрешена; запрещено только наследование классов.",
@@ -275,7 +276,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Да, от record можно наследоваться как от обычного класса, переопределяя его компоненты.",
+              "text": "Обычный class может extends record и override component accessors, если сохраняет canonical constructor signature и final component fields parent-а.",
               "correct": false,
               "sections": {
                 "what_actually": "record неявно `final` — наследование от него невозможно; он лишь может реализовывать интерфейсы.",
@@ -287,14 +288,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Нет: record неявно `final` и не может быть родителем или потомком другого класса — он уже неявно расширяет `java.lang.Record`, а множественного наследования классов в Java нет. Однако record МОЖЕТ реализовывать интерфейсы.",
-              "correct": true,
+              "text": "Record может extends другой record, но не ordinary class; inherited components автоматически добавляются к child canonical constructor и equality contract.",
+              "correct": false,
               "sections": {
-                "explanation": "Объяснение: запрет наследования сохраняет инварианты record (состояние = компоненты, корректные equals/hashCode), которые подкласс мог бы нарушить.",
-                "example": "Пример: `record Circle(double r) implements Shape {}` — реализация интерфейса допустима, а `extends` другого класса — нет.",
-                "when_to_apply": "Применять интерфейсы (в т.ч. sealed) для полиморфизма над records вместо наследования классов.",
-                "edge_cases": "Подводный камень: попытка `class X extends SomeRecord` или сделать record абстрактным не скомпилируется; иерархии строят через интерфейсы.",
-                "related": "[[java-records-interview#Q13]] sealed-интерфейсы + records для ADT; [[java-records-interview#Q1]] record неявно extends java.lang.Record."
+                "what_actually": "record не может расширять ничего (он уже extends `java.lang.Record`), включая другой record.",
+                "source_of_confusion": "Кажется, что однотипные конструкции наследуются друг от друга.",
+                "if_it_were_true": "Тогда существовала бы иерархия records с общими полями.",
+                "how_it_should_be": "records не наследуются друг от друга; общий контракт задаёт интерфейс."
               }
             }
           ]
@@ -306,12 +306,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как сериализовать records с Jackson?",
+          "question_text": "Как современные версии Jackson сериализуют и десериализуют Java records?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Jackson сериализует records по accessor'ам, но десериализовать их не может без кастомного `JsonDeserializer`: canonical-конструктор databinder напрямую не вызывает.",
+              "text": "Jackson умеет только serialization через accessors; deserialization всегда требует custom `JsonDeserializer`, потому что databind не вызывает canonical constructor record напрямую.",
               "correct": false,
               "sections": {
                 "what_actually": "Jackson поддерживает records из коробки (с 2.12); кастомные сериализаторы нужны лишь для особых случаев.",
@@ -323,7 +323,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Jackson десериализует records как обычные JavaBeans — через no-arg конструктор и сеттеры по именам полей, поэтому для записи достаточно стандартных accessor'ов и пустого конструктора.",
+              "text": "Jackson 2.12+ поддерживает records без `-parameters`: accessors используются для serialization, canonical constructor и component names — для deserialization, names меняют annotations/strategy.",
+              "correct": true,
+              "sections": {
+                "explanation": "Databind знает record metadata и creator components, поэтому обычный record не требует no-arg constructor, setters, `-parameters` или `jackson-module-parameter-names` только ради обнаружения component names.",
+                "example": "`record User(@JsonProperty(\"user_name\") String name, int age) {}` корректно maps `user_name`; compact constructor при deserialization также выполняет normalization/invariants.",
+                "when_to_apply": "Records удобны для immutable HTTP DTO и event payload, если versioning JSON schema и constructor invariants согласованы с внешним contract.",
+                "edge_cases": "Точная annotation behavior зависит от Jackson version; custom accessors, delegating creators, polymorphism и unknown properties требуют обычной настройки databind. Проверяйте совместимость старых 2.x versions.",
+                "related": "[[java-records-interview#Q3]] canonical construction; [[java-records-interview#Q7]] Spring DTO; [[java-records-interview#Q12]] Java serialization."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Jackson обрабатывает record как JavaBean через no-arg constructor и setters; без них record можно читать только с field visibility `ANY`.",
               "correct": false,
               "sections": {
                 "what_actually": "У record нет ни no-arg конструктора, ни сеттеров; Jackson использует canonical-конструктор.",
@@ -333,28 +346,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Jackson поддерживает records нативно с версии 2.12: он сериализует их по accessor'ам и десериализует через canonical-конструктор. Для корректного маппинга имён параметров нужен модуль `jackson-module-parameter-names` или компиляция с флагом `-parameters`; при расхождении имён используют `@JsonProperty`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Объяснение: поскольку у record нет сеттеров и no-arg конструктора, Jackson использует именно canonical-конструктор для десериализации.",
-                "example": "Пример: `@JsonProperty(\"user_name\") String name` в record маппит JSON-поле `user_name` на компонент `name`.",
-                "when_to_apply": "Применять `-parameters`/parameter-names-модуль, чтобы Jackson знал имена компонентов без ручных аннотаций.",
-                "edge_cases": "Подводный камень: без `-parameters` и без `@JsonProperty` имена параметров теряются (становятся `arg0`...), и десериализация ломается.",
-                "related": "[[java-records-interview#Q12]] взаимодействие record с сериализацией в целом; [[java-records-interview#Q3]] canonical-конструктор как точка десериализации."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "При расхождении имён JSON-поля и компонента Jackson всё равно связывает их по порядку следования компонентов в record, поэтому ни `@JsonProperty`, ни флаг `-parameters` для этого не нужны.",
+              "text": "При несовпадении names Jackson связывает JSON properties с components только по declaration order, поэтому annotations и naming strategy не влияют на mapping.",
               "correct": false,
               "sections": {
-                "what_actually": "Без `-parameters` или parameter-names-модуля имена параметров стираются в `arg0` и маппинг ломается.",
-                "source_of_confusion": "Кажется, что компилятор всегда сохраняет имена параметров.",
-                "if_it_were_true": "Тогда не требовалось бы ни `@JsonProperty`, ни специального флага.",
-                "how_it_should_be": "Включают `-parameters`/модуль либо размечают `@JsonProperty`."
+                "what_actually": "Jackson использует record component names и canonical constructor; declaration order не заменяет property names, а `@JsonProperty` и naming strategy действительно влияют на mapping.",
+                "source_of_confusion": "У canonical constructor параметры следуют порядку components, поэтому positional creation ошибочно переносят на JSON property binding.",
+                "if_it_were_true": "Переименование JSON property или настройка naming strategy не меняли бы binding, а перестановка полей в document определяла бы результат deserialization.",
+                "how_it_should_be": "Связывайте external names через component metadata, `@JsonProperty` или naming strategy; порядок JSON properties не является contract mapping-а."
               }
             }
           ]
@@ -371,20 +371,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В Spring records отлично подходят как DTO для request/response тел контроллеров и как носители конфигурации через `@ConfigurationProperties` с constructor binding. Spring Boot (с актуальных версий) поддерживает их из коробки — связывание идёт через canonical-конструктор.",
+              "text": "В Spring records подходят для DTO, projections и immutable configuration properties; binding вызывает canonical constructor, validation работает обычными mechanisms.",
               "correct": true,
               "sections": {
-                "explanation": "Объяснение: неизменяемость и canonical-конструктор хорошо ложатся на Spring-механизмы привязки, которым не нужны сеттеры.",
-                "example": "Пример: `@ConfigurationProperties(\"app\") record AppProps(String name, int size) {}` биндит `app.name`/`app.size` через конструктор.",
-                "when_to_apply": "Применять records для DTO и типобезопасной конфигурации; для JPA-сущностей они не годятся.",
-                "edge_cases": "Подводный камень: record нельзя использовать как JPA `@Entity` (нужен no-arg конструктор и мутабельность) — для persistence остаются обычные классы.",
-                "related": "[[java-records-interview#Q14]] почему record не подходит для JPA; [[java-records-interview#Q6]] сериализация records (DTO в REST)."
+                "explanation": "Современные Spring Boot и Jackson понимают constructor-bound immutable types. Record хорошо соответствует boundary data, но не требованиям JPA entity lifecycle и lazy proxying.",
+                "example": "`record CreateUserRequest(@NotBlank String name) {}` принимается `@RequestBody @Valid`; `@ConfigurationProperties(\"client\") record ClientProps(URI url, Duration timeout) {}` связывается по constructor.",
+                "when_to_apply": "Используйте для immutable API/configuration values и query projections; domain entities выбирайте по persistence model, а не ради сокращения boilerplate.",
+                "edge_cases": "Registration configuration properties всё ещё нужна (`@ConfigurationPropertiesScan`/`@EnableConfigurationProperties`). Framework-specific tools могут ожидать bean setters/no-arg constructor и не поддерживать record.",
+                "related": "[[java-records-interview#Q6]] Jackson; [[java-records-interview#Q10]] Bean Validation; [[java-records-interview#Q14]] ORM constraints."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`@ConfigurationProperties` с record требует сеттеров для каждого свойства.",
+              "text": "`@ConfigurationProperties` record требует setters для каждого property и обязательный no-arg constructor; constructor binding поддерживается только mutable JavaBean classes.",
               "correct": false,
               "sections": {
                 "what_actually": "Для record используется constructor binding — сеттеры не нужны и невозможны.",
@@ -396,7 +396,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для работы records в Spring обязательно писать кастомные конвертеры — из коробки не поддерживаются.",
+              "text": "Spring не обнаруживает record components и требует custom converters для MVC, Jackson, configuration binding и dependency injection.",
               "correct": false,
               "sections": {
                 "what_actually": "Spring Boot поддерживает records как DTO и `@ConfigurationProperties` нативно, без кастомных конвертеров.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Records в Spring используют как JPA-сущности (`@Entity`) благодаря их неизменяемости.",
+              "text": "Record является рекомендуемым JPA `@Entity`: final class, отсутствие no-arg constructor и immutable components полностью соответствуют proxy-based ORM.",
               "correct": false,
               "sections": {
                 "what_actually": "JPA требует no-arg конструктор и мутабельные поля — record для `@Entity` не подходит.",
@@ -431,20 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Да: с Java 21 есть record patterns — деконструкция record прямо в сопоставлении с образцом. Можно извлечь компоненты в переменные и применять вложенную деконструкцию, в т.ч. в `switch`. Это особенно мощно вместе с sealed-интерфейсами для исчерпывающего разбора.",
-              "correct": true,
-              "sections": {
-                "explanation": "Объяснение: компилятор знает компоненты record, поэтому позволяет «разобрать» объект на части в одном выражении `instanceof`/`switch`.",
-                "example": "Пример: `if (obj instanceof Point(int x, int y)) { ... }` извлекает `x` и `y`; вложенно — `Line(Point(var x1,var y1), Point p2)`.",
-                "when_to_apply": "Применять record patterns для лаконичного разбора данных и обработки sealed-иерархий в switch.",
-                "edge_cases": "Подводный камень: типы компонентов в паттерне должны соответствовать объявленным; неверная деконструкция (число/типы компонентов) не скомпилируется.",
-                "related": "[[java-records-interview#Q13]] sealed + records + exhaustive switch; [[java-records-interview#Q5]] интерфейсы для полиморфизма над records."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Нет: pattern matching в Java работает только с обычными классами, но не с records.",
+              "text": "Pattern matching работает только с ordinary classes; record component access возможен лишь ручными вызовами accessor после `instanceof`.",
               "correct": false,
               "sections": {
                 "what_actually": "record patterns (Java 21) созданы именно для records и позволяют их деконструкцию.",
@@ -454,9 +441,22 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Java 21 record patterns проверяют type и деконструируют components, включая nested patterns в `instanceof` и pattern-matching `switch`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Record pattern mirrors component list and combines type test with deconstruction. Nested patterns позволяют разбирать immutable data shape без boilerplate casts/accessors.",
+                "example": "`case Order(LineItem(Product(var id), var qty)) -> ...` проверяет структуру и связывает вложенные component values в одном switch arm.",
+                "when_to_apply": "Используйте при обработке AST, commands/events и ADT variants, особенно когда sealed type делает switch exhaustive.",
+                "edge_cases": "Pattern follows declared components, не arbitrary fields. `null` и exhaustiveness имеют отдельные switch rules; changing record header меняет deconstruction contract.",
+                "related": "[[java-records-interview#Q13]] ADT; [[kotlin-sealed-classes-interview#Q4]] exhaustive variants; [[java-records-interview#Q1]] components."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
-              "text": "Да, и паттерн может извлекать произвольные поля record, даже не входящие в его компоненты.",
+              "text": "Record pattern может извлечь private fields и computed properties, которые не объявлены components, потому что reflection открывает весь object state.",
               "correct": false,
               "sections": {
                 "what_actually": "Деконструкция извлекает именно компоненты record (других instance-полей у него и нет).",
@@ -468,7 +468,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Да, но деконструкция record возможна только в `if`, а в `switch` records не поддерживаются.",
+              "text": "Record pattern разрешён только в условии `if`; grammar `switch` не принимает деконструкцию record и поддерживает лишь type patterns.",
               "correct": false,
               "sections": {
                 "what_actually": "record patterns работают и в `switch` (включая исчерпывающий разбор sealed-иерархий), не только в `if`.",
@@ -491,20 +491,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Да: record может объявлять параметры типа, и они применяются к его компонентам. Это удобно для типобезопасных контейнеров и пар. Ограничения дженериков обычные (нельзя примитив как тип-аргумент, type erasure в рантайме).",
-              "correct": true,
+              "text": "Record declaration не поддерживает `<T>` и всегда требует concrete component types, потому что generated `equals` несовместим с erasure.",
+              "correct": false,
               "sections": {
-                "explanation": "Объяснение: дженерик-record сочетает компактность носителя данных с параметризацией типов компонентов.",
-                "example": "Пример: `record Pair<A, B>(A first, B second) {}` — затем `new Pair<>(\"id\", 42)` даёт типобезопасную пару `Pair<String, Integer>`.",
-                "when_to_apply": "Применять generic-records для переиспользуемых типобезопасных структур: пары, результаты, обёртки.",
-                "edge_cases": "Подводный камень: из-за type erasure нельзя различать `Pair<String,Integer>` и `Pair<Long,Long>` в рантайме — это общая черта дженериков, не специфика record.",
-                "related": "[[java-records-interview#Q1]] базовая суть record; [[java-records-interview#Q13]] generic-records в ADT."
+                "what_actually": "records полноценно поддерживают дженерики: `record Pair<A,B>(A a, B b)` корректен.",
+                "source_of_confusion": "Кажется, что «простая» конструкция не сочетается с дженериками.",
+                "if_it_were_true": "Тогда нельзя было бы писать типобезопасные пары/контейнеры как record.",
+                "how_it_should_be": "record может быть generic, параметризуя свои компоненты."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Да, и благодаря records дженерики наконец сохраняют типы в рантайме (без erasure).",
+              "text": "Generic record сохраняет actual type arguments в каждом instance at runtime, поэтому `Box<String>` и `Box<Integer>` имеют разные runtime classes.",
               "correct": false,
               "sections": {
                 "what_actually": "type erasure действует и для records; они не отменяют стирание типов.",
@@ -516,7 +515,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Да, но параметры типа можно применять только к методам record, а не к его компонентам.",
+              "text": "Type parameter record разрешён только для generic methods; components должны иметь concrete non-generic types, известные compiler-у при declaration.",
               "correct": false,
               "sections": {
                 "what_actually": "Параметры типа применяются именно к компонентам record (его состоянию), а не только к методам.",
@@ -528,13 +527,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Нет: records не поддерживают параметры типа и всегда работают с конкретными типами.",
-              "correct": false,
+              "text": "Record объявляет type parameters и bounds как ordinary generic declaration; erasure сохраняется, primitive type arguments по-прежнему недопустимы.",
+              "correct": true,
               "sections": {
-                "what_actually": "records полноценно поддерживают дженерики: `record Pair<A,B>(A a, B b)` корректен.",
-                "source_of_confusion": "Кажется, что «простая» конструкция не сочетается с дженериками.",
-                "if_it_were_true": "Тогда нельзя было бы писать типобезопасные пары/контейнеры как record.",
-                "how_it_should_be": "record может быть generic, параметризуя свои компоненты."
+                "explanation": "Record является generic class с обычными Java type-system rules. Header может ссылаться на `T`, а generated constructor/accessor signatures параметризованы; runtime erasure остаётся.",
+                "example": "`record Pair<L,R>(L left,R right) {}` и `record Box<T extends Comparable<T>>(T value) {}` корректны и type-safe compile time.",
+                "when_to_apply": "Используйте для typed result wrappers, pairs, pages, commands и success/error containers, когда components полностью описывают generic value.",
+                "edge_cases": "Static members не могут ссылаться на class type parameter без собственного generic declaration. Runtime frameworks могут требовать `TypeReference` для сохранения nested generic metadata.",
+                "related": "[[java-records-interview#Q5]] interfaces; [[java-records-interview#Q13]] generic ADT; [[java-records-interview#Q6]] JSON type metadata."
               }
             }
           ]
@@ -546,12 +546,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как сделать record с валидацией через Bean Validation?",
+          "question_text": "Как Bean Validation и constructor invariants применяются к record?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Аннотации Bean Validation на record проверяются автоматически при каждом вызове `new`.",
+              "text": "Annotation на component автоматически запускает validation при каждом `new`; JVM вызывает Jakarta Validator до canonical constructor без участия framework.",
               "correct": false,
               "sections": {
                 "what_actually": "Bean Validation проверяет объект только через валидатор (`@Valid`/Validator), а не на самом `new`.",
@@ -563,7 +563,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для валидации record нужно реализовать интерфейс `Validatable` и метод `validate()`.",
+              "text": "Bean Validation constraints ставят на components, а compact constructor проверяет invariants при создании; эти mechanisms дополняют, но не заменяют друг друга.",
+              "correct": true,
+              "sections": {
+                "explanation": "Record component annotations могут распространяться на field/accessor/constructor parameter согласно `@Target`. Но object creation сам по себе не запускает validation engine; это делает framework interception или явный вызов.",
+                "example": "MVC `@Valid @RequestBody CreateUser(@NotBlank String name)` запускает Validator. Compact constructor проверяет cross-field invariant `from <= to` для любого construction path.",
+                "when_to_apply": "Используйте declarative constraints на boundary DTO и compact constructor для invariants, без которых value не должен существовать даже вне Spring.",
+                "edge_cases": "Валидация constructor parameters до создания объекта требует executable validation/interception. Нельзя вызвать object-level validator внутри compact constructor до implicit field assignment как обычный fully-built instance.",
+                "related": "[[java-records-interview#Q3]] compact constructor; [[java-records-interview#Q7]] Spring binding; [[java-records-interview#Q15]] defensive design."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Для record validation требуется interface `Validatable`, обязательный метод `validate()` и явный вызов после construction; стандартные constraints components не поддерживаются.",
               "correct": false,
               "sections": {
                 "what_actually": "Такого интерфейса нет; валидация идёт через Bean Validation-аннотации и/или compact-конструктор.",
@@ -573,22 +586,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Аннотации Bean Validation (`@NotNull`, `@Size`, `@Min` и т.п.) вешают прямо на компоненты record, и при `@Valid` они проверяются как обычно. Для собственных инвариантов используют compact-конструктор, бросающий исключение при нарушении.",
-              "correct": true,
-              "sections": {
-                "explanation": "Объяснение: компоненты record — это и параметры конструктора, и поля, поэтому аннотации валидации на них работают штатно.",
-                "example": "Пример: `record User(@NotBlank String name, @Min(0) int age) {}` плюс при необходимости проверка диапазона в compact-конструкторе.",
-                "when_to_apply": "Применять Bean Validation для декларативных правил (на входе контроллера) и compact-конструктор — для сложных инвариантов.",
-                "edge_cases": "Подводный камень: Bean Validation срабатывает только там, где есть валидатор (`@Valid` в Spring); сам по себе record при `new` эти аннотации не проверяет — для гарантий нужен compact-конструктор.",
-                "related": "[[java-records-interview#Q3]] compact-конструктор для инвариантов; [[java-records-interview#Q7]] records как DTO в Spring."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "Bean Validation на record невозможен — аннотации нельзя вешать на компоненты record.",
+              "text": "Constraint annotations синтаксически запрещены в record header, поэтому validation возможна только после преобразования record в mutable bean class.",
               "correct": false,
               "sections": {
                 "what_actually": "Аннотации валидации корректно ставятся на компоненты record и обрабатываются `@Valid`.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "У record нельзя переопределить `equals`/`hashCode` — они жёстко зашиты компилятором.",
+              "text": "Generated `equals`/`hashCode` нельзя override: compiler отвергает любые declarations с такими signatures внутри record body как конфликт generated members.",
               "correct": false,
               "sections": {
                 "what_actually": "Переопределить их можно (компилятор лишь генерирует по умолчанию), хотя обычно не нужно.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`equals` record учитывает только первый компонент, остальные игнорируются для скорости.",
+              "text": "Generated equality сравнивает только первый component для performance, а остальные components используются исключительно `toString` и serialization metadata.",
               "correct": false,
               "sections": {
                 "what_actually": "В сравнении участвуют ВСЕ компоненты record, а не только первый.",
@@ -635,20 +635,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "У record `equals` и `hashCode` генерируются автоматически и основаны на ВСЕХ компонентах (value-based): два record равны, если равны все их компоненты, а не по ссылке (identity). Можно переопределить их вручную, но это почти всегда нежелательно и ломает контракт.",
+              "text": "Generated `equals` сравнивает records одного class по всем components, а `hashCode` использует те же components; override обычно не нужен.",
               "correct": true,
               "sections": {
-                "explanation": "Объяснение: record — это value-объект, поэтому равенство по значению компонентов встроено и согласовано с `hashCode`.",
-                "example": "Пример: `new Point(1,2).equals(new Point(1,2))` → `true`, и их `hashCode` совпадают, поэтому record годится как ключ `HashMap`.",
-                "when_to_apply": "Применять авто-equals/hashCode для ключей map, множеств и сравнения значений без ручного boilerplate.",
-                "edge_cases": "Подводный камень: если компонент — мутабельный объект (например, массив), авто-equals сравнивает его по ссылке/контракту самого компонента; для массивов это особенно коварно.",
-                "related": "[[java-records-interview#Q1]] что генерирует record; [[java-records-interview#Q15]] defensive copy для мутабельных компонентов."
+                "explanation": "Value semantics follows state description: each component contributes to equality/hash. Reference components use their own equality; primitive components follow specified primitive comparison behavior.",
+                "example": "`new Point(1,2).equals(new Point(1,2))` true. Но два records с разными `int[]` одинакового содержимого обычно unequal, потому что array equality по умолчанию reference-based.",
+                "when_to_apply": "Records естественны как map keys/value objects при стабильных immutable components. Custom equality используйте только с ясным alternate domain identity и полным contract testing.",
+                "edge_cases": "Mutable list/array может изменить hash after insertion. Arrays требуют wrapper/copy или custom equality. Floating-point semantics соответствуют generated record contract, а не произвольному tolerance comparison.",
+                "related": "[[java-records-interview#Q1]] shallow immutability; [[java-records-interview#Q15]] defensive copy; [[java-records-interview#Q4]] overrides."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`equals` у record по умолчанию сравнивает объекты по ссылке (identity), как `Object.equals`.",
+              "text": "Record наследует identity equality `Object.equals`, поэтому два instance с одинаковыми component values считаются разными без ручного override methods.",
               "correct": false,
               "sections": {
                 "what_actually": "record генерирует value-based `equals` по компонентам, а не identity-сравнение из `Object`.",
@@ -666,12 +666,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как record взаимодействует с serialization?",
+          "question_text": "Чем Java object serialization records отличается от сериализации обычных classes?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "record сериализуется автоматически любым `ObjectOutputStream` без реализации `Serializable`, потому что компилятор помечает все записи сериализуемыми по умолчанию.",
+              "text": "Любой record автоматически implements `Serializable`; marker interface не нужен, даже если components содержат несериализуемые types.",
               "correct": false,
               "sections": {
                 "what_actually": "Как и для классов, для сериализации record должен реализовывать `Serializable`.",
@@ -683,20 +683,19 @@
             {
               "order": 1,
               "label": "B",
-              "text": "record сериализуется, если реализует `Serializable`, но процесс отличается: десериализация идёт через canonical-конструктор, а не в обход через reflection/`readObject`. Это делает её безопаснее — инварианты, заданные в compact-конструкторе, соблюдаются, и нельзя создать «невалидный» объект мимо проверок.",
-              "correct": true,
+              "text": "Deserialization создаёт record в обход constructor и напрямую записывает final fields reflection-ом, поэтому compact constructor invariants не выполняются.",
+              "correct": false,
               "sections": {
-                "explanation": "Объяснение: для обычных классов десериализация обходит конструкторы; у record она использует canonical-конструктор, поэтому валидация не обходится.",
-                "example": "Пример: record с проверкой `lo <= hi` в compact-конструкторе при десериализации повторно пройдёт эту проверку, отвергая подделанный поток.",
-                "when_to_apply": "Применять records там, где важна безопасная десериализация неизменяемых данных с гарантией инвариантов.",
-                "edge_cases": "Подводный камень: кастомные `readObject`/`writeObject`-хаки для records не применяются так же, как для классов — модель сериализации record намеренно ограничена и идёт через компоненты.",
-                "related": "[[java-records-interview#Q3]] compact-конструктор и инварианты при десериализации; [[java-records-interview#Q6]] сериализация records в Jackson."
+                "what_actually": "Для record десериализация идёт через canonical-конструктор, а не в обход — поэтому инварианты сохраняются.",
+                "source_of_confusion": "Классическая модель Java-сериализации (обход конструктора) переносится на record.",
+                "if_it_were_true": "Тогда можно было бы создать record, нарушающий проверки compact-конструктора.",
+                "how_it_should_be": "Восстановление record проходит через canonical-конструктор с валидацией."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "record сериализуется через `Serializable`, а безопасность десериализации обеспечивает обязательный метод `readResolve`, который подменяет восстановленный объект валидным экземпляром.",
+              "text": "Для serializable record обязателен `readResolve`; без него stream API отклоняет class, даже если canonical constructor доступен.",
               "correct": false,
               "sections": {
                 "what_actually": "Безопасность даёт сам механизм через canonical-конструктор; обязательного `readResolve` для этого не требуется.",
@@ -708,13 +707,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Десериализация record идёт так же, как у обычного класса: объект создаётся через reflection в обход конструктора, а поля восстанавливаются прямо из потока, минуя проверки compact-конструктора.",
-              "correct": false,
+              "text": "Record сериализуется при `implements Serializable`; deserialization вызывает canonical constructor, а обычные serialization hooks для records ограничены.",
+              "correct": true,
               "sections": {
-                "what_actually": "Для record десериализация идёт через canonical-конструктор, а не в обход — поэтому инварианты сохраняются.",
-                "source_of_confusion": "Классическая модель Java-сериализации (обход конструктора) переносится на record.",
-                "if_it_were_true": "Тогда можно было бы создать record, нарушающий проверки compact-конструктора.",
-                "how_it_should_be": "Восстановление record проходит через canonical-конструктор с валидацией."
+                "explanation": "Serializable record имеет специальную serialization form, основанную на components. Reconstruction проходит canonical constructor, что сохраняет validation/normalization лучше, чем field injection ordinary serializable object.",
+                "example": "`record Money(BigDecimal amount) implements Serializable { Money { requireNonNull(amount); } }` снова выполняет constructor check при object deserialization.",
+                "when_to_apply": "Предпочитайте explicit versioned formats JSON/Protobuf для distributed contracts; Java serialization оставляйте для контролируемых JVM-local use cases с доверенными данными.",
+                "edge_cases": "`Serializable` не делает каждый component serializable. Record-specific rules игнорируют/запрещают часть traditional hooks; serialVersionUID и compatibility всё равно требуют анализа между versions.",
+                "related": "[[java-records-interview#Q3]] canonical constructor; [[java-records-interview#Q6]] Jackson; [[java-records-interview#Q10]] invariants."
               }
             }
           ]
@@ -731,7 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "ADT в Java строят через абстрактные классы и наследование records друг от друга.",
+              "text": "ADT строят через inheritance records: один record extends другой, а parent components автоматически образуют sum type hierarchy.",
               "correct": false,
               "sections": {
                 "what_actually": "records не наследуются; ADT собирают из records (product) и sealed-интерфейсов (sum), а не наследованием.",
@@ -743,7 +743,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "ADT с records работают только в рантайме через `instanceof`-проверки без поддержки компилятора.",
+              "text": "Record-based ADT существует только как runtime convention с ручными casts; compiler не помогает проверить полный набор variants.",
               "correct": false,
               "sections": {
                 "what_actually": "Компилятор активно помогает: exhaustive switch по sealed+records проверяется статически.",
@@ -755,26 +755,26 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для ADT достаточно одних records — sealed-интерфейсы и exhaustive switch не нужны.",
+              "text": "Records моделируют product types, sealed hierarchy — closed sum type, а pattern switch деконструирует variants и проверяет exhaustiveness.",
+              "correct": true,
+              "sections": {
+                "explanation": "Product объединяет несколько values «и», sum выбирает один variant «или». Java records и sealed types дают эти свойства в nominal type system без наследования records друг от друга.",
+                "example": "`sealed interface Result<T> permits Ok, Err {}; record Ok<T>(T value) implements Result<T>{}; record Err<T>(String message) implements Result<T>{}` разбирается switch-ом.",
+                "when_to_apply": "Используйте для command/result states, parsers, domain events и state machines, где illegal variants должны быть непредставимы или обнаруживаться compiler-ом.",
+                "edge_cases": "Exhaustiveness зависит от закрытой hierarchy и compiler version. Generic variance и serialization of polymorphic types требуют дополнительного design.",
+                "related": "[[java-records-interview#Q5]] interfaces/finality; [[java-records-interview#Q8]] record patterns; [[kotlin-sealed-classes-interview#Q1]] sealed ADT."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Одних records достаточно для закрытого выбора variants: любой набор unrelated records автоматически образует exhaustive sum type.",
               "correct": false,
               "sections": {
                 "what_actually": "Без sealed-интерфейса нет закрытого набора вариантов и проверки полноты switch — ключевой части ADT.",
                 "source_of_confusion": "records (product-типы) заметнее, а sum-часть упускают.",
                 "if_it_were_true": "Тогда компилятор не мог бы гарантировать обработку всех вариантов.",
                 "how_it_should_be": "Нужны и records, и sealed-иерархия для исчерпывающего разбора."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "ADT собирают из двух кирпичей: records как product-типы (агрегат полей «И») и sealed-интерфейсы как sum-типы (выбор «ИЛИ» из закрытого набора). Вместе с record patterns и исчерпывающим `switch` это даёт типобезопасное моделирование вариантов данных.",
-              "correct": true,
-              "sections": {
-                "explanation": "Объяснение: sealed-интерфейс перечисляет конкретные records-варианты, а компилятор проверяет, что switch покрыл их все.",
-                "example": "Пример: `sealed interface Shape permits Circle, Rect {} record Circle(double r) implements Shape {} record Rect(double w,double h) implements Shape {}` + exhaustive `switch`.",
-                "when_to_apply": "Применять ADT для моделирования состояний/событий/выражений, где набор вариантов фиксирован и важна полнота обработки.",
-                "edge_cases": "Подводный камень: добавление нового варианта в sealed-иерархию заставит компилятор подсветить все неполные switch — это плюс, но требует обновления всех мест обработки.",
-                "related": "[[java-records-interview#Q8]] record patterns в switch; [[java-records-interview#Q5]] sealed-интерфейсы вместо наследования."
               }
             }
           ]
@@ -786,12 +786,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Когда НЕ стоит использовать records?",
+          "question_text": "В каких случаях обычный class предпочтительнее record?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "records не стоит применять для объектов с большим числом компонентов: длинный canonical-конструктор становится громоздким, поэтому для крупных структур берут обычный класс с билдером.",
+              "text": "Record запрещён при большом количестве components независимо от design; Java compiler устанавливает фиксированный максимум header fields и constructor parameters.",
               "correct": false,
               "sections": {
                 "what_actually": "Ограничение не в размере, а в требованиях: мутабельность, наследование, JPA — вот где record не подходит, независимо от числа полей.",
@@ -803,38 +803,38 @@
             {
               "order": 1,
               "label": "B",
-              "text": "records не подходят, когда нужны мутабельность, наследование классов, скрытое внутреннее состояние помимо компонентов или интеграция, требующая no-arg конструктора и сеттеров (например, JPA `@Entity`, некоторые ORM/фреймворки). Для богатого поведения с изменяемым состоянием берут обычный класс.",
-              "correct": true,
-              "sections": {
-                "explanation": "Объяснение: record намеренно ограничен ролью неизменяемого носителя данных, поэтому вне этой роли он мешает, а не помогает.",
-                "example": "Пример: JPA-сущность, требующая пустого конструктора и изменяемых полей для dirty checking, не может быть record — нужен обычный `@Entity`-класс.",
-                "when_to_apply": "Применять обычный класс при необходимости мутабельности, наследования или persistence-маппинга; record — только для immutable-данных.",
-                "edge_cases": "Подводный камень: соблазн сделать record «потому что компактно» приводит к борьбе с ограничениями там, где нужен мутабельный/наследуемый класс.",
-                "related": "[[java-records-interview#Q7]] почему record не годится для JPA в Spring; [[java-records-interview#Q5]] запрет наследования."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "records не подходят там, где нужно равенство по значению и стабильный `hashCode`: автогенерируемые `equals`/`hashCode` для этого не годятся, поэтому берут обычный класс с ручной реализацией.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Наоборот: value-based равенство — сильная сторона records; неподходящи они для мутабельности/наследования.",
-                "source_of_confusion": "Путают сильную сторону record с его ограничением.",
-                "if_it_were_true": "Тогда record был бы бесполезен как ключ map, что неверно.",
-                "how_it_should_be": "Равенство по значению — это плюс record; избегают их при мутабельности/JPA."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "records не стоит использовать в многопоточном коде: без синхронизации доступа к компонентам возможны гонки и проблемы видимости, поэтому для конкурентных сценариев берут обычный класс.",
+              "text": "Record нельзя использовать между threads: final fields не имеют safe-publication semantics, поэтому concurrent code требует mutable synchronized class.",
               "correct": false,
               "sections": {
                 "what_actually": "Неизменяемость record как раз делает его потокобезопасным; видимость final-полей гарантирована.",
                 "source_of_confusion": "Опасения о concurrency ошибочно переносят на immutable-тип.",
                 "if_it_were_true": "Тогда immutable-объекты были бы небезопасны в многопоточности, что противоречит модели памяти.",
                 "how_it_should_be": "Immutable records потокобезопасны; ограничение — в мутабельности/наследовании."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Record не подходит для value equality и stable hash code, потому что generated methods используют identity; ordinary class обязателен для value objects.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот: value-based равенство — сильная сторона records; неподходящи они для мутабельности/наследования.",
+                "source_of_confusion": "Путают сильную сторону record с его ограничением.",
+                "if_it_were_true": "Records с value-based component equality нельзя было бы надёжно применять как keys в maps и members в sets, хотя generated contract именно это поддерживает.",
+                "how_it_should_be": "Равенство по значению — это плюс record; избегают их при мутабельности/JPA."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Обычный class лучше для mutable lifecycle, inheritance, hidden state, custom identity или framework contracts с no-arg constructor/setters/proxying.",
+              "correct": true,
+              "sections": {
+                "explanation": "Record намеренно прозрачно связывает API со state description. Когда domain object имеет evolving identity/state, lazy loading, hidden caches или inheritance model, ограничения record становятся неправильным abstraction fit.",
+                "example": "JPA entity с protected no-arg constructor, generated id, dirty tracking и collections остаётся class; API response snapshot или money value может быть record.",
+                "when_to_apply": "Выбирайте class, если components не являются полным долгоживущим contract объекта или tooling реально требует bean/proxy model.",
+                "edge_cases": "Большой record не запрещён, но длинный header может указывать на смешение responsibilities. Record может содержать поведение; проблема не в количестве методов, а в соответствии state/value model.",
+                "related": "[[java-records-interview#Q1]] data carrier contract; [[java-records-interview#Q7]] Spring/JPA; [[java-records-interview#Q15]] practices."
               }
             }
           ]
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Рекомендуется использовать records как JPA-сущности для уменьшения boilerplate в persistence-слое.",
+              "text": "Best practice — использовать records как JPA entities: finality, canonical constructor и component accessors упрощают lazy proxies и dirty tracking ORM.",
               "correct": false,
               "sections": {
                 "what_actually": "records не годятся для JPA `@Entity` (нужны no-arg конструктор и мутабельность); это анти-практика.",
@@ -863,20 +863,19 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Использовать records для неизменяемых DTO/value-объектов; валидировать и нормализовать в compact-конструкторе; делать defensive copy для мутабельных компонентов (списки, массивы); строить ADT через sealed + records; не применять их как JPA-сущности; держать их сфокусированными (данные, а не богатая логика).",
-              "correct": true,
+              "text": "Для производительности коллекции и arrays следует сохранять по ссылке и возвращать напрямую; defensive copy нарушает прозрачный смысл record components.",
+              "correct": false,
               "sections": {
-                "explanation": "Объяснение: эти практики используют сильные стороны record (immutability, краткость) и обходят его ограничения (мутабельные компоненты, persistence).",
-                "example": "Пример: `record Order(List<Item> items){ Order { items = List.copyOf(items); } }` — defensive copy делает record по-настоящему неизменяемым.",
-                "when_to_apply": "Применять как чек-лист при проектировании value-типов и DTO на records.",
-                "edge_cases": "Подводный камень: без defensive copy «неизменяемый» record с мутабельным списком на деле изменяем через исходную ссылку — частая скрытая ошибка.",
-                "related": "[[java-records-interview#Q3]] compact-конструктор для валидации/копий; [[java-records-interview#Q14]] когда record не подходит."
+                "what_actually": "Без defensive copy внешняя ссылка позволит менять содержимое — record перестаёт быть неизменяемым; копию делают в конструкторе.",
+                "source_of_confusion": "Экономия на копировании кажется безобидной оптимизацией.",
+                "if_it_were_true": "Тогда «immutable» record можно было бы поменять снаружи через исходный список.",
+                "how_it_should_be": "Делают `List.copyOf`/копию мутабельных компонентов в compact-конструкторе."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Best practice — наделять records богатой бизнес-логикой и состоянием жизненного цикла.",
+              "text": "Рекомендуется помещать в record большую mutable business state machine: generated accessors заменяют domain methods и упрощают lifecycle transitions объекта.",
               "correct": false,
               "sections": {
                 "what_actually": "records держат сфокусированными на данных; богатую логику/жизненный цикл выносят в сервисы или обычные классы.",
@@ -888,13 +887,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Лучшая практика — хранить мутабельные коллекции в record как есть, без копирования, ради производительности.",
-              "correct": false,
+              "text": "Используйте records для focused immutable values/DTO, проверяйте invariants, defensively copy mutable components и сочетайте sealed+records для algebraic data types.",
+              "correct": true,
               "sections": {
-                "what_actually": "Без defensive copy внешняя ссылка позволит менять содержимое — record перестаёт быть неизменяемым; копию делают в конструкторе.",
-                "source_of_confusion": "Экономия на копировании кажется безобидной оптимизацией.",
-                "if_it_were_true": "Тогда «immutable» record можно было бы поменять снаружи через исходный список.",
-                "how_it_should_be": "Делают `List.copyOf`/копию мутабельных компонентов в compact-конструкторе."
+                "explanation": "Хороший record делает state очевидным и стабильным. Shallow immutability требует самостоятельной защиты mutable components, а constructor должен гарантировать корректность value независимо от framework.",
+                "example": "`record Tags(List<String> values){ Tags { values=List.copyOf(values); } @Override public List<String> values(){ return values; } }` сохраняет immutable snapshot.",
+                "when_to_apply": "Используйте как boundary/value type с небольшим cohesive header. При росте optional components, lifecycle transitions или hidden state пересмотрите abstraction.",
+                "edge_cases": "Defensive copy может быть дорогой для больших buffers; тогда нужен immutable/persistent data structure или отдельный ownership contract, а не молчаливая shared mutability.",
+                "related": "[[java-records-interview#Q1]] shallow immutability; [[java-records-interview#Q10]] invariants; [[java-records-interview#Q14]] когда выбрать class."
               }
             }
           ]

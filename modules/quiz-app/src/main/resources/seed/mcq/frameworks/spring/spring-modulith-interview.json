@@ -11,7 +11,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring Modulith` — это новый язык конфигурации модулей вместо `application.yml`: он переопределяет Spring Boot auto-configuration и требует описывать бины и их связи в собственном декларативном формате.",
+              "text": "`Spring Modulith` заменяет Spring Boot auto-configuration отдельным языком модульных настроек; каждый модуль получает собственный `application.yml` и независимый bootstrap context.",
               "correct": false,
               "sections": {
                 "what_actually": "Modulith не заменяет конфигурацию или auto-configuration: это библиотека поверх обычного Spring Boot, добавляющая границы модулей и их верификацию.",
@@ -23,7 +23,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Spring Modulith` — это ORM-библиотека, заменяющая `Spring Data JPA`: она берёт на себя маппинг `@Entity`, генерацию схемы и одновременную работу с несколькими базами данных приложения.",
+              "text": "`Spring Modulith` является ORM для распределения агрегатов между несколькими базами; он заменяет Spring Data JPA и автоматически управляет межмодульными транзакциями.",
               "correct": false,
               "sections": {
                 "what_actually": "Modulith не работает с маппингом сущностей и не заменяет JPA: он про границы модулей и event-driven взаимодействие, а доступ к БД остаётся за Spring Data.",
@@ -35,26 +35,26 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Spring Modulith` — это система оркестрации контейнеров: она сразу разбивает приложение на несколько деплой-артефактов и раскладывает их по подам, управляя масштабированием каждого.",
+              "text": "`Spring Modulith` организует один deployable application как проверяемые package-based modules с explicit API, dependency rules, module tests, events и documentation.",
+              "correct": true,
+              "sections": {
+                "explanation": "Проект анализирует структуру Spring Boot application package и строит модель application modules. Эту модель можно верифицировать, тестировать по модульным границам, документировать и использовать для надёжного обмена событиями.",
+                "example": "Пакеты `order`, `inventory` и `payment` остаются в одном приложении, но тест `ApplicationModules.of(App.class).verify()` запрещает циклы и обращения к внутренним типам соседних модулей.",
+                "when_to_apply": "Используйте, когда монолиту нужны дисциплинированные границы, независимые области разработки и путь к эволюции без немедленного перехода к распределённой системе.",
+                "edge_cases": "Библиотека не проектирует доменные границы вместо команды и не обеспечивает процессную изоляцию. Неправильно выбранные пакеты останутся неправильными модулями, даже если `verify()` технически проходит.",
+                "related": "[[spring-modulith-interview#Q2]] определение модуля; [[spring-modulith-interview#Q3]] верификация; [[spring-modulith-interview#Q11]] выбор между монолитом и сервисами."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Modulith` — container orchestrator, который при сборке превращает пакеты в отдельные OCI images и разворачивает каждый модуль как Kubernetes pod.",
               "correct": false,
               "sections": {
                 "what_actually": "Modulith даёт один деплоируемый артефакт с модулями внутри; разбиение на несколько сервисов и их оркестрация — это уже микросервисы и Kubernetes, а не modulith.",
                 "source_of_confusion": "Модули ассоциируются с независимыми сервисами, поэтому их путают с оркестрацией нескольких артефактов.",
                 "if_it_were_true": "Тогда каждый модуль деплоился бы отдельно, но суть модульного монолита — единый деплой.",
                 "how_it_should_be": "Это один артефакт с явными внутренними границами; разнесение по контейнерам — отдельный архитектурный шаг."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Spring Modulith` — библиотека для модульных монолитов на Spring Boot: единый деплой-артефакт с явными границами модулей, их изоляцией и верифицируемыми зависимостями против сползания в `Big Ball of Mud`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Модульный монолит — переходный шаг между классическим монолитом и микросервисами: деплой один, но внутри явные модули с проверяемыми зависимостями, поэтому архитектура не деградирует со временем.",
-                "example": "В пакете `com.example.shop` соседствуют модули `order/`, `inventory/`, `notification/`; каждый имеет публичный API и закрытую часть, а `verify()` ловит обращения через границы.",
-                "when_to_apply": "Подходит небольшой команде, которой нужны явные границы, но без накладных расходов сети и независимого деплоя микросервисов.",
-                "edge_cases": "Это не отдельный фреймворк поверх Spring, а тонкая надстройка: рантайм-логика остаётся обычным Spring Boot, добавляются верификация и event-инфраструктура.",
-                "related": "[[spring-modulith-interview#Q2]] как определяется модуль; [[spring-modulith-interview#Q11]] когда выбрать микросервисы вместо modulith."
               }
             }
           ]
@@ -66,24 +66,25 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как `Spring Modulith` определяет модуль?",
+          "question_text": "Как по умолчанию `Spring Modulith` определяет модули и их публичный API?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Модулем считается любой класс, помеченный аннотацией `@Module`: modulith сканирует такие аннотации по всему classpath и собирает модуль из помеченных классов независимо от их пакета.",
-              "correct": false,
+              "text": "Direct subpackages Boot base package становятся modules по convention; types module base package образуют API, а nested packages internal, если не экспортированы named interface.",
+              "correct": true,
               "sections": {
-                "what_actually": "По умолчанию модуль определяется структурой пакетов (top-level пакет рядом с приложением), а не обязательной аннотацией на каждом классе.",
-                "source_of_confusion": "В Spring многое настраивается аннотациями, поэтому кажется, что и модуль помечается отдельной `@Module`.",
-                "if_it_were_true": "Тогда без аннотации модулей бы не было, но modulith находит их по пакетам автоматически.",
-                "how_it_should_be": "Модуль — это top-level пакет рядом с `@SpringBootApplication`; аннотации лишь уточняют метаданные."
+                "explanation": "Modulith использует package-based convention. Прямой подпакет application base package задаёт module base package; его корневые типы доступны другим модулям, а вложенные пакеты скрыты моделью модулей по умолчанию.",
+                "example": "Для `com.acme.shop.ShopApplication` пакеты `com.acme.shop.order` и `...inventory` — модули. `order.OrderFacade` публичен, а `order.persistence.JpaOrderRepository` внутренний без named interface.",
+                "when_to_apply": "Организуйте root package каждого модуля как небольшую публичную поверхность, а реализацию размещайте во вложенных пакетах; затем закрепите соглашение через `verify()`.",
+                "edge_cases": "Модель можно настраивать annotations и explicit module metadata. Имя подпакета `internal` удобно как соглашение, но внутренними по умолчанию являются все вложенные пакеты, а не только пакет с таким именем.",
+                "related": "[[spring-modulith-interview#Q3]] проверка доступа; [[spring-modulith-interview#Q13]] named interfaces; [[spring-modulith-interview#Q15]] архитектурные границы."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Модулем считается каждый отдельный Gradle/Maven-подпроект, поэтому модульность требует многомодульной сборки с отдельным собираемым артефактом на каждый модуль системы.",
+              "text": "Модулем считается отдельный Maven/Gradle subproject с собственным artifact id; одно-модульная сборка не может содержать несколько application modules в одном Spring Boot application.",
               "correct": false,
               "sections": {
                 "what_actually": "Modulith работает внутри одного артефакта и определяет модули по Java-пакетам, а не по подпроектам системы сборки.",
@@ -95,7 +96,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Модули перечисляются в `application.yml` через список `spring.modulith.modules`, и именно эта запись, а не структура пакетов, задаёт их набор и границы между ними.",
+              "text": "Список модулей задаётся свойством `spring.modulith.modules` в конфигурации, а package structure используется только для имён и не влияет на public/internal boundaries.",
               "correct": false,
               "sections": {
                 "what_actually": "Границы модулей выводятся из структуры пакетов автоматически; нет обязательного списка модулей в `application.yml`.",
@@ -107,14 +108,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Каждый top-level пакет рядом с классом `@SpringBootApplication` — это отдельный модуль; классы в подпакете `internal/` считаются закрытой реализацией и недоступны другим модулям.",
-              "correct": true,
+              "text": "Каждый класс с `@Module` становится самостоятельным application module независимо от package hierarchy; его public methods образуют API, а package-private types автоматически скрываются.",
+              "correct": false,
               "sections": {
-                "explanation": "Modulith использует структуру пакетов как источник истины: всё, что лежит в корне пакета модуля, — публичный API, а `internal/` — приватная реализация, обращение к которой извне является нарушением.",
-                "example": "В `com.example.shop` пакеты `order/`, `inventory/`, `notification/` — три модуля; `order/internal/OrderRepository.java` недоступен из `inventory/`.",
-                "when_to_apply": "Эта конвенция применяется сразу при старте проекта: достаточно разложить код по пакетам, чтобы modulith увидел границы без дополнительной конфигурации.",
-                "edge_cases": "Имя приватного подпакета по умолчанию `internal`, но его можно переопределить; named interface позволяют объявить несколько публичных точек входа.",
-                "related": "[[spring-modulith-interview#Q1]] зачем нужны границы; [[spring-modulith-interview#Q13]] named interface для нескольких точек входа."
+                "what_actually": "По умолчанию модуль определяется структурой пакетов (top-level пакет рядом с приложением), а не обязательной аннотацией на каждом классе.",
+                "source_of_confusion": "В Spring многое настраивается аннотациями, поэтому кажется, что и модуль помечается отдельной `@Module`.",
+                "if_it_were_true": "Тогда без аннотации модулей бы не было, но modulith находит их по пакетам автоматически.",
+                "how_it_should_be": "Модуль — это top-level пакет рядом с `@SpringBootApplication`; аннотации лишь уточняют метаданные."
               }
             }
           ]
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Включить `spring.modulith.verify=true` в `application.yml`: тогда приложение само проверит границы при старте и упадёт с ошибкой, если найдёт нарушение архитектуры.",
+              "text": "Достаточно задать `spring.modulith.verify=true`: проверка выполняется при каждом production startup и останавливает приложение до создания ApplicationContext.",
               "correct": false,
               "sections": {
                 "what_actually": "Верификация запускается явным вызовом `ApplicationModules.of(App.class).verify()` в тесте, а не флагом авто-падения при старте приложения.",
@@ -143,20 +143,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Написать `@Test` с `ApplicationModules.of(ShopApplication.class).verify()`: метод ловит ссылки на чужой `internal/` и циклы между модулями и бросает исключение с описанием нарушения.",
+              "text": "`ApplicationModules.of(Application.class).verify()` проверяет module dependencies, internal access и cycles и завершает architecture test с описанием violations.",
               "correct": true,
               "sections": {
-                "explanation": "`verify()` строит модель модулей из пакетов и проверяет правила: обращение к приватной части другого модуля и циклы между модулями. Поскольку это обычный JUnit-тест, провал автоматически валит CI.",
-                "example": "```java\n@Test\nvoid modulesAreCompliant() {\n    ApplicationModules.of(ShopApplication.class).verify();\n}\n```",
-                "when_to_apply": "Тест добавляют в основной test-set, чтобы каждая сборка проверяла архитектуру и предотвращала её деградацию.",
-                "edge_cases": "Сообщение об ошибке точно указывает нарушающий класс и зависимость, поэтому исправлять нарушения можно итеративно.",
-                "related": "[[spring-modulith-interview#Q2]] как определяются модули и `internal/`; [[spring-modulith-interview#Q14]] итеративное внедрение проверки в существующий проект."
+                "explanation": "`ApplicationModules` строит структурную модель приложения и применяет verification rules. Обычный JUnit-тест делает архитектурные ограничения частью CI и предотвращает постепенное размывание границ.",
+                "example": "`@Test void verifiesModules() { ApplicationModules.of(ShopApplication.class).verify(); }` падает при цикле `order -> inventory -> order` или ссылке на тип из внутреннего подпакета.",
+                "when_to_apply": "Добавляйте test в начале модульного рефакторинга и запускайте при каждом merge; нарушения должны исправляться или явно моделироваться как разрешённые зависимости.",
+                "edge_cases": "Проверка видит статические зависимости и metadata, но не доказывает корректность runtime protocols, ownership данных или отсутствие reflection-based обходов. Для дополнительных правил можно подключать собственные detection strategies.",
+                "related": "[[spring-modulith-interview#Q2]] package conventions; [[spring-modulith-interview#Q7]] module tests; [[spring-modulith-interview#Q14]] внедрение в существующий проект."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Границы приходится проверять вручную в код-ревью, вычитывая `import`-ы между пакетами: собственного автоматического механизма контроля границ modulith не предоставляет.",
+              "text": "Границы проверяются только вручную на code review; library не предоставляет программной модели модулей или автоматических architecture tests.",
               "correct": false,
               "sections": {
                 "what_actually": "Modulith даёт именно автоматическую проверку через `verify()`, не полагаясь на ручной просмотр импортов.",
@@ -168,7 +168,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Подключить отдельный Gradle-плагин `spring-modulith-gradle`: он анализирует границы модулей во время компиляции и валит сборку при нарушениях, не требуя писать тесты.",
+              "text": "Для проверки обязателен Gradle plugin `spring-modulith-gradle`, который вмешивается в Java compilation; Maven и JUnit-проверки не поддерживаются.",
               "correct": false,
               "sections": {
                 "what_actually": "Проверка делается рантайм-вызовом `verify()` в тесте на основе `ApplicationModules`; нет обязательного компиляционного плагина для этого.",
@@ -186,12 +186,25 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как модули в `Spring Modulith` должны взаимодействовать между собой?",
+          "question_text": "Какими способами модули `Spring Modulith` должны публиковать взаимодействие друг для друга?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Модули взаимодействуют синхронно через `@EventListener`, выполняемый в той же транзакции, что и публикация: издатель и подписчик коммитятся вместе, обеспечивая атомарность реакции.",
+              "text": "Соседний module использует только public module API или events; sync call и event interaction выбирают по consistency и coupling requirements.",
+              "correct": true,
+              "sections": {
+                "explanation": "Модуль публикует минимальный API из root package/named interfaces и domain events. Синхронный API подходит для немедленного ответа и общей транзакции, события снижают coupling и позволяют независимую последующую реакцию.",
+                "example": "`checkout` синхронно вызывает публичный `InventoryFacade.reserve()`, а после коммита публикует `OrderCompleted`, который модуль уведомлений обрабатывает без ссылки на внутренние order classes.",
+                "when_to_apply": "Используйте public facade для обязательной команды/запроса, а событие — для факта, на который могут независимо реагировать несколько модулей.",
+                "edge_cases": "Фраза «только через события» слишком жёсткая. События также не устраняют необходимость versioned contracts, идемпотентности и ясного владельца данных; synchronous cycles остаются архитектурным запахом.",
+                "related": "[[spring-modulith-interview#Q5]] module listeners; [[spring-modulith-interview#Q6]] event publication registry; [[spring-modulith-interview#Q13]] named interfaces."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Все взаимодействия обязаны проходить через синхронный `@EventListener` внутри транзакции издателя; прямой вызов публичного facade считается нарушением модульности.",
               "correct": false,
               "sections": {
                 "what_actually": "Modulith поощряет публичный API и `@ApplicationModuleListener` (after-commit, async); ограничение «только синхронный `@EventListener` в той же транзакции» неверно.",
@@ -201,9 +214,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Модули общаются через общую статическую `God`-фасадную утилиту, куда сложены сервисы всех модулей и через которую проходит каждый вызов между ними для централизации.",
+              "order": 2,
+              "label": "C",
+              "text": "Для устранения циклов создают общий static facade, который импортирует внутренние сервисы каждого модуля и предоставляет единый набор глобальных методов.",
               "correct": false,
               "sections": {
                 "what_actually": "Правильное взаимодействие — через публичный API конкретного модуля и через события, а не через единый статический фасад, нарушающий границы.",
@@ -213,28 +226,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Модули вызывают классы из чужого `internal/` напрямую через рефлексию: так они обходят проверку компилятора и достают приватные бины соседнего модуля во время работы.",
+              "order": 3,
+              "label": "D",
+              "text": "Доступ к внутреннему классу допустим через reflection или `ObjectProvider`, потому что verification анализирует только прямые Java imports и не регулирует runtime lookup.",
               "correct": false,
               "sections": {
                 "what_actually": "Обращение к чужому `internal/` (любым способом) — это нарушение, которое modulith запрещает; рефлексия не легализует такой доступ.",
                 "source_of_confusion": "Рефлексия обходит видимость в Java, поэтому кажется допустимым способом «достучаться» до приватной части.",
                 "if_it_were_true": "Тогда границы были бы фиктивны, но смысл modulith — именно запретить доступ к реализации соседа.",
                 "how_it_should_be": "Взаимодействие идёт через публичный API и события; `internal/` чужого модуля недоступен в принципе."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Модули взаимодействуют через публичный API (классы и интерфейсы вне `internal/`) и через Spring Application Events; прямой доступ к чужому `internal/` запрещён и ловится верификацией.",
-              "correct": true,
-              "sections": {
-                "explanation": "Два разрешённых канала — синхронный вызов публичного API соседа и слабосвязанная публикация события через `ApplicationEventPublisher`, на которое подписывается другой модуль. Это сохраняет границы и упрощает будущую декомпозицию.",
-                "example": "`OrderService` делает `events.publishEvent(new OrderPlaced(id))`, а `InventoryListener` ловит событие через `@ApplicationModuleListener` и уменьшает остаток — модули не знают о реализации друг друга.",
-                "when_to_apply": "Публичный API уместен для синхронного запроса данных, события — для уведомления о факте и слабой связи между модулями.",
-                "edge_cases": "Событие лучше делать простым `record` с идентификаторами, а не передавать тяжёлые доменные сущности другого модуля.",
-                "related": "[[spring-modulith-interview#Q5]] чем `@ApplicationModuleListener` лучше обычного listener; [[spring-modulith-interview#Q12]] как события превращаются в Kafka при декомпозиции."
               }
             }
           ]
@@ -251,20 +251,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@ApplicationModuleListener` = `@TransactionalEventListener(AFTER_COMMIT)` + `@Async`: обработка после коммита издателя и в отдельном потоке, а `@EventListener` синхронен в той же транзакции.",
-              "correct": true,
-              "sections": {
-                "explanation": "After-commit гарантирует, что обработчик сработает только если основная транзакция реально закоммичена, а `@Async` выносит побочные эффекты из основного потока — это повышает изоляцию модулей и предотвращает влияние обработчика на транзакцию издателя.",
-                "example": "При публикации `OrderPlaced` обработчик инвентаря в `@ApplicationModuleListener` запустится только после коммита сохранения заказа и в отдельном потоке, не задерживая ответ пользователю.",
-                "when_to_apply": "Используют для межмодульной реакции на доменное событие, когда нужна слабая связанность и побочный эффект не должен влиять на транзакцию-источник.",
-                "edge_cases": "Так как обработка асинхронна и после коммита, для надёжности её сочетают с персистентностью событий, иначе падение обработчика потеряет событие.",
-                "related": "[[spring-modulith-interview#Q4]] события как канал взаимодействия модулей; [[spring-modulith-interview#Q6]] персистентность событий для надёжной доставки."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`@ApplicationModuleListener` по поведению не отличается от `@EventListener`: это его псевдоним, введённый ради читаемости кода в модульных приложениях и единого стиля аннотаций.",
+              "text": "`@ApplicationModuleListener` является только alias для `@EventListener`: execution phase, threading, transaction propagation и error handling у них полностью совпадают.",
               "correct": false,
               "sections": {
                 "what_actually": "Это не псевдоним: он добавляет семантику after-commit и async, тогда как `@EventListener` синхронен и в той же транзакции.",
@@ -274,9 +261,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`@ApplicationModuleListener` сам отправляет событие в Kafka, тогда как `@EventListener` обрабатывает его внутри JVM: выбор аннотации определяет транспорт доставки события.",
+              "order": 1,
+              "label": "B",
+              "text": "`@ApplicationModuleListener` автоматически сериализует событие и публикует его в Kafka topic с именем модуля, тогда как `@EventListener` ограничен JVM.",
               "correct": false,
               "sections": {
                 "what_actually": "Аннотация лишь меняет фазу транзакции и асинхронность внутри JVM; интеграция с Kafka — отдельный модуль `spring-modulith-events-kafka`, а не сама аннотация.",
@@ -286,9 +273,22 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "`@ApplicationModuleListener` сочетает transactional event listener, async execution и новую transaction, обеспечивая after-commit запуск относительно publisher transaction.",
+              "correct": true,
+              "sections": {
+                "explanation": "Составная аннотация предназначена для развязки модулей: событие регистрируется транзакционно, а listener выполняется асинхронно после commit и может использовать собственную транзакцию с `REQUIRES_NEW` semantics.",
+                "example": "`@ApplicationModuleListener void on(OrderCompleted event)` обновляет read model после commit заказа; сбой не откатывает уже сохранённый заказ, а publication registry сохраняет незавершённую публикацию.",
+                "when_to_apply": "Применяйте для межмодульных реакций, которым не требуется участвовать в атомарной транзакции издателя и которые должны поддерживать durable completion tracking.",
+                "edge_cases": "Async execution должен быть включён и настроен. Listener обязан учитывать at-least-once redelivery и не полагаться на thread-local context издателя; для действий до commit нужен другой listener contract.",
+                "related": "[[spring-modulith-interview#Q4]] формы взаимодействия; [[spring-modulith-interview#Q6]] durable publications; [[spring-modulith-interview#Q9]] тестирование сценариев."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "`@ApplicationModuleListener` выполняется синхронно до коммита транзакции издателя, чтобы при ошибке обработчика откатить вместе с ним и саму публикацию исходного события.",
+              "text": "`@ApplicationModuleListener` запускается синхронно до commit в транзакции издателя, чтобы exception listener-а откатил исходное изменение и запись publication registry.",
               "correct": false,
               "sections": {
                 "what_actually": "Он работает `AFTER_COMMIT` и асинхронно, а не до коммита; ошибка обработчика не откатывает уже закоммиченную транзакцию издателя.",
@@ -306,12 +306,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как работает персистентность событий в `Spring Modulith`?",
+          "question_text": "Как `Spring Modulith` сохраняет и повторно обрабатывает транзакционные публикации событий?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Персистентность событий включена по умолчанию и не требует дополнительных зависимостей или настройки: таблица под события создаётся сама при первой же публикации сразу после старта приложения.",
+              "text": "Publication registry всегда активен в core starter и сохраняет абсолютно все `ApplicationEvent`, включая события без transactional listener, без дополнительного persistence module.",
               "correct": false,
               "sections": {
                 "what_actually": "Персистентность требует подключения стартера хранения (JPA/JDBC/MongoDB) и обычно настройки повтора; по умолчанию её нет.",
@@ -323,20 +323,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Стартер `spring-modulith-starter-jpa` создаёт таблицу `event_publication`, куда событие пишется до обработки; при `republish-outstanding-events-on-restart: true` необработанные повторяются после рестарта (at-least-once).",
-              "correct": true,
-              "sections": {
-                "explanation": "Запись события в таблицу происходит транзакционно вместе с бизнес-данными, а отметка о завершении ставится после успешной обработки; если приложение упало между публикацией и обработкой, событие останется «незавершённым» и будет повторено.",
-                "example": "```yaml\nspring:\n  modulith:\n    republish-outstanding-events-on-restart: true\n```\nПосле рестарта необработанные `OrderPlaced` доставляются повторно.",
-                "when_to_apply": "Используют, когда нужна надёжная доставка между модулями без поднятия Kafka/RabbitMQ — достаточно одной БД монолита.",
-                "edge_cases": "Гарантия именно at-least-once, поэтому обработчики должны быть идемпотентны: одно и то же событие может прийти дважды.",
-                "related": "[[spring-modulith-interview#Q5]] async after-commit обработка, которой нужна надёжность; [[spring-modulith-interview#Q12]] переход от таблицы событий к Kafka."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Spring Modulith пишет события в отдельный файл `events.log` на диске и при старте приложения проигрывает незавершённые записи из него, не задействуя реляционную базу данных, её транзакции и схему.",
+              "text": "События записываются в локальный файл `events.log`; при startup файл целиком проигрывается, а database-backed repository для публикаций не предусмотрен.",
               "correct": false,
               "sections": {
                 "what_actually": "События сохраняются в таблицу БД (`event_publication`) через стартеры вроде `spring-modulith-starter-jpa`, а не в плоский файл на диске.",
@@ -346,9 +333,22 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "Persistent publication registry фиксирует delivery для listeners, отмечает completion и republish-ит incomplete events как at-least-once mechanism; listener должен быть idempotent.",
+              "correct": true,
+              "sections": {
+                "explanation": "Event publication registry устраняет окно между commit бизнес-транзакции и асинхронной обработкой: publication сохраняется вместе с бизнес-изменением, а успешный listener отмечает её завершённой.",
+                "example": "JPA/JDBC/Mongo persistence module создаёт repository публикаций. После crash незавершённые записи обнаруживаются и перепубликуются по конфигурации или operational action.",
+                "when_to_apply": "Используйте для надёжных внутренних domain events, когда потеря реакции при restart недопустима, но отдельный message broker пока не нужен.",
+                "edge_cases": "Гарантия ближе к at-least-once, а не exactly-once: crash после side effect и до completion допускает повтор. Schema initialization, retention/cleanup и idempotency должны быть настроены осознанно.",
+                "related": "[[spring-modulith-interview#Q5]] application module listener; [[spring-modulith-interview#Q9]] scenarios; [[spring-modulith-interview#Q12]] переход к внешнему broker."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "Modulith гарантирует exactly-once доставку сохранённых событий, поэтому обработчики можно писать неидемпотентными, не опасаясь повторной обработки одного и того же события после рестарта приложения либо его переподключения к БД.",
+              "text": "Registry обеспечивает exactly-once side effects: после сохранения publication Spring гарантирует единственный вызов listener-а даже при crash между бизнес-операцией и отметкой completion.",
               "correct": false,
               "sections": {
                 "what_actually": "Гарантия — at-least-once, а не exactly-once: после повтора событие может прийти дважды, поэтому идемпотентность обработчиков обязательна.",
@@ -366,12 +366,25 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как тестировать отдельный модуль `Spring Modulith` в изоляции?",
+          "question_text": "Как `@ApplicationModuleTest` изолирует модуль и что происходит с его зависимостями?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Для изоляции модуля используют `@WebMvcTest`: он точечно поднимает слой контроллеров модуля и его бины, оставляя остальной контекст приложения незагруженным и лёгким для запуска отдельных проверок.",
+              "text": "`@ApplicationModuleTest` загружает module по bootstrap mode; external collaborators подключают dependencies, test configuration или `@MockitoBean`, сохраняя explicit test wiring.",
+              "correct": true,
+              "sections": {
+                "explanation": "Annotation определяет модуль тестового класса и создаёт сокращённый application context. Bootstrap mode управляет включением зависимых модулей; collaborators вне context должны быть предоставлены тестом явно, а не появляются как автоматические mocks.",
+                "example": "Standalone test модуля `order` добавляет `@MockitoBean InventoryFacade inventory`; вариант `DIRECT_DEPENDENCIES` вместо mock загружает прямой module dependency. `PublishedEvents`/`Scenario` проверяют event interaction.",
+                "when_to_apply": "Используйте module test между unit и full application test: он проверяет Spring wiring, transactions, persistence и events конкретного модуля с контролируемым набором соседей.",
+                "edge_cases": "Скрытая зависимость проявится ошибкой создания context — это полезный сигнал, а не повод автоматически мокировать всё. Конкретные annotation names test doubles зависят от версии Spring Framework/Boot.",
+                "related": "[[spring-modulith-interview#Q8]] bootstrap modes; [[spring-modulith-interview#Q9]] Scenario API; [[spring-modulith-interview#Q3]] architecture verification."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Для модульной изоляции используется только `@WebMvcTest`: он определяет application module по controller package и автоматически включает его services, repositories, events и соседние facades.",
               "correct": false,
               "sections": {
                 "what_actually": "`@WebMvcTest` изолирует web-слой (контроллеры), а не модуль modulith; для модуля предназначен `@ApplicationModuleTest`.",
@@ -381,22 +394,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Аннотировать тест `@ApplicationModuleTest`: он поднимает бины только текущего модуля, а зависимости от других модулей мокируются; в тест инжектится `ApplicationEvents` для проверки опубликованных событий.",
-              "correct": true,
-              "sections": {
-                "explanation": "`@ApplicationModuleTest` — это slice для модуля: контекст ограничен пакетом модуля, чужие бины подменяются моками, что делает тест быстрым и сфокусированным на логике одного модуля.",
-                "example": "```java\n@ApplicationModuleTest\nclass OrderModuleTests {\n  @Test void publishes(@Autowired OrderService s, ApplicationEvents e) {\n    s.placeOrder(order);\n    assertThat(e.ofType(OrderPlaced.class)).hasSize(1);\n  }\n}\n```",
-                "when_to_apply": "Применяют для unit-уровня интеграции модуля: проверить, что бизнес-метод публикует нужное событие, не поднимая всё приложение.",
-                "edge_cases": "Если нужны реальные соседние модули, переключают режим bootstrap на `DIRECT_DEPENDENCIES` или `ALL_DEPENDENCIES`.",
-                "related": "[[spring-modulith-interview#Q8]] режимы bootstrap для подключения зависимостей; [[spring-modulith-interview#Q9]] Scenarios API для асинхронных сценариев."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "Нужно вручную перечислить все бины модуля в `@ContextConfiguration`: автоматически вывести состав и границы модуля для теста инструмент не умеет, поэтому список ведут руками.",
+              "text": "Framework не понимает module boundaries в тестах, поэтому каждый application bean и infrastructure component необходимо вручную перечислить в `@ContextConfiguration` и `@Import`.",
               "correct": false,
               "sections": {
                 "what_actually": "`@ApplicationModuleTest` сам определяет границы модуля по пакету и грузит его бины; ручное перечисление не требуется.",
@@ -408,13 +408,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Использовать обычный `@SpringBootTest`, поднимающий весь контекст приложения: без полного контекста тест модуля не найдёт свои зависимости и не запустится в изоляции модуля корректно.",
+              "text": "Только полный `@SpringBootTest` способен запустить модуль: сокращённый context нарушает module metadata, не создаёт event infrastructure и всегда завершается ошибкой wiring.",
               "correct": false,
               "sections": {
                 "what_actually": "Для изоляции есть `@ApplicationModuleTest`, поднимающий только текущий модуль; `@SpringBootTest` грузит весь контекст и не даёт изоляции.",
                 "source_of_confusion": "`@SpringBootTest` — самый известный способ тестов, поэтому его считают единственным.",
                 "if_it_were_true": "Тогда нельзя было бы тестировать модуль отдельно, но modulith специально для этого даёт `@ApplicationModuleTest`.",
-                "how_it_should_be": "Используют `@ApplicationModuleTest`: грузятся бины модуля, зависимости от других модулей мокируются."
+                "how_it_should_be": "Используйте `@ApplicationModuleTest`: выбранный module загружается согласно bootstrap mode, а отсутствующие external collaborators задаются явно через dependencies или test doubles."
               }
             }
           ]
@@ -431,20 +431,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Есть три режима `BootstrapMode`: `STANDALONE` — только текущий модуль (по умолчанию), `DIRECT_DEPENDENCIES` — модуль плюс его прямые зависимости, `ALL_DEPENDENCIES` — весь граф зависимостей модуля.",
-              "correct": true,
+              "text": "`READ_ONLY` и `READ_WRITE` являются bootstrap modes и определяют, разрешены ли транзакции записи в repositories тестируемого модуля.",
+              "correct": false,
               "sections": {
-                "explanation": "Режим управляет, какие соседние модули поднимаются по-настоящему, а какие мокируются: чем шире режим, тем реалистичнее интеграция, но тяжелее и медленнее тест.",
-                "example": "```java\n@ApplicationModuleTest(mode = BootstrapMode.DIRECT_DEPENDENCIES)\nclass OrderIntegrationTests { ... }\n```",
-                "when_to_apply": "`STANDALONE` — для чистой логики модуля; `DIRECT_DEPENDENCIES` — когда нужна реальная работа с непосредственными соседями; `ALL_DEPENDENCIES` — для широкой интеграции.",
-                "edge_cases": "Чем шире граф, тем выше шанс затащить лишние бины и замедлить тесты, поэтому по умолчанию оставлен самый узкий `STANDALONE`.",
-                "related": "[[spring-modulith-interview#Q7]] базовая изоляция модуля в тесте; [[spring-modulith-interview#Q9]] Scenarios API поверх таких тестов."
+                "what_actually": "Режимы bootstrap определяют, какие модули-зависимости поднимать (`STANDALONE`/`DIRECT_DEPENDENCIES`/`ALL_DEPENDENCIES`), а не права доступа к БД.",
+                "source_of_confusion": "Названия `READ_ONLY/READ_WRITE` знакомы по транзакциям, поэтому их ошибочно приписывают bootstrap.",
+                "if_it_were_true": "Тогда режим управлял бы записью в БД, но он управляет составом загружаемых модулей.",
+                "how_it_should_be": "Bootstrap-режим — это объём поднимаемого графа модулей, а не политика чтения/записи."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Другого режима нет: modulith при запуске теста поднимает весь граф зависимостей приложения, и сузить состав поднимаемого контекста под конкретный модуль не получится.",
+              "text": "Bootstrap mode всегда один: каждый module test поднимает полный application context, поэтому объём зависимостей не настраивается.",
               "correct": false,
               "sections": {
                 "what_actually": "Режимов несколько: `STANDALONE` (по умолчанию), `DIRECT_DEPENDENCIES` и `ALL_DEPENDENCIES`; «всегда весь граф» — это лишь самый широкий из них.",
@@ -456,7 +455,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Режим задаётся числом: `mode = 1` поднимает один модуль, `mode = 2` — два соседних, и так далее — параметр прямо указывает нужное количество загружаемых в тест модулей приложения.",
+              "text": "Режим задаётся целым числом — `1`, `2` или `3`; число означает максимальное количество application modules в контексте.",
               "correct": false,
               "sections": {
                 "what_actually": "Режим — это enum `BootstrapMode` (`STANDALONE`, `DIRECT_DEPENDENCIES`, `ALL_DEPENDENCIES`), а не число загружаемых модулей.",
@@ -468,13 +467,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Режимы называются `READ_ONLY` и `READ_WRITE` и определяют, может ли тест писать в базу данных модуля во время выполнения сценария или же ограничиться чтением без побочных эффектов.",
-              "correct": false,
+              "text": "`STANDALONE` загружает selected module, `DIRECT_DEPENDENCIES` добавляет direct dependencies, `ALL_DEPENDENCIES` — весь доступный transitive dependency graph.",
+              "correct": true,
               "sections": {
-                "what_actually": "Режимы bootstrap определяют, какие модули-зависимости поднимать (`STANDALONE`/`DIRECT_DEPENDENCIES`/`ALL_DEPENDENCIES`), а не права доступа к БД.",
-                "source_of_confusion": "Названия `READ_ONLY/READ_WRITE` знакомы по транзакциям, поэтому их ошибочно приписывают bootstrap.",
-                "if_it_were_true": "Тогда режим управлял бы записью в БД, но он управляет составом загружаемых модулей.",
-                "how_it_should_be": "Bootstrap-режим — это объём поднимаемого графа модулей, а не политика чтения/записи."
+                "explanation": "Режим регулирует breadth сокращённого context. Standalone максимально изолирует модуль; direct dependencies удобны для реальных соседних contracts; all dependencies поднимает всю достижимую часть module graph, но не обязательно несвязанные модули.",
+                "example": "`@ApplicationModuleTest(mode = BootstrapMode.DIRECT_DEPENDENCIES)` загружает `order` и модули, от API которых order прямо зависит, не превращая тест в полный `@SpringBootTest`.",
+                "when_to_apply": "Начинайте со standalone и расширяйте mode только когда реальная интеграция с module dependency является предметом теста, а mock и test configuration скрыли бы важное поведение.",
+                "edge_cases": "Чем шире context, тем выше время и риск косвенной связанности. Mode не подменяет architecture verification и не определяет read/write permissions базы.",
+                "related": "[[spring-modulith-interview#Q7]] module tests; [[spring-modulith-interview#Q3]] dependency graph; [[spring-modulith-interview#Q9]] async scenarios."
               }
             }
           ]
@@ -491,20 +491,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Scenarios API — высокоуровневый DSL для интеграционного теста связей модулей: стимулировать действие, дождаться нужного события, верифицировать его. Удобен для async-цепочек с `@ApplicationModuleListener`.",
-              "correct": true,
-              "sections": {
-                "explanation": "DSL инкапсулирует ожидание асинхронного результата: вместо ручных `sleep`/`Awaitility` тест декларативно описывает `stimulate → andWaitForEventOfType → andVerify`, что делает асинхронные интеграционные проверки читаемыми и стабильными.",
-                "example": "```java\nscenario.stimulate(() -> orderService.placeOrder(order))\n        .andWaitForEventOfType(NotificationSent.class)\n        .toArrive()\n        .andVerify(e -> assertThat(e.orderId()).isEqualTo(order.getId()));\n```",
-                "when_to_apply": "Применяют, когда между модулями идёт async-цепочка событий и нужно дождаться её завершения, не зашивая таймауты вручную.",
-                "edge_cases": "`Scenario` инжектится как параметр тест-метода в `@ApplicationModuleTest`; DSL сам управляет таймаутом ожидания события.",
-                "related": "[[spring-modulith-interview#Q7]] @ApplicationModuleTest как основа сценариев; [[spring-modulith-interview#Q5]] async-обработка событий, которую проверяет Scenario."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Scenarios API — это раздел конфигурации в `application.yml`, описывающий порядок инициализации модулей при старте приложения и их взаимные зависимости при запуске контекста.",
+              "text": "Scenarios API — раздел `application.yml`, который задаёт порядок initialization callbacks, startup dependencies и readiness conditions между application modules.",
               "correct": false,
               "sections": {
                 "what_actually": "Это тестовый DSL, инжектируемый как `Scenario` в тест-метод, а не yml-конфигурация порядка старта модулей.",
@@ -514,9 +501,22 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "`Scenario` запускает action/event, ожидает observable event или state change с timeout без arbitrary sleeps и выполняет verification async module behavior.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Scenario` устраняет ручные sleeps и polling boilerplate. DSL описывает stimulus, ожидаемое событие или состояние и verification, интегрируясь с transaction handling и publication test infrastructure.",
+                "example": "Тест вызывает `scenario.stimulate(() -> orders.complete(id)).andWaitForEventOfType(OrderCompleted.class).matching(...).toArriveAndVerify(...)` и получает ограниченное ожидание.",
+                "when_to_apply": "Используйте для module listener, eventual consistency, публикации событий и других сценариев, где результат появляется после asynchronous boundary.",
+                "edge_cases": "Ожидание должно иметь разумный timeout и проверять бизнес-результат, а не только факт любого события. Scenario не заменяет performance testing и не делает неидемпотентный listener надёжным.",
+                "related": "[[spring-modulith-interview#Q5]] async listeners; [[spring-modulith-interview#Q6]] persistent publications; [[spring-modulith-interview#Q7]] module test context."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
-              "text": "Scenarios API анализирует код модулей и генерирует по нему диаграммы пользовательских сценариев (use-case) в формате PlantUML для архитектурной документации и обзора связей проекта.",
+              "text": "Scenarios API анализирует controller methods и генерирует PlantUML use-case diagrams; выполнять тестовый код или ждать события он не умеет.",
               "correct": false,
               "sections": {
                 "what_actually": "Генерацию диаграмм делает `Documenter` из `spring-modulith-docs`; Scenarios API — это про тестирование, а не про документацию.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Scenarios API — инструмент нагрузочного тестирования: он прогоняет типовые сценарии под высокой параллельной нагрузкой и измеряет latency, throughput и стабильность взаимодействия модулей.",
+              "text": "Scenarios API создаёт нагрузочный профиль, запускает параллельные business flows и вычисляет throughput, percentile latency и resource utilization каждого application module.",
               "correct": false,
               "sections": {
                 "what_actually": "Scenarios API — DSL для функционального интеграционного теста взаимодействия модулей, а не нагрузочный инструмент для замера latency.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Spring Modulith сам публикует интерактивную диаграмму зависимостей модулей на эндпоинте `/actuator/modulith`, не требуя подключать дополнительные библиотеки или писать код.",
+              "text": "Интерактивная diagram всегда доступна по `/actuator/modulith`; endpoint входит в core starter и не требует generation step или docs dependency.",
               "correct": false,
               "sections": {
                 "what_actually": "Готовой авто-диаграммы на actuator из коробки нет; для PlantUML нужен `Documenter` из `spring-modulith-docs`.",
@@ -563,7 +563,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Диаграммы получают, запустив приложение и сняв дамп фактических зависимостей профайлером во время его работы под нагрузкой, а затем отрисовав собранный граф отдельным инструментом.",
+              "text": "Зависимости модулей можно увидеть только runtime profiler-ом после запуска production traffic; статическая модель package dependencies недоступна.",
               "correct": false,
               "sections": {
                 "what_actually": "Структуру модулей строит статический анализ `ApplicationModules` из пакетов; профайлер рантайма для этого не нужен.",
@@ -575,20 +575,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`ApplicationModules.of(App.class)` даёт модель модулей, а с зависимостью `spring-modulith-docs` `Documenter` рендерит PlantUML: `writeModulesAsPlantUml()` и `writeIndividualModulesAsPlantUml()`.",
+              "text": "`ApplicationModules` раскрывает module model, а `Documenter` генерирует diagrams, module canvases и API descriptions из фактических packages/dependencies.",
               "correct": true,
               "sections": {
-                "explanation": "Модель `ApplicationModules` уже содержит модули и их зависимости; `Documenter` рендерит её в PlantUML — как общую диаграмму всех модулей, так и отдельную диаграмму для каждого модуля.",
-                "example": "```java\nApplicationModules modules = ApplicationModules.of(ShopApplication.class);\nnew Documenter(modules)\n    .writeModulesAsPlantUml()\n    .writeIndividualModulesAsPlantUml();\n```",
-                "when_to_apply": "Используют для актуальной архитектурной документации: диаграммы генерируются из кода в тесте и не устаревают вручную.",
-                "edge_cases": "Зависимость `spring-modulith-docs` обычно помечают `optional`, чтобы она не попадала в рантайм продакшена.",
-                "related": "[[spring-modulith-interview#Q3]] `ApplicationModules` для верификации; [[spring-modulith-interview#Q15]] модули как bounded contexts для документации."
+                "explanation": "Documentation строится из той же application module model, которая используется verification. Поэтому diagram отражает реальные package dependencies и может обновляться автоматически в test/build step.",
+                "example": "Test создаёт `new Documenter(ApplicationModules.of(App.class))` и записывает общую или отдельные module diagrams, которые публикуются как build artifacts вместе с module canvases.",
+                "when_to_apply": "Генерируйте документацию в CI для architecture review, onboarding и контроля изменений module graph; diff диаграммы помогает увидеть новую связь до merge.",
+                "edge_cases": "Имена методов/output formats зависят от версии docs module. Диаграмма показывает структурные зависимости, но не заменяет sequence documentation для runtime event flow и data ownership.",
+                "related": "[[spring-modulith-interview#Q3]] verification model; [[spring-modulith-interview#Q13]] named interfaces; [[spring-modulith-interview#Q14]] внедрение в CI."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Визуализация доступна через платный плагин IntelliJ IDEA, который рисует граф модулей по проекту; программно, прямо из кода теста, сгенерировать такие диаграммы нельзя.",
+              "text": "Документирование доступно исключительно через коммерческий IntelliJ plugin: программный API, test integration и build-time generation для module diagrams отсутствуют.",
               "correct": false,
               "sections": {
                 "what_actually": "Диаграммы генерируются программно через `Documenter` (модуль `spring-modulith-docs`), без привязки к платному IDE-плагину.",
@@ -606,12 +606,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Когда использовать `Spring Modulith`, а когда — микросервисы?",
+          "question_text": "По каким признакам выбирать модульный монолит или микросервисную архитектуру?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Выбор определяется языком реализации: для Java берут Spring Modulith, а сервисы на других языках делают микросервисами с сетевым взаимодействием между отдельными процессами и хостами.",
+              "text": "Выбор определяется языком реализации: Java-приложения должны использовать Modulith, а использование другого языка автоматически требует отдельного микросервиса и сетевого API.",
               "correct": false,
               "sections": {
                 "what_actually": "Критерий — масштабирование, структура команд и изоляция данных, а не язык; модульные монолиты строят и на других стеках.",
@@ -623,20 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Spring Modulith — небольшой команде с единым деплоем: явные границы без сети и распределённых транзакций либо плавный переход к сервисам. Микросервисы — под независимое масштабирование и изоляцию данных БД.",
-              "correct": true,
-              "sections": {
-                "explanation": "Решение определяется организацией и нефункциональными требованиями: если команда одна и деплой единый, monolith даёт границы дешевле; если нужны независимое масштабирование и автономные команды — оправданы микросервисы с их распределённой сложностью.",
-                "example": "Стартап из 6 человек с одним деплоем выбирает modulith; крупная платформа, где платежи масштабируются отдельно от каталога и владеются разными командами, — микросервисы.",
-                "when_to_apply": "Этот критерий применяют на старте проекта и при пересмотре архитектуры, когда команда или нагрузка выросли.",
-                "edge_cases": "Часто оптимально начать с modulith и выделить в сервис лишь тот модуль, которому реально нужны автономный деплой или масштабирование.",
-                "related": "[[spring-modulith-interview#Q1]] что такое модульный монолит; [[spring-modulith-interview#Q12]] как modulith облегчает последующий переход."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Spring Modulith годится для учебных проектов и прототипов, а серьёзные продакшен-системы с реальной нагрузкой строят уже на микросервисах с независимым деплоем и масштабированием каждого сервиса.",
+              "text": "Модульный монолит подходит только для prototype и внутренних tools; любой production workload требует network isolation, отдельного deploy и собственной database для каждого context.",
               "correct": false,
               "sections": {
                 "what_actually": "Модульный монолит — полноценный продакшен-подход для небольших команд и единого деплоя, а не только учебная игрушка.",
@@ -646,15 +633,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Микросервисы предпочтительнее в любом проекте: модульный монолит считают устаревшим подходом, и на распределённые сервисы стоит переходить с самого начала разработки любого нового продукта и его частей с первого дня.",
+              "order": 2,
+              "label": "C",
+              "text": "Микросервисы всегда архитектурно предпочтительнее: раннее разделение снижает стоимость разработки даже при одной команде, общей release cadence, общей базе и отсутствии независимого scaling.",
               "correct": false,
               "sections": {
                 "what_actually": "Modulith уместен, когда нужны явные границы без накладных расходов сети и независимого деплоя; «всегда микросервисы» игнорирует их сложность.",
                 "source_of_confusion": "Микросервисы на слуху как «современная» архитектура, отсюда вывод об устаревании монолита.",
                 "if_it_were_true": "Тогда небольшим командам приходилось бы тянуть распределённые транзакции зря, но monolith часто проще и дешевле.",
                 "how_it_should_be": "Выбор зависит от масштабирования, команд и изоляции данных; modulith — валидный и часто лучший старт."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Модульный монолит сохраняет один deploy и local transactions; microservices оправданы реальной потребностью в independent releases, scaling, isolation и ownership.",
+              "correct": true,
+              "sections": {
+                "explanation": "Решение определяется организационными и эксплуатационными требованиями, а не размером команды по фиксированной формуле. Modulith снижает coordination/network overhead; services покупают автономность ценой contracts, observability, delivery и consistency complexity.",
+                "example": "Одна product group с общей release cadence использует modules. Отдельный high-load component с собственным owner, SLO, storage и независимыми релизами может стать service после появления измеримой причины.",
+                "when_to_apply": "Начинайте с самого простого deployment model, удовлетворяющего текущим требованиям, и выделяйте service по подтверждённой необходимости автономности, а не как профилактику гипотетического роста.",
+                "edge_cases": "Один deploy не исключает большой масштаб, а несколько services не гарантируют границ. Shared database и coordinated releases могут превратить микросервисы в распределённый монолит.",
+                "related": "[[spring-modulith-interview#Q1]] задача Modulith; [[spring-modulith-interview#Q12]] эволюция к services; [[spring-modulith-interview#Q15]] DDD boundaries."
               }
             }
           ]
@@ -671,7 +671,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Modulith облегчает переход тем, что уже в режиме монолита разворачивает каждый модуль отдельным подом в Kubernetes и связывает их по сети заранее, ещё до всякой декомпозиции на сервисы.",
+              "text": "Module APIs, events и verified dependencies создают extraction seams, но вынос всё равно требует remote contracts, data migration, security и observability.",
+              "correct": true,
+              "sections": {
+                "explanation": "Хорошая модульность снижает code-level coupling до декомпозиции: понятно, какие API и events пересекают границу. Но in-process call и shared transaction не являются готовым distributed protocol.",
+                "example": "`OrderFacade` превращается в HTTP/gRPC client/server, `OrderCompleted` — во внешнее broker event; отдельно выделяются order tables, retries, idempotency и failure handling.",
+                "when_to_apply": "Используйте module graph как карту кандидатов, затем выделяйте только module с обоснованной автономностью и предварительно делайте явными его data ownership и contracts.",
+                "edge_cases": "Пакет `internal` не устраняет shared database coupling, distributed transactions или chatty API. Иногда правильным результатом анализа является оставить module внутри монолита.",
+                "related": "[[spring-modulith-interview#Q4]] module contracts; [[spring-modulith-interview#Q6]] events; [[spring-modulith-interview#Q11]] критерии выбора."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Modulith заранее запускает каждый Java package в отдельном process/pod, а единый артефакт является только упаковкой нескольких скрытых микросервисов.",
               "correct": false,
               "sections": {
                 "what_actually": "В режиме монолита всё работает в одном процессе/поде; modulith не разворачивает модули отдельными подами заранее.",
@@ -681,9 +694,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Главное, чем помогает modulith, — он заранее шифрует трафик между модулями, поэтому при выносе взаимодействия в сеть протокол и его безопасность при декомпозиции менять уже не придётся.",
+              "order": 2,
+              "label": "C",
+              "text": "Главное преимущество — автоматическое шифрование и versioning всех вызовов между модулями; после выделения transport protocol, authentication и failure handling менять не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Modulith не шифрует межмодульный трафик (внутри процесса его нет); он помогает чёткими границами, контрактами и явными зависимостями.",
@@ -693,22 +706,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Границы модулей — швы декомпозиции: публичный API становится REST/gRPC-контрактом, `ApplicationEvents` — сообщениями Kafka/RabbitMQ, `internal/` уже скрыт, а зависимости между модулями явны и верифицированы.",
-              "correct": true,
-              "sections": {
-                "explanation": "Так как modulith с самого начала требует общения только через публичный API и события, к моменту декомпозиции уже есть готовые контракты и слабая связанность — выделение модуля в сервис сводится к замене внутрипроцессного вызова сетевым, без сюрпризов в виде скрытых зависимостей.",
-                "example": "Модуль `Order` с событием `OrderPlaced` выносят в сервис: публичный метод становится REST-эндпоинтом, а `OrderPlaced` — сообщением в топике Kafka, на которое подписывается сервис `Inventory`.",
-                "when_to_apply": "Этим пользуются, когда конкретному модулю понадобились автономный деплой или независимое масштабирование, и его пора отделить.",
-                "edge_cases": "Главная оставшаяся работа — разделение данных: общую БД монолита приходится дробить на схемы/базы, и это обычно самая сложная часть выноса.",
-                "related": "[[spring-modulith-interview#Q11]] когда вообще пора в микросервисы; [[spring-modulith-interview#Q4]] публичный API и события как будущие контракты."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "Modulith сам выделяет каждый модуль в отдельный микросервис одной командой `extract-services`, генерируя сервис, его контракт и инфраструктуру без участия разработчика, ручной правки кода, настройки деплоя и мониторинга.",
+              "text": "Команда `extract-services` генерирует repositories, network API, manifests и переносит данные для каждого module без проектных решений разработчика.",
               "correct": false,
               "sections": {
                 "what_actually": "Автоматического выделения сервисов нет: modulith лишь делает границы чёткими заранее, а декомпозицию выполняет команда вручную.",
@@ -731,20 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "По умолчанию публичный API модуля — весь корень его пакета. Named Interface (`@NamedInterface(\"api\")` на пакете) объявляет несколько точек входа, чтобы сосед зависел от конкретной, а не от всего модуля.",
-              "correct": true,
-              "sections": {
-                "explanation": "Named Interface даёт более тонкий контроль над публичной поверхностью: вместо «весь корень пакета публичен» модуль явно выделяет, например, `api`, `events`, `config` как отдельные точки входа, и зависимости фиксируются на нужной из них.",
-                "example": "```java\n@org.springframework.modulith.NamedInterface(\"api\")\npackage com.example.shop.order.api;\n```\nДругой модуль зависит только от `order::api`, а не от всего `order`.",
-                "when_to_apply": "Полезно в больших модулях с разными аспектами (API, события, конфигурация), когда нужно ограничить, чем именно может пользоваться сосед.",
-                "edge_cases": "Без named interface весь корень пакета — единый публичный API; именование даёт несколько изолированных «фасадов» одного модуля.",
-                "related": "[[spring-modulith-interview#Q2]] корень пакета как публичный API по умолчанию; [[spring-modulith-interview#Q4]] взаимодействие через публичный API."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Named Interface — обязательная аннотация на каждом публичном классе модуля: без неё класс не считается частью API и остаётся невидимым для других модулей приложения при верификации границ и сборке проекта.",
+              "text": "Каждый публичный класс обязан иметь `@NamedInterface`; без аннотации даже тип из module base package невидим другим application modules.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию весь корень пакета публичен без аннотаций; Named Interface — опциональный инструмент для нескольких точек входа, а не обязательная метка каждого класса.",
@@ -754,9 +741,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Named Interface требует, чтобы публичный API модуля состоял из Java-`interface`, а не из конкретных классов или record: их публикация в API модуля не разрешается правилами.",
+              "order": 1,
+              "label": "B",
+              "text": "Named Interface превращает экспортированные типы в Java `interface` и запрещает использовать public classes, records или annotations как contract.",
               "correct": false,
               "sections": {
                 "what_actually": "Named Interface — это именованная группа публичных типов пакета (классы и интерфейсы), он не требует, чтобы API состоял только из Java-интерфейсов.",
@@ -766,15 +753,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Named Interface задаёт имя REST-эндпоинту модуля, под которым тот отображается в OpenAPI-спецификации и Swagger-UI приложения для внешних клиентов и генерации их кода по общей схеме.",
+              "order": 2,
+              "label": "C",
+              "text": "Named Interface задаёт operationId REST endpoint и группировку OpenAPI; package dependencies и module verification его не используют.",
               "correct": false,
               "sections": {
                 "what_actually": "Named Interface относится к границам модулей на уровне пакетов и зависимостей, а не к именованию REST-эндпоинтов или OpenAPI.",
                 "source_of_confusion": "Слово «interface» ассоциируется с HTTP API и его описанием в OpenAPI.",
                 "if_it_were_true": "Тогда он влиял бы на swagger-документацию, но он управляет тем, от какой части модуля можно зависеть.",
                 "how_it_should_be": "Это именованная точка входа модуля для других модулей; к REST/OpenAPI отношения не имеет."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Module base package образует default API; `@NamedInterface` экспортирует named group types, чтобы dependency ссылалась на конкретный contract.",
+              "correct": true,
+              "sections": {
+                "explanation": "Named interfaces позволяют иметь несколько явных facets одного module API и адресовать dependency не ко всему модулю. Аннотация описывает архитектурный export, а не Java language interface.",
+                "example": "Пакет `order.events` помечают `@NamedInterface(\"events\")`, пакет `order.api` — `api`; другой модуль декларирует разрешённую зависимость только на `order::events`.",
+                "when_to_apply": "Используйте, когда root API слишком широк, требуется экспортировать типы из вложенного пакета или разным consumers нужны независимые contract surfaces.",
+                "edge_cases": "Named interface должен оставаться небольшим и стабильным. Экспорт internal implementation ради прохождения `verify()` ослабляет границу вместо исправления архитектуры.",
+                "related": "[[spring-modulith-interview#Q2]] default API; [[spring-modulith-interview#Q3]] verification; [[spring-modulith-interview#Q4]] взаимодействие модулей."
               }
             }
           ]
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Проект нужно с нуля переписать на новую структуру пакетов за один большой рефакторинг: подключить modulith к существующей раскладке классов без полного переписывания не выйдет никак.",
+              "text": "Подключение возможно только после полного big-bang перемещения всех classes в новую package structure; частично соответствующий проект не может использовать module model.",
               "correct": false,
               "sections": {
                 "what_actually": "Внедрять можно итеративно: подключить стартер, прогнать `verify()`, исправлять нарушения постепенно — большой разовый рефакторинг не требуется.",
@@ -803,7 +803,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Добавить аннотацию `@EnableModulith` на главный класс приложения: границы модулей и их проверка включатся сами при старте, без отдельного теста, настройки сборки и шага в CI.",
+              "text": "Добавьте Modulith dependencies и architecture test `ApplicationModules.of(App.class).verify()`, затем сужайте APIs/dependencies и закрепляйте verification/documentation в CI.",
+              "correct": true,
+              "sections": {
+                "explanation": "Внедрение может быть эволюционным: module model сразу показывает фактическое состояние, а architecture test создаёт feedback loop. Затем команда исправляет зависимости небольшими изменениями и добавляет event/test capabilities по необходимости.",
+                "example": "Сначала добавляют core/test dependencies и фиксируют violations; затем переносят implementation в subpackages, вводят facades/named interfaces и удаляют cycles по одному module flow.",
+                "when_to_apply": "Подходит для существующего Spring Boot монолита, где нужен контролируемый architecture refactoring без остановки feature development и переписывания приложения.",
+                "edge_cases": "Версии Modulith и Spring Boot должны быть совместимы через release train/BOM. Не следует автоматически включать JPA event registry, docs или runtime modules, если они не нужны.",
+                "related": "[[spring-modulith-interview#Q3]] verify test; [[spring-modulith-interview#Q10]] documentation; [[spring-modulith-interview#Q11]] architecture decision."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Достаточно поставить `@EnableModulith` на application class: modules автоматически исправят cycles и начнут проверяться на каждом startup без tests.",
               "correct": false,
               "sections": {
                 "what_actually": "Внедрение делают через зависимость и тест с `verify()`; единственной аннотации `@EnableModulith`, включающей всё сама, для процесса не требуется.",
@@ -813,22 +826,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Добавить `spring-modulith-starter-core`, вызвать `ApplicationModules.of(App.class).verify()` для списка нарушений, чинить их итеративно (классы в `internal/`, убрать лишние зависимости), закрепить тестом в CI.",
-              "correct": true,
-              "sections": {
-                "explanation": "Подход инкрементальный: уже само добавление проверки фиксирует текущие границы и не даёт архитектуре деградировать дальше, а существующие нарушения чинятся постепенно, без остановки разработки.",
-                "example": "После первого `verify()` тест падает со списком обращений к чужим классам; их по одному переносят в `internal/` или заменяют на события, пока тест не станет зелёным.",
-                "when_to_apply": "Используют, когда нужно навести порядок в разросшемся монолите без рискованного большого рефакторинга «всё сразу».",
-                "edge_cases": "Не обязательно чинить все нарушения немедленно — главное добавить `verify()` в CI, чтобы новые нарушения не появлялись.",
-                "related": "[[spring-modulith-interview#Q3]] как работает `verify()` в CI; [[spring-modulith-interview#Q2]] перенос реализации в `internal/`."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "Включение требует миграции сборки с Maven на Gradle, поскольку Spring Modulith и его стартеры поддерживаются в Gradle-проектах и под Maven официально не собираются и не поддерживаются.",
+              "text": "Проект нужно мигрировать с Maven на Gradle, потому что BOM, starters и test/docs modules публикуются только как Gradle plugins.",
               "correct": false,
               "sections": {
                 "what_actually": "Spring Modulith работает и с Maven, и с Gradle; миграция системы сборки для его подключения не нужна.",
@@ -846,12 +846,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как `Spring Modulith` соотносится с Hexagonal Architecture и DDD?",
+          "question_text": "Как `Spring Modulith` может дополнять DDD и Hexagonal Architecture?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Spring Modulith заменяет DDD и Hexagonal Architecture: с ним эти концепции больше не нужны, так как границы, порты и адаптеры он выстраивает автоматически по коду, пакетам и аннотациям.",
+              "text": "Modulith заменяет DDD и Hexagonal Architecture: package scanner сам определяет bounded contexts, domain model, aggregates и ports, поэтому моделирование командой больше не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Modulith не заменяет, а поддерживает эти концепции: он даёт механизм границ, но стратегическое и тактическое моделирование остаётся за командой.",
@@ -863,7 +863,19 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Spring Modulith — это конкретная реализация Hexagonal Architecture: он предписывает обязательную раскладку `domain/`, `application/`, `adapters/` внутри каждого модуля любого приложения, построенного на этом фреймворке.",
+              "text": "Modulith несовместим с DDD, потому что application module допускает только anemic services и запрещает aggregates, value objects, repositories и domain events внутри границы.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Наоборот, modulith реализует `Bounded Context` из DDD на уровне пакетов и хорошо сочетается с агрегатами; никакой анемичности он не навязывает.",
+                "source_of_confusion": "Кажется, что технический инструмент модульности противоречит тактическим паттернам DDD.",
+                "if_it_were_true": "Тогда DDD-команды не могли бы использовать modulith, но он как раз помогает выражать bounded contexts.",
+                "how_it_should_be": "Каждый модуль — bounded context с публичным API; внутреннюю доменную модель modulith не ограничивает."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Modulith является строгим Hexagonal framework и требует пакеты `domain`, `application`, `ports`, `adapters` и фиксированное направление зависимостей; любая другая структура не проходит verification.",
               "correct": false,
               "sections": {
                 "what_actually": "Modulith не навязывает внутреннюю структуру модуля: он задаёт границы между модулями, но как организовать слои внутри — решает команда.",
@@ -873,28 +885,16 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Spring Modulith реализует `Bounded Context` из DDD на уровне пакетов: модуль = bounded context с публичным API и скрытым `internal/`. По Hexagonal API — порты, `internal/` — адаптеры; раскладку слоёв не диктует.",
-              "correct": true,
-              "sections": {
-                "explanation": "Modulith даёт технический механизм для стратегических и тактических идей: границы модулей выражают bounded contexts DDD, а разделение «публичный API против `internal/`» естественно ложится на порты и адаптеры hexagonal, оставляя свободу во внутренней организации.",
-                "example": "Модуль `order` = bounded context: публичный `OrderService` — порт (вход), классы в `order/internal/` (репозитории, клиенты) — адаптеры, скрытые от других модулей.",
-                "when_to_apply": "Эту связь используют, проектируя модули как bounded contexts и объясняя команде, что публичный API — это порт, а `internal/` — адаптеры и реализация.",
-                "edge_cases": "Modulith не заставляет применять DDD или hexagonal — он лишь предоставляет границы; глубину тактических паттернов выбирает команда.",
-                "related": "[[spring-modulith-interview#Q2]] публичный API против `internal/`; [[spring-modulith-interview#Q4]] взаимодействие через публичные порты и события."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "Spring Modulith и DDD несовместимы: modulith навязывает анемичную доменную модель и мешает применять агрегаты и bounded contexts в тактическом проектировании доменных модулей системы.",
-              "correct": false,
+              "text": "Модули можно выровнять по bounded contexts и использовать APIs/events как contracts; ports-and-adapters внутри возможен, но Modulith его не гарантирует.",
+              "correct": true,
               "sections": {
-                "what_actually": "Наоборот, modulith реализует `Bounded Context` из DDD на уровне пакетов и хорошо сочетается с агрегатами; никакой анемичности он не навязывает.",
-                "source_of_confusion": "Кажется, что технический инструмент модульности противоречит тактическим паттернам DDD.",
-                "if_it_were_true": "Тогда DDD-команды не могли бы использовать modulith, но он как раз помогает выражать bounded contexts.",
-                "how_it_should_be": "Каждый модуль — bounded context с публичным API; внутреннюю доменную модель modulith не ограничивает."
+                "explanation": "Modulith обеспечивает технические module boundaries, а DDD отвечает за смысл границ и model. Hexagonal principles можно применять внутри module и на его API, но package conventions сами по себе не превращают module в bounded context.",
+                "example": "`order` соответствует контексту заказов; root facade и events являются входными/выходными contracts, а вложенные `domain`, `application`, `infrastructure` организованы по выбранной командой hexagonal variation.",
+                "when_to_apply": "Используйте DDD для поиска language/ownership boundaries, Modulith для их автоматической проверки в codebase, а ports-and-adapters для управления зависимостями внутри каждой границы.",
+                "edge_cases": "Один bounded context может содержать несколько technical modules, а крупный module может случайно объединить разные contexts. Равенство «один пакет = один bounded context» не является гарантией framework.",
+                "related": "[[spring-modulith-interview#Q2]] package modules; [[spring-modulith-interview#Q4]] contracts; [[spring-modulith-interview#Q11]] deployment architecture."
               }
             }
           ]

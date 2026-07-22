@@ -6,7 +6,7 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие уровни кэширования предоставляет `Hibernate` и какие из них включены по умолчанию?",
+          "question_text": "Какие кэши есть в `Hibernate` и какие из них активны без дополнительной настройки?",
           "options": [
             {
               "order": 0,
@@ -23,19 +23,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Сам `Hibernate` даёт трёхуровневую модель: `L1 cache` уровня `Session`/Persistence Context (включён всегда), `L2 cache` уровня `SessionFactory`/`EntityManagerFactory` (нужна настройка) и Query Cache для результатов запросов (тоже нужна настройка).",
-              "correct": true,
-              "sections": {
-                "explanation": "`L1` живёт в пределах одной сессии и обязателен — он обеспечивает identity объектов. `L2` общий на приложение и разделяется между сессиями, но его нужно включать через `use_second_level_cache`. Query Cache хранит результаты JPQL/Criteria и требует включённого `L2`.",
-                "example": "Два вызова `em.find(User.class, 1L)` в одной сессии дают один и тот же инстанс из `L1` без второго SQL; чтобы `anotherEm.find(...)` тоже обошёлся без SQL, нужен включённый `L2`.",
-                "when_to_apply": "Эту классификацию используют, проектируя стратегию кэширования: что покрывает `L1` бесплатно, а где нужно осознанно включать `L2` и Query Cache под конкретную нагрузку.",
-                "edge_cases": "`L1` нельзя выключить, но он исчезает после `em.close()`; Query Cache без `L2` бесполезен, потому что хранит лишь идентификаторы и тянет сами сущности из `L2`.",
-                "related": "[[hibernate-caching-interview#Q2]] как работает `L1`; [[hibernate-caching-interview#Q3]] настройка `L2`; [[hibernate-caching-interview#Q5]] Query Cache."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Сам `Hibernate` различает кэш чтения и кэш записи, и оба настраиваются единым флагом `write_through: true` в блоке `hibernate.cache`, после чего `SessionFactory` синхронизирует обе области через общий `region.factory_class`.",
               "correct": false,
               "sections": {
@@ -46,8 +33,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "У `Hibernate` два уровня — `L1` и `L2` — и оба включены по умолчанию после добавления `hibernate-jcache`: `use_second_level_cache` уже стоит в `true`, а Query Cache входит в `L1` и отдельной настройки не требует.",
               "correct": false,
               "sections": {
@@ -55,6 +42,19 @@
                 "source_of_confusion": "`L1`/`L2` — самые упоминаемые термины, поэтому Query Cache забывают, а статус `L2` принимают за дефолтный.",
                 "if_it_were_true": "Тогда не существовало бы свойства `use_second_level_cache`, которое явно требуется для активации `L2`.",
                 "how_it_should_be": "Три уровня кэша; автоматически включён лишь `L1`, а `L2` и Query Cache конфигурируются отдельно."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`L1` существует в каждой `Session`/`EntityManager` и всегда активен. `L2` разделяется через `SessionFactory` и требует провайдера и политики. Query Cache отдельно кэширует результаты запросов и остаётся необязательным.",
+              "correct": true,
+              "sections": {
+                "explanation": "Первый уровень встроен в persistence context и не отключается для управляемых сущностей. Второй уровень разделяется между сессиями одной `SessionFactory`, а Query Cache отдельно хранит результаты запросов и включается только по явной настройке.",
+                "example": "Два вызова `em.find(User.class, 1L)` в одной сессии дают один и тот же инстанс из `L1` без второго SQL; чтобы `anotherEm.find(...)` тоже обошёлся без SQL, нужен включённый `L2`.",
+                "when_to_apply": "Эту классификацию используют, проектируя стратегию кэширования: что покрывает `L1` бесплатно, а где нужно осознанно включать `L2` и Query Cache под конкретную нагрузку.",
+                "edge_cases": "Наличие провайдера ещё не означает, что все сущности кэшируются: shared-cache mode и аннотации определяют, какие entity и коллекции попадут во второй уровень.",
+                "related": "[[hibernate-caching-interview#Q2]] как работает L1 cache (Persistence Context) и что он гарантирует; [[hibernate-caching-interview#Q3]] что нужно сделать, чтобы настроить L2 cache (например, с Ehcache); [[hibernate-caching-interview#Q4]] какие concurrency strategies существуют для L2 cache и чем они различаются."
               }
             }
           ]
@@ -66,11 +66,24 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как работает `L1 cache` (Persistence Context) и что он гарантирует?",
+          "question_text": "Какую роль играет persistence context (`L1 cache`) и какие гарантии он даёт?",
           "options": [
             {
               "order": 0,
               "label": "A",
+              "text": "Persistence context хранит единственный управляемый экземпляр сущности для пары «тип + идентификатор» в пределах одной `Session`/`EntityManager`. Он обеспечивает identity map и отслеживание изменений; момент `flush` зависит от режима flush и границ транзакции.",
+              "correct": true,
+              "sections": {
+                "explanation": "Повторная загрузка той же сущности в одном persistence context возвращает тот же Java-объект. Dirty checking и unit-of-work относятся к persistence context в целом; `flush` синхронизирует изменения с БД, но не обязательно ждёт только commit.",
+                "example": "После `user.setName(\"Alice\")` второй `em.find(User.class, 1L)` вернёт тот же объект; вызвав на нём `setName(\"Bob\")`, мы меняем и `user`, а commit сгенерирует `UPDATE users SET name='Bob' WHERE id=1`.",
+                "when_to_apply": "Persistence context естественно используется в каждой Hibernate session/transaction; учитывайте его при объяснении повторных `find` и при диагностике расхождений после bulk SQL.",
+                "edge_cases": "JPQL/Criteria-запрос при `FlushMode.AUTO` может вызвать flush до выполнения. `clear()`, `detach()` или закрытие `EntityManager` прекращают управление объектами и очищают соответствующие записи первого уровня.",
+                "related": "[[hibernate-caching-interview#Q3]] что нужно сделать, чтобы настроить L2 cache (например, с Ehcache); [[hibernate-caching-interview#Q1]] какие кэши есть в Hibernate и какие из них активны без дополнительной настройки; [[hibernate-caching-interview#Q4]] какие concurrency strategies существуют для L2 cache и чем они различаются."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "`L1 cache` — это разделяемый на всё приложение кэш уровня `SessionFactory`, который переживает закрытие `EntityManager` и одновременно доступен всем потокам, поэтому объект, загруженный в одной `Session`, немедленно виден в остальных без повторного `find` и без обращения к БД.",
               "correct": false,
               "sections": {
@@ -81,8 +94,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "`L1 cache` участвует исключительно в ускорении чтения и никак не связан с записью: он не делает dirty checking, поэтому, чтобы изменения полей попали в БД, разработчик обязан вручную формировать и выполнять UPDATE, а `flush()` лишь очищает кэш чтения и SQL не генерирует.",
               "correct": false,
               "sections": {
@@ -93,8 +106,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 3,
+              "label": "D",
               "text": "`L1 cache` по умолчанию выключен, и его нужно явно активировать свойством `use_first_level_cache: true` в конфиге `EntityManagerFactory`, пока флаг не выставлен, каждый повторный `find` по одному и тому же ID внутри сессии обходит Persistence Context и уходит в БД отдельным SELECT.",
               "correct": false,
               "sections": {
@@ -102,19 +115,6 @@
                 "source_of_confusion": "По аналогии с `use_second_level_cache` придумывают несуществующий симметричный флаг для первого уровня.",
                 "if_it_were_true": "Тогда identity объектов в сессии не гарантировалась бы по умолчанию, но `Hibernate` обеспечивает её всегда.",
                 "how_it_should_be": "`L1` работает автоматически без настроек; конфигурируется только `L2` через `use_second_level_cache`."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`L1 cache` — автоматический кэш в пределах одной `EntityManager`/`Session`. Он гарантирует identity (один объект на один ID в сессии), выполняет dirty checking (отслеживает изменения и генерирует UPDATE) и делает automatic flush при commit или `flush()`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Пока сессия открыта, повторный `find` по тому же ID возвращает тот же инстанс, а правки в любом из ссылок на него видны везде. На commit `Hibernate` сравнивает снимок и текущее состояние и формирует нужные UPDATE.",
-                "example": "После `user.setName(\"Alice\")` второй `em.find(User.class, 1L)` вернёт тот же объект; вызвав на нём `setName(\"Bob\")`, мы меняем и `user`, а commit сгенерирует `UPDATE users SET name='Bob' WHERE id=1`.",
-                "when_to_apply": "На `L1` опираются всегда внутри транзакции: он бесплатно убирает повторные SELECT по одному ID и обеспечивает консистентность объектов в рамках бизнес-операции.",
-                "edge_cases": "`L1` живёт только пока открыта сессия — после `em.close()` данные теряются; в долгих сессиях он может разрастись и держать в памяти много managed-сущностей.",
-                "related": "[[hibernate-caching-interview#Q1]] уровни кэша; [[hibernate-caching-interview#Q8]] как чистить `L1` через `evict`/`clear`; [[hibernate-caching-interview#Q14]] N+1 и кэш."
               }
             }
           ]
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно пометить сущность `@Cacheable`, и `L2 cache` включится сам: `Hibernate` подставит `region.factory_class` и выставит `use_second_level_cache` в `true`, так что ни `hibernate-jcache`, ни `application.yml` не нужны.",
+              "text": "Достаточно включить `hibernate.cache.use_second_level_cache=true`: Hibernate сам выберет встроенный provider, создаст regions и начнёт кэшировать все entity без `@Cacheable` или shared-cache mode.",
               "correct": false,
               "sections": {
                 "what_actually": "Одной аннотации мало: без `use_second_level_cache: true` и настройки фабрики регионов `L2` остаётся выключенным и `@Cacheable` ни на что не влияет.",
@@ -143,7 +143,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Уровень `L2 cache` конфигурируется программно через `sessionFactory.getCache()`: там задают и `CacheConcurrencyStrategy`, и провайдера, поэтому ни `application.yml`, ни `ehcache.xml` не нужны.",
+              "text": "Нужны совместимые region factory и provider, включённый `L2` и выбранные кэшируемые entity/collections. Политика shared cache задаётся JPA-настройками или аннотациями, а regions — конфигурацией provider.",
+              "correct": true,
+              "sections": {
+                "explanation": "Hibernate определяет контракт второго уровня, а хранение и eviction реализует провайдер. Поэтому одной зависимости недостаточно: нужны region factory, настройки провайдера и явная политика включения сущностей.",
+                "example": "Сущность `@Entity @Cacheable @Cache(usage = READ_WRITE, region = \"users\")` начнёт кэшироваться в регион `users`, для которого в `ehcache.xml` задан TTL 30 минут и heap на 10000 entries.",
+                "when_to_apply": "Эту последовательность применяют, когда профилирование показало повторное чтение одних и тех же сущностей между сессиями и `L1` уже недостаточно.",
+                "edge_cases": "Точные имена JCache-свойств и классов region factory различаются между major-версиями Hibernate. Конфигурацию следует брать из документации используемой версии, а не копировать пример для Hibernate 5 в Hibernate 6/7.",
+                "related": "[[hibernate-caching-interview#Q4]] какие concurrency strategies существуют для L2 cache и чем они различаются; [[hibernate-caching-interview#Q2]] какую роль играет persistence context (L1 cache) и какие гарантии он даёт; [[hibernate-caching-interview#Q5]] что такое Query Cache, как его включить и в чём ключевое ограничение."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Второй уровень настраивают только через `SessionFactory.getCache()`: этим API выбирают провайдера, стратегию согласованности и TTL, поэтому отдельная конфигурация JCache или Ehcache не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "`getCache()` — это API для инвалидации/проверки уже работающего `L2`, а включают и конфигурируют его именно через свойства и файл провайдера.",
@@ -153,22 +166,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Добавить зависимости провайдера (`hibernate-jcache` + `ehcache`), включить `use_second_level_cache: true` и указать `region.factory_class: jcache` с провайдером `EhcacheCachingProvider`, а затем пометить сущности `@Cacheable`/`@Cache(usage = ..., region = ...)`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Сначала подключается интеграция `JCache` и сам `Ehcache`, затем в `application.yml` активируется `L2` и указывается фабрика регионов и URI конфигурации `ehcache.xml`. Без аннотации `@Cache`/`@Cacheable` конкретная сущность в `L2` не попадёт.",
-                "example": "Сущность `@Entity @Cacheable @Cache(usage = READ_WRITE, region = \"users\")` начнёт кэшироваться в регион `users`, для которого в `ehcache.xml` задан TTL 30 минут и heap на 10000 entries.",
-                "when_to_apply": "Эту последовательность применяют, когда профилирование показало повторное чтение одних и тех же сущностей между сессиями и `L1` уже недостаточно.",
-                "edge_cases": "Забытая аннотация `@Cache` — частая ошибка: `L2` включён, но сущность не кэшируется; для распределённых провайдеров дополнительно нужна сериализуемость сущности.",
-                "related": "[[hibernate-caching-interview#Q4]] concurrency strategies в `@Cache`; [[hibernate-caching-interview#Q6]] регионы кэша; [[hibernate-caching-interview#Q7]] провайдеры `L2`."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "Нужно лишь выставить `use_query_cache: true` — этот флаг включает второй уровень для всех сущностей, и аннотация `@Cache` уже не требуется.",
+              "text": "Достаточно установить `hibernate.cache.use_query_cache=true`: Query Cache автоматически включает второй уровень для всех сущностей и заменяет настройку region factory и аннотации кэширования.",
               "correct": false,
               "sections": {
                 "what_actually": "`use_query_cache` включает только Query Cache для результатов запросов; за `L2` отвечает отдельное свойство `use_second_level_cache`.",
@@ -191,19 +191,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Четыре — `READ_ONLY` для чтения справочников, `NONSTRICT_READ_WRITE` для редко обновляемых с eventual consistency, `READ_WRITE` с soft locking для часто обновляемых и `TRANSACTIONAL` для критичных данных через `JTA`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Стратегия определяет поведение при конкурентных изменениях и баланс производительность/консистентность: `READ_ONLY` самый быстрый и строго консистентный для неизменяемых данных, `READ_WRITE` использует soft locks как в БД, а `TRANSACTIONAL` даёт строгую распределённую консистентность ценой накладных расходов `JTA`.",
-                "example": "`@Cache(usage = READ_ONLY)` ставят на `Country`, `NONSTRICT_READ_WRITE` — на редко правимый `BlogPost`, `READ_WRITE` — на часто обновляемый `Product`, а `TRANSACTIONAL` — на финансовый `Account`.",
-                "when_to_apply": "Стратегию выбирают по частоте изменений и требованиям к согласованности: справочники — `READ_ONLY`, обычные изменяемые сущности — `READ_WRITE`, деньги под `JTA` — `TRANSACTIONAL`.",
-                "edge_cases": "`NONSTRICT_READ_WRITE` допускает кратковременный stale-read после UPDATE; `TRANSACTIONAL` требует `JTA`-окружения и заметно медленнее, поэтому без необходимости его не берут.",
-                "related": "[[hibernate-caching-interview#Q3]] где задаётся `usage` в `@Cache`; [[hibernate-caching-interview#Q6]] регионы под разные стратегии; [[hibernate-caching-interview#Q12]] когда `L2` лучше не включать."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Режим `READ_ONLY` означает, что после первой загрузки сущность не перечитывается из БД, а обслуживается из `L2 cache`. Вызов `evict` для неё приведёт к ошибке, ведь восстановить её из базы уже нельзя.",
               "correct": false,
               "sections": {
@@ -214,9 +201,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Стратегия `TRANSACTIONAL` — самая быстрая стратегия, потому что она пропускает soft locking, поэтому её рекомендуют по умолчанию как значение `CacheConcurrencyStrategy` в `@Cache(usage = ...)` для любых сущностей, включая часто обновляемые, даже без контейнера с `JTA`.",
+              "order": 1,
+              "label": "B",
+              "text": "Стратегия `TRANSACTIONAL` — самая быстрая стратегия, потому что она пропускает soft locking, поэтому её рекомендуют по умолчанию как значение `CacheConcurrencyStrategy` в `@Cache(usage =...)` для любых сущностей, включая часто обновляемые, даже без контейнера с `JTA`.",
               "correct": false,
               "sections": {
                 "what_actually": "`TRANSACTIONAL` как раз самая медленная из-за `JTA`-координации; для большинства данных оптимальны `READ_ONLY` или `READ_WRITE`.",
@@ -226,8 +213,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Есть только две стратегии — `READ_ONLY` и `READ_WRITE`, а `NONSTRICT_READ_WRITE` и `TRANSACTIONAL` — это не значения `CacheConcurrencyStrategy`, а отдельные провайдеры кэша, которые задают в `region.factory_class` рядом с фабрикой региона.",
               "correct": false,
               "sections": {
@@ -235,6 +222,19 @@
                 "source_of_confusion": "`READ_ONLY` и `READ_WRITE` самые наглядные, поэтому две промежуточные стратегии часто упускают.",
                 "if_it_were_true": "Тогда в `CacheConcurrencyStrategy` было бы лишь два значения, но enum содержит все четыре.",
                 "how_it_should_be": "Четыре стратегии concurrency; провайдеры (`Ehcache`, `Infinispan`) — это уже отдельное измерение настройки."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Стандартные стратегии Hibernate — `READ_ONLY`, `NONSTRICT_READ_WRITE`, `READ_WRITE` и `TRANSACTIONAL`. Они различаются допустимостью изменений и моделью согласованности; фактическая поддержка `READ_WRITE`/`TRANSACTIONAL` зависит от конкретного провайдера и транзакционной инфраструктуры.",
+              "correct": true,
+              "sections": {
+                "explanation": "`READ_ONLY` подходит только неизменяемым данным; `NONSTRICT_READ_WRITE` допускает окно устаревания; `READ_WRITE` координирует обновления средствами Hibernate; `TRANSACTIONAL` требует provider, поддерживающего соответствующую транзакционную стратегию и интеграцию.",
+                "example": "`READ_ONLY` подходит справочнику стран; для изменяемой сущности выбирают стратегию, поддерживаемую cache provider и соответствующую требованиям согласованности. `TRANSACTIONAL` используют только при реально настроенной транзакционной интеграции.",
+                "when_to_apply": "Стратегию выбирают по изменяемости данных, допустимому окну stale reads и возможностям конкретного provider; название домена само по себе не определяет выбор.",
+                "edge_cases": "Название стратегии не превращает распределённый кэш в линейно согласованное хранилище. Нужно учитывать topology, isolation и поведение provider при сбоях и сетевых разделениях.",
+                "related": "[[hibernate-caching-interview#Q5]] что такое Query Cache, как его включить и в чём ключевое ограничение; [[hibernate-caching-interview#Q3]] что нужно сделать, чтобы настроить L2 cache (например, с Ehcache); [[hibernate-caching-interview#Q6]] что такое Cache Region (регион кэша) и зачем он нужен."
               }
             }
           ]
@@ -246,7 +246,7 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое Query Cache, как его включить и в чём ключевое ограничение?",
+          "question_text": "Что хранит Hibernate Query Cache и когда он действительно полезен?",
           "options": [
             {
               "order": 0,
@@ -287,14 +287,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Query Cache — кэш результатов JPQL/Criteria-запросов, то есть не самих сущностей, а списка их идентификаторов. Включается `use_query_cache: true`, запрос помечается хинтом `org.hibernate.cacheable=true`, и работает только при включённом `L2`.",
+              "text": "Query Cache хранит identifiers entity и scalar results вместе с данными актуальности query spaces. Его включают глобально и для запроса; для entity-результатов он особенно полезен вместе с `L2`.",
               "correct": true,
               "sections": {
-                "explanation": "В кэше хранятся ID результата и набор параметров запроса как ключ; сами сущности подтягиваются из `L2`. Поэтому Query Cache без `L2` бесполезен. Для разных запросов можно задавать свои регионы через `HINT_CACHE_REGION`.",
-                "example": "`em.createQuery(\"FROM Product WHERE category = :cat\").setHint(QueryHints.HINT_CACHEABLE, true)` или Spring Data `@QueryHints({@QueryHint(name = \"org.hibernate.cacheable\", value = \"true\")})` над методом репозитория.",
+                "explanation": "При cache hit Hibernate получает сохранённый набор идентификаторов или scalar values. Состояние entity затем берётся из persistence context, L2 либо БД; поэтому Query Cache без L2 может не сократить число загрузок сущностей.",
+                "example": "`em.createQuery(\"FROM Product WHERE category =:cat\").setHint(QueryHints.HINT_CACHEABLE, true)` или Spring Data `@QueryHints({@QueryHint(name = \"org.hibernate.cacheable\", value = \"true\")})` над методом репозитория.",
                 "when_to_apply": "Query Cache применяют для часто повторяемых запросов с одинаковыми параметрами и редко меняющимися данными — например, выборки справочных списков по категории.",
-                "edge_cases": "Любой UPDATE сущности инвалидирует все Query Cache regions, где она участвует; поэтому для часто изменяемых таблиц кэш запросов почти не попадает и только тратит память.",
-                "related": "[[hibernate-caching-interview#Q1]] место Query Cache среди уровней; [[hibernate-caching-interview#Q3]] включение `L2` как предусловие; [[hibernate-caching-interview#Q10]] инвалидация query cache при UPDATE."
+                "edge_cases": "Изменения таблиц, относящихся к query spaces, делают запись неактуальной через timestamps region. Это не обязательно физическая очистка всего query cache после каждого `UPDATE`.",
+                "related": "[[hibernate-caching-interview#Q6]] что такое Cache Region (регион кэша) и зачем он нужен; [[hibernate-caching-interview#Q4]] какие concurrency strategies существуют для L2 cache и чем они различаются; [[hibernate-caching-interview#Q7]] какие провайдеры L2 cache существуют и чем они отличаются по применению."
               }
             }
           ]
@@ -311,6 +311,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Region — именованная логическая область кэша с собственными настройками (размер heap, TTL, eviction). Разные сущности и коллекции кладут в разные регионы через `@Cache(region = \"...\")`, и для каждого региона в `ehcache.xml` задают свои параметры.",
+              "correct": true,
+              "sections": {
+                "explanation": "Регионы позволяют тонко управлять политиками: справочники можно держать без expiry и с маленьким heap, а активно читаемые пользовательские сущности — с TTL и большим лимитом записей. Без регионов все сущности делили бы одну общую политику.",
+                "example": "`User` идёт в `users-region` (TTL 15 минут, 10000 entries), `Country` — в `countries-region` (без expiry, 300 entries); в `ehcache.xml` для каждого alias заданы свои `expiry` и `heap`.",
+                "when_to_apply": "Регионы применяют, когда у разных сущностей разный профиль изменчивости и объёма: чтобы редкие большие данные не вытесняли часто читаемые мелкие и наоборот.",
+                "edge_cases": "Если регион в аннотации не задан, используется регион по умолчанию (обычно имя класса); опечатка в имени региона приведёт к настройкам по умолчанию вместо ожидаемых.",
+                "related": "[[hibernate-caching-interview#Q7]] какие провайдеры L2 cache существуют и чем они отличаются по применению; [[hibernate-caching-interview#Q5]] что хранит Hibernate Query Cache и когда он действительно полезен; [[hibernate-caching-interview#Q8]] как инвалидировать L2 cache (и связанный L1) программно."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Все сущности приложения обязаны лежать в одном общем регионе `StandardQueryCache`, а задать разным сущностям разные регионы через `@Cache(region = \"...\")` нельзя — атрибут `region` парсится, но Hibernate его игнорирует и складывает всё в единый heap.",
               "correct": false,
               "sections": {
@@ -321,8 +334,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "Region — это отдельный физический сервер кэша: каждый регион, объявленный в `@Cache(region = \"...\")`, обязательно разворачивается на своей выделенной машине кластера и общается с приложением по сети, поэтому число регионов ограничено числом нод в `Infinispan` или `Hazelcast`.",
               "correct": false,
               "sections": {
@@ -330,19 +343,6 @@
                 "source_of_confusion": "Слово «region» вызывает ассоциацию с географическим/аппаратным разделением, как в облаках.",
                 "if_it_were_true": "Тогда нельзя было бы иметь несколько регионов в одном `ehcache.xml` на одной JVM, но именно так их и описывают.",
                 "how_it_should_be": "Region — логический сегмент кэша с отдельными настройками; физическое размещение определяет провайдер."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Region — именованная логическая область кэша с собственными настройками (размер heap, TTL, eviction). Разные сущности и коллекции кладут в разные регионы через `@Cache(region = \"...\")`, и для каждого региона в `ehcache.xml` задают свои параметры.",
-              "correct": true,
-              "sections": {
-                "explanation": "Регионы позволяют тонко управлять политиками: справочники можно держать без expiry и с маленьким heap, а активно читаемые пользовательские сущности — с TTL и большим лимитом записей. Без регионов все сущности делили бы одну общую политику.",
-                "example": "`User` идёт в `users-region` (TTL 15 минут, 10000 entries), `Country` — в `countries-region` (без expiry, 300 entries); в `ehcache.xml` для каждого alias заданы свои `expiry` и `heap`.",
-                "when_to_apply": "Регионы применяют, когда у разных сущностей разный профиль изменчивости и объёма: чтобы редкие большие данные не вытесняли часто читаемые мелкие и наоборот.",
-                "edge_cases": "Если регион в аннотации не задан, используется регион по умолчанию (обычно имя класса); опечатка в имени региона приведёт к настройкам по умолчанию вместо ожидаемых.",
-                "related": "[[hibernate-caching-interview#Q3]] как указать region в `@Cache`; [[hibernate-caching-interview#Q4]] стратегии внутри региона; [[hibernate-caching-interview#Q8]] инвалидация по регионам."
               }
             },
             {
@@ -366,31 +366,31 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие провайдеры `L2 cache` существуют и чем они отличаются по применению?",
+          "question_text": "Как выбирать провайдер второго уровня кэша для `Hibernate`?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Основные: `Ehcache` — single-node и легко настраивается, `Infinispan` — нативный кластер для `JBoss`/`WildFly`, `Hazelcast` — distributed memory grid, `Redis` через `Redisson` как общий shared `L2` и `JCache (JSR-107)` как унифицированный API поверх провайдеров.",
-              "correct": true,
+              "text": "Все провайдеры `L2` одинаково подходят для кластера, поэтому выбор между `Ehcache` и `Infinispan` не важен: оба реплицируют записи между нодами через `invalidation`-протокол, и даже локальный `Ehcache` держит распределённую консистентность как нативно-кластерный `Infinispan`.",
+              "correct": false,
               "sections": {
-                "explanation": "Выбор зависит от топологии: для одного инстанса достаточно `Ehcache`, для кластера нужен распределённый провайдер (`Infinispan`, `Hazelcast`, `Redis`), синхронизирующий кэш между узлами. `JCache` даёт единый API, скрывая конкретную реализацию.",
-                "example": "Для кластера подключают `infinispan-hibernate-cache-v60` и указывают `region.factory_class: org.infinispan.hibernate.cache.v60.InfinispanRegionFactory`; для single-node чаще берут `Ehcache` через `jcache`.",
-                "when_to_apply": "Провайдера выбирают по числу инстансов и требованиям к согласованности кэша между ними: один узел — локальный кэш, несколько — распределённый или внешний (`Redis`).",
-                "edge_cases": "Распределённые провайдеры требуют сериализуемых сущностей и добавляют сетевые/serialization-накладные расходы; кластерный `Ehcache` (Terracotta) — платный, поэтому для кластера чаще берут `Infinispan`/`Hazelcast`/`Redis`.",
-                "related": "[[hibernate-caching-interview#Q3]] подключение провайдера через `factory_class`; [[hibernate-caching-interview#Q10]] serialization overhead распределённого кэша; [[hibernate-caching-interview#Q15]] best practices для кластеров."
+                "what_actually": "Кластерные свойства зависят от конкретного провайдера, его редакции, topology и конфигурации. Локальная конфигурация не начинает реплицировать или инвалидировать записи между узлами автоматически.",
+                "source_of_confusion": "Единый Hibernate Cache SPI скрывает различия интеграций, поэтому провайдеры легко принять за взаимозаменяемые реализации с одинаковой распределённой семантикой.",
+                "if_it_were_true": "Выбор provider, topology и режима consistency не влиял бы на coherence и поведение при сетевых сбоях, что противоречит реальной эксплуатации кластерного кэша.",
+                "how_it_should_be": "Проверяйте официальную совместимость и отдельно проектируйте topology, consistency, serialization и failure mode для выбранной интеграции."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Все провайдеры `L2` одинаково подходят для кластера, поэтому выбор между `Ehcache` и `Infinispan` не важен: оба реплицируют записи между нодами через `invalidation`-протокол, и даже single-node `Ehcache` держит распределённую консистентность как нативно-кластерный `Infinispan`.",
-              "correct": false,
+              "text": "Провайдер выбирают по официальной совместимости с используемой версией Hibernate, требованиям к кластеризации, транзакциям, сериализации и эксплуатации. Hibernate поддерживает region factory-интеграции, включая JCache и Infinispan; другие решения могут поставляться сторонними модулями.",
+              "correct": true,
               "sections": {
-                "what_actually": "Базовый `Ehcache` — локальный single-node кэш (кластер только через платный Terracotta), а `Infinispan`/`Hazelcast` нативно распределены; для кластера выбор критичен.",
-                "source_of_confusion": "Все они «кэш-провайдеры», и кажется, что различия только в синтаксисе конфигурации.",
-                "if_it_were_true": "Тогда в кластере локальный `Ehcache` на узлах не давал бы рассинхронизации, но без репликации он её даёт.",
-                "how_it_should_be": "Для кластера нужен распределённый провайдер; локальный `Ehcache` подходит для одного инстанса."
+                "explanation": "Нельзя классифицировать провайдер только как «локальный» или «распределённый» по названию продукта: режим зависит от редакции и конфигурации. Важнее проверить матрицу совместимости, topology и поддерживаемые concurrency strategies.",
+                "example": "Для кластера можно выбрать официально совместимую интеграцию Infinispan и настроить region factory; для одного процесса часто достаточно JCache-провайдера в локальном режиме. Точные артефакты и классы сверяют с версией Hibernate.",
+                "when_to_apply": "Провайдера выбирают по числу экземпляров, требованиям к согласованности, транзакциям, latency, сериализации и операционной поддержке, а не только по названию продукта.",
+                "edge_cases": "JCache унифицирует API, но не семантику кластеризации, eviction и транзакций. Смена провайдера всё равно требует нагрузочного теста и пересмотра настроек регионов.",
+                "related": "[[hibernate-caching-interview#Q8]] как инвалидировать L2 cache (и связанный L1) программно; [[hibernate-caching-interview#Q6]] что такое Cache Region (регион кэша) и зачем он нужен; [[hibernate-caching-interview#Q9]] какие метрики Hibernate-кэша нужно отслеживать и какие у них целевые значения."
               }
             },
             {
@@ -399,10 +399,10 @@
               "text": "Провайдер `Redis` нельзя использовать как `L2 cache` в `Hibernate`, потому что это key-value хранилище, а не кэш-провайдер, и `region.factory_class` принимает только in-process реализации вроде `Ehcache`. Сетевой доступ к `Redisson` из слоя `L2` архитектурно не поддерживается.",
               "correct": false,
               "sections": {
-                "what_actually": "`Redis` подключают как distributed `L2` через `Redisson`, и это распространённый вариант общего кэша для кластера.",
-                "source_of_confusion": "`Redis` чаще обсуждают как самостоятельный кэш приложения, поэтому забывают про интеграцию с `Hibernate L2`.",
-                "if_it_were_true": "Тогда не существовало бы `Redisson`-интеграции `Hibernate`, но она есть и работает как shared `L2`.",
-                "how_it_should_be": "`Redis` через `Redisson` — валидный distributed `L2`-провайдер для разделяемого между инстансами кэша."
+                "what_actually": "Сторонние интеграции с удалёнными key-value хранилищами могут существовать, но их поддержку, совместимость с версией Hibernate и семантику concurrency strategy нужно проверять по документации конкретного модуля.",
+                "source_of_confusion": "Встроенные примеры Hibernate чаще показывают JCache или Infinispan, поэтому отсутствие конкретного backend в core-документации ошибочно принимают за архитектурный запрет.",
+                "if_it_were_true": "SPI region factory мог бы создавать только in-process реализации и не допускал бы сторонних модулей, хотя сам SPI предназначен для подключаемых интеграций.",
+                "how_it_should_be": "Не объявляйте Redis-подобный backend ни гарантированно поддерживаемым, ни запрещённым: проверяйте конкретный integration module, version matrix и эксплуатационные свойства."
               }
             },
             {
@@ -411,10 +411,10 @@
               "text": "Единственный поддерживаемый провайдер `L2` — это встроенный в `Hibernate` `EhCache`, а интеграций с `Infinispan`, `Hazelcast` или `Redis` через `Redisson` не существует, потому что SPI `region.factory_class` жёстко зашит на `EhCacheRegionFactory` и не допускает сторонних реализаций.",
               "correct": false,
               "sections": {
-                "what_actually": "Провайдеров много: `Ehcache`, `Infinispan`, `Hazelcast`, `Redis` (`Redisson`), а также `JCache` как общий API; `Hibernate` не привязан к одному.",
-                "source_of_confusion": "`Ehcache` исторически самый популярный пример в туториалах, поэтому его принимают за единственный.",
-                "if_it_were_true": "Тогда не было бы артефактов вроде `infinispan-hibernate-cache`, но они существуют и активно используются.",
-                "how_it_should_be": "Есть несколько провайдеров под разные топологии; `Ehcache` — лишь один из вариантов, удобный для single-node."
+                "what_actually": "Hibernate предоставляет подключаемый SPI второго уровня и не ограничивает его одной реализацией. Набор поддерживаемых интеграций зависит от версии Hibernate и выбранных модулей.",
+                "source_of_confusion": "Ehcache долго был распространённым примером в учебных материалах, поэтому историческую популярность легко принять за жёсткое ограничение ORM.",
+                "if_it_were_true": "Пользовательская region factory и официальные интеграционные модули других провайдеров были бы невозможны, однако SPI специально допускает такие реализации.",
+                "how_it_should_be": "Выбирайте из совместимых integration modules и подтверждайте поддержку по документации конкретной версии, не полагаясь на старые списки из туториалов."
               }
             }
           ]
@@ -431,19 +431,6 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Через `SessionFactory.getCache()` или JPA `Cache`: метод `evict` убирает один entity, `evictEntityData` — все записи класса, `evictQueryRegions` — весь query-кэш, а `evictAll` — весь `L2`. Уровень `L1` чистят через session.evict и session.clear.",
-              "correct": true,
-              "sections": {
-                "explanation": "Инвалидация нужна, когда данные изменены в обход `Hibernate` (прямой SQL) и кэш устарел. JPA-вариант `emf.getCache().evict(...)` эквивалентен по смыслу и удобен в Spring-сервисах через инъекцию `EntityManagerFactory`.",
-                "example": "В Spring-сервисе с `@Autowired EntityManagerFactory emf` метод инвалидации делает `emf.getCache().evict(User.class, userId)`, чтобы сбросить устаревшую запись после внешнего обновления.",
-                "when_to_apply": "Ручную инвалидацию применяют после bulk-UPDATE через `jdbcTemplate`, после миграций/batch-job или при импорте данных в обход ORM, чтобы убрать stale-записи из `L2`.",
-                "edge_cases": "`evictAll()` сбрасывает весь `L2` и временно роняет hit ratio (cold cache); `session.clear()` отвязывает все managed-сущности `L1`, после чего dirty checking по ним уже не сработает.",
-                "related": "[[hibernate-caching-interview#Q2]] что такое `L1`, который чистит `session.clear()`; [[hibernate-caching-interview#Q5]] query cache, сбрасываемый `evictQueryRegions`; [[hibernate-caching-interview#Q10]] инвалидация после прямого SQL."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Кэш `L2 cache` нельзя инвалидировать программно — ни `SessionFactory.getCache()`, ни JPA `Cache` не предоставляют методов `evict`/`evictAll`, поэтому регион сбрасывается только при полном перезапуске приложения либо по истечении `TTL`, заданного в `ehcache.xml`.",
               "correct": false,
               "sections": {
@@ -454,8 +441,8 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
+              "order": 1,
+              "label": "B",
               "text": "Вызов `evict(User.class, 1L)` удаляет запись из самой базы данных, а не из кэша: метод выполняет `DELETE FROM users WHERE id = 1`, поэтому `L2`-регион остаётся заполненным устаревшими данными вплоть до ручного `evictAll()`.",
               "correct": false,
               "sections": {
@@ -466,8 +453,8 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
+              "order": 2,
+              "label": "C",
               "text": "Метод `session.clear()` очищает именно `L2 cache` для всех сущностей приложения, а не `L1`: вызов проходит через `SessionFactory.getCache().evictAll()` и опустошает shared-регион, тогда как содержимое `L1` конкретной сессии остаётся нетронутым до её закрытия.",
               "correct": false,
               "sections": {
@@ -475,6 +462,19 @@
                 "source_of_confusion": "Оба метода «что-то очищают про кэш», и уровень, на который они влияют, легко перепутать.",
                 "if_it_were_true": "Тогда одна сессия одним вызовом сбрасывала бы общий кэш всего приложения, что опасно и не так работает.",
                 "how_it_should_be": "`session.clear()` — это `L1` одной сессии; `L2` инвалидируют через `getCache()`/`evictAll()`."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Второй уровень очищают через `SessionFactory.getCache()`/Hibernate `Cache`: можно удалить запись entity, весь регион типа, collection region, query region или все регионы. Первый уровень относится к конкретной сессии и очищается через `evict`, `detach` либо `clear`.",
+              "correct": true,
+              "sections": {
+                "explanation": "JPA `Cache` предоставляет базовые операции `evict`, а Hibernate `Cache` — более детальные методы для entity, collections, natural-id и query regions. L1 и L2 имеют разные жизненные циклы и не очищаются одной универсальной командой.",
+                "example": "В Spring-сервисе с `@Autowired EntityManagerFactory emf` метод инвалидации делает `emf.getCache().evict(User.class, userId)`, чтобы сбросить устаревшую запись после внешнего обновления.",
+                "when_to_apply": "Ручную инвалидацию применяют после bulk-UPDATE через `jdbcTemplate`, после миграций/batch-job или при импорте данных в обход ORM, чтобы убрать stale-записи из `L2`.",
+                "edge_cases": "После bulk DML или внешнего SQL нужно явно продумать invalidation. Очистка L2 не меняет уже управляемые объекты в существующем persistence context, поэтому иногда дополнительно требуется `clear()`.",
+                "related": "[[hibernate-caching-interview#Q9]] какие метрики Hibernate-кэша нужно отслеживать и какие у них целевые значения; [[hibernate-caching-interview#Q7]] как выбирать провайдер второго уровня кэша для Hibernate; [[hibernate-caching-interview#Q10]] какие типичные проблемы и pitfalls возникают при работе с L2 cache."
               }
             }
           ]
@@ -486,25 +486,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие метрики `Hibernate`-кэша нужно отслеживать и какие у них целевые значения?",
+          "question_text": "Какие метрики Hibernate-кэша отслеживать и как интерпретировать их без универсальных порогов?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Через `Statistics` (после `setStatisticsEnabled(true)`) смотрят hit/miss count и hit ratio для `L2` и Query Cache, а также per-entity статистику и evictions. Целевые ориентиры: hit ratio > 80% — хороший кэш, < 50% — кэш, возможно, не нужен или мал, а высокий evictions/sec — размер кэша мал.",
-              "correct": true,
-              "sections": {
-                "explanation": "`getSecondLevelCacheHitCount()`/`MissCount()` дают долю попаданий; `getQueryCacheHitCount()` — для запросов; `getEntityStatistics(...)` — разбивку по сущности. Метрики выводятся и через Actuator (`management.metrics.enable.hibernate: true`).",
-                "example": "`hitRatio = hits / (hits + misses)`; если для региона `products` ratio держится около 30%, кэш почти не помогает, и его стоит пересмотреть или отключить.",
-                "when_to_apply": "Метрики собирают постоянно в проде, чтобы доказательно решать, помогает ли кэш, и ловить деградацию hit ratio при изменении нагрузки или размера кэша.",
-                "edge_cases": "`Statistics` по умолчанию выключена и сама добавляет небольшой overhead; высокий hit ratio при высоком evictions/sec означает, что кэш работает, но постоянно вытесняет данные из-за малого размера.",
-                "related": "[[hibernate-caching-interview#Q10]] pitfalls, которые видны по метрикам; [[hibernate-caching-interview#Q12]] когда низкий hit ratio говорит не включать `L2`; [[hibernate-caching-interview#Q15]] best practice «всегда измеряйте»."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Hit ratio ниже 50%, видимый в `Statistics`, всегда указывает на баг конфигурации — неверно заданный `region` или отключённый Query Cache — и требует срочного исправления, потому что для корректно настроенного `L2` доля попаданий не может опускаться ниже этого порога.",
+              "text": "Hit ratio ниже фиксированного порога всегда означает ошибку конфигурации: корректный второй уровень обязан давать не менее 80% попаданий независимо от характера данных и стоимости чтения из БД.",
               "correct": false,
               "sections": {
                 "what_actually": "Низкий hit ratio чаще говорит, что данные плохо подходят для кэширования (уникальные/часто меняющиеся), и кэш стоит уменьшить или убрать, а не «чинить».",
@@ -514,27 +501,40 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Сама `Statistics` активна сразу после старта `SessionFactory` и автоматически накапливает hit/miss count, hit ratio и evictions без вызова `setStatisticsEnabled(true)` — этот метод лишь дублирует уже включённый сбор и на практике ничего не меняет, поэтому в коде его можно безопасно опустить.",
+              "order": 1,
+              "label": "B",
+              "text": "Главная метрика — только объём региона в памяти: если он стабилен, значения hit, miss, put, eviction и число обращений к БД не влияют на оценку эффективности кэша.",
               "correct": false,
               "sections": {
-                "what_actually": "Сбор статистики по умолчанию выключен (он добавляет overhead) и активируется явно через `setStatisticsEnabled(true)` или свойство конфигурации.",
-                "source_of_confusion": "Раз метрики «существуют», кажется, что они собираются автоматически без включения.",
-                "if_it_were_true": "Тогда не было бы метода `setStatisticsEnabled`, но он нужен именно для активации сбора.",
-                "how_it_should_be": "Статистику включают явно; без этого `getSecondLevelCacheHitCount()` не накапливает данные."
+                "what_actually": "Стабильный объём памяти не показывает пользу кэша. Нужны hit, miss, put, eviction/invalidation, обращения к БД, latency попаданий и промахов, а также стоимость хранения.",
+                "source_of_confusion": "Размер региона легко наблюдать, и отсутствие роста выглядит как признак здоровья, хотя кэш может стабильно занимать память и почти не обслуживать повторные чтения.",
+                "if_it_were_true": "Большой, редко используемый регион считался бы эффективным лишь потому, что не растёт, даже если он не снижает latency и нагрузку на БД.",
+                "how_it_should_be": "Оценивайте потребление памяти вместе с полезностью попаданий, стоимостью промахов, eviction и сравнением с режимом без кэша."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Достаточно сравнить hit и miss counts одного региона: latency, стоимость промаха, invalidation, размер объектов и контрольный запуск без кэша для решения не нужны.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Hit и miss counts важны, но без latency, стоимости загрузки, invalidation, размера объектов и baseline они не показывают итоговый эффект для системы.",
+                "source_of_confusion": "Hit ratio — привычная сводная метрика, поэтому её легко принять за универсальную оценку независимо от стоимости конкретного попадания или промаха.",
+                "if_it_were_true": "Два региона с одинаковым hit ratio считались бы равноценными, даже если промах одного выполняет дешёвый lookup, а другого запускает тяжёлый запрос и сетевые вызовы.",
+                "how_it_should_be": "Интерпретируйте hit/miss в контексте workload: учитывайте latency, стоимость miss, invalidation, память, нагрузку на БД и контрольный baseline."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Достаточно отслеживать только размер кэша в мегабайтах через `Statistics.getSecondLevelCacheSizeInMemory()`: hit ratio и miss count носят чисто справочный характер, ведь эффективность `L2` определяется исключительно занятой памятью, а не долей попаданий — при достаточном объёме `region` попадания гарантированы сами собой.",
-              "correct": false,
+              "text": "Следят за hit, miss и put counts, загрузками из БД, eviction/invalidation, размером регионов, latency и памятью. Универсального хорошего hit ratio нет: метрики сопоставляют с профилем доступа, стоимостью miss и контрольным запуском без кэша.",
+              "correct": true,
               "sections": {
-                "what_actually": "Главная метрика эффективности — именно hit ratio; размер сам по себе ничего не говорит о том, попадают ли запросы в кэш.",
-                "source_of_confusion": "Объём памяти легко увидеть в мониторинге, поэтому его принимают за достаточный показатель.",
-                "if_it_were_true": "Тогда большой, но бесполезный кэш с 5% попаданий считался бы хорошим, что неверно.",
-                "how_it_should_be": "Ключевые метрики — hit/miss и hit ratio; размер важен лишь в связке с evictions."
+                "explanation": "Высокий hit ratio бесполезен, если кэширует дешёвые чтения и создаёт дорогую invalidation, а низкий ratio может быть приемлем для очень дорогих редких запросов. Решение принимают по общей latency, нагрузке на БД и стоимости памяти.",
+                "example": "Для региона с hit ratio около 30% сравнивают latency попадания и промаха, стоимость загрузки из БД, объём памяти и частоту invalidation. Само значение 30% ещё не доказывает ни пользу, ни бесполезность кэша.",
+                "when_to_apply": "Метрики собирают постоянно в проде, чтобы доказательно решать, помогает ли кэш, и ловить деградацию hit ratio при изменении нагрузки или размера кэша.",
+                "edge_cases": "Hibernate `Statistics` нужно включить явно и они сами добавляют накладные расходы. Метрики провайдера важны не меньше ORM-метрик, поскольку показывают eviction, heap/off-heap usage и сетевые задержки.",
+                "related": "[[hibernate-caching-interview#Q10]] какие типичные проблемы и pitfalls возникают при работе с L2 cache; [[hibernate-caching-interview#Q8]] как инвалидировать L2 cache (и связанный L1) программно; [[hibernate-caching-interview#Q11]] чем Hibernate L2 cache отличается от Spring @Cacheable и как их комбинировать."
               }
             }
           ]
@@ -546,7 +546,7 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие типичные проблемы и pitfalls возникают при работе с `L2 cache`?",
+          "question_text": "Какие типичные проблемы и ошибки возникают при работе с `L2 cache`?",
           "options": [
             {
               "order": 0,
@@ -575,14 +575,14 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Основные: рассинхронизация при прямом SQL в обход `Hibernate`, memory pressure от большого кэша, агрессивная инвалидация Query Cache (любой UPDATE сущности сбрасывает её query regions), serialization overhead для распределённых кэшей, cache stampede при истечении TTL и бесполезное кэширование append-only данных.",
+              "text": "Основные риски — устаревшие данные при изменениях в обход Hibernate, чрезмерная invalidation, memory/serialization overhead, неверная кластерная topology и cache stampede. Query Cache особенно чувствителен к часто меняющимся query spaces и низкой повторяемости запросов.",
               "correct": true,
               "sections": {
-                "explanation": "Прямой `jdbcTemplate.update(...)` не виден `Hibernate`, поэтому `L2` остаётся устаревшим — нужна ручная `evict`. Большой heap-кэш вытесняет важные данные, а распределённые провайдеры требуют `Serializable`-сущностей и платят за сериализацию.",
-                "example": "После `jdbcTemplate.update(\"UPDATE users SET name=? WHERE id=?\", ...)` запись в `L2` становится stale, и её надо сбросить через `sessionFactory.getCache().evict(User.class, 1L)`.",
+                "explanation": "Кэш улучшает только повторяющиеся чтения и добавляет новое состояние, которое нужно синхронизировать. Прямой SQL, bulk DML и другие приложения могут обходить известные Hibernate механизмы invalidation.",
+                "example": "После `jdbcTemplate.update(\"UPDATE users SET name=? WHERE id=?\",...)` запись в `L2` становится stale, и её надо сбросить через `sessionFactory.getCache().evict(User.class, 1L)`.",
                 "when_to_apply": "Эти риски учитывают при включении `L2` на изменяемых данных, при выборе распределённого провайдера и при настройке TTL, чтобы не получить stale-данные, OOM или stampede.",
-                "edge_cases": "Cache stampede возникает, когда у популярного ключа одновременно истекает TTL и десятки потоков идут в БД; кэширование audit logs тратит память впустую, так как чтения уникальны.",
-                "related": "[[hibernate-caching-interview#Q8]] ручная инвалидация после прямого SQL; [[hibernate-caching-interview#Q9]] метрики, выявляющие проблемы; [[hibernate-caching-interview#Q12]] когда `L2` лучше не включать."
+                "edge_cases": "Не каждая запись удаляется физически при изменении таблицы: query timestamps позволяют признать cached result устаревшим. Это всё равно превращает частые записи в поток cache misses.",
+                "related": "[[hibernate-caching-interview#Q11]] чем Hibernate L2 cache отличается от Spring @Cacheable и как их комбинировать; [[hibernate-caching-interview#Q9]] какие метрики Hibernate-кэша отслеживать и как интерпретировать их без универсальных порогов; [[hibernate-caching-interview#Q12]] в каких случаях L2 cache включать НЕ стоит."
               }
             },
             {
@@ -611,6 +611,19 @@
             {
               "order": 0,
               "label": "A",
+              "text": "Это два разных механизма: `Hibernate L2` работает на уровне ORM и кэширует сущности по их ID с автоматической инвалидацией через `Hibernate`, а Spring `@Cacheable` работает на уровне приложения, кэширует результаты любых методов по параметрам и требует ручной инвалидации `@CacheEvict`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`L2` знает про жизненный цикл сущностей и сам сбрасывает кэш при их изменении через ORM; `@Cacheable` про сущности ничего не знает — он просто запоминает возвращаемое значение метода. Обычно для одной задачи берут один из них, а не оба.",
+                "example": "`@Cacheable(\"products\")` над методом, возвращающим `ProductDto`, кэширует DTO по аргументам метода; а `repository.findById(id)` с `@Cache` на сущности `Product` кэширует саму entity в `L2`.",
+                "when_to_apply": "Spring `@Cacheable` берут для результатов расчётов/агрегаций и DTO, а `Hibernate L2` — для часто читаемых JPA-сущностей по их идентификаторам.",
+                "edge_cases": "Если кэшировать и DTO через `@Cacheable`, и саму сущность через `L2`, легко получить двойную инвалидацию и stale-DTO, потому что `@CacheEvict` не срабатывает автоматически при изменении entity через ORM.",
+                "related": "[[hibernate-caching-interview#Q12]] в каких случаях L2 cache включать НЕ стоит; [[hibernate-caching-interview#Q10]] какие типичные проблемы и ошибки возникают при работе с L2 cache; [[hibernate-caching-interview#Q13]] что такое natural id cache и зачем он нужен."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
               "text": "Ключом Spring `@Cacheable` по умолчанию всегда выступает идентификатор сущности, вычисляемый тем же `KeyGenerator`, что использует `Hibernate L2` для своих регионов, поэтому оба механизма адресуют закэшированные объекты одинаково — по первичному ключу, а не по аргументам вызванного метода.",
               "correct": false,
               "sections": {
@@ -621,8 +634,8 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
+              "order": 2,
+              "label": "C",
               "text": "Spring `@Cacheable` подписан на события `Hibernate` и при любом изменении сущности через сессию автоматически сбрасывает соответствующую запись в `region`, ровно как это делает `L2`, поэтому ручной `@CacheEvict` избыточен и кэш приложения всегда остаётся согласованным с базой данных.",
               "correct": false,
               "sections": {
@@ -630,19 +643,6 @@
                 "source_of_confusion": "Раз оба про кэш в одном приложении, кажется, что изменение сущности «само» обновит и Spring-кэш.",
                 "if_it_were_true": "Тогда `@CacheEvict` был бы не нужен, но именно он отвечает за ручную инвалидацию Spring-кэша.",
                 "how_it_should_be": "Инвалидация `@Cacheable` — ручная (`@CacheEvict`); автоматическую инвалидацию по entity даёт только `L2`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Это два разных механизма: `Hibernate L2` работает на уровне ORM и кэширует сущности по их ID с автоматической инвалидацией через `Hibernate`, а Spring `@Cacheable` работает на уровне приложения, кэширует результаты любых методов по параметрам и требует ручной инвалидации `@CacheEvict`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`L2` знает про жизненный цикл сущностей и сам сбрасывает кэш при их изменении через ORM; `@Cacheable` про сущности ничего не знает — он просто запоминает возвращаемое значение метода. Обычно для одной задачи берут один из них, а не оба.",
-                "example": "`@Cacheable(\"products\")` над методом, возвращающим `ProductDto`, кэширует DTO по аргументам метода; а `repository.findById(id)` с `@Cache` на сущности `Product` кэширует саму entity в `L2`.",
-                "when_to_apply": "Spring `@Cacheable` берут для результатов расчётов/агрегаций и DTO, а `Hibernate L2` — для часто читаемых JPA-сущностей по их идентификаторам.",
-                "edge_cases": "Если кэшировать и DTO через `@Cacheable`, и саму сущность через `L2`, легко получить двойную инвалидацию и stale-DTO, потому что `@CacheEvict` не срабатывает автоматически при изменении entity через ORM.",
-                "related": "[[hibernate-caching-interview#Q3]] аннотации `@Cacheable`/`@Cache` для `L2`; [[hibernate-caching-interview#Q8]] инвалидация `L2`; [[hibernate-caching-interview#Q15]] правило выбора между механизмами."
               }
             },
             {
@@ -666,7 +666,7 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "В каких случаях `L2 cache` включать НЕ стоит?",
+          "question_text": "Когда второй уровень кэша `Hibernate` обычно не окупается?",
           "options": [
             {
               "order": 0,
@@ -676,26 +676,13 @@
               "sections": {
                 "what_actually": "Append-only данные читаются по разу и уникальны, поэтому кэш почти не попадает и лишь зря занимает память — это классический случай НЕ кэшировать.",
                 "source_of_confusion": "«Только добавление, без обновлений» звучит как идеал для кэша (нет инвалидаций), хотя проблема в уникальности чтений.",
-                "if_it_were_true": "Тогда `AuditLog` рекомендовали бы кэшировать, но best practices прямо относят его к не-кэшируемым.",
+                "if_it_were_true": "Тогда `AuditLog` рекомендовали бы кэшировать, но практики прямо относят его к не-кэшируемым.",
                 "how_it_should_be": "Append-only/audit данные не кэшируют: hit ratio близок к нулю при уникальных чтениях."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Не стоит для часто обновляемых сущностей (инвалидации съедают выгоду), append-only данных (audit logs — чтения уникальны, кэш не попадает), больших объектов (BLOB/большой JSON занимают много памяти), single-instance приложений без повторных запросов (хватает `L1`) и при требовании strict consistency (`L2` допускает минимальные рассинхронизации).",
-              "correct": true,
-              "sections": {
-                "explanation": "Кэш окупается только при повторном чтении относительно стабильных данных. Если данные меняются на каждый запрос или читаются по разу, hit ratio будет низким, а накладные расходы на инвалидацию и память — высокими.",
-                "example": "Ставить `@Cache(usage = READ_WRITE)` на `TodoItem`, который постоянно меняется, — плохо: каждое изменение инвалидирует запись, и кэш почти не попадает.",
-                "when_to_apply": "Этот список применяют как чек-лист перед включением `L2`: если сущность попадает под любой пункт, кэш чаще вредит, чем помогает.",
-                "edge_cases": "Для `AuditLog` каждая запись уникальна, поэтому кэш бесполезен; при strict-требованиях даже краткий stale-read недопустим, и `L2` исключают независимо от частоты чтения.",
-                "related": "[[hibernate-caching-interview#Q4]] стратегии для изменяемых данных; [[hibernate-caching-interview#Q9]] низкий hit ratio как сигнал; [[hibernate-caching-interview#Q15]] что не кэшировать по best practices."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Для часто обновляемых сущностей `L2` особенно выгоден: при каждом `UPDATE` `Hibernate` немедленно перезаписывает соответствующую запись в кэше через `put`, так что `region` всегда содержит самые свежие значения и обслуживает горячие чтения быстрее, чем при редких изменениях сущности.",
               "correct": false,
               "sections": {
@@ -706,6 +693,19 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "L2 обычно не окупается при высокой доле записей, низкой повторяемости чтений, больших значениях, коротком жизненном цикле данных или дешёвом доступе к БД. Для строгих требований согласованности решение зависит от стратегии, provider и topology, а не от одного запрета на L2.",
+              "correct": true,
+              "sections": {
+                "explanation": "Польза появляется, когда один и тот же объект читают многократно из разных persistence contexts и miss заметно дороже работы кэша. При churn и уникальных чтениях invalidation, память и сериализация становятся чистыми расходами.",
+                "example": "Ставить `@Cache(usage = READ_WRITE)` на `TodoItem`, который постоянно меняется, — плохо: каждое изменение инвалидирует запись, и кэш почти не попадает.",
+                "when_to_apply": "Этот список применяют как чек-лист перед включением `L2`: если сущность попадает под любой пункт, кэш чаще вредит, чем помогает.",
+                "edge_cases": "Даже single-instance приложение может выиграть от L2 между короткими сессиями. И наоборот, кластер не является автоматическим аргументом за кэш: сеть и согласование способны сделать его дороже БД.",
+                "related": "[[hibernate-caching-interview#Q13]] что такое natural id cache и зачем он нужен; [[hibernate-caching-interview#Q11]] чем Hibernate L2 cache отличается от Spring @Cacheable и как их комбинировать; [[hibernate-caching-interview#Q14]] как кэш и сопутствующие приёмы помогают решить проблему N+1 запросов."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
               "text": "Кэш `L2 cache` стоит включать по умолчанию почти для всех сущностей: накладные расходы на инвалидацию `region` малы, а промахи уходят в базу обычным `SELECT`, поэтому `L2` при большинстве профилей нагрузки поднимает hit ratio, ускоряет чтения и редко вредит производительности.",
@@ -713,7 +713,7 @@
               "sections": {
                 "what_actually": "Для часто меняющихся, append-only и больших данных `L2` снижает производительность из-за инвалидаций и расхода памяти; включать его «везде» — антипаттерн.",
                 "source_of_confusion": "Кэш ассоциируется исключительно с ускорением, поэтому его считают безусловно полезным.",
-                "if_it_were_true": "Тогда не было бы целого списка случаев «когда не кэшировать», но он есть и в best practices.",
+                "if_it_were_true": "Тогда не было бы целого списка случаев «когда не кэшировать», но он есть и в практики.",
                 "how_it_should_be": "`L2` включают избирательно, для часто читаемых и относительно стабильных данных."
               }
             }
@@ -767,14 +767,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Natural ID — естественный уникальный идентификатор (email, username) вместо суррогатного auto-generated ID. `@NaturalIdCache` создаёт отдельный кэш, который мапит natural ID на первичный ключ, ускоряя частые lookup'ы по таким полям (например, при логине).",
+              "text": "Natural ID — естественный уникальный идентификатор (email, username) вместо суррогатного auto-generated ID. `@NaturalIdCache` создаёт отдельный кэш, который мапит natural ID на первичный ключ, ускоряя частые поиски по таким полям (например, при логине).",
               "correct": true,
               "sections": {
                 "explanation": "Поля помечают `@NaturalId` (с `mutable = false`/`true`), а класс — `@NaturalIdCache` вдобавок к обычному `@Cache`. Поиск через `session.bySimpleNaturalId(User.class).load(\"alice@example.com\")` сначала находит в этом кэше PK, затем достаёт сущность из обычного `L2`.",
                 "example": "Логин по email: `bySimpleNaturalId(User.class).load(\"alice@example.com\")` попадает в natural-id-кэш и не делает SELECT по неиндексированному перебору, а сразу резолвит ID.",
                 "when_to_apply": "Применяют, когда сущность часто ищут по бизнес-ключу (email/username при аутентификации, артикул товара), а не только по суррогатному ID.",
                 "edge_cases": "Для `mutable = true` (например, изменяемый username) кэш natural ID нужно корректно инвалидировать при смене значения; `@NaturalIdCache` без обычного `@Cache` на сущности теряет смысл, так как сама entity берётся из `L2`.",
-                "related": "[[hibernate-caching-interview#Q3]] обычный `@Cache` на сущности как основа; [[hibernate-caching-interview#Q8]] инвалидация при смене natural id; [[hibernate-caching-interview#Q14]] оптимизация частых lookup'ов."
+                "related": "[[hibernate-caching-interview#Q14]] как кэш и сопутствующие приёмы помогают решить проблему N+1 запросов; [[hibernate-caching-interview#Q12]] когда второй уровень кэша Hibernate обычно не окупается; [[hibernate-caching-interview#Q15]] какие best practices применяют при работе с Hibernate cache."
               }
             }
           ]
@@ -803,19 +803,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Против N+1 используют `JOIN FETCH` (одним запросом подтянуть связь), `@BatchSize` (грузить связанные сущности пачками вместо по одной) и `L2 cache` на часто читаемой связанной сущности (первая итерация заполняет кэш, последующие попадают в него). `L2` помогает при повторном чтении; `JOIN FETCH` действует одномоментно.",
-              "correct": true,
-              "sections": {
-                "explanation": "N+1 — это 1 запрос за список и N запросов за их связь в цикле. `JOIN FETCH` устраняет проблему в один SELECT; `@BatchSize(size = 20)` снижает число запросов кратно; `L2` на `Profile` помогает, если те же профили читаются повторно между сессиями.",
-                "example": "`FROM User u JOIN FETCH u.profile` грузит пользователей и профили одним запросом; альтернатива — `@BatchSize(size = 20)` на `profile`, чтобы профили подгружались партиями по 20.",
-                "when_to_apply": "Приёмы выбирают по сценарию: `JOIN FETCH`/`@BatchSize` — для одноразовой выборки в одном запросе, а `L2` на справочную связанную сущность — когда она читается повторно во многих запросах.",
-                "edge_cases": "`L2` не спасёт от N+1 при первом холодном проходе (кэш ещё пуст), и помогает только для часто повторяемых данных; `JOIN FETCH` с коллекциями может дать декартово произведение строк.",
-                "related": "[[hibernate-caching-interview#Q2]] `L1` и identity в цикле; [[hibernate-caching-interview#Q4]] `READ_ONLY` для кэша `Profile`; [[hibernate-caching-interview#Q15]] правило «L2 для повторного чтения»."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Аннотация `@BatchSize` увеличивает число SQL-запросов, поскольку для каждой связанной сущности выполняет отдельный `SELECT` с дополнительной проверкой версии; вместо одного `IN`-запроса на пачку идентификаторов Hibernate дробит выборку по одной строке, из-за чего `@BatchSize` при `N+1` только усугубляет проблему, а не решает её.",
               "correct": false,
               "sections": {
@@ -823,6 +810,19 @@
                 "source_of_confusion": "Слово «batch» иногда ассоциируют с дополнительной обработкой, а не с группировкой загрузок.",
                 "if_it_were_true": "Тогда `@BatchSize` усугублял бы N+1, но его как раз применяют для борьбы с ним.",
                 "how_it_should_be": "`@BatchSize` группирует загрузку связей в пачки, уменьшая количество SQL-запросов."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`JOIN FETCH` и `@EntityGraph` меняют fetch plan одного запроса, а `@BatchSize` группирует отложенные загрузки. L2 может убрать повторные обращения за уже закэшированными связанными entity, но не исправляет сам fetch plan и не гарантирует устранение N+1.",
+              "correct": true,
+              "sections": {
+                "explanation": "Проблему N+1 сначала решают формой запроса. Кэш лишь уменьшает цену некоторых дополнительных загрузок при повторном доступе и может скрыть дефект на прогретом окружении.",
+                "example": "`FROM User u JOIN FETCH u.profile` грузит пользователей и профили одним запросом; альтернатива — `@BatchSize(size = 20)` на `profile`, чтобы профили подгружались партиями по 20.",
+                "when_to_apply": "Приёмы выбирают по сценарию: `JOIN FETCH`/`@BatchSize` — для одноразовой выборки в одном запросе, а `L2` на справочную связанную сущность — когда она читается повторно во многих запросах.",
+                "edge_cases": "Тест N+1 должен выполняться с очищенными L1/L2 или с явным учётом cache hit, иначе локальный прогон может показать меньше SQL, чем холодный production-сценарий.",
+                "related": "[[hibernate-caching-interview#Q15]] какие best practices применяют при работе с Hibernate cache; [[hibernate-caching-interview#Q13]] что такое natural id cache и зачем он нужен; [[hibernate-caching-interview#Q12]] когда второй уровень кэша Hibernate обычно не окупается."
               }
             },
             {
@@ -846,7 +846,7 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие best practices применяют при работе с `Hibernate cache`?",
+          "question_text": "Какие практики применяют при работе с `Hibernate cache`?",
           "options": [
             {
               "order": 0,
@@ -863,19 +863,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Ключевые правила: всегда измерять (`Statistics` + Actuator), кэшировать справочники с `READ_ONLY`, настраивать TTL и max size; для кластеров брать distributed cache аккуратно к serialization, собирать hit ratio в проде, периодически полностью инвалидировать в batch-job при прямом SQL, помнить что Query Cache работает только с `L2`, и не кэшировать транзакционные/append-only/уникальные/BLOB-данные.",
-              "correct": true,
-              "sections": {
-                "explanation": "Базовый принцип — решения о кэше принимать по метрикам, а не по интуиции. Справочники дают лучший эффект с `READ_ONLY`; неограниченный кэш опасен для heap; в кластере распределённый кэш требует осторожности к сериализации и согласованности.",
-                "example": "Включают `management.metrics.enable.hibernate: true` и `prometheus`-endpoint, ставят `@Cache(usage = READ_ONLY)` на `Country`/`Currency` и задают в `ehcache.xml` TTL и `heap` limit.",
-                "when_to_apply": "Эти практики применяют при проектировании и эксплуатации кэша: на старте — выбор стратегий и лимитов, в проде — мониторинг hit ratio и реакция на его падение.",
-                "edge_cases": "Если данные обновляются прямым SQL, помогает периодическая полная инвалидация в batch-job; Query Cache бесполезен без `L2`, поэтому включать его в одиночку — частая ошибка.",
-                "related": "[[hibernate-caching-interview#Q9]] метрики, которые «всегда измеряют»; [[hibernate-caching-interview#Q12]] что не кэшировать; [[hibernate-caching-interview#Q5]] зависимость Query Cache от `L2`."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Best practice — кэшировать почти всё, включая логи, доменные события и `BLOB`-поля, чтобы ускорить чтения; чем больше сущностей помечено `@Cache` со стратегией `READ_WRITE`, тем выше общий hit ratio, поэтому даже append-only, уникальные и транзакционные таблицы стоит завести в `L2`-регион.",
               "correct": false,
               "sections": {
@@ -886,6 +873,19 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "Кэшировать стоит только измеренные горячие чтения, разносить данные по осмысленным регионам, ограничивать размер/TTL и выбирать стратегию по мутабельности. Нужно тестировать cold и warm paths, наблюдать invalidation и явно учитывать bulk DML, прямой SQL и кластерную topology.",
+              "correct": true,
+              "sections": {
+                "explanation": "Кэш — часть модели согласованности и эксплуатации, а не универсальный флаг ускорения. Полезный набор данных определяется профилированием, а настройки проверяются нагрузкой и отказами.",
+                "example": "Включают `management.metrics.enable.hibernate: true` и `prometheus`-endpoint, ставят `@Cache(usage = READ_ONLY)` на `Country`/`Currency` и задают в `ehcache.xml` TTL и `heap` limit.",
+                "when_to_apply": "Эти практики применяют при проектировании и эксплуатации кэша: на старте — выбор стратегий и лимитов, в проде — мониторинг hit ratio и реакция на его падение.",
+                "edge_cases": "Не задавайте универсальные hit-ratio цели и не очищайте весь кэш по расписанию вместо корректной invalidation. Query Cache включают точечно для стабильных повторяемых запросов.",
+                "related": "[[hibernate-caching-interview#Q14]] как кэш и сопутствующие приёмы помогают решить проблему N+1 запросов; [[hibernate-caching-interview#Q13]] что такое natural id cache и зачем он нужен; [[hibernate-caching-interview#Q12]] когда второй уровень кэша Hibernate обычно не окупается."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
               "text": "Лучшая практика — задавать неограниченный размер кэша и полностью отключать `TTL`, чтобы максимизировать hit ratio и вообще ничего не вытеснять; при таком подходе `L2`-регион держит все сущности в heap постоянно, `Statistics` показывает стабильные 100% hit ratio, а eviction-политику вроде LRU можно смело выключить без риска `OutOfMemoryError`.",
@@ -893,7 +893,7 @@
               "sections": {
                 "what_actually": "Неограниченный кэш без TTL — антипаттерн: он может исчерпать heap и вызвать OOM; best practice — задавать max size и TTL.",
                 "source_of_confusion": "Идея «чем больше кэша, тем лучше hit ratio» звучит правдоподобно, но игнорирует ограниченность памяти.",
-                "if_it_were_true": "Тогда не рекомендовали бы настраивать TTL и max size, но это прямое правило best practices.",
+                "if_it_were_true": "Тогда не рекомендовали бы настраивать TTL и max size, но это прямое правило практики.",
                 "how_it_should_be": "Размер и TTL нужно ограничивать; неограниченный кэш рискует heap и стабильностью приложения."
               }
             }

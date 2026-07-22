@@ -11,7 +11,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Availability `99.99%` требует минимум 5 дата-центров в разных регионах планеты.",
+              "text": "Availability `99.99%` требует минимум 5 дата-центров в разных регионах планеты. Любой стартап с одним-двумя регионами не мог бы заявить `99.99%`. SLA выводится только из количества регионов и не зависит от redundancy внутри региона, failover time, dependencies и operational maturity.",
               "correct": false,
               "sections": {
                 "what_actually": "`99.99%` = около 52 минут downtime в год; это достигается active-active в 2-3 DC + graceful degradation, а не пятью ДЦ.",
@@ -23,7 +23,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "High reliability достигается только синхронной репликацией с ACK от всех реплик перед ответом клиенту.",
+              "text": "High reliability достигается только синхронной репликацией с ACK от всех реплик перед ответом клиенту. Отправка сообщения ждала бы самую медленную реплику в другом регионе, и latency взлетела бы до секунд.",
               "correct": false,
               "sections": {
                 "what_actually": "Синхронная репликация во все реплики добавляет десятки ms на каждый write и нарушает требование `< 500ms` доставки.",
@@ -35,7 +35,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Ordering можно игнорировать — клиент сам разберётся по времени получения сообщений.",
+              "text": "Ordering можно игнорировать — клиент сам разберётся по времени получения сообщений. В группе из 50 человек ответы на реплики шли бы вразнобой, и тред превратился бы в кашу. В 1:1 чате с редкими сообщениями расхождение почти незаметно.",
               "correct": false,
               "sections": {
                 "what_actually": "Без `seq_id` или серверного timestamp сообщения приходят в порядке прибытия по сети, и у разных участников группы порядок будет разным.",
@@ -47,13 +47,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Ключевые NFR чата: низкая latency доставки (`< 500ms`), reliability (no message loss), правильный ordering (через `seq_id`/`TIMEUUID`), E2E-шифрование для приватности и availability `99.99%`. Функциональные: 1:1 и group messaging, presence, read receipts, история, typing-indicators, media.",
+              "text": "Для крупной чат-системы фиксируют функциональные требования: 1:1 и группы, история, delivery/read receipts, presence, media и offline delivery. NFR задают измеримо и как предположения интервью: latency, durability, ordering scope, availability, privacy/E2EE, масштаб соединений и требования к abuse/retention.",
               "correct": true,
               "sections": {
                 "explanation": "В начале интервью озвучивают эти 5 NFR: при 1B пользователей и 500M онлайн именно latency + reliability + ordering + encryption + availability определяют всю архитектуру (WebSocket-tier, broker, Cassandra).",
                 "example": "Например, требование `< 500ms` сразу отметает synchronous-репликацию во все реплики и подталкивает к quorum-write + async fan-out через `Kafka`/`Redis`.",
                 "when_to_apply": "Этот список NFR применяют как стартовую рамку любого chat-интервью: каждое требование (latency, reliability, ordering, encryption, availability) задаёт отдельный слой архитектуры и отдельный набор trade-off'ов.",
-                "edge_cases": "Группы на 50+ участников делают ordering критичным: без `seq_id`/`TIMEUUID` сообщения приходят в разном порядке у разных людей, и тред становится нечитаемым.",
+                "edge_cases": "Числа вроде p95 < 500 мс или 99,99% не универсальны: их согласуют по регионам, типам сообщений и бюджету. E2EE меняет поиск, moderation, multi-device sync и recovery.",
                 "related": "[[design-chat-system-interview#Q2]] capacity estimation для этих NFR; [[design-chat-system-interview#Q12]] reliability через at-least-once; [[design-chat-system-interview#Q14]] ordering через TIMEUUID."
               }
             }
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "1B × 50 msg/day = `5 TB/day` storage, и медиа учитывать отдельно не нужно — оно входит в эту оценку.",
+              "text": "1B × 50 msg/day = `5 TB/day` storage, и медиа учитывать отдельно не нужно — оно входит в эту оценку. `5 TB/day` хватало бы навсегда. Текст и медиа кажутся «одними сообщениями». Attachments и replicas считаются частью того же текстового объёма.",
               "correct": false,
               "sections": {
                 "what_actually": "Медиа увеличивает объём в 10-100×: `5 TB/day` текста превращается в `50-500 TB/day` с фото/видео, и хранится отдельно в `S3`.",
@@ -83,20 +83,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "При 1B пользователей × 50 сообщений/день ≈ 50B msg/day (~580K msg/sec в среднем, peak ~2M msg/sec). Storage: ~`5 TB/day` текста + `500 TB/day` с медиа (×10-100). Connection-tier: 500M concurrent WebSocket при 50-100K conn/сервер = `5-10K` серверов. Presence-map (`user_id→server_id`) ~16GB — помещается в `Redis`.",
+              "text": "Capacity считают от явно заданных assumptions: DAU, сообщений на пользователя, доли групповых fan-out, среднего размера, media ratio, concurrent connections и peak factor. Для 1 млрд DAU и 50 исходящих сообщений/день это около 580 тыс.",
               "correct": true,
               "sections": {
-                "explanation": "На интервью считают так: msg/day = users × 50; storage = msg × ~100B; число WS-серверов = online / concurrency_per_server. Это даёт порядок величин для каждого слоя.",
+                "explanation": "Главная цель оценки — порядок величин и выявление доминирующего ресурса. Fan-out может увеличить доставочные операции на порядок, а memory overhead connection/presence записей обычно намного больше размера пары идентификаторов.",
                 "example": "Например, peak `2M msg/sec` через единый брокер требует кластера `Kafka`/`Redis` на десятки нод, а 500M соединений — отдельного connection-tier с kernel-tuning.",
                 "when_to_apply": "Такую оценку делают на старте design-интервью, чтобы обосновать число WS-серверов, размер брокера и выбор storage; цифры дают порядок величин, а не точный прогноз.",
-                "edge_cases": "Медиа считают отдельно: `5 TB/day` текста превращается в `50-500 TB/day` с фото/видео, поэтому media уходит в `S3`, а не в message-DB.",
+                "edge_cases": "Нельзя выводить, что presence-map на сотни миллионов пользователей «помещается в 16 GB Redis»: object overhead, replicas, TTL и active subscriptions требуют распределённого состояния и существенно большего бюджета.",
                 "related": "[[design-chat-system-interview#Q1]] NFR, под которые делается оценка; [[design-chat-system-interview#Q3]] выбор транспорта под connection-tier; [[design-chat-system-interview#Q15]] presence-map в Redis."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Presence-map на 1B пользователей в `Redis` займёт около 16GB и в `Redis` не поместится.",
+              "text": "Presence-map на 1B пользователей в `Redis` займёт около 16GB и в `Redis` не поместится. Presence пришлось бы хранить в дисковой БД с медленным lookup. Metadata каждой записи занимает меньше нескольких байтов.",
               "correct": false,
               "sections": {
                 "what_actually": "16B на entry × 1B = ~16GB, и `Redis` (особенно кластер) спокойно держит 100GB+ — это вполне реалистичная и помещающаяся оценка.",
@@ -108,7 +108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "500M concurrent connections = 500 серверов по 1M соединений на каждом — реалистичная оценка connection-tier.",
+              "text": "500M concurrent connections = 500 серверов по 1M соединений на каждом — реалистичная оценка connection-tier. Хватило бы 500 серверов. Теоретический предел сокетов высок. Операционный overhead и запас capacity считаются пренебрежимо малыми. Kernel, TLS, load balancing и failover не требуют дополнительного headroom.",
               "correct": false,
               "sections": {
                 "what_actually": "1M соединений на сервер требует серьёзного kernel-tuning (`ulimit`, `epoll`, `SO_REUSEPORT`); реалистично 50-100K/сервер → `5-10K` серверов.",
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`WebSocket` не поддерживается в мобильных браузерах, поэтому для мобильных нужен другой протокол.",
+              "text": "`WebSocket` не поддерживается в мобильных браузерах, поэтому для мобильных нужен другой протокол. Мобильные мессенджеры строились бы на polling. Старые мифы о слабой поддержке WS в мобильных всё ещё всплывают.",
               "correct": false,
               "sections": {
                 "what_actually": "`WebSocket` поддерживается во всех современных браузерах и мобильных приложениях с 2012 года; WhatsApp/Telegram используют WS-подобные протоколы.",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Long polling надёжнее `WebSocket`, потому что его проще пробросить через корпоративные proxy.",
+              "text": "Long polling надёжнее `WebSocket`, потому что его проще пробросить через корпоративные proxy. Чат на нём масштабировался бы линейно. Long polling действительно лучше проходит через старые proxy. Каждый poll считается постоянным двунаправленным соединением без setup overhead.",
               "correct": false,
               "sections": {
                 "what_actually": "Long polling делает новый TCP/HTTP-запрос на каждое событие; при 500M пользователей и 2M msg/sec это нереальная нагрузка, тогда как `WebSocket` держит одно соединение.",
@@ -155,7 +155,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`WebSocket` — bidirectional persistent поверх одного TCP, лучший выбор для чата (поток сообщений in+out). `SSE` — server→client one-way (для notifications/дашбордов). Long polling — fallback для legacy-окружений, где WS заблокирован. Для мобильных offline-доставка идёт через push (`APNs`/`FCM`). Итог: чат = `WebSocket`.",
+              "text": "`WebSocket` — bidirectional persistent поверх одного TCP, лучший выбор для чата (поток сообщений in+out). `SSE` — server→client one-way (для notifications/дашбордов). Long polling — fallback для legacy-окружений, где WS заблокирован.",
               "correct": true,
               "sections": {
                 "explanation": "Правило выбора: duplex-поток (чат) → `WebSocket`; одностороннее server-push (live-дашборд, уведомления) → `SSE`; старые браузеры/прокси → long polling как fallback.",
@@ -168,7 +168,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`SSE` лучше `WebSocket` для чата, потому что у него меньше overhead.",
+              "text": "`SSE` лучше `WebSocket` для чата, потому что у него меньше overhead. Отправка сообщения шла бы через `POST`, а приём — через `SSE`, что усложняет ack/ordering и удваивает каналы. `SSE` проще и легче `WebSocket`.",
               "correct": false,
               "sections": {
                 "what_actually": "`SSE` — это server→client only (unidirectional); для чата нужен bidirectional поток, а клиентские сообщения пришлось бы слать отдельным REST → двойной overhead.",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Presence service не нужен, если есть consistent hashing `hash(user_id) % N`.",
+              "text": "Presence service не нужен, если есть consistent hashing `hash(user_id) % N`. После падения сервера сообщения роутились бы на мёртвый адрес по старому хешу. Consistent hashing считается самодостаточным.",
               "correct": false,
               "sections": {
                 "what_actually": "Consistent hashing маппит `user→server` статично; при failover (сервер упал) или scale (`N` поменялся) нужно обновить маппинг в presence, иначе router не знает, где пользователь.",
@@ -203,20 +203,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`WebSocket` stateful: соединение пользователя живёт на одном сервере. Маппинг `user_id→server` хранят в presence (`Redis`); при отправке сообщения делают lookup и роутят на нужный WS-сервер через брокер (`Kafka`/`Redis` pub/sub). Failover: сервер упал → клиенты переподключаются → presence обновляется.",
+              "text": "WebSocket-соединение закреплено за конкретным gateway на время жизни. Load balancer распределяет новые connections, а sharded connection registry хранит `user/device → gateway`; message router отправляет событие нужному gateway через partitioned broker или internal RPC.",
               "correct": true,
               "sections": {
                 "explanation": "Так роутят на 1B-scale: presence-lookup даёт адрес сервера получателя, а брокер fan-out'ит сообщение в его канал — отправителю не нужно знать топологию напрямую.",
                 "example": "Например, X подключился к S1 → `SET user:X server:S1`; когда Y шлёт X, его сервер публикует в канал `user:X`, и S1 пушит в сокет X.",
                 "when_to_apply": "Такой routing применяют на 1B-scale: presence-lookup находит сервер получателя, а брокер fan-out'ит сообщение в его канал — отправителю не нужно знать топологию кластера напрямую.",
-                "edge_cases": "При смерти сервера все его сокеты рвутся: клиенты reconnect'ятся на новый сервер, и presence-registry обновляется новым `user_id→server`.",
+                "edge_cases": "Один глобальный Redis становится bottleneck и failure domain. Registry шардируют, используют TTL/lease и fencing version; Kafka не создают отдельный topic на каждого пользователя.",
                 "related": "[[design-chat-system-interview#Q5]] sticky vs broker-routed выбор; [[design-chat-system-interview#Q8]] выбор брокера; [[design-chat-system-interview#Q15]] presence service детально."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Message broker не нужен при consistent hashing — отправитель шлёт сообщение прямо на сервер получателя.",
+              "text": "Message broker не нужен при consistent hashing — отправитель шлёт сообщение прямо на сервер получателя. При каждом деплое WS-tier половина адресов протухала бы, и сообщения уходили бы в никуда.",
               "correct": false,
               "sections": {
                 "what_actually": "Без брокера отправитель должен знать адрес сервера получателя напрямую, а при rolling deploy/failover адреса меняются; брокер decouples и даёт delivery guarantee.",
@@ -228,7 +228,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "WebSocket LB работает так же, как HTTP LB — достаточно статичного round-robin.",
+              "text": "WebSocket LB работает так же, как HTTP LB — достаточно статичного round-robin. Каждое переподключение попадало бы на случайный сервер без знания, где раньше жил пользователь. Внешне WS-handshake — это HTTP-upgrade.",
               "correct": false,
               "sections": {
                 "what_actually": "После handshake `WebSocket` закреплён за сервером (stateful); round-robin разрушал бы соединение при каждом reconnect, нужен sticky или presence-based routing.",
@@ -246,25 +246,25 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Sticky sessions vs broker-routed routing для WebSocket-чата на 500M пользователей: что реально используют Slack/Discord и почему?",
+          "question_text": "Sticky sessions и routed delivery для WebSocket-чата: какой trade-off важен?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Non-sticky LB + broker-routed: пользователь подключается на любой WS-сервер, при connect регистрирует presence (`SET user:X server:S2 EX 60`) и подписывается на канал `user:X` в `Redis` pub/sub / `Kafka`. Доставка — через publish в канал; rolling deploy, autoscale и failover не требуют сложной миграции — клиент просто reconnect'ится. Slack/Discord выбрали именно это ради гибкого scale.",
+              "text": "Sticky routing упрощает повторное попадание клиента на тот же gateway, но усложняет failover и rebalance. Routed delivery хранит внешний mapping connection→gateway и позволяет подключаться к любой ноде; это гибче для autoscaling, но требует надёжного registry, fencing и маршрутизации сообщений. Часто применяют комбинацию.",
               "correct": true,
               "sections": {
-                "explanation": "Применяют для динамических кластеров с autoscale и ежедневными деплоями: sticky привёл бы к постоянным reshuffle, а broker-routed позволяет переподключаться куда угодно.",
+                "explanation": "Sticky LB решает только выбор gateway при connect и не отвечает, как другой сервис найдёт живой socket. Внешний registry нужен для server-to-server delivery, а affinity может уменьшить churn при reconnect.",
                 "example": "Например, X упал с S2 и сел на S5: `SET user:X server:S5 EX 60` + `SUBSCRIBE user:X`, а старая подписка на S2 истекает по TTL.",
                 "when_to_apply": "Non-sticky + broker-routed применяют в динамических кластерах с autoscale и ежедневными деплоями (Slack, Discord, Twitch); sticky привёл бы к постоянным reshuffle при изменении числа серверов.",
-                "edge_cases": "Extra hop через брокер добавляет 1-5ms; presence TTL должен быть длиннее heartbeat-интервала, иначе presence истекает между ping'ами (race).",
+                "edge_cases": "Не следует приписывать конкретную внутреннюю реализацию Slack или Discord без источника. Архитектура выбирается по масштабу, multi-region, reconnect rate и возможностям broker/router.",
                 "related": "[[design-chat-system-interview#Q4]] connection routing и presence; [[design-chat-system-interview#Q6]] broker-tier в архитектуре; [[design-chat-system-interview#Q8]] выбор Redis vs Kafka."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Full-mesh server-to-server: каждый WS-сервер держит прямое соединение со всеми остальными и при сообщении сам пушит его на сервер получателя, без presence-хранилища и внешнего брокера. Топология убирает лишний сетевой hop через брокер и потому линейно масштабируется на тысячи нод.",
+              "text": "Full-mesh server-to-server: каждый WS-сервер держит прямое соединение со всеми остальными и при сообщении сам пушит его на сервер получателя, без presence-хранилища и внешнего брокера. Топология убирает лишний сетевой hop через брокер и потому линейно масштабируется на тысячи нод. При перезапуске `Redis` терялись бы все сообщения, а recovery 50TB в RAM = часы downtime.",
               "correct": false,
               "sections": {
                 "what_actually": "Presence хранит только метаданные (`user_id→server_id` + TTL), ~8GB на 500M; а 50B msg/day × 1KB = 50TB/day — это hot tier (Cassandra) + cold (S3), не presence-объём.",
@@ -276,7 +276,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Sticky по IP клиента: балансировщик маршрутизирует по source-IP на один WS-сервер и держит соединение там весь сеанс, без presence-регистрации и брокера. Для мобильных клиентов это надёжно, так как source-IP пользователя стабилен на всём протяжении WebSocket-сессии.",
+              "text": "Sticky по IP клиента: балансировщик маршрутизирует по source-IP на один WS-сервер и держит соединение там весь сеанс, без presence-регистрации и брокера. Для мобильных клиентов это надёжно, так как source-IP пользователя стабилен на всём протяжении WebSocket-сессии. CGNAT-региона на один IP легли бы на один WS-сервер (instant overload), а переключение сети рвало бы соединение.",
               "correct": false,
               "sections": {
                 "what_actually": "IP-based sticky ломается на мобильных: IP меняется при переключении Wi-Fi/4G/5G, а NAT/CGNAT даёт один IP миллионам пользователей — sticky схлопывает их на 1 сервер.",
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Non-sticky LB с центральным routing через основную БД (DB lookup на каждое сообщение) — достаточная схема.",
+              "text": "Non-sticky LB с центральным routing через основную БД (DB lookup на каждое сообщение) — достаточная схема. Основная БД захлёбывалась бы read-нагрузкой только от routing-lookup'ов. «Спросить базу, где пользователь» звучит просто и надёжно, если не считать частоту запросов.",
               "correct": false,
               "sections": {
                 "what_actually": "DB lookup на каждое из 2M msg/sec — это bottleneck; `Redis` presence с `O(1)` lookup обязателен для горячего пути.",
@@ -336,7 +336,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Presence service лучше хранить в PostgreSQL ради строгой consistency статусов.",
+              "text": "Presence service лучше хранить в PostgreSQL ради строгой consistency статусов. WAL и vacuum в PostgreSQL не успевали бы за потоком presence-updates. ACID и «consistency» ассоциируются с правильным выбором.",
               "correct": false,
               "sections": {
                 "what_actually": "Presence обновляется при каждом heartbeat (30s × 500M = ~16M updates/мин); `Redis` с TTL — идеальный fit, PostgreSQL даст write-bottleneck и vacuum-storm.",
@@ -348,7 +348,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Sticky LB достаточно для routing — consistent hashing без presence service покрывает всё.",
+              "text": "Sticky LB достаточно для routing — consistent hashing без presence service покрывает всё. При падении сервера сообщения роутились бы по старому хешу на мёртвый узел. Хеш-роутинг считается самодостаточным.",
               "correct": false,
               "sections": {
                 "what_actually": "Consistent hashing статичен; при failover маппинг не обновится автоматически, поэтому нужен presence service для динамического routing после reconnect.",
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Persist надо делать после push — если persist упадёт, сообщение всё равно дойдёт через push.",
+              "text": "Persist надо делать после push — если persist упадёт, сообщение всё равно дойдёт через push. При сбое записи после успешного push сообщение исчезло бы из истории, нарушив no-loss.",
               "correct": false,
               "sections": {
                 "what_actually": "Нужно наоборот: persist ПЕРЕД push; если push fails — данные в Cassandra и retry'ятся из storage; если persist fails — reject сразу.",
@@ -383,7 +383,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Application-level ACK от клиента не нужен — достаточно TCP ACK на уровне сети.",
+              "text": "Application-level ACK от клиента не нужен — достаточно TCP ACK на уровне сети. Нельзя было бы показать статусы сообщения и отличить «дошло до сервера» от «прочитано». Раз TCP уже «подтверждает доставку».",
               "correct": false,
               "sections": {
                 "what_actually": "TCP ACK подтверждает только доставку байтов по сети; application ACK нужен для read/delivery-receipt (WhatsApp ✓ sent / ✓✓ delivered / ✓✓ blue read).",
@@ -395,7 +395,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Offline-доставку достаточно держать в `Redis` до reconnect пользователя.",
+              "text": "Offline-доставку достаточно держать в `Redis` до reconnect пользователя. Падение `Redis` стирало бы непрочитанные сообщения навсегда. `Redis` уже используется для presence/pub-sub. Репликация и персистентность такой очереди не требуются.",
               "correct": false,
               "sections": {
                 "what_actually": "`Redis` in-memory: при рестарте сообщения теряются; для offline-очереди нужен persistent storage (Cassandra + `message_queue`).",
@@ -407,13 +407,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Persist в Cassandra (durable) → lookup presence получателя → если online: publish в канал `user:X` (`Kafka`/`Redis`) → его WS-сервер пушит в сокет; если offline: запись в undelivered-queue + trigger push (`FCM`/`APNs`). Гарантия — через persist-first + ACK на каждом hop, retry из storage.",
+              "text": "Надёжный delivery flow сначала фиксирует сообщение или durable event с idempotency key, затем маршрутизирует online recipients и отмечает ACK/state; offline device получает push как сигнал и забирает данные после reconnect.",
               "correct": true,
               "sections": {
                 "explanation": "Правило: persist first, push second, retry from storage. Сообщение сначала ложится в durable-хранилище, и только потом доставляется — push/WS становятся best-effort поверх надёжного persist.",
                 "example": "Например, end-to-end latency обычно `< 200ms`: A пишет → WS → Chat service → Cassandra → presence(B) → publish `user:B` → S3-сервер B пушит → B ACK'ает.",
                 "when_to_apply": "Паттерн persist-first + ACK применяют для гарантии доставки: сообщение сначала ложится в durable-хранилище, и только потом доставляется через WS/push, которые становятся best-effort поверх надёжного persist.",
-                "edge_cases": "Если push fails — данные уже в Cassandra, доставятся при reconnect; если persist fails — сообщение reject'ится сразу, чтобы не потерять молча.",
+                "edge_cases": "Persist-first не означает один конкретный Cassandra write перед каждым hop. E2EE, multi-device и group fan-out требуют отдельных per-device delivery cursors; push provider не является надёжным каналом доставки сообщения.",
                 "related": "[[design-chat-system-interview#Q8]] брокер между серверами; [[design-chat-system-interview#Q12]] at-least-once + idempotency; [[design-chat-system-interview#Q18]] push для offline получателей."
               }
             }
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Kafka` — лучший выбор для всех сообщений чата: durability + replay покрывают любой сценарий.",
+              "text": "`Kafka` — лучший выбор для всех сообщений чата: durability + replay покрывают любой сценарий. Typing-indicator появлялся бы с задержкой 50-100ms и ощущался как лаг, а инфра под signaling-объём была бы в 10× дороже.",
               "correct": false,
               "sections": {
                 "what_actually": "`Kafka` даёт durability и replay, но добавляет 10-100ms latency vs `Redis` pub/sub (микросекунды); для typing/presence он слишком медленный.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Redis` pub/sub — единственный нужный брокер; `Kafka` избыточен для чата.",
+              "text": "`Redis` pub/sub — единственный нужный брокер; `Kafka` избыточен для чата. При pod-restart WS-сервера во время publish сообщения для его пользователей терялись бы молча, без retry. `Redis` pub/sub — самый простой и быстрый брокер, легко забыть про отсутствие durability.",
               "correct": false,
               "sections": {
                 "what_actually": "`Redis` pub/sub fire-and-forget: если subscriber был disconnected на момент publish (network blip, GC pause) — сообщение потеряно, что нарушает no-message-loss.",
@@ -455,7 +455,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`RabbitMQ` — единственный брокер для чата: AMQP с очередью на каждого пользователя.",
+              "text": "`RabbitMQ` — единственный брокер для чата: AMQP с очередью на каждого пользователя. WhatsApp/Slack использовали бы `RabbitMQ` как primary broker. `RabbitMQ` — популярный AMQP-брокер с богатым routing (topic/fanout/direct).",
               "correct": false,
               "sections": {
                 "what_actually": "Queue-per-user-per-server не масштабируется на 500M: 500M очередей дают десятки GB metadata-overhead в Erlang VM, а create/delete при connect/disconnect — операционный шторм.",
@@ -467,13 +467,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Hybrid: `Redis` pub/sub для real-time signaling (typing/presence, эфемерные сигналы) с микросекундной latency + `Kafka` для persistent message-stream (audit, analytics, offline-delivery, replay). Cassandra — primary persistence; `Kafka` — CDC-поток для read-models. Горячий путь без durability-tax, холодный — с replay.",
+              "text": "Эфемерные сигналы вроде typing/presence можно вести через low-latency pub/sub без replay. Сообщения, audit и offline delivery требуют durable log/queue или чтения из primary storage. Часто используют hybrid, но конкретный выбор Redis/Kafka/NATS/Pulsar зависит от partitioning, retention и delivery semantics.",
               "correct": true,
               "sections": {
                 "explanation": "Реальные системы разделяют классы событий: эфемерный сигналинг → `Redis` (fast, lossy ok), durable-сообщения и downstream-пайплайны (notifications, search, ML) → `Kafka`.",
                 "example": "Например, Slack использует `Redis` для presence + WS-signaling и `Kafka` для message-events; WhatsApp — кастомный Erlang-брокер + Mnesia как in-house аналог.",
                 "when_to_apply": "Hybrid применяют, разделяя классы событий: эфемерный сигналинг (typing/presence) → `Redis`, durable-сообщения и downstream-пайплайны (analytics, search, offline) → `Kafka`.",
-                "edge_cases": "Согласованность двух путей: что если `Kafka` получил, а `Redis` нет? Cassandra-first как source of truth + idempotent consumers; дубль-push при online+Kafka решают сверкой с presence.",
+                "edge_cases": "Redis Pub/Sub теряет события без подписчика; Kafka даёт durability, но не предназначена для миллиона динамических per-user topics. Primary message store и broker должны иметь ясные обязанности и recovery path.",
                 "related": "[[design-chat-system-interview#Q5]] каналы `user:{id}` для broker-routed delivery; [[design-chat-system-interview#Q7]] delivery flow с persistence-first; [[design-chat-system-interview#Q18]] push через Kafka-consumer."
               }
             }
@@ -491,13 +491,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`PRIMARY KEY ((conversation_id), message_id) WITH CLUSTERING ORDER BY (message_id DESC)`, где `message_id` — `TIMEUUID`. Partition key `conversation_id` локализует все сообщения чата на одной replica-group; clustering `TIMEUUID` даёт сортировку + уникальность; `DESC` ускоряет «последние 50 сообщений» — самый частый read-pattern.",
+              "text": "Cassandra-таблицу проектируют от чтения истории: partition key включает `conversation_id` и временной bucket, clustering key — монотонный `sequence` или `(event_time, message_id)` с нужным порядком. Bucket ограничивает размер partition, а cursor pagination читает последние сообщения без scan всей истории.",
               "correct": true,
               "sections": {
                 "explanation": "Это эталонная schema для chat в Cassandra/ScyllaDB: partition по логическому контейнеру (conversation), clustering по времени (`TIMEUUID`), order `DESC` под чтение свежего хвоста.",
                 "example": "Например, запрос `SELECT * FROM messages WHERE conversation_id=? LIMIT 50` бьёт в одну партицию: sequential scan от head, `O(50)` seek, без scatter-gather.",
                 "when_to_apply": "Эту schema применяют как эталон для chat в Cassandra/ScyllaDB: partition по логическому контейнеру (conversation), clustering по времени (`TIMEUUID`), order `DESC` под чтение свежего хвоста.",
-                "edge_cases": "Hot partition (celeb ответил в группе 500K) и wide partition (10M+ сообщений) лечат bucket'ингом partition key (`conversation_id::bucket=YYYYMM`) + `TimeWindowCompactionStrategy`.",
+                "edge_cases": "Один `conversation_id` без bucket может создать неограниченную partition. `TIMEUUID` удобно сортируется приблизительно по времени, но не заменяет строгую server-assigned последовательность при конкурентных writers.",
                 "related": "[[design-chat-system-interview#Q10]] почему NoSQL под write-heavy chat; [[design-chat-system-interview#Q11]] sharding и hot-partition mitigation; [[design-chat-system-interview#Q14]] ordering через TIMEUUID."
               }
             },
@@ -564,7 +564,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Cassandra/Scylla для users/friends (гибко масштабируемый граф связей); PostgreSQL для messages (ACID на каждое сообщение); Redis для presence (ephemeral KV + TTL); S3 для media. Тяжёлые реляционные связи уходят в Cassandra, а критичные сообщения — под транзакции Postgres.",
+              "text": "Cassandra/Scylla для users/friends (гибко масштабируемый граф связей); PostgreSQL для messages (ACID на каждое сообщение); Redis для presence (ephemeral KV + TTL); S3 для media. Тяжёлые реляционные связи уходят в Cassandra, а критичные сообщения — под транзакции Postgres. WhatsApp/Slack/Discord строились бы на Mongo.",
               "correct": false,
               "sections": {
                 "what_actually": "MongoDB хорош horizontally, но для chat-time-series не оптимален: write amplification из-за BSON, нет clustering-order как в Cassandra, а presence в Redis быстрее в ~10×.",
@@ -576,7 +576,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "PostgreSQL для всех данных: messages в партиционированных таблицах, users/friends в реляционных, presence — в unlogged-таблицах, media — в `BYTEA`/`JSONB`-колонках. Один ACID-движок с привычной операционкой закрывает все access-pattern без зоопарка технологий.",
+              "text": "PostgreSQL для всех данных: messages в партиционированных таблицах, users/friends в реляционных, presence — в unlogged-таблицах, media — в `BYTEA`/`JSONB`-колонках. Один ACID-движок с привычной операционкой закрывает все access-pattern без зоопарка технологий. Slack не пришлось бы строить 1000+ MySQL-шардов с Vitess-like proxy, а WhatsApp не выбирал бы кастомный Erlang Mnesia.",
               "correct": false,
               "sections": {
                 "what_actually": "PostgreSQL тянет ~100K writes/sec на тюненом инстансе, но 2M msg/sec требует 20-50 shards с cross-shard логикой; presence в SQL = constant WAL pressure + vacuum-storm.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Cassandra для messages; PostgreSQL для users/friends; S3 для presence (durable-хранилище статусов online/offline); Redis для media — кэш горячих картинок. Каждый тип данных ложится в свой движок под его профиль нагрузки.",
+              "text": "Cassandra для messages; PostgreSQL для users/friends; S3 для presence (durable-хранилище статусов online/offline); Redis для media — кэш горячих картинок. Каждый тип данных ложится в свой движок под его профиль нагрузки. Redis-кластер использовали бы для PB-scale storage. Redis субъективно «быстрее» (in-memory).",
               "correct": false,
               "sections": {
                 "what_actually": "Redis — RAM-storage: 50TB hot messages × цена RAM = ~$500K/мес + 3× на репликацию, тогда как disk в Cassandra в ~100× дешевле; recovery Redis после краша — десятки минут.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Sharding по `user_id` (consistent hash в token ring): у каждого пользователя outbox-партиция со всеми отправленными им сообщениями; virtual nodes дают равномерность. Для hot partition (celeb-отправитель) partition key расширяют до `(user_id, bucket)` по неделям.",
+              "text": "Sharding по `user_id` (consistent hash в token ring): у каждого пользователя outbox-партиция со всеми отправленными им сообщениями; virtual nodes дают равномерность. Для hot partition (celeb-отправитель) partition key расширяют до `(user_id, bucket)` по неделям. Загрузка группового чата с N участниками = N запросов к N shards = scatter-gather, p99 в секундах.",
               "correct": false,
               "sections": {
                 "what_actually": "Outbox-модель (по author/sender) хороша для feed-систем (Twitter/Instagram), но в чате читают по conversation, поэтому каждое чтение становится cross-shard query.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Sharding по `sent_at` (time-based partitions в token ring): естественно для time-series, virtual nodes выравнивают распределение. Для hot partition групповой чат разносят по `(sent_at, conversation_id)`.",
+              "text": "Sharding по `sent_at` (time-based partitions в token ring): естественно для time-series, virtual nodes выравнивают распределение. Для hot partition групповой чат разносят по `(sent_at, conversation_id)`. Пиковый трафик «сегодня» убивал бы одну реплику, а TTL/compaction по time-bucket не подходили бы под chat-модель.",
               "correct": false,
               "sections": {
                 "what_actually": "Time-based партиции создают hot-write-partition «сегодня»: 100% writes в одну replica-group; а чтение «чат X за весь период» = scan всех time-партиций.",
@@ -635,20 +635,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Sharding по `conversation_id` (consistent hash в token ring Cassandra/Scylla) — все сообщения чата на одной replica-group; virtual nodes (256-1024/нода) дают равномерность. Для hot partition (celeb в группе 500K) применяют bucket'ing: расширяют partition key до `(conversation_id, bucket)`, где bucket = month/week, чтобы шарить write-нагрузку по времени.",
+              "text": "Partitioning по `conversation_id` локализует историю и ordering, но ключ обычно дополняют временным bucket и распределяют replicas. Очень горячие каналы требуют отдельного sequencer/partition, write batching и fan-out strategy; произвольно шардировать один ordered stream нельзя без merge-протокола. Это стандарт для Cassandra/ScyllaDB chat-store (Discord, Instagram DM): partition по conversation + bucket'ing для известных горячих чатов (viral groups, broadcast channels).",
               "correct": true,
               "sections": {
                 "explanation": "Это стандарт для Cassandra/ScyllaDB chat-store (Discord, Instagram DM): partition по conversation + bucket'ing для известных горячих чатов (viral groups, broadcast channels).",
                 "example": "Например, `PRIMARY KEY ((conversation_id, bucket), message_id)` и чтение `WHERE conversation_id=? AND bucket IN ('2026-05','2026-04')` распределяет нагрузку по бакетам.",
                 "when_to_apply": "Sharding по `conversation_id` + bucket'ing применяют в Cassandra/ScyllaDB chat-store (Discord, Instagram DM): обычные чаты — просто по conversation, известные горячие (viral groups, broadcast) — с bucket'ом.",
-                "edge_cases": "Выбор bucket критичен: слишком крупный (year) остаётся горячим, слишком мелкий (hour) даёт много партиций при чтении; нужна metadata-таблица активных бакетов.",
+                "edge_cases": "Cassandra сама хэширует partition key по token ring; число vnodes — deployment detail, а не часть модели сообщения. Bucket уменьшает размер данных, но не обязательно распределяет одновременную нагрузку текущего hot bucket.",
                 "related": "[[design-chat-system-interview#Q9]] Cassandra schema с partition by conversation_id; [[design-chat-system-interview#Q10]] почему NoSQL и polyglot; [[design-chat-system-interview#Q17]] group fan-out для очень больших групп."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Sharding по `message_id` (random hash в token ring): идеально равномерное распределение записи по нодам, hot partition исключён by design. Чтение диалога собирает сообщения через вторичный индекс по `conversation_id` поверх шардов.",
+              "text": "Sharding по `message_id` (random hash в token ring): идеально равномерное распределение записи по нодам, hot partition исключён by design. Чтение диалога собирает сообщения через вторичный индекс по `conversation_id` поверх шардов. Каждое открытие чата сканировало бы весь кластер, нагружая coordinator-ноду, p99 чтения — секунды.",
               "correct": false,
               "sections": {
                 "what_actually": "Random sharding рассыпает сообщения одной conversation по всему кластеру, и «последние 50 в чате» превращаются в scatter-gather с фильтрацией по `conversation_id`.",
@@ -671,20 +671,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "At-least-once delivery + idempotent processing через client-generated UUID + `INSERT IF NOT EXISTS` (Cassandra LWT / `ON CONFLICT DO NOTHING`): retry безопасен, дубликаты — no-op. End-to-end ACK chain client→server→recipient даёт ✓/✓✓/✓✓ blue. Результат — effectively exactly-once без сетевых блокировок.",
+              "text": "Практический вариант — at-least-once transport плюс idempotent write по client-generated `message_id` и дедупликация на каждом потребителе. Одинаковый primary key превращает повтор в тот же результат; отдельный ledger/status хранит обработку side effects.",
               "correct": true,
               "sections": {
                 "explanation": "Клиент генерирует UUID/ULID ПЕРЕД отправкой и переиспользует его при retry; сервер кладёт по этому ключу idempotently — повтор не создаёт дубль.",
                 "example": "Например, Kafka producers с `enable.idempotence=true` + transactional consumers, и payment-системы (Stripe) с idempotency-key в заголовках — тот же паттерн.",
                 "when_to_apply": "At-least-once + idempotency применяют везде, где нужна no-loss доставка: WhatsApp/Telegram/Signal, Kafka с `enable.idempotence=true`, payment-системы с idempotency-key в заголовках.",
-                "edge_cases": "Идемпотентность работает только если клиент сохраняет `message_id` между retry; Cassandra LWT дороже обычного INSERT в ~4× (paxos), поэтому на hot path иногда `INSERT` + async dedup.",
+                "edge_cases": "Cassandra LWT `IF NOT EXISTS` даёт дополнительную координацию и может быть слишком дорогой для каждого сообщения. Обычный idempotent upsert часто достаточен, если collision невозможен и payload для одного id неизменяем.",
                 "related": "[[design-chat-system-interview#Q7]] delivery flow с persist-first + ACK; [[design-chat-system-interview#Q13]] delivery vs read receipts; [[design-chat-system-interview#Q14]] ordering отдельно от delivery."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Exactly-once через distributed two-phase commit (2PC) между client→server→recipient.",
+              "text": "Exactly-once через distributed two-phase commit (2PC) между client→server→recipient. WhatsApp/Telegram/Slack использовали бы 2PC. «Exactly-once delivery» — маркетинговый термин (Kafka/Pulsar/Flink), который ассоциируют с 2PC. Каждый участник удерживает блокировки до ACK конечного получателя.",
               "correct": false,
               "sections": {
                 "what_actually": "2PC — это coordinator-as-SPOF, блокирует ресурсы на phase 1+2; при 2M msg/sec он задушит latency до 100ms+, а true exactly-once over network невозможен (Two Generals).",
@@ -696,7 +696,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "At-most-once: send-and-forget без retry — приемлемо для чата, потеря ~1% сообщений терпима.",
+              "text": "At-most-once: send-and-forget без retry — приемлемо для чата, потеря ~1% сообщений терпима. «сообщение не пришло» стало бы самой частой жалобой, а критические тексты (банковский OTP) терялись бы.",
               "correct": false,
               "sections": {
                 "what_actually": "At-most-once значит «отправили один раз, не подтверждаем, не ретраим»; любой network blip = lost message, а NFR чата явно требует no-loss.",
@@ -708,7 +708,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Server-generated message_id вместо client-generated — единый источник правды.",
+              "text": "Server-generated message_id вместо client-generated — единый источник правды. При флакающем соединении (метро, лифт) каждое сообщение дублировалось бы 2-3 раза («привет», «привет», «привет»). Server-side ID (autoincrement/snowflake) считается авторитетным и логичным.",
               "correct": false,
               "sections": {
                 "what_actually": "Если ID генерит сервер после получения, клиент при retry не имеет idempotency-key: server упал до ACK → клиент retry → второй INSERT с новым server-id = дубликат, который клиент не распознает.",
@@ -731,7 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Synchronous UPDATE статуса прямо в main message-table при каждом ACK от recipient.",
+              "text": "Synchronous UPDATE статуса прямо в main message-table при каждом ACK от recipient. При 50B msg/day и средней группе 20 человек = ~1T status-updates/day на main table, и compaction никогда не догонит. «Обновим статус сообщения» — естественное SQL-мышление, где UPDATE дешёвый.",
               "correct": false,
               "sections": {
                 "what_actually": "UPDATE на messages при каждом read-event = огромная write-amplification: группа 100 × 1 message = 100 UPDATE на одну row; в Cassandra UPDATE = INSERT + tombstone → compaction-storm.",
@@ -743,7 +743,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Bilateral privacy: серверу вообще не отправлять read receipts — приватность важнее UI.",
+              "text": "Bilateral privacy: серверу вообще не отправлять read receipts — приватность важнее UI. У WhatsApp/iMessage не было бы ✓✓ blue — одной из самых востребованных фич, без которой продукт неполон. Клиенты определяют факт прочтения локально по открытию диалога и не синхронизируют per-user receipt state через сервер.",
               "correct": false,
               "sections": {
                 "what_actually": "Read receipts — фундаментальная UX-фича (WhatsApp ✓✓ blue, iMessage Read); их делают opt-in/opt-out per user, но не disabled by default.",
@@ -755,20 +755,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Отдельная таблица `message_status (message_id, user_id, status, ts)` с async batch-update; для группы 100 человек = 100 status-rows на сообщение. Partition по `message_id`, clustering по `user_id` → `O(1)` lookup статуса конкретного recipient, без загрязнения main message-table. Sender UI агрегирует «Прочитано N из M».",
+              "text": "Для небольших групп допустимы per-message per-recipient delivery rows. На больших группах read state обычно сжимают до per-user cursor/high-watermark на conversation, а исключения хранят отдельно; sender UI агрегирует счётчики асинхронно. Выбор зависит от требования показать точный список прочитавших.",
               "correct": true,
               "sections": {
                 "explanation": "Так делают WhatsApp/iMessage/Slack: per-recipient статус критичен для групп > 10 человек, а отдельная таблица легко аналитизируется (engagement-метрики).",
                 "example": "Например, клиент шлёт batch read-event на 10 сообщений → сервер делает 1 batch-INSERT в `message_status` + 1 pub/sub-нотификацию отправителю, а не UPDATE на каждое.",
                 "when_to_apply": "Отдельную status-таблицу применяют в WhatsApp/iMessage/Slack: per-recipient статус критичен для групп > 10 человек, и такая таблица легко аналитизируется под engagement-метрики.",
-                "edge_cases": "Storage amplification: 1 group message × 100 members = 100 rows; read-event может прийти раньше delivery (out-of-order) → нужна логика «read implies delivered»; при отключённых receipts read-event не публикуют отправителю.",
+                "edge_cases": "Сотни тысяч status rows на каждое сообщение создают write amplification и hot partitions. Read receipt может быть выключен по privacy policy, а multi-device требует различать user-level и device-level acknowledgements.",
                 "related": "[[design-chat-system-interview#Q12]] delivery semantics через end-to-end ACK; [[design-chat-system-interview#Q14]] ordering и уникальность message_id; [[design-chat-system-interview#Q17]] groups и fan-out статусов."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Один булев флаг `is_read` в таблице `messages`, обновляемый при чтении любым recipient'ом.",
+              "text": "Один булев флаг `is_read` в таблице `messages`, обновляемый при чтении любым recipient'ом. После первого читателя сообщение было бы «прочитано» для всех 99, хотя они даже не открыли приложение. В учебном 1:1 чате `is_read` на сообщении действительно достаточно, и это обобщают на группы.",
               "correct": false,
               "sections": {
                 "what_actually": "Read receipts нужны per-recipient («прочитано Алисой, не прочитано Бобом»); один флаг не различает читателей, а UI группы показывает «Прочитано 7 из 10».",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Lamport timestamps на клиенте: каждое устройство держит monotonic counter, штампует им сообщение, а получатели сортируют по этому счётчику — так внутри чата все видят один порядок без участия сервера. Глобальный порядок между чатами не требуется.",
+              "text": "Lamport timestamps на клиенте: каждое устройство держит monotonic counter, штампует им сообщение, а получатели сортируют по этому счётчику — так внутри чата все видят один порядок без участия сервера. Глобальный порядок между чатами не требуется. Клиент с быстрым набором (high counter) всегда отображался бы «после» медленного, а порядок зависел бы от typing-speed.",
               "correct": false,
               "sections": {
                 "what_actually": "Lamport timestamps работают для causally related events; client-side counter — это локальный view, у двух клиентов счётчики не согласованы, и сравнить их нельзя без causality-info.",
@@ -803,7 +803,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Vector clocks на каждого участника: вектор счётчиков задаёт total ordering сообщений между всеми участниками, любой получатель восстанавливает единый линейный порядок. Глобальный порядок между чатами при этом не нужен.",
+              "text": "Vector clocks на каждого участника: вектор счётчиков задаёт total ordering сообщений между всеми участниками, любой получатель восстанавливает единый линейный порядок. Глобальный порядок между чатами при этом не нужен. WhatsApp/Slack использовали бы vector clocks для message-ordering. Vector clocks упоминают рядом с Lamport как «более продвинутый» вариант ordering.",
               "correct": false,
               "sections": {
                 "what_actually": "Vector clocks решают partial ordering в multi-master KV (старый Dynamo/Riak); их размер растёт с числом writers — для группы 100 человек это ~1.6KB overhead на каждое 100-байтное сообщение.",
@@ -815,20 +815,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Per-conversation ordering через `TIMEUUID` + server-assigned timestamp (authoritative); global ordering не требуется. Внутри одной conversation все участники видят один порядок; между разными чатами порядок не важен. `TIMEUUID` v1 (time + clock-seq + node-id) — sortable + globally unique; Cassandra clustering order даёт порядок внутри partition.",
+              "text": "Обычно достаточно стабильного порядка внутри conversation или partition; глобальный порядок между чатами не нужен. Его обеспечивают single logical sequencer/leader, broker offset или server-assigned sequence с idempotent retry. Wall-clock timestamp и `TIMEUUID` сами по себе не дают строгого causal order при распределённых writers.",
               "correct": true,
               "sections": {
                 "explanation": "Это и есть достаточная гарантия: server присваивает timestamp при receive (client-time untrusted из-за clock skew), а `TIMEUUID` детерминированно разруливает одновременные сообщения.",
                 "example": "Например, A и B пишут в группу в одну ms: `server_ts` равны, но `TIMEUUID` различаются по clock-seq/node-id → все participants видят одинаковый порядок (A,B) или (B,A).",
                 "when_to_apply": "Per-conversation ordering применяют во всех чатах (WhatsApp, Slack, Discord) и в любом time-series с логически изолированными partition'ами; global order не нужен, потому что чаты независимы.",
-                "edge_cases": "Clock skew между серверами (NTP drift 10-50ms) и out-of-order delivery по сети требуют client-side reorder by `message_id`; causally-consistent order между разными чатами потребовал бы Lamport-таймстампов (редко нужно).",
+                "edge_cases": "При multi-region active-active приходится выбирать: региональный порядок, conflict resolution или координация с большей latency. Клиентский timestamp используют для отображения, но не как единственный источник authoritative order.",
                 "related": "[[design-chat-system-interview#Q9]] TIMEUUID в Cassandra schema; [[design-chat-system-interview#Q12]] delivery отдельно от ordering; [[design-chat-system-interview#Q17]] shared sequence для группы."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Global ordering через distributed sequencer (Zookeeper/etcd): единый сервис выдаёт монотонные ID всем сообщениям, поэтому порядок консистентен и внутри чата, и между чатами. Это снимает нужду в `TIMEUUID` и server-assigned timestamp.",
+              "text": "Global ordering через distributed sequencer (Zookeeper/etcd): единый сервис выдаёт монотонные ID всем сообщениям, поэтому порядок консистентен и внутри чата, и между чатами. Это снимает нужду в `TIMEUUID` и server-assigned timestamp. Zookeeper-counter на 2M msg/sec задушил бы кластер, +5ms на каждый atomic increment, плюс SPOF при maintenance.",
               "correct": false,
               "sections": {
                 "what_actually": "Global sequencer становится bottleneck (2M msg/sec через один counter невозможно) и SPOF; при этом global order не нужен — никто не сравнивает порядок между разными чатами.",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "WebSocket heartbeat каждую секунду — иначе presence будет неточным.",
+              "text": "WebSocket heartbeat каждую секунду — иначе presence будет неточным. WhatsApp жрал бы батарею за пару часов, а presence-Redis получал бы 500M ops/sec и требовал 1000+ shards.",
               "correct": false,
               "sections": {
                 "what_actually": "1 ping/sec × 500M = 500M req/sec в presence-store — в ~30× больше нужного; 30s heartbeat достаточно для UX, а мобильные клиенты экономят батарею.",
@@ -863,20 +863,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Redis` с `SET user:X \"online\" EX 60` + heartbeat каждые 30s (renew TTL) + pub/sub `presence.changed:X` для подписчиков-друзей. Sub-ms latency, встроенный TTL для auto-expire: ungraceful-disconnect → key исчезает через ≤60s → offline. Sharding by user_id hash.",
+              "text": "Presence хранит короткоживущий lease `user/device → gateway/status`, обновляемый heartbeat; истечение переводит запись в offline. Состояние шардируют, события рассылают только заинтересованным online subscribers и coalesce-ят, чтобы friend graph не создавал квадратичный fan-out.",
               "correct": true,
               "sections": {
                 "explanation": "Применяют для любой presence/heartbeat-системы (chat, gaming, Figma/Notion), где нужен `O(1)` lookup статуса и eventual consistency на 10-60s приемлема.",
                 "example": "Например, при connect: `SET presence:X EX 60` + `PUBLISH presence.changed:X online`; при graceful disconnect — `DEL` + publish offline; при network-drop — молча истекает по TTL.",
                 "when_to_apply": "Этот presence-паттерн применяют в chat, gaming и collaborative-tools (Figma, Notion), где нужен `O(1)` lookup статуса и допустима eventual consistency на 10-60s (presence — soft-data).",
-                "edge_cases": "TTL должен быть > heartbeat (60s > 30s) с буфером, иначе false-offline в момент in-flight ping; heartbeat-трафик 500M × 1/30s × 50B = ~800MB/s нужно закладывать в capacity.",
+                "edge_cases": "Presence по природе приблизителен: mobile backgrounding, network partition и reconnect дают задержки. TTL и heartbeat выбирают по батарее и допустимой stale-индикации, а не фиксируют универсально на 30/60 секунд.",
                 "related": "[[design-chat-system-interview#Q4]] presence в connection routing; [[design-chat-system-interview#Q5]] broker-routed delivery использует presence; [[design-chat-system-interview#Q16]] typing — похожий fire-and-forget."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "PostgreSQL с `UPDATE user.is_online=true` при connect и `=false` при disconnect — ACID-гарантия статуса.",
+              "text": "PostgreSQL с `UPDATE user.is_online=true` при connect и `=false` при disconnect — ACID-гарантия статуса. Vacuum никогда не догонял бы, index bloat рос бы, и Slack/WhatsApp хранили бы presence в SQL.",
               "correct": false,
               "sections": {
                 "what_actually": "Presence — ephemeral high-frequency data: 30s × 500M = ~16.6M UPDATE/мин дают WAL overflow, vacuum-storm, MVCC bloat; ACID для online/offline не критичен.",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Хранить presence только локально в каждом WS-сервере — сервер знает лишь своих connected users.",
+              "text": "Хранить presence только локально в каждом WS-сервере — сервер знает лишь своих connected users. «друг online?» требовал бы broadcast на 10K серверов, а presence-list группы 100 человек = 100 broadcast-lookups.",
               "correct": false,
               "sections": {
                 "what_actually": "Локальный presence недоступен другим серверам: чтобы Y на S1 узнал, online ли друг X на S2, без centralized registry пришлось бы broadcast'ить запрос — N×N трафик.",
@@ -911,20 +911,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Throttled (1 event per 3-5s) fire-and-forget через `Redis` pub/sub, без persistence; client-side timeout скрывает индикатор через 5s. Client дебаунсит keystrokes, сервер публикует в канал `typing:conversation:X`, subscribers пушат в сокеты; потеря OK, latency микросекундная.",
+              "text": "Typing indicator — эфемерное best-effort событие: клиент debounce/throttle-ит ввод, сервер ограничивает rate и публикует только текущим участникам, persistence и replay не нужны. UI скрывает индикатор по timeout или явному stop, поэтому потеря отдельного события не влияет на сообщения.",
               "correct": true,
               "sections": {
                 "explanation": "Применяют для любых ephemeral-сигналов: typing, «X записывает голос», «Y загружает файл», WebRTC availability — тот же fire-and-forget pattern.",
                 "example": "Например, при первом keystroke client шлёт `typing_start` (затем throttle 3s); получатель показывает «A is typing...» и стартует 5s-таймер, который сбрасывается каждым новым event'ом.",
                 "when_to_apply": "Fire-and-forget через `Redis` применяют для любых ephemeral-сигналов: typing, «X записывает голос», «Y загружает файл», WebRTC availability — там, где durability не нужна, а latency критична.",
-                "edge_cases": "Stop-event важен: если client закрыл app без `typing_stop`, индикатор висит 5s до auto-expire; в больших группах (1000+) лучше серверный аггрегат «N people typing».",
+                "edge_cases": "Не обещайте «микросекундную latency»: end-to-end задержка включает сеть, gateway и fan-out. Для больших групп typing часто отключают или агрегируют из-за privacy и нагрузки.",
                 "related": "[[design-chat-system-interview#Q8]] Redis pub/sub vs Kafka выбор брокера; [[design-chat-system-interview#Q15]] presence — похожий ephemeral pattern с TTL; [[design-chat-system-interview#Q17]] group fan-out для typing."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Сервер вычисляет typing pattern из keystroke-timing analytics и пушит computed `is_typing_smart`.",
+              "text": "Сервер вычисляет typing pattern из keystroke-timing analytics и пушит computed `is_typing_smart`. Slack/WhatsApp описывали бы typing-indicator как ML-фичу в blog. «Давайте используем ML, где можно» — текущий тренд, переносимый на простую UX-фичу.",
               "correct": false,
               "sections": {
                 "what_actually": "Over-engineering: задача простая — показать «X пишет», если X нажал клавишу за последние 5s; ML-вывод добавляет latency, computation cost и opaque behavior.",
@@ -936,7 +936,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Broadcast каждое keystroke через durable `Kafka`-topic — гарантированная доставка typing-events.",
+              "text": "Broadcast каждое keystroke через durable `Kafka`-topic — гарантированная доставка typing-events. Понадобился бы Kafka-кластер на 1000+ brokers только под typing + 100PB/day эфемерных данных, а latency убила бы UX. `Kafka` — default modern broker.",
               "correct": false,
               "sections": {
                 "what_actually": "`Kafka` durable, ~10-100ms latency; typing имеет UX-tolerance 1-2s, и «с задержкой 100ms» ощущается как лаг; keystroke-per-event = ~250M events/sec — не масштабируется.",
@@ -948,7 +948,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Хранить typing-events в Cassandra с TTL=5s — для аудита и потенциальной аналитики.",
+              "text": "Хранить typing-events в Cassandra с TTL=5s — для аудита и потенциальной аналитики. Cassandra compaction никогда не догоняла бы, storage рос бы линейно с typing-трафиком, инфра — миллионы $/мес за бесполезные данные. «Давайте всё хранить, вдруг пригодится» — классический distractor для junior.",
               "correct": false,
               "sections": {
                 "what_actually": "Typing — ephemeral signal, ценность только в момент рендеринга; persistence = миллиарды writes/sec ради 5-секундной ценности + TTL-storm с tombstones ломает compaction.",
@@ -971,7 +971,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Always read-time fan-out: писать один раз, recipient pull'ит при open.",
+              "text": "Always read-time fan-out: писать один раз, recipient pull'ит при open. WhatsApp/Telegram не были бы real-time, а iMessage потерял бы core-UX. Read-time экономит write-amplification и считается чистой архитектурой (как в Twitter timeline hybrid).",
               "correct": false,
               "sections": {
                 "what_actually": "Read-time fan-out = polling: получатель спрашивает «новые сообщения?» каждые N секунд → «увидел через 30s» вместо мгновенно; 500M × poll/30s = 16M poll/sec на API.",
@@ -983,7 +983,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Always WebSocket pub/sub channel per group без storage fan-out — recipients просто подписываются.",
+              "text": "Always WebSocket pub/sub channel per group без storage fan-out — recipients просто подписываются. Offline-пользователи не получали бы сообщений после reconnect, а «непрочитанные» не работали бы. `Redis` pub/sub удобен для broadcast и считается самодостаточным для группы.",
               "correct": false,
               "sections": {
                 "what_actually": "Pub/sub per group хорош для realtime, но без storage есть проблема offline-recipients (pull history при reconnect) и inbox-view (список чатов по last_message_at требует index/fan-out).",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Always write-time fan-out: при отправке писать копию каждому участнику в его inbox-table.",
+              "text": "Always write-time fan-out: при отправке писать копию каждому участнику в его inbox-table. Slack public channels на 100K subscribers убивали бы storage, а latency write = max(N INSERT). Outbox / fan-out-on-write — стандарт для feed-систем (Twitter/Facebook) с малым avg follower count.",
               "correct": false,
               "sections": {
                 "what_actually": "Write-amplification = N: группа 10K = 10K INSERT на сообщение; channel 30K × 100 msg/sec = 3M writes/sec, storage = N × messages_volume — не масштабируется на large groups.",
@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Skip persist, слать push напрямую из WS-сервера — экономия storage-write.",
+              "text": "Skip persist, слать push напрямую из WS-сервера — экономия storage-write. При отказе APNs (известные инциденты пару раз в год) сотни тысяч сообщений терялись бы навсегда. APNs или FCM рассматривается как основная durable queue сообщения, поэтому собственные outbox, retry и delivery state не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Если push fails (APNs timeout, FCM down) и сообщение не persisted — оно потеряно; persist-first гарантирует доставку при следующем reconnect.",
@@ -1056,7 +1056,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Push notification = полный текст сообщения в payload, и тогда не нужно дочитывать через WS после open.",
+              "text": "Push notification = полный текст сообщения в payload, и тогда не нужно дочитывать через WS после open. Sensitive-сообщения (банковский OTP, intimate texts) появлялись бы целиком на lock-screen, а E2E-систему нельзя было бы построить. «Зачем второй round-trip — сразу полный текст?» — premature optimization без учёта limits и privacy.",
               "correct": false,
               "sections": {
                 "what_actually": "APNs/FCM лимитируют payload ~4KB; реальные сообщения (E2E ciphertext + attachments meta) превышают, а lock-screen по design показывает только preview.",
@@ -1068,7 +1068,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Использовать только WebSocket reconnect для offline — push не нужен.",
+              "text": "Использовать только WebSocket reconnect для offline — push не нужен. WhatsApp не работал бы с закрытым приложением. «WebSocket persistent» верно лишь когда app в foreground; про background-killing забывают. Операционная система сохраняет socket активным после выгрузки приложения.",
               "correct": false,
               "sections": {
                 "what_actually": "WebSocket не работает при закрытом приложении: iOS/Android убивают background-соединения ради батареи; push — единственный способ разбудить app.",
@@ -1091,20 +1091,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Signal Protocol: `X3DH` key agreement при первой связи + Double Ratchet (DH-ratchet + chain-ratchet) с per-message rotation; forward secrecy + post-compromise security (self-healing). Server видит только ciphertext + envelope-metadata (sender, recipient, timestamp, size), но не plaintext.",
+              "text": "Современный Signal protocol использует асинхронное начальное соглашение ключей (`PQXDH` в актуальных спецификациях) и Double Ratchet для новых message keys. Это даёт forward secrecy и post-compromise security при продолжении обмена; сервер видит ciphertext и необходимую routing metadata, но не plaintext.",
               "correct": true,
               "sections": {
                 "explanation": "Это gold-standard secure messaging: Signal (reference), WhatsApp (since 2016, все чаты), Messenger «secret conversations» (opt-in), iMessage (похожий PKI-протокол).",
                 "example": "Например, X3DH считает root-key из `DH(IK_A,SPK_B)||DH(EK_A,IK_B)||...`, а Double Ratchet деривит новый `message_key = HKDF(chain_key)` на каждое сообщение → past messages защищены даже при leak текущего ключа.",
                 "when_to_apply": "Signal Protocol применяют как gold-standard secure messaging: Signal (reference), WhatsApp (с 2016, все чаты), Messenger «secret conversations» (opt-in), iMessage (похожий PKI-протокол).",
-                "edge_cases": "Group E2E — «Sender Keys» (per-sender symmetric key, rekey при membership change, дорого для больших групп); metadata всё ещё видна (traffic analysis), Signal частично закрывает «sealed sender».",
+                "edge_cases": "Группы, multi-device, backup и metadata protection используют дополнительные протоколы и компромиссы. E2EE не скрывает автоматически участников, время, размеры и push metadata.",
                 "related": "[[design-chat-system-interview#Q18]] push и E2E preview privacy; [[design-chat-system-interview#Q20]] media: client-side encrypt before upload; [[design-chat-system-interview#Q21]] server-side search невозможен при E2E."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Server должен хранить backup-копию ключей шифрования для recovery при потере пароля.",
+              "text": "Server должен хранить backup-копию ключей шифрования для recovery при потере пароля. При server-compromise (subpoena, breach) все сообщения восстанавливались бы. «Потерял пароль → потерял чаты» — реальная UX-боль, и server-side recovery считается спасением.",
               "correct": false,
               "sections": {
                 "what_actually": "Если server имеет ключи — это уже не E2E; key escrow противоречит определению «only endpoints have keys»; modern E2E делает user-controlled encrypted backup.",
@@ -1116,7 +1116,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Signal Protocol = простой AES-GCM с одним симметричным ключом, общим для sender и recipient на всё время.",
+              "text": "Signal Protocol = простой AES-GCM с одним симметричным ключом, общим для sender и recipient на всё время. Кража телефона давала бы доступ ко всей истории и будущим сообщениям, чего Signal/WhatsApp специально избегают.",
               "correct": false,
               "sections": {
                 "what_actually": "Static shared key не даёт forward secrecy: компрометация ключа сегодня раскрывает всю прошлую переписку; Signal использует Double Ratchet с новым ключом на каждое сообщение.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "E2E = TLS между client и server, и application-level шифрование не нужно.",
+              "text": "E2E = TLS между client и server, и application-level шифрование не нужно. Государственный запрос (subpoena) к Signal вернул бы все сообщения. Сервер, завершающий TLS, получает plaintext и считается конечной стороной шифрования.",
               "correct": false,
               "sections": {
                 "what_actually": "`TLS` — transport encryption: server видит plaintext (потом шифрует in transit); E2E — application encryption, где server никогда не видит plaintext, только ciphertext.",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Прокидывать media через chat-tier ради unified encryption и access control.",
+              "text": "Прокидывать media через chat-tier ради unified encryption и access control. Серверы WhatsApp были бы saturated media-трафиком, signaling-latency упала бы, а большие файлы вызывали бы OOM. «Единый канал = unified auth/encryption» считается academically clean.",
               "correct": false,
               "sections": {
                 "what_actually": "Chat-tier (Spring/Erlang/Go) — это request/response application-слой, не stream gigabytes: OOM на больших body, thread starvation; direct-to-S3 существует именно для отгрузки blob-трафика.",
@@ -1163,7 +1163,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Отправлять media inline через WebSocket вместе с текстом ради атомарности «сообщение + фото».",
+              "text": "Отправлять media inline через WebSocket вместе с текстом ради атомарности «сообщение + фото». 500M × upload 100MB/day = 50PB через WS-tier превратили бы WS-серверы в blob-proxy. Атомарность звучит логично («сообщение и фото вместе»).",
               "correct": false,
               "sections": {
                 "what_actually": "WS-frame обычно ограничен (~64KB у WhatsApp), а фото 2-5MB / video > 50MB; inline-media saturate'ит WS-tier bandwidth, ловит fragmentation и OOM.",
@@ -1175,7 +1175,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Хранить media base64-encoded прямо в `Cassandra` `messages.content` — единый storage.",
+              "text": "Хранить media base64-encoded прямо в `Cassandra` `messages.content` — единый storage. Кластер Cassandra был бы в ~50× больше нужного, а read-amplification и compaction не справлялись бы. «Всё в одной БД» — операционная простота.",
               "correct": false,
               "sections": {
                 "what_actually": "Cassandra warns при rows > 1MB (плохо для row cache/compaction/repair), а base64 раздувает binary на 33%; миллиарды rows × 5MB = exabyte-class в БД для time-series, не для blob.",
@@ -1211,7 +1211,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Гибридная схема: сервер хранит копию ключей шифрования, расшифровывает сообщения на своей стороне для построения `Elasticsearch`-индекса, а транспорт оставляет E2E-зашифрованным. Так сохраняются и E2E-приватность, и полноценный server-side search.",
+              "text": "Гибридная схема: сервер хранит копию ключей шифрования, расшифровывает сообщения на своей стороне для построения `Elasticsearch`-индекса, а транспорт оставляет E2E-зашифрованным. Так сохраняются и E2E-приватность, и полноценный server-side search. Signal/WhatsApp могли бы делать server-search. Server-side индекс считается совместимым с E2E-моделью при хранении копии ключей на сервере.",
               "correct": false,
               "sections": {
                 "what_actually": "Если server имеет ключи decrypt, это уже не E2E (см. Q19); «слабая E2E» — оксюморон, граница либо есть, либо нет.",
@@ -1223,7 +1223,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Client-side индекс невозможен из-за ограничений мобильных устройств, поэтому в E2E-чатах full-text search не предоставляют — при end-to-end шифровании это принципиально нерешаемая задача.",
+              "text": "Client-side индекс невозможен из-за ограничений мобильных устройств, поэтому в E2E-чатах full-text search не предоставляют — при end-to-end шифровании это принципиально нерешаемая задача. «найти сообщение» в WhatsApp не работало бы. Academic-формулировка «E2E + search невозможно» воспринимается как absolute без compromise.",
               "correct": false,
               "sections": {
                 "what_actually": "WhatsApp/Signal предоставляют search — он работает client-side: медленнее server-side, но usable для большинства сценариев.",
@@ -1235,7 +1235,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Server-side `Elasticsearch` inverted index для всех чатов: сервер индексирует входящие сообщения и отдаёт full-text search одинаково для E2E и non-E2E. Единый индекс проще эксплуатировать, а latency поиска одинаково низкая для всех пользователей.",
+              "text": "Server-side `Elasticsearch` inverted index для всех чатов: сервер индексирует входящие сообщения и отдаёт full-text search одинаково для E2E и non-E2E. Единый индекс проще эксплуатировать, а latency поиска одинаково низкая для всех пользователей. Signal/WhatsApp хвалились бы server-side search.",
               "correct": false,
               "sections": {
                 "what_actually": "Для E2E-систем сервер физически не имеет plaintext — индексировать нечего кроме metadata; `Elasticsearch` требует tokenized text для inverted index.",

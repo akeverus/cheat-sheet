@@ -11,7 +11,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`RabbitMQ` реализует протокол `STOMP` и написан на `Java`, что обеспечивает широкую экосистему.",
+              "text": "RabbitMQ — Java broker с native STOMP, где AMQP используется только как optional client library.",
               "correct": false,
               "sections": {
                 "what_actually": "`STOMP` поддерживается плагином `rabbitmq_stomp`, а не нативно; язык реализации — `Erlang`, не `Java`.",
@@ -23,7 +23,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`RabbitMQ` реализует протокол `AMQP 1.0` и написан на `Rust`, что обеспечивает высокую производительность.",
+              "text": "RabbitMQ нативно реализует AMQP 1.0 на Rust; AMQP 0-9-1 доступен лишь через compatibility plugin.",
               "correct": false,
               "sections": {
                 "what_actually": "Нативный протокол — `AMQP 0-9-1`; `AMQP 1.0` — это отдельный плагин `rabbitmq_amqp1_0`, а `Rust` к реализации отношения не имеет.",
@@ -35,7 +35,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`RabbitMQ` реализует протокол `MQTT` и написан на `Go`, что обеспечивает высокую конкурентность.",
+              "text": "RabbitMQ — Go broker с native MQTT, а AMQP exchanges и queues эмулируются отдельным extension.",
               "correct": false,
               "sections": {
                 "what_actually": "`MQTT` — дополнительный протокол через плагин `rabbitmq_mqtt`, а не основной; язык реализации — `Erlang/OTP`, не `Go`.",
@@ -47,7 +47,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`RabbitMQ` — open-source брокер сообщений, реализующий протокол `AMQP 0-9-1`; написан на `Erlang/OTP`, что даёт отказоустойчивость и кластеризацию из коробки.",
+              "text": "RabbitMQ — Erlang message broker; AMQP 0-9-1 задаёт wire protocol, exchanges, queues, bindings и acknowledgements.",
               "correct": true,
               "sections": {
                 "explanation": "`AMQP 0-9-1` — бинарный wire-протокол с моделью exchange/queue/binding, подтверждениями доставки и `TLS`/`SASL`; `Erlang` создавался для telecom с требованием 99.999% uptime, и его supervision trees делают брокер устойчивым к сбоям отдельных процессов.",
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Producer` публикует сообщения напрямую в `Queue`, минуя `Exchange`, указывая имя очереди.",
+              "text": "Producer публикует message напрямую в Queue, минуя Exchange и Binding; routing key используется только как точное имя конечной очереди.",
               "correct": false,
               "sections": {
                 "what_actually": "В `AMQP` producer всегда публикует в `Exchange`; даже прямая отправка в named queue идёт через `Default Exchange` (безымянный direct) — под капотом тот же exchange.",
@@ -96,7 +96,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Consumer` получает сообщения напрямую от `Producer` через `Binding`, без участия `Exchange` и `Queue`.",
+              "text": "Consumer получает messages непосредственно от Producer через Binding, без Exchange и Queue как промежуточного буфера или durable destination.",
               "correct": false,
               "sections": {
                 "what_actually": "`Binding` связывает `Exchange` и `Queue`, а не producer и consumer; consumer всегда подписывается на `Queue` через `basicConsume`.",
@@ -108,7 +108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Exchange` доставляет сообщения напрямую в `Consumer`, минуя `Queue`, при наличии активного `Binding`.",
+              "text": "`Exchange` доставляет сообщения напрямую в `Consumer`, минуя `Queue`, при наличии активного `Binding`. После рестарта consumer терял все «не пришедшие» сообщения, ведь буфера-очереди нет.",
               "correct": false,
               "sections": {
                 "what_actually": "`Exchange` никогда не доставляет потребителю напрямую — всегда через промежуточную `Queue`, которая обеспечивает буферизацию, durability и prefetch.",
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Virtual Host` — это псевдоним для конкретного `Exchange`, позволяющий маршрутизировать сообщения по имени хоста.",
+              "text": "Vhost — DNS alias конкретного exchange, используемый client-ом для выбора broker endpoint.",
               "correct": false,
               "sections": {
                 "what_actually": "`vhost` — изолированное namespace с собственными exchange/queue/binding/permissions, а не alias; маршрутизация идёт внутри vhost через exchange.",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Virtual Host` — это механизм репликации очередей между узлами кластера для обеспечения HA.",
+              "text": "Vhost автоматически реплицирует все queues между cluster nodes и определяет их HA policy.",
               "correct": false,
               "sections": {
                 "what_actually": "Репликация — отдельный механизм: classic mirrored queues (legacy) или quorum queues; vhost занимается изоляцией ресурсов, а не отказоустойчивостью.",
@@ -155,7 +155,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Virtual Host` — это физически отдельный сервер `RabbitMQ`, изолирующий данные разных приложений на уровне ОС.",
+              "text": "Vhost запускается в отдельной Erlang VM и обеспечивает физическую resource isolation между tenants.",
               "correct": false,
               "sections": {
                 "what_actually": "`vhost` — логическая, а не физическая изоляция; все vhost живут в одном процессе `Erlang VM` (`BEAM`) и делят память, диск и CPU.",
@@ -167,7 +167,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Virtual Host` — логическое разделение ресурсов в одном `RabbitMQ`-сервере: каждый vhost изолирует свои `exchange`, `queue`, `binding` и `permissions`, как отдельная схема в СУБД.",
+              "text": "Vhost — isolated namespace для exchanges, queues, bindings и permissions; одинаковые имена в разных vhosts независимы.",
               "correct": true,
               "sections": {
                 "explanation": "По умолчанию существует vhost `/`; `rabbitmqctl add_vhost /payments` создаёт изолированное пространство с собственным namespace и ACL — ресурсы разных vhost не пересекаются.",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Channel` — это очередь сообщений внутри `Connection`, буферизующая данные до подтверждения.",
+              "text": "Channel — durable message buffer внутри connection, сохраняющий pending publications после network disconnect.",
               "correct": false,
               "sections": {
                 "what_actually": "`Channel` — не очередь, а логический канал для `AMQP`-команд (publish, consume, declare); буферизация сообщений происходит в `Queue` на брокере.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Channel` — виртуальное соединение поверх одного TCP `Connection`, позволяющее мультиплексировать сотни/тысячи `AMQP`-операций без накладных расходов дополнительных TCP-соединений; не thread-safe.",
+              "text": "Channel — lightweight virtual connection поверх TCP; он multiplex-ит AMQP operations, но не хранит messages и не thread-safe.",
               "correct": true,
               "sections": {
                 "explanation": "Один `Connection` содержит до 2047 каналов по умолчанию; `Channel` НЕ thread-safe — его должен использовать строго один поток.",
@@ -216,25 +216,25 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Channel` — это физическое TCP-соединение к брокеру; каждый поток обязан использовать «один `Channel` = одно `Connection`».",
+              "text": "Channel автоматически распределяет consumers между TCP connections и cluster nodes как load balancer.",
               "correct": false,
               "sections": {
-                "what_actually": "`Channel` — виртуальное (логическое) соединение поверх единого TCP `Connection`; мультиплексирование позволяет держать тысячи channel на одном TCP без накладных расходов.",
-                "source_of_confusion": "Слово «соединение» в обоих случаях наводит на мысль, что channel и есть TCP-сокет.",
-                "if_it_were_true": "Будь channel отдельным TCP, открытие пула каналов исчерпало бы file descriptors — реально это и происходит, если ошибочно открывать `Connection` на каждый запрос.",
-                "how_it_should_be": "`Connection` — это TCP, а `Channel` — лёгкий логический канал поверх него; один поток на channel, но много channel на одно соединение."
+                "what_actually": "`Channel` не распределяет consumers между соединениями или узлами: это логический AMQP-канал поверх одного `Connection`; распределение сообщений выполняют очереди и consumer scheduling.",
+                "source_of_confusion": "Через channel отправляют publish/consume-команды, поэтому его легко принять за компонент маршрутизации или балансировки.",
+                "if_it_were_true": "Увеличение числа channels само меняло бы распределение нагрузки между consumers и узлами, но фактически на него влияют topology, число consumers и `prefetch`.",
+                "how_it_should_be": "Используйте `Channel` для мультиплексирования AMQP-операций, а балансировку проектируйте через очереди, consumers, topology и QoS."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`Channel` — это компонент балансировки нагрузки, распределяющий сообщения между несколькими `Connection`.",
+              "text": "Каждая AMQP command требует отдельного TCP connection; channels не уменьшают sockets и TLS handshakes.",
               "correct": false,
               "sections": {
-                "what_actually": "Балансировка в `RabbitMQ` достигается через `prefetch_count` и несколько consumer на одной очереди; channel выполняет mux/demux, а не routing-решения.",
-                "source_of_confusion": "Раз channel «между producer и брокером», кажется, что он распределяет нагрузку.",
-                "if_it_were_true": "Будь channel балансировщиком, изменение числа каналов меняло бы распределение — реально нужно настраивать `basic.qos` на consumer.",
-                "how_it_should_be": "Балансировку задаёт `prefetch`/несколько consumer; channel только мультиплексирует TCP."
+                "what_actually": "Много `Channel` мультиплексируются внутри одного TCP `Connection`, поэтому AMQP-команды не требуют отдельного сокета и TLS-handshake на каждую операцию.",
+                "source_of_confusion": "Слово channel воспринимают как физическое сетевое соединение, хотя в AMQP это лёгкая логическая сущность.",
+                "if_it_were_true": "Каждая публикация или подписка открывала бы новый TCP-сокет, резко увеличивая число file descriptors и стоимость TLS, чего нормальная channel-модель избегает.",
+                "how_it_should_be": "Держите ограниченное число TCP connections и создавайте поверх них отдельные channels с безопасным lifecycle для producer и consumer."
               }
             }
           ]
@@ -251,7 +251,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Direct` маршрутизирует по паттерну с `*` и `#`, `Fanout` — всем привязанным очередям, `Topic` — по точному совпадению, `Headers` — по заголовкам.",
+              "text": "Direct использует wildcard patterns, topic делает exact match, fanout учитывает key, headers читает JSON body.",
               "correct": false,
               "sections": {
                 "what_actually": "`Direct` и `Topic` перепутаны: именно `Topic` использует wildcards (`*` — одно слово, `#` — ноль или более), а `Direct` требует точного совпадения routing key.",
@@ -263,7 +263,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Direct` — точное совпадение routing key; `Fanout` — все привязанные очереди (broadcast); `Topic` — паттерн с `*` (одно слово) и `#` (ноль или более слов); `Headers` — `x-match: all/any` по заголовкам.",
+              "text": "Direct сопоставляет exact key, topic — pattern, fanout игнорирует key, headers проверяет message headers.",
               "correct": true,
               "sections": {
                 "explanation": "Четыре типа покрывают разные модели маршрутизации: точечную (`Direct`), broadcast (`Fanout`), иерархическую (`Topic`) и по метаданным (`Headers`).",
@@ -276,25 +276,25 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Direct` маршрутизирует по заголовкам сообщения, `Fanout` — всем привязанным очередям, `Topic` — по паттерну, `Headers` — по точному routing key.",
+              "text": "Fanout применяет `*` и `#`, а topic безусловно рассылает publication во все bound queues.",
               "correct": false,
               "sections": {
-                "what_actually": "`Direct` и `Headers` перепутаны: `Headers` использует `x-match: all/any` по заголовкам, а `Direct` смотрит только на точный routing key.",
-                "source_of_confusion": "Раз есть тип `Headers`, кажется логичным, что и `Direct` может фильтровать по заголовкам.",
-                "if_it_were_true": "Будь `Direct` headers-based, фильтрация по custom-заголовкам работала бы — реально `Direct` их игнорирует, и сообщения уходят не туда.",
-                "how_it_should_be": "`Direct` смотрит на routing key, `Headers` — на заголовки; путать их нельзя."
+                "what_actually": "`Fanout` игнорирует routing key и доставляет сообщение во все связанные очереди, а `Topic` сопоставляет routing key с шаблонами `*` и `#`.",
+                "source_of_confusion": "Оба exchange часто используют для рассылки нескольким получателям, поэтому broadcast и pattern routing смешивают.",
+                "if_it_were_true": "Binding-шаблон `orders.*` влиял бы на `Fanout`, а `Topic` отправлял бы каждое сообщение всем очередям; фактическое поведение противоположно.",
+                "how_it_should_be": "`Fanout` выбирайте для безусловного broadcast, `Topic` — для маршрутизации по шаблону routing key."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`Direct` маршрутизирует всем привязанным очередям, `Fanout` — по точному совпадению, `Topic` — по паттерну, `Headers` — по заголовкам.",
+              "text": "Headers exchange маршрутизирует по body JSON, а direct/topic сравнивают только AMQP headers.",
               "correct": false,
               "sections": {
-                "what_actually": "`Direct` и `Fanout` перепутаны: `Fanout` рассылает во все привязанные очереди игнорируя routing key, а `Direct` делает строгий match.",
-                "source_of_confusion": "Оба часто упоминают рядом как «простые» exchange, поэтому их семантику путают.",
-                "if_it_were_true": "Будь `Direct` broadcast-ом, payment-notifications дошли бы до всех подписчиков — реально на `Direct` сообщение получит только одна очередь с совпавшим ключом.",
-                "how_it_should_be": "`Direct` = exact match, `Fanout` = broadcast без учёта routing key."
+                "what_actually": "`Headers` сопоставляет AMQP headers по правилам `x-match`, но не анализирует JSON body; `Direct` и `Topic` используют routing key.",
+                "source_of_confusion": "Название `Headers` иногда трактуют как любые данные сообщения, включая поля payload, хотя exchange работает только с метаданными AMQP.",
+                "if_it_were_true": "Изменение JSON-поля без изменения AMQP headers меняло бы маршрут сообщения, но broker не разбирает application payload для такого exchange.",
+                "how_it_should_be": "Маршрутизируйте по AMQP headers через `Headers`, по точному ключу через `Direct`, по шаблону ключа через `Topic`."
               }
             }
           ]
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Direct Exchange` маршрутизирует по `AMQP headers` сообщения, игнорируя `routing key`.",
+              "text": "Direct exchange сопоставляет binding по headers через `x-match=all/any`, игнорируя routing key.",
               "correct": false,
               "sections": {
                 "what_actually": "Это `Headers Exchange` с аргументом `x-match=all/any`; `Direct` смотрит только на routing key.",
@@ -323,7 +323,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Direct Exchange` маршрутизирует во все привязанные очереди независимо от `routing key` (broadcast).",
+              "text": "Direct exchange игнорирует routing key и broadcast-ит каждое message во все bound queues.",
               "correct": false,
               "sections": {
                 "what_actually": "Это поведение `Fanout`, который игнорирует routing key; `Direct` всегда фильтрует по нему.",
@@ -335,7 +335,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Direct Exchange` маршрутизирует в очередь, у которой `binding key` ТОЧНО совпадает с `routing key` сообщения (string equality).",
+              "text": "Direct exchange доставляет publication в bindings, чей binding key точно равен routing key.",
               "correct": true,
               "sections": {
                 "explanation": "Строгое посимвольное сравнение строк: `channel.queueBind(\"error-queue\", \"logs.direct\", \"error\")` и `basicPublish(\"logs.direct\", \"error\", ...)` доставит только в `error-queue`.",
@@ -348,7 +348,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Direct Exchange` маршрутизирует во все очереди, у которых `binding key` НАЧИНАЕТСЯ с `routing key` (prefix-match).",
+              "text": "Direct exchange применяет wildcard `*` и `#`, выбирая несколько pattern bindings как topic exchange.",
               "correct": false,
               "sections": {
                 "what_actually": "Это семантика `Topic` с wildcard `#`, а не `Direct`; `Direct` сравнивает строки строго побайтово.",
@@ -396,7 +396,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Fanout Exchange` маршрутизирует по заголовкам сообщения с аргументом `x-match=any/all`.",
+              "text": "`Fanout Exchange` маршрутизирует по заголовкам сообщения с аргументом `x-match=any/all`. Фильтрация работала.",
               "correct": false,
               "sections": {
                 "what_actually": "Это `Headers Exchange`; `Fanout` не использует ни заголовки, ни routing key — всё broadcast по списку bindings.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Fanout Exchange` маршрутизирует по паттерну `routing key` с использованием wildcards `*` и `#`.",
+              "text": "`Fanout Exchange` маршрутизирует по паттерну `routing key` с использованием wildcards `*` и `#`. Binding `notifications.*` фильтровал события.",
               "correct": false,
               "sections": {
                 "what_actually": "Wildcards `*`/`#` — фича только `Topic Exchange`; `Fanout` не анализирует routing key вообще.",
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `Topic Exchange` `*` заменяет ноль или более слов, а `#` заменяет ровно одно слово.",
+              "text": "`*` совпадает с любым количеством слов routing key, включая точки, а `#` — ровно с одним словом.",
               "correct": false,
               "sections": {
                 "what_actually": "Значения перепутаны: `*` — ровно одно слово, `#` — ноль или более слов; это классический gotcha на собеседовании.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В `Topic Exchange` символ `*` заменяет любой символ внутри слова (glob-стиль), а `#` используется для именования exchange.",
+              "text": "Topic exchange сравнивает только headers и игнорирует routing key, поэтому wildcard patterns не участвуют в маршрутизации.",
               "correct": false,
               "sections": {
                 "what_actually": "`Topic` работает с целыми словами, разделёнными точкой, а не с glob-символами; `#` — wildcard для слов, а не часть имени exchange.",
@@ -455,7 +455,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В `Topic Exchange` символы `*` и `#` используются только в `routing key` при публикации, но не в `binding key`.",
+              "text": "Topic exchange требует полного равенства routing key; `*` и `#` являются обычными символами без специальной семантики.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: wildcards задаются в `binding key` (`queueBind`), а publisher указывает конкретный routing key без wildcards.",
@@ -467,7 +467,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В `Topic Exchange` `*` заменяет ровно одно слово, а `#` — ноль или более слов; wildcards задаются в `binding key`, а publisher указывает конкретный `routing key`.",
+              "text": "Topic exchange сопоставляет routing key с binding pattern: `*` означает один token, `#` — ноль или больше tokens.",
               "correct": true,
               "sections": {
                 "explanation": "Точные правила: `eu.#` совпадает с `eu`, `eu.auth`, `eu.auth.error`; `*.*.error` — только с трёхсловными `X.Y.error`; producer всегда шлёт конкретный ключ вроде `eu.auth.error`.",
@@ -491,7 +491,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Headers Exchange` маршрутизирует по `routing key` с точным совпадением, а `x-match` определяет чувствительность к регистру.",
+              "text": "Headers exchange маршрутизирует по точному routing key и игнорирует message headers, как direct exchange.",
               "correct": false,
               "sections": {
                 "what_actually": "`Headers` полностью игнорирует routing key и маршрутизирует по заголовкам; `x-match` управляет логикой `all`/`any`, а не регистром.",
@@ -503,7 +503,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`x-match=all` означает «достаточно одного совпадения заголовка», а `x-match=any` — «все должны совпасть».",
+              "text": "Он поддерживает только одно header condition и не умеет режимы `x-match=all` или `x-match=any`.",
               "correct": false,
               "sections": {
                 "what_actually": "Значения перепутаны: `all` = AND (совпасть должны все заголовки), `any` = OR (достаточно одного) — классический gotcha.",
@@ -515,7 +515,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Headers Exchange` маршрутизирует по `AMQP`-заголовкам сообщения: `x-match=all` требует совпадения ВСЕХ указанных заголовков, `x-match=any` — хотя бы одного; routing key игнорируется.",
+              "text": "Headers exchange сопоставляет binding arguments с headers сообщения; `x-match=all` требует все пары, `any` — хотя бы одну.",
               "correct": true,
               "sections": {
                 "explanation": "При привязке через `bindingArgs` задаются заголовки-критерии плюс `x-match`; exchange сравнивает их с `properties.headers` сообщения по строгому равенству значений.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Headers Exchange` поддерживает wildcards `*` и `#` в значениях заголовков, аналогично `Topic Exchange`.",
+              "text": "Headers exchange использует wildcard `*` и `#` над именами headers, а значения при маршрутизации не сравнивает.",
               "correct": false,
               "sections": {
                 "what_actually": "`Headers` сравнивает только ТОЧНЫЕ значения заголовков; wildcards `*`/`#` — фича `Topic`, в `Headers` они трактуются как обычные literal-символы.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Default Exchange` — это `Topic` без имени, маршрутизирующий по паттерну, равному имени очереди.",
+              "text": "Default exchange — fanout exchange, автоматически рассылающий publication во все queues текущего vhost.",
               "correct": false,
               "sections": {
                 "what_actually": "`Default` — это `Direct` с точным совпадением строк, без wildcards `*`/`#`; паттерны вроде `orders.*` в routing key не работают.",
@@ -563,7 +563,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Default Exchange` — это `Headers Exchange` без имени, маршрутизирующий по заголовку `x-queue-name`, равному имени очереди.",
+              "text": "Default exchange — встроенный `amq.topic`; routing key трактуется как pattern с wildcards `*` и `#`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Default` — это `Direct`, а не `Headers`; маршрутизация идёт по routing key, а заголовка `x-queue-name` в спецификации `AMQP` нет.",
@@ -575,7 +575,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Default Exchange` — это системный `Direct Exchange` без имени (`\"\"`), к которому каждая очередь автоматически привязана с `binding key`, равным имени очереди.",
+              "text": "Default exchange имеет пустое имя и implicit binding каждой queue по её имени; matching routing key доставляет напрямую.",
               "correct": true,
               "sections": {
                 "explanation": "`basicPublish(\"\", \"my-queue\", ...)` доставляет напрямую в `my-queue`; удобно для прототипов, но скрывает маршрутизацию, поэтому в проде предпочитают явные exchange.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Default Exchange` — это `Fanout` без имени, автоматически рассылающий сообщения во все очереди при пустом `routing key`.",
+              "text": "Default exchange создаётся application-ом вручную и может быть удалён либо перенастроен как headers exchange.",
               "correct": false,
               "sections": {
                 "what_actually": "`Default Exchange` — это `Direct`, а не `Fanout`; routing key равен имени очереди, и сообщение попадает в одну КОНКРЕТНУЮ очередь, а не во все.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`autoDelete=true` означает, что очередь записывает все сообщения на диск для защиты от потери данных.",
+              "text": "`autoDelete=false` делает transient messages persistent и подтверждёнными на disk независимо от delivery mode.",
               "correct": false,
               "sections": {
                 "what_actually": "`autoDelete` управляет lifecycle очереди (удаление после отписки всех consumer), а не персистентностью; для записи на диск нужны `durable=true` + `deliveryMode=2`.",
@@ -623,31 +623,31 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`exclusive=true` означает, что очередь удаляется, когда последний consumer отписывается.",
+              "text": "`durable=true` ограничивает queue текущим connection и удаляет её при disconnect.",
               "correct": false,
               "sections": {
-                "what_actually": "Это описание `autoDelete`; `exclusive` — про привязку к одному `Connection` (очередь видна только ему и удаляется при его закрытии).",
-                "source_of_confusion": "Оба флага «удаляют очередь автоматически», поэтому их триггеры путают.",
-                "if_it_were_true": "Будь `exclusive` про отписку consumer, очередь чистилась бы после ухода читателей — реально она держится, пока живо соединение (например, в пуле).",
-                "how_it_should_be": "`exclusive` = Connection-bound, `autoDelete` = последний consumer ушёл."
+                "what_actually": "`durable` позволяет declaration очереди пережить рестарт брокера; привязку очереди к одному `Connection` и удаление при его закрытии задаёт `exclusive`.",
+                "source_of_confusion": "Оба флага влияют на lifecycle очереди, поэтому долговечность declaration смешивают с областью жизни соединения.",
+                "if_it_were_true": "Durable-очереди исчезали бы при disconnect клиента, хотя они предназначены для восстановления после перезапуска брокера.",
+                "how_it_should_be": "`durable` отвечает за восстановление declaration, `exclusive` — за принадлежность одному соединению."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`durable=true` означает, что очередь доступна только текущему `Connection` и удаляется при его закрытии.",
+              "text": "`exclusive=true` сохраняет queue после restart и автоматически реплицирует её на все nodes.",
               "correct": false,
               "sections": {
-                "what_actually": "Это описание `exclusive=true`, а не `durable`; `durable` — про переживание рестарта брокера, а не про привязку к соединению.",
-                "source_of_confusion": "Оба флага boolean и относятся к lifecycle очереди, поэтому их семантику смешивают.",
-                "if_it_were_true": "Будь `durable` про Connection, временная очередь чистилась бы при disconnect — реально она останется навсегда, накапливая zombie-queues.",
-                "how_it_should_be": "`durable` = очередь переживает рестарт брокера; привязка к Connection — это `exclusive`."
+                "what_actually": "`exclusive` не делает очередь durable и не реплицирует её: такая очередь принадлежит одному `Connection` и удаляется, когда соединение закрывается.",
+                "source_of_confusion": "Изоляцию exclusive-очереди ошибочно связывают с повышенной надёжностью и кластерной репликацией.",
+                "if_it_were_true": "Exclusive reply-queue переживала бы рестарт и существовала на всех узлах, но её lifecycle намеренно ограничен клиентским соединением.",
+                "how_it_should_be": "Для временной private-очереди используйте `exclusive`; для устойчивости выбирайте durable/quorum topology и persistent messages отдельно."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`durable=true` — очередь переживает рестарт брокера; `exclusive=true` — очередь видна только текущему `Connection` и удаляется при его закрытии; `autoDelete=true` — удаляется после отписки последнего consumer.",
+              "text": "`durable` сохраняет declaration, `exclusive` связывает queue с connection, `autoDelete` удаляет после использования; message persistence отдельна.",
               "correct": true,
               "sections": {
                 "explanation": "Три независимых свойства: `durable` про восстановление, `exclusive` про privacy/Connection-bound, `autoDelete` про cleanup; персистентность сообщений задаётся отдельно через `deliveryMode=2`.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Durable queue достаточно для гарантии сохранности сообщений при рестарте — persistent message не требуется.",
+              "text": "Durable queue достаточно для сохранения messages после restart; publisher delivery mode не имеет значения.",
               "correct": false,
               "sections": {
                 "what_actually": "Durable queue гарантирует выживание только самой очереди; без `deliveryMode=2` сообщения хранятся в памяти и теряются при падении брокера.",
@@ -683,7 +683,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Durable queue и persistent message гарантируют мгновенную доставку сообщений без задержки на запись.",
+              "text": "Durable queue и persistent message ускоряют delivery, потому что broker не выполняет disk writes.",
               "correct": false,
               "sections": {
                 "what_actually": "Эти настройки про надёжность, а не про скорость; запись на диск неизбежно добавляет латентность по сравнению с хранением только в памяти.",
@@ -695,7 +695,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для гарантии сохранности сообщений при рестарте нужны оба условия: durable queue и persistent message (`deliveryMode=2`).",
+              "text": "Для restart durability нужны durable queue и persistent message; replication и confirms решают дополнительные failure cases.",
               "correct": true,
               "sections": {
                 "explanation": "Durable queue переживает рестарт брокера, а persistent сообщение (`deliveryMode=2`) гарантирует запись тела на диск; только вместе они дают at-least-once при падении.",
@@ -708,7 +708,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Persistent message достаточно для гарантии сохранности при рестарте — durable queue не требуется.",
+              "text": "Persistent message переживает restart даже в non-durable queue, потому что body хранится независимо от declaration.",
               "correct": false,
               "sections": {
                 "what_actually": "Persistent message пишется на диск, но если очередь не durable, она удаляется при рестарте брокера вместе со всеми сообщениями.",
@@ -731,7 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`exclusive` очередь удаляется при закрытии создавшего её `Connection`, а `auto-delete` — когда отписался ПОСЛЕДНИЙ consumer (после того как был хотя бы один).",
+              "text": "`exclusive` связывает queue с declaring connection; `auto-delete` удаляет использованную queue после исчезновения последнего consumer.",
               "correct": true,
               "sections": {
                 "explanation": "Два независимых триггера удаления: `exclusive` привязан к времени жизни `Connection`, `auto-delete` — к жизненному циклу consumer.",
@@ -744,7 +744,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`auto-delete` очередь доступна только создавшему её `Connection` и используется для temporary RPC reply-queue.",
+              "text": "`exclusive` означает durable replication на всех nodes и сохранение queue после connection close.",
               "correct": false,
               "sections": {
                 "what_actually": "Это описание `exclusive`; `auto-delete` НЕ ограничивает доступ по Connection — другие соединения могут подписываться.",
@@ -756,7 +756,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`exclusive` очередь переживает рестарт брокера и используется для сохранения истории сообщений.",
+              "text": "`auto-delete` удаляет queue сразу после declaration до первого consumer независимо от её использования.",
               "correct": false,
               "sections": {
                 "what_actually": "`exclusive` — временная конструкция, привязанная к `Connection`; она не переживает ни закрытие соединения, ни рестарт брокера.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`exclusive` очередь удаляется, когда все consumer отписались, и используется для динамических подписок.",
+              "text": "Оба флага задают message TTL и срок хранения каждого record внутри queue.",
               "correct": false,
               "sections": {
                 "what_actually": "Это описание `auto-delete`; `exclusive` привязана к одному `Connection` и удаляется при его закрытии, независимо от consumer.",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "TTL на уровне очереди задаётся через `x-expires`, а TTL сообщений применить невозможно.",
+              "text": "Queue TTL задаётся `x-expires`, а TTL отдельных messages RabbitMQ не поддерживает через message properties.",
               "correct": false,
               "sections": {
                 "what_actually": "`x-expires` — это TTL самой очереди (когда она удаляется при бездействии), а не TTL сообщений; TTL сообщений задаётся через `x-message-ttl` или `expiration`.",
@@ -803,7 +803,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "TTL для сообщений работает только при настроенном `DLX` — без него истёкшие сообщения остаются в очереди навсегда.",
+              "text": "Message TTL работает только при DLX; без него expired records остаются в queue навсегда.",
               "correct": false,
               "sections": {
                 "what_actually": "TTL работает независимо от `DLX`: при истечении сообщение либо отбрасывается (если DLX нет), либо маршрутизируется в DLX (если есть).",
@@ -815,7 +815,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "TTL на уровне сообщения задаётся через аргумент `x-message-ttl` (число миллисекунд), а TTL очереди — через поле `expiration` в `BasicProperties`.",
+              "text": "Per-message TTL задаётся `x-message-ttl`, а queue-wide message TTL — property `expiration` у каждой отдельной публикации.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: `x-message-ttl` в аргументах `queueDeclare` задаёт TTL для всех сообщений очереди, а `expiration` (строка!) в `BasicProperties` — TTL конкретного сообщения.",
@@ -827,7 +827,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "TTL на уровне очереди задаётся через `x-message-ttl` в аргументах `queueDeclare`, а TTL конкретного сообщения — через `expiration` в `BasicProperties`.",
+              "text": "Queue-wide message TTL задаётся `x-message-ttl`, а per-message TTL — строковым `expiration` в properties.",
               "correct": true,
               "sections": {
                 "explanation": "`x-message-ttl` в Map-аргументах при объявлении очереди применяется ко всем её сообщениям; `expiration` в `AMQP BasicProperties` — к конкретному сообщению. Оба в миллисекундах, но `expiration` передаётся строкой.",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "При переполнении с `x-overflow=reject-publish` удаляется самое старое сообщение из очереди.",
+              "text": "При `reject-publish` broker удаляет oldest message, принимает new publication и всегда подтверждает её.",
               "correct": false,
               "sections": {
                 "what_actually": "`reject-publish` ОТКЛОНЯЕТ новые публикации (publisher получает `nack` или `basic.return` при `mandatory=true`), а существующие сообщения не трогает.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`drop-head` (default) удаляет самое СТАРОЕ; `reject-publish` ОТКЛОНЯЕТ новые публикации (`nack` publisher'у); `drop-head` вместе с `DLX` направит удалённые в dead letter.",
+              "text": "`max-length`/bytes ограничивают ready queue; overflow может drop-head или reject new publishes, а DLX behavior зависит от policy/type.",
               "correct": true,
               "sections": {
                 "explanation": "Два режима с противоположной семантикой: `drop-head` жертвует историей ради свежести, `reject-publish` защищает историю ценой backpressure на publisher.",
@@ -876,25 +876,25 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`x-max-length` ограничивает объём очереди в БАЙТАХ, а `x-max-length-bytes` — количество сообщений.",
+              "text": "Length limit учитывает только unacked deliveries и не ограничивает ready messages в queue.",
               "correct": false,
               "sections": {
-                "what_actually": "Всё наоборот: `x-max-length` — количество сообщений (штук), `x-max-length-bytes` — объём в байтах; параметры независимы.",
-                "source_of_confusion": "Похожие имена параметров провоцируют перепутать единицы измерения.",
-                "if_it_were_true": "Будь `x-max-length=1048576` лимитом «1 МБ», очередь была бы маленькой — реально это лимит в 1 миллион сообщений, и она распухнет до десятков ГБ.",
-                "how_it_should_be": "`x-max-length` считает сообщения, `x-max-length-bytes` считает байты."
+                "what_actually": "Ограничение `max-length` применяется к ready-сообщениям в очереди; unacked deliveries уже переданы consumers и не составляют этот ready backlog.",
+                "source_of_confusion": "В UI рядом показываются ready и unacked counts, поэтому лимит очереди ошибочно связывают только с сообщениями в обработке.",
+                "if_it_were_true": "Очередь могла бы бесконечно накапливать ready messages, пока consumers держат мало unacked deliveries, что противоречило бы назначению length limit.",
+                "how_it_should_be": "Считайте `max-length` ограничением ready backlog и отдельно контролируйте unacked объём через consumer capacity и `prefetch`."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "При переполнении с `x-overflow=drop-head` удаляется САМОЕ НОВОЕ сообщение (только что опубликованное).",
+              "text": "При overflow broker автоматически расширяет limit до свободного disk, поэтому records не отклоняются.",
               "correct": false,
               "sections": {
-                "what_actually": "`drop-head` удаляет HEAD очереди — самое СТАРОЕ (голову FIFO); чтобы отклонять новые, нужен `reject-publish`.",
-                "source_of_confusion": "Слово «head» можно ошибочно понять как «свежее», а не как голову FIFO-очереди.",
-                "if_it_were_true": "Будь `drop-head` про новые, свежие alerts защищались бы — реально теряются именно свежие p0-инциденты, а на доске остаются старые warnings.",
-                "how_it_should_be": "`drop-head` выбрасывает самое старое; для защиты истории и отклонения новых нужен `reject-publish`."
+                "what_actually": "RabbitMQ не расширяет `max-length` автоматически: при достижении лимита действует настроенная overflow-политика, например `drop-head` или `reject-publish`.",
+                "source_of_confusion": "Дисковые alarm и свободное место влияют на способность брокера принимать данные, но не отменяют установленный queue limit.",
+                "if_it_were_true": "Заданный лимит переставал бы сдерживать backlog при наличии свободного диска, поэтому policy не обеспечивала бы предсказуемую границу.",
+                "how_it_should_be": "Задайте явный лимит и overflow policy; масштабируйте storage отдельно, не рассчитывая на автоматическое увеличение очереди."
               }
             }
           ]
@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Binding` — правило связи `Exchange ↔ Queue` (создаётся через `queueBind`), а `Routing Key` — строка в сообщении, которую `Exchange` сравнивает с `binding key` для выбора целевых очередей.",
+              "text": "Binding связывает exchange с queue/exchange и задаёт key, pattern или arguments для routing publication.",
               "correct": true,
               "sections": {
                 "explanation": "Два разных понятия: binding key — атрибут связи, routing key — атрибут сообщения; в `Direct` идёт точное равенство, в `Topic` — паттерн-match, в `Fanout` оба игнорируются.",
@@ -924,7 +924,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Routing Key` — это атрибут очереди, определяющий, какие типы сообщений она принимает от exchange.",
+              "text": "Routing key — имя consumer connection, а binding автоматически появляется после первого `basicConsume`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Routing Key` — атрибут сообщения, передаётся publisher'ом в `basicPublish`; у очереди есть `binding key` (через `queueBind`), который exchange сравнивает с routing key.",
@@ -936,7 +936,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Binding` — это правило связи между `Producer` и `Exchange`, определяющее, какие сообщения exchange принимает от данного producer.",
+              "text": "Binding находится внутри message, и producer перечисляет все destination queues при каждом publish.",
               "correct": false,
               "sections": {
                 "what_actually": "`Binding` связывает `Exchange` и `Queue`, а не producer с exchange; producer вообще не имеет постоянной связи с exchange — он публикует в момент `basicPublish`.",
@@ -948,7 +948,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Routing Key` — это уникальный идентификатор сообщения в очереди, используемый для дедупликации при повторной доставке.",
+              "text": "Routing key используется только fanout exchange; direct и topic полностью игнорируют его.",
               "correct": false,
               "sections": {
                 "what_actually": "`Routing Key` — ключ маршрутизации, а не identifier; для идентификации сообщения есть `messageId`/`correlationId` в `BasicProperties`, дедупликацию consumer обеспечивает сам.",
@@ -971,7 +971,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Да: один `exchange` может быть привязан к неограниченному числу очередей и к другим exchange через `exchange-to-exchange binding` (`exchangeBind`).",
+              "text": "Да: один `exchange` может иметь bindings с множеством очередей и с другими exchanges через `exchange-to-exchange binding` (`exchangeBind`); фактический масштаб ограничен ресурсами и topology.",
               "correct": true,
               "sections": {
                 "explanation": "Множественные bindings дают fan-out к N очередям; E2E bindings позволяют строить composable-топологии, например audit-tap, подключённый к основному потоку.",
@@ -984,7 +984,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Exchange-to-exchange binding` возможен только для `Fanout Exchange` и не поддерживается для `Direct` или `Topic`.",
+              "text": "`Exchange-to-exchange binding` возможен только для `Fanout Exchange` и не поддерживается для `Direct`, `Topic` или других exchange types.",
               "correct": false,
               "sections": {
                 "what_actually": "E2E binding работает для всех типов: `Direct`, `Topic`, `Fanout`, `Headers`; тип влияет на логику маршрутизации, а не на возможность связи.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Exchange-to-exchange binding` позволяет consumer читать сообщения напрямую из exchange без промежуточной очереди.",
+              "text": "`Exchange-to-exchange binding` позволяет consumer читать сообщения напрямую из exchange без промежуточной очереди. `basicConsume(\"my-exchange\",...)` работал.",
               "correct": false,
               "sections": {
                 "what_actually": "E2E binding соединяет Exchange↔Exchange для composable-маршрутизации; consumer всё равно читает из `Queue` через `basicConsume`, exchange сообщения не хранит.",
@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "При падении consumer без `ack` сообщение теряется, и брокер не пытается доставить его другому consumer.",
+              "text": "При падении consumer без `ack` сообщение теряется, и брокер не пытается доставить его другому consumer. При OOM consumer заказ исчезал.",
               "correct": false,
               "sections": {
                 "what_actually": "Без `ack` сообщение возвращается в `ready` и доставляется другому consumer; потеря возможна только при `auto-ack`.",
@@ -1043,7 +1043,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Параметр `multiple=true` в `basicAck` подтверждает только следующее сообщение после указанного `deliveryTag`.",
+              "text": "Параметр `multiple=true` в `basicAck` подтверждает только следующее сообщение после указанного `deliveryTag`. Часть сообщений осталась неподтверждённой и при retry улетела дублями.",
               "correct": false,
               "sections": {
                 "what_actually": "`multiple=true` подтверждает ВСЕ сообщения до и включая `deliveryTag` — это батчевый ack для снижения числа round-trip.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`basicReject` поддерживает параметр `multiple` для массового отклонения, а `basicNack` — нет.",
+              "text": "`basicReject` поддерживает параметр `multiple` для массового отклонения, а `basicNack` — нет. Батч-обработку делали через него.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `basicNack` принимает `multiple`, а `basicReject` отклоняет только одно сообщение по `deliveryTag`.",
@@ -1211,20 +1211,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Publisher Confirms` — брокер шлёт producer-у `basic.ack` после того, как сообщение принято в очередь (или сохранено на диск для durable), подтверждая факт публикации.",
+              "text": "В confirm mode брокер отправляет publisher-у ack или nack после принятия публикации и выполнения гарантий для конкретного типа очереди. Confirm подтверждает ответственность брокера, но не обработку сообщения consumer-ом.",
               "correct": true,
               "sections": {
-                "explanation": "Это гарантия со стороны брокера, что сообщение принято: для durable-очередей ack приходит после записи на диск (или репликации в quorum через Raft).",
-                "example": "Booking-confirmation events: async confirm listener + outbox-таблица; producer ретраит publish при `nack` или таймауте подтверждения.",
-                "when_to_apply": "Применяют, когда потеря публикации недопустима и нужно знать, что брокер реально принял сообщение.",
-                "edge_cases": "Confirms покрывают только «accepted by broker», но не маршрутизацию: для гарантии доставки в очередь нужен `mandatory=true` + `ReturnListener`. Confirms несовместимы с транзакциями на одном channel.",
+                "explanation": "Confirm относится к publisher-to-broker участку. Момент ack зависит от routing и durability/replication очередей; consumer acknowledgements — отдельная гарантия.",
+                "example": "Publisher присваивает sequence number, отправляет batch и асинхронно удаляет записи из unconfirmed map после `basic.ack`; при nack или закрытии channel выполняет retry с идемпотентностью.",
+                "when_to_apply": "Используйте для обнаружения потерянных публикаций и построения надёжного outbox publisher, особенно при persistent messages и replicated queues.",
+                "edge_cases": "Ack не означает, что consumer выполнил бизнес-операцию. Unroutable mandatory message может требовать return listener, а повторная публикация создаёт дубли.",
                 "related": "[[rabbitmq-interview#Q12]] durable и persistent; [[rabbitmq-interview#Q22]] confirms против транзакций; [[rabbitmq-interview#Q23]] Dead Letter Exchange."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`confirmSelect()` нужно вызывать перед каждым `basicPublish`, иначе подтверждения не работают.",
+              "text": "`confirmSelect()` вызывают перед каждой publication; после одного `basicPublish` channel автоматически выходит из confirm mode, поэтому следующий message публикуется без подтверждения.",
               "correct": false,
               "sections": {
                 "what_actually": "`confirmSelect()` переключает channel в confirm-mode один раз; все последующие publish получают подтверждения.",
@@ -1236,7 +1236,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Асинхронный `ConfirmListener` блокирует publisher-поток до получения подтверждения.",
+              "text": "Async confirm listener блокирует publisher до acknowledgement каждого message и по поведению полностью совпадает с последовательным `waitForConfirms()`, не позволяя держать publications in-flight.",
               "correct": false,
               "sections": {
                 "what_actually": "Асинхронный listener — это non-blocking callback на отдельном потоке; publisher продолжает работу. Блокирующая семантика — у `waitForConfirms`.",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Без `Publisher Confirms` `RabbitMQ` всё равно гарантирует доставку сообщения, потому что использует TCP.",
+              "text": "Успешная TCP write гарантирует routing, durable storage и последующую business processing consumer-ом, поэтому publisher confirms не добавляют никаких failure guarantees.",
               "correct": false,
               "sections": {
                 "what_actually": "TCP гарантирует доставку байтов до брокера, но не persistence на диск и не маршрутизацию в очередь; сообщение можно потерять при crash брокера до flush.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Publisher Confirms` поддерживают rollback через `confirm.rollback`, что упрощает обработку ошибок.",
+              "text": "Publisher confirms позволяют rollback уже confirmed messages и удалять их из queues без consumer.",
               "correct": false,
               "sections": {
                 "what_actually": "В confirm-mode нет rollback — есть только `ack` или `nack` от брокера; rollback существует только в транзакциях (`tx.rollback`).",
@@ -1283,7 +1283,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Транзакции и `Publisher Confirms` можно безопасно комбинировать на одном канале для двойной надёжности.",
+              "text": "Transactions и confirm mode нужно одновременно включать на channel для объединения guarantees.",
               "correct": false,
               "sections": {
                 "what_actually": "Они несовместимы: одновременное использование на одном канале вызывает ошибку `PRECONDITION_FAILED` и закрытие канала.",
@@ -1295,20 +1295,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Транзакции `AMQP` снижают throughput в ~250 раз из-за блокирующего `tx.commit`, тогда как `Publisher Confirms` асинхронны и быстры.",
+              "text": "Transactions требуют commit round trips; confirms поддерживают asynchronous in-flight acknowledgements и обычно дают выше throughput.",
               "correct": true,
               "sections": {
-                "explanation": "Практическое сравнение из бенчмарков команды `RabbitMQ`: блокирующий `tx.commit` синхронен и медленен, confirm-mode подтверждает асинхронно через listener.",
-                "example": "High-throughput event bus: confirm-mode + async listener; транзакции остаются только в legacy-коде на старых AMQP-библиотеках.",
-                "when_to_apply": "Применяют confirms всегда, когда нужна гарантия публикации без потери производительности; транзакции — практически нигде в новом коде.",
-                "edge_cases": "Семантика у обоих at-least-once, но rollback есть только у транзакций (`tx.rollback`); комбинировать confirms и tx на одном channel нельзя — будет `PRECONDITION_FAILED`.",
+                "explanation": "Transactions сериализуют публикацию вокруг commit round trips. Confirms позволяют держать несколько сообщений in-flight и обрабатывать подтверждения batch/async.",
+                "example": "Вместо commit после каждой публикации producer включает confirm mode один раз, отправляет batch и обрабатывает multiple acks по sequence numbers.",
+                "when_to_apply": "Обычно выбирают confirms для надёжной высокой производительности; transactions — только когда действительно нужна channel-level rollback-семантика и её стоимость измерена.",
+                "edge_cases": "Число «в 250 раз» из примеров документации не является универсальным benchmark. Ни transactions, ни confirms не включают внешнюю БД в одну атомарную границу.",
                 "related": "[[rabbitmq-interview#Q21]] Publisher Confirms; [[rabbitmq-interview#Q23]] Dead Letter Exchange; [[rabbitmq-interview#Q12]] durable и persistent."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`AMQP`-транзакции обеспечивают распределённый XA-протокол между брокером и producer.",
+              "text": "AMQP transaction является XA между RabbitMQ, SQL и HTTP и атомарно решает dual-write.",
               "correct": false,
               "sections": {
                 "what_actually": "`AMQP tx.*` — это локальные на канале транзакции (publish/ack), а не XA и не двухфазный коммит между разными ресурсами.",
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "При попадании в `DLX` сообщение теряет оригинальные headers и routing key.",
+              "text": "При попадании в `DLX` сообщение полностью теряет оригинальные headers, routing key и сведения о причине dead-lettering, поэтому диагностировать сбой невозможно.",
               "correct": false,
               "sections": {
                 "what_actually": "Сообщение сохраняет тело и заголовки; `RabbitMQ` лишь добавляет служебный заголовок `x-death` с историей dead-lettering.",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`DLX` — это отдельный системный exchange `amq.dlx`, который автоматически создаётся для каждой очереди.",
+              "text": "`DLX` — это отдельный системный exchange `amq.dlx`, который автоматически создаётся для каждой очереди. Отклонённые сообщения всегда сохранялись.",
               "correct": false,
               "sections": {
                 "what_actually": "`DLX` — это обычный пользовательский exchange, который объявляется явно через `exchangeDeclare` и привязывается к очереди аргументом `x-dead-letter-exchange`.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Сообщение dead-letter-ится только при истечении TTL очереди, но не при `nack` или overflow.",
+              "text": "Dead-lettering происходит только при expiry всей queue; reject, message TTL, length overflow и quorum delivery limit не создают dead-letter events.",
               "correct": false,
               "sections": {
                 "what_actually": "Это три независимых триггера: reject/nack с `requeue=false`, истечение TTL (сообщения или очереди), и overflow по `max-length` с `drop-head`.",
@@ -1403,20 +1403,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Три триггера: `reject`/`nack` с `requeue=false`; истечение TTL (сообщения или очереди); и `max-length` overflow с политикой `drop-head`.",
+              "text": "Сообщение может dead-letter-иться при `reject`/`nack` с `requeue=false`, истечении per-message TTL, вытеснении из-за length limit и превышении delivery limit quorum queue; точный набор зависит от queue type и policy.",
               "correct": true,
               "sections": {
-                "explanation": "Это полный набор условий из официальной документации; в DLX-сообщение добавляется `x-death` с причиной (`rejected`/`expired`/`maxlen`), счётчиком и исходной очередью.",
-                "example": "Payment retry-loop через DLX (reject + TTL) и audit overflow-drops для capacity planning.",
-                "when_to_apply": "Знание триггеров нужно при проектировании DLX-топологии и anti-poison логики на счётчике `x-death`.",
-                "edge_cases": "Лимит попыток брокер не считает сам — consumer читает `x-death[0].count` и при превышении делает `nack(false, false)` в parking-lot очередь.",
+                "explanation": "DLX — настраиваемый exchange; broker публикует туда сообщение при поддерживаемом dead-letter событии. Истечение срока самой очереди не означает автоматическое dead-lettering её содержимого.",
+                "example": "Quorum queue имеет delivery limit и DLX policy: после превышения числа неуспешных доставок сообщение публикуется в exchange `orders.dlx` и попадает в `orders.dlq`.",
+                "when_to_apply": "Настраивайте DLX policy, DLQ binding, retention и alerting для poison messages, retry exhaustion и TTL-based workflows.",
+                "edge_cases": "Dead-letter publish может столкнуться с недоступностью target queue или отсутствием routing. Cycle detection и `x-death` headers влияют на повторные маршруты.",
                 "related": "[[rabbitmq-interview#Q19]] nack и reject; [[rabbitmq-interview#Q23]] Dead Letter Exchange; [[rabbitmq-interview#Q25]] retry через DLX и TTL."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Сообщение попадает в `DLQ` при `basicNack` с `requeue=true` после превышения числа попыток.",
+              "text": "Любой `nack` с `requeue=true` немедленно отправляет message в DLX и одновременно оставляет его копию в исходной queue для следующей delivery.",
               "correct": false,
               "sections": {
                 "what_actually": "`requeue=true` возвращает сообщение в ту же очередь; в DLQ направляет ТОЛЬКО `requeue=false`. Число попыток брокер сам не считает.",
@@ -1428,7 +1428,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Если у очереди не настроен `x-dead-letter-exchange`, отклонённые сообщения автоматически идут в `amq.default`.",
+              "text": "Без настроенного DLX RabbitMQ автоматически отправляет dead-lettered message в default exchange с исходным routing key и гарантирует его сохранение в подходящей queue.",
               "correct": false,
               "sections": {
                 "what_actually": "При отсутствии настройки сообщения просто отбрасываются и теряются — никакого fallback на default exchange нет.",
@@ -1451,7 +1451,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно поставить `requeue=true` с задержкой через `Thread.sleep` в consumer для реализации delayed retry.",
+              "text": "Retry делают `requeue=true` и `Thread.sleep` в consumer; sleeping worker не удерживает resources.",
               "correct": false,
               "sections": {
                 "what_actually": "`Thread.sleep` блокирует поток consumer, держит prefetch и channel; решение не масштабируется и не переживает рестарт.",
@@ -1463,7 +1463,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Main Queue` → `DLX` → `retry-queue` с `x-message-ttl` → по истечении TTL через её `x-dead-letter-exchange` обратно в main exchange → `Main Queue`.",
+              "text": "Main queue отправляет в TTL retry queue через DLX, а expiry возвращает message; routing и attempt count задают явно.",
               "correct": true,
               "sections": {
                 "explanation": "Классический delayed-retry без блокировки consumer: сообщение nack-ается в DLX, ждёт TTL в retry-queue, а затем по dead-letter-роутингу возвращается в основной поток.",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Заголовок `x-death` обновляется только при первом dead-letter, поэтому считать попытки в нём нельзя.",
+              "text": "`x-death` создаётся один раз и не обновляет count или routing history при повторных cycles.",
               "correct": false,
               "sections": {
                 "what_actually": "`x-death` — это массив записей: каждый dead-letter добавляет новую запись или инкрементирует `count` в существующей.",
@@ -1488,7 +1488,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Плагин `rabbitmq_delayed_message_exchange` работает идентично паттерну DLX+TTL и заменяем по производительности.",
+              "text": "Delayed-message plugin и DLX+TTL имеют одинаковые storage, ordering и failure semantics при любой нагрузке.",
               "correct": false,
               "sections": {
                 "what_actually": "Плагин хранит отложенные сообщения отдельно (в Mnesia/Khepri) и даёт per-message delay, но на high-throughput паттерн DLX+TTL предпочтительнее.",
@@ -1511,7 +1511,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Высокий `prefetchCount` всегда улучшает производительность, потому что снижает round-trips.",
+              "text": "Высокий `prefetchCount` всегда улучшает производительность, потому что снижает round-trips. Ставили prefetch=10000 везде.",
               "correct": false,
               "sections": {
                 "what_actually": "На очень высоких значениях растёт memory footprint consumer и штраф rebalancing при его смерти — все unacked перевыдаются разом.",
@@ -1548,7 +1548,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`prefetchCount=0` означает «одно сообщение за раз» и обеспечивает fair dispatch.",
+              "text": "`prefetchCount=0` означает «одно сообщение за раз» для каждого consumer и обеспечивает максимально fair dispatch.",
               "correct": false,
               "sections": {
                 "what_actually": "`prefetchCount=0` означает БЕЗ ограничений — брокер шлёт всё сразу; fair dispatch — это `prefetchCount=1`.",
@@ -1566,25 +1566,25 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как prefetch влияет на производительность и нагрузку?",
+          "question_text": "Как выбирать prefetch для consumer-а?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "`prefetchCount=1` даёт fair dispatch для долгих неравномерных задач, а `10–100` — баланс throughput/latency для большинства сервисов.",
+              "text": "Prefetch ограничивает unacked deliveries на consumer; значение выбирают по processing time, memory, fairness и throughput.",
               "correct": true,
               "sections": {
-                "explanation": "Низкий prefetch равномерно распределяет долгие задачи между worker'ами, средний даёт батчинг и хороший throughput для типовых сервисов.",
-                "example": "Image resize с тяжёлой обработкой — `prefetch=1`; обычный order processor — `prefetch=20`.",
-                "when_to_apply": "Значение выбирают по длительности задачи: долго → низкий prefetch, быстро → 10–100.",
-                "edge_cases": "`prefetch=0` — это unlimited (опасно), а очень высокий prefetch (>100) повышает memory pressure и штраф при смерти consumer; `global=false` — per-consumer, `global=true` — общий лимит канала.",
+                "explanation": "Большой prefetch уменьшает delivery round trips, но резервирует много сообщений за одним consumer-ом и увеличивает память/повторную доставку при его сбое.",
+                "example": "Для тяжёлых задач начинают с небольшого prefetch и повышают по load test; для быстрых idempotent сообщений допускают больший batch, контролируя unacked и processing latency.",
+                "when_to_apply": "Настраивайте отдельно для разных listener/container и workload, измеряя throughput, p99, memory и равномерность.",
+                "edge_cases": "В RabbitMQ prefetch обычно применяется per consumer, несмотря на формулировки AMQP channel QoS. Global/channel semantics и framework defaults нужно проверять явно.",
                 "related": "[[rabbitmq-interview#Q26]] prefetch count и QoS; [[rabbitmq-interview#Q20]] auto-ack и manual ack; [[rabbitmq-interview#Q34]] настройка @RabbitListener."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`prefetchCount=0` означает «по одному сообщению за раз» как самая безопасная настройка для всех воркеров.",
+              "text": "Максимальный prefetch всегда снижает latency и memory, поэтому безопасен для любого workload.",
               "correct": false,
               "sections": {
                 "what_actually": "`0` означает unlimited — брокер шлёт consumer-у сразу всё; безопасное значение — `1`.",
@@ -1596,7 +1596,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "При высоком `prefetchCount` (>100) consumer перестаёт получать новые сообщения, пока не подтвердит все.",
+              "text": "Prefetch ограничивает messages на disk и не влияет на распределение deliveries между consumers.",
               "correct": false,
               "sections": {
                 "what_actually": "Брокер шлёт до `prefetch` unacked одновременно, но consumer обрабатывает их параллельно/по мере готовности — throughput растёт, а не замирает.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`global=true` означает, что лимит применяется ко всем каналам соединения, а не к одному каналу.",
+              "text": "`prefetch=0` означает ровно одну unacked delivery и является обязательным для fair dispatch.",
               "correct": false,
               "sections": {
                 "what_actually": "`global=true` — лимит на весь channel (не connection); `global=false` — на каждого consumer этого channel. `AMQP 0-9-1` отличается тут от 0-10.",
@@ -1631,20 +1631,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Метаданные (exchanges, bindings, vhosts) реплицируются на все узлы, а очередь по умолчанию живёт на одном узле; `pause-minority` корректно обрабатывает split-brain, останавливая меньшинство.",
+              "text": "Cluster разделяет topology metadata; data HA зависит от queue type, replicas и quorum/partition policies.",
               "correct": true,
               "sections": {
-                "explanation": "Базовая модель: replicated metadata + per-queue master; при network partition `pause-minority` останавливает меньшинство, не давая ему принимать сообщения и расходиться с большинством.",
-                "example": "Production 3-node кластер с `pause-minority` для безопасности при сетевых разделениях.",
-                "when_to_apply": "Эту модель учитывают при проектировании HA: репликация очередей — отдельно (quorum), а partition handling — через стратегию.",
-                "edge_cases": "При чётном числе узлов `pause-minority` может остановить весь кластер при split 2-vs-2 — для надёжного quorum нужен нечётный размер (3, 5, 7).",
+                "explanation": "Кластер не превращает любую очередь в автоматически replicated. Availability данных определяется queue type, replica placement и наличием majority.",
+                "example": "Quorum queue с тремя members переживает отказ одного узла; non-replicated classic queue становится недоступной вместе со своим leader до восстановления или обработки потери.",
+                "when_to_apply": "Проектируйте queue types и node count из RPO/RTO, а не полагайтесь на сам факт объединения broker-ов в cluster.",
+                "edge_cases": "`pause_minority`, `autoheal` и `ignore` имеют разные trade-offs. Двухузловой quorum deployment не обеспечивает устойчивого majority при обслуживании.",
                 "related": "[[rabbitmq-interview#Q29]] Mirrored Queues; [[rabbitmq-interview#Q30]] Quorum Queues; [[rabbitmq-interview#Q31]] Federation и Shovel."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Стратегия `ignore` при network partition безопаснее `pause-minority`, потому что не останавливает обработку.",
+              "text": "`ignore` всегда безопаснее `pause_minority`, потому что обе partitions могут писать без divergence.",
               "correct": false,
               "sections": {
                 "what_actually": "`ignore` ведёт к split-brain: обе части продолжают принимать сообщения, и после восстановления данные расходятся; `pause-minority` — рекомендуемый default.",
@@ -1656,7 +1656,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Все очереди в кластере автоматически реплицируются между всеми узлами для отказоустойчивости.",
+              "text": "Каждая queue автоматически реплицируется на все nodes независимо от classic, quorum или stream type.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию очередь живёт ТОЛЬКО на одном узле (master); реплика требует quorum- или mirrored-политики. Реплицируются лишь метаданные.",
@@ -1668,7 +1668,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`ram`-узлы работают быстрее и переживают рестарт благодаря репликации в `disc`-узлах.",
+              "text": "RAM node хранит durable copy всех messages и переживает полный cluster restart самостоятельно.",
               "correct": false,
               "sections": {
                 "what_actually": "`ram`-узел хранит метаданные только в RAM; при рестарте они теряются и узел ресинхронизируется с disc-узлами. Non-durable сообщения при рестарте теряются в любом случае.",
@@ -1691,7 +1691,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Slave-узлы в mirrored queue могут принимать publish-операции для распределения нагрузки.",
+              "text": "Mirrored classic queues остаются основным HA queue type RabbitMQ 4.x и автоматически создаются без policy.",
               "correct": false,
               "sections": {
                 "what_actually": "Все операции (publish/consume) идут через master; slave только зеркалируют — это узкое место, а не масштабирование.",
@@ -1703,7 +1703,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Mirrored Queues` надёжнее `Quorum Queues`, так как используют синхронную репликацию на все slave.",
+              "text": "Каждая mirror принимала independent publishes и consumers, поэтому throughput линейно рос с числом replicas.",
               "correct": false,
               "sections": {
                 "what_actually": "Mirrored используют custom-протокол со слабыми гарантиями и уязвимы к split-brain; quorum используют Raft с majority-quorum и устойчивее.",
@@ -1715,7 +1715,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "При падении master в mirrored queue новый master всегда содержит все сообщения, отправленные publisher'ом.",
+              "text": "Mirror promotion гарантировала сохранение всех confirmed messages при любом failover и network partition.",
               "correct": false,
               "sections": {
                 "what_actually": "Без publisher confirms сообщения, ещё не реплицированные на slave, теряются при failover — репликация eventually consistent.",
@@ -1727,13 +1727,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Mirrored Queues` deprecated с `RabbitMQ 3.9` и удалены в 4.x; они использовали eventually-consistent master-slave репликацию, новые проекты должны брать `Quorum Queues` или `Streams`.",
+              "text": "Classic mirrored queues были legacy HA и удалены в 4.x; replicated queues используют quorum queues, replay workloads — streams.",
               "correct": true,
               "sections": {
-                "explanation": "Чёткая миграционная стратегия: classic-HA устарел из-за слабых гарантий и уязвимости к split-brain, на смену пришли quorum (Raft) и streams (append-only log).",
-                "example": "Миграция order pipeline с mirrored на quorum: в Spring AMQP — `QueueBuilder.durable(\"q\").quorum().build()`.",
-                "when_to_apply": "Знание нужно при апгрейде на 4.x: mirrored-фича недоступна, и критичные очереди надо заранее перевести на quorum.",
-                "edge_cases": "При failover master в mirrored unacked-сообщения, не достигшие slave, терялись — quorum через Raft majority закрывает эту дыру; все операции шли через master, slave только зеркалировали.",
+                "explanation": "Mirrored queues имели сложные failure semantics и стоимость синхронизации. Quorum queues используют Raft и являются актуальной replicated queue моделью.",
+                "example": "Перед переходом на RabbitMQ 4.x команда объявляет новые quorum queues, переносит publishers/consumers и проверяет feature differences вместо попытки сохранить `ha-mode` policy.",
+                "when_to_apply": "Учитывайте при upgrade с 3.x, миграции policies и выборе queue type для новых сервисов.",
+                "edge_cases": "Quorum queues не являются feature-identical classic queues; priority, TTL и другие возможности нужно сверять с актуальной версией.",
                 "related": "[[rabbitmq-interview#Q11]] свойства очереди; [[rabbitmq-interview#Q28]] кластеризация; [[rabbitmq-interview#Q30]] Quorum Queues."
               }
             }
@@ -1751,7 +1751,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Quorum Queues` идентичны по производительности `Streams` и подходят для event sourcing с replay-семантикой.",
+              "text": "`Quorum Queues` идентичны по производительности `Streams` и подходят для event sourcing с replay-семантикой. Audit-log на нём перечитывался.",
               "correct": false,
               "sections": {
                 "what_actually": "`Streams` — отдельный append-only тип для event log с replay; quorum — это replicated FIFO без replay. Разные use-case.",
@@ -1763,7 +1763,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Quorum Queues` работают на двух узлах кластера, обеспечивая active-passive failover.",
+              "text": "`Quorum Queues` работают на двух узлах кластера, обеспечивая active-passive failover. Экономный 2-node кластер работал.",
               "correct": false,
               "sections": {
                 "what_actually": "Raft требует majority-quorum: минимум 3 узла для tolerance 1; на 2-узловом кластере потеря одного узла теряет quorum.",
@@ -1775,7 +1775,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Quorum Queues` поддерживают полный набор функций классических очередей, включая priority и per-message TTL.",
+              "text": "`Quorum Queues` поддерживают полный набор функций классических очередей, включая priority и per-message TTL. Миграция priority-очереди прошла прозрачно.",
               "correct": false,
               "sections": {
                 "what_actually": "Quorum НЕ поддерживают priority queues и per-message TTL (только per-queue TTL), а также не имеют `exclusive`.",
@@ -1811,7 +1811,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Federation` и `Shovel` — это синонимы для одного механизма репликации между датацентрами.",
+              "text": "Federation и Shovel являются одним механизмом синхронной репликации queue state между nodes одного cluster-а.",
               "correct": false,
               "sections": {
                 "what_actually": "`Federation` работает на уровне exchange/queue (логическая связь, lazy-pull при наличии consumer); `Shovel` — явный transfer сообщение-за-сообщением. Это разные модели.",
@@ -1823,32 +1823,32 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Federation` — логическая связь exchange/queue между брокерами с lazy-pull (только при наличии consumer); `Shovel` — explicit message transfer для миграции и DLQ-replay.",
+              "text": "Federation связывает exchanges/queues независимых broker-ов, а Shovel читает source и публикует в destination как управляемый bridge.",
               "correct": true,
               "sections": {
-                "explanation": "Чёткое разделение по use-case: Federation подтягивает сообщения по необходимости, Shovel непрерывно перекачивает из одной очереди в другую, в том числе на удалённом брокере.",
-                "example": "Federation для cross-DC event flow; Shovel для одноразовой миграции legacy-кластера или переброски из DLQ после починки.",
-                "when_to_apply": "Применяют для связи брокеров между датацентрами и для миграций/репликации сообщений.",
-                "edge_cases": "Federation подтягивает сообщения только при наличии consumer на target и не делает полную копию очередей; Shovel перемещает сообщения явно.",
+                "explanation": "Оба механизма работают между независимыми broker-ами, но Federation сохраняет routing-level связь, а Shovel явно читает из source и публикует в destination.",
+                "example": "Federation распространяет события exchange между регионами; Shovel переносит накопившиеся сообщения из старой очереди в новую во время миграции.",
+                "when_to_apply": "Используйте Federation для loosely coupled multi-broker routing, Shovel — для контролируемого forwarding, migration или bridge.",
+                "edge_cases": "Фраза lazy pull не универсальна для всех federation режимов. Нужно учитывать loops, acknowledgements, reconnect, duplicate delivery и WAN latency.",
                 "related": "[[rabbitmq-interview#Q3]] Virtual Host; [[rabbitmq-interview#Q28]] кластеризация; [[rabbitmq-interview#Q30]] Quorum Queues."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`Federation` создаёт полную копию очередей source-брокера на target-брокере, удваивая хранилище.",
+              "text": "Federation создаёт полную копию всех upstream queues вместе с consumer acknowledgements и local channel state.",
               "correct": false,
               "sections": {
                 "what_actually": "`Federation` подтягивает сообщения по необходимости (только при наличии consumer на target); полной копии очередей нет.",
                 "source_of_confusion": "Слово «federation» наводит на мысль о зеркалировании всего состояния.",
-                "if_it_were_true": "Будь так, в плане ёмкости закладывали бы удвоение storage — реально реально используются единицы процентов.",
+                "if_it_were_true": "Будь так, в плане ёмкости закладывали бы удвоение storage — фактически используются единицы процентов.",
                 "how_it_should_be": "Federation — lazy-pull link без полной копии; для явного перемещения есть Shovel."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`Shovel` требует отдельного брокера-посредника, а `Federation` работает point-to-point.",
+              "text": "Shovel требует отдельного третьего broker-а между source и destination и не может соединить их напрямую.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба — плагины самого `RabbitMQ` и не требуют посредников; настраиваются на одном из узлов.",
@@ -1871,7 +1871,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`RabbitTemplate.convertAndSend()` блокируется до получения `ack` от брокера для гарантии доставки.",
+              "text": "`RabbitTemplate.convertAndSend()` блокируется до consumer acknowledgement и подтверждает business processing.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию метод non-blocking; гарантию даёт publisher confirms (`setConfirmCallback`) или транзакция.",
@@ -1883,7 +1883,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`RabbitTemplate.convertSendAndReceive()` реализует синхронный RPC через временные reply-queue и `correlationId`, а `convertAndSend(obj)` пропускает объект через `MessageConverter`.",
+              "text": "`RabbitTemplate` конвертирует/публикует objects; `convertSendAndReceive` делает request-reply, а confirms и returns настраиваются отдельно.",
               "correct": true,
               "sections": {
                 "explanation": "`Spring AMQP` — абстракция над AMQP: модуль `spring-amqp` (базовые абстракции) + `spring-rabbit` (реализация для RabbitMQ); `RabbitTemplate` — основной класс для отправки и синхронного RPC.",
@@ -1896,7 +1896,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`SimpleMessageConverter` по умолчанию умеет сериализовать любые POJO в JSON через рефлексию.",
+              "text": "`SimpleMessageConverter` сериализует любой POJO в JSON и гарантирует cross-language schema compatibility.",
               "correct": false,
               "sections": {
                 "what_actually": "`SimpleMessageConverter` использует Java-сериализацию для неизвестных типов; для JSON нужен явно `Jackson2JsonMessageConverter`.",
@@ -1908,7 +1908,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`spring-amqp` зависит от `spring-rabbit` и автоматически подключает RabbitMQ-драйвер при импорте.",
+              "text": "`spring-amqp` зависит от `spring-rabbit` и не предоставляет broker-neutral AMQP abstractions.",
               "correct": false,
               "sections": {
                 "what_actually": "Зависимость обратная: `spring-rabbit` зависит от `spring-amqp` (абстракций); сам `spring-amqp` не требует `RabbitMQ`.",
@@ -1931,7 +1931,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Декларация `Queue`/`Exchange`/`Binding` через `@Bean` идемпотентна: `Spring AMQP` создаёт их при старте через `RabbitAdmin`, если их ещё нет.",
+              "text": "Queue, Exchange и Binding объявляют beans; RabbitAdmin создаёт missing topology, но incompatible existing arguments вызывают error.",
               "correct": true,
               "sections": {
                 "explanation": "Auto-declaration: `RabbitAdmin` при подключении объявляет все bean-ы `Queue`/`Exchange`/`Binding`; если объект уже существует с теми же параметрами — ничего не происходит.",
@@ -1944,7 +1944,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Spring AMQP` автоматически пересоздаёт очереди и bindings, объявленные в коде, даже если они уже существуют с другими параметрами.",
+              "text": "Spring удаляет и пересоздаёт existing queue при любом отличии arguments без channel error и data loss.",
               "correct": false,
               "sections": {
                 "what_actually": "При расхождении параметров (durable, auto-delete, x-arguments) брокер бросает `PRECONDITION_FAILED` — очередь не пересоздаётся автоматически.",
@@ -1956,7 +1956,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Jackson2JsonMessageConverter` использует Java-сериализацию как fallback для неизвестных типов.",
+              "text": "Jackson converter всегда fallback-ит на Java serialization, сохраняя корректный JSON для non-Java consumers.",
               "correct": false,
               "sections": {
                 "what_actually": "Jackson строго JSON; для неизвестных типов он кидает `MessageConversionException`, без Java-fallback.",
@@ -1968,7 +1968,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`BindingBuilder.bind(queue).to(exchange).with(\"order.#\")` работает одинаково для всех типов exchange.",
+              "text": "`BindingBuilder.with(\"order.#\")` одинаково применяет topic pattern к direct, fanout, headers и default exchanges.",
               "correct": false,
               "sections": {
                 "what_actually": "Routing key с wildcards (`#`, `*`) работает только для `Topic` exchange; для `Direct` это literal match, для `Fanout` ключ игнорируется.",
@@ -1991,7 +1991,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Параметры `concurrency` и `maxConcurrency` указывают количество одновременных сообщений в обработке.",
+              "text": "`concurrency` задаёт число messages, одновременно находящихся в broker queue, а listener container всегда создаёт один consumer thread независимо от указанного range.",
               "correct": false,
               "sections": {
                 "what_actually": "Эти параметры задают количество consumer-потоков, каждый из которых обрабатывает по `prefetchCount` сообщений.",
@@ -2003,20 +2003,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`concurrency = \"5-10\"` задаёт min/max consumer-потоков (реальный throughput ≈ `threads × prefetch`); `acknowledge-mode=manual` отключает auto-ack Spring и требует `Channel.basicAck`/`basicNack` в коде.",
+              "text": "Container создаёт заданное число consumer-ов и может масштабировать их до max; prefetch ограничивает unacked на consumer. Manual acknowledge требует явно вызвать ack/nack, но throughput нельзя вычислять простой формулой `threads × prefetch`.",
               "correct": true,
               "sections": {
-                "explanation": "Формат `min-max` — это границы одного пула consumer-потоков, который Spring масштабирует под нагрузку; manual-ack требует `Channel` в сигнатуре метода и явного подтверждения.",
-                "example": "Payment listener: `concurrency = \"3-10\"` + `acknowledge-mode=manual` + явный `basicAck` после успешной транзакции в БД.",
-                "when_to_apply": "Применяют для тюнинга пропускной способности и надёжного ack в критичных listener'ах.",
-                "edge_cases": "`acknowledge-mode=auto` (default Spring) — это НЕ AMQP auto-ack: Spring сам делает ack после успешного return и nack/reject при exception (at-least-once); AMQP auto-ack — это `acknowledge-mode=none`.",
+                "explanation": "Concurrency управляет parallel consumers, prefetch — количеством in-flight сообщений, а acknowledge mode — моментом подтверждения. Производительность зависит также от processing time, broker и downstream.",
+                "example": "Listener использует `concurrency=\"3-8\"`, prefetch 20 и manual ack для idempotent batch; load test проверяет scaling и redelivery при падении worker-а.",
+                "when_to_apply": "Настраивайте контейнер по workload и SLA, совместно контролируя concurrency, prefetch, retry, executor и connection/channel limits.",
+                "edge_cases": "Simple и Direct listener containers масштабируются по-разному. Manual ack с неправильным delivery tag или channel thread может закрыть channel.",
                 "related": "[[rabbitmq-interview#Q20]] auto-ack и manual ack; [[rabbitmq-interview#Q26]] prefetch и QoS; [[rabbitmq-interview#Q35]] retry-логика в Spring AMQP."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "При выбросе exception в `@RabbitListener` сообщение всегда попадает в DLQ автоматически без дополнительной настройки.",
+              "text": "Любое listener exception автоматически маршрутизирует message в DLQ даже без DLX, retry advice, recoverer, container error handler или отдельной queue policy.",
               "correct": false,
               "sections": {
                 "what_actually": "Без `RejectAndDontRequeueRecoverer` или DLX-конфигурации сообщение по умолчанию requeue'ится — получается бесконечный loop.",
@@ -2028,7 +2028,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`@RabbitListener` поддерживает только одну очередь на метод, иначе компиляция падает.",
+              "text": "Один `@RabbitListener` может слушать только одну queue; несколько queue names в annotation считаются invalid configuration и требуют отдельных методов, containers и duplicated processing code.",
               "correct": false,
               "sections": {
                 "what_actually": "`queues = {\"q1\", \"q2\"}` — несколько очередей в одном listener полностью валидно.",
@@ -2051,7 +2051,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Backoff `multiplier 2.0` означает удвоение количества попыток после каждой неудачи.",
+              "text": "Backoff multiplier увеличивает число retry attempts после ошибки, а intervals остаются неизменными.",
               "correct": false,
               "sections": {
                 "what_actually": "`multiplier` — это коэффициент роста интервала между попытками (1s, 2s, 4s, 8s); число попыток фиксировано параметром `max-attempts`.",
@@ -2063,7 +2063,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Stateless retry полностью эквивалентен stateful — выбор не влияет на гарантии, только на performance.",
+              "text": "Stateless и stateful retry эквивалентны по transaction context, redelivery и recovery behavior.",
               "correct": false,
               "sections": {
                 "what_actually": "Stateless блокирует поток на время backoff, stateful возвращает сообщение в очередь между попытками; для долгих backoff это принципиальная разница.",
@@ -2075,7 +2075,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`acknowledge-mode: auto` совместим с stateful retry без потерь сообщений.",
+              "text": "Auto-ack сохраняет message до завершения stateful retry даже при crash listener container.",
               "correct": false,
               "sections": {
                 "what_actually": "Stateful retry требует `MANUAL` ack для отслеживания `deliveryTag` между попытками; с `auto` сообщение подтверждается при первой доставке.",
@@ -2087,13 +2087,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`RejectAndDontRequeueRecoverer` после исчерпания retry-попыток отправляет сообщение в DLQ через `basicReject(requeue=false)`.",
+              "text": "После exhausted retry recoverer reject-ит без requeue; DLQ требует настроенного DLX и подходящего routing.",
               "correct": true,
               "sections": {
-                "explanation": "Стандартная стратегия poison-message handling: после `max-attempts` неудач recoverer делает `reject(requeue=false)`, и сообщение уходит в DLQ вместо бесконечного цикла.",
-                "example": "Spring Boot order processor с retry 3x exponential backoff и DLQ для анализа через Grafana-alert.",
-                "when_to_apply": "Применяют, чтобы отделить сбойные сообщения после исчерпания попыток и не зацикливать consumer.",
-                "edge_cases": "Stateless retry блокирует поток на backoff (плохо для долгих интервалов), stateful возвращает сообщение в очередь и требует `MANUAL` ack; `multiplier` — коэффициент роста интервала, а не числа попыток.",
+                "explanation": "Spring Retry определяет попытки, а recoverer решает финальное действие. Broker dead-lettering срабатывает на reject/nack `requeue=false` лишь при наличии DLX.",
+                "example": "Listener использует exponential backoff и recoverer; policy `dead-letter-exchange=orders.dlx` направляет отклонённое сообщение в `orders.dlq`.",
+                "when_to_apply": "Используйте для ограниченного retry transient errors и явного вывода poison messages из основной очереди.",
+                "edge_cases": "Stateful/stateless retry и acknowledge mode влияют на redelivery. Без идемпотентности retry может повторить внешние side effects.",
                 "related": "[[rabbitmq-interview#Q23]] Dead Letter Exchange; [[rabbitmq-interview#Q24]] условия попадания в DLQ; [[rabbitmq-interview#Q34]] настройка @RabbitListener."
               }
             }
@@ -2111,7 +2111,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Work Queue (Task Queue) требует `Topic` exchange для распределения задач между workers.",
+              "text": "Work Queue обязательно требует topic exchange и не может распределять tasks через одну queue между competing consumers.",
               "correct": false,
               "sections": {
                 "what_actually": "Work Queue использует default exchange (или `Direct`) с одной очередью и несколькими consumer; конкуренция встроена.",
@@ -2123,7 +2123,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Pub/Sub в `RabbitMQ` реализуется через одну shared queue — все подписчики читают из неё параллельно.",
+              "text": "Pub/Sub реализуется одной shared queue, которую все subscribers делят как competing consumers без fanout.",
               "correct": false,
               "sections": {
                 "what_actually": "Pub/Sub требует Fanout exchange + отдельную очередь на подписчика; одна shared queue даёт competing consumers (Work Queue), а не Pub/Sub.",
@@ -2135,7 +2135,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "RPC pattern в `RabbitMQ` автоматически обеспечивает порядок ответов, соответствующий порядку запросов.",
+              "text": "RabbitMQ RPC гарантирует responses в request order, поэтому correlation ID и явный response matching не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Ответы могут приходить в любом порядке; для сопоставления нужен `correlationId` на каждый запрос.",
@@ -2147,7 +2147,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Delayed-pattern реализуется через `DLX` + per-message TTL или плагин `rabbitmq_delayed_message_exchange`; Work Queue — competing consumers, Pub/Sub — fanout, RPC — replyTo+correlationId.",
+              "text": "Work Queue использует competing consumers, Pub/Sub — fanout queues, RPC — replyTo/correlationId, delayed delivery — TTL+DLX либо plugin.",
               "correct": true,
               "sections": {
                 "explanation": "Основные паттерны: Work Queue (default/Direct, распределение задач), Pub/Sub (Fanout, broadcast подписчикам), Routing (Direct), Topic (паттерны), RPC (default + reply-queue), Delayed (DLX+TTL).",
@@ -2171,7 +2171,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Клиент создаёт временную reply-queue, передаёт её имя в `replyTo`, кладёт `correlationId` в свойства и фильтрует входящие ответы по этому `correlationId`.",
+              "text": "Client передаёт replyTo/correlationId и сопоставляет response; client timeout не отменяет server-side processing.",
               "correct": true,
               "sections": {
                 "explanation": "Базовый AMQP RPC: запрос публикуется с `replyTo` (имя callback-очереди) и `correlationId`; сервер отвечает в reply-queue с тем же `correlationId`, по которому клиент находит свой ответ.",
@@ -2184,7 +2184,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "RPC через `RabbitMQ` обеспечивает synchronous behavior быстрее, чем HTTP REST, благодаря бинарному протоколу `AMQP`.",
+              "text": "RabbitMQ RPC всегда быстрее HTTP, потому что AMQP исключает serialization, queueing и broker round trips.",
               "correct": false,
               "sections": {
                 "what_actually": "Round-trip через брокер обычно медленнее HTTP (лишний hop через брокер); RPC через MQ выбирают за фичи, а не за latency.",
@@ -2196,7 +2196,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "При timeout RPC-вызова сообщение автоматически удаляется из RPC-очереди без обработки сервером.",
+              "text": "Client timeout удаляет pending request до обработки и гарантирует отсутствие late side effect.",
               "correct": false,
               "sections": {
                 "what_actually": "Сообщение уже у сервера в обработке (или ожидает); client-side timeout не отменяет server-side processing — at-least-once.",
@@ -2208,7 +2208,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`correlationId` опционален, если каждый клиент создаёт уникальную reply-queue.",
+              "text": "Correlation ID не нужен: shared reply queue всегда возвращает responses в request order.",
               "correct": false,
               "sections": {
                 "what_actually": "Даже с уникальной reply-queue нужен `correlationId`: один клиент может слать несколько параллельных RPC через одну очередь.",
@@ -2231,7 +2231,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Management Plugin рекомендуется как основной production-monitoring tool для high-load кластеров.",
+              "text": "Management UI подходит для high-frequency polling десятков тысяч queues; Prometheus и external dashboards избыточны.",
               "correct": false,
               "sections": {
                 "what_actually": "Management UI хранит метрики in-memory с overhead на каждом узле; для production используют `Prometheus` + `Grafana` через плагин `rabbitmq_prometheus`.",
@@ -2243,7 +2243,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`rabbitmqadmin` — это REST-клиент, требующий установки отдельной утилиты `Erlang`.",
+              "text": "`rabbitmqadmin` требует local Erlang VM, потому что HTTP API недоступен обычным automation scripts.",
               "correct": false,
               "sections": {
                 "what_actually": "`rabbitmqadmin` — это Python-скрипт, поставляемый с Management Plugin (скачивается из UI); `Erlang` для него не нужен.",
@@ -2255,20 +2255,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "HTTP API на порту 15672 (`/api/queues`, `/api/overview`) позволяет автоматизировать мониторинг и алертинг через скрипты или `Prometheus`.",
+              "text": "Management plugin даёт UI/HTTP API; regular production metrics обычно собирают Prometheus integration, ограничивая access.",
               "correct": true,
               "sections": {
-                "explanation": "Management Plugin даёт Web UI (`:15672`), HTTP API (`/api/`) и CLI `rabbitmqadmin`; HTTP API — программный доступ к метаданным и метрикам для систем мониторинга.",
-                "example": "Кастомные Grafana-дашборды через `rabbitmq_prometheus` с алертами на queue depth и unacked count.",
-                "when_to_apply": "Применяют для автоматизации: скрипты опрашивают `/api/queues`, а Prometheus собирает метрики для алертинга.",
-                "edge_cases": "Плагин не включён по умолчанию (`rabbitmq-plugins enable rabbitmq_management`); `rabbitmqadmin` — Python-скрипт из самого плагина, Erlang для него не нужен.",
+                "explanation": "API полезен для topology и diagnostics, но polling большого числа объектов через management database может создавать нагрузку. Prometheus-путь лучше подходит для регулярного сбора метрик.",
+                "example": "Оператор ограничивает доступ к management listener, включает TLS или private network и собирает broker/queue metrics в Prometheus с dashboard в Grafana.",
+                "when_to_apply": "Используйте UI/API для администрирования и расследований, а для постоянного high-cardinality monitoring — специализированную интеграцию.",
+                "edge_cases": "15672 не является неизменяемым контрактом и может отсутствовать, если plugin выключен. Права пользователя ограничивают видимые vhosts и операции.",
                 "related": "[[rabbitmq-interview#Q3]] Virtual Host; [[rabbitmq-interview#Q39]] важные метрики; [[rabbitmq-interview#Q28]] кластеризация."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Management Plugin включён по умолчанию во всех релизах `RabbitMQ` начиная с 3.0.",
+              "text": "Plugin всегда enabled, слушает fixed port 15672 без TLS и не может быть отключён или перенастроен.",
               "correct": false,
               "sections": {
                 "what_actually": "Плагин не активен по умолчанию; его включают командой `rabbitmq-plugins enable rabbitmq_management`.",
@@ -2291,7 +2291,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главная метрика — `publish_rate`: пока publishers пишут, всё в порядке.",
+              "text": "Достаточно `publish_rate`: пока producers активны, consumers и queues здоровы независимо от backlog.",
               "correct": false,
               "sections": {
                 "what_actually": "Без мониторинга `unacked` и `consumers` зависание consumer остаётся незамеченным даже при здоровом `publish_rate`.",
@@ -2303,7 +2303,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Контролировать только `connection_count` и `channel_count` — они отражают нагрузку и здоровье брокера.",
+              "text": "Connection/channel count полностью отражают processing; ready, unacked, redelivery и utilisation не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Соединения и каналы могут быть в норме при полностью остановленной обработке сообщений.",
@@ -2315,20 +2315,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Следить за связкой `queue_messages_ready` + `queue_messages_unacknowledged` + `queue_consumers`; рост `ready` при `consumers=0` — главный сигнал аварии.",
+              "text": "Мониторят ready/unacked, consumer utilisation, publish/deliver/ack, redeliveries, resource alarms и quorum/stream health.",
               "correct": true,
               "sections": {
-                "explanation": "Эти три метрики показывают backpressure и пропажу consumer — главные причины инцидентов: накопление ready, зависание в unacked и обнуление числа consumer.",
-                "example": "Alert: `ready` растёт И `consumers=0` — почти всегда означает остановку обработки.",
-                "when_to_apply": "Применяют как ядро алертинга на здоровье очереди в дополнение к инфраструктурным метрикам.",
-                "edge_cases": "При достижении `vm_memory_high_watermark` (по умолчанию 40% RAM) брокер включает flow-control и блокирует publishers — это отдельный сигнал к мониторингу `mem_used`.",
+                "explanation": "Нужно связывать backlog, скорость входа/выхода и ресурсы. Одна метрика не отличает остановку consumer-ов, медленную обработку, retry storm и resource alarm.",
+                "example": "Alert срабатывает, когда ready растёт, ack rate отстаёт от publish rate и consumer count равен нулю; отдельный alert отслеживает quorum queue без majority.",
+                "when_to_apply": "Стройте dashboard и SLO по критичным queues/vhosts, учитывая нормальный сезонный backlog и время drain.",
+                "edge_cases": "Названия вроде `queue_messages_ready` не универсальны между Management API, Prometheus plugin и сторонними exporters; проверяйте labels и aggregation.",
                 "related": "[[rabbitmq-interview#Q18]] acknowledgement; [[rabbitmq-interview#Q26]] prefetch и QoS; [[rabbitmq-interview#Q38]] Management Plugin."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Достаточно `disk_free` и `mem_used` — они покрывают все аварии брокера.",
+              "text": "Disk free и memory used покрывают все incidents; при нормальных resources consumers не останавливаются.",
               "correct": false,
               "sections": {
                 "what_actually": "Инфраструктурные метрики не показывают логических проблем: зависший consumer, медленный ack, растущий backlog.",
@@ -2351,20 +2351,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`RabbitMQ` — push-модель с гибкой маршрутизацией через exchange/binding и удалением после `ack`; `Kafka` — pull-модель с persistent log и replay по offset (retention-based).",
-              "correct": true,
+              "text": "Обе системы используют одинаковые exchanges, bindings, partitions и pull delivery; различаются только client API.",
+              "correct": false,
               "sections": {
-                "explanation": "Фундаментальная разница в дизайне: push+exchange+ack против pull+log+offset. RabbitMQ — низкая latency и гибкая маршрутизация, Kafka — очень высокий throughput и replay.",
-                "example": "RabbitMQ для task queue/RPC/сложной маршрутизации; Kafka для event streaming, аналитики и audit log с перечитыванием.",
-                "when_to_apply": "Выбор делают по задаче: «задачи и маршрутизация» → Rabbit, «event log и replay» → Kafka.",
-                "edge_cases": "Ordering у обоих partial (Kafka — внутри партиции, Rabbit — очередь+single consumer); retention есть только у Kafka (по `log.retention.*` независимо от чтения), RabbitMQ удаляет на `ack`.",
-                "related": "[[rabbitmq-interview#Q18]] acknowledgement; [[rabbitmq-interview#Q28]] кластеризация; [[rabbitmq-interview#Q41]] когда выбрать RabbitMQ или Kafka."
+                "what_actually": "`RabbitMQ` — push-модель (брокер пушит consumer-у в пределах prefetch), а `Kafka` — pull (consumer тянет).",
+                "source_of_confusion": "Раз оба «доставляют сообщения», модель доставки кажется одинаковой.",
+                "if_it_were_true": "Будь RabbitMQ pull-моделью, prefetch не имел бы смысла — реально именно он ограничивает push-поток.",
+                "how_it_should_be": "`RabbitMQ` пушит (с prefetch как backpressure); `Kafka` — pull по offset."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`RabbitMQ` хранит сообщения как лог N дней с replay по offset, как `Kafka`.",
+              "text": "Любая RabbitMQ queue является immutable retained log с offsets и позволяет replay acknowledged messages.",
               "correct": false,
               "sections": {
                 "what_actually": "Это модель `Kafka`; в `RabbitMQ` сообщения удаляются после `ack`, и replay по offset не поддерживается.",
@@ -2376,7 +2375,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`RabbitMQ` гарантирует total ordering всех сообщений во всём кластере, а `Kafka` — только внутри партиции.",
+              "text": "RabbitMQ гарантирует global ordering между всеми queues/nodes, а Kafka не сохраняет order даже внутри partition.",
               "correct": false,
               "sections": {
                 "what_actually": "`RabbitMQ` даёт порядок только в пределах одной очереди и одного consumer; при нескольких consumer глобальный порядок теряется. Обе системы по факту дают partial ordering.",
@@ -2388,13 +2387,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Оба брокера используют pull-модель: consumer тянет сообщения сам.",
-              "correct": false,
+              "text": "RabbitMQ queues дают exchange routing и ack-based consumption; Kafka — retained partitioned pull log с offsets/replay; RabbitMQ Streams добавляют log mode.",
+              "correct": true,
               "sections": {
-                "what_actually": "`RabbitMQ` — push-модель (брокер пушит consumer-у в пределах prefetch), а `Kafka` — pull (consumer тянет).",
-                "source_of_confusion": "Раз оба «доставляют сообщения», модель доставки кажется одинаковой.",
-                "if_it_were_true": "Будь RabbitMQ pull-моделью, prefetch не имел бы смысла — реально именно он ограничивает push-поток.",
-                "how_it_should_be": "`RabbitMQ` пушит (с prefetch как backpressure); `Kafka` — pull по offset."
+                "explanation": "Классические/quorum queues и Kafka log оптимизированы под разные consumption patterns. RabbitMQ гибко маршрутизирует сообщения, Kafka масштабирует ordered partitions и повторное чтение.",
+                "example": "Команды и RPC идут через RabbitMQ quorum queues; доменные события для аналитики и rebuild projections — в Kafka. RabbitMQ Stream оценивают отдельно для replay use case.",
+                "when_to_apply": "Сравнивайте требования к routing, fanout, replay, retention, ordering key, throughput и operational expertise.",
+                "edge_cases": "Нельзя сводить RabbitMQ только к transient push queues: Streams имеют retention и offsets. Kafka также поддерживает transactions и compacted topics.",
+                "related": "[[rabbitmq-interview#Q18]] acknowledgement; [[rabbitmq-interview#Q28]] кластеризация; [[rabbitmq-interview#Q41]] когда выбрать RabbitMQ или Kafka."
               }
             }
           ]
@@ -2411,7 +2411,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`RabbitMQ` — для task queues, RPC и сложной маршрутизации; `Kafka` — для event log, replay и очень высокого throughput.",
+              "text": "RabbitMQ выбирают для task queues, commands, RPC и гибкой маршрутизации; Kafka — для durable partitioned log, replay, analytics и stream-processing ecosystem.",
               "correct": true,
               "sections": {
                 "explanation": "Эти use-case напрямую соответствуют сильным сторонам брокеров: RabbitMQ — гибкая маршрутизация, низкая latency, Work Queue/RPC; Kafka — persistent log, replay, миллионы событий/сек.",
@@ -2424,7 +2424,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Kafka` лучше для синхронного RPC через messaging с низкой latency на одно сообщение.",
+              "text": "Kafka оптимальна для синхронного RPC с одним request/response и broker-side headers routing через exchanges.",
               "correct": false,
               "sections": {
                 "what_actually": "`Kafka` оптимизирована под batch-throughput, а не под per-message RPC; latency выше из-за батчинга.",
@@ -2436,7 +2436,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Использовать оба брокера одновременно нельзя — это дублирование инфраструктуры.",
+              "text": "Оба broker-а нельзя использовать вместе: наличие RabbitMQ исключает Kafka даже для отдельного analytical event log.",
               "correct": false,
               "sections": {
                 "what_actually": "На практике брокеры дополняют друг друга: `Kafka` для event streaming, `RabbitMQ` для task queues и RPC.",
@@ -2448,7 +2448,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Выбирайте `RabbitMQ` для миллионов событий/сек и долгого хранения с replay.",
+              "text": "RabbitMQ classic queues лучше подходят для многолетней retention и массового offset replay, чем Kafka topics.",
               "correct": false,
               "sections": {
                 "what_actually": "Это сценарий `Kafka`; throughput `RabbitMQ` ограничен ~100K msg/s, а replay не поддерживается.",

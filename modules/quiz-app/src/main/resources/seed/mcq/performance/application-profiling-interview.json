@@ -21,13 +21,13 @@
               "label": "A"
             },
             {
-              "text": "`Profiling` измеряет поведение на уровне методов и stack-traces (где тратится CPU, как аллоцируется память, где блокировки); мониторинг даёт метрики уровня сервиса (`p99`, `RPS`, `CPU%`).",
+              "text": "`Profiling` измеряет поведение на уровне методов и stack-traces; мониторинг даёт метрики уровня сервиса.",
               "correct": true,
               "sections": {
                 "explanation": "Мониторинг обнаруживает проблему по SLI («p99 вырос до 500ms»), а профилирование локализует root cause до конкретного метода («60% CPU в `JsonParser.parse()`»). Это разная гранулярность одного процесса диагностики.",
                 "example": "Например, `Netflix` и `Datadog` связывают `Prometheus`-алерт с `JFR`-снимком: алерт `p99 > 500ms` триггерит автоматический JFR-record именно тогда, когда метрика показала «что плохо».",
                 "when_to_apply": "Профилирование применяют после сигнала о деградации или при оптимизации критичного сценария — не вместо метрик, а как следующий шаг по цепочке profile → hypothesis → change → re-profile.",
-                "edge_cases": "Overhead профиля выше (1-5% против <1% у мониторинга), поэтому его не держат включённым везде; исключение — continuous profiling с ~1% overhead, который как раз стирает эту границу.",
+                "edge_cases": "Overhead профиля выше обычного мониторинга и зависит от выбранных events, поэтому его не держат включённым везде; исключение — continuous profiling с low-overhead sampling, который как раз стирает эту границу.",
                 "related": "[[application-profiling-interview#Q4]] какие метрики связать с профилем; [[application-profiling-interview#Q24]] APM как мост monitoring↔profiling; [[application-profiling-interview#Q29]] алерт→trigger профиля."
               },
               "order": 1,
@@ -39,7 +39,7 @@
               "sections": {
                 "what_actually": "Профилирование — это sampling stack-traces с low overhead, а не ручная инструментация логами; `nanoTime`-обёртки на каждый метод дают высокий overhead и искажают картину.",
                 "source_of_confusion": "Ручной замер времени интуитивно кажется «профилированием», ведь он тоже измеряет длительность методов.",
-                "if_it_were_true": "Если бы это работало, достаточно было бы добавить `DEBUG`-логи — но они дают 30-50% overhead в production, p99 растёт со 100ms до 400ms, а stack-trace бизнес-методов всё равно не виден.",
+                "if_it_were_true": "Если бы это работало, достаточно было бы добавить `DEBUG`-логи — но они могут существенно увеличить overhead и p99 в production, а stack-trace бизнес-методов всё равно не виден.",
                 "how_it_should_be": "Это sampling-профайлер (`JFR`, `async-profiler`), снимающий стеки без правки кода; ручные `nanoTime`-обёртки — антипаттерн."
               },
               "order": 2,
@@ -69,20 +69,20 @@
           "question_text": "Как выбрать между `sampling` и `instrumentation`?",
           "options": [
             {
-              "text": "`Sampling` периодически снимает stack-traces (overhead `~1-5%`, для prod); `instrumentation` вставляет байткод в каждый метод (overhead `10-50%+`, для dev/test).",
+              "text": "Sampling периодически наблюдает stacks или события, а instrumentation добавляет probes в выбранный код; выбор зависит от точности и допустимого observer effect.",
               "correct": true,
               "sections": {
-                "explanation": "Sampling даёт вероятностную картину с low overhead, instrumentation — точные счётчики вызовов ценой искажения поведения (observer effect). Поэтому выбор привязан к среде, а не к вкусу.",
-                "example": "Например, `async-profiler` (sampling) включают на prod в `Netflix`/`Uber` для CPU-анализа, а `BTrace`/`JProfiler` (instrumentation) — только в staging для точного подсчёта вызовов узких классов.",
-                "when_to_apply": "Правило простое: sampling — для prod, instrumentation — для лаборатории; в production почти всегда выбирают sampling (`JFR`, `async-profiler`).",
-                "edge_cases": "Sampling может пропустить короткие или JIT-inlined методы (вероятностная природа), поэтому для точного подсчёта вызовов конкретного класса берут точечный instrumentation в dev.",
+                "explanation": "Sampling даёт статистическую картину без перехвата каждого вызова. Instrumentation может точно учитывать выбранные события, но её стоимость зависит от охвата и частоты probes.",
+                "example": "Для production CPU-профиля используют ограниченный sampling; для точного счётчика вызовов одного компонента можно применить узкую instrumentation после оценки overhead.",
+                "when_to_apply": "Выбирайте sampling для широкого поиска hotspots, а instrumentation — когда нужна детерминированная информация о конкретном участке и среда выдерживает дополнительную стоимость.",
+                "edge_cases": "Ни один режим не имеет фиксированного процента overhead: результат зависит от frequency, stack depth, event type, числа instrumented methods и workload. Точечная instrumentation иногда допустима в production.",
                 "related": "[[application-profiling-interview#Q3]] safepoint bias как ограничение sampling; [[application-profiling-interview#Q9]] async-profiler без safepoint bias; [[application-profiling-interview#Q39]] детально overhead sampling vs instrumentation."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "`Sampling` и `instrumentation` одинаковы по overhead, разница только в формате вывода.",
+              "text": "Sampling и instrumentation создают одинаковый overhead и одинаково изменяют workload; различается только формат итогового отчёта профилировщика.",
               "correct": false,
               "sections": {
                 "what_actually": "Разница принципиальна именно в стоимости: sampling `~1-5%`, instrumentation `10-50%+`; формат вывода тут вторичен.",
@@ -94,7 +94,7 @@
               "label": "B"
             },
             {
-              "text": "`Sampling` видит все методы без исключений, а `instrumentation` пропускает inlined-методы.",
+              "text": "Sampling детерминированно видит каждый вызов метода, тогда как instrumentation теряет короткие и JIT-inlined вызовы из-за редкой выборки.",
               "correct": false,
               "sections": {
                 "what_actually": "Перевёрнуто: именно sampling из-за вероятностной выборки может пропустить короткие методы; instrumentation как раз видит каждый вызов.",
@@ -106,13 +106,13 @@
               "label": "C"
             },
             {
-              "text": "`Instrumentation` безопасен в production: его overhead `~1%`, такой же как у `sampling`.",
+              "text": "Instrumentation всегда безопасен в production: ширина охвата probes не влияет на overhead, а короткая запись полностью исключает искажение.",
               "correct": false,
               "sections": {
-                "what_actually": "Overhead `instrumentation` — 10-50%+, потому что он вставляет код до/после каждого вызова метода; `~1%` бывает только у sampling.",
-                "source_of_confusion": "Оба называются «профилированием», поэтому их накладные расходы ошибочно считают одинаковыми.",
-                "if_it_were_true": "Если бы overhead был `~1%`, можно было бы запустить `JProfiler` в instrumentation mode на prod — но throughput падает с 5K RPS до 800 RPS, p99 растёт в 5 раз из-за observer effect.",
-                "how_it_should_be": "В production допустим только sampling; instrumentation с его высоким overhead — для dev/test."
+                "what_actually": "Стоимость instrumentation зависит от числа и частоты instrumented events; даже короткий запуск способен изменить latency и contention.",
+                "source_of_confusion": "Ограниченный scope действительно может быть приемлемым, из-за чего свойство ошибочно распространяют на любую instrumentation.",
+                "if_it_were_true": "Широкое instrumentирование hot paths не меняло бы throughput, allocation и scheduling, независимо от workload.",
+                "how_it_should_be": "Начинайте с sampling и применяйте instrumentation точечно после capacity-оценки и с контролем rollback."
               },
               "order": 3,
               "label": "D"
@@ -129,7 +129,7 @@
           "question_text": "Что такое `safepoint bias` и как он влияет на точность профилирования?",
           "options": [
             {
-              "text": "`Safepoint bias` означает, что `JFR` пропускает GC-события.",
+              "text": "Safepoint bias означает потерю GC-событий при записи профиля средствами JFR.",
               "correct": false,
               "sections": {
                 "what_actually": "Safepoint bias — про выборку stack-traces в safepoint, а не про потерю GC-событий; `JFR` фиксирует GC-события через отдельную событийную модель.",
@@ -141,11 +141,11 @@
               "label": "A"
             },
             {
-              "text": "`Safepoint bias` — это баг в `VisualVM`, исправленный в `JDK 17`.",
+              "text": "Safepoint bias — дефект VisualVM, полностью устранённый начиная с JDK 17.",
               "correct": false,
               "sections": {
-                "what_actually": "Это не баг одного инструмента, а свойство всех `JVMTI GetStackTrace`-based профайлеров: они снимают стек только в safepoint; loop strip mining (JDK 10+) ограничил time-to-safepoint в counted loops, но проблема выборки осталась.",
-                "source_of_confusion": "Loop strip mining (JDK 10+, по умолчанию в C2) действительно улучшил ситуацию с counted loops, поэтому кажется, что проблему «закрыли».",
+                "what_actually": "Safepoint bias возникает у stack-sampling mechanisms, которым нужны безопасные точки JVM; степень смещения зависит от profiler-а, JDK и формы compiled code.",
+                "source_of_confusion": "HotSpot улучшал time-to-safepoint для некоторых loops, поэтому локальное улучшение ошибочно принимают за устранение любого sampling bias.",
                 "if_it_were_true": "Если бы это был баг VisualVM, после апдейта `JDK` до 21 bias бы исчез — но `JVMTI`-based профайлеры всё равно ждут safepoint, горячие counted-loops остаются невидимыми.",
                 "how_it_should_be": "Это общее ограничение safepoint-based выборки; решается `AsyncGetCallTrace` (`async-profiler`) или `perf`, а не апдейтом одного инструмента."
               },
@@ -153,7 +153,7 @@
               "label": "B"
             },
             {
-              "text": "`Safepoint bias` влияет только на debug-сборки JVM, в release-режиме его нет.",
+              "text": "Safepoint bias возникает только в debug-сборках JVM и отсутствует в production builds.",
               "correct": false,
               "sections": {
                 "what_actually": "Bias есть и в release JDK: он вытекает из механизма safepoint-выборки `JVMTI`, а не из типа сборки.",
@@ -165,13 +165,13 @@
               "label": "C"
             },
             {
-              "text": "`Safepoint bias` — стандартный `JVMTI` снимает stack только в safepoint, поэтому tight loops без safepoint poll невидимы; `async-profiler` использует `AsyncGetCallTrace` и работает вне safepoint.",
+              "text": "Safepoint bias недооценивает код между safepoints; async-profiler снижает искажение независимым stack sampling.",
               "correct": true,
               "sections": {
                 "explanation": "JVM может безопасно снять стек потока лишь в safepoint — точке с полностью определённым состоянием. Длинный цикл без safepoint-а профайлер «не видит», и hot path смещается на соседние методы.",
                 "example": "Например, в `for (int i=0; i<array.length; i++) sum += array[i];` (counted loop без loop strip mining) safepoint мог отсутствовать — VisualVM/JProfiler (sampling) такой цикл не покажут, а `async-profiler` через `AsyncGetCallTrace` снимет его честно.",
                 "when_to_apply": "Это объясняет, почему `async-profiler` точнее `VisualVM`/`JProfiler` (sampling): команды `Twitter` и `LinkedIn` перешли на него именно из-за safepoint bias в counted-loops до loop strip mining.",
-                "edge_cases": "Loop strip mining (JDK 10+, по умолчанию в C2) ограничил time-to-safepoint в counted loops, уменьшив bias для них, но `JVMTI`-based профайлеры всё равно ждут safepoint — гарантию даёт только `AsyncGetCallTrace`/`perf`.",
+                "edge_cases": "Loop strip mining и другие изменения HotSpot уменьшают отдельные длинные участки без polls, но точность всё равно зависит от stack-walking mechanism, native frames, JIT и выбранного event-а.",
                 "related": "[[application-profiling-interview#Q2]] sampling как класс, где возникает bias; [[application-profiling-interview#Q9]] как async-profiler обходит safepoint; [[application-profiling-interview#Q11]] выбор JFR vs async-profiler."
               },
               "order": 3,
@@ -189,7 +189,7 @@
           "question_text": "Какие метрики обязательно связать с профилем?",
           "options": [
             {
-              "text": "Достаточно одного `CPU%` — остальные метрики для профилирования не важны.",
+              "text": "Для интерпретации профиля достаточно общего CPU%; остальные runtime-метрики не добавляют контекста.",
               "correct": false,
               "sections": {
                 "what_actually": "`CPU%` не показывает off-CPU ожидание и GC pauses; нужен набор: latency, throughput, CPU%, GC pauses, error rate, heap usage.",
@@ -201,7 +201,7 @@
               "label": "A"
             },
             {
-              "text": "Профили самодостаточны, метрики — это дублирование информации.",
+              "text": "Профиль самодостаточен и уже содержит временную, нагрузочную и пользовательскую картину инцидента.",
               "correct": false,
               "sections": {
                 "what_actually": "Профиль — это snapshot момента, а метрики — временные ряды; без них нельзя ответить «когда началась деградация».",
@@ -213,7 +213,7 @@
               "label": "B"
             },
             {
-              "text": "Связать минимум: `latency` p50/p95/p99, `throughput` (RPS), `CPU%`, GC pauses, error rate, heap usage — без них профиль интерпретируется неверно.",
+              "text": "Профиль связывают с latency, throughput, errors, CPU, GC и окном нагрузки.",
               "correct": true,
               "sections": {
                 "explanation": "Метрики дают контекст: «горячий» метод может не влиять на пользовательский SLI. Например, `GC` может занимать 30% CPU, но если паузы не бьют по p99 — оптимизировать его бессмысленно.",
@@ -226,7 +226,7 @@
               "label": "C"
             },
             {
-              "text": "Связывать только бизнес-метрики (`orders/sec`, `revenue`) — технические бессмысленны.",
+              "text": "Профиль следует сопоставлять только с бизнес-метриками, исключая CPU, GC и системную нагрузку.",
               "correct": false,
               "sections": {
                 "what_actually": "Бизнес-метрики не дают технического контекста (RPS, GC pauses, heap), без которого профиль интерпретируется неверно.",
@@ -249,50 +249,50 @@
           "question_text": "Что такое `JFR` и как он работает?",
           "options": [
             {
-              "text": "`JFR` — это просто wrapper над `jstack`, снимающий thread dumps каждые 100ms.",
+              "text": "`JFR` — wrapper над `jstack`, который по таймеру объединяет последовательные thread dumps и сохраняет их в один архив.",
               "correct": false,
               "sections": {
-                "what_actually": "JFR — событийная модель (CPU samples, allocation, GC, I/O, locks, exceptions), а не периодический thread dump.",
-                "source_of_confusion": "И JFR, и `jstack` показывают стеки потоков, поэтому JFR упрощают до polling thread dumps.",
-                "if_it_were_true": "Если бы JFR был wrapper над `jstack`, в нём не было бы allocation events — и команда упустила бы 60% allocation rate в hot path, а GC-флаги не помогли бы.",
-                "how_it_should_be": "JFR — это событийный движок с allocation/GC/IO/lock событиями; `jstack`-polling его не заменяет."
+                "what_actually": "JFR собирает множество VM- и application-events, а stack traces являются лишь частью событийной модели.",
+                "source_of_confusion": "Thread sampling действительно может выглядеть как серия thread dumps, особенно при анализе CPU hotspots.",
+                "if_it_were_true": "Recording содержала бы только состояния потоков и не включала GC, allocations, locks, I/O, compilation и пользовательские events.",
+                "how_it_should_be": "Считайте JFR event recorder-ом JVM, а `jstack` — разовым снимком потоков."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "`JFR` пишет события через global lock в один файл, поэтому даёт `30%+` overhead.",
+              "text": "`JFR` инструментирует вход и выход каждого Java-метода через bytecode hooks, поэтому точность всегда сопровождается высоким overhead.",
               "correct": false,
               "sections": {
-                "what_actually": "Архитектура обратная: thread-local буферы исключают lock contention, overhead `<1%` на default profile.",
-                "source_of_confusion": "Запись в общий файл интуитивно ассоциируется с глобальной блокировкой и высокой стоимостью.",
-                "if_it_were_true": "Если бы overhead был `30%+`, команда отказалась бы от `JFR` в prod ради самописных `nanoTime`-обёрток — но они дают 40% overhead и удваивают p99, делая хуже.",
-                "how_it_should_be": "JFR использует thread-local буферы без global lock; overhead `<1%`, поэтому он production-safe."
+                "what_actually": "JFR использует настраиваемые события, thresholds и sampling; он не обязан перехватывать каждый вызов каждого метода.",
+                "source_of_confusion": "Некоторые классические profilers используют instrumentation, поэтому их модель overhead ошибочно переносят на JFR.",
+                "if_it_were_true": "Стоимость recording росла бы прямо пропорционально числу всех method calls даже при отключённых method events.",
+                "how_it_should_be": "Оценивайте overhead по конкретной JFC-конфигурации и включённым events, а не по модели тотальной instrumentation."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "`JFR` — встроенный в JVM движок событий: thread-local буферы → global pool → disk; overhead `<1%` на default profile, бесплатен с `JDK 11`; circular buffer для continuous mode.",
+              "text": "`JFR` — встроенная в JVM инфраструктура событий и recordings; набор событий, thresholds, sampling и хранение настраиваются под диагностическую задачу.",
               "correct": true,
               "sections": {
-                "explanation": "Данные пишутся в thread-local буферы без lock contention, событийная модель покрывает CPU-стеки, GC, I/O, monitor enter, exceptions. Это даёт богатый контекст при минимальном overhead.",
-                "example": "Например, `Twitter` использует `JFR` continuous recording 24/7 на всех prod JVM с `disk=true,maxage=4h` — JFR работает как always-on чёрный ящик JVM для post-mortem.",
-                "when_to_apply": "JFR включают для общего контекста (что происходит в JVM в целом) и для непрерывной записи в production; два профиля — `default` (~1%) и `profile` (~2%, больше деталей).",
-                "edge_cases": "Circular buffer перезаписывает старые данные, поэтому без `disk=true` запись живёт только в памяти и теряется при крэше контейнера — для post-mortem нужен флаг disk.",
-                "related": "[[application-profiling-interview#Q6]] как запустить JFR и настройки; [[application-profiling-interview#Q8]] ключевые JFR-события; [[application-profiling-interview#Q11]] JFR vs async-profiler."
+                "explanation": "Flight Recorder встроен в HotSpot и пишет выбранные события в memory buffers и disk repository; `default` и `profile` — стартовые конфигурации, которые можно адаптировать.",
+                "example": "`jcmd <pid> JFR.start name=diag settings=profile duration=60s filename=diag.jfr` запускает ограниченную запись для последующего анализа в JMC.",
+                "when_to_apply": "Используйте JFR для production-диагностики GC, CPU sampling, locks, I/O, allocations и JVM internals, предварительно проверив выбранную конфигурацию на workload.",
+                "edge_cases": "Overhead зависит от частоты и набора events; recording может содержать чувствительные данные, а тяжёлые события и stack traces следует включать осознанно.",
+                "related": "[[application-profiling-interview#Q6]] запуск JFR; [[application-profiling-interview#Q7]] анализ в JMC; [[application-profiling-interview#Q27]] безопасное profiling в production."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "`JFR` доступен только в `Oracle JDK` по коммерческой лицензии, в `OpenJDK` его нет.",
+              "text": "`JFR` доступен только в коммерческом Oracle JDK, поэтому OpenJDK-приложения должны использовать сторонний profiler.",
               "correct": false,
               "sections": {
-                "what_actually": "С `JDK 11` `JFR` бесплатен и присутствует в `OpenJDK`; коммерческая лицензия требовалась только до этого.",
-                "source_of_confusion": "До `JDK 11` `JFR` действительно был частью платной `Oracle JDK`, и это устаревшее знание сохраняется.",
-                "if_it_were_true": "Если бы это было так, команда платила бы за `Oracle JDK Subscription` ($25/CPU/мес) ради `JFR` — на 200 CPU это $50K/год впустую, хотя в `OpenJDK` он уже бесплатен.",
-                "how_it_should_be": "С `JDK 11` `JFR` — часть `OpenJDK` и бесплатен; платить за него не нужно."
+                "what_actually": "JFR и JMC доступны в современных OpenJDK-based distributions; коммерческая лицензия Oracle JDK не является обязательным условием.",
+                "source_of_confusion": "Исторические лицензионные ограничения старых Oracle JDK закрепили устаревшее представление о недоступности JFR.",
+                "if_it_were_true": "Стандартные OpenJDK builds не содержали бы модуль `jdk.jfr`, команды `JFR.start` и API для пользовательских events.",
+                "how_it_should_be": "Проверяйте возможности конкретной JDK distribution и версии, а не переносите лицензионную историю старых релизов."
               },
               "order": 3,
               "label": "D"
@@ -309,7 +309,7 @@
           "question_text": "Как запустить `JFR` и какие настройки использовать?",
           "options": [
             {
-              "text": "Для long continuous recording нормально запускать `JFR.start` без `disk=true`.",
+              "text": "Для длительной JFR-записи `disk=true` не нужен: все события безопасно удерживаются только в heap процесса.",
               "correct": false,
               "sections": {
                 "what_actually": "Без `disk=true` запись живёт в memory ring buffer и теряется при рестарте; для continuous нужен disk.",
@@ -321,7 +321,7 @@
               "label": "A"
             },
             {
-              "text": "Только `-XX:StartFlightRecording` при старте JVM; `jcmd JFR.start` на работающем процессе не работает.",
+              "text": "JFR можно включить только JVM-флагом при старте; команда `jcmd JFR.start` для работающего процесса отсутствует.",
               "correct": false,
               "sections": {
                 "what_actually": "Hot-attach через `jcmd JFR.start` работает на живом процессе — это и есть основной способ диагностики без рестарта.",
@@ -333,7 +333,7 @@
               "label": "B"
             },
             {
-              "text": "При старте: `-XX:StartFlightRecording=duration=60s,filename=...`; на работающем JVM: `jcmd <PID> JFR.start name=... settings=profile duration=60s filename=...`; для continuous — `disk=true,maxage=1h,maxsize=500m`.",
+              "text": "JFR запускают JVM-флагом или через `jcmd JFR.start`, выбирая settings, duration, disk и output под задачу.",
               "correct": true,
               "sections": {
                 "explanation": "Hot-attach через `jcmd` критичен для prod-диагностики без рестарта, а `disk=true` обязателен для post-mortem — иначе данные уходят только в память.",
@@ -346,12 +346,12 @@
               "label": "C"
             },
             {
-              "text": "`settings=profile` стоит держать по умолчанию — набор событий в `default` слишком беден для диагностики.",
+              "text": "Профиль `profile` всегда безопаснее `default` для постоянной production-записи и имеет меньший overhead.",
               "correct": false,
               "sections": {
-                "what_actually": "`default` (~1%) достаточен для большинства задач; `profile` (~2%) включают точечно для диагностики аллокаций, а не 24/7.",
+                "what_actually": "`default` обычно подходит для большинства задач; `profile` включают точечно для диагностики аллокаций, а не 24/7.",
                 "source_of_confusion": "Профиль `profile` богаче событиями (включает allocation), отсюда соблазн ставить его везде.",
-                "if_it_were_true": "Если бы `profile` нужно было всегда, его держали бы 24/7 — но overhead ~2% вместо ~1% на узких CPU-инстансах поднимает p99 и ломает capacity planning на 10%.",
+                "if_it_were_true": "Если бы `profile` нужно было всегда, его держали бы 24/7 — но дополнительные events могут заметно влиять на p99 и capacity узких CPU-инстансов.",
                 "how_it_should_be": "По умолчанию `default`; `profile` — для конкретного расследования (например, allocation), не постоянно."
               },
               "order": 3,
@@ -369,7 +369,7 @@
           "question_text": "Как анализировать `JFR`-записи?",
           "options": [
             {
-              "text": "Три способа: CLI `jfr summary/print --events` (JDK 17+), GUI `JMC` (Automated Analysis, dependency view), programmatic `RecordingFile` API для массового парсинга.",
+              "text": "JFR анализируют командами `jfr`, в JDK Mission Control или через Recording API.",
               "correct": true,
               "sections": {
                 "explanation": "CLI удобен для скриптов и автоматизации, `JMC` — для глубокого анализа с правилами обнаружения проблем, API — для интеграции в CI/CD baseline-comparator.",
@@ -429,7 +429,7 @@
           "question_text": "Какие ключевые `JFR`-события нужно знать?",
           "options": [
             {
-              "text": "Достаточно `jdk.ExecutionSample` — все остальные события избыточны.",
+              "text": "Для любой диагностики достаточно `jdk.ExecutionSample`; остальные JFR events только дублируют stack samples.",
               "correct": false,
               "sections": {
                 "what_actually": "Один CPU sampling не покрывает память, GC, locks и I/O; для них нужны `ObjectAllocation*TLAB`, `GCPhasePause`, `JavaMonitorEnter` и др.",
@@ -441,7 +441,7 @@
               "label": "A"
             },
             {
-              "text": "`JavaMonitorEnter` срабатывает на каждый `synchronized`, поэтому генерирует терабайты данных.",
+              "text": "`JavaMonitorEnter` фиксирует каждый вход в `synchronized`, поэтому неизбежно создаёт огромный поток событий.",
               "correct": false,
               "sections": {
                 "what_actually": "`JavaMonitorEnter` фиксируется с порогом (например, >20ms), а не на каждый вход в монитор — объём контролируем.",
@@ -453,7 +453,7 @@
               "label": "B"
             },
             {
-              "text": "`jdk.ObjectAllocationInNewTLAB` включён в `default` profile, отдельной настройки не требуется.",
+              "text": "Allocation events всегда включены в стандартный `default` recording и не требуют отдельной настройки.",
               "correct": false,
               "sections": {
                 "what_actually": "Allocation-события включены в `profile`, а не `default`; для них нужно `settings=profile`.",
@@ -465,7 +465,7 @@
               "label": "C"
             },
             {
-              "text": "Минимум: `ExecutionSample` (CPU), `ObjectAllocation*TLAB` (memory), `GCPhasePause` + `GarbageCollection` (GC), `JavaMonitorEnter`/`ThreadPark` (locks, threshold >20ms), `Socket/FileRead/Write` (I/O), `JavaExceptionThrow` (errors).",
+              "text": "Ключевые JFR events покрывают CPU, allocations, GC, locks, threads, I/O, exceptions и compilation.",
               "correct": true,
               "sections": {
                 "explanation": "Эти 7 категорий покрывают ~95% диагностики, а threshold-фильтрация `JavaMonitorEnter` спасает от шума, оставляя только значимые ожидания.",
@@ -489,50 +489,50 @@
           "question_text": "Как работает `async-profiler` и чем он лучше стандартных инструментов?",
           "options": [
             {
-              "text": "`async-profiler` работает только на `Windows` и `macOS`, на `Linux` нужен `JFR`.",
+              "text": "`async-profiler` снимает только Java frames в safepoints, поэтому сохраняет safepoint bias и не показывает native или kernel execution.",
               "correct": false,
               "sections": {
-                "what_actually": "Полный функционал async-profiler как раз на `Linux` (через `perf_events`); `Windows` он не поддерживает.",
-                "source_of_confusion": "Совместимость путают, потому что инструменты профилирования ассоциируют с desktop-окружением.",
-                "if_it_were_true": "Если бы он не работал на `Linux`, нельзя было бы профилировать prod в `Kubernetes` без safepoint bias — отчёт делали бы на biased `JVMTI` sampling и находили root cause неверно.",
-                "how_it_should_be": "`async-profiler` нативно работает на `Linux` (полный набор режимов) и `macOS` (CPU); именно там он наиболее точен."
+                "what_actually": "Profiler использует HotSpot-specific stack walking и системные sampling-механизмы, что позволяет видеть Java и native frames без привязки только к safepoints.",
+                "source_of_confusion": "Многие старые Java profilers действительно получали стеки лишь в безопасных точках JVM.",
+                "if_it_were_true": "Горячий native-код, GC/JIT threads и методы без частых safepoints отсутствовали бы либо систематически недооценивались.",
+                "how_it_should_be": "При выборе CPU-profiler проверяйте отсутствие safepoint bias и поддержку mixed Java/native stacks."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "Использует `AsyncGetCallTrace` (без safepoint) + `perf_events` (Linux): снимает Java + native стеки без safepoint bias, overhead `~1-2%`, поддерживает CPU/alloc/lock/wall, встроенно генерирует HTML flame graph.",
+              "text": "`async-profiler` — low-overhead sampling profiler, который показывает Java, native и kernel stacks и поддерживает CPU, allocation, lock и wall-clock modes.",
               "correct": true,
               "sections": {
-                "explanation": "Объединение Java и native стеков делает видимыми JNI/GC/JIT, а отсутствие safepoint bias даёт честную CPU-картину, включая код внутри counted loops.",
-                "example": "Например, `async-profiler` — стандарт в `Netflix` Performance Engineering и agent в `Pyroscope`/`Grafana` continuous profiling.",
-                "when_to_apply": "Его берут для точного CPU/alloc-анализа конкретного hot path, когда нужны native-стеки и честная выборка без safepoint bias.",
-                "edge_cases": "На `Linux` для `perf_events` нужны `perf_event_paranoid`/`CAP_SYS_ADMIN`, а на `macOS` доступен только CPU-режим — это ограничения, которых нет у `JFR`.",
-                "related": "[[application-profiling-interview#Q3]] safepoint bias, который он обходит; [[application-profiling-interview#Q11]] когда JFR, когда async-profiler; [[application-profiling-interview#Q15]] wall-clock и off-CPU."
+                "explanation": "Sampling выполняется периодически, а не на каждом method call; mixed stacks и разные event sources позволяют анализировать CPU, off-CPU ожидание, allocations и locks.",
+                "example": "`asprof -d 30 -e cpu -f cpu.html <pid>` собирает CPU profile, а wall-clock или allocation mode выбирают для ожиданий и allocation pressure.",
+                "when_to_apply": "Используйте async-profiler для кратких production-сессий и flame graphs, когда нужны low-overhead samples и видимость native frames.",
+                "edge_cases": "Доступные engines и события зависят от ОС, permissions, container configuration и JDK; overhead всё равно нужно измерять на своей нагрузке.",
+                "related": "[[application-profiling-interview#Q3]] safepoint bias; [[application-profiling-interview#Q10]] flame graph; [[application-profiling-interview#Q15]] wall-clock profiling."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "Overhead `async-profiler` сопоставим с instrumentation (`30-50%`), поэтому он только для dev.",
+              "text": "`async-profiler` переписывает bytecode каждого метода и считает каждый вызов, поэтому его overhead близок к полной instrumentation.",
               "correct": false,
               "sections": {
-                "what_actually": "Overhead `async-profiler` в sampling mode `~1-2%`, а не 30-50% — он создан для production.",
-                "source_of_confusion": "Слово «профайлер» ассоциируется с тяжёлым instrumentation, отсюда миф о высоком overhead.",
-                "if_it_were_true": "Если бы overhead был `30-50%`, его запретили бы в prod — и при инцидентах ждали бы staging-репро, который не воспроизводится, RCA затягивался бы на недели.",
-                "how_it_should_be": "Sampling-overhead `~1-2%` делает async-profiler безопасным для prod; высокий overhead — это про instrumentation."
+                "what_actually": "Основная модель async-profiler — sampling; он не вставляет enter/exit hook в каждый Java-метод.",
+                "source_of_confusion": "Слово profiler часто ассоциируется с точным tracing каждого вызова, хотя sampling решает другую задачу.",
+                "if_it_were_true": "Стоимость росла бы с количеством вызовов методов, JIT inlining нарушался бы, а tight loops замедлялись бы как при instrumentation.",
+                "how_it_should_be": "Различайте статистическое sampling и точный per-call tracing: у них разные данные и профиль overhead."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "`async-profiler` — это GUI-аналог `JFR`, написанный на Java.",
+              "text": "`async-profiler` — только графический viewer для `.jfr`; самостоятельно подключаться к процессу и собирать samples он не умеет.",
               "correct": false,
               "sections": {
-                "what_actually": "Это native-инструмент на `AsyncGetCallTrace`/`perf_events`, а не GUI-обёртка над JFR; механизм сбора стеков принципиально другой.",
-                "source_of_confusion": "Оба строят flame graph по JVM, поэтому их считают разными интерфейсами к одному движку.",
-                "if_it_were_true": "Если бы это был аналог JFR, не нужны были бы `perf_event_paranoid`/`CAP_SYS_ADMIN` — но без них в `Kubernetes` async-profiler падает с `Permission denied`.",
-                "how_it_should_be": "Это отдельный native-профайлер; он обходит safepoint bias так, как JFR не умеет."
+                "what_actually": "async-profiler самостоятельно подключается к JVM, собирает samples и может выдавать HTML flame graph или JFR output.",
+                "source_of_confusion": "Поддержка формата JFR и интеграция с viewers создают впечатление, что profiler только отображает уже готовые записи.",
+                "if_it_were_true": "Без внешнего `.jfr` файла команда profiler-а не могла бы запускать сессию и создавать новый профиль.",
+                "how_it_should_be": "Viewer визуализирует данные, а async-profiler является их источником и экспортёром."
               },
               "order": 3,
               "label": "D"
@@ -549,7 +549,7 @@
           "question_text": "Как использовать `async-profiler` на практике?",
           "options": [
             {
-              "text": "Запуск как `-javaagent:libasyncProfiler.jar` — корректный флаг agent-attach.",
+              "text": "`async-profiler` подключают JVM-флагом `-javaagent`, потому что attach к PID не поддерживается.",
               "correct": false,
               "sections": {
                 "what_actually": "`async-profiler` — native-библиотека, нужен `-agentpath:libasyncProfiler.so`, а не `-javaagent` с jar.",
@@ -561,7 +561,7 @@
               "label": "A"
             },
             {
-              "text": "`--filter \"http-nio-*\"` фильтрует по HTTP-эндпоинтам, а не по имени потока.",
+              "text": "Параметр thread filter выбирает HTTP endpoints, а не потоки по их именам или шаблонам.",
               "correct": false,
               "sections": {
                 "what_actually": "Фильтр работает по имени потока (`http-nio-*`), а не по URL-эндпоинту; это thread filter.",
@@ -573,7 +573,7 @@
               "label": "B"
             },
             {
-              "text": "`./asprof -d 30 <PID>` без `-e` запускает все события сразу — это правильно по умолчанию.",
+              "text": "Запуск без события одновременно профилирует CPU, allocations, locks и wall-clock в одном результате.",
               "correct": false,
               "sections": {
                 "what_actually": "Без `-e` по умолчанию идёт CPU sampling, а не все режимы сразу; alloc/lock/wall надо указывать явно.",
@@ -585,7 +585,7 @@
               "label": "C"
             },
             {
-              "text": "Запуск 4 режимами через `-e`: `cpu`, `alloc`, `lock`, `wall`; как Java agent через `-agentpath:libasyncProfiler.so=start,event=cpu,...`; программно через `AsyncProfiler.getInstance().execute(\"start,event=cpu\")`.",
+              "text": "`async-profiler` запускают для выбранного события: `cpu`, `wall`, `alloc`, `lock` или их комбинации.",
               "correct": true,
               "sections": {
                 "explanation": "Знание режимов критично для правильного расследования: `alloc` для GC pressure, `lock` для contention, `wall` для off-CPU ожиданий; флаг `-t` разбивает по потокам.",
@@ -633,7 +633,7 @@
               "label": "B"
             },
             {
-              "text": "Сначала `JFR` для общего контекста (GC, I/O, exceptions, lock events), затем `async-profiler` для детального CPU/alloc-анализа конкретного hot path с честными стеками.",
+              "text": "JFR даёт широкий JVM-контекст, async-profiler — детальный CPU, allocation, lock и wall-clock sampling.",
               "correct": true,
               "sections": {
                 "explanation": "`JFR` даёт широкий event-контекст, `async-profiler` — точные CPU/alloc-стеки без safepoint bias; вместе они закрывают и «что происходит в целом», и «где именно горячо».",
@@ -669,7 +669,7 @@
           "question_text": "Как читать `flame graph` корректно?",
           "options": [
             {
-              "text": "Ширина блока = доля ресурса (CPU time / allocations / lock waits), высота = глубина стека, горизонтальный порядок — алфавитный (НЕ хронологический); искать широкие плато.",
+              "text": "В flame graph ширина показывает ресурс, вертикаль — stack, а ось X не является временем.",
               "correct": true,
               "sections": {
                 "explanation": "Широкое плато на нижнем уровне = реальный hot path, что защищает от оптимизации helper-методов наверху; ширина — это доля от общего, а не абсолютное время.",
@@ -682,7 +682,7 @@
               "label": "A"
             },
             {
-              "text": "Высота блока показывает время выполнения: чем выше — тем дольше работал метод.",
+              "text": "Высота блока отражает затраченное время, поэтому самый высокий stack всегда является главным bottleneck.",
               "correct": false,
               "sections": {
                 "what_actually": "Высота — это глубина стека вызовов, а не время; время отражает ширина.",
@@ -694,7 +694,7 @@
               "label": "B"
             },
             {
-              "text": "`[unknown]` фреймы можно игнорировать как шум.",
+              "text": "Фреймы `[unknown]` являются визуальным шумом и не требуют проверки native-кода или unwinding.",
               "correct": false,
               "sections": {
                 "what_actually": "`[unknown]` — это часто JIT stubs или native-код (например, TLS/crypto), а не шум; их игнорирование скрывает реальную нагрузку.",
@@ -706,7 +706,7 @@
               "label": "C"
             },
             {
-              "text": "Ось X — хронологический порядок выполнения: слева направо = последовательность вызовов.",
+              "text": "Ось X показывает хронологию вызовов, поэтому порядок выполнения читается слева направо.",
               "correct": false,
               "sections": {
                 "what_actually": "Горизонтальный порядок алфавитный, а не хронологический; ширина — это доля ресурса, а не позиция во времени.",
@@ -741,7 +741,7 @@
               "label": "A"
             },
             {
-              "text": "Allocation flame graph и CPU flame graph — это одно и то же, разница только в title.",
+              "text": "Allocation flame graph и CPU flame graph — это одно и то же.",
               "correct": false,
               "sections": {
                 "what_actually": "У них разная ось X: у allocation — байты выделенной памяти, у CPU — процессорное время; это разные ресурсы.",
@@ -753,7 +753,7 @@
               "label": "B"
             },
             {
-              "text": "CPU (где CPU time), Allocation (bytes allocated), Off-CPU (wall wait time), Wall-clock (on+off), Differential (diff двух профилей), Icicle (инвертированный bottom-up) — каждый показывает свой ресурс.",
+              "text": "CPU, Allocation, Off-CPU, Wall-clock, Differential, Icicle — каждый показывает свой ресурс.",
               "correct": true,
               "sections": {
                 "explanation": "Выбор типа — это выбор измеряемого ресурса; например, Wall-clock спасает в ситуации «медленно, но CPU низкий», показывая off-CPU ожидания.",
@@ -813,7 +813,7 @@
               "label": "B"
             },
             {
-              "text": "Системный подход: (1) зафиксировать окно по метрикам, (2) снять CPU profile (`async-profiler -e cpu` или `JFR settings=profile`), (3) анализ flame graph (top hot methods), (4) исправить и повторно профилировать для подтверждения.",
+              "text": "Системный подход: зафиксировать окно по метрикам, снять CPU profile, анализ flame graph, исправить и повторно профилировать для подтверждения.",
               "correct": true,
               "sections": {
                 "explanation": "Цикл profile → hypothesis → change → re-profile исключает оптимизацию по догадкам: каждое изменение подтверждается повторным профилем.",
@@ -849,7 +849,7 @@
           "question_text": "Что такое on-CPU и off-CPU анализ, и зачем нужны оба?",
           "options": [
             {
-              "text": "`on-CPU` и `off-CPU` — два разных инструмента, не совместимы в одном sample.",
+              "text": "On-CPU и off-CPU требуют разных несвязанных инструментов и не объединяются в одном расследовании.",
               "correct": false,
               "sections": {
                 "what_actually": "`wall-clock` профиль (`-e wall`) снимает оба типа одновременно, сохраняя корреляцию.",
@@ -861,7 +861,7 @@
               "label": "A"
             },
             {
-              "text": "`off-CPU` — это когда CPU выключен из-за power management, профилировать не нужно.",
+              "text": "Off-CPU означает аппаратное отключение процессора механизмами энергосбережения во время профилирования.",
               "correct": false,
               "sections": {
                 "what_actually": "Off-CPU — это поток, ожидающий lock/I/O/sleep, а не физическое отключение ядра; его обязательно профилируют.",
@@ -873,7 +873,7 @@
               "label": "B"
             },
             {
-              "text": "off-CPU видим только через `jstack` thread dump в цикле.",
+              "text": "Off-CPU ожидания достоверно видны только через непрерывную серию `jstack` thread dumps.",
               "correct": false,
               "sections": {
                 "what_actually": "Off-CPU снимается sampling-профайлером (`-e wall`/off-CPU); цикл `jstack` — грубый polling, вредный для prod.",
@@ -885,7 +885,7 @@
               "label": "C"
             },
             {
-              "text": "`on-CPU` — поток выполняет код на ядре; `off-CPU` — поток ждёт (lock, I/O, sleep, park, network); только on-CPU пропускает основные источники latency, нужен wall-clock или off-CPU профиль.",
+              "text": "On-CPU показывает выполнение, off-CPU — ожидания locks, I/O и parking; для latency нужны оба.",
               "correct": true,
               "sections": {
                 "explanation": "Sampling-профайлер видит только running-потоки, а `BLOCKED`/`PARKED` невидимы — поэтому lock contention и I/O waits полностью пропадают из on-CPU картины.",
@@ -909,7 +909,7 @@
           "question_text": "Как интерпретировать профиль и не ошибиться с root cause?",
           "options": [
             {
-              "text": "Проверить (1) воспроизводимость в нескольких прогонах, (2) корреляцию с метриками (горячий метод реально влияет на p99?), (3) подтверждение после фикса (re-profile показывает уход hotspot).",
+              "text": "Root cause подтверждают повторными профилями, корреляцией с SLI и контрольным измерением после исправления.",
               "correct": true,
               "sections": {
                 "explanation": "Без подтверждения это не root cause, а симптом; типичные ловушки — `wait`/`sleep` в CPU-профиле, `GC` в top (надо смотреть allocation), `JIT compilation` как warm-up.",
@@ -922,7 +922,7 @@
               "label": "A"
             },
             {
-              "text": "Одного снимка достаточно — повторные прогоны излишни.",
+              "text": "Одного случайного профиля достаточно для root cause; повторные записи и сравнение нагрузки избыточны.",
               "correct": false,
               "sections": {
                 "what_actually": "Один прогон может быть артефактом (GC pause, network jitter, JIT timing); нужна воспроизводимость на нескольких прогонах.",
@@ -934,7 +934,7 @@
               "label": "B"
             },
             {
-              "text": "`Thread.sleep()` в top CPU-профиля — точно проблема, оптимизировать первым.",
+              "text": "Любой `Thread.sleep()` в верхней части CPU-профиля является причиной деградации производительности.",
               "correct": false,
               "sections": {
                 "what_actually": "`sleep`/`wait` в CPU-профиле — это ожидание, а не CPU-нагрузка; их «оптимизация» не уменьшает CPU.",
@@ -946,7 +946,7 @@
               "label": "C"
             },
             {
-              "text": "`JIT compilation` в начале записи означает производственную проблему.",
+              "text": "JIT compilation в начале короткой записи всегда означает устойчивую production-проблему приложения.",
               "correct": false,
               "sections": {
                 "what_actually": "Активность C1/C2 в начале — это warm-up, а не steady-state; на нём нельзя строить выводы о hot path.",
@@ -969,7 +969,7 @@
           "question_text": "Как профилировать allocation и memory pressure?",
           "options": [
             {
-              "text": "Достаточно `-XX:+PrintGC` логов — allocation flame graph избыточен.",
+              "text": "GC-лога достаточно для поиска allocation hotspots; allocation profile не добавляет полезной информации.",
               "correct": false,
               "sections": {
                 "what_actually": "GC-логи показывают частоту/длительность пауз, но не метод-источник аллокаций; flame graph нужен, чтобы найти hot allocation site.",
@@ -981,7 +981,7 @@
               "label": "A"
             },
             {
-              "text": "Использовать `async-profiler -e alloc -d 60` или `JFR settings=profile` (включает `ObjectAllocationInNewTLAB`); искать allocation hotspots, churn (temporary objects), promotion в Old Gen; фиксы — `StringBuilder` вместо `+`, primitive collections (`Eclipse Collections`/`fastutil`) против autoboxing.",
+              "text": "Allocation pressure исследуют `async-profiler` в режиме `alloc` или allocation events в JFR.",
               "correct": true,
               "sections": {
                 "explanation": "Прямое профилирование байтов даёт карту «где создаются объекты», что недоступно через GC-логи; снижение allocation rate напрямую уменьшает GC pressure и паузы.",
@@ -994,7 +994,7 @@
               "label": "B"
             },
             {
-              "text": "`LongIntHashMap` из `Eclipse Collections` медленнее `HashMap<Long,Integer>` из-за primitives.",
+              "text": "Primitive collections всегда создают больше объектов, чем `HashMap<Long,Integer>`, и усиливают GC pressure.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: primitive-коллекции быстрее и без autoboxing — `HashMap<Long,Integer>` создаёт 2 объекта на каждый put.",
@@ -1006,7 +1006,7 @@
               "label": "C"
             },
             {
-              "text": "Allocation pressure не нужно профилировать — современный `G1GC` справляется сам.",
+              "text": "Allocation rate можно не профилировать: современный collector полностью устраняет стоимость создания объектов.",
               "correct": false,
               "sections": {
                 "what_actually": "`G1GC` управляет паузами, но не убирает причину высокого allocation rate; при `500MB/s` он уходит в частый Mixed GC.",
@@ -1029,7 +1029,7 @@
           "question_text": "Как снять и проанализировать heap dump?",
           "options": [
             {
-              "text": "`Shallow size` и `Retained size` — синонимы, `MAT` показывает одно и то же.",
+              "text": "`Shallow size` и `retained size` обозначают один размер и взаимозаменяемы при анализе dump.",
               "correct": false,
               "sections": {
                 "what_actually": "`Shallow size` — размер самого объекта; `Retained size` — память, освобождаемая при его удалении (объект + всё, что он dominate'ит); это разные колонки.",
@@ -1041,7 +1041,7 @@
               "label": "A"
             },
             {
-              "text": "`jcmd <PID> GC.heap_dump` (рекомендовано) или `jmap -dump:format=b`; автоматически с `-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=...`; анализ в `Eclipse MAT` (Leak Suspects, Dominator Tree, Histogram, Path to GC Roots); знать `shallow size` vs `retained size`.",
+              "text": "Heap dump снимают через `jcmd GC.heap_dump` или совместимый инструмент и анализируют dominators и GC roots.",
               "correct": true,
               "sections": {
                 "explanation": "`shallow size` — размер самого объекта, `retained size` — сколько освободится при его удалении; именно retained ведёт к настоящему держателю утечки.",
@@ -1054,7 +1054,7 @@
               "label": "B"
             },
             {
-              "text": "`HeapDumpOnOutOfMemoryError` бесполезен — файл слишком большой.",
+              "text": "`HeapDumpOnOutOfMemoryError` бесполезен: после OOM достаточно logs, а dump нельзя анализировать стандартными tools.",
               "correct": false,
               "sections": {
                 "what_actually": "Этот флаг сохраняет дамп в момент OOM, что часто единственный шанс найти причину утечки; размер — управляемая проблема (диск, `HeapDumpPath`).",
@@ -1066,7 +1066,7 @@
               "label": "C"
             },
             {
-              "text": "Heap dump через `jmap -dump` безопасен для production — STW-паузы нет.",
+              "text": "Снятие heap dump гарантированно не останавливает приложение и безопасно при любом размере heap.",
               "correct": false,
               "sections": {
                 "what_actually": "Снятие heap dump вызывает STW-паузу, пропорциональную размеру heap (на 16GB — минуты); это не безопасная операция.",
@@ -1089,7 +1089,7 @@
           "question_text": "Как найти memory leak с помощью профилирования?",
           "options": [
             {
-              "text": "Достаточно одного heap dump — сравнение двух снимков избыточно.",
+              "text": "Одного heap dump достаточно: динамику удержания объектов и рост классов сравнивать не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Для роста памяти сравнивают два дампа (delta histogram), чтобы увидеть, какие классы растут; один снимок не показывает динамику.",
@@ -1101,7 +1101,7 @@
               "label": "A"
             },
             {
-              "text": "Стратегия: heap растёт после Full GC → снять 2 heap dump → сравнить histogram (delta) → найти растущие классы → Path to GC Roots → найти нежелательную ссылку → fix + verify.",
+              "text": "Сравнивают снимки после GC, находят растущие dominators и проверяют удерживающий путь до GC roots.",
               "correct": true,
               "sections": {
                 "explanation": "Сравнение двух дампов выделяет именно растущие классы, а Path to GC Roots показывает, какая ссылка держит объект живым (root cause утечки).",
@@ -1114,7 +1114,7 @@
               "label": "B"
             },
             {
-              "text": "`memory leak` в Java — это сбой сборщика мусора, который перестаёт освобождать недостижимый мусор.",
+              "text": "Java memory leak означает, что GC перестаёт освобождать любые недостижимые объекты из-за внутренней ошибки.",
               "correct": false,
               "sections": {
                 "what_actually": "Java-утечка — это объекты, которые ещё достижимы через нежелательные ссылки, поэтому GC обоснованно их не собирает; сам GC исправен.",
@@ -1126,7 +1126,7 @@
               "label": "C"
             },
             {
-              "text": "Утечку находят по `shallow size`: класс с наибольшим shallow heap и есть утечка.",
+              "text": "Утечка всегда определяется классом с максимальным shallow size, независимо от retained graph.",
               "correct": false,
               "sections": {
                 "what_actually": "Утечку ищут по `retained size` и Path to GC Roots; `shallow size` у держателя (например, синглтон-кэша) мал.",
@@ -1149,7 +1149,7 @@
           "question_text": "Как снять и анализировать thread dump?",
           "options": [
             {
-              "text": "`jcmd <PID> Thread.print` (рекомендовано) или `jstack <PID>`, `kill -3 <PID>` (вывод в stdout); состояния `RUNNABLE`/`BLOCKED`/`WAITING`/`TIMED_WAITING`; делать 3-5 снимков с интервалом 5s — статичный stack между ними = bottleneck/deadlock.",
+              "text": "Снимают серию dumps и сравнивают повторяющиеся stacks, states, locks и deadlock cycles.",
               "correct": true,
               "sections": {
                 "explanation": "Серия dump-ов отделяет «застрявшие» потоки от нормально работающих; `jcmd` — современный безопасный способ снятия.",
@@ -1162,7 +1162,7 @@
               "label": "A"
             },
             {
-              "text": "`jstack` без `-l` показывает все locks — флаг `-l` избыточен.",
+              "text": "Обычный `jstack` уже показывает всю lock-информацию, поэтому параметр `-l` ничего не добавляет.",
               "correct": false,
               "sections": {
                 "what_actually": "Без `-l` `jstack` не выводит ownable synchronizers (информацию о владении locks), что критично для deadlock-анализа.",
@@ -1174,7 +1174,7 @@
               "label": "B"
             },
             {
-              "text": "Все `RUNNABLE` потоки = они активно жгут CPU.",
+              "text": "Каждый поток в состоянии `RUNNABLE` непрерывно потребляет CPU и является кандидатом на оптимизацию.",
               "correct": false,
               "sections": {
                 "what_actually": "В Java `RUNNABLE` включает потоки в blocking I/O (socket read), которые на деле ждут, а не считают.",
@@ -1186,7 +1186,7 @@
               "label": "C"
             },
             {
-              "text": "`kill -9 <PID>` снимает thread dump и не убивает процесс.",
+              "text": "Команда `kill -9 <PID>` печатает thread dump, не завершая и не повреждая процесс.",
               "correct": false,
               "sections": {
                 "what_actually": "Thread dump даёт `kill -3` (SIGQUIT); `kill -9` (SIGKILL) мгновенно убивает процесс.",
@@ -1209,7 +1209,7 @@
           "question_text": "Как находить lock contention через профилирование?",
           "options": [
             {
-              "text": "`synchronized` быстрее `ReadWriteLock` за счёт меньших накладных расходов, поэтому годится и для read-heavy нагрузки.",
+              "text": "`synchronized` всегда снимает contention лучше `ReadWriteLock`, потому что меньший API overhead компенсирует сериализацию параллельных чтений.",
               "correct": false,
               "sections": {
                 "what_actually": "При read-heavy нагрузке `ReadWriteLock`/`StampedLock` сильно выигрывают, позволяя параллельные чтения, тогда как `synchronized` их сериализует.",
@@ -1221,7 +1221,7 @@
               "label": "A"
             },
             {
-              "text": "Глобальный `ConcurrentHashMap` снимает contention лучше ручного lock-per-partition за счёт встроенного lock striping.",
+              "text": "Глобальный `ConcurrentHashMap` устраняет любой lock contention благодаря striping, даже когда почти все операции приходятся на один hot key.",
               "correct": false,
               "sections": {
                 "what_actually": "На горячем ключе `ConcurrentHashMap` сериализует операции в одном bucket; нужно partition по domain key.",
@@ -1233,7 +1233,7 @@
               "label": "B"
             },
             {
-              "text": "CPU-профилировщик видит lock contention напрямую — отдельный lock-режим не нужен.",
+              "text": "Обычный CPU profile напрямую показывает время ожидания monitors и parking, поэтому lock, wall-clock и JFR events не добавляют информации.",
               "correct": false,
               "sections": {
                 "what_actually": "Contention — это off-CPU ожидание, которого CPU-профиль не видит; нужен lock/wall-режим.",
@@ -1245,13 +1245,13 @@
               "label": "C"
             },
             {
-              "text": "Сигналы — много `BLOCKED`/`WAITING` в thread dump, рост `JavaMonitorEnter`/`ThreadPark` events, negative scalability при росте потоков; `async-profiler -e lock` или `JFR settings=profile`; фиксы — `synchronized HashMap` → `ConcurrentHashMap`, global lock → lock per partition, `Lock` → `LongAdder`/`AtomicReference`/`ReadWriteLock`.",
+              "text": "Contention подтверждают повторяющимися `BLOCKED` или park-waits на одном lock/owner, JFR monitor/park events и lock либо wall-clock профилем.",
               "correct": true,
               "sections": {
-                "explanation": "Lock-режим `async-profiler` показывает, на каких объектах потоки ждут и кто держит lock; падение throughput при росте потоков (negative scalability) — характерный признак contention.",
-                "example": "Например, `LongAdder` используется в `Micrometer` для high-throughput counters, `Caffeine` cache — на striped locks, а `Cassandra` перешла с `synchronized` на `LongAdder` для метрик в 4.0.",
-                "when_to_apply": "Это применяют, когда throughput не растёт (или падает) с добавлением потоков; правило — «если throughput падает с потоками — это lock contention».",
-                "edge_cases": "`ConcurrentHashMap` не панацея: на одном горячем ключе операции всё равно сериализуются в одном bucket, и нужно partition по domain key, а не доверять «out-of-the-box».",
+                "explanation": "Само состояние потока не доказывает проблему. Важны повторяемая цепочка ожидания, длительность, объект синхронизации, владелец и корреляция с падением throughput или ростом latency.",
+                "example": "Серия thread dumps показывает много потоков на одном monitor, а JFR `JavaMonitorEnter` или park events и lock profile подтверждают, где теряется время.",
+                "when_to_apply": "Используйте этот анализ, когда увеличение concurrency не повышает throughput, CPU остаётся умеренным, а tail latency растёт.",
+                "edge_cases": "`WAITING` может быть нормальным состоянием idle workers, event loops или condition waits. Оптимизацию выбирают после проверки semantics, fairness и read/write pattern, а не по одному dump.",
                 "related": "[[application-profiling-interview#Q9]] lock-режим async-profiler; [[application-profiling-interview#Q15]] lock contention как off-CPU; [[application-profiling-interview#Q20]] BLOCKED-потоки в thread dump."
               },
               "order": 3,
@@ -1269,7 +1269,7 @@
           "question_text": "Как анализировать GC и связать его с профилированием?",
           "options": [
             {
-              "text": "Включить unified GC logging (`-Xlog:gc*:file=gc.log:time,uptime,level,tags:filecount=5,filesize=50m`), анализировать через `GCEasy`/`GCViewer`; в JFR смотреть `jdk.GarbageCollection`/`GCPhasePause`; цепочка: высокий allocation rate → частые Young GC → promotion → Old Gen → Full GC pause → p99 spike.",
+              "text": "GC анализируют по unified logs и JFR, сопоставляя pauses, allocation rate, promotion и latency приложения.",
               "correct": true,
               "sections": {
                 "explanation": "Связь GC↔profiling — это единая цепочка от allocation rate до пользовательского latency; снижение аллокаций часто эффективнее, чем кручение GC-флагов.",
@@ -1282,7 +1282,7 @@
               "label": "A"
             },
             {
-              "text": "GC анализируется только через JMX `getGarbageCollectorMXBeans` — flame graph не нужен.",
+              "text": "Поведение GC можно исследовать только через MXBeans; logs, JFR и профили allocations не помогают.",
               "correct": false,
               "sections": {
                 "what_actually": "JMX даёт счётчики GC, но не источник аллокаций; для метода-виновника нужен allocation flame graph/JFR events.",
@@ -1294,7 +1294,7 @@
               "label": "B"
             },
             {
-              "text": "Любые GC pause < 200ms для `G1GC` — норма, расследования не требуют.",
+              "text": "Любая G1-пауза короче 200 мс считается нормой и не требует проверки влияния на SLO.",
               "correct": false,
               "sections": {
                 "what_actually": "Для latency-critical систем (SLO p99 `<100ms`) даже 150ms пауза нарушает SLO; threshold зависит от SLO сервиса.",
@@ -1306,7 +1306,7 @@
               "label": "C"
             },
             {
-              "text": "Достаточно `-verbose:gc` без unified logging — он deprecated только в `JDK 21`.",
+              "text": "Флага `-verbose:gc` достаточно для современной JVM; unified logging появился только после JDK 21.",
               "correct": false,
               "sections": {
                 "what_actually": "`-verbose:gc` даёт неконсистентный формат между версиями JDK; современный способ — unified logging `-Xlog:gc*`.",
@@ -1329,7 +1329,7 @@
           "question_text": "Как профилировать GC pauses и их влияние на latency?",
           "options": [
             {
-              "text": "STW-паузы — главный источник latency, поэтому ради их минимизации стоит переходить на `ZGC` независимо от профиля нагрузки.",
+              "text": "Минимальная pause всегда требует перехода на ZGC, независимо от throughput, heap и профиля нагрузки.",
               "correct": false,
               "sections": {
                 "what_actually": "Для batch-нагрузок без latency-SLO важнее throughput; `ZGC` может его снизить, и переход вреден.",
@@ -1341,7 +1341,7 @@
               "label": "A"
             },
             {
-              "text": "GC pauses не добавляются к latency — они асинхронны.",
+              "text": "GC pauses не влияют на request latency, поскольку все этапы сборки выполняются асинхронно.",
               "correct": false,
               "sections": {
                 "what_actually": "STW-паузы синхронно останавливают все потоки, поэтому напрямую добавляются к latency запросов, попавших в паузу.",
@@ -1353,7 +1353,7 @@
               "label": "B"
             },
             {
-              "text": "STW pauses напрямую добавляются к latency; выбор GC по pause goal — `G1GC` (<200ms, default JDK 9+), `ZGC` (<1ms, large heap, low-latency), `Shenandoah` (<10ms), `Parallel` (throughput, batch); снижение allocation rate через alloc-профиль уменьшает GC pressure.",
+              "text": "Влияние GC оценивают корреляцией pauses и latency; collector меняют лишь после проверки allocation и heap.",
               "correct": true,
               "sections": {
                 "explanation": "Оптимизация кода (снижение allocation rate) часто эффективнее замены GC-коллектора: меньше мусора — реже и короче паузы.",
@@ -1366,7 +1366,7 @@
               "label": "C"
             },
             {
-              "text": "Object pooling снижает allocation rate за счёт переиспользования, поэтому его стоит применять на горячих путях с частой аллокацией.",
+              "text": "Object pooling универсально снижает latency и должен применяться ко всем часто создаваемым объектам.",
               "correct": false,
               "sections": {
                 "what_actually": "Pooling вводит синхронизацию и сложность; на thread-safe путях lock contention может превысить выгоду от снижения аллокаций.",
@@ -1389,7 +1389,7 @@
           "question_text": "Что такое `APM` и как он дополняет профилирование?",
           "options": [
             {
-              "text": "`APM` полностью заменяет профилировщик — отдельный `JFR`/`async-profiler` не нужен.",
+              "text": "APM полностью заменяет профилировщик: traces содержат точный CPU и allocation cost каждого метода.",
               "correct": false,
               "sections": {
                 "what_actually": "APM показывает duration span-ов и метрики, но без stack-traces hot-метода; для точной локализации нужен профайлер.",
@@ -1401,32 +1401,32 @@
               "label": "A"
             },
             {
-              "text": "`APM` (`Datadog`/`New Relic`/`Dynatrace`/`Elastic`/`Grafana`+`Pyroscope`) даёт единый UI — traces + metrics + profiles + logs; ключевая интеграция «Trace → Profile»: из медленного span открыть CPU-профиль запроса и видеть hot method в контексте distributed trace.",
+              "text": "APM связывает service-level traces, metrics и logs, а profiler раскрывает CPU, allocations и contention внутри процесса.",
               "correct": true,
               "sections": {
                 "explanation": "APM соединяет «что медленное» (trace) и «где медленное в коде» (profile) на уровне отдельного запроса, делая переход от симптома к методу одним кликом.",
                 "example": "Например, `Datadog Continuous Profiler` с `dd-trace-java` agent — стандарт у `Wolt` и `Booking.com`, а `Grafana`+`Pyroscope` — open-source альтернатива в стиле `GitLab`.",
                 "when_to_apply": "Эту связку применяют при latency-регрессиях: из slow span в trace переходят в profile view и видят hot method.",
-                "edge_cases": "Агенты вроде `dd-trace-java` дают `<3%` overhead, поэтому миф про `30%+` приводит к отказу от tracing и диагностике по логам — это худший исход, чем сам overhead.",
+                "edge_cases": "Агенты вроде `dd-trace-java` дают `<3%` overhead, поэтому миф про существенный приводит к отказу от tracing и диагностике по логам — это худший исход, чем сам overhead.",
                 "related": "[[application-profiling-interview#Q1]] monitoring vs profiling; [[application-profiling-interview#Q25]] continuous profiling; [[application-profiling-interview#Q29]] алерт→trigger профиля."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "`APM`-агенты добавляют `30%+` overhead — для prod не подходят.",
+              "text": "Любой APM-agent добавляет не менее 30% overhead, поэтому production-наблюдаемость через agent невозможна.",
               "correct": false,
               "sections": {
                 "what_actually": "Современные APM-агенты (`dd-trace-java`) дают `<3%` overhead и созданы для production.",
                 "source_of_confusion": "Слово «агент в каждом запросе» ассоциируется с большой стоимостью.",
-                "if_it_were_true": "Если бы overhead был `30%+`, от `dd-trace-java` отказывались бы — но без distributed tracing инциденты диагностируют через grep по логам, RCA затягивается на дни.",
+                "if_it_were_true": "Если бы overhead был существенный, от `dd-trace-java` отказывались бы — но без distributed tracing инциденты диагностируют через grep по логам, RCA затягивается на дни.",
                 "how_it_should_be": "APM-агенты имеют `<3%` overhead; высокая стоимость — миф, мешающий получить tracing."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "Distributed traces важнее профилей — выбирают что-то одно.",
+              "text": "Distributed tracing и profiling решают одну задачу, поэтому одновременное использование создаёт только дубли.",
               "correct": false,
               "sections": {
                 "what_actually": "Trace отвечает «что медленное», profile — «где медленное в коде»; это разные слои, а не выбор «или-или».",
@@ -1449,19 +1449,19 @@
           "question_text": "Что такое `continuous profiling` и зачем он нужен?",
           "options": [
             {
-              "text": "`Pyroscope`/`Datadog` overhead — `10%+`, нельзя для production.",
+              "text": "Continuous profiler всегда даёт двузначный overhead и непригоден для постоянной production-записи.",
               "correct": false,
               "sections": {
-                "what_actually": "Современные continuous-агенты дают `~1%` overhead и спроектированы для постоянной работы в prod.",
+                "what_actually": "Современные continuous-агенты дают низкий и измеряемый overhead и спроектированы для постоянной работы в prod.",
                 "source_of_confusion": "Слово «continuous» ассоциируется с «всегда работает = большой overhead».",
-                "if_it_were_true": "Если бы overhead был `10%+`, от `Pyroscope` отказались бы — но тогда нет always-on flame graph и regression detection, и деградация v1.2.3 vs v1.2.2 не находится автоматически.",
-                "how_it_should_be": "Continuous-агенты имеют `~1%` overhead; высокая стоимость — миф, лишающий regression detection."
+                "if_it_were_true": "Если бы overhead был высокий, от `Pyroscope` отказались бы — но тогда нет always-on flame graph и regression detection, и деградация v1.2.3 vs v1.2.2 не находится автоматически.",
+                "how_it_should_be": "Continuous-агенты имеют низкий и измеряемый overhead; высокая стоимость — миф, лишающий regression detection."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "Достаточно snapshot-профилирования по требованию (`jcmd` при инциденте).",
+              "text": "Snapshot-профиля при инциденте достаточно: исторический профиль до события не даёт дополнительной ценности.",
               "correct": false,
               "sections": {
                 "what_actually": "On-demand профиль не поможет, если инцидент уже прошёл; continuous хранит данные ретроспективно.",
@@ -1473,7 +1473,7 @@
               "label": "B"
             },
             {
-              "text": "`Continuous profiling` — это `JFR.start` без `duration`, остальное не нужно.",
+              "text": "Continuous profiling означает только JFR без duration; хранение, агрегация и сравнение версий не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Это система с rotation, storage и UI (flame graph/diff/trends), а не просто бесконечный JFR без управления данными.",
@@ -1485,7 +1485,7 @@
               "label": "C"
             },
             {
-              "text": "`Continuous profiling` — постоянное (24/7) low-overhead (`~1%`) профилирование в prod; данные ретроспективно доступны для post-mortem; обнаружение regression между деплоями (diff flame graph v1.2.2 vs v1.2.3); инструменты — `Datadog Continuous Profiler`, `Grafana Pyroscope`, `Parca`; подключение через `agentpath` или Java agent.",
+              "text": "Continuous profiling постоянно собирает low-overhead профили и позволяет сравнивать код во времени.",
               "correct": true,
               "sections": {
                 "explanation": "Снимок прошлого момента доступен всегда — это критично для редких или уже ушедших инцидентов, которые невозможно воспроизвести по запросу.",
@@ -1509,7 +1509,7 @@
           "question_text": "Как работает `Datadog Continuous Profiler`?",
           "options": [
             {
-              "text": "`Datadog Continuous Profiler` поддерживает Trace→Profile корреляцию: из медленного APM span открывается flame graph конкретного запроса с cost attribution по методам; есть endpoint profiling, version comparison, timeline view.",
+              "text": "Datadog связывает APM spans с profiles, позволяя перейти от медленного trace к затратным методам.",
               "correct": true,
               "sections": {
                 "explanation": "Корреляция trace→profile связывает «какой запрос медленный» и «какой метод виноват», а cost attribution оценивает стоимость метода в cloud-инфраструктуре.",
@@ -1522,7 +1522,7 @@
               "label": "A"
             },
             {
-              "text": "`Datadog Profiler` — это wrapper над `JFR` без дополнительных возможностей.",
+              "text": "Datadog Profiler лишь переименовывает локальный JFR-файл и не добавляет агрегацию или корреляцию.",
               "correct": false,
               "sections": {
                 "what_actually": "Поверх сбора он даёт уникальные фичи: version diff flame graph, endpoint profiling, cost attribution, Trace→Profile корреляцию.",
@@ -1534,7 +1534,7 @@
               "label": "B"
             },
             {
-              "text": "`Datadog Continuous Profiler` собирает только CPU-профиль, allocation и lock недоступны.",
+              "text": "Datadog Profiler собирает только CPU samples; allocations, locks и другие типы профилей недоступны.",
               "correct": false,
               "sections": {
                 "what_actually": "Он собирает CPU, wall, allocations, heap live objects, lock contention и thrown exceptions, а не один CPU.",
@@ -1546,7 +1546,7 @@
               "label": "C"
             },
             {
-              "text": "`Datadog Profiler` требует root-привилегии и `SYS_PTRACE` на каждом хосте.",
+              "text": "Datadog Profiler всегда требует root и `SYS_PTRACE`, даже когда использует безопасные JVM-механизмы.",
               "correct": false,
               "sections": {
                 "what_actually": "Java-agent `Datadog` подключается как обычный `-javaagent` без root/`SYS_PTRACE`; это требование скорее у `perf_events`-based инструментов.",
@@ -1569,7 +1569,7 @@
           "question_text": "Как профилировать production безопасно?",
           "options": [
             {
-              "text": "`async-profiler` нельзя использовать в production из-за слишком высокого overhead.",
+              "text": "Async-profiler нельзя применять в production: любой sampling создаёт неприемлемый overhead и риск остановки.",
               "correct": false,
               "sections": {
                 "what_actually": "`async-profiler` в sampling mode имеет `~1-2%` overhead и штатно используется в production (`Netflix`, `LinkedIn`, `Twitter`).",
@@ -1581,7 +1581,7 @@
               "label": "A"
             },
             {
-              "text": "Heap dump — обычный способ анализа памяти в production, его можно снимать прямо на боевом инстансе без особых предосторожностей.",
+              "text": "Heap dump можно снимать на загруженной production-реплике без drain, headroom и оценки impact.",
               "correct": false,
               "sections": {
                 "what_actually": "Heap dump вызывает STW-паузу на секунды/минуты (пропорционально heap); это не safe-операция для живого трафика.",
@@ -1593,7 +1593,7 @@
               "label": "B"
             },
             {
-              "text": "Instrumentation-профайлер (`YourKit` full trace) можно включить на 5 минут — overhead терпимый.",
+              "text": "Instrumentation-profiler безопасен при коротком запуске: duration автоматически ограничивает его overhead.",
               "correct": false,
               "sections": {
                 "what_actually": "Full-trace instrumentation даёт 50-200% overhead; даже на 5 минут он деградирует сервис.",
@@ -1605,10 +1605,10 @@
               "label": "C"
             },
             {
-              "text": "Для production использовать только sampling (`JFR`, `async-profiler`) с overhead <2%, сессия 30-60 секунд, согласовать окно с SRE; чёткий rollback-план и минимально достаточный набор событий.",
+              "text": "В production начинают с ограниченного sampling на одной реплике; тяжёлые операции проводят отдельно.",
               "correct": true,
               "sections": {
-                "explanation": "Sampling даёт low overhead без блокировки потоков, короткая сессия ограничивает влияние, согласование с SRE обеспечивает безопасность и хранение артефактов.",
+                "explanation": "Sampling и ограниченная duration обычно дают низкий impact, но безопасность подтверждают на workload; согласование, одна реплика и мониторинг позволяют быстро остановить сессию.",
                 "example": "Например, при latency-инциденте снимают `jcmd JFR.start duration=60s settings=profile` или `async-profiler -e cpu --interval 10ms`.",
                 "when_to_apply": "Эти принципы применяют для любого prod-профилирования; правило — «sampling + короткая сессия + согласование = safe production profiling».",
                 "edge_cases": "Heap dump из этого ряда выпадает: он вызывает STW-паузу пропорционально heap, поэтому его делают только на drain/standby-инстансе, а не на боевом под трафиком.",
@@ -1665,7 +1665,7 @@
               "label": "C"
             },
             {
-              "text": "Для K8s: `kubectl exec -it <pod> -- jcmd 1 JFR.start`, затем `kubectl cp <pod>:/tmp/recording.jfr ./` + учесть cgroup limits (`JDK 17+` авто-детект) и добавить `SYS_PTRACE` для `async-profiler`; анализировать локально.",
+              "text": "Profiler запускают в нужном container namespace, сохраняют артефакт вне pod и учитывают cgroup limits.",
               "correct": true,
               "sections": {
                 "explanation": "Exec даёт доступ к процессу (PID обычно `1`), `kubectl cp` спасает файл из ephemeral pod, а cgroup limits меняют поведение JVM (CPU/memory лимиты).",
@@ -1689,7 +1689,7 @@
           "question_text": "Как связать profiling с Prometheus/Grafana и алертингом?",
           "options": [
             {
-              "text": "Для интеграции profiling с `Grafana` достаточно `JFR` + `JfrMeterRegistry` → метрики в `Prometheus`.",
+              "text": "Для интеграции достаточно экспортировать JFR как обычные Prometheus metrics через специальный registry.",
               "correct": false,
               "sections": {
                 "what_actually": "Так получаются только метрики JFR в Prometheus, но без flame graph визуализации — не видно, какой метод виноват.",
@@ -1701,7 +1701,7 @@
               "label": "A"
             },
             {
-              "text": "`Grafana` может напрямую снимать `JFR`-профили при срабатывании алерта без доп. кода.",
+              "text": "Grafana самостоятельно запускает JFR при alert-е и получает профиль без collector-а или automation.",
               "correct": false,
               "sections": {
                 "what_actually": "Grafana визуализирует данные continuous-агента, но сам JFR-snapshot триггерит код (Spring listener / `AlertManager` webhook), а не Grafana «из коробки».",
@@ -1713,7 +1713,7 @@
               "label": "B"
             },
             {
-              "text": "`Prometheus`-алертинг и профилирование — независимые инструменты, интеграции между ними нет.",
+              "text": "Prometheus alerts и profiling принципиально независимы, поэтому связать их временными labels невозможно.",
               "correct": false,
               "sections": {
                 "what_actually": "Их связывают: алерт по SLI триггерит автоматический snapshot профиля (через webhook/listener) в момент проблемы.",
@@ -1725,7 +1725,7 @@
               "label": "C"
             },
             {
-              "text": "`Pyroscope`/`Grafana Phlare` интегрируется с `Grafana`: flame graph panel получает данные continuous-агента, а alert-менеджер через webhook автоматически триггерит snapshot при `CPU > 80%`.",
+              "text": "Metrics находят проблемное окно, а labels и deploy metadata связывают continuous profile с SLI и релизом.",
               "correct": true,
               "sections": {
                 "explanation": "Алерт по SLI становится триггером профиля, и flame graph снимается именно в момент проблемы, а не постфактум вручную.",
@@ -1749,7 +1749,7 @@
           "question_text": "Какие anti-patterns в profiling чаще всего встречаются и какой обнуляет результат всей оптимизации?",
           "options": [
             {
-              "text": "Профилирование без репрезентативной нагрузки: синтетика на 1 RPS не отражает поведение под 1000 RPS; без realistic load (replay/shadow traffic) hotspots в профиле могут быть совсем другими, чем в проде, и оптимизация даёт 0% эффекта или регресс.",
+              "text": "Профиль нерепрезентативной нагрузки оптимизирует не production bottleneck и может обнулить ценность работы.",
               "correct": true,
               "sections": {
                 "explanation": "Большинство performance-проблем нелинейны: lock contention растёт квадратично с числом потоков, GC pauses усугубляются при высокой allocation rate, cache misses зависят от working set — на 1 RPS ничего этого не видно.",
@@ -1762,7 +1762,7 @@
               "label": "A"
             },
             {
-              "text": "Главный антипаттерн — heavy instrumentation в production (overhead 10-30%).",
+              "text": "Главный anti-pattern — любой instrumentation в production, поскольку sampling неизбежно даёт 30% overhead.",
               "correct": false,
               "sections": {
                 "what_actually": "Это реальный, но известный антипаттерн: каждый senior знает, что в prod нужен sampling; чаще встречается нерепрезентативная нагрузка.",
@@ -1774,7 +1774,7 @@
               "label": "B"
             },
             {
-              "text": "Главный антипаттерн — выводы по одному профилю (один прогон может быть артефактом).",
+              "text": "Один профиль всегда статистически достаточен; повторный прогон только мешает интерпретации результата.",
               "correct": false,
               "sections": {
                 "what_actually": "Один прогон действительно ненадёжен, но это решается простым правилом «3+ прогона» — это basic discipline, а не главный антипаттерн.",
@@ -1786,7 +1786,7 @@
               "label": "C"
             },
             {
-              "text": "Главный антипаттерн — оптимизация micro-hotspot без бизнес-эффекта.",
+              "text": "Micro-hotspot следует оптимизировать первым, даже если он не влияет на пользовательский SLO или стоимость.",
               "correct": false,
               "sections": {
                 "what_actually": "Это реальная проблема (закон Амдала: оптимизация 1% даёт максимум 1%), но она лишь тратит время, а не делает хуже; нерепрезентативная нагрузка опаснее.",
@@ -1821,7 +1821,7 @@
               "label": "A"
             },
             {
-              "text": "Level 3 встраивает profiling в CI/CD pipeline с performance budgets: регрессия выше порога блокирует merge. Это shift-left — проблемы ловятся ДО deploy, а не после.",
+              "text": "Зрелость растёт от ad-hoc profiling к continuous profiles и автоматическим regression checks в CI/CD.",
               "correct": true,
               "sections": {
                 "explanation": "Level 1 (reactive) — ad-hoc по инциденту; Level 2 (proactive) — continuous профили в проде, регрессии видны быстро, но после deploy; Level 3 — performance budget блокирует merge как failing unit-test.",
@@ -1869,7 +1869,7 @@
           "question_text": "Как ответить про profiling на senior-раунде за 1 минуту и что отличает senior от middle?",
           "options": [
             {
-              "text": "Senior-уровень — это подробное описание инструментов: `JFR` vs `async-profiler` vs `YourKit` с pros/cons каждого.",
+              "text": "Senior-уровень — это подробное описание инструментов: `JFR`, `async-profiler`, `YourKit`.",
               "correct": false,
               "sections": {
                 "what_actually": "Перечисление инструментов — middle-уровень; senior знает их, но в 60-секундном ответе тратит на это секунды, фокусируясь на процессе и результате.",
@@ -1893,7 +1893,7 @@
               "label": "B"
             },
             {
-              "text": "Senior-уровень — связь профиля с измеримым бизнес-результатом («p99 −35%, CPU −15%») и понимание profiling как операционного процесса (continuous, не разовый).",
+              "text": "Senior-уровень — связь профиля с измеримым бизнес-результатом и понимание profiling как операционного процесса.",
               "correct": true,
               "sections": {
                 "explanation": "Senior отвечает в формате STAR с метриками: симптом (по SLI) → диагностика (как пришли к гипотезе) → находка → результат с конкретными цифрами; и показывает системность (continuous, runbook, post-mortem).",
@@ -1929,7 +1929,7 @@
           "question_text": "Как анализировать heap dump с `Eclipse MAT`: какой путь к root cause утечки самый прямой?",
           "options": [
             {
-              "text": "Сравнить два heap dump'а: snapshot до и после, найти класс с наибольшим приростом.",
+              "text": "Сравнение двух heap dump автоматически показывает удерживающую ссылку и заменяет анализ dominator tree.",
               "correct": false,
               "sections": {
                 "what_actually": "Compare мощен, но требует двух дампов, что доступно не всегда; для one-shot OOM (single dump на момент crash) нужен workflow на одном дампе.",
@@ -1941,7 +1941,7 @@
               "label": "A"
             },
             {
-              "text": "Histogram: отсортировать классы по shallow heap и найти самый большой по count.",
+              "text": "Класс с максимальным shallow heap всегда является root cause, поэтому retained size можно не смотреть.",
               "correct": false,
               "sections": {
                 "what_actually": "Histogram показывает shallow heap, а утечка обычно про retained heap (что объект удерживает от GC); количество объектов само по себе не утечка.",
@@ -1953,7 +1953,7 @@
               "label": "B"
             },
             {
-              "text": "Leak Suspects Report → Dominator Tree → Path to GC Roots для топ-3 кандидатов — canonical workflow `Eclipse MAT`, оптимизированный для скорости диагностики.",
+              "text": "В MAT идут от Leak Suspects и Dominator Tree к `Path to GC Roots` подозрительных dominators.",
               "correct": true,
               "sections": {
                 "explanation": "Leak Suspects по эвристикам за ~30s даёт top suspect'ов; Dominator Tree сортирует по retained heap; Path to GC Roots показывает, какая ссылка держит объект — это и есть root cause.",
@@ -1966,7 +1966,7 @@
               "label": "C"
             },
             {
-              "text": "OQL-запросы: написать custom query для каждого подозрительного класса.",
+              "text": "Для каждого класса сначала нужен OQL-запрос; встроенные отчёты и GC-root paths ненадёжны.",
               "correct": false,
               "sections": {
                 "what_actually": "OQL мощен для уточнения гипотезы, но как первый шаг слишком долог: без гипотезы неясно, какой запрос писать.",
@@ -1989,7 +1989,7 @@
           "question_text": "Что означает широкая плоская вершина в flame graph и почему это первый кандидат на оптимизацию?",
           "options": [
             {
-              "text": "Это глубокая рекурсия с большим количеством вызовов одного метода.",
+              "text": "Широкая плоская вершина показывает только большую глубину рекурсии, а доля samples и self-time метода по ней не определяется.",
               "correct": false,
               "sections": {
                 "what_actually": "Рекурсия выглядит как высокая узкая колонна (уровни одного метода друг над другом) — противоположность плоской вершины.",
@@ -2001,20 +2001,20 @@
               "label": "A"
             },
             {
-              "text": "Метод сам по себе тратит много CPU (высокий self-time) — не из-за вызовов внутрь, а из-за работы в самом методе; это прямой bottleneck для оптимизации.",
+              "text": "Широкий верхний frame означает большой self-resource share без значимых дочерних frames; это кандидат на анализ, подтверждаемый контекстом и измерением.",
               "correct": true,
               "sections": {
-                "explanation": "Ось X = доля времени, ось Y = глубина стека; плоская вершина значит, что над методом нет значимых дочерних вызовов — он сам выполняет работу, в отличие от узкой высокой башни.",
-                "example": "Например, `calculateTotals` на 70% self-time с `BigDecimal` в indexed-цикле; замена на `long` (cents) и enhanced-for снизила её с 70% до 8%, p99 800ms→120ms.",
-                "when_to_apply": "Широкое плато ищут в CPU-bound сервисах при высоком p99; типично — `serialize`/`parse`/`format` на 30%+ или `String.format`/regex на 20%+.",
-                "edge_cases": "Подводные камни: JIT inlining может скрыть мелкий метод в caller (`-XX:+PrintInlining`), а native `Unsafe.park`/`epollWait` — это off-CPU и на CPU-графе их быть не должно.",
+                "explanation": "Ширина flame graph пропорциональна числу samples или выбранному ресурсу. Верхний frame не передаёт работу дочерним frames, поэтому observed cost относится к нему или скрытому native/inlined коду.",
+                "example": "Широкая вершина serializer-а приводит к проверке алгоритма, allocations и generated/native implementation; после изменения сравнивают профиль и end-to-end SLI.",
+                "when_to_apply": "Начинайте с широких frames в релевантном профиле, но учитывайте frequency, business importance и возможность оптимизации, а не только визуальную площадь.",
+                "edge_cases": "Inlining, incomplete stacks, `[unknown]`, sampling event и off-CPU semantics способны изменить интерпретацию. Ширина показывает correlation с ресурсом, а не автоматически root cause.",
                 "related": "[[application-profiling-interview#Q12]] основы flame graph; [[application-profiling-interview#Q13]] типы flame graph; [[application-profiling-interview#Q15]] on-CPU vs off-CPU."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "Метод вызывался много раз, но каждый вызов короткий — лучше оставить как есть.",
+              "text": "Ширина верхнего frame отражает исключительно число вызовов метода, поэтому частый короткий метод всегда является главным bottleneck.",
               "correct": false,
               "sections": {
                 "what_actually": "Flame graph показывает не количество вызовов, а агрегированное время (samples): метод на 50% ширины = 50% CPU независимо от частоты.",
@@ -2026,7 +2026,7 @@
               "label": "C"
             },
             {
-              "text": "Это delegating-метод: он только перевызывает другие методы без своей логики.",
+              "text": "Плоская вершина означает delegating-метод без собственной работы: вся стоимость обязательно принадлежит скрытым дочерним вызовам.",
               "correct": false,
               "sections": {
                 "what_actually": "Delegating-метод выглядит как широкое основание с активной башней над ним, а не как плоская вершина (top of stack без significant children).",
@@ -2049,7 +2049,7 @@
           "question_text": "`async-profiler` vs `JFR`: в каком сценарии async-profiler принципиально превосходит JFR?",
           "options": [
             {
-              "text": "Анализ GC pauses и связь с allocation rate.",
+              "text": "JFR принципиально лучше async-profiler для поиска native CPU hotspots без safepoint bias.",
               "correct": false,
               "sections": {
                 "what_actually": "Для GC-анализа превосходит `JFR`: у него встроены `jdk.GarbageCollection`, `GCPhasePause`, `GCHeapSummary`, `PromotionFailed` — комплексный контекст, включая concurrent vs STW фазы.",
@@ -2061,7 +2061,7 @@
               "label": "A"
             },
             {
-              "text": "Точный CPU/allocation-анализ без safepoint bias и с native-стеками: `async-profiler` через `AsyncGetCallTrace` + `perf_events` видит «застрявшие» counted-loops, JNI, системные вызовы, что `JFR` с safepoint bias пропускает.",
+              "text": "`async-profiler` особенно силён в точном CPU/allocation sampling с native stacks и без safepoint bias.",
               "correct": true,
               "sections": {
                 "explanation": "`JFR` сэмплирует через safepoints (safepoint bias — методы, редко доходящие до safepoint, недооценены), а async-profiler работает вне safepoints и объединяет Java + native стеки.",
@@ -2074,7 +2074,7 @@
               "label": "B"
             },
             {
-              "text": "Long-term continuous profiling в production (24/7 запись).",
+              "text": "Для постоянной исторической записи JFR всегда непригоден, тогда как async-profiler не имеет overhead.",
               "correct": false,
               "sections": {
                 "what_actually": "Для long-term continuous лучший выбор — `JFR`: rolling buffer, overhead 1-2%, integration с Mission Control, работает out-of-the-box; async-profiler — on-demand tool на 30-90s.",
@@ -2086,7 +2086,7 @@
               "label": "C"
             },
             {
-              "text": "Профилирование короткоживущих процессов (CLI tool, batch job на 10 сек).",
+              "text": "Короткоживущий процесс нельзя профилировать async-profiler: attach требует нескольких минут прогрева.",
               "correct": false,
               "sections": {
                 "what_actually": "Для short-lived процессов оба работают, и `JFR` даже удобнее: `-XX:StartFlightRecording=duration=10s` пишет с первой миллисекунды, а async-profiler требует attach к running процессу (race condition).",
@@ -2106,53 +2106,53 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какой инструмент категорически нельзя использовать в production даже для краткого анализа из-за многосекундного Stop-the-World?",
+          "question_text": "Почему heap dump в production требует особой осторожности и как снизить риск?",
           "options": [
             {
-              "text": "`async-profiler` с `-d 30 -e cpu` (sampling 1000Hz).",
+              "text": "Флаг `live=true` делает heap dump полностью non-blocking, поэтому его можно снимать на любой реплике без подготовки и наблюдения.",
               "correct": false,
               "sections": {
-                "what_actually": "async-profiler с дефолтными настройками имеет overhead 1-3% без STW-пауз; sampling через signal handler не блокирует application threads.",
-                "source_of_confusion": "«1000Hz» звучит как высокая нагрузка.",
-                "if_it_were_true": "Если бы он вызывал STW, его запретили бы в prod — но это самый используемый production profiler в Java (Netflix, LinkedIn, Twitter).",
-                "how_it_should_be": "async-profiler («async» = неблокирующий) production-safe; STW даёт heap dump."
+                "what_actually": "`live` ограничивает dump достижимыми объектами, но операция всё равно может потребовать GC, паузу, CPU, I/O и значительный объём диска.",
+                "source_of_confusion": "Название флага воспринимают как обещание live/non-blocking режима, хотя оно описывает набор включённых объектов.",
+                "if_it_were_true": "Большой heap можно было бы дампить на latency-critical реплике без изменения p99, health checks и ресурсов node-а.",
+                "how_it_should_be": "Считайте heap dump high-impact операцией независимо от `live`; планируйте её и наблюдайте приложение."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "`Datadog Continuous Profiler` агент в дефолтной конфигурации.",
+              "text": "Heap dump эквивалентен JFR heap statistics: оба механизма дают полный object graph с одинаково низким impact.",
               "correct": false,
               "sections": {
-                "what_actually": "Datadog Java Agent спроектирован для production: overhead 2-5%, no STW, rolling buffer; по умолчанию профилирует 60s каждые 60 минут.",
-                "source_of_confusion": "«continuous» звучит как «всегда работает = большой overhead».",
-                "if_it_were_true": "Если бы он вызывал STW, Datadog продал бы 0 лицензий — но это многомиллионный бизнес именно на production-grade safety.",
-                "how_it_should_be": "Continuous-агенты созданы для постоянной работы в проде; STW — у heap dump."
+                "what_actually": "JFR heap statistics и old-object sampling помогают искать рост и retention, но не являются полной копией object graph как HPROF dump.",
+                "source_of_confusion": "Оба инструмента применяют для memory leak, поэтому объём и impact их данных легко принять за одинаковые.",
+                "if_it_were_true": "JFR-файл содержал бы каждый объект, каждое поле и полный путь ссылок с размером, сопоставимым с heap dump.",
+                "how_it_should_be": "Начинайте с менее инвазивных JFR/metrics-инструментов, а полный dump оставляйте для задач, где нужен object graph."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "`JFR` с настройками `settings=profile` (не default).",
+              "text": "Единственный риск heap dump — нехватка диска; CPU, GC и обработка запросов во время операции не затрагиваются.",
               "correct": false,
               "sections": {
-                "what_actually": "`JFR settings=profile` имеет overhead ~2% (vs ~1% у default), но полностью безопасен — никаких STW-пауз сверх обычных.",
-                "source_of_confusion": "«profile» звучит как «heavy» в отличие от «default».",
-                "if_it_were_true": "Если бы `profile` был опасен, `Datadog`/`Pyroscope` не могли бы использовать `JFR` — но это их основа.",
-                "how_it_should_be": "`JFR settings=profile` production-safe; STW-проблема — у heap dump, а не у него."
+                "what_actually": "Помимо диска, dump может вызвать full GC, остановку или сильное замедление JVM и заметную I/O-нагрузку.",
+                "source_of_confusion": "Наиболее очевидный артефакт — большой HPROF-файл, поэтому runtime impact иногда недооценивают.",
+                "if_it_were_true": "При достаточном диске latency, CPU и liveness оставались бы неизменными на heap любого размера.",
+                "how_it_should_be": "Оценивайте disk, pause budget, I/O, replica capacity и поведение orchestrator-а вместе."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "Heap dump через `jmap -dump` без предупреждения, особенно на больших heap (10GB+): он требует полной остановки JVM (STW) на время записи всего heap на диск.",
+              "text": "Heap dump имеет высокий impact, зависящий от heap и содержимого; безопаснее drain-ить реплику, проверить disk headroom и использовать управляемую диагностическую процедуру.",
               "correct": true,
               "sections": {
-                "explanation": "Для 10GB heap на SSD это ~5-10 секунд, на slow storage (NFS, EBS gp2) — до минуты; все потоки заморожены, запросы копятся, healthcheck'и падают, `K8s` рестартит pod как unhealthy.",
-                "example": "Например, `jmap -dump` без флага `live` дампит ВСЕ объекты включая garbage (размер в 2-3 раза больше); безопаснее `jcmd GC.heap_dump live=true` или JFR с GC events без STW.",
-                "when_to_apply": "Heap dump в prod делают только при memory leak без альтернатив, на одной реплике, после drain pod из service, с уведомлением on-call — это planned operation, не silent.",
-                "edge_cases": "Подводные камни: для 10GB heap нужно 10GB+ свободного диска (ephemeral storage pod может быть 1GB → dump fail), а во время STW gRPC keep-alive падает и downstream видит timeouts.",
-                "related": "[[application-profiling-interview#Q18]] heap dump basics; [[application-profiling-interview#Q27]] безопасное prod-профилирование; [[application-profiling-interview#Q19]] memory leak detection."
+                "explanation": "`jcmd GC.heap_dump` документирован как high-impact операция; размер и длительность зависят от heap, reachable objects, GC и скорости storage.",
+                "example": "Для подозрения на leak сначала включают JFR heap statistics; если нужен HPROF, одну реплику выводят из traffic, проверяют свободное место и снимают dump через `jcmd`.",
+                "when_to_apply": "Используйте heap dump, когда требуется полный object graph и менее инвазивных данных недостаточно; оформляйте операцию как контролируемую production-диагностику.",
+                "edge_cases": "`-XX:+HeapDumpOnOutOfMemoryError` полезен для аварийного снимка, но также требует disk headroom; поведение и impact проверяют на staging с похожим heap.",
+                "related": "[[application-profiling-interview#Q18]] анализ heap dump; [[application-profiling-interview#Q19]] memory leaks; [[application-profiling-interview#Q27]] production profiling."
               },
               "order": 3,
               "label": "D"
@@ -2169,7 +2169,7 @@
           "question_text": "В чём разница между `Shallow Heap` и `Retained Heap` в `Eclipse MAT` и почему для поиска утечек важна именно Retained?",
           "options": [
             {
-              "text": "`Shallow Heap` = размер самого объекта (header + поля как references). `Retained Heap` = shallow + размер всего, что объект уникально удерживает через dominator tree. Для утечек нужен Retained: объект с Retained=800MB при удалении освобождает 800MB — это и есть утечка.",
+              "text": "`Shallow Heap` — размер самого объекта; `Retained Heap` — память, освобождаемая вместе с ним.",
               "correct": true,
               "sections": {
                 "explanation": "Утечка — это объект, не собираемый GC из-за держащей ссылки; MAT находит держателя через dominator tree (X dominate'ит Y, если каждый путь из GC root к Y идёт через X).",
@@ -2182,7 +2182,7 @@
               "label": "A"
             },
             {
-              "text": "`Shallow Heap` = размер объекта + все его поля (включая вложенные), `Retained Heap` = только сам объект.",
+              "text": "`Shallow Heap` включает весь достижимый граф, а `Retained Heap` учитывает только header объекта.",
               "correct": false,
               "sections": {
                 "what_actually": "Определения перепутаны: Shallow = сам объект (без рекурсивного разворачивания), Retained = shallow + всё, что объект dominate'ит.",
@@ -2194,7 +2194,7 @@
               "label": "B"
             },
             {
-              "text": "`Shallow Heap` меньше `Retained Heap`, ведь retained прибавляет к самому объекту размер удерживаемого им поддерева — совпадать эти величины не могут.",
+              "text": "`Retained Heap` всегда строго больше shallow size и никогда не может совпасть с ним.",
               "correct": false,
               "sections": {
                 "what_actually": "Shallow может равняться Retained, если объект ничего не dominate'ит (immutable `Integer`, или его поля удерживаются ещё откуда-то).",
@@ -2206,7 +2206,7 @@
               "label": "C"
             },
             {
-              "text": "`Shallow Heap` = только примитивы объекта (без references), `Retained Heap` = только references (без примитивов).",
+              "text": "`Shallow Heap` учитывает только примитивы, а `Retained Heap` — только reference-поля объекта.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба включают и примитивы (поля long/int), и references; разница не в типе данных, а в scope (сам объект vs плюс dominated).",
@@ -2229,7 +2229,7 @@
           "question_text": "Как анализировать thread dump для обнаружения deadlock и какие состояния потоков важны?",
           "options": [
             {
-              "text": "Массовое `WAITING` у потоков event-loop указывает на deadlock, а обнаружить его `jstack` сам не может — нужен внешний анализатор.",
+              "text": "Массовое `WAITING` у event-loop threads само по себе доказывает наличие взаимной блокировки.",
               "correct": false,
               "sections": {
                 "what_actually": "`WAITING` у event-loop потоков (epoll_wait) — норма, а не deadlock; `jstack` как раз умеет детектить реальные deadlocks через monitor cycle analysis.",
@@ -2241,7 +2241,7 @@
               "label": "A"
             },
             {
-              "text": "Снять через `jstack -l` (с locks), `jcmd Thread.print` или `kill -3`; различать состояния `RUNNABLE`/`BLOCKED`/`WAITING`/`TIMED_WAITING`; deadlock виден как взаимное `waiting to lock <X> held by Thread-Y` и `jstack` пишет «Found 1 deadlock».",
+              "text": "Ищут цикл владения locks; `BLOCKED` означает contention, `WAITING` — ожидание, а `RUNNABLE` не гарантирует CPU.",
               "correct": true,
               "sections": {
                 "explanation": "`jstack` автоматически детектит deadlock через анализ цикла мониторов; флаг `-l` показывает ownable synchronizers, без которых владение locks неполно.",
@@ -2254,7 +2254,7 @@
               "label": "B"
             },
             {
-              "text": "Состояние `BLOCKED` и `WAITING` — это одно и то же, оба означают ожидание монитора.",
+              "text": "Состояния `BLOCKED` и `WAITING` эквивалентны и одинаково означают ожидание освобождения Java monitor.",
               "correct": false,
               "sections": {
                 "what_actually": "`BLOCKED` — ожидание входа в `synchronized` (монитор занят), `WAITING` — `Object.wait()`/`LockSupport.park()` без таймаута; это разные причины ожидания.",
@@ -2266,7 +2266,7 @@
               "label": "C"
             },
             {
-              "text": "`kill -9 <PID>` — стандартный способ снять thread dump.",
+              "text": "Deadlock диагностируют командой `kill -9`, которая сохраняет locks и cycles перед остановкой процесса.",
               "correct": false,
               "sections": {
                 "what_actually": "Thread dump даёт `kill -3` (SIGQUIT); `kill -9` (SIGKILL) убивает процесс без всякого dump.",
@@ -2286,53 +2286,53 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Почему sampling profiling имеет overhead 1-3%, а instrumentation — 10-200x, и где разница принципиальна?",
+          "question_text": "Чем sampling profiling отличается от instrumentation по overhead и точности?",
           "options": [
             {
-              "text": "`Sampling` периодически (например, 1000Hz) снимает stack trace без модификации кода — overhead зависит от частоты sampling, а не от числа методов. `Instrumentation` модифицирует bytecode каждого метода (enter/exit hooks) — overhead пропорционален количеству вызовов, что в tight loops даёт 10-200x slowdown.",
+              "text": "Sampling периодически снимает stacks и даёт статистическую картину; instrumentation перехватывает события или вызовы точнее, но её стоимость растёт с их частотой.",
               "correct": true,
               "sections": {
-                "explanation": "Sampling-overhead = cost_of_sample × samples_per_second (распределён по ядрам → 1-3%); instrumentation-overhead = cost_per_call × calls_per_second, и при миллионах вызовов в секунду растёт катастрофически.",
-                "example": "Например, метод 10ns с 1M вызовов/сек: sampling видит его раз в ~миллион вызовов (slowdown 0.1%), instrumentation добавляет +100ns на вызов (11x slowdown, +100ms/sec → service unusable).",
-                "when_to_apply": "В production ВСЕГДА sampling; instrumentation допустим для dev micro-benchmark (`JMH` изолирован в harness) или coverage-tools (`JaCoCo`, обычно offline).",
-                "edge_cases": "Подводные камни: sampling в tight loops без safepoints может промахнуться (`async-profiler` через `perf_events` решает), а instrumentation ломает JIT inlining и портит timing async-цепочек (`CompletableFuture`).",
-                "related": "[[application-profiling-interview#Q2]] sampling vs instrumentation теория; [[application-profiling-interview#Q3]] safepoint bias; [[application-profiling-interview#Q9]] async-profiler internals."
+                "explanation": "Стоимость sampling определяется частотой samples и глубиной stack, тогда как instrumentation добавляет работу на каждое наблюдаемое событие или вызов и может менять JIT-поведение.",
+                "example": "CPU sampling на 100 Hz выявляет hotspots статистически; exact tracing enter/exit показывает call counts, но в горячем цикле создаёт намного больше событий.",
+                "when_to_apply": "Для production hotspots обычно начинайте с sampling; instrumentation применяйте точечно, когда нужны точные события и допустим измеренный impact.",
+                "edge_cases": "Редкие методы могут не попасть в короткую sample-сессию, а аккуратно ограниченная instrumentation не обязательно тяжёлая; универсальных процентов overhead нет.",
+                "related": "[[application-profiling-interview#Q2]] sampling и instrumentation; [[application-profiling-interview#Q3]] safepoint bias; [[application-profiling-interview#Q9]] async-profiler."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "`Sampling` вставляет байт-код в каждый метод, `instrumentation` собирает stack trace через `JVMTI`; sampling быстрее из-за hardware counters.",
+              "text": "Sampling вставляет hooks в каждый метод, а instrumentation лишь изредка читает stack, поэтому sampling всегда дороже на call-heavy workload.",
               "correct": false,
               "sections": {
-                "what_actually": "Определения перевёрнуты: sampling не вставляет байт-код (снимает стек «снаружи»), а instrumentation именно вставляет enter/exit hooks; hardware counters — это техника `perf_events` async-profiler.",
-                "source_of_confusion": "Sampling и instrumentation часто упоминают вместе, и термины путают.",
-                "if_it_were_true": "Если бы было так, sampling замедлял бы JVM на 100x, а instrumentation был бы быстрее — на практике обратное.",
-                "how_it_should_be": "Sampling снимает стек без правки кода; instrumentation модифицирует bytecode каждого метода."
+                "what_actually": "В типичной модели всё наоборот: per-call hooks относятся к instrumentation, а sampling периодически получает stack snapshots.",
+                "source_of_confusion": "Названия описывают способ наблюдения, и без привязки к механизму их легко поменять местами.",
+                "if_it_were_true": "Частота method calls почти не влияла бы на instrumentation, а sampling ломал бы inlining каждого метода.",
+                "how_it_should_be": "Связывайте overhead с числом операций: samples — с sampling rate, hooks — с количеством инструментированных событий."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "Разница не принципиальна — оба дают overhead 1-5% при правильной настройке.",
+              "text": "Обе модели собирают одинаковые события и имеют одинаковый overhead; различается только формат файла, который открывает viewer.",
               "correct": false,
               "sections": {
-                "what_actually": "Для простых сценариев instrumentation может дать 5-10% (1-2 метода), но в default config (всё) или для CPU-bound кода разница на порядки.",
-                "source_of_confusion": "Оба работают в dev без видимых проблем, отсюда вывод о малой разнице.",
-                "if_it_were_true": "Если бы разница была мала, `YourKit`/`JProfiler` можно было бы оставлять в production — но все BigTech их там запрещают.",
-                "how_it_should_be": "Для prod вопрос критический: 1-3% (sampling) vs 10-200x (instrumentation) определяет, можно ли запускать инструмент в проде."
+                "what_actually": "Модели отличаются и полнотой данных, и способом сбора, поэтому их runtime impact и искажения различаются.",
+                "source_of_confusion": "Оба результата часто отображаются одним flame graph, скрывая разницу источников данных.",
+                "if_it_were_true": "Одинаковая конфигурация давала бы одинаковые call counts, rare events и влияние на JIT независимо от collector-а.",
+                "how_it_should_be": "Сначала определите, нужны ли статистические hotspots или точные события, затем выбирайте механизм."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "`Sampling` использует CPU sampling counters, `instrumentation` использует RAM — это hardware vs software профилирование.",
+              "text": "Sampling фиксирует каждый вызов без пропусков, а instrumentation строит вероятностную выборку, поэтому только sampling даёт точные call counts.",
               "correct": false,
               "sections": {
-                "what_actually": "Оба используют и CPU, и RAM; различие в подходе к измерению (статистический vs полный), а не в аппаратном уровне; hardware counters — подмножество sampling.",
-                "source_of_confusion": "«hardware counters» и «software counters» — реальная дихотомия, но оба внутри категории sampling.",
-                "if_it_were_true": "Если бы instrumentation работал RAM-only без CPU, он не писал бы timestamps — но для записи времени он требует CPU.",
-                "how_it_should_be": "Различие — статистический (sampling) vs полный (instrumentation) подход, а не hardware vs software."
+                "what_actually": "Sampling является вероятностным, а instrumentation может фиксировать каждый инструментированный вызов или event.",
+                "source_of_confusion": "Sampling flame graph выглядит детальным и поэтому иногда воспринимается как исчерпывающий trace.",
+                "if_it_were_true": "Короткая sample-сессия никогда не пропускала бы редкие методы и всегда давала бы точные counts.",
+                "how_it_should_be": "Не интерпретируйте sample count как точное число вызовов; это оценка доли наблюдаемого времени."
               },
               "order": 3,
               "label": "D"
@@ -2346,53 +2346,53 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Почему JFR allocation profiling использует два события `ObjectAllocationInNewTLAB` и `ObjectAllocationOutsideTLAB`, и о чём говорит преобладание одного над другим?",
+          "question_text": "Как интерпретировать JFR-события аллокаций внутри и вне TLAB?",
           "options": [
             {
-              "text": "`InNewTLAB` фиксируется на каждую аллокацию внутри TLAB, а `OutsideTLAB` — только при его переполнении, поэтому событий первого типа кратно больше.",
+              "text": "`ObjectAllocationInNewTLAB` создаётся для каждой аллокации внутри текущего TLAB, поэтому число events равно точному числу созданных объектов.",
               "correct": false,
               "sections": {
-                "what_actually": "Оба — sampled events (раз в N байт, default period ~20ms), а не every allocation; соотношение зависит от размеров объектов и TLAB.",
-                "source_of_confusion": "«in TLAB — normal, outside — exception» частично верно, но не про частоту событий.",
-                "if_it_were_true": "Если бы соотношение было константой, оно не несло бы информации — но оно как раз диагностический сигнал (90/10 норма, 20%+ Outside = много больших объектов).",
-                "how_it_should_be": "Оба события сэмплируются; соотношение — диагностический сигнал, а не фиксированный множитель."
+                "what_actually": "Событие InNewTLAB связано с аллокацией, потребовавшей новый TLAB, а не с каждым объектом, помещённым в уже существующий буфер.",
+                "source_of_confusion": "Название «allocation in TLAB» легко прочитать как per-object event для всех fast-path allocations.",
+                "if_it_were_true": "Event count точно совпадал бы с object count и позволял бы без weighting вычислить allocation rate.",
+                "how_it_should_be": "Учитывайте семантику события и его fields; для репрезентативного low-overhead профиля используйте allocation sampling."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "`InNewTLAB` = объект помещается в текущий TLAB (fast path, sub-microsecond, просто сдвиг указателя). `OutsideTLAB` = объект слишком большой для TLAB (обычно > 1/64 TLAB size), аллоцируется напрямую в Eden через CAS lock (slow path). Преобладание `OutsideTLAB` = много больших объектов → bottleneck.",
+              "text": "`ObjectAllocationInNewTLAB` отмечает allocation при получении нового TLAB, а `ObjectAllocationOutsideTLAB` — вне него; для low-overhead профиля используют также allocation sampling.",
               "correct": true,
               "sections": {
-                "explanation": "TLAB — приватный регион Eden, аллокация в нём это `top += size` без синхронизации (наносекунды); большой объект идёт slow path с CAS lock на Eden top pointer — сериализованная операция с contention.",
-                "example": "Например: `InNewTLAB` 5000 events/50MB, `OutsideTLAB` 300 events/800MB → drill-down показывает `ObjectMapper.writeValueAsBytes` (byte[] 5-15MB на huge JSON); фикс — streaming serialization + `-XX:TLABSize=4m`, OutsideTLAB 300→20, GC pause −40%.",
-                "when_to_apply": "Разделение анализируют при высоком GC pressure и Eden lock contention в thread dump; `InNewTLAB >> OutsideTLAB` (90/10) — норма, `OutsideTLAB` 20%+ — сигнал больших объектов.",
-                "edge_cases": "Подводные камни: `async-profiler` не различает in/out TLAB напрямую (нужен JFR), `-XX:+ResizeTLAB` динамически подбирает размер, а на NUMA-системах outside TLAB ещё медленнее (cross-socket access).",
-                "related": "[[application-profiling-interview#Q17]] allocation profiling basics; [[application-profiling-interview#Q22]] GC analysis; [[application-profiling-interview#Q8]] JFR allocation-события."
+                "explanation": "TLAB даёт потоку дешёвый allocation fast path; JFR различает объект, вызвавший выдачу нового TLAB, и объект, размещённый вне TLAB, а sampled allocations показывают горячие allocation sites.",
+                "example": "Запись показывает крупные `byte[]` в `ObjectAllocationOutsideTLAB`, тогда как `ObjectAllocationSample` с weight выявляет основной объём временных DTO из hot path.",
+                "when_to_apply": "Используйте эти events при высоком allocation rate, GC pressure и поиске классов или stack traces, создающих крупные либо многочисленные объекты.",
+                "edge_cases": "Raw event counts не равны точному числу всех объектов; интерпретируйте allocation size, TLAB size, sampling weight, stack trace и настройки recording вместе.",
+                "related": "[[application-profiling-interview#Q8]] allocation events JFR; [[application-profiling-interview#Q17]] allocation profiling; [[application-profiling-interview#Q22]] GC analysis."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "`InNewTLAB` события быстрее писать, поэтому JFR разделяет их для performance; с точки зрения user они одинаковы.",
+              "text": "`ObjectAllocationInNewTLAB` относится только к primitive arrays, а `ObjectAllocationOutsideTLAB` — только к обычным reference objects.",
               "correct": false,
               "sections": {
-                "what_actually": "Разделение — ради диагностической ценности (разные performance characteristics приложения), а не ради performance самого JFR; overhead обоих событий одинаков.",
-                "source_of_confusion": "«зачем разделять, если одинаковы» кажется arbitrary решением.",
-                "if_it_were_true": "Если бы это было про performance JFR, в Mission Control события показывались бы вместе — но они в разных tab'ах с разной интерпретацией.",
-                "how_it_should_be": "Разделение про семантику (fast path vs slow path), а не про скорость записи событий."
+                "what_actually": "TLAB placement определяется размером и allocation path, а не делением типов на primitive и reference.",
+                "source_of_confusion": "Большие primitive arrays часто идут вне TLAB, что может создать ложную корреляцию между типом и событием.",
+                "if_it_were_true": "Любой обычный object всегда создавался бы outside TLAB, лишая TLAB основного назначения для быстрых Java allocations.",
+                "how_it_should_be": "Связывайте event с allocation path и размером, а не с категорией Java-типа."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "`InNewTLAB` — для primitive объектов, `OutsideTLAB` — для reference объектов (аналогично stack vs heap allocation).",
+              "text": "Большая доля `OutsideTLAB` сама по себе доказывает lock contention и требует увеличить `TLABSize`, независимо от размеров объектов и collector-а.",
               "correct": false,
               "sections": {
-                "what_actually": "Все Java-объекты аллоцируются в heap; TLAB vs outside TLAB — не про тип объекта, а про то, где в young generation он размещён.",
-                "source_of_confusion": "«in» vs «outside» звучит как fundamental dichotomy типов.",
-                "if_it_were_true": "Если бы дело было в типе, `int[]`-массивы не попадали бы в TLAB как primitive container — но они аллоцируются в TLAB, если помещаются.",
-                "how_it_should_be": "Оба — heap allocation; разница в performance characteristics размещения, а не в типе объекта."
+                "what_actually": "Outside-TLAB allocations являются сигналом для анализа, но причина может быть в крупных объектах, TLAB policy, workload и collector settings.",
+                "source_of_confusion": "Наличие медленного пути соблазняет сразу назначить один JVM flag как универсальное лечение.",
+                "if_it_were_true": "Одинаковое увеличение TLAB исправляло бы любой workload без memory waste, regressions и изменений GC behavior.",
+                "how_it_should_be": "Сначала анализируйте classes, sizes, stacks и allocation rate; JVM flags меняйте только после измерений."
               },
               "order": 3,
               "label": "D"
@@ -2409,7 +2409,7 @@
           "question_text": "В `EXPLAIN ANALYZE` виден `Seq Scan` на таблице 50M строк и `Rows Removed by Filter: 49,950,000`. Что это значит и какое решение?",
           "options": [
             {
-              "text": "Нужно увеличить `shared_buffers` `PostgreSQL` до 32GB, чтобы вся таблица помещалась в RAM.",
+              "text": "Нужно только увеличить `shared_buffers`, чтобы таблица целиком оказалась в RAM; после этого чтение всех 50 миллионов строк перестанет быть проблемой.",
               "correct": false,
               "sections": {
                 "what_actually": "Увеличение `shared_buffers` снижает disk I/O, но 50M строк всё равно читаются и фильтруются — это band-aid, не fix; индекс снижает читаемые страницы с 580k до 200 (3000x).",
@@ -2421,7 +2421,7 @@
               "label": "A"
             },
             {
-              "text": "`Rows Removed by Filter` — это не проблема, `PostgreSQL` так пишет нормальные запросы, решения не требуется.",
+              "text": "`Rows Removed by Filter` является служебным счётчиком без диагностического смысла, поэтому большое значение не требует проверки selectivity или buffers.",
               "correct": false,
               "sections": {
                 "what_actually": "`Rows Removed by Filter: 49M` — критический сигнал: 49M строк прочитано впустую (disk I/O, CPU, memory bandwidth); это определение inefficient query.",
@@ -2433,20 +2433,20 @@
               "label": "B"
             },
             {
-              "text": "Полный sequential scan: `PostgreSQL` читает все 50M строк, фильтрует 99.9% в памяти, возвращает 50k. Это значит, что нет подходящего индекса под `WHERE` — нужен B-tree индекс на столбцах фильтрации (с учётом selectivity и query pattern).",
+              "text": "`Seq Scan` прочитал около 50 млн строк и отбросил почти все; селективный индекс может помочь, но решение подтверждают predicates, statistics, buffers и новым plan.",
               "correct": true,
               "sections": {
-                "explanation": "`Rows Removed by Filter: 49,950,000` = selectivity 0.1%: из 50M прочитанных строк проходят лишь 50k — классический индекс-кандидат, индекс найдёт 50k строк, не читая все 50M.",
-                "example": "Например: `CREATE INDEX CONCURRENTLY idx_orders_status_created ON orders(status, created_at)` + `ANALYZE` снижает Buffers с `read=580000` (4.6GB) до `read=50` и actual time с 4500ms до 15ms.",
-                "when_to_apply": "С `EXPLAIN ANALYZE` начинают любую медленную query; после bulk insert/migration обновляют статистику через `ANALYZE`, для составного индекса важен порядок колонок (leftmost prefix).",
-                "edge_cases": "Подводные камни: `CREATE INDEX CONCURRENTLY` обязателен в проде (иначе блокирует таблицу на 5-30 минут на 50M строк); planner может игнорировать индекс при устаревшей статистике (`default_statistics_target`).",
+                "explanation": "`Rows Removed by Filter` показывает строки, отвергнутые filter-условием на соответствующем plan node. Большое число при малом результате указывает на дорогую работу, но не автоматически предписывает индекс.",
+                "example": "Проверяют `EXPLAIN (ANALYZE, BUFFERS)`, статистику и запрос; для `WHERE status = ? AND created_at >= ?` оценивают подходящий composite или partial index и повторно измеряют plan.",
+                "when_to_apply": "Применяйте при разборе медленных запросов, сопоставляя selectivity, frequency, write cost, table size и возможный sequential I/O.",
+                "edge_cases": "Seq Scan может быть правильным для низкой селективности, маленькой таблицы или большого диапазона. `CREATE INDEX CONCURRENTLY` снижает блокировки writes, но не является универсальной обязанностью и имеет собственную стоимость.",
                 "related": "[[application-profiling-interview#Q22]] GC и DB latency; [[application-profiling-interview#Q15]] off-CPU видит DB wait; [[application-profiling-interview#Q42]] профилирование reactive с R2DBC."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "`PostgreSQL` не поддерживает индексы для условий со временем (`created_at`) — нужно партиционирование.",
+              "text": "PostgreSQL не умеет использовать B-tree для timestamp ranges, поэтому такой запрос можно ускорить только обязательным partitioning таблицы.",
               "correct": false,
               "sections": {
                 "what_actually": "B-tree индексы отлично работают с timestamp-колонками (`WHERE created_at > X` — bounded range scan); партиционирование полезно для очень больших таблиц, но не альтернатива индексу для 50M строк.",
@@ -2469,7 +2469,7 @@
           "question_text": "Почему traditional thread dump малоинформативен для reactive-приложений на `Project Reactor` и какой инструмент даёт правильную картину?",
           "options": [
             {
-              "text": "Reactive-код выполняется на event loop pool (1 поток на CPU) — один поток обрабатывает много запросов, переключаясь между ними; stack trace показывает текущий запрос, но контекст других не виден. Решение — `Reactor Debug Agent` / `Hooks.onOperatorDebug()` для assembly-time stack trace (где создан `Flux`).",
+              "text": "Reactive dump показывает event loops; причинную цепочку восстанавливают traces, Reactor checkpoints и wall-clock profiling.",
               "correct": true,
               "sections": {
                 "explanation": "В thread-per-request (Servlet) поток ведёт один запрос от начала до конца, dump полный; в reactive поток `reactor-http-nio-1` ведёт сотни запросов, и в момент T виден стек одного — остальные не на CPU, а сам стек короткий и не показывает assembly-time.",
@@ -2494,7 +2494,7 @@
               "label": "B"
             },
             {
-              "text": "В reactive thread dumps все потоки в state `WAITING` — это deadlock, который традиционный `jstack` не умеет обнаруживать.",
+              "text": "В reactive thread dumps все потоки в state `WAITING` — это deadlock.",
               "correct": false,
               "sections": {
                 "what_actually": "`WAITING` у event-loop потоков (epoll_wait) — норма, не deadlock; `jstack` отлично детектит реальные deadlocks через monitor cycle analysis. Проблема — в смешивании контекстов запросов на одном потоке.",

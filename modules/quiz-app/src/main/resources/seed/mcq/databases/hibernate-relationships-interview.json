@@ -10,6 +10,19 @@
           "options": [
             {
               "label": "A",
+              "text": "`Hibernate` поддерживает четыре кардинальности ассоциаций: `@OneToOne`, `@OneToMany`, `@ManyToOne` и `@ManyToMany`. Каждая объявляется аннотацией над полем-ссылкой и отражает связь один-к-одному, один-ко-многим либо многие-ко-многим.",
+              "correct": true,
+              "sections": {
+                "explanation": "Эти четыре аннотации соответствуют кардинальности связи в реляционной модели: 1:1, 1:N, N:1 и N:M; они объявляются над полем-ссылкой на связанную entity.",
+                "example": "`@OneToMany(mappedBy = \"order\") List<OrderItem> items` на стороне `Order` и `@ManyToOne @JoinColumn(name = \"order_id\") Order order` на стороне `OrderItem` — типичная пара для связи родитель-дети.",
+                "when_to_apply": "`@OneToMany` + `@ManyToOne` ставят на двунаправленную связь родитель-дети; `@ManyToMany` — когда обе стороны коллекции и нет дополнительных полей в junction-таблице.",
+                "edge_cases": "`@ManyToOne` и `@OneToMany` — это две стороны одной FK-связи; `@ManyToMany` под капотом всегда создаёт отдельную junction-таблицу, даже если вы её не объявили явно.",
+                "related": "[[hibernate-relationships-interview#Q2]] чем отличается unidirectional от bidirectional связей в Hibernate; [[hibernate-relationships-interview#Q3]] что такое FetchType.LAZY и FetchType.EAGER, чем они отличаются; [[hibernate-relationships-interview#Q4]] что такое N+1 проблема в Hibernate и как её решить."
+              },
+              "order": 0
+            },
+            {
+              "label": "B",
               "text": "`@OneToMany` и `@ManyToOne` считаются нативными, а `@OneToOne` с `@ManyToMany` — обёртки поверх них. Их собирают руками через дополнительный `@JoinColumn` или `@JoinTable` над той же парой полей.",
               "correct": false,
               "sections": {
@@ -18,10 +31,10 @@
                 "if_it_were_true": "Тогда нельзя было бы объявить `@JoinTable` для `@ManyToMany`, но эта связь работает из коробки без ручных коллекций.",
                 "how_it_should_be": "Поддерживаются все четыре кардинальности: `@OneToOne`, `@OneToMany`, `@ManyToOne`, `@ManyToMany` — как самостоятельные аннотации."
               },
-              "order": 0
+              "order": 1
             },
             {
-              "label": "B",
+              "label": "C",
               "text": "`JOIN` в `JPQL` или нативном `SQL` — так идёт навигация по связям. Аннотации вроде `@OneToMany` лишь задают имена FK-колонок, а объектных ссылок между `entity` сами не создают.",
               "correct": false,
               "sections": {
@@ -30,10 +43,10 @@
                 "if_it_were_true": "Тогда `Hibernate` не был бы ORM, а просто генератором SQL, но он маппит ассоциации на поля объектов.",
                 "how_it_should_be": "Связи объявляются аннотациями над полями entity, а `Hibernate` сам транслирует их в нужные SQL `JOIN`/подзапросы."
               },
-              "order": 1
+              "order": 2
             },
             {
-              "label": "C",
+              "label": "D",
               "text": "`@ManyToOne` и `@OneToOne` под капотом — тот же `@ManyToMany`: каждая связь хранится через junction-таблицу. Отличие лишь в `unique`-ограничении на одной стороне таблицы `@JoinTable`.",
               "correct": false,
               "sections": {
@@ -41,19 +54,6 @@
                 "source_of_confusion": "Логически любую связь можно свести к таблице связей, что создаёт иллюзию универсальности `@ManyToMany`.",
                 "if_it_were_true": "Тогда каждая `@ManyToOne`-связь создавала бы лишнюю junction-таблицу, но FK хранится прямо в колонке entity.",
                 "how_it_should_be": "Каждая кардинальность реализуется по-своему: `@ManyToOne` — через FK-колонку, `@ManyToMany` — через отдельную junction-таблицу."
-              },
-              "order": 2
-            },
-            {
-              "label": "D",
-              "text": "`Hibernate` поддерживает четыре кардинальности ассоциаций: `@OneToOne`, `@OneToMany`, `@ManyToOne` и `@ManyToMany`. Каждая объявляется аннотацией над полем-ссылкой и отражает связь один-к-одному, один-ко-многим либо многие-ко-многим.",
-              "correct": true,
-              "sections": {
-                "explanation": "Эти четыре аннотации соответствуют кардинальности связи в реляционной модели: 1:1, 1:N, N:1 и N:M; они объявляются над полем-ссылкой на связанную entity.",
-                "example": "`@OneToMany(mappedBy = \"order\") List<OrderItem> items` на стороне `Order` и `@ManyToOne @JoinColumn(name = \"order_id\") Order order` на стороне `OrderItem` — типичная пара для связи родитель-дети.",
-                "when_to_apply": "`@OneToMany` + `@ManyToOne` ставят на двунаправленную связь родитель-дети; `@ManyToMany` — когда обе стороны коллекции и нет дополнительных полей в junction-таблице.",
-                "edge_cases": "`@ManyToOne` и `@OneToMany` — это две стороны одной FK-связи; `@ManyToMany` под капотом всегда создаёт отдельную junction-таблицу, даже если вы её не объявили явно.",
-                "related": "[[hibernate-relationships-interview#Q2]] unidirectional vs bidirectional; [[hibernate-relationships-interview#Q7]] моделирование @ManyToMany; [[hibernate-relationships-interview#Q9]] варианты @OneToOne."
               },
               "order": 3
             }
@@ -66,23 +66,10 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Чем отличается unidirectional от bidirectional связей в `Hibernate`?",
+          "question_text": "Чем однонаправленная ассоциация отличается от двунаправленной и какая сторона управляет связью?",
           "options": [
             {
               "label": "A",
-              "text": "В unidirectional о связи знает одна сторона `Order` с `@OneToMany` и `@JoinColumn`, в bidirectional — обе. Owning side несёт FK, inverse — `@OneToMany` с `mappedBy` и helper-метод синхронизации.",
-              "correct": true,
-              "sections": {
-                "explanation": "`mappedBy` указывает на поле owning side и говорит `Hibernate`, что эта сторона не управляет FK; owning side — та, у которой `@JoinColumn` без `mappedBy`.",
-                "example": "`addItem(OrderItem i) { items.add(i); i.setOrder(this); }` — helper-метод, который держит обе стороны bidirectional-связи синхронными при добавлении элемента.",
-                "when_to_apply": "Bidirectional нужен, когда требуется навигация с обеих сторон и удобная синхронизация коллекции и FK через helper-методы `addItem`/`removeItem`.",
-                "edge_cases": "Без синхронизации обеих сторон (`item.setOrder(this)`) в bidirectional коллекция в памяти и FK в БД могут разойтись до flush, давая неверное состояние.",
-                "related": "[[hibernate-relationships-interview#Q1]] типы связей; [[hibernate-relationships-interview#Q10]] @JoinColumn vs @JoinTable; [[hibernate-relationships-interview#Q15]] best practices синхронизации."
-              },
-              "order": 0
-            },
-            {
-              "label": "B",
               "text": "Unidirectional и `@OneToMany`-bidirectional — один и тот же маппинг, отличие лишь в стиле кода. На генерируемый `SQL` и на то, чья `entity` держит `@JoinColumn` и `mappedBy`, выбор не влияет.",
               "correct": false,
               "sections": {
@@ -91,10 +78,10 @@
                 "if_it_were_true": "Тогда не нужны были бы helper-методы синхронизации обеих сторон, но без них коллекция и FK расходятся.",
                 "how_it_should_be": "Unidirectional — одна сторона знает о другой; bidirectional — обе, и тогда нужен `mappedBy` для inverse side."
               },
-              "order": 1
+              "order": 0
             },
             {
-              "label": "C",
+              "label": "B",
               "text": "В bidirectional `mappedBy` вешают на owning side `Order`, где стоит `@JoinColumn`, а не на inverse. Сторона `@OneToMany` остаётся без аннотации, а `mappedBy` отвечает за навигацию и FK не затрагивает.",
               "correct": false,
               "sections": {
@@ -102,6 +89,19 @@
                 "source_of_confusion": "Owning side кажется «главной», поэтому интуитивно хочется навесить `mappedBy` именно на неё.",
                 "if_it_were_true": "Тогда `Hibernate` создал бы две конкурирующие FK-колонки для одной связи, но `mappedBy` как раз убирает дублирование.",
                 "how_it_should_be": "`mappedBy` на inverse side (`@OneToMany`), `@JoinColumn` без `mappedBy` — на owning side (`@ManyToOne`)."
+              },
+              "order": 1
+            },
+            {
+              "label": "C",
+              "text": "Однонаправленная ассоциация доступна только с одной стороны объектной модели, двунаправленная — с обеих. Owning side определяется маппингом и управляет изменением связи в БД; сторона с `mappedBy` является inverse, а helper-методы должны синхронизировать обе ссылки в памяти.",
+              "correct": true,
+              "sections": {
+                "explanation": "Owning side — не всегда «таблица, где физически лежит FK», а сторона, чьи изменения Hibernate использует для записи ассоциации. `mappedBy` указывает на поле owning side.",
+                "example": "`addItem(OrderItem i) { items.add(i); i.setOrder(this); }` — helper-метод, который держит обе стороны bidirectional-связи синхронными при добавлении элемента.",
+                "when_to_apply": "Bidirectional нужен, когда требуется навигация с обеих сторон и удобная синхронизация коллекции и FK через helper-методы `addItem`/`removeItem`.",
+                "edge_cases": "Для unidirectional `@OneToMany` Hibernate может использовать join table либо FK в дочерней таблице в зависимости от маппинга. Изменение только inverse-коллекции не обязано обновить связь в БД.",
+                "related": "[[hibernate-relationships-interview#Q3]] что такое FetchType.LAZY и FetchType.EAGER, чем они отличаются; [[hibernate-relationships-interview#Q1]] какие типы связей (ассоциаций) поддерживает Hibernate/JPA; [[hibernate-relationships-interview#Q4]] что такое N+1 проблема в Hibernate и как её решить."
               },
               "order": 2
             },
@@ -130,20 +130,20 @@
           "options": [
             {
               "label": "A",
-              "text": "`LAZY` — подсказка отложить связь до первого обращения, `EAGER` — требование грузить сразу, `JOIN`-ом либо отдельным запросом. По умолчанию коллекции ленивы, а `@ManyToOne` — нет.",
+              "text": "`LAZY` просит отложить загрузку до обращения, `EAGER` требует доступности связи сразу, но не определяет один SQL `JOIN`. To-many по умолчанию `LAZY`, а `@ManyToOne` и `@OneToOne` — `EAGER`.",
               "correct": true,
               "sections": {
-                "explanation": "`LAZY` — лишь подсказка провайдеру (он вправе загрузить и сразу), `EAGER` — требование грузить немедленно; при `EAGER` `Hibernate` использует `JOIN` в `em.find`, но в `JPQL`-запросе без `JOIN FETCH` — отдельный `SELECT`.",
+                "explanation": "Fetch type определяет контракт доступности, а конкретный fetch plan выбирается провайдером и запросом. Поэтому `EAGER` может породить отдельные SELECT и N+1, а не один join.",
                 "example": "`em.find(Order.class, 1L)` при `LAZY` `items` даёт один `SELECT` за заказом; обращение `order.getItems().size()` инициирует второй `SELECT` за `order_items`.",
                 "when_to_apply": "Рекомендуется явно ставить `LAZY` на все связи (`@ManyToOne(fetch = LAZY)`), а нужные данные подтягивать `JOIN FETCH`/`@EntityGraph` в конкретных запросах.",
-                "edge_cases": "`LAZY` вне открытой сессии бросает `LazyInitializationException`; `EAGER` от этого спасает, но не фильтруется под запрос и на списках сам порождает N+1.",
-                "related": "[[hibernate-relationships-interview#Q4]] N+1 проблема; [[hibernate-relationships-interview#Q11]] @EntityGraph для загрузки; [[hibernate-relationships-interview#Q9]] LAZY в @OneToOne."
+                "edge_cases": "Для basic fields и to-one ленивость может зависеть от bytecode enhancement и провайдера. Практически безопаснее держать ассоциации ленивыми и задавать fetch plan под use case.",
+                "related": "[[hibernate-relationships-interview#Q4]] что такое N+1 проблема в Hibernate и как её решить; [[hibernate-relationships-interview#Q2]] чем однонаправленная ассоциация отличается от двунаправленной и какая сторона управляет связью; [[hibernate-relationships-interview#Q5]] что такое CascadeType и какие у него варианты."
               },
               "order": 0
             },
             {
               "label": "B",
-              "text": "`LAZY` и `EAGER` отличаются лишь оборачиванием связи в прокси-объект. Данные в обоих режимах приходят тем же `SELECT` за parent, просто `LAZY` откладывает разворачивание в поля `entity`.",
+              "text": "`EAGER` всегда означает один `JOIN` в исходном запросе, а `LAZY` гарантирует отдельный SELECT только при первом обращении; provider не может выбрать batch, proxy или дополнительный запрос.",
               "correct": false,
               "sections": {
                 "what_actually": "`EAGER` грузит связь сразу вместе с parent, `LAZY` — отдельным запросом при первом обращении; это разное число и время SQL-запросов.",
@@ -214,19 +214,6 @@
             },
             {
               "label": "C",
-              "text": "`N+1` — это один запрос за родителями плюс по отдельному `SELECT` за связью каждого из них. Лечат это `JOIN FETCH`, `@EntityGraph` и `@BatchSize`, а не глобальным переводом на `EAGER`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Причина — ленивая загрузка коллекции, к которой обращаются в цикле: каждый `order.getItems()` инициирует свой `SELECT`, и их количество растёт линейно с N.",
-                "example": "`em.createQuery(\"FROM Order o JOIN FETCH o.items\", Order.class).getResultList()` тянет заказы вместе с `items` одним SQL вместо 1+N запросов.",
-                "when_to_apply": "Чинят на этапе запроса: `JOIN FETCH o.items` тянет всё одним SQL, `@EntityGraph` делает это декларативно, `@BatchSize(20)` грузит связи пачками по 20.",
-                "edge_cases": "`JOIN FETCH` двух `List`-коллекций бросает `MultipleBagFetchException` — тогда используют `Set` или несколько запросов; `@BatchSize` снижает 1+N до 1+ceil(N/size).",
-                "related": "[[hibernate-relationships-interview#Q3]] LAZY vs EAGER как источник N+1; [[hibernate-relationships-interview#Q11]] @EntityGraph; [[hibernate-relationships-interview#Q8]] Set против MultipleBagFetchException."
-              },
-              "order": 2
-            },
-            {
-              "label": "D",
               "text": "`N+1` — по сути проблема схемы: повесьте индекс на FK-колонку `order_id` связи. Тогда `SELECT` за детьми станут дешёвыми, и деградация списков `Order` уйдёт без правки загрузки `entity`.",
               "correct": false,
               "sections": {
@@ -234,6 +221,19 @@
                 "source_of_confusion": "Индексы — частый ответ на «медленные запросы», поэтому их применяют и здесь по инерции.",
                 "if_it_were_true": "Тогда после индексации `Hibernate Statistics` показывала бы 1 запрос, но останется 1+N.",
                 "how_it_should_be": "Снижать нужно само число запросов через `JOIN FETCH`/`@EntityGraph`/`@BatchSize`; индекс — лишь точечная оптимизация каждого."
+              },
+              "order": 2
+            },
+            {
+              "label": "D",
+              "text": "`N+1` — это один запрос за родителями плюс по отдельному `SELECT` за связью каждого из них. Лечат это `JOIN FETCH`, `@EntityGraph` и `@BatchSize`, а не глобальным переводом на `EAGER`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Причина — ленивая загрузка коллекции, к которой обращаются в цикле: каждый `order.getItems()` инициирует свой `SELECT`, и их количество растёт линейно с N.",
+                "example": "`em.createQuery(\"FROM Order o JOIN FETCH o.items\", Order.class).getResultList()` тянет заказы вместе с `items` одним SQL вместо 1+N запросов.",
+                "when_to_apply": "Чинят на этапе запроса: `JOIN FETCH o.items` тянет всё одним SQL, `@EntityGraph` делает это декларативно, `@BatchSize(20)` грузит связи пачками по 20.",
+                "edge_cases": "`JOIN FETCH` двух `List`-коллекций бросает `MultipleBagFetchException` — тогда используют `Set` или несколько запросов; `@BatchSize` снижает 1+N до 1+ceil(N/size).",
+                "related": "[[hibernate-relationships-interview#Q5]] что такое CascadeType и какие у него варианты; [[hibernate-relationships-interview#Q3]] что такое FetchType.LAZY и FetchType.EAGER, чем они отличаются; [[hibernate-relationships-interview#Q6]] что такое orphanRemoval и чем он отличается от CascadeType.REMOVE."
               },
               "order": 3
             }
@@ -269,7 +269,7 @@
                 "example": "`@OneToMany(mappedBy = \"order\", cascade = {PERSIST, REMOVE})`: `em.persist(order)` сохранит и заказ, и все `items`, а `em.remove(order)` удалит заказ вместе с ними.",
                 "when_to_apply": "Каскады ставят на owned-связь родитель→дети (`Order` → `OrderItem`), где жизненный цикл детей привязан к родителю и их не нужно сохранять отдельно.",
                 "edge_cases": "`CascadeType.ALL` не включает `orphanRemoval` — это отдельный атрибут; удаление item из коллекции при одном лишь `ALL` не удалит его из БД.",
-                "related": "[[hibernate-relationships-interview#Q6]] orphanRemoval; [[hibernate-relationships-interview#Q15]] почему не ставить ALL по умолчанию; [[hibernate-relationships-interview#Q2]] owning side связи."
+                "related": "[[hibernate-relationships-interview#Q6]] что такое orphanRemoval и чем он отличается от CascadeType.REMOVE; [[hibernate-relationships-interview#Q4]] что такое N+1 проблема в Hibernate и как её решить; [[hibernate-relationships-interview#Q7]] как моделировать @ManyToMany связь и что делать, когда нужны поля в junction-таблице."
               },
               "order": 1
             },
@@ -322,19 +322,6 @@
             },
             {
               "label": "B",
-              "text": "`orphanRemoval = true` шлёт `DELETE` по ребёнку при выносе из коллекции: после `getItems().remove(item)` и `flush`. А `CascadeType.REMOVE` срабатывает лишь при `em.remove(order)` над parent.",
-              "correct": true,
-              "sections": {
-                "explanation": "Без `orphanRemoval` удалённый из коллекции `item` остаётся в БД с `order_id = null` (или ловит FK-violation); с ним `Hibernate` выдаёт `DELETE` по этому item.",
-                "example": "`@OneToMany(mappedBy = \"order\", cascade = ALL, orphanRemoval = true)`: после `order.getItems().remove(item); em.flush()` `Hibernate` выполнит `DELETE FROM order_items WHERE id = ?`.",
-                "when_to_apply": "Флаг ставят на owned-связь, где parent полностью владеет жизненным циклом детей (`Order` → `OrderItem`), и «осиротевшая» строка не имеет смысла без родителя.",
-                "edge_cases": "`orphanRemoval` реагирует на удаление из коллекции, `REMOVE` — на удаление parent; их часто включают вместе (`cascade = ALL, orphanRemoval = true`), но это разные триггеры.",
-                "related": "[[hibernate-relationships-interview#Q5]] CascadeType и его варианты; [[hibernate-relationships-interview#Q14]] тест на удаление orphan; [[hibernate-relationships-interview#Q15]] orphanRemoval для owned children."
-              },
-              "order": 1
-            },
-            {
-              "label": "C",
               "text": "`orphanRemoval` срабатывает при `em.remove(order)` и каскадно шлёт `DELETE` по детям `@OneToMany`. На вынос через `getItems().remove(item)` из коллекции он не реагирует, оставляя строку `order_items`.",
               "correct": false,
               "sections": {
@@ -343,10 +330,10 @@
                 "if_it_were_true": "Тогда `order.getItems().remove(item)` не удалял бы item, но именно на это `orphanRemoval` и реагирует.",
                 "how_it_should_be": "`orphanRemoval` срабатывает при удалении item из коллекции родителя; каскад при `em.remove(parent)` — это `CascadeType.REMOVE`."
               },
-              "order": 2
+              "order": 1
             },
             {
-              "label": "D",
+              "label": "C",
               "text": "`orphanRemoval` работает лишь в `@ManyToMany` и чистит строки junction-таблицы через `DELETE`. Саму дочернюю `entity` из её таблицы `order_items` он при этом не трогает.",
               "correct": false,
               "sections": {
@@ -354,6 +341,19 @@
                 "source_of_confusion": "Junction-таблица и удаление связей в `@ManyToMany` создают ассоциацию с «удалением связи», но это другой механизм.",
                 "if_it_were_true": "Тогда для `@OneToMany` `Order` → `OrderItem` флаг был бы бесполезен, но именно там его чаще всего и применяют.",
                 "how_it_should_be": "`orphanRemoval` валиден для owned `@OneToMany`/`@OneToOne` и удаляет дочернюю запись целиком, а не строку junction."
+              },
+              "order": 2
+            },
+            {
+              "label": "D",
+              "text": "`orphanRemoval = true` шлёт `DELETE` по ребёнку при выносе из коллекции: после `getItems().remove(item)` и `flush`. А `CascadeType.REMOVE` срабатывает лишь при `em.remove(order)` над parent.",
+              "correct": true,
+              "sections": {
+                "explanation": "Без `orphanRemoval` удалённый из коллекции `item` остаётся в БД с `order_id = null` (или ловит FK-violation); с ним `Hibernate` выдаёт `DELETE` по этому item.",
+                "example": "`@OneToMany(mappedBy = \"order\", cascade = ALL, orphanRemoval = true)`: после `order.getItems().remove(item); em.flush()` `Hibernate` выполнит `DELETE FROM order_items WHERE id =?`.",
+                "when_to_apply": "Флаг ставят на owned-связь, где parent полностью владеет жизненным циклом детей (`Order` → `OrderItem`), и «осиротевшая» строка не имеет смысла без родителя.",
+                "edge_cases": "`orphanRemoval` реагирует на удаление из коллекции, `REMOVE` — на удаление parent; их часто включают вместе (`cascade = ALL, orphanRemoval = true`), но это разные триггеры.",
+                "related": "[[hibernate-relationships-interview#Q7]] как моделировать @ManyToMany связь и что делать, когда нужны поля в junction-таблице; [[hibernate-relationships-interview#Q5]] что такое CascadeType и какие у него варианты; [[hibernate-relationships-interview#Q8]] какие коллекции использовать для @OneToMany и как выбирать между Set и List."
               },
               "order": 3
             }
@@ -382,6 +382,19 @@
             },
             {
               "label": "B",
+              "text": "Простой `@ManyToMany` маппится через `@JoinTable` плюс `mappedBy` на обратной стороне. Когда в связи нужны поля, её заменяют на `entity` `Enrollment` с двумя `@ManyToOne` к сторонам.",
+              "correct": true,
+              "sections": {
+                "explanation": "`Student` ↔ `Enrollment` ↔ `Course`: `Enrollment` держит `@EmbeddedId EnrollmentId`, `@ManyToOne @MapsId(\"studentId\")` и `@ManyToOne @MapsId(\"courseId\")`, плюс `enrolledAt` и `grade`.",
+                "example": "Простой случай: `@ManyToMany @JoinTable(name = \"student_course\", joinColumns = @JoinColumn(name = \"student_id\"), inverseJoinColumns = @JoinColumn(name = \"course_id\")) Set<Course> courses`.",
+                "when_to_apply": "Промежуточную entity вводят, как только junction-таблице нужны собственные атрибуты или поведение; для чистой связи N:M достаточно `@ManyToMany` с `@JoinTable`.",
+                "edge_cases": "Удаление через `student.getCourses().remove(course)` при чистом `@ManyToMany` стирает строку junction вместе с её полями — поэтому при наличии `grade` нужен явный entity и управление им.",
+                "related": "[[hibernate-relationships-interview#Q8]] какие коллекции использовать для @OneToMany и как выбирать между Set и List; [[hibernate-relationships-interview#Q6]] что такое orphanRemoval и чем он отличается от CascadeType.REMOVE; [[hibernate-relationships-interview#Q9]] как работает @OneToOne и какие у него варианты (shared PK vs FK)."
+              },
+              "order": 1
+            },
+            {
+              "label": "C",
               "text": "Поле `grade` можно объявить прямо в `@JoinTable` через атрибут `columns`, не заводя отдельный `entity` вроде `Enrollment` с полем `enrolled_at` для той же связи.",
               "correct": false,
               "sections": {
@@ -390,10 +403,10 @@
                 "if_it_were_true": "Тогда `enrolled_at`/`grade` хранились бы без отдельного класса, но `@ManyToMany` такие поля не поддерживает.",
                 "how_it_should_be": "Доп. поля требуют замены `@ManyToMany` на промежуточный entity (`Enrollment`) с `@ManyToOne` к обеим сторонам."
               },
-              "order": 1
+              "order": 2
             },
             {
-              "label": "C",
+              "label": "D",
               "text": "На обеих сторонах `@ManyToMany` надо указать `mappedBy`, иначе `Hibernate` заведёт две junction-таблицы. Общий `@JoinTable` без owning side связать `Set<Course>` не сможет.",
               "correct": false,
               "sections": {
@@ -401,19 +414,6 @@
                 "source_of_confusion": "Симметричность `@ManyToMany` создаёт ощущение, что и `mappedBy` должен быть симметричным.",
                 "if_it_were_true": "Тогда не было бы owning side, и `Hibernate` не знал бы, кто управляет junction-таблицей.",
                 "how_it_should_be": "`@JoinTable` — на owning side, `mappedBy` — на inverse; так обе стороны делят одну junction-таблицу."
-              },
-              "order": 2
-            },
-            {
-              "label": "D",
-              "text": "Простой `@ManyToMany` маппится через `@JoinTable` плюс `mappedBy` на обратной стороне. Когда в связи нужны поля, её заменяют на `entity` `Enrollment` с двумя `@ManyToOne` к сторонам.",
-              "correct": true,
-              "sections": {
-                "explanation": "`Student` ↔ `Enrollment` ↔ `Course`: `Enrollment` держит `@EmbeddedId EnrollmentId`, `@ManyToOne @MapsId(\"studentId\")` и `@ManyToOne @MapsId(\"courseId\")`, плюс `enrolledAt` и `grade`.",
-                "example": "Простой случай: `@ManyToMany @JoinTable(name = \"student_course\", joinColumns = @JoinColumn(name = \"student_id\"), inverseJoinColumns = @JoinColumn(name = \"course_id\")) Set<Course> courses`.",
-                "when_to_apply": "Промежуточную entity вводят, как только junction-таблице нужны собственные атрибуты или поведение; для чистой связи N:M достаточно `@ManyToMany` с `@JoinTable`.",
-                "edge_cases": "Удаление через `student.getCourses().remove(course)` при чистом `@ManyToMany` стирает строку junction вместе с её полями — поэтому при наличии `grade` нужен явный entity и управление им.",
-                "related": "[[hibernate-relationships-interview#Q1]] @ManyToMany среди типов связей; [[hibernate-relationships-interview#Q10]] @JoinTable vs @JoinColumn; [[hibernate-relationships-interview#Q13]] потеря полей при удалении @ManyToMany."
               },
               "order": 3
             }
@@ -426,23 +426,10 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие коллекции использовать для `@OneToMany` и как выбирать между `Set` и `List`?",
+          "question_text": "Как выбирать `List`, `Set` и другие коллекции для `@OneToMany`?",
           "options": [
             {
               "label": "A",
-              "text": "Доступны `List`, `Set`, `Bag`, `SortedSet` и `Map` c `@MapKey`; конкретный выбор зависит от семантики самой связи. Порядок элементов диктует `List`, а от дублей и `MultipleBagFetchException` защищает `Set`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`@OrderBy(\"price DESC\") List<OrderItem> items` сортирует при загрузке; `Set<Comment>` исключает дубликаты; `@MapKey(name = \"type\") Map<String, Phone> phones` даёт доступ по ключу `phone.type`.",
-                "example": "`@OneToMany Set<OrderItem> items` плюс `@OneToMany Set<Shipment> shipments` позволяют `JOIN FETCH` обеих коллекций сразу, тогда как две `List` дали бы `MultipleBagFetchException`.",
-                "when_to_apply": "Выбор зависит от семантики: `List` — когда важен порядок (`@OrderBy`/`@OrderColumn`); `Set` — против дублей и для безопасного `JOIN FETCH` нескольких коллекций; `Bag` — самый дешёвый, без индекса.",
-                "edge_cases": "`JOIN FETCH` двух `List` (двух bag) бросает `MultipleBagFetchException`; замена на `Set` снимает именно этот случай, а общий N+1 лечат `@BatchSize`, отдельными запросами или `@EntityGraph`.",
-                "related": "[[hibernate-relationships-interview#Q4]] JOIN FETCH и N+1; [[hibernate-relationships-interview#Q13]] MultipleBagFetchException как типичная ошибка; [[hibernate-relationships-interview#Q15]] Set vs List в best practices."
-              },
-              "order": 0
-            },
-            {
-              "label": "B",
               "text": "Сам `@OneToMany` спроектирован под `List<T>`; её порядок держит `@OrderColumn`. `Set<T>`, `Bag` и `Map<K,V>` он оставляет другим механизмам вроде `@ElementCollection`, а не `@OneToMany`-ассоциациям.",
               "correct": false,
               "sections": {
@@ -450,6 +437,19 @@
                 "source_of_confusion": "`List` — самый частый тип в примерах, отсюда ощущение, что других нет.",
                 "if_it_were_true": "Тогда нельзя было бы объявить `Set<Comment> comments` или `Map<String, Phone>`, но это валидные маппинги.",
                 "how_it_should_be": "Доступны `List`, `Set`, `Bag`, `SortedSet`, `Map`; `Set` особенно полезен для bidirectional-связей."
+              },
+              "order": 0
+            },
+            {
+              "label": "B",
+              "text": "Коллекцию выбирают по доменной семантике: `Set` требует устойчивых `equals/hashCode`, `List` сохраняет порядок, а `@OrderColumn` хранит индекс. Замена bag на `Set` не устраняет cartesian product.",
+              "correct": true,
+              "sections": {
+                "explanation": "Hibernate различает bag, indexed list, set и map, и генерирует SQL с учётом этой семантики. Коллекцию нельзя выбирать только как обход одного исключения.",
+                "example": "`@OneToMany Set<OrderItem> items` плюс `@OneToMany Set<Shipment> shipments` позволяют `JOIN FETCH` обеих коллекций сразу, тогда как две `List` дали бы `MultipleBagFetchException`.",
+                "when_to_apply": "Выбор зависит от семантики: `List` — когда важен порядок (`@OrderBy`/`@OrderColumn`); `Set` — против дублей и для безопасного `JOIN FETCH` нескольких коллекций; `Bag` — самый дешёвый, без индекса.",
+                "edge_cases": "Две fetch-joined коллекции всё равно могут раздувать результат. Часто лучше разделить запросы, применить batch fetching или DTO projection.",
+                "related": "[[hibernate-relationships-interview#Q9]] как работает @OneToOne и какие у него варианты (shared PK vs FK); [[hibernate-relationships-interview#Q7]] как моделировать @ManyToMany связь и что делать, когда нужны поля в junction-таблице; [[hibernate-relationships-interview#Q10]] чем отличаются @JoinColumn и @JoinTable и когда что применять."
               },
               "order": 1
             },
@@ -520,8 +520,8 @@
                 "explanation": "Shared PK экономит колонку и гарантирует 1:1 на уровне ключа: `profile.id == user.id`; FK-вариант хранит отдельный `profile_id` и допускает `optional`-связь.",
                 "example": "Shared PK: `@OneToOne @MapsId @JoinColumn(name = \"id\") User user` в `UserProfile`. FK: `@OneToOne @JoinColumn(name = \"profile_id\") UserProfile profile` в `User`.",
                 "when_to_apply": "Shared PK выбирают, когда профиль не существует без пользователя и делит его identity; FK-вариант — когда связь опциональна или маппится на готовую схему с отдельной колонкой.",
-                "edge_cases": "`LAZY` в `@OneToOne` часто не работает: при 1:1 `Hibernate` не знает, есть ли связь, без запроса, и делает `EAGER`; помогает `optional = false` + bytecode enhancement.",
-                "related": "[[hibernate-relationships-interview#Q1]] @OneToOne среди типов связей; [[hibernate-relationships-interview#Q3]] почему LAZY проблемен; [[hibernate-relationships-interview#Q10]] @JoinColumn для FK-варианта."
+                "edge_cases": "Ленивая загрузка `@OneToOne` зависит от стороны связи, optionality, bytecode enhancement и версии/provider behavior. Проверяйте фактический SQL: иногда Hibernate нужен дополнительный запрос, чтобы определить наличие связанной строки.",
+                "related": "[[hibernate-relationships-interview#Q10]] чем отличаются @JoinColumn и @JoinTable и когда что применять; [[hibernate-relationships-interview#Q8]] как выбирать List, Set и другие коллекции для @OneToMany; [[hibernate-relationships-interview#Q11]] как использовать @EntityGraph для оптимизации загрузки связей."
               },
               "order": 2
             },
@@ -565,11 +565,11 @@
               "text": "`@JoinColumn` кладёт FK в таблицу самой `entity`: `@ManyToOne @JoinColumn(customer_id)` даёт колонку в `orders`. А `@JoinTable` создаёт отдельную таблицу связей — типично для `@ManyToMany`.",
               "correct": true,
               "sections": {
-                "explanation": "`CREATE TABLE orders (id, customer_id, ...)` — это `@JoinColumn`; `CREATE TABLE student_course (student_id, course_id)` — это `@JoinTable` с `joinColumns`/`inverseJoinColumns`.",
-                "example": "`@ManyToOne @JoinColumn(name = \"customer_id\") Customer customer` кладёт FK в `orders`; `@ManyToMany @JoinTable(name = \"student_course\", ...)` создаёт отдельную таблицу `student_course`.",
+                "explanation": "`CREATE TABLE orders (id, customer_id,...)` — это `@JoinColumn`; `CREATE TABLE student_course (student_id, course_id)` — это `@JoinTable` с `joinColumns`/`inverseJoinColumns`.",
+                "example": "`@ManyToOne @JoinColumn(name = \"customer_id\") Customer customer` кладёт FK в `orders`; `@ManyToMany @JoinTable(name = \"student_course\",...)` создаёт отдельную таблицу `student_course`.",
                 "when_to_apply": "`@JoinColumn` берут, когда FK помещается в таблицу entity (`@ManyToOne`, FK-`@OneToOne`); `@JoinTable` — когда нужна отдельная таблица связей, обычно для N:M.",
                 "edge_cases": "Технически `@JoinTable` можно навесить и на `@OneToMany`, чтобы вынести FK из таблицы детей в отдельную таблицу — но это редкий и обычно нежелательный приём.",
-                "related": "[[hibernate-relationships-interview#Q2]] owning side и @JoinColumn; [[hibernate-relationships-interview#Q7]] @JoinTable для @ManyToMany; [[hibernate-relationships-interview#Q9]] @JoinColumn в FK-варианте @OneToOne."
+                "related": "[[hibernate-relationships-interview#Q11]] как использовать @EntityGraph для оптимизации загрузки связей; [[hibernate-relationships-interview#Q9]] как работает @OneToOne и какие у него варианты (shared PK vs FK); [[hibernate-relationships-interview#Q12]] как работает @ElementCollection и когда её применять вместо @OneToMany."
               },
               "order": 1
             },
@@ -590,10 +590,10 @@
               "text": "`@JoinColumn` задаёт имя самой таблицы `entity`, а имя FK-колонки `customer_id` провайдер берёт сам. Переопределить его через `@JoinColumn(name)` вместо `@Table` не получится.",
               "correct": false,
               "sections": {
-                "what_actually": "`@JoinColumn(name = ...)` задаёт именно имя FK-колонки, а не таблицы; таблица именуется через `@Table`.",
+                "what_actually": "`@JoinColumn(name =...)` задаёт именно имя FK-колонки, а не таблицы; таблица именуется через `@Table`.",
                 "source_of_confusion": "Слово «column» рядом с «join» сбивает: кажется, что речь о таблице связи.",
                 "if_it_were_true": "Тогда `@JoinColumn(name = \"customer_id\")` не влиял бы на имя колонки, но он его и определяет.",
-                "how_it_should_be": "`@JoinColumn(name = ...)` управляет именем FK-колонки в таблице entity; имя таблицы — отдельно через `@Table`."
+                "how_it_should_be": "`@JoinColumn(name =...)` управляет именем FK-колонки в таблице entity; имя таблицы — отдельно через `@Table`."
               },
               "order": 3
             }
@@ -610,6 +610,19 @@
           "options": [
             {
               "label": "A",
+              "text": "`@EntityGraph` — это декларативный fetch-план для одного конкретного запроса. Задаётся именованным `@NamedEntityGraph`, ad-hoc `@EntityGraph(attributePaths)` над методом или программно через `em.createEntityGraph()`, оставляя связи `LAZY`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`EntityGraph` задаёт атрибуты, которые должны быть загружены для конкретной операции. Hibernate может реализовать план соединением или дополнительными запросами; важен результат загрузки, а не обязательная форма SQL.",
+                "example": "Программно: `EntityGraph<Order> g = em.createEntityGraph(Order.class); g.addAttributeNodes(\"items\", \"customer\"); em.find(Order.class, 1L, Map.of(\"jakarta.persistence.fetchgraph\", g))`.",
+                "when_to_apply": "Граф применяют, чтобы переиспользовать fetch-план в нескольких запросах и держать связи `LAZY` по умолчанию, подтягивая нужное точечно.",
+                "edge_cases": "Граф не гарантирует один SQL `JOIN` и сам по себе не исключает cartesian product либо дополнительные select. Проверяйте фактический SQL и число запросов для конкретного графа и версии Hibernate.",
+                "related": "[[hibernate-relationships-interview#Q12]] как работает @ElementCollection и когда её применять вместо @OneToMany; [[hibernate-relationships-interview#Q10]] чем отличаются @JoinColumn и @JoinTable и когда что применять; [[hibernate-relationships-interview#Q13]] какие типичные ошибки допускают при работе со связями в Hibernate."
+              },
+              "order": 0
+            },
+            {
+              "label": "B",
               "text": "`@EntityGraph` меняет стратегию загрузки всей `entity` разом: перечисленные связи становятся `EAGER` во всех запросах. Точечно держать их `LAZY` при этом не выйдет.",
               "correct": false,
               "sections": {
@@ -618,42 +631,29 @@
                 "if_it_were_true": "Тогда нельзя было бы держать `LAZY` по умолчанию и подтягивать связь точечно, но именно в этом смысл графа.",
                 "how_it_should_be": "`@EntityGraph` задаёт fetch-план для отдельного запроса; глобальная стратегия по-прежнему определяется `FetchType`."
               },
-              "order": 0
-            },
-            {
-              "label": "B",
-              "text": "`@EntityGraph` задаётся лишь программно через `em.createEntityGraph()` вместе с `fetchgraph`-hint у `find`. Аннотацией `@EntityGraph(attributePaths)` над методом репозитория `findById` его никак не объявить.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Граф задаётся и аннотацией (`@EntityGraph(attributePaths = ...)` или именованный `@NamedEntityGraph`), и программно — оба способа валидны.",
-                "source_of_confusion": "Программный API выглядит «настоящим», и про декларативный вариант забывают.",
-                "if_it_were_true": "Тогда нельзя было бы написать `@EntityGraph(\"Order.withItems\")` над `findById`, но это штатный способ в Spring Data.",
-                "how_it_should_be": "`@EntityGraph` доступен и как аннотация над методом репозитория, и программно через `EntityManager`-hints."
-              },
               "order": 1
             },
             {
               "label": "C",
-              "text": "`@EntityGraph` — лишь необязательный совет: связи из `@EntityGraph(attributePaths)` провайдер вправе проигнорировать. Тогда `LAZY`-поля грузятся по одному, и N+1 сохраняется.",
+              "text": "`@EntityGraph` задаётся лишь программно через `em.createEntityGraph()` вместе с `fetchgraph`-hint у `find`. Аннотацией `@EntityGraph(attributePaths)` над методом репозитория `findById` его никак не объявить.",
               "correct": false,
               "sections": {
-                "what_actually": "`@EntityGraph` — не необязательный hint: для fetchgraph/loadgraph Hibernate гарантированно грузит перечисленные `attributePaths` одним `JOIN`, устраняя N+1.",
-                "source_of_confusion": "JPA-спека формально зовёт это «hint», отсюда впечатление, будто провайдер волен его проигнорировать.",
-                "if_it_were_true": "Если бы граф игнорировался, `@EntityGraph` не решал бы N+1 и был бы бесполезен как инструмент оптимизации.",
-                "how_it_should_be": "Корректно: `@EntityGraph` надёжно подтягивает указанные связи за один запрос, оставляя прочие поля `LAZY`."
+                "what_actually": "Граф задаётся и аннотацией (`@EntityGraph(attributePaths =...)` или именованный `@NamedEntityGraph`), и программно — оба способа валидны.",
+                "source_of_confusion": "Программный API выглядит «настоящим», и про декларативный вариант забывают.",
+                "if_it_were_true": "Тогда нельзя было бы написать `@EntityGraph(\"Order.withItems\")` над `findById`, но это штатный способ в Spring Data.",
+                "how_it_should_be": "`@EntityGraph` доступен и как аннотация над методом репозитория, и программно через `EntityManager`-hints."
               },
               "order": 2
             },
             {
               "label": "D",
-              "text": "`@EntityGraph` — это декларативный fetch-план для одного конкретного запроса. Задаётся именованным `@NamedEntityGraph`, ad-hoc `@EntityGraph(attributePaths)` над методом или программно через `em.createEntityGraph()`, оставляя связи `LAZY`.",
-              "correct": true,
+              "text": "`@EntityGraph` — лишь необязательный совет: связи из `@EntityGraph(attributePaths)` провайдер вправе проигнорировать. Тогда `LAZY`-поля грузятся по одному, и N+1 сохраняется.",
+              "correct": false,
               "sections": {
-                "explanation": "`@EntityGraph(\"Order.withItems\") Optional<Order> findById(Long id)` подтянет `items` и `customer` одним планом, решая N+1 без `JOIN FETCH` в JPQL.",
-                "example": "Программно: `EntityGraph<Order> g = em.createEntityGraph(Order.class); g.addAttributeNodes(\"items\", \"customer\"); em.find(Order.class, 1L, Map.of(\"jakarta.persistence.fetchgraph\", g))`.",
-                "when_to_apply": "Граф применяют, чтобы переиспользовать fetch-план в нескольких запросах и держать связи `LAZY` по умолчанию, подтягивая нужное точечно.",
-                "edge_cases": "В отличие от инлайнового `JOIN FETCH`, `@EntityGraph` декларативнее и переиспользуется, но для одной выборки оба дают одинаковый результат — это вопрос стиля.",
-                "related": "[[hibernate-relationships-interview#Q4]] @EntityGraph как решение N+1; [[hibernate-relationships-interview#Q3]] LAZY по умолчанию; [[hibernate-relationships-interview#Q15]] @EntityGraph в best practices."
+                "what_actually": "Entity graph обязывает загрузить указанные атрибуты для операции, но не предписывает Hibernate единственный SQL `JOIN`. Провайдер может использовать join или дополнительные запросы.",
+                "source_of_confusion": "JPA-спека формально зовёт это «hint», отсюда впечатление, будто провайдер волен его проигнорировать.",
+                "if_it_were_true": "Если бы граф игнорировался, `@EntityGraph` не решал бы N+1 и был бы бесполезен как инструмент оптимизации.",
+                "how_it_should_be": "Оценивайте entity graph по загруженным атрибутам и фактическому SQL; он управляет fetch plan, но не гарантирует один запрос."
               },
               "order": 3
             }
@@ -670,6 +670,19 @@
           "options": [
             {
               "label": "A",
+              "text": "`@ElementCollection` маппит коллекцию значений `String` или `@Embeddable`-объектов `Address` в отдельную таблицу `@CollectionTable` с `@JoinColumn`. Собственной `entity` и `id` у элементов при этом нет.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@ElementCollection @CollectionTable(name = \"user_addresses\", joinColumns = @JoinColumn(name = \"user_id\")) List<Address> addresses`, где `Address` — `@Embeddable` со `street`/`city`/`country`.",
+                "example": "Для простых значений: `@ElementCollection @CollectionTable(name = \"user_emails\", joinColumns = @JoinColumn(name = \"user_id\")) @Column(name = \"email\") Set<String> emails`.",
+                "when_to_apply": "Применяют для коллекций значений без собственной identity (теги, адреса, телефоны); если на элемент ссылаются другие сущности и нужна identity — берут `@OneToMany` с entity.",
+                "edge_cases": "У элементов нет PK, поэтому обновление коллекции часто реализуется как delete-all + re-insert строк `@CollectionTable` — на больших коллекциях это дороже, чем у `@OneToMany`.",
+                "related": "[[hibernate-relationships-interview#Q13]] какие типичные ошибки допускают при работе со связями в Hibernate; [[hibernate-relationships-interview#Q11]] как использовать @EntityGraph для оптимизации загрузки связей; [[hibernate-relationships-interview#Q14]] как тестировать связи между entity и обнаруживать N+1 в тестах."
+              },
+              "order": 0
+            },
+            {
+              "label": "B",
               "text": "`@ElementCollection` работает как `@OneToMany`: оба маппят коллекцию полноценных `entity` с собственным `id` и ключом. Сослаться на элемент `@CollectionTable` из другой `entity` можно так же.",
               "correct": false,
               "sections": {
@@ -678,10 +691,10 @@
                 "if_it_were_true": "Тогда на элемент `@ElementCollection` можно было бы сослаться из другой entity, но у него нет identity.",
                 "how_it_should_be": "`@ElementCollection` — для коллекций значений/embeddable без PK; `@OneToMany` — для коллекций entity со своей identity."
               },
-              "order": 0
+              "order": 1
             },
             {
-              "label": "B",
+              "label": "C",
               "text": "`@ElementCollection` хранит элементы прямо в таблице владельца как массив в одной строке. Отдельная `@CollectionTable` с `@JoinColumn(user_id)` под коллекцию `String` не заводится.",
               "correct": false,
               "sections": {
@@ -689,19 +702,6 @@
                 "source_of_confusion": "Идея «простые значения хранятся рядом» создаёт иллюзию массива в одной строке.",
                 "if_it_were_true": "Тогда `@CollectionTable(name = \"user_emails\")` был бы не нужен, но он как раз и описывает отдельную таблицу.",
                 "how_it_should_be": "`@ElementCollection` всегда использует отдельную таблицу (`@CollectionTable`) с FK на entity-владельца."
-              },
-              "order": 1
-            },
-            {
-              "label": "C",
-              "text": "`@ElementCollection` маппит коллекцию значений `String` или `@Embeddable`-объектов `Address` в отдельную таблицу `@CollectionTable` с `@JoinColumn`. Собственной `entity` и `id` у элементов при этом нет.",
-              "correct": true,
-              "sections": {
-                "explanation": "`@ElementCollection @CollectionTable(name = \"user_addresses\", joinColumns = @JoinColumn(name = \"user_id\")) List<Address> addresses`, где `Address` — `@Embeddable` со `street`/`city`/`country`.",
-                "example": "Для простых значений: `@ElementCollection @CollectionTable(name = \"user_emails\", joinColumns = @JoinColumn(name = \"user_id\")) @Column(name = \"email\") Set<String> emails`.",
-                "when_to_apply": "Применяют для коллекций значений без собственной identity (теги, адреса, телефоны); если на элемент ссылаются другие сущности и нужна identity — берут `@OneToMany` с entity.",
-                "edge_cases": "У элементов нет PK, поэтому обновление коллекции часто реализуется как delete-all + re-insert строк `@CollectionTable` — на больших коллекциях это дороже, чем у `@OneToMany`.",
-                "related": "[[hibernate-relationships-interview#Q1]] @OneToMany среди типов связей; [[hibernate-relationships-interview#Q8]] коллекции для @OneToMany; [[hibernate-relationships-interview#Q9]] @Embeddable и @MapsId."
               },
               "order": 2
             },
@@ -726,11 +726,11 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие типичные ошибки допускают при работе со связями в `Hibernate`?",
+          "question_text": "Какие ошибки чаще всего возникают при маппинге ассоциаций в `Hibernate`?",
           "options": [
             {
               "label": "A",
-              "text": "Частая ошибка — вешать `LAZY` на все связи: она плодит лишние `SELECT` и роняет `LazyInitializationException` вне сессии. Безопаснее держать `@ManyToOne` и коллекции на `EAGER`.",
+              "text": "Все ассоциации безопаснее объявлять `EAGER`: это устраняет `LazyInitializationException`, а persistence context компенсирует дополнительные запросы и cartesian product без отдельного fetch plan.",
               "correct": false,
               "sections": {
                 "what_actually": "`LAZY` — как раз рекомендуемая стратегия; ошибкой считается бездумный `EAGER`, а `LazyInitializationException` лечат границами транзакции/`JOIN FETCH`.",
@@ -742,7 +742,7 @@
             },
             {
               "label": "B",
-              "text": "Ошибка `MultipleBagFetchException` возникает при `JOIN FETCH` сразу двух `Set`-коллекций одного `@OneToMany`. Спасает переход на `List`, снимающий конфликт `bag` при выборке `items` и `shipments`.",
+              "text": "`MultipleBagFetchException` возникает при одновременном fetch join двух `Set`, поэтому переход с `Set` на `List` устраняет исключение и одновременно сохраняет порядок элементов.",
               "correct": false,
               "sections": {
                 "what_actually": "Исключение бросают именно две `List` (bag); решение — заменить одну/обе на `Set` или разбить на два запроса.",
@@ -754,26 +754,26 @@
             },
             {
               "label": "C",
-              "text": "Типичные ошибки — ненужный `EAGER` и забытая синхронизация bidirectional (`setOrder` без `items`). Также `MultipleBagFetchException` на двух `List`, `@ManyToMany` с полями и `equals/hashCode` по всем полям.",
-              "correct": true,
-              "sections": {
-                "explanation": "Например, `@EqualsAndHashCode` от `Lombok` по всем полям ломает entity в `Set`: `hashCode` меняется после `save` (генерится `id`), и объект «теряется» в коллекции.",
-                "example": "`@Query(\"FROM Order o JOIN FETCH o.items JOIN FETCH o.shipments\")` с двумя `List` бросает `MultipleBagFetchException` — лечится заменой на `Set` или двумя отдельными запросами.",
-                "when_to_apply": "Этот чек-лист применяют на код-ревью JPA-кода и при разборе багов с пустыми коллекциями, дублями в `Set` или внезапными лишними запросами.",
-                "edge_cases": "`equals/hashCode` правильнее строить по natural ID или возвращать константный `hashCode`; `MultipleBagFetchException` лечится заменой `List` на `Set` или двумя запросами.",
-                "related": "[[hibernate-relationships-interview#Q3]] EAGER vs LAZY; [[hibernate-relationships-interview#Q8]] MultipleBagFetchException и Set; [[hibernate-relationships-interview#Q2]] синхронизация bidirectional."
-              },
-              "order": 2
-            },
-            {
-              "label": "D",
-              "text": "Для `entity` в `Set` лучше `@EqualsAndHashCode` от `Lombok` по всем полям. Так `hashCode` и `equals` точнее различают объекты `Order`, чем сравнение по одному `id`.",
+              "text": "Для сущностей в `Set` следует генерировать `equals/hashCode` по всем полям через Lombok: изменяемые бизнес-поля обеспечивают более точную идентичность объектов, чем стабильный ключ.",
               "correct": false,
               "sections": {
                 "what_actually": "`@EqualsAndHashCode` по всем полям ломает контракт: после `save` меняется `id`, `hashCode` уезжает, и entity «пропадает» из `Set`.",
                 "source_of_confusion": "Lombok удобен и кажется безопасным выбором по умолчанию для `equals/hashCode`.",
                 "if_it_were_true": "Тогда не было бы рекомендации делать `equals/hashCode` по ID или константный `hashCode`, но её дают как best practice.",
                 "how_it_should_be": "`equals/hashCode` строят по стабильному ID (natural ID/UUID) или возвращают константу, а не по всем полям."
+              },
+              "order": 2
+            },
+            {
+              "label": "D",
+              "text": "Частые ошибки — глобальный `EAGER`, несинхронизированные стороны bidirectional-связи, опасный `CascadeType.REMOVE`, прямой `@ManyToMany` при атрибутах связи и нестабильные `equals/hashCode`. Отдельно проверяют N+1 и cartesian product при fetch join.",
+              "correct": true,
+              "sections": {
+                "explanation": "Большинство проблем возникает из-за смешения объектной навигации, владельца связи и SQL-плана. Корректный mapping ещё не гарантирует эффективную загрузку.",
+                "example": "`@Query(\"FROM Order o JOIN FETCH o.items JOIN FETCH o.shipments\")` с двумя `List` бросает `MultipleBagFetchException` — лечится заменой на `Set` или двумя отдельными запросами.",
+                "when_to_apply": "Этот чек-лист применяют на код-ревью JPA-кода и при разборе багов с пустыми коллекциями, дублями в `Set` или внезапными лишними запросами.",
+                "edge_cases": "`equals/hashCode` нельзя безусловно строить «по всем полям» или по изменяемому generated id. Выбор зависит от жизненного цикла entity и стабильного natural/business key.",
+                "related": "[[hibernate-relationships-interview#Q14]] как тестировать связи между entity и обнаруживать N+1 в тестах; [[hibernate-relationships-interview#Q12]] как работает @ElementCollection и когда её применять вместо @OneToMany; [[hibernate-relationships-interview#Q15]] какие best practices при работе с отношениями в Hibernate."
               },
               "order": 3
             }
@@ -802,19 +802,6 @@
             },
             {
               "label": "B",
-              "text": "Связи проверяют срезом `@DataJpaTest` с `TestEntityManager`: сохранить parent, вызвать `flush` и `clear` для сброса L1-кэша, затем перечитать `findById` и число запросов через `Statistics`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`shouldSaveOrderWithItems`: после `flush`/`clear` `loaded.getItems()` имеет размер 2; `shouldDetectNPlusOne`: `stats.getPrepareStatementCount()` ожидается `<= 2`, а не `1 + N`.",
-                "example": "`Statistics stats = sessionFactory.getStatistics(); stats.clear();` затем после выборки `assertThat(stats.getPrepareStatementCount()).isLessThanOrEqualTo(2)` фиксирует отсутствие N+1.",
-                "when_to_apply": "Такие тесты пишут при настройке связей, каскадов и `orphanRemoval`, а Statistics-проверку — чтобы зафиксировать отсутствие регрессии в количестве запросов.",
-                "edge_cases": "`@DataJpaTest` по умолчанию откатывает транзакцию и использует тестовый контекст; `stats.clear()` перед актом обязателен, иначе счётчик включит предыдущие запросы.",
-                "related": "[[hibernate-relationships-interview#Q4]] N+1 проблема; [[hibernate-relationships-interview#Q6]] orphanRemoval в тесте; [[hibernate-relationships-interview#Q15]] Hibernate Statistics в best practices."
-              },
-              "order": 1
-            },
-            {
-              "label": "C",
               "text": "Проблему `N+1` в тесте ловят по времени: замеряют суммарную длительность метода и сравнивают с бюджетом. Явный подсчёт запросов через `getPrepareStatementCount()` у `Statistics` в `@DataJpaTest` считают необязательным.",
               "correct": false,
               "sections": {
@@ -823,17 +810,30 @@
                 "if_it_were_true": "Тогда на быстрой БД N+1 проходил бы тест, но число запросов всё равно 1+N.",
                 "how_it_should_be": "Считают количество SQL через Statistics, а не миллисекунды: это детерминированный сигнал N+1."
               },
-              "order": 2
+              "order": 1
             },
             {
-              "label": "D",
-              "text": "Для теста связей обычно берут полный `@SpringBootTest` со всем контекстом: среза `@DataJpaTest` не хватает, а `TestEntityManager` и `getItems()` вне полного контекста ведут себя неверно.",
+              "label": "C",
+              "text": "Полноценная проверка ассоциаций возможна только через `@SpringBootTest`; `@DataJpaTest` не создаёт рабочий persistence context и не позволяет надёжно использовать `TestEntityManager`.",
               "correct": false,
               "sections": {
                 "what_actually": "`@DataJpaTest` специально поднимает только JPA-слой (репозитории, `TestEntityManager`) и идеально подходит для тестов связей.",
                 "source_of_confusion": "`@SpringBootTest` кажется «более правильным», раз он самый полный.",
                 "if_it_were_true": "Тогда `TestEntityManager` был бы недоступен, но он предоставляется именно срезом `@DataJpaTest`.",
                 "how_it_should_be": "Связи тестируют срезом `@DataJpaTest` с `TestEntityManager`; полный `@SpringBootTest` тут избыточен."
+              },
+              "order": 2
+            },
+            {
+              "label": "D",
+              "text": "Связи проверяют срезом `@DataJpaTest` с `TestEntityManager`: сохранить parent, вызвать `flush` и `clear` для сброса L1-кэша, затем перечитать `findById` и число запросов через `Statistics`.",
+              "correct": true,
+              "sections": {
+                "explanation": "`shouldSaveOrderWithItems`: после `flush`/`clear` `loaded.getItems()` имеет размер 2; `shouldDetectNPlusOne`: `stats.getPrepareStatementCount()` ожидается `<= 2`, а не `1 + N`.",
+                "example": "`Statistics stats = sessionFactory.getStatistics(); stats.clear();` затем после выборки `assertThat(stats.getPrepareStatementCount()).isLessThanOrEqualTo(2)` фиксирует отсутствие N+1.",
+                "when_to_apply": "Такие тесты пишут при настройке связей, каскадов и `orphanRemoval`, а Statistics-проверку — чтобы зафиксировать отсутствие регрессии в количестве запросов.",
+                "edge_cases": "`@DataJpaTest` по умолчанию откатывает транзакцию и использует тестовый контекст; `stats.clear()` перед актом обязателен, иначе счётчик включит предыдущие запросы.",
+                "related": "[[hibernate-relationships-interview#Q15]] какие best practices при работе с отношениями в Hibernate; [[hibernate-relationships-interview#Q13]] какие ошибки чаще всего возникают при маппинге ассоциаций в Hibernate; [[hibernate-relationships-interview#Q12]] как работает @ElementCollection и когда её применять вместо @OneToMany."
               },
               "order": 3
             }
@@ -846,18 +846,18 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие best practices при работе с отношениями в `Hibernate`?",
+          "question_text": "Какие практики при работе с отношениями в `Hibernate`?",
           "options": [
             {
               "label": "A",
-              "text": "Разумные умолчания: `LAZY`-связи с точечным `JOIN FETCH` или `@EntityGraph`, `mappedBy` на inverse и выборочные каскады вместо `CascadeType.ALL`. Плюс `equals/hashCode` по бизнес-ключу и промежуточный `entity` для `@ManyToMany` с полями.",
+              "text": "Обычно ассоциации оставляют `LAZY`, fetch plan задают запросом, owning/inverse стороны синхронизируют helper-методами, а каскады выбирают по реальному aggregate lifecycle. Связь с собственными атрибутами моделируют отдельной entity, а SQL-поведение проверяют тестами и метриками.",
               "correct": true,
               "sections": {
-                "explanation": "Это умолчания, а не догмы: `@ManyToOne(fetch = LAZY)` вместо дефолтного `EAGER`, helper-методы `addItem`/`removeItem` для синхронизации, `orphanRemoval = true` там, где parent владеет жизненным циклом детей.",
+                "explanation": "Универсальный `CascadeType.ALL`, глобальный `EAGER` и один тип коллекции для всех отношений создают скрытые удаления, N+1 и лишние данные. Mapping должен отражать ownership и сценарии доступа.",
                 "example": "На код-ревью ловят `@ManyToOne` без `fetch = LAZY`, `@EqualsAndHashCode` по всем полям и `@ManyToMany` с полями вроде `grade` — каждый пункт ведёт к конкретному багу в проде.",
                 "when_to_apply": "Этот набор применяют как чек-лист при проектировании JPA-модели и на код-ревью, чтобы заранее исключить N+1, пустые коллекции и проблемы с `Set`.",
-                "edge_cases": "Контекст решает: иногда инлайновый `JOIN FETCH` уместнее переиспользуемого `@EntityGraph`; `equals/hashCode` строят по бизнес-ключу, когда он есть, иначе по суррогатному `id`; `Hibernate Statistics` — диагностика, которую включают на время разбора, а не постоянная настройка prod.",
-                "related": "[[hibernate-relationships-interview#Q3]] LAZY для всех связей; [[hibernate-relationships-interview#Q6]] orphanRemoval для owned children; [[hibernate-relationships-interview#Q13]] типичные ошибки, которых избегают."
+                "edge_cases": "Стратегия `equals/hashCode` требует отдельного решения: stable natural id часто удобен, но не у каждой entity он существует; generated id нельзя использовать так, чтобы hash менялся после persist.",
+                "related": "[[hibernate-relationships-interview#Q14]] как тестировать связи между entity и обнаруживать N+1 в тестах; [[hibernate-relationships-interview#Q13]] какие ошибки чаще всего возникают при маппинге ассоциаций в Hibernate; [[hibernate-relationships-interview#Q12]] как работает @ElementCollection и когда её применять вместо @OneToMany."
               },
               "order": 0
             },
@@ -868,7 +868,7 @@
               "sections": {
                 "what_actually": "Рекомендуют обратное: `LAZY` на всех связях и выбор конкретных каскадов, а не `ALL`; глобальный `EAGER` раздувает запросы.",
                 "source_of_confusion": "«Чтобы точно всё загрузилось/сохранилось» звучит безопасно, отсюда тяга к EAGER+ALL.",
-                "if_it_were_true": "Тогда best practices не предупреждали бы против `EAGER` и `CascadeType.ALL`, но они делают это явно.",
+                "if_it_were_true": "Тогда практики не предупреждали бы против `EAGER` и `CascadeType.ALL`, но они делают это явно.",
                 "how_it_should_be": "Правильно: `LAZY` везде, точечные каскады вместо `ALL`, а нужные связи тянуть `JOIN FETCH`/`@EntityGraph`."
               },
               "order": 1

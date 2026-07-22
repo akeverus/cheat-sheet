@@ -11,7 +11,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Optional<T>` — это синхронизированная обёртка, которая делает доступ к значению потокобезопасным и заменяет `AtomicReference`.",
+              "text": "`Optional<T>` — value-based container для present non-null value или absence; обычно он выражает нормальное отсутствие в method return type.",
+              "correct": true,
+              "sections": {
+                "explanation": "Optional делает отсутствие частью API вместо неявного nullable return. Empty и present states обрабатываются operations `map`, `flatMap`, `filter`, `orElse*`, `or` и `ifPresent*`, но container не является универсальной заменой null.",
+                "example": "`Optional<User> findById(Id id)` сообщает caller-у, что запись может отсутствовать; `findById(id).map(User::email).orElseThrow(...)` обрабатывает обе ветви.",
+                "when_to_apply": "Используйте прежде всего как return type метода, где отсутствие является нормальным исходом и caller должен принять явное решение.",
+                "edge_cases": "Сам `Optional` по convention не должен быть `null`, но Java это не запрещает. Он value-based: не следует полагаться на identity, synchronization или singleton empty instance.",
+                "related": "[[java-optional-interview#Q2]] создание; [[java-optional-interview#Q7]] map/flatMap; [[java-optional-interview#Q12]] антипаттерны."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`Optional<T>` — synchronized holder, который делает чтение и обновление значения thread-safe и заменяет `AtomicReference` для shared mutable state.",
               "correct": false,
               "sections": {
                 "what_actually": "`Optional` не имеет отношения к многопоточности: он лишь моделирует наличие или отсутствие значения и не даёт никаких гарантий синхронизации.",
@@ -21,22 +34,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`Optional<T>` — контейнер-обёртка, который либо содержит значение (`present`), либо пуст (`empty`). Главная цель — явно выразить в сигнатуре метода, что результат может отсутствовать, превратив контракт «может вернуть null» из комментария в часть типа.",
-              "correct": true,
-              "sections": {
-                "explanation": "Возврат `null` не виден в сигнатуре, поэтому вызывающий код легко забывает проверку и ловит `NullPointerException`. `Optional<User>` в типе возврата вынуждает обработать оба случая на этапе компиляции.",
-                "example": "Вместо `User findByEmail(String e)`, который тайком возвращает `null`, пишут `Optional<User> findByEmail(...)`, и клиент обязан вызвать `.map(User::getName).orElse(\"Аноним\")`.",
-                "when_to_apply": "Применяют для возвращаемых значений методов поиска (`findById`, `findByCriteria`), где отсутствие результата — нормальный исход, а не ошибка.",
-                "edge_cases": "`Optional` не убирает `null` из языка: внутри обёртки всё ещё может оказаться `null`, если использовать `of(null)`, а сам контейнер можно по ошибке оставить `null`-ссылкой.",
-                "related": "[[java-optional-interview#Q2]] способы создания Optional; [[java-optional-interview#Q6]] почему get() — плохая практика; [[java-optional-interview#Q15]] когда Optional не нужен."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "`Optional<T>` — это коллекция фиксированной длины, всегда хранящая ровно два элемента: значение и флаг присутствия.",
+              "text": "`Optional<T>` — коллекция постоянной длины два: первый элемент хранит value, второй boolean flag; к ней применимы обычные collection operations.",
               "correct": false,
               "sections": {
                 "what_actually": "`Optional` хранит 0 или 1 значение, не реализует `Collection` и не является коллекцией — это контейнер на одно опциональное значение.",
@@ -48,7 +48,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Optional<T>` полностью устраняет `null` из программы: после его внедрения `NullPointerException` в коде стать невозможен в принципе.",
+              "text": "`Optional<T>` полностью исключает `null` и `NullPointerException` из приложения: после его появления ни один API или component уже не может вернуть `null`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Optional` лишь делает обработку отсутствия явной в сигнатуре, но `null` остаётся в языке, а NPE возможен (например, при `null`-ссылке на сам `Optional`).",
@@ -71,19 +71,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Единственный способ создать `Optional` — конструктор `new Optional<>(value)`, который сам решает, пустой контейнер вернуть или с значением.",
-              "correct": false,
+              "text": "`empty()` создаёт absence, `of(value)` требует non-null, а `ofNullable(value)` превращает nullable reference в present или empty Optional.",
+              "correct": true,
               "sections": {
-                "what_actually": "Конструктор `Optional` приватный; создавать экземпляры можно только статическими фабриками `empty`, `of` и `ofNullable`.",
-                "source_of_confusion": "Привычка создавать объекты через `new` переносится на `Optional`, у которого фабричный API.",
-                "if_it_were_true": "Тогда `new Optional<>(null)` был бы валиден, но конструктор недоступен извне и компиляция не пройдёт.",
-                "how_it_should_be": "Используют фабричные методы: `empty()`, `of(value)` и `ofNullable(value)` вместо `new`."
+                "explanation": "Фабрики отражают исходный contract: `of` фиксирует невозможность null и быстро выявляет нарушение, `ofNullable` адаптирует legacy/nullable source, `empty` выражает заведомое отсутствие.",
+                "example": "`Optional.of(config)` подходит после обязательной validation; `Optional.ofNullable(row.getNickname())` безопасно преобразует nullable database value.",
+                "when_to_apply": "Выбирайте factory по реальной nullability, не используйте `ofNullable` как способ скрыть bug там, где value обязан существовать.",
+                "edge_cases": "Передача null в `map` result превращает результат в empty, но `flatMap` function обязана вернуть non-null Optional. Сам return Optional не должен быть null.",
+                "related": "[[java-optional-interview#Q1]] назначение; [[java-optional-interview#Q5]] отсутствие как ошибка; [[java-optional-interview#Q7]] transformations."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Чтобы получить пустой `Optional`, нужно вызвать `Optional.ofNullable()` вообще без аргументов — именно так создают `empty`.",
+              "text": "Пустой container создают `Optional.ofNullable()` без arguments, а `empty()` является instance method заполненного Optional и очищает его текущее value.",
               "correct": false,
               "sections": {
                 "what_actually": "Пустой контейнер создаёт `Optional.empty()`; `ofNullable` требует аргумент и без него не скомпилируется.",
@@ -95,7 +96,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Optional.of(value)` и `Optional.ofNullable(value)` ведут себя одинаково: оба возвращают пустой `Optional`, если передать `null`.",
+              "text": "`Optional.of(value)` и `ofNullable(value)` одинаково принимают `null` и возвращают empty, различаясь только названием и intended readability API.",
               "correct": false,
               "sections": {
                 "what_actually": "`of(null)` бросает `NullPointerException`, а `ofNullable(null)` возвращает `Optional.empty()` — поведение на `null` принципиально разное.",
@@ -107,14 +108,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Тремя фабричными методами: `Optional.empty()` — явно пустой; `Optional.of(value)` — когда значение гарантированно не `null` (иначе сразу `NullPointerException`); `Optional.ofNullable(value)` — когда значение может быть `null` (тогда вернётся пустой `Optional`).",
-              "correct": true,
+              "text": "Optional создают public constructor `new Optional<>(value)`; constructor автоматически преобразует `null` в empty и доступен для generic inference.",
+              "correct": false,
               "sections": {
-                "explanation": "Разделение `of` и `ofNullable` отражает контракт: `of` документирует уверенность в not-null и быстро падает при нарушении, а `ofNullable` безопасно превращает возможный `null` в `empty`.",
-                "example": "`Optional.of(\"hello\")` для литерала, `Optional.ofNullable(map.get(key))` для значения из мапы, `Optional.empty()` чтобы явно вернуть «ничего».",
-                "when_to_apply": "`of` берут для заведомо ненулевых значений (`new Object()`, литералы), `ofNullable` — для результатов, способных оказаться `null` (запросы, мапы, парсинг).",
-                "edge_cases": "`Optional.of(null)` бросает `NullPointerException` немедленно — это частая ошибка; в сомнительных случаях всегда выбирают `ofNullable`.",
-                "related": "[[java-optional-interview#Q1]] зачем нужен Optional; [[java-optional-interview#Q3]] проверка присутствия значения; [[java-optional-interview#Q6]] опасность get() на пустом Optional."
+                "what_actually": "Конструктор `Optional` приватный; создавать экземпляры можно только статическими фабриками `empty`, `of` и `ofNullable`.",
+                "source_of_confusion": "Привычка создавать объекты через `new` переносится на `Optional`, у которого фабричный API.",
+                "if_it_were_true": "Тогда `new Optional<>(null)` был бы валиден, но конструктор недоступен извне и компиляция не пройдёт.",
+                "how_it_should_be": "Используют фабричные методы: `empty()`, `of(value)` и `ofNullable(value)` вместо `new`."
               }
             }
           ]
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`isPresent()` возвращает само значение из `Optional`, а `isEmpty()` возвращает `boolean` — поэтому их используют для разных целей.",
+              "text": "`isPresent()` возвращает contained value типа `T`, а `isEmpty()` возвращает boolean; первый заменяет `get()` и безопасно распаковывает container.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба метода возвращают `boolean`; извлечение значения делают `get`, `orElse` и подобные, но не `isPresent`.",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`isEmpty()` очищает `Optional`, делая его пустым, тогда как `isPresent()` лишь проверяет содержимое.",
+              "text": "`isEmpty()` изменяет Optional и удаляет value, тогда как `isPresent()` выполняет read-only check без изменения состояния.",
               "correct": false,
               "sections": {
                 "what_actually": "`Optional` неизменяем: `isEmpty()` ничего не меняет, а только проверяет, пуст ли контейнер, и возвращает `boolean`.",
@@ -155,26 +155,26 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Оба — простые булевы проверки наполненности, но `isPresent()` (с Java 8) возвращает `true`, когда значение есть, а `isEmpty()` (с Java 11) возвращает `true`, когда значение отсутствует. `isEmpty()` — синтаксический сахар для `!opt.isPresent()`, улучшающий читаемость условий.",
-              "correct": true,
+              "text": "Оба появились в Java 8 и являются synonyms с одинаковым result; выбор имени не меняет условие и нужен только для style.",
+              "correct": false,
               "sections": {
-                "explanation": "Методы взаимно противоположны: для одного и того же `Optional` они всегда дают разные значения. `isEmpty()` появился позже, чтобы убрать визуально неудобное отрицание `!isPresent()`.",
-                "example": "Для `Optional.of(\"value\")`: `isPresent()` → `true`, `isEmpty()` → `false`. Для `Optional.empty()`: `isPresent()` → `false`, `isEmpty()` → `true`.",
-                "when_to_apply": "`isEmpty()` выбирают, когда ветка кода обрабатывает именно отсутствие значения — `if (opt.isEmpty()) return default;` читается чище, чем с `!`.",
-                "edge_cases": "На проектах с Java 8 `isEmpty()` недоступен, поэтому приходится писать `!opt.isPresent()`; обе проверки часто признак того, что лучше подошёл бы `map`/`orElse`.",
-                "related": "[[java-optional-interview#Q6]] почему isPresent()+get() антипаттерн; [[java-optional-interview#Q9]] ifPresent вместо ручной проверки; [[java-optional-interview#Q12]] антипаттерны Optional."
+                "what_actually": "`isPresent()` есть с Java 8, `isEmpty()` добавили только в Java 11, и результаты у них противоположны, а не одинаковы.",
+                "source_of_confusion": "Оба метода относятся к `Optional`, поэтому их ошибочно считают ровесниками и синонимами.",
+                "if_it_were_true": "`isEmpty()` был бы доступен уже в Java 8 и возвращал бы то же значение, что `isPresent()`, вместо противоположной проверки absence.",
+                "how_it_should_be": "`isPresent()` (Java 8) и `isEmpty()` (Java 11) противоположны: один `true` там, где другой `false`."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`isPresent()` и `isEmpty()` появились в одной версии Java 8 и являются простыми синонимами с одинаковым результатом.",
-              "correct": false,
+              "text": "`isPresent()` true при наличии value, `isEmpty()` — при отсутствии; добавленный в Java 11 метод проверяет absence без чтения содержимого.",
+              "correct": true,
               "sections": {
-                "what_actually": "`isPresent()` есть с Java 8, `isEmpty()` добавили только в Java 11, и результаты у них противоположны, а не одинаковы.",
-                "source_of_confusion": "Оба метода относятся к `Optional`, поэтому их ошибочно считают ровесниками и синонимами.",
-                "if_it_were_true": "Тогда `isEmpty()` работал бы на Java 8, но там его нет, а его значение совпадало бы с `isPresent()`, что неверно.",
-                "how_it_should_be": "`isPresent()` (Java 8) и `isEmpty()` (Java 11) противоположны: один `true` там, где другой `false`."
+                "explanation": "Optional immutable, поэтому проверки не меняют state. `isEmpty()` устраняет отрицание в условиях и делает intent явнее, но не предоставляет более безопасную распаковку сам по себе.",
+                "example": "`if (result.isEmpty()) return notFound();` читается прямее, чем `if (!result.isPresent())`; для transformation лучше chain `map`/`orElse` вместо branch + `get`.",
+                "when_to_apply": "Используйте при действительно imperative branching или guard clause; для преобразования значения предпочитайте functional operations.",
+                "edge_cases": "Проверка и последующий `get()` не создают race внутри immutable Optional, но делают код многословным и легче ломаются при refactoring control flow.",
+                "related": "[[java-optional-interview#Q6]] get; [[java-optional-interview#Q9]] conditional actions; [[java-optional-interview#Q12]] isPresent+get smell."
               }
             }
           ]
@@ -191,20 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Оба возвращают значение из `Optional` либо дефолт, но `orElse(value)` вычисляет аргумент-дефолт всегда (даже когда `Optional` непуст), а `orElseGet(supplier)` вызывает `Supplier` только при пустом `Optional`. Разница критична, когда дефолт дорог в вычислении.",
-              "correct": true,
-              "sections": {
-                "explanation": "Аргумент `orElse` — обычное выражение, оно вычисляется до вызова метода, независимо от наполненности. `orElseGet` принимает `Supplier`, тело которого выполняется лениво только когда значения нет.",
-                "example": "`Optional.of(\"v\").orElse(expensiveDefault())` всё равно вызовет `expensiveDefault()`, а `Optional.of(\"v\").orElseGet(() -> expensiveDefault())` — нет.",
-                "when_to_apply": "`orElseGet` выбирают, когда дефолт дорогой: запрос в БД, HTTP-вызов, создание тяжёлого объекта; `orElse` достаточно для дешёвых констант.",
-                "edge_cases": "Типичный баг — `cache.get(k).orElse(db.find(k))`: поход в базу происходит даже при попадании в кэш; правильно — `orElseGet(() -> db.find(k))`.",
-                "related": "[[java-optional-interview#Q5]] orElseThrow для ошибочного отсутствия; [[java-optional-interview#Q10]] or() для fallback-цепочек; [[java-optional-interview#Q12]] orElse с дорогим вычислением как антипаттерн."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`orElseGet()` кэширует дефолтное значение между вызовами, поэтому `Supplier` исполняется ровно один раз на всю программу.",
+              "text": "`orElseGet` кэширует supplier result внутри Optional и выполняет его один раз на весь lifecycle приложения, даже для разных containers.",
               "correct": false,
               "sections": {
                 "what_actually": "`orElseGet` не кэширует ничего: `Supplier` исполняется при каждом вызове на пустом `Optional`, без межвызовного запоминания.",
@@ -214,9 +201,22 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Оба возвращают value или fallback, но `orElse` вычисляет argument заранее, а supplier `orElseGet` вызывается только для empty, избегая лишних side effects.",
+              "correct": true,
+              "sections": {
+                "explanation": "Java evaluates method arguments eagerly, поэтому выражение в `orElse(expensive())` уже выполнено. Supplier является объектом отложенного вычисления и вызывается только empty branch.",
+                "example": "`cached.orElse(loadFromDatabase())` обращается к БД даже при cache hit; `cached.orElseGet(this::loadFromDatabase)` делает lookup только при miss.",
+                "when_to_apply": "Используйте `orElse` для дешёвой готовой constant/value, `orElseGet` — для allocation, I/O, logging side effect или сложной computation.",
+                "edge_cases": "Supplier может быть вызван при каждом отдельном empty invocation — никакого caching нет. Он также может вернуть null, и тогда result `orElseGet` будет null.",
+                "related": "[[java-optional-interview#Q10]] optional fallback; [[java-optional-interview#Q12]] eager fallback smell; [[java-optional-interview#Q15]] overhead."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
-              "text": "`orElse()` и `orElseGet()` различаются только типом возвращаемого значения: первый отдаёт `Optional`, второй — само значение.",
+              "text": "`orElse` возвращает `Optional<T>`, а `orElseGet` возвращает raw `T`; выбор определяется желанием сохранить wrapper и продолжить fluent chain.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба возвращают развёрнутое значение типа `T`, а не `Optional`; разница — в момент вычисления дефолта, а не в типе результата.",
@@ -228,10 +228,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`orElse()` ленивый и вычисляет дефолт только при пустом `Optional`, а `orElseGet()`, наоборот, всегда выполняет переданный `Supplier`.",
+              "text": "`orElse` лениво вычисляет fallback только при empty, а `orElseGet` всегда вызывает supplier до проверки present value и затем отбрасывает result.",
               "correct": false,
               "sections": {
-                "what_actually": "Всё ровно наоборот: `orElse` вычисляет аргумент всегда, а `orElseGet` запускает `Supplier` лениво лишь при пустом `Optional`.",
+                "what_actually": "`orElse` вычисляет аргумент всегда, а `orElseGet` запускает `Supplier` лениво лишь при пустом `Optional`.",
                 "source_of_confusion": "Имена похожи, и без знания семантики легко перепутать, какой из методов ленивый.",
                 "if_it_were_true": "Тогда `orElse(db.find(k))` не ходил бы в базу при попадании в кэш, но на практике он ходит туда всегда.",
                 "how_it_should_be": "`orElse` — eager (аргумент считается заранее), `orElseGet` — lazy (Supplier только при empty)."
@@ -251,7 +251,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Безаргументный `orElseThrow()` бросает `NullPointerException`, чтобы повторить поведение прямого разыменования `null`.",
+              "text": "Безаргументный `orElseThrow()` при empty бросает `NullPointerException` с сообщением о container, полностью имитируя прямое разыменование отсутствующего reference напрямую.",
               "correct": false,
               "sections": {
                 "what_actually": "Безаргументный `orElseThrow()` бросает `NoSuchElementException` с сообщением «No value present», а не `NullPointerException`.",
@@ -263,7 +263,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`orElseThrow(Supplier)` требует, чтобы переданное исключение было обязательно checked, иначе код не скомпилируется.",
+              "text": "`orElseThrow(Supplier)` принимает только checked exception и требует объявить его в `throws`; runtime exception supplier не удовлетворяет generic signature.",
               "correct": false,
               "sections": {
                 "what_actually": "`Supplier` может вернуть любое исключение — и checked, и unchecked; ограничения «только checked» нет.",
@@ -275,26 +275,26 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`orElseThrow()` бросает исключение всегда, независимо от того, пуст `Optional` или содержит значение — это способ принудительно прервать цепочку.",
+              "text": "`orElseThrow()` возвращает value или бросает `NoSuchElementException`; overload с supplier создаёт нужный domain-specific exception для нарушенного contract.",
+              "correct": true,
+              "sections": {
+                "explanation": "Метод превращает normal empty state в exceptional outcome только на boundary, где value обязательно. Generic supplier позволяет создать contextual checked или unchecked exception.",
+                "example": "`repository.findById(id).orElseThrow(() -> new EntityNotFoundException(\"User \" + id))` переводит отсутствие repository result в domain/API error.",
+                "when_to_apply": "Используйте, когда caller не может корректно продолжить без value; если отсутствие ожидаемо, оставьте Optional или предоставьте fallback.",
+                "edge_cases": "Безаргументная версия существует с Java 10, но `get()` тоже бросает `NoSuchElementException`; supplier предпочтительнее для диагностики и domain semantics.",
+                "related": "[[java-optional-interview#Q6]] get; [[java-optional-interview#Q4]] fallback values; [[java-optional-interview#Q1]] absence contract."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`orElseThrow` всегда создаёт и бросает exception до проверки container, поэтому его используют как unconditional termination любой Optional chain.",
               "correct": false,
               "sections": {
                 "what_actually": "`orElseThrow` бросает исключение только при пустом `Optional`; если значение есть, оно просто возвращается.",
                 "source_of_confusion": "Слово «throw» в имени создаёт впечатление безусловного исключения.",
                 "if_it_were_true": "Тогда `Optional.of(user).orElseThrow()` всегда падал бы, но он спокойно возвращает `user`.",
                 "how_it_should_be": "Исключение бросается лишь при `empty`; на наполненном `Optional` метод отдаёт значение."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`orElseThrow()` применяют, когда отсутствие значения является ошибкой: метод бросает исключение, если `Optional` пуст. Без аргумента (Java 10+) кидает `NoSuchElementException`, с `Supplier` — любое кастомное исключение, например `EntityNotFoundException`.",
-              "correct": true,
-              "sections": {
-                "explanation": "В отличие от `orElse`/`orElseGet`, которые подставляют дефолт, `orElseThrow` сигнализирует, что пустой результат недопустим. Это превращает «не найдено» в явную исключительную ситуацию.",
-                "example": "`userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException(\"User \" + id))` в сервисном слое — отсутствие пользователя по id трактуется как ошибка.",
-                "when_to_apply": "Используют, когда вызывающий код предполагает, что значение обязано существовать (поиск по первичному ключу, обязательная конфигурация) и дефолт здесь бессмысленен.",
-                "edge_cases": "Безаргументный `orElseThrow()` доступен только с Java 10; до неё бросали через `orElseThrow(NoSuchElementException::new)` или использовали `get()`, что менее выразительно.",
-                "related": "[[java-optional-interview#Q4]] orElse/orElseGet для дефолта вместо исключения; [[java-optional-interview#Q6]] get() как менее выразительная альтернатива; [[java-optional-interview#Q2]] откуда берётся пустой Optional."
               }
             }
           ]
@@ -306,24 +306,25 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Почему `get()` считается плохой практикой?",
+          "question_text": "Почему прямой `Optional.get()` обычно нежелателен?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "`get()` плох из-за производительности: он внутри делает рефлексию для извлечения значения, что замедляет горячий путь.",
-              "correct": false,
+              "text": "`get()` бросает при empty и скрывает policy; `orElse*`, `orElseThrow`, `map` или branch делают fallback и error contract явными.",
+              "correct": true,
               "sections": {
-                "what_actually": "`get()` просто возвращает поле `value` без рефлексии; проблема в безопасности (исключение на пустом), а не в скорости.",
-                "source_of_confusion": "Любые «плохие практики» иногда обобщённо списывают на производительность.",
-                "if_it_were_true": "Тогда `get()` был бы медленнее `orElse`, но оба — тривиальные обращения к полю.",
-                "how_it_should_be": "Недостаток `get()` — риск `NoSuchElementException`, а не накладные расходы на рефлексию."
+                "explanation": "Проблема не в самой exception, а в слепой распаковке, возвращающей hidden precondition. Более выразительный API показывает, почему absence допустимо или какое exception должно возникнуть.",
+                "example": "Вместо `opt.get()` используют `opt.orElseThrow(() -> new MissingConfigException(key))`; после pattern-like guard `if (opt.isEmpty()) return; use(opt.get())` риск локально контролируем.",
+                "when_to_apply": "Избегайте в public/business flow; допускайте только после очевидного local proof, в тесте или internal code, где invariant невозможно потерять.",
+                "edge_cases": "Сравнение с `NullPointerException` неточно: exception type другой и возникает сразу. IDE warning помогает, но static analyzer не всегда доказывает сложные invariants.",
+                "related": "[[java-optional-interview#Q3]] presence checks; [[java-optional-interview#Q5]] contextual exceptions; [[java-optional-interview#Q12]] anti-patterns."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`get()` плох, потому что при пустом `Optional` он возвращает `null`, и вызывающий код снова получает `NullPointerException` ниже по стеку.",
+              "text": "При empty `get()` возвращает null без exception, а subsequent dereference создаёт обычный `NullPointerException` на следующей строке обычного business code.",
               "correct": false,
               "sections": {
                 "what_actually": "`get()` на пустом `Optional` не возвращает `null`, а бросает `NoSuchElementException` прямо в точке вызова.",
@@ -335,20 +336,19 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Потому что `get()` бросает `NoSuchElementException`, если `Optional` пуст, — то есть возвращает нас к той же проблеме, что и `NullPointerException`. Прямой вызов `get()` без гарантии присутствия лишает `Optional` его главного смысла: явной и безопасной обработки отсутствия.",
-              "correct": true,
+              "text": "`get()` использует reflection и dynamic proxy для каждого access, поэтому его основная проблема — существенно более низкая performance на hot path.",
+              "correct": false,
               "sections": {
-                "explanation": "Смысл `Optional` — заставить обработать пустой случай. `get()` обходит это: при пустом контейнере он падает в рантайме так же неожиданно, как разыменование `null`.",
-                "example": "`Optional.empty().get()` сразу бросает `NoSuchElementException: No value present`; идиоматичные замены — `opt.orElse(\"default\")` или `opt.ifPresent(this::process)`.",
-                "when_to_apply": "Если всё же берут `get()`, то лишь внутри проверенного `if (opt.isPresent())`, но даже там предпочтительнее `map`/`orElse`/`ifPresent`.",
-                "edge_cases": "Связка `isPresent()` + `get()` — классический антипаттерн: это многословный аналог `orElse`, который к тому же легко сломать, забыв синхронизировать проверку и извлечение.",
-                "related": "[[java-optional-interview#Q3]] isPresent/isEmpty проверки; [[java-optional-interview#Q5]] orElseThrow как выразительная альтернатива; [[java-optional-interview#Q12]] isPresent+get как антипаттерн."
+                "what_actually": "`get()` просто возвращает поле `value` без рефлексии; проблема в безопасности (исключение на пустом), а не в скорости.",
+                "source_of_confusion": "Любые «плохие практики» иногда обобщённо списывают на производительность.",
+                "if_it_were_true": "Тогда `get()` был бы медленнее `orElse`, но оба — тривиальные обращения к полю.",
+                "how_it_should_be": "Недостаток `get()` — риск `NoSuchElementException`, а не накладные расходы на рефлексию."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`get()` плох, потому что он мутирует `Optional`, очищая его после первого извлечения, и повторный вызов всегда падает.",
+              "text": "Первый `get()` извлекает и удаляет value из Optional, поэтому второй вызов того же immutable container всегда завершается неизбежным `NoSuchElementException`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Optional` неизменяем: `get()` не очищает контейнер, повторные вызовы на наполненном `Optional` возвращают то же значение.",
@@ -371,20 +371,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`map(fn)` применяет функцию `T → R` к значению и сам оборачивает результат в `Optional`. `flatMap(fn)` применяет функцию `T → Optional<R>`, которая уже возвращает `Optional`, и не оборачивает его повторно — это избегает вложенности `Optional<Optional<R>>`.",
-              "correct": true,
+              "text": "Оба метода автоматически flatten любой nesting depth, поэтому function return type не влияет на result type и semantics.",
+              "correct": false,
               "sections": {
-                "explanation": "Если функция возвращает «голое» значение, нужен `map`. Если функция сама возвращает `Optional`, `map` создал бы `Optional<Optional<R>>`, а `flatMap` разворачивает один уровень, оставляя плоский `Optional<R>`.",
-                "example": "`opt.map(String::trim)` даёт `Optional<String>`; а для `User::getEmail`, возвращающего `Optional<String>`, нужен `opt.flatMap(User::getEmail)`, иначе получится `Optional<Optional<String>>`.",
-                "when_to_apply": "`map` — для обычных трансформаций (`String::trim`, `User::getName`); `flatMap` — для навигации по методам, которые сами отдают `Optional`, в цепочках `user → address → city`.",
-                "edge_cases": "Если по ошибке применить `map` к функции, возвращающей `Optional`, получится двойная вложенность `Optional<Optional<R>>`, которую потом мучительно разворачивать.",
-                "related": "[[java-optional-interview#Q8]] filter в цепочках; [[java-optional-interview#Q1]] map в примере findByEmail; [[java-optional-interview#Q11]] flatMap с Optional.stream()."
+                "what_actually": "`map` оборачивает результат и при функции, возвращающей `Optional`, даёт `Optional<Optional<R>>`; только `flatMap` разворачивает лишний уровень.",
+                "source_of_confusion": "В простых случаях с функцией `T → R` оба внешне дают похожий результат, и разницу не замечают.",
+                "if_it_were_true": "Тогда `Optional.of(user).map(User::getEmail)` давал бы `Optional<String>`, но реально получается `Optional<Optional<String>>`.",
+                "how_it_should_be": "`map` всегда добавляет обёртку; разворачивает вложенность именно `flatMap`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`flatMap()` применяет функцию к каждому символу строки внутри `Optional`, тогда как `map()` обрабатывает значение целиком.",
+              "text": "`flatMap` проходит по символам, collection elements или fields внутри contained value, тогда как `map` всегда обрабатывает весь object целиком.",
               "correct": false,
               "sections": {
                 "what_actually": "`flatMap` не разбивает значение на элементы: он применяет функцию ко всему значению целиком, просто функция возвращает `Optional`.",
@@ -396,19 +395,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`map()` и `flatMap()` полностью эквивалентны для `Optional`: оба сами разворачивают вложенные `Optional`, поэтому разницы на практике нет.",
-              "correct": false,
+              "text": "`map` преобразует `T` в `R` и оборачивает result, `flatMap` принимает `T -> Optional<R>` и избегает nested wrapper при chained transformations.",
+              "correct": true,
               "sections": {
-                "what_actually": "`map` оборачивает результат и при функции, возвращающей `Optional`, даёт `Optional<Optional<R>>`; только `flatMap` разворачивает лишний уровень.",
-                "source_of_confusion": "В простых случаях с функцией `T → R` оба внешне дают похожий результат, и разницу не замечают.",
-                "if_it_were_true": "Тогда `Optional.of(user).map(User::getEmail)` давал бы `Optional<String>`, но реально получается `Optional<Optional<String>>`.",
-                "how_it_should_be": "`map` всегда добавляет обёртку; разворачивает вложенность именно `flatMap`."
+                "explanation": "Операции выполняются только для present state и пропускают empty. Отличие связано с shape mapper result: plain value против уже вычисленного Optional.",
+                "example": "`userOpt.map(User::address)` даёт `Optional<Address>`; если `findManager(User)` уже возвращает `Optional<User>`, нужен `flatMap(this::findManager)`.",
+                "when_to_apply": "Используйте `map` для property/calculation, `flatMap` для chaining operations, которые сами могут не вернуть value.",
+                "edge_cases": "`map` mapper, вернувший null, даёт empty. `flatMap` mapper, вернувший null вместо Optional, нарушает contract и вызывает `NullPointerException`.",
+                "related": "[[java-optional-interview#Q8]] filter; [[java-optional-interview#Q10]] fallback Optional; [[java-optional-interview#Q11]] stream flattening."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`map()` работает только с примитивами, а `flatMap()` — только с объектами; выбор между ними определяется типом значения, а не формой функции.",
+              "text": "`map` поддерживает только primitive values, а `flatMap` только reference objects; выбор определяется component type, а не return shape mapper function.",
               "correct": false,
               "sections": {
                 "what_actually": "Выбор зависит от того, что возвращает функция (`R` или `Optional<R>`), а не от примитивности типа; `map` и `flatMap` работают с любыми ссылочными значениями.",
@@ -431,20 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`filter(predicate)` проверяет значение предикатом: если `Optional` непуст и предикат вернул `true` — `Optional` остаётся прежним; если предикат вернул `false` (или `Optional` был пуст) — результат становится пустым `Optional`. Удобно для валидации внутри цепочки.",
-              "correct": true,
-              "sections": {
-                "explanation": "`filter` не меняет значение, а условно «гасит» его: непрошедшее проверку значение исчезает, превращая контейнер в `empty`. На пустом `Optional` предикат вообще не вызывается.",
-                "example": "`Optional.of(25).filter(a -> a >= 18)` остаётся `Optional[25]`, а `Optional.of(25).filter(a -> a >= 60)` становится `Optional.empty()`.",
-                "when_to_apply": "Применяют для условной валидации в цепочках: `findById(id).filter(User::isActive).filter(u -> u.hasRole(ADMIN))` отбрасывает неподходящих пользователей.",
-                "edge_cases": "Если `Optional` уже пуст, `filter` просто возвращает `empty`, не вызывая предикат, поэтому внутри предиката не бывает `null` для проверки.",
-                "related": "[[java-optional-interview#Q7]] map/flatMap в той же цепочке; [[java-optional-interview#Q5]] orElseThrow после filter; [[java-optional-interview#Q9]] ifPresent после фильтрации."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`filter()` изменяет значение внутри `Optional`, заменяя его на результат предиката (`true`/`false`), и возвращает `Optional<Boolean>`.",
+              "text": "`filter` заменяет contained value результатом predicate и возвращает `Optional<Boolean>`, сохраняя information о true/false для следующего chain step.",
               "correct": false,
               "sections": {
                 "what_actually": "`filter` не заменяет значение на булев результат: он сохраняет исходное значение при `true` и делает `Optional` пустым при `false`, тип не меняется.",
@@ -454,9 +441,22 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "`filter(predicate)` сохраняет present value при true и возвращает empty при false; для empty Optional predicate не вызывается благодаря short-circuit semantics.",
+              "correct": true,
+              "sections": {
+                "explanation": "Filter сохраняет исходный Optional при successful predicate и превращает rejected value в absence. Это соответствует stream filtering для последовательности длины 0 или 1.",
+                "example": "`token.filter(this::notExpired).map(this::principal)` продолжает chain только для присутствующего и актуального token.",
+                "when_to_apply": "Используйте для простого gate в fluent chain; если требуется distinguish not-found from invalid, верните richer result type или exception.",
+                "edge_cases": "Predicate exception распространяется наружу. Side effects в predicate ухудшают читаемость; empty после filter теряет причину rejection.",
+                "related": "[[java-optional-interview#Q7]] map; [[java-optional-interview#Q5]] error policy; [[java-optional-interview#Q13]] richer contracts."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
-              "text": "`filter()` на пустом `Optional` всё равно вызывает предикат, передавая в него `null`, поэтому предикат обязан проверять аргумент на `null`.",
+              "text": "Для empty container predicate всё равно вызывается с null, поэтому любой predicate обязан начинаться с null-check и не может предполагать present value.",
               "correct": false,
               "sections": {
                 "what_actually": "На пустом `Optional` `filter` не вызывает предикат вообще и сразу возвращает `empty`, так что `null` в предикат не попадает.",
@@ -468,7 +468,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`filter()` при ложном предикате бросает `IllegalArgumentException`, прерывая цепочку вместо тихого превращения в пустой `Optional`.",
+              "text": "При false predicate `filter` бросает `IllegalArgumentException` с rejected value, а empty result возвращает только для исходного empty Optional.",
               "correct": false,
               "sections": {
                 "what_actually": "При ложном предикате `filter` тихо возвращает `Optional.empty()`, никаких исключений не бросает.",
@@ -491,20 +491,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ifPresent(consumer)` выполняет переданное действие, только если значение присутствует, и ничего не делает при пустом `Optional`. `ifPresentOrElse(consumer, runnable)` (Java 9+) выполняет одно из двух действий: `consumer` при наличии значения и `runnable` при его отсутствии, заменяя конструкцию `if-else`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Оба метода ориентированы на побочные эффекты, а не на возврат значения. `ifPresent` покрывает только «есть значение», а `ifPresentOrElse` явно описывает и ветку отсутствия, не оставляя её необработанной.",
-                "example": "`Optional.of(\"hi\").ifPresent(System.out::println)` печатает `hi`; `opt.ifPresentOrElse(v -> log(v), () -> log(\"нет значения\"))` обрабатывает обе ветки.",
-                "when_to_apply": "`ifPresent` берут, когда при пустом значении делать нечего; `ifPresentOrElse` — когда нужны обе реакции и хочется избежать ручного `if (opt.isPresent()) {...} else {...}`.",
-                "edge_cases": "`ifPresentOrElse` доступен только с Java 9; на Java 8 приходится писать явный `if-else` или комбинировать `ifPresent` с отдельной проверкой.",
-                "related": "[[java-optional-interview#Q3]] isPresent/isEmpty проверки; [[java-optional-interview#Q6]] ifPresent вместо isPresent+get; [[java-optional-interview#Q8]] ifPresent после filter."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`ifPresent()` существует с Java 9, а `ifPresentOrElse()` — с Java 8, поэтому на старых проектах доступен только второй метод.",
+              "text": "`ifPresent` появился в Java 9, а `ifPresentOrElse` существовал с Java 8; поэтому второй совместим с более старыми runtimes.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `ifPresent` есть с Java 8, а `ifPresentOrElse` добавили в Java 9; на Java 8 доступен именно `ifPresent`.",
@@ -514,9 +501,22 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "`ifPresent` выполняет consumer для present value; `ifPresentOrElse` выбирает consumer или empty-action, и оба methods возвращают `void`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это terminal side-effect operations, а не transformations. Они выбирают одну ветвь по state и не возвращают Optional/value для дальнейшей цепочки.",
+                "example": "`result.ifPresentOrElse(this::send, () -> metrics.incrementMissing())` выполняет ровно одно действие.",
+                "when_to_apply": "Используйте на boundary, где нужен side effect. Для вычисления нового значения предпочтительнее `map`, `flatMap` и fallback methods.",
+                "edge_cases": "Consumer/runnable могут бросить exception. Многословная логика в lambdas сигнализирует, что лучше обычный `if` или отдельный method.",
+                "related": "[[java-optional-interview#Q3]] checks; [[java-optional-interview#Q7]] transformations; [[java-optional-interview#Q12]] imperative smells."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
-              "text": "`ifPresentOrElse()` вызывает второй аргумент-`runnable` всегда, а не только при пустом `Optional`, дублируя действие для непустого случая.",
+              "text": "`ifPresentOrElse` всегда запускает empty runnable после consumer, поэтому present case выполняет обе ветви последовательно и возвращает результат второй.",
               "correct": false,
               "sections": {
                 "what_actually": "`runnable` запускается строго при пустом `Optional`; при наличии значения работает только `consumer`, и ровно одна из веток.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`ifPresent()` возвращает значение из `Optional`, поэтому его можно присвоить переменной: `String s = opt.ifPresent(...)`.",
+              "text": "`ifPresent` возвращает contained value после consumer и может быть присвоен переменной либо продолжен через `map` без повторного wrapping.",
               "correct": false,
               "sections": {
                 "what_actually": "`ifPresent` возвращает `void` и предназначен для побочного эффекта; извлекать значение в переменную им нельзя.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`or()` принимает уже готовый `Optional` как аргумент (не `Supplier`), поэтому альтернатива вычисляется всегда, ещё до проверки исходного `Optional`.",
+              "text": "`or` принимает готовый Optional и вычисляет alternative до проверки source, поэтому он eager, не принимает supplier и не поддерживает lazy fallback.",
               "correct": false,
               "sections": {
                 "what_actually": "`or` принимает `Supplier<Optional<T>>` и вызывает его лениво — только когда исходный `Optional` пуст.",
@@ -563,7 +563,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`or()` объединяет значения двух непустых `Optional` в один, конкатенируя их содержимое.",
+              "text": "`or` объединяет два present values arithmetic или concatenation operation и возвращает один Optional с комбинированным result независимо от generic type.",
               "correct": false,
               "sections": {
                 "what_actually": "`or` не объединяет значения: если исходный `Optional` непуст, он возвращается как есть, а альтернатива игнорируется.",
@@ -575,20 +575,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`or(supplier)` (Java 9+) возвращает исходный `Optional`, если он непуст, иначе — альтернативный `Optional`, полученный из `Supplier`. Ключевое отличие от `orElse`/`orElseGet`: `or` возвращает `Optional`, а не само значение, поэтому удобен для построения цепочек fallback-ов с ленивым вычислением.",
+              "text": "`or(Supplier<Optional<T>>)` лениво выбирает alternative Optional только при empty source, сохраняя wrapper для chained fallback sources.",
               "correct": true,
               "sections": {
-                "explanation": "`or` сохраняет «оптиональную» природу результата: можно последовательно перебирать источники, и каждый следующий вызывается лениво, только если предыдущие дали пустоту.",
-                "example": "`tryCache().or(this::tryDatabase).or(this::tryRemoteApi)` поочерёдно пробует источники и возвращает первый непустой `Optional`, не разворачивая значение преждевременно.",
-                "when_to_apply": "`or` выбирают, когда после подстановки альтернативы нужно продолжить цепочку `map`/`filter`/`or`, то есть результат должен остаться `Optional`.",
-                "edge_cases": "`Supplier` в `or` обязан вернуть `Optional<T>` (можно `Optional.empty()`), а не голое значение; метод доступен только с Java 9.",
-                "related": "[[java-optional-interview#Q4]] orElse/orElseGet возвращают значение, а не Optional; [[java-optional-interview#Q5]] orElseThrow для отсутствия; [[java-optional-interview#Q11]] другой Java 9+ метод stream()."
+                "explanation": "Supplier alternative вычисляется только при empty, а return type остаётся Optional. Это позволяет последовательно пробовать несколько источников без ручного wrapping/unwrapping.",
+                "example": "`fromCache(key).or(() -> fromDatabase(key)).or(() -> fromRemote(key))` останавливается на первом present result.",
+                "when_to_apply": "Используйте для lazy fallback sources, каждый из которых естественно возвращает Optional.",
+                "edge_cases": "Supplier обязан вернуть non-null Optional. Повторные I/O fallbacks требуют timeout, metrics и понимания latency; Optional не реализует retry/circuit breaker.",
+                "related": "[[java-optional-interview#Q4]] value fallback; [[java-optional-interview#Q7]] flatMap; [[java-optional-interview#Q15]] appropriate use."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`or()` возвращает само значение типа `T`, как и `orElse()`, поэтому его результат можно сразу использовать без распаковки.",
+              "text": "`or` возвращает unwrapped `T`, полностью эквивалентен `orElse`, принимает обычный fallback value и не может участвовать в chain Optional alternatives.",
               "correct": false,
               "sections": {
                 "what_actually": "`or` возвращает `Optional<T>`, а не `T`; распаковка по-прежнему нужна, например через последующий `orElse`.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Optional.stream()` доступен ещё с Java 8 и заменил собой `Optional.map()`, который в Java 9 был удалён.",
+              "text": "`Optional.stream()` существовал в Java 8 и заменил удалённый `map`; начиная с Java 9 transformations выполняются только Stream API.",
               "correct": false,
               "sections": {
                 "what_actually": "`Optional.stream()` добавлен в Java 9, а `Optional.map()` существует с Java 8 и никуда не удалялся.",
@@ -623,7 +623,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Optional.stream()` создаёт `Stream`, где элементами являются отдельные поля объекта, лежащего внутри `Optional`.",
+              "text": "`stream()` создаёт stream из нуля или одного element; `flatMap(Optional::stream)` удаляет empty values из `Stream<Optional<T>>`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Optional behaves as zero-or-one sequence. Method bridges Optional API and Stream pipelines without explicit `isPresent`/`get` filtering.",
+                "example": "`users.stream().map(this::findEmail).flatMap(Optional::stream).toList()` собирает только найденные email addresses.",
+                "when_to_apply": "Используйте внутри Stream API для flattening optional results; вне stream chain обычные Optional operations обычно читаются проще.",
+                "edge_cases": "Это не parallelization и не reflection. Creating many Optional objects may be avoidable by returning stream directly in performance-sensitive pipeline.",
+                "related": "[[java-optional-interview#Q7]] flatMap; [[java-optional-interview#Q8]] filter; [[java-optional-interview#Q15]] performance context."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Mетод отражает fields contained object в stream, создавая отдельный element на каждое его property через reflection.",
               "correct": false,
               "sections": {
                 "what_actually": "Стрим содержит само значение целиком как единственный элемент, а не его поля по отдельности.",
@@ -633,22 +646,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "`stream()` (Java 9+) конвертирует `Optional` в `Stream<T>` из 0 или 1 элемента: пустой `Optional` даёт пустой стрим, наполненный — стрим с одним элементом. Это удобно при работе со Stream API, где через `flatMap(Optional::stream)` можно отбросить пустые `Optional` в одном шаге.",
-              "correct": true,
-              "sections": {
-                "explanation": "Метод наводит мост между `Optional` и `Stream`. Раньше для отсева пустых нужна была связка `.filter(Optional::isPresent).map(Optional::get)`, теперь достаточно `.flatMap(Optional::stream)`.",
-                "example": "`optionals.stream().flatMap(Optional::stream).collect(toList())` из списка `Optional` оставляет только непустые значения: из `[of(\"a\"), empty(), of(\"b\")]` получится `[\"a\", \"b\"]`.",
-                "when_to_apply": "Применяют, когда поток содержит `Optional` (например, результаты `findById` для коллекции id) и нужно собрать только присутствующие значения.",
-                "edge_cases": "Метод доступен с Java 9; на Java 8 приходится использовать `filter(Optional::isPresent).map(Optional::get)`, что многословнее и подвержено ошибкам.",
-                "related": "[[java-optional-interview#Q7]] flatMap в Optional vs Stream; [[java-optional-interview#Q10]] другой Java 9+ метод or(); [[java-optional-interview#Q15]] когда вместо Optional лучше пустая коллекция."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "`Optional.stream()` всегда возвращает бесконечный стрим, повторяющий хранимое значение, поэтому его нужно ограничивать через `limit()`.",
+              "text": "Он создаёт infinite stream, повторяющий present value; для empty stream также бесконечен и содержит null, поэтому нужен `limit`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Optional.stream()` даёт конечный стрим из 0 или 1 элемента; повторения значения и бесконечности нет.",
@@ -666,12 +666,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие антипаттерны использования `Optional` существуют?",
+          "question_text": "Какие способы использования `Optional` часто считаются антипаттернами и почему?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Использовать `orElseGet()` вместо `orElse()` — антипаттерн, потому что ленивое вычисление непредсказуемо и его следует избегать.",
+              "text": "`orElseGet` всегда является антипаттерном: supplier делает результат nondeterministic, усложняет debugging и поэтому любой fallback нужно вычислять eagerly только через eager `orElse`.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `orElseGet` с дорогим дефолтом предпочтителен, а антипаттерн — это `orElse` с дорогим вычислением, которое запускается всегда.",
@@ -683,20 +683,19 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Основные антипаттерны: связка `isPresent()` + `get()` вместо `orElse`/`map`; `Optional` как параметр метода; `Optional` в полях сущности (проблемы с JPA/Jackson); `orElse` с дорогим вычислением вместо `orElseGet`; и оборачивание коллекций в `Optional<List<...>>` вместо пустого списка.",
-              "correct": true,
+              "text": "Главный антипаттерн — Optional return type: container следует использовать только в fields и parameters, а методы должны возвращать null с внешней документацией contract.",
+              "correct": false,
               "sections": {
-                "explanation": "Все эти случаи либо обходят смысл `Optional` (явная обработка отсутствия), либо создают новые проблемы — лишние NPE, дорогие вычисления, несериализуемость, неестественную форму API.",
-                "example": "`Optional.ofNullable(cache.get(k)).orElse(db.find(k))` всегда ходит в базу — правильно `orElseGet(() -> db.find(k))`; `Optional<List<User>>` стоит заменить на `List<User>` с `Collections.emptyList()`.",
-                "when_to_apply": "Распознавать эти паттерны нужно на код-ревью: они частые и внешне выглядят рабочими, но ломают производительность или сериализацию.",
-                "edge_cases": "Самый коварный — `orElse` с дорогим дефолтом: код работает корректно, но впустую нагружает БД/сеть на каждом непустом `Optional`.",
-                "related": "[[java-optional-interview#Q6]] isPresent+get как антипаттерн; [[java-optional-interview#Q13]] Optional как параметр метода; [[java-optional-interview#Q14]] Optional в полях класса."
+                "what_actually": "Возврат `Optional` из метода — это рекомендованное, основное назначение `Optional`, а не антипаттерн; ошибочны параметры и поля.",
+                "source_of_confusion": "Запрет на `Optional` в параметрах и полях по ошибке распространяют и на возвращаемые значения.",
+                "if_it_were_true": "Тогда `Optional<User> findById(...)` считался бы плохой практикой, но это как раз канонический пример правильного использования.",
+                "how_it_should_be": "`Optional` создан именно для возврата значений; антипаттерны — параметры, поля, обёртки коллекций."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Возвращать `Optional<List<User>>` — хорошая практика, потому что так клиент чётко отличает «список не загружен» от «список пуст».",
+              "text": "`Optional<List<T>>` всегда лучше empty list: он обязан различать «не загружено» и «загружено пустым» даже если API не имеет такого состояния.",
               "correct": false,
               "sections": {
                 "what_actually": "Оборачивание коллекций в `Optional` — антипаттерн: пустой список уже выражает отсутствие элементов, и `Optional` лишь усложняет API.",
@@ -708,13 +707,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Главный антипаттерн — это использование `Optional` как типа возвращаемого значения метода: именно для возврата `Optional` применять нельзя.",
-              "correct": false,
+              "text": "Smells включают `isPresent()+get`, nullable Optional, expensive `orElse`, необоснованные fields/parameters и wrapper вокруг collections без domain distinction.",
+              "correct": true,
               "sections": {
-                "what_actually": "Возврат `Optional` из метода — это рекомендованное, основное назначение `Optional`, а не антипаттерн; ошибочны параметры и поля.",
-                "source_of_confusion": "Запрет на `Optional` в параметрах и полях по ошибке распространяют и на возвращаемые значения.",
-                "if_it_were_true": "Тогда `Optional<User> findById(...)` считался бы плохой практикой, но это как раз канонический пример правильного использования.",
-                "how_it_should_be": "`Optional` создан именно для возврата значений; антипаттерны — параметры, поля, обёртки коллекций."
+                "explanation": "Optional эффективен, когда state действительно бинарный «значение/отсутствие» на return boundary. Он ухудшает API, если дублирует empty collection, допускает собственный null или конфликтует с serialization/ORM conventions.",
+                "example": "Вместо `if(opt.isPresent()) use(opt.get())` применяют `opt.ifPresent(this::use)`; вместо `Optional<List<Row>>` часто возвращают empty immutable list, если третьего состояния нет.",
+                "when_to_apply": "Оценивайте semantic states и consumers, а не применяйте blanket ban. Parameter/field Optional иногда оправдан в internal immutable API, но должен быть осознанным contract.",
+                "edge_cases": "`Optional<List<T>>` может быть корректен, если «не вычислено» отлично от «вычислено пусто». Framework/Jackson modules могут поддерживать field Optional, но JPA/basic serialization остаются отдельными ограничениями.",
+                "related": "[[java-optional-interview#Q6]] get; [[java-optional-interview#Q13]] parameters; [[java-optional-interview#Q14]] fields."
               }
             }
           ]
@@ -726,12 +726,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Почему `Optional` нельзя использовать как параметр метода?",
+          "question_text": "Почему `Optional` обычно не рекомендуют как параметр публичного метода?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Потому что Java на уровне компилятора запрещает объявлять параметры типа `Optional`, и код с таким параметром просто не скомпилируется.",
+              "text": "Java compiler запрещает parameterized type `Optional<T>` в method signature; такой source code не проходит type checking и не создаёт bytecode.",
               "correct": false,
               "sections": {
                 "what_actually": "Компилятор не запрещает `Optional`-параметры: `void notify(Optional<String> e)` компилируется без ошибок; это лишь стилевой антипаттерн.",
@@ -743,7 +743,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Потому что внутри метода `Optional`-параметр становится неизменяемым и его нельзя передать дальше в другие методы.",
+              "text": "Optional parameter становится compile-time constant и не может быть передан дальше, reassigned, inspected или сохранён внутри method body.",
               "correct": false,
               "sections": {
                 "what_actually": "`Optional` иммутабелен всегда, но это не мешает передавать его в другие методы; неизменяемость не связана с проблемой параметров.",
@@ -755,26 +755,26 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Потому что `Optional` как параметр резко замедляет вызов метода: на упаковку и распаковку обёртки уходит больше времени, чем на сам метод.",
+              "text": "Caller может передать `null` вместо empty; параметр Optional часто уступает overload, nullability annotation, parameter object или domain sum type.",
+              "correct": true,
+              "sections": {
+                "explanation": "Optional parameter добавляет два способа выразить отсутствие — null container и empty container — если contract не запрещает первый внешними средствами. Он также переносит wrapping ceremony на каждого caller-а.",
+                "example": "Вместо `search(Optional<String> query)` используют `search()`/`search(String query)`, `@Nullable String`, либо `SearchCriteria`, если optional fields являются частью command model.",
+                "when_to_apply": "Избегайте в stable public APIs, особенно вызываемых из других языков/frameworks. Допускайте в узком internal functional API, если callers уже естественно имеют Optional.",
+                "edge_cases": "Это рекомендация, не запрет Java. Overloads могут вызвать ambiguity, nullable annotations требуют tooling, а parameter object лучше масштабируется при нескольких optional arguments.",
+                "related": "[[java-optional-interview#Q12]] context-dependent smells; [[java-optional-interview#Q14]] fields; [[java-optional-interview#Q1]] intended role."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Главная проблема — обязательная wrapper allocation делает любой method call медленнее business logic независимо от JIT optimization и actual workload.",
               "correct": false,
               "sections": {
                 "what_actually": "Проблема не в производительности, а в том, что параметр-`Optional` не спасает от `null` и усложняет API; накладные расходы обёртки незначительны.",
                 "source_of_confusion": "Любые предостережения против `Optional` обобщённо приписывают накладным расходам.",
                 "if_it_were_true": "Тогда запрет касался бы только горячих путей, но его рекомендуют повсеместно из-за семантики, а не скорости.",
                 "how_it_should_be": "Главная причина — caller может передать `null`, и `Optional` в параметре не добавляет гарантий."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Потому что параметр типа `Optional<String>` не защищает от `null`: вызывающий код может передать `null` вместо `Optional.empty()`, и обращение к нему внутри метода снова даст `NullPointerException`. `Optional` создан для возвращаемых значений; для опциональных параметров используют перегрузку методов или `@Nullable`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Идея `Optional` — заставить обработать отсутствие, но параметр всё равно остаётся ссылкой, которую можно сделать `null`. Так появляется лишний слой обёртки, не убирающий исходную проблему.",
-                "example": "`void notify(Optional<String> email)` падает на `notify(null)`, потому что `email.ifPresent(...)` разыменует `null`; компилятор такой вызов не запрещает.",
-                "when_to_apply": "Когда параметр опционален, делают перегрузку (`notify()` и `notify(String email)`) либо помечают `@Nullable` с явной проверкой, оставляя `Optional` только в возвращаемых типах.",
-                "edge_cases": "`Optional`-параметр ещё и навязывает клиенту обязательную упаковку значения в `Optional` на каждом вызове, загромождая код вызывающей стороны.",
-                "related": "[[java-optional-interview#Q12]] антипаттерны Optional; [[java-optional-interview#Q14]] почему Optional плох в полях; [[java-optional-interview#Q15]] когда вместо Optional берут @Nullable."
               }
             }
           ]
@@ -786,12 +786,25 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Можно ли хранить `Optional` в полях класса?",
+          "question_text": "Когда поле типа `Optional` может быть проблемой и является ли оно запрещённым?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Нет, хранить `Optional` в полях невозможно: компилятор Java запрещает поля типа `Optional` и выдаёт ошибку при объявлении.",
+              "text": "Optional field возможен, но часто мешает serialization, JPA и bean tools; entity обычно хранит nullable value, возвращая Optional через API.",
+              "correct": true,
+              "sections": {
+                "explanation": "Язык не запрещает Optional fields. Ограничения приходят от design intent и integrations: `Optional` не `Serializable`, JPA не рассматривает его как обычный persistent attribute, а JSON support зависит от datatype module/configuration.",
+                "example": "Entity хранит `String nickname` и repository method возвращает `Optional<Entity>`; immutable application settings object может хранить Optional, если tooling и API явно это поддерживают.",
+                "when_to_apply": "Предпочитайте raw nullable field на persistence/serialization boundary и Optional return. Используйте Optional field только когда model действительно требует wrapper и весь toolchain проверен.",
+                "edge_cases": "Jackson JDK8 module поддерживает Optional; это не делает его хорошим JPA field. Getter, возвращающий Optional, может изменить JSON shape, если mapper treats it as property.",
+                "related": "[[java-optional-interview#Q12]] антипаттерны; [[java-optional-interview#Q13]] parameters; [[java-optional-interview#Q15]] когда не нужен."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Java compiler запрещает fields типа Optional и выдаёт compile error независимо от visibility, static modifier, generic argument или initialization expression или annotation.",
               "correct": false,
               "sections": {
                 "what_actually": "Поле типа `Optional` объявить можно — компиляция пройдёт; проблемы возникают в рантайме при сериализации и ORM-маппинге, а не на уровне языка.",
@@ -801,22 +814,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Технически можно, но не рекомендуется: `Optional` не реализует `Serializable`, поэтому возникают проблемы с JPA/Hibernate, Jackson и RMI. Золотой стандарт для сущностей — хранить поле как `String` (или другой тип), а `Optional` возвращать только из геттера через `Optional.ofNullable(field)`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Поле-`Optional` ломает сериализацию и ORM: Hibernate не умеет маппить `Optional<String>` на колонку, Jackson без настройки сериализует его некорректно, а несериализуемость мешает RMI и кэшам.",
-                "example": "`@Entity class User { private String phone; public Optional<String> getPhone() { return Optional.ofNullable(phone); } }` — поле `String`, удобство `Optional` только в геттере.",
-                "when_to_apply": "Этот приём применяют в сущностях и DTO: хранят `null`-совместимое поле для совместимости с инфраструктурой и отдают `Optional` наружу для безопасного API.",
-                "edge_cases": "Если всё же объявить поле `Optional<String> phone` в `@Entity`, Hibernate упадёт при маппинге, а в JSON поле сериализуется не как значение/`null`, а как объект-обёртка.",
-                "related": "[[java-optional-interview#Q12]] антипаттерны Optional; [[java-optional-interview#Q13]] Optional в параметрах; [[java-optional-interview#Q2]] ofNullable для построения Optional в геттере."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "Да, и это предпочтительный способ: поле `Optional<String>` корректно маппится Hibernate на nullable-колонку и сериализуется Jackson из коробки.",
+              "text": "Optional field является стандартным JPA basic type и Jackson property без дополнительных modules; Hibernate автоматически maps present/empty на nullable column и сохраняет wrapper.",
               "correct": false,
               "sections": {
                 "what_actually": "Hibernate не умеет маппить `Optional<String>` на колонку, а Jackson без настройки сериализует его некорректно — поэтому поле-`Optional` как раз не рекомендуют.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Да, но только если поле объявлено `static`, потому что статические `Optional`-поля сериализации не подлежат и проблем не вызывают.",
+              "text": "Поле Optional разрешено только как `static final`, потому что instance Optional всегда пытается сериализоваться и JVM запрещает construction любого enclosing object instance.",
               "correct": false,
               "sections": {
                 "what_actually": "Рекомендация против `Optional` в полях не зависит от `static`; обычные поля сущности именно не статические, и проблема в несериализуемости инстансных полей.",
@@ -846,12 +846,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Когда `Optional` не нужен?",
+          "question_text": "Когда `Optional` не добавляет полезной семантики?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "`Optional` особенно нужен именно на горячем пути кода, потому что обёртка уменьшает количество аллокаций по сравнению с прямым использованием `null`.",
+              "text": "Optional особенно нужен в каждом hot path: wrapper гарантированно уменьшает allocations, исключает branch prediction misses и быстрее прямой проверки nullable reference.",
               "correct": false,
               "sections": {
                 "what_actually": "На горячем пути `Optional` как раз избыточен: каждый его экземпляр — дополнительная аллокация, тогда как `null` не аллоцирует ничего.",
@@ -863,20 +863,19 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Optional` добавляет накладные расходы (аллокация объекта) и оправдан не всегда. Он не нужен для пустых коллекций (лучше `Collections.emptyList()`), для полей сущности и DTO (лучше `null` с `@Nullable`), для параметров (перегрузка или `@Nullable`), в `private`-методах, на горячем пути кода и в `void`-сценариях. Он нужен для возвращаемых значений, которых может не быть.",
-              "correct": true,
+              "text": "Optional не нужен только для `void`; любой reference или primitive return обязан быть Optional, даже если absence невозможен по domain invariant.",
+              "correct": false,
               "sections": {
-                "explanation": "Каждый `Optional` — это дополнительный объект в куче. Там, где отсутствие уже выражается естественно (пустая коллекция, `null`-поле, перегрузка), обёртка лишь усложняет код без выигрыша.",
-                "example": "Метод, возвращающий список, отдаёт `Collections.emptyList()` вместо `Optional<List<...>>`; поле сущности держит `null` с `@Nullable`, а не `Optional`.",
-                "when_to_apply": "`Optional` уместен, когда метод ищет значение, которого может не быть (`findById`, find by criteria), и нужно вынудить клиента явно обработать оба случая в цепочке `map`/`filter`/`flatMap`.",
-                "edge_cases": "На горячем пути с миллионами вызовов аллокация `Optional` может стать заметной — там осознанно возвращаются к `null` ради производительности.",
-                "related": "[[java-optional-interview#Q1]] зачем нужен Optional; [[java-optional-interview#Q12]] обёртка коллекций как антипаттерн; [[java-optional-interview#Q13]] Optional не для параметров."
+                "what_actually": "`Optional` избыточен во многих случаях помимо `void`: пустые коллекции, поля, параметры, горячий путь — там предпочтительнее `null` или пустой контейнер.",
+                "source_of_confusion": "Правило «возвращай Optional» абсолютизируют, считая обёртку обязательной везде, кроме `void`.",
+                "if_it_were_true": "Тогда поля сущностей и пустые списки тоже оборачивали бы в `Optional`, но это признанные антипаттерны.",
+                "how_it_should_be": "`Optional` не нужен в коллекциях, полях, параметрах, на горячем пути; он уместен для опциональных возвращаемых значений."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Для отсутствующей коллекции `Optional<List<T>>` — единственно правильный способ, а `Collections.emptyList()` считается устаревшим и не должен использоваться.",
+              "text": "Для отсутствующей коллекции только `Optional<List<T>>` корректен; empty list устарел и смешивает ошибку загрузки с valid result во всех API.",
               "correct": false,
               "sections": {
                 "what_actually": "Для отсутствующих элементов как раз рекомендуют пустую коллекцию (`Collections.emptyList()`), а оборачивание коллекции в `Optional` — антипаттерн.",
@@ -888,13 +887,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Optional` не нужен только в одном случае — когда метод вообще ничего не возвращает (`void`); во всех остальных ситуациях его использование обязательно.",
-              "correct": false,
+              "text": "Optional обычно лишний для collections, `void`, обязательных values, primitive hot paths и framework fields; основной use case — nullable return result.",
+              "correct": true,
               "sections": {
-                "what_actually": "`Optional` избыточен во многих случаях помимо `void`: пустые коллекции, поля, параметры, горячий путь — там предпочтительнее `null` или пустой контейнер.",
-                "source_of_confusion": "Правило «возвращай Optional» абсолютизируют, считая обёртку обязательной везде, кроме `void`.",
-                "if_it_were_true": "Тогда поля сущностей и пустые списки тоже оборачивали бы в `Optional`, но это признанные антипаттерны.",
-                "how_it_should_be": "`Optional` не нужен в коллекциях, полях, параметрах, на горячем пути; он уместен для опциональных возвращаемых значений."
+                "explanation": "Container полезен не сам по себе, а когда заставляет обработать meaningful absence. Если type уже имеет естественный empty result или value обязано существовать, Optional добавляет ceremony и иногда allocation.",
+                "example": "`findAll()` возвращает empty list; `count()` возвращает primitive; `findOne()` возвращает Optional. Для primitive absence существуют `OptionalInt/Long/Double`, но они также нужны только при реальном optional state.",
+                "when_to_apply": "Выбирайте по semantics public contract и profile performance только после измерений; не вводите Optional как универсальное style rule.",
+                "edge_cases": "JIT может устранять некоторые allocations, поэтому blanket performance claims ненадёжны. Empty collection и absent collection различаются только если domain явно моделирует третье состояние.",
+                "related": "[[java-optional-interview#Q1]] purpose; [[java-optional-interview#Q12]] smells; [[java-optional-interview#Q14]] framework fields."
               }
             }
           ]

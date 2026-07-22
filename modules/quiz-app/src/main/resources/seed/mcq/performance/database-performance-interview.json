@@ -47,7 +47,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Системный подход: сначала найти запрос (`pg_stat_statements`, APM, slow query log), воспроизвести на prod-like данных, прогнать `EXPLAIN (ANALYZE, BUFFERS)`, найти узкое место (`Seq Scan`, `Sort` на диск, `Nested Loop`), выдвинуть гипотезу фикса (индекс, переписать запрос, `work_mem`), проверить тем же `EXPLAIN ANALYZE` и только потом катить в прод с мониторингом.",
+              "text": "Системный подход: сначала найти запрос (`pg_stat_statements`, APM, slow query log), воспроизвести на prod-like данных, прогнать `EXPLAIN (ANALYZE, BUFFERS)`.",
               "correct": true,
               "sections": {
                 "explanation": "Каждый шаг сужает область поиска: identify даёт топ-запросы по суммарному времени, reproduce убирает влияние кэша, `EXPLAIN ANALYZE` показывает реальный план, а verify подтверждает, что фикс действительно помог, а не сломал что-то ещё.",
@@ -83,7 +83,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`EXPLAIN ANALYZE` для DML работает как dry-run: он оценивает стоимость `DELETE` по статистике и откатывает изменения сам, поэтому оборачивать его в транзакцию не требуется.",
+              "text": "`EXPLAIN ANALYZE` для DML работает как dry-run: он оценивает стоимость `DELETE` по статистике и откатывает изменения сам.",
               "correct": false,
               "sections": {
                 "what_actually": "`EXPLAIN ANALYZE` реально выполняет запрос, в том числе DML: `DELETE` удалит строки и не откатит их сам, если не обернуть его в транзакцию с `ROLLBACK`.",
@@ -107,7 +107,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`EXPLAIN` показывает только запланированный план с оценками (cost, rows) и не выполняет запрос, а `EXPLAIN ANALYZE` реально выполняет запрос и измеряет фактическое время и число строк, позволяя поймать расхождение estimate-vs-actual из-за устаревшей статистики; для DML `EXPLAIN ANALYZE` нужно оборачивать в `BEGIN; ... ROLLBACK;`.",
+              "text": "`EXPLAIN` показывает только запланированный план с оценками и не выполняет запрос, а `EXPLAIN ANALYZE` реально выполняет запрос и измеряет фактическое время и число строк.",
               "correct": true,
               "sections": {
                 "explanation": "`EXPLAIN` дёшев и гипотетичен, `EXPLAIN ANALYZE` стоит реального выполнения, но даёт правду: видно, где планировщик ошибся в оценке строк — главный признак протухшей статистики и плохих планов.",
@@ -131,13 +131,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "План — это дерево операций, которое выполняется снизу вверх: чем глубже отступ, тем раньше выполняется узел (листья первыми). Каждый узел показывает операцию, `cost=startup..total` (абстрактные единицы, важно соотношение), оценочные `rows`, реальные `actual time` и `loops` (число выполнений — умножать на actual time для реального вклада).",
+              "text": "Plan читают как дерево iterator-узлов: родитель запрашивает tuples у children; листья обычно производят данные первыми, а `loops`, actual rows, time и buffers показывают реальную работу.",
               "correct": true,
               "sections": {
-                "explanation": "Чтение снизу вверх отражает порядок исполнения; сравнение `rows` (оценка) с `actual rows` ловит mis-estimate, а `loops` показывает, что узел во `Nested Loop` выполнялся многократно и его время надо умножить.",
-                "example": "`Nested Loop` с `Index Scan using users_pkey` внутри и `loops=1` — нормально; но `loops=10000` у внутреннего узла означает, что он отработал 10000 раз, и реальный вклад = `actual time × loops`.",
-                "when_to_apply": "Навык нужен при каждом разборе `EXPLAIN ANALYZE`: без чтения дерева нельзя понять, какой именно узел узкое место и почему план выбран.",
-                "edge_cases": "`Rows Removed by Filter` с большим числом — признак, что фильтр стоило бы загнать в index condition; `Sort Method: external merge Disk` — `work_mem` слишком мал.",
+                "explanation": "Execution идёт по demand/pull-модели, поэтому простой лозунг «снизу вверх» недостаточен. Parent node может многократно вызывать child, особенно в nested loops.",
+                "example": "У `Nested Loop` смотрят `loops` внутреннего scan-а и умножают per-loop rows/time; у sort/hash оценивают память, spill и input cardinality.",
+                "when_to_apply": "Читайте от итогового node к детям, проверяя estimates versus actuals, loops, filters, buffers и наиболее дорогой повторяющийся участок.",
+                "edge_cases": "Timing узлов inclusive и зависит от instrumentation; parallel plans, rescans и early LIMIT меняют интуитивный порядок. `EXPLAIN ANALYZE` реально выполняет запрос.",
                 "related": "[[database-performance-interview#Q2]] EXPLAIN ANALYZE; [[database-performance-interview#Q4]] типы scan-узлов; [[database-performance-interview#Q19]] work_mem и Sort на диск."
               }
             },
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Seq Scan` читает таблицу страница за страницей и выгоден на малых таблицах или при выборке ≥~30% строк; `Index Scan` идёт по индексу и случайно читает строки — хорош для селективных запросов; `Bitmap Index Scan + Bitmap Heap Scan` строит битмап TID, сортирует по страницам и читает heap последовательно — оптимален при средней селективности (10–30%). Выбор зависит от статистики и `random_page_cost`/`seq_page_cost`.",
+              "text": "Seq Scan читает таблицу последовательно, Index Scan идёт по индексу к heap, Bitmap Scan объединяет много index hits; выбор зависит от selectivity, correlation и cost model.",
               "correct": true,
               "sections": {
                 "explanation": "Планировщик взвешивает селективность и стоимость случайного vs последовательного I/O: при выборке многих строк `Seq Scan` дешевле случайных чтений, при единичных — `Index Scan`, а на средней доле `Bitmap Scan` объединяет преимущества.",
@@ -216,7 +216,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Seq Scan` появляется в плане только когда на колонке нет подходящего индекса; при наличии индекса планировщик предпочтёт `Index Scan`, потому что индексный доступ дешевле полного чтения.",
+              "text": "`Seq Scan` появляется в плане только когда на колонке нет подходящего индекса; при наличии индекса планировщик предпочтёт `Index Scan`.",
               "correct": false,
               "sections": {
                 "what_actually": "При выборке большой доли строк (≥~30%) планировщик сознательно выбирает `Seq Scan` даже при наличии индекса: последовательное чтение дешевле тысяч случайных обращений.",
@@ -263,7 +263,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Поиск по индексу — это `O(log n)` обращений независимо от числа строк в результате, поэтому `Index Scan` выгоден и при `WHERE active=true`, где 90% строк active.",
+              "text": "Поиск по индексу — это `O(log n)` обращений независимо от числа строк в результате, поэтому `Index Scan` выгоден и при `WHERE active=true`.",
               "correct": false,
               "sections": {
                 "what_actually": "При выборке большой доли строк (>30%) `Index Scan` проигрывает `Seq Scan`: на каждую найденную строку идёт отдельное случайное чтение heap, и их суммарная цена превышает один последовательный проход.",
@@ -275,7 +275,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Индекс помогает на `WHERE col = value`, диапазонах `col > X`, `ORDER BY`, `GROUP BY` и `JOIN ON`. Он НЕ помогает при функции на колонке (`WHERE LOWER(email)=...`), leading wildcard (`LIKE '%john%'`), type mismatch с неявным кастом, неселективных запросах (>30% строк), `OR` без индексов на обе колонки и при сильном перекосе распределения — там спасает functional/partial индекс.",
+              "text": "Индекс помогает селективным predicates, joins и ordering, но может не использоваться при низкой selectivity, неподходящем left prefix, функции без expression index или stale statistics.",
               "correct": true,
               "sections": {
                 "explanation": "Индекс ускоряет, когда сужает выборку и сохраняет порядок B-tree; но если предикат скрывает колонку (функция, каст) или возвращает большую долю строк, планировщик сознательно выберет `Seq Scan`.",
@@ -323,13 +323,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Порядок диктует не «самая селективная первой» (это миф), а паттерн доступа запросов и left-prefix rule: индекс `(a, b, c)` работает для `WHERE a=?`, `a=? AND b=?`, `a=? AND b=? AND c=?`, но не для `WHERE b=?` (пропущен лидирующий) и не для `a=? AND c=?` (использует только `a`). Колонки равенства идут первыми, диапазон — последним, колонки сортировки — после равенства.",
+              "text": "Порядок composite index выбирают по predicates, leftmost prefix, equality/range и требуемой сортировке; высокая selectivity сама по себе не является универсальным правилом.",
               "correct": true,
               "sections": {
-                "explanation": "B-tree упорядочен по первой колонке, потом по второй и т.д., поэтому поиск возможен только с лидирующего префикса; диапазон в середине обрывает использование последующих колонок.",
-                "example": "Для запросов `WHERE user_id=? AND created_at>?` и `WHERE user_id=? ORDER BY created_at DESC` индекс `(user_id, created_at)` покрывает оба, а `(created_at, user_id)` — нет: первый запрос станет range-scan'ом, второй не использует сортировку.",
-                "when_to_apply": "Применяют при проектировании индекса под конкретные запросы: сначала equality-колонки, затем range/sort, ориентируясь на реальный access pattern.",
-                "edge_cases": "При разных воркладах может понадобиться несколько индексов, но каждый добавляет write overhead и место; правило большого пальца — <10 индексов на таблицу.",
+                "explanation": "B-tree эффективно использует ведущие columns. Equality predicates обычно ставят до range/order columns, но итог определяется реальными запросами и возможностью index-only scan.",
+                "example": "Для `WHERE tenant_id=? AND created_at>=? ORDER BY created_at` индекс `(tenant_id, created_at)` поддерживает equality prefix и range/order.",
+                "when_to_apply": "Проектируйте индекс под несколько важных query shapes и проверяйте `EXPLAIN (ANALYZE, BUFFERS)`, write amplification и существующие overlapping indexes.",
+                "edge_cases": "Planner иногда использует skip scan или suffix columns для filtering, но это не отменяет leftmost-prefix economics. Selectivity, correlation, ordering и data distribution меняются.",
                 "related": "[[database-performance-interview#Q5]] когда индекс помогает; [[database-performance-interview#Q7]] INCLUDE для index-only; [[database-performance-interview#Q21]] индекс под keyset-пагинацию."
               }
             },
@@ -395,7 +395,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Из-за MVCC `Index Only Scan` всё равно проверяет видимость каждой строки в heap, поэтому covering index экономит лишь чтение колонок, но не само обращение к таблице.",
+              "text": "Из-за MVCC `Index Only Scan` всё равно проверяет видимость каждой строки в heap, поэтому covering index экономит лишь чтение колонок.",
               "correct": false,
               "sections": {
                 "what_actually": "Если индекс покрывает все нужные колонки и visibility map отмечает страницу all-visible, heap не читается совсем (`Heap Fetches: 0`) — видимость берётся из visibility map, а не из heap.",
@@ -407,13 +407,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Covering index содержит все колонки, нужные запросу (и в `SELECT`, и в `WHERE`), что позволяет `Index Only Scan` без обращения к heap. В PG 11+ часть колонок выносят в `INCLUDE`: ключевые колонки остаются в B-tree (отсортированы, по ним идёт поиск), а `INCLUDE`-колонки лежат в leaf-страницах (не отсортированы, просто хранятся) — индекс меньше, чем полный многоколоночный, а Index Only Scan всё равно работает.",
+              "text": "Covering index хранит search keys и дополнительные `INCLUDE` columns, позволяя index-only scan, когда все нужные значения доступны и visibility map подтверждает видимость heap pages.",
               "correct": true,
               "sections": {
-                "explanation": "Главный выигрыш — отсутствие heap visit: если все нужные данные есть в индексе, СУБД не читает строки таблицы, что заметно ускоряет горячие read-пути.",
-                "example": "`CREATE INDEX ON orders (user_id) INCLUDE (amount, status)` для `SELECT amount, status FROM orders WHERE user_id=42` даёт `Index Only Scan` с `Heap Fetches: 0` — без чтения таблицы.",
-                "when_to_apply": "Применяют на частых read-only запросах, где небольшой набор колонок возвращается по индексируемому условию, чтобы убрать обращение к heap.",
-                "edge_cases": "После недавнего `UPDATE` visibility map может быть не all-visible, и появятся `Heap Fetches: N` — Index Only Scan перестаёт быть чисто индексным до `VACUUM`.",
+                "explanation": "Key columns участвуют в поиске и ordering, а `INCLUDE` payload columns только покрывают SELECT. Index-only scan всё ещё может обращаться к heap при неактуальных all-visible bits.",
+                "example": "`CREATE INDEX ON orders (customer_id, created_at) INCLUDE (status, total)` покрывает query по customer/time, возвращающую status и total.",
+                "when_to_apply": "Используйте INCLUDE для часто читаемых узких queries, когда уменьшение heap visits оправдывает больший индекс и стоимость writes.",
+                "edge_cases": "Payload columns увеличивают size и могут превысить index tuple limits. VACUUM и visibility map важны; INCLUDE не расширяет usable search prefix и не задаёт сортировку.",
                 "related": "[[database-performance-interview#Q6]] порядок колонок в индексе; [[database-performance-interview#Q4]] Index Only Scan среди сканов; [[database-performance-interview#Q8]] partial index для горячих путей."
               }
             }
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Partial index индексирует все строки таблицы, а `WHERE`-условие в `CREATE INDEX` лишь задаёт порядок сортировки записей внутри индекса.",
+              "text": "Partial index содержит все строки, а его predicate задаёт лишь внутренний порядок записей B-tree.",
               "correct": false,
               "sections": {
                 "what_actually": "Partial index индексирует только строки, удовлетворяющие `WHERE`-предикату; остальные в индекс не попадают, поэтому он меньше.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Partial index подхватывается для любого запроса по проиндексированной колонке, даже если в запросе нет фильтра, совпадающего с предикатом индекса.",
+              "text": "Planner применяет partial index к любому запросу по колонке, даже если predicate запроса ему не соответствует.",
               "correct": false,
               "sections": {
                 "what_actually": "Планировщик использует partial index только если предикат запроса logically implied предикатом индекса; без совпадающего фильтра индекс игнорируется.",
@@ -455,7 +455,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Partial index индексирует только подмножество строк, заданное `WHERE`-условием в `CREATE INDEX` (например `WHERE status='PENDING'`). Он меньше, быстрее на чтение и запись, идеален для перекошенных данных (99% одно значение), soft delete (`WHERE deleted_at IS NULL`) и горячих паттернов. Запрос использует индекс, только если его предикат логически вытекает из предиката индекса.",
+              "text": "Partial index хранит только строки, удовлетворяющие predicate, и полезен для небольшого активного подмножества.",
               "correct": true,
               "sections": {
                 "explanation": "Индексировать редкие строки выгоднее: при 100M строк, где 99M completed и 1M pending, partial-индекс по `PENDING` хранит 1M записей вместо 100M — в 100 раз меньше.",
@@ -468,7 +468,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Partial index по размеру равен обычному полному, потому что PostgreSQL всё равно резервирует B-tree-страницы под все строки таблицы и лишь помечает не подходящие под предикат как пустые.",
+              "text": "Partial index занимает столько же места, сколько полный, поскольку резервирует страницы под исключённые строки.",
               "correct": false,
               "sections": {
                 "what_actually": "Partial index меньше полного: строки, не удовлетворяющие предикату, в индекс вообще не попадают и страниц под них не резервируется.",
@@ -491,13 +491,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Index bloat — частично заполненные страницы индекса из-за dead tuples от `UPDATE`/`DELETE` (MVCC): индекс растёт больше данных, сканы замедляются, растёт I/O. Лечат `REINDEX INDEX CONCURRENTLY` (неблокирующий, PG 12+), на старых версиях — `CREATE INDEX CONCURRENTLY` + `DROP` старого, либо `pg_repack`. Профилактика — корректный autovacuum, отказ от очень долгих транзакций и HOT-апдейты.",
+              "text": "Index bloat — лишнее пространство и pages из-за churn, dead index entries, page splits и неудачного fill; бороться следует после измерения причиной, cleanup и rebuild при необходимости.",
               "correct": true,
               "sections": {
-                "explanation": "`UPDATE` в MVCC — это вставка новой версии плюс пометка старой как dead; пока `VACUUM` их не уберёт, страницы индекса разрежены, `avg_leaf_density` падает, а индекс пухнет.",
-                "example": "`SELECT * FROM pgstatindex('idx_name')` показывает `avg_leaf_density` < 50% → bloat; `REINDEX INDEX CONCURRENTLY idx_name` перестраивает индекс без блокировки записи.",
-                "when_to_apply": "Реиндексируют, когда размер индекса заметно превышает данные и `pgstattuple` показывает низкую плотность; на проде — только `CONCURRENTLY`.",
-                "edge_cases": "Долгие транзакции держат xmin horizon и мешают `VACUUM` чистить dead tuples; HOT-апдейты (не меняется индексируемая колонка) вообще не растят индексы.",
+                "explanation": "MVCC cleanup не всегда возвращает физический размер индекса операционной системе, а updates/deletes и random inserts способны снизить page density и увеличить I/O.",
+                "example": "Сравнивают size, page density и workload; устраняют причину churn, настраивают autovacuum/fillfactor и при подтверждённой выгоде выполняют `REINDEX CONCURRENTLY` или online rebuild tool.",
+                "when_to_apply": "Применяйте при росте index size, read amplification и degraded cache efficiency, подтверждённых статистикой, а не только по возрасту индекса.",
+                "edge_cases": "Rebuild требует I/O, временного места и планирования; обычный VACUUM удаляет dead entries логически, но не всегда существенно уменьшает файл. Не каждый большой индекс раздут.",
                 "related": "[[database-performance-interview#Q8]] размер partial index; [[database-performance-interview#Q18]] VACUUM и dead tuples; [[database-performance-interview#Q17]] статистика после перестройки."
               }
             },
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "N+1 — это 1 запрос на список плюс N запросов (по одному на элемент) на связанную сущность; для 100 заказов получается 1+100=101 round-trip. Обнаруживают через APM-трейсы (много похожих запросов), `hibernate.generate_statistics`, p6spy или QuickPerf. Исправляют `JOIN FETCH`, `@EntityGraph`, `default_batch_fetch_size` или DTO-проекцией.",
+              "text": "N+1 — это 1 запрос на список плюс N запросов на связанную сущность; для 100 заказов получается 1+100=101 round-trip.",
               "correct": true,
               "sections": {
                 "explanation": "Lazy-загрузка связи внутри цикла порождает по запросу на каждый элемент; видно по череде одинаковых SQL, отличающихся только параметром — классический симптом N+1.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Batch fetching выполняет ровно один запрос на всю выборку независимо от числа родителей: Hibernate собирает идентификаторы всех загруженных заказов и подтягивает их связи единым JOIN к родительской таблице, так что число обращений к БД не зависит ни от размера батча, ни от количества коллекций.",
+              "text": "Batch fetching выполняет ровно один запрос на всю выборку независимо от числа родителей: Hibernate собирает идентификаторы всех загруженных заказов и подтягивает их связи единым JOIN к родительской таблице, так что число обращений к БД не зависит ни от размера батча.",
               "correct": false,
               "sections": {
                 "what_actually": "Batch fetching делает ~N/размер_батча запросов через `IN (...)`, а не один JOIN: для 16 заказов при `default_batch_fetch_size=16` это два запроса, и число обращений растёт с числом родителей делённым на размер батча.",
@@ -671,20 +671,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Открытие соединения дорого: TCP-handshake, TLS-handshake (~100+ мс на WAN), аутентификация в БД и fork backend-процесса в PostgreSQL. Без пула каждый запрос открывает и закрывает соединение — это serial bottleneck, плюс БД ограничена по числу соединений. Пул держит N открытых соединений, выдаёт их по запросу и возвращает в очередь, убирая overhead и ограничивая конкурентные подключения.",
+              "text": "Connection pooling переиспользует DB sessions, снижает setup/authentication cost и ограничивает число одновременных connections, обслуживаемых базой.",
               "correct": true,
               "sections": {
-                "explanation": "Пул амортизирует дорогое создание соединения и защищает БД: вместо тысяч новых backend-процессов приложение переиспользует фиксированный набор, экономя миллисекунды на каждом запросе и стабилизируя сервер.",
-                "example": "`HikariCP` (default в Spring Boot) держит, скажем, 20 соединений; запрос берёт одно и возвращает по завершении, а при занятости всех — ждёт в очереди вместо открытия нового.",
-                "when_to_apply": "Применяют практически всегда в backend-приложениях; особенно критично в serverless (Lambda) — там без пула типа RDS Proxy получается взрыв соединений к БД.",
-                "edge_cases": "Размер пула не «чем больше, тем лучше»: слишком большой пул вызывает context switching и деградацию; типично 10–30 на инстанс, итог тюнят бенчмарком.",
+                "explanation": "Создание соединения включает network setup, authentication, backend/session initialization и memory. Слишком много активных sessions увеличивает scheduling и memory pressure.",
+                "example": "Приложение берёт connection из HikariCP на время короткой transaction, а PgBouncer дополнительно multiplex-ит множество clients на ограниченный pool backend connections.",
+                "when_to_apply": "Используйте pool с bounded size и timeout, согласованными с DB capacity, transaction duration и числом application instances.",
+                "edge_cases": "TLS и network cost зависят от topology и resumption, а PostgreSQL backend model отличается от других БД. Слишком большой pool ухудшает очередь и throughput; transaction pooling ограничивает session state.",
                 "related": "[[database-performance-interview#Q13]] настройки HikariCP; [[database-performance-interview#Q14]] PgBouncer transaction vs session; [[database-performance-interview#Q25]] соединения к репликам."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Пул соединений в первую очередь распределяет запросы между несколькими инстансами или репликами БД; для одной-единственной базы он почти не даёт прироста, потому что соединение к одному инстансу после первого подключения и так остаётся дешёвым, а основную ценность пул раскрывает именно как балансировщик.",
+              "text": "Пул нужен главным образом для балансировки между репликами; при одной базе переиспользование sessions почти не влияет на ресурсы или latency.",
               "correct": false,
               "sections": {
                 "what_actually": "Пул ускоряет и работу с одной БД: он убирает повторные TCP/TLS-handshake'и, аутентификацию и fork backend-процесса, экономя миллисекунды на каждом запросе и удерживая число коннектов в рамках лимита.",
@@ -696,7 +696,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Главная задача пула — управлять защищёнными соединениями: он держит установленные TLS-сессии открытыми и переиспользует их между запросами, чтобы не проходить дорогой TLS-handshake каждый раз; экономия времени на установке соединения здесь вторична и идёт бонусом к безопасному транспортному слою.",
+              "text": "Единственная задача пула — сохранять TLS-сессии; authentication, backend initialization, memory и ограничение concurrency к его назначению не относятся.",
               "correct": false,
               "sections": {
                 "what_actually": "Пул переиспользует открытые соединения ради экономии всего overhead установки (TCP, TLS, аутентификация, fork backend) и контроля их числа; шифрование задаёт TLS-конфигурация драйвера, а не пул — пул одинаково работает и без TLS.",
@@ -708,7 +708,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Размер пула стоит задавать с большим запасом — близко к `max_connections` базы: так на пиках ни один запрос не ждёт в очереди за соединением, а простаивающие коннекты почти ничего не стоят, поэтому пул в сотни соединений на инстанс обычно безопаснее, чем риск упереться в нехватку.",
+              "text": "Размер пула безопасно приближать к `max_connections` на каждом application instance: простаивающие connections почти ничего не стоят и очередь всегда вредна.",
               "correct": false,
               "sections": {
                 "what_actually": "Слишком большой пул вредит: лишние соединения вызывают context switching и борьбу за ресурсы БД, а суммарно по инстансам легко превысить `max_connections`. Типично 10–30 на инстанс, размер подбирают бенчмарком.",
@@ -731,7 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Метрика `hikaricp.connections.pending` отражает соединения, которые пул держит про запас сверх текущей нагрузки; её устойчивый рост — сигнал, что `maximum-pool-size` завышен относительно реального трафика, поэтому пул можно безопасно ужать, освободив ресурсы базы и снизив накладные расходы на лишние idle-соединения.",
+              "text": "Метрика `hikaricp.connections.pending` отражает соединения, которые пул держит про запас сверх текущей нагрузки; её устойчивый рост — сигнал, что `maximum-pool-size` завышен относительно реального трафика, поэтому пул можно безопасно ужать.",
               "correct": false,
               "sections": {
                 "what_actually": "Устойчивый `pending > 0` означает число запросов, ждущих свободного соединения в очереди, то есть пул недосайзен (или запросы держат соединение слишком долго), а не избыточен — уменьшение `maximum-pool-size` только удлинит ожидание.",
@@ -743,7 +743,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`max-lifetime` имеет смысл выставлять очень большим или отключать вовсе: принудительный рециклинг рабочих соединений лишь добавляет всплески переподключений под нагрузкой, а HikariCP перед выдачей и так проверяет соединение и отбраковывает мёртвое, поэтому отдельная защита от stale не требуется.",
+              "text": "`max-lifetime` имеет смысл выставлять очень большим или отключать вовсе: принудительный рециклинг рабочих соединений лишь добавляет всплески переподключений под нагрузкой, а HikariCP перед выдачей и так проверяет соединение и отбраковывает мёртвое.",
               "correct": false,
               "sections": {
                 "what_actually": "`max-lifetime` рециклит соединения, иначе они становятся stale: firewall тихо рвёт долгие idle-соединения, а рестарт БД делает их непригодными так, что проверка перед выдачей не всегда это ловит — без рециклинга получаем спорадические ошибки.",
@@ -755,7 +755,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Ключевые параметры `spring.datasource.hikari.*`: `maximum-pool-size` (стартуют с 10, тюнят под нагрузку и `max_connections` БД), `minimum-idle` (обычно = max для стабильной latency), `connection-timeout` (fail-fast вместо вечного ожидания), `idle-timeout`, `max-lifetime` (рециклинг против stale-соединений, убитых firewall/рестартом БД), `leak-detection-threshold` (логирует stack trace при незакрытом соединении).",
+              "text": "В HikariCP тюнят `maximumPoolSize`, `minimumIdle`, timeouts, lifetime и leak detection по database capacity, concurrency и measured wait time; универсального размера пула нет.",
               "correct": true,
               "sections": {
                 "explanation": "Каждая настройка закрывает свой риск: `max-lifetime` спасает от соединений, тихо убитых firewall'ом; `connection-timeout` не даёт приложению зависнуть; `leak-detection-threshold` находит забытый `try-with-resources`.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Размер пула задают исходя из нагрузки на конкретный инстанс, а лимит `max_connections` базы — это зона ответственности администратора БД: даже при превышении PostgreSQL просто поставит лишние коннекты в ожидание и не уронит приложение, так что считать суммарный пул по всем инстансам не нужно.",
+              "text": "Размер пула задают исходя из нагрузки на конкретный инстанс, а лимит `max_connections` базы — это зона ответственности администратора БД: даже при превышении PostgreSQL просто поставит лишние коннекты в ожидание и не уронит приложение.",
               "correct": false,
               "sections": {
                 "what_actually": "Пул каждого инстанса не знает о других: 10 инстансов × 20 = 200 соединений превысят `max_connections=100`, и PostgreSQL не ставит лишние коннекты в очередь, а отвергает их с ошибкой `too many connections`, обрушивая приложение.",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Session pooling даёт максимальную экономию соединений, позволяя тысяче клиентов делить десяток backend'ов; transaction pooling, наоборот, почти не экономит.",
+              "text": "Session pooling даёт максимальную экономию соединений, позволяя тысяче клиентов делить десяток backend'ов; transaction pooling, наоборот.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: session pooling держит соединение всю сессию и экономит мало; transaction pooling даёт огромную экономию, деля backend'ы между клиентами.",
@@ -803,7 +803,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В transaction pooling соединение выдаётся клиенту на всю сессию и возвращается только при disconnect, как и в session pooling — разницы между режимами нет.",
+              "text": "В transaction pooling соединение выдаётся клиенту на всю сессию и возвращается только при disconnect.",
               "correct": false,
               "sections": {
                 "what_actually": "Transaction pooling возвращает соединение по `COMMIT`/`ROLLBACK`, а не при disconnect; именно это даёт совместное использование 20 backend'ов тысячей клиентов.",
@@ -815,7 +815,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Session pooling (default) выдаёт соединение клиенту на всю сессию (connect→disconnect) — безопасно для prepared statements, temp tables, `LISTEN/NOTIFY`, но даёт малый выигрыш. Transaction pooling выдаёт соединение на транзакцию и возвращает по `COMMIT`/`ROLLBACK` — огромная эффективность (1000 клиентов делят 20 соединений), но запрещены session-scoped вещи: prepared statements (до PG 14+/PgBouncer 1.22+), `SET`, temp tables, `LISTEN/NOTIFY`.",
+              "text": "Session pooling закрепляет connection за сессией, transaction pooling — за транзакцией, ограничивая session state.",
               "correct": true,
               "sections": {
                 "explanation": "Transaction pooling экономит соединения, отдавая backend сразу после транзакции, но всё, что живёт в рамках сессии (prepared statements, `SET`, temp tables), ломается, потому что следующая транзакция может попасть на другой backend.",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Старые данные из партиционированной таблицы удаляют обычным `DELETE` по диапазону дат с последующим `VACUUM`: декларативные партиции PostgreSQL не позволяют отцепить и сбросить отдельную партицию без полной перестройки таблицы, поэтому retention делают тем же запросом, что и в непартиционированной таблице.",
+              "text": "Старые partition-ы удаляют только массовым `DELETE`; detach/drop отдельного раздела таблицы невозможны.",
               "correct": false,
               "sections": {
                 "what_actually": "`DROP TABLE partition` или `ALTER TABLE ... DETACH PARTITION` удаляет старые данные за миллисекунды как операция над метаданными; именно ради этого партиционируют time-series, избегая медленного `DELETE` миллионов строк с последующим `VACUUM`.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Партиционирование разбивает большую таблицу на физические куски по критерию (range/list/hash). Применяют для очень больших таблиц (>100M строк / >100GB), time-series данных (range по месяцу — `DROP` старой партиции вместо `DELETE` миллионов строк), delete-heavy воркладов и tenant-изоляции. НЕ применяют для малых таблиц (<10M строк), когда нет pruning и когда сложность не окупается; FK между партициями усложняются.",
+              "text": "Partitioning делит таблицу по range, list или hash и полезен при pruning и обслуживании крупных наборов.",
               "correct": true,
               "sections": {
                 "explanation": "Выигрыш — partition pruning (сканируется только нужная партиция), мгновенный `DROP` партиции для retention и обслуживание по частям; но появляется сложность миграций и требование, чтобы ключ партиции был во всех unique-индексах.",
@@ -876,7 +876,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Уникальные индексы в партиционированной таблице можно строить по любой колонке: PostgreSQL проверяет уникальность глобально, проходя по всем партициям при вставке, поэтому включать ключ партиционирования в состав unique-индекса (и первичного ключа) не требуется — он ведёт себя как в обычной таблице.",
+              "text": "Глобальный unique index можно создать по любой колонке, даже если partition key в него не входит.",
               "correct": false,
               "sections": {
                 "what_actually": "PostgreSQL требует, чтобы ключ партиции входил в каждый unique-индекс, включая PK: глобальную уникальность по произвольной колонке через все партиции движок не гарантирует, уникальность проверяется только в пределах партиции (либо нужен workaround).",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Партиционирование полезно вводить заранее, уже на средних таблицах (от ~1M строк): план в большинстве запросов выигрывает от partition pruning, обслуживание удобно идёт по кускам, а накладные расходы на лишние партиции на современном железе пренебрежимо малы — так что разбивать стоит при первых признаках роста, не дожидаясь сотен миллионов строк.",
+              "text": "Partitioning нужно включать уже для любой таблицы около миллиона строк, независимо от запросов и lifecycle.",
               "correct": false,
               "sections": {
                 "what_actually": "На малых и средних таблицах партиционирование добавляет сложность без выигрыша: pruning не даёт заметного эффекта, обычный индекс справляется лучше, а cross-partition запросы, FK и unique-индексы усложняются. Порог окупаемости — десятки–сотни миллионов строк.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Range — значения в диапазоне идут в партицию (лучше для timestamps, sequential IDs). List — дискретные значения по партициям (регион, категория, статус). Hash — `hash(key) % N` для равномерного распределения без естественного ключа, но range-запросы по hash неэффективны. Pruning исключает ненужные партиции, когда WHERE совпадает с ключом партиции; hash трудно репартиционировать — число партиций выбирают заранее (степень двойки).",
+              "text": "Range делит упорядоченные интервалы, List — дискретные группы, Hash — равномерные buckets; выбор определяется pruning pattern, lifecycle данных и skew.",
               "correct": true,
               "sections": {
                 "explanation": "Тип партиционирования определяет, как WHERE отображается на партиции: range и list дают pruning по диапазону/равенству, а hash — только по равенству ключа и непригоден для диапазонных запросов.",
@@ -971,7 +971,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Статистика — сводные данные о распределении в таблицах/колонках (число строк, distinct-значения, most common values, гистограмма, доля null, средняя ширина), которые планировщик использует для оценки. `ANALYZE` сэмплирует строки и обновляет `pg_statistic`; autovacuum запускает auto-analyze, когда изменилось > 10% строк. Устаревшая статистика → план врёт (видно по `rows` vs `actual rows`), запросы тормозят.",
+              "text": "`ANALYZE` обновляет statistics распределения и cardinality, по которым planner выбирает execution plan.",
               "correct": true,
               "sections": {
                 "explanation": "Планировщик выбирает план по оценкам, а оценки берутся из статистики; если она протухла (bulk INSERT, сдвиг распределения, новый месяц у time-series), оценки строк расходятся с реальностью и план оказывается плохим.",
@@ -984,7 +984,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Параметр `default_statistics_target` управляет тем, насколько часто autovacuum инициирует пересбор статистики, а на детальность гистограмм и точность оценок планировщика он не влияет — за глубину статистики отвечает только размер выборки `ANALYZE`, поэтому крутить `target` ради качества плана бессмысленно.",
+              "text": "`default_statistics_target` управляет частотой auto-analyze, но не детализацией statistics и оценок planner-а.",
               "correct": false,
               "sections": {
                 "what_actually": "`default_statistics_target` задаёт детальность статистики — размер выборки и число корзин гистограммы/MCV; повышение до 1000 на колонке со сложным распределением напрямую улучшает оценки планировщика.",
@@ -996,7 +996,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Auto-analyze срабатывает только при первичном наполнении таблицы, а дальше статистику нужно обновлять руками через `ANALYZE`: фоновый autovacuum отвечает лишь за уборку dead tuples и пересбор статистики между своими прогонами не инициирует, поэтому на активных таблицах оценки быстро устаревают без явного вызова.",
+              "text": "Auto-analyze выполняется только после первичной загрузки; дальнейшие statistics всегда обновляют вручную.",
               "correct": false,
               "sections": {
                 "what_actually": "Autovacuum запускает auto-analyze автоматически на любой таблице, когда изменилось больше `autovacuum_analyze_scale_factor` строк (по умолчанию 10%), а не только при первичной загрузке.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`ANALYZE` параллельно со сбором статистики уплотняет таблицу и подчищает dead tuples от прошлых `UPDATE`/`DELETE`, поэтому в современных версиях он фактически перекрывает работу `VACUUM`: достаточно регулярно запускать `ANALYZE`, и отдельная очистка мёртвых версий строк становится излишней.",
+              "text": "`ANALYZE` очищает dead tuples и заменяет `VACUUM`, одновременно обновляя statistics таблицы.",
               "correct": false,
               "sections": {
                 "what_actually": "`ANALYZE` только обновляет статистику в `pg_statistic` сэмплированием строк; уборку dead tuples, реклейм места и защиту от wraparound делает `VACUUM` — это разные команды, и `ANALYZE` ни одной строки не освобождает.",
@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`VACUUM` освобождает dead tuples от `UPDATE`/`DELETE` (MVCC) и предотвращает transaction ID wraparound. Стандартный `VACUUM` помечает место для повторного использования, не блокирует и не отдаёт место ОС; `VACUUM FULL` переписывает таблицу, отдаёт место ОС, но блокирует запись (аварийный случай — лучше `pg_repack`). Autovacuum — фоновый воркер по `scale_factor`. Bloat — мёртвые версии, не убранные вовремя, часто из-за долгих транзакций (`xmin horizon`).",
+              "text": "`VACUUM` переиспользует dead tuples и защищает от TXID wraparound; autovacuum запускает эту работу автоматически.",
               "correct": true,
               "sections": {
                 "explanation": "`UPDATE` в MVCC создаёт новую версию и помечает старую dead; `VACUUM` чистит их, а долгая транзакция держит xmin horizon и мешает уборке, накапливая bloat.",
@@ -1044,7 +1044,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Долгая `idle in transaction` сессия не мешает `VACUUM`: он работает по собственному снимку и спокойно убирает dead tuples, ставшие мёртвыми до начала этой транзакции, поэтому отдельно мониторить такие зависшие транзакции ради борьбы с bloat не обязательно — очистка идёт своим чередом.",
+              "text": "Долгая `idle in transaction` сессия не мешает VACUUM удалять версии строк, видимые её старому snapshot.",
               "correct": false,
               "sections": {
                 "what_actually": "Долгая транзакция держит xmin horizon: `VACUUM` не может убрать версии строк, которые потенциально видны этой транзакции, поэтому мёртвые версии копятся и таблица раздувается, пока транзакция жива.",
@@ -1056,7 +1056,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Стандартный `VACUUM` после уборки dead tuples возвращает освобождённое место операционной системе и физически уменьшает файл таблицы на диске: помеченные страницы тут же усекаются, так что после прогона размер таблицы в файловой системе заметно сокращается — отдельный `VACUUM FULL` для этого не нужен.",
+              "text": "Обычный `VACUUM` всегда физически уменьшает файл таблицы и немедленно возвращает страницы операционной системе.",
               "correct": false,
               "sections": {
                 "what_actually": "Стандартный `VACUUM` лишь помечает место для повторного использования внутри таблицы и в общем случае ОС его не отдаёт (усекает только хвостовые полностью пустые страницы); реальный реклейм места делает `VACUUM FULL` ценой блокировки записи.",
@@ -1068,7 +1068,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Риск TXID wraparound на практике уже снят: PostgreSQL давно использует 64-битные идентификаторы транзакций, поэтому счётчик не зацикливается, freeze-проход `VACUUM` и мониторинг `age(relfrozenxid)` нужны разве что на очень старых версиях, а на актуальных об этой проблеме можно не думать.",
+              "text": "TXID wraparound больше невозможен, поскольку PostgreSQL полностью перешёл на бесконечные 64-битные идентификаторы.",
               "correct": false,
               "sections": {
                 "what_actually": "Идентификаторы транзакций по-прежнему 32-битные и конечны; без freeze (через `VACUUM`) при ~2 млрд транзакций наступает wraparound, и БД принудительно останавливается, чтобы не допустить порчи данных.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`work_mem` — это глобальный лимит памяти на весь сервер: сколько бы соединений и операций ни было, суммарно они не превысят одно значение `work_mem`.",
+              "text": "`work_mem` — это глобальный лимит памяти на весь сервер: сколько бы соединений и операций ни было.",
               "correct": false,
               "sections": {
                 "what_actually": "`work_mem` выделяется на каждую операцию каждого соединения: 10 соединений × 3 sort/hash × `work_mem` = 30× памяти, что легко приводит к OOM.",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`shared_buffers` — блочный кэш PostgreSQL в shared memory (дефолт 128MB слишком мал; рекомендуют ~25% RAM). `work_mem` — память на операцию (sort, hash), причём per-operation × per-connection, поэтому 10 соединений × 3 операции = 30× памяти; дефолт 4MB, типично 16–64MB. `effective_cache_size` — подсказка планировщику об общем кэше (OS+shared_buffers), память не аллоцирует, рекомендуют 50–75% RAM.",
+              "text": "`shared_buffers` — cache PostgreSQL, `work_mem` — лимит на отдельную sort/hash operation, а `effective_cache_size` — planner estimate доступного OS+DB cache.",
               "correct": true,
               "sections": {
                 "explanation": "`shared_buffers` реально резервирует память под кэш страниц, `work_mem` умножается на число операций и соединений (отсюда риск OOM), а `effective_cache_size` лишь влияет на выбор плана, склоняя к index scan при большом значении.",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`synchronous_commit=off` ускоряет коммиты и при этом остаётся безопасным: PostgreSQL всё равно записывает каждую транзакцию в WAL, просто не блокируется на ожидании fsync, а фоновый writer сбрасывает журнал на диск в течение секунды, поэтому потерять подтверждённую транзакцию при краше фактически нельзя.",
+              "text": "`synchronous_commit=off` ускоряет коммиты и при этом остаётся безопасным: PostgreSQL всё равно записывает каждую транзакцию в WAL, просто не блокируется на ожидании fsync.",
               "correct": false,
               "sections": {
                 "what_actually": "`synchronous_commit=off` подтверждает коммит клиенту до fsync WAL: при краше теряются последние транзакции, чей WAL ещё не сброшен на диск (до ~`wal_writer_delay`), — это реальный выигрыш в скорости ценой риска для durability.",
@@ -1163,7 +1163,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Меньший `max_wal_size` повышает write-throughput: частые короткие checkpoint'ы распределяют сброс грязных буферов мелкими порциями и не дают накопиться большому пиковому fsync, который иначе надолго тормозит запись, — поэтому для нагрузки с интенсивной записью лучше держать `max_wal_size` поменьше.",
+              "text": "Меньший `max_wal_size` повышает write-throughput: частые короткие checkpoint'ы распределяют сброс грязных буферов мелкими порциями и не дают накопиться большому пиковому fsync.",
               "correct": false,
               "sections": {
                 "what_actually": "Маленький `max_wal_size` учащает checkpoint'ы и снижает write-throughput из-за повторной записи одних и тех же страниц (full-page writes); больший размер делает checkpoint'ы реже и ускоряет запись ценой более долгого recovery.",
@@ -1175,7 +1175,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "WAL фиксирует уже применённые к файлам данных изменения как страховочную копию: PostgreSQL сначала обновляет страницы в data files, а затем дублирует правку в журнал, поэтому если краш случится в промежутке между записью данных и записью в WAL, изменение теряется и восстановить его по логу нельзя.",
+              "text": "WAL фиксирует уже применённые к файлам данных изменения как страховочную копию: PostgreSQL сначала обновляет страницы в data files, а затем дублирует правку в журнал.",
               "correct": false,
               "sections": {
                 "what_actually": "WAL — это write-ahead log: изменение пишется в журнал ДО применения к data files, и именно опережающая запись позволяет накатить его при восстановлении, даже если страницы данных на диск ещё не легли.",
@@ -1187,13 +1187,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "WAL пишет все изменения до данных (для восстановления); checkpoint сбрасывает грязные буферы в файлы, после чего старый WAL можно переиспользовать. Ключевое: `max_wal_size` (цель WAL между checkpoint'ами; больше = реже checkpoint, выше throughput, но дольше recovery), `checkpoint_timeout` (макс. интервал, дефолт 5 мин; 15–30 мин для write-heavy), `checkpoint_completion_target=0.9` (размазать I/O), `synchronous_commit` (on — durable, off — быстрее, риск потерять несколько мс).",
+              "text": "WAL обеспечивает crash-recovery механизм, а checkpoints ограничивают объём replay; тюнинг балансирует WAL volume, recovery time и write spikes через timeout, size и pacing.",
               "correct": true,
               "sections": {
-                "explanation": "Реже и крупнее checkpoint'ы дают лучший write-throughput ценой более долгого recovery; `synchronous_commit=off` ускоряет коммиты, жертвуя несколькими миллисекундами при краше — приемлемо для bulk-загрузок.",
-                "example": "Для bulk-импорта в сессии ставят `SET synchronous_commit=off` → быстрее; высокий `checkpoints_req` против `checkpoints_timed` в `pg_stat_bgwriter` означает, что `max_wal_size` слишком мал.",
-                "when_to_apply": "Тюнят на write-heavy базах и при пиковых загрузках; для реплик и PITR настраивают `wal_keep_size`, `archive_mode`, replication slots.",
-                "edge_cases": "Слишком большой `max_wal_size` и `checkpoint_timeout` удлиняют восстановление после краша; `synchronous_commit=off` может потерять последние коммиты — недопустимо для критичных данных.",
+                "explanation": "WAL-before-data позволяет повторить durable records после crash, а checkpoint создаёт более позднюю точку восстановления. Фактическая durability зависит от settings и storage guarantees.",
+                "example": "Наблюдают checkpoint frequency/reasons, write/sync time и WAL generation, затем корректируют `checkpoint_timeout`, `max_wal_size` и `checkpoint_completion_target` вместе с storage capacity.",
+                "when_to_apply": "Тюнинг нужен при checkpoint spikes, слишком частых checkpoints, большом recovery time или чрезмерном WAL после измерения write workload.",
+                "edge_cases": "`synchronous_commit`, `fsync`, storage cache и replication policy меняют durability. Увеличение WAL limits требует диска и не исправляет медленный storage.",
                 "related": "[[database-performance-interview#Q19]] память и буферы; [[database-performance-interview#Q25]] репликация и WAL; [[database-performance-interview#Q18]] VACUUM и wraparound."
               }
             }
@@ -1235,7 +1235,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`LIMIT 20 OFFSET 10000` вынуждает СУБД просканировать 10020 строк, отбросить 10000 и вернуть 20 — каждая следующая страница медленнее. Решение — keyset (seek) пагинация: вместо OFFSET использовать последнюю строку как закладку, `WHERE (created_at, id) < ('...', 1234) ORDER BY ... LIMIT 20` с индексом `(created_at DESC, id DESC)`. Это даёт постоянное время на страницу и устойчивость к сдвигу при вставках.",
+              "text": "`LIMIT 20 OFFSET 10000` вынуждает СУБД просканировать 10020 строк, отбросить 10000 и вернуть 20 — каждая следующая страница медленнее.",
               "correct": true,
               "sections": {
                 "explanation": "OFFSET не пропускает строки «бесплатно»: их всё равно надо прочитать и отбросить, поэтому стоимость растёт с номером страницы; keyset через индексный seek прыгает сразу к нужной позиции.",
@@ -1266,55 +1266,55 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Чем отличаются JOIN, IN-subquery и EXISTS?",
+          "question_text": "Чем семантически и планово отличаются `JOIN`, `IN` и `EXISTS`?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "На практике `NOT IN` и `NOT EXISTS` взаимозаменяемы: оба отбирают внешние строки, для которых нет совпадения в подзапросе, и при переписывании одного через другое набор результатов совпадает. Поэтому выбор между ними сводят к читаемости и привычке команды, а не к корректности — даже когда подзапрос теоретически способен вернуть NULL, итог считают одинаковым.",
+              "text": "`JOIN`, `IN` и `EXISTS` всегда возвращают одинаковые строки; различается только синтаксис, а planner обязан построить один plan.",
               "correct": false,
               "sections": {
-                "what_actually": "Это неверно именно из-за NULL: если подзапрос вернул хотя бы один NULL, условие `NOT IN` становится UNKNOWN и результат схлопывается в пустой; `NOT EXISTS` так не ломается, поэтому наборы расходятся.",
-                "source_of_confusion": "Без NULL `NOT IN` и `NOT EXISTS` действительно дают один результат, и этот частый случай переносят на общий, забывая про трёхзначную логику с NULL.",
-                "if_it_were_true": "Если бы они были полностью взаимозаменяемы, стандартный совет «заменяй `NOT IN` на `NOT EXISTS`» не имел бы смысла, но именно он закреплён в гайдах по производительности.",
-                "how_it_should_be": "Для отрицания берут `NOT EXISTS` или `LEFT JOIN ... IS NULL` — они устойчивы к NULL и дают корректный результат там, где `NOT IN` молча вернёт пусто."
+                "what_actually": "Формы могут быть преобразованы в похожий semi-join только когда их семантика эквивалентна; duplicates и NULL способны изменить результат.",
+                "source_of_confusion": "Planner действительно часто нормализует эквивалентные predicates, поэтому оптимизацию ошибочно принимают за семантическую тождественность.",
+                "if_it_were_true": "`JOIN` никогда не умножал бы строку при нескольких matches, а `NOT IN` с NULL возвращал бы тот же результат, что `NOT EXISTS`.",
+                "how_it_should_be": "Сначала проверьте требуемую семантику результата, затем сравните plans через `EXPLAIN`; не переписывайте запрос только по лозунгу о скорости."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Поскольку синтаксис у `JOIN`, `IN` и `EXISTS` разный, они порождают принципиально разные планы выполнения, и форма с вложенным подзапросом (`EXISTS`) обычно заметно проигрывает явному `JOIN` по скорости. Поэтому при тюнинге запрос с `EXISTS` стоит первым делом переписывать на `JOIN`, а `IN`-подзапрос — разворачивать в соединение, чтобы планировщику было проще: явный `JOIN` он как правило оптимизирует лучше, чем подзапрос, который приходится разбирать отдельным шагом.",
+              "text": "`EXISTS` материализует весь subquery до проверки outer row, поэтому он всегда медленнее `IN` и обычного `JOIN`.",
               "correct": false,
               "sections": {
-                "what_actually": "Современный планировщик PostgreSQL обычно сводит все три формы к эквивалентному плану (например `Semi Hash Join`), так что систематического проигрыша `EXISTS` по скорости нет — различие чаще в семантике, а не в производительности.",
-                "source_of_confusion": "Разный синтаксис создаёт впечатление принципиально разной механики выполнения, хотя на уровне плана планировщик эти формы выравнивает.",
-                "if_it_were_true": "Если бы `EXISTS` стабильно проигрывал `JOIN`, его не рекомендовали бы для semi-join и проверок наличия, но именно там он часто оптимален за счёт короткого замыкания.",
-                "how_it_should_be": "Планировщик выравнивает три формы; выбирают по читаемости и семантике, а реальный план подтверждают через `EXPLAIN ANALYZE`, а не по форме записи."
+                "what_actually": "`EXISTS` является existence predicate; planner может реализовать его semi-join-ом и не обязан материализовать весь subquery для каждой строки.",
+                "source_of_confusion": "Буквальное чтение nested subquery создаёт представление о полном последовательном выполнении SQL-текста.",
+                "if_it_were_true": "Plan всегда содержал бы полную materialization независимо от indexes, correlation и join strategies.",
+                "how_it_should_be": "Смотрите фактический plan: `EXISTS` выражает намерение «есть хотя бы одна строка», а execution strategy выбирает planner."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`EXISTS` по поведению близок к `JOIN`: он возвращает внешнюю строку столько раз, сколько совпадений нашёл во внутренней таблице, поэтому при нескольких совпадениях в результате появляются дубли. Чтобы их убрать, к запросу с `EXISTS` приходится добавлять `DISTINCT` или `GROUP BY`, ровно как и при обычном соединении с размножением строк.",
+              "text": "`NOT IN` и `NOT EXISTS` эквивалентны даже при `NULL` в subquery, поскольку SQL игнорирует неизвестные значения.",
               "correct": false,
               "sections": {
-                "what_actually": "`EXISTS` короткозамыкается на первом совпадении и возвращает внешнюю строку ровно один раз независимо от их числа; дубли при множественных совпадениях даёт как раз `JOIN`, а не `EXISTS`.",
-                "source_of_confusion": "Поведение `JOIN` (размножение строк по совпадениям) ошибочно переносят на `EXISTS`, потому что обе формы «связывают» внешнюю и внутреннюю таблицы.",
-                "if_it_were_true": "Если бы `EXISTS` плодил дубли, он не был бы удобен для semi-join и требовал бы `DISTINCT`, но как раз отсутствие дублей — его главное преимущество.",
-                "how_it_should_be": "`EXISTS` выдаёт внешнюю строку единожды и `DISTINCT` для этого не нужен; за дубли при нескольких совпадениях отвечает `JOIN`."
+                "what_actually": "Если subquery `NOT IN` содержит NULL, сравнение может стать UNKNOWN и исключить все outer rows; `NOT EXISTS` проверяет отсутствие matches иначе.",
+                "source_of_confusion": "Для `IN` без NULL и уникальных значений формы часто дают ожидаемо похожий результат, и это обобщают на отрицание.",
+                "if_it_were_true": "Добавление одной NULL-строки не меняло бы результат `NOT IN`, что противоречит трёхзначной логике SQL.",
+                "how_it_should_be": "Для anti-join предпочитайте `NOT EXISTS` либо явно исключайте NULL, если именно такая семантика требуется."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Семантически три формы (`JOIN`, `IN (SELECT ...)`, `EXISTS (SELECT 1 ...)`) часто эквивалентны, и современный планировщик PostgreSQL обычно сводит их к одному плану. Различия: `EXISTS` возвращает строку один раз независимо от числа совпадений (хорош для semi-join), `IN` опасен NULL-семантикой, `NOT IN` с подзапросом, вернувшим NULL, ломается (всегда false) — нужен `NOT EXISTS` или `LEFT JOIN ... IS NULL`. `JOIN` лучше, когда нужны колонки из обеих таблиц.",
+              "text": "`JOIN` комбинирует строки и может размножить outer rows; `EXISTS` проверяет существование, `IN` — принадлежность множеству, а `NULL` особенно меняет `NOT IN`.",
               "correct": true,
               "sections": {
-                "explanation": "Главное различие не в скорости (планировщик их выравнивает), а в семантике: `EXISTS` короткозамыкается на первом совпадении и не дублирует строки, тогда как `JOIN` с `SELECT *` может размножить строки при нескольких совпадениях.",
-                "example": "`SELECT * FROM orders WHERE NOT IN (SELECT user_id FROM banned)` сломается, если `banned.user_id` содержит NULL; корректно — `WHERE NOT EXISTS (SELECT 1 FROM banned b WHERE b.user_id = orders.user_id)`.",
-                "when_to_apply": "Выбирают по читаемости и семантике: `JOIN` — когда нужны колонки обеих таблиц, `EXISTS`/`NOT EXISTS` — для проверки наличия/отсутствия связи без дублей.",
-                "edge_cases": "`EXISTS` часто быстрее, когда внутренняя таблица большая (короткозамыкание); план всё равно проверяют `EXPLAIN ANALYZE` — `IN` нередко превращается в `Semi Hash Join`, эквивалентный `EXISTS`.",
-                "related": "[[database-performance-interview#Q10]] N+1 и связи; [[database-performance-interview#Q11]] subselect-стратегии; [[database-performance-interview#Q3]] Semi Join в плане."
+                "explanation": "`JOIN` создаёт комбинации matching rows; `EXISTS` выражает semi-join-проверку без размножения outer row; `IN` сравнивает с набором и участвует в трёхзначной логике.",
+                "example": "Если у customer три orders, `JOIN` возвращает три строки customer, а `EXISTS` — одну. `NOT IN (1, NULL)` не ведёт себя как `NOT EXISTS`.",
+                "when_to_apply": "Выбирайте форму по требуемой кардинальности и NULL semantics, затем проверяйте plan, statistics и indexes.",
+                "edge_cases": "Planner может свести эквивалентные `IN`/`EXISTS` к одному semi-join. `JOIN DISTINCT` иногда имитирует existence, но добавляет стоимость и может скрыть ошибку модели.",
+                "related": "[[database-performance-interview#Q3]] чтение execution plan; [[database-performance-interview#Q6]] составные индексы; [[database-performance-interview#Q17]] statistics planner-а."
               }
             }
           ]
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Оконные функции считают значение по «окну» строк, не схлопывая их (в отличие от агрегата). Обычно требуют сортировки всего набора, если индекс не совпадает с `PARTITION BY ... ORDER BY`; индекс `(user_id, created_at)` избавляет от сортировки. Spill `work_mem` на диск замедляет, но window почти всегда быстрее эквивалентного коррелированного подзапроса. PostgreSQL-специфичный `DISTINCT ON` часто быстрее для «первой строки на группу».",
+              "text": "Window functions вычисляют значения по окну, сохраняя исходные строки; стоимость часто определяется сортировкой.",
               "correct": true,
               "sections": {
                 "explanation": "Стоимость window-функций — это в первую очередь сортировка набора под `PARTITION BY/ORDER BY`; подходящий индекс убирает сортировку, а нехватка `work_mem` гонит её на диск.",
@@ -1344,7 +1344,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Оконные функции — это разновидность агрегатов, поэтому, как и `GROUP BY`, они схлопывают строки группы в одну итоговую. Например, `ROW_NUMBER() OVER (PARTITION BY user_id ...)` вернёт по одной строке на каждого пользователя, а не пронумерует все его строки по отдельности, и чтобы увидеть все исходные строки, окно приходится оборачивать в подзапрос с повторным джойном.",
+              "text": "Window functions схлопывают каждую partition в одну строку так же, как обычный `GROUP BY`.",
               "correct": false,
               "sections": {
                 "what_actually": "Оконные функции НЕ схлопывают строки: они считают значение для каждой строки в рамках её окна и сохраняют все строки набора; схлопывает только агрегат с `GROUP BY`.",
@@ -1356,7 +1356,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Коррелированный подзапрос обычно работает быстрее эквивалентной оконной функции: он считает значение точечно по каждой строке и не сортирует весь набор, тогда как окно вынуждено материализовать и упорядочить все строки разом. Поэтому ради производительности расчёты по группам разумнее выражать через коррелированный подзапрос, а `OVER (...)` оставлять лишь для читаемости там, где набор небольшой и стоимость отдельного прохода по каждой строке несущественна.",
+              "text": "Коррелированный подзапрос всегда быстрее окна, поскольку никогда не повторяет работу для каждой исходной строки.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: оконная функция почти всегда быстрее, потому что проходит набор один раз, а коррелированный подзапрос пересчитывается заново для каждой внешней строки (фактически N проходов).",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Сортировка под `PARTITION BY ... ORDER BY` — это внутренний шаг самой оконной функции, поэтому индекс на её результат повлиять не может: даже при индексе `(user_id, created_at)`, точно совпадающем с окном, планировщик всё равно вставит отдельный Sort перед расчётом окна. Индексы тут помогают только фильтрации в `WHERE`, но не порядку внутри окна.",
+              "text": "Индекс не может помочь порядку `PARTITION BY/ORDER BY`; planner в любом случае выполняет отдельный Sort.",
               "correct": false,
               "sections": {
                 "what_actually": "Индекс, совпадающий с `PARTITION BY ... ORDER BY` (например `(user_id, created_at)`), позволяет планировщику читать данные уже в нужном порядке и пропустить Sort, заметно ускоряя окно.",
@@ -1391,50 +1391,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`MATERIALIZED VIEW` ведёт себя как обычный view с кэшем поверх: он отражает изменения базовых таблиц в реальном времени и подтягивает свежие данные сам, а команда `REFRESH` нужна лишь изредка — чтобы пересобрать структуру после изменения схемы, а не для актуализации содержимого. Поэтому stale-данных в нём между записями не бывает.",
+              "text": "Materialized view автоматически отражает каждое изменение base tables; `REFRESH` нужен только после изменения его схемы, поэтому stale data невозможны.",
               "correct": false,
               "sections": {
-                "what_actually": "Materialized view хранит снимок и остаётся stale до явного `REFRESH`: изменения базовых таблиц в него автоматически не попадают, никакого фонового обновления содержимого нет.",
-                "source_of_confusion": "«View» наводит на мысль о живом отображении данных, как у обычного view, и это переносят на materialized.",
-                "if_it_were_true": "Если бы содержимое обновлялось само, команда `REFRESH` для актуализации данных была бы не нужна, но без неё matview отдаёт устаревший снимок.",
-                "how_it_should_be": "Materialized view надо обновлять `REFRESH` (полным или `CONCURRENTLY`); до этого он возвращает данные на момент последнего обновления."
+                "what_actually": "Materialized view хранит результат последнего refresh и не синхронизируется автоматически с изменениями base tables.",
+                "source_of_confusion": "Слово view создаёт ожидание той же свежести, что у обычного view, а материализацию воспринимают только как внутренний cache.",
+                "if_it_were_true": "Каждый write в base tables должен был бы синхронно обновлять snapshot и его indexes.",
+                "how_it_should_be": "Проектируйте refresh schedule и допустимую staleness явно; materialized view не является автоматически поддерживаемой projection."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`REFRESH MATERIALIZED VIEW CONCURRENTLY` — это просто неблокирующая версия обычного refresh, применимая к любому materialized view как есть, без какой-либо предварительной подготовки. Дополнительные индексы на нём заводят только ради ускорения последующего чтения, но для самого `CONCURRENTLY` они не требуются, и команда штатно отработает даже на свежесозданном matview, где ещё нет ни одного индекса.",
+              "text": "`REFRESH MATERIALIZED VIEW CONCURRENTLY` работает для любого matview без unique index и не требует предварительного заполнения результата.",
               "correct": false,
               "sections": {
-                "what_actually": "`REFRESH ... CONCURRENTLY` требует, чтобы на materialized view был unique-индекс; без него доступен только блокирующий `REFRESH`, а `CONCURRENTLY` завершится ошибкой.",
-                "source_of_confusion": "`CONCURRENTLY` ассоциируется с «всегда онлайн и без условий», как у некоторых операций, где предусловий действительно нет.",
-                "if_it_were_true": "Если бы unique-индекс был не нужен, документация не выдвигала бы его как обязательное условие неблокирующего refresh, но это условие явно описано.",
-                "how_it_should_be": "Для неблокирующего refresh заранее создают unique-индекс на matview; без него остаётся только блокирующий чтение вариант `REFRESH`."
+                "what_actually": "В PostgreSQL concurrent refresh требует подходящего unique index по обычным columns и уже populated matview; обычный refresh блокирует concurrent reads сильнее.",
+                "source_of_confusion": "Название `CONCURRENTLY` выглядит как универсальный modifier без структурных prerequisites.",
+                "if_it_were_true": "PostgreSQL мог бы сопоставить old/new rows без уникального ключа и выполнить первый concurrent refresh пустого matview.",
+                "how_it_should_be": "Проверьте unique index и lifecycle: initial population/обычный refresh, затем `REFRESH ... CONCURRENTLY` там, где непрерывное чтение важнее скорости refresh."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`VIEW` — это сохранённый запрос, который выполняется при каждом обращении: всегда актуален, но для сложных агрегатов медленный. `MATERIALIZED VIEW` хранит результат запроса как таблицу: чтение быстрое (просто `SELECT`), но данные stale до `REFRESH`. `REFRESH MATERIALIZED VIEW` блокирует чтение, а `REFRESH ... CONCURRENTLY` — нет, но требует unique-индекс. Инкрементального refresh в ядре нет (есть `pg_ivm`/CDC).",
+              "text": "Обычный view хранит query и вычисляет результат при обращении; materialized view хранит snapshot результата, который остаётся stale до явного refresh.",
               "correct": true,
               "sections": {
-                "explanation": "Компромисс — свежесть против скорости: обычный view пересчитывает запрос каждый раз (актуально, но дорого), materialized view отдаёт готовый результат мгновенно ценой устаревания до обновления.",
-                "example": "`CREATE MATERIALIZED VIEW user_summary_mv AS SELECT user_id, SUM(amount) ... GROUP BY user_id` плюс `CREATE UNIQUE INDEX ON user_summary_mv (user_id)` — тогда возможен `REFRESH ... CONCURRENTLY` без блокировки чтения.",
-                "when_to_apply": "Materialized view применяют для дашбордов (ночной refresh), отчётов со сложными join'ами и денормализации read-пути, где допустима небольшая stale-задержка.",
-                "edge_cases": "Время refresh может стать узким местом: если пересчёт идёт 10 минут, частота обновления ограничена — иногда нужен partition-based инкрементальный rebuild или `pg_ivm`.",
-                "related": "[[database-performance-interview#Q23]] оконные агрегаты; [[database-performance-interview#Q25]] read replica со stale-данными; [[database-performance-interview#Q22]] сложные JOIN в отчётах."
+                "explanation": "Обычный view разворачивается в query и читает актуальный MVCC snapshot base tables. Materialized view физически хранит строки и обновляется только командой refresh.",
+                "example": "Dashboard читает агрегаты из matview за миллисекунды, а scheduled `REFRESH MATERIALIZED VIEW CONCURRENTLY` обновляет snapshot при наличии требуемого unique index.",
+                "when_to_apply": "Используйте matview для дорогих joins/aggregations при допустимой staleness; обычный view — когда важнее свежесть и исходный query достаточно эффективен.",
+                "edge_cases": "Обычный view не гарантирует дешёвое чтение, а matview требует storage и refresh capacity. Concurrent refresh обычно допускает reads, но может быть медленнее и имеет prerequisites; инкрементального refresh общего назначения в core нет.",
+                "related": "[[database-performance-interview#Q23]] оконные функции; [[database-performance-interview#Q25]] read replicas и lag; [[database-performance-interview#Q22]] JOIN и EXISTS."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Обычный `VIEW` при создании физически материализует результат запроса в отдельную таблицу, поэтому чтение из него мгновенно и не зависит от сложности исходного запроса. Пересчёт происходит только при явном пересоздании view, а на каждое обращение СУБД просто читает уже сохранённые строки, как из обычной таблицы с данными.",
+              "text": "Обычный view физически хранит строки как таблица и пересчитывается только при `CREATE OR REPLACE VIEW`, поэтому чтение не выполняет исходный query.",
               "correct": false,
               "sections": {
-                "what_actually": "Обычный `VIEW` ничего не хранит — это сохранённый текст запроса, который выполняется заново при каждом обращении; физически результат хранит именно `MATERIALIZED VIEW`.",
-                "source_of_confusion": "Слово «view» иногда ассоциируют с заранее посчитанным, кэшированным представлением данных.",
-                "if_it_were_true": "Если бы обычный view хранил готовый результат, отдельный `MATERIALIZED VIEW` был бы не нужен, но он введён в язык именно ради хранения снимка.",
-                "how_it_should_be": "Обычный view пересчитывает запрос на каждом обращении и всегда отдаёт свежие данные; хранит готовый результат materialized view."
+                "what_actually": "Обычный view хранит определение query, а не materialized rows; обращение планирует и выполняет underlying query.",
+                "source_of_confusion": "Термин view иногда ассоциируется с заранее подготовленной read-model таблицей.",
+                "if_it_were_true": "Изменения base tables не были бы видны до пересоздания view, а query plan не содержал бы underlying relations.",
+                "how_it_should_be": "Разделяйте logical view и stored snapshot: физический результат хранит materialized view."
               }
             }
           ]
@@ -1451,7 +1451,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Синхронная репликация (`synchronous_standby_names`) ускоряет запись на primary: изменения уходят реплике в фоне, а коммит подтверждается, не дожидаясь её ответа. Асинхронный режим, наоборот, добавляет задержку на согласование, поэтому его и не делают режимом по умолчанию для нагруженных систем, где важна скорость записи.",
+              "text": "Синхронная репликация (`synchronous_standby_names`) ускоряет запись на primary: изменения уходят реплике в фоне, а коммит подтверждается.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё ровно наоборот: sync-репликация замедляет запись, потому что primary ждёт подтверждения от реплики ради нулевой потери данных; async быстрее, но рискует потерять последние транзакции при краше.",
@@ -1463,7 +1463,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Тяжёлую аналитику и отчёты разумнее выполнять на primary, где данные точно консистентны и нет лага, а реплики держать резервом под запись и failover, чтобы лишний раз не нагружать копию длинными сканами. Так primary остаётся единым источником для всех серьёзных чтений, а реплики принимают пишущий трафик и подменяют мастер при сбое.",
+              "text": "Тяжёлую аналитику и отчёты разумнее выполнять на primary, где данные точно консистентны и нет лага.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: тяжёлую аналитику выносят на реплику, чтобы разгрузить primary и изолировать OLTP от длинных сканов; писать в read-only streaming-реплику нельзя в принципе.",
@@ -1475,7 +1475,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Read replica — копия БД, следующая за WAL primary и обслуживающая read-запросы. Применяют для масштабирования чтения (большинство приложений 80%+ чтения), изоляции тяжёлой аналитики от OLTP и HA-failover. В PostgreSQL есть streaming (физическая, read-only) и logical (построчная, выборочные таблицы) репликация. Главная проблема — read-your-writes: после записи немедленное чтение может попасть на реплику со stale-данными.",
+              "text": "Read replicas разгружают чтение, но требуют routing, контроля lag и read-after-write consistency.",
               "correct": true,
               "sections": {
                 "explanation": "Реплика разгружает primary, асинхронно повторяя его изменения; но репликация имеет лаг (ms–секунды), поэтому пользователь, сразу читающий только что записанное, может увидеть устаревшую версию.",
@@ -1488,7 +1488,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Read replica применяет WAL мастера фактически мгновенно, поэтому её данные совпадают с primary в реальном времени. Раз заметного отставания нет, проблема read-your-writes на практике не возникает, и любое чтение можно спокойно направлять на реплику сразу после записи — пользователь наверняка увидит только что записанное, без всяких sticky-сессий и без маршрутизации немедленных чтений обратно на primary.",
+              "text": "Read replica применяет WAL мастера фактически мгновенно, поэтому её данные совпадают с primary в реальном времени.",
               "correct": false,
               "sections": {
                 "what_actually": "Репликация асинхронна и имеет лаг (от миллисекунд до секунд), особенно под нагрузкой: сразу после записи реплика может отдать stale-данные — это и есть проблема read-your-writes.",
@@ -1511,7 +1511,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `pg_stat_statements` основной критерий — сортировка по числу `calls`: самый часто вызываемый запрос создаёт и наибольшую нагрузку на БД, поэтому оптимизацию начинают с вершины этого списка. Суммарное время выполнения при этом считают вторичным показателем, ведь именно частые запросы чаще всего и оказываются узким местом системы.",
+              "text": "В `pg_stat_statements` основной критерий — сортировка по числу `calls`: самый часто вызываемый запрос создаёт и наибольшую нагрузку на БД, поэтому оптимизацию начинают с вершины этого списка.",
               "correct": false,
               "sections": {
                 "what_actually": "Нагрузку определяет `total_exec_time` (calls × mean), а не одна частота: частый, но почти мгновенный запрос грузит меньше редкого, но тяжёлого; стартуют именно с `total_exec_time`.",
@@ -1523,20 +1523,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В PostgreSQL начинают с расширения `pg_stat_statements`: оно агрегирует запросы по нормализованному тексту (параметры → `$1`) с `total_exec_time`, `mean_exec_time`, `calls` — топ-10 обычно объясняют 80% нагрузки. Дополняют slow query log (`log_min_duration_statement=1000`), `pg_stat_activity` для «что тормозит прямо сейчас», `auto_explain` для полного плана медленных запросов и APM (DataDog/New Relic) с P95/P99 по запросам.",
+              "text": "`pg_stat_statements` агрегирует calls, total/mean execution time, rows и block I/O по нормализованным queries; результаты связывают с APM/logs и анализируют план.",
               "correct": true,
               "sections": {
-                "explanation": "`pg_stat_statements` даёт агрегированную картину по суммарному времени, что важнее единичных тяжёлых запросов: частый запрос со средним временем может грузить БД сильнее редкого медленного.",
-                "example": "`SELECT query, calls, total_exec_time/1000 AS total_sec, mean_exec_time FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 20` — стартовая точка; `auto_explain.log_min_duration=1000` пишет EXPLAIN медленных запросов в лог.",
-                "when_to_apply": "Используют постоянно для мониторинга нагрузки и при инцидентах: сначала топ по `total_exec_time`, затем разбор худшего запроса через `EXPLAIN ANALYZE` на test.",
-                "edge_cases": "`auto_explain.log_analyze=true` добавляет runtime overhead, поэтому на проде его включают осторожно; `pg_stat_activity` показывает только активные сейчас, а не историю.",
+                "explanation": "Разные сортировки отвечают на разные вопросы: total time показывает общий вклад, mean — дорогой отдельный call, calls — частоту, shared/temp blocks — I/O pressure.",
+                "example": "Выбирают query по total_exec_time и p95 из APM, получают representative parameters и снимают `EXPLAIN (ANALYZE, BUFFERS)` в безопасной среде.",
+                "when_to_apply": "Используйте постоянно для workload-level visibility, дополняя slow query log, auto_explain и tracing при необходимости контекста.",
+                "edge_cases": "Нормализация скрывает конкретные parameters, statistics сбрасываются, а aggregate mean может смешивать разные планы. Не существует универсального правила, что top-10 объяснят фиксированный процент нагрузки.",
                 "related": "[[database-performance-interview#Q1]] полный цикл диагностики; [[database-performance-interview#Q2]] EXPLAIN ANALYZE для разбора; [[database-performance-interview#Q27]] нагрузочное тестирование запросов."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`auto_explain` с `log_analyze=true` практически не добавляет накладных расходов, ведь он лишь дописывает уже посчитанный планировщиком план в лог. Поэтому его можно безопасно держать включённым на проде сразу для всех запросов, без порога по длительности, чтобы гарантированно ничего не упустить и иметь полный план с реальными временами для каждого выполненного запроса, включая самые быстрые и частые.",
+              "text": "`auto_explain` с `log_analyze=true` практически не добавляет накладных расходов, ведь он лишь дописывает уже посчитанный планировщиком план в лог.",
               "correct": false,
               "sections": {
                 "what_actually": "`auto_explain.log_analyze=true` инструментирует выполнение и добавляет runtime overhead на каждый отслеживаемый запрос, поэтому его включают осторожно и обычно с порогом `log_min_duration`.",
@@ -1548,7 +1548,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`pg_stat_activity` ведёт журнал всех выполненных запросов за последние сутки, поэтому по нему удобно искать медленные запросы постфактум: достаточно отфильтровать представление по длительности и времени старта, чтобы поднять историю проблемных вызовов за день и разобрать их позже, уже после завершения инцидента.",
+              "text": "`pg_stat_activity` ведёт журнал всех выполненных запросов за последние сутки, поэтому по нему удобно искать медленные запросы постфактум: достаточно отфильтровать представление по длительности и времени старта.",
               "correct": false,
               "sections": {
                 "what_actually": "`pg_stat_activity` показывает только запросы, активные прямо сейчас, и не хранит истории; для исторического анализа служат `pg_stat_statements` и slow query log.",
@@ -1607,7 +1607,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`pgbench` (входит в PostgreSQL) — встроенный TPC-B-подобный бенчмарк с кастомными скриптами: `pgbench -i -s 100 testdb` инициализирует, `pgbench -c 50 -j 4 -T 60 testdb` гонит 50 клиентов в 4 потока 60 секунд, выдавая TPS и latency. `sysbench` — мульти-СУБД (MySQL/PostgreSQL) со стандартными OLTP-воркладами. Главное — prod-like объём данных, конфиг и сеть, warmup и измерение P50/P95/P99.",
+              "text": "БД тестируют prod-like workload-ом, отделяя client saturation от bottleneck по latency, locks, I/O и plans.",
               "correct": true,
               "sections": {
                 "explanation": "Бенчмарк имеет смысл только на prod-like условиях: объём данных (scale factor ~ размер прода), конфиг (`shared_buffers`, `work_mem`) и сеть влияют на результат, иначе цифры не переносятся на прод.",

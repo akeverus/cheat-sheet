@@ -11,7 +11,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Functional и non-functional требования — это одно и то же: и то и другое описывает, какие кнопки нажимает водитель на `EntrancePanel`.",
+              "text": "Functional и non-functional требования — это одно и то же: и то и другое описывает, какие кнопки нажимает водитель на `EntrancePanel`. Не было бы смысла отдельно проговаривать latency < 200 мс или 99.95% доступности.",
               "correct": false,
               "sections": {
                 "what_actually": "Functional описывают поведение системы (выдать билет, посчитать тариф), а non-functional — качества: thread safety, availability, latency, аудит. Это разные категории.",
@@ -23,7 +23,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Thread safety, availability и latency — это functional-требования, а типы транспорта и расчёт тарифа — non-functional.",
+              "text": "Thread safety, availability и latency — это functional-требования, а типы транспорта и расчёт тарифа — non-functional. «99.95% доступности» определяло бы фичу продукта. Категории легко перепутать местами, если не держать в голове критерий «что делает» против «как хорошо делает».",
               "correct": false,
               "sections": {
                 "what_actually": "Ровно наоборот: типы транспорта и тарификация — functional (поведение), а thread safety/availability/latency — non-functional (качества).",
@@ -35,7 +35,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Functional: парковка для `Motorcycle`/`Car`/`Truck`, multi-floor/multi-entrance/multi-exit, выдача билета со spot на въезде, расчёт тарифа и оплата на выезде, discount для monthly subscribers, handicapped/electric места, display board. Non-functional: thread safety (два въезда не выдают один spot), availability ~99.95%, latency выдачи билета < 200 мс, audit log всех событий, observability занятости.",
+              "text": "Functional: парковка для `Motorcycle`/`Car`/`Truck`, multi-floor/multi-entrance/multi-exit, выдача билета со spot на въезде, расчёт тарифа и оплата на выезде, discount для monthly subscribers, handicapped/electric места, display board. Functional описывают что система делает (типы транспорта, въезд/выезд, тарификация), non-functional.",
               "correct": true,
               "sections": {
                 "explanation": "Functional описывают что система делает (типы транспорта, въезд/выезд, тарификация), non-functional — каким качеством: конкурентность, доступность, latency, аудит. Проговорить и зафиксировать scope — половина успеха интервью.",
@@ -48,7 +48,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Достаточно перечислить только functional-требования; non-functional на LLD-интервью по парковке не обсуждают вообще.",
+              "text": "Достаточно перечислить только functional-требования; non-functional на LLD-интервью по парковке не обсуждают вообще. Можно было бы игнорировать гонку за spot. LLD — это только про классы, а NFR относятся к большому system design.",
               "correct": false,
               "sections": {
                 "what_actually": "Non-functional как раз критичны: thread safety при двух въездах напрямую формирует дизайн блокировок, а latency и аудит влияют на структуру.",
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Admin` и `Driver` имеют одинаковый набор use cases — оба могут менять тарифы и закрывать этажи.",
+              "text": "`Admin` и `Driver` имеют одинаковый набор use cases — оба могут менять тарифы и закрывать этажи. Любой водитель обнулил бы тариф, и `/admin/rates` не нуждался бы в проверке роли.",
               "correct": false,
               "sections": {
                 "what_actually": "У `Driver` нет прав на тарифы и этажи; он только берёт билет, платит и читает тариф. Управление тарифами/этажами — исключительно `Admin`.",
@@ -83,7 +83,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Happy path выезда: spot помечается свободным сразу при сканировании билета на `ExitPanel`, а оплата происходит уже после открытия барьера.",
+              "text": "Happy path выезда: spot помечается свободным сразу при сканировании билета на `ExitPanel`, а оплата происходит уже после открытия барьера. Водитель мог бы уехать, а платёж — провалиться, и spot числился бы свободным при неоплаченном визите.",
               "correct": false,
               "sections": {
                 "what_actually": "Spot освобождается только после успешной оплаты (`COMPLETED`); открыть барьер до подтверждения платежа — это риск списания и бесплатного выезда одновременно.",
@@ -95,7 +95,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Actors: `Driver` (взять билет, оплатить и выехать, проверить тариф), `ParkingAttendant` (помочь с потерянным билетом, ручной платёж), `Admin` (настроить тарифы, добавить/закрыть этаж, отчёты), `System` (мониторить occupancy, алерты). Happy path: машина у `EntrancePanel` → проверка свободного spot нужного типа → выдача `Ticket` с `entryTime`/`spotId` → на `ExitPanel` скан билета → расчёт `Payment` по `ParkingRate` → после успешной оплаты spot помечается свободным.",
+              "text": "Actors разделяют права и сценарии: driver получает билет, оплачивает и выезжает; attendant решает исключения и потерянные билеты; admin управляет тарифами и конфигурацией; system отслеживает occupancy и alarms. Happy path связывает въезд, атомарное назначение spot, оплату, открытие барьера и освобождение места.",
               "correct": true,
               "sections": {
                 "explanation": "Actor — это роль, инициирующая взаимодействие. Разделение на `Driver`/`Attendant`/`Admin`/`System` сразу намечает границы доступа и набор сценариев, которые надо покрыть классами.",
@@ -108,7 +108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Единственный actor системы — `Driver`; `Admin` и `ParkingAttendant` — это просто методы внутри класса `ParkingLot`, а не действующие лица.",
+              "text": "Единственный actor системы — `Driver`; `Admin` и `ParkingAttendant` — это просто методы внутри класса `ParkingLot`, а не действующие лица. Сценарий «attendant провёл ручной платёж за потерянный билет» некуда было бы поместить в модель акторов.",
               "correct": false,
               "sections": {
                 "what_actually": "`Admin` и `ParkingAttendant` — самостоятельные actors с собственными use cases (настройка тарифов, обработка потерянного билета), а не методы одного класса.",
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Интеграцию с банком надо спроектировать полностью: реализовать 3-D Secure, токенизацию карт и обработку чарджбэков прямо на интервью.",
+              "text": "Интеграцию с банком надо спроектировать полностью: реализовать 3-D Secure, токенизацию карт и обработку чарджбэков прямо на интервью. На дизайн классов парковки не осталось бы времени, а именно он — предмет LLD-интервью.",
               "correct": false,
               "sections": {
                 "what_actually": "Банк сводят к интерфейсу `PaymentGateway.charge(amount)` — детали платёжного провайдера считают чёрным ящиком и не реализуют.",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Out of scope: shuttle bus между терминалами; license plate recognition (CV) считаем чёрным ящиком, возвращающим строку; интеграция с банком — это интерфейс `PaymentGateway.charge(amount)`; мобильное приложение клиента — отдельная задача; multi-tenant (сеть парковок) — на интервью одна сущность `ParkingLot`. Чёткое проговаривание границ экономит время и показывает зрелость.",
+              "text": "Out of scope: shuttle bus между терминалами; license plate recognition (CV) считаем чёрным ящиком, возвращающим строку; интеграция с банком — это интерфейс `PaymentGateway.charge(amount)`; мобильное приложение клиента — отдельная задача.",
               "correct": true,
               "sections": {
                 "explanation": "За 45 минут невозможно спроектировать всё. Явные границы фокусируют обсуждение на ядре (классы, паттерны, конкурентность) и показывают, что кандидат умеет управлять scope.",
@@ -156,7 +156,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Out of scope означает, что эти возможности нельзя будет добавить в систему никогда, даже в следующих версиях.",
+              "text": "Out of scope означает, что эти возможности нельзя будет добавить в систему никогда, даже в следующих версиях; Не было бы смысла в секции расширений (`EV charging`, reservations).",
               "correct": false,
               "sections": {
                 "what_actually": "Out of scope — это «не на этом интервью / не в этой итерации», а не «навсегда запрещено». Многое (CV, mobile) добавляется позже как расширение.",
@@ -168,7 +168,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Проговаривать границы scope не нужно — лучше молча спроектировать максимум возможностей, чтобы показать широту знаний.",
+              "text": "Проговаривать границы scope не нужно — лучше молча спроектировать максимум возможностей, чтобы показать широту знаний. Чем больше всего спроектируешь, тем выше оценка.",
               "correct": false,
               "sections": {
                 "what_actually": "Явное проговаривание границ — само по себе сильный сигнал зрелости; молчаливый разброс по всему подряд читается как неумение управлять временем.",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Vehicle` обязан быть `interface`, а не `abstract class`, потому что у транспорта не может быть общего состояния.",
+              "text": "`Vehicle` обязан быть `interface`, а не `abstract class`, потому что у транспорта не может быть общего состояния; `licenseNumber` пришлось бы дублировать в каждом подклассе, теряя общий конструктор и поля. Совет «программируй на интерфейсы» иногда понимают как «никогда не используй abstract class».",
               "correct": false,
               "sections": {
                 "what_actually": "У `Vehicle` есть общее состояние (`licenseNumber`, `type`) и общий конструктор — это естественный кейс для `abstract class`, а не чистого интерфейса.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`VehicleType` лучше хранить как `String` (например `\"car\"`), а не `enum`, чтобы легко добавлять новые типы без перекомпиляции.",
+              "text": "`VehicleType` лучше хранить как `String` (например `\"car\"`), а не `enum`, чтобы легко добавлять новые типы без перекомпиляции; Опечатка `\"caar\"` молча ломала бы `canFitVehicle`, а компилятор бы не помог.",
               "correct": false,
               "sections": {
                 "what_actually": "`enum` даёт типобезопасность и исчерпывающие `switch` (компилятор ловит незакрытый кейс); `String` открывает дорогу опечаткам и невалидным значениям.",
@@ -215,7 +215,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Нужно завести отдельный подкласс под каждый возможный тип кузова заранее (`Sedan`, `SUV`, `Van`, `Pickup`), даже если поведение идентично.",
+              "text": "Нужно завести отдельный подкласс под каждый возможный тип кузова заранее (`Sedan`, `SUV`, `Van`, `Pickup`), даже если поведение идентично. Добавление нового кузова всегда требовало бы нового класса. Богатая иерархия выглядит «более ООП», поэтому хочется разложить каждый кузов по классу.",
               "correct": false,
               "sections": {
                 "what_actually": "Подклассы без различий в поведении — это оверинжиниринг; пока van/SUV ведут себя как `Car`, их моделируют `VehicleType.CAR`, а не новыми классами.",
@@ -227,7 +227,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Vehicle` — `abstract class` с общими полями `licenseNumber` и `type` (`VehicleType`: MOTORCYCLE/CAR/TRUCK). Подклассы (`Motorcycle`, `Car`, `Truck`) добавляют поведение только когда оно различается. Если все три ведут себя одинаково — достаточно одного класса с `enum VehicleType`; отдельные классы появляются, когда у типа возникает специфичное поведение (например, `ElectricCar` с `chargingPort`).",
+              "text": "`Vehicle` — `abstract class` с общими полями `licenseNumber` и `type` (`VehicleType`: MOTORCYCLE/CAR/TRUCK); Подклассы (`Motorcycle`, `Car`, `Truck`) добавляют поведение только когда оно различается; Если все три ведут себя одинаково — достаточно одного класса с `enum VehicleType`.",
               "correct": true,
               "sections": {
                 "explanation": "Это компромисс между гибкостью и простотой: плодить пустые подклассы без поведения — оверинжиниринг, а `enum` в едином классе достаточно, пока различий в логике нет.",
@@ -251,7 +251,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ParkingSpot` — `abstract` с полями `id`, `size`, `volatile parkedVehicle`, `volatile available` и абстрактным `canFitVehicle(Vehicle)`, который переопределяют подклассы. `MotorcycleSpot` принимает только мотоцикл; `CompactSpot` — мотоцикл или машину; `LargeSpot` — всё. Правило: `Motorcycle` влезает куда угодно, `Truck` — только в `LARGE`, `Car` — в `COMPACT` или `LARGE`. Это полиморфизм: каждый spot сам знает, кого может принять.",
+              "text": "`ParkingSpot` — `abstract` с полями `id`, `size`, `volatile parkedVehicle`, `volatile available` и абстрактным `canFitVehicle(Vehicle)`, который переопределяют подклассы; `MotorcycleSpot` принимает только мотоцикл; `CompactSpot` — мотоцикл или машину; `LargeSpot` — всё. Совместимость инкапсулирована в `canFitVehicle`, поэтому клиент не пишет `if (type==...)`.",
               "correct": true,
               "sections": {
                 "explanation": "Совместимость инкапсулирована в `canFitVehicle`, поэтому клиент не пишет `if (type==...)` — он просто спрашивает spot, влезает ли машина. Добавление нового типа места не трогает вызывающий код.",
@@ -264,7 +264,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Поля `available` и `parkedVehicle` можно держать обычными (без `volatile`/synchronized) — JVM сама гарантирует видимость между потоками.",
+              "text": "Поля `available` и `parkedVehicle` можно держать обычными (без `volatile`/synchronized) — JVM сама гарантирует видимость между потоками. `volatile` в коде был бы лишним. На одном CPU гонка часто не воспроизводится, создавая иллюзию, что всё и так безопасно.",
               "correct": false,
               "sections": {
                 "what_actually": "JVM не гарантирует видимость записей одного потока другим без `volatile` или синхронизации; без них второй въезд может увидеть устаревшее `available=true`.",
@@ -276,7 +276,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Совместимость транспорта и места правильнее решать одним большим `if/switch` в `ParkingLot`, а не методом `canFitVehicle` в каждом spot.",
+              "text": "Совместимость транспорта и места правильнее решать одним большим `if/switch` в `ParkingLot`, а не методом `canFitVehicle` в каждом spot. Добавление `ElectricSpot` заставляло бы лезть в `ParkingLot` и дописывать ветки `if` в нескольких местах.",
               "correct": false,
               "sections": {
                 "what_actually": "Централизованный `switch` по типам — это процедурный код в OO-обёртке; полиморфный `canFitVehicle` распределяет знание по местам и не требует правок при новом типе spot.",
@@ -288,7 +288,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`LargeSpot.canFitVehicle` должен возвращать true только для `Truck`, потому что большие места предназначены исключительно под грузовики.",
+              "text": "`LargeSpot.canFitVehicle` должен возвращать true только для `Truck`, потому что большие места предназначены исключительно под грузовики. При заполненных compact-местах машина не смогла бы встать на свободное большое место. Название «Large» наводит на мысль, что туда пускают только крупный транспорт.",
               "correct": false,
               "sections": {
                 "what_actually": "`LargeSpot` вмещает всё (возвращает true для любого типа) — большое место может принять и машину, и мотоцикл, не только грузовик.",
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Поиск и резервирование spot можно делать в два отдельных шага без общей блокировки: сначала `findFreeSpot`, затем позже `assign`.",
+              "text": "Поиск и резервирование spot можно делать в два отдельных шага без общей блокировки: сначала `findFreeSpot`, затем позже `assign`. Два въезда получили бы один и тот же `Optional<Spot>` и оба отдали бы его водителям.",
               "correct": false,
               "sections": {
                 "what_actually": "Между `findFreeSpot` и `assign` другой поток успеет занять тот же spot; шаги объединяют под одним `floorLock`, делая «найти + занять» атомарным.",
@@ -323,7 +323,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Единица блокировки всегда должна быть на уровне всей `ParkingLot` — иначе нельзя гарантировать корректность при конкуренции.",
+              "text": "Единица блокировки всегда должна быть на уровне всей `ParkingLot` — иначе нельзя гарантировать корректность при конкуренции. При 1000+ въездов в минуту единственный глобальный lock убил бы throughput всей парковки.",
               "correct": false,
               "sections": {
                 "what_actually": "Корректность достигается и на floor-level (или per-spot CAS); глобальный lot-lock корректен, но это боттлнек, а не единственный безопасный вариант.",
@@ -335,7 +335,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`ParkingFloor` отвечает за состояние одного этажа: `Map<SpotSize, List<ParkingSpot>>`, локальный `DisplayBoard`, метод `assignVehicleToSpot(vehicle)`, который под `floorLock` находит и атомарно резервирует подходящий spot. Floor — самая мелкая единица блокировки: локать всю парковку медленно, отдельный spot недостаточно (нужна стратегия выбора среди кандидатов), а floor — золотая середина. Эта сущность не даёт `ParkingLot` превратиться в god-класс.",
+              "text": "`ParkingFloor` хранит spots одного этажа, локальное табло и индексы по размеру. Операция назначения под `floorLock` или эквивалентной атомарной границей одновременно находит подходящее свободное место и резервирует его; поэтому два въезда не получают один spot, а разные этажи не блокируют друг друга.",
               "correct": true,
               "sections": {
                 "explanation": "Группировка мест по `SpotSize` и метод `candidateSpots(type)` позволяют floor отдавать кандидатов нужного типа, а `floorLock` делает «найти + занять» атомарным шагом — без него два потока возьмут один spot.",
@@ -348,7 +348,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`ParkingFloor` должен сам считать тариф и проводить оплату — так меньше классов и проще sequence-диаграмма.",
+              "text": "`ParkingFloor` одновременно управляет местами, рассчитывает тариф, проводит платёж и закрывает билет. Такое объединение уменьшает число классов и считается правильной границей ответственности, поэтому изменение PSP или pricing policy должно изменять объект этажа.",
               "correct": false,
               "sections": {
                 "what_actually": "Тарификация — ответственность `ParkingRate`, оплата — `Payment`/`PaymentStrategy`; смешивать их во `ParkingFloor` нарушает SRP и превращает этаж в god-класс.",
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Singleton для `ParkingLot` оправдан тем, что объект удобно доставать из любой точки кода без передачи ссылки.",
+              "text": "Singleton для `ParkingLot` оправдан тем, что объект удобно доставать из любой точки кода без передачи ссылки. Любой класс с удобным глобальным доступом стоило бы делать Singleton, что плодит скрытые зависимости.",
               "correct": false,
               "sections": {
                 "what_actually": "«Удобно достать откуда угодно» — это анти-обоснование (глобальная переменная). Singleton оправдан инвариантом уникальности одной физической парковки, а не удобством доступа.",
@@ -383,7 +383,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`ParkingLot` — корневая сущность: один физический объект ⇒ одна сущность в памяти. Singleton оправдан именно этим инвариантом (а не «удобно достать откуда угодно») и реализуется через double-checked locking с `volatile instance`. Минусы: сложно тестировать (решают, пряча за интерфейсом `ParkingFacility` и подкладывая mock), глобальное состояние, проблемы с DI — в Spring правильнее `@Component` со singleton scope, чем ручной double-checked locking.",
+              "text": "`ParkingLot` — корневая сущность: один физический объект ⇒ одна сущность в памяти; Singleton оправдан именно этим инвариантом (а не «удобно достать откуда угодно») и реализуется через double-checked locking с `volatile instance`.",
               "correct": true,
               "sections": {
                 "explanation": "Singleton корректен, когда уникальность объекта — реальный инвариант домена. Одна физическая парковка действительно одна, поэтому единственный экземпляр в памяти отражает реальность, а не просто экономит код.",
@@ -396,7 +396,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "У Singleton нет минусов для тестирования — глобальный экземпляр одинаково легко подменяется в unit-тестах, как и обычный объект.",
+              "text": "У Singleton нет минусов для тестирования — глобальный экземпляр одинаково легко подменяется в unit-тестах, как и обычный объект. Не нужен был бы приём с интерфейсом-фасадом.",
               "correct": false,
               "sections": {
                 "what_actually": "Глобальное состояние Singleton как раз мешает тестам (общий инстанс между кейсами); поэтому его прячут за интерфейсом `ParkingFacility` и подкладывают mock.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Double-checked locking можно писать без `volatile` у поля `instance` — на современных JVM это уже не нужно.",
+              "text": "Double-checked locking можно писать без `volatile` у поля `instance` — на современных JVM это уже не нужно. Старая байка, что DCL «починили» в Java 5 так, что volatile больше не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "Без `volatile` другой поток может увидеть частично сконструированный объект из-за reordering; `volatile instance` обязателен для корректного double-checked locking.",
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "У них разные жизненные циклы. `Ticket` создаётся при въезде, живёт до выезда, может быть утерян (статусы ACTIVE/PAID/LOST/EXPIRED). `Payment` создаётся в момент оплаты и имеет свой статус (PENDING/COMPLETED/FAILED/REFUNDED), а также подтипы (`CashPayment`, `CreditCardPayment` с `PaymentGateway`). Если запихнуть оплату внутрь `Ticket`, нарушим SRP: при добавлении нового способа оплаты пришлось бы менять класс билета.",
+              "text": "У них разные жизненные циклы; `Ticket` создаётся при въезде, живёт до выезда, может быть утерян (статусы ACTIVE/PAID/LOST/EXPIRED); `Payment` создаётся в момент оплаты и имеет свой статус (PENDING/COMPLETED/FAILED/REFUNDED), а также подтипы (`CashPayment`, `CreditCardPayment` с `PaymentGateway`).",
               "correct": true,
               "sections": {
                 "explanation": "Разделение по жизненному циклу и причине изменения — суть SRP. У билета причина меняться — правила парковки; у платежа — способы оплаты. Это независимые оси, поэтому им место в разных классах.",
@@ -444,7 +444,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Payment` не нужно делать абстрактным с подтипами — достаточно одного конкретного класса, ведь оплата всегда происходит картой.",
+              "text": "`Payment` не нужно делать абстрактным с подтипами — достаточно одного конкретного класса, ведь оплата всегда происходит картой. `CashPayment` (мгновенный COMPLETED без шлюза) некуда было бы поместить, и attendant не принял бы наличные.",
               "correct": false,
               "sections": {
                 "what_actually": "Способов оплаты много (наличные, карта, Apple Pay, корпоративный счёт); `Payment`/`PaymentStrategy` абстрагирует их, а `CashPayment`/`CreditCardPayment` — конкретные реализации.",
@@ -456,7 +456,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Ticket` и `Payment` лучше объединить в один класс, потому что у них один и тот же жизненный цикл — оба создаются на въезде и удаляются на выезде.",
+              "text": "`Ticket` и `Payment` лучше объединить в один класс, потому что у них один и тот же жизненный цикл — оба создаются на въезде и удаляются на выезде. У объединённого класса была бы одна шкала статусов.",
               "correct": false,
               "sections": {
                 "what_actually": "Жизненные циклы разные: билет создаётся на въезде, платёж — в момент оплаты на выезде; у них разные статусы и разные причины изменения.",
@@ -468,7 +468,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Статус оплаты надо хранить прямо в `Ticket` как поле `paid: boolean`, а отдельный класс `Payment` — лишняя абстракция.",
+              "text": "Статус оплаты надо хранить прямо в `Ticket` как поле `paid: boolean`, а отдельный класс `Payment` — лишняя абстракция. Нельзя было бы отличить «оплата провалилась» от «ещё не платили» или оформить возврат (REFUNDED).",
               "correct": false,
               "sections": {
                 "what_actually": "`boolean paid` теряет существенные состояния платежа (PENDING, FAILED, REFUNDED) и `externalRef` шлюза; для этого и нужен отдельный `Payment` со своей шкалой статусов.",
@@ -491,7 +491,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Деньги в `ParkingRate` лучше считать в `double`, а не `BigDecimal` — так быстрее и проще арифметика.",
+              "text": "Деньги в `ParkingRate` лучше считать в `double`, а не `BigDecimal` — так быстрее и проще арифметика. Итоговая сумма могла бы оказаться 7.500000001 и не сойтись с чеком и аудитом.",
               "correct": false,
               "sections": {
                 "what_actually": "`double` накапливает ошибки округления (0.1+0.2 != 0.3); для денег используют `BigDecimal` с явным `setScale(2, HALF_UP)`, как в `calculate`.",
@@ -503,7 +503,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Сезонную скидку правильно добавлять, модифицируя метод `calculate` внутри `ParkingRate` и дописывая туда условие на дату.",
+              "text": "Сезонную скидку правильно добавлять, модифицируя метод `calculate` внутри `ParkingRate` и дописывая туда условие на дату. Каждая новая скидка раздувала бы `calculate` ветвлениями и риском сломать базовый расчёт.",
               "correct": false,
               "sections": {
                 "what_actually": "Скидку добавляют через `Decorator` (`DiscountedRate`) поверх `ParkingRate`, не трогая существующий класс — это OCP. Правка `calculate` нарушает «открыт для расширения, закрыт для изменения».",
@@ -515,7 +515,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`ParkingRate` хранит `List<Tier>` (`Tier(upToHourExclusive, hourlyRate)`), `lostTicketPenalty` и `freeGracePeriod` (например 15 минут). Метод `calculate(Duration)` идёт по тирам, начисляя за часы в каждом тире (первый час дороже, дальше дешевле), с округлением HALF_UP. Это табличная структура, а не цепочка `if`: тарифы редко плоские, а сезонную скидку добавляют через `Decorator` поверх `ParkingRate` (OCP), не модифицируя класс.",
+              "text": "`ParkingRate` хранит `List<Tier>` (`Tier(upToHourExclusive, hourlyRate)`), `lostTicketPenalty` и `freeGracePeriod` (например 15 минут); Метод `calculate(Duration)` идёт по тирам, начисляя за часы в каждом тире (первый час дороже, дальше дешевле), с округлением HALF_UP.",
               "correct": true,
               "sections": {
                 "explanation": "Таблица тиров делает прайсинг данными, а не кодом: чтобы поменять цены, правят конфиг, а не ветвление. Это упрощает добавление тиров и админский эндпоинт изменения тарифа.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Тариф проще зашить как цепочку `if (hours == 1) return 4; else if (hours <= 3) ...` прямо в коде `ParkingRate` — это нагляднее таблицы тиров.",
+              "text": "Тариф проще зашить как цепочку `if (hours == 1) return 4; else if (hours <= 3) ...` прямо в коде `ParkingRate` — это нагляднее таблицы тиров. Смена цены первого часа означала бы релиз кода, а не правку конфигурации.",
               "correct": false,
               "sections": {
                 "what_actually": "Цепочка `if` хардкодит цены в коде: каждое изменение тарифа требует правки и пересборки. Табличные тиры делают прайсинг данными, меняемыми через конфиг/admin-endpoint.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ParkingSpot` и `Vehicle` на диаграмме должны быть конкретными классами без абстрактных предков — иерархия только усложняет картинку.",
+              "text": "`ParkingSpot` и `Vehicle` на диаграмме должны быть конкретными классами без абстрактных предков; иерархия только усложняет картинку; `canFitVehicle` нельзя было бы переопределять полиморфно, и совместимость считал бы внешний switch.",
               "correct": false,
               "sections": {
                 "what_actually": "`ParkingSpot` и `Vehicle` — абстрактные с подклассами (MotorcycleSpot/CompactSpot/LargeSpot; Motorcycle/Car/Truck); абстракция и полиморфизм здесь — суть дизайна, а не усложнение.",
@@ -563,7 +563,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Связь `ParkingLot`—`ParkingFloor` лучше моделировать как наследование (`ParkingFloor extends ParkingLot`), а не композицию.",
+              "text": "Связь `ParkingLot`—`ParkingFloor` лучше моделировать как наследование (`ParkingFloor extends ParkingLot`), а не композицию. `ParkingFloor` унаследовал бы методы `parkVehicle`/тарифы парковки, что бессмысленно для одного этажа.",
               "correct": false,
               "sections": {
                 "what_actually": "Этаж не является частным случаем парковки — это «часть-целое», то есть композиция (`*--`), а не наследование `is-a`.",
@@ -575,7 +575,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "На class diagram `ParkingLot` композицией содержит `ParkingFloor`, `EntrancePanel`, `ExitPanel`, `ParkingRate`; `ParkingFloor` — `ParkingSpot` и `DisplayBoard`. `ParkingSpot` и `Vehicle` — абстрактные с подклассами (MotorcycleSpot/CompactSpot/LargeSpot/Handicapped; Motorcycle/Car/Truck). `Payment` абстрактен с Cash/CreditCard. Важна направленность связей: `ParkingLot` знает про `ParkingFloor`, но не наоборот (агрегация сверху вниз) — это упрощает изолированное тестирование floor.",
+              "text": "На class diagram `ParkingLot` композицией содержит `ParkingFloor`, `EntrancePanel`, `ExitPanel`, `ParkingRate`; `ParkingFloor` — `ParkingSpot` и `DisplayBoard`; `ParkingSpot` и `Vehicle` — абстрактные с подклассами (MotorcycleSpot/CompactSpot/LargeSpot/Handicapped; Motorcycle/Car/Truck); `Payment` абстрактен с Cash/CreditCard.",
               "correct": true,
               "sections": {
                 "explanation": "Однонаправленность связей (сверху вниз) снижает связанность: нижние сущности не зависят от верхних, поэтому floor можно тестировать без поднятия всего `ParkingLot`.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "На диаграмме связи должны быть двунаправленными: `ParkingFloor` обязан хранить ссылку обратно на `ParkingLot`, иначе этаж не сможет работать.",
+              "text": "На диаграмме связи должны быть двунаправленными: `ParkingFloor` обязан хранить ссылку обратно на `ParkingLot`, иначе этаж не сможет работать. Нельзя было бы создать `ParkingFloor` в тесте без полноценного `ParkingLot`, и тесты стали бы тяжёлыми.",
               "correct": false,
               "sections": {
                 "what_actually": "Связи направлены сверху вниз: `ParkingLot` знает про floor, но floor не держит обратную ссылку — это снижает связанность и упрощает изолированное тестирование этажа.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ParkingLot` берёт один общий `floorLock` перед циклом по всем этажам и держит его, пока `assignVehicleToSpot` не найдёт свободное место хоть на каком-нибудь этаже.",
+              "text": "`ParkingLot` берёт один общий `floorLock` перед циклом по всем этажам и держит его, пока `assignVehicleToSpot` не найдёт свободное место хоть на каком-нибудь этаже. Два въезда на разные этажи блокировали бы друг друга без причины, теряя throughput.",
               "correct": false,
               "sections": {
                 "what_actually": "Lock берут на уровне отдельного этажа внутри `assignVehicleToSpot`; держать один lock через все этажи сериализует всю парковку и убивает параллелизм между этажами.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Sequence въезда: `Driver` жмёт кнопку на `EntrancePanel` → `EntrancePanel.parkVehicle(car)` → `ParkingLot` в цикле по этажам зовёт `ParkingFloor.assignVehicleToSpot(car)` → floor берёт `floorLock`, вызывает `spot.assignVehicle(car)`, отпускает lock → `ParkingLot` сохраняет ticket в `TicketRepository` и возвращает `Ticket` → печать билета; floor шлёт `DisplayBoard.notifySpotTaken`. Ключевое: блок `assignVehicleToSpot` атомарен внутри одного `floorLock` — иначе два потока получат один и тот же `Optional<Spot>`.",
+              "text": "Sequence въезда: `Driver` жмёт кнопку на `EntrancePanel` → `EntrancePanel.parkVehicle(car)` → `ParkingLot` в цикле по этажам зовёт `ParkingFloor.assignVehicleToSpot(car)` → floor берёт `floorLock`, вызывает `spot.assignVehicle(car)`, отпускает lock → `ParkingLot` сохраняет ticket в `TicketRepository` и возвращает `Ticket` → печать билета; floor шлёт `DisplayBoard.notifySpotTaken`.",
               "correct": true,
               "sections": {
                 "explanation": "Sequence-диаграмма показывает порядок взаимодействия во времени и где именно стоит блокировка. Атомарность «найти + занять» под `floorLock` — главное условие корректности при двух въездах.",
@@ -636,7 +636,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В sequence въезда `EntrancePanel.parkVehicle` сам в цикле обходит `ParkingFloor` и `ParkingSpot`, берёт `floorLock` и вызывает `spot.assignVehicle`, а `ParkingLot` лишь сохраняет ticket в `TicketRepository` и печатает билет.",
+              "text": "В sequence въезда `EntrancePanel.parkVehicle` сам в цикле обходит `ParkingFloor` и `ParkingSpot`, берёт `floorLock` и вызывает `spot.assignVehicle`, а `ParkingLot` лишь сохраняет ticket в `TicketRepository` и печатает билет. Панель содержала бы доменную логику размещения, дублируясь на каждом въезде и нарушая SRP.",
               "correct": false,
               "sections": {
                 "what_actually": "Перебор этажей и резервирование делегированы `ParkingLot.parkVehicle` → `ParkingFloor.assignVehicleToSpot`; `EntrancePanel` тонкий — он лишь инициирует и печатает билет.",
@@ -648,7 +648,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Сначала `ParkingLot` возвращает и печатает водителю `Ticket`, а `assignVehicleToSpot` подбирает и резервирует spot уже потом, асинхронно после выдачи билета.",
+              "text": "Сначала `ParkingLot` возвращает и печатает водителю `Ticket`, а `assignVehicleToSpot` подбирает и резервирует spot уже потом, асинхронно после выдачи билета. Водитель получил бы билет, а свободного места могло не оказаться — конфликт у шлагбаума.",
               "correct": false,
               "sections": {
                 "what_actually": "Spot резервируется атомарно до создания билета; билет несёт `spotId`, поэтому без занятого места билет выдавать нельзя — иначе на руках билет без места.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "После неуспешной оплаты билет надо сразу переводить в статус EXPIRED и звать attendant — повторная попытка оплаты не предусмотрена.",
+              "text": "После неуспешной оплаты билет надо сразу переводить в статус EXPIRED и звать attendant — повторная попытка оплаты не предусмотрена. Любая случайно отклонённая карта блокировала бы выезд и звала бы человека, создавая очередь.",
               "correct": false,
               "sections": {
                 "what_actually": "При fail билет остаётся ACTIVE, и водителю предлагают другой метод оплаты («try another method»); EXPIRED — это про билет старше 30 дней, а не про одну отклонённую карту.",
@@ -683,7 +683,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Sequence выезда: `Driver` сканирует билет на `ExitPanel` → `findById` в `TicketRepository` (ACTIVE) → `ParkingRate.calculate(duration)` даёт amount → водитель выбирает метод → создаётся `Payment` (Strategy) → `PaymentGateway.charge` → при success платёж COMPLETED, `ticket.markPaid()`, `ParkingFloor.freeSpot()`, `notifySpotFreed`, барьер открывается; при fail — «try another method». Ключ: `freeSpot` вызывается ТОЛЬКО после `COMPLETED` — иначе риск списания денег и бесплатного выезда одновременно.",
+              "text": "Sequence выезда: `Driver` сканирует билет на `ExitPanel` → `findById` в `TicketRepository` (ACTIVE) → `ParkingRate.calculate(duration)` даёт amount → водитель выбирает метод → создаётся `Payment` (Strategy) → `PaymentGateway.charge` → при success платёж COMPLETED, `ticket.markPaid()`, `ParkingFloor.freeSpot()`, `notifySpotFreed`, барьер открывается; при fail — «try another method».",
               "correct": true,
               "sections": {
                 "explanation": "Порядок шагов критичен для целостности: освобождение места и открытие барьера привязаны к подтверждённой оплате, чтобы система не оказалась в состоянии «уехал, но не заплатил».",
@@ -696,7 +696,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Барьер на выезде нужно открывать сразу после расчёта стоимости, ещё до подтверждения оплаты — чтобы не задерживать поток машин.",
+              "text": "Барьер на выезде нужно открывать сразу после расчёта стоимости, ещё до подтверждения оплаты — чтобы не задерживать поток машин. При отклонённой карте водитель всё равно уехал бы, не заплатив, а spot остался бы числиться занятым.",
               "correct": false,
               "sections": {
                 "what_actually": "Барьер открывают только после `Payment` COMPLETED; открыть его на этапе расчёта — это риск, что списание провалится, а машина уже уехала бесплатно.",
@@ -708,7 +708,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Стоимость на выезде должен считать сам `ExitPanel`, обращаясь напрямую к тиражам и `if`-ам, а не вызывать `ParkingRate.calculate`.",
+              "text": "Стоимость на выезде должен считать сам `ExitPanel`, обращаясь напрямую к тиражам и `if`-ам, а не вызывать `ParkingRate.calculate`. Изменение тарифа требовало бы правок и в `ParkingRate`, и в `ExitPanel`, нарушая единый источник правды.",
               "correct": false,
               "sections": {
                 "what_actually": "Расчёт делегируется `ParkingRate.calculate(duration)`; панель не должна знать формулу тарифа — иначе логика прайсинга расползётся по нескольким местам.",
@@ -731,7 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "State diagram билета не нужна вообще — достаточно булева поля `paid`, остальные состояния (LOST, EXPIRED) избыточны.",
+              "text": "State diagram билета не нужна вообще — достаточно булева поля `paid`, остальные состояния (LOST, EXPIRED) избыточны. Нельзя было бы отличить «потерян» от «просрочен» и применить к ним разные правила. У билета только два исхода: оплачен или нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Состояния LOST и EXPIRED несут разные бизнес-правила (штраф за утерю, выезд через attendant); булев `paid` их не различает и теряет логику переходов.",
@@ -743,7 +743,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Переходы статуса билета удобнее делать через публичный `setStatus(TicketStatus)`, чтобы из любого места можно было выставить нужное состояние.",
+              "text": "Переходы статуса билета удобнее делать через публичный `setStatus(TicketStatus)`, чтобы из любого места можно было выставить нужное состояние. Баг в любом месте кода мог бы выставить `EXPIRED` активному билету в обход бизнес-правил. Сеттер выглядит универсальным и гибким — «один метод на все случаи».",
               "correct": false,
               "sections": {
                 "what_actually": "Голый `setStatus` теряет инвариант: он позволит, например, поставить PAID без оплаты или вернуть PAID-билет в ACTIVE. Переходы делают явными методами с проверками.",
@@ -755,7 +755,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В state diagram билета переход `PAID → LOST` обязателен: оплаченный билет тоже можно потерять и снова заплатить штраф.",
+              "text": "В state diagram билета переход `PAID → LOST` обязателен: оплаченный билет тоже можно потерять и снова заплатить штраф. С водителя списывали бы штраф за утерю после того, как он уже всё оплатил и выехал.",
               "correct": false,
               "sections": {
                 "what_actually": "Из PAID нельзя уйти в LOST — оплаченный билет уже завершает визит; терять и штрафовать можно только активный билет (`ACTIVE → LOST → PAID`).",
@@ -767,7 +767,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "State diagram билета: `[*] → ACTIVE` (создан на въезде); `ACTIVE → PAID` (оплата успешна), `ACTIVE → LOST` (заявлена утеря), `ACTIVE → EXPIRED` (> 30 дней без выезда); `LOST → PAID` (оплачен штраф за утерю); `PAID → [*]`, `EXPIRED → [*]`. State здесь — реальное состояние с привязанными бизнес-правилами: из PAID нельзя оплатить второй раз, из LOST нельзя выехать без штрафа. Переходы делают явными методами (`markPaid`, `markLost`), а не сеттером `setStatus` — иначе теряется инвариант.",
+              "text": "У билета есть явные состояния и допустимые переходы: `ACTIVE` переходит в `PAID`, `LOST` или `EXPIRED`, а штраф за утерю переводит `LOST` в `PAID`. Доменные методы проверяют переход, фиксируют время и side effects; публичный универсальный setter позволил бы обходить эти инварианты.",
               "correct": true,
               "sections": {
                 "explanation": "Явный метод перехода инкапсулирует проверку допустимости и сопутствующие эффекты (например, фиксацию `exitTime`), тогда как голый `setStatus(any)` позволяет выставить любое состояние в обход правил.",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Singleton — `ParkingLot` (один физический объект); Strategy — `Payment` (Cash/Card/UPI) и `SpotAllocationStrategy`; Factory Method — `SpotFactory`/`VehicleFactory`; Abstract Factory — `ParkingLotBuilder` для разных конфигов (mall vs airport); Observer — `DisplayBoard` ← `ParkingFloor`; State — `Ticket` (ACTIVE/PAID/LOST/EXPIRED); Decorator — `DiscountedRate` поверх `ParkingRate`; Command — `ParkVehicleCommand`/`ExitCommand`; Chain of Responsibility — `EntryValidationChain`. Не каждый нужен — на интервью достаточно назвать 4–5 с примером применения.",
+              "text": "Singleton — `ParkingLot` (один физический объект); Strategy — `Payment` (Cash/Card/UPI) и `SpotAllocationStrategy`; Factory Method — `SpotFactory`/`VehicleFactory`; Abstract Factory — `ParkingLotBuilder` для разных конфигов (mall vs airport); Observer — `DisplayBoard` ← `ParkingFloor`; State — `Ticket` (ACTIVE/PAID/LOST/EXPIRED); Decorator — `DiscountedRate` поверх `ParkingRate`; Command — `ParkVehicleCommand`/`ExitCommand`; Chain of Responsibility — `EntryValidationChain`.",
               "correct": true,
               "sections": {
                 "explanation": "Каждый паттерн привязан к конкретной точке вариативности: Strategy — к способам оплаты/выбора места, Observer — к реакции табло, State — к поведению билета. Паттерн ради паттерна — анти-паттерн.",
@@ -804,7 +804,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Singleton — `ParkingLot` (один физический объект); Strategy — `Payment` (Cash/Card/UPI) и `SpotAllocationStrategy`; Prototype — `Ticket` клонируется из шаблона при каждом заезде; Observer — `DisplayBoard` ← `ParkingFloor`; Decorator — `DiscountedRate` поверх `ParkingRate`. Достаточно назвать 4–5 паттернов с примером применения.",
+              "text": "Singleton — `ParkingLot` (один физический объект); Strategy — `Payment` (Cash/Card/UPI) и `SpotAllocationStrategy`; Prototype — `Ticket` клонируется из шаблона при каждом заезде; Observer — `DisplayBoard` ← `ParkingFloor`; Decorator — `DiscountedRate` поверх `ParkingRate`. Достаточно назвать 4–5 паттернов с примером применения. Нагромождение Command/Visitor/Mediator без нужды считалось бы плюсом.",
               "correct": false,
               "sections": {
                 "what_actually": "Перебор паттернов — анти-паттерн («каждая фича = паттерн»). Паттерн вводят при реальной точке вариативности; ценят уместность, а не количество.",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для способов оплаты лучше Observer: `PaymentGateway` публикует событие «нужно списать сумму», а каждый способ (`CardPayment`, `CashPayment`) подписан на него и срабатывает, когда доходит его очередь.",
+              "text": "Для способов оплаты лучше Observer: `PaymentGateway` публикует событие «нужно списать сумму», а каждый способ (`CardPayment`, `CashPayment`) подписан на него и срабатывает, когда доходит его очередь. При оплате картой «срабатывали» бы и наличные, и Apple Pay одновременно, что бессмысленно.",
               "correct": false,
               "sections": {
                 "what_actually": "Оплата — это выбор одного взаимозаменяемого алгоритма (Strategy), а не рассылка события подписчикам (Observer). На один платёж выполняется одна стратегия, а не уведомляются все способы.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Strategy для оплаты — оверинжиниринг: достаточно одного метода `PaymentService.pay(amount, method)` с `switch (method)` внутри, а отдельные классы-стратегии только плодят сущности.",
+              "text": "Strategy для оплаты — оверинжиниринг: достаточно одного метода `PaymentService.pay(amount, method)` с `switch (method)` внутри, а отдельные классы-стратегии только плодят сущности. Добавление Apple Pay означало бы правку центрального `switch`, рискуя сломать существующие ветки. Для двух способов `switch` короче, чем заводить иерархию стратегий.",
               "correct": false,
               "sections": {
                 "what_actually": "`switch (method)` внутри одного метода нарушает OCP: каждый новый способ требует правки этого метода. Strategy выносит каждый способ в отдельный класс, добавляемый без изменения клиента.",
@@ -875,7 +875,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Способов оплаты много (кэш, карта, Apple Pay, корпоративный аккаунт), и все отвечают на один вопрос «провести платёж X»: алгоритм разный, интерфейс одинаковый — это каноничный Strategy. `PaymentStrategy.charge(amount, ctx)` реализуют `CardPaymentStrategy` (через `PaymentGateway`), `CashPaymentStrategy` и т.д., а `ExitController` выбирает нужную по `Map<PaymentMethod, PaymentStrategy>`. Наследование `Payment ← CardPayment` тоже работает, но смешивает данные платежа и алгоритм проведения; Strategy чище: `Payment` хранит данные, `PaymentStrategy` — алгоритм.",
+              "text": "Способов оплаты много (кэш, карта, Apple Pay, корпоративный аккаунт), и все отвечают на один вопрос «провести платёж X»: алгоритм разный, интерфейс одинаковый — это каноничный Strategy; `PaymentStrategy.charge(amount, ctx)` реализуют `CardPaymentStrategy` (через `PaymentGateway`), `CashPaymentStrategy` и т.д., а `ExitController` выбирает нужную по `Map<PaymentMethod, PaymentStrategy>`.",
               "correct": true,
               "sections": {
                 "explanation": "Strategy разделяет «что хранится» и «как выполняется»: одинаковый интерфейс `charge` при разных реализациях позволяет добавлять способ оплаты новым классом без правок клиента (OCP).",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Наследование `Payment ← CardPayment` строго лучше Strategy: держать данные платежа и алгоритм списания в одном классе — это высокая связность, а не смешение ответственностей.",
+              "text": "Наследование `Payment ← CardPayment` строго лучше Strategy: держать данные платежа и алгоритм списания в одном классе — это высокая связность, а не смешение ответственностей. Нельзя было бы переиспользовать алгоритм проведения отдельно от конкретных данных платежа.",
               "correct": false,
               "sections": {
                 "what_actually": "Объединение данных и алгоритма в одном классе — недостаток, а не плюс: Strategy разделяет их (`Payment` хранит данные, `PaymentStrategy` — алгоритм), что чище и гибче.",
@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`SpotFactory.create(SpotConfig)` создаёт правильный тип spot по `enum size` (MOTORCYCLE→MotorcycleSpot, COMPACT→CompactSpot, LARGE→LargeSpot, HANDICAPPED→HandicappedSpot, ELECTRIC→ElectricSpot) — например при загрузке этажа из БД. Когда добавляется `ElectricSpot`, меняется только фабрика, клиент продолжает работать с `ParkingSpot`; без фабрики `new` пришлось бы вызывать в десятке мест. Выбор места — отдельный `SpotAllocationStrategy` (NearestFirst/SmallestFitting), то есть Factory создаёт, а Strategy решает, какой из подходящих занять.",
+              "text": "`SpotFactory.create(SpotConfig)` создаёт правильный тип spot по `enum size` (MOTORCYCLE→MotorcycleSpot, COMPACT→CompactSpot, LARGE→LargeSpot, HANDICAPPED→HandicappedSpot, ELECTRIC→ElectricSpot); например при загрузке этажа из БД; Когда добавляется `ElectricSpot`, меняется только фабрика, клиент продолжает работать с `ParkingSpot`.",
               "correct": true,
               "sections": {
                 "explanation": "Factory централизует создание: единственная точка `switch` по типу, а не разбросанные `new` по коду. Это поддерживает OCP — новый тип spot добавляется правкой одной фабрики.",
@@ -971,7 +971,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для списка подписчиков табло правильнее обычный `ArrayList` без синхронизации — Observer не работает в многопоточной среде.",
+              "text": "Для списка подписчиков табло правильнее обычный `ArrayList` без синхронизации — Observer не работает в многопоточной среде. Параллельные уведомления при подписке/отписке роняли бы итерацию по списку слушателей.",
               "correct": false,
               "sections": {
                 "what_actually": "Подписчиков читают из разных потоков при событиях занятости, поэтому берут `CopyOnWriteArrayList` (много чтений, редкие записи); обычный `ArrayList` дал бы `ConcurrentModificationException` или гонку.",
@@ -983,7 +983,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`ParkingSpot` должен напрямую хранить ссылку на `DisplayBoard` и сам вызывать его методы при занятии — так проще и без лишних интерфейсов.",
+              "text": "`ParkingSpot` должен напрямую хранить ссылку на `DisplayBoard` и сам вызывать его методы при занятии — так проще и без лишних интерфейсов. Добавить второй потребитель (метрики) было бы нельзя без правки `ParkingSpot`.",
               "correct": false,
               "sections": {
                 "what_actually": "Прямая ссылка `ParkingSpot → DisplayBoard` нарушает DIP: низкоуровневая сущность зависела бы от конкретного потребителя. Observer вводит абстракцию `SpotListener`, и spot/floor не знают про табло.",
@@ -995,7 +995,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`DisplayBoard` показывает число свободных мест и должен реагировать на любое изменение `ParkingSpot.available` — но `ParkingSpot` не должен знать про `DisplayBoard` (иначе нарушение DIP). Решение — Observer: `ParkingFloor` (publisher) держит `List<SpotListener>` в `CopyOnWriteArrayList`, `DisplayBoard implements SpotListener` подписывается и в `onSpotTaken`/`onSpotFreed` обновляет `EnumMap<SpotSize, AtomicInteger>`. `CopyOnWriteArrayList` — потому что подписчиков мало, читаются часто, изменения редкие.",
+              "text": "`ParkingSpot` не зависит от табло; Изменения публикует `ParkingFloor` или доменный event source, а `DisplayBoard` и metrics подписываются через listener/event bus; это сохраняет DIP и позволяет добавлять потребителей без изменения spot.",
               "correct": true,
               "sections": {
                 "explanation": "Observer инвертирует зависимость: источник события (floor/spot) знает лишь абстрактный `SpotListener`, а не конкретное табло. Это позволяет добавлять новых наблюдателей (метрики, алерты) без правок publisher.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`DisplayBoard` должен сам опрашивать все spots в цикле каждую секунду (polling), а не подписываться на события — push-модель тут не нужна.",
+              "text": "`DisplayBoard` каждую секунду обходит все места и заново вычисляет свободные счётчики; события о занятии и освобождении не используются. Polling считается точнее Observer и остаётся дешёвым независимо от числа этажей, spots и количества табло.",
               "correct": false,
               "sections": {
                 "what_actually": "Polling всех мест неэффективен и даёт устаревшие данные между опросами; Observer — push: floor уведомляет табло в момент изменения, и счётчики всегда актуальны.",
@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Паттерн State надо применять всегда, как только у `Ticket` появляется поле `status`: хранить статус в `enum` и ветвиться по нему — анти-паттерн даже для двух состояний `ACTIVE`/`PAID`.",
+              "text": "Паттерн State применяют при любом появлении поля `status`: даже два состояния `ACTIVE` и `PAID` должны быть отдельными классами, а enum и доменные методы не используют. Такой подход обязателен независимо от числа переходов и различий в поведении.",
               "correct": false,
               "sections": {
                 "what_actually": "Для 2–3 состояний без сложной логики достаточно `enum`; State оправдан при 5+ состояниях с разным поведением. `enum`-статус — нормальное решение, а не анти-паттерн.",
@@ -1043,7 +1043,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "State и Strategy для билета — по сути один паттерн: `TicketState` и `PaymentStrategy` одинаково подменяют поведение через интерфейс, поэтому один можно заменить другим без разницы.",
+              "text": "State и Strategy для билета — по сути один паттерн: `TicketState` и `PaymentStrategy` одинаково подменяют поведение через интерфейс, поэтому один можно заменить другим без разницы. Переходы билета ACTIVE→PAID нечем было бы инкапсулировать — Strategy не управляет сменой собственного состояния.",
               "correct": false,
               "sections": {
                 "what_actually": "Различие есть: Strategy — внешне выбираемый взаимозаменяемый алгоритм, а State — поведение, зависящее от внутреннего состояния, которое само инициирует переходы между состояниями.",
@@ -1055,7 +1055,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "При State-паттерне попытка оплатить уже оплаченный билет должна в `PaidTicketState.processPayment` просто вернуть текущий статус `PAID` без изменений, а не бросать исключение.",
+              "text": "При State-паттерне попытка оплатить уже оплаченный билет должна в `PaidTicketState.processPayment` просто вернуть текущий статус `PAID` без изменений, а не бросать исключение. Повторная оплата прошла бы незаметно, и баг двойного списания остался бы скрытым.",
               "correct": false,
               "sections": {
                 "what_actually": "`PaidTicketState.processPayment` явно бросает `IllegalStateException(\"Already paid\")` — недопустимый переход сигнализируется ошибкой, а не молчанием, иначе двойную оплату не отловить.",
@@ -1067,7 +1067,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В наивном дизайне `Ticket.process()` превращается в гигантский `switch` по `status`. Паттерн State выносит поведение в классы (`ActiveTicketState`, `PaidTicketState`, `LostTicketState`), каждый реализует `TicketState` с методами `processPayment` и `markLost`. Так `ActiveTicketState.processPayment` при успехе переводит билет в `PaidTicketState`, `PaidTicketState.processPayment` бросает `IllegalStateException` («Already paid»), `LostTicketState` берёт штраф. Правило: если состояний 2–3 — хватает `enum`; если 5+ с разной логикой — State.",
+              "text": "State полезен, когда поведение и допустимые операции заметно различаются между `ACTIVE`, `PAID`, `LOST` и другими состояниями: классы инкапсулируют переходы и исключения. Для простой модели с несколькими переходами достаточно enum и доменных методов; паттерн не вводят автоматически для каждого status.",
               "correct": true,
               "sections": {
                 "explanation": "State заменяет ветвление по статусу полиморфизмом: поведение в каждом состоянии живёт в своём классе, а недопустимые переходы естественно выражаются как исключения в соответствующем State.",
@@ -1127,7 +1127,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "S: `Ticket` хранит факт заезда, деньги считает `ParkingRate`, `PaymentStrategy` проводит платёж не зная про `Ticket`. O: добавить `UpiPayment` — новый класс под `PaymentStrategy` без правок; `ElectricSpot` — подкласс + одна строка в `SpotFactory`. L: `LargeSpot` подставляется вместо `ParkingSpot` без сюрпризов (антипример — если `MotorcycleSpot` примет `Truck`). I: разделить `Bookable` и `Releasable`, чтобы клиент зависел только от нужного. D: `ParkingLot` зависит от интерфейса `TicketRepository`, `Payment` — от `PaymentGateway`, а не от Stripe SDK напрямую.",
+              "text": "S: `Ticket` хранит факт заезда, деньги считает `ParkingRate`, `PaymentStrategy` проводит платёж не зная про `Ticket`; O: добавить `UpiPayment` — новый класс под `PaymentStrategy` без правок; `ElectricSpot` — подкласс + одна строка в `SpotFactory`; L: `LargeSpot` подставляется вместо `ParkingSpot` без сюрпризов (антипример — если `MotorcycleSpot` примет `Truck`).",
               "correct": true,
               "sections": {
                 "explanation": "Каждая буква проверяется на конкретной сущности: SRP — на разделении Ticket/Rate/Payment, OCP — на добавлении способа оплаты, LSP — на подстановке spot, ISP — на узких интерфейсах, DIP — на зависимости от абстракций репозитория и шлюза.",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Composition over inheritance означает полный отказ от наследования в дизайне — никаких `abstract class` и `extends` быть не должно.",
+              "text": "Composition over inheritance означает полный отказ от наследования в дизайне — никаких `abstract class` и `extends` быть не должно. Пришлось бы выкинуть полиморфный `canFitVehicle` через подклассы spot. Лозунг звучит категорично, поэтому его понимают как «наследование под запретом».",
               "correct": false,
               "sections": {
                 "what_actually": "Принцип — предпочитать композицию там, где наследование даёт взрыв подклассов, а не запрещать наследование вовсе. `Vehicle`/`ParkingSpot` остаются разумными иерархиями.",
@@ -1163,7 +1163,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Соблазн — `DiscountedRate extends ParkingRate`, но каждая комбинация скидок порождает новый класс (`DiscountedNightRate`, `SeniorDiscountedNightRate` …) — комбинаторный взрыв. Решение через композицию (Decorator): интерфейс `Rate { calculate(Duration) }`, базовый `StandardRate`, и `DiscountedRate implements Rate` хранит `inner Rate` + `multiplier`, делегируя `inner.calculate` и домножая. Тогда `new DiscountedRate(weekendRate, 0.5)` собирает любую комбинацию скидок без новых классов.",
+              "text": "Соблазн — `DiscountedRate extends ParkingRate`, но каждая комбинация скидок порождает новый класс (`DiscountedNightRate`, `SeniorDiscountedNightRate` …) — комбинаторный взрыв; Решение через композицию (Decorator): интерфейс `Rate { calculate(Duration) }`, базовый `StandardRate`, и `DiscountedRate implements Rate` хранит `inner Rate` + `multiplier`, делегируя `inner.calculate` и домножая.",
               "correct": true,
               "sections": {
                 "explanation": "Композиция вместо наследования заменяет взрыв подклассов сборкой объектов в рантайме: скидки навешиваются как обёртки друг на друга, и число комбинаций не требует новых типов.",
@@ -1176,7 +1176,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Decorator-обёртка `DiscountedRate` может менять сигнатуру метода `calculate`, возвращая, например, не `BigDecimal`, а строку с описанием скидки.",
+              "text": "Decorator-обёртка `DiscountedRate` может менять сигнатуру метода `calculate`, возвращая, например, не `BigDecimal`, а строку с описанием скидки. Нельзя было бы вкладывать `DiscountedRate` друг в друга — типы перестали бы совпадать.",
               "correct": false,
               "sections": {
                 "what_actually": "Декоратор обязан реализовывать тот же интерфейс `Rate` с той же сигнатурой `calculate(Duration): BigDecimal` — иначе он не подставится в цепочку. Менять контракт нельзя.",
@@ -1188,7 +1188,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Скидки правильнее моделировать наследованием: `DiscountedNightRate extends ParkingRate`, `SeniorDiscountedNightRate extends DiscountedNightRate` и так далее.",
+              "text": "Комбинации тарифов и скидок моделируют только наследованием: для каждого набора правил создают отдельный подкласс, например `SeniorDiscountedNightRate`. Рост числа классов не влияет на расширяемость, а композиция и Decorator лишь усложняют вызов расчёта.",
               "correct": false,
               "sections": {
                 "what_actually": "Это и есть комбинаторный взрыв подклассов, которого избегают: каждая новая комбинация скидок порождала бы новый класс. Decorator собирает комбинации из обёрток без новых типов.",
@@ -1211,7 +1211,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно объявить метод `assignVehicle` на `ParkingSpot` как `synchronized`: он выполнится атомарно, поэтому проверку `available` можно оставить снаружи, в цикле выбора spot по этажу.",
+              "text": "Достаточно синхронизировать только `ParkingSpot.assignVehicle`: поиск свободного места выполняется снаружи и может вернуть один spot двум потокам, но последующие вызовы автоматически перераспределят второй автомобиль. Атомарная операция «найти и занять» на уровне этажа не нужна.",
               "correct": false,
               "sections": {
                 "what_actually": "Гонка решается атомарностью: либо `floorLock` (взаимное исключение), либо `compareAndSet` (lock-free CAS). Ровно один поток выигрывает spot, второй получает отказ и идёт дальше.",
@@ -1223,7 +1223,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Достаточно пометить поле `available` как `volatile`: гарантированная видимость записи между потоками не даст двум потокам занять один и тот же spot.",
+              "text": "Достаточно пометить поле `available` как `volatile`: гарантированная видимость записи между потоками не даст двум потокам занять один и тот же spot. `floorLock` и `AtomicReference` были бы лишними.",
               "correct": false,
               "sections": {
                 "what_actually": "`volatile` даёт только видимость, но не атомарность пары «прочитать available + записать занятость». Между чтением и записью второй поток успеет вклиниться; нужен `synchronized`/lock или `compareAndSet`.",
@@ -1235,7 +1235,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "CAS через `parked.compareAndSet(null, v)` для парковки применять нельзя: если первый поток уже записал, второй получит `false`, и его автомобиль просто потеряется без назначенного места.",
+              "text": "CAS через `parked.compareAndSet(null, v)` для парковки применять нельзя: если первый поток уже записал, второй получит `false`, и его автомобиль просто потеряется без назначенного места. Не было бы смысла мигрировать на CAS под high-load.",
               "correct": false,
               "sections": {
                 "what_actually": "CAS lock-free и масштабируется лучше под высокой конкуренцией; floor-lock проще, но при тысячах въездов/мин становится боттлнеком. «Лучше» зависит от нагрузки, а не абсолютно.",
@@ -1247,7 +1247,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Проблема: две камеры на двух въездах одновременно зовут `parkVehicle`; если просто пробежаться по `spots` и взять первый `available`, оба получат один spot. Решение 1 — coarse lock на этаже: под `floorLock.lock()` ищем `available` spot и `assignVehicle`, отпускаем в `finally`. Просто и надёжно, но при 1000+ въездов/мин lock на этаж — боттлнек. Решение 2 — CAS на каждом spot: `AtomicReference<Vehicle> parked`, `tryAssign` делает `parked.compareAndSet(null, v)`; floor крутит цикл без lock. CAS быстрее, lock-free, масштабируется, но сложнее объяснять.",
+              "text": "Гонка возникает между проверкой доступности и резервированием; Её устраняют одной атомарной границей: lock на этаже охватывает поиск и assign либо каждый spot резервируется CAS, а проигравший поток продолжает поиск.",
               "correct": true,
               "sections": {
                 "explanation": "Оба решения делают «проверить-и-занять» атомарным: либо взаимным исключением через `floorLock`, либо неблокирующим `compareAndSet`. Без атомарности окно между проверкой `available` и присвоением порождает гонку.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Три уровня: `ParkingLot` (один глобальный `ReentrantLock`) — низкий throughput, минимум сложности, годится для прототипа/debug; `ParkingFloor` (lock на этаж) — средний throughput (≈ N этажей), средняя сложность, стандартный выбор; `ParkingSpot` (CAS / per-spot lock) — высокий throughput, сложнее тесты, для high-load. Эвристика для интервью: «начну с floor-level lock, потому что 99% парковок этого хватит, а если надо больше — мигрирую на CAS». Это демонстрирует понимание trade-off, а не оверинжиниринг.",
+              "text": "Три уровня: `ParkingLot` (один глобальный `ReentrantLock`) — низкий throughput, минимум сложности, годится для прототипа/debug; `ParkingFloor` (lock на этаж) — средний throughput (≈ N этажей), средняя сложность, стандартный выбор; `ParkingSpot` (CAS / per-spot lock) — высокий throughput, сложнее тесты, для high-load.",
               "correct": true,
               "sections": {
                 "explanation": "Чем мельче гранула блокировки, тем выше параллелизм, но тем сложнее код и тесты. Floor — золотая середина: даёт параллелизм между этажами при простой реализации.",
@@ -1284,7 +1284,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Обратная зависимость: глобальный `ReentrantLock` на всю `ParkingLot` даёт максимальный throughput при минимуме кода, поэтому его берут для high-load, а per-spot CAS оставляют для прототипов, где важна простота отладки.",
+              "text": "Обратная зависимость: глобальный `ReentrantLock` на всю `ParkingLot` даёт максимальный throughput при минимуме кода, поэтому его берут для high-load, а per-spot CAS оставляют для прототипов, где важна простота отладки. Даже прототип парковки требовал бы lock-free структур и тяжёлых конкурентных тестов без реальной выгоды.",
               "correct": false,
               "sections": {
                 "what_actually": "Per-spot CAS даёт максимум throughput, но усложняет код и тесты; на низкой нагрузке это оверинжиниринг. Дефолт — floor-level, а вниз мигрируют по необходимости.",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "На тестируемость гранулярность не влияет: per-spot CAS и глобальный lock проверяются одними и теми же тестами, так как вся логика блокировки спрятана внутри одного метода `reserve`.",
+              "text": "На тестируемость гранулярность не влияет: per-spot CAS и глобальный lock проверяются одними и теми же тестами, так как вся логика блокировки спрятана внутри одного метода `reserve`. В таблице trade-off не стояло бы «сложнее тесты» напротив spot-level.",
               "correct": false,
               "sections": {
                 "what_actually": "Чем мельче блокировка, тем сложнее конкурентные тесты (нужно ловить редкие гонки на уровне отдельных spot); глобальный lock тестировать проще. Сложность тестов растёт вниз по уровням.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Floor-level lock не даёт выигрыша над глобальным: пока один поток держит lock этажа, операции на других этажах всё равно ждут общий менеджер `ParkingLot`, поэтому throughput остаётся тем же.",
+              "text": "Floor-level lock не даёт выигрыша над глобальным: пока один поток держит lock этажа, операции на других этажах всё равно ждут общий менеджер `ParkingLot`, поэтому throughput остаётся тем же. Не было бы смысла в floor-lock.",
               "correct": false,
               "sections": {
                 "what_actually": "Глобальный lock сериализует все въезды (даже на разные этажи), давая низкий throughput; floor-level позволяет параллельные въезды на разные этажи. Это разные уровни производительности.",
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Hibernate с `@Version` при конфликте автоматически повторяет `UPDATE` с перечитанной версией, поэтому ловить `OptimisticLockException` в коде не нужно — ретрай встроен в провайдера.",
+              "text": "Hibernate с `@Version` при конфликте автоматически повторяет `UPDATE` с перечитанной версией, поэтому ловить `OptimisticLockException` в коде не нужно — ретрай встроен в провайдера. Не нужна была бы ветка «попробовать другой spot». Слово «locking» наводит на мысль о гарантированной блокировке без конфликтов.",
               "correct": false,
               "sections": {
                 "what_actually": "Optimistic locking не предотвращает конфликт, а обнаруживает его: при коллизии прилетает `OptimisticLockException` (или `updated == 0`), и приложение обязано отреагировать — попробовать другой spot.",
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Оптимистичную блокировку делают так: безусловный `UPDATE parking_spot SET vehicle_id = ?, version = version + 1 WHERE id = ?`, а затем перечитывают `version` и сравнивают с ожидаемой — если совпала, бронь удалась.",
+              "text": "Оптимистичную блокировку делают так: безусловный `UPDATE parking_spot SET vehicle_id = ?, version = version + 1 WHERE id = ?`, а затем перечитывают `version` и сравнивают с ожидаемой — если совпала, бронь удалась. `version = version + 1` при каждом резерве меняло бы «номер места», что бессмысленно.",
               "correct": false,
               "sections": {
                 "what_actually": "`version` — счётчик ревизий строки для optimistic locking: Hibernate/UPDATE сверяют и инкрементят его, чтобы поймать конкурентное изменение. К номеру места он отношения не имеет.",
@@ -1367,7 +1367,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Когда `ParkingSpot` персистится, in-memory CAS недостаточно. Используют optimistic locking с версией: таблица `parking_spot` с колонкой `version BIGINT`. Метод `tryReserve` делает `UPDATE parking_spot SET vehicle_id = ?, version = version + 1 WHERE id = ? AND vehicle_id IS NULL` и возвращает `updated == 1`. `WHERE vehicle_id IS NULL` — это CAS на уровне БД: при двух одновременных — один поток получит `updated == 1`, второй `0`. Альтернатива — JPA с `@Version`: Hibernate бросит `OptimisticLockException`, который обрабатывают как «попробовать другой spot».",
+              "text": "Когда `ParkingSpot` персистится, in-memory CAS недостаточно; Используют optimistic locking с версией: таблица `parking_spot` с колонкой `version BIGINT`. Условие в `WHERE` превращает обычный UPDATE в атомарный compare-and-swap силами СУБД: запись применится, только если место всё ещё свободно, иначе вернётся 0 затронутых строк.",
               "correct": true,
               "sections": {
                 "explanation": "Условие в `WHERE` превращает обычный UPDATE в атомарный compare-and-swap силами СУБД: запись применится, только если место всё ещё свободно, иначе вернётся 0 затронутых строк.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Lost ticket: водитель идёт к attendant, берётся `MAX_LOST_PENALTY` (например $50) + распознавание номера по камере, статус билета → LOST. Full lot: `parkVehicle` возвращает `Optional.empty()`, на входе «Full» (альтернатива — FIFO `Queue<Vehicle>`). Early exit (< 15 мин): `freeGracePeriod` → `BigDecimal.ZERO`, барьер открывается. Monthly subscriber: флаг `Subscription` на `Vehicle`, `calculate` возвращает 0. Билет старше 30 дней: EXPIRED, выезд через attendant + штраф. Эти кейсы — главный материал для дополнительных вопросов интервьюера.",
+              "text": "Lost ticket: водитель идёт к attendant, берётся `MAX_LOST_PENALTY` (например $50) + распознавание номера по камере, статус билета → LOST; Full lot: `parkVehicle` возвращает `Optional.empty()`, на входе «Full» (альтернатива; FIFO `Queue<Vehicle>`); Early exit (< 15 мин): `freeGracePeriod` → `BigDecimal.ZERO`, барьер открывается.",
               "correct": true,
               "sections": {
                 "explanation": "Edge cases проверяют, продумана ли система за пределами happy path: каждый кейс имеет чёткое поведение и привязан к конкретному полю/статусу (penalty, grace period, статус билета).",
@@ -1404,7 +1404,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Lost ticket обрабатывается так же, как обычный выезд: водитель просто платит стандартный тариф по времени, ничего особенного не требуется.",
+              "text": "Lost ticket обрабатывается так же, как обычный выезд: водитель просто платит стандартный тариф по времени, ничего особенного не требуется. Потеряв билет, можно было бы заявить минимальное время стоянки и не платить за реальный срок.",
               "correct": false,
               "sections": {
                 "what_actually": "При утере неизвестно точное время заезда, поэтому берут фиксированный `MAX_LOST_PENALTY` (например $50) + распознавание номера по камере, а статус билета переводят в LOST через attendant.",
@@ -1416,7 +1416,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Early exit (выезд за 5 минут) должен тарифицироваться как полный первый час, потому что место всё равно было занято.",
+              "text": "Early exit (выезд за 5 минут) должен тарифицироваться как полный первый час, потому что место всё равно было занято. Заехавший развернуться водитель платил бы за час, что отпугнуло бы клиентов и противоречит grace-периоду.",
               "correct": false,
               "sections": {
                 "what_actually": "Для коротких визитов действует `freeGracePeriod` (например 15 минут): `calculate` возвращает `BigDecimal.ZERO`, и барьер открывается бесплатно. Полный час за 5 минут не берут.",
@@ -1428,7 +1428,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "При full lot метод `parkVehicle` должен бросать `RuntimeException`, которое обрушит обработку въезда, — это самый чистый способ сообщить об отсутствии мест.",
+              "text": "При full lot метод `parkVehicle` должен бросать `RuntimeException`, которое обрушит обработку въезда, — это самый чистый способ сообщить об отсутствии мест. Каждое заполнение парковки спамило бы stacktrace в логи и требовало try/catch на happy path.",
               "correct": false,
               "sections": {
                 "what_actually": "Отсутствие мест — ожидаемый бизнес-исход, а не ошибка: `parkVehicle` возвращает `Optional.empty()`, и на входе показывается «Full». Исключение для нормального сценария — анти-паттерн.",
@@ -1451,7 +1451,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Счётчики `DisplayBoard` нужно персистить в БД наравне с билетами и обновлять синхронно при каждом изменении занятости.",
+              "text": "Счётчики `DisplayBoard` нужно персистить в БД наравне с билетами и обновлять синхронно при каждом изменении занятости. При расхождении между сохранёнными счётчиками и реальными местами было бы непонятно, чему верить. Раз счётчик — важное число, его надо сохранять, как и всё остальное.",
               "correct": false,
               "sections": {
                 "what_actually": "Счётчики табло — derived state: их пересчитывают из `ParkingSpot` при старте, а не хранят отдельно. Дублировать производное состояние в БД создаёт риск рассинхрона с источником.",
@@ -1463,7 +1463,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Краш посреди транзакции (деньги списаны, место не освобождено) безопасен сам по себе — БД-транзакция гарантированно откатит всё, и reconciliation не нужен.",
+              "text": "Локальная DB-транзакция автоматически согласует внешний платёж, билет и освобождение места после любого crash. Если деньги уже списаны у PSP, rollback базы вернёт их клиенту сам, поэтому idempotency, outbox, reconciliation и recovery workflow не требуются. Rollback вернул бы деньги клиенту автоматически.",
               "correct": false,
               "sections": {
                 "what_actually": "Списание идёт через внешний `PaymentGateway` вне БД-транзакции, поэтому одна транзакция не откатит деньги. Нужен outbox + reconciliation job, который находит и разруливает такие расхождения.",
@@ -1475,7 +1475,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Состояние парковки достаточно держать только в памяти — при рестарте система просто начнёт с чистого листа, считая все места свободными.",
+              "text": "Состояние парковки достаточно держать только в памяти — при рестарте система просто начнёт с чистого листа, считая все места свободными. После рестарта система выдала бы занятые места новым машинам, а оплатившие водители «исчезли» бы.",
               "correct": false,
               "sections": {
                 "what_actually": "Сброс в «все свободны» при рестарте потерял бы реально припаркованные машины и активные билеты. Критичное состояние пишут в БД синхронно и загружают при старте.",
@@ -1487,7 +1487,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "После рестарта нельзя забыть, кто где стоит, поэтому всё критичное состояние пишут в БД синхронно: `ParkingSpot.occupied` (UPDATE при assign/release, загрузка при старте), `Ticket` (INSERT при выдаче, UPDATE при оплате, active-билеты грузятся из БД), `Payment` (INSERT, idempotent status, для аудита), `ParkingRate` (конфиг в БД). `DisplayBoard counters` — derived state, пересчитывают из `ParkingSpot`. При краше посреди транзакции (списали деньги, не освободили spot) нужен outbox pattern + reconciliation job, который ищет такие расхождения.",
+              "text": "После рестарта нельзя забыть, кто где стоит, поэтому всё критичное состояние пишут в БД синхронно: `ParkingSpot.occupied` (UPDATE при assign/release, загрузка при старте), `Ticket` (INSERT при выдаче, UPDATE при оплате, active-билеты грузятся из БД), `Payment` (INSERT, idempotent status, для аудита), `ParkingRate` (конфиг в БД).",
               "correct": true,
               "sections": {
                 "explanation": "Состояние делят на персистентное (места, билеты, платежи) и производное (счётчики табло). Производное восстанавливают пересчётом, а не хранят — это исключает рассинхрон между источником и кэшем.",
@@ -1511,7 +1511,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Dynamic pricing требует изменить интерфейс `Rate`, добавив в `calculate` параметр `occupancy`, — иначе текущую занятость в расчёт наценки не передать.",
+              "text": "Dynamic pricing требует изменить интерфейс `Rate`, добавив в `calculate` параметр `occupancy`, — иначе текущую занятость в расчёт наценки не передать. Правка сигнатуры `Rate.calculate` сломала бы все существующие реализации (`StandardRate`, `DiscountedRate`) разом. Для наценки по занятости её надо явно прокинуть в метод расчёта.",
               "correct": false,
               "sections": {
                 "what_actually": "Интерфейс `Rate` не меняют: `DynamicRate implements Rate` сам читает `OccupancyMetric` как зависимость и домножает результат. Сигнатура `calculate(Duration)` остаётся прежней, клиент не знает о наценке.",
@@ -1523,7 +1523,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "EV charging: `ElectricSpot extends ParkingSpot` с `chargingPowerKw` и `ChargingSession`, тариф = parking + electricity·kWh (комбинация двух стратегий через Decorator). Reservation: новая сущность `Reservation(spotId, from, to, vehicleId)`; `assignVehicleToSpot` сначала проверяет, не зарезервирован ли spot на сейчас; если резерв не пришёл за 15 минут — освобождаем (cron). Dynamic pricing: `DynamicRate implements Rate` с зависимостью от `OccupancyMetric` — при occupancy > 80% наценка ×1.5, прозрачно для остальной системы. Tiered VIP: отдельный `SpotSize.VIP` + проверка `Vehicle.tier()` в `canFitVehicle`.",
+              "text": "EV charging: `ElectricSpot extends ParkingSpot` с `chargingPowerKw` и `ChargingSession`, тариф = parking + electricity·kWh (комбинация двух стратегий через Decorator); Reservation: новая сущность `Reservation(spotId, from, to, vehicleId)`; `assignVehicleToSpot` сначала проверяет, не зарезервирован ли spot на сейчас.",
               "correct": true,
               "sections": {
                 "explanation": "Все расширения ложатся поверх существующих абстракций без переписывания ядра: новый подкласс spot, новая сущность, новая реализация `Rate`. Это прямая выгода от OCP и Strategy/Decorator в базовом дизайне.",
@@ -1536,7 +1536,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Reservation реализуется полем `reserved: boolean` прямо в `ParkingSpot`; окно `from`/`to` и cron-освобождение брони не нужны — флаг снимает тот, кто занял место.",
+              "text": "Reservation реализуется полем `reserved: boolean` прямо в `ParkingSpot`; окно `from`/`to` и cron-освобождение брони не нужны — флаг снимает тот, кто занял место. Нельзя было бы хранить интервал брони и автоматически освобождать просроченные резервы.",
               "correct": false,
               "sections": {
                 "what_actually": "Бронь моделируют отдельной сущностью `Reservation(spotId, from, to, vehicleId)` с временным окном; нужен cron, освобождающий spot, если зарезервировавший не приехал за 15 минут. Булев флаг не несёт времени и владельца.",
@@ -1548,7 +1548,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "EV charging добавляется правкой базового `ParkingSpot`: в него кладут поля `chargingPowerKw` и `ChargingSession`, а обычные места просто оставляют их `null`.",
+              "text": "EV charging добавляется правкой базового `ParkingSpot`: в него кладут поля `chargingPowerKw` и `ChargingSession`, а обычные места просто оставляют их `null`. У каждого `MotorcycleSpot` болтались бы пустые `chargingPowerKw`, нарушая SRP базового класса.",
               "correct": false,
               "sections": {
                 "what_actually": "EV-специфику выносят в подкласс `ElectricSpot extends ParkingSpot`; базовый класс не трогают, иначе обычные места получили бы ненужные зарядные поля. Это OCP.",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "REST API: `POST /api/v1/park` (тело `{licensePlate, vehicleType}` → `Ticket`), `POST /api/v1/exit/{ticketId}` (расчёт + начало оплаты), `POST /api/v1/exit/{ticketId}/payment` (подтвердить оплату), `GET /api/v1/status` (свободные места), `GET /api/v1/tickets/{id}`, `PUT /api/v1/admin/rates` (admin role), `POST /api/v1/admin/floors/{id}/close`. Контроллер тонкий: делегирует в `ParkingLot`/`ExitService`, логика остаётся в domain-слое. `ParkingController.park` мапит результат `parkVehicle` в `200` или `409 CONFLICT` при full lot.",
+              "text": "REST API остаётся тонким адаптером: endpoints принимают DTO для парковки, выхода, оплаты и status, преобразуют их в команды доменной модели и делегируют application service или фасаду. Контроллер не рассчитывает тариф и не меняет spot напрямую.",
               "correct": true,
               "sections": {
                 "explanation": "API — это тонкий адаптер: контроллер принимает DTO, конвертирует в доменные объекты и делегирует фасаду. Бизнес-логика (размещение, тариф, оплата) живёт в domain-слое, а не в контроллере.",
@@ -1584,7 +1584,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Изменение тарифов вешают на `GET /api/v1/admin/rates?newPrice=...`, передавая новое значение в query-параметрах, — GET проще вызвать из браузера и он кэшируется.",
+              "text": "Изменение тарифов вешают на `GET /api/v1/admin/rates?newPrice=...`, передавая новое значение в query-параметрах, — GET проще вызвать из браузера и он кэшируется. Любой клиент менял бы прайс парковки, что недопустимо с точки зрения бизнеса и безопасности.",
               "correct": false,
               "sections": {
                 "what_actually": "Менять тарифы вправе только `Admin`; эндпоинт защищают проверкой роли (admin). Открытый доступ позволил бы любому водителю обнулить или взвинтить цены.",
@@ -1596,7 +1596,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Когда парковка заполнена, `POST /api/v1/park` возвращает `500 Internal Server Error`, поскольку сервер не смог выполнить операцию парковки.",
+              "text": "Когда парковка заполнена, `POST /api/v1/park` возвращает `500 Internal Server Error`, поскольку сервер не смог выполнить операцию парковки. Мониторинг захлёбывался бы 5xx-алертами при каждой заполненной парковке. «Не удалось припарковать» интуитивно воспринимается как ошибка сервера.",
               "correct": false,
               "sections": {
                 "what_actually": "Full lot — ожидаемый бизнес-исход, его маппят в `409 CONFLICT`, чтобы клиент отличал «нет мест» от реального сбоя сервера. `500` обозначает внутреннюю ошибку, а не отсутствие мест.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Бизнес-логику размещения и расчёта тарифа держат целиком в методах `@RestController` (`ParkingController.park`), а `ParkingLot` оставляют простым хранилищем данных без поведения — так вся обработка запроса собрана в одном слое.",
+              "text": "Бизнес-логику размещения и расчёта тарифа держат целиком в методах `@RestController` (`ParkingController.park`), а `ParkingLot` оставляют простым хранилищем данных без поведения — так вся обработка запроса собрана в одном слое. Переход с REST на gRPC потребовал бы переписать всю бизнес-логику, зашитую в контроллеры.",
               "correct": false,
               "sections": {
                 "what_actually": "Логика в контроллере смешивает транспорт и домен, мешает тестированию и замене API. Контроллер должен быть тонким и делегировать в `ParkingLot`/`ExitService`; правила живут в domain-слое.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "God class `ParkingLot` на 1000+ строк — не проблема дизайна, а вопрос производительности: пока его методы отрабатывают быстро, размер класса на поддержку не влияет, и дробить его на `EntryService`/`ExitService`/`BillingService` стоит только ради latency.",
+              "text": "God class `ParkingLot` на 1000+ строк — не проблема дизайна, а вопрос производительности: пока его методы отрабатывают быстро, размер класса на поддержку не влияет, и дробить его на `EntryService`/`ExitService`/`BillingService` стоит только ради latency. Любая правка тарификации или въезда трогала бы один гигантский класс, плодя конфликты и баги.",
               "correct": false,
               "sections": {
                 "what_actually": "God class — анти-паттерн: его разбивают на `EntryService`, `ExitService`, `BillingService`. Раздутая корневая сущность нарушает SRP и становится неподдерживаемой.",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Главные анти-паттерны: God class `ParkingLot` (1000+ строк, делает всё → выносить `EntryService`/`ExitService`/`BillingService`); procedural в OO-одежде (`if (type == MOTORCYCLE) ...` повсюду → полиморфизм через `canFitVehicle`); анемичная модель (`Ticket` — только getters/setters → методы поведения внутрь, `markPaid`/`duration`); hard-coded rates (→ `ParkingRate` + admin endpoint); магические числа (`if (minutes < 15)` → `freeGracePeriod` в конфиге); mutable shared state без защиты (→ `volatile`/`synchronized`/`AtomicReference`); слишком много паттернов (YAGNI); `spot-id как int` (→ value object `record SpotId`). Признак плохого дизайна: новый тип транспорта/оплаты требует правок > 3 файлов и `if/switch` в нескольких местах.",
+              "text": "Главные анти-паттерны: God class `ParkingLot` (1000+ строк, делает всё → выносить `EntryService`/`ExitService`/`BillingService`); procedural в OO-одежде (`if (type == MOTORCYCLE) ...` повсюду → полиморфизм через `canFitVehicle`); анемичная модель (`Ticket` — только getters/setters → методы поведения внутрь, `markPaid`/`duration`); hard-coded rates (→ `ParkingRate` + admin endpoint).",
               "correct": true,
               "sections": {
                 "explanation": "Каждый анти-паттерн имеет симптом и лечение: god class лечится разбиением на сервисы, procedural — полиморфизмом, анемичность — поведением внутри сущности. Хороший дизайн добавляет новый класс и одну строку в фабрике.",
@@ -1656,7 +1656,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Магические числа вроде `if (minutes < 15)` терпимы, а вот вынос ставки в `ParkingRate` с admin-endpoint избыточен: тарифы меняются раз в год, поэтому hard-coded `new BigDecimal(\"4\")` предпочтительнее лишней сущности.",
+              "text": "Магические числа вроде `if (minutes < 15)` терпимы, а вот вынос ставки в `ParkingRate` с admin-endpoint избыточен: тарифы меняются раз в год, поэтому hard-coded `new BigDecimal(\"4\")` предпочтительнее лишней сущности. Смена grace-периода или тарифа всегда означала бы патч кода вместо правки настройки.",
               "correct": false,
               "sections": {
                 "what_actually": "Магические числа и hard-coded rates — анти-паттерны: их выносят в конфиг (`freeGracePeriod`, `ParkingRate` + admin endpoint). Иначе изменение требует правки и релиза кода.",
@@ -1668,7 +1668,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Признак хорошего OO-дизайна — когда добавление нового типа транспорта затрагивает один централизованный `switch (type)` в `canFitVehicle`: собрать всю логику вроде `if (type == MOTORCYCLE)` в одном месте проще поддерживать, чем размазывать поведение по подклассам.",
+              "text": "Признак хорошего OO-дизайна — когда добавление нового типа транспорта затрагивает один централизованный `switch (type)` в `canFitVehicle`: собрать всю логику вроде `if (type == MOTORCYCLE)` в одном месте проще поддерживать, чем размазывать поведение по подклассам. Инварианты билета (нельзя оплатить дважды) жили бы вне сущности и легко нарушались бы из любого сервиса.",
               "correct": false,
               "sections": {
                 "what_actually": "Анемичная модель — анти-паттерн: поведение оторвано от данных. Поведенческие методы (`markPaid`, `duration`) кладут внутрь сущности `Ticket`, а не выносят в сервис.",

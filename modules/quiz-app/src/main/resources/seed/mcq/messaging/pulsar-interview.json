@@ -23,20 +23,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Apache Pulsar` — распределённая платформа messaging + streaming, созданная в `Yahoo!` (2013), open-source с 2016 и Apache top-level с 2018. Её отличают разделённые compute и storage (`Brokers` + `BookKeeper`), встроенная multi-tenancy, нативная geo-replication, `Pulsar Functions` и tiered storage с offload в `S3`.",
+              "text": "`Apache Pulsar` — распределённая платформа messaging и streaming с разделёнными compute/storage слоями. Она поддерживает durable topics, несколько моделей подписки, multi-tenancy, geo-replication и tiered storage.",
               "correct": true,
               "sections": {
-                "explanation": "Pulsar совмещает очередь (queue) и лог (log) семантику в одной системе, поэтому покрывает и messaging, и streaming сценарии без отдельных инструментов под каждый.",
-                "example": "В multi-region IoT-платформе один Pulsar-кластер обслуживает несколько команд (multi-tenancy) и реплицирует события между регионами нативно, без внешнего инструмента.",
-                "when_to_apply": "Pulsar выбирают для event streaming, микросервисов, IoT и multi-region приложений, где важны изоляция арендаторов и гибкая модель подписок.",
-                "edge_cases": "Несмотря на современную архитектуру, Pulsar сложнее в эксплуатации (больше компонентов) и имеет меньшую экосистему, чем `Kafka`, что учитывают при выборе.",
+                "explanation": "Brokers обслуживают клиентов и routing, BookKeeper хранит журналы, а metadata store координирует кластер. Такая архитектура позволяет масштабировать соединения и storage независимо.",
+                "example": "Один tenant публикует события в `persistent://acme/orders/created`, несколько сервисов используют разные subscriptions, а старые ledgers offload-ятся в object storage.",
+                "when_to_apply": "Рассматривайте Pulsar для multi-tenant платформ, multi-region messaging, большого числа topics и независимого масштабирования compute/storage.",
+                "edge_cases": "Архитектурная гибкость увеличивает число компонентов и операционные требования. Сравнение с Kafka должно учитывать конкретные workload, команды и managed-варианты.",
                 "related": "[[pulsar-interview#Q2]] отличия от Kafka; [[pulsar-interview#Q4]] разделение brokers и bookies; [[pulsar-interview#Q14]] Pulsar Functions как compute-слой."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`Apache Pulsar` — это исключительно streaming-движок (как лог), он не поддерживает queue-семантику и модель нескольких потребителей с балансировкой.",
+              "text": "`Apache Pulsar` — это исключительно streaming-движок (как лог), он не поддерживает queue-семантику и модель нескольких потребителей с балансировкой. Не существует подписок `Shared` и `Key_Shared`.",
               "correct": false,
               "sections": {
                 "what_actually": "Pulsar поддерживает обе семантики: лог (streaming) и очередь (queue) через subscription types вроде `Shared`, где сообщения распределяются между потребителями.",
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Pulsar` поддерживает только один тип подписки (как Kafka consumer group), а geo-replication в нём делается внешним `MirrorMaker`, как и в Kafka.",
+              "text": "Pulsar имеет только Kafka-like consumer group, а geo-replication требует внешний MirrorMaker; Shared и Key_Shared отсутствуют.",
               "correct": false,
               "sections": {
                 "what_actually": "Pulsar даёт 4 типа подписок (`Exclusive`, `Shared`, `Failover`, `Key_Shared`) и нативную geo-replication; `MirrorMaker` — это инструмент Kafka, не Pulsar.",
@@ -83,7 +83,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В `Kafka` есть built-in multi-tenancy с tenants и namespaces, а в `Pulsar` изоляцию арендаторов приходится делать вручную через отдельные кластеры.",
+              "text": "Kafka имеет native tenants/namespaces, а Pulsar требует отдельный cluster каждому tenant для isolation.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: built-in multi-tenancy (tenants/namespaces) — это про Pulsar, а в Kafka изоляцию обычно делают ACL-ами или отдельными кластерами.",
@@ -95,7 +95,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Главное отличие — в архитектуре: у `Pulsar` compute (`Brokers`) и storage (`BookKeeper`) разделены, у `Kafka` они совмещены на брокерах. Pulsar даёт built-in multi-tenancy, нативную geo-replication, 4 типа подписок и built-in tiered storage, тогда как Kafka использует ручную изоляцию, `MirrorMaker` и consumer groups; зато Kafka намного зрелее и доминирует на рынке.",
+              "text": "Pulsar отделяет brokers от BookKeeper storage, поддерживает tenants, subscription types и geo-replication; Kafka ecosystem обычно зрелее.",
               "correct": true,
               "sections": {
                 "explanation": "Разделение compute/storage позволяет масштабировать брокеры и хранилище независимо, тогда как в Kafka добавление брокера требует rebalance партиций.",
@@ -108,7 +108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Pulsar` и `Kafka` архитектурно идентичны: оба совмещают compute и storage на одних брокерах, и разница лишь в названиях команд CLI.",
+              "text": "Pulsar и Kafka архитектурно идентичны: оба хранят partitions локально на brokers и различаются только CLI.",
               "correct": false,
               "sections": {
                 "what_actually": "Ключевое отличие именно архитектурное: Pulsar разделяет compute (`Brokers`) и storage (`BookKeeper`), а Kafka их совмещает — это не косметика CLI.",
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "«Cloud-native» означает, что брокеры Pulsar stateful и хранят данные локально, поэтому при добавлении брокера нужен ребаланс, как в Kafka.",
+              "text": "Cloud-native означает stateful brokers с local partitions, поэтому добавление broker-а требует переноса всего storage.",
               "correct": false,
               "sections": {
                 "what_actually": "Брокеры Pulsar именно stateless: данные лежат в `BookKeeper`, поэтому добавление брокера не требует перемещения данных и ребаланса.",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для Pulsar «cloud-native» означает stateless-брокеры (легко добавлять/удалять), отдельное хранилище `BookKeeper` с независимым масштабированием, контейнеро-дружелюбность (`Kubernetes` через Pulsar Operator), tiered storage для холодных данных в object storage и multi-tenancy — один кластер на много use case'ов.",
+              "text": "Pulsar разделяет stateless brokers и BookKeeper, масштабирует compute/storage независимо и поддерживает Kubernetes, multi-tenancy и offload.",
               "correct": true,
               "sections": {
                 "explanation": "Stateless-брокеры и отдельный storage позволяют эластично масштабироваться в облаке, а холодные данные уходят в дешёвый `S3` вместо дорогих SSD.",
@@ -156,7 +156,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "«Cloud-native» для Pulsar означает обязательное использование serverless-функций вместо брокеров, а `BookKeeper` при этом не нужен.",
+              "text": "Cloud-native требует serverless Functions для каждой обработки; без них brokers не принимают producer connections.",
               "correct": false,
               "sections": {
                 "what_actually": "Cloud-native относится к брокерам и хранилищу; `Pulsar Functions` — это опциональный compute-слой, а `BookKeeper` обязателен как persistent storage.",
@@ -168,7 +168,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "«Cloud-native» в Pulsar означает, что Pulsar можно запустить только в `AWS`, и он не работает в on-prem или других облаках.",
+              "text": "Pulsar работает только в AWS и не поддерживает on-prem, другие clouds или S3-compatible storage.",
               "correct": false,
               "sections": {
                 "what_actually": "Cloud-native — это про stateless-брокеры, отдельное хранилище и контейнеры; Pulsar прекрасно работает on-prem и в любом облаке.",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Добавление брокера в Pulsar требует ребаланса и перемещения данных между узлами, ровно как ребаланс партиций в Kafka.",
+              "text": "Добавление broker-а требует перенести ledgers на него, поскольку каждый broker хранит local topic data.",
               "correct": false,
               "sections": {
                 "what_actually": "Брокеры stateless, данные в `BookKeeper`, поэтому добавление брокера не двигает данные и не требует ребаланса — в отличие от Kafka.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Brokers` и `Bookies` всегда масштабируются строго вместе и в одинаковом количестве, потому что compute и storage жёстко связаны 1:1.",
+              "text": "Brokers и bookies всегда масштабируются 1:1; отдельно увеличить connection capacity или storage нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "Смысл разделения именно в независимом масштабировании: брокеров и bookies может быть разное число, они растут отдельно под свою нагрузку.",
@@ -215,7 +215,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Brokers` — stateless compute-слой: обрабатывают подключения producer/consumer, routing, масштабируются горизонтально без ребаланса. `Bookies` (узлы `BookKeeper`) — persistent storage с реплицированными записями, масштабируются независимо. Добавление брокеров даёт больше соединений без перемещения данных, добавление bookies — больше хранилища без изменения брокеров.",
+              "text": "Brokers обслуживают connections/ownership, BookKeeper хранит replicated ledgers; compute и storage масштабируются независимо.",
               "correct": true,
               "sections": {
                 "explanation": "Разделение ролей убирает «rebalance hell»: compute и storage растут независимо, потому что брокер не владеет данными — они в `BookKeeper`.",
@@ -228,7 +228,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Brokers` в Pulsar хранят данные локально, а `Bookies` — это только маршрутизаторы запросов без персистентности.",
+              "text": "Brokers являются durable storage, а bookies только маршрутизируют client requests и не записывают data.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: брокеры stateless и не хранят данные, а bookies (`BookKeeper`) — это и есть persistent storage с репликацией.",
@@ -251,7 +251,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Ledger` в BookKeeper — это изменяемая (mutable) структура, в которой записи можно перезаписывать и удалять по индексу in-place.",
+              "text": "Ledger — mutable structure, где entries можно перезаписывать и удалять по index in-place.",
               "correct": false,
               "sections": {
                 "what_actually": "Ledger — append-only последовательность записей: данные только дописываются, перезапись по индексу in-place не предусмотрена.",
@@ -263,7 +263,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Apache BookKeeper` — распределённая система хранения логов уровнем ниже Pulsar. Её концепции: `Bookies` (узлы хранения), `Ledgers` (append-only последовательности записей), `Ensembles` (группа bookies под ledger). Репликация задаётся параметрами Ensemble size (E), Quorum write (Q_w) и Quorum read (Q_r); например, E=3, Q_w=2 значит 3 реплики и 2 ack на запись, что даёт строгую консистентность.",
+              "text": "BookKeeper — distributed log storage: bookies хранят append-only ledgers, а ensemble задаёт набор bookies для ledger.",
               "correct": true,
               "sections": {
                 "explanation": "Quorum writes обеспечивают strong consistency: запись считается успешной только после ack от Q_w bookies, поэтому подтверждённые данные не теряются.",
@@ -276,7 +276,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "При E=3, Q_w=2 запись считается успешной сразу после записи в один bookie, а остальные две реплики создаются позже, без ожидания ack.",
+              "text": "При E3/Qw2 write успешен после одного bookie, а остальные replicas создаются позже без quorum acknowledgement.",
               "correct": false,
               "sections": {
                 "what_actually": "Q_w=2 означает, что запись подтверждается только после ack от 2 bookies; одного ack недостаточно для успешной записи.",
@@ -288,7 +288,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`BookKeeper` — это слой поверх Pulsar, который занимается только балансировкой соединений клиентов и не хранит данные.",
+              "text": "BookKeeper находится поверх Pulsar, балансирует client connections и не хранит message data.",
               "correct": false,
               "sections": {
                 "what_actually": "BookKeeper — это слой НИЖЕ Pulsar и именно он хранит данные (ledgers на bookies); балансировкой соединений занимаются брокеры.",
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ZooKeeper` в Pulsar хранит сами сообщения топиков, а `Oxia` — это новый движок, ускоряющий чтение этих сообщений с диска.",
+              "text": "Metadata store хранит message payload и заменяет BookKeeper; brokers читают records напрямую из ZooKeeper/Oxia.",
               "correct": false,
               "sections": {
                 "what_actually": "ZooKeeper/Oxia хранят метаданные и координацию, а сами сообщения лежат в `BookKeeper`; Oxia не движок чтения данных.",
@@ -323,7 +323,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Переход с `ZooKeeper` на `Oxia` увеличивает операционную сложность и требует добавить ZooKeeper и Oxia одновременно в каждый кластер.",
+              "text": "Oxia всегда требует параллельный ZooKeeper и синхронно дублирует каждую metadata operation в обе системы.",
               "correct": false,
               "sections": {
                 "what_actually": "Oxia как раз снижает операционную сложность и заменяет ZooKeeper, а не работает вместе с ним постоянно.",
@@ -335,20 +335,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Исторически `ZooKeeper` использовался Pulsar для метаданных кластера, ownership топиков, service discovery и координации. С Pulsar 3.0+ появился `Oxia` — новый сервис метаданных, заменяющий ZooKeeper: лучше по производительности, Pulsar-специфичный и снижает операционную сложность. В 2025 новые deployment'ы переходят с ZK на Oxia.",
+              "text": "Metadata store хранит configuration, ownership и coordination; ZooKeeper историчен, Oxia — альтернативный store в поддерживаемых версиях.",
               "correct": true,
               "sections": {
-                "explanation": "Pulsar нужен внешний координатор для метаданных и владения топиками; Oxia делает это эффективнее и без отдельного зоопарка ZooKeeper.",
-                "example": "В новом кластере на Pulsar 3.x метаданные и ownership топиков ведёт Oxia, что убирает ZooKeeper из стека и упрощает эксплуатацию.",
-                "when_to_apply": "Выбор между ZK и Oxia делают при развёртывании кластера: legacy остаётся на ZooKeeper, новые ставят на Oxia.",
-                "edge_cases": "Oxia относительно новый, поэтому ZooKeeper всё ещё встречается в существующих кластерах, и миграция между ними — отдельная операционная задача.",
+                "explanation": "Metadata store не хранит сообщения топиков: durable data находится в BookKeeper. Oxia развивается как более специализированная альтернатива, но её нельзя объявлять безусловной заменой во всех установках.",
+                "example": "Новый deployment проверяет поддержку Oxia в выбранной версии/операторе; существующий ZooKeeper-based кластер использует документированный migration path, а не меняет backend вручную.",
+                "when_to_apply": "Учитывайте при проектировании control plane, upgrades и disaster recovery metadata. Решение согласуют с поддержкой managed platform и tooling.",
+                "edge_cases": "BookKeeper может использовать metadata store для собственных метаданных, но записи ledger остаются на bookies. Совместимость и production readiness Oxia меняются по версиям.",
                 "related": "[[pulsar-interview#Q5]] BookKeeper для хранения данных; [[pulsar-interview#Q4]] ownership топиков у брокеров; [[pulsar-interview#Q1]] общая архитектура Pulsar."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`Oxia` — это форк `ZooKeeper` от Apache Kafka, который Pulsar заимствовал без изменений для совместимости с Kafka-кластерами.",
+              "text": "Oxia — Kafka-compatible fork ZooKeeper, совместно обслуживающий Pulsar и Kafka metadata без integration.",
               "correct": false,
               "sections": {
                 "what_actually": "Oxia — Pulsar-специфичный сервис метаданных, а не форк ZooKeeper из Kafka; он создан под нужды Pulsar.",
@@ -383,7 +383,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Segment` и `ledger` — это разные сущности: segment живёт в брокере как буфер, а ledger — это индекс ZooKeeper.",
+              "text": "`Segment` и `ledger` — это разные сущности: segment живёт в брокере как буфер, а ledger — это индекс ZooKeeper. Данные дублировались между брокером и BookKeeper.",
               "correct": false,
               "sections": {
                 "what_actually": "Segment и есть ledger в `BookKeeper` — это одно и то же chunk-данных топика, а не буфер брокера или индекс ZooKeeper.",
@@ -407,7 +407,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Topic` — поток сообщений (как Kafka topic), адресуется `persistent://tenant/namespace/topic`. `Segment` — чанк данных топика, равный одному ledger в `BookKeeper`. Каждый segment может лежать на разных bookies (например, segment 1 на A,B,C, segment 2 на B,C,D), поэтому данные топика автоматически распределяются по кластеру — в отличие от Kafka, где партиция привязана к одному брокеру.",
+              "text": "`Topic` — поток сообщений (как Kafka topic), адресуется `persistent://tenant/namespace/topic`. `Segment` — чанк данных топика, равный одному ledger в `BookKeeper`.",
               "correct": true,
               "sections": {
                 "explanation": "Так как топик нарезан на ledgers, и каждый ledger размещается на своём наборе bookies, данные распределяются автоматически без ручного планирования.",
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Key_Shared` распределяет сообщения round-robin без учёта ключа, поэтому сообщения одного ключа попадают разным потребителям.",
+              "text": "`Key_Shared` игнорирует key и распределяет records round-robin, поэтому один key параллельно обрабатывают разные consumers.",
               "correct": false,
               "sections": {
                 "what_actually": "`Key_Shared` гарантирует, что сообщения одного ключа всегда идут одному consumer, сохраняя порядок по ключу.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Failover` подписка раздаёт сообщения сразу нескольким активным потребителям параллельно, без понятия standby.",
+              "text": "`Failover` держит всех consumers active и балансирует records между ними без standby order.",
               "correct": false,
               "sections": {
                 "what_actually": "В `Failover` активен один consumer, остальные — standby и включаются только при его отключении; параллельной раздачи нет.",
@@ -455,7 +455,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В `Shared` подписке каждое сообщение доставляется ВСЕМ потребителям сразу (broadcast), а не балансируется между ними.",
+              "text": "`Shared` работает как broadcast: каждое message получают все consumers одной subscription.",
               "correct": false,
               "sections": {
                 "what_actually": "`Shared` балансирует сообщения между потребителями (round-robin), каждый получает свою часть; broadcast — это не про Shared.",
@@ -467,13 +467,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Четыре типа подписок. `Exclusive` — один consumer на подписку (queue-like). `Failover` — один активный consumer плюс standby, который перехватывает при отключении активного. `Shared` — несколько consumers с балансировкой (round-robin), каждый получает часть сообщений. `Key_Shared` — несколько consumers с упорядочиванием по ключу, где сообщения одного ключа всегда идут одному consumer.",
+              "text": "`Exclusive` — один consumer; `Failover` — active/standby; `Shared` балансирует, `Key_Shared` сохраняет key affinity.",
               "correct": true,
               "sections": {
-                "explanation": "Разные типы покрывают разные сценарии: эксклюзивный consumer, отказоустойчивость, балансировку и упорядоченную обработку по ключу — без отдельных инструментов.",
-                "example": "Для `key=\"user1\"` все сообщения в `Key_Shared` всегда идут consumer A, а `key=\"user2\"` — consumer B, что сохраняет порядок по пользователю при параллелизме.",
-                "when_to_apply": "Тип подписки выбирают под задачу: `Exclusive`/`Failover` — для порядка и отказоустойчивости, `Shared` — для throughput, `Key_Shared` — для порядка по ключу с параллелизмом.",
-                "edge_cases": "У Kafka есть только consumer group (ближе к `Failover` с распределением партиций), поэтому гибкость подписок Pulsar шире из коробки.",
+                "explanation": "Тип подписки определяет конкуренцию и порядок. `Key_Shared` добавляет key affinity, которого нет у `Shared`, а `Failover` обеспечивает active/standby вместо параллельной обработки.",
+                "example": "Платежи используют `Key_Shared` по `accountId`, чтобы операции одного счёта шли последовательно, но разные счета обрабатывались параллельно.",
+                "when_to_apply": "Выбирайте `Exclusive` для одиночного consumer-а, `Failover` для горячего резерва, `Shared` для независимых задач и `Key_Shared` для порядка по ключу.",
+                "edge_cases": "Для `Key_Shared` producer должен корректно задавать key и соблюдать требования к batching, иначе ожидаемая маршрутизация или порядок могут нарушиться.",
                 "related": "[[pulsar-interview#Q9]] Shared vs consumer group; [[pulsar-interview#Q2]] отличия от Kafka; [[pulsar-interview#Q10]] tenants и namespaces в адресации."
               }
             }
@@ -491,7 +491,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В Kafka consumer group каждая партиция назначается одному consumer, поэтому максимальный параллелизм равен числу партиций, и добавление consumers сверх их числа даёт idle-потребителей. В Pulsar `Shared` каждое сообщение маршрутизируется любому consumer подписки: добавление consumers увеличивает параллелизм без ребаланса и без понятия партиции для счёта потребителей. Trade-off: `Shared` не гарантирует порядок по ключу — для этого есть `Key_Shared`.",
+              "text": "Kafka group ограничена числом partitions; Pulsar Shared может распределять individual messages между большим числом consumers.",
               "correct": true,
               "sections": {
                 "explanation": "Pulsar `Shared` масштабирует потребителей независимо от партиционирования, тогда как Kafka требует планировать число партиций заранее.",
@@ -504,7 +504,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Добавление потребителей в `Shared` подписку всегда вызывает ребаланс и кратковременную остановку доставки, как ребаланс в Kafka.",
+              "text": "Shared всегда запускает Kafka-like global rebalance и полностью останавливает delivery при каждом membership change.",
               "correct": false,
               "sections": {
                 "what_actually": "Добавление потребителей в `Shared` не требует ребаланса партиций: новый consumer просто начинает получать сообщения.",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Shared` подписка Pulsar, как и Kafka consumer group, ограничивает параллелизм числом партиций, и лишние потребители простаивают.",
+              "text": "Shared, как Kafka group, ограничивает parallelism числом partitions, поэтому extra consumers всегда idle.",
               "correct": false,
               "sections": {
                 "what_actually": "В `Shared` нет привязки параллелизма к числу партиций: сообщения идут любому consumer, поэтому лишних idle-потребителей нет.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Shared` подписка Pulsar гарантирует строгий порядок сообщений по ключу, поэтому `Key_Shared` не нужен.",
+              "text": "Shared гарантирует strict key order, поэтому Key_Shared не добавляет отдельной семантики.",
               "correct": false,
               "sections": {
                 "what_actually": "`Shared` НЕ гарантирует порядок по ключу — за это отвечает `Key_Shared`; в этом и состоит trade-off Shared.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В Pulsar иерархия плоская: есть только topics без tenants и namespaces, а изоляция делается отдельными кластерами, как в Kafka.",
+              "text": "Pulsar имеет только flat topics; tenants и namespaces отсутствуют, isolation требует отдельного cluster.",
               "correct": false,
               "sections": {
                 "what_actually": "Иерархия трёхуровневая: tenant → namespace → topic, и именно она даёт built-in multi-tenancy без отдельных кластеров.",
@@ -563,7 +563,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Namespace` в Pulsar — это синоним топика, поэтому адрес `persistent://tenant/namespace/topic` содержит избыточное дублирование одного и того же.",
+              "text": "Namespace является вторым именем topic, поэтому policies нельзя применять к группе topics.",
               "correct": false,
               "sections": {
                 "what_actually": "Namespace — это группировка топиков внутри tenant, а topic — конкретный поток; это разные уровни, не дубликаты.",
@@ -575,7 +575,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Политики retention и квот в Pulsar задаются только глобально на весь кластер и не могут отличаться между tenants.",
+              "text": "Retention и quotas задаются только cluster-wide, поэтому tenants не могут иметь разные limits.",
               "correct": false,
               "sections": {
                 "what_actually": "Политики (квоты, retention, ACL, geo-replication) задаются per-tenant и per-namespace, поэтому у разных арендаторов они разные.",
@@ -587,7 +587,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Адрес топика — `persistent://tenant/namespace/topic`. `Tenant` — верхнеуровневая изоляция (например, `marketing`, `engineering`). `Namespace` — группировка внутри tenant (`marketing/campaigns`). `Topic` — собственно поток. Per-tenant можно задавать политики: квоты на storage и throughput, auth/ACL, retention, geo-replication. Один Pulsar-кластер обслуживает множество use case'ов, тогда как в Kafka обычно поднимают несколько кластеров.",
+              "text": "Topic адресуется tenant/namespace/topic; policies, auth, quotas, retention и replication применяются на соответствующих scopes.",
               "correct": true,
               "sections": {
                 "explanation": "Трёхуровневая иерархия (tenant → namespace → topic) даёт встроенную multi-tenancy с раздельными политиками вместо ручной изоляции через отдельные кластеры.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Квоты в Pulsar носят рекомендательный характер: брокер их не форсит, и tenant может превысить лимит publish-rate без последствий.",
+              "text": "Namespace quotas являются advisory: broker не ограничивает publish rates, backlog, storage или число producers/consumers.",
               "correct": false,
               "sections": {
                 "what_actually": "Hard isolation означает, что брокер именно форсит квоты, поэтому превысить лимит publish-rate не получится.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Resource isolation в Pulsar возможна только через запуск отдельного кластера на каждого tenant — квот внутри одного кластера нет.",
+              "text": "Resource isolation требует отдельного cluster на tenant; policies и broker isolation в shared deployment отсутствуют.",
               "correct": false,
               "sections": {
                 "what_actually": "Внутри одного кластера есть квоты (backlog, publish-rate, max-consumers), которые брокер форсит per-namespace; отдельный кластер не нужен.",
@@ -635,20 +635,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Изоляция бывает hard и soft. Hard isolation — брокер форсит квоты на уровне namespace: backlog quota (например, `set-backlog-quota ... --limit 10G`), publish rate (`set-publish-rate ... --msg-publish-rate 10000`), лимит потребителей (`set-max-consumers-per-subscription ... 50`), так что один tenant не может навредить другим. Soft isolation — более продвинутый вариант: назначение конкретных брокеров/bookies определённым tenants.",
+              "text": "Tenant/namespace policies задают rates, quotas, limits и auth; broker isolation применяют при необходимости и capacity planning.",
               "correct": true,
               "sections": {
-                "explanation": "Брокер сам применяет квоты, поэтому ресурсное давление одного арендатора не перетекает на других — это и есть hard isolation.",
-                "example": "`pulsar-admin namespaces set-publish-rate acme-corp/orders --msg-publish-rate 10000` ограничивает скорость публикации арендатора, защищая соседей по кластеру.",
-                "when_to_apply": "Квоты и лимиты настраивают, когда один кластер делят несколько арендаторов и нужно гарантировать справедливое распределение ресурсов.",
-                "edge_cases": "Для самых требовательных случаев hard-квот недостаточно, и тогда применяют soft isolation — физическое закрепление брокеров/bookies за tenant.",
+                "explanation": "Pulsar применяет policies на уровне namespace и может распределять namespaces по выделенным broker groups. Это ограничивает noisy neighbor, но не заменяет измерение shared BookKeeper, network и object storage.",
+                "example": "Для tenant задают publish rate и backlog quota из SLA, а критичный namespace размещают на отдельной broker pool через isolation policy.",
+                "when_to_apply": "Используйте в shared platform, где tenants имеют разные SLA, бюджеты и профили нагрузки.",
+                "edge_cases": "Не все ресурсы изолируются одной квотой: bookie IO, compaction, offload и network требуют отдельных метрик и capacity limits.",
                 "related": "[[pulsar-interview#Q10]] tenants и namespaces; [[pulsar-interview#Q16]] backlog и offload в storage; [[pulsar-interview#Q1]] multi-tenancy как ключевая фича."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Soft isolation в Pulsar — это шифрование данных между tenants, а назначение брокеров/bookies конкретным арендаторам невозможно.",
+              "text": "Isolation означает только encryption между tenants; namespaces нельзя назначать отдельным broker groups или ограничивать quotas.",
               "correct": false,
               "sections": {
                 "what_actually": "Soft isolation — это как раз назначение конкретных брокеров/bookies определённым tenants, а не шифрование данных.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Geo-replication в Pulsar — нативная multi-region репликация. Топик/namespace настраивается на несколько кластеров командой `set-clusters ... --clusters us-east,eu-west,ap-northeast`. Репликация между кластерами асинхронная: producers пишут в локальный кластер, а данные async-реплицируются в остальные. В отличие от Kafka, где нужен отдельный `MirrorMaker`, у Pulsar это встроено — проще в эксплуатации. Use cases: disaster recovery, multi-region apps с низкой локальной задержкой, compliance (data residency).",
+              "text": "Geo-replication настраивается для namespaces/clusters и асинхронно переносит records между regions, пока producers пишут локально.",
               "correct": true,
               "sections": {
                 "explanation": "Поскольку репликация встроена и настраивается per-namespace, не нужен отдельный инструмент синхронизации между регионами.",
@@ -684,7 +684,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Репликация между регионами в Pulsar синхронная: producer получает ack только после того, как запись подтверждена всеми удалёнными кластерами, — это гарантирует нулевую потерю данных при отказе региона.",
+              "text": "Replication синхронна: producer ack ждёт подтверждения каждого remote cluster и всегда гарантирует zero-loss region failover.",
               "correct": false,
               "sections": {
                 "what_actually": "Репликация асинхронная: producer пишет в локальный кластер и получает ack, а в другие регионы данные едут async.",
@@ -696,7 +696,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Geo-replication в Pulsar настраивается только глобально на весь кластер через конфиг брокера и не может быть включена точечно для отдельного namespace или топика.",
+              "text": "Geo-replication включается только globally на cluster и не может настраиваться для namespace.",
               "correct": false,
               "sections": {
                 "what_actually": "Geo-replication настраивается per-namespace (`set-clusters` для конкретного namespace), а не только глобально.",
@@ -708,7 +708,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Geo-replication в Pulsar не встроена в брокер: между кластерами данные переносит внешний процесс `MirrorMaker`, который вычитывает топик в одном регионе и записывает его в другой, ровно как в Kafka.",
+              "text": "Pulsar использует внешний MirrorMaker process и не имеет встроенной geo-replication.",
               "correct": false,
               "sections": {
                 "what_actually": "В Pulsar geo-replication встроена и настраивается per-namespace через `set-clusters`; `MirrorMaker` — это инструмент Kafka, не Pulsar.",
@@ -731,7 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Replicated subscriptions реплицируют только сами сообщения между регионами, но не позицию подписки, поэтому при failover consumer начинает с начала топика.",
+              "text": "Geo-replication переносит records, но replicated subscriptions никогда не синхронизируют cursor; failover consumer всегда начинает с начала topic.",
               "correct": false,
               "sections": {
                 "what_actually": "Суть replicated subscriptions именно в репликации позиции подписки (offset), чтобы consumer продолжил с места остановки, а не с начала.",
@@ -743,7 +743,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Replicated subscriptions — это про active-passive только: второй регион полностью простаивает и не может иметь потребителей вообще.",
+              "text": "Replicated subscription допускает только один active region, а consumer-ы в других regions не могут читать topic до disaster failover.",
               "correct": false,
               "sections": {
                 "what_actually": "Replicated subscriptions особенно полезны для active-active multi-region, где потребители работают в нескольких регионах с консистентной позицией.",
@@ -755,7 +755,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Replicated subscriptions — это репликация состояния подписки (позиции offset) между регионами. Use case: при failover consumer в другом регионе подхватывает обработку с консистентной позиции — где остановился consumer в исходном регионе. Включается через `set-replicated-subscription persistent://tenant/ns/topic my-subscription`. Pulsar отслеживает позицию глобально, поэтому consumer в eu-west продолжает с места, на котором закончил consumer в us-east. Это мощно для active-active multi-region setup'ов.",
+              "text": "Replicated subscriptions передают состояние subscription/cursor между clusters, чтобы consumer в другом регионе продолжил ближе к согласованной позиции.",
               "correct": true,
               "sections": {
                 "explanation": "Реплицируется не только данные, но и прогресс подписки, поэтому при переключении региона не происходит ни потери, ни повторной обработки большого хвоста.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Replicated subscriptions включаются автоматически для всех подписок при настройке geo-replication, отдельной команды для этого нет.",
+              "text": "Они автоматически включены для каждой subscription вместе с geo-replication и не требуют отдельной policy или поддержки клиента.",
               "correct": false,
               "sections": {
                 "what_actually": "Replicated subscriptions включаются явно командой `set-replicated-subscription` для конкретной подписки, а не автоматически вместе с geo-replication.",
@@ -791,20 +791,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Pulsar Functions` — это лёгкий compute-слой, обрабатывающий сообщения без внешних систем вроде `Spark` или `Flink`. Функция читает из input-топика и пишет в output-топик (например, `--inputs .../raw --output .../processed --classname my_module.process`). Языки: `Java`, `Python`, `Go`. Режимы: Local (внутри брокера) и Cluster (отдельные K8s-pods). Use cases: фильтрация, трансформации, routing, обогащение, ограниченные оконные агрегации. Не подходит для сложной потоковой обработки — там используют `Flink`/`Spark`.",
+              "text": "Pulsar Functions — lightweight compute для filters/transforms/routing; Worker управляет instances и runtime isolation.",
               "correct": true,
               "sections": {
-                "explanation": "Functions решают простые задачи обработки прямо в Pulsar, избавляя от развёртывания отдельного стрим-процессора под лёгкую логику.",
-                "example": "Функция `def process(input): return input.upper()` читает из `raw`, пишет в `processed` и разворачивается через `pulsar-admin functions create`.",
-                "when_to_apply": "Functions выбирают для лёгкой обработки в потоке (фильтр, маппинг, enrichment), когда тяжёлый стрим-процессор избыточен.",
-                "edge_cases": "Для сложной потоковой обработки (большие join, продвинутые окна, stateful-пайплайны) Functions слабоваты — там нужен `Flink` или `Spark`.",
+                "explanation": "Functions предназначены для простых transforms, filters, routing и enrichment рядом с Pulsar. Worker управляет экземплярами и может использовать thread/process/container isolation в зависимости от deployment.",
+                "example": "Функция читает `orders`, добавляет нормализованный region и публикует в `orders-enriched`; сложные оконные joins остаются во Flink.",
+                "when_to_apply": "Используйте для небольшой логики без отдельного streaming framework, когда важна простая эксплуатация внутри Pulsar.",
+                "edge_cases": "Поддерживаемые языки, runtimes и isolation modes зависят от версии. Для тяжёлого state, event-time и сложных DAG лучше специализированный engine.",
                 "related": "[[pulsar-interview#Q15]] Pulsar IO connectors; [[pulsar-interview#Q1]] Functions как фича Pulsar; [[pulsar-interview#Q21]] слабость stream processing у Pulsar."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Pulsar Functions` исполняются только как отдельные сервисы в Cluster-режиме на K8s-подах и не могут запускаться внутри брокера в Local-режиме.",
+              "text": "Functions запускаются только как отдельные Kubernetes pods; local и process runtimes отсутствуют.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть два режима: Local (внутри брокера) и Cluster (отдельные K8s-pods), так что исполнение внутри брокера возможно.",
@@ -816,7 +816,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Pulsar Functions` — это полноценная замена `Apache Flink`, рассчитанная на сложные stateful-пайплайны с большими join, продвинутыми окнами и хранением состояния.",
+              "text": "Functions полностью заменяют Flink для сложных joins, event-time windows и large stateful DAGs.",
               "correct": false,
               "sections": {
                 "what_actually": "Functions — лёгкий compute для простых задач (фильтр, трансформ, routing); для сложной потоковой обработки используют `Flink`/`Spark`.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Pulsar Functions` можно писать только на `Java`: рантайм функций исполняет исключительно JVM-байткод, поэтому `Python` и `Go` не поддерживаются.",
+              "text": "Functions поддерживают только Java bytecode; Python и Go runtimes отсутствуют.",
               "correct": false,
               "sections": {
                 "what_actually": "Functions можно писать на `Java`, `Python` и `Go` — поддержка не ограничена одним языком.",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Pulsar IO` — это компонент, заменяющий `BookKeeper` для хранения данных, а не средство интеграции с внешними системами.",
+              "text": "Pulsar IO заменяет BookKeeper и хранит message data, а не интегрируется с external systems.",
               "correct": false,
               "sections": {
                 "what_actually": "Pulsar IO — про интеграцию с внешними системами (коннекторы), а хранение данных обеспечивает `BookKeeper`; это разные роли.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Pulsar IO` требует писать каждый коннектор с нуля на Java, готовых pre-built коннекторов к Postgres или S3 не существует.",
+              "text": "Каждый connector пишут с нуля на Java; готовых source/sink integrations нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Pulsar IO — это именно набор pre-built коннекторов (Kafka, Postgres, MongoDB, Cassandra, S3 и др.), а не каркас для написания с нуля.",
@@ -875,7 +875,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Pulsar IO` — это только sink-коннекторы (выгрузка наружу); читать данные из внешних систем в Pulsar он не умеет.",
+              "text": "Pulsar IO предоставляет только sinks и не умеет читать data из external systems.",
               "correct": false,
               "sections": {
                 "what_actually": "Pulsar IO включает и source (чтение снаружи в Pulsar), и sink (выгрузка наружу) — оба направления поддержаны.",
@@ -887,7 +887,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Pulsar IO` — это готовые коннекторы к внешним системам, аналог `Kafka Connect`, но интегрированный в Pulsar. Source-коннекторы читают данные снаружи в Pulsar (например, `--source-type kafka` пишет в `from-kafka`), sink-коннекторы выгружают из Pulsar наружу (например, `--sink-type jdbc-postgres`). Доступны коннекторы к `Kafka`, `Postgres`, `MongoDB`, `Cassandra`, `Elasticsearch`, `Redis`, `S3` и другим.",
+              "text": "Pulsar IO включает source и sink connectors к external systems, выполняемые через Pulsar runtime.",
               "correct": true,
               "sections": {
                 "explanation": "Source/sink-коннекторы избавляют от написания custom-интеграций: ввод и вывод данных конфигурируются командами `pulsar-admin sources/sinks create`.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Tiered storage — встроенный offload старых ledgers в object storage (`S3`, `GCS`). Политика задаётся, например, `set-offload-policies ... --offload-driver aws-s3 --bucket ... --offload-after-threshold 100G`: после 100 GB на `BookKeeper` старые данные перемещаются в `S3`. Чтение прозрачное — Pulsar сам читает из `S3`, если данные offload-нуты (медленнее, но дёшево). Экономия: `S3` ~$0.023/GB против SSD $0.10+, то есть в 5–10 раз дешевле для долгого хранения. В Kafka аналог — KIP-405 (с 3.6+, менее зрелый).",
+              "text": "Tiered storage — встроенный offload старых ledgers в object storage (`S3`, `GCS`). Политика задаётся, например, `set-offload-policies... --offload-driver aws-s3 --bucket... --offload-after-threshold 100G`: после 100 GB на `BookKeeper` старые данные перемещаются в `S3`.",
               "correct": true,
               "sections": {
                 "explanation": "Холодные данные уезжают в дешёвый object storage, освобождая дорогой SSD на bookies, а доступ к ним остаётся прозрачным для потребителя.",
@@ -971,7 +971,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Compaction в Pulsar оставляет ПЕРВОЕ сообщение по каждому ключу, отбрасывая все последующие обновления.",
+              "text": "Compaction сохраняет первое value каждого key и удаляет все последующие updates.",
               "correct": false,
               "sections": {
                 "what_actually": "Compaction оставляет ПОСЛЕДНЕЕ (latest) сообщение по ключу, чтобы отражать актуальное состояние, а не первое.",
@@ -983,7 +983,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Compaction в Pulsar сжимает каждое сообщение алгоритмом вроде `gzip`, уменьшая байты, но сохраняет все сообщения и всю историю по ключу.",
+              "text": "Compaction только gzip-сжимает bytes, сохраняя полную history records каждого key.",
               "correct": false,
               "sections": {
                 "what_actually": "Compaction оставляет только ПОСЛЕДНЕЕ сообщение по ключу, отбрасывая старые версии; это не байтовое сжатие типа gzip.",
@@ -995,7 +995,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Compaction идеально подходит для audit log и event-sourcing, где нужна полная история всех изменений по каждому ключу.",
+              "text": "Compacted topic подходит для immutable audit log, поскольку сохраняет каждое change event.",
               "correct": false,
               "sections": {
                 "what_actually": "Compaction отбрасывает промежуточные значения, поэтому для audit log и event-sourcing, где важна вся история, оно не годится.",
@@ -1007,7 +1007,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Compaction оставляет в топике только последнее сообщение по каждому ключу. Запускается командой `pulsar-admin topics compact persistent://tenant/ns/topic`. Use cases: хранить актуальное состояние объектов (профили пользователей, конфиги), schema registry; compaction уменьшает размер хранения. Compacted-топик можно реплеить как latest snapshot — каждый ключ представлен своим последним значением.",
+              "text": "Compaction сохраняет latest value каждого key для state view, но не заменяет полный audit log.",
               "correct": true,
               "sections": {
                 "explanation": "Для каждого ключа нужно только текущее значение, поэтому старые версии можно отбросить, сократив объём и ускорив восстановление состояния.",
@@ -1031,20 +1031,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`KoP` — это брокер Pulsar, выставляющий Kafka wire protocol. Эффект: Kafka-клиенты (producers, consumers, `Kafka Streams`) общаются с Pulsar без изменения кода. Поток выглядит как `Kafka Producer → Pulsar (KoP) → Pulsar storage`. Use case: постепенная миграция с Kafka на Pulsar — разворачиваешь Pulsar с KoP и переключаешь клиентов по одному. Изначально проект `StreamNative`, теперь плагин Apache Pulsar.",
+              "text": "KoP — Kafka protocol handler для Pulsar clients; compatibility transactions, admin API и Streams зависит от версии.",
               "correct": true,
               "sections": {
-                "explanation": "KoP позволяет переезжать с Kafka без переписывания приложений: тот же протокол, но хранение и обработка — на стороне Pulsar.",
-                "example": "Существующий `Kafka Producer` пишет в Pulsar через KoP без правок кода, а данные попадают в storage Pulsar (`BookKeeper`).",
-                "when_to_apply": "KoP применяют при постепенной миграции Kafka → Pulsar, когда нельзя сразу переписать всех клиентов.",
-                "edge_cases": "KoP покрывает протокол Kafka, но не гарантирует 100% поведенческой совместимости со всеми фичами Kafka, поэтому миграцию проверяют по клиентам.",
+                "explanation": "Protocol handler переводит Kafka protocol operations в модель Pulsar topics/subscriptions. Это облегчает миграцию клиентов, но не делает Pulsar идентичным Kafka во всех административных и streaming API.",
+                "example": "Простой Kafka producer меняет bootstrap endpoint на KoP listener и публикует в topic, который хранится Pulsar/BookKeeper; затем команда тестирует offsets, transactions и Streams compatibility.",
+                "when_to_apply": "Используйте как миграционный мост или для повторного использования Kafka clients, когда покрытие требуемых API подтверждено тестами.",
+                "edge_cases": "Admin API, transactions, consumer group semantics и Kafka Streams stateful workloads могут иметь ограничения. Не обещайте zero-change совместимость без qualification test.",
                 "related": "[[pulsar-interview#Q19]] AMQP-on-Pulsar; [[pulsar-interview#Q2]] Pulsar vs Kafka; [[pulsar-interview#Q15]] Kafka-коннектор через Pulsar IO."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`KoP` встроен в ядро Pulsar по умолчанию и не является отдельным плагином или проектом.",
+              "text": "KoP всегда встроен и включён в core broker, поэтому plugin, listener и configuration не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "KoP — это отдельный плагин (изначально проект `StreamNative`, теперь плагин Apache Pulsar), а не часть ядра по умолчанию.",
@@ -1056,7 +1056,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`KoP` — это инструмент, который конвертирует код Kafka-приложений в код Pulsar, поэтому без перекомпиляции приложений он не работает.",
+              "text": "KoP переписывает source code Kafka application при compile time и не обеспечивает wire compatibility.",
               "correct": false,
               "sections": {
                 "what_actually": "KoP не трогает код: он выставляет Kafka wire protocol, и существующие Kafka-клиенты работают с Pulsar без изменений.",
@@ -1068,7 +1068,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`KoP` — это плагин, заставляющий Pulsar пересылать сообщения в реальный Kafka-кластер для хранения, своего storage у Pulsar при этом нет.",
+              "text": "KoP хранит records в отдельном Kafka cluster, а Pulsar работает только как stateless proxy.",
               "correct": false,
               "sections": {
                 "what_actually": "При KoP данные хранятся в storage Pulsar (`BookKeeper`); реальный Kafka-кластер не нужен — Pulsar лишь говорит на протоколе Kafka.",
@@ -1091,20 +1091,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`AoP` — это та же идея, что и `KoP`, но для протокола `AMQP` (протокол `RabbitMQ`). Клиенты `RabbitMQ` общаются с Pulsar через AMQP-слой совместимости. AoP встречается реже, чем KoP, потому что миграции с `RabbitMQ` происходят не так часто.",
+              "text": "AoP — optional AMQP protocol handler/compatibility layer, позволяющий части AMQP clients работать с Pulsar.",
               "correct": true,
               "sections": {
-                "explanation": "AoP даёт совместимость по протоколу AMQP, позволяя RabbitMQ-клиентам работать с Pulsar без переписывания, аналогично KoP для Kafka.",
-                "example": "Приложение с `RabbitMQ`-клиентом подключается к Pulsar через AoP и публикует/потребляет сообщения по протоколу AMQP без смены клиентской библиотеки.",
-                "when_to_apply": "AoP применяют при миграции с `RabbitMQ` на Pulsar, когда нужно сохранить существующих AMQP-клиентов.",
-                "edge_cases": "AoP менее распространён и менее обкатан, чем KoP, потому что спрос на миграции с RabbitMQ ниже, чем с Kafka.",
+                "explanation": "Это не универсальная встроенная гарантия Pulsar, а дополнительный compatibility layer. Различия между AMQP exchanges/queues и Pulsar topics/subscriptions требуют отображения и создают ограничения.",
+                "example": "Перед миграцией RabbitMQ-приложения команда проверяет поддерживаемые exchange types, acknowledgements, transactions и dead-letter behavior на выбранной AoP-реализации.",
+                "when_to_apply": "Рассматривайте как переходный мост, когда переписывать всех клиентов сразу дорого и требуемая часть AMQP покрыта.",
+                "edge_cases": "Community maturity и совместимость могут отличаться. Для критичной системы нативный Pulsar API часто даёт более предсказуемую семантику.",
                 "related": "[[pulsar-interview#Q18]] Kafka-on-Pulsar; [[pulsar-interview#Q2]] Pulsar vs Kafka; [[pulsar-interview#Q20]] выбор Pulsar над другими брокерами."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`AoP` требует переписать все `RabbitMQ`-приложения под Pulsar-клиент, совместимости по протоколу AMQP он не даёт.",
+              "text": "AoP не даёт network compatibility и требует полностью переписать application на Pulsar client.",
               "correct": false,
               "sections": {
                 "what_actually": "AoP даёт именно совместимость по протоколу AMQP: RabbitMQ-клиенты работают с Pulsar без переписывания.",
@@ -1116,7 +1116,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`AoP` реализует протокол `MQTT` для IoT-устройств, а не `AMQP` от `RabbitMQ`.",
+              "text": "AoP реализует MQTT QoS для IoT, но не обрабатывает AMQP commands, exchanges или queues.",
               "correct": false,
               "sections": {
                 "what_actually": "AoP — это AMQP-on-Pulsar, протокол `RabbitMQ`; MQTT — отдельный протокол (для него существует другой плагин).",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`AoP` используется чаще, чем `KoP`, потому что миграции с `RabbitMQ` происходят значительно чаще, чем с Kafka.",
+              "text": "AoP обязателен и включён на каждом Pulsar broker, даже без AMQP workloads.",
               "correct": false,
               "sections": {
                 "what_actually": "AoP встречается реже KoP, так как миграции с `RabbitMQ` менее часты, чем с Kafka.",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Pulsar выбирают именно тогда, когда у команды нет опыта Pulsar и нужна максимальная совместимость со стандартом Kafka.",
+              "text": "Pulsar выбирают из-за отсутствия team experience: незнакомая technology якобы снижает adoption и operational risks.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: отсутствие опыта Pulsar и нужда в максимальной Kafka-совместимости — это аргументы ПРОТИВ Pulsar.",
@@ -1163,20 +1163,19 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Pulsar выбирают, когда: нужна multi-tenancy (SaaS, internal platform); нужна native geo-replication (multi-region apps); нужно масштабировать compute и storage раздельно; нужен long retention с дешёвым tiered storage в `S3`; раздражает сложность Kafka `MirrorMaker`; нужны разные паттерны подписок; важна современная cloud-native архитектура. Не выбирают, когда: уже глубоко вложились в Kafka; нужна огромная экосистема; меньший масштаб (Kafka проще в эксплуатации); у команды нет опыта Pulsar; нужна максимальная совместимость (Kafka — стандарт).",
-              "correct": true,
+              "text": "Pulsar быстрее Kafka при любом payload и durability, поэтому workload, tooling и ecosystem не влияют.",
+              "correct": false,
               "sections": {
-                "explanation": "Решение сводится к тому, перевешивают ли архитектурные плюсы Pulsar (multi-tenancy, geo-replication, separated storage) стоимость освоения и меньшую экосистему.",
-                "example": "Для multi-region SaaS с десятками арендаторов в одном кластере Pulsar выигрывает; для одиночного зрелого Kafka-стека с большим штатом — нет.",
-                "when_to_apply": "Этот чек-лист применяют при выборе брокера под конкретные требования к изоляции, регионам, хранению и зрелости команды.",
-                "edge_cases": "Даже при технических плюсах Pulsar отсутствие опыта у команды и зависимость от Kafka-экосистемы часто перевешивают и склоняют к Kafka.",
-                "related": "[[pulsar-interview#Q2]] отличия Pulsar от Kafka; [[pulsar-interview#Q21]] минусы Pulsar; [[pulsar-interview#Q12]] native geo-replication."
+                "what_actually": "Есть явные ситуации в пользу Kafka: глубокие вложения в него, нужда в огромной экосистеме, меньший масштаб, отсутствие опыта Pulsar.",
+                "source_of_confusion": "Современная архитектура Pulsar создаёт ощущение безусловного превосходства.",
+                "if_it_were_true": "Тогда Kafka не доминировал бы на рынке, но он остаётся самым зрелым и распространённым.",
+                "how_it_should_be": "Выбор зависит от контекста; во многих случаях зрелость и экосистема Kafka перевешивают."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Главный аргумент за Pulsar — он проще в эксплуатации, чем Kafka, за счёт меньшего числа компонентов в кластере.",
+              "text": "Главное преимущество Pulsar — single binary и меньше operational components, чем у NATS или managed queues.",
               "correct": false,
               "sections": {
                 "what_actually": "Pulsar операционно сложнее: больше компонентов (brokers + bookies + ZK/Oxia); простота эксплуатации — аргумент в пользу Kafka.",
@@ -1188,13 +1187,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Pulsar выбирают всегда при высоких нагрузках: на большом throughput он безусловно обгоняет Kafka независимо от паттерна нагрузки, поэтому это и есть главный критерий выбора.",
-              "correct": false,
+              "text": "Pulsar полезен для multi-tenancy, geo-replication, independent compute/storage scale, subscription models и tiered retention.",
+              "correct": true,
               "sections": {
-                "what_actually": "Есть явные ситуации в пользу Kafka: глубокие вложения в него, нужда в огромной экосистеме, меньший масштаб, отсутствие опыта Pulsar.",
-                "source_of_confusion": "Современная архитектура Pulsar создаёт ощущение безусловного превосходства.",
-                "if_it_were_true": "Тогда Kafka не доминировал бы на рынке, но он остаётся самым зрелым и распространённым.",
-                "how_it_should_be": "Выбор зависит от контекста; во многих случаях зрелость и экосистема Kafka перевешивают."
+                "explanation": "Решение сводится к тому, перевешивают ли архитектурные плюсы Pulsar (multi-tenancy, geo-replication, separated storage) стоимость освоения и меньшую экосистему.",
+                "example": "Для multi-region SaaS с десятками арендаторов в одном кластере Pulsar выигрывает; для одиночного зрелого Kafka-стека с большим штатом — нет.",
+                "when_to_apply": "Этот чек-лист применяют при выборе брокера под конкретные требования к изоляции, регионам, хранению и зрелости команды.",
+                "edge_cases": "Даже при технических плюсах Pulsar отсутствие опыта у команды и зависимость от Kafka-экосистемы часто перевешивают и склоняют к Kafka.",
+                "related": "[[pulsar-interview#Q2]] отличия Pulsar от Kafka; [[pulsar-interview#Q21]] минусы Pulsar; [[pulsar-interview#Q12]] native geo-replication."
               }
             }
           ]
@@ -1211,7 +1211,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главный минус Pulsar — слишком малое число компонентов: одного брокера с `BookKeeper` не хватает, из-за чего теряется гибкость масштабирования.",
+              "text": "Главный минус Pulsar — слишком мало компонентов и невозможность независимо масштабировать storage.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: у Pulsar БОЛЬШЕ компонентов (brokers + bookies + ZK/Oxia), и именно это повышает операционную сложность.",
@@ -1223,7 +1223,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Минусы Pulsar: операционная сложность (больше компонентов — brokers + bookies + ZK/Oxia); меньшее сообщество и экосистема, чем у Kafka; меньше документации и блог-постов; клиентские библиотеки слабее (лучшая — Java, остальные хуже); меньше обкатан на экстремальном масштабе; выше порог входа; субъективно больше багов / меньше стабильности (улучшается); меньше интеграций с внешними инструментами; слабее stream processing — интеграция с Flink есть, но `Kafka Streams` зрелее.",
+              "text": "Минусы — многокомпонентные operations, меньшая ecosystem/talent pool и необходимость настраивать BookKeeper, metadata, replication и offload.",
               "correct": true,
               "sections": {
                 "explanation": "Большинство минусов вытекает из меньшей зрелости и распространённости: экосистема, документация и обкатанность отстают от Kafka.",
@@ -1236,7 +1236,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Экосистема, документация и сообщество у Pulsar заметно богаче, чем у Kafka, — новичку проще найти готовые интеграции и ответы, и это скорее плюс.",
+              "text": "Pulsar ecosystem и hiring pool заметно шире Kafka, поэтому integrations и expertise найти проще.",
               "correct": false,
               "sections": {
                 "what_actually": "Сообщество, документация и экосистема Pulsar МЕНЬШЕ, чем у Kafka — это перечисляется среди минусов Pulsar.",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Stream processing — сильная сторона Pulsar: `Pulsar Functions` перекрывают возможности `Kafka Streams` и превосходят его по зрелости.",
+              "text": "Pulsar Functions полностью превосходят Kafka Streams/Flink для сложного stateful processing.",
               "correct": false,
               "sections": {
                 "what_actually": "Stream processing у Pulsar как раз слабее: `Kafka Streams` зрелее, а Functions ограничены лёгкой обработкой.",
@@ -1266,25 +1266,25 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Кто использует `Pulsar` и каков его статус на рынке?",
+          "question_text": "Как оценивать зрелость и применимость `Pulsar` для организации?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Pulsar используют: `Yahoo!` (создатель) — internal messaging и IoT; `Tencent` — множество use case'ов; `Splunk` — внутренняя инфраструктура; `Verizon Media` (Yahoo); `Iterable` (маркетинг); `Iconectiv` (телеком); `Salesforce` и `Comcast` — отдельные сервисы. Adoption растёт, но сильно отстаёт от доли рынка Kafka. Pulsar — niche-решение для cloud-native, multi-tenant систем; в 2025 — нишевый, но растущий игрок в messaging.",
+              "text": "Pulsar — Apache project; applicability проверяют clients, connectors, support, team skills, upgrade/failure tests, PoC и TCO.",
               "correct": true,
               "sections": {
-                "explanation": "Список adopters показывает, что Pulsar закрепился в крупных компаниях для специфичных задач, но остаётся нишевым относительно Kafka.",
-                "example": "`Yahoo!` (создатель) применяет Pulsar для internal messaging и IoT, а `Splunk` — во внутренней инфраструктуре.",
-                "when_to_apply": "Эти примеры приводят, оценивая зрелость и проверенность Pulsar в проде перед его внедрением.",
-                "edge_cases": "Несмотря на громкие имена adopters, доля рынка Pulsar заметно меньше Kafka, поэтому «кто-то крупный использует» не равно «массовый стандарт».",
+                "explanation": "Списки пользователей быстро устаревают и не доказывают соответствие конкретной нагрузке. Более надёжны release activity, support model, reference architectures и собственные failure/upgrade tests.",
+                "example": "Команда проводит PoC с реальным producer/consumer mix, проверяет failover bookie/broker, client libraries, schema, offload и upgrade, затем сравнивает TCO с Kafka/managed services.",
+                "when_to_apply": "Используйте такой подход при platform selection и подготовке ADR, особенно если технология менее знакома операционной команде.",
+                "edge_cases": "Публичный adopter не означает использование той же версии, масштаба или функций. Managed distribution может существенно отличаться по поддерживаемым возможностям.",
                 "related": "[[pulsar-interview#Q20]] когда выбрать Pulsar; [[pulsar-interview#Q21]] минусы и зрелость; [[pulsar-interview#Q2]] доминирование Kafka на рынке."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Pulsar применяют почти исключительно небольшие стартапы ради дешёвого старта; крупные enterprise-компании в проде его практически не используют.",
+              "text": "Pulsar используют только small startups, поскольку replication, multi-tenancy и managed support недостаточны для enterprise.",
               "correct": false,
               "sections": {
                 "what_actually": "Pulsar используют крупные компании (`Yahoo!`, `Tencent`, `Splunk`, `Salesforce`, `Comcast`) в продакшене, а не только стартапы.",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Pulsar создан компанией `Tencent` для internal messaging и IoT, позже передан в Apache; сегодня его в проде используют `Splunk`, `Salesforce` и `Comcast`.",
+              "text": "Pulsar остаётся закрытым Tencent product без independent Apache governance и public ecosystem.",
               "correct": false,
               "sections": {
                 "what_actually": "Pulsar создан в `Yahoo!`, а среди adopters — `Tencent`, `Splunk`, `Salesforce`, `Comcast`, `Iterable` и другие, а не только Tencent.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Pulsar уже обогнал Kafka по доле рынка и стал доминирующим стандартом messaging, оставив Kafka в нише legacy-систем.",
+              "text": "Pulsar полностью вытеснил Kafka, поэтому benchmark, support assessment и migration testing не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: Pulsar по доле рынка сильно отстаёт от Kafka и остаётся нишевым решением, тогда как доминирует Kafka.",

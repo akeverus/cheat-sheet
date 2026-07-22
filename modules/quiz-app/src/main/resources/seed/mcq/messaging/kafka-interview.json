@@ -9,20 +9,19 @@
           "question_text": "Что такое `Apache Kafka` и для чего он используется?",
           "options": [
             {
-              "text": "`Apache Kafka` — это распределённый коммит-лог, который хранит сообщения на диске и позволяет потребителям воспроизводить их повторно.",
-              "correct": true,
+              "text": "Apache Kafka — priority task queue с exchange routing и удалением сообщения после первого acknowledgement.",
+              "correct": false,
               "sections": {
-                "explanation": "Kafka спроектирована как append-only распределённый лог: сообщения не удаляются при чтении, а живут до конца retention-периода, поэтому возможны replay и независимые `consumer group`.",
-                "example": "Например, при багфиксе делают `kafka-consumer-groups.sh --reset-offsets --to-earliest` и переобрабатывают историю заново.",
-                "when_to_apply": "Модель применяют, когда нужны durable-хранение событий, replay и несколько независимых потребителей одного потока без удаления данных после чтения.",
-                "edge_cases": "Если выбрать Kafka как transactional task queue, где задачи должны исчезать после выполнения, топик переполнится записями, а производительность деградирует через retention-период.",
-                "related": "[[kafka-interview#Q2]] основные компоненты; [[kafka-interview#Q3]] что такое топик; [[kafka-interview#Q7]] что такое offset."
+                "what_actually": "Описание соответствует `RabbitMQ`/`AMQP`: в Kafka нет понятий exchange и priority queue, есть только топики и партиции.",
+                "source_of_confusion": "Привычные по `RabbitMQ` exchange и priority queue по ошибке переносят на Kafka как на «ещё один брокер».",
+                "if_it_were_true": "Если бы Kafka имела priority queues, миграция с `RabbitMQ` была бы тривиальной, но приоритеты приходится эмулировать отдельными топиками.",
+                "how_it_should_be": "Маршрутизация в Kafka делается через имя топика и ключ партиционирования, а приоритеты и DLQ устроены принципиально иначе, чем в `AMQP`."
               },
               "label": "A",
               "order": 0
             },
             {
-              "text": "`Apache Kafka` — это in-memory кэш сообщений, оптимизированный для минимальной задержки доставки.",
+              "text": "Apache Kafka — in-memory message cache, оптимизированный только для минимальной delivery latency без retention.",
               "correct": false,
               "sections": {
                 "what_actually": "Kafka хранит данные на диске с опорой на page cache операционной системы, а её сильная сторона — высокая пропускная способность, а не минимальная задержка.",
@@ -34,19 +33,20 @@
               "order": 1
             },
             {
-              "text": "`Apache Kafka` — это очередь задач с поддержкой приоритетов и маршрутизацией через `exchange`.",
-              "correct": false,
+              "text": "Apache Kafka — distributed commit log, который хранит records на disk и позволяет consumers читать их повторно.",
+              "correct": true,
               "sections": {
-                "what_actually": "Описание соответствует `RabbitMQ`/`AMQP`: в Kafka нет понятий exchange и priority queue, есть только топики и партиции.",
-                "source_of_confusion": "Привычные по `RabbitMQ` exchange и priority queue по ошибке переносят на Kafka как на «ещё один брокер».",
-                "if_it_were_true": "Если бы Kafka имела priority queues, миграция с `RabbitMQ` была бы тривиальной, но приоритеты приходится эмулировать отдельными топиками.",
-                "how_it_should_be": "Маршрутизация в Kafka делается через имя топика и ключ партиционирования, а приоритеты и DLQ устроены принципиально иначе, чем в `AMQP`."
+                "explanation": "Kafka спроектирована как append-only распределённый лог: сообщения не удаляются при чтении, а живут до конца retention-периода, поэтому возможны replay и независимые `consumer group`.",
+                "example": "Например, при багфиксе делают `kafka-consumer-groups.sh --reset-offsets --to-earliest` и переобрабатывают историю заново.",
+                "when_to_apply": "Модель применяют, когда нужны durable-хранение событий, replay и несколько независимых потребителей одного потока без удаления данных после чтения.",
+                "edge_cases": "Если выбрать Kafka как transactional task queue, где задачи должны исчезать после выполнения, топик переполнится записями, а производительность деградирует через retention-период.",
+                "related": "[[kafka-interview#Q2]] основные компоненты; [[kafka-interview#Q3]] что такое топик; [[kafka-interview#Q7]] что такое offset."
               },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`Apache Kafka` — это классический message broker, который удаляет сообщения сразу после доставки потребителю.",
+              "text": "Apache Kafka — классический broker, который безвозвратно удаляет record сразу после доставки consumer-у.",
               "correct": false,
               "sections": {
                 "what_actually": "Kafka не удаляет сообщения после чтения — она хранит их в логе в течение настроенного retention-периода, и именно это отличает её от `RabbitMQ`.",
@@ -66,23 +66,23 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие основные компоненты `Apache Kafka`?",
+          "question_text": "Как `Consumer Group` распределяет партиции между экземплярами consumer-а?",
           "options": [
             {
-              "text": "Компонент `Consumer Group` — это группа потребителей с общим `group.id`, где каждая партиция обрабатывается только одним потребителем группы.",
+              "text": "В одной group каждая partition назначается максимум одному consumer; membership changes вызывают перераспределение assignments.",
               "correct": true,
               "sections": {
-                "explanation": "Consumer Group обеспечивает масштабируемое параллельное чтение: партиции распределяются между участниками, при этом разные группы читают независимо и каждая получает все сообщения.",
-                "example": "Например, два инстанса `order-service` с одним `group.id=orders` делят 4 партиции по 2 на каждого.",
-                "when_to_apply": "Для горизонтального масштабирования увеличивают число инстансов в одной группе (до количества партиций), а для нескольких подписчиков заводят разные `group.id`.",
-                "edge_cases": "Если consumer-ов в группе больше, чем партиций, лишние простаивают; rebalance запускается при входе или выходе участника группы.",
+                "explanation": "Consumer group реализует competing consumption: партиции делятся между активными участниками, а offset хранится отдельно для group id. Масштабирование ограничено числом доступных партиций.",
+                "example": "Топик с шестью партициями и три consumer-а в одной группе обычно даёт по две партиции каждому; четвёртый участник вызывает rebalance и получает часть назначений.",
+                "when_to_apply": "Используйте один group id для параллельной обработки общего потока и разные group id, когда нескольким приложениям нужна независимая копия данных.",
+                "edge_cases": "При consumer-ов больше, чем партиций, часть участников простаивает. Cooperative assignors уменьшают объём перемещений, но не отменяют необходимость корректно обрабатывать rebalance.",
                 "related": "[[kafka-interview#Q6]] что такое партиция; [[kafka-interview#Q14]] consumer и группа; [[kafka-interview#Q15]] как происходит rebalance."
               },
               "label": "A",
               "order": 0
             },
             {
-              "text": "Компонент `Kafka Streams` — это отдельный кластер, который нужно разворачивать рядом с Kafka для потоковой обработки.",
+              "text": "Все consumers одной group получают копию каждого record, поэтому group автоматически реализует broadcast pub/sub.",
               "correct": false,
               "sections": {
                 "what_actually": "`Kafka Streams` — это клиентская библиотека, работающая как обычное Java-приложение, и отдельный кластер для неё не требуется.",
@@ -94,7 +94,7 @@
               "order": 1
             },
             {
-              "text": "Компонент `ZooKeeper`/`KRaft Controller` хранит пользовательские сообщения и индексирует их для быстрого поиска.",
+              "text": "Одна partition одновременно делится между несколькими consumers по отдельным records, масштабируясь выше числа partitions.",
               "correct": false,
               "sections": {
                 "what_actually": "`ZooKeeper` и `KRaft` хранят только метаданные кластера (топики, партиции, ACL, лидеры), а пользовательские сообщения лежат на брокерах в сегментах партиций.",
@@ -106,7 +106,7 @@
               "order": 2
             },
             {
-              "text": "Компонент `Broker` отвечает за маршрутизацию сообщений через `exchange` между `Producer` и `Consumer`.",
+              "text": "Assignments фиксируются при создании topic и не меняются после добавления, остановки или сбоя consumers.",
               "correct": false,
               "sections": {
                 "what_actually": "Exchange и маршрутизация — понятия `AMQP`; брокер Kafka хранит данные в партициях и обслуживает запросы клиентов напрямую, без промежуточного routing.",
@@ -129,31 +129,31 @@
           "question_text": "Что такое `Topic` в `Kafka`?",
           "options": [
             {
-              "text": "Топик — это постоянное хранилище, которое никогда не удаляет данные и гарантирует их вечное хранение.",
+              "text": "Topic хранит records бессрочно по умолчанию и никогда не удаляет их без явного delete API.",
               "correct": false,
               "sections": {
-                "what_actually": "По умолчанию Kafka удаляет сообщения по истечении retention-периода (7 дней) или при достижении лимита размера; вечное хранение требует явного `retention.ms=-1`.",
-                "source_of_confusion": "Durability и replay создают иллюзию, что данные в топике лежат бесконечно без настройки.",
-                "if_it_were_true": "Если бы топик хранил данные вечно по умолчанию, его можно было бы использовать как аудит-лог без настройки, но через 7 дней записи пропадут.",
-                "how_it_should_be": "Для бессрочного хранения нужно задать `retention.ms=-1` и/или дополнительный sink в `S3`, а по умолчанию работает TTL."
+                "what_actually": "Kafka удаляет records по настроенной retention policy либо compaction; бессрочное хранение требует явной конфигурации и capacity planning.",
+                "source_of_confusion": "Возможность replay создаёт впечатление, что log всегда хранится бесконечно.",
+                "if_it_were_true": "Disk usage topic рос бы без ограничений даже при default configuration.",
+                "how_it_should_be": "Рассматривайте topic как retained log с явными time/size/compaction policies."
               },
               "label": "A",
               "order": 0
             },
             {
-              "text": "Топик — это именованный `exchange`, к которому `Producer` привязывает сообщения через routing key.",
+              "text": "Topic является routing exchange, который направляет publication в отдельные queues по binding patterns.",
               "correct": false,
               "sections": {
-                "what_actually": "Routing key и exchange — концепции `RabbitMQ`/`AMQP`; в Kafka `Producer` публикует прямо в топик, а маршрутизация идёт через ключ партиционирования.",
-                "source_of_confusion": "Знакомые по `RabbitMQ` exchange и routing key ошибочно отождествляют с топиком Kafka.",
-                "if_it_were_true": "Если бы топик был exchange, существовал бы аналог direct/topic routing, но его приходится изобретать через middleware.",
-                "how_it_should_be": "Для разделения concerns в Kafka используют разные топики, а для маршрутизации внутри топика — ключ партиции."
+                "what_actually": "Kafka topic не использует exchanges и bindings: producer выбирает topic/partition, а consumer groups читают тот же log.",
+                "source_of_confusion": "Модель routing exchange из RabbitMQ ошибочно переносится на Kafka.",
+                "if_it_were_true": "В Kafka существовали бы binding keys и отдельные broker-side destination queues.",
+                "how_it_should_be": "Маршрутизацию моделируйте topic names, keys, partitions и application-level processing."
               },
               "label": "B",
               "order": 1
             },
             {
-              "text": "Топик — это логическая категория для сообщений, которая делится на партиции, а сами сообщения хранятся ограниченное время согласно retention-политике.",
+              "text": "Topic — логическая категория records, разделённая на ordered partitions; retention определяет хранение, а offsets поддерживают replay.",
               "correct": true,
               "sections": {
                 "explanation": "Топик — основная единица организации данных: `retention.ms` (по умолчанию 7 дней) или `retention.bytes` определяют срок хранения, а compacted-топики держат только последнее значение по ключу.",
@@ -166,13 +166,13 @@
               "order": 2
             },
             {
-              "text": "Топик — это FIFO-очередь, где каждое сообщение читается только одним `Consumer` и затем удаляется.",
+              "text": "Topic работает как competing queue: после acknowledgement record удаляется и недоступен другим consumer groups.",
               "correct": false,
               "sections": {
-                "what_actually": "Топик не является FIFO-очередью с эксклюзивным доступом: несколько `Consumer Group` читают его независимо, и сообщение не удаляется после первого чтения.",
-                "source_of_confusion": "Привычная модель очереди из `RabbitMQ` переносится на топик Kafka как на эксклюзивную FIFO-очередь.",
-                "if_it_were_true": "Если бы сообщение забиралось эксклюзивно, после рестарта consumer не увидел бы уже прочитанные записи, но он читает с committed offset заново.",
-                "how_it_should_be": "Несколько групп читают один топик параллельно, удаление управляется retention, а порядок гарантируется лишь внутри партиции."
+                "what_actually": "Consumer acknowledgement фиксирует group offset, но не удаляет record; другие groups и тот же consumer после reset могут прочитать его снова.",
+                "source_of_confusion": "Queue semantics удаления после ack переносятся на retained log Kafka.",
+                "if_it_were_true": "Новая consumer group не смогла бы прочитать ранее обработанную историю topic.",
+                "how_it_should_be": "Отделяйте lifecycle records по retention от progress каждой consumer group."
               },
               "label": "D",
               "order": 3
@@ -189,7 +189,7 @@
           "question_text": "Что такое `ZooKeeper` и какова его роль в `Kafka`?",
           "options": [
             {
-              "text": "`ZooKeeper` отвечал за балансировку нагрузки между `Producer`-клиентами и распределение сообщений по партициям.",
+              "text": "ZooKeeper распределял producer records по partitions и выполнял client-side balancing между brokers.",
               "correct": false,
               "sections": {
                 "what_actually": "Распределение сообщений по партициям выполняет сам `Producer` через `Partitioner`, и `ZooKeeper` в этом процессе не участвует.",
@@ -201,7 +201,7 @@
               "order": 0
             },
             {
-              "text": "`ZooKeeper` отвечал за сериализацию и десериализацию сообщений при передаче между `Producer` и `Consumer`.",
+              "text": "ZooKeeper сериализовал payload и управлял schema evolution producer и consumer clients.",
               "correct": false,
               "sections": {
                 "what_actually": "Сериализация и десериализация — ответственность клиентских `Serializer`/`Deserializer`, и `ZooKeeper` не обрабатывает пользовательские данные вообще.",
@@ -213,20 +213,20 @@
               "order": 1
             },
             {
-              "text": "`ZooKeeper` отвечал за хранение метаданных кластера, выбор лидера контроллера и управление `ACL`, но с Kafka 4.0 полностью заменён на `KRaft`.",
+              "text": "Исторически ZooKeeper координировал metadata/controllers; в Kafka 4.x его режим удалён и заменён KRaft quorum.",
               "correct": true,
               "sections": {
-                "explanation": "`ZooKeeper` выполнял координирующую роль: хранил список брокеров, топиков, партиций и их лидеров, а также управлял `ACL` и конфигурацией, пока `KRaft` не заменил его протоколом `Raft`.",
-                "example": "Например, кластер на Kafka 3.5 ещё держит метаданные в `ZooKeeper`, а на Kafka 4.0 их уже хранит контроллер `KRaft`.",
-                "when_to_apply": "Для новых деплоев сразу включают `KRaft` без `ZooKeeper`, а существующие кластеры до Kafka 4.0 мигрируют через ZooKeeper-to-KRaft tool.",
-                "edge_cases": "`KRaft` production-ready с Kafka 3.3+, поэтому держать `ZooKeeper` на новых кластерах не нужно, а на старых его выводят постепенно.",
+                "explanation": "Kafka перешла на собственный metadata quorum. В актуальных 4.x кластерах ZooKeeper не является вариантом развертывания, поэтому новые инсталляции и миграции проектируют вокруг KRaft.",
+                "example": "При обновлении старого кластера сначала выполняют поддерживаемую миграцию метаданных в KRaft, а новый Kafka 4.x кластер создают сразу с controller quorum.",
+                "when_to_apply": "Знание важно при проектировании topology controller-ов, обновлении старых кластеров и выборе совместимых operational tools.",
+                "edge_cases": "Исторические версии Kafka могли работать с ZooKeeper, поэтому документацию и команды необходимо соотносить с major-версией кластера.",
                 "related": "[[kafka-interview#Q2]] основные компоненты; [[kafka-interview#Q5]] что такое KRaft; [[kafka-interview#Q24]] транзакции и internal-топики."
               },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`ZooKeeper` отвечал за хранение пользовательских сообщений и обеспечивал их репликацию между брокерами.",
+              "text": "ZooKeeper хранил пользовательские records и служил основным replicated storage для topic partitions.",
               "correct": false,
               "sections": {
                 "what_actually": "Пользовательские сообщения никогда не хранились в `ZooKeeper` — только метаданные кластера, а репликацию данных обеспечивали сами брокеры через механизм ISR.",
@@ -249,7 +249,7 @@
           "question_text": "Что такое `KRaft` и зачем он нужен?",
           "options": [
             {
-              "text": "`KRaft` хранит метаданные кластера во внешней базе `etcd` по протоколу `Raft`.",
+              "text": "KRaft — compression format для record batches, заменяющий gzip и lz4 у idempotent producer.",
               "correct": false,
               "sections": {
                 "what_actually": "`KRaft` не использует внешнее хранилище вроде `etcd`: метаданные лежат во внутреннем топике Kafka и реплицируются самими контроллерами.",
@@ -261,20 +261,20 @@
               "order": 0
             },
             {
-              "text": "`KRaft` хранит метаданные кластера во внутреннем топике `__cluster_metadata` по протоколу `Raft`.",
+              "text": "KRaft — встроенный Raft-based metadata quorum Kafka, где controllers ведут replicated metadata log вместо ZooKeeper.",
               "correct": true,
               "sections": {
-                "explanation": "`KRaft` встроен в брокеры: специальный топик `__cluster_metadata` реплицируется между контроллерами через `Raft`-консенсус, что ускоряет восстановление и масштабируемость без внешнего координатора.",
-                "example": "Например, три ноды с `process.roles=controller` образуют кворум и реплицируют топик `__cluster_metadata` по `Raft`.",
-                "when_to_apply": "Для Kafka 3.3+ задают `process.roles=broker,controller` в combined-режиме для малых кластеров или выделенный `process.roles=controller` в production.",
-                "edge_cases": "Для кворума нужно минимум 3 контроллера, а `metadata.log.dir` лучше держать на отдельном диске ради производительности metadata-операций.",
+                "explanation": "KRaft управляет метаданными брокеров, топиков, партиций, конфигураций и leadership через отдельный quorum controller-ов. Пользовательские записи по-прежнему хранятся в обычных topic partitions.",
+                "example": "Три controller-процесса образуют quorum; изменения метаданных фиксируются в metadata log и применяются брокерами после подтверждения большинством controller-ов.",
+                "when_to_apply": "Используйте при создании Kafka 4.x кластеров, выборе числа controller-ов, планировании fault tolerance и миграции с ZooKeeper.",
+                "edge_cases": "Metadata quorum не заменяет replication factor пользовательских топиков. Совмещённые broker/controller роли допустимы не во всех production-топологиях.",
                 "related": "[[kafka-interview#Q4]] что такое ZooKeeper; [[kafka-interview#Q2]] основные компоненты; [[kafka-interview#Q6]] что такое партиция."
               },
               "label": "B",
               "order": 1
             },
             {
-              "text": "`KRaft` хранит метаданные кластера в файловой системе каждого брокера без репликации.",
+              "text": "KRaft — client library для exactly-once, объединяющая offsets и external database updates в XA transaction.",
               "correct": false,
               "sections": {
                 "what_actually": "Метаданные в `KRaft` обязательно реплицируются между контроллерами кворума, иначе не было бы отказоустойчивости координации.",
@@ -286,7 +286,7 @@
               "order": 2
             },
             {
-              "text": "`KRaft` хранит метаданные кластера в `ZooKeeper` через протокол `Paxos`.",
+              "text": "KRaft реплицирует каждую пользовательскую partition на все brokers независимо от configured replication factor.",
               "correct": false,
               "sections": {
                 "what_actually": "`KRaft` принципиально заменяет `ZooKeeper` и не использует его, а протокол консенсуса — это `Raft`, а не `Paxos`.",
@@ -309,7 +309,7 @@
           "question_text": "Что такое `Partition` и как она устроена?",
           "options": [
             {
-              "text": "Партиция — это append-only лог, где порядок гарантируется только внутри одной партиции.",
+              "text": "Partition — append-only log, где ordering гарантируется только внутри конкретной partition.",
               "correct": true,
               "sections": {
                 "explanation": "Партиция — единица параллелизма и хранения: записи в ней строго упорядочены по offset, но глобального порядка между партициями нет — это фундаментальное свойство Kafka.",
@@ -322,7 +322,7 @@
               "order": 0
             },
             {
-              "text": "Партиция — это append-only лог, где порядок гарантируется между топиками одного брокера.",
+              "text": "Partition гарантирует единый order между всеми topics, размещёнными на одном broker.",
               "correct": false,
               "sections": {
                 "what_actually": "Порядок не гарантируется между топиками вообще: границы порядка — это всегда одна партиция одного топика.",
@@ -334,7 +334,7 @@
               "order": 1
             },
             {
-              "text": "Партиция — это append-only лог, где порядок гарантируется между всеми репликами ISR в реальном времени.",
+              "text": "Partition гарантирует одновременную видимость каждой записи на всех ISR replicas до leader append.",
               "correct": false,
               "sections": {
                 "what_actually": "ISR обеспечивает репликацию, но порядок определяется самой партицией на `Leader`, а не согласованием между репликами в реальном времени.",
@@ -346,7 +346,7 @@
               "order": 2
             },
             {
-              "text": "Партиция — это append-only лог, где порядок гарантируется глобально между всеми партициями топика.",
+              "text": "Partition обеспечивает global order между всеми partitions одного topic без использования ключей.",
               "correct": false,
               "sections": {
                 "what_actually": "Глобального порядка по топику нет — порядок гарантируется только внутри одной партиции, а для глобального порядка нужен топик с одной партицией.",
@@ -489,7 +489,7 @@
           "question_text": "Как выбирается `Partition` при отправке сообщения с ключом?",
           "options": [
             {
-              "text": "При наличии ключа `Producer` выбирает партицию через sticky partitioning в рамках batch.",
+              "text": "С ключом producer применяет sticky partitioning внутри batch и не учитывает hash значения.",
               "correct": false,
               "sections": {
                 "what_actually": "Sticky partitioning работает только при отсутствии ключа начиная с Kafka 2.4; при наличии ключа оно не применяется, иначе нарушилась бы гарантия порядка.",
@@ -501,7 +501,7 @@
               "order": 0
             },
             {
-              "text": "При наличии ключа `Producer` выбирает партицию через `hash(key) % numPartitions` с использованием `Murmur2`.",
+              "text": "С ключом default producer partitioner использует deterministic hash key и число доступных partitions.",
               "correct": true,
               "sections": {
                 "explanation": "Hash-based партиционирование гарантирует, что одинаковые ключи всегда попадают в одну партицию, а `Murmur2` выбран как быстрый non-cryptographic хеш с равномерным распределением.",
@@ -514,7 +514,7 @@
               "order": 1
             },
             {
-              "text": "При наличии ключа `Producer` выбирает партицию через `SHA-256` от ключа.",
+              "text": "С ключом partition всегда выбирается по SHA-256 независимо от serializer и client implementation.",
               "correct": false,
               "sections": {
                 "what_actually": "`SHA-256` слишком медленный для высокопроизводительного партиционирования; Kafka использует `Murmur2`, оптимизированный под скорость и равномерность.",
@@ -526,7 +526,7 @@
               "order": 2
             },
             {
-              "text": "При наличии ключа `Producer` выбирает партицию через round-robin по списку партиций.",
+              "text": "С ключом producer использует round-robin, поэтому одинаковые keys могут попадать в разные partitions.",
               "correct": false,
               "sections": {
                 "what_actually": "Round-robin применяется только при отсутствии ключа (до Kafka 2.4), а при наличии ключа всегда работает hash-стратегия ради стабильности порядка.",
@@ -549,7 +549,7 @@
           "question_text": "Что такое `Producer` и как он работает внутри?",
           "options": [
             {
-              "text": "`Producer` делает round-trip к брокеру для каждого отдельного сообщения и только потом отправляет следующее.",
+              "text": "Producer делает synchronous round trip для каждого record и не сериализует следующий до acknowledgement.",
               "correct": false,
               "sections": {
                 "what_actually": "`Producer` оптимизирован под высокий throughput и не делает round-trip на каждое сообщение: применяются батчинг и pipelining через `max.in.flight.requests.per.connection`.",
@@ -561,7 +561,7 @@
               "order": 0
             },
             {
-              "text": "`Producer` ожидает подтверждения от брокера перед сериализацией следующего сообщения.",
+              "text": "Producer сериализует record только после broker acknowledgement, поэтому batching до отправки невозможен.",
               "correct": false,
               "sections": {
                 "what_actually": "Сериализация и накопление батчей идут независимо от подтверждений: producer может держать несколько in-flight запросов без блокировки на acks.",
@@ -573,7 +573,7 @@
               "order": 1
             },
             {
-              "text": "`Producer` накапливает сообщения в `RecordAccumulator` и отправляет их батчами через отдельный `Sender Thread`, снижая network overhead.",
+              "text": "Producer сериализует records, помещает их в per-partition accumulator, а sender thread асинхронно отправляет batches.",
               "correct": true,
               "sections": {
                 "explanation": "Батчинг — ключевая оптимизация: сообщения группируются по партициям до достижения `batch.size` или `linger.ms`, а отдельный `Sender Thread` отправляет батчи на брокеры, кратно повышая throughput.",
@@ -586,7 +586,7 @@
               "order": 2
             },
             {
-              "text": "`Producer` отправляет каждое сообщение синхронно в main thread сразу после вызова `send()`.",
+              "text": "`send()` пишет record в socket из caller thread и всегда блокируется до полной replication.",
               "correct": false,
               "sections": {
                 "what_actually": "`send()` не блокирует main thread — вызов асинхронный и возвращает `Future`, а фактическая отправка идёт батчами в отдельном `Sender Thread`.",
@@ -729,7 +729,7 @@
           "question_text": "Как настроить батчинг и сжатие у `Producer`?",
           "options": [
             {
-              "text": "Для оптимального баланса CPU и сжатия в `Producer` рекомендуется `compression.type=gzip`.",
+              "text": "`batch.size=1`, `linger.ms=0` и отключённое compression одновременно максимизируют throughput и минимизируют network usage.",
               "correct": false,
               "sections": {
                 "what_actually": "`gzip` даёт лучшую степень сжатия, но высокую CPU-нагрузку и медленную работу — это выбор для минимизации storage, а не баланса.",
@@ -741,20 +741,20 @@
               "order": 0
             },
             {
-              "text": "Для оптимального баланса CPU и сжатия в `Producer` рекомендуется `compression.type=lz4`.",
+              "text": "Producer группирует records по partitions; `batch.size`, `linger.ms` и compression балансируют latency, throughput, CPU и memory.",
               "correct": true,
               "sections": {
-                "explanation": "`lz4` обеспечивает низкое потребление CPU при хорошей степени сжатия и очень высокой скорости — это стандартная production-рекомендация для большинства пайплайнов.",
-                "example": "Например, на `orders` ставят `compression.type=lz4`, и при сжатии ~4x объём диска падает с 8 ТБ до 2 ТБ в сутки.",
-                "when_to_apply": "Типичный setup `compression.type=lz4 + batch.size=32768 + linger.ms=10`; для экстремальной экономии хранения на CDC-топиках берут `zstd`.",
-                "edge_cases": "Для real-time low-latency иногда выбирают `none`, а `gzip` оставляют, только когда экономия диска важнее CPU-затрат.",
+                "explanation": "Accumulator группирует записи одной партиции, а sender отправляет готовые batch. Небольшое ожидание и сжатие уменьшают число запросов, но могут увеличить latency и нагрузку CPU.",
+                "example": "Для потока телеметрии команда тестирует `linger.ms` в несколько миллисекунд, увеличенный `batch.size` и `lz4`/`zstd`, сравнивая p99 latency, throughput и producer buffer pressure.",
+                "when_to_apply": "Настраивайте по измерениям реального payload и SLA, а не по универсальному рецепту; особенно важно при высоком числе мелких сообщений.",
+                "edge_cases": "Batch не обязан заполняться полностью: producer отправит его по таймеру или при pressure. Слишком большой `buffer.memory` и медленные broker-ы могут привести к блокировке или timeout отправок.",
                 "related": "[[kafka-interview#Q10]] как работает Producer; [[kafka-interview#Q11]] параметр acks; [[kafka-interview#Q12]] идемпотентный producer."
               },
               "label": "B",
               "order": 1
             },
             {
-              "text": "Для оптимального баланса CPU и сжатия в `Producer` рекомендуется `compression.type=snappy`.",
+              "text": "`linger.ms` задаёт ожидание broker-а перед disk flush и не влияет на producer-side batching.",
               "correct": false,
               "sections": {
                 "what_actually": "`snappy` — хороший, но более старый алгоритм с чуть худшим соотношением сжатия к скорости, чем `lz4`.",
@@ -766,7 +766,7 @@
               "order": 2
             },
             {
-              "text": "Для оптимального баланса CPU и сжатия в `Producer` рекомендуется `compression.type=none`.",
+              "text": "Compression выполняется для каждого record до partitioning, поэтому batch composition не влияет на ratio.",
               "correct": false,
               "sections": {
                 "what_actually": "Без сжатия трафик и объём хранения значительно растут; `none` приемлем лишь при строгих CPU-ограничениях, но не для баланса.",
@@ -1029,7 +1029,7 @@
           "question_text": "Как работает репликация в `Kafka`?",
           "options": [
             {
-              "text": "В модели репликации Kafka `Leader` активно push-ит записи на всех followers сразу после получения от `Producer`.",
+              "text": "Leader push-ит каждую запись followers сразу после получения от producer.",
               "correct": false,
               "sections": {
                 "what_actually": "Kafka использует pull-модель: `Leader` не инициирует отправку, а только отвечает на fetch-запросы от followers.",
@@ -1041,7 +1041,7 @@
               "order": 0
             },
             {
-              "text": "В модели репликации Kafka каждое сообщение реплицируется синхронно всеми брокерами кластера независимо от `replication.factor`.",
+              "text": "Каждый record синхронно копируется на все brokers независимо от replication factor.",
               "correct": false,
               "sections": {
                 "what_actually": "Реплицируется только на число брокеров, равное `replication.factor`, а синхронность зависит от параметра `acks` на стороне producer.",
@@ -1053,7 +1053,7 @@
               "order": 1
             },
             {
-              "text": "В модели репликации Kafka followers реплицируют данные через протокол `Raft`-консенсуса с кворумом голосов.",
+              "text": "Followers реплицируют user data через отдельный Raft vote quorum для каждой record.",
               "correct": false,
               "sections": {
                 "what_actually": "`Raft` используется в `KRaft` для метаданных, но не для репликации данных партиций — там применяется ISR-модель leader-follower.",
@@ -1065,7 +1065,7 @@
               "order": 2
             },
             {
-              "text": "В модели репликации Kafka followers реплицируют данные fetch-запросами к `Leader` — это pull-модель.",
+              "text": "Followers отправляют fetch requests leader-у и копируют log в pull-модели.",
               "correct": true,
               "sections": {
                 "explanation": "Followers инициируют репликацию сами: периодически отправляют `FetchRequest` к лидеру и получают новые записи, что упрощает backpressure и контроль скорости репликации.",
@@ -1089,7 +1089,7 @@
           "question_text": "Что такое `ISR`, `OSR` и `High Watermark`?",
           "options": [
             {
-              "text": "Consumer может читать сообщения только до `High Watermark` (HW) — offset, реплицированного на все ISR.",
+              "text": "High Watermark ограничивает обычное чтение replicated records; ISR синхронны, OSR отстают.",
               "correct": true,
               "sections": {
                 "explanation": "HW гарантирует, что сообщение надёжно сохранено на всех ISR; чтение ограничено HW, чтобы не показать данные, способные пропасть после failover лидера.",
@@ -1102,7 +1102,7 @@
               "order": 0
             },
             {
-              "text": "Consumer может читать сообщения до offset `__consumer_offsets` последнего commit.",
+              "text": "High Watermark хранится в `__consumer_offsets` и равен committed offset каждой consumer group.",
               "correct": false,
               "sections": {
                 "what_actually": "`__consumer_offsets` хранит позиции commit самого consumer-а, а не границу читаемых данных; границу задаёт HW партиции.",
@@ -1114,7 +1114,7 @@
               "order": 1
             },
             {
-              "text": "Consumer может читать сообщения до `Log End Offset` (LEO) `Leader`-реплики.",
+              "text": "Consumer читает до leader LEO, включая records, которые могут исчезнуть после failover.",
               "correct": false,
               "sections": {
                 "what_actually": "Consumer ограничен `High Watermark` (HW), а не LEO: чтение до LEO небезопасно, ведь такие записи могут пропасть при падении лидера до репликации.",
@@ -1126,7 +1126,7 @@
               "order": 2
             },
             {
-              "text": "Consumer может читать сообщения только до offset follower с наибольшим отставанием.",
+              "text": "Read boundary определяется самой отстающей replica, включая все OSR независимо от ISR membership.",
               "correct": false,
               "sections": {
                 "what_actually": "Это не так: сильно отставший follower выпадает из ISR, и HW считается по текущему составу ISR, а не по самой медленной реплике вне него.",
@@ -1149,7 +1149,7 @@
           "question_text": "Что произойдёт при падении `Leader`-брокера?",
           "options": [
             {
-              "text": "`Controller` выбирает нового лидера из списка ISR текущей партиции.",
+              "text": "Controller выбирает нового partition leader из доступных ISR replicas.",
               "correct": true,
               "sections": {
                 "explanation": "`Controller` обнаруживает падение через heartbeat и выбирает нового лидера только среди ISR — реплик, синхронизированных с прежним лидером, что исключает потерю committed-данных.",
@@ -1162,7 +1162,7 @@
               "order": 0
             },
             {
-              "text": "`Controller` создаёт новую реплику на свободном брокере и назначает её лидером.",
+              "text": "Controller сначала создаёт новую replica на свободном broker и сразу назначает её leader.",
               "correct": false,
               "sections": {
                 "what_actually": "Создание новой реплики — долгая операция и при failover не выполняется: используется существующая ISR-реплика с актуальными данными.",
@@ -1174,7 +1174,7 @@
               "order": 1
             },
             {
-              "text": "`Controller` выбирает нового лидера из любой живой реплики независимо от ISR.",
+              "text": "Controller выбирает любую live replica независимо от ISR и возможной потери confirmed data.",
               "correct": false,
               "sections": {
                 "what_actually": "Выбор из не-ISR реплик возможен только при `unclean.leader.election.enable=true` и чреват потерей данных; по умолчанию лидер выбирается лишь из ISR.",
@@ -1186,7 +1186,7 @@
               "order": 2
             },
             {
-              "text": "`Controller` запускает голосование кворума среди всех брокеров кластера для выбора лидера партиции.",
+              "text": "Все brokers голосуют Raft quorum за leader каждой user partition при каждом failover.",
               "correct": false,
               "sections": {
                 "what_actually": "Kafka не голосует среди всех брокеров за лидера партиции: `Controller` принимает решение единолично на основе метаданных ISR.",
@@ -1326,10 +1326,10 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как реализовать `Exactly-Once` семантику?",
+          "question_text": "Как получить exactly-once обработку внутри Kafka?",
           "options": [
             {
-              "text": "Для exactly-once на стороне consumer достаточно установить `isolation.level=repeatable_read`.",
+              "text": "`read_committed` автоматически делает external HTTP/SQL effects и consumer offsets атомарными без transactions.",
               "correct": false,
               "sections": {
                 "what_actually": "`repeatable_read` — уровень изоляции SQL, а не Kafka; в Kafka есть только `read_uncommitted` и `read_committed`.",
@@ -1341,20 +1341,20 @@
               "order": 0
             },
             {
-              "text": "Для exactly-once на стороне consumer достаточно установить `isolation.level=read_committed`.",
+              "text": "Transactional producer фиксирует output records и consumed offsets одной Kafka transaction; Streams предоставляет EOS processing mode.",
               "correct": true,
               "sections": {
-                "explanation": "`read_committed` заставляет consumer читать только сообщения из успешно закоммиченных транзакций, пропуская uncommitted и aborted — это обязательный параметр на стороне чтения.",
-                "example": "Например, на consumer ставят `isolation.level=read_committed`, и записи aborted-транзакции просто пропускаются.",
-                "when_to_apply": "Полный setup exactly-once read-process-write: `enable.idempotence=true + transactional.id` на producer и `isolation.level=read_committed` на consumer.",
-                "edge_cases": "Сам `read_committed` не делает exactly-once в одиночку — нужны идемпотентный и транзакционный producer, иначе гарантия неполна.",
+                "explanation": "Idempotent producer подавляет дубли записи от retries, но end-to-end read-process-write требует транзакции, включающей output records и offsets. `read_committed` лишь скрывает незавершённые/abort records.",
+                "example": "Consumer читает вход, producer начинает транзакцию, пишет результат, вызывает `sendOffsetsToTransaction(...)` и commit; при сбое транзакция abort-ится, а входной offset остаётся непотверждённым.",
+                "when_to_apply": "Используйте для Kafka-to-Kafka pipelines, где повторный результат недопустим и вся атомарная граница находится внутри Kafka.",
+                "edge_cases": "Внешняя БД или HTTP-сервис не становятся частью Kafka-транзакции. Для них нужны идемпотентность, outbox/inbox, deduplication или отдельный coordination pattern.",
                 "related": "[[kafka-interview#Q12]] идемпотентный producer; [[kafka-interview#Q22]] семантики доставки; [[kafka-interview#Q24]] транзакции."
               },
               "label": "B",
               "order": 1
             },
             {
-              "text": "Для exactly-once на стороне consumer достаточно установить `isolation.level=read_uncommitted`.",
+              "text": "`enable.idempotence=true` делает любую бизнес-операцию, включая SQL, HTTP и отправку email, exactly-once без общей транзакционной границы.",
               "correct": false,
               "sections": {
                 "what_actually": "`read_uncommitted` (значение по умолчанию) читает все сообщения, включая uncommitted от aborted-транзакций, что нарушает exactly-once.",
@@ -1366,7 +1366,7 @@
               "order": 2
             },
             {
-              "text": "Для exactly-once на стороне consumer достаточно установить `isolation.level=serializable`.",
+              "text": "`acks=all` и RF=3 предотвращают повторное выполнение consumer business logic после crash.",
               "correct": false,
               "sections": {
                 "what_actually": "Значения `serializable` у параметра `isolation.level` в Kafka нет — допустимы только `read_uncommitted` и `read_committed`.",
@@ -1449,7 +1449,7 @@
           "question_text": "Как интегрировать `Kafka` со `Spring Boot` для отправки сообщений?",
           "options": [
             {
-              "text": "Для отправки сообщений используется бин `KafkaPublisher`, создаваемый через `Spring Cloud Stream`.",
+              "text": "Spring отправляет records через `KafkaPublisher`, автоматически создаваемый Spring Cloud Stream в любом приложении.",
               "correct": false,
               "sections": {
                 "what_actually": "У `Spring Cloud Stream` другие абстракции (`binder`, `StreamBridge`), и это отдельный модуль; для прямой работы с Kafka используется `KafkaTemplate`.",
@@ -1461,7 +1461,7 @@
               "order": 0
             },
             {
-              "text": "Для отправки сообщений используется бин `KafkaProducer`, создаваемый вручную.",
+              "text": "Spring создаёт raw `KafkaProducer` вручную как singleton без `ProducerFactory` и lifecycle management.",
               "correct": false,
               "sections": {
                 "what_actually": "`Spring Kafka` предоставляет высокоуровневую обёртку `KafkaTemplate`; прямое использование `KafkaProducer` нетипично и теряет интеграцию с метриками и tracing.",
@@ -1473,7 +1473,7 @@
               "order": 1
             },
             {
-              "text": "Для отправки сообщений используется бин `KafkaTemplate`, создаваемый через `ProducerFactory`.",
+              "text": "Для отправки обычно используют `KafkaTemplate`, созданный и настроенный через `ProducerFactory`/Boot autoconfiguration.",
               "correct": true,
               "sections": {
                 "explanation": "`KafkaTemplate` — стандартная абстракция `Spring Kafka`, обёртка над `KafkaProducer` с поддержкой `SpEL`, tracing, callbacks и транзакций, создаётся автоматически из `ProducerFactory`.",
@@ -1486,7 +1486,7 @@
               "order": 2
             },
             {
-              "text": "Для отправки сообщений используется бин `KafkaSender`, создаваемый через `SenderFactory`.",
+              "text": "Отправку выполняет `KafkaSender`, который всегда создаётся через обязательный `SenderFactory`.",
               "correct": false,
               "sections": {
                 "what_actually": "Таких бинов в `Spring Kafka` нет: `KafkaSender` относится к `Reactor Kafka`, а это другая библиотека.",
@@ -1686,23 +1686,23 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как тестировать `Kafka` в `Spring Boot`?",
+          "question_text": "Как тестировать интеграцию с Kafka в `Spring Boot`?",
           "options": [
             {
-              "text": "Для unit-тестирования без внешней зависимости используется `@EmbeddedKafka` с `EmbeddedKafkaBroker`.",
+              "text": "`@EmbeddedKafka` запускает local broker для integration test; Testcontainers даёт более реалистичную версию и network environment.",
               "correct": true,
               "sections": {
-                "explanation": "`@EmbeddedKafka` из spring-kafka-test поднимает встроенный брокер внутри JVM без Docker и внешних зависимостей — это идеально для быстрых тестов с минимальной инфраструктурой.",
-                "example": "Например, `@SpringBootTest @EmbeddedKafka(partitions=1, topics={\"orders\"})` поднимает брокер в JVM без Docker.",
-                "when_to_apply": "Пишут `@SpringBootTest @EmbeddedKafka(partitions=1, topics={\"orders\"})` для быстрых тестов, а для integration берут `Testcontainers` с реальным образом.",
-                "edge_cases": "Встроенный брокер не на 100% повторяет production-поведение, поэтому критичные сценарии всё равно проверяют против реального кластера.",
+                "explanation": "Mock-тесты проверяют локальную логику, но не протокол и broker behavior. Embedded broker и контейнер позволяют проверить сериализацию, listeners, offsets и реальные topic interactions.",
+                "example": "Тест запускает `@EmbeddedKafka`, публикует record через `KafkaTemplate`, ждёт обработку listener-а и проверяет side effect; отдельный suite повторяет сценарий на container-образе целевой версии Kafka.",
+                "when_to_apply": "Комбинируйте быстрые unit-тесты с integration tests для конфигурации, схем, retry/DLT и consumer behavior.",
+                "edge_cases": "Embedded broker может отличаться от production по версии, security и окружению. Для TLS/SASL, KRaft и operational configuration предпочтительнее Testcontainers.",
                 "related": "[[kafka-interview#Q25]] интеграция со Spring; [[kafka-interview#Q27]] Consumer с KafkaListener; [[kafka-interview#Q28]] обработка ошибок."
               },
               "label": "A",
               "order": 0
             },
             {
-              "text": "Для unit-тестирования без внешней зависимости используется `@Testcontainers` с `KafkaContainer`.",
+              "text": "Kafka integration проверяют только mock `KafkaTemplate`; serializers, retries и group semantics не требуют broker test.",
               "correct": false,
               "sections": {
                 "what_actually": "`Testcontainers` поднимает реальный Docker-контейнер Kafka — это интеграционный тест, а не unit, и он требует Docker как внешнюю зависимость.",
@@ -1714,7 +1714,7 @@
               "order": 1
             },
             {
-              "text": "Для unit-тестирования без внешней зависимости используется `@MockKafka` с `MockKafkaBroker`.",
+              "text": "`@EmbeddedKafka` подключается к production cluster и создаёт временный topic с автоматической изоляцией.",
               "correct": false,
               "sections": {
                 "what_actually": "Таких аннотаций в `Spring Kafka` нет; для тестов без брокера можно мокать `KafkaTemplate` через `Mockito`, но не через `@MockKafka`.",
@@ -1726,7 +1726,7 @@
               "order": 2
             },
             {
-              "text": "Для unit-тестирования без внешней зависимости используется `@KafkaTest` с автоматическим брокером.",
+              "text": "Testcontainers нельзя запускать из JUnit/CI; он подходит только для ручных end-to-end checks.",
               "correct": false,
               "sections": {
                 "what_actually": "Аннотации `@KafkaTest` не существует; стандартный путь — `@EmbeddedKafka` для встроенного брокера в JVM.",
@@ -1749,7 +1749,7 @@
           "question_text": "Что такое `Kafka Streams`?",
           "options": [
             {
-              "text": "`Kafka Streams` — это клиентская библиотека, которая работает внутри JVM-приложения без отдельного кластера.",
+              "text": "Kafka Streams — client library, выполняющая topology внутри JVM application без отдельного processing cluster.",
               "correct": true,
               "sections": {
                 "explanation": "`Kafka Streams` не требует dedicated processing cluster: это обычная Java-библиотека, запускаемая как часть приложения, а масштабирование достигается запуском большего числа инстансов.",
@@ -1762,7 +1762,7 @@
               "order": 0
             },
             {
-              "text": "`Kafka Streams` — это отдельный distributed processing cluster, разворачиваемый рядом с Kafka.",
+              "text": "Kafka Streams — отдельный distributed compute cluster, который разворачивается рядом с Kafka brokers.",
               "correct": false,
               "sections": {
                 "what_actually": "Это описание `Apache Flink` или `Spark Streaming`, но не `Kafka Streams`, который спроектирован без отдельной инфраструктуры обработки.",
@@ -1774,7 +1774,7 @@
               "order": 1
             },
             {
-              "text": "`Kafka Streams` — это UI-инструмент для визуального проектирования pipeline-обработки сообщений.",
+              "text": "Kafka Streams — UI для визуального проектирования и запуска message-processing pipelines.",
               "correct": false,
               "sections": {
                 "what_actually": "`Kafka Streams` — это API и runtime, а не UI; визуальные инструменты (например `Confluent Flow`) существуют отдельно и не являются частью Streams.",
@@ -1786,7 +1786,7 @@
               "order": 2
             },
             {
-              "text": "`Kafka Streams` — это плагин для брокеров, выполняющий обработку прямо на брокерах.",
+              "text": "Kafka Streams — broker plugin, исполняющий transformations непосредственно внутри Kafka servers.",
               "correct": false,
               "sections": {
                 "what_actually": "`Kafka Streams` не работает на брокерах — это чисто клиентская библиотека, а брокеры занимаются только хранением и доставкой данных.",
@@ -1809,7 +1809,7 @@
           "question_text": "Какие основные абстракции в `Kafka Streams` и что такое `KStream`?",
           "options": [
             {
-              "text": "`KStream` представляет changelog-таблицу с upsert-семантикой по ключу.",
+              "text": "`KStream` — changelog table с upsert semantics, где новый record полностью заменяет прежнее значение того же key.",
               "correct": false,
               "sections": {
                 "what_actually": "Это описание `KTable`, а не `KStream`: `KStream` — бесконечный append-only поток событий, где каждая запись независима.",
@@ -1821,7 +1821,7 @@
               "order": 0
             },
             {
-              "text": "`KStream` представляет локальное хранилище состояния на основе `RocksDB`.",
+              "text": "`KStream` — local RocksDB state store, доступный только task-у и не представляющий входной event stream.",
               "correct": false,
               "sections": {
                 "what_actually": "Это описание `State Store`, а не `KStream`: `State Store` хранит накопленное состояние, тогда как `KStream` — это поток событий.",
@@ -1833,7 +1833,7 @@
               "order": 1
             },
             {
-              "text": "`KStream` представляет материализованное состояние, реплицированное на все инстансы приложения.",
+              "text": "`KStream` — materialized snapshot входных данных, который автоматически и полностью реплицируется каждому application instance.",
               "correct": false,
               "sections": {
                 "what_actually": "Это описание `GlobalKTable`, а не `KStream`: `GlobalKTable` доступен целиком на всех инстансах и используется для broadcast reference data.",
@@ -1845,7 +1845,7 @@
               "order": 2
             },
             {
-              "text": "`KStream` представляет бесконечный поток записей (insert-only) без семантики обновления по ключу.",
+              "text": "`KStream` представляет независимые events; повторный key остаётся новым record, в отличие от table semantics.",
               "correct": true,
               "sections": {
                 "explanation": "`KStream` моделирует event stream: каждое сообщение — независимый факт, добавляемый к потоку, и одинаковые ключи не заменяют предыдущие, а сосуществуют.",
@@ -1869,7 +1869,7 @@
           "question_text": "Как использовать `Kafka Streams` в `Spring Boot`?",
           "options": [
             {
-              "text": "Для включения `Kafka Streams` в `Spring Boot` необходима аннотация `@EnableStreams`.",
+              "text": "Для Boot Kafka Streams требуется несуществующая `@EnableStreams`, одновременно создающая topology, runtime и все properties.",
               "correct": false,
               "sections": {
                 "what_actually": "Аннотации `@EnableStreams` в `Spring Kafka` не существует; правильная — `@EnableKafkaStreams`.",
@@ -1881,7 +1881,7 @@
               "order": 0
             },
             {
-              "text": "Для включения `Kafka Streams` в `Spring Boot` необходима аннотация `@KafkaStreamsConfig`.",
+              "text": "Активацию выполняет специальная `@KafkaStreamsConfig`, заменяющая dependencies, configuration и `StreamsBuilder` bean.",
               "correct": false,
               "sections": {
                 "what_actually": "Такой аннотации нет: активация — через `@EnableKafkaStreams`, а конфигурация — через бин `KafkaStreamsConfiguration`.",
@@ -1893,20 +1893,20 @@
               "order": 1
             },
             {
-              "text": "Для включения `Kafka Streams` в `Spring Boot` необходима аннотация `@EnableKafkaStreams` на конфигурационном классе.",
+              "text": "Добавляют `kafka-streams`, задают application id/bootstrap servers и объявляют topology через `StreamsBuilder`; Boot запускает runtime.",
               "correct": true,
               "sections": {
-                "explanation": "`@EnableKafkaStreams` активирует инфраструктуру `Spring Kafka Streams`: автоматический старт `StreamsBuilder` и управление жизненным циклом `KafkaStreams`, без неё бины streams не создаются.",
-                "example": "Например, класс с `@EnableKafkaStreams` и бином `KafkaStreamsConfiguration` запускает топологию через `StreamsBuilder`.",
-                "when_to_apply": "Связка `@EnableKafkaStreams` плюс бин `KafkaStreamsConfiguration` — это production-setup, а топологию описывают через инъекцию `StreamsBuilder`.",
-                "edge_cases": "Для exactly-once в конфигурации задают `processing.guarantee=exactly_once_v2`, иначе по умолчанию работает at-least-once.",
+                "explanation": "Boot интегрирует Spring for Apache Kafka и создаёт infrastructure beans для Streams. Конкретный способ включения зависит от версии и конфигурации, поэтому `@EnableKafkaStreams` не следует объявлять универсально обязательной.",
+                "example": "`@Bean KStream<String, Order> topology(StreamsBuilder builder)` читает input topic, фильтрует записи и пишет output topic; свойства `spring.kafka.streams.application-id` задают identity приложения.",
+                "when_to_apply": "Используйте для stateful/event-stream обработки внутри Spring Boot, когда нужны joins, windows, aggregations и локальные state stores.",
+                "edge_cases": "`application.id` определяет consumer group, internal topics и state directory. Изменение id создаёт новую processing identity и может потребовать повторной обработки.",
                 "related": "[[kafka-interview#Q30]] что такое Kafka Streams; [[kafka-interview#Q31]] абстракции KStream/KTable; [[kafka-interview#Q49]] State Store."
               },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Для включения `Kafka Streams` в `Spring Boot` необходима аннотация `@EnableKafka`.",
+              "text": "Достаточно `@EnableKafka`: она автоматически создаёт Kafka Streams topology из всех listener methods приложения.",
               "correct": false,
               "sections": {
                 "what_actually": "`@EnableKafka` включает только поддержку `@KafkaListener` (consumer), но не `Kafka Streams DSL`; для streams нужна `@EnableKafkaStreams`.",
@@ -1929,7 +1929,7 @@
           "question_text": "Что такое `Kafka Connect` и какой режим выбрать для production?",
           "options": [
             {
-              "text": "Для production рекомендуется режим `cluster-less` с serverless-моделью выполнения.",
+              "text": "Production Kafka Connect использует cluster-less serverless mode без workers и internal topics.",
               "correct": false,
               "sections": {
                 "what_actually": "Такого режима у `Apache Kafka Connect` нет: serverless-варианты существуют как отдельные managed-сервисы, но не как стандартный режим Connect.",
@@ -1941,7 +1941,7 @@
               "order": 0
             },
             {
-              "text": "Для production рекомендуется режим `embedded`, встроенный в ваше приложение.",
+              "text": "Production Connect встраивают embedded mode внутрь business application и делят его lifecycle.",
               "correct": false,
               "sections": {
                 "what_actually": "Такого режима у `Kafka Connect` нет: Connect — это отдельный процесс или кластер, а не библиотека для встраивания в приложение.",
@@ -1953,7 +1953,7 @@
               "order": 1
             },
             {
-              "text": "Для production рекомендуется режим `distributed` — с кластером воркеров и REST API.",
+              "text": "Production обычно использует distributed mode с worker cluster, REST API и replicated config/status/offset topics.",
               "correct": true,
               "sections": {
                 "explanation": "Distributed-режим обеспечивает отказоустойчивость (конфигурация и состояние коннекторов хранятся в Kafka), горизонтальное масштабирование и управление через REST API.",
@@ -1966,7 +1966,7 @@
               "order": 2
             },
             {
-              "text": "Для production рекомендуется режим `standalone` — с одним процессом на одной машине.",
+              "text": "Production всегда использует standalone mode: один process, local config и local offsets.",
               "correct": false,
               "sections": {
                 "what_actually": "Standalone — режим для разработки и тестов: он не отказоустойчив, падение процесса останавливает все коннекторы, а конфигурация лежит в локальных файлах.",
@@ -1989,7 +1989,7 @@
           "question_text": "В чём разница между `Source` и `Sink Connector`?",
           "options": [
             {
-              "text": "Для переноса данных из `PostgreSQL` в Kafka используется `Source Connector` (например, `Debezium` CDC или JDBC Source).",
+              "text": "Source Connector переносит данные из PostgreSQL в Kafka, например через Debezium CDC или JDBC Source.",
               "correct": true,
               "sections": {
                 "explanation": "`Source Connector` читает данные из внешней системы и публикует в Kafka: `Debezium` использует CDC через логическую репликацию `PostgreSQL`, а JDBC Source делает периодический polling запросов.",
@@ -2002,7 +2002,7 @@
               "order": 0
             },
             {
-              "text": "Для переноса данных из `PostgreSQL` в Kafka используется `Stream Connector`, выполняющий потоковую обработку.",
+              "text": "Stream Connector читает PostgreSQL и одновременно выполняет stateful transformations перед записью Kafka.",
               "correct": false,
               "sections": {
                 "what_actually": "Такого типа коннектора нет: `Kafka Connect` различает только Source и Sink, а обработка потоков — это отдельный `Kafka Streams`.",
@@ -2014,7 +2014,7 @@
               "order": 1
             },
             {
-              "text": "Для переноса данных из `PostgreSQL` в Kafka используется `Sink Connector` (например, JDBC Sink).",
+              "text": "Sink Connector предназначен для чтения external database и публикации её изменений в Kafka.",
               "correct": false,
               "sections": {
                 "what_actually": "`Sink Connector` работает в обратном направлении (Kafka → внешняя система); для чтения из `PostgreSQL` в Kafka нужен `Source Connector`.",
@@ -2026,7 +2026,7 @@
               "order": 2
             },
             {
-              "text": "Для переноса данных из `PostgreSQL` в Kafka используется `Bridge Connector`, работающий двунаправленно.",
+              "text": "Bridge Connector двунаправленно синхронизирует PostgreSQL и Kafka в одном обязательном connector instance.",
               "correct": false,
               "sections": {
                 "what_actually": "У `Kafka Connect` нет bi-directional коннекторов: каждый коннектор — либо Source, либо Sink.",
@@ -2109,7 +2109,7 @@
           "question_text": "Что такое `Consumer Lag` и как он вычисляется?",
           "options": [
             {
-              "text": "`Consumer Lag` вычисляется как разница `committed_offset - current_offset`.",
+              "text": "Lag равен `committed_offset - current_offset`, поэтому положительное значение показывает, насколько consumer опережает broker.",
               "correct": false,
               "sections": {
                 "what_actually": "Формула обратная: lag = LEO минус committed; committed и current — это позиции consumer-а, а LEO — конец лога, к которому нужно догнать.",
@@ -2121,7 +2121,7 @@
               "order": 0
             },
             {
-              "text": "`Consumer Lag` вычисляется как разница `log_end_offset - committed_offset` и показывает отставание consumer-а.",
+              "text": "Lag обычно считают как `log_end_offset - committed_offset`; он показывает объём данных, ещё не подтверждённых consumer group.",
               "correct": true,
               "sections": {
                 "explanation": "Lag — это число непрочитанных consumer-ом сообщений: разница между последним записанным offset (LEO) и последним закоммиченным offset группы.",
@@ -2134,7 +2134,7 @@
               "order": 1
             },
             {
-              "text": "`Consumer Lag` вычисляется как разница `log_end_offset - high_watermark`.",
+              "text": "Lag равен разнице `log_end_offset - high_watermark` и измеряет отставание follower replicas, а не consumer-а.",
               "correct": false,
               "sections": {
                 "what_actually": "Разница между LEO и HW — это отставание репликации followers, а не consumer lag, который меряют относительно committed offset consumer-а.",
@@ -2146,7 +2146,7 @@
               "order": 2
             },
             {
-              "text": "`Consumer Lag` вычисляется как разница `current_timestamp - message_timestamp` и выражается в секундах.",
+              "text": "Lag — только временная разница между timestamp сообщения и текущим временем; offsets при расчёте не используются.",
               "correct": false,
               "sections": {
                 "what_actually": "Это временной лаг (time-based), а не классический offset-based lag; в Kafka обычно говорят именно про offset-lag.",
@@ -2169,7 +2169,7 @@
           "question_text": "Какие ключевые метрики `Kafka` нужно мониторить и что значит `UnderReplicatedPartitions`?",
           "options": [
             {
-              "text": "`UnderReplicatedPartitions` > 0 означает, что в кластере слишком мало брокеров для создания новых топиков.",
+              "text": "`UnderReplicatedPartitions>0` означает, что brokers недостаточно для создания новых topics.",
               "correct": false,
               "sections": {
                 "what_actually": "Метрика отражает текущее состояние существующих партиций, а не ёмкость кластера для новых топиков.",
@@ -2181,7 +2181,7 @@
               "order": 0
             },
             {
-              "text": "`UnderReplicatedPartitions` > 0 означает, что `Schema Registry` недоступен для некоторых партиций.",
+              "text": "Метрика показывает недоступность Schema Registry для отдельных partitions.",
               "correct": false,
               "sections": {
                 "what_actually": "`Schema Registry` — отдельный сервис и никак не связан с метрикой репликации внутри кластера Kafka.",
@@ -2193,7 +2193,7 @@
               "order": 1
             },
             {
-              "text": "`UnderReplicatedPartitions` > 0 означает, что consumer-ы читают быстрее, чем producer-ы записывают.",
+              "text": "Метрика означает, что consumers читают быстрее, чем producers публикуют records.",
               "correct": false,
               "sections": {
                 "what_actually": "Эта метрика не связана со скоростью consumer-ов: она отражает состояние репликации между брокерами, а не consumer lag.",
@@ -2205,7 +2205,7 @@
               "order": 2
             },
             {
-              "text": "`UnderReplicatedPartitions` > 0 означает, что часть реплик партиций отстала от `Leader` и требует внимания.",
+              "text": "Метрика показывает partitions, где часть replicas отстала и вышла из ISR.",
               "correct": true,
               "sections": {
                 "explanation": "Под under-replicated понимают партиции, где текущий ISR меньше полного `replication.factor`; это индикатор проблем с брокером, сетью или диском и критический алерт для production.",
@@ -2229,7 +2229,7 @@
           "question_text": "Как масштабировать `Kafka`-кластер и что можно сделать с числом партиций?",
           "options": [
             {
-              "text": "После создания топика с N партициями можно свободно уменьшить их количество до M < N.",
+              "text": "Число partitions можно уменьшать; Kafka перенумерует offsets и сохранит key ordering.",
               "correct": false,
               "sections": {
                 "what_actually": "Kafka не поддерживает уменьшение числа партиций: это нарушило бы гарантии порядка по ключу, ведь сообщения одного ключа могли бы оказаться в разных партициях.",
@@ -2241,7 +2241,7 @@
               "order": 0
             },
             {
-              "text": "После создания топика число партиций можно изменить только на следующую степень двойки.",
+              "text": "Partitions разрешено менять только до ближайшей степени двойки из-за bit-mask partitioner.",
               "correct": false,
               "sections": {
                 "what_actually": "Ограничения по степени двойки в Kafka нет: можно указать любое положительное число больше текущего.",
@@ -2253,7 +2253,7 @@
               "order": 1
             },
             {
-              "text": "После создания топика нельзя изменить количество партиций вообще.",
+              "text": "Число partitions неизменно после topic creation: увеличить или уменьшить его нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "Увеличение партиций поддерживается полностью; запрещено только уменьшение, и то по соображениям консистентности данных.",
@@ -2265,7 +2265,7 @@
               "order": 2
             },
             {
-              "text": "После создания топика с N партициями можно только увеличить их количество до M > N.",
+              "text": "Partitions можно добавить, но штатно уменьшить нельзя; увеличение меняет key distribution и operational assumptions.",
               "correct": true,
               "sections": {
                 "explanation": "Увеличение партиций поддерживается через `kafka-topics.sh --alter --partitions`, но старые сообщения остаются в своих партициях, а ключи могут перераспределиться, что способно нарушить порядок.",
@@ -2409,7 +2409,7 @@
           "question_text": "Как спроектировать правильную топологию топиков и какую `cleanup.policy` выбрать для справочников?",
           "options": [
             {
-              "text": "Для справочных данных рекомендуется `cleanup.policy=archive`.",
+              "text": "Для справочника используют `cleanup.policy=archive`, чтобы broker переносил старые версии ключей в отдельный архивный topic.",
               "correct": false,
               "sections": {
                 "what_actually": "Значения `archive` у `cleanup.policy` нет: архивация — это отдельный паттерн через S3 Sink или tiered storage, а не встроенная политика.",
@@ -2421,7 +2421,7 @@
               "order": 0
             },
             {
-              "text": "Для справочных данных рекомендуется `cleanup.policy=delete`.",
+              "text": "Для справочника всегда выбирают только `delete`: retention удаляет старые записи и автоматически оставляет последнее значение каждого ключа.",
               "correct": false,
               "sections": {
                 "what_actually": "Delete удаляет старые сегменты по retention, но справочные данные должны оставаться доступными всегда — при delete consumer не сможет прочитать исторические справочники.",
@@ -2433,7 +2433,7 @@
               "order": 1
             },
             {
-              "text": "Для справочных данных рекомендуется `cleanup.policy=none`.",
+              "text": "Для справочника отключают cleanup policy, иначе Kafka может потерять актуальное состояние при перезапуске consumer-а.",
               "correct": false,
               "sections": {
                 "what_actually": "Значения `none` у параметра `cleanup.policy` нет: допустимы `delete`, `compact` и комбинированное `compact,delete`.",
@@ -2445,7 +2445,7 @@
               "order": 2
             },
             {
-              "text": "Для топика со справочными данными (курсы валют, справочник пользователей) рекомендуется `cleanup.policy=compact`.",
+              "text": "Для changelog-справочника обычно выбирают `compact`: Kafka сохраняет последнее значение каждого ключа, а tombstone позволяет удалить ключ.",
               "correct": true,
               "sections": {
                 "explanation": "Compact сохраняет только последнее значение по ключу, что идеально для справочников: любой consumer читает актуальное состояние с начала топика без ограничения по времени.",
@@ -2589,7 +2589,7 @@
           "question_text": "Какие практические советы для production-использования `Kafka` по конфигурации брокеров?",
           "options": [
             {
-              "text": "Рекомендуемая production-конфигурация: `replication.factor=3`, `min.insync.replicas=2`.",
+              "text": "Настройки выводят из RPO/RTO: RF, minISR, `acks=all`, rack awareness и capacity; RF3/minISR2 — частый baseline.",
               "correct": true,
               "sections": {
                 "explanation": "Это стандарт best practices: RF=3 даёт отказоустойчивость к потере одного брокера, а MISR=2 гарантирует запись минимум на две реплики перед ACK.",
@@ -2602,7 +2602,7 @@
               "order": 0
             },
             {
-              "text": "Рекомендуемая production-конфигурация: `replication.factor=1`, `min.insync.replicas=1`.",
+              "text": "RF1 и `acks=0` сохраняют confirmed records при broker failure и подходят для любых critical topics.",
               "correct": false,
               "sections": {
                 "what_actually": "При `replication.factor=1` нет репликации, и потеря брокера означает потерю данных — это конфигурация для dev/тестов, неприемлемая для production.",
@@ -2614,7 +2614,7 @@
               "order": 1
             },
             {
-              "text": "Рекомендуемая production-конфигурация: `replication.factor=2`, `min.insync.replicas=2`.",
+              "text": "RF2/minISR2 позволяет продолжать запись при недоступности одной replica во время rolling restart.",
               "correct": false,
               "sections": {
                 "what_actually": "При RF=2 и MISR=2 любая недоступность одного брокера блокирует запись — не хватает запаса для плановых обновлений, поэтому рекомендуют RF=3.",
@@ -2626,7 +2626,7 @@
               "order": 2
             },
             {
-              "text": "Рекомендуемая production-конфигурация: `replication.factor=5`, `min.insync.replicas=4`.",
+              "text": "Максимальный RF всегда одновременно снижает latency и disk usage, поэтому оптимален для каждого topic.",
               "correct": false,
               "sections": {
                 "what_actually": "Такая конфигурация избыточна для большинства сценариев: увеличивает storage впятеро и повышает latency записи, тогда как RF=3 достаточен для 99.9% случаев.",
@@ -2766,10 +2766,10 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как `Schema Registry` хранит схемы и какой wire format у `Avro`-сообщения?",
+          "question_text": "Как связаны Schema Registry и wire format Avro-сообщений?",
           "options": [
             {
-              "text": "Сообщение с `Avro`-сериализацией содержит на диске `[schema JSON][avro encoded payload]`.",
+              "text": "Registry вставляет полную JSON schema в каждый record, исключая schema lookup и local cache.",
               "correct": false,
               "sections": {
                 "what_actually": "Вставка полной JSON-схемы в каждое сообщение многократно увеличит объём; `Confluent` использует короткий schema_id и запрашивает схему по требованию.",
@@ -2781,20 +2781,20 @@
               "order": 0
             },
             {
-              "text": "Сообщение с `Avro`-сериализацией содержит на диске `[magic byte 0x00][schema_id 4 bytes][avro encoded payload]`.",
+              "text": "Registry хранит versions/compatibility, а serializer определяет wire format; Confluent Avro обычно пишет magic byte, ID и payload.",
               "correct": true,
               "sections": {
-                "explanation": "Это стандартный wire format `Confluent`: первый байт — magic number для идентификации формата, следующие 4 байта — schema_id из registry, далее данные в `Avro` binary; consumer запрашивает схему по schema_id.",
-                "example": "Например, байты `00 00 00 00 2A ...` означают magic byte `0x00`, schema_id 42 и далее `Avro`-payload.",
-                "when_to_apply": "Связку `KafkaAvroSerializer`/`KafkaAvroDeserializer` с `Confluent Schema Registry` используют как стандарт; `Protobuf` и `JSON Schema` имеют такой же формат.",
-                "edge_cases": "Magic byte `0x00` — конвенция `Confluent`, поэтому сторонние сериализаторы без него несовместимы с этим форматом.",
+                "explanation": "Registry API и serializer работают совместно, но framing является контрактом конкретной экосистемы. Нельзя приписывать Confluent wire format любому Registry или любому Avro serializer.",
+                "example": "Producer регистрирует схему, получает ID и пишет framing Confluent serializer; consumer читает ID, получает или берёт из cache соответствующую схему и декодирует Avro payload.",
+                "when_to_apply": "Фиксируйте serializer, subject naming strategy и compatibility rules как часть контракта между producer и consumer.",
+                "edge_cases": "Apicurio и другие registry/serializer реализации могут использовать иной framing. Raw Avro container files также имеют другой формат.",
                 "related": "[[kafka-interview#Q35]] зачем нужен Schema Registry; [[kafka-interview#Q34]] Source vs Sink; [[kafka-interview#Q41]] топология топиков."
               },
               "label": "B",
               "order": 1
             },
             {
-              "text": "Сообщение с `Avro`-сериализацией содержит на диске `[avro encoded payload]` без служебных байтов.",
+              "text": "Apache Avro требует четырёхбайтовый Confluent schema ID в любом wire format и любой library.",
               "correct": false,
               "sections": {
                 "what_actually": "Без schema_id consumer не узнает, какой схемой десериализовать сообщение, поэтому формат обязательно включает magic byte и schema_id.",
@@ -2806,7 +2806,7 @@
               "order": 2
             },
             {
-              "text": "Сообщение с `Avro`-сериализацией содержит на диске `[topic name][schema_id][avro encoded payload]`.",
+              "text": "Registry хранит Java classes, а schema ID вычисляется только из class name.",
               "correct": false,
               "sections": {
                 "what_actually": "Имя топика не входит в payload — оно известно из контекста партиции/топика; в wire format только magic byte, schema_id и данные.",
@@ -2889,7 +2889,7 @@
           "question_text": "Что такое `Kafka Streams State Store` и как он реплицируется?",
           "options": [
             {
-              "text": "`State Store` реплицируется через прямую peer-to-peer связь между инстансами.",
+              "text": "State Store реплицируется напрямую peer-to-peer между Kafka Streams instances.",
               "correct": false,
               "sections": {
                 "what_actually": "P2P-репликации между инстансами нет: `Kafka Streams` не обменивается данными напрямую, всё идёт через changelog-топик Kafka.",
@@ -2901,7 +2901,7 @@
               "order": 0
             },
             {
-              "text": "`State Store` реплицируется через changelog-топик Kafka с `cleanup.policy=compact`.",
+              "text": "State Store восстанавливается из Kafka changelog topic, часто compacted для keyed state.",
               "correct": true,
               "sections": {
                 "explanation": "Для каждого state store `Kafka Streams` автоматически создаёт changelog-топик с compaction; при падении инстанса новый восстанавливает state, читая последнее значение по каждому ключу.",
@@ -2914,7 +2914,7 @@
               "order": 1
             },
             {
-              "text": "`State Store` реплицируется через `ZooKeeper` для отказоустойчивости.",
+              "text": "State Store реплицируется через ZooKeeper metadata и snapshots.",
               "correct": false,
               "sections": {
                 "what_actually": "`ZooKeeper` не используется для state store: данные реплицируются через специальный changelog-топик Kafka с `cleanup.policy=compact`.",
@@ -2926,7 +2926,7 @@
               "order": 2
             },
             {
-              "text": "`State Store` реплицируется через `Redis`-кэш для быстрого восстановления.",
+              "text": "State Store обязательно использует Redis как shared replication cache.",
               "correct": false,
               "sections": {
                 "what_actually": "`Redis` не используется: state store реплицируется через сам Kafka, что не требует внешних зависимостей для HA.",
@@ -2946,10 +2946,10 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как организовать мониторинг `__consumer_offsets` и алертинг `Consumer Lag`?",
+          "question_text": "Как организовать мониторинг consumer lag?",
           "options": [
             {
-              "text": "Лучший подход — опрос `__consumer_offsets` напрямую как обычного топика.",
+              "text": "Lag получают прямым чтением `__consumer_offsets` обычным consumer и алертят только по общему числу records внутреннего topic.",
               "correct": false,
               "sections": {
                 "what_actually": "Прямое чтение `__consumer_offsets` сложно: нужно декодировать служебный формат ключей и значений, тогда как метрики через `Micrometer` дают стандартный путь.",
@@ -2961,7 +2961,7 @@
               "order": 0
             },
             {
-              "text": "Лучший подход — запрос к `Transaction Coordinator` через Admin API каждые 10 секунд.",
+              "text": "Число active consumer connections достаточно: connected instance гарантированно обрабатывает поток без накопления отставания.",
               "correct": false,
               "sections": {
                 "what_actually": "`Transaction Coordinator` отвечает за транзакции, а не за consumer offsets; для offsets используется `Group Coordinator`, а частые запросы к `AdminClient` нагружают брокер.",
@@ -2973,7 +2973,7 @@
               "order": 1
             },
             {
-              "text": "Лучший подход к алертингу lag — периодический запуск `kafka-consumer-groups.sh --describe` через cron и парсинг вывода.",
+              "text": "Периодический `kafka-consumer-groups.sh` является полноценной scalable monitoring системой и заменяет exporter, dashboards и alerts.",
               "correct": false,
               "sections": {
                 "what_actually": "Скриптовый подход не масштабируется: требует ssh на брокер, не хранит историю метрик, не даёт группировки и визуализации — годится только для ad-hoc проверок.",
@@ -2985,13 +2985,13 @@
               "order": 2
             },
             {
-              "text": "Лучший подход — PromQL-алерт на метрику `kafka_consumer_fetch_manager_records_lag_max` с threshold и длительностью.",
+              "text": "Lag экспортируют по group/topic/partition и анализируют вместе с record age и trend; metric name зависит от tooling.",
               "correct": true,
               "sections": {
-                "explanation": "Метрика `records.lag.max` экспортируется клиентом Kafka через `Micrometer` и видна в `Prometheus`/`Victoria Metrics`, а условие `for: 5m` исключает ложные срабатывания на кратковременных всплесках.",
-                "example": "Например, алерт `kafka_consumer_fetch_manager_records_lag_max > 10000 for 5m` шлёт warning в `Alertmanager`.",
-                "when_to_apply": "Ставят `lag_max > 10000 for 5m` (warning) и `lag_max > 100000 for 2m` (critical), а `Burrow` от `LinkedIn` даёт продвинутый анализ застрявших consumer-ов.",
-                "edge_cases": "Сама по себе метрика `records.lag.max` снимается только с работающего клиента, поэтому упавший consumer перестаёт её слать — для этого нужны и broker-side метрики.",
+                "explanation": "Lag — разница между end offset и подтверждённым offset группы. Один абсолютный threshold без контекста скорости поступления и времени обработки часто даёт ложные сигналы.",
+                "example": "Dashboard показывает max/sum lag и oldest record age по consumer group; alert срабатывает, когда отставание растёт несколько интервалов и прогнозируемое время восстановления превышает SLA.",
+                "when_to_apply": "Мониторьте каждую критичную группу вместе с throughput, rebalance, processing errors и состоянием broker-ов.",
+                "edge_cases": "Названия JMX/Prometheus метрик различаются между client, Burrow, Kafka Exporter и managed-платформами. После простоя группы committed offsets могут отсутствовать или устареть.",
                 "related": "[[kafka-interview#Q36]] что такое Consumer Lag; [[kafka-interview#Q37]] ключевые метрики; [[kafka-interview#Q44]] production-советы."
               },
               "label": "D",

@@ -6,10 +6,10 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие functional и non-functional requirements у Netflix?",
+          "question_text": "Какие требования задать Netflix-подобному VOD-сервису?",
           "options": [
             {
-              "text": "Live streaming и real-time chat — ключевые functional requirements Netflix, на них и нужно строить весь дизайн кейса.",
+              "text": "Live streaming и real-time chat — ключевые functional requirements Netflix, на них и нужно строить весь дизайн кейса. Дизайн крутился бы вокруг low-latency live-пайплайна.",
               "correct": false,
               "sections": {
                 "what_actually": "Live streaming и chat явно вынесены out of scope; ядро — VOD-стриминг, browse, поиск, рекомендации и continue watching.",
@@ -21,7 +21,7 @@
               "order": 0
             },
             {
-              "text": "Functional и non-functional requirements здесь одно и то же: главное — перечислить технологии (`Cassandra`, `Kafka`, `Eureka`), а пользовательские сценарии не важны.",
+              "text": "Functional и non-functional requirements здесь одно и то же: главное; перечислить технологии (`Cassandra`, `Kafka`, `Eureka`), а пользовательские сценарии не важны.",
               "correct": false,
               "sections": {
                 "what_actually": "Functional описывают что система делает для пользователя (стриминг, поиск, рекомендации), non-functional — качества (latency, availability); технологии вторичны и выбираются под requirements.",
@@ -33,20 +33,20 @@
               "order": 1
             },
             {
-              "text": "Functional: VOD-стриминг на TV/Mobile/Web/Console, browse каталога, typo-tolerant поиск, персональные рекомендации, continue watching с sync между устройствами, offline-downloads под DRM, до 5 профилей на аккаунт. Non-functional: 270M+ подписчиков, p99 старта плейбэка `< 2 сек`, availability `99.99%`, rebuffering `< 1%`, multi-region active-active (US-East/EU/APAC), compliance с `GDPR`/`DMCA`.",
+              "text": "Functional: VOD playback на разных устройствах, каталог и поиск, персональные рекомендации, continue watching, профили, subtitles/audio tracks, offline downloads под DRM.",
               "correct": true,
               "sections": {
                 "explanation": "Senior-кандидат сразу разделяет два класса нагрузки: `read-heavy on metadata` (каталог, рекомендации, профили) и `bandwidth-heavy on video` (поток байтов). Это диктует архитектурный сплит: микросервисы в `AWS` для метаданных и собственный `Open Connect` CDN для видео.",
                 "example": "Из non-functional `p99 start playback < 2 сек` и `rebuffering < 1%` напрямую вытекают edge-кэш у ISP и ABR на клиенте; из `99.99%` (≈52 минуты простоя в год) — multi-region active-active и chaos engineering.",
                 "when_to_apply": "Формулировать requirements нужно в начале интервью: они задают рамки для capacity estimation, выбора хранилищ и SLO; без них дизайн уходит в произвольную сторону.",
-                "edge_cases": "Live streaming, real-time chat и user-generated content явно выносятся out of scope (Netflix начал live недавно — бокс, NFL), иначе кейс раздувается и теряет фокус.",
+                "edge_cases": "Control plane может деградировать отдельно от video delivery: временно недоступные рекомендации не должны останавливать уже начатый playback.",
                 "related": "[[design-netflix-interview#Q2]] capacity estimation из этих цифр; [[design-netflix-interview#Q3]] SLA/SLO для pipeline; [[design-netflix-interview#Q18]] high-level архитектура двух плоскостей."
               },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Достаточно одного non-functional requirement — высокой пропускной способности; latency старта и availability на таком масштабе значения не имеют.",
+              "text": "Достаточно одного non-functional requirement — высокой пропускной способности; latency старта и availability на таком масштабе значения не имеют. Не было бы нужды в edge-CDN у ISP и в SLO на rebuffering.",
               "correct": false,
               "sections": {
                 "what_actually": "Latency старта (`p99 < 2 сек`) и availability (`99.99%`) — критичные метрики: они напрямую коррелируют с QoE и retention пользователей.",
@@ -66,10 +66,10 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как сделать capacity estimation для Netflix (270M подписчиков, 1 Pbps peak)?",
+          "question_text": "Как оценить capacity Netflix-подобного сервиса для заданного peak-сценария?",
           "options": [
             {
-              "text": "Egress считается как 270M подписчиков × 5 Mbps = 1.35 Pbps постоянно круглосуточно, потому что все аккаунты смотрят одновременно 24/7.",
+              "text": "Egress считается как 270M подписчиков × 5 Mbps = 1.35 Pbps постоянно круглосуточно, потому что все аккаунты смотрят одновременно 24/7. Инфраструктуру строили бы на постоянный 1.35 Pbps без суточного профиля.",
               "correct": false,
               "sections": {
                 "what_actually": "Считают по concurrent viewers (~100M на пике), а не по всем 270M подписчикам сразу: люди смотрят не одновременно, средний egress ~500 Tbps, пик ~1 Pbps.",
@@ -81,7 +81,7 @@
               "order": 0
             },
             {
-              "text": "Метаданные пользователей доминируют в смете: 270M профилей и историй просмотра требуют сотни петабайт, больше чем само видео.",
+              "text": "Пользовательские профили и история просмотров — главный storage и egress cost: сотни миллионов небольших metadata-записей всегда тяжелее каталога видео, его codec-вариантов и CDN-трафика. Поэтому capacity можно оценивать без bitrate, concurrent viewers и replication media.",
               "correct": false,
               "sections": {
                 "what_actually": "Метаданные крошечные: 270M × ~100 KB ≈ 27 TB профилей+истории и ~10 GB rich-metadata тайтлов — на порядки меньше видео-хранилища в ~300 PB.",
@@ -93,7 +93,7 @@
               "order": 1
             },
             {
-              "text": "Хранилище равно размеру каталога: ~10 PB уникального контента — и это финальная цифра, варианты и репликация её не меняют.",
+              "text": "Хранилище равно размеру каталога: ~10 PB уникального контента — и это финальная цифра, варианты и репликация её не меняют. Хватило бы 10 PB на регион.",
               "correct": false,
               "sections": {
                 "what_actually": "10 PB — только мастера; bitrate ladder (codec × resolution) даёт ~10× → ~100 PB, а репликация по 3 регионам ещё ×3 → ~300 PB.",
@@ -105,13 +105,13 @@
               "order": 2
             },
             {
-              "text": "При 100M concurrent viewers и среднем bitrate `5 Mbps` egress = `500 Tbps` в среднем и `1 Pbps` на пике (US+EU вечером). Каталог ~10 PB уникального контента превращается в ~100 PB с вариантами (codec × resolution × bitrate ladder, ~10× expansion) и в ~300 PB с репликацией по 3 регионам. Метаданные в `Cassandra`: 270M × ~100 KB профиль+история ≈ 27 TB; ~10K тайтлов × 1 MB rich metadata ≈ 10 GB (мало, но горячее).",
+              "text": "Сетевую нагрузку считают как `concurrent_viewers × average_delivered_bitrate`, отдельно моделируя peak по регионам и codec/device mix; Storage начинается с master assets и умножается на bitrate ladder, codecs, audio/subtitles, replicas и cache tiers.",
               "correct": true,
               "sections": {
                 "explanation": "Главный множитель — egress: 100M concurrent × 5 Mbps = 500 Tbps; пик из-за overlap US+EU вечером даёт 1 Pbps (~125 TB/sec). Хранилище раздувается из-за bitrate ladder и репликации, а метаданные на этом фоне крошечные.",
                 "example": "Cost-расчёт делает CDN-стратегию очевидной: 1 Pbps × `$0.02/GB` на commercial CDN ≈ `$250M/месяц`; `Open Connect` режет это в ~10× до `$25M/месяц` (`$300M/год` против `$3B/год`).",
                 "when_to_apply": "Capacity estimation проговаривают сразу после requirements: цифры обосновывают выбор собственного CDN, тиров хранения и размер `Cassandra`-кластера.",
-                "edge_cases": "Encoding-ферма почти бесплатна на фоне egress: 5000 часов нового контента/год × ~100 EC2-hours per hour на Spot ≈ `$25K/год` — настолько мало, что в смете округляется до нуля.",
+                "edge_cases": "Средний bitrate скрывает 4K/HDR и мобильный long tail. CDN offload уменьшает origin traffic, но не общий egress к пользователям и не стоимость ISP/edge capacity.",
                 "related": "[[design-netflix-interview#Q4]] Open Connect как следствие cost-расчёта; [[design-netflix-interview#Q6]] storage-тиры под 300 PB; [[design-netflix-interview#Q28]] детальная cost optimization."
               },
               "label": "D",
@@ -129,7 +129,7 @@
           "question_text": "Какие SLA и SLO задают для streaming pipeline Netflix?",
           "options": [
             {
-              "text": "Единственная значимая метрика — availability `99.99%`; latency старта и rebuffering не нужно выносить в отдельные SLO.",
+              "text": "Единственная значимая метрика — availability `99.99%`; latency старта и rebuffering не нужно выносить в отдельные SLO. Зелёный статус availability гарантировал бы хороший опыт.",
               "correct": false,
               "sections": {
                 "what_actually": "Availability недостаточна: сервис может быть 'up', но с высоким rebuffering и медленным стартом — пользователь всё равно страдает, поэтому нужны отдельные SLO на latency и rebuffering.",
@@ -154,7 +154,7 @@
               "order": 1
             },
             {
-              "text": "SLA и SLO — это одно и то же: внутренний целевой `p99 < 2 сек` и контрактное обязательство перед клиентом не различаются.",
+              "text": "SLA и SLO — это одно и то же: внутренний целевой `p99 < 2 сек` и контрактное обязательство перед клиентом не различаются. Любое превышение внутренней цели автоматически означало бы нарушение контракта.",
               "correct": false,
               "sections": {
                 "what_actually": "SLO — внутренняя цель команды (например, `p99 < 2 сек`), SLA — внешнее контрактное обязательство с последствиями за нарушение; SLO обычно строже SLA.",
@@ -166,7 +166,7 @@
               "order": 2
             },
             {
-              "text": "QoE — это просто синоним аптайма: если сервис доступен, QoE автоматически считается отличным.",
+              "text": "QoE — это просто синоним аптайма: если сервис доступен, QoE автоматически считается отличным. Не было бы смысла отдельно алертить на деградацию QoE при 100% аптайме.",
               "correct": false,
               "sections": {
                 "what_actually": "QoE — composite-score из start latency, rebuffering, sustained bitrate и разрешения; он измеряет качество просмотра, а не факт доступности сервиса.",
@@ -189,7 +189,7 @@
           "question_text": "Что такое Open Connect — собственный CDN Netflix?",
           "options": [
             {
-              "text": "OCA — это виртуальные машины в AWS-регионах Netflix, которые ничем не отличаются от обычного origin в дата-центре.",
+              "text": "OCA — это виртуальные машины в AWS-регионах Netflix, которые ничем не отличаются от обычного origin в дата-центре. Трафик всё равно шёл бы из AWS-регионов через upstream ISP, и экономии на transit не возникало бы.",
               "correct": false,
               "sections": {
                 "what_actually": "OCA — это физические 2U-серверы, размещённые в сетях ISP и в IXP, как можно ближе к пользователю, а не VM в AWS; именно близость к абоненту даёт latency < 50 ms.",
@@ -201,7 +201,7 @@
               "order": 0
             },
             {
-              "text": "Главная причина строить свой CDN — улучшить рекомендации: OCA хранят ML-модели и считают персонализацию ближе к пользователю.",
+              "text": "Главная причина строить свой CDN; улучшить рекомендации: OCA хранят ML-модели и считают персонализацию ближе к пользователю; OCA были бы compute-узлами с GPU для inference. И CDN, и рекомендации связаны с 'близостью к пользователю', что создаёт ложную ассоциацию.",
               "correct": false,
               "sections": {
                 "what_actually": "OCA занимаются доставкой видео-байтов (кэш контента у ISP), а не рекомендациями; ML-персонализация живёт в control plane на AWS, не на edge.",
@@ -213,20 +213,20 @@
               "order": 1
             },
             {
-              "text": "`Open Connect` — это собственный CDN Netflix на базе `Open Connect Appliances (OCA)`: 2U-серверы с 200-400 TB SSD и 100-200 Gbps NIC, физически размещённые у ISP-партнёров (`Comcast`, `Verizon`, `МТС`) или в `IXP`. Они локально кэшируют популярный для региона контент; на пике ~95% трафика Netflix идёт через OCA, и лишь ~5% уходит fallback на `AWS`.",
+              "text": "`Open Connect` — собственная CDN-платформа Netflix с Open Connect Appliances, размещаемыми у ISP и в internet exchange locations; Appliances кэшируют популярный для региона encoded content и отдают video ближе к пользователю.",
               "correct": true,
               "sections": {
                 "explanation": "Свой CDN нужен из-за денег и контроля: commercial CDN (`Akamai`, `CloudFront`) на 1 Pbps стоил бы `$1-3B/год`, а Open Connect режет это в ~10× за счёт peering с ISP. ISP выигрывают меньшие transit-costs (трафик не идёт через upstream), Netflix — control, low cost и предсказуемый perf.",
                 "example": "OCA ставят по тирам: у Tier-1 ISP — десятки appliance в крупных POP; у regional ISP — 1-3 OCA в дата-центре; в `IXP` — OCA peering вообще без участия ISP. Для партнёра нужен 10+ Gbps свободного uplink, BGP-сессия и минимум 6 месяцев commitment.",
                 "when_to_apply": "Собственный CDN оправдан только на огромном устойчивом egress: при 1 Pbps экономия в миллиарды окупает железо и годы выстраивания отношений с ISP.",
-                "edge_cases": "Netflix не единственный со своим CDN: у `YouTube` есть `Google Global Cache`; а `Cloudflare`/`Fastly` остаются в роли pure-CDN провайдеров, не размещая железо внутри сетей ISP так глубоко.",
+                "edge_cases": "OCA не заменяет AWS/control-plane сервисы и не гарантирует cache hit для long tail. При miss или outage клиент получает альтернативный CDN/path согласно steering policy.",
                 "related": "[[design-netflix-interview#Q2]] cost-расчёт, делающий свой CDN выгодным; [[design-netflix-interview#Q5]] pre-positioning контента на OCA; [[design-netflix-interview#Q6]] OCA как hot-тир хранения."
               },
               "label": "C",
               "order": 2
             },
             {
-              "text": "`Open Connect` — это аккаунт Netflix у коммерческого провайдера `Akamai`, через который раздаётся весь видеотрафик без собственного железа.",
+              "text": "`Open Connect` — обычный контракт с внешним CDN: Netflix не размещает собственные appliances у ISP и не управляет placement контента. Весь видеотрафик идёт через универсальные коммерческие POP, поэтому сервис не контролирует региональное pre-positioning и delivery telemetry.",
               "correct": false,
               "sections": {
                 "what_actually": "Open Connect — это собственная инфраструктура Netflix (свои OCA-серверы у ISP), а не контракт с Akamai; коммерческий CDN остаётся лишь ~5% fallback.",
@@ -249,7 +249,7 @@
           "question_text": "Как работает pre-positioning контента overnight (predictive caching) на OCA?",
           "options": [
             {
-              "text": "Pre-positioning — это раздача всего каталога (10 PB) на каждый OCA, чтобы любой запрос гарантированно попадал в кэш без единого miss.",
+              "text": "Pre-positioning — это раздача всего каталога (10 PB) на каждый OCA, чтобы любой запрос гарантированно попадал в кэш без единого miss. Каждый OCA нёс бы петабайты редко смотримого контента.",
               "correct": false,
               "sections": {
                 "what_actually": "Полный кэш всего каталога на каждом OCA невозможен — long tail слишком велик; push'ат только предсказанный топ, а miss обрабатывают fallback'ом на origin.",
@@ -261,7 +261,7 @@
               "order": 0
             },
             {
-              "text": "Pre-positioning происходит реактивно: контент копируется на OCA только после того, как первый пользователь его запросил и получил cache miss.",
+              "text": "Pre-positioning происходит реактивно: контент копируется на OCA только после того, как первый пользователь его запросил и получил cache miss. Премьера ловила бы origin-spike при холодном кэше.",
               "correct": false,
               "sections": {
                 "what_actually": "Pre-positioning именно проактивен — контент пушится заранее ночью на основе предсказания, а реактивное наполнение по первому miss — это обычный pull-CDN, которого здесь стараются избежать.",
@@ -273,7 +273,7 @@
               "order": 1
             },
             {
-              "text": "Predictive-модель основана исключительно на алфавитном порядке тайтлов: первые по алфавиту считаются самыми популярными и пушатся первыми.",
+              "text": "Predictive-модель основана исключительно на алфавитном порядке тайтлов: первые по алфавиту считаются самыми популярными и пушатся первыми. `Squid Game` в Korea пушился бы по букве 'S', а не по реальному пику интереса, и cache hit обвалился бы.",
               "correct": false,
               "sections": {
                 "what_actually": "Модель использует поведенческие сигналы — historical watch patterns, time-of-day, day-of-week, тренды в соцсетях, маркетинг; алфавит к популярности отношения не имеет.",
@@ -285,13 +285,13 @@
               "order": 2
             },
             {
-              "text": "Идея — не ждать запроса пользователя, а ночью (окно 04:00-06:00 local time, минимальный трафик) предсказать ML-моделью, что будет популярно завтра, и заранее push'нуть контент с origin на OCA. Top-1000 тайтлов на регион уходят на все OCA, long tail — на меньшее число с fallback на miss; цель — 95%+ запросов отдавать из OCA.",
+              "text": "Pre-positioning заранее заполняет edge caches контентом, который с высокой вероятностью понадобится региону, используя popularity forecasts, release schedule и доступную off-peak capacity; Long tail может загружаться on demand, а placement учитывает storage, network cost и rights.",
               "correct": true,
               "sections": {
                 "explanation": "Predictive caching строится на сигналах популярности: исторические watch-паттерны по региону (пики `Squid Game` в Korea), time-of-day (детский контент утром, драма вечером), day-of-week (binge на выходных), тренды в соцсетях и маркетинговые кампании. Inter-OCA репликация идёт peer-to-peer (BitTorrent-like внутри сети).",
                 "example": "Новый релиз получает emergency push в ночь премьеры, чтобы premiere-spike не ударил в origin; региональный контент не push'ится в страны без лицензионных прав.",
                 "when_to_apply": "Pre-positioning применяют, когда long tail слишком велик для полного кэша, но топ-контент предсказуем — тогда выгоднее залить предсказанный топ заранее, чем греть кэш в момент пика.",
-                "edge_cases": "Холодный кэш всего каталога невозможен (long tail огромен), поэтому на cache miss всегда нужен fallback к AWS origin; внезапный live-surge обрабатывается ручным emergency push.",
+                "edge_cases": "Ошибочный forecast тратит bandwidth и cache space, поэтому placement сравнивают с demand caching и ограничивают eviction/refresh policy.",
                 "related": "[[design-netflix-interview#Q4]] OCA, куда пушится контент; [[design-netflix-interview#Q6]] тиры хранения hot/warm/cold; [[design-netflix-interview#Q11]] переход на pull-CDN как антипаттерн без pre-positioning."
               },
               "label": "D",
@@ -309,7 +309,7 @@
           "question_text": "Как устроены storage-тиры: hot OCA, warm regional, cold Glacier?",
           "options": [
             {
-              "text": "После удаления тайтла из каталога его 4K HDR мастер немедленно стирается, чтобы освободить дорогое хранилище.",
+              "text": "После удаления тайтла из каталога его 4K HDR мастер немедленно стирается, чтобы освободить дорогое хранилище. При появлении нового кодека (`AV1`) нельзя было бы перекодировать каталог, и пришлось бы re-ingest от студий.",
               "correct": false,
               "sections": {
                 "what_actually": "Мастера никогда не удаляются: они source of truth для будущего re-encoding под новые кодеки/ladder, плюс лицензионные требования обязывают хранить контент N лет.",
@@ -321,7 +321,7 @@
               "order": 0
             },
             {
-              "text": "Все три тира хранят одинаковые данные с одинаковой репликацией: hot, warm и cold — просто три копии одного и того же на разных носителях.",
+              "text": "Все три тира хранят одинаковые данные с одинаковой репликацией: hot, warm и cold — просто три копии одного и того же на разных носителях. На каждом OCA лежал бы весь каталог, что невозможно по объёму SSD и не нужно по паттерну доступа.",
               "correct": false,
               "sections": {
                 "what_actually": "Тиры хранят разные срезы по горячести: hot — только top-контент на SSD, warm — active в S3, cold — архив в Glacier; репликация тоже различается (active 3×, long tail 1×).",
@@ -333,7 +333,7 @@
               "order": 1
             },
             {
-              "text": "Cold-тир (`Glacier`) используется для самого популярного контента, потому что он самый дешёвый и его не жалко для топовых тайтлов.",
+              "text": "Cold-тир (`Glacier`) используется для самого популярного контента, потому что он самый дешёвый и его не жалко для топовых тайтлов. Старт популярного тайтла занимал бы минуты-часы вместо `< 2 сек`, нарушая SLO плейбэка.",
               "correct": false,
               "sections": {
                 "what_actually": "Glacier предназначен для архива и long tail с retrieval минуты-часы; популярный контент нельзя держать в Glacier — пользователь не будет ждать восстановления для старта плейбэка.",
@@ -345,7 +345,7 @@
               "order": 2
             },
             {
-              "text": "Трёхтировая модель: hot — SSD на OCA (200-400 TB) только под top-контент (top 5% тайтлов даёт 80% watch-hours), latency < 50 ms; warm — региональный `S3` (US-East/EU-West/APAC-Tokyo) с active-контентом и fallback при OCA miss, latency 100-300 ms; cold — `S3 Glacier` для архива, long tail и удалённых тайтлов, retrieval минуты-часы. Мастера (4K HDR) живут в `S3` и никогда не удаляются.",
+              "text": "Трёхтировая модель: hot; SSD на OCA (200-400 TB) только под top-контент (top 5% тайтлов даёт 80% watch-hours), latency < 50 ms; warm; региональный `S3` (US-East/EU-West/APAC-Tokyo) с active-контентом и fallback при OCA miss, latency 100-300 ms.",
               "correct": true,
               "sections": {
                 "explanation": "Тиринг следует за паттерном доступа: горячее и маленькое держат на дорогом быстром SSD у пользователя, тёплое — в региональном S3, холодное — в дешёвом Glacier. Репликация тоже дифференцирована: active-контент 3× по регионам, long tail — один регион (экономия), мастера 3× плюс Glacier-бэкап.",
@@ -369,7 +369,7 @@
           "question_text": "Как устроена encoding pipeline (master → variants)?",
           "options": [
             {
-              "text": "QC-стадия проверяет только размер выходного файла в байтах: если файл не пустой, вариант считается прошедшим контроль качества.",
+              "text": "QC проверяет только наличие и размер выходного файла: любой непустой variant считается корректным. Декодирование, audio/video sync, perceptual quality, black frames, loudness и соответствие packaging manifest не проверяются перед публикацией в origin.",
               "correct": false,
               "sections": {
                 "what_actually": "QC использует `VMAF` — perceptual-метрику Netflix (0-100), и отбраковывает re-encode, если score ниже порога для разрешения; размер файла качество не отражает.",
@@ -381,20 +381,20 @@
               "order": 0
             },
             {
-              "text": "Pipeline идёт стадиями: Ingest (студия загружает 4K HDR мастер ~1-2 TB, обычно `Apple ProRes`, с валидацией checksum/length/audio-sync) → pre-processing (color space, audio normalization, извлечение субтитров) → encoding farm на `EC2 Spot` (10K+ машин параллельно, per-shot/per-chunk) → bitrate ladder (5-10 вариантов на codec, от 240p@235kbps до 2160p@16Mbps) → QC через `VMAF` → packaging (`HLS`/`DASH`/`CMAF`) → distribution в `S3` и pre-positioning на OCA.",
+              "text": "Encoding pipeline: ingest master с checksum и media validation → normalization и segmenting → parallel encoding в codec/resolution/bitrate variants → objective и perceptual QC (`VMAF` как один из сигналов) → packaging в HLS/DASH/CMAF → publish в origin и CDN.",
               "correct": true,
               "sections": {
                 "explanation": "Из одного мастера получается ~30-50 output-файлов на тайтл: декартово произведение codec × resolution × bitrate, плюс языковые аудиодорожки и субтитры. Кодируют в `H.264` (совместимость), `HEVC` (mobile/TV), `VP9` (Android/Chrome), `AV1` (новейший, ~30% экономии битрейта).",
                 "example": "QC отбраковывает результат, если `VMAF` (perceptual-метрика качества от Netflix) ниже порога для данного разрешения — тогда чанк перекодируется; это не даёт outliers-кадрам испортить опыт.",
                 "when_to_apply": "Такой многоступенчатый pipeline нужен, когда один источник должен играть на тысячах разных устройств с разными кодеками, экранами и каналами — то есть ровно случай VOD-платформы.",
-                "edge_cases": "Throughput скромный относительно egress: ~5000 часов нового контента/год × ~100 EC2-hours per content hour ≈ 500K EC2-hours/год (~`$25K` на Spot), потому что кодирование — это batch, а не realtime.",
+                "edge_cases": "Один quality metric не ловит audio sync, subtitle, color/HDR и decoding defects. Per-title/per-shot encoding оптимизирует ladder, но усложняет validation и cache footprint.",
                 "related": "[[design-netflix-interview#Q8]] per-title и per-chunk оптимизация внутри farm; [[design-netflix-interview#Q9]] codec ladder; [[design-netflix-interview#Q10]] почему именно EC2 Spot."
               },
               "label": "B",
               "order": 1
             },
             {
-              "text": "Bitrate ladder состоит из одного варианта на тайтл — фиксированного 1080p@3Mbps, который подходит всем устройствам сразу.",
+              "text": "Bitrate ladder состоит из одного варианта на тайтл — фиксированного 1080p@3Mbps, который подходит всем устройствам сразу. При просадке сети нечем было бы заменить 3 Mbps на низкий битрейт, и начался бы rebuffering.",
               "correct": false,
               "sections": {
                 "what_actually": "Ladder — это 5-10 вариантов на codec (от 240p до 2160p), чтобы ABR на клиенте мог адаптироваться к каналу и экрану; единый вариант сломал бы адаптацию.",
@@ -406,7 +406,7 @@
               "order": 2
             },
             {
-              "text": "Encoding — это один шаг: студия загружает 4K-мастер, и он сразу же без перекодирования раздаётся пользователям как есть.",
+              "text": "Encoding — это один шаг: студия загружает 4K-мастер, и он сразу же без перекодирования раздаётся пользователям как есть. Телефон на мобильном интернете грузил бы терабайтный ProRes, что нереально по bandwidth и декодированию.",
               "correct": false,
               "sections": {
                 "what_actually": "Из мастера генерируют десятки вариантов (codec × resolution × bitrate ladder) с QC через VMAF; раздавать сырой 4K ProRes (1-2 TB) клиентам невозможно — ни одно устройство и канал его не потянут.",
@@ -429,7 +429,7 @@
           "question_text": "В чём разница между per-title и per-chunk encoding и какая экономия bitrate?",
           "options": [
             {
-              "text": "Per-title и per-chunk — две ступени адаптивной оптимизации битрейта. Per-title (Netflix 2015) анализирует сложность всего тайтла и строит custom ladder: мультик достигает 1080p на 2 Mbps, action-фильм требует 4 Mbps — экономия ~20% по каталогу. Per-chunk (Dynamic Optimizer, 2018) идёт глубже и назначает битрейт per shot внутри тайтла: диалог — низкий, экшен-сцена — высокий, чанки сшиваются в один stream — дополнительные 15-30% экономии.",
+              "text": "Per-title и per-chunk — две ступени адаптивной оптимизации битрейта; Per-title (Netflix 2015) анализирует сложность всего тайтла и строит custom ladder: мультик достигает 1080p на 2 Mbps, action-фильм требует 4 Mbps — экономия ~20% по каталогу.",
               "correct": true,
               "sections": {
                 "explanation": "До 2015 использовали fixed ladder для всех тайтлов: простой мультик перекодировался с тем же 3 Mbps, что и сложный боевик — мультик over-compressed (зря тратит), а боевик under-compressed (выглядит хуже в сложных сценах). Per-title и per-chunk убирают это, подгоняя битрейт под фактическую сложность контента.",
@@ -442,7 +442,7 @@
               "order": 0
             },
             {
-              "text": "Per-chunk encoding снижает качество видео ради экономии, поэтому экшен-сцены выглядят хуже диалогов после оптимизации.",
+              "text": "Per-chunk encoding снижает качество видео ради экономии, поэтому экшен-сцены выглядят хуже диалогов после оптимизации. Слово 'экономия' воспринимают как 'ухудшение', будто битрейт режут везде одинаково. Экшен страдал бы сильнее всего.",
               "correct": false,
               "sections": {
                 "what_actually": "Per-chunk наоборот выравнивает воспринимаемое качество: экшену даёт больше битрейта, диалогу меньше — каждая сцена кодируется под свой quality-таргет (VMAF), а не жертвует качеством сложных сцен.",
@@ -454,7 +454,7 @@
               "order": 1
             },
             {
-              "text": "Экономия от per-title и per-chunk пренебрежимо мала — единицы процентов — и не влияет на расходы Netflix.",
+              "text": "Экономия от per-title и per-chunk пренебрежимо мала — единицы процентов — и не влияет на расходы Netflix. Netflix не вкладывался бы в Dynamic Optimizer и VMAF. Проценты на отдельном файле кажутся мелочью без учёта масштаба egress.",
               "correct": false,
               "sections": {
                 "what_actually": "Per-title даёт ~20% по каталогу, per-chunk ещё 15-30%; на 1 Pbps это десятки-сотни миллионов долларов в год экономии на bandwidth.",
@@ -466,7 +466,7 @@
               "order": 2
             },
             {
-              "text": "Per-title и per-chunk — это одно и то же, просто два названия одной фиксированной bitrate ladder, одинаковой для всех тайтлов.",
+              "text": "Per-title и per-chunk — это одно и то же, просто два названия одной фиксированной bitrate ladder, одинаковой для всех тайтлов. Не было бы ~20% экономии от per-title и ещё 15-30% от per-chunk.",
               "correct": false,
               "sections": {
                 "what_actually": "Per-title строит custom ladder на весь тайтл по его сложности, per-chunk — назначает битрейт per shot внутри тайтла; обе отличаются от старого fixed-ladder подхода и дают экономию.",
@@ -501,7 +501,7 @@
               "order": 0
             },
             {
-              "text": "Netflix кодирует в несколько кодеков с разным trade-off: `H.264/AVC` (2003) — baseline и fallback для legacy-устройств (95%+ совместимость), всегда кодируется; `HEVC/H.265` (2013) — основной путь для mobile/smart TV, экономит 30-40% против H.264, но требует royalty; `VP9` (royalty-free от Google) — для Android/Chrome; `AV1` (2018, royalty-free от AOMedia) — новейший, до 50% экономии против H.264, постепенный rollout. Клиент сообщает supported codecs, сервер выбирает лучший: `AV1 → HEVC → VP9 → H.264`.",
+              "text": "Netflix кодирует в несколько кодеков с разным trade-off: `H.264/AVC` (2003) — baseline и fallback для legacy-устройств (95%+ совместимость), всегда кодируется; `HEVC/H.265` (2013) — основной путь для mobile/smart TV, экономит 30-40% против H.264, но требует royalty; `VP9` (royalty-free от Google) — для Android/Chrome.",
               "correct": true,
               "sections": {
                 "explanation": "Несколько кодеков нужны, потому что устройства разные: новый чип умеет hardware-decode `AV1` (и экономит battery), а старый телевизор знает только `H.264`. Сервер выбирает максимально сжимающий из поддерживаемых клиентом и hardware-decodable.",
@@ -549,7 +549,7 @@
           "question_text": "Почему encoding farm работает на AWS EC2 Spot instances?",
           "options": [
             {
-              "text": "Чтобы избежать одновременной потери всех инстансов, Spot fleet берут из одного-единственного типа `c5` — однородность повышает стабильность.",
+              "text": "Чтобы избежать одновременной потери всех инстансов, Spot fleet берут из одного-единственного типа `c5` — однородность повышает стабильность. Скачок Spot-цены на `c5` вынес бы сразу всю ферму, остановив весь encoding.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот, fleet диверсифицируют по типам (`c5`, `c5n`, `m5`): однородный пул прерывается синхронно, а разные пулы редко исчезают одновременно.",
@@ -561,7 +561,7 @@
               "order": 0
             },
             {
-              "text": "Encoding-нагрузка идеально ложится на `EC2 Spot`, потому что она embarrassingly parallel (чанки независимы), fault-tolerant (упавший чанк просто re-encode), не-realtime (кодирование может занять часы) и high-CPU. Spot даёт скидку 70-90% от On-Demand ценой риска termination с 2-минутным warning — но прерванный чанк просто re-queued в `SQS` и пересчитывается на другой машине. Итог: 500K EC2-hours/год × `$0.05` ≈ `$25K/год` против `$250K` на On-Demand.",
+              "text": "Encoding-нагрузка идеально ложится на `EC2 Spot`, потому что она embarrassingly parallel (чанки независимы), fault-tolerant (упавший чанк просто re-encode), не-realtime (кодирование может занять часы) и high-CPU. Spot выгоден именно для batch-нагрузок, которые переживают внезапную потерю инстанса.",
               "correct": true,
               "sections": {
                 "explanation": "Spot выгоден именно для batch-нагрузок, которые переживают внезапную потерю инстанса. Архитектура: очередь заданий (`SQS`) → Spot fleet (10K инстансов) → output в `S3`. Idempotent encoding (одинаковый вход → одинаковый выход) делает повтор безопасным.",
@@ -574,7 +574,7 @@
               "order": 1
             },
             {
-              "text": "Encoding запускают на Spot, потому что Spot-инстансы гарантированно никогда не прерываются и потому надёжнее On-Demand.",
+              "text": "Encoding запускают на Spot, потому что Spot-инстансы гарантированно никогда не прерываются и потому надёжнее On-Demand. Spot не давали бы скидку 70-90%, ведь скидка — это и есть плата за риск прерывания.",
               "correct": false,
               "sections": {
                 "what_actually": "Spot как раз может быть terminated в любой момент с 2-минутным warning — это его суть; encoding подходит не из-за надёжности, а из-за устойчивости к прерываниям (чанк просто re-queued).",
@@ -586,7 +586,7 @@
               "order": 2
             },
             {
-              "text": "Spot подходит для encoding, так как кодирование — это realtime-задача с жёстким дедлайном в миллисекунды, и Spot даёт минимальную latency.",
+              "text": "Spot подходит для encoding, так как кодирование — это realtime-задача с жёстким дедлайном в миллисекунды, и Spot даёт минимальную latency. Прерывание инстанса ломало бы realtime-дедлайн, и Spot был бы неприемлем.",
               "correct": false,
               "sections": {
                 "what_actually": "Encoding — это batch, не realtime: один тайтл может кодироваться часами; Spot выбирают как раз потому, что задержка и прерывание допустимы, а не ради latency.",
@@ -609,7 +609,7 @@
           "question_text": "HLS vs DASH vs CMAF — что выбрать для streaming?",
           "options": [
             {
-              "text": "`CMAF` (Common Media Application Format, спека 2017) — выбор Netflix для унификации: один и тот же fMP4-чанк используется и `HLS`, и `DASH`, то есть single encoding → два манифеста (`.m3u8` + `.mpd`), что экономит хранилище 2× (нет отдельных TS + fMP4). `HLS` (Apple, RFC 8216, native в Safari/iOS) и `DASH` (ISO/IEC 23009-1, native в Chrome/Firefox/Android/Smart TV, но на Safari нужен Shaka Player polyfill) остаются как форматы манифестов поверх общих CMAF-чанков.",
+              "text": "`CMAF` (Common Media Application Format, спека 2017) — выбор Netflix для унификации: один и тот же fMP4-чанк используется и `HLS`, и `DASH`, то есть single encoding → два манифеста (`.m3u8` + `.mpd`), что экономит хранилище 2× (нет отдельных TS + fMP4).",
               "correct": true,
               "sections": {
                 "explanation": "До CMAF приходилось хранить контент дважды: `.ts`-сегменты для HLS и fMP4 для DASH. CMAF делает медиа-чанк общим, оставляя различие только на уровне манифеста — это и убирает дублирование storage, и упрощает packaging-стадию.",
@@ -622,7 +622,7 @@
               "order": 0
             },
             {
-              "text": "`CMAF` объединяет `HLS` и `DASH` на уровне манифестов, но экономии хранилища не даёт: каждый манифест (`.m3u8` и `.mpd`) требует собственного набора зашифрованных чанков, поэтому storage остаётся 2×, как и без CMAF.",
+              "text": "`CMAF` объединяет `HLS` и `DASH` на уровне манифестов, но экономии хранилища не даёт: каждый манифест (`.m3u8` и `.mpd`) требует собственного набора зашифрованных чанков, поэтому storage остаётся 2×, как и без CMAF. Не было бы смысла мигрировать на CMAF.",
               "correct": false,
               "sections": {
                 "what_actually": "Всё наоборот: CMAF использует один общий fMP4-чанк для обоих протоколов и экономит storage 2×; двойное хранение (TS + fMP4) было проблемой до CMAF.",
@@ -634,7 +634,7 @@
               "order": 1
             },
             {
-              "text": "`HLS` и `DASH` различаются сетевым транспортом: `HLS` доставляется поверх `RTMP` с постоянным соединением, а `DASH` — короткими HTTP-запросами; `CMAF` выбирают, когда нужно объединить оба транспорта в одном плеере.",
+              "text": "`HLS` и `DASH` различаются сетевым транспортом: `HLS` доставляется поверх `RTMP` с постоянным соединением, а `DASH` — короткими HTTP-запросами; `CMAF` выбирают, когда нужно объединить оба транспорта в одном плеере. Смена HLS на DASH меняла бы качество картинки.",
               "correct": false,
               "sections": {
                 "what_actually": "Это не кодеки, а протоколы доставки и форматы упаковки/манифестов; сжатие делают кодеки (H.264/HEVC/AV1), а HLS/DASH/CMAF лишь описывают, как нарезать и перечислить сегменты.",
@@ -646,7 +646,7 @@
               "order": 2
             },
             {
-              "text": "Нативная поддержка распределена наоборот: `DASH` играет нативно в Safari/iOS, а `HLS` на Apple-устройствах требует `Shaka Player` как polyfill; поэтому в экосистеме Apple Netflix отдаёт `DASH`, и отдельный `CMAF` там не нужен.",
+              "text": "Нативная поддержка распределена наоборот: `DASH` играет нативно в Safari/iOS, а `HLS` на Apple-устройствах требует `Shaka Player` как polyfill; поэтому в экосистеме Apple Netflix отдаёт `DASH`, и отдельный `CMAF` там не нужен. Не пришлось бы тащить Shaka Player для DASH на Safari.",
               "correct": false,
               "sections": {
                 "what_actually": "HLS native только в Safari/iOS; в Chrome/Firefox/Android для HLS или DASH нужен player-полифилл (Shaka), а CMAF как раз решает кросс-платформенность одним набором чанков.",
@@ -669,7 +669,7 @@
           "question_text": "Как работает Adaptive Bitrate (ABR), что такое BOLA и ML-based подходы?",
           "options": [
             {
-              "text": "`BOLA` — это чисто rate-based алгоритм: он переключает битрейт строго по измеренному throughput канала и не учитывает текущий уровень буфера плеера.",
+              "text": "`BOLA` — это чисто rate-based алгоритм: он переключает битрейт строго по измеренному throughput канала и не учитывает текущий уровень буфера плеера. BOLA фигурировал бы в codec ladder рядом с HEVC/VP9.",
               "correct": false,
               "sections": {
                 "what_actually": "BOLA (Buffer Occupancy based Lyapunov Algorithm) — это buffer-based ABR-алгоритм выбора варианта, он ничего не кодирует; сжатием занимаются кодеки.",
@@ -681,7 +681,7 @@
               "order": 0
             },
             {
-              "text": "ABR — это клиентский цикл (каждые 2-4 сек), который выбирает bitrate-вариант следующего чанка по сигналам: текущий throughput, buffer level (сколько секунд уже буферизовано), разрешение экрана и состояние батареи. Классы алгоритмов: rate-based (переключаться ≈ на измеренный throughput, но buffer-blind), buffer-based `BOLA` (Buffer Occupancy based Lyapunov Algorithm, максимизирует `log(quality) − penalty(rebuffering)`, provably near-optimal), hybrid (ABR-PB, throughput+buffer) и `ML-based`, куда движется Netflix.",
+              "text": "ABR — это клиентский цикл (каждые 2-4 сек), который выбирает bitrate-вариант следующего чанка по сигналам: текущий throughput, buffer level (сколько секунд уже буферизовано), разрешение экрана и состояние батареи.",
               "correct": true,
               "sections": {
                 "explanation": "BOLA повышает битрейт, когда буфер высокий, и роняет его, когда буфер низкий, формально балансируя качество и риск rebuffering. ML-подход обучается на миллионах реальных сессий с QoE-метками и предсказывает оптимальный битрейт per chunk по фичам (история throughput, buffer, device, экран, time-of-day, тип контента).",
@@ -729,7 +729,7 @@
           "question_text": "Как устроен DRM: Widevine, FairPlay, PlayReady?",
           "options": [
             {
-              "text": "Три DRM делят платформы, но по-другому: `FairPlay` покрывает Android/Chrome/Smart TV, `Widevine` — iOS/Safari/Apple TV, `PlayReady` — Windows/Xbox/Edge; Netflix маршрутизирует запрос лицензии по `User-Agent` клиента.",
+              "text": "Три DRM делят платформы, но по-другому: `FairPlay` покрывает Android/Chrome/Smart TV, `Widevine` — iOS/Safari/Apple TV, `PlayReady` — Windows/Xbox/Edge; Netflix маршрутизирует запрос лицензии по `User-Agent` клиента. Netflix не держал бы license server для трёх DRM-типов.",
               "correct": false,
               "sections": {
                 "what_actually": "Экосистемы требуют свой DRM: iOS/Safari работают только с `FairPlay`, Windows/Xbox — с `PlayReady`; Widevine покрывает Android/Chrome/часть Smart TV, но не Apple и не Xbox.",
@@ -765,7 +765,7 @@
               "order": 2
             },
             {
-              "text": "DRM нужен, потому что студии требуют hardware-level защиты контента — без него Netflix не получит лицензии на Hollywood. Три экосистемных DRM: `Widevine` (Android/Chrome/Smart TV, уровни L1/L2/L3 от Google), `FairPlay` (iOS/Safari/Apple TV, только Apple), `PlayReady` (Windows/Xbox/Edge, Microsoft). Контент шифруется `AES-128` (CBC/CTR, common encryption CENC), лицензия — encrypted key blob, привязанный к device certificate; Netflix держит собственный license server для всех трёх типов.",
+              "text": "DRM нужен, потому что студии требуют hardware-level защиты контента — без него Netflix не получит лицензии на Hollywood; Три экосистемных DRM: `Widevine` (Android/Chrome/Smart TV, уровни L1/L2/L3 от Google), `FairPlay` (iOS/Safari/Apple TV, только Apple), `PlayReady` (Windows/Xbox/Edge, Microsoft).",
               "correct": true,
               "sections": {
                 "explanation": "Security-уровни (на примере `Widevine`) определяют максимальное разрешение: `L1` — ключи в TEE (`TrustZone`) → разрешён 4K HDR; `L2` — software-protected → max 1080p; `L3` — pure software → max 480p (защита от риппера). Поэтому уровень DRM напрямую гейтит доступное качество.",
@@ -789,7 +789,7 @@
           "question_text": "Как устроена recommendation system: CF + content + deep learning?",
           "options": [
             {
-              "text": "Финальный слой — page-level optimization, задача которого выбрать один самый релевантный ряд (row) и скрыть остальные ради максимального engagement; diversity при этом намеренно отключается, чтобы не разбавлять топовую подборку.",
+              "text": "Финальный слой — page-level optimization, задача которого выбрать один самый релевантный ряд (row) и скрыть остальные ради максимального engagement; diversity при этом намеренно отключается, чтобы не разбавлять топовую подборку. Homepage из множества rows была бы не нужна.",
               "correct": false,
               "sections": {
                 "what_actually": "Цель — page-level optimization: порядок rows и items по всей homepage с учётом diversity, а не один тайтл; engagement растёт от хорошей композиции страницы, а не от единственной ячейки.",
@@ -813,7 +813,7 @@
               "order": 1
             },
             {
-              "text": "Рекомендации Netflix — это ансамбль из нескольких подходов: collaborative filtering (matrix factorization/SVD по user×item, страдает от cold start), content-based (метаданные жанр/режиссёр/актёры — решает item cold start), deep learning (DNN-ranking, two-tower архитектура, transformer/`BERT4Rec` для sequence modeling), contextual bandits (online explore/exploit) и page-level optimization (оптимизация порядка rows и items ради overall engagement, плюс diversity). Цель — показать каждому максимально релевантный контент в rows homepage.",
+              "text": "Recommendation system строят ансамблем: collaborative filtering использует историю взаимодействий, content-based модели — метаданные и embeddings тайтлов, а deep learning учитывает последовательность просмотров и контекст. Candidate generation сокращает каталог, ranking оценивает ограниченный набор, а page-level optimization добавляет diversity.",
               "correct": true,
               "sections": {
                 "explanation": "Один подход не закрывает всё: CF хорош, когда много истории, но падает на холодном старте; content-based вытягивает новые тайтлы; deep learning ловит сложные нелинейные паттерны и последовательность просмотров (binge). Поэтому их комбинируют ансамблем, а не выбирают один.",
@@ -826,7 +826,7 @@
               "order": 2
             },
             {
-              "text": "Рекомендации — ансамбль, но роли перепутаны: collaborative filtering закрывает item cold start для только что добавленных тайтлов без истории просмотров, а content-based по метаданным (жанр/актёры) решает user cold start для новых пользователей; deep learning лишь переставляет готовый список.",
+              "text": "Collaborative filtering закрывает item cold start для новых тайтлов без истории просмотров, а content-based признаки жанра и актёров решают user cold start для новых пользователей. Deep learning применяют только для перестановки уже готового списка и не используют для sequence modeling.",
               "correct": false,
               "sections": {
                 "what_actually": "Это ансамбль персонализированных подходов (CF + content + DL + bandits + page optimization); глобальная популярность используется лишь как fallback при отказе recommendation-сервиса.",
@@ -849,7 +849,7 @@
           "question_text": "Как устроены candidate generation и online ranking?",
           "options": [
             {
-              "text": "Netflix использует two-stage retrieval. Stage 1 — candidate generation (broad recall): из ~10K тайтлов параллельными запросами набирают ~1000 кандидатов из множества источников (популярное в регионе, genre matches истории, item-item CF 'похоже на то, что нравилось', trending, 'because you watched X'), latency < 50 ms. Stage 2 — online ranking (precision): ML-модель скорит каждого кандидата по фичам (user_embed, item_embed, context, time, device), отбирая top 10-20 per row, latency < 200 ms. Затем page layout: порядок rows и diversity-ограничения.",
+              "text": "Netflix использует two-stage retrieval; Stage 1 — candidate generation (broad recall): из ~10K тайтлов параллельными запросами набирают ~1000 кандидатов из множества источников (популярное в регионе, genre matches истории, item-item CF 'похоже на то, что нравилось', trending, 'because you watched X'), latency < 50 ms.",
               "correct": true,
               "sections": {
                 "explanation": "Двухстадийность нужна из-за латентности и масштаба: точную тяжёлую ML-модель нельзя прогнать по всем 10K тайтлам в бюджете 100 ms, поэтому сперва дешёвый recall сужает до 1000, а дорогой precision-ranking работает уже по сокращённому множеству.",
@@ -862,7 +862,7 @@
               "order": 0
             },
             {
-              "text": "Порядок обратный: сначала online ranking точной ML-моделью проходит по всем ~10K тайтлам, а затем candidate generation расширяет top-выборку обратно до ~1000 кандидатов.",
+              "text": "Порядок обратный: сначала online ranking точной ML-моделью проходит по всем ~10K тайтлам, а затем candidate generation расширяет top-выборку обратно до ~1000 кандидатов. Не было бы смысла в двух стадиях — хватило бы одной. Обе стадии выдают 'список тайтлов', поэтому кажутся одинаковыми по реализации.",
               "correct": false,
               "sections": {
                 "what_actually": "Стадии разные по природе: recall — дешёвые параллельные запросы из многих источников (< 50 ms), ranking — дорогой ML-скоринг по фичам (< 200 ms); у них разные модели и цели (recall vs precision).",
@@ -874,7 +874,7 @@
               "order": 1
             },
             {
-              "text": "Рекомендации считают в один проход: одна ML-модель скорит все ~10K тайтлов каталога на каждый запрос пользователя, поэтому отдельная стадия candidate generation не нужна.",
+              "text": "Рекомендации считают в один проход: одна ML-модель скорит все ~10K тайтлов каталога на каждый запрос пользователя, поэтому отдельная стадия candidate generation не нужна. Полный inference по каталогу занимал бы куда больше 200 ms, нарушая SLO на homepage.",
               "correct": false,
               "sections": {
                 "what_actually": "Так не уложиться в latency-бюджет ~100 ms; поэтому делают two-stage: дешёвый candidate generation сужает 10K → ~1000, и только потом дорогой ranker скорит сокращённое множество.",
@@ -886,7 +886,7 @@
               "order": 2
             },
             {
-              "text": "Page layout выстраивает rows строго по убыванию score ranking-стадии и не накладывает diversity-ограничений, поэтому соседние строки могут дублировать один жанр.",
+              "text": "Page layout выстраивает rows строго по убыванию score ranking-стадии и не накладывает diversity-ограничений, поэтому соседние строки могут дублировать один жанр. Первой строкой шли бы тайтлы на 'A', а не самые релевантные Top Picks, и engagement упал бы.",
               "correct": false,
               "sections": {
                 "what_actually": "Page layout определяет порядок rows (Top Picks → My List → Trending) и применяет diversity-constraint (нет одинаковых жанров в соседних rows); алфавит здесь не используется.",
@@ -909,7 +909,7 @@
           "question_text": "Как устроены персонализация homepage и artwork personalization?",
           "options": [
             {
-              "text": "Каждый из 270M пользователей получает уникальную homepage: персонализированы и сами rows (Trending, Top Picks, Because You Watched), и их порядок, и items внутри. Сверху — artwork personalization (патент Netflix): у каждого тайтла есть 5-10 cover-вариантов, и ML выбирает лучший per user по past clicks — фанату romance показывают couple-постер, фанату action — explosion-вариант. Это даёт +20-30% click-through на постеры. Mapping `user_id → (title_id → image_id)` хранится в `EVCache`.",
+              "text": "Homepage персонализирует состав и порядок rows, элементы внутри них и часть presentation, включая artwork-вариант тайтла. Решение использует историю и контекст, но должно балансировать CTR с downstream просмотром, разнообразием и exploration; конкретное число постеров и эффект подтверждают экспериментами.",
               "correct": true,
               "sections": {
                 "explanation": "Персонализация идёт на двух уровнях: что показать (rows и их ранжирование) и как показать (какой постер). Artwork-вариант подбирается ML отдельно per user × per row, потому что один и тот же тайтл по-разному 'продаётся' разным сегментам зрителей.",
@@ -922,7 +922,7 @@
               "order": 0
             },
             {
-              "text": "Все 270M пользователей видят одну и ту же homepage с одинаковым порядком rows; персонализируется только список 'продолжить просмотр'.",
+              "text": "Все 270M пользователей видят одну и ту же homepage с одинаковым порядком rows; персонализируется только список 'продолжить просмотр'. Не имело бы смысла ранжировать rows per user.",
               "correct": false,
               "sections": {
                 "what_actually": "Персонализирована вся homepage: и набор rows, и их порядок, и items, и даже постеры тайтлов — это 270M уникальных страниц, а не общая раскладка.",
@@ -934,7 +934,7 @@
               "order": 1
             },
             {
-              "text": "Единственная метрика для выбора постера — CTR; downstream watch completion не учитывается, лишь бы клик случился.",
+              "text": "Artwork выбирают исключительно по CTR: вариант с максимальной вероятностью клика считается лучшим даже при коротком просмотре, быстром выходе и разочаровании пользователя. Watch completion, satisfaction, diversity и долгосрочные эффекты в objective не входят.",
               "correct": false,
               "sections": {
                 "what_actually": "В A/B берут связку CTR + downstream watch completion: постер, повышающий клики, но снижающий досматриваемость (кликбейт), не должен выигрывать; одного CTR недостаточно.",
@@ -946,7 +946,7 @@
               "order": 2
             },
             {
-              "text": "У каждого тайтла ровно один постер, одинаковый для всех зрителей; artwork personalization означает лишь перевод текста на постере.",
+              "text": "У каждого тайтла ровно один постер, одинаковый для всех зрителей; artwork personalization означает лишь перевод текста на постере. Не было бы +20-30% прироста CTR от подбора варианта.",
               "correct": false,
               "sections": {
                 "what_actually": "У тайтла 5-10 cover-вариантов, и ML выбирает лучший per user по past clicks (romance- vs action-постер); это не локализация текста, а подбор образа под сегмент.",
@@ -969,7 +969,7 @@
           "question_text": "Как применяются contextual bandits для explore vs exploit?",
           "options": [
             {
-              "text": "`LinUCB` балансирует через сэмплирование из апостериорного распределения, а `Thompson Sampling` детерминированно добавляет к reward слагаемое λ×uncertainty за неопределённость.",
+              "text": "`LinUCB` балансирует через сэмплирование из апостериорного распределения, а `Thompson Sampling` детерминированно добавляет к reward слагаемое λ×uncertainty за неопределённость. Они стояли бы в одном ряду с HEVC/CMAF. Технические аббревиатуры легко спутать со слоем доставки/кодирования.",
               "correct": false,
               "sections": {
                 "what_actually": "Это bandit-алгоритмы выбора тайтла под explore/exploit: LinUCB добавляет к reward бонус за неопределённость, Thompson Sampling сэмплирует из posterior; ни тот, ни другой не кодируют видео.",
@@ -981,7 +981,7 @@
               "order": 0
             },
             {
-              "text": "В bandit-формулировке reward — это всегда прямой денежный доход с показа тайтла, а engagement пользователя (например, watched > 5 min) в reward не входит.",
+              "text": "В bandit-формулировке reward — это всегда прямой денежный доход с показа тайтла, а engagement пользователя (например, watched > 5 min) в reward не входит. Нельзя было бы применять bandit к рекомендациям, где прямого дохода с показа нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Reward здесь — это engagement-сигнал (например, watched > 5 min), а не выручка с показа; bandit оптимизирует вовлечённость, которая уже коррелирует с retention.",
@@ -993,7 +993,7 @@
               "order": 1
             },
             {
-              "text": "Contextual bandits решают баланс discovery и relevance: pure exploit (всегда top-ranked) даёт скуку и падение engagement, pure explore (случайное) — фрустрацию. В формулировке каждая 'arm' = тайтл-кандидат, reward = engagement (например, watched > 5 min), context = состояние пользователя, время, устройство; алгоритм балансирует explore/exploit per context. Используют `LinUCB` (reward + λ×uncertainty, исследует тайтлы с высокой неопределённостью) и `Thompson Sampling` (сэмплирование из posterior, естественный баланс).",
+              "text": "Contextual bandits решают баланс discovery и relevance: pure exploit (всегда top-ranked) даёт скуку и падение engagement, pure explore (случайное) — фрустрацию; В формулировке каждая 'arm' = тайтл-кандидат, reward = engagement (например, watched > 5 min), context = состояние пользователя, время, устройство; алгоритм балансирует explore/exploit per context.",
               "correct": true,
               "sections": {
                 "explanation": "Bandit отличается от обычного ranking тем, что учитывает неопределённость оценки: если про тайтл мало данных, его иногда показывают намеренно, чтобы собрать сигнал. Так система не застревает на уже известном топе и продолжает учиться на новом контенте.",
@@ -1006,7 +1006,7 @@
               "order": 2
             },
             {
-              "text": "Contextual bandits — это всегда pure exploit: система показывает исключительно top-ranked тайтлы и никогда не исследует новые тайтлы с высокой неопределённостью.",
+              "text": "Contextual bandits — это всегда pure exploit: система показывает исключительно top-ranked тайтлы и никогда не исследует новые тайтлы с высокой неопределённостью. Новый тайтл без истории никогда не получил бы показов и не накопил бы данных, оставаясь невидимым.",
               "correct": false,
               "sections": {
                 "what_actually": "Суть bandits — именно баланс explore и exploit; pure exploit (только топ) ведёт к стагнации engagement, поэтому алгоритм намеренно иногда показывает неопределённые тайтлы.",
@@ -1029,7 +1029,7 @@
           "question_text": "Как выглядит high-level архитектура Netflix?",
           "options": [
             {
-              "text": "Видео-байты проходят через тот же `Zuul`-gateway и микросервисы, что и метаданные, — единая плоскость обрабатывает и API-запросы, и сам стрим.",
+              "text": "Видео-байты проходят через тот же `Zuul`-gateway и микросервисы, что и метаданные, — единая плоскость обрабатывает и API-запросы, и сам стрим. Микросервисы должны были бы проксировать 1 Pbps видеотрафика, что нереально и убило бы control plane.",
               "correct": false,
               "sections": {
                 "what_actually": "Видео идёт по отдельной data plane (`Open Connect`, client → OCA напрямую), минуя Zuul и микросервисы; через control plane (Zuul/сервисы) идут только метаданные и API-вызовы.",
@@ -1041,7 +1041,7 @@
               "order": 0
             },
             {
-              "text": "Сервисы находят друг друга по жёстко прописанным IP-адресам в конфиге; service discovery вроде `Eureka` не используется.",
+              "text": "Сервисы находят друг друга по жёстко прописанным IP-адресам в конфиге; service discovery вроде `Eureka` не используется. После рестарта/перемещения инстанса в ASG все вызовы к нему ломались бы, а Chaos Monkey мгновенно валил бы систему.",
               "correct": false,
               "sections": {
                 "what_actually": "Сервисы регистрируются и обнаруживаются через `Eureka` (service discovery с health checks); hardcoded-IP не работают при автоскейлинге и chaos-termination инстансов.",
@@ -1053,7 +1053,7 @@
               "order": 1
             },
             {
-              "text": "Архитектура делится на две плоскости. Control plane (`AWS`, сотни микросервисов) держит метаданные, рекомендации, поиск, аккаунты, billing и license server; stateful-хранилища — `Cassandra` (профили/история), `MySQL` (billing), `Elasticsearch` (поиск). Data plane (`Open Connect`) несёт видео-байты: OCA приближают их к пользователю, ~95% запросов отдаётся из OCA, ~5% из AWS. Все клиентские запросы идут через `Zuul`-gateway (auth, rate limit, routing, A/B bucketing), сервисы обнаруживают друг друга через `Eureka`.",
+              "text": "Архитектура делится на две плоскости; Control plane (`AWS`, сотни микросервисов) держит метаданные, рекомендации, поиск, аккаунты, billing и license server; stateful-хранилища; `Cassandra` (профили/история), `MySQL` (billing), `Elasticsearch` (поиск). Разделение на control и data plane.",
               "correct": true,
               "sections": {
                 "explanation": "Разделение на control и data plane — ключевая идея: метаданные требуют богатой бизнес-логики и микросервисов в облаке, а видео — это просто массивный поток байтов, которому нужна близость к пользователю, а не вычисления. Поэтому видео не гоняют через микросервисы.",
@@ -1066,7 +1066,7 @@
               "order": 2
             },
             {
-              "text": "Вся архитектура — это один монолит на `AWS`, который сам и хранит видео, и считает рекомендации, и раздаёт байты пользователям.",
+              "text": "Вся архитектура — это один монолит на `AWS`, который сам и хранит видео, и считает рекомендации, и раздаёт байты пользователям. Нельзя было бы независимо деплоить и масштабировать рекомендации, поиск и billing по отдельности.",
               "correct": false,
               "sections": {
                 "what_actually": "Это сотни микросервисов в control plane плюс отдельный Open Connect CDN в data plane; монолита нет — иначе один деплой ломал бы весь Netflix.",
@@ -1089,7 +1089,7 @@
           "question_text": "Что входит в микросервисный стек Netflix (Eureka, Ribbon, Hystrix, Zuul, Atlas)?",
           "options": [
             {
-              "text": "`Hystrix` и `Ribbon` активно развиваются Netflix и остаются рекомендованным выбором для новых проектов, а `Resilience4j` и Spring Cloud LoadBalancer — их устаревшие предшественники.",
+              "text": "`Hystrix` и `Ribbon` активно развиваются Netflix и остаются рекомендованным выбором для новых проектов, а `Resilience4j` и Spring Cloud LoadBalancer — их устаревшие предшественники. Netflix не публиковал бы migration guides на Resilience4j.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба deprecated: Hystrix с 2018 (преемник — Resilience4j), Ribbon заменён на Spring Cloud LoadBalancer; в новых проектах берут именно преемников, а не их.",
@@ -1101,7 +1101,7 @@
               "order": 0
             },
             {
-              "text": "`Eureka` — это client-side балансировщик нагрузки, распределяющий запросы между инстансами, а регистрацию сервисов и health checks выполняет `Ribbon`.",
+              "text": "`Eureka` — это client-side балансировщик нагрузки, распределяющий запросы между инстансами, а регистрацию сервисов и health checks выполняет `Ribbon`. Не было бы отдельного механизма резолва адресов сервисов, и динамический ASG ломал бы вызовы.",
               "correct": false,
               "sections": {
                 "what_actually": "Eureka — service discovery (реестр инстансов с health checks); профили и историю хранит `Cassandra`, а не Eureka.",
@@ -1113,7 +1113,7 @@
               "order": 1
             },
             {
-              "text": "Netflix OSS — открытая часть internal-стека, многое стало индустриальным стандартом: `Eureka` — service discovery (регистрация инстансов + health checks); `Ribbon` — client-side load balancer (deprecated в пользу Spring Cloud LoadBalancer); `Hystrix` — circuit breaker (deprecated 2018, теперь Resilience4j); `Zuul` — API gateway (edge routing, фильтры); `Atlas` — time-series метрики (Prometheus-like); плюс `Spinnaker` (CD), `Chaos Monkey` (chaos), `Mantis` (stream processing).",
+              "text": "Netflix OSS; открытая часть internal-стека, многое стало индустриальным стандартом: `Eureka`; service discovery (регистрация инстансов + health checks); `Ribbon`; client-side load balancer (deprecated в пользу Spring Cloud LoadBalancer); `Hystrix`; circuit breaker (deprecated 2018, теперь Resilience4j).",
               "correct": true,
               "sections": {
                 "explanation": "Стек отражает паттерн: client → `Zuul` (routing) → Service A (через `Ribbon` → `Eureka` → Service B), а при сбое — `Hystrix` fallback на cached response. Netflix постепенно мигрирует на open standards (`gRPC` + `Envoy` + `K8s`), но исторический стек важен для понимания эволюции.",
@@ -1126,7 +1126,7 @@
               "order": 2
             },
             {
-              "text": "`Zuul` — это система time-series метрик (Prometheus-like), а `Atlas` — edge API gateway, отвечающий за роутинг и фильтры на границе.",
+              "text": "`Zuul` — это система time-series метрик (Prometheus-like), а `Atlas` — edge API gateway, отвечающий за роутинг и фильтры на границе. Zuul фигурировал бы в codec ladder. Все эти имена из 'Netflix-стека', и легко смешать инфраструктурные компоненты с медиа-слоем.",
               "correct": false,
               "sections": {
                 "what_actually": "Zuul — API gateway (routing/фильтры), Eureka — service discovery; к кодированию видео они отношения не имеют, сжатием занимаются H.264/HEVC/AV1.",
@@ -1149,7 +1149,7 @@
           "question_text": "Какие resilience-паттерны применяет Netflix (bulkheads, circuit breaker, fallback)?",
           "options": [
             {
-              "text": "Bulkhead выделяет один общий thread pool с глобальным семафором на все зависимости: он ограничивает суммарную нагрузку, но медленный Recommendation и быстрый Catalog по-прежнему конкурируют за одни и те же треды.",
+              "text": "Bulkhead выделяет один общий thread pool с глобальным семафором на все зависимости: он ограничивает суммарную нагрузку, но медленный Recommendation и быстрый Catalog по-прежнему конкурируют за одни и те же треды. Зависание одной зависимости съело бы все треды и заблокировало все остальные вызовы.",
               "correct": false,
               "sections": {
                 "what_actually": "Bulkhead — наоборот изоляция: отдельный thread pool per dependency, чтобы медленный Recommendation не исчерпал треды, нужные Catalog; общий пул как раз и даёт cascade.",
@@ -1161,20 +1161,20 @@
               "order": 0
             },
             {
-              "text": "На масштабе Netflix отказы неизбежны (hardware, баги, cascade), поэтому применяют набор паттернов: bulkhead (отдельные thread pools per dependency — медленный Recommendation не съест треды Catalog), circuit breaker (`Resilience4j`, состояния Closed→Open→Half-Open, fail-fast при пороге ошибок), fallback (у каждого remote-вызова — запасной ответ: рекомендации → кэш часовой давности, поиск → static popular, лицензия → cached 24h), агрессивные timeouts (50-200 ms, ниже upstream), retry с exponential backoff+jitter (idempotency, max 3) и rate limiting.",
+              "text": "Resilience строят комбинацией bulkhead isolation, timeouts, circuit breakers, bounded retries с backoff+jitter, load shedding и domain-specific fallback; Ресурсы разделяют по dependency или workload class, breaker переводят через `Closed/Open/Half-Open`, а fallback может вернуть cached/stale/упрощённый ответ только там, где это безопасно.",
               "correct": true,
               "sections": {
                 "explanation": "Главная цель — не дать локальному сбою каскадировать вверх: bulkhead изолирует ресурсы (как водонепроницаемые отсеки корабля), circuit breaker отрезает медленную зависимость до того, как она исчерпает треды вызывающего, а fallback гарантирует деградированный, но рабочий ответ.",
                 "example": "В коде на `Resilience4j` метод getRecommendation помечается `@CircuitBreaker(fallbackMethod=...)`, `@Bulkhead(type=THREADPOOL)` и `@TimeLimiter`; при срабатывании fallback возвращает закэшированные popular_titles из `EVCache` вместо живого вызова.",
                 "when_to_apply": "Эти паттерны нужны на любом внешнем вызове в распределённой системе: без circuit breaker медленный downstream блокирует треды upstream и роняет цепочку; с ним — деградация локализуется.",
-                "edge_cases": "Timeouts должны быть строго ниже upstream-таймаута — иначе вызывающий уже отвалился по своему лимиту, а нижний сервис продолжает зря работать; именно рассогласование таймаутов часто и порождает cascade.",
+                "edge_cases": "Thread pool bulkhead не универсален для async/reactive стека, где применяют semaphore/concurrency limits. Cached licensing или authorization data нельзя использовать дольше разрешённой security policy.",
                 "related": "[[design-netflix-interview#Q19]] Resilience4j как преемник Hystrix; [[design-netflix-interview#Q3]] fallback'и из failure modes SLO; [[design-netflix-interview#Q30]] отсутствие circuit breaker как антипаттерн."
               },
               "label": "B",
               "order": 1
             },
             {
-              "text": "Fallback реализуется так: при сбое remote-вызова система автоматически повторяет тот же запрос к упавшей зависимости, пока он не вернёт успешный ответ.",
+              "text": "Fallback реализуется так: при сбое remote-вызова система автоматически повторяет тот же запрос к упавшей зависимости, пока он не вернёт успешный ответ. Любой сбой recommendation-сервиса оставлял бы пользователя с пустой homepage и ронял retention.",
               "correct": false,
               "sections": {
                 "what_actually": "Netflix даёт fallback почти везде: рекомендации → кэш часовой давности, поиск → static popular, лицензия → cached 24h; деградированный ответ лучше пустого экрана и держит QoE.",
@@ -1186,7 +1186,7 @@
               "order": 2
             },
             {
-              "text": "Circuit breaker после срабатывания в Open ждёт фиксированный таймаут и сразу возвращается в Closed, пропуская полный трафик без пробных запросов состояния Half-Open.",
+              "text": "Circuit breaker после срабатывания в Open ждёт фиксированный таймаут и сразу возвращается в Closed, пропуская полный трафик без пробных запросов состояния Half-Open. После сбоя breaker оставался бы открытым навсегда или вручную, не умея сам вернуться в норму.",
               "correct": false,
               "sections": {
                 "what_actually": "У circuit breaker три состояния: Closed (норма), Open (fail-fast), Half-Open (пробный трафик для проверки восстановления); именно Half-Open и тестирует recovery.",
@@ -1209,7 +1209,7 @@
           "question_text": "Как устроен catalog service (Elasticsearch, GraphQL Gateway)?",
           "options": [
             {
-              "text": "Catalog хранит метаданные тайтлов (название, год, жанр, cast, описание), episode-метаданные, мультиязычную локализацию и region-specific licensing-флаги. Хранилища: master data в `Cassandra` (по title_id), search index в `Elasticsearch` (full-text + фильтры), hot cache в `EVCache`. Поверх — federated `GraphQL Gateway` (`Apollo Federation`): каждый сервис экспонирует фрагмент схемы, gateway оркеструет запрос вроде `{ title { name, recommendations { ... } } }`, заменяя REST для клиентов и батча round trips.",
+              "text": "Catalog хранит метаданные тайтлов (название, год, жанр, cast, описание), episode-метаданные, мультиязычную локализацию и region-specific licensing-флаги; Хранилища: master data в `Cassandra` (по title_id), search index в `Elasticsearch` (full-text + фильтры), hot cache в `EVCache`.",
               "correct": true,
               "sections": {
                 "explanation": "Catalog разделяет источник правды и индекс поиска: `Cassandra` — авторитетное хранилище по ключу, `Elasticsearch` — производный индекс для full-text и фасетных фильтров (жанр, год, язык, rating). `EVCache` держит самые горячие тайтлы, чтобы не бить по основному хранилищу.",
@@ -1222,7 +1222,7 @@
               "order": 0
             },
             {
-              "text": "`GraphQL Gateway` на каждое поле схемы делает отдельный синхронный REST-вызов к соответствующему сервису, поэтому число обращений к бэкендам растёт пропорционально размеру запроса.",
+              "text": "`GraphQL Gateway` на каждое поле схемы делает отдельный синхронный REST-вызов к соответствующему сервису, поэтому число обращений к бэкендам растёт пропорционально размеру запроса. Не было бы выигрыша против REST.",
               "correct": false,
               "sections": {
                 "what_actually": "Federated GraphQL даёт built-in batching и оркестрацию: один клиентский запрос разворачивается в параллельные вызовы к сервисам, сокращая round trips против REST.",
@@ -1234,7 +1234,7 @@
               "order": 1
             },
             {
-              "text": "Catalog-данные кэшируют в `EVCache`, но кэш инвалидируется при каждом чтении, поэтому фактически почти каждый запрос всё равно уходит в `Cassandra`.",
+              "text": "Catalog-данные кэшируют в `EVCache`, но кэш инвалидируется при каждом чтении, поэтому фактически почти каждый запрос всё равно уходит в `Cassandra`. Каждый просмотр страницы бил бы в Cassandra/ES напрямую, перегружая их без нужды.",
               "correct": false,
               "sections": {
                 "what_actually": "Catalog меняется редко, поэтому кэш агрессивный (TTL ~5 минут в EVCache); консистентность держат через pub/sub-инвалидацию при обновлении метаданных.",
@@ -1246,7 +1246,7 @@
               "order": 2
             },
             {
-              "text": "Catalog хранит master data как источник правды в `Elasticsearch` по `title_id`, а `Cassandra` подключают лишь как вторичный full-text поисковый индекс поверх него.",
+              "text": "Catalog хранит master data как источник правды в `Elasticsearch` по `title_id`, а `Cassandra` подключают лишь как вторичный full-text поисковый индекс поверх него. Потеря/переиндексация ES означала бы потерю авторитетных данных.",
               "correct": false,
               "sections": {
                 "what_actually": "Источник правды — `Cassandra` (по title_id), а `Elasticsearch` — лишь производный search-индекс; ES не предназначен быть primary store для критичных метаданных.",
@@ -1305,7 +1305,7 @@
               "order": 2
             },
             {
-              "text": "Прогресс хранится в `Cassandra` (таблица watch_progress с `PRIMARY KEY (user_id, title_id)`: partition по user_id — весь прогресс одного юзера на одной ноде, eventual consistency на `LOCAL_QUORUM`). Flow: клиент шлёт position каждые 30 сек (или на pause/seek) → Watch Service пишет в Cassandra и эмитит `Kafka`-событие → событие потребляют аналитика, recommendation feature store и multi-device sync. При открытии на другом устройстве Watch Service читает Cassandra и резюмирует с сохранённой позиции.",
+              "text": "Прогресс хранится в `Cassandra` (таблица watch_progress с `PRIMARY KEY (user_id, title_id)`: partition по user_id; весь прогресс одного юзера на одной ноде, eventual consistency на `LOCAL_QUORUM`); Partition по user_id выбран потому, что типичный запрос.",
               "correct": true,
               "sections": {
                 "explanation": "Partition по user_id выбран потому, что типичный запрос — 'весь прогресс этого пользователя', и так все его строки лежат на одной ноде (быстрое чтение). `Kafka` развязывает запись прогресса и его побочные потребители: плеер не ждёт аналитику и sync.",
@@ -1329,7 +1329,7 @@
           "question_text": "Что такое Chaos Engineering у Netflix (Chaos Monkey, Kong, Latency)?",
           "options": [
             {
-              "text": "Chaos engineering — это нагрузочное тестирование на staging-окружении: генерация большого числа запросов без реальных отказов инфраструктуры.",
+              "text": "Chaos engineering — это нагрузочное тестирование на staging-окружении: генерация большого числа запросов без реальных отказов инфраструктуры. Chaos Monkey генерировал бы трафик, а не убивал инстансы. И chaos, и load testing относятся к 'проверке под стрессом', отсюда смешение.",
               "correct": false,
               "sections": {
                 "what_actually": "Это намеренная инъекция отказов (termination инстансов, AZ, региона, latency) в production, а не генерация нагрузки на staging; цель — проверить поведение при реальных сбоях.",
@@ -1341,7 +1341,7 @@
               "order": 0
             },
             {
-              "text": "Netflix первым поставил подход 'доказывать резильентность, намеренно ломая production'. Simian Army: `Chaos Monkey` (random termination инстансов, continuously в рабочие часы), `Chaos Gorilla` (убивает целую availability zone, weekly), `Chaos Kong` (убивает целый AWS-регион, monthly), `Latency Monkey` (инжектит задержку 1-10 сек, hourly), плюс Conformity/Security/Janitor Monkey. Философия: 'если что-то нельзя починить — автоматизируй поломку ежедневно, чтобы фикс стал обязательным'.",
+              "text": "Netflix первым поставил подход 'доказывать резильентность, намеренно ломая production'; Simian Army: `Chaos Monkey` (random termination инстансов, continuously в рабочие часы), `Chaos Gorilla` (убивает целую availability zone, weekly), `Chaos Kong` (убивает целый AWS-регион, monthly), `Latency Monkey` (инжектит задержку 1-10 сек, hourly), плюс Conformity/Security/Janitor Monkey.",
               "correct": true,
               "sections": {
                 "explanation": "Смысл chaos engineering — не ждать реального отказа, а вызывать его постоянно в управляемых условиях, чтобы слабые места всплывали при инженерах на рабочем месте, а не ночью в инцидент. Это меняет и культуру: инженеры заранее пишут defensive code.",
@@ -1354,7 +1354,7 @@
               "order": 1
             },
             {
-              "text": "`Chaos Kong` убивает один случайный инстанс, а `Chaos Monkey` — целый AWS-регион; их роли в Simian Army противоположны заявленным.",
+              "text": "`Chaos Kong` убивает один случайный инстанс, а `Chaos Monkey` — целый AWS-регион; их роли в Simian Army противоположны заявленным. 'monthly' и 'continuously' периодичности относились бы к другим инструментам. Имена обезьян легко перепутать, не запомнив их уровень воздействия.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: `Chaos Monkey` терминирует отдельные инстансы, `Chaos Gorilla` — availability zone, `Chaos Kong` — целый регион; масштаб растёт от Monkey к Kong.",
@@ -1366,7 +1366,7 @@
               "order": 2
             },
             {
-              "text": "Эксперименты Chaos Monkey запускают только на dev-стендах, потому что в production трогать живые инстансы слишком опасно.",
+              "text": "Эксперименты Chaos Monkey запускают только на dev-стендах, потому что в production трогать живые инстансы слишком опасно. Непротестированный prod-failover так и оставался бы непроверенным до настоящего инцидента. Интуитивно безопаснее ломать тестовое окружение, и это противоречит самой идее chaos.",
               "correct": false,
               "sections": {
                 "what_actually": "Принципиально Chaos Monkey работает в production (random termination в рабочие часы): только так выявляются реальные слабые места, которые на dev не воспроизводятся.",
@@ -1389,7 +1389,7 @@
           "question_text": "Как устроен multi-region active-active (US-East + EU + APAC)?",
           "options": [
             {
-              "text": "Цели: latency < 100 ms из любой geo, switchover при отказе региона < 5 минут, local data residency (`GDPR` в EU). Регионы: US-East-1 (primary US), EU-West-1 (primary EU), AP-Northeast-1 Tokyo (primary APAC), плюс secondary для DR. В каждом — полная реплика микросервисов, multi-DC `Cassandra`, локальный `Eureka` (сервисы ищут in-region first) и локальный OCA-кластер. Роутинг через `Route 53` latency-based (DNS TTL 60 сек → быстрый failover) с health checks.",
+              "text": "Цели: latency < 100 ms из любой geo, switchover при отказе региона < 5 минут, local data residency (`GDPR` в EU); Регионы: US-East-1 (primary US), EU-West-1 (primary EU), AP-Northeast-1 Tokyo (primary APAC), плюс secondary для DR.",
               "correct": true,
               "sections": {
                 "explanation": "Active-active означает, что все регионы обслуживают трафик одновременно, а не stand-by: пользователя направляют в ближайший по latency регион. `Cassandra` пишет `LOCAL_QUORUM` (latency < 10 ms in-region) и асинхронно реплицирует в другие регионы (лаг 5-30 сек); критичные записи могут идти `EACH_QUORUM`.",
@@ -1402,7 +1402,7 @@
               "order": 0
             },
             {
-              "text": "Все записи между регионами идут синхронно с `EACH_QUORUM` для каждой операции, чтобы данные были идентичны мгновенно.",
+              "text": "Все записи между регионами идут синхронно с `EACH_QUORUM` для каждой операции, чтобы данные были идентичны мгновенно. Каждая запись watch-прогресса (27K/sec) ждала бы cross-region кворум, и latency взлетела бы.",
               "correct": false,
               "sections": {
                 "what_actually": "Большинство записей идут `LOCAL_QUORUM` (быстро, in-region) с async-репликацией; `EACH_QUORUM` дорог и применяется лишь к критичным записям, а не ко всем.",
@@ -1414,7 +1414,7 @@
               "order": 1
             },
             {
-              "text": "Failover между регионами выполняется вручную инженером через тикет и занимает часы, автоматики для переключения нет.",
+              "text": "Failover между регионами выполняется вручную инженером через тикет и занимает часы, автоматики для переключения нет. Потеря региона означала бы часы простоя, нарушая availability 99.99% и цель < 5 минут.",
               "correct": false,
               "sections": {
                 "what_actually": "Failover автоматизирован: `Route 53` latency-based routing с DNS TTL 60 сек и health checks перенаправляет трафик за 1-2 минуты; цель switchover < 5 минут, ручной процесс часами недопустим.",
@@ -1426,7 +1426,7 @@
               "order": 2
             },
             {
-              "text": "Active-active означает, что только один регион обслуживает весь трафик, а остальные стоят выключенными как холодный резерв.",
+              "text": "Active-active означает, что только один регион обслуживает весь трафик, а остальные стоят выключенными как холодный резерв. Пользователь из APAC ходил бы в US-East с большой latency, нарушая цель < 100 ms из любой geo.",
               "correct": false,
               "sections": {
                 "what_actually": "Active-active — все регионы обслуживают трафик одновременно (пользователь идёт в ближайший по latency); холодный резерв с одним активным регионом — это active-passive, другая модель.",
@@ -1449,7 +1449,7 @@
           "question_text": "Как устроена A/B testing платформа (1-5% traffic, auto-rollout)?",
           "options": [
             {
-              "text": "Bucketing назначает пользователю случайную группу при каждом запросе, поэтому один и тот же человек постоянно перескакивает между control и treatment.",
+              "text": "Bucketing назначает пользователю случайную группу при каждом запросе, поэтому один и тот же человек постоянно перескакивает между control и treatment. Нельзя было бы измерить D7/D30 retention варианта, ведь пользователь видел бы оба опыта вперемешку.",
               "correct": false,
               "sections": {
                 "what_actually": "Bucketing использует consistent hashing по user_id — пользователь стабильно остаётся в одной группе на всё время эксперимента; иначе измерения были бы зашумлены.",
@@ -1461,7 +1461,7 @@
               "order": 0
             },
             {
-              "text": "Единственная метрика успеха — мгновенный CTR; retention и guardrail-метрики (error rate, latency) в расчёт не берутся.",
+              "text": "Единственная метрика успеха — мгновенный CTR; retention и guardrail-метрики (error rate, latency) в расчёт не берутся. Выигрывал бы кликбейт с высоким CTR. CTR измеряется мгновенно и нагляднее долгосрочного retention.",
               "correct": false,
               "sections": {
                 "what_actually": "Primary-метрика — retention (D7/D30), CTR лишь secondary; обязательны guardrail-метрики (error rate, latency), которые триггерят auto-rollback даже при росте CTR.",
@@ -1473,7 +1473,7 @@
               "order": 1
             },
             {
-              "text": "Каждый новый вариант сразу выкатывается на 100% пользователей; постепенный ramp и стартовый 1% — лишняя бюрократия.",
+              "text": "Каждый новый вариант сразу выкатывается на 100% пользователей; постепенный ramp и стартовый 1% — лишняя бюрократия. Баг в новом ranking-варианте мгновенно ударил бы по всем 270M, а не по 1%.",
               "correct": false,
               "sections": {
                 "what_actually": "Эксперименты стартуют с 1% и постепенно рампятся (5% → 25% → 50% → 100%) с auto-rollback при регрессии > 1%; немедленный 100% подверг бы всех пользователей непроверенному изменению.",
@@ -1485,7 +1485,7 @@
               "order": 2
             },
             {
-              "text": "Netflix гоняет 1000+ активных экспериментов одновременно на in-house платформе: bucketing-сервис (consistent hashing по user_id), config-сервис с вариантами, metric-пайплайн engagement-сигналов. Дизайн: control + 1-5 treatment-вариантов, старт с 1% трафика, ramp 5% → 25% → 50% → 100% при позитивных метриках, auto-rollback при регрессии > 1%. Метрики: primary — retention (D7/D30), secondary — watch hours/completion/CTR, guardrail — error rate и latency.",
+              "text": "Netflix гоняет 1000+ активных экспериментов одновременно на in-house платформе: bucketing-сервис (consistent hashing по user_id), config-сервис с вариантами, metric-пайплайн engagement-сигналов. Малый стартовый процент и поэтапный ramp ограничивают риск: плохой вариант задевает лишь 1% пользователей и откатывается автоматически по guardrail-метрикам, прежде чем дойти до всех.",
               "correct": true,
               "sections": {
                 "explanation": "Малый стартовый процент и поэтапный ramp ограничивают риск: плохой вариант задевает лишь 1% пользователей и откатывается автоматически по guardrail-метрикам, прежде чем дойти до всех. Consistent hashing гарантирует, что пользователь стабильно попадает в одну и ту же группу.",
@@ -1509,7 +1509,7 @@
           "question_text": "Как устроена data platform (Kafka, Iceberg, Spark, Flink)?",
           "options": [
             {
-              "text": "Это многослойный конвейер. Stream layer: `Apache Kafka` — primary event backbone (триллионы событий/день, 100+ кластеров, топики watch_events/profile_changes/recommendation_clicks). Stream processing: `Apache Flink` — low-latency realtime (рекомендации, fraud) с exactly-once. Batch: `Apache Spark` на EMR (ETL, ML-training). Data lake: `Apache Iceberg` на `S3` (schema evolution, time travel, partition pruning). Warehouse: `Snowflake`/`Druid` для BI, `Tableau` для дашбордов.",
+              "text": "Data platform разделяет роли: Kafka принимает durable event streams, Flink рассчитывает realtime-состояние и online features, Spark выполняет тяжёлые batch-задачи, а Iceberg-таблицы в object storage хранят исторические данные с эволюцией схемы. Общие contracts и feature definitions поддерживают train-serve consistency.",
               "correct": true,
               "sections": {
                 "explanation": "Слои разделены по latency и назначению: `Kafka` принимает события, `Flink` обрабатывает их в реальном времени для online-фич, `Spark` делает тяжёлый batch (агрегации, обучение моделей), `Iceberg` хранит историю как table-format на S3. Один движок не закрывает и realtime, и batch одинаково хорошо.",
@@ -1522,7 +1522,7 @@
               "order": 0
             },
             {
-              "text": "`Kafka` здесь используется как реляционная база данных для долговременного хранения всей истории просмотров вместо `Iceberg`.",
+              "text": "Kafka используют как единственное бессрочное хранилище всей истории просмотров: topics заменяют lakehouse-таблицы, snapshot isolation и batch scans. Retention не ограничивают, а аналитические запросы читают полный log напрямую без Iceberg или другого table format.",
               "correct": false,
               "sections": {
                 "what_actually": "Kafka — это event backbone (шина событий), а долговременное историческое хранение — на `Iceberg`/`S3` (table format, time travel); Kafka не предназначен быть основным data lake.",
@@ -1534,7 +1534,7 @@
               "order": 1
             },
             {
-              "text": "Train-serve consistency не важна: можно обучать модель на одних фичах, а в проде подавать совершенно другие, результат не пострадает.",
+              "text": "Train-serve consistency не важна: можно обучать модель на одних фичах, а в проде подавать совершенно другие, результат не пострадает. Не нужен был бы общий feature store. Модель 'обобщает' и устойчива к смене входных признаков.",
               "correct": false,
               "sections": {
                 "what_actually": "Feature store специально обеспечивает train-serve consistency — одинаковые фичи в обучении и inference; расхождение (training-serving skew) ломает качество модели в проде.",
@@ -1546,7 +1546,7 @@
               "order": 2
             },
             {
-              "text": "Вся обработка данных делается одним движком `Spark` в batch-режиме; realtime-слой и `Flink` платформе не нужны.",
+              "text": "Вся data platform работает только пакетно на Spark: события сначала накапливаются, затем часы спустя пересчитывают features и decisions. Kafka используется как временный файл, а Flink и realtime-serving не нужны даже для оперативных рекомендаций и fraud-сигналов.",
               "correct": false,
               "sections": {
                 "what_actually": "Realtime-нужды (fraud, online-рекомендации) обслуживает `Flink` с low-latency и exactly-once; `Spark` хорош для batch, но не даёт секундной реакции, поэтому слои сосуществуют.",
@@ -1569,7 +1569,7 @@
           "question_text": "Как устроены downloads для offline viewing?",
           "options": [
             {
-              "text": "Offline-лицензия бессрочна: один раз скачав тайтл, его можно смотреть вечно, даже после отмены подписки.",
+              "text": "Offline-лицензия бессрочна: один раз скачав тайтл, его можно смотреть вечно, даже после отмены подписки. Отмена подписки не лишала бы доступа к скачанному, и offline стал бы лазейкой против DRM.",
               "correct": false,
               "sections": {
                 "what_actually": "Лицензия персистентная, но с истечением (обычно 30 дней) и auto-delete после expiry/watch; при suspended-аккаунте следующая online-проверка её инвалидирует.",
@@ -1581,7 +1581,7 @@
               "order": 0
             },
             {
-              "text": "Скачанный файл хранится на устройстве в открытом, незашифрованном виде, потому что он уже на телефоне пользователя и защищать его не нужно.",
+              "text": "Скачанный файл хранится на устройстве в открытом, незашифрованном виде, потому что он уже на телефоне пользователя и защищать его не нужно. Любой мог бы вытащить незашифрованное видео из файловой системы и распространить его.",
               "correct": false,
               "sections": {
                 "what_actually": "Download всегда зашифрован at rest и требует DRM-лицензию для воспроизведения; открытый файл позволил бы скопировать и слить контент, и студии не дали бы прав.",
@@ -1593,7 +1593,7 @@
               "order": 1
             },
             {
-              "text": "Для offline берут тот же высокобитрейтный 4K-вариант, что и для стриминга на TV, без mobile-оптимизации.",
+              "text": "Для offline download используют тот же высокобитрейтный 4K-variant, который отправляют телевизорам при streaming. Mobile-specific bitrate, codec profile и storage budget не учитывают: максимальное качество сохраняют независимо от размера файла, батареи и возможностей устройства.",
               "correct": false,
               "sections": {
                 "what_actually": "Для downloads выбирают mobile-optimized кодек (`HEVC`/`AV1`) с пониженным битрейтом ради экономии storage и battery; 4K-вариант занял бы слишком много места на телефоне.",
@@ -1605,7 +1605,7 @@
               "order": 2
             },
             {
-              "text": "Download — это зашифрованный локальный файл на устройстве плюс DRM-лицензия (`Widevine`/`FairPlay`), привязанная к устройству, с истечением обычно 30 дней после скачивания. Кодек выбирается mobile-optimized (`HEVC` или `AV1`, меньше файлы) с пониженным относительно стриминга битрейтом (экономия battery и storage). Ограничения: не все тайтлы доступны для скачивания (licensing), есть max downloads на аккаунт, auto-delete после expiry или watch + 48h.",
+              "text": "Download — это зашифрованный локальный файл на устройстве плюс DRM-лицензия (`Widevine`/`FairPlay`), привязанная к устройству, с истечением обычно 30 дней после скачивания; Кодек выбирается mobile-optimized (`HEVC` или `AV1`, меньше файлы) с пониженным относительно стриминга битрейтом (экономия battery и storage).",
               "correct": true,
               "sections": {
                 "explanation": "Offline отличается от стриминга персистентной лицензией: ключ DRM должен работать без сети, но не вечно — отсюда срок жизни (30 дней) и автоудаление. Файл всегда зашифрован at rest, чтобы скачанное нельзя было вытащить из файловой системы.",
@@ -1629,7 +1629,7 @@
           "question_text": "Как устроена cost optimization (Reserved + Spot + Open Connect)?",
           "options": [
             {
-              "text": "Топ cost-buckets и их оптимизации: CDN egress (`$300-500M/год`) — собственный `Open Connect` вместо commercial CDN ($3B+); AWS Compute (`$100-200M`) — Reserved Instances + Savings Plans; AWS Storage (`$50-100M`) — lifecycle-политики и Glacier для cold; Encoding (`$25-50M`) — Spot; studio licensing (`$15-20B`) — крупнейшая статья, контентные сделки. Open Connect отдаёт 95% трафика по ~$2/TB против ~$20/TB commercial CDN (10× дешевле, $200-400M/год экономии).",
+              "text": "Топ cost-buckets и их оптимизации: CDN egress (`$300-500M/год`) — собственный `Open Connect` вместо commercial CDN ($3B+); AWS Compute (`$100-200M`) — Reserved Instances + Savings Plans; AWS Storage (`$50-100M`) — lifecycle-политики и Glacier для cold; Encoding (`$25-50M`) — Spot.",
               "correct": true,
               "sections": {
                 "explanation": "Оптимизация привязана к характеру нагрузки: steady-state сервисы (микросервисы, Cassandra) берут Reserved Instances (3-year RI — 60% скидки), bursty encoding — Spot, холодное хранилище — Glacier через S3 lifecycle, а доставку — Open Connect. Каждый bucket оптимизируется своим инструментом.",
@@ -1642,7 +1642,7 @@
               "order": 0
             },
             {
-              "text": "Open Connect не экономит деньги — он стоит примерно столько же, сколько commercial CDN, и нужен только ради контроля.",
+              "text": "Open Connect не экономит деньги; он стоит примерно столько же, сколько commercial CDN, и нужен только ради контроля; Не было бы смысла строить и поддерживать тысячи OCA.",
               "correct": false,
               "sections": {
                 "what_actually": "Open Connect отдаёт 95% трафика по ~$2/TB против ~$20/TB у commercial CDN — это ~10× дешевле и $200-400M/год экономии; контроль — приятный бонус, но главная причина именно cost.",
@@ -1654,7 +1654,7 @@
               "order": 1
             },
             {
-              "text": "Крупнейшая статья расходов Netflix — это AWS Compute (EC2), а studio licensing и CDN egress на её фоне незначительны.",
+              "text": "Крупнейшая статья расходов Netflix — это AWS Compute (EC2), а studio licensing и CDN egress на её фоне незначительны. Оптимизация EC2 решала бы основную часть бюджета.",
               "correct": false,
               "sections": {
                 "what_actually": "Крупнейшая статья — studio licensing (`$15-20B/год`, контентные сделки), далее CDN egress ($300-500M); AWS Compute ($100-200M) меньше их на порядок.",
@@ -1666,7 +1666,7 @@
               "order": 2
             },
             {
-              "text": "Reserved Instances выгодно использовать для encoding-фермы, а Spot — для steady-state микросервисов и Cassandra.",
+              "text": "Reserved Instances выгодно использовать для encoding-фермы, а Spot — для steady-state микросервисов и Cassandra. Микросервисы могли бы внезапно терминироваться (Spot), что недопустимо для постоянной нагрузки.",
               "correct": false,
               "sections": {
                 "what_actually": "Ровно наоборот: bursty encoding идёт на Spot (терпит прерывания), а steady-state сервисы и Cassandra — на Reserved Instances, где важна стабильность мощности.",
@@ -1689,7 +1689,7 @@
           "question_text": "Как работает anti-fraud: детект шеринга аккаунтов и паролей?",
           "options": [
             {
-              "text": "При обнаружении шеринга Netflix немедленно и безвозвратно блокирует аккаунт без предупреждений и без возможности верификации.",
+              "text": "При обнаружении шеринга Netflix немедленно и безвозвратно блокирует аккаунт без предупреждений и без возможности верификации. Легитимные пользователи в edge-кейсах (общежитие, путешествие) теряли бы доступ и уходили бы.",
               "correct": false,
               "sections": {
                 "what_actually": "Enforcement — это friction и soft warnings (запрос подтвердить primary-локацию), а не hard block; цель — конвертировать в Extra Member, а не оттолкнуть пользователя.",
@@ -1701,7 +1701,7 @@
               "order": 0
             },
             {
-              "text": "Anti-fraud охватывает только account sharing; краденые карты, free-trial abuse и боты к зоне борьбы с мошенничеством не относятся.",
+              "text": "Anti-fraud охватывает только account sharing; краденые карты, free-trial abuse и боты к зоне борьбы с мошенничеством не относятся; Платёжный фрод и bot-скрейпинг оставались бы без защиты.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные классы fraud с разными механизмами: краденые карты — fraud-сигналы на signup, free-trial abuse — device fingerprint blocklist, боты — rate limiting + CAPTCHA; sharing лишь один из них.",
@@ -1713,7 +1713,7 @@
               "order": 1
             },
             {
-              "text": "Account sharing (один аккаунт → несколько домохозяйств) стоит Netflix миллиарды; в crackdown 2023 ввели stricter 'Primary household'-детект и Extra Member за $7.99/мес. Detection-сигналы: device locations (IP, geo, ISP), login patterns (время, частота), watch patterns (одновременные стримы на 3+ разных IP-диапазонах), device fingerprints. Алгоритм: 'household' = устройства, периодически смотрящие из одной домашней Wi-Fi; ML строит household-граф, и стримы вне него триггерят верификацию.",
+              "text": "Account sharing (один аккаунт → несколько домохозяйств) стоит Netflix миллиарды; в crackdown 2023 ввели stricter 'Primary household'-детект и Extra Member за $7.99/мес.",
               "correct": true,
               "sections": {
                 "explanation": "Подход опирается на граф устройств, а не на единичный сигнал: одно отклонение (поездка) не повод блокировать, но устойчивый паттерн нескольких домохозяйств — повод. Enforcement мягкий: friction (запрос верификации primary-локации), а не жёсткий блок, чтобы не злить легитимных пользователей.",
@@ -1726,7 +1726,7 @@
               "order": 2
             },
             {
-              "text": "Детект шеринга — это простое правило: любой второй IP-адрес на аккаунте автоматически означает фрод и мгновенную блокировку.",
+              "text": "Детект шеринга — это простое правило: любой второй IP-адрес на аккаунте автоматически означает фрод и мгновенную блокировку. Член семьи в поездке или просмотр через мобильную сеть сразу блокировались бы, разрушая UX.",
               "correct": false,
               "sections": {
                 "what_actually": "Используется ML household-граф по множеству сигналов (geo, fingerprints, watch patterns), а enforcement мягкий (friction, не блок); правило 'второй IP = фрод' давало бы массу ложных срабатываний на легитимных семьях.",
@@ -1749,7 +1749,7 @@
           "question_text": "Какие антипаттерны и подводные камни в дизайне Netflix?",
           "options": [
             {
-              "text": "Отсутствие chaos-тестов закрывается тщательным покрытием failover-кода unit-тестами: если тесты зелёные, `Chaos Monkey` в проде избыточен, потому что он лишь дублирует уже проверенные юнитами сценарии отказа и только раскачивает стабильность.",
+              "text": "Отсутствие chaos-тестов закрывается тщательным покрытием failover-кода unit-тестами: если тесты зелёные, `Chaos Monkey` в проде избыточен, потому что он лишь дублирует уже проверенные юнитами сценарии отказа и только раскачивает стабильность; Утверждение было бы верным лишь в мире, где единственный CDN никогда не падает, межрегиональные линки дают нулевую задержку, а failover корректен по построению.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот — это три хрестоматийных антипаттерна: single CDN без fallback = outage обнуляет revenue (фикс — multi-CDN); strong cross-region consistency = 100+ ms задержки (фикс — eventual + LOCAL_QUORUM); отказ от chaos = непроверенный failover срабатывает лишь ~40% времени (фикс — Chaos Monkey/Kong).",
@@ -1761,7 +1761,7 @@
               "order": 0
             },
             {
-              "text": "Ключевые антипаттерны и их фиксы: синхронные вызовы между всеми сервисами (→ cascade; фикс: async через Kafka, tight timeouts, bulkheads); single CDN без fallback (→ outage = 0 revenue; фикс: multi-CDN); отсутствие chaos-тестов (непротестированный failover работает ~40% времени; фикс: Chaos Monkey/Kong); strong consistency между регионами (→ 100+ ms; фикс: eventual + LOCAL_QUORUM); сервисы без circuit breaker; fixed bitrate ladder для всего; один кодек на все устройства; отсутствие DRM; pure pull-CDN (cold cache → origin spike; фикс: pre-positioning); монолит; encoding на On-Demand вместо Spot; отсутствие observability на QoE.",
+              "text": "Ключевые антипаттерны и их фиксы: синхронные вызовы между всеми сервисами (→ cascade; фикс: async через Kafka, tight timeouts, bulkheads); single CDN без fallback (→ outage = 0 revenue; фикс: multi-CDN); отсутствие chaos-тестов (непротестированный failover работает ~40% времени; фикс: Chaos Monkey/Kong); strong consistency между регионами (→ 100+ ms; фикс: eventual + LOCAL_QUORUM).",
               "correct": true,
               "sections": {
                 "explanation": "Большинство антипаттернов — это игнорирование одного из принципов кейса: async вместо sync, изоляция отказов, eventual consistency, адаптивный encoding, device-aware кодеки, pre-positioning. Каждый имеет конкретный фикс, уже разобранный в соответствующем вопросе.",
@@ -1774,7 +1774,7 @@
               "order": 1
             },
             {
-              "text": "Strong consistency между регионами действительно добавляет 100+ ms, но фикс — не eventual consistency, а региональный read-through кэш поверх синхронной глобальной БД: кэш скрывает латентность чтений, сохраняя strong consistency на запись во всех регионах.",
+              "text": "Strong consistency между регионами действительно добавляет 100+ ms, но фикс — не eventual consistency, а региональный read-through кэш поверх синхронной глобальной БД: кэш скрывает латентность чтений, сохраняя strong consistency на запись во всех регионах. Netflix не вкладывался бы в AV1 и per-title/per-chunk encoding.",
               "correct": false,
               "sections": {
                 "what_actually": "Это антипаттерны: один H.264 даёт ~30% лишнего bandwidth против AV1 (фикс device-aware codec selection), а fixed ladder over/under-кодирует контент (фикс per-title encoding, ~20% экономии).",
@@ -1786,7 +1786,7 @@
               "order": 2
             },
             {
-              "text": "Ключевой антипаттерн — синхронные вызовы между всеми сервисами, но правильный фикс не async через Kafka, а вертикальное масштабирование: если добавить каждому сервису CPU и RAM, синхронная цепочка перестаёт порождать cascade failures без перехода на события.",
+              "text": "Синхронные вызовы между сервисами исправляют вертикальным масштабированием каждого узла: дополнительные CPU и RAM устраняют cascade failures без перехода на события, timeouts или bulkheads. Зависание одной зависимости после увеличения ресурсов не влияет на остальные звенья цепочки.",
               "correct": false,
               "sections": {
                 "what_actually": "Сплошные sync-вызовы как раз порождают cascade: медленный downstream блокирует треды upstream по всей цепочке; фикс — async через Kafka, tight timeouts и bulkheads.",

@@ -11,7 +11,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Fetch HTML по seed URLs, extract content и outlinks, recurse и сохранить raw HTML.",
+              "text": "Базовый scope: получить HTML из seed URLs, извлечь нормализованный контент и outlinks, поставить новые URL во frontier и сохранить результат с метаданными обхода. Классический цикл Mercator/Heritrix: seed → fetch → parse → store → enqueue outlinks → повтор.",
               "correct": true,
               "sections": {
                 "explanation": "Классический цикл Mercator/Heritrix: seed → fetch → parse → store → enqueue outlinks → повтор.",
@@ -24,7 +24,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Делать ranking страниц по PageRank и персонализацию SERP.",
+              "text": "Основная задача crawler-а — считать PageRank и персонализировать поисковую выдачу. Fetch, parse, deduplication и frontier рассматриваются как внутренние детали поискового движка, а каждый URL проходит единый pipeline без отдельного состояния повторного обхода и politeness scheduling.",
               "correct": false,
               "sections": {
                 "what_actually": "Ranking и personalization живут в search/SERP-сервисе, crawler только готовит сырой контент.",
@@ -36,7 +36,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Только проверять uptime сайтов из seed-списка раз в сутки.",
+              "text": "Только проверять uptime сайтов из seed-списка раз в сутки. В предложенной схеме не было бы parser-а, dedup-а и storage — ничего из дизайна не нужно. Каждый origin получает один и тот же график обхода и лимит запросов. Одновременно frontier не хранит дополнительное состояние операции.",
               "correct": false,
               "sections": {
                 "what_actually": "Crawler качает контент и разворачивает граф, а не делает healthcheck.",
@@ -48,7 +48,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Построить inverted index и обслуживать поисковые запросы пользователей.",
+              "text": "Crawler должен построить inverted index и напрямую обслуживать пользовательские поисковые запросы. HTML считается уже подготовленным источником документов, поэтому собственные fetch, parse, deduplication и distributed frontier не входят в scope; workers только обновляют индекс и ranking signals.",
               "correct": false,
               "sections": {
                 "what_actually": "Это задача indexer-а и search backend (см. design-search), а не crawler-а.",
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "~10 RPS sustained и пара ГБ HTML в сутки — небольшой vertical crawler.",
+              "text": "~10 RPS sustained и пара ГБ HTML в сутки — небольшой vertical crawler. При таком устройстве не нужны были бы distributed frontier, Bloom-filter dedup и tiered storage.",
               "correct": false,
               "sections": {
                 "what_actually": "Для system-design кейса берут масштаб ближе к Common Crawl: ~1B страниц/месяц и ~400 RPS.",
@@ -83,7 +83,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Strictly write-heavy: 100k uploads пользовательских страниц в секунду.",
+              "text": "Strictly write-heavy: 100k uploads пользовательских страниц в секунду. В этой модели нужен был бы API ingestion-слой, как у Instagram/YouTube. Read path и frontier scheduling не учитываются.",
               "correct": false,
               "sections": {
                 "what_actually": "Crawler сам инициирует GET-запросы наружу, user uploads — это не его сценарий.",
@@ -95,7 +95,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "1B страниц/месяц, ~400 RPS sustained и ~100 KB средний размер страницы.",
+              "text": "Нагрузку задают как явное допущение: страницы в месяц, sustained и peak fetch RPS, средний размер ответа, долю повторных обходов и retention. Из них выводят bandwidth и storage.",
               "correct": true,
               "sections": {
                 "explanation": "Это типовые цифры интервью: 1e9 / (30*86400) ≈ 386 RPS, средняя страница ~100 KB после декомпрессии.",
@@ -108,7 +108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "1M страниц/секунду по 1 MB каждая — нужно петабайт хранилища в день.",
+              "text": "1M страниц/секунду по 1 MB каждая — нужно петабайт хранилища в день. В этой модели потребовалось бы 100+ Tbps egress и весь интернет-bandwidth региона.",
               "correct": false,
               "sections": {
                 "what_actually": "На два порядка завышено: 1M RPS × 1 MB = 1 TB/sec — нереалистично даже для Google.",
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "~10 TB/месяц — основной объём gzip-ится в момент скачивания.",
+              "text": "~10 TB/месяц — основной объём gzip-ится в момент скачивания. В этой модели не нужны были бы S3 lifecycle policies и Glacier tier.",
               "correct": false,
               "sections": {
                 "what_actually": "Даже после gzip 3-5× остаётся ~25 TB, а сырой объём — 100 TB/месяц.",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "~1 EB/месяц — каждая страница тянет с собой все ресурсы (CSS, JS, images).",
+              "text": "~1 EB/месяц — каждая страница тянет с собой все ресурсы (CSS, JS, images). Worker принимает решение локально; повторные ошибки не снижают приоритет URL.",
               "correct": false,
               "sections": {
                 "what_actually": "Crawler скачивает только HTML страницы, CSS/JS/images — отдельные fetch-и и часто не нужны.",
@@ -155,19 +155,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Невозможно посчитать без знания точного content type каждой страницы.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Back-of-the-envelope как раз и нужен, чтобы дать порядок без точных данных.",
-                "source_of_confusion": "Боязнь дать число — но интервьюер ждёт ровно прикидку.",
-                "if_it_were_true": "Невозможно было бы планировать ёмкость storage в любой системе.",
-                "how_it_should_be": "Брать средние (100 KB/страница) и умножать на объём — этого достаточно."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "~100 TB raw HTML/месяц, ~25 TB после gzip и ~500 GB метаданных.",
+              "text": "При `1B × 100 KB` получается около `100 TB` raw HTML до compression, replication и метаданных. Итоговый storage считают отдельно для raw, parsed content и индексов.",
               "correct": true,
               "sections": {
                 "explanation": "1e9 × 100 KB = 1e14 байт = 100 TB; gzip 3-5× → ~25 TB; метаданные ~500 B × 1e9 = 500 GB.",
@@ -175,6 +163,18 @@
                 "when_to_apply": "На стадии capacity estimation, до выбора storage backend и compression strategy.",
                 "edge_cases": "Видео/PDF поднимают средний размер; нужно отдельно считать non-HTML контент.",
                 "related": "Q18 tiered storage, Q19 Cassandra schema, Q23 JS-rendered."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Невозможно посчитать без знания точного content type каждой страницы. При таком подходе невозможно было бы планировать ёмкость storage в любой системе.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Back-of-the-envelope как раз и нужен, чтобы дать порядок без точных данных.",
+                "source_of_confusion": "Боязнь дать число — но интервьюер ждёт ровно прикидку.",
+                "if_it_were_true": "Невозможно было бы планировать ёмкость storage в любой системе.",
+                "how_it_should_be": "Брать средние (100 KB/страница) и умножать на объём — этого достаточно."
               }
             }
           ]
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Headless Chrome pool для рендеринга всех страниц.",
+              "text": "Headless Chrome pool для рендеринга всех страниц. Worker принимает решение локально; повторные ошибки не снижают приоритет URL. В предложенной схеме Throughput упал бы в 20-50 раз — невозможно держать 400 RPS на headless. Первое допущение — одинаковая политика применяется ко всем origin; второе — частота изменений и размер ответа не меняют решение.",
               "correct": false,
               "sections": {
                 "what_actually": "Headless pool — отдельный медленный fetch pipeline только для SPA, не основной flow.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "DNS resolver кластер — без него ни один URL не качается.",
+              "text": "DNS resolver cluster — центральный компонент, потому что без него ни один URL не скачивается. Worker принимает решения локально, spider traps не требуют нескольких защитных слоёв, а frontier остаётся простым FIFO и не управляет priority, per-host politeness, retry backoff или lease для распределённых workers.",
               "correct": false,
               "sections": {
                 "what_actually": "DNS — важный shared service, но не центр архитектуры; это поддержка fetcher-а.",
@@ -215,7 +215,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Elasticsearch индекс — куда складывается весь текст для поиска.",
+              "text": "Elasticsearch индекс — куда складывается весь текст для поиска. История предыдущих обходов не влияет на обработку; JavaScript и обычный HTML не разделяются по cost. В этой модели crawler бы зависел от ES uptime и не мог накапливать backlog в S3. Index одновременно выполняет scheduling и politeness.",
               "correct": false,
               "sections": {
                 "what_actually": "ES — downstream-консумер crawler-а, он принимает уже спарсенный контент.",
@@ -227,7 +227,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "URL Frontier (Mercator) — все остальные компоненты обвязка вокруг него.",
+              "text": "В центре находится persistent URL Frontier: он хранит pending URLs, priority, per-host politeness, retry schedule и leases для workers. Fetchers получают разрешённые задания, parser извлекает ссылки, dedup отсекает повторы, а storage сохраняет результаты. Все компоненты возвращают новые или повторные URL обратно в frontier.",
               "correct": true,
               "sections": {
                 "explanation": "Frontier решает что и когда скачивать; fetcher, parser, dedup, storage — всё крутится вокруг него и пополняет/опустошает frontier.",
@@ -251,7 +251,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Discovered → fetched сразу → потом normalized и проверка дубликата задним числом.",
+              "text": "Discovered → fetched сразу → потом normalized и проверка дубликата задним числом. В этой модели crawler качал бы один контент по 10 раз и забивал бы целевые сайты.",
               "correct": false,
               "sections": {
                 "what_actually": "Fetch до dedup-а бесполезен — потратим bandwidth на уже виденные URLs.",
@@ -263,7 +263,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Discovered → queued → fetched → robots.txt проверяется уже на стороне fetcher worker-а.",
+              "text": "Discovered → queued → fetched → robots.txt проверяется уже на стороне fetcher worker-а. Pending work хранится как обычный FIFO; сбой worker-а не требует отдельного возврата in-flight URL.",
               "correct": false,
               "sections": {
                 "what_actually": "Robots.txt проверка должна идти до queueing, иначе frontier заполнен запрещёнными URLs.",
@@ -275,7 +275,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Discovered → normalized → dedup check → filter (robots/quota) → queued → fetched → parsed → stored → outlinks обратно в discovered.",
+              "text": "Discovered → normalized → dedup check → filter (robots/quota) → queued → fetched → parsed → stored → outlinks обратно в discovered. Канонический lifecycle: нормализация и фильтры идут до queuing, иначе frontier забьётся мусором.",
               "correct": true,
               "sections": {
                 "explanation": "Канонический lifecycle: нормализация и фильтры идут до queuing, иначе frontier забьётся мусором.",
@@ -288,7 +288,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Lifecycle линейный без states — URL либо скачан, либо нет.",
+              "text": "Lifecycle линейный без states — URL либо скачан, либо нет. Worker сам выбирает следующий URL без глобального состояния; повторная доставка считается безопасной без checkpoint.",
               "correct": false,
               "sections": {
                 "what_actually": "На практике состояний 5-7: queued, in_flight, fetched, error, filtered, duplicate, dead.",
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Concurrency не масштабируется, FIFO O(N) при вставке.",
+              "text": "Concurrency не масштабируется, FIFO O(N) при вставке. Worker сам выбирает следующий URL без глобального состояния; сбой worker-а не требует отдельного возврата in-flight URL. Приоритет не меняется после ошибки или повторной попытки; host politeness и история обхода не влияют на порядок.",
               "correct": false,
               "sections": {
                 "what_actually": "Структурно очередь быстрая, проблема не в perf, а в логике politeness и приоритетов.",
@@ -323,7 +323,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "FIFO нельзя шардировать — он по определению single-node.",
+              "text": "FIFO нельзя шардировать — он по определению single-node. Pending work хранится как обычный FIFO; повторная доставка считается безопасной без checkpoint. Выдача задачи не создаёт lease; freshness и importance не участвуют в scheduling.",
               "correct": false,
               "sections": {
                 "what_actually": "FIFO легко шардится по hash(url) — Kafka и SQS реализуют именно это.",
@@ -335,7 +335,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Если 90% URLs из frontier ведут на один домен — либо нарушим politeness, либо все workers idle.",
+              "text": "Если 90% URLs из frontier ведут на один домен — либо нарушим politeness, либо все workers idle. FIFO не различает hosts — взяв подряд 100 URLs одного домена, либо забиваем его (DDoS), либо ждём crawl-delay.",
               "correct": true,
               "sections": {
                 "explanation": "FIFO не различает hosts — взяв подряд 100 URLs одного домена, либо забиваем его (DDoS), либо ждём crawl-delay.",
@@ -348,7 +348,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "FIFO не персистентен и теряет URLs при restart кластера.",
+              "text": "FIFO не персистентен и теряет URLs при restart кластера. Worker сам выбирает следующий URL без глобального состояния; back queues по origin не выделяются. Повторная доставка считается безопасной без checkpoint.",
               "correct": false,
               "sections": {
                 "what_actually": "Персистентность ортогональна типу очереди — FIFO можно положить на Kafka/RocksDB.",
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Front queues по приоритету, biased router маршрутизирует в back queues per-host, min-heap по next-fetch time.",
+              "text": "Front queues по приоритету, biased router маршрутизирует в back queues per-host, min-heap по next-fetch time. Front queue даёт приоритет, back queue per host обеспечивает politeness, heap по ready_time — выбор готового host-а worker-у.",
               "correct": true,
               "sections": {
                 "explanation": "Front queue даёт приоритет, back queue per host обеспечивает politeness, heap по ready_time — выбор готового host-а worker-у.",
@@ -384,7 +384,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Один уровень с round-robin по доменам — каждый worker берёт свой домен.",
+              "text": "Один уровень с round-robin по доменам — каждый worker берёт свой домен. В этой модели низкоприоритетные домены отбирали бы time slot у news-сайтов с freshness SLA.",
               "correct": false,
               "sections": {
                 "what_actually": "Round-robin не учитывает приоритеты страниц и плохо балансирует разные размеры доменов.",
@@ -396,7 +396,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Одна big priority queue + token bucket per host рядом — heap не нужен.",
+              "text": "Одна big priority queue + token bucket per host рядом — heap не нужен. Приоритет не меняется после ошибки или повторной попытки; freshness и importance не участвуют в scheduling.",
               "correct": false,
               "sections": {
                 "what_actually": "Token bucket per host работает, но требует миллионы in-memory state-ов и плохо переживает restart.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Front и back — это просто два FIFO, между ними random shuffle.",
+              "text": "Front и back — это просто два FIFO, между ними random shuffle. Pending work хранится как обычный FIFO; сбой worker-а не требует отдельного возврата in-flight URL. Host affinity и priority между очередями отсутствуют.",
               "correct": false,
               "sections": {
                 "what_actually": "Random shuffle убил бы и приоритет, и politeness — обе ключевые гарантии.",
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "DFS вообще не работает на ориентированных графах с циклами.",
+              "text": "DFS вообще не работает на ориентированных графах с циклами. При таком устройстве никто не использовал бы DFS в graph algorithms. Frontier применяет единые правила ко всем доменам независимо от их структуры.",
               "correct": false,
               "sections": {
                 "what_actually": "DFS работает на циклах с visited-set; проблема не математическая, а практическая (traps, покрытие).",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "BFS даёт лучшее покрытие, коррелирует с PageRank и легко параллелится; DFS легко застревает в spider trap.",
+              "text": "BFS даёт лучшее покрытие, коррелирует с PageRank и легко параллелится; DFS легко застревает в spider trap. Hub-страницы близко к seed, их соседи обычно важные — BFS их видит первыми.",
               "correct": true,
               "sections": {
                 "explanation": "Hub-страницы близко к seed, их соседи обычно важные — BFS их видит первыми. DFS уходит на 10k уровней в календарь.",
@@ -456,7 +456,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "BFS требует меньше памяти на frontier, чем DFS.",
+              "text": "BFS требует меньше памяти на frontier, чем DFS. В этой модели не нужны были бы priority queues и depth limits для контроля. Все документы получают одинаковый crawl budget.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот — BFS frontier распухает экспоненциально, DFS экономит память (одна цепочка).",
@@ -468,7 +468,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "DFS медленнее по тактовой частоте процессора.",
+              "text": "DFS медленнее по тактовой частоте процессора. В этой модели выбор зависел бы от железа, а не от структуры web-графа. История предыдущих обходов не влияет на обработку.",
               "correct": false,
               "sections": {
                 "what_actually": "Performance pop/push у DFS и BFS одинаков — выбор не по CPU.",
@@ -491,7 +491,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Domain authority + depth from seed + last-crawled age + update frequency + domain quota.",
+              "text": "Domain authority + depth from seed + last-crawled age + update frequency + domain quota. Score = ω1·authority − ω2·depth + ω3·freshness_bonus − ω4·domain_overuse, с квотой на host. Без domain quota один крупный сайт забивает всю high-priority frontier.",
               "correct": true,
               "sections": {
                 "explanation": "Score = ω1·authority − ω2·depth + ω3·freshness_bonus − ω4·domain_overuse, с квотой на host.",
@@ -504,7 +504,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Только domain authority — топ-1000 доменов в priority 1, остальное в одну общую очередь.",
+              "text": "Только domain authority — топ-1000 доменов в priority 1, остальное в одну общую очередь. Выдача задачи не создаёт lease; сбой worker-а не требует отдельного возврата in-flight URL. Pending work хранится как обычный FIFO. Freshness и change frequency не меняют score.",
               "correct": false,
               "sections": {
                 "what_actually": "Domain authority — один из сигналов, но не единственный: ещё depth, freshness и update frequency.",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Random shuffle для fairness — фиксированный приоритет нечестен по отношению к новым доменам.",
+              "text": "Random shuffle для fairness — фиксированный приоритет нечестен по отношению к новым доменам. В этой модели crawler не успевал бы обходить топ-1000 сайтов за нужное окно. Pending work хранится как обычный FIFO; freshness и importance не участвуют в scheduling.",
               "correct": false,
               "sections": {
                 "what_actually": "Random shuffle убивает freshness SLA для news и тратит бюджет на спам.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Только размер ответа в байтах — большие страницы важнее.",
+              "text": "Только размер ответа в байтах — большие страницы важнее. Выдача задачи не создаёт lease; сбой worker-а не требует отдельного возврата in-flight URL. Worker сам выбирает следующий URL без глобального состояния; host politeness и история обхода не влияют на порядок.",
               "correct": false,
               "sections": {
                 "what_actually": "Размер не коррелирует с важностью — спам-страницы часто крупнее новостей.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "User-Agent можно ставить пустым или маскироваться под обычный браузер для скрытности.",
+              "text": "Crawler может скрывать identity и использовать User-Agent обычного браузера: так сайты реже блокируют обход, а отдельный контакт оператора не требуется. При таком подходе невозможно было бы связаться с админом сайта при проблеме, репутация crawler-а упала бы.",
               "correct": false,
               "sections": {
                 "what_actually": "Identifying UA с контактом — обязательное правило; маскировка нарушает интернет-этикет.",
@@ -563,7 +563,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Открывать 100 параллельных TCP connections к одному host для ускорения.",
+              "text": "Politeness реализуют только большим пулом соединений: чем быстрее crawler заберёт все URL одного host, тем меньше времени он создаёт нагрузку. Каждый URL проходит один неизменный pipeline; повторные ошибки не снижают приоритет URL.",
               "correct": false,
               "sections": {
                 "what_actually": "Параллельные connections к одному host = DDoS-паттерн, который сразу детектят WAF и Cloudflare.",
@@ -575,7 +575,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Per-host rate-limit (1 req/sec default), respect crawl-delay из robots.txt, sequential connections к одному host, identifying User-Agent.",
+              "text": "Politeness ограничивает нагрузку на каждый origin: per-host queue, минимальный интервал, небольшой concurrency, exponential backoff и честный `User-Agent`. `crawl-delay` можно поддерживать как необязательное расширение. Politeness защищает целевой сайт от перегрузки — без неё crawler выглядит как DDoS и IP-банится Cloudflare/firewall-ами.",
               "correct": true,
               "sections": {
                 "explanation": "Politeness защищает целевой сайт от перегрузки — без неё crawler выглядит как DDoS и IP-банится Cloudflare/firewall-ами.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Один глобальный rate-limit 1000 RPS на весь crawler независимо от целевого host-а.",
+              "text": "Достаточно одного глобального лимита RPS на весь кластер; распределение запросов между host не важно, если суммарная нагрузка остаётся ниже порога. История предыдущих обходов не влияет на обработку; частота изменений и размер ответа не меняют решение.",
               "correct": false,
               "sections": {
                 "what_actually": "Глобальный лимит без per-host разбиения не защищает конкретный сайт от 1000 RPS на нём же.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Robots.txt можно игнорировать, если краулер маленький и редкий.",
+              "text": "`robots.txt` можно игнорировать для небольшого crawler-а: редкие запросы не создают заметной нагрузки, поэтому publisher policy и стандартные правила доступа применяются только к крупным поисковым роботам. User-Agent и конкретный path не меняют решение.",
               "correct": false,
               "sections": {
                 "what_actually": "Игнор robots.txt = немедленный бан по IP плюс репутационный риск.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Если robots.txt вернул 404 — считать «всё запрещено».",
+              "text": "Ответ `404` на `/robots.txt` означает полный запрет crawling для origin. Worker блокирует все URL до появления файла, а временная недоступность и отсутствие policy трактуются одинаково, чтобы не рисковать нарушением правил сайта.",
               "correct": false,
               "sections": {
                 "what_actually": "Стандарт: 4xx → нет ограничений, всё разрешено; 5xx → временно блокируем.",
@@ -635,7 +635,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Скачивать robots.txt перед каждым URL — кэширование рискует пропустить обновление.",
+              "text": "Crawler скачивает `/robots.txt` перед каждым URL, потому что cache может пропустить немедленное изменение правил. Дополнительный request на каждый document считается приемлемым, TTL и conditional requests не используются, а все workers проверяют policy независимо.",
               "correct": false,
               "sections": {
                 "what_actually": "Это создаёт N лишних запросов на host — сам по себе нарушение politeness.",
@@ -647,13 +647,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Скачивать /robots.txt перед первым fetch домена, парсить группы по User-Agent (longest-prefix match для Allow/Disallow), кэшировать TTL 24h.",
+              "text": "Crawler получает `/robots.txt` для origin, выбирает наиболее специфичную подходящую `User-agent` group, применяет `Allow`/`Disallow` и кэширует policy с ограниченным TTL. Сетевые ошибки обрабатываются консервативно с bounded retry, а frontier проверяет правила до выдачи URL worker-у.",
               "correct": true,
               "sections": {
-                "explanation": "Google спецификация требует именно longest-prefix match; TTL 24h — рекомендация Google webmaster docs.",
+                "explanation": "Robots Exclusion Protocol стандартизован RFC 9309. Он управляет разрешением на обход, но не является механизмом авторизации или гарантией сокрытия URL.",
                 "example": "Heritrix/Nutch кэшируют robots в Redis-подобном хранилище с key=hostname, TTL=24h.",
                 "when_to_apply": "В URL filter, до момента enqueue в frontier.",
-                "edge_cases": "4xx → считаем «всё разрешено», 5xx → временно «всё запрещено» с retry через 1h.",
+                "edge_cases": "Поведение при 4xx, 5xx и недоступности robots.txt различается; crawler должен ограничивать размер файла, редиректы и время ожидания, не создавая отдельный DoS-вектор.",
                 "related": "Q10 politeness, Q21 sitemap, Q24 HTTP error handling."
               }
             }
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "DNS медленный из-за TCP — нужно переключить весь трафик на DoT/DoH.",
+              "text": "DNS медленный из-за TCP — нужно переключить весь трафик на DoT/DoH. Размер ответа не ограничивается отдельной политикой; large responses проходят тот же parser без early abort.",
               "correct": false,
               "sections": {
                 "what_actually": "DNS обычно UDP, проблема не в протоколе, а в синхронности и overload public серверов.",
@@ -683,7 +683,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Default OS resolver синхронный и blocking; решение — dedicated cluster (Unbound/BIND) + app-level cache TTL 1h + async resolver (aiodns/c-ares).",
+              "text": "DNS становится узким местом из-за большого числа origin и блокирующего resolver path. Используют локальный caching resolver, соблюдают DNS TTL, объединяют запросы и применяют асинхронное разрешение имён.",
               "correct": true,
               "sections": {
                 "explanation": "getaddrinfo блокирует тред, default TTL часто игнорируется, public DNS легко overload-ятся — отсюда отдельный resolver и app cache.",
@@ -696,7 +696,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "DNS можно убрать вообще — резолвить IP заранее при добавлении в seed.",
+              "text": "DNS можно убрать вообще — резолвить IP заранее при добавлении в seed. Каждый worker разрешает DNS и открывает соединение самостоятельно; общий resolver cache не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "IP меняются (CDN, load-balancing), статический резолв ломается через дни.",
@@ -708,7 +708,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "DNS resolver не нужен — современные ОС резолвят достаточно быстро через системный getaddrinfo.",
+              "text": "DNS resolver не нужен — современные ОС резолвят достаточно быстро через системный getaddrinfo. Connection pooling не меняет основной fetch path; large responses проходят тот же parser без early abort.",
               "correct": false,
               "sections": {
                 "what_actually": "Default glibc resolver синхронный, blocking 10-50ms — на 400 RPS легко становится bottleneck.",
@@ -731,7 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Connect timeout 60s, read timeout без лимита — нельзя терять страницы.",
+              "text": "Connect timeout 60s, read timeout без лимита — нельзя терять страницы. Каждый worker разрешает DNS и открывает соединение самостоятельно; large responses проходят тот же parser без early abort.",
               "correct": false,
               "sections": {
                 "what_actually": "Без timeout один зависший сайт парализует worker-ов на часы — резкое падение throughput.",
@@ -743,7 +743,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Connect timeout 5s, read timeout 30s, max redirects 5, max response size 5 MB, 50-200 concurrent connections async, retry 3× с exponential backoff.",
+              "text": "Fetcher ограничивает connect/read timeout, redirects, response size и concurrency per origin; использует connection pooling, compression, понятный `User-Agent` и bounded retries с backoff для временных ошибок.",
               "correct": true,
               "sections": {
                 "explanation": "Эти числа закрывают типичные failure modes: hung-сайты, redirect-loops, gigabytes-страницы, временные 5xx.",
@@ -756,7 +756,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Один connection — один URL, без connection pool и без keep-alive.",
+              "text": "Один connection — один URL, без connection pool и без keep-alive. Размер ответа не ограничивается отдельной политикой; large responses проходят тот же parser без early abort.",
               "correct": false,
               "sections": {
                 "what_actually": "Это создаёт TCP+TLS handshake на каждый GET — 100-300ms лишних на запрос.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Без User-Agent и Accept-Encoding — экономия headers экономит bandwidth.",
+              "text": "Без User-Agent и Accept-Encoding — экономия headers экономит bandwidth. Размер ответа не ограничивается отдельной политикой; общий resolver cache не требуется. Connection pooling не меняет основной fetch path; per-host concurrency и `Retry-After` не учитываются.",
               "correct": false,
               "sections": {
                 "what_actually": "Без Accept-Encoding теряется gzip 3-5× компрессии — десятки TB лишнего трафика.",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Парсер должен исполнять `<script>` теги — иначе outlinks из JS не найдутся.",
+              "text": "Parser должен исполнять весь JavaScript каждой страницы, иначе невозможно получить корректный DOM, текст и исходящие ссылки даже для обычного server-rendered HTML. В этой модели throughput parser-а упал бы с 1000 страниц/sec до 20-50.",
               "correct": false,
               "sections": {
                 "what_actually": "Исполнение JS — задача headless browser pool, а не parser-а; иначе перформанс падает в 20-50×.",
@@ -803,7 +803,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Charset detection → DOM parse (lxml/Jericho/Tika) → extract outlinks через `<a href>` + urljoin → extract text → metadata (title, meta description, canonical).",
+              "text": "Parser определяет charset, строит tolerant DOM, извлекает canonical URL, metadata, structured data, текст и нормализованные outlinks. JavaScript передают отдельному rendering tier только при необходимости. Pipeline стандартный: правильный encoding → DOM → outlinks + text + structured data; lxml на C быстрее BeautifulSoup в разы.",
               "correct": true,
               "sections": {
                 "explanation": "Pipeline стандартный: правильный encoding → DOM → outlinks + text + structured data; lxml на C быстрее BeautifulSoup в разы.",
@@ -816,7 +816,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Extract только текст, outlinks не нужны — discovery через sitemap.xml.",
+              "text": "Parser извлекает только видимый текст, а discovery полностью делегирует sitemap; ссылки из HTML не нужны и не должны попадать обратно во frontier. В этой модели coverage упало бы до сотен миллионов страниц вместо миллиардов.",
               "correct": false,
               "sections": {
                 "what_actually": "Без outlinks crawler не сможет развернуть граф web-а, sitemap есть не у всех сайтов.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Парсить HTML regex-ами `<a href=...>` — DOM-парсер избыточен для извлечения ссылок.",
+              "text": "Для извлечения ссылок достаточно регулярного выражения по `<a href>`; полноценный HTML parser лишь увеличивает CPU и не меняет результат. В этой модели crawler терял бы 10-20% ссылок и периодически крашился на edge cases.",
               "correct": false,
               "sections": {
                 "what_actually": "Regex ломается на quoted attributes, nested структуре, CDATA — известный antipattern.",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Scheme/host lowercase, default port убрать, percent-decode, resolve `..`/`.`, убрать fragment, сортировать query, выкинуть tracking-params (utm_*, fbclid) и session IDs.",
+              "text": "Normalization приводит scheme и host к канону, удаляет default port и fragment, разрешает dot-segments, нормализует percent-encoding и обрабатывает query по политике домена. Без этих шагов одна страница порождает десятки разных URL-строк → dedup ломается, frontier распухает.",
               "correct": true,
               "sections": {
                 "explanation": "Без этих шагов одна страница порождает десятки разных URL-строк → dedup ломается, frontier распухает.",
@@ -864,7 +864,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Оставить fragment (#section) — он часто несёт уникальный контент SPA.",
+              "text": "Fragment нужно всегда сохранять как часть crawl key, поскольку `#section` обозначает отдельный документ и должен обходиться независимо. В этой модели crawler качал бы одну страницу N раз с разными #-якорями.",
               "correct": false,
               "sections": {
                 "what_actually": "Fragment не отправляется на сервер; для статичного HTML это не отдельный ресурс.",
@@ -876,7 +876,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Только lowercase всей строки целиком — этого достаточно.",
+              "text": "Достаточно перевести всю строку URL в lowercase; path, percent-encoding, default ports и порядок query parameters не влияют на deduplication. В этой модели crawler терял бы реальные ресурсы или собирал duplicates без понимания.",
               "correct": false,
               "sections": {
                 "what_actually": "Lowercase всего ломает case-sensitive path (на многих сайтах /User != /user) и percent-encoding.",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Удалить весь query string — параметры всегда являются tracking.",
+              "text": "Query string нужно удалять полностью: любые параметры являются tracking и никогда не меняют содержимое ресурса. История предыдущих обходов не влияет на обработку; частота изменений и размер ответа не меняют решение.",
               "correct": false,
               "sections": {
                 "what_actually": "Многие сайты используют query для реальных ресурсов (`?id=42`); удалить всё = потерять контент.",
@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Один Redis cluster с 2.5 TB RAM для всех URLs.",
+              "text": "Один Redis cluster с 2.5 TB RAM для всех URLs. Полный набор ключей хранится в одном слое; отдельная верификация false positives не выполняется. False positives и disk verification не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Дорого и нестабильно: 2.5 TB RAM на Redis — много шардов, репликация, eviction risk.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Полный scan Cassandra на каждый новый URL — DB сама сделает dedup.",
+              "text": "Полный scan Cassandra на каждый новый URL — DB сама сделает dedup. Один идентификатор используется для любого вида дубликатов; отдельная верификация false positives не выполняется.",
               "correct": false,
               "sections": {
                 "what_actually": "На 400+ RPS dedup-стадии Cassandra-lookup на каждый URL — 30-50ms × N → throughput collapse.",
@@ -935,7 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Хранить весь hash-set в RAM — 50B × 16 байт = 800 GB, шардировать на 100 серверов.",
+              "text": "Хранить весь hash-set в RAM — 50B × 16 байт = 800 GB, шардировать на 100 серверов. Возможное совпадение считается окончательным; probabilistic candidate search не требуется. Коллизии считаются невозможными после hash lookup.",
               "correct": false,
               "sections": {
                 "what_actually": "Работает, но дорого: 800 GB RAM минимум, плюс репликация — это 100+ серверов только под set.",
@@ -947,7 +947,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Bloom filter ~60 GB RAM (sharded, 10 bits/key) + sharded URL DB (RocksDB/Cassandra) для верификации FP.",
+              "text": "Для десятков миллиардов URL используют шардированный probabilistic filter как быстрый negative check и persistent key-value store для подтверждения возможных совпадений. Размер фильтра рассчитывают из числа ключей и допустимой false-positive rate.",
               "correct": true,
               "sections": {
                 "explanation": "Bloom отсекает 99% «новый URL» за O(1) без disk; для «возможно видел» (1% FP) идёт DB-lookup.",
@@ -971,7 +971,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Exact SHA256 контента достаточно — near-duplicates редки.",
+              "text": "Exact SHA256 контента достаточно — near-duplicates редки. Полный набор ключей хранится в одном слое; probabilistic candidate search не требуется. Возможное совпадение считается окончательным.",
               "correct": false,
               "sections": {
                 "what_actually": "Near-dups составляют 20-30% web-а (mirrors, syndication, скопированные статьи) — пропускать нельзя.",
@@ -983,7 +983,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "SimHash 64 бита (Charikar/Google): XOR + popcount, Hamming distance ≤ k (обычно k=3) — компактно и мгновенно.",
+              "text": "Для compact fingerprint и Hamming-distance поиска часто выбирают SimHash; MinHash+LSH лучше моделирует Jaccard similarity множеств shingles, но требует более тяжёлой подписи. Выбор зависит от типа near-duplicates и допустимой стоимости.",
               "correct": true,
               "sections": {
                 "explanation": "Google использует SimHash именно в web crawl — 64 бит на документ, near-dup проверка через bit-permutation tables за O(log n).",
@@ -996,7 +996,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "MinHash + LSH — единственный способ для near-duplicate.",
+              "text": "MinHash + LSH — единственный способ для near-duplicate. Полный набор ключей хранится в одном слое; память растёт линейно без compact negative filter. URL normalization не влияет на deduplication; отдельная верификация false positives не выполняется.",
               "correct": false,
               "sections": {
                 "what_actually": "MinHash отлично подходит для set-данных (basket recommendation), для web crawl-а SimHash проще.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Сравнивать тексты целиком через diff — самый точный путь.",
+              "text": "Сравнивать тексты целиком через diff — самый точный путь. Полный набор ключей хранится в одном слое; probabilistic candidate search не требуется. Content fingerprints и URL keys не разделяются.",
               "correct": false,
               "sections": {
                 "what_actually": "Pairwise diff на 1B страниц — O(N²), даже одну страницу со всеми сравнить нереально.",
@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Только Elasticsearch — он сам и индекс, и storage.",
+              "text": "Только Elasticsearch — он сам и индекс, и storage. В предложенной схеме Cost storage вырос бы в 10-50× против S3. Все документы получают одинаковый crawl budget. Одновременно JavaScript и обычный HTML не разделяются по cost.",
               "correct": false,
               "sections": {
                 "what_actually": "ES не подходит как primary blob-storage: дорогой по cost/GB, сложный в operations на петабайтах.",
@@ -1043,7 +1043,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Всё положить в один PostgreSQL — проще и атомарно.",
+              "text": "Всё положить в один PostgreSQL — проще и атомарно. При таком устройстве Cluster vacuum и репликация легли бы под нагрузкой за дни. История предыдущих обходов не влияет на обработку; при этом spider traps не требуют нескольких защитных слоёв.",
               "correct": false,
               "sections": {
                 "what_actually": "PostgreSQL не масштабируется на 100 TB/месяц write-throughput и 50B rows без шардирования.",
@@ -1055,7 +1055,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Локальный SSD каждой fetcher-машины — быстрее любого distributed store.",
+              "text": "Локальный SSD каждой fetcher-машины — быстрее любого distributed store. Все документы получают одинаковый crawl budget; spider traps не требуют нескольких защитных слоёв. Частота изменений и размер ответа не меняют решение.",
               "correct": false,
               "sections": {
                 "what_actually": "Локальный SSD теряется при падении хоста, не доступен другим воркерам — нет durability и shareability.",
@@ -1067,7 +1067,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Raw HTML → S3/HDFS (gzip, tiered Standard→IA→Glacier), URL metadata → Cassandra/HBase, robots.txt → Redis, full-text → Elasticsearch.",
+              "text": "Raw HTML → S3/HDFS (gzip, tiered Standard→IA→Glacier), URL metadata → Cassandra/HBase, robots.txt → Redis, full-text → Elasticsearch. Каждый тип данных в подходящий store: cold HTML на дешёвый объект-стор, hot writes — wide-column, hot lookup — RAM, search — ES.",
               "correct": true,
               "sections": {
                 "explanation": "Каждый тип данных в подходящий store: cold HTML на дешёвый объект-стор, hot writes — wide-column, hot lookup — RAM, search — ES.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Partition key = timestamp вставки URL — естественная упорядоченность.",
+              "text": "Partition key = timestamp вставки URL — естественная упорядоченность. При таком подходе один node ловил бы все writes, кластер не масштабировался бы. Каждый URL проходит один неизменный pipeline.",
               "correct": false,
               "sections": {
                 "what_actually": "Time-partitioning создаёт hot partition (текущий час), все writes идут в один node.",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Partition key = `hash(host) % N`, clustering = (host, url_hash); даёт локальность по host и параллелизм между hosts.",
+              "text": "Partition key = `hash(host) % N`, clustering = (host, url_hash); даёт локальность по host и параллелизм между hosts. Per-host локальность критична для refill back queue и politeness; разные hosts на разных node-ах дают параллелизм.",
               "correct": true,
               "sections": {
                 "explanation": "Per-host локальность критична для refill back queue и politeness; разные hosts на разных node-ах дают параллелизм.",
@@ -1116,7 +1116,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Partition key = `url_hash` сам по себе — равномерное распределение.",
+              "text": "Partition key = `url_hash` сам по себе — равномерное распределение. Одинаковая политика применяется ко всем origin; spider traps не требуют нескольких защитных слоёв. Все документы получают одинаковый crawl budget, тогда как частота изменений и размер ответа не меняют решение.",
               "correct": false,
               "sections": {
                 "what_actually": "Равномерно, но теряется локальность по host: refill back queue делает N точечных lookup-ов вместо одного scan.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Без партиционирования — Cassandra сама всё распределит.",
+              "text": "Без партиционирования — Cassandra сама всё распределит. Одинаковая политика применяется ко всем origin; JavaScript и обычный HTML не разделяются по cost. Все документы получают одинаковый crawl budget; frontier не хранит дополнительное состояние операции.",
               "correct": false,
               "sections": {
                 "what_actually": "Cassandra обязательно требует partition key — без него distribution не работает.",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Adaptive по domain type + change frequency: news ~ежечасно, blog ~ежедневно, evergreen ~раз в месяц, удваиваем интервал если N подряд unchanged.",
+              "text": "Re-crawl interval адаптируют по типу ресурса, наблюдаемой частоте изменений, `lastmod`, HTTP validators, importance и crawl budget. Интервал увеличивают после стабильных версий и сокращают при частых изменениях.",
               "correct": true,
               "sections": {
                 "explanation": "Без adaptive подхода бюджет crawler-а тратится впустую на статичные страницы и не успевает за свежими.",
@@ -1164,7 +1164,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Re-crawl только при ручном triggering админом — экономия бюджета.",
+              "text": "Re-crawl только при ручном triggering админом — экономия бюджета. Одинаковая политика применяется ко всем origin; повторные ошибки не снижают приоритет URL. Freshness и historical change rate не учитываются.",
               "correct": false,
               "sections": {
                 "what_actually": "Без auto re-crawl freshness деградирует, search index становится stale через дни.",
@@ -1176,7 +1176,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Re-crawl никогда — один проход за всё время.",
+              "text": "Re-crawl никогда — один проход за всё время. Первое допущение — все документы получают одинаковый crawl budget; второе — JavaScript и обычный HTML не разделяются по cost.",
               "correct": false,
               "sections": {
                 "what_actually": "Без re-crawl freshness = бесконечность, index безнадёжно устаревает.",
@@ -1188,7 +1188,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Фиксированный интервал 24 часа для всех страниц — справедливо.",
+              "text": "Фиксированный интервал 24 часа для всех страниц — справедливо. История предыдущих обходов не влияет на обработку; повторные ошибки не снижают приоритет URL.",
               "correct": false,
               "sections": {
                 "what_actually": "Fixed interval либо отстаёт на news (час vs день), либо переплачивает на evergreen (день vs месяц).",
@@ -1211,7 +1211,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Sitemap игнорируем — он часто неконсистентен и устарел.",
+              "text": "Sitemap игнорируем — он часто неконсистентен и устарел. Каждый URL проходит один неизменный pipeline; частота изменений и размер ответа не меняют решение. В этой модели crawler тратил бы недели на discovery 10M товаров через outlinks.",
               "correct": false,
               "sections": {
                 "what_actually": "Даже неполный sitemap даёт 10-100× ускорение discovery для крупных сайтов.",
@@ -1223,7 +1223,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Sitemap.xml — авторитет, нужно использовать только URL из sitemap и игнорировать outlinks.",
+              "text": "Sitemap.xml — авторитет, нужно использовать только URL из sitemap и игнорировать outlinks. Одинаковая политика применяется ко всем origin; spider traps не требуют нескольких защитных слоёв. В этой модели coverage упало бы до сайтов с sitemap-ами, остальной web невидим.",
               "correct": false,
               "sections": {
                 "what_actually": "Sitemap есть не у всех сайтов и часто неполный — outlinks остаются основным discovery.",
@@ -1235,7 +1235,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Discovery URLs мимо parse-стадии + lastmod/changefreq/priority как сигналы для re-crawl scheduler-а.",
+              "text": "`sitemap.xml` служит дополнительным источником discovery и сигналов `lastmod`; URL всё равно проходят normalization, robots, dedup, priority и fetch pipeline. Sitemap — это hint от сайта о структуре и обновлениях; ускоряет coverage крупных e-commerce и news.",
               "correct": true,
               "sections": {
                 "explanation": "Sitemap — это hint от сайта о структуре и обновлениях; ускоряет coverage крупных e-commerce и news.",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Sitemap нужен только для small static-сайтов — для крупных бесполезен.",
+              "text": "Sitemap нужен только для small static-сайтов — для крупных бесполезен. Каждый URL проходит один неизменный pipeline; spider traps не требуют нескольких защитных слоёв. При таком подходе frontier не хранит дополнительное состояние операции, а история предыдущих обходов не влияет на обработку.",
               "correct": false,
               "sections": {
                 "what_actually": "Ровно наоборот: для крупных e-commerce с миллионами URL sitemap — основной discovery boost.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Только depth limit — этого достаточно.",
+              "text": "Spider traps закрывает один depth limit: после достижения максимальной глубины crawler прекращает обход, поэтому дополнительные quota и pattern detection не нужны. Worker принимает решение локально; spider traps не требуют нескольких защитных слоёв. В этой модели faceted-каталог с 1M комбинаций забил бы frontier.",
               "correct": false,
               "sections": {
                 "what_actually": "Depth не ловит session-ID-loops (depth=1, но миллион URLs) и faceted navigation на верхнем уровне.",
@@ -1283,7 +1283,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Спайдер-трапы редки, защита не нужна — потеряем 0.1% и забудем.",
+              "text": "Защита от spider traps считается неоправданной: бесконечные календари и faceted navigation останавливают вручную после обнаружения. Все origin получают одинаковый crawl budget, JavaScript и обычный HTML имеют одинаковую стоимость, а frontier не применяет pattern detection, depth limits и автоматические квоты.",
               "correct": false,
               "sections": {
                 "what_actually": "Один calendar-trap может сгенерировать 10M URLs и заполнить frontier полностью.",
@@ -1295,7 +1295,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Ручной blacklist доменов — авто-детект ненадёжен.",
+              "text": "Достаточно ручного blacklist доменов; автоматический анализ URL patterns и похожести контента создаёт ложные блокировки и не должен применяться. В этой модели команда crawler-а тратила бы дни на ручной анализ. Worker принимает решение локально; JavaScript и обычный HTML не разделяются по cost.",
               "correct": false,
               "sections": {
                 "what_actually": "Web слишком велик для manual blacklist; нужны auto-heuristics.",
@@ -1307,7 +1307,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Depth limit (10-15), URL normalization (убирает session IDs), domain quota (max ~1M URLs/host), pattern detection и content-sameness (SimHash) для авто-блэклиста.",
+              "text": "Используют несколько слоёв: depth и URL-length limits, normalization, per-host quota, pattern detection, content fingerprints и anomaly monitoring. Пороги настраивают по типу crawl и домену. Ни одна защита по отдельности не закрывает все типы trap-ов (calendar, faceted nav, session IDs, faceted) — нужен слоёный подход.",
               "correct": true,
               "sections": {
                 "explanation": "Ни одна защита по отдельности не закрывает все типы trap-ов (calendar, faceted nav, session IDs, faceted) — нужен слоёный подход.",
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Отдельный headless pool (Puppeteer/Playwright/Splash) для selective rendering: HTML почти пуст → re-fetch через JS pool; основной HTTP pool остаётся быстрым.",
+              "text": "Сначала используют обычный HTTP fetch. Headless browser запускают только для URL, где нужный контент зависит от JavaScript, с отдельными лимитами CPU, памяти, времени и глубины навигации.",
               "correct": true,
               "sections": {
                 "explanation": "Headless в 20-50× медленнее plain HTTP и жрёт ~100 MB RAM/instance — рендерим только когда без JS не получить контент.",
@@ -1344,7 +1344,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Парсер сам исполняет `<script>` теги через встроенный V8.",
+              "text": "Парсер сам исполняет `<script>` теги через встроенный V8. В этой модели sPA frameworks (React, Vue) ломались бы на отсутствующих API. Rendering выполняется для каждого URL одинаково.",
               "correct": false,
               "sections": {
                 "what_actually": "Встроенный JS-engine в parser не моделирует DOM, не загружает зависимости — это полноценный browser нужен.",
@@ -1356,7 +1356,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Все страницы через headless Chrome — иначе SPA не покрыты.",
+              "text": "Все страницы через headless Chrome — иначе SPA не покрыты. При таком подходе Crawler не выполнил бы 1B страниц/месяц SLA.",
               "correct": false,
               "sections": {
                 "what_actually": "Throughput упал бы с 400 RPS до 10-20 RPS, ресурсы кратно выросли.",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "SPA игнорируем — большая часть всё ещё статичный HTML.",
+              "text": "SPA игнорируем — большая часть всё ещё статичный HTML. Каждый URL проходит один неизменный pipeline; frontier не хранит дополнительное состояние операции. Client-side content не входит в crawl scope.",
               "correct": false,
               "sections": {
                 "what_actually": "30-50% коммерческого web-а сегодня SPA — без headless coverage упадёт радикально.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Worker сам пишет state перед смертью — coordination не нужна.",
+              "text": "Worker перед завершением всегда успевает записать статус in-flight URL, поэтому lease и heartbeat не нужны даже при kill, network partition или потере процесса. HTTP status не влияет на число повторов; user-Agent и compression не влияют на архитектуру.",
               "correct": false,
               "sections": {
                 "what_actually": "Если worker «умер» из-за SIGKILL/OOM/сетевого разрыва — он не успеет ничего записать.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Lease timeout: `in_flight > 5min` → state обратно в `queued`; 4xx (permanent) → mark `dead`, 5xx/429/network → retry с exp backoff (3 раза), DNS NXDOMAIN → permanent fail.",
+              "text": "Worker получает URL по lease; при пропаже heartbeat frontier возвращает задачу в очередь. `429`, `5xx` и network errors получают bounded backoff, terminal `4xx` обычно не повторяются. Без lease-mechanism падение worker-а потеряло бы URL навсегда; разные HTTP коды требуют разной reaction.",
               "correct": true,
               "sections": {
                 "explanation": "Без lease-mechanism падение worker-а потеряло бы URL навсегда; разные HTTP коды требуют разной reaction.",
@@ -1416,7 +1416,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Frontier держится только in-memory — после restart все pending теряем намеренно.",
+              "text": "Frontier можно хранить только в памяти worker-ов: после рестарта потерянные pending URL считаются допустимой ценой простой архитектуры. Connection pooling не меняет основной fetch path; user-Agent и compression не влияют на архитектуру. Lease и durable checkpoint не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Потеря всего frontier на restart = полный re-crawl с нуля и часы downtime.",
@@ -1428,7 +1428,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Все HTTP-коды трактуем одинаково — retry бесконечно.",
+              "text": "Все HTTP-ошибки следует повторять бесконечно с одинаковой задержкой; код ответа, `Retry-After` и число предыдущих попыток не меняют retry policy. Размер ответа не ограничивается отдельной политикой; per-host concurrency и `Retry-After` не учитываются. Permanent и transient errors обрабатываются одинаково.",
               "correct": false,
               "sections": {
                 "what_actually": "Бесконечный retry на 404 = бесконечная нагрузка на dead-URL; 429 без backoff = баннят.",
@@ -1451,7 +1451,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Distributed: shard по `hash(host) % N_shards` (~256), внутри shard — Mercator front+back, cross-shard outlinks через Kafka topic `outlinks-to-shard-N`.",
+              "text": "На большом масштабе frontier распределяют по host, чтобы politeness оставалась локальной shard-у. Outlinks маршрутизируют владельцу host через durable messaging; каждый shard сохраняет собственные priority и back queues.",
               "correct": true,
               "sections": {
                 "explanation": "Линейный scale по N_shards; politeness локальна (один shard — свои hosts); failure-isolation между shards.",
@@ -1464,7 +1464,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Distributed без cross-shard коммуникации — outlinks остаются в shard discovery.",
+              "text": "Distributed без cross-shard коммуникации — outlinks остаются в shard discovery. Pending work хранится как обычный FIFO; back queues по origin не выделяются. Cross-shard URL transfer считается ненужным.",
               "correct": false,
               "sections": {
                 "what_actually": "Outlink с одного host часто ведёт на другой host — без cross-shard передачи URL потерян.",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Шардировать по hash(url), а не hash(host) — равномернее.",
+              "text": "Шардировать по hash(url), а не hash(host) — равномернее. В этой модели каждый fetcher должен был бы синхронизироваться по rate-limit с N-1 другими — нереально.",
               "correct": false,
               "sections": {
                 "what_actually": "Hash(url) ломает per-host локальность: URLs одного host разлетаются по N шардам, politeness требует cross-shard coord.",
@@ -1488,7 +1488,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Centralized всегда лучше — single point координации проще.",
+              "text": "Centralized всегда лучше — single point координации проще. Worker сам выбирает следующий URL без глобального состояния; back queues по origin не выделяются. Coordinator остаётся единственной точкой масштабирования.",
               "correct": false,
               "sections": {
                 "what_actually": "Centralized упирается в throughput одного frontier service и в single point of failure.",
@@ -1511,7 +1511,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Storage — главное: где и как хранить 100 TB/месяц решает всё.",
+              "text": "Storage — главное: где и как хранить 100 TB/месяц решает всё. При таком подходе одинаковая политика применяется ко всем origin, причём частота изменений и размер ответа не меняют решение.",
               "correct": false,
               "sections": {
                 "what_actually": "Storage важен, но без правильного frontier crawler не дойдёт до момента «есть что хранить».",
@@ -1523,7 +1523,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Скорость fetcher-а — единственное, что считается; всё остальное оптимизация.",
+              "text": "Скорость fetcher-а — единственное, что считается; всё остальное оптимизация. Каждый URL проходит один неизменный pipeline; spider traps не требуют нескольких защитных слоёв.",
               "correct": false,
               "sections": {
                 "what_actually": "Fetcher без politeness даст 0 RPS уже через час (banned), без priority — будет качать мусор.",
@@ -1535,7 +1535,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Frontier — сердце системы: правильный (politeness + priority + persistent) frontier превращает crawler в индустриальный сервис, простой FIFO — в DDoS-генератор.",
+              "text": "Главный принцип — управляемый persistent frontier: priority, politeness, dedup и lease важнее максимального parallel fetch. Fetcher, parser и storage масштабируются вокруг этой модели планирования.",
               "correct": true,
               "sections": {
                 "explanation": "Все остальные компоненты (fetcher, parser, dedup, storage) — обвязка вокруг frontier; именно его дизайн отличает Heritrix от любительского scrapy.",
@@ -1548,7 +1548,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Главное — search backend; crawler сам по себе вторичен.",
+              "text": "Главное — search backend; crawler сам по себе вторичен. Каждый URL проходит один неизменный pipeline; частота изменений и размер ответа не меняют решение.",
               "correct": false,
               "sections": {
                 "what_actually": "Без хорошего crawl search backend получает stale/incomplete данные — garbage in, garbage out.",

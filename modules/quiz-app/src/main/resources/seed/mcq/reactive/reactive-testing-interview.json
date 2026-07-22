@@ -11,7 +11,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`StepVerifier` запускает реальный HTTP-сервер `Netty` и шлёт запросы к контроллеру, проверяя статус-коды ответа.",
+              "text": "`StepVerifier` запускает реальный HTTP-сервер `Netty` и шлёт запросы к контроллеру, проверяя статус-коды ответа. И `StepVerifier`, и `WebTestClient` живут в реактивном тест-стеке `Spring`.",
               "correct": false,
               "sections": {
                 "what_actually": "`StepVerifier` работает с любым `Publisher` (`Mono`/`Flux`) в памяти и не поднимает сервер; HTTP-тестирование `WebFlux` делает `WebTestClient`.",
@@ -23,7 +23,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`StepVerifier` — это блокирующий аналог `block()`: он собирает все элементы в `List` и возвращает его тесту для обычных `assertEquals`.",
+              "text": "`StepVerifier` — это блокирующий аналог `block()`: он собирает все элементы в `List` и возвращает его тесту для обычных `assertEquals`. И `block()`, и `StepVerifier` дают «синхронный» результат теста.",
               "correct": false,
               "sections": {
                 "what_actually": "`StepVerifier` не возвращает коллекцию — он сам сравнивает поток сигналов с ожиданиями через `expect*`-шаги и бросает `AssertionError` при расхождении.",
@@ -35,7 +35,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`StepVerifier` из `reactor-test` — тестовый компонент, который декларативно верифицирует сигналы реактивной цепочки. Он подписывается на publisher, записывает `onNext`/`onError`/`onComplete` и сравнивает их с описанным сценарием; запуск идёт по терминальному вызову `verify()` / `verifyComplete()`.",
+              "text": "`StepVerifier` из `reactor-test` подписывается на `Publisher` и декларативно сопоставляет `onNext`, `onError`, `onComplete`, demand и время с заданным сценарием при вызове `verify`.",
               "correct": true,
               "sections": {
                 "explanation": "Принцип в три шага: `StepVerifier.create(publisher)` создаёт верификатор и подписывается, цепочка `expectNext*`/`expectError*`/`expectComplete` описывает ожидания, а `.verify()` запускает поток и блокирует тест до терминального сигнала.",
@@ -48,7 +48,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`StepVerifier` нужен только для генерации тестовых данных (фейковых `Flux`), а сами проверки делаются обычным `JUnit` после него.",
+              "text": "`StepVerifier` нужен только для генерации тестовых данных (фейковых `Flux`), а сами проверки делаются обычным `JUnit` после него. `TestPublisher` и `StepVerifier` обычно используют вместе.",
               "correct": false,
               "sections": {
                 "what_actually": "Генерацию управляемых сигналов даёт `TestPublisher`; `StepVerifier` — это именно инструмент проверки потока, а не источник данных.",
@@ -83,7 +83,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Перед проверкой `Flux` обязательно вызвать `.collectList()` и подписаться через `block()`, иначе `expectNext` не увидит элементы.",
+              "text": "Перед проверкой `Flux` обязательно вызвать `.collectList()` и подписаться через `block()`, иначе `expectNext` не увидит элементы. Привычка к `block()` из императивного кода переносится на реактивные тесты.",
               "correct": false,
               "sections": {
                 "what_actually": "`StepVerifier.create(flux)` сам подписывается на `Flux` и видит элементы напрямую; `collectList().block()` не нужен и противоречит реактивному тестированию.",
@@ -95,7 +95,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Элементы проверяют цепочкой `expectNext`: можно по одному (`.expectNext(1).expectNext(2)`) или несколько сразу (`.expectNext(3, 4, 5)`), завершая `.verifyComplete()`. Порядок и значения должны совпадать точно.",
+              "text": "Элементы проверяют цепочкой `expectNext`: можно по одному (`.expectNext(1).expectNext(2)`) или несколько сразу, завершая `.verifyComplete()`. Порядок и значения должны совпадать точно.",
               "correct": true,
               "sections": {
                 "explanation": "Для `Flux.range(1, 5)` пишут `StepVerifier.create(numbers).expectNext(1).expectNext(2).expectNext(3, 4, 5).verifyComplete()` — мешать одиночные и varargs-вызовы можно свободно.",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Ошибку `Mono` проверяют специальными шагами: `verifyError(RuntimeException.class)` по типу, `expectErrorMessage(\"...\").verify()` по сообщению, `expectErrorMatches(predicate).verify()` по предикату и `expectErrorSatisfies(consumer).verify()` для assertJ-проверок внутри.",
+              "text": "Ошибку проверяют через `verifyError`, `expectErrorMessage`, `expectErrorMatches` или `expectErrorSatisfies`, выбирая проверку типа, сообщения, предиката либо содержимого исключения.",
               "correct": true,
               "sections": {
                 "explanation": "Для `Mono.error(new RuntimeException(\"something went wrong\"))` подойдёт `StepVerifier.create(failing).verifyError(RuntimeException.class)` или `.expectErrorMatches(ex -> ex instanceof RuntimeException && ex.getMessage().contains(\"wrong\")).verify()`.",
@@ -227,7 +227,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Пустой поток проверяют без единого `expectNext`: для `Mono.empty()` — `.verifyComplete()`, для `Flux.empty()` — `.expectNextCount(0).verifyComplete()`. А `switchIfEmpty` тестируют, ожидая уже подставленный fallback-элемент.",
+              "text": "Пустой поток проверяют без единого `expectNext`: для `Mono.empty()` — `.verifyComplete()`, для `Flux.empty()` — `.expectNextCount(0).verifyComplete()`.",
               "correct": true,
               "sections": {
                 "explanation": "Для `Mono.<String>empty().switchIfEmpty(Mono.just(\"fallback\"))` пишут `StepVerifier.create(withFallback).expectNext(\"fallback\").verifyComplete()` — проверяется, что пустота подменилась значением.",
@@ -251,14 +251,13 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`verifyComplete()` — это сокращение для `expectComplete().verify()`: он ждёт сигнал `onComplete` и бросает `AssertionError`, если пришла ошибка или поток не завершился. `verify()` лишь запускает поток без проверки типа завершения — ожидание должно быть описано раньше через `expectComplete()`/`expectError()`.",
-              "correct": true,
+              "text": "`verify()` и `verifyComplete()` полностью идентичны и взаимозаменяемы — разница только в названии для читаемости. Имена похожи и оба завершают цепочку.",
+              "correct": false,
               "sections": {
-                "explanation": "`StepVerifier.create(flux).expectNext(1, 2, 3).verifyComplete()` эквивалентно `...expectNext(1, 2, 3).expectComplete().verify()` — это одно и то же.",
-                "example": "С ошибкой `verify()` используют явно: `StepVerifier.create(failingMono).expectError(IllegalStateException.class).verify()` — здесь сокращённого `verifyError`-варианта не применяют намеренно.",
-                "when_to_apply": "Выбор между ними важен в каждом тесте: `verifyComplete()` для штатного завершения, `verify()` — когда завершение уже описано `expectError`/`expectComplete`.",
-                "edge_cases": "Оба метода блокирующие и запускают подписку; разница лишь в том, добавляет ли вызов неявный шаг `expectComplete`. Забыть `verify()`/`verifyComplete()` нельзя — тогда поток не подпишется.",
-                "related": "[[reactive-testing-interview#Q3]] проверка ошибки; [[reactive-testing-interview#Q26]] последствия отсутствия `verify()`; [[reactive-testing-interview#Q1]] базовый цикл `StepVerifier`."
+                "what_actually": "`verifyComplete()` добавляет неявный `expectComplete()`, поэтому упадёт при ошибке, а `verify()` запускает уже описанный сценарий без этой проверки.",
+                "source_of_confusion": "Имена похожи и оба завершают цепочку, отсюда вывод о полной идентичности.",
+                "if_it_were_true": "Если бы они были идентичны, `verify()` после `expectError(...)` тоже требовал бы `onComplete` и всегда падал бы на ошибочном потоке.",
+                "how_it_should_be": "`verifyComplete()` = `expectComplete() + verify()`, а `verify()` просто запускает заранее описанный сценарий."
               }
             },
             {
@@ -276,13 +275,14 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`verify()` и `verifyComplete()` полностью идентичны и взаимозаменяемы — разница только в названии для читаемости.",
-              "correct": false,
+              "text": "`verifyComplete()` — это сокращение для `expectComplete().verify()`: он ждёт сигнал `onComplete` и бросает `AssertionError`, если пришла ошибка или поток не завершился.",
+              "correct": true,
               "sections": {
-                "what_actually": "`verifyComplete()` добавляет неявный `expectComplete()`, поэтому упадёт при ошибке, а `verify()` запускает уже описанный сценарий без этой проверки.",
-                "source_of_confusion": "Имена похожи и оба завершают цепочку, отсюда вывод о полной идентичности.",
-                "if_it_were_true": "Если бы они были идентичны, `verify()` после `expectError(...)` тоже требовал бы `onComplete` и всегда падал бы на ошибочном потоке.",
-                "how_it_should_be": "`verifyComplete()` = `expectComplete() + verify()`, а `verify()` просто запускает заранее описанный сценарий."
+                "explanation": "`StepVerifier.create(flux).expectNext(1, 2, 3).verifyComplete()` эквивалентно `...expectNext(1, 2, 3).expectComplete().verify()` — это одно и то же.",
+                "example": "С ошибкой `verify()` используют явно: `StepVerifier.create(failingMono).expectError(IllegalStateException.class).verify()` — здесь сокращённого `verifyError`-варианта не применяют намеренно.",
+                "when_to_apply": "Выбор между ними важен в каждом тесте: `verifyComplete()` для штатного завершения, `verify()` — когда завершение уже описано `expectError`/`expectComplete`.",
+                "edge_cases": "Оба метода блокирующие и запускают подписку; разница лишь в том, добавляет ли вызов неявный шаг `expectComplete`. Забыть `verify()`/`verifyComplete()` нельзя — тогда поток не подпишется.",
+                "related": "[[reactive-testing-interview#Q3]] проверка ошибки; [[reactive-testing-interview#Q26]] последствия отсутствия `verify()`; [[reactive-testing-interview#Q1]] базовый цикл `StepVerifier`."
               }
             },
             {
@@ -335,7 +335,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`expectNextMatches(Predicate<T>)` проверяет один элемент через предикат и удобен для частичных проверок — не нужно сравнивать объект целиком. Возвращает `true`, если элемент подходит.",
+              "text": "`expectNextMatches` проверяет один элемент через предикат и удобен для частичных проверок — не нужно сравнивать объект целиком.",
               "correct": true,
               "sections": {
                 "explanation": "Для `Mono<UserDto>`: `.expectNextMatches(u -> u.id() == 1L && u.name() != null && !u.name().isBlank())` валидирует только нужные поля, игнорируя остальные.",
@@ -383,7 +383,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`expectNextCount(n)` проверяет, что прошло ровно `n` элементов `onNext`, не сверяя их значения. Его комбинируют с `expectNext` для частичной проверки и завершают `verifyComplete()` либо `thenCancel().verify()`.",
+              "text": "`expectNextCount(n)` проверяет, что прошло ровно `n` элементов `onNext`, не сверяя их значения.",
               "correct": true,
               "sections": {
                 "explanation": "Для `Flux.range(1, 1000)` достаточно `.expectNextCount(1000).verifyComplete()` — проверяется только количество, перечислять тысячу значений не нужно.",
@@ -396,7 +396,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "После `expectNextCount(500)` следующий `expectNext(501, 502)` проверит элементы с индексами 501-502, отсчитывая от начала каждый раз.",
+              "text": "После `expectNextCount(500)` следующий `expectNext` проверит элементы с индексами 501-502, отсчитывая от начала каждый раз.",
               "correct": false,
               "sections": {
                 "what_actually": "`expectNextCount(500)` пропускает первые 500 элементов, и следующий `expectNext` сверяет уже 501-й и 502-й по потоку, а не «от начала».",
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`assertNext(Consumer<T>)` проверяет один следующий элемент через consumer с полноценными AssertJ/JUnit-ассертами внутри. Это удобно для сложных объектов, где надо проверить много полей и вложенных коллекций с детальной диагностикой.",
+              "text": "`assertNext` проверяет один следующий элемент через consumer с полноценными AssertJ/JUnit-ассертами внутри.",
               "correct": true,
               "sections": {
                 "explanation": "Для `Mono<UserProfileDto>`: `.assertNext(p -> { assertThat(p.user().id()).isEqualTo(1L); assertThat(p.orders()).isNotEmpty(); assertThat(p.orders()).allMatch(o -> o.userId().equals(1L)); assertThat(p.subscription()).isNotNull(); }).verifyComplete()`.",
@@ -456,7 +456,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`assertNext(Predicate<T>)` возвращает `boolean`, и при `false` сам формирует подробное сообщение об ошибке.",
+              "text": "`assertNext` возвращает `boolean`, и при `false` сам формирует подробное сообщение об ошибке.",
               "correct": false,
               "sections": {
                 "what_actually": "`assertNext` принимает `Consumer<T>`, а не предикат: внутри пишут AssertJ/JUnit-ассерты, которые сами бросают исключение с понятным сообщением.",
@@ -491,7 +491,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`recordWith` применим только к `Mono`, потому что собирает единственный элемент в коллекцию.",
+              "text": "`recordWith` применим только к `Mono`, потому что собирает единственный элемент в коллекцию. Слово «коллекция» ассоциируют с единичным результатом `Mono`.",
               "correct": false,
               "sections": {
                 "what_actually": "`recordWith` создан для `Flux` с множеством элементов; на `Mono` коллекция из одного элемента смысла почти не имеет.",
@@ -515,7 +515,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`recordWith(Supplier<Collection>)` вместе с `thenConsumeWhile` и `expectRecordedMatches` собирает все прошедшие элементы в коллекцию и проверяет её целиком одним предикатом. Это удобно, когда важен набор/агрегат, а не пошаговый порядок.",
+              "text": "`recordWith` вместе с `thenConsumeWhile` и `expectRecordedMatches` собирает все прошедшие элементы в коллекцию и проверяет её целиком одним предикатом.",
               "correct": true,
               "sections": {
                 "explanation": "`StepVerifier.create(numbers).recordWith(() -> collected).thenConsumeWhile(n -> true).expectRecordedMatches(list -> list.size() == 5 && list.stream().allMatch(n -> n % 2 == 0)).verifyComplete()` собирает чётные и проверяет их разом.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для hot publisher обязательно виртуальное время `withVirtualTime`, иначе `StepVerifier` не успеет получить события.",
+              "text": "Hot publisher обязательно тестируют через `withVirtualTime`, поскольку без виртуального scheduler подписка `StepVerifier` не успевает увидеть события.",
               "correct": false,
               "sections": {
                 "what_actually": "Виртуальное время нужно для задержек/таймеров, а не для hot-источников; здесь синхронизацию даёт `.then(...)` вокруг `emitNext`.",
@@ -563,7 +563,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Sinks.emitNext` нельзя вызывать из `StepVerifier`-цепочки, поэтому события эмитят в отдельном потоке через `Thread.sleep` до `create`.",
+              "text": "События hot-источника нельзя эмитить внутри `StepVerifier.then`; их нужно отправить заранее или из отдельного потока с задержкой.",
               "correct": false,
               "sections": {
                 "what_actually": "`emitNext` штатно вызывают именно внутри `.then(...)`, синхронно с шагами `StepVerifier`; ручные потоки и `sleep` создают флакки.",
@@ -575,7 +575,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Hot publisher излучает элементы независимо от подписчиков, поэтому в тесте эмиссию синхронизируют с подпиской через `.then(() -> sink.emitNext(...))`. Источником служат `Sinks` или `ConnectableFlux`, а `StepVerifier` управляет моментом эмиссии.",
+              "text": "Эмиссию hot-источника синхронизируют с подпиской через `then(() -> sink.tryEmitNext(...))`, используя `Sinks` или управляемый `ConnectableFlux`.",
               "correct": true,
               "sections": {
                 "explanation": "`Sinks.Many<String> sink = Sinks.many().multicast().onBackpressureBuffer(); Flux<String> hotFlux = sink.asFlux();` затем `StepVerifier.create(hotFlux).then(() -> sink.emitNext(\"event1\", FAIL_FAST)).expectNext(\"event1\")...verifyComplete()`.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Hot publisher можно протестировать обычным `StepVerifier.create(hotFlux).expectNext(...).verifyComplete()`, эмитировав элементы заранее — подписчик получит все ранее излучённые события.",
+              "text": "Hot publisher можно заполнить событиями до создания `StepVerifier`: новый подписчик всегда получит всю ранее опубликованную историю.",
               "correct": false,
               "sections": {
                 "what_actually": "Hot publisher излучает независимо от подписчиков, поэтому элементы, эмитированные до подписки `StepVerifier`, обычно теряются; их надо эмитить внутри `.then(...)` после подписки.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Виртуальное время решает проблему медленных тестов с `delay`/`interval`/`timeout`, которые иначе шли бы минуты/часы. `VirtualTimeScheduler` заменяет системные часы управляемыми: реальное время не тратится, тест двигает «виртуальное» через `thenAwait`.",
+              "text": "Виртуальное время решает проблему медленных тестов с `delay`/`interval`/`timeout`, которые иначе шли бы минуты/часы.",
               "correct": true,
               "sections": {
                 "explanation": "Без него `StepVerifier.create(Mono.delay(Duration.ofSeconds(5))).expectNext(0L).verifyComplete()` реально ждёт 5 секунд.",
@@ -683,7 +683,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В `withVirtualTime` критично передавать `Supplier<Publisher>` (лямбду), а не готовый publisher: только тогда источник создаётся уже под подменённым `VirtualTimeScheduler`. Иначе таймер стартует на реальном планировщике до подмены, и виртуальное время не действует.",
+              "text": "В `withVirtualTime` критично передавать `Supplier<Publisher>` (лямбду), а не готовый publisher: только тогда источник создаётся уже под подменённым `VirtualTimeScheduler`.",
               "correct": true,
               "sections": {
                 "explanation": "Правильно: `StepVerifier.withVirtualTime(() -> Flux.interval(Duration.ofSeconds(1)).take(3)).thenAwait(Duration.ofSeconds(3)).expectNext(0L, 1L, 2L).verifyComplete()`.",
@@ -708,7 +708,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`withVirtualTime(() -> ...)` сам по себе проматывает всё время до конца, поэтому `thenAwait` вызывать не нужно.",
+              "text": "`withVirtualTime(() ->...)` сам по себе проматывает всё время до конца, поэтому `thenAwait` вызывать не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "Виртуальное время не двигается само — его явно продвигает `thenAwait(Duration)`; без него таймеры не сработают.",
@@ -731,7 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Flux.interval(...)` можно тестировать без `take`/`thenCancel` и без виртуального времени — `verifyComplete()` сам завершит бесконечный поток.",
+              "text": "`Flux.interval` можно проверять обычным `verifyComplete()` без ограничения элементов: тестовый verifier самостоятельно завершит бесконечный источник.",
               "correct": false,
               "sections": {
                 "what_actually": "`interval` бесконечен: без `take(n)`/`thenCancel()` он не завершится, а без виртуального времени тест ждал бы реальные периоды.",
@@ -743,7 +743,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`interval` под виртуальным временем требует `thenAwait` отдельно перед каждым элементом — промотать сразу 5 минут нельзя.",
+              "text": "Под виртуальным временем `interval` требует отдельного `thenAwait` перед каждым элементом; единый переход сразу на несколько периодов не поддерживается.",
               "correct": false,
               "sections": {
                 "what_actually": "Можно промотать весь интервал разом (`thenAwait(Duration.ofMinutes(5))`) и затем `expectNext(0L..4L)`; пошаговая проматывание не обязательна.",
@@ -755,7 +755,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`delayElements(1s)` задерживает только первый элемент, а остальные эмитятся сразу следом без задержки.",
+              "text": "`delayElements` задерживает только первый сигнал, после чего остальные элементы исходной последовательности приходят без дополнительных интервалов.",
               "correct": false,
               "sections": {
                 "what_actually": "`delayElements` задерживает каждый элемент на указанный `Duration`, поэтому между `a`, `b`, `c` проматывают по секунде.",
@@ -767,7 +767,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Оба оператора тестируют под `withVirtualTime`, чередуя `thenAwait(Duration)` с `expectNext`. `delayElements` задерживает каждый элемент, поэтому время проматывают перед каждым; `interval` эмитит периодически, и можно промотать сразу весь период.",
+              "text": "`delayElements` и `interval` тестируют через `withVirtualTime`; время можно продвигать нужными шагами, а бесконечный `interval` ограничивают или отменяют.",
               "correct": true,
               "sections": {
                 "explanation": "`delayElements`: `StepVerifier.withVirtualTime(() -> Flux.just(\"a\", \"b\", \"c\").delayElements(Duration.ofSeconds(1))).thenAwait(Duration.ofSeconds(1)).expectNext(\"a\").thenAwait(Duration.ofSeconds(1)).expectNext(\"b\")...verifyComplete()`.",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`timeout` тестируют под `withVirtualTime`: проматывают время до порога и проверяют ошибку `TimeoutException`, либо эмитят элемент раньше порога и проверяют успешное завершение. Реальное время не тратится.",
+              "text": "`timeout` проверяют с `withVirtualTime`: продвигают часы до порога и ожидают `TimeoutException` либо подают сигнал раньше дедлайна.",
               "correct": true,
               "sections": {
                 "explanation": "Срабатывание: `StepVerifier.withVirtualTime(() -> Mono.<String>never().timeout(Duration.ofSeconds(10))).thenAwait(Duration.ofSeconds(10)).verifyError(TimeoutException.class)`.",
@@ -804,7 +804,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Чтобы проверить `timeout(10s)`, нужно реально подождать 10 секунд через `Thread.sleep`, потому что виртуальное время на таймауты не действует.",
+              "text": "Для `timeout(Duration.ofSeconds(10))` тест обязан реально спать десять секунд, поскольку оператор не использует scheduler виртуального времени.",
               "correct": false,
               "sections": {
                 "what_actually": "Виртуальное время как раз и создано для таймеров, включая `timeout`: `thenAwait(Duration.ofSeconds(10))` мгновенно доводит до порога.",
@@ -816,7 +816,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Mono.never().timeout(10s)` под виртуальным временем завершится сразу, без `thenAwait`, потому что `never()` ничего не эмитит.",
+              "text": "`Mono.never().timeout(...)` завершается немедленно при создании verifier, поэтому `thenAwait` перед проверкой ошибки не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Без `thenAwait(Duration.ofSeconds(10))` виртуальные часы не сдвинутся, таймер не сработает и тест зависнет в ожидании сигнала.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Сработавший `timeout` завершает поток через `onComplete`, поэтому тест пишут как `.thenAwait(...).verifyComplete()`.",
+              "text": "Истечение `timeout` посылает `onComplete`, поэтому тест должен ожидать успешное завершение, а не терминальную ошибку.",
               "correct": false,
               "sections": {
                 "what_actually": "При срабатывании `timeout` поток падает с `TimeoutException` (`onError`), поэтому проверяют `verifyError(TimeoutException.class)`, а не `verifyComplete()`.",
@@ -875,7 +875,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`TestPublisher<T>` — управляемый publisher: можно вручную эмитировать элементы, ошибки и сигналы завершения в нужный момент. Его берут, чтобы симулировать асинхронные события точно по сценарию, проверить реакцию потребителя на конкретную последовательность сигналов и протестировать backpressure.",
+              "text": "`TestPublisher<T>` — управляемый publisher: можно вручную эмитировать элементы, ошибки и сигналы завершения в нужный момент.",
               "correct": true,
               "sections": {
                 "explanation": "`TestPublisher<String> publisher = TestPublisher.create(); StepVerifier.create(publisher.flux().map(String::toUpperCase)).then(() -> publisher.emit(\"hello\", \"world\")).expectNext(\"HELLO\", \"WORLD\").then(publisher::complete).verifyComplete();`.",
@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`TestPublisher` эмитит сигналы явными методами: `next(T...)` — элементы, `complete()` — успешное завершение, `error(Throwable)` — завершение ошибкой, а `emit(T...)` = `next(...)` + `complete()`. Их комбинируют внутри `StepVerifier` через `then(...)`.",
+              "text": "`TestPublisher` эмитит сигналы явными методами: `next(T...)` — элементы, `complete()` — успешное завершение, `error` — завершение ошибкой, а `emit(T...)` = `next(...)` + `complete()`.",
               "correct": true,
               "sections": {
                 "explanation": "`publisher.next(1); publisher.next(2, 3, 4); publisher.complete();` или короче `publisher.emit(1, 2, 3);` — последнее сразу и шлёт элементы, и завершает.",
@@ -983,7 +983,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Backpressure включают аннотацией `@Backpressure` на тесте, после чего `StepVerifier` сам ограничивает запросы.",
+              "text": "Backpressure включают аннотацией `@Backpressure` на тесте, после чего `StepVerifier` сам ограничивает запросы. Аналогия с декларативными аннотациями `Spring`.",
               "correct": false,
               "sections": {
                 "what_actually": "Начальный спрос задают вторым аргументом `create(flux, n)` и шагами `thenRequest`; никакой аннотации `@Backpressure` не существует.",
@@ -995,7 +995,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Backpressure тестируют, задавая начальный запрос вторым параметром `StepVerifier.create(publisher.flux(), n)` и добавляя `thenRequest(m)`. `TestPublisher` при этом умеет ассертить, сколько запросил подписчик: `assertMinRequested`/`assertMaxRequested`. По умолчанию он соблюдает спецификацию и не отдаёт больше запрошенного.",
+              "text": "Backpressure тестируют, задавая начальный запрос вторым параметром `StepVerifier.create(publisher.flux(), n)` и добавляя `thenRequest(m)`.",
               "correct": true,
               "sections": {
                 "explanation": "`StepVerifier.create(publisher.flux(), 1).then(() -> publisher.next(1)).expectNext(1).thenRequest(2).then(() -> publisher.next(2, 3)).expectNext(2, 3).thenCancel().verify();`.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`assertMinRequested`/`assertMaxRequested` проверяют количество эмитированных элементов, а не запрошенных подписчиком.",
+              "text": "`assertMinRequested`/`assertMaxRequested` проверяют количество эмитированных элементов, а не запрошенных подписчиком. Эмиссия и запрос — связанные величины.",
               "correct": false,
               "sections": {
                 "what_actually": "Эти методы ассертят именно объём спроса (request) от подписчика, а не число фактически эмитированных элементов.",
@@ -1067,7 +1067,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "По умолчанию `TestPublisher` соблюдает правила `Reactive Streams` и бросает исключение при нарушении. `TestPublisher.createNoncompliant(Violation...)` отключает выбранные проверки, позволяя сэмулировать «плохой» publisher и проверить устойчивость потребителя.",
+              "text": "По умолчанию `TestPublisher` соблюдает правила `Reactive Streams` и бросает исключение при нарушении.",
               "correct": true,
               "sections": {
                 "explanation": "`TestPublisher.createNoncompliant(TestPublisher.Violation.ALLOW_NULL)` разрешает эмитить `null`; `createNoncompliant(TestPublisher.Violation.REQUEST_OVERFLOW)` — эмитить больше запрошенного.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`WebTestClient` — это сервер-заглушка (mock-сервер), который перехватывает исходящие HTTP-вызовы приложения в тестах.",
+              "text": "`WebTestClient` — mock-сервер для перехвата исходящих HTTP-запросов приложения; клиентскую часть теста он не предоставляет.",
               "correct": false,
               "sections": {
                 "what_actually": "Он сам выступает клиентом, который шлёт запросы к контроллеру/серверу; перехват исходящих вызовов делают `MockWebServer`/`WireMock`.",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`WebTestClient` всегда требует поднятого реального сервера и не умеет тестировать контроллер изолированно.",
+              "text": "`WebTestClient` работает только с запущенным сервером и не может быть привязан напрямую к контроллеру, роутеру или `ApplicationContext`.",
               "correct": false,
               "sections": {
                 "what_actually": "Он умеет работать без сервера через `bindToController`/`bindToRouterFunction`, а реальный сервер подключают `bindToServer` по необходимости.",
@@ -1115,7 +1115,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`WebTestClient` — это блокирующий клиент `RestTemplate` с тестовыми методами для классического `Spring MVC`.",
+              "text": "`WebTestClient` является блокирующей оболочкой над `RestTemplate`, предназначенной прежде всего для классического Spring MVC.",
               "correct": false,
               "sections": {
                 "what_actually": "`WebTestClient` — реактивный неблокирующий HTTP-клиент для тестирования `Spring WebFlux`, а не обёртка над `RestTemplate`.",
@@ -1127,7 +1127,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`WebTestClient` — реактивный тестовый HTTP-клиент для `Spring WebFlux`. Он умеет тестировать без запуска сервера (`bindToController`, `bindToRouterFunction`), тестировать реальный сервер (`bindToServer`) и интегрируется со `Spring Boot Test` через `@AutoConfigureWebTestClient`.",
+              "text": "`WebTestClient` — реактивный HTTP-клиент для тестов: его привязывают к контроллеру, роутеру, контексту или реальному серверу.",
               "correct": true,
               "sections": {
                 "explanation": "В `@WebFluxTest(UserController.class)` он автоконфигурируется, и тест шлёт запросы прямо к контроллеру без реального порта.",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `@WebFluxTest` зависимости контроллера поднимаются по-настоящему, поэтому `@MockBean` для `UserService` не нужен.",
+              "text": "`@WebFluxTest` поднимает реальные зависимости контроллера, поэтому сервисы не требуется объявлять через mock-bean или test configuration.",
               "correct": false,
               "sections": {
                 "what_actually": "`@WebFluxTest` загружает только web-слой; бины сервисов надо подменять через `@MockBean`, иначе контекст не поднимется из-за отсутствующих зависимостей.",
@@ -1163,7 +1163,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Есть два способа: аннотационный срез `@WebFluxTest(UserController.class)` с автоинжектом `WebTestClient` и `@MockBean` для зависимостей, либо ручная привязка `WebTestClient.bindToRouterFunction(routes).build()` для функциональных роутеров — оба без реального сервера.",
+              "text": "Функциональные маршруты нельзя передать в `bindToRouterFunction`; их тестируют только через настоящий HTTP-сервер и случайный порт.",
               "correct": true,
               "sections": {
                 "explanation": "Срез: `@WebFluxTest(UserController.class)` + `@Autowired WebTestClient` + `@MockBean UserService`, затем `given(userService.findById(1L)).willReturn(Mono.just(user)); webTestClient.get().uri(\"/api/v1/users/1\").exchange().expectStatus().isOk().expectBody(UserDto.class).isEqualTo(user);`.",
@@ -1176,7 +1176,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Чтобы замокать ответ сервиса, в `@WebFluxTest` пишут `given(userService.findById(1L)).willReturn(new UserDto(...))` — без оборачивания в `Mono`.",
+              "text": "Реактивный сервис в mock настраивают обычным объектом `UserDto`, а `Mono` или `Flux` автоматически добавляет инфраструктура тестового среза.",
               "correct": false,
               "sections": {
                 "what_actually": "Реактивный метод возвращает `Mono<UserDto>`, поэтому мок должен отдавать `Mono.just(user)`, а не голый объект.",
@@ -1188,7 +1188,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`bindToRouterFunction` нельзя использовать в тестах — функциональные роутеры тестируют только через реальный сервер.",
+              "text": "Для контроллера используют `@WebFluxTest` и mock зависимостей, а функциональный роутер можно напрямую передать в `WebTestClient.bindToRouterFunction`.",
               "correct": false,
               "sections": {
                 "what_actually": "`WebTestClient.bindToRouterFunction(routes).build()` штатно тестирует `RouterFunction` без сервера.",
@@ -1211,7 +1211,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Единственный способ проверить тело — `expectBody(String.class)` и ручной парсинг JSON через `ObjectMapper`.",
+              "text": "Единственный способ проверить тело — `expectBody(String.class)` и ручной парсинг JSON через `ObjectMapper`. Привычка к низкоуровневой работе с телом ответа.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть удобные типизированные средства (`expectBody(Class).value/isEqualTo`, `expectBodyList`, `jsonPath`); ручной парсинг строки не нужен.",
@@ -1247,7 +1247,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Тело проверяют тремя способами: типизированный объект `expectBody(UserDto.class).value(consumer)` или `.isEqualTo(...)`, список `expectBodyList(UserDto.class).hasSize(n).contains(...)`, и сырой JSON через `expectBody().jsonPath(\"$.field\").isEqualTo(...)`.",
+              "text": "Тело проверяют тремя способами: типизированный объект `expectBody.value(consumer)` или `.isEqualTo(...)`, список `expectBodyList.hasSize(n).contains(...)`, и сырой JSON через `expectBody().jsonPath.isEqualTo(...)`.",
               "correct": true,
               "sections": {
                 "explanation": "Объект: `.expectBody(UserDto.class).value(user -> { assertThat(user.id()).isEqualTo(1L); assertThat(user.name()).isEqualTo(\"Alice\"); });`.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "SSE тестируют, забирая поток ответа как `Flux` и применяя к нему `StepVerifier`: `.returnResult(Type.class).getResponseBody().take(n).as(StepVerifier::create)...thenCancel().verify()`. Обязательны `accept(TEXT_EVENT_STREAM)`, `take(n)` для ограничения и `thenCancel()`, потому что поток бесконечен.",
+              "text": "SSE-ответ получают как `Flux` и проверяют `StepVerifier`, ограничивая число событий через `take(n)` либо завершая проверку `thenCancel()`.",
               "correct": true,
               "sections": {
                 "explanation": "`webTestClient.get().uri(\"/api/v1/events\").accept(MediaType.TEXT_EVENT_STREAM).exchange().expectStatus().isOk().returnResult(String.class).getResponseBody().take(3).as(StepVerifier::create).expectNextCount(3).thenCancel().verify();`.",
@@ -1284,7 +1284,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "SSE-поток проверяют как обычное тело: `.expectBodyList(String.class).hasSize(3)` дождётся завершения и соберёт все события.",
+              "text": "SSE проверяют через `expectBodyList`, который дождётся завершения бесконечного потока и соберёт все события в список.",
               "correct": false,
               "sections": {
                 "what_actually": "SSE — бесконечный поток, поэтому его получают через `returnResult(...).getResponseBody()`, ограничивают `take(n)` и проверяют `StepVerifier` с `thenCancel()`; `expectBodyList` ждал бы завершения, которого нет.",
@@ -1296,7 +1296,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`take(3)` в SSE-тесте берёт первые 3 байта потока, поэтому события придётся собирать вручную.",
+              "text": "`take(3)` ограничивает SSE первыми тремя байтами HTTP-тела, поэтому границы событий необходимо восстанавливать вручную.",
               "correct": false,
               "sections": {
                 "what_actually": "`take(3)` берёт первые 3 элемента (события) `Flux`, а не байты, и сам ограничивает бесконечный поток.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для SSE достаточно `.expectStatus().isOk()` — содержимое событий через `WebTestClient` проверить нельзя.",
+              "text": "Через `WebTestClient` можно проверить только HTTP-статус SSE; содержимое реактивного потока клиент тестирования не раскрывает.",
               "correct": false,
               "sections": {
                 "what_actually": "Содержимое событий проверяют, обернув `getResponseBody()` в `StepVerifier` и применив `expectNextMatches`/`expectNextCount`.",
@@ -1367,7 +1367,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Соблюдение backpressure проверяют через `StepVerifier.create(flux, initialRequest)`, где второй параметр — начальный запрос. Затем `thenRequest(n)` добавляет спрос пошагово, а `TestPublisher.assertMinRequested` подтверждает, что publisher не отдаёт лишнего.",
+              "text": "Соблюдение backpressure проверяют через `StepVerifier.create`, где второй параметр — начальный запрос.",
               "correct": true,
               "sections": {
                 "explanation": "`StepVerifier.create(Flux.range(1, 10), 3).expectNext(1, 2, 3).thenRequest(2).expectNext(4, 5).thenRequest(Long.MAX_VALUE).expectNext(6, 7, 8, 9, 10).verifyComplete();` — элементы идут строго по спросу.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Дроп тестируют так: вешают на `onBackpressureDrop(consumer)` свой список, запрашивают меньше элементов через `StepVerifier.create(flux, n)`, проверяют пришедшие `expectNext` и завершают `thenCancel().verify()`. Затем `assertThat` проверяет, что отброшенные элементы попали в список.",
+              "text": "Для проверки drop используют управляемый источник, ограниченный demand и callback `onBackpressureDrop`; затем отдельно утверждают полученные и отброшенные значения.",
               "correct": true,
               "sections": {
                 "explanation": "`List<Integer> dropped = new ArrayList<>(); Flux<Integer> flux = Flux.range(1, 100).onBackpressureDrop(dropped::add); StepVerifier.create(flux, 5).expectNext(1, 2, 3, 4, 5).thenCancel().verify();`.",
@@ -1404,7 +1404,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Чтобы проверить дроп, нужно дождаться `verifyComplete()` всего потока из 100 элементов, иначе callback не вызовется.",
+              "text": "Callback дропа вызывается только после полного `verifyComplete()` всех элементов, поэтому отменять поток до завершения нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "Поток ограничивают начальным запросом и завершают `thenCancel().verify()`; ждать `verifyComplete()` на 100 элементах не нужно, а с малым спросом он и не наступит штатно.",
@@ -1416,7 +1416,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Отброшенные элементы нельзя проверить из теста — callback `onBackpressureDrop(consumer)` доступен только в продакшене.",
+              "text": "Отброшенные значения недоступны тесту: consumer у `onBackpressureDrop` работает только в production runtime и игнорируется `StepVerifier`.",
               "correct": false,
               "sections": {
                 "what_actually": "Callback `onBackpressureDrop(dropped::add)` штатно используют в тесте, накапливая дропнутые элементы в список и проверяя его `assertThat`.",
@@ -1428,7 +1428,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`onBackpressureDrop` буферизует лишние элементы, поэтому при запросе 5 из 100 остальные 95 придут позже, когда подписчик запросит ещё.",
+              "text": "`onBackpressureDrop` сохраняет лишние элементы во внутреннем буфере и отдаёт их после следующего `request(n)`, не теряя данные.",
               "correct": false,
               "sections": {
                 "what_actually": "`onBackpressureDrop` именно отбрасывает (drop) элементы сверх спроса — они не буферизуются и не приходят позже; буферизация — это `onBackpressureBuffer`.",
@@ -1446,12 +1446,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Почему нельзя вызывать `block()` в тестах `Spring WebFlux`?",
+          "question_text": "Почему `block()` опасен в WebFlux-коде и event-loop тестах?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "`block()` запрещён, потому что он всегда возвращает `null` в тестовом профиле `Spring`.",
+              "text": "`block()` в тестовом профиле всегда возвращает `null`, поэтому любые проверки результата приводят к случайным `NullPointerException`.",
               "correct": false,
               "sections": {
                 "what_actually": "`block()` возвращает значение потока, а проблема в том, что он блокирует non-blocking event loop и бросает `IllegalStateException`.",
@@ -1463,7 +1463,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`block()` в тестах запрещён компилятором — код с ним просто не соберётся в `WebFlux`-модуле.",
+              "text": "Компилятор запрещает `block()` во всех WebFlux-тестах, и код с таким вызовом не может пройти сборку проекта.",
               "correct": false,
               "sections": {
                 "what_actually": "Это рантайм-ограничение: код компилируется, но в реакторном потоке бросает `IllegalStateException` при выполнении.",
@@ -1475,7 +1475,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`block()` нельзя, потому что он не дожидается завершения `Mono` и возвращает промежуточный результат.",
+              "text": "`block()` возвращает значение до завершения `Mono`, поэтому тест получает промежуточный результат вместо терминального сигнала.",
               "correct": false,
               "sections": {
                 "what_actually": "`block()` как раз синхронно дожидается терминального сигнала; проблема не в ожидании, а в блокировке non-blocking-потока.",
@@ -1487,7 +1487,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В контексте `WebFlux`/`Netty` event loop вызов `block()` бросает `IllegalStateException: block()/blockFirst()/blockLast() are blocking, which is not supported in thread reactor-xxx`. Reactor запрещает блокировку non-blocking-потоков, чтобы не застопорить event loop. Вместо `block()` используют `StepVerifier`.",
+              "text": "`block()` допустим в обычном тестовом потоке, но на event loop блокирует обработку и может завершиться `IllegalStateException` от Reactor.",
               "correct": true,
               "sections": {
                 "explanation": "Плохо: `UserDto user = userController.getById(1L).block(); assertThat(user.name()).isEqualTo(\"Alice\");` — кинет исключение в реакторном потоке.",
@@ -1523,7 +1523,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Без `verify()`/`verifyComplete()` подписки не произойдёт: реактивная цепочка ленива, Publisher не подпишется и никакая проверка не выполнится. Тест пройдёт (зелёный) даже при некорректном поведении — это тихий ложноположительный результат.",
+              "text": "Без `verify()`/`verifyComplete()` подписки не произойдёт: реактивная цепочка ленива, Publisher не подпишется и никакая проверка не выполнится.",
               "correct": true,
               "sections": {
                 "explanation": "Плохо: `StepVerifier.create(mono).expectNext(\"expected\");` — верификатор создан, но не запущен, тест ничего не проверяет.",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`R2DBC` + `@Transactional` работает реактивно. В тестах берут срез `@DataR2dbcTest` (или `@Transactional` на классе с реактивным `TransactionManager`), а результат операций проверяют через `StepVerifier`, связывая запись и чтение в одной цепочке.",
+              "text": "`R2DBC` + `@Transactional` работает реактивно. В тестах берут срез `@DataR2dbcTest`, а результат операций проверяют через `StepVerifier`, связывая запись и чтение в одной цепочке.",
               "correct": true,
               "sections": {
                 "explanation": "`@DataR2dbcTest @Transactional class UserRepositoryTest { @Autowired UserRepository userRepository; ... }` — срез поднимает только R2DBC-слой и реактивные транзакции.",
@@ -1584,7 +1584,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Результат `save(...)` проверяют через `repository.save(user).block()` внутри транзакционного теста.",
+              "text": "Результат `save(...)` проверяют через `repository.save(user).block()` внутри транзакционного теста. Императивный стиль проверки сохранения тянет к `block()`.",
               "correct": false,
               "sections": {
                 "what_actually": "`block()` в реактивном тесте запрещён на event loop; результат проверяют через `StepVerifier`, а не блокировкой.",
@@ -1596,7 +1596,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "При `@Transactional` на реактивном тесте откат не нужен — `R2DBC` не поддерживает транзакции, поэтому данные всегда коммитятся.",
+              "text": "При `@Transactional` на реактивном тесте откат не нужен — `R2DBC` не поддерживает транзакции, поэтому данные всегда коммитятся. Молодость `R2DBC` рождает миф об отсутствии транзакций.",
               "correct": false,
               "sections": {
                 "what_actually": "`R2DBC` поддерживает реактивные транзакции с откатом; `@DataR2dbcTest` по умолчанию откатывает изменения после теста.",
@@ -1608,7 +1608,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Реактивные транзакции тестируют классическим `@DataJpaTest` с блокирующим `JPA`-`TransactionManager`.",
+              "text": "Реактивные транзакции тестируют классическим `@DataJpaTest` с блокирующим `JPA`-`TransactionManager`. `@DataJpaTest` — привычный срез из MVC-мира, его по инерции.",
               "correct": false,
               "sections": {
                 "what_actually": "Реактивный стек использует `R2DBC` и реактивный `TransactionManager`; срез `@DataR2dbcTest`, а не `@DataJpaTest`, который блокирующий.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для отсутствующего значения мокают `given(repo.findById(999L)).willReturn(null)` — `null` корректно означает «не найдено».",
+              "text": "`findById` можно замокать возвратом `null`: Mockito трактует его как отсутствие publisher, а `StepVerifier` автоматически преобразует это в пустое завершение.",
               "correct": false,
               "sections": {
                 "what_actually": "Возврат `null` из реактивного метода ломает цепочку (`NullPointerException` при подписке); «не найдено» моделируют `Mono.empty()`.",
@@ -1643,7 +1643,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Mockito` работает с `Mono`/`Flux`, но реактивные типы нужно возвращать из `given(...)` явно: `Mono.just(...)` для значения, `Mono.empty()` для «не найдено», `Flux.just(...)` для нескольких. Результат сервиса проверяют через `StepVerifier`, а не `block()`.",
+              "text": "`Mockito` работает с `Mono`/`Flux`, но реактивные типы нужно возвращать из `given(...)` явно: `Mono.just(...)` для значения, `Mono.empty()` для «не найдено», `Flux.just(...)` для нескольких.",
               "correct": true,
               "sections": {
                 "explanation": "`@ExtendWith(MockitoExtension.class)` + `@Mock UserRepository` + `@InjectMocks UserService`; затем `given(userRepository.findById(1L)).willReturn(Mono.just(user)); StepVerifier.create(userService.findById(1L)).assertNext(dto -> assertThat(dto.name()).isEqualTo(\"Alice\")).verifyComplete();`.",
@@ -1656,7 +1656,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Замоканный `Mono`/`Flux` нельзя проверить через `StepVerifier` — нужно вызвать `block()` на результате сервиса.",
+              "text": "Замоканный `Mono`/`Flux` нельзя проверить через `StepVerifier` — нужно вызвать `block()` на результате сервиса. Императивная проверка результата тянет к `block()`.",
               "correct": false,
               "sections": {
                 "what_actually": "Результат сервиса поверх мока штатно проверяют `StepVerifier`; `block()` на event loop запрещён и не нужен.",
@@ -1668,7 +1668,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`given(repo.findById(1L)).willReturn(user)` — `Mockito` сам обернёт результат в `Mono`, если метод реактивный.",
+              "text": "`given(repo.findById(1L)).willReturn(user)` — `Mockito` сам обернёт результат в `Mono`, если метод реактивный. Привычка мокать синхронные методы возвратом голого значения переносится на реактив.",
               "correct": false,
               "sections": {
                 "what_actually": "`Mockito` ничего не оборачивает: метод возвращает `Mono<User>`, поэтому мок должен явно отдавать `Mono.just(user)`, иначе типы не сойдутся / придёт `null`.",

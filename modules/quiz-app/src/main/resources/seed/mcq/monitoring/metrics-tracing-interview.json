@@ -47,7 +47,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Метрики — агрегированные числа во времени (counter, gauge, histogram), малый объём, хороши для алертов и дашбордов. Логи — дискретные события с текстом и контекстом, большой объём, для отладки и аудита. Трейсы — цепочка spans одного запроса, показывают, где ушло время по сервисам.",
+              "text": "Metrics — aggregated time series для trends/alerts; logs — подробные discrete events; traces связывают spans отдельного request между services.",
               "correct": true,
               "sections": {
                 "explanation": "Это три столпа observability: метрики говорят «что в целом», трейсы — «где задержка в одном запросе», логи — детали по конкретному запросу. Они дополняют, а не заменяют друг друга.",
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Prometheus` работает по push-модели: приложения сами отправляют метрики на сервер по расписанию, а `Prometheus` лишь принимает и складывает их.",
+              "text": "Prometheus использует push-модель: приложения периодически отправляют каждое изменение метрики на сервер.",
               "correct": false,
               "sections": {
                 "what_actually": "`Prometheus` по умолчанию использует pull-модель — сам периодически делает scrape `HTTP`-эндпоинтов приложений (`/actuator/prometheus`); push идёт только через `Pushgateway` для short-lived jobs.",
@@ -83,7 +83,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Prometheus` — система мониторинга с pull-моделью: сервер периодически делает scrape `HTTP`-эндпоинтов приложений (обычно `/actuator/prometheus`), хранит временные ряды в локальной TSDB, а запросы выполняет на `PromQL`.",
+              "text": "Prometheus обычно scrapes HTTP endpoints по pull-модели и сохраняет полученные time series в TSDB.",
               "correct": true,
               "sections": {
                 "explanation": "Pull удобен тем, что `Prometheus` сам знает, какие цели опрашивать, и видит, когда цель недоступна; формат метрик текстовый, что упрощает отладку.",
@@ -96,7 +96,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Prometheus` — это язык запросов `PromQL` и ничего больше; хранение и сбор метрик он делегирует `Grafana`.",
+              "text": "Prometheus является только языком PromQL и не включает сбор, хранение или alerting.",
               "correct": false,
               "sections": {
                 "what_actually": "`Prometheus` — это и сервер сбора (scrape), и TSDB-хранилище, и движок `PromQL`; `Grafana` лишь визуализирует данные поверх него.",
@@ -108,7 +108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Prometheus` собирает метрики, подключаясь к базе данных приложения и читая бизнес-таблицы напрямую через `SQL`.",
+              "text": "Prometheus читает метрики напрямую из бизнес-таблиц приложения через SQL-соединение с базой.",
               "correct": false,
               "sections": {
                 "what_actually": "`Prometheus` не ходит в БД приложения — он делает `HTTP`-scrape эндпоинта с метриками в текстовом формате, а не выполняет `SQL`.",
@@ -167,7 +167,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Micrometer` — фасад для метрик в `Java` (как `SLF4J` для логов): приложение регистрирует `Counter`, `Gauge`, `Timer` через единый API, а биндинг `micrometer-registry-prometheus` экспортирует их в формат, который `Prometheus` scrape'ит на `/actuator/prometheus`.",
+              "text": "`Micrometer` регистрирует JVM-метрики, а Prometheus registry отдаёт их для scrape через Actuator.",
               "correct": true,
               "sections": {
                 "explanation": "Фасад развязывает код от бэкенда: один и тот же инструментированный код можно экспортировать в `Prometheus`, `Datadog` или `InfluxDB`, поменяв лишь зависимость registry.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Четыре типа: `Counter` — монотонно растущее значение (число запросов, ошибок); `Gauge` — текущее значение, может расти и падать (размер очереди, память); `Histogram` — распределение по бакетам (латентность, через `Timer`/`DistributionSummary`); `Summary` — квантили на стороне приложения (не рекомендуется в `Prometheus`).",
+              "text": "`Counter` растёт, `Gauge` показывает state, `Histogram` считает bucket distributions, `Summary` вычисляет client-side quantiles/count/sum с ограниченной aggregation.",
               "correct": true,
               "sections": {
                 "explanation": "Тип выбирают по природе величины: счётчик для накоплений, gauge для мгновенного снимка, histogram для распределений, по которым нужны перцентили.",
@@ -216,7 +216,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Counter` — это текущее значение, которое может расти и падать (например, размер очереди), а `Gauge` — монотонно растущий счётчик запросов.",
+              "text": "`Counter` — это текущее значение, которое может расти и падать (например, размер очереди).",
               "correct": false,
               "sections": {
                 "what_actually": "Определения перепутаны местами: `Counter` монотонно растёт (число запросов, ошибок), а `Gauge` показывает текущее значение, которое может расти и падать.",
@@ -263,7 +263,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Распределённая трассировка — запись цепочки операций (spans) одного запроса при прохождении через несколько сервисов. Она показывает, где запрос провёл время (какой сервис или БД медленный), и выявляет узкие места в цепочке вызовов.",
+              "text": "Распределённая трассировка — запись цепочки операций (spans) одного запроса при прохождении через несколько сервисов.",
               "correct": true,
               "sections": {
                 "explanation": "Без трассировки в микросервисах видно только латентность на границе, а внутри цепочки вызовов всё — «чёрный ящик»; трейс раскрывает дерево вызовов с временем на каждом узле.",
@@ -335,7 +335,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`OpenTelemetry` (OTel) — открытый стандарт и набор `SDK/API` для трассировки, метрик и логов: единая инструментация кода с экспортом в разные бэкенды. Он генерирует spans и trace context (`traceId`, `spanId`), передаёт контекст между сервисами и экспортирует через `OTLP`.",
+              "text": "`OpenTelemetry` — vendor-neutral API, SDK, semantic conventions и протоколы для traces, metrics и logs.",
               "correct": true,
               "sections": {
                 "explanation": "OTel развязывает инструментацию от бэкенда: код пишут один раз (авто-инструментация `HTTP`/`JDBC`/`Kafka` или ручные spans), а бэкенд (`Jaeger`, `Tempo`, облако) меняют без переписывания.",
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Span` — одна операция (например, `HTTP`-вызов, запрос к БД). `Trace` — дерево spans, объединённых общим `traceId`; один запрос от клиента до ответа может породить десятки spans в разных сервисах, а span может иметь дочерние spans.",
+              "text": "`Span` описывает одну операцию, а `trace` объединяет причинно связанные spans одного запроса.",
               "correct": true,
               "sections": {
                 "explanation": "По дереву spans виден полный путь запроса и время на каждом уровне: корневой span — входящий `HTTP`, дочерние — вызовы к БД и другим сервисам.",
@@ -384,7 +384,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Span` — это всё дерево операций запроса, а `Trace` — это одна отдельная операция внутри него.",
+              "text": "`Span` содержит всё дерево запроса, а `trace` представляет одну отдельную операцию.",
               "correct": false,
               "sections": {
                 "what_actually": "Определения перепутаны: `Span` — одна операция, а `Trace` — дерево spans, объединённых общим `traceId`.",
@@ -396,7 +396,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Trace` хранит только суммарную длительность запроса как одно число, без разбивки по отдельным операциям.",
+              "text": "`Trace` хранит только суммарную длительность и не содержит отдельных операций или связей.",
               "correct": false,
               "sections": {
                 "what_actually": "`Trace` — это именно разбивка по spans с временем каждой операции, а не одно суммарное число длительности.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Все spans одного запроса плоские и независимые: родительско-дочерних связей между ними не бывает.",
+              "text": "Все spans одного trace плоские, независимые и не имеют parent-child или link отношений.",
               "correct": false,
               "sections": {
                 "what_actually": "Spans образуют дерево: дочерний span ссылается на `parentSpanId`, а корневой span родителя не имеет.",
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Контекст трассировки передаётся через общую базу данных: каждый сервис записывает `traceId` в таблицу, а следующий читает его оттуда.",
+              "text": "Контекст трассировки передаётся через общую базу данных: каждый сервис записывает `traceId` в таблицу.",
               "correct": false,
               "sections": {
                 "what_actually": "Контекст передаётся в `HTTP`-заголовках (`traceparent`, `tracestate`) по стандарту `W3C Trace Context`, а не через общую таблицу в БД.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Контекст не нужно передавать вообще: каждый сервис создаёт свой независимый `traceId`, а бэкенд потом склеивает трейсы по времени.",
+              "text": "Контекст не нужно передавать вообще: каждый сервис создаёт свой независимый `traceId`.",
               "correct": false,
               "sections": {
                 "what_actually": "Без передачи общего `traceId` трейсы не склеятся в одно дерево — корреляция по времени ненадёжна и не даёт parent-child связей.",
@@ -467,7 +467,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Контекст (`traceId`, `spanId`, флаги sampling) передаётся в `HTTP`-заголовках по стандарту `W3C Trace Context`: заголовки `traceparent` и `tracestate`. Клиент (или шлюз) создаёт корневой span и инжектирует контекст в заголовки; следующий сервис извлекает контекст и создаёт дочерний span.",
+              "text": "Контекст (`traceId`, `spanId`, флаги sampling) передаётся в `HTTP`-заголовках по стандарту `W3C Trace Context`.",
               "correct": true,
               "sections": {
                 "explanation": "Так формируется единое дерево: `Service A` создаёт `span-1`, шлёт `traceparent: 00-abc123-span1-01`, `Service B` извлекает контекст и создаёт `span-2` с `parent: span-1`.",
@@ -491,7 +491,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Sampling` — это сжатие каждого сохранённого трейса алгоритмом вроде `gzip` для экономии места.",
+              "text": "Sampling сжимает каждый сохранённый trace, не изменяя число записываемых запросов.",
               "correct": false,
               "sections": {
                 "what_actually": "`Sampling` — это решение, какие трейсы вообще сохранять, а не сжатие уже сохранённых; сжатие — отдельная оптимизация транспорта.",
@@ -503,7 +503,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Sampling` нужен в основном в dev-окружении, а в production стараются сохранять 100% трейсов ради полноты данных при расследованиях.",
+              "text": "Sampling нужен только в development и не применяется при большом production-трафике.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: в dev часто держат 100%, а в prod именно sampling спасает от непосильной стоимости хранения всех трейсов.",
@@ -515,7 +515,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Sampling` — решение, записывать ли trace целиком. При высокой нагрузке нельзя сохранять все трейсы — это дорого по хранению и трафику, поэтому сохраняют только часть. Виды: head-based (решение в начале), tail-based (в конце), rate-limiting (по квоте).",
+              "text": "Sampling решает, какие traces сохранять, чтобы контролировать объём и стоимость телеметрии.",
               "correct": true,
               "sections": {
                 "explanation": "Head-based прост и даёт предсказуемый overhead, но может пропустить ошибочный трейс; tail-based сохраняет ошибки и выбросы, но требует Collector с буферизацией.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Sampling` означает, что из трейса записывается только корневой span, а дочерние spans при экспорте отбрасываются ради экономии места.",
+              "text": "Sampling сохраняет каждый trace, но удаляет из него все spans кроме root span.",
               "correct": false,
               "sections": {
                 "what_actually": "Sampling-решение действует на весь trace: при `sampled=true` сохраняются все его spans, а не только корневой.",
@@ -575,7 +575,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В `Spring Boot` `Micrometer` включён через `spring-boot-starter-actuator`; нужно добавить зависимость `micrometer-registry-prometheus` и открыть эндпоинт (`management.endpoints.web.exposure.include: prometheus`). Метрики `JVM`, `HTTP`, пулов появляются автоматически на `/actuator/prometheus`.",
+              "text": "В `Spring Boot` `Micrometer` включён через `spring-boot-starter-actuator`; нужно добавить зависимость `micrometer-registry-prometheus` и открыть эндпоинт (`management.endpoints.web.exposure.include: prometheus`).",
               "correct": true,
               "sections": {
                 "explanation": "`Actuator` берёт на себя экспорт: формат текстовый, `Prometheus` его scrape'ит; кастомные таймеры удобно вешать аннотацией `@Timed` при наличии бина `TimedAspect`.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Экспоненциальные гистограммы хранят каждое наблюдение отдельно, поэтому они точнее, но требуют больше памяти, чем обычные.",
+              "text": "Exponential Histogram сохраняет каждое наблюдение отдельно и не группирует значения в buckets.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: они дают хорошую точность при малом числе бакетов для широкого диапазона, не храня каждое наблюдение.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Экспоненциальная гистограмма — это `Summary` с квантилями, вычисленными на стороне приложения по экспоненциальному окну.",
+              "text": "Exponential Histogram является обычным Summary с заранее вычисленными клиентскими quantiles.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разновидность `Histogram` с геометрической шкалой бакетов, а не `Summary`; квантили по-прежнему считаются через `histogram_quantile` в `PromQL`.",
@@ -635,10 +635,10 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Экспоненциальная гистограмма — это гистограмма, у которой число наблюдений в каждом бакете растёт по экспоненте со временем.",
+              "text": "Число событий в каждом bucket автоматически растёт экспоненциально со временем наблюдения.",
               "correct": false,
               "sections": {
-                "what_actually": "Экспоненциальность относится к расположению границ бакетов (1, 2, 4, 8, ...), а не к росту числа наблюдений во времени.",
+                "what_actually": "Экспоненциальность относится к расположению границ бакетов (1, 2, 4, 8,...), а не к росту числа наблюдений во времени.",
                 "source_of_confusion": "Слово «экспоненциальный» ошибочно привязывают к динамике счётчиков, а не к шкале бакетов.",
                 "if_it_were_true": "Тогда любая растущая гистограмма была бы экспоненциальной, но речь именно о геометрической шкале границ.",
                 "how_it_should_be": "Экспоненциальные — это бакеты с границами по степеням (геометрическая шкала), а не экспоненциальный рост значений."
@@ -647,7 +647,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Экспоненциальная гистограмма — бакеты (корзины) распределены по экспоненте (1, 2, 4, 8, ...); подходит для латентности с большим разбросом значений. В `Prometheus` и `OpenTelemetry` их используют для эффективного хранения и агрегации.",
+              "text": "Exponential Histogram использует экспоненциальные границы buckets и масштаб, покрывая широкий диапазон значений.",
               "correct": true,
               "sections": {
                 "explanation": "Геометрическая шкала границ покрывает широкий диапазон (от 1ms до 30s) малым числом бакетов с приемлемой относительной точностью на каждом масштабе.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Метрики `JVM` нужно собирать вручную через `JMX`-клиент и отдельный экспортёр; в `Spring Boot` они по умолчанию недоступны.",
+              "text": "Метрики `JVM` нужно собирать вручную через `JMX`-клиент и отдельный экспортёр.",
               "correct": false,
               "sections": {
                 "what_actually": "В `Spring Boot` с `Micrometer` метрики `JVM` включаются автоматически — память, потоки, классы, `GC` появляются на `/actuator/prometheus` без ручного `JMX`.",
@@ -695,7 +695,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В `Spring Boot` с `Micrometer` метрики `JVM` включаются автоматически: память, потоки, загрузка классов, `GC`. Эндпоинт `/actuator/prometheus` отдаёт `jvm_memory_used_bytes`, `jvm_threads_live_threads`, `jvm_gc_pause_seconds` и др.",
+              "text": "В `Spring Boot` с `Micrometer` метрики `JVM` включаются автоматически: память, потоки, загрузка классов.",
               "correct": true,
               "sections": {
                 "explanation": "Эти метрики покрывают здоровье `JVM`: heap-утилизацию, паузы `GC`, число живых и deadlocked потоков — основу алертинга по ресурсам процесса.",
@@ -708,7 +708,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Метрики `GC` в `Micrometer` показывают только число сборок мусора, без длительности пауз — паузы измерить нельзя.",
+              "text": "Метрики `GC` в `Micrometer` показывают только число сборок мусора.",
               "correct": false,
               "sections": {
                 "what_actually": "`Micrometer` экспортирует и длительность пауз через `jvm_gc_pause_seconds_sum`/`_count`, по которым считают среднюю паузу.",
@@ -731,7 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Custom` metrics — метрики, определённые приложением (счётчик заказов, размер очереди, бизнес-события). Их добавляют, когда стандартных метрик `JVM`/`HTTP` недостаточно для алертинга или анализа конкретной бизнес-логики.",
+              "text": "Custom metrics описывают прикладные события и состояния, например заказы, очередь или бизнес-ошибки.",
               "correct": true,
               "sections": {
                 "explanation": "Стандартные метрики покрывают инфраструктуру, но не отвечают на бизнес-вопросы вроде «сколько заказов по региону» — для этого регистрируют собственные `Counter`/`Gauge`/`Timer`.",
@@ -744,7 +744,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Custom metrics стоит добавлять как можно шире и с детальными лейблами вроде `user_id` и `request_id` — так наблюдаемость строится прямо из метрик в нужном разрезе.",
+              "text": "Custom metrics следует снабжать `user_id` и `request_id`, чтобы получить максимально детальные разрезы.",
               "correct": false,
               "sections": {
                 "what_actually": "Чрезмерные уникальные лейблы (`user_id`, `request_id`) взрывают cardinality и ломают `Prometheus`; добавлять метрики нужно осознанно.",
@@ -756,7 +756,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Custom metrics требуют отдельной системы хранения и не могут использовать тот же `Prometheus`, что и стандартные.",
+              "text": "Custom metrics требуют отдельной TSDB и не могут экспортироваться в тот же Prometheus.",
               "correct": false,
               "sections": {
                 "what_actually": "Кастомные метрики регистрируются через тот же `MeterRegistry` и экспортируются в тот же `Prometheus`, что и стандартные.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Custom` metrics — это переименованные стандартные метрики `JVM`; новые величины через них измерять нельзя.",
+              "text": "Custom metrics — только переименованные JVM metrics; приложение не может измерять новые величины.",
               "correct": false,
               "sections": {
                 "what_actually": "`Custom`-метрики измеряют именно новые, прикладные величины (заказы, очереди, бизнес-события), а не переименовывают `JVM`-метрики.",
@@ -827,7 +827,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Связь по времени и лейблам: в `Grafana` на одном дашборде запросы к `Prometheus` (метрики) и к `Jaeger`/`Tempo` (трейсы). `Exemplars` — ссылки от точки метрики к конкретному trace; по клику переходят к трейсу.",
+              "text": "Связь по времени и лейблам: в `Grafana` на одном дашборде запросы к `Prometheus` (метрики) и к `Jaeger`/`Tempo` (трейсы).",
               "correct": true,
               "sections": {
                 "explanation": "Это превращает дашборд в точку входа в расследование: видишь пик p99 → кликаешь по exemplar → попадаешь в конкретный медленный трейс, а оттуда — в логи по `traceId`.",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Zipkin` — полнофункциональный бэкенд с adaptive sampling и интеграцией с `Kubernetes`, а `Jaeger` — урезанная упрощённая версия.",
+              "text": "Zipkin предоставляет adaptive sampling и Kubernetes orchestration, которых Jaeger принципиально не поддерживает.",
               "correct": false,
               "sections": {
                 "what_actually": "Характеристики перепутаны: это `Jaeger` полнофункционален (adaptive sampling, `Kubernetes`-интеграция), а `Zipkin` проще и легковеснее.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Jaeger` и `Zipkin` — бэкенды для хранения и отображения трейсов. `Zipkin` проще и с меньшим числом функций; `Jaeger` полнофункционален (богатый интерфейс, adaptive sampling, интеграция с `Kubernetes`). Оба поддерживают `OpenTelemetry` как источник данных.",
+              "text": "Jaeger и Zipkin принимают, хранят и отображают distributed traces, отличаясь архитектурой и возможностями.",
               "correct": true,
               "sections": {
                 "explanation": "Поскольку инструментирование стандартизировано (`OTLP`), бэкенд можно менять без правок кода — выбор идёт по экосистеме и потребностям, а не по формату.",
@@ -876,7 +876,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Jaeger` и `Zipkin` хранят и анализируют логи приложений, а к распределённой трассировке отношения не имеют.",
+              "text": "Jaeger и Zipkin предназначены для хранения application logs и полнотекстового поиска по ним.",
               "correct": false,
               "sections": {
                 "what_actually": "Оба — именно трейс-бэкенды (хранят spans и trace), а логи хранят `Loki`/`ELK`; это разные классы инструментов.",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Jaeger` и `Zipkin` — это форматы инструментирования кода, конкурирующие с `OpenTelemetry` за то, как создавать spans.",
+              "text": "Jaeger и Zipkin являются форматами instrumentation API, а не tracing backends.",
               "correct": false,
               "sections": {
                 "what_actually": "`Jaeger` и `Zipkin` — это бэкенды хранения и отображения трейсов, а инструментируют код через `OpenTelemetry`, который оба поддерживают как источник.",
@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Два подхода: (1) `OpenTelemetry Java Agent` — zero-code авто-инструментация (`-javaagent:/otel-agent.jar`, env `OTEL_SERVICE_NAME`, `OTEL_EXPORTER_OTLP_ENDPOINT`); (2) `Spring Boot` starter с `Micrometer Tracing` (`micrometer-tracing-bridge-otel` + `opentelemetry-exporter-otlp`).",
+              "text": "В Spring Boot используют Micrometer Tracing с OTel bridge или OpenTelemetry Java Agent.",
               "correct": true,
               "sections": {
                 "explanation": "Агент удобен тем, что не требует менять код: он инструментирует `HTTP`, `JDBC`, `Kafka` автоматически; starter лучше, когда нужны spans прямо из бизнес-кода через `Observation` API.",
@@ -936,7 +936,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Трассировку в `Spring Boot` включают, вручную оборачивая нужные методы в span через `Tracer` API, — готовой авто-инструментации фреймворк не даёт.",
+              "text": "Трассировку в `Spring Boot` включают, вручную оборачивая нужные методы в span через `Tracer` API.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть два подхода без ручного оборачивания всего кода: `OTel Java Agent` (zero-code авто-инструментация) и `Spring Boot` starter с `Micrometer Tracing`.",
@@ -948,7 +948,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Sampling в `Spring Boot` задают лишь на стороне бэкенда (`Jaeger`/`Tempo`), а само приложение отправляет все трейсы независимо от `application.yml`.",
+              "text": "Sampling в `Spring Boot` задают лишь на стороне бэкенда (`Jaeger`/`Tempo`).",
               "correct": false,
               "sections": {
                 "what_actually": "Sampling настраивается: `management.tracing.sampling.probability` (или `OTEL_TRACES_SAMPLER_ARG`) задаёт долю записываемых трейсов.",
@@ -971,20 +971,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Cardinality` — число уникальных комбинаций значений лейблов метрики. Высокая cardinality приводит к взрывному росту временных рядов в `Prometheus` и проблемам с памятью, вплоть до `OOM` и медленных запросов.",
+              "text": "Cardinality — число уникальных комбинаций label values, каждая из которых создаёт отдельную time series.",
               "correct": true,
               "sections": {
                 "explanation": "Каждая уникальная комбинация лейблов — отдельный time series; лейбл по `user_id` с миллионами значений порождает миллионы рядов из одной метрики.",
                 "example": "Плохо: `registry.counter(\"api.requests\", \"user_id\", userId)`. Хорошо: лейблы малой мощности (`endpoint`, `method`, `status`) и нормализация `uri` через `MeterFilter.replaceTagValues` (`/api/users/123` → `/api/users/{id}`).",
                 "when_to_apply": "Cardinality проверяют при добавлении каждой новой метрики: оценивают, сколько уникальных комбинаций лейблов возможно, и убирают неограниченно растущие.",
-                "edge_cases": "Формула: `cardinality = V1 * V2 * ... * Vn`, где `Vi` — число значений i-го лейбла; `path`-параметры в `uri` и `user_id`/`order_id` — частая причина взрыва.",
+                "edge_cases": "Формула: `cardinality = V1 * V2 *... * Vn`, где `Vi` — число значений i-го лейбла; `path`-параметры в `uri` и `user_id`/`order_id` — частая причина взрыва.",
                 "related": "[[metrics-tracing-interview#Q13]] custom metrics и осторожность с лейблами; [[metrics-tracing-interview#Q39]] проблема высокой кардинальности подробнее; [[metrics-tracing-interview#Q3]] почему Micrometer предостерегает от user_id-лейблов."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Cardinality` — это точность гистограммы, то есть число бакетов в распределении латентности.",
+              "text": "Cardinality означает точность histogram и определяется только количеством её buckets.",
               "correct": false,
               "sections": {
                 "what_actually": "Число бакетов гистограммы — это другое; cardinality считает уникальные комбинации значений лейблов по всем рядам метрики.",
@@ -996,7 +996,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Cardinality` — это частота, с которой `Prometheus` делает scrape метрики; чем выше, тем чаще опрос.",
+              "text": "Cardinality — это частота Prometheus scrape и число запросов к metrics endpoint.",
               "correct": false,
               "sections": {
                 "what_actually": "Cardinality — это число уникальных комбинаций лейблов, а частота scrape задаётся отдельно через `scrape_interval`.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Высокая cardinality улучшает наблюдаемость и почти не влияет на ресурсы `Prometheus`, поэтому лейблов стоит добавлять больше.",
+              "text": "Высокая cardinality почти бесплатна, поэтому identifiers пользователей и запросов безопасны как labels.",
               "correct": false,
               "sections": {
                 "what_actually": "Высокая cardinality — главная причина роста памяти и деградации `Prometheus`; больше лейблов с уникальными значениями вредит, а не помогает.",
@@ -1055,7 +1055,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Метрики дают алерты при аномалии (рост ошибок, латентности) и на дашбордах показывают, какой сервис или эндпоинт деградировал. Трейсы показывают конкретный путь запроса и где именно задержка или ошибка.",
+              "text": "Metrics показывают population anomaly и affected services; traces раскрывают путь и latency конкретного request, а exemplars и trace IDs связывают сигналы.",
               "correct": true,
               "sections": {
                 "explanation": "Связка ускоряет разбор: метрика отвечает «что и где в целом», трейс — «почему этот запрос», а лог по `traceId` — «какие именно детали ошибки».",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`USE` применяют к сервисам и `HTTP`-запросам, а `RED` — к низкоуровневым ресурсам вроде `CPU` и памяти.",
+              "text": "`USE` применяют к HTTP endpoints: Utilization означает requests per second, Saturation — p99 latency, Errors — response status 5xx.",
               "correct": false,
               "sections": {
                 "what_actually": "Области перепутаны: `RED` — для сервисов и запросов, а `USE` (`Utilization`, `Saturation`, `Errors`) — для ресурсов.",
@@ -1103,11 +1103,11 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`RED` — для сервисов: `Rate` (запросы/сек), `Errors` (доля ошибок), `Duration` (латентность). `USE` — для ресурсов: `Utilization` (загрузка), `Saturation` (насыщенность/очереди), `Errors` (ошибки).",
+              "text": "`RED` измеряет Rate, Errors, Duration у request-driven services; `USE` — Utilization, Saturation, Errors у resources.",
               "correct": true,
               "sections": {
                 "explanation": "Два взгляда дополняют друг друга: `RED` отвечает на «как чувствуют сервис пользователи», `USE` — «насколько загружены ресурсы под ним».",
-                "example": "RED в `PromQL`: `rate(http_server_requests_seconds_count[5m])`, доля 5xx через `sum(rate(...{status=~\"5..\"}))/sum(rate(...))`, p99 через `histogram_quantile(0.99, ...)`. USE: `process_cpu_usage`, `tomcat_threads_busy/config_max`.",
+                "example": "RED в `PromQL`: `rate(http_server_requests_seconds_count[5m])`, доля 5xx через `sum(rate(...{status=~\"5..\"}))/sum(rate(...))`, p99 через `histogram_quantile(0.99,...)`. USE: `process_cpu_usage`, `tomcat_threads_busy/config_max`.",
                 "when_to_apply": "RED применяют для мониторинга API и микросервисов, USE — для инфраструктуры и `JVM`; вместе они дают golden signals для дашборда и алертов.",
                 "edge_cases": "В `Micrometer` Rate и Errors берут из `Timer`/счётчиков с лейблом outcome, Duration — из гистограммы; для USE по инфраструктуре нужны `node_exporter`/`cAdvisor`.",
                 "related": "[[metrics-tracing-interview#Q26]] RED и USE метрики ещё раз с диаграммой; [[metrics-tracing-interview#Q36]] SLI/SLO поверх RED-метрик; [[metrics-tracing-interview#Q41]] выбор SLI для разных типов сервисов."
@@ -1116,7 +1116,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`RED` и `USE` — это конкретные `PromQL`-функции, встроенные в `Prometheus`, а не методологии выбора метрик.",
+              "text": "`RED` и `USE` — встроенные PromQL functions, которые автоматически выбирают labels и вычисляют golden signals без metric design.",
               "correct": false,
               "sections": {
                 "what_actually": "`RED` и `USE` — это методологии (наборы рекомендуемых сигналов), а не встроенные функции `PromQL`.",
@@ -1128,7 +1128,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`RED` расшифровывается как `Rate`, `Errors`, `Disk` и применяется к дисковой подсистеме хранилищ.",
+              "text": "`RED` означает Rate и Errors только; latency относится исключительно к `USE`, поскольку Duration является resource saturation.",
               "correct": false,
               "sections": {
                 "what_actually": "`RED` — это `Rate`, `Errors`, `Duration` для сервисов; третья буква — Duration (латентность), а не Disk, и метод не про диски.",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Java-приложение должно само устанавливать соединение с `Prometheus`-сервером и отправлять метрики ему по push при каждом изменении.",
+              "text": "Java-приложение обязано push-ить метрики в Prometheus при каждом изменении значения.",
               "correct": false,
               "sections": {
                 "what_actually": "Приложение не пушит метрики в `Prometheus` по умолчанию — оно открывает `HTTP`-эндпоинт `/actuator/prometheus`, который `Prometheus` сам scrape'ит (pull); push идёт лишь через `Pushgateway`.",
@@ -1163,7 +1163,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Метрики экспортируются в бинарном формате `Protobuf`, который человеку прочитать нельзя, поэтому отладка эндпоинта невозможна.",
+              "text": "Prometheus принимает только бинарный Protobuf, поэтому текстовый metrics endpoint не используется.",
               "correct": false,
               "sections": {
                 "what_actually": "Базовый формат `/actuator/prometheus` — человекочитаемый текст (`# HELP`, `# TYPE`, имя{лейблы} значение), что как раз упрощает отладку curl-ом.",
@@ -1175,7 +1175,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для экспорта метрик нужно вручную писать сериализатор формата `Prometheus`; готовой библиотеки в `Spring Boot` нет.",
+              "text": "Для экспорта необходимо вручную реализовать сериализацию Prometheus exposition format без готовых registry.",
               "correct": false,
               "sections": {
                 "what_actually": "Сериализацию в текстовый формат делает `micrometer-registry-prometheus` автоматически — вручную писать её не нужно.",
@@ -1187,7 +1187,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Приложение открывает `HTTP`-эндпоинт с метриками в формате `Prometheus` (текст). В `Spring Boot`: зависимость `micrometer-registry-prometheus` и эндпоинт `/actuator/prometheus`, который `Prometheus` периодически scrape'ит.",
+              "text": "Приложение открывает HTTP metrics endpoint, а Prometheus registry формирует exposition format для scrape.",
               "correct": true,
               "sections": {
                 "explanation": "Эндпоинт отдаёт строки вида `http_server_requests_seconds_bucket{...,le=\"0.5\"} 1891` и `jvm_memory_used_bytes{area=\"heap\",...}`; этого достаточно, чтобы `Prometheus` забрал данные.",
@@ -1211,7 +1211,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Exemplars` — связь точки на графике метрики с конкретным trace: exemplar хранит `traceId` и `spanId`. При просмотре скачка метрики можно перейти к конкретному трейсу и понять причину аномалии.",
+              "text": "Exemplar связывает конкретное наблюдение метрики с trace/span identifiers для перехода к трассе.",
               "correct": true,
               "sections": {
                 "explanation": "Это мост от агрегата к примеру: гистограмма говорит «p99 = 5s», а exemplar даёт конкретный медленный запрос, объясняющий этот хвост.",
@@ -1224,7 +1224,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Exemplars` заменяют гистограммы: вместо бакетов хранится по одному образцу на метрику, и квантили считаются по нему.",
+              "text": "Exemplars заменяют histogram buckets одним образцом, по которому вычисляются все quantiles.",
               "correct": false,
               "sections": {
                 "what_actually": "Exemplars не заменяют гистограмму, а дополняют её: бакеты остаются, а exemplar лишь прикрепляет `traceId` к наблюдению.",
@@ -1236,7 +1236,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Exemplars` работают только с метриками типа `Counter` и не применимы к гистограммам латентности.",
+              "text": "Exemplars поддерживаются только counters и не применяются к latency histograms.",
               "correct": false,
               "sections": {
                 "what_actually": "Exemplars как раз прикрепляются к бакетам гистограмм (латентность) — это их основной сценарий, а не `Counter`.",
@@ -1248,7 +1248,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Exemplars` — это примеры конфигурации `Prometheus`, которые показывают, как писать `PromQL`-запросы.",
+              "text": "Exemplars — это примеры Prometheus-конфигурации, не содержащие связей с runtime traces.",
               "correct": false,
               "sections": {
                 "what_actually": "`Exemplars` — это образцы наблюдений с `traceId` внутри метрики, а не примеры конфигурации или запросов.",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Алерт срабатывает мгновенно при первом же превышении порога; параметра выдержки времени в `Prometheus` нет.",
+              "text": "Prometheus alert срабатывает при первом transient sample выше threshold; параметр `for`, missing data и state transitions не влияют.",
               "correct": false,
               "sections": {
                 "what_actually": "Параметр `for` задаёт выдержку: алерт firing'ится, только если условие держится заданное время (например, `for: 5m`), что отсекает кратковременные всплески.",
@@ -1283,7 +1283,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Alertmanager` сам вычисляет `PromQL`-выражения и решает, когда алерт должен сработать.",
+              "text": "Alertmanager вычисляет PromQL expressions из dashboards, а Prometheus только forwards raw samples и не хранит alert rule state.",
               "correct": false,
               "sections": {
                 "what_actually": "Вычисляет выражения и определяет firing именно `Prometheus`; `Alertmanager` лишь принимает уже сработавшие алерты и маршрутизирует их.",
@@ -1295,7 +1295,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "В `Prometheus` задают правила алертов на `PromQL` (`alert_rules.yml`): при выполнении условия в течение `for` алерт переходит в firing. `Alertmanager` группирует, дедуплицирует и отправляет в каналы (`Slack`, `PagerDuty`, email).",
+              "text": "Prometheus вычисляет PromQL alert rules и отправляет firing/resolved alerts в Alertmanager, который groups, deduplicates, silences и routes notifications.",
               "correct": true,
               "sections": {
                 "explanation": "Разделение ролей: `Prometheus` решает «сработало ли условие», `Alertmanager` — «кому, как и с какой частотой об этом сообщить», избегая шквала уведомлений.",
@@ -1308,7 +1308,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Алерты задаются прямо в `Grafana`-панелях, а `Prometheus` и `Alertmanager` в процессе алертинга не участвуют.",
+              "text": "Alerts существуют только внутри Grafana panels; standalone Prometheus rules и Alertmanager routing не поддерживают production notification workflow.",
               "correct": false,
               "sections": {
                 "what_actually": "Классическая схема: правила алертов (`PromQL`) задают в `Prometheus`, а маршрутизацию и доставку делает `Alertmanager`; `Grafana`-алерты — отдельный механизм.",
@@ -1355,7 +1355,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`traceId` — уникальный идентификатор всего trace (одного запроса через систему); один для всех spans. `spanId` — идентификатор одной операции (span); у каждого span свой. Связь: span ссылается на родительский `spanId` (parent spanId); корневой span родителя не имеет.",
+              "text": "`traceId` общий для trace; каждая operation имеет свой `spanId`, а child span ссылается на parent и образует causal tree.",
               "correct": true,
               "sections": {
                 "explanation": "Эта пара позволяет и сгруппировать все операции запроса (по общему `traceId`), и восстановить иерархию (по `parentSpanId`).",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Меры: (1) sampling — записывать только часть трейсов; (2) ограничить атрибуты и размер событий; (3) сократить retention; (4) отключать инструментацию неважных компонентов. В prod часто достаточно tail-based: сохраняются ошибки и выбросы по латентности.",
+              "text": "Меры: (1) sampling — записывать только часть трейсов; (2) ограничить атрибуты и размер событий; (3) сократить retention.",
               "correct": true,
               "sections": {
                 "explanation": "Баланс между полнотой для отладки и затратами: «нормальные» успешные трейсы отбрасывают, а аномальные (ошибки, медленные) сохраняют целиком.",
@@ -1451,7 +1451,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для отладки предпочтительнее трейсы: они раскрывают детали конкретного запроса, тогда как метрики полезны в основном для обзорных дашбордов, а не для разбора причин.",
+              "text": "Traces всегда лучше metrics: один trace полно описывает weekly trend, total error rate и saturation всех instances без aggregation.",
               "correct": false,
               "sections": {
                 "what_actually": "Метрики критичны и для отладки: они быстро отвечают на «какой сервис/эндпоинт деградировал» и «каков тренд», что трейсы делают плохо.",
@@ -1463,7 +1463,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Метрики отвечают на вопросы уровня системы и трендов: какой сервис деградировал, какой эндпоинт медленный, каков тренд за неделю. Трейсы — на вопросы уровня одного запроса: почему конкретный запрос медленный, где в цепочке вызовов ошибка.",
+              "text": "Metrics находят trends, scope и affected services; traces показывают path, timings и attributes request; переход выполняют через exemplars или trace IDs.",
               "correct": true,
               "sections": {
                 "explanation": "Правило простое: агрегатный, обзорный вопрос → метрики; конкретный, единичный запрос → трейс (часто вместе с логами по `traceId`).",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Тренд за неделю смотрят по трейсам через range-запрос, а метрики для исторического анализа непригодны.",
+              "text": "Weekly trends получают range-query по raw traces без aggregation; metrics не подходят для historical comparison и alerting.",
               "correct": false,
               "sections": {
                 "what_actually": "Тренды и история — это сильная сторона метрик (`PromQL` range query); трейсы дороги для хранения и не предназначены для недельной аналитики.",
@@ -1488,7 +1488,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Выбор зависит только от объёма данных: при малом трафике берут метрики, при большом — трейсы.",
+              "text": "Выбор зависит только от traffic volume: low traffic требует metrics, high traffic — traces независимо от вопроса и sampling.",
               "correct": false,
               "sections": {
                 "what_actually": "Выбор зависит от типа вопроса (обзор vs конкретный запрос), а не от объёма трафика; при любом трафике оба инструмента отвечают на разные вопросы.",
@@ -1535,11 +1535,11 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`RED` (`Rate`, `Errors`, `Duration`) — для сервисов и запросов: количество запросов в секунду, доля ошибок, задержка (p50, p99). `USE` (`Utilization`, `Saturation`, `Errors`) — для ресурсов (`CPU`, диск, сеть): утилизация, насыщенность (очереди), ошибки.",
+              "text": "`RED` — Rate, Errors, Duration для service requests; `USE` — Utilization, Saturation, Errors для resources и capacity bottlenecks.",
               "correct": true,
               "sections": {
                 "explanation": "Это два набора golden signals под разные объекты: `RED` смотрит на сервис глазами клиента, `USE` — на ресурс под капотом.",
-                "example": "`Rate` — `rate(http_requests_total[5m])`, `Errors` — `rate(errors)/rate(total)`, `Duration` — `histogram_quantile(0.99, ...)`; `Utilization` — `process_cpu_usage`, `Saturation` — `thread_pool_queue_size`.",
+                "example": "`Rate` — `rate(http_requests_total[5m])`, `Errors` — `rate(errors)/rate(total)`, `Duration` — `histogram_quantile(0.99,...)`; `Utilization` — `process_cpu_usage`, `Saturation` — `thread_pool_queue_size`.",
                 "when_to_apply": "RED применяют для `HTTP` API и микросервисов, USE — для `CPU`/памяти/диска/сети; вместе они закрывают и сервисный, и ресурсный взгляд.",
                 "edge_cases": "В `Micrometer`: Rate и Errors — через `Timer` и счётчики с лейблом outcome, Duration — гистограмма; для USE по инфраструктуре нужны `node_exporter`, `cAdvisor`.",
                 "related": "[[metrics-tracing-interview#Q19]] RED и USE методологии впервые; [[metrics-tracing-interview#Q36]] SLI/SLO поверх этих сигналов; [[metrics-tracing-interview#Q41]] какие SLI брать для разных сервисов."
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Стратегии: (1) sampling — head-based (процент) или tail-based (по ошибкам/латентности); (2) фильтрация атрибутов — не писать тело запроса, хешировать `SQL`; (3) retention policy — 7-14 дней для raw, агрегаты дольше; (4) агрегация — старые трейсы конвертировать в метрики (span metrics).",
+              "text": "Стратегии: (1) sampling — head-based (процент) или tail-based (по ошибкам/латентности); (2) фильтрация атрибутов — не писать тело запроса.",
               "correct": true,
               "sections": {
                 "explanation": "Идея в том, чтобы хранить дёшево: аномалии — целиком, нормальные трейсы — выборочно, а долгосрочную аналитику вести по дешёвым span-метрикам, а не по сырым spans.",
@@ -1626,19 +1626,19 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое sampling в трассировке и когда его применять?",
+          "question_text": "Как выбрать head-based и tail-based sampling для production?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "`Sampling` — решение, какие трейсы сохранять. `Head-based`: решение в начале трейса (например, 10% запросов). `Tail-based`: решение в конце (сохранять трейсы с ошибками или медленные). В dev можно 100% для отладки; в prod — долевой или tail-based.",
+              "text": "Head sampling дешёв и принимает решение сразу, tail sampling сохраняет ошибки и медленные трассы после их завершения.",
               "correct": true,
               "sections": {
-                "explanation": "Head-based прост и предсказуем, но «нормальные» и ошибочные запросы попадают в одни и те же 10%, и важное можно потерять; tail-based гарантированно сохраняет аномалии.",
-                "example": "В `OpenTelemetry` настраивают `Sampler` (`ParentBased`, `RateLimiting`); в `Jaeger`/`Tempo` tail-based делают на коллекторе по атрибутам (`status=error`, `duration>threshold`).",
-                "when_to_apply": "Sampling применяют всегда, когда хранить все трейсы дорого; выбор head vs tail зависит от того, насколько критично не терять ошибки.",
-                "edge_cases": "Tail-based стоит дороже (буфер, задержка решения 5-30s), зато сохраняет все ошибки и медленные; head-based дёшев, но может отбросить важный трейс.",
-                "related": "[[metrics-tracing-interview#Q9]] sampling и его виды впервые; [[metrics-tracing-interview#Q37]] механика tail-based sampling; [[metrics-tracing-interview#Q24]] sampling как способ снизить объём в prod."
+                "explanation": "Head sampling принимает решение рано и дешёво, не зная outcome. Tail sampling буферизует trace и применяет policies после spans, поэтому лучше сохраняет выбранные errors/latency cases, но не гарантирует их при incomplete traces или capacity drops.",
+                "example": "Collector tail policy оставляет traces со status ERROR, latency выше threshold и 5% остальных; head sampler оставляет фиксированную probability до отправки spans.",
+                "when_to_apply": "Выбирайте head sampling для простоты и predictable cost; tail sampling — когда outcome-based selection оправдывает memory, latency и operational complexity.",
+                "edge_cases": "Tail sampler видит только поступившие spans и может evict traces при capacity pressure или поздней доставке. Нужно согласовать load balancing, decision wait, policies и collector sizing.",
+                "related": "[[metrics-tracing-interview#Q9]] виды sampling; [[metrics-tracing-interview#Q37]] tail sampling; [[metrics-tracing-interview#Q24]] снижение telemetry volume."
               }
             },
             {
@@ -1691,7 +1691,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для связи метрик с бизнесом нужно добавлять тег `user_id` к каждой метрике, иначе бизнес-разрез не построить.",
+              "text": "Для связи метрик с бизнесом нужно добавлять тег `user_id` к каждой метрике.",
               "correct": false,
               "sections": {
                 "what_actually": "Бизнес-разрезы строят по тегам малой cardinality (`region`, `payment_method`), а `user_id` запрещён — он взрывает число рядов.",
@@ -1703,7 +1703,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Бизнес-метрики стоит держать в отдельной системе и не выводить вместе с техническими на один дашборд, чтобы продуктовые и инженерные показатели не путались.",
+              "text": "Бизнес-метрики стоит держать в отдельной системе и не выводить вместе с техническими на один дашборд.",
               "correct": false,
               "sections": {
                 "what_actually": "Главная ценность связи — именно совмещение бизнес- и технических метрик на одном дашборде через общие теги и время.",
@@ -1727,7 +1727,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Технические метрики приложения (`RPS`, latency, ошибки) дополняют бизнес-метрики (конверсия, заказы, отказы). Связь делают через общие теги, дашборды «технические + бизнес» и алерты по бизнес-метрикам наряду с техническими.",
+              "text": "Технические метрики приложения (`RPS`, latency, ошибки) дополняют бизнес-метрики (конверсия, заказы, отказы).",
               "correct": true,
               "sections": {
                 "explanation": "Это даёт единую картину: падение конверсии можно сразу сопоставить с ростом латентности или ошибок того же сервиса на одном дашборде.",
@@ -1751,19 +1751,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Маршрутизация по severity невозможна: все алерты идут в один канал, разделить critical и warning нельзя.",
+              "text": "Alert routing по severity невозможен, поэтому все уведомления всегда отправляются одному получателю.",
               "correct": false,
               "sections": {
                 "what_actually": "`Alertmanager` маршрутизирует по `severity`: critical → `PagerDuty`, warning → `Slack`, info → email; разделение каналов — штатная возможность.",
                 "source_of_confusion": "Простой единый webhook создаёт впечатление, что маршрутизации нет.",
-                "if_it_were_true": "Тогда `route`/`routes` с `match: {severity: ...}` были бы бессмысленны, но они и реализуют разделение.",
+                "if_it_were_true": "Тогда `route`/`routes` с `match: {severity:...}` были бы бессмысленны, но они и реализуют разделение.",
                 "how_it_should_be": "Маршрутизация по `severity` и лейблам — базовая функция `Alertmanager`; каналы разделяют через `routes`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Чем больше алертов и порогов, тем надёжнее система: на каждый показатель стоит завести отдельный алерт.",
+              "text": "Чем больше независимых пороговых alerts, тем надёжнее система и ниже alert fatigue.",
               "correct": false,
               "sections": {
                 "what_actually": "Избыток алертов рождает шум и усталость дежурных (alert fatigue); хорошая практика — мало точных порогов с агрегацией и подтверждением.",
@@ -1775,7 +1775,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Алерты строят преимущественно по трейсам, а метрики для алертинга почти не используют из-за их усреднённости.",
+              "text": "Основные alerts строят по отдельным traces, а агрегированные metrics для них не нужны.",
               "correct": false,
               "sections": {
                 "what_actually": "Алерты в основном строят по метрикам (пороги по latency, error rate, доступности); по трейсам алертят редко (например, рост доли медленных трейсов).",
@@ -1787,7 +1787,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Алерты в основном по метрикам: пороги по latency, error rate, доступности; по трейсам — реже (например, рост доли медленных трейсов). Каналы доставки — `Alertmanager`, `PagerDuty`, `Slack`, email; маршрутизация по `severity`.",
+              "text": "Alerts строят по SLO и metrics, маршрутизируют по severity, а traces используют для диагностики.",
               "correct": true,
               "sections": {
                 "explanation": "Цель — заметить аномалию и быстро дать дежурному контекст: в алерт кладут ссылку на дашборд, runbook и пример трейса (exemplar), чтобы разбор начался сразу.",
@@ -1823,7 +1823,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`W3C TraceContext` — стандарт `HTTP`-заголовков для передачи контекста трассировки между сервисами. Без стандарта каждая система использовала свои заголовки: `X-B3-TraceId` (Zipkin), `X-Amzn-Trace-Id` (AWS), `uber-trace-id` (Jaeger). Стандарт вводит `traceparent` и опциональный `tracestate`.",
+              "text": "W3C Trace Context стандартизует `traceparent` и `tracestate` для совместимой передачи trace context.",
               "correct": true,
               "sections": {
                 "explanation": "Единый формат обеспечивает сквозную трассировку при смешивании вендоров (AWS → Kubernetes → on-prem) без потери контекста на границах систем.",
@@ -1883,7 +1883,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Micrometer` даёт API для бизнес-метрик с тегами: `Counter.builder(\"orders.placed\").tag(\"region\", \"ru\").register(registry)`, `DistributionSummary` для сумм заказа с перцентилями, `Timer` для времени оформления с `sla(...)`, `Gauge` с lambda для текущих значений.",
+              "text": "`Micrometer` даёт API для бизнес-метрик с тегами: `Counter.builder(\"orders.placed\").tag(\"region\", \"ru\").register(registry)`.",
               "correct": true,
               "sections": {
                 "explanation": "Теги позволяют резать бизнес-метрики по измерениям (`region`, `reason`, `payment_method`), сохраняя при этом малую cardinality и агрегируемость в `Prometheus`.",
@@ -1931,20 +1931,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Zipkin` — один из первых open-source бэкендов для distributed tracing (Twitter, 2012). В `Spring Boot 3` интегрируют через `Micrometer Tracing`: зависимости `micrometer-tracing-bridge-brave` + `zipkin-reporter-brave` и endpoint в конфиге; либо через `OpenTelemetry` → `Zipkin exporter`.",
+              "text": "В Spring Boot подключают Micrometer Tracing/Brave reporter или OTel exporter и задают Zipkin endpoint.",
               "correct": true,
               "sections": {
-                "explanation": "Интеграция сводится к выбору моста (`brave` для Zipkin-нативного пути) и указанию `endpoint`, куда репортить spans; sampling задают через `probability`.",
-                "example": "В `application.yml`: `management.tracing.sampling.probability: 1.0` и `management.zipkin.tracing.endpoint: http://zipkin:9411/api/v2/spans`; альтернатива — `ZipkinSpanExporter.builder().setEndpoint(...)` с `Sampler.traceIdRatioBased(0.1)`.",
-                "when_to_apply": "Zipkin выбирают, когда нужен лёгкий в настройке бэкенд; в `UI` смотрят service dependency graph, waterfall view (где теряется время) и error-трейсы (`tags[\"error\"]=true`).",
-                "edge_cases": "Для `OpenTelemetry`-first подхода `Jaeger` или `Tempo` предпочтительнее (богаче UI, adaptive sampling); `Zipkin` проще, но беднее по возможностям.",
-                "related": "[[metrics-tracing-interview#Q15]] Jaeger и Zipkin как бэкенды; [[metrics-tracing-interview#Q16]] трассировка в Spring Boot через OTel; [[metrics-tracing-interview#Q6]] OpenTelemetry как общий источник spans."
+                "explanation": "Spring Boot 3 uses Micrometer Tracing. A Brave bridge with Zipkin reporter or an OpenTelemetry Zipkin exporter serializes spans and sends them to the configured Zipkin HTTP endpoint.",
+                "example": "Configure `management.zipkin.tracing.endpoint=http://zipkin:9411/api/v2/spans` and an appropriate tracing bridge/exporter; set sampling probability separately for the environment.",
+                "when_to_apply": "Use this integration when Zipkin is the chosen tracing backend and the application already uses Spring Boot observability or OpenTelemetry instrumentation.",
+                "edge_cases": "Dependencies and property names depend on the Spring Boot line. Production sampling should rarely remain at 100%, and network/export failures require queue and retry monitoring.",
+                "related": "[[metrics-tracing-interview#Q15]] Jaeger and Zipkin; [[metrics-tracing-interview#Q16]] tracing in Spring Boot; [[metrics-tracing-interview#Q6]] OpenTelemetry signals."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Zipkin` интегрируют только через прямой `JDBC`-драйвер: приложение пишет spans в базу `Zipkin` `SQL`-запросами.",
+              "text": "Zipkin интегрируется только через JDBC, которым приложение напрямую пишет spans в backend database.",
               "correct": false,
               "sections": {
                 "what_actually": "Приложение шлёт spans по `HTTP` на `POST /api/v2/spans` (через reporter), а не пишет их в БД `Zipkin` напрямую `SQL`-ом.",
@@ -1956,7 +1956,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Zipkin` несовместим со `Spring Boot 3` и `Micrometer Tracing` — его можно подключить только в `Spring Boot 2` со `Spring Cloud Sleuth`.",
+              "text": "Zipkin несовместим со Spring Boot 3 и работает только через устаревший Spring Cloud Sleuth.",
               "correct": false,
               "sections": {
                 "what_actually": "`Spring Boot 3` штатно интегрируется с `Zipkin` через `Micrometer Tracing` (мост `brave` + `zipkin-reporter-brave`); `Sleuth` был путём в `Boot 2`, но не единственным сегодня.",
@@ -1968,7 +1968,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Zipkin` и `OpenTelemetry` взаимоисключающи: если используешь OTel, отправить трейсы в `Zipkin` невозможно.",
+              "text": "OpenTelemetry не может экспортировать spans в Zipkin, поэтому эти технологии взаимоисключающи.",
               "correct": false,
               "sections": {
                 "what_actually": "`OpenTelemetry` умеет экспортировать в `Zipkin` через `opentelemetry-exporter-zipkin`; они отлично совмещаются.",
@@ -2003,7 +2003,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Micrometer` (фасад метрик для `JVM`, аналог `SLF4J`) даёт: `Counter` — монотонно возрастающий счётчик; `Gauge` — текущее значение (может убывать); `Timer` — время и число вызовов с гистограммой; `DistributionSummary` — распределение числовых значений (не времени); плюс `LongTaskTimer` для долгих задач.",
+              "text": "`Counter` считает events, `Gauge` наблюдает state, `Timer` пишет duration/count, `DistributionSummary` — нетемпоральные distributions, например payload size.",
               "correct": true,
               "sections": {
                 "explanation": "Фасад абстрагирует от бэкенда (`Prometheus`, `Datadog`, `InfluxDB`): один и тот же код метрик экспортируется в любой из них через биндинг registry.",
@@ -2087,7 +2087,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`OpenTelemetry Collector` — независимый процесс-посредник между приложениями и бэкендами мониторинга. Принимает телеметрию (трейсы, метрики, логи) через receivers, обрабатывает processors'ами и экспортирует в нужные системы (`Jaeger`, `Prometheus`, `Tempo`, `Loki`).",
+              "text": "OpenTelemetry Collector принимает данные receivers, обрабатывает processors, соединяет pipelines connectors и отправляет exporters; разворачивается как agent.",
               "correct": true,
               "sections": {
                 "explanation": "Один endpoint для всех сигналов развязывает приложения от бэкендов: можно сменить хранилище без перекомпиляции, а батчинг, сжатие, retry и tail-based sampling вынести из приложения в Collector.",
@@ -2111,7 +2111,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`SLA` обычно строже `SLO`: клиенту обещают более высокую планку, чем закладывают во внутреннюю цель команды.",
+              "text": "`SLA` обычно строже `SLO`: клиенту обещают более высокую планку.",
               "correct": false,
               "sections": {
                 "what_actually": "Обычно `SLA` слабее `SLO` (`SLA ≤ SLO`): внутренняя цель жёстче договорной, чтобы иметь запас до нарушения контракта.",
@@ -2123,7 +2123,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`SLA` — это внутренняя цель команды, `SLO` — юридический договор с клиентом, а `SLI` — бюджет ошибок.",
+              "text": "`SLA` — это внутренняя цель команды, `SLO` — юридический договор с клиентом.",
               "correct": false,
               "sections": {
                 "what_actually": "Определения перепутаны: `SLI` — измеримый показатель, `SLO` — внутренняя цель, `SLA` — юридическое соглашение с клиентом; error budget — производная от `SLO`.",
@@ -2147,7 +2147,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`SLI` (Service Level Indicator) — измеримый показатель качества (например, availability). `SLO` (Objective) — внутренняя цель по `SLI` (>= 99.9%). `SLA` (Agreement) — юридическое соглашение с клиентом, обычно слабее `SLO`. Типичная связь: `SLA ≤ SLO ≤ 100%`.",
+              "text": "`SLI` — измеренное качество, `SLO` — target за window, `SLA` — внешнее commitment, error budget — допустимая unreliability.",
               "correct": true,
               "sections": {
                 "explanation": "Error budget — производная от SLO: `SLO 99.9%` → бюджет ошибок `0.1%` от времени; если бюджет исчерпан, замораживают релизы и переключаются на надёжность.",
@@ -2171,20 +2171,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Tail-based sampling` принимает решение о записи трейса **после** его завершения, когда уже известны результат, ошибки и латентность. Это позволяет сохранять 100% ошибок и медленных запросов, семплируя только «нормальные».",
+              "text": "Tail-based sampling принимает решение после накопления трассы, сохраняя errors, slow traces и другие policies.",
               "correct": true,
               "sections": {
-                "explanation": "В отличие от head-based (решение в начале, не зная исхода), tail-based видит весь трейс целиком, поэтому не теряет аномалии — но требует буфера и задержки решения.",
-                "example": "В `OTel Collector` `tail_sampling` с `decision_wait: 10s`, `num_traces: 100000` и политиками: `status_code: [ERROR]` (100%), `latency: threshold_ms 500` (100%), `probabilistic: 5%` для остальных.",
-                "when_to_apply": "Tail-based применяют в высоконагруженных сервисах, где хранить все трейсы дорого, но нужно гарантированно сохранять аномальные запросы; требует `OTel Collector` в инфраструктуре.",
-                "edge_cases": "Цена tail-based — память под буфер (GB), задержка решения 5-30s и высокая сложность; head-based проще и без задержки, но может отбросить ошибочный трейс.",
-                "related": "[[metrics-tracing-interview#Q9]] sampling и его виды; [[metrics-tracing-interview#Q28]] head-based vs tail-based; [[metrics-tracing-interview#Q24]] tail-based как способ снизить объём в prod."
+                "explanation": "Tail sampler собирает spans до decision wait и оценивает completed-enough trace по status, latency, attributes или probability. Это повышает шанс сохранить интересные traces, но зависит от полноты доставки и capacity.",
+                "example": "OTel Collector `tail_sampling` сохраняет ERROR traces, latency выше 500 ms и 5% остальных; memory и `num_traces` рассчитывают под peak concurrent traces.",
+                "when_to_apply": "Используйте, когда outcome-based selection ценнее минимальной стоимости и infrastructure может корректно route все spans trace к sampler и удерживать buffer.",
+                "edge_cases": "Late/missing spans, collector restart, eviction и неправильное load balancing могут дать partial decision. Tail sampling не является абсолютной гарантией сохранения каждой anomaly.",
+                "related": "[[metrics-tracing-interview#Q9]] sampling; [[metrics-tracing-interview#Q28]] head vs tail; [[metrics-tracing-interview#Q24]] production volume."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Tail-based sampling` реализуется прямо в `OpenTelemetry SDK` приложения и не требует `OTel Collector`.",
+              "text": "Tail sampling полностью выполняется SDK приложения и не требует централизованного Collector или буфера.",
               "correct": false,
               "sections": {
                 "what_actually": "Tail-based требует `OTel Collector` (нужен буфер для сборки всех spans трейса перед решением); в SDK реализуется head-based.",
@@ -2196,7 +2196,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Tail-based sampling` не нуждается в памяти и буфере, так как решение принимается мгновенно по первому span.",
+              "text": "Tail sampling не использует память и принимает решение без ожидания остальных spans трассы.",
               "correct": false,
               "sections": {
                 "what_actually": "Tail-based как раз требует буфера в памяти (GB) и задержки (`decision_wait`), чтобы дождаться всех spans трейса.",
@@ -2208,7 +2208,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Tail-based sampling` принимает решение в начале трейса по `traceId`, как и head-based, но с другим процентом.",
+              "text": "Tail sampling выбирает trace в момент создания root span так же, как head sampling.",
               "correct": false,
               "sections": {
                 "what_actually": "Tail-based решает **после** завершения трейса (зная ошибки и латентность); решение в начале по `traceId` — это head-based.",
@@ -2231,7 +2231,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Exemplar` — это усреднённое значение метрики за период, которое показывают на дашборде вместо сырых точек.",
+              "text": "Exemplar — это среднее значение метрики за период, не связанное с конкретным наблюдением.",
               "correct": false,
               "sections": {
                 "what_actually": "`Exemplar` — это конкретное наблюдение со ссылкой на трейс (`traceId`), а не усреднение; он указывает на единичный запрос, объясняющий точку.",
@@ -2243,7 +2243,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Exemplars` работают без трассировки: они генерируются `Prometheus` автоматически из имени метрики.",
+              "text": "Prometheus генерирует exemplars из имени метрики даже при отсутствии tracing context.",
               "correct": false,
               "sections": {
                 "what_actually": "Exemplar содержит `traceId`, который берётся из активной трассировки (`OpenTelemetry` context); без трассировки связать точку метрики с трейсом нечем.",
@@ -2255,7 +2255,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Exemplar` — конкретный пример (образец) наблюдения в метрике, содержащий ссылку на трейс (`traceId`, `spanId`). Он позволяет перейти от аномальной точки на графике метрики к конкретному трейсу, объясняющему эту аномалию.",
+              "text": "Exemplar хранит trace/span reference рядом с наблюдением метрики и связывает агрегат с конкретной трассой.",
               "correct": true,
               "sections": {
                 "explanation": "Это мост агрегат → пример: видим p99 latency = 5s → кликаем точку → exemplar даёт `traceId` → открываем трейс → видим конкретный медленный запрос и его причину.",
@@ -2268,10 +2268,10 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Exemplars` хранятся в обычном текстовом формате `Prometheus 0.0.4` и не требуют `OpenMetrics`.",
+              "text": "Exemplars всегда передаются форматом Prometheus 0.0.4 и не требуют OpenMetrics-поддержки.",
               "correct": false,
               "sections": {
-                "what_actually": "Для exemplars нужен `OpenMetrics`-формат scrape (`scrape_protocols: [OpenMetricsText1.0.0, ...]`); классический текст `Prometheus 0.0.4` их не передаёт.",
+                "what_actually": "Для exemplars нужен `OpenMetrics`-формат scrape (`scrape_protocols: [OpenMetricsText1.0.0,...]`); классический текст `Prometheus 0.0.4` их не передаёт.",
                 "source_of_confusion": "Привычный текстовый формат кажется достаточным для любых данных.",
                 "if_it_were_true": "Тогда `scrape_protocols` с `OpenMetricsText1.0.0` был бы не нужен, но именно он включает передачу exemplars.",
                 "how_it_should_be": "Exemplars требуют `OpenMetrics`-формата; в `PrometheusText0.0.4` они не сериализуются."
@@ -2291,7 +2291,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Высокая кардинальность — это слишком частый scrape метрик, который перегружает сеть между `Prometheus` и приложением.",
+              "text": "Высокая cardinality означает слишком частый scrape и устраняется увеличением scrape interval.",
               "correct": false,
               "sections": {
                 "what_actually": "Кардинальность — это число уникальных комбинаций значений тегов, а не частота scrape; перегрузку даёт рост числа временных рядов, а не сеть опроса.",
@@ -2303,7 +2303,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Высокая кардинальность опасна только для логов, а метрики `Prometheus` обрабатывают любое число тегов без проблем.",
+              "text": "Высокая cardinality опасна только для logs и почти не влияет на metrics storage.",
               "correct": false,
               "sections": {
                 "what_actually": "Именно метрики `Prometheus` страдают от высокой cardinality (взрыв time series, `OOM`); логи как раз годятся для high-cardinality детализации.",
@@ -2315,7 +2315,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Кардинальность — количество уникальных комбинаций значений тегов метрики. Высокая кардинальность даёт экспоненциальный рост объёма в TSDB (`OOM`, медленные запросы): тег `userId` с миллионами значений порождает миллионы временных рядов.",
+              "text": "Cardinality — число уникальных комбинаций label values; unbounded identifiers создают взрыв time series.",
               "correct": true,
               "sections": {
                 "explanation": "Каждая комбинация лейблов — отдельный ряд; `userId`/`orderId`/`requestId` неограниченны, поэтому их нельзя класть в теги — детализацию по пользователю отправляют в логи.",
@@ -2328,7 +2328,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Чтобы избежать высокой кардинальности, нужно увеличить число бакетов гистограммы — тогда данные точнее и компактнее.",
+              "text": "Кардинальность уменьшают увеличением числа histogram buckets, делая представление одновременно точнее и компактнее.",
               "correct": false,
               "sections": {
                 "what_actually": "Число бакетов не относится к проблеме cardinality по тегам; избегают её, убирая высококардинальные теги (`userId`, `orderId`), а не меняя бакеты.",
@@ -2351,7 +2351,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Context propagation — передача trace context (`traceId`, `spanId`, sampling decision) между сервисами через заголовки. `W3C TraceContext` (рекомендуемый): `traceparent`/`tracestate`. B3 (`Zipkin`): multi-header (`X-B3-TraceId`, `X-B3-SpanId`, `X-B3-Sampled`) или single-header `b3`.",
+              "text": "Context propagation передаёт trace state между сервисами: W3C использует `traceparent`/`tracestate`, B3 — single или multi-header формат.",
               "correct": true,
               "sections": {
                 "explanation": "Стандартизация заголовков позволяет сшивать трейс через разные системы; composite propagator поддерживает одновременно `W3C` и B3 для смешанных (legacy + новых) сред.",
@@ -2376,7 +2376,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Трейс не обрывается на async-вызовах и `Kafka`: контекст пропагируется туда авто-инструментацией так же бесшовно, как в синхронных `HTTP`-вызовах.",
+              "text": "Трейс не обрывается на async-вызовах и `Kafka`: контекст пропагируется туда авто-инструментацией так же бесшовно.",
               "correct": false,
               "sections": {
                 "what_actually": "Async executor по умолчанию не копирует контекст, а producer `Kafka` — не добавляет заголовки; для непрерывности нужны `ContextPropagatingExecutorService` и OTel `Kafka` instrumentation.",
@@ -2411,7 +2411,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Выбор SLI зависит от характера сервиса. Request-driven (REST/gRPC): availability и latency p99. Data pipeline (Kafka, batch): freshness и throughput. Storage (БД, кэш): durability, read latency, cache hit rate. Background workers: completion rate и delivery rate.",
+              "text": "Request-driven services используют availability/latency, batch jobs — completion/freshness, streaming — lag/throughput, storage — durability, availability и latency.",
               "correct": true,
               "sections": {
                 "explanation": "SLI должен отражать пользовательский опыт, а не внутренние метрики; для разных классов сервисов «качество» означает разное — где-то доступность, где-то свежесть данных.",
@@ -2448,7 +2448,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Для всех типов сервисов используют один и тот же набор SLI — availability и latency, независимо от природы сервиса.",
+              "text": "Для всех типов сервисов используют один и тот же набор SLI — availability и latency.",
               "correct": false,
               "sections": {
                 "what_actually": "SLI зависят от типа: для `Kafka`-консьюмера ключевые — freshness и throughput, а не latency `HTTP`; единый набор не отражает разный пользовательский опыт.",

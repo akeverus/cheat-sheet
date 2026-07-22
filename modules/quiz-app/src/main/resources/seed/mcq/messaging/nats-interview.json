@@ -9,7 +9,7 @@
           "question_text": "Что такое `NATS` и из каких слоёв он состоит?",
           "options": [
             {
-              "text": "`NATS` — это Java-based messaging system в одном ряду с `ActiveMQ` и `RabbitMQ`, поэтому требует JVM в production.",
+              "text": "NATS — распределённая SQL-база: subjects являются tables, а messages читаются через transactional queries с блокировками строк.",
               "correct": false,
               "sections": {
                 "what_actually": "Сервер `NATS` написан на Go и компилируется в native binary ~30 MB; JVM ему не нужен, Java есть только в клиенте `nats.java`.",
@@ -21,20 +21,20 @@
               "order": 0
             },
             {
-              "text": "`NATS` — open-source messaging system (CNCF Incubating) из двух слоёв: `Core NATS` (lightweight pub/sub, at-most-once) и `JetStream` (persistence, at-least-once / exactly-once). Дизайн нацелен на microseconds latency, millions msg/sec и ~30 MB binary.",
+              "text": "NATS — subject-based messaging system: Core даёт быстрый pub/sub и request-reply, а JetStream добавляет durable streams и consumers.",
               "correct": true,
               "sections": {
-                "explanation": "`Core NATS` отвечает за быстрый fire-and-forget pub/sub, а `JetStream` (с 2020) добавляет durable storage и replay поверх того же протокола. Это два слоя одной системы, а не два разных брокера.",
-                "example": "Один бинарь на 30 MB закрывает microservices-обмен, IoT с миллионами устройств, edge computing и real-time приложения вроде чата или gaming.",
-                "when_to_apply": "Берут `NATS`, когда нужны очень низкая latency и низкий resource budget; `Core` — для realtime, `JetStream` — когда нужна durability.",
-                "edge_cases": "Без `JetStream` сообщения для offline-подписчиков теряются (at-most-once) — для гарантий доставки слой persistence обязателен, и это частая ошибка дизайна.",
+                "explanation": "Слои разделяют требования: Core не хранит сообщения для отключённых подписчиков, JetStream сохраняет публикации в streams и отслеживает состояние consumers.",
+                "example": "Сервис discovery использует Core request-reply для коротких запросов, а события заказов публикуются в subject, захватываемый реплицируемым JetStream stream.",
+                "when_to_apply": "Выбирайте Core для transient real-time messaging, а JetStream — когда нужны повторная доставка, offline consumers, retention или replay.",
+                "edge_cases": "Гарантия exactly-once в JetStream требует корректного использования deduplication и double acknowledgements; бизнес-побочные эффекты всё равно должны быть идемпотентными.",
                 "related": "[[nats-interview#Q2]] сравнение с Kafka и RabbitMQ; [[nats-interview#Q6]] pub/sub и at-most-once в Core."
               },
               "label": "B",
               "order": 1
             },
             {
-              "text": "`NATS` подходит только для прототипирования и не используется в serious production-системах.",
+              "text": "NATS работает только как persistent event log: transient pub/sub без записи messages на disk в нём отсутствует.",
               "correct": false,
               "sections": {
                 "what_actually": "`NATS` работает в production у Mastercard, Walmart, GE, Tesla и других; это зрелый CNCF Incubating проект.",
@@ -46,7 +46,7 @@
               "order": 2
             },
             {
-              "text": "`NATS` — это только pub/sub без persistence, поэтому для durable messaging обязательно нужен отдельный broker рядом.",
+              "text": "NATS — Java-брокер поверх ZooKeeper, использующий Kafka partitions, offsets и consumer groups вместо subjects.",
               "correct": false,
               "sections": {
                 "what_actually": "Persistence даёт встроенный слой `JetStream` (at-least-once / exactly-once с 2020) — отдельный broker не нужен.",
@@ -69,7 +69,7 @@
           "question_text": "Чем `NATS` отличается от `Kafka` и `RabbitMQ` и когда выбирать каждый?",
           "options": [
             {
-              "text": "`NATS` вообще не поддерживает persistence, поэтому для любых durable сценариев нужна `Kafka`.",
+              "text": "NATS, Kafka и RabbitMQ различаются только wire protocol; storage, routing, ordering и эксплуатационная модель у них одинаковы.",
               "correct": false,
               "sections": {
                 "what_actually": "`JetStream` (с 2020) даёт persistence и replay; ограничение лишь в том, что replay скромнее, чем first-class у `Kafka`.",
@@ -81,7 +81,7 @@
               "order": 0
             },
             {
-              "text": "`RabbitMQ` имеет наивысший throughput из трёх, поэтому его выбирают для high-volume нагрузок.",
+              "text": "Kafka выбирают для короткого request-reply, RabbitMQ — для многолетнего partitioned log, а NATS — для exchange bindings.",
               "correct": false,
               "sections": {
                 "what_actually": "`RabbitMQ` держит десятки тысяч msg/sec, тогда как `NATS` — миллионы; для high-volume `RabbitMQ` чаще bottleneck.",
@@ -93,7 +93,7 @@
               "order": 1
             },
             {
-              "text": "`Kafka` лучше во всех сценариях, поэтому всегда стоит выбирать именно её, а `NATS` и `RabbitMQ` не нужны.",
+              "text": "NATS универсально заменяет HTTP/gRPC, Kafka и RabbitMQ, поэтому одного брокера достаточно для любого messaging workload.",
               "correct": false,
               "sections": {
                 "what_actually": "Для microservices с low-latency требованиями `NATS` быстрее на порядки (microseconds против ms), а `Kafka` для простого pub/sub — overkill.",
@@ -105,7 +105,7 @@
               "order": 2
             },
             {
-              "text": "`NATS` — microseconds latency и ~30 MB (microservices, IoT, edge); `Kafka` — stream processing и big data с first-class replay; `RabbitMQ` — сложный routing через exchanges/bindings. Правило: latency → `NATS`, объём → `Kafka`, routing → `RabbitMQ`.",
+              "text": "NATS силён в lightweight messaging и edge, Kafka — в durable log, RabbitMQ — в queues и гибкой маршрутизации.",
               "correct": true,
               "sections": {
                 "explanation": "У каждого свой профиль: `NATS` — миллионы msg/sec на ноду при очень низкой задержке, `Kafka` — высокий throughput с долгим хранением и replay, `RabbitMQ` — гибкая AMQP-маршрутизация.",
@@ -129,7 +129,7 @@
           "question_text": "Как устроена архитектура `NATS Server` и какие у него режимы развёртывания?",
           "options": [
             {
-              "text": "`NATS Server` — единый Go-бинарь ~30 MB с режимами standalone, cluster (full mesh peers), super-cluster (регионы) и leaf nodes (edge). Встроены authentication, authorization по subject, TLS и monitoring HTTP endpoint; внешних зависимостей нет.",
+              "text": "NATS Server — self-contained процесс с standalone, cluster, gateway и leaf-node топологиями; TLS, accounts и monitoring встроены.",
               "correct": true,
               "sections": {
                 "explanation": "Один self-contained бинарь покрывает всё: standalone — одна нода, cluster — full mesh, super-cluster — связка кластеров, leaf nodes — edge. Auth, TLS и мониторинг встроены, отдельные сервисы не нужны.",
@@ -142,7 +142,7 @@
               "order": 0
             },
             {
-              "text": "`NATS Server` требует JVM в production, как и большинство enterprise-брокеров.",
+              "text": "Production NATS требует JVM и application server, а компактный Go binary используется только как development proxy.",
               "correct": false,
               "sections": {
                 "what_actually": "Сервер написан на Go и компилируется в native binary; никакого JVM нет, поэтому он весит ~30 MB, а не гигабайты.",
@@ -154,7 +154,7 @@
               "order": 1
             },
             {
-              "text": "Cluster mode в `NATS` строится по топологии master-slave, где запросы обслуживает только master-нода.",
+              "text": "NATS cluster имеет единственный master для client connections; остальные nodes пассивны и обслуживают только failover.",
               "correct": false,
               "sections": {
                 "what_actually": "Кластер `NATS` — это full mesh всех peers без master-ноды: любой peer принимает запросы и маршрутизирует их.",
@@ -166,7 +166,7 @@
               "order": 2
             },
             {
-              "text": "`NATS Server` требует `ZooKeeper` для координации кластера так же, как `Kafka` до версии 3.x.",
+              "text": "Membership и metadata NATS обязательно хранятся во внешнем ZooKeeper, без которого cluster не запускается.",
               "correct": false,
               "sections": {
                 "what_actually": "`NATS` не имеет внешних зависимостей и координирует кластер сам; `ZooKeeper` нужен был только `Kafka` < 3.x, а `JetStream` использует `RAFT`.",
@@ -189,7 +189,7 @@
           "question_text": "Что такое subjects в `NATS` и чем они отличаются от топиков `Kafka`?",
           "options": [
             {
-              "text": "Subject в `NATS` — это полный аналог топика `Kafka`, между ними нет различий.",
+              "text": "Subject полностью эквивалентен Kafka topic: wildcard-подписок, дешёвых per-user names и отдельной routing model нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Subjects иерархические, dot-separated и поддерживают wildcards; топики `Kafka` плоские, и subjects можно создавать миллионами без overhead.",
@@ -201,7 +201,7 @@
               "order": 0
             },
             {
-              "text": "Subjects не поддерживают wildcards — подписка возможна только по точному совпадению имени.",
+              "text": "Subjects поддерживают только exact matching; подписка `orders.>` не может получать всё семейство order events.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть два wildcard: `*` (один токен) и `>` (несколько токенов, только в конце) — именно они дают подписку на широкий диапазон.",
@@ -213,7 +213,7 @@
               "order": 1
             },
             {
-              "text": "Число subjects жёстко лимитировано (~100 на сервер), поэтому миллионы создавать нельзя.",
+              "text": "Сервер поддерживает около ста subjects, поэтому granular names и per-user subjects не масштабируются в production.",
               "correct": false,
               "sections": {
                 "what_actually": "`NATS` специально спроектирован под миллионы subjects: в `Core NATS` нет per-subject overhead.",
@@ -225,7 +225,7 @@
               "order": 2
             },
             {
-              "text": "Subject — иерархическое dot-separated имя для маршрутизации (например `orders.created`, `user.123.profile`) с поддержкой wildcards `*` и `>`. Они granular-нее топиков `Kafka`, создаются миллионами дёшево, а partitions в `Core NATS` нет.",
+              "text": "Subject — иерархическое имя с wildcards `*` и `>`; оно легче Kafka topic и не требует partitions в Core NATS.",
               "correct": true,
               "sections": {
                 "explanation": "Subjects строятся как иерархия токенов через точку и матчатся подписками с wildcards. Это даёт тонкую адресацию (вплоть до per-user) без накладных расходов на каждый subject.",
@@ -249,7 +249,7 @@
           "question_text": "Как работают wildcards `*` и `>` в subjects `NATS`?",
           "options": [
             {
-              "text": "`*` матчит несколько токенов, включая точки, поэтому `orders.*` совпадает с `orders.shipping.scheduled`.",
+              "text": "Wildcard `*` захватывает любое число tokens, включая точки, поэтому `orders.*` совпадает с `orders.eu.created` и глубже.",
               "correct": false,
               "sections": {
                 "what_actually": "`*` матчит ровно ОДИН токен; чтобы захватить несколько уровней, нужен `>` (multi-token).",
@@ -261,7 +261,7 @@
               "order": 0
             },
             {
-              "text": "`>` можно ставить в любой позиции паттерна, например `orders.>.scheduled`.",
+              "text": "Wildcard `>` можно ставить в середине subject, например `orders.>.created`, а после него продолжать точные tokens.",
               "correct": false,
               "sections": {
                 "what_actually": "`>` обязан быть ПОСЛЕДНИМ токеном паттерна; `orders.>.scheduled` — невалидный паттерн.",
@@ -273,7 +273,7 @@
               "order": 1
             },
             {
-              "text": "`*` матчит ровно один токен, `>` — несколько токенов и должен стоять последним. Поэтому `orders.*` ловит `orders.created`, но НЕ `orders.shipping.scheduled`, а `orders.>` ловит всё под `orders`. Matching идёт по prefix tree (trie), а не перебором подписчиков.",
+              "text": "`*` совпадает с одним token, а `>` — с оставшимся хвостом и ставится в конце; их области различаются.",
               "correct": true,
               "sections": {
                 "explanation": "`*` — это один уровень иерархии, `>` — всё вложенное до конца. Комбинируя их, подписываются либо на конкретный уровень (`user.*.profile`), либо на целое семейство событий (`orders.>`).",
@@ -286,7 +286,7 @@
               "order": 2
             },
             {
-              "text": "Wildcards замедляют доставку до O(N) подписчиков на каждое сообщение.",
+              "text": "Любой wildcard заставляет сервер линейно перебирать все subscriptions, поэтому subject hierarchy плохо масштабируется при множестве routes.",
               "correct": false,
               "sections": {
                 "what_actually": "`NATS` использует prefix tree (trie): стоимость matching зависит от числа токенов, а не от количества подписчиков.",
@@ -309,7 +309,7 @@
           "question_text": "Как устроен pub/sub в `Core NATS` и что происходит без подписчиков?",
           "options": [
             {
-              "text": "Publish в `NATS` блокируется до тех пор, пока все подписчики не обработают сообщение.",
+              "text": "Publish ждёт обработки сообщения всеми matching subscribers и их acknowledgements, поэтому скорость определяется самым медленным получателем.",
               "correct": false,
               "sections": {
                 "what_actually": "Publish неблокирующий, fire-and-forget: broker не ждёт обработки на стороне подписчиков.",
@@ -321,7 +321,7 @@
               "order": 0
             },
             {
-              "text": "В pub/sub `NATS` сообщение получает только один подписчик из всех matching.",
+              "text": "Каждое сообщение получает только один matching subscriber, поэтому обычный Core NATS pub/sub не поддерживает fanout нескольким services.",
               "correct": false,
               "sections": {
                 "what_actually": "Классический pub/sub — это broadcast: сообщение получают ВСЕ matching-подписчики; «один из» — это queue groups.",
@@ -333,7 +333,7 @@
               "order": 1
             },
             {
-              "text": "`Core NATS` буферизует сообщения, если подписчики офлайн, и автоматически проигрывает их при подключении.",
+              "text": "Core NATS сохраняет сообщения для offline subscribers и автоматически replay-ит их после подключения без JetStream и durable consumers.",
               "correct": false,
               "sections": {
                 "what_actually": "`Core NATS` работает at-most-once: офлайн-подписчики пропускают сообщения; для буферизации и replay нужен `JetStream`.",
@@ -345,7 +345,7 @@
               "order": 2
             },
             {
-              "text": "Все подписчики, чей subject совпадает, получают сообщение — это broadcast. Если подписчиков нет, сообщение в `Core NATS` просто отбрасывается (at-most-once). Для durability и доставки офлайн-подписчикам нужен `JetStream`.",
+              "text": "Все matching subscribers получают сообщение; без подписчиков Core NATS его отбрасывает, а durability добавляет JetStream.",
               "correct": true,
               "sections": {
                 "explanation": "Классический pub/sub: publish уходит всем matching-подписчикам сразу. Доставка fire-and-forget, без хранения, поэтому сообщение без получателей теряется.",
@@ -369,20 +369,20 @@
           "question_text": "Что такое queue groups в `NATS` и для чего они нужны?",
           "options": [
             {
-              "text": "Queue group — это несколько consumers на одном subject с одинаковым именем группы; каждое сообщение получает РОВНО ОДИН из них (round-robin). Это эффективный load balancing для work queues; можно совмещать с обычными подписчиками (каждая группа берёт 1 копию, не-queue подписчики — каждое сообщение).",
+              "text": "Queue group объединяет subscribers: сервер выбирает одного доступного участника на сообщение без гарантии строгого round-robin.",
               "correct": true,
               "sections": {
-                "explanation": "Подписки с общим параметром `queue` образуют группу, внутри которой сервер раздаёт сообщения по очереди. Так пул воркеров делит нагрузку без дублирования обработки.",
-                "example": "Применяют для worker pool, обрабатывающего jobs, и горизонтального масштабирования consumers под рост нагрузки.",
-                "when_to_apply": "Берут, когда нужно распределить работу, а не разослать всем: добавил воркер в группу — и пропускная способность выросла.",
-                "edge_cases": "При сбое воркера с `Core NATS` сообщение теряется (at-most-once); с `JetStream` и ack-based доставкой оно redelivered другому воркеру.",
+                "explanation": "Обычные подписчики образуют broadcast, а подписчики с одинаковым queue name — competing consumers. Выбор участника выполняет сервер и не является контрактом round-robin.",
+                "example": "Пять экземпляров `billing-worker` подписаны на `billing.commands` с queue name `billing`; каждую команду получает один из активных экземпляров.",
+                "when_to_apply": "Используйте для горизонтального масштабирования stateless worker-ов. Когда нужна гарантированная повторная доставка, применяйте JetStream consumer.",
+                "edge_cases": "Core queue subscription остаётся at-most-once: если выбранный subscriber потеряет сообщение после доставки, сервер не хранит его для redelivery.",
                 "related": "[[nats-interview#Q6]] broadcast-семантика обычного pub/sub; [[nats-interview#Q3]] queue groups поверх кластера full mesh."
               },
               "label": "A",
               "order": 0
             },
             {
-              "text": "Queue group — это несколько consumers на одном subject с общим именем группы; распределение между ними не автоматическое — воркеры сами договариваются через общий координационный subject, кто возьмёт очередное сообщение.",
+              "text": "Все участники queue group получают сообщение и затем выбирают победителя через отдельный coordination subject.",
               "correct": false,
               "sections": {
                 "what_actually": "Сервер `NATS` сам распределяет сообщения round-robin внутри queue group; client-side координация не нужна.",
@@ -394,7 +394,7 @@
               "order": 1
             },
             {
-              "text": "Queue group — это несколько consumers на одном subject с общим именем группы; каждое сообщение получают ВСЕ участники группы, а общее имя нужно лишь для того, чтобы объединять их подписки в мониторинге.",
+              "text": "Queue group влияет только на monitoring; каждое сообщение всё равно получает каждый matching subscriber.",
               "correct": false,
               "sections": {
                 "what_actually": "Queue group делает round-robin (сообщение получает один из группы), а обычный subscribe — broadcast всем; путаница ведёт к неожиданной дублирующей обработке.",
@@ -406,7 +406,7 @@
               "order": 2
             },
             {
-              "text": "Queue group — это несколько consumers на одном subject с общим именем группы; сервер раздаёт сообщения по очереди, но при сбое взявшего сообщение воркера оно теряется безвозвратно в любом режиме, redelivery для групп не предусмотрен.",
+              "text": "Core NATS queue group обеспечивает durable redelivery после сбоя worker-а без stream и consumer state.",
               "correct": false,
               "sections": {
                 "what_actually": "С `Core NATS` без ack — да, теряется; но с `JetStream` и ack-based доставкой сообщение redelivered другому воркеру.",
@@ -429,7 +429,7 @@
           "question_text": "Как реализован паттерн request-reply в `NATS`?",
           "options": [
             {
-              "text": "Request-reply в `NATS` требует, чтобы клиент заранее вручную создал и подписался на постоянный reply-subject.",
+              "text": "Request-reply требует заранее создать постоянный reply subject и вручную поддерживать его жизненный цикл для каждого клиента.",
               "correct": false,
               "sections": {
                 "what_actually": "`NATS` сам создаёт временный reply-subject под каждый запрос и управляет им автоматически; вручную ничего настраивать не нужно.",
@@ -441,7 +441,7 @@
               "order": 0
             },
             {
-              "text": "В request-reply ответ от сервера получают все клиенты, подписанные на основной subject, а не только инициатор запроса.",
+              "text": "Ответ получают все subscribers основного subject, поэтому инициатор запроса не может сопоставить response со своим request.",
               "correct": false,
               "sections": {
                 "what_actually": "Ответ уходит на уникальный временный reply-subject конкретного запроса, поэтому его получает только инициатор.",
@@ -453,20 +453,20 @@
               "order": 1
             },
             {
-              "text": "Это RPC-подобный паттерн поверх pub/sub: сервер подписывается на subject и отвечает через `msg.respond(...)`, а клиент делает `nc.request(subject, data, {timeout})` и ждёт ответ. `NATS` под капотом создаёт временные reply-subjects (auto-managed) и даёт sub-millisecond latency против HTTP.",
+              "text": "Requester публикует reply inbox и ждёт ответ синхронно либо асинхронно; responder отправляет response на этот inbox.",
               "correct": true,
               "sections": {
-                "explanation": "Клиент шлёт запрос и блокируется до ответа или таймаута; сервер отвечает на временный reply-subject, который `NATS` сам завёл под этот запрос. Получается синхронный вызов поверх асинхронного транспорта.",
-                "example": "Подходит для быстрых внутренних RPC между сервисами, где HTTP/gRPC добавляли бы лишнюю latency и инфраструктуру.",
-                "when_to_apply": "Берут, когда нужен синхронный ответ с минимальной задержкой; обязательно задают timeout, чтобы не зависнуть без ответа.",
-                "edge_cases": "Если сервер не ответит в пределах timeout, клиент получает ошибку/таймаут; reply-subjects временные и убираются автоматически после ответа.",
+                "explanation": "Это протокольный паттерн поверх pub/sub, а не отдельный транспорт. Клиентские библиотеки создают уникальный inbox и сопоставляют ответ с запросом.",
+                "example": "Сервис подписан на `inventory.check`; клиент вызывает request с timeout, а handler отвечает через `msg.respond(...)`. В async API результат возвращается через future.",
+                "when_to_apply": "Подходит для коротких внутренних запросов, когда устраивает messaging-семантика и предусмотрены timeout, cancellation на стороне клиента и обработка отсутствия responder-а.",
+                "edge_cases": "Timeout requester-а не отменяет обработку у responder-а. Для длительных операций лучше использовать асинхронную команду и отдельное событие результата.",
                 "related": "[[nats-interview#Q6]] pub/sub, поверх которого строится request-reply; [[nats-interview#Q4]] subjects, включая временные reply-subjects."
               },
               "label": "C",
               "order": 2
             },
             {
-              "text": "Request-reply работает только поверх `JetStream` и недоступен в `Core NATS`.",
+              "text": "Request-reply доступен только в JetStream и не работает поверх transient Core NATS subjects.",
               "correct": false,
               "sections": {
                 "what_actually": "Это паттерн поверх обычного pub/sub в `Core NATS`: сервер отвечает через `msg.respond(...)`, persistence не требуется.",
@@ -489,7 +489,7 @@
           "question_text": "Что такое `JetStream` в `NATS` и что он добавляет к `Core NATS`?",
           "options": [
             {
-              "text": "`JetStream` заменяет `Core NATS`: после его включения обычный pub/sub перестаёт работать.",
+              "text": "Включение JetStream отключает Core NATS и переводит все subscriptions в durable mode с обязательными acknowledgements и replay.",
               "correct": false,
               "sections": {
                 "what_actually": "`JetStream` backwards-compatible и сосуществует с `Core NATS`; обычный pub/sub продолжает работать как прежде.",
@@ -501,7 +501,7 @@
               "order": 0
             },
             {
-              "text": "`JetStream` — это внешняя система persistence (как отдельная `Kafka`), которую разворачивают рядом с `NATS`.",
+              "text": "JetStream — внешний storage cluster, который разворачивают отдельно и связывают с Core NATS через специальный connector.",
               "correct": false,
               "sections": {
                 "what_actually": "`JetStream` встроен в сам сервер `NATS` и использует тот же протокол; отдельную систему разворачивать не нужно.",
@@ -513,7 +513,7 @@
               "order": 1
             },
             {
-              "text": "`JetStream` (с 2020) — persistence-слой поверх `Core NATS`: durable storage в memory или на disk, replay сообщений, at-least-once / exactly-once доставка, репликация через `RAFT` и трекинг состояния consumers. Он backwards-compatible — тот же протокол, лишь добавлены команды.",
+              "text": "JetStream добавляет streams, file/memory storage, retention, durable consumers, replay и Raft replication, сохраняя Core subject protocol.",
               "correct": true,
               "sections": {
                 "explanation": "`JetStream` живёт в том же сервере и протоколе, что и `Core NATS`, добавляя durable storage и replay поверх привычного pub/sub. Это включаемый слой, а не отдельный брокер.",
@@ -526,7 +526,7 @@
               "order": 2
             },
             {
-              "text": "`JetStream` даёт только in-memory хранение и не умеет писать сообщения на диск.",
+              "text": "JetStream хранит данные только в memory; restart кластера удаляет streams независимо от replicas и storage configuration.",
               "correct": false,
               "sections": {
                 "what_actually": "`JetStream` поддерживает и memory, и file storage; именно file-режим даёт durable хранение на диске.",
@@ -549,7 +549,7 @@
           "question_text": "Что такое stream в `JetStream` и как он настраивается?",
           "options": [
             {
-              "text": "Stream всегда хранит данные только в памяти, поэтому durable-журнала на диске у `JetStream` нет.",
+              "text": "Stream всегда использует memory storage и теряет records после restart независимо от replicas, limits и storage configuration.",
               "correct": false,
               "sections": {
                 "what_actually": "Storage stream выбирается: `file` пишет на диск (durable), `memory` — эфемерно; durable-журнал даёт именно file-режим.",
@@ -561,7 +561,7 @@
               "order": 0
             },
             {
-              "text": "`Stream` — persistent storage для сообщений, попадающих под заданные subjects (`--subjects \"orders.>\"`). Настраивается storage (`file` durable или `memory` ephemeral), число `--replicas`, лимиты `--max-age` / `--max-msgs` / `--max-bytes`. Все publish в matching subjects сохраняются в stream.",
+              "text": "Stream захватывает subjects и задаёт storage, replicas, retention и limits; сохранённые publications доступны consumers и replay.",
               "correct": true,
               "sections": {
                 "explanation": "Stream привязывается к набору subjects и копит туда все matching-сообщения. Это и есть durable-журнал, поверх которого работают consumers и replay.",
@@ -574,7 +574,7 @@
               "order": 1
             },
             {
-              "text": "Число реплик stream нельзя задать — `JetStream` всегда держит ровно одну копию данных.",
+              "text": "Stream всегда имеет одну replica, поэтому JetStream не обеспечивает high availability, quorum и failover данных.",
               "correct": false,
               "sections": {
                 "what_actually": "Параметр `--replicas` задаёт число копий (например 3), и `JetStream` реплицирует их через `RAFT`.",
@@ -586,7 +586,7 @@
               "order": 2
             },
             {
-              "text": "Stream хранит сообщения только одного конкретного subject и не поддерживает wildcard в `--subjects`.",
+              "text": "Stream принимает только один точный subject; wildcard families вроде `orders.>` и несколько subjects для него недоступны.",
               "correct": false,
               "sections": {
                 "what_actually": "Stream может покрывать целое семейство subjects через wildcard, например `orders.>`, а не один точный subject.",
@@ -609,7 +609,7 @@
           "question_text": "Что такое consumer в `JetStream`, и чем durable отличается от ephemeral, а push от pull?",
           "options": [
             {
-              "text": "`Consumer` — это view на сообщения stream; и `durable`, и `ephemeral` одинаково переживают рестарт сервера, `NATS` хранит last consumed sequence для обоих, а различаются они лишь тем, задано ли у consumer явное имя.",
+              "text": "Durable и ephemeral consumers одинаково переживают restart и сохраняют позицию; различаются они только наличием явного имени.",
               "correct": false,
               "sections": {
                 "what_actually": "Только durable хранит позицию и переживает рестарты; ephemeral удаляется вместе с состоянием, когда уходит последний подписчик.",
@@ -621,7 +621,7 @@
               "order": 0
             },
             {
-              "text": "`Consumer` — это view на сообщения stream; по модели доставки бывает `push`, где подписчик сам запрашивает сообщения батчами по мере готовности, и `pull`, где сервер проталкивает их подписчику автоматически.",
+              "text": "В push-модели client сам запрашивает batches, а в pull-модели server автоматически проталкивает сообщения подписчику.",
               "correct": false,
               "sections": {
                 "what_actually": "Кроме push есть pull-consumer: подписчик сам запрашивает сообщения, что удобно для batch-обработки и контроля темпа.",
@@ -633,7 +633,7 @@
               "order": 1
             },
             {
-              "text": "`Consumer` — это view на сообщения stream. `Durable` consumer переживает рестарты, `NATS` хранит его позицию (last consumed sequence); `ephemeral` удаляется автоматически, когда подписчиков не осталось. По модели доставки бывает `push` (сервер сам шлёт сообщения) и `pull` (подписчик сам запрашивает, что удобнее для batch-обработки).",
+              "text": "Consumer задаёт чтение stream: durable сохраняет позицию между restart, ephemeral удаляется без subscribers; доставка бывает push или pull.",
               "correct": true,
               "sections": {
                 "explanation": "Consumer определяет, как именно читают stream: durable сохраняет прогресс между перезапусками, ephemeral живёт только пока есть подписчик. Push и pull различаются тем, кто инициирует доставку.",
@@ -646,7 +646,7 @@
               "order": 2
             },
             {
-              "text": "`Consumer` — это отдельная копия сообщений stream: `JetStream` физически дублирует данные в хранилище consumer'а, поэтому durable consumer занимает примерно столько же места, сколько исходный stream.",
+              "text": "Consumer хранит отдельную физическую копию stream, поэтому каждый durable consumer удваивает объём сохранённых messages.",
               "correct": false,
               "sections": {
                 "what_actually": "Consumer — это view с позицией чтения поверх того же stream; отдельной копии сообщений он не делает.",
@@ -669,7 +669,7 @@
           "question_text": "Какие retention policies поддерживает `JetStream` и чем они различаются?",
           "options": [
             {
-              "text": "Политика `interest` хранит сообщения по `max-age`, игнорируя факт их получения consumers.",
+              "text": "`InterestPolicy` игнорирует acknowledgements и удаляет records только по времени, поэтому совпадает с `LimitsPolicy`.",
               "correct": false,
               "sections": {
                 "what_actually": "`interest` удаляет сообщение, как только его получили ВСЕ заинтересованные consumers; по `max-age` хранит именно `limits`.",
@@ -681,7 +681,7 @@
               "order": 0
             },
             {
-              "text": "`JetStream` поддерживает три retention policy: `limits` (по умолчанию — хранить, пока не превышены `max_age` / `max_msgs` / `max_bytes`), `interest` (удалять сообщение после того, как его получили все consumers) и `workqueue` (удалять после получения одним consumer — queue-семантика).",
+              "text": "`LimitsPolicy` хранит до лимитов, `InterestPolicy` — пока данные нужны consumers, `WorkQueuePolicy` — до успешной обработки.",
               "correct": true,
               "sections": {
                 "explanation": "Retention определяет, когда сообщение удаляется из stream. `limits` держит историю по лимитам, `interest` чистит по факту доставки всем, `workqueue` превращает stream в распределённую очередь.",
@@ -694,7 +694,7 @@
               "order": 1
             },
             {
-              "text": "`JetStream` поддерживает единственную retention policy — хранить сообщения вечно без какого-либо удаления.",
+              "text": "JetStream хранит records бессрочно: `max_age`, `max_msgs` и `max_bytes` не удаляют данные.",
               "correct": false,
               "sections": {
                 "what_actually": "Политик три (`limits`, `interest`, `workqueue`), и все они так или иначе удаляют сообщения; вечного хранения по умолчанию нет.",
@@ -706,7 +706,7 @@
               "order": 2
             },
             {
-              "text": "Политика `workqueue` оставляет копию сообщения каждому consumer, как обычный broadcast.",
+              "text": "`WorkQueuePolicy` broadcast-ит сообщение всем consumers и сохраняет полную историю после acknowledgements.",
               "correct": false,
               "sections": {
                 "what_actually": "`workqueue` удаляет сообщение после получения ОДНИМ consumer — это queue-семантика, а не broadcast.",
@@ -729,7 +729,7 @@
           "question_text": "Как `JetStream` обеспечивает репликацию и какие гарантии даёт `RAFT`?",
           "options": [
             {
-              "text": "`JetStream` реплицирует данные через `ZooKeeper`, как это делала старая `Kafka`.",
+              "text": "JetStream использует ZooKeeper для leader election и replication stream data между NATS servers.",
               "correct": false,
               "sections": {
                 "what_actually": "Репликацию обеспечивает встроенный `RAFT`; внешний `ZooKeeper` `NATS` не использует.",
@@ -741,20 +741,20 @@
               "order": 0
             },
             {
-              "text": "`JetStream` использует консенсус `RAFT` для репликации streams. Число копий задаётся `--replicas` (например 3 → quorum 2, переживает 1 отказ; 5 → переживает 2). Запись подтверждается (ACK) только после того, как её сохранило большинство реплик (quorum write).",
+              "text": "Stream и consumer state реплицируются Raft-группами; commit требует majority, поэтому без quorum новые записи не подтверждаются.",
               "correct": true,
               "sections": {
-                "explanation": "`RAFT` выбирает лидера и реплицирует записи на follower'ов; ACK клиенту уходит лишь после кворумного подтверждения. Это даёт согласованность и устойчивость к отказам нод.",
-                "example": "Stream с `--replicas 3` переживает падение одной ноды без потери данных, потому что кворум из двух реплик продолжает работать.",
-                "when_to_apply": "Реплики увеличивают, когда нужна высокая доступность и защита данных от отказа отдельных нод.",
-                "edge_cases": "1 реплика — нет HA; 3 — переживают 1 отказ; 5 — два отказа; чем больше реплик, тем выше latency записи из-за ожидания кворума.",
+                "explanation": "Raft выбирает leader и требует majority для commit. Число replicas определяет допустимое число отказов и стоимость записи.",
+                "example": "Stream с `replicas=3` продолжает подтверждать записи при отказе одной ноды, но теряет доступность при отсутствии большинства.",
+                "when_to_apply": "Для критичных данных задавайте нечётное число реплик, распределяйте их по failure domains и проверяйте quorum при обслуживании.",
+                "edge_cases": "Replication не заменяет backups и не защищает от логического удаления или ошибочной retention policy. Сетевой partition сохраняет consistency ценой недоступности меньшинства.",
                 "related": "[[nats-interview#Q10]] параметр --replicas при создании stream; [[nats-interview#Q17]] кластеризация, поверх которой работает RAFT."
               },
               "label": "B",
               "order": 1
             },
             {
-              "text": "Stream с тремя репликами переживает отказ двух нод одновременно.",
+              "text": "Три replicas продолжают принимать записи после отказа двух nodes, поскольку одной копии достаточно для commit.",
               "correct": false,
               "sections": {
                 "what_actually": "3 реплики дают quorum 2 и переживают лишь 1 отказ; чтобы пережить 2 отказа, нужно 5 реплик.",
@@ -766,7 +766,7 @@
               "order": 2
             },
             {
-              "text": "Запись подтверждается клиенту сразу после приёма лидером, не дожидаясь репликации на другие ноды.",
+              "text": "Leader подтверждает publish до replication, поэтому acknowledgement не означает фиксацию записи на quorum.",
               "correct": false,
               "sections": {
                 "what_actually": "ACK уходит только после quorum write — когда запись сохранило большинство реплик, а не один лидер.",
@@ -789,7 +789,7 @@
           "question_text": "Что такое встроенный Key-Value store в `NATS` и где его применяют?",
           "options": [
             {
-              "text": "`NATS KV` не умеет уведомлять об изменениях — узнать про новое значение можно только периодическим поллингом.",
+              "text": "NATS KV не поддерживает watch и change notifications; приложения узнают об обновлениях только периодическим polling всех keys.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть `watch` API: подписка на изменения ключей в реальном времени, аналог etcd watch, без поллинга.",
@@ -801,7 +801,7 @@
               "order": 0
             },
             {
-              "text": "`NATS KV` предназначен для хранения крупных файлов и бинарных blob'ов вместо мелких ключей.",
+              "text": "KV предназначен для крупных файлов и blob-объектов; отдельный Object Store не нужен, поскольку values практически не ограничены.",
               "correct": false,
               "sections": {
                 "what_actually": "KV рассчитан на небольшие значения (конфиги, флаги, сессии); для крупных blob'ов есть Object Store.",
@@ -813,7 +813,7 @@
               "order": 1
             },
             {
-              "text": "`JetStream KV` — простой key-value store поверх streams `JetStream`. Команды: `nats kv add`, `put`, `get`, плюс `watch` для подписки на изменения в реальном времени (аналог etcd watch). Применяют для distributed configuration, service discovery, feature flags и хранения сессий.",
+              "text": "JetStream KV предоставляет buckets, revisions и watch поверх streams; его используют для configuration, feature flags и небольшого distributed state.",
               "correct": true,
               "sections": {
                 "explanation": "KV строится на streams: каждое значение ключа — это сообщение, а история ревизий хранится в stream. `watch` даёт realtime-уведомления об изменениях без поллинга.",
@@ -826,7 +826,7 @@
               "order": 2
             },
             {
-              "text": "`NATS KV` — это внешняя интеграция с `Redis`, которую нужно подключать отдельно.",
+              "text": "NATS KV является client wrapper над внешним Redis, обязательным для хранения values, revisions, watches и replication.",
               "correct": false,
               "sections": {
                 "what_actually": "KV встроен в `JetStream` и работает поверх его streams; внешний `Redis` подключать не нужно.",
@@ -849,7 +849,7 @@
           "question_text": "Что такое Object Store в `NATS` и для каких объектов он подходит?",
           "options": [
             {
-              "text": "`JetStream Object Store` — объектное хранилище поверх `JetStream` с командами `nats object put` / `get`; это полноценная замена `S3`, рассчитанная на терабайтные объёмы и массовое хранение данных независимо от messaging.",
+              "text": "Object Store — storage поверх JetStream и полноценная замена S3 для терабайтных datasets и массового archival независимо от messaging.",
               "correct": false,
               "sections": {
                 "what_actually": "Это не замена `S3`: Object Store рассчитан на меньшие объекты, интегрированные с messaging, а не на массовое объектное хранилище.",
@@ -861,7 +861,7 @@
               "order": 0
             },
             {
-              "text": "`JetStream Object Store` — хранилище для blob'ов поверх `JetStream`; команды `nats object put` / `get` кладут объект целиком одним сообщением, поэтому максимальный размер файла ограничен лимитом размера сообщения `NATS`.",
+              "text": "Object Store кладёт blob одним NATS message, поэтому размер файла всегда ограничен максимальным message size.",
               "correct": false,
               "sections": {
                 "what_actually": "Объект разбивается на chunks (по умолчанию 128 KB) и хранится по частям в stream, а при чтении собирается обратно.",
@@ -873,7 +873,7 @@
               "order": 1
             },
             {
-              "text": "`JetStream Object Store` — хранилище крупных blob'ов поверх `JetStream`; объекты держатся только в памяти ноды ради скорости доступа, поэтому при рестарте сервера загруженные файлы теряются.",
+              "text": "Object Store хранит chunks только в memory текущей node, поэтому restart удаляет загруженные objects и metadata.",
               "correct": false,
               "sections": {
                 "what_actually": "Object Store лежит поверх `JetStream`, который умеет file storage; данные могут храниться durable на диске.",
@@ -885,13 +885,13 @@
               "order": 2
             },
             {
-              "text": "`JetStream Object Store` — хранилище для крупных blob'ов (файлы, изображения) поверх `JetStream`. Команды: `nats object add` / `put` / `get`. Объект разбивается на chunks (по умолчанию 128 KB) и хранится в stream. Применяют для file transfer между сервисами, distributed storage и edge-кэширования; это не замена `S3`, а интеграция с messaging для меньших объектов.",
+              "text": "Object Store разбивает objects на chunks и хранит metadata в stream; он полезен рядом с NATS, но не заменяет S3.",
               "correct": true,
               "sections": {
-                "explanation": "Object Store режет большой объект на chunks и складывает их в `JetStream`-stream, собирая обратно при чтении. Это даёт передачу файлов прямо через messaging-стек.",
-                "example": "`nats object put my_objects ./photo.jpg` загружает файл, а `nats object get` забирает его на другом сервисе без отдельного файлового хранилища.",
-                "when_to_apply": "Берут, когда нужно передать файл или blob между сервисами в едином стеке с messaging, особенно на edge с локальным кэшем.",
-                "edge_cases": "Это не замена `S3`: подходит для умеренных объёмов, интегрированных с сообщениями; chunking по 128 KB означает overhead на очень больших объектах.",
+                "explanation": "Chunking позволяет хранить объект больше максимального NATS message. API предоставляет put/get/watch, а durability и replicas наследуются от backing stream.",
+                "example": "Edge-сервис получает новую ML-модель через object bucket и подписывается на изменение metadata, после чего атомарно переключает локальную версию.",
+                "when_to_apply": "Используйте для умеренных объёмов объектов, тесно связанных с NATS control plane или edge-доставкой; для массового объектного архива выбирайте специализированное хранилище.",
+                "edge_cases": "Размер chunk по умолчанию является деталью реализации/клиента и не должен становиться архитектурным контрактом. Следите за storage limits, replicas и cleanup.",
                 "related": "[[nats-interview#Q14]] KV для мелких значений; [[nats-interview#Q9]] JetStream как основа Object Store."
               },
               "label": "D",
@@ -909,7 +909,7 @@
           "question_text": "Чем Mirror отличается от Source (Sourcing) в `JetStream`?",
           "options": [
             {
-              "text": "`Mirror` — точная реплика одного другого stream (`--mirror ORDERS`), копирующая его 1:1. `Source` — объединение сообщений из НЕСКОЛЬКИХ streams в один (`--sources STREAM1 --sources STREAM2`). Применяют для multi-region репликации, disaster recovery и агрегации streams.",
+              "text": "Mirror копирует один source stream, а Sources агрегируют несколько; оба механизма применяют для DR и региональных topology.",
               "correct": true,
               "sections": {
                 "explanation": "Mirror создаёт зеркало ровно одного источника, а Sourcing сливает потоки из многих streams в общий. Это два разных механизма копирования данных между streams.",
@@ -922,7 +922,7 @@
               "order": 0
             },
             {
-              "text": "Mirroring и Sourcing работают только внутри одного датацентра и непригодны для multi-region.",
+              "text": "Mirror и Sources работают только внутри одного server process и не поддерживают accounts, domains, clusters или regions.",
               "correct": false,
               "sections": {
                 "what_actually": "Это ключевые инструменты как раз для multi-region репликации и disaster recovery между регионами.",
@@ -934,7 +934,7 @@
               "order": 1
             },
             {
-              "text": "Mirror и Source — это одно и то же, просто два разных названия одной команды.",
+              "text": "Mirror и Sources — два названия одного режима: оба принимают ровно один stream и создают одинаковую конфигурацию.",
               "correct": false,
               "sections": {
                 "what_actually": "Mirror зеркалит ОДИН stream 1:1, а Source объединяет НЕСКОЛЬКО streams в один — это разные механизмы.",
@@ -946,7 +946,7 @@
               "order": 2
             },
             {
-              "text": "Mirror может объединять сразу несколько streams в одну реплику.",
+              "text": "Mirror агрегирует несколько streams, а Sources допускает только точную копию единственного source stream без merging.",
               "correct": false,
               "sections": {
                 "what_actually": "Mirror привязан ровно к одному источнику; объединение нескольких streams делает Source.",
@@ -969,7 +969,7 @@
           "question_text": "Как устроена кластеризация `NATS` и какие гарантии она даёт?",
           "options": [
             {
-              "text": "`Cluster` — несколько инстансов `NATS Server`, соединённых в full mesh (routes). Клиенты подключаются к ЛЮБОЙ ноде, и трафик автоматически маршрутизируется (auto-discovery). Семантика — единый виртуальный брокер: publish на одной ноде доходит до подписчиков на других. Масштабируется до десятков нод на кластер.",
+              "text": "NATS cluster соединяет равноправные servers routes; clients подключаются к любой node, а messages маршрутизируются к matching subscribers на других nodes.",
               "correct": true,
               "sections": {
                 "explanation": "Все ноды кластера равноправны и связаны mesh-маршрутами, поэтому подписчик на одной ноде получает сообщения, опубликованные на другой. Для клиента это выглядит как один брокер.",
@@ -982,7 +982,7 @@
               "order": 0
             },
             {
-              "text": "Кластер `NATS` для координации нод требует внешний `etcd` или `Consul`.",
+              "text": "NATS cluster требует внешний etcd или Consul для membership, leader election, subject registry и coordination nodes.",
               "correct": false,
               "sections": {
                 "what_actually": "Координация встроена в сам сервер через routes и auto-discovery; внешние `etcd`/`Consul` не нужны.",
@@ -994,7 +994,7 @@
               "order": 1
             },
             {
-              "text": "В кластере `NATS` клиент обязан подключаться только к одной выделенной master-ноде, иначе сообщения теряются.",
+              "text": "Clients обязаны подключаться к единственной master node; остальные servers пассивны и принимают connections только после failover.",
               "correct": false,
               "sections": {
                 "what_actually": "Master-ноды нет: ноды равноправны (full mesh), и клиент подключается к любой — трафик маршрутизируется автоматически.",
@@ -1006,7 +1006,7 @@
               "order": 2
             },
             {
-              "text": "Сообщение, опубликованное на одной ноде кластера, доходит только до подписчиков той же ноды.",
+              "text": "Messages остаются на node публикации, поэтому subscribers других nodes не видят общий subject namespace.",
               "correct": false,
               "sections": {
                 "what_actually": "Кластер даёт семантику единого виртуального брокера: publish на одной ноде доходит до подписчиков на любых других.",
@@ -1029,7 +1029,7 @@
           "question_text": "Что такое leaf nodes в `NATS` и для каких сценариев они нужны?",
           "options": [
             {
-              "text": "При обрыве связи с центральным кластером leaf node полностью останавливает обслуживание локальных клиентов.",
+              "text": "При потере hub connection leaf server прекращает обслуживать локальных clients, поэтому disconnected edge работа становится полностью невозможна.",
               "correct": false,
               "sections": {
                 "what_actually": "Leaf поддерживает disconnected operation: локальные клиенты продолжают работать даже при разрыве связи с центром.",
@@ -1041,7 +1041,7 @@
               "order": 0
             },
             {
-              "text": "Leaf node имеет неограниченный доступ ко всем subjects центрального кластера без каких-либо ограничений.",
+              "text": "Leaf connection экспортирует все account subjects без permissions, mappings, scoped imports и любого контроля видимости.",
               "correct": false,
               "sections": {
                 "what_actually": "Subjects leaf-ноды ограничены allowed accounts; доступ изолирован, а не глобален.",
@@ -1053,7 +1053,7 @@
               "order": 1
             },
             {
-              "text": "Leaf node — это просто ещё одна равноправная нода внутри full-mesh кластера.",
+              "text": "Leaf node является обычным route full-mesh peer, участвует в cluster membership и не отличается от cluster node.",
               "correct": false,
               "sections": {
                 "what_actually": "Leaf подключается к кластеру как ОДНОСТОРОННИЙ edge-узел, а не как равноправный mesh-peer кластера.",
@@ -1065,7 +1065,7 @@
               "order": 2
             },
             {
-              "text": "`Leaf node` — `NATS Server`, подключённый к основному кластеру как односторонний leaf (через `leafnodes.remotes`). Применяют для edge-развёртываний (IoT-устройства, branch offices): локальный `NATS` даёт low latency, а к центру идёт связь через leaf, при этом возможна работа в disconnected-режиме. Subjects ограничены allowed accounts.",
+              "text": "Leaf server обслуживает local clients и соединяется с hub, уменьшая WAN connections и контролируя межконтурный subject sharing.",
               "correct": true,
               "sections": {
                 "explanation": "Leaf node — это локальный сервер на краю сети, подвешенный к центральному кластеру. Локальные клиенты работают с low latency, а нужные сообщения прозрачно ходят к центру и обратно.",
@@ -1089,7 +1089,7 @@
           "question_text": "Что такое super-cluster в `NATS` и зачем он нужен для multi-region?",
           "options": [
             {
-              "text": "`Super-cluster` — несколько кластеров, связанных в mesh через gateway-соединения. Клиенты подключаются локально, а сообщения маршрутизируются глобально между регионами. Это даёт multi-region messaging без центрального брокера: например, кластер us-east и кластер eu-west соединены gateways, и под ними edge/leaf-ноды.",
+              "text": "Super-cluster связывает региональные NATS clusters gateways: clients подключаются локально, а interest и messages маршрутизируются между регионами.",
               "correct": true,
               "sections": {
                 "explanation": "Super-cluster соединяет отдельные кластеры gateway-линками, образуя глобальную mesh. Клиент работает со своим локальным кластером, а трафик при необходимости уходит в другой регион.",
@@ -1102,7 +1102,7 @@
               "order": 0
             },
             {
-              "text": "Super-cluster требует единый центральный брокер-координатор, через который проходит весь межрегиональный трафик.",
+              "text": "Весь межрегиональный трафик проходит через один coordinator server, который хранит глобальную таблицу subjects и routes.",
               "correct": false,
               "sections": {
                 "what_actually": "Super-cluster — это mesh из кластеров через gateways без центрального брокера; трафик идёт напрямую между регионами.",
@@ -1114,7 +1114,7 @@
               "order": 1
             },
             {
-              "text": "В super-cluster клиент должен подключаться к удалённому региональному кластеру напрямую, локального подключения нет.",
+              "text": "Clients всегда подключаются к удалённому region напрямую; local cluster не обслуживает локальные subjects, subscriptions и requests.",
               "correct": false,
               "sections": {
                 "what_actually": "Клиент подключается ЛОКАЛЬНО к своему кластеру, а сообщения маршрутизируются глобально через gateways.",
@@ -1126,7 +1126,7 @@
               "order": 2
             },
             {
-              "text": "Super-cluster — это то же самое, что обычный cluster, только с большим числом нод.",
+              "text": "Super-cluster — обычный route cluster с большим числом nodes, без gateways, region awareness и locality.",
               "correct": false,
               "sections": {
                 "what_actually": "Cluster — full mesh нод в одном регионе; super-cluster — mesh КЛАСТЕРОВ через gateways между регионами.",
@@ -1146,23 +1146,23 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие методы аутентификации поддерживает `NATS` и почему JWT — production best practice?",
+          "question_text": "Какие методы аутентификации поддерживает `NATS` и когда полезна JWT-модель?",
           "options": [
             {
-              "text": "`NATS` поддерживает token, user/password, NKEY (на публичных ключах, как SSH), JWT (децентрализованная аутентификация, recommended) и mTLS. В JWT-модели иерархия operator → accounts → users; серверам не нужен список пользователей — они проверяют подписи JWT. Production best practice — JWT с инструментом NSC для управления.",
+              "text": "NATS поддерживает token, user/password, NKEY, JWT и mTLS; JWT claims удобны для децентрализованного управления accounts и users.",
               "correct": true,
               "sections": {
-                "explanation": "JWT-аутентификация децентрализована: оператор подписывает accounts, accounts — users, а сервер лишь верифицирует подписи токенов. Список пользователей на сервере хранить не нужно.",
-                "example": "С помощью NSC выпускают operator, под ним accounts и users; сервер настраивают на resolver, и он проверяет JWT без локальной базы пользователей.",
-                "when_to_apply": "JWT берут в production и multi-tenant, где нужно масштабируемое управление доступом без перезапуска серверов при добавлении пользователей.",
-                "edge_cases": "Token и user/password проще, но не масштабируются и хуже для multi-tenant; mTLS даёт транспортную аутентификацию, но не заменяет account-модель JWT.",
+                "explanation": "NKEY использует challenge-response с публичным ключом, JWT переносит подписанные claims о правах, а mTLS связывает identity с сертификатом. Выбор зависит от масштаба и модели управления.",
+                "example": "Operator подписывает account JWT, account — user credentials; сервер проверяет цепочку подписей и применяет publish/subscribe permissions без хранения приватных ключей.",
+                "when_to_apply": "JWT/NKEY полезны в multi-account и распределённых окружениях; для небольшого закрытого deployment может быть достаточна более простая схема вместе с TLS.",
+                "edge_cases": "JWT не является автоматически лучшим вариантом для любого проекта: нужны безопасное хранение signing keys, rotation, resolver strategy и процедура отзыва.",
                 "related": "[[nats-interview#Q21]] accounts как часть JWT-иерархии; [[nats-interview#Q3]] встроенные authentication и TLS в сервере."
               },
               "label": "A",
               "order": 0
             },
             {
-              "text": "NKEY-аутентификация передаёт приватный ключ на сервер, поэтому сервер хранит секреты всех клиентов.",
+              "text": "NKEY передаёт private seed серверу при каждом connection, поэтому broker хранит и повторно использует все клиентские секреты.",
               "correct": false,
               "sections": {
                 "what_actually": "NKEY основан на публичных ключах (как SSH): сервер знает публичный ключ, приватный остаётся у клиента.",
@@ -1174,7 +1174,7 @@
               "order": 1
             },
             {
-              "text": "При JWT-аутентификации сервер `NATS` обязан хранить полный список всех пользователей локально.",
+              "text": "JWT требует синхронного запроса к центральной user database при каждом connection, иначе сервер не может проверить claims.",
               "correct": false,
               "sections": {
                 "what_actually": "В JWT-модели сервер НЕ хранит список пользователей — он проверяет подписи токенов по цепочке operator → accounts → users.",
@@ -1186,7 +1186,7 @@
               "order": 2
             },
             {
-              "text": "Единственный способ аутентификации в `NATS` — общий статический token, других методов нет.",
+              "text": "Сервер поддерживает только общий token; account isolation, public-key credentials, client certificates и mTLS полностью отсутствуют.",
               "correct": false,
               "sections": {
                 "what_actually": "Кроме token есть user/password, NKEY, JWT и mTLS; token — лишь самый простой из вариантов.",
@@ -1209,7 +1209,7 @@
           "question_text": "Что такое accounts в `NATS` и как они обеспечивают multi-tenancy?",
           "options": [
             {
-              "text": "Для multi-tenancy в `NATS` нужно поднимать отдельный сервер на каждого клиента — внутри одного сервера тенанты не разделить.",
+              "text": "Multi-tenancy требует отдельного NATS server на каждого tenant, потому что внутри одного deployment namespaces не изолируются.",
               "correct": false,
               "sections": {
                 "what_actually": "Multi-tenancy обеспечивают accounts внутри ОДНОГО сервера/кластера; отдельный сервер на тенанта не требуется.",
@@ -1221,7 +1221,7 @@
               "order": 0
             },
             {
-              "text": "`Account` — изолированный namespace (subjects, streams, KV), полностью отделённый от других accounts. Межаккаунтная коммуникация возможна только через явные exports/imports. Use case — SaaS multi-tenant: каждый клиент = отдельный account, изолированный от остальных.",
+              "text": "Account изолирует subjects, streams и KV; обмен между accounts разрешается только через явные exports и imports.",
               "correct": true,
               "sections": {
                 "explanation": "Account создаёт жёсткую изоляцию: subjects одного account по умолчанию не видны другому. Это и есть механизм multi-tenancy внутри одного кластера `NATS`.",
@@ -1234,7 +1234,7 @@
               "order": 1
             },
             {
-              "text": "Accounts видят subjects друг друга по умолчанию, поэтому изоляция между тенантами отсутствует.",
+              "text": "Accounts видят subjects друг друга по умолчанию, поэтому tenants нельзя безопасно разделить на одной инсталляции.",
               "correct": false,
               "sections": {
                 "what_actually": "Accounts изолированы по умолчанию: subjects одного не видны другому, пока их явно не экспортируют/импортируют.",
@@ -1246,7 +1246,7 @@
               "order": 2
             },
             {
-              "text": "Account изолирует только subjects, но streams и KV у всех тенантов общие.",
+              "text": "Account изолирует только subjects, а streams и KV остаются общими для всех tenants.",
               "correct": false,
               "sections": {
                 "what_actually": "Account изолирует весь namespace: subjects, streams и KV принадлежат конкретному account, а не общие.",
@@ -1269,7 +1269,7 @@
           "question_text": "В каких сценариях стоит выбирать `NATS`?",
           "options": [
             {
-              "text": "`NATS` выбирают в первую очередь для многолетнего хранения событий, big-data аналитики и тяжёлого stream processing: `JetStream` покрывает те же сценарии, что и `Kafka` со Spark/Flink.",
+              "text": "NATS выбирают прежде всего для многолетнего event log и тяжёлого stream processing вместо Kafka, Pulsar и Flink.",
               "correct": false,
               "sections": {
                 "what_actually": "Для долгого retention и big-data выгоднее `Kafka`; `NATS` выбирают за low latency, edge и лёгкость, а не за многолетнее хранение.",
@@ -1281,7 +1281,7 @@
               "order": 0
             },
             {
-              "text": "`NATS` выбирают прежде всего тогда, когда в команде уже развёрнута `Kafka` и накоплена глубокая экспертиза по ней, чтобы переиспользовать существующую инфраструктуру и мониторинг.",
+              "text": "NATS имеет смысл только при уже развёрнутой Kafka, чтобы переиспользовать её brokers, partitions, storage и monitoring.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: если команда уже инвестировала в `Kafka`, это аргумент остаться на ней; `NATS` выбирают за его собственные сильные стороны, а не из-за Kafka-экспертизы.",
@@ -1293,7 +1293,7 @@
               "order": 1
             },
             {
-              "text": "`NATS` выбирают для внутренней коммуникации microservices (замена HTTP/gRPC), IoT с миллионами устройств при низком расходе ресурсов, edge computing через leaf nodes, сценариев с критичной low latency (gaming, real-time), когда нужна простая эксплуатация вместо сложности `Kafka`, для multi-region без дорогого Kafka MirrorMaker, и когда нужны request-reply + pub/sub + persistent streams в одном стеке.",
+              "text": "NATS подходит для low-latency pub/sub, request-reply и edge; JetStream добавляет durability при подходящих retention и consumer semantics.",
               "correct": true,
               "sections": {
                 "explanation": "Сильные стороны `NATS` — скорость, лёгкость и совмещение нескольких паттернов обмена в одном бинаре. Это делает его удачным для микросервисов, edge и realtime.",
@@ -1306,7 +1306,7 @@
               "order": 2
             },
             {
-              "text": "`NATS` выбирают, когда нужен сложный routing с десятками exchange-правил и маршрутизацией по заголовкам сообщений, как в `RabbitMQ` с его bindings и dead-letter-обменниками.",
+              "text": "NATS выбирают для сложной маршрутизации по headers, priorities и десяткам exchange bindings, аналогичной RabbitMQ.",
               "correct": false,
               "sections": {
                 "what_actually": "Сложный routing — сильная сторона `RabbitMQ` (exchanges/bindings); `NATS` оперирует subjects и queue groups, а не богатой маршрутизацией AMQP.",
@@ -1329,7 +1329,7 @@
           "question_text": "Когда `NATS` НЕ стоит выбирать?",
           "options": [
             {
-              "text": "`NATS` не стоит выбирать для внутренней коммуникации микросервисов: он рассчитан только на event streaming и не умеет request-reply вместо HTTP/gRPC.",
+              "text": "NATS не подходит для внутренних service interactions, поскольку поддерживает только event streaming и не имеет request-reply.",
               "correct": false,
               "sections": {
                 "what_actually": "Microservices-коммуникация — один из ОСНОВНЫХ сценариев `NATS` (замена HTTP/gRPC), а не противопоказание.",
@@ -1341,7 +1341,7 @@
               "order": 0
             },
             {
-              "text": "`NATS` не стоит выбирать, когда критична низкая задержка: его текстовый протокол делает доставку заметно медленнее, чем у `Kafka` и `RabbitMQ` на том же оборудовании.",
+              "text": "NATS не выбирают при требованиях к низкой latency: его protocol медленнее Kafka и RabbitMQ.",
               "correct": false,
               "sections": {
                 "what_actually": "Low latency — как раз сильная сторона `NATS` (microseconds против ms); это аргумент ЗА, а не против.",
@@ -1353,7 +1353,7 @@
               "order": 1
             },
             {
-              "text": "`NATS` не стоит выбирать, когда нужна durability: слоя persistence у него нет вовсе, сообщения существуют только в момент доставки и на диск не сохраняются.",
+              "text": "NATS не подходит для durable workloads, поскольку JetStream не сохраняет сообщения и consumer state.",
               "correct": false,
               "sections": {
                 "what_actually": "Persistence есть — это `JetStream`; причина отказа не в её отсутствии, а в ограничениях для big-data и долгого retention.",
@@ -1365,7 +1365,7 @@
               "order": 2
             },
             {
-              "text": "`NATS` не выбирают, когда нужен сложный stream processing (`Kafka Streams` сильнее), богатая экосистема интеграций (она у `Kafka`), долгосрочное хранение на годы (дешевле `Kafka`), big-data обработка (`Kafka` + Spark/Flink — стандарт), когда команда уже инвестировала в `Kafka`/`RabbitMQ`, или нужны enterprise-фичи, которых у `NATS` нет.",
+              "text": "NATS может уступать при многолетнем analytics log, зрелом stream-processing ecosystem или сложной exchange-like routing.",
               "correct": true,
               "sections": {
                 "explanation": "Ограничения `NATS` лежат в области тяжёлого stream processing, экосистемы и долгого хранения. Там, где это критично, выигрывают `Kafka` и `RabbitMQ`.",
@@ -1389,7 +1389,7 @@
           "question_text": "Какие частые проблемы возникают при эксплуатации `NATS` / `JetStream`?",
           "options": [
             {
-              "text": "Главная эксплуатационная проблема — управление внешним `ZooKeeper`-ансамблем: `JetStream` хранит в нём метаданные кластера, и его отказ часто становится узким местом.",
+              "text": "Главная проблема JetStream — обязательный ZooKeeper ensemble, где хранятся metadata и состояние cluster-а.",
               "correct": false,
               "sections": {
                 "what_actually": "`NATS` не использует `ZooKeeper` вовсе; реальные проблемы — storage, replicas, retention, backpressure и мониторинг.",
@@ -1401,7 +1401,7 @@
               "order": 0
             },
             {
-              "text": "Частые проблемы: неверный storage в `JetStream` (memory → потеря данных), недостаточно реплик (single point of failure), ошибки retention (данные удалены до обработки), отсутствие backpressure (consumers не успевают, очереди растут), split кластера при сетевых partition, мисконфиг аутентификации, отсутствие мониторинга, неверный выбор слоя (`Core NATS` там, где нужен `JetStream`), плоский subject namespace без иерархии и недооценка кривой обучения новым паттернам.",
+              "text": "Риски включают неверные replicas/retention, consumer lag, redelivery, исчерпание limits и потерю quorum при maintenance.",
               "correct": true,
               "sections": {
                 "explanation": "Большинство проблем — операционные: неправильные storage/replicas/retention, отсутствие backpressure и мониторинга, неверный выбор слоя. Они ведут к потере данных или деградации.",
@@ -1414,7 +1414,7 @@
               "order": 1
             },
             {
-              "text": "Отсутствие backpressure не создаёт проблем: сервер буферизует сообщения для отстающих consumers на диске без ограничений, поэтому очереди никогда не переполняются.",
+              "text": "Slow consumers безопасны: сервер бесконечно буферизует backlog на диске без memory и account limits.",
               "correct": false,
               "sections": {
                 "what_actually": "Без backpressure отстающие consumers приводят к росту очередей и риску переполнения; бесконечной бесплатной буферизации нет.",
@@ -1426,7 +1426,7 @@
               "order": 2
             },
             {
-              "text": "Частая, но безопасная практика — держать durable stream на `--storage memory`: `JetStream` периодически сбрасывает in-memory stream в snapshot на диск, поэтому рестарт ноды не приводит к потере сообщений.",
+              "text": "Memory-backed stream автоматически становится durable через snapshots, поэтому restart не приводит к потере records.",
               "correct": false,
               "sections": {
                 "what_actually": "Memory-storage эфемерный: при рестарте ноды данные теряются; для durability нужен `file`.",

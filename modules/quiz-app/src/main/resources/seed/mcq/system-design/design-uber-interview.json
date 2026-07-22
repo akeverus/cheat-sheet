@@ -11,7 +11,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Функциональные требования — это в первую очередь maps & navigation, road graph, driver onboarding и financial reports, а сам заказ поездки и матчинг вторичны и обсуждаются в конце интервью.",
+              "text": "Функциональные требования — это в первую очередь maps & navigation, road graph, driver onboarding и financial reports, а сам заказ поездки и матчинг вторичны и обсуждаются в конце интервью. События обрабатываются синхронно в request path; device, payment и location signals не объединяются.",
               "correct": false,
               "sections": {
                 "what_actually": "Maps/navigation, onboarding и reports как раз выносят out of scope; ядро — заказ, матчинг, трекинг и оплата.",
@@ -35,7 +35,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Request ride, driver matching, real-time tracking обеих сторон, trip lifecycle, payment, rating 1-5, surge pricing и ride history.",
+              "text": "Базовый scope: запрос поездки с pickup и destination, estimate, поиск и предложение водителю, real-time tracking, trip lifecycle, payment, rating и history. Дополнительные классы поездок, scheduled rides и multi-stop фиксируют как расширения.",
               "correct": true,
               "sections": {
                 "explanation": "Это базовый набор фич, который надо проговорить за 2-3 минуты: заказ (pickup/destination, тип `UberX`/`Comfort`/`Black`, price estimate, ETA), матчинг < 5 сек, трекинг, жизненный цикл (`arriving → pickup → in-progress → completed`), оплата (pre-auth, charge, tip, split, refund), рейтинг и surge. Сопутствующее (multi-stop, scheduled, pool) упоминают, но раскрывают только по запросу.",
@@ -48,7 +48,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Функциональные требования сводятся к выбору базы данных и схемы шардирования (Cassandra vs PostgreSQL, shard key, репликация) — это и есть точное описание того, «что система умеет» для пользователя.",
+              "text": "Функциональные требования сводятся к выбору базы данных и схемы шардирования (Cassandra vs PostgreSQL, shard key, репликация) — это и есть точное описание того, «что система умеет» для пользователя. События обрабатываются синхронно в request path; durable event stream не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Выбор БД и шардирования — это решения уровня дизайна (Q20, Q25), а не функциональные требования, описывающие поведение для пользователя.",
@@ -66,7 +66,7 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какие non-functional требования и SLA важны для дизайна Uber и какой делается выбор по CAP?",
+          "question_text": "Какие NFR стоит зафиксировать для учебного дизайна ride-hailing системы?",
           "options": [
             {
               "order": 0,
@@ -107,7 +107,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Масштаб 100M+ DAU и ~20M rides/day; matching p99 < 5 сек, tracking p99 < 1 сек, availability 99.99%; locations — eventual, payments — strong (ACID + ledger).",
+              "text": "Фиксируют latency запроса и матчинга, частоту location updates, availability, durability поездок и платежей, географический масштаб и privacy. Live locations допускают eventual consistency, а trip transitions и деньги требуют согласованного контура.",
               "correct": true,
               "sections": {
                 "explanation": "NFR фиксируют масштаб (DAU 100M+, ~20M rides/day, ~5M активных драйверов, 500K-1M активных поездок в пик), цели по латентности (matching < 5 сек, tracking < 1 сек), доступность 99.99% (~52 мин/год) и разные consistency-модели: locations eventual, payments strong (ACID + ledger), multi-region latency < 100 ms.",
@@ -126,7 +126,7 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какой получается back-of-the-envelope расчёт нагрузки (writes, reads, storage) для Uber?",
+          "question_text": "Как оценить нагрузку ride-hailing системы при заданных числе водителей и частоте location updates?",
           "options": [
             {
               "order": 0,
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Writes ≈ 1.25M location/sec (125 MB/sec), trip events 50-100K/sec в Kafka, reads ~200K/sec на tracking; storage — locations hot ≈ 500 MB, cold ≈ 1 PB/90 дней.",
+              "text": "Location writes/sec = online drivers / update interval; matching reads зависят от ride requests и числа расширяемых geo-ячеек. Trips и payments считают отдельно, затем добавляют peak-factor, retention и репликацию.",
               "correct": true,
               "sections": {
                 "explanation": "Считаем по слоям: горячий поток локаций (5M драйверов × 1/4 sec = 1.25M writes/sec ≈ 125 MB/sec, overwrite в Redis), события поездок в Kafka peak, reads на трекинг, и storage отдельно: locations hot ≈ 500 MB в Redis, cold ≈ 1 PB за 90 дней, trips ~70 TB/год.",
@@ -215,7 +215,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "REST для CRUD, WebSocket для real-time (tracking, driver-stream), gRPC internal; `POST /rides/request` отдаёт `202 Accepted` с `ride_id` за < 200 ms, дальше matching асинхронно.",
+              "text": "REST подходит для команд и обычных чтений, WebSocket или другой persistent channel — для location stream, tracking и offers, gRPC — для внутренних low-latency вызовов. `POST /rides/request` быстро возвращает `202` и `ride_id`, а matching продолжается асинхронно.",
               "correct": true,
               "sections": {
                 "explanation": "Разделяем по природе данных: REST для команд и чтения (`POST /rides/estimate`, `/rides/request`, `/rides/{id}/accept|start|complete`, `/payments/*`), WebSocket для двунаправленного real-time (`/ws/tracking`, `/ws/driver-stream`), gRPC между сервисами; критичный `/rides/request` отвечает мгновенно и не блокируется матчингом.",
@@ -251,7 +251,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Все сервисы должны читать и писать в одну общую PostgreSQL-базу, включая driver locations и payments, чтобы избежать сложности с несколькими хранилищами и держать единую транзакционную границу на всю систему.",
+              "text": "Все сервисы должны читать и писать в одну общую PostgreSQL-базу, включая driver locations и payments, чтобы избежать сложности с несколькими хранилищами и держать единую транзакционную границу на всю систему. Failure recovery повторяет пользовательскую операцию целиком; device, payment и location signals не объединяются.",
               "correct": false,
               "sections": {
                 "what_actually": "У каждого сервиса своё хранилище под его access pattern: Redis для hot locations, Cassandra для trips, PostgreSQL только для users/drivers/payments.",
@@ -263,7 +263,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Сервисы должны вызывать друг друга только синхронно через REST/gRPC с retry и circuit breaker; Kafka и event-driven fan-out здесь избыточны, усложняют трассировку и не дают выигрыша.",
+              "text": "Сервисы должны вызывать друг друга только синхронно через REST/gRPC с retry и circuit breaker; Kafka и event-driven fan-out здесь избыточны, усложняют трассировку и не дают выигрыша. Одинаковое правило применяется во всех регионах; durable event stream не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Kafka — event backbone: один location-event читают matching, архиватор и аналитика независимо, без взаимной блокировки сервисов.",
@@ -275,7 +275,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Достаточно одного монолитного сервиса, который сам принимает локации, матчит, считает surge и проводит платежи в общей транзакции — микросервисное разбиение здесь преждевременно и не оправдано.",
+              "text": "Достаточно одного монолитного сервиса, который сам принимает локации, матчит, считает surge и проводит платежи в общей транзакции — микросервисное разбиение здесь преждевременно и не оправдано. Одинаковое правило применяется во всех регионах; device, payment и location signals не объединяются.",
               "correct": false,
               "sections": {
                 "what_actually": "Подсистемы имеют разные SLA, нагрузку и consistency, поэтому их разносят на отдельные сервисы (location AP-поток vs payment strong-CP).",
@@ -287,7 +287,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "API Gateway (auth, rate limit) перед доменными сервисами; `location-service` пишет в Redis (hot) + Kafka (durable), а Kafka — event backbone для async fan-out.",
+              "text": "High-level design разделяет gateway и доменные сервисы: user/driver, location, matching, trip, pricing, payment, ETA и notifications. Location updates идут в hot geo-store и event backbone, а каждый домен владеет своим согласованным storage. Архитектура — это gateway + независимые сервисы по доменам, каждый владеет своими таблицами.",
               "correct": true,
               "sections": {
                 "explanation": "Архитектура — это gateway + независимые сервисы по доменам (`user`/`driver`/`trip`/`location`/`matching`/`pricing`/`payment`/`notification`/`ETA`), каждый владеет своими таблицами; Kafka связывает их событиями (`driver.location.updated`, `trip.matched`, `payment.captured`), давая fan-out для аналитики, истории и матчинга без прямой связности.",
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`payment_methods` нужно хранить как реальные номера карт (PAN, CVV, срок) в отдельной зашифрованной таблице PostgreSQL, чтобы payment-service мог их быстро читать и проводить charge сам без провайдера.",
+              "text": "`payment_methods` нужно хранить как реальные номера карт (PAN, CVV, срок) в отдельной зашифрованной таблице PostgreSQL, чтобы payment-service мог их быстро читать и проводить charge сам без провайдера. Один retention применяется ко всем location data; исторические запросы конкурируют с matching traffic.",
               "correct": false,
               "sections": {
                 "what_actually": "Хранят не номера карт, а token ID от провайдера (Stripe) в JSONB; реальные PAN не держат у себя из-за PCI DSS.",
@@ -323,7 +323,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Trips и driver locations логично хранить в одной таблице с одинаковым access pattern и общим shard key, ведь и то и другое привязано к `driver_id` и пишется в реальном времени поездки.",
+              "text": "Trips и driver locations логично хранить в одной таблице с одинаковым access pattern и общим shard key, ведь и то и другое привязано к `driver_id` и пишется в реальном времени поездки. Matching всегда читает координаты из удалённого хранилища; event stream для истории не выделяется.",
               "correct": false,
               "sections": {
                 "what_actually": "У trips и locations разные access patterns: trip — «прочитать одну запись» или «список за месяц», а location — «найти всё в радиусе R», под это нужен geo-spatial index.",
@@ -335,7 +335,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Trips надо партиционировать по `ride_id` (UUID), потому что это естественный первичный ключ поездки, он равномерно распределяет нагрузку по shards и не создаёт hot-партиций под активных пользователей.",
+              "text": "Trips надо партиционировать по `ride_id` (UUID), потому что это естественный первичный ключ поездки, он равномерно распределяет нагрузку по shards и не создаёт hot-партиций под активных пользователей. Hot locations и история хранятся в одном storage tier; in-memory grid не участвует в read path.",
               "correct": false,
               "sections": {
                 "what_actually": "Партиционирование по `ride_id` ломает «my rides» в scatter-gather по всем shards; trips партиционируют по `(user_id, month)`, чтобы история читалась одной партицией.",
@@ -347,7 +347,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`users`/`drivers` — PostgreSQL (sharded by `user_id`); `trips_by_user` — Cassandra по `(user_id, month)`; locations hot — Redis GEO; `payment_ledger` — PostgreSQL ACID.",
+              "text": "Профили пользователей и водителей подходят для реляционного OLTP-хранилища; историю поездок и location events — для масштабируемого partitioned store; текущие координаты — для low-latency geo-index; payment ledger — для ACID-хранилища с аудитом. Shard keys выбирают по основным query patterns, а PAN и CVV не хранят: payment provider возвращает token.",
               "correct": true,
               "sections": {
                 "explanation": "Каждую сущность кладут в хранилище под её паттерн доступа: OLTP-профили в PostgreSQL (профиль, рейтинг, `payment_methods` в JSONB), write-heavy time-series trips в Cassandra с `PRIMARY KEY ((user_id, month), trip_id)`, hot-позиции в Redis ZSET/GEO, деньги в ACID-ledger. Trips держат отдельно от locations, потому что access patterns принципиально разные.",
@@ -383,7 +383,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Наивный SQL `WHERE lat BETWEEN ... AND lng BETWEEN ...` проваливается сразу по геометрии, индексам, нагрузке и семантике; нужен spatial index + in-memory `cell_id → drivers`.",
+              "text": "Наивный SQL `WHERE lat BETWEEN ... AND ... AND lng BETWEEN ... AND ...` проваливается сразу по геометрии, индексам, нагрузке и семантике; нужен spatial index + in-memory `cell_id → drivers`.",
               "correct": true,
               "sections": {
                 "explanation": "Наивный SQL проваливается по геометрии (bounding box ≠ радиус — углы дальше центра в √2; Земля не плоскость: 1° долготы у полюсов ≈ 10 км, на экваторе 111 км), по индексам (B-tree ускоряет только первую колонку — полоса 11 км = миллионы строк в Манхэттене), по нагрузке (1.25M writes/sec ломают индекс) и по семантике (нужны «ближайшие N по ETA», а не по air distance). Решение — spatial index (geohash/S2/H3) + in-memory `cell_id → drivers` + отдельная подсистема.",
@@ -491,7 +491,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Главное преимущество S2 — гексагональные ячейки с 6 равноудалёнными соседями, что делает его идеальным для distance-запросов и агрегации supply/demand по соседним ячейкам без угловых случаев.",
+              "text": "Главное преимущество S2 — гексагональные ячейки с 6 равноудалёнными соседями, что делает его идеальным для distance-запросов и агрегации supply/demand по соседним ячейкам без угловых случаев. Прямое расстояние считается достаточной оценкой близости; дополнительный поиск соседних cells не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Гексагоны с 6 равноудалёнными соседями — это про H3; у S2 ячейки квадратные (4+4 соседа).",
@@ -503,7 +503,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`S2` (Google) проецирует сферу на куб (6 граней), нумерует ячейки кривой Гильберта, 64-bit cell ID, 30 уровней; uniform area, но квадратные ячейки и не human-readable.",
+              "text": "`S2` (Google) проецирует сферу на куб (6 граней), нумерует ячейки кривой Гильберта, 64-bit cell ID, 30 уровней; uniform area, но квадратные ячейки и не human-readable. S2 проецирует Землю на куб (6 граней), каждая грань разбивается по Hilbert curve, ячейка получает 64-bit cell ID, 30 уровней разрешения.",
               "correct": true,
               "sections": {
                 "explanation": "S2 проецирует Землю на куб (6 граней), каждая грань разбивается по Hilbert curve, ячейка получает 64-bit cell ID, 30 уровней разрешения. Плюсы: uniform area на любой широте, Hilbert curve сохраняет локальность (близкие cell ID ⇒ близкие точки), компактный 64-bit int. Минусы: квадратные ячейки (4+4 соседа с разным расстоянием), не human-readable, мало native-интеграций в БД.",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "S2 работает на плоскости точно так же, как geohash, и страдает от того же вырождения и сжатия ячеек около полюсов, поэтому никакого преимущества uniform area над geohash не даёт.",
+              "text": "S2 работает на плоскости точно так же, как geohash, и страдает от того же вырождения и сжатия ячеек около полюсов, поэтому никакого преимущества uniform area над geohash не даёт. Один geo-index используется без специальных пограничных правил; hot regions не требуют отдельного разбиения.",
               "correct": false,
               "sections": {
                 "what_actually": "S2 работает на сфере (проекция на куб), поэтому даёт uniform area на любой широте и не вырождается у полюсов, в отличие от geohash.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "S2 кодирует ячейки в human-readable base-32 строки с префиксной вложенностью, что упрощает отладку и prefix scan по сравнению с непрозрачным числовым ID geohash.",
+              "text": "S2 кодирует ячейки в human-readable base-32 строки с префиксной вложенностью, что упрощает отладку и prefix scan по сравнению с непрозрачным числовым ID geohash. Прямое расстояние считается достаточной оценкой близости; плотность водителей не меняет размер ячейки.",
               "correct": false,
               "sections": {
                 "what_actually": "S2 использует 64-bit integer cell ID, который как раз не human-readable; base-32 строки — это про geohash.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "У H3 нет никаких edge cases: гексагоны идеально замощают сферу без pentagons, а родительская ячейка всегда строго содержит ровно 7 дочерних без какого-либо overlap при агрегации.",
+              "text": "У H3 нет никаких edge cases: гексагоны идеально замощают сферу без pentagons, а родительская ячейка всегда строго содержит ровно 7 дочерних без какого-либо overlap при агрегации. Прямое расстояние считается достаточной оценкой близости; hot regions не требуют отдельного разбиения.",
               "correct": false,
               "sections": {
                 "what_actually": "У H3 есть 12 pentagons (гексагонами сферу идеально не замостить) и неточная вложенность: родительский hex не строго содержит 7 детей, есть overlap.",
@@ -563,7 +563,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "H3 (Uber, 2018) проецирует Землю на icosahedron и тесселирует гексагонами; 6 равноудалённых соседей, иерархия, surge per hexagon. Минус: 12 pentagons и неточная вложенность.",
+              "text": "H3 (Uber, 2018) проецирует Землю на icosahedron и тесселирует гексагонами; 6 равноудалённых соседей, иерархия, surge per hexagon. Минус: 12 pentagons и неточная вложенность. H3 проецирует Землю на icosahedron и тесселирует гексагонами (16 уровней, 64-bit int).",
               "correct": true,
               "sections": {
                 "explanation": "H3 проецирует Землю на icosahedron и тесселирует гексагонами (16 уровней, 64-bit int). Гексагоны лучше квадратов: 6 равноудалённых соседей, нет угловых, меньше искажений; иерархия (~7 «детей»). Uber выбрал его, потому что surge считается per hexagon, supply/demand агрегируется hierarchical, matching = `h3.grid_disk(cell, k)`. Минус: 12 pentagons и неточная вложенность родителя (overlap).",
@@ -576,7 +576,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "H3 проецирует Землю на куб, как S2, и использует квадратные ячейки с 8 соседями (4 по стороне, 4 по углу); гексагоны — это маркетинговое упрощение без реальной геометрической основы.",
+              "text": "H3 проецирует Землю на куб, как S2, и использует квадратные ячейки с 8 соседями (4 по стороне, 4 по углу); гексагоны — это маркетинговое упрощение без реальной геометрической основы. Все ячейки считаются одинаковыми по форме и площади; pentagons, boundaries и area distortion не влияют на результат.",
               "correct": false,
               "sections": {
                 "what_actually": "H3 проецирует Землю на icosahedron (20-гранник) и тесселирует его гексагонами с 6 равноудалёнными соседями — это и есть его суть, а не маркетинг.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Uber выбрал H3 главным образом потому, что у него есть нативная поддержка в Redis (`GEOADD`/`GEOSEARCH`), в отличие от geohash и S2, и его не нужно подключать отдельной библиотекой.",
+              "text": "Uber выбрал H3 главным образом потому, что у него есть нативная поддержка в Redis (`GEOADD`/`GEOSEARCH`), в отличие от geohash и S2, и его не нужно подключать отдельной библиотекой. Одинаковый resolution применяется во всех регионах; hot regions не требуют отдельного разбиения.",
               "correct": false,
               "sections": {
                 "what_actually": "Нативная поддержка в Redis — у geohash; H3 как раз требует отдельную библиотеку. Uber выбрал H3 за гексагоны, per-cell surge и hierarchical-агрегацию.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Каждый индекс жертвует чем-то своим: geohash — простотой, S2 — google-стеком, H3 — гексагонами; по форме, проекции, соседям и uniform-площади они различаются.",
+              "text": "Каждый индекс жертвует чем-то своим: geohash — простотой, S2 — google-стеком, H3 — гексагонами; по форме, проекции, соседям и uniform-площади они различаются. Различия по форме ячейки, проекции, числу соседей, кодированию, uniform-площади и edge cases определяют выбор: простота geohash для старта, гексагоны H3 для distance/heatmaps, S2 для Google-стека.",
               "correct": true,
               "sections": {
                 "explanation": "Различия по форме ячейки, проекции, числу соседей, кодированию, uniform-площади и edge cases определяют выбор: простота geohash для старта, гексагоны H3 для distance/heatmaps, S2 для Google-стека. Конкретно: geohash — прямоугольник/plane/8 соседей/base-32/не uniform/native в Redis (`GEOADD`); S2 — квадрат/cube→sphere/8 соседей/64-bit Hilbert/uniform; H3 — гексагон/icosahedron/6 равноудалённых соседей/64-bit/uniform, но 12 pentagons. Практика: MVP — Redis+geohash, глобальный сервис с heatmaps и ML — H3, стек Google — S2.",
@@ -624,7 +624,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "H3 — однозначно лучший выбор для любого проекта, включая MVP стартапа: его native-поддержка в Redis `GEOADD` снимает интеграционные издержки, поэтому его всегда стоит брать с первого дня.",
+              "text": "H3 — однозначно лучший выбор для любого проекта, включая MVP стартапа: его native-поддержка в Redis `GEOADD` снимает интеграционные издержки, поэтому его всегда стоит брать с первого дня. Прямое расстояние считается достаточной оценкой близости; hot regions не требуют отдельного разбиения.",
               "correct": false,
               "sections": {
                 "what_actually": "Для MVP/стартапа берут Redis+geohash («запустился за день»); H3 оправдан для глобального сервиса с heatmaps и ML, но требует отдельной библиотеки.",
@@ -636,7 +636,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Все три индекса дают по 6 равноудалённых соседей и uniform area, поэтому по форме ячеек и соседям они эквивалентны — выбор чисто вкусовой, разница только в длине строкового кода.",
+              "text": "Все три индекса дают по 6 равноудалённых соседей и uniform area, поэтому по форме ячеек и соседям они эквивалентны — выбор чисто вкусовой, разница только в длине строкового кода. Все ячейки считаются одинаковыми по форме и площади; плотность водителей не меняет размер ячейки.",
               "correct": false,
               "sections": {
                 "what_actually": "6 равноудалённых соседей только у H3; geohash и S2 дают по 8 соседей (4+4 угловых), а uniform area есть у S2/H3, но не у geohash.",
@@ -648,7 +648,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Geohash кодируется в 64-bit integer, S2 — в base-32 строку, а H3 — в иерархию префиксов; именно так они различаются по кодированию.",
+              "text": "Geohash кодируется в 64-bit integer, S2 — в base-32 строку, а H3 — в иерархию префиксов; именно так они различаются по кодированию. Соседние candidates определяются одним lookup; дорожная сеть и трафик не меняют ranking. Один geo-index используется без специальных пограничных правил; дополнительный поиск соседних cells не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: geohash — base-32 строка, S2 и H3 — 64-bit int; префиксная вложенность — свойство geohash, а не H3.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Координаты стримят через gRPC streams со всех мобильных приложений напрямую: HTTP/2, типизация и нативная поддержка в мобильных SDK делают gRPC оптимальным двусторонним транспортом для клиентов.",
+              "text": "Координаты стримят через gRPC streams со всех мобильных приложений напрямую: HTTP/2, типизация и нативная поддержка в мобильных SDK делают gRPC оптимальным двусторонним транспортом для клиентов. События обрабатываются синхронно в request path; cross-region routing не выделяется отдельно. Mobile networks всегда поддерживают stable HTTP/2 streams.",
               "correct": false,
               "sections": {
                 "what_actually": "gRPC streams не работают в большинстве мобильных SDK без обёрток; реальное решение — WebSocket (и MQTT для IoT-устройств в машинах).",
@@ -683,7 +683,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "WebSocket — основной транспорт, MQTT — для IoT-планшетов в машинах. Поток: driver → WebSocket → location-service → Redis ZSET (hot) + Kafka `driver.location.updated` → matching/archiver/analytics.",
+              "text": "WebSocket — основной транспорт, MQTT — для IoT-планшетов в машинах. Поток: driver → WebSocket → location-service → Redis ZSET (hot) + Kafka `driver.location.updated` → matching/archiver/analytics. WebSocket даёт постоянное двунаправленное соединение с малым overhead (драйвер и шлёт координаты, и получает offers), а durable-поток уходит в Kafka, откуда независимо читают matching, архиватор и аналитика.",
               "correct": true,
               "sections": {
                 "explanation": "WebSocket даёт постоянное двунаправленное соединение с малым overhead (драйвер и шлёт координаты, и получает offers), а durable-поток уходит в Kafka, откуда независимо читают matching, архиватор и аналитика. Свойства WebSocket: bi-directional, persistent, low overhead, требует sticky LB (иначе переподключения «прыгают» между подами). Redis ZSET — overwrite hot-позиции. Сообщения — Protobuf, не JSON (размер в 2-3 раза меньше); батчинг 2-3 обновлений на клиенте.",
@@ -708,7 +708,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Лучший транспорт для 1.25M location writes/sec — обычный HTTP POST каждые 4 секунды: новое соединение на запрос дешевле постоянного, любой LB его балансирует, а сервер пушит offers тем же ответом.",
+              "text": "Лучший транспорт для 1.25M location writes/sec — обычный HTTP POST каждые 4 секунды: новое соединение на запрос дешевле постоянного, любой LB его балансирует, а сервер пушит offers тем же ответом. Failure recovery повторяет пользовательскую операцию целиком; плотность водителей и network latency не учитываются.",
               "correct": false,
               "sections": {
                 "what_actually": "HTTP POST на каждый update даёт overhead на TLS handshake и новое соединение на запрос, и не поддерживает server→client push; реальное решение — WebSocket.",
@@ -731,7 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Достаточно одной Cassandra: с row cache она отдаёт hot-позиции за < 1 мс для матчинга и одновременно хранит историю траекторий — отдельный Redis избыточен.",
+              "text": "Достаточно одной Cassandra: с row cache она отдаёт hot-позиции за < 1 мс для матчинга и одновременно хранит историю траекторий — отдельный Redis избыточен. Локальный snapshot активных drivers не создаётся; event stream для истории не выделяется. Matching читает каждую позицию из Cassandra.",
               "correct": false,
               "sections": {
                 "what_actually": "Cassandra хороша для cold time-series истории, но не для sub-ms matching reads; hot-слой держат в in-memory Redis.",
@@ -743,7 +743,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Историческую траекторию всех поездок надо хранить в Redis вместе с hot-позициями: всё гео в одном in-memory store даёт < 1 мс на любой запрос и упрощает sweeper.",
+              "text": "Историческую траекторию всех поездок надо хранить в Redis вместе с hot-позициями: всё гео в одном in-memory store даёт < 1 мс на любой запрос и упрощает sweeper. Локальный snapshot активных drivers не создаётся; sweeper и durable archive используют одну модель данных.",
               "correct": false,
               "sections": {
                 "what_actually": "Cold-история (1 PB at scale, 90 дней) хранится в Cassandra, а потом архивируется в S3 Parquet; держать её в Redis в RAM невозможно по объёму.",
@@ -755,7 +755,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Warm-слой не нужен: matching-сервис должен на каждый запрос ходить напрямую в Redis, локальный in-memory geo-grid на воркерах только усложняет систему.",
+              "text": "Warm-слой не нужен: matching-сервис должен на каждый запрос ходить напрямую в Redis, локальный in-memory geo-grid на воркерах только усложняет систему. Current state и trajectory обновляются одной записью; sweeper и durable archive используют одну модель данных.",
               "correct": false,
               "sections": {
                 "what_actually": "Warm-слой (in-memory geo-grid на воркерах, обновляемый из Kafka) разгружает Redis: matching не делает round-trip на каждый запрос.",
@@ -767,7 +767,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Многоуровнево: hot — Redis, warm — in-memory geo-grid на matching-воркерах, cold — Cassandra (90 дней), analytics — Kafka → Flink/Spark → ClickHouse/BigQuery.",
+              "text": "Многоуровнево: hot — Redis, warm — in-memory geo-grid на matching-воркерах, cold — Cassandra (90 дней), analytics — Kafka → Flink/Spark → ClickHouse/BigQuery. Одна логическая сущность (позиция драйвера) хранится в нескольких системах с разным lifetime и access pattern: hot для матчинга, warm-кэш для разгрузки Redis, cold для истории и аналитики.",
               "correct": true,
               "sections": {
                 "explanation": "Одна логическая сущность (позиция драйвера) хранится в нескольких системах с разным lifetime и access pattern: hot для матчинга, warm-кэш для разгрузки Redis, cold для истории и аналитики. Hot: Redis `GEOADD`/`GEOSEARCH` или hash `cell_id → driver_ids`, ~5M ключей ≈ 500 MB, < 1 ms, sweeper удаляет OFFLINE (native TTL не используется — драйвер перезаписывает запись). Warm: in-memory geo-grid обновляется из Kafka. Cold: Cassandra по `(driver_id, day)`, retention 90 дней (~1 PB), затем архив в S3/Parquet.",
@@ -791,7 +791,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`GEOSEARCH` умеет фильтровать кандидатов по car_type и rating прямо в команде через опцию `FILTER`, поэтому метаданные драйверов хранить рядом с гео не нужно — хватит одного ключа.",
+              "text": "`GEOSEARCH` умеет фильтровать кандидатов по car_type и rating прямо в команде через опцию `FILTER`, поэтому метаданные драйверов хранить рядом с гео не нужно — хватит одного ключа. Одинаковый resolution применяется во всех регионах; pentagons, boundaries и area distortion не влияют на результат.",
               "correct": false,
               "sections": {
                 "what_actually": "`GEOSEARCH` фильтрует только по гео; по car_type/rating отфильтровать нельзя — приходится отдельно идти в БД, поэтому в гибриде метаданные кладут рядом.",
@@ -803,7 +803,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Кастомный H3 grid плох тем, что требует ручного партиционирования по slots; распределение по нодам в нём приходится настраивать вручную для каждой ячейки.",
+              "text": "Кастомный H3 grid плох тем, что требует ручного партиционирования по slots; распределение по нодам в нём приходится настраивать вручную для каждой ячейки. Прямое расстояние считается достаточной оценкой близости; дополнительный поиск соседних cells не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "В H3 grid каждая ячейка — отдельный Redis hash, и он распределяется по slots автоматически; ручной настройки на ячейку не требуется.",
@@ -815,7 +815,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Production — гибрид: Redis hash, partitioned по H3 cell (`drivers:cell:<h3_id>`), внутри `driver_id → packed_metadata`. Чистый `GEOADD` оставляют для MVP/прототипа.",
+              "text": "Production — гибрид: Redis hash, partitioned по H3 cell (`drivers:cell:<h3_id>`), внутри `driver_id → packed_metadata`. Чистый `GEOADD` оставляют для MVP/прототипа. Партиционирование по H3 cell распределяет ключи по slots автоматически и кладёт метаданные рядом с гео (один round-trip), избегая single-key bottleneck чистого `GEOADD`.",
               "correct": true,
               "sections": {
                 "explanation": "Партиционирование по H3 cell распределяет ключи по slots автоматически и кладёт метаданные рядом с гео (один round-trip), избегая single-key bottleneck чистого `GEOADD`. Внутри хеша метаданные упакованы в Protobuf; sweeper играет роль TTL — дропает неактивных за 30 сек. Запрос: `h3.grid_disk(cell, k=1)` → 7 ячеек → 7 параллельных `HGETALL` → merge. Чистый `GEOSEARCH` по одному ключу `drivers:online` всегда упирается в одну ноду кластера.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Чистый `GEOADD`/`GEOSEARCH` в один ключ `drivers:online` идеально масштабируется в Redis Cluster, потому что команды распределяют драйверов по всем slots автоматически.",
+              "text": "Чистый `GEOADD`/`GEOSEARCH` в один ключ `drivers:online` идеально масштабируется в Redis Cluster, потому что команды распределяют драйверов по всем slots автоматически. Все ячейки считаются одинаковыми по форме и площади; pentagons, boundaries и area distortion не влияют на результат.",
               "correct": false,
               "sections": {
                 "what_actually": "Все драйверы в одном ключе `drivers:online` попадают в один slot — это single-key bottleneck и hot key; `GEOSEARCH` всегда упирается в одну ноду.",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Pipeline: get pickup H3 cell → `grid_disk(k=2)` (19 cells) → `GEOSEARCH`/`HGETALL` parallel → union кандидатов → filter → rank по composite score → offer sequential/top-K → first accept wins.",
+              "text": "Pipeline: get pickup H3 cell → `grid_disk(k=2)` (19 cells) → `GEOSEARCH`/`HGETALL` parallel → union кандидатов → filter → rank по composite score → offer sequential/top-K → first accept wins. Матчинг — это многошаговый pipeline: получить кандидатов из ячейки и соседей, отфильтровать по атрибутам, отранжировать композитным score и провести offer-фазу, где первый accept выигрывает.",
               "correct": true,
               "sections": {
                 "explanation": "Матчинг — это многошаговый pipeline: получить кандидатов из ячейки и соседей, отфильтровать по атрибутам, отранжировать композитным score и провести offer-фазу, где первый accept выигрывает. Детали: pickup cell на res 9; `h3.grid_disk(cell, k=2)` = 19 ячеек; union кандидатов 50-200; filter по `car_type`, `ONLINE`, `rating`, `blacklist`; остальные offers cancel; trip-service пишет `MATCHED` в Kafka. SLA: p50 ≤ 2 сек, p99 ≤ 5 сек; нет драйвера за 30 сек → `NO_DRIVERS_AVAILABLE`.",
@@ -864,7 +864,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Если первый драйвер отклонил offer, поездку сразу помечают `NO_DRIVERS_AVAILABLE`: повторять offer другим кандидатам не нужно, иначе нарушится справедливость очереди.",
+              "text": "Если первый драйвер отклонил offer, поездку сразу помечают `NO_DRIVERS_AVAILABLE`: повторять offer другим кандидатам не нужно, иначе нарушится справедливость очереди. Региональная нагрузка не меняет архитектурный путь; device, payment и location signals не объединяются. События обрабатываются синхронно в request path; cross-region routing не выделяется отдельно.",
               "correct": false,
               "sections": {
                 "what_actually": "Offers шлют последовательно/параллельно top-K кандидатам; `NO_DRIVERS_AVAILABLE` ставят только если за ~30 сек никто не принял, а не после первого reject.",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Кандидатов нужно ранжировать строго по рейтингу драйвера: 5 звёзд всегда выигрывают, а ETA и баланс supply/demand в composite score не входят, чтобы не усложнять формулу.",
+              "text": "Кандидатов нужно ранжировать строго по рейтингу драйвера: 5 звёзд всегда выигрывают, а ETA и баланс supply/demand в composite score не входят, чтобы не усложнять формулу. События обрабатываются синхронно в request path; durable event stream не требуется. Региональная нагрузка не меняет архитектурный путь.",
               "correct": false,
               "sections": {
                 "what_actually": "Ранжируют по composite score, где ETA — самый важный фактор, плюс accept_rate, supply/demand, cool-down и cancellation history, а не только rating.",
@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Sequential — справедлив и без race condition, но медленный. Broadcast — быстрый, но race и unfair. Batched (real Uber) — копит N запросов за окно и решает bipartite matching (Hungarian).",
+              "text": "Sequential matching прост и справедлив, но накапливает задержку при отказах. Broadcast быстрее, но создаёт race и unfairness. Batched matching оптимизирует набор поездок и водителей глобально, ценой задержки окна и более сложной координации.",
               "correct": true,
               "sections": {
                 "explanation": "Три стратегии — это trade-off между справедливостью, скоростью и глобальной оптимальностью: sequential прост и справедлив, broadcast быстр, batched оптимизирует global throughput ценой задержки окна. Sequential тормозит на 30+ сек при цепочке отказов (ожидание 10-15 сек на оффер). Batched копит запросы за окно 5-10 сек и оптимизирует global ETA. Реальное: sequential в неплотных зонах, batched в hot regions; часто шлют top-3 параллельно — «мягкий broadcast» с малым K.",
@@ -936,7 +936,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Batched matching минимизирует latency: накопление запросов за окно T идёт фоном и никак не задерживает ответ райдеру, поэтому всегда быстрее sequential даже в разреженных зонах.",
+              "text": "Batched matching минимизирует latency: накопление запросов за окно T идёт фоном и никак не задерживает ответ райдеру, поэтому всегда быстрее sequential даже в разреженных зонах. Одна matching-стратегия используется при любой плотности спроса; исторические данные не используются для настройки весов.",
               "correct": false,
               "sections": {
                 "what_actually": "Batched, наоборот, добавляет 5-10 сек к latency (надо накопить окно), зато оптимизирует global throughput через bipartite matching (Hungarian).",
@@ -948,7 +948,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Broadcast (offer всем top-K сразу) не имеет недостатков: при accept срабатывает атомарный LWT, поэтому race condition невозможен, и далёкие драйверы рады любому offer'у.",
+              "text": "Broadcast (offer всем top-K сразу) не имеет недостатков: при accept срабатывает атомарный LWT, поэтому race condition невозможен, и далёкие драйверы рады любому offer'у. Offer отправляется одинаковому числу drivers во всех зонах; исторические данные не используются для настройки весов.",
               "correct": false,
               "sections": {
                 "what_actually": "У broadcast есть минусы: race condition при одновременных accept'ах надо синхронизировать, а далёкие драйверы тратят время впустую и раздражаются (unfair).",
@@ -971,7 +971,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "При дефиците драйверов в ячейке правильнее сузить radius search, чтобы не предлагать далёких водителей и держать ETA низким даже ценой `NO_DRIVERS_AVAILABLE`.",
+              "text": "При дефиците драйверов в ячейке правильнее сузить radius search, чтобы не предлагать далёких водителей и держать ETA низким даже ценой `NO_DRIVERS_AVAILABLE`. Радиус поиска остаётся фиксированным; race между accept-ами не требует отдельной координации.",
               "correct": false,
               "sections": {
                 "what_actually": "При дефиците radius наоборот расширяют (`k=3` вместо `k=2`), иначе кандидатов вообще не хватит; сужают фильтр при избытке драйверов.",
@@ -983,7 +983,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Веса `w1..w6` задаются вручную инженером один раз и не зависят от исторических данных: бизнес-метрики вроде NPS подвержены шуму, поэтому их в тюнинг весов не закладывают.",
+              "text": "Веса ranking задают вручную один раз и не пересматривают по историческим outcomes; ETA, acceptance probability, cancellations и fairness не участвуют в последующей калибровке. Кандидаты ранжируются по одному статическому score; race между accept-ами не требует отдельной координации.",
               "correct": false,
               "sections": {
                 "what_actually": "Веса тюнятся offline на исторических данных под target `accept_rate × (1−cancellation_rate) × NPS`, а не подбираются вручную раз и навсегда.",
@@ -995,7 +995,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Композитный score per (rider, driver): `w1·(1/ETA) + w2·rating + w3·accept_rate + w4·(1−recent_offers) + w5·fairness − w6·cancellation`. ETA — самый важный фактор.",
+              "text": "Кандидатов ранжируют композитным score, где ETA обычно имеет большой вес, но вместе с ним учитывают вероятность принятия, рейтинг, cancellations, recent offers и fairness. Веса калибруют по историческим outcomes и продуктовым ограничениям; окончательное назначение защищают от race между несколькими accept-событиями.",
               "correct": true,
               "sections": {
                 "explanation": "Ранжирование — это взвешенная сумма факторов, где ETA доминирует, а rating, accept_rate, fairness и penalty за отмены корректируют выбор; веса подбираются офлайн под бизнес-метрику. ETA считают через Google Maps Distance Matrix или свой road graph + ML (у топ-городов Uber — собственный). Веса тюнятся offline на target `accept_rate × (1−cancellation_rate) × NPS`. Cool-down не спамит одного драйвера; при дефиците supply/demand расширяет radius (`k=3` вместо `k=2`).",
@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Surge multiplier можно менять скачком в любую величину мгновенно: сглаживание и cap не нужны, ведь цена должна точно и без задержки отражать текущий ratio demand/supply в ячейке.",
+              "text": "Surge multiplier можно менять скачком в любую величину мгновенно: сглаживание и cap не нужны, ведь цена должна точно и без задержки отражать текущий ratio demand/supply в ячейке. Одинаковое правило применяется во всех регионах; device, payment и location signals не объединяются.",
               "correct": false,
               "sections": {
                 "what_actually": "Multiplier сглаживают (не больше +0.2 за минуту) и кэпируют (∈ [1.0, 5.0]), иначе будут «прыжки» цены и regulatory-проблемы в ряде регионов.",
@@ -1043,7 +1043,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Multiplier хранят в PostgreSQL и читают синхронным SQL-запросом на каждый estimate: ACID-гарантии важнее, а отдельный Redis-кэш для surge только усложняет инвалидацию.",
+              "text": "Multiplier хранят в PostgreSQL и читают синхронным SQL-запросом на каждый estimate: ACID-гарантии важнее, а отдельный Redis-кэш для surge только усложняет инвалидацию. Failure recovery повторяет пользовательскую операцию целиком, тогда как durable event stream не требуется. Один набор сигналов используется для любого решения. Каждый estimate ждёт transactional database read.",
               "correct": false,
               "sections": {
                 "what_actually": "Surge хранят в Redis hash `surge:cell:<h3_id>` для read latency < 1 ms; PostgreSQL не дал бы нужной скорости на read-heavy поток estimate'ов.",
@@ -1055,7 +1055,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Для каждой H3 cell (res 7): `raw_ratio = demand/max(supply,1)`, `multiplier = ML_model(ratio, ...)`, capped ∈ [1.0, 5.0]. Pipeline: Kafka → Flink → `surge:cell:<h3>` в Redis → pricing-service.",
+              "text": "Surge считают по фиксированной формуле `demand / supply` для каждой ячейки и сразу публикуют multiplier без сглаживания, hysteresis, соседних cells и продуктовых ограничений. Surge считается per H3 cell на потоке Kafka: Flink агрегирует demand/supply в скользящем окне, ML-модель выдаёт capped multiplier, который кладётся в Redis для < 1 ms чтения pricing-сервисом.",
               "correct": true,
               "sections": {
                 "explanation": "Surge считается per H3 cell на потоке Kafka: Flink агрегирует demand/supply в скользящем окне, ML-модель выдаёт capped multiplier, который кладётся в Redis для < 1 ms чтения pricing-сервисом. Конкретно: cell res 7 ≈ 5 km²; `demand` = requests за 5 мин; `supply` = доступные драйверы в cell + соседях; вход модели — `ratio, hour, weather, events, history`. Источники Kafka: `trip.requested`, `driver.location.updated`. Sliding window 5 мин, пересчёт каждую минуту, сглаживание ≤ +0.2/мин.",
@@ -1091,7 +1091,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Переходы состояния можно делать прямым `UPDATE trips SET status=...` без идемпотентности: дублирующиеся события безопасны, потому что повторный переход просто перезапишет то же значение.",
+              "text": "Переходы выполняют прямым `UPDATE status` без проверки текущего состояния, version field и idempotency key; повторное или пришедшее не по порядку событие просто перезаписывает значение. Один набор сигналов используется для любого решения; плотность водителей и network latency не учитываются.",
               "correct": false,
               "sections": {
                 "what_actually": "Каждый transition требует `event_id` как dedup key, иначе consumer обработает событие дважды; для конкурентных accept'ов используют LWT (`IF status='MATCHING'`).",
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Trip-service должен писать только в Cassandra и не эмитить события: notification и payment сами опросят базу периодическим polling — так избегается дублирование событий в Kafka.",
+              "text": "Trip-service должен писать только в Cassandra и не эмитить события: notification и payment сами опросят базу периодическим polling — так избегается дублирование событий в Kafka. Региональная нагрузка не меняет архитектурный путь; промежуточное состояние операции не сохраняется. С этой конфигурацией push приходил бы с задержкой polling-интервала, а payment не реагировал бы на `IN_PROGRESS` вовремя.",
               "correct": false,
               "sections": {
                 "what_actually": "Trip-service пишет в Cassandra и emit'ит событие в Kafka — это fan-out для notification (push), payment (pre-auth на `IN_PROGRESS`) и analytics; polling базы хуже.",
@@ -1115,7 +1115,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Состояния `REQUESTED → MATCHING → MATCHED → … → PAID → RATED` (плюс `CANCELLED`). Каждый переход — событие в Kafka для fan-out. Идемпотентность по `event_id`, optimistic locking через LWT.",
+              "text": "Состояния `REQUESTED → MATCHING → MATCHED → … → PAID → RATED` (плюс `CANCELLED`). Каждый переход — событие в Kafka для fan-out. Идемпотентность по `event_id`, optimistic locking через LWT. State machine — это явный набор состояний с переходами-событиями; Kafka даёт fan-out для нотификаций/оплаты/аналитики, а LWT и `event_id` защищают от двойного accept и повторной обработки.",
               "correct": true,
               "sections": {
                 "explanation": "State machine — это явный набор состояний с переходами-событиями; Kafka даёт fan-out для нотификаций/оплаты/аналитики, а LWT и `event_id` защищают от двойного accept и повторной обработки. Полная цепочка: `REQUESTED → MATCHING → MATCHED → DRIVER_ARRIVING → DRIVER_ARRIVED → IN_PROGRESS → COMPLETED → PAID → RATED`. Событие несёт `event_id`, `from`, `to`, `actor`, `payload`. LWT (`IF status='MATCHING'`) против двойного accept; компенсация `PAID_FAILED` через Outbox.",
@@ -1163,7 +1163,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "По подсистемам: users/drivers → PostgreSQL; trips → Cassandra; locations hot → Redis; locations cold → Cassandra; payments → PostgreSQL; surge → Redis; analytics → ClickHouse.",
+              "text": "Хранилища выбирают по access pattern: relational OLTP для profiles, trip state и ledger; low-latency geo-store для active locations; partitioned event/history store для траекторий; analytical store для агрегатов. Названия продуктов вторичны относительно latency и consistency.",
               "correct": true,
               "sections": {
                 "explanation": "Выбор БД диктуется access pattern и consistency: OLTP CRUD в PostgreSQL, write-heavy time-series в Cassandra, sub-ms hot key-value в Redis, OLAP в ClickHouse, а деньги — только в ACID-хранилище. Детали: users/drivers — PostgreSQL sharded by user_id (ACID, JSONB); trips — Cassandra `(user_id, month)`; locations hot — Redis (GEO + H3); cold — Cassandra `(driver_id, day)`, 90d; payments — PostgreSQL multi-region sync (ledger); surge — Redis; analytics — Kafka → ClickHouse/BigQuery. Никогда: PG для locations, Cassandra для payments.",
@@ -1176,7 +1176,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Trip metadata правильно хранить в Redis: всё, что связано с поездкой, должно лежать в in-memory store ради скорости чтения receipt, а AOF-персистентность защищает от потери.",
+              "text": "Trip metadata правильно хранить в Redis: всё, что связано с поездкой, должно лежать в in-memory store ради скорости чтения receipt, а AOF-персистентность защищает от потери. Локальный snapshot активных drivers не создаётся; sweeper и durable archive используют одну модель данных.",
               "correct": false,
               "sections": {
                 "what_actually": "Trip metadata write-heavy и читается как history — это Cassandra (partition `(user_id, month)`), а не in-memory Redis, который не для долгого хранения.",
@@ -1188,7 +1188,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Payment ledger удобно хранить в Cassandra: высокая запись и масштабируемость важнее строгой согласованности, а LWT при необходимости даёт нужную ACID-гарантию для денег.",
+              "text": "Payment ledger удобно хранить в Cassandra: высокая запись и масштабируемость важнее строгой согласованности, а LWT при необходимости даёт нужную ACID-гарантию для денег. Один retention применяется ко всем location data; sweeper и durable archive используют одну модель данных.",
               "correct": false,
               "sections": {
                 "what_actually": "Cassandra не используют для payments — нужна ACID и multi-row transactions; ledger держат в PostgreSQL (multi-region sync replication для CP).",
@@ -1271,7 +1271,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Ledger удобнее вести как изменяемые строки баланса: на каждый платёж делаем `UPDATE balance SET amount=...` под row-lock, чтобы не плодить append-only записи и не считать `SUM` на чтении.",
+              "text": "Ledger хранится как одна изменяемая строка баланса под row lock: charge, refund и payout перезаписывают текущее значение. История проводок и append-only entries не сохраняются, повтор запроса выполняет платёж заново, а аудит и reconciliation восстанавливаются из последнего баланса и логов провайдера.",
               "correct": false,
               "sections": {
                 "what_actually": "Ledger — append-only: каждый финансовый event это новая строка, а `balance = SUM(amount)`; никаких in-place updates — это даёт reconciliation и решает concurrency.",
@@ -1283,7 +1283,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Driver payout проводят в реальном времени сразу после COMPLETED — мгновенный Stripe Transfer на карту водителя по факту каждой поездки, без ожидания банковского ACH в 1-2 дня.",
+              "text": "Driver payout проводят в реальном времени сразу после COMPLETED — мгновенный Stripe Transfer на карту водителя по факту каждой поездки, без ожидания банковского ACH в 1-2 дня. Повтор запроса заново выполняет платёж; разные state transitions не фиксируются отдельно. Charge, refund и payout используют одну операцию; банковские сроки не влияют на завершение поездки.",
               "correct": false,
               "sections": {
                 "what_actually": "Payout идёт async, обычно daily/weekly через Stripe Connect/Adyen; банковский ACH занимает 1-2 дня, поэтому он не в реальном времени.",
@@ -1307,7 +1307,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Pre-auth (hold) на estimate × 1.2 при request; capture по actual fare при COMPLETED; refund при cancel; tip — отдельный PaymentIntent; payout — async через Stripe Connect; ledger append-only.",
+              "text": "Pre-auth (hold) на estimate × 1.2 при request; capture по actual fare при COMPLETED; refund при cancel; tip — отдельный PaymentIntent; payout — async через Stripe Connect; ledger append-only. Платёж проходит фазы pre-auth → capture → (refund/payout) с буфером на overage. Pre-auth/capture с ledger применяют, когда нужны strong consistency, аудит и защита от двойных списаний при ретраях и webhook-дублях.",
               "correct": true,
               "sections": {
                 "explanation": "Платёж проходит фазы pre-auth → capture → (refund/payout) с буфером на overage. Hold ставят при request на estimate × 1.2 (buffer); capture при COMPLETED по actual fare (release разницы, если меньше); refund при cancel; split fare → N pre-auths/captures; tip — отдельный PaymentIntent через 24 ч; driver payout — daily/weekly Transfer через Stripe Connect, банковский ACH занимает 1-2 дня. Ledger append-only решает concurrent updates и даёт reconciliation/audit (`balance = SUM(amount)`), а `Idempotency-Key` на всех запросах к Stripe защищает от двойных списаний.",
@@ -1331,7 +1331,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Live driver locations нужно реплицировать глобально во все регионы через Cassandra DC-aware, чтобы любой DC мог матчить драйверов из любой точки мира без обращения к чужому региону.",
+              "text": "Live driver locations нужно реплицировать глобально во все регионы через Cassandra DC-aware, чтобы любой DC мог матчить драйверов из любой точки мира без обращения к чужому региону. Региональная нагрузка не меняет архитектурный путь; device, payment и location signals не объединяются.",
               "correct": false,
               "sections": {
                 "what_actually": "Live locations не реплицируют глобально — они нужны только в home region; незачем знать, где driver в SF, при запросе в Берлине.",
@@ -1343,7 +1343,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "4-6 автономных регионов, GeoDNS/Anycast роутит к ближайшему DC; within-region strong, cross-region eventual через async-репликацию; live locations pinned к региону; payments — multi-region sync.",
+              "text": "4-6 автономных регионов, GeoDNS/Anycast роутит к ближайшему DC; within-region strong, cross-region eventual через async-репликацию; live locations pinned к региону; payments — multi-region sync. Геораспределение обязательно (SF→Singapore RTT 180 мс). Multi-region применяют, когда latency от user до DC надо держать < 100 ms и обеспечивать работу при перелётах пользователей между странами.",
               "correct": true,
               "sections": {
                 "explanation": "Геораспределение обязательно (SF→Singapore RTT 180 мс). Регионов 4-6 (US-East/West, EU, APAC, LatAm, MENA), каждый — независимый deployment и strong внутри; GeoDNS/Anycast направляет к ближайшему DC. Within-region — strong consistency; cross-region — eventual (Kafka mirror, Cassandra DC-aware). Глобально async реплицируют profiles и trip history; НЕ реплицируют live locations и active trips (pinned к региону создания). Payment ledger — multi-region sync (strong), кроме денег всё cross-region eventual.",
@@ -1368,7 +1368,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Payment ledger можно держать в eventual cross-region репликации, как user profiles и trip history, — финансы синхронизируются между регионами асинхронно через Kafka mirror без strong-гарантий.",
+              "text": "Payment ledger можно держать в eventual cross-region репликации, как user profiles и trip history, — финансы синхронизируются между регионами асинхронно через Kafka mirror без strong-гарантий. При таком устройстве во время cross-region расхождения возможны двойные списания при roaming-поездке.",
               "correct": false,
               "sections": {
                 "what_actually": "Payment ledger реплицируют multi-region sync replication (strong consistency); деньги — единственное, что не отдают на eventual между регионами.",
@@ -1416,7 +1416,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Hot cities должны делить общую инфраструктуру с остальным регионом — выделять отдельные Kafka/Redis/matching-кластеры под NYC нерентабельно и усложняет эксплуатацию без выигрыша.",
+              "text": "Hot cities должны делить общую инфраструктуру с остальным регионом — выделять отдельные Kafka/Redis/matching-кластеры под NYC нерентабельно и усложняет эксплуатацию без выигрыша. Одинаковое правило применяется во всех регионах; cross-region routing не выделяется отдельно.",
               "correct": false,
               "sections": {
                 "what_actually": "Для hot cities выделяют dedicated infra: отдельные Kafka clusters, Redis clusters и matching-service deployment, иначе один регион становится bottleneck.",
@@ -1511,7 +1511,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "По категориям: GPS spoofing → sanity-check скорости + `isMockLocation()`; fake drivers → selfie + biometrics; card fraud → 3D Secure + Stripe Radar; промо-абьюз → fingerprint. Сигналы → Flink → fraud-score.",
+              "text": "По категориям: GPS spoofing → sanity-check скорости + `isMockLocation()`; fake drivers → selfie + biometrics; card fraud → 3D Secure + Stripe Radar; промо-абьюз → fingerprint. Сигналы → Flink → fraud-score. GPS spoofing → sanity-check скорости (> 200 km/h, прыжки), `isMockLocation()`, ML на траектории fake drivers → selfie verification, behavioral biometrics collusion → graph analysis flagged pairs.",
               "correct": true,
               "sections": {
                 "explanation": "Anti-fraud покрывает разные категории разными сигналами. GPS spoofing → sanity-check скорости (> 200 km/h, прыжки), `isMockLocation()`, ML на траектории; fake drivers → selfie verification, behavioral biometrics; collusion → graph analysis flagged pairs; card fraud → 3D Secure, device fingerprint, Stripe Radar; cancel scamming → suspension thresholds; promo abuse → device/phone fingerprint, ML clustering. Архитектура: real-time signals → Flink → fraud-score per event → block + manual review queue; batch ML retraining weekly на исторических disputes.",
@@ -1524,7 +1524,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Card fraud достаточно ловить только постфактум при ручном разборе чарджбэков — real-time сигналы, 3D Secure и device fingerprint для платежей избыточны и лишь замедляют checkout.",
+              "text": "Card fraud достаточно ловить только постфактум при ручном разборе чарджбэков — real-time сигналы, 3D Secure и device fingerprint для платежей избыточны и лишь замедляют checkout. Повтор запроса заново выполняет платёж; разные state transitions не фиксируются отдельно. Rider charge и driver payout считаются единым переводом; append-only ledger и reconciliation не применяются.",
               "correct": false,
               "sections": {
                 "what_actually": "Card fraud детектируют в реальном времени: 3D Secure, device fingerprint, Stripe Radar и сигналы (new device, unusual location) — а не только постфактум по чарджбэкам.",
@@ -1536,7 +1536,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Promo abuse через множественные fake-аккаунты нельзя выявить — каждый аккаунт выглядит как новый легитимный пользователь, и device/phone fingerprint с ML-clustering тут бессильны.",
+              "text": "Promo abuse через множественные fake-аккаунты нельзя выявить — каждый аккаунт выглядит как новый легитимный пользователь, и device/phone fingerprint с ML-clustering тут бессильны. Charge, refund и payout используют одну операцию; audit восстанавливается из текущего баланса. Баланс хранится как изменяемая строка; append-only ledger и reconciliation не применяются.",
               "correct": false,
               "sections": {
                 "what_actually": "Promo abuse ловят по device fingerprint, phone verification и ML clustering (same device, same IP, похожие номера телефонов), даже если аккаунты формально новые.",
@@ -1548,7 +1548,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "GPS spoofing невозможно детектировать на стороне системы — клиент сообщает координаты, и сервер обязан им доверять; sanity-check скорости и ML на траектории тут не помогают, защита только на устройстве через `isMockLocation()`.",
+              "text": "GPS spoofing невозможно детектировать на стороне системы — клиент сообщает координаты, и сервер обязан им доверять; sanity-check скорости и ML на траектории тут не помогают, защита только на устройстве через `isMockLocation()`. Все финансовые переходы выполняются в одном синхронном потоке; разные state transitions не фиксируются отдельно.",
               "correct": false,
               "sections": {
                 "what_actually": "Spoofing детектируют sanity-check'ами скорости/ускорения (> 200 km/h, прыжки координат), флагом `isMockLocation()` и ML на траектории — сервер не доверяет слепо.",
@@ -1571,7 +1571,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Payments и ledger можно держать AP с eventual consistency глобально — деньги в итоге сойдутся при reconciliation, а доступность важнее строгой согласованности баланса.",
+              "text": "Payments и ledger можно держать AP с eventual consistency глобально — деньги в итоге сойдутся при reconciliation, а доступность важнее строгой согласованности баланса. В этой модели в окне расхождения возможны двойные списания и потерянные платежи — прямой финансовый риск.",
               "correct": false,
               "sections": {
                 "what_actually": "Payments/ledger — CP с multi-region sync replication: деньги нельзя терять, нужны two-phase commit и distributed locks, а не eventual.",
@@ -1583,7 +1583,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Live driver locations должны быть CP (strong): перед каждым матчингом все реплики обязаны согласовать точную позицию драйвера через consensus, иначе разные DC увидят разные координаты и матчинг сломается.",
+              "text": "Live driver locations должны быть CP (strong): перед каждым матчингом все реплики обязаны согласовать точную позицию драйвера через consensus, иначе разные DC увидят разные координаты и матчинг сломается. Один набор сигналов используется для любого решения; durable event stream не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Live locations — AP (eventual): позиция 2 сек назад приемлема, и главное — availability; strong здесь бессмысленен, ведь к моменту чтения драйвер уже сдвинулся.",
@@ -1595,7 +1595,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Trip state machine должна быть AP, чтобы максимизировать доступность: два конкурирующих accept'а одного драйвера можно потом разрешить eventually без LWT и row-lock.",
+              "text": "Trip state machine должна быть AP, чтобы максимизировать доступность: два конкурирующих accept'а одного драйвера можно потом разрешить eventually без LWT и row-lock. При таком подходе оба драйвера получили бы одну поездку, и конфликт пришлось бы разруливать постфактум, ломая UX.",
               "correct": false,
               "sections": {
                 "what_actually": "Trip state machine — CP within region: два accept'а одной поездки недопустимы, поэтому нужны LWT в Cassandra или row-lock в PostgreSQL, а не eventual.",
@@ -1607,7 +1607,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Per-подсистему: profiles/trip state/payments — CP (strong внутри региона); live locations, matching, surge, history, notifications — AP. Правило: state strong, real-time всегда AP, деньги — sync.",
+              "text": "Consistency выбирают по данным: payment ledger и критичные trip transitions требуют согласованной записи внутри региона; live locations, matching candidates, surge и notifications допускают bounded staleness. Межрегиональная репликация проектируется отдельно от локальной целостности.",
               "correct": true,
               "sections": {
                 "explanation": "CAP-выбор делают per-подсистему по природе данных. Profiles — CP (strong); live locations — AP (eventual); matching — AP (лучше быстрый «нет», чем full consistency); trip state machine — CP within region (LWT в Cassandra или PG-row-lock против двойного accept); surge — AP (approximate); payments/ledger — CP multi-region sync; history — AP; notifications — AP at-least-once (dedup by `event_id`); analytics — AP eventual. Правило: локально strong для state, глобально eventual кроме денег, real-time всегда AP.",
@@ -1631,7 +1631,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Anti-patterns: SQL для real-time locations, single global matching, strong consistency для locations, sequential matching без timeout, sync в payment без idempotency, вечное хранение локаций (GDPR).",
+              "text": "Anti-patterns: SQL для real-time locations, single global matching, strong consistency для locations, sequential matching без timeout, sync в payment без idempotency, вечное хранение локаций (GDPR). SQL для real-time locations (умирает на 1.25M writes/sec) single global matching (latency из Asia 200+ мс) strong consistency для locations (бессмысленна).",
               "correct": true,
               "sections": {
                 "explanation": "Типичные ошибки бьют по всем слоям. SQL для real-time locations (умирает на 1.25M writes/sec); single global matching (latency из Asia 200+ мс); strong consistency для locations (бессмысленна); sequential matching без timeout; синхронные вызовы в payment (нужен async + Outbox); игнор idempotency (webhook дважды → двойной charge); один Redis key для всех drivers (hot key); polling вместо WebSocket; pre-auth без buffer; вечное хранение локаций (GDPR); нет circuit breaker на Maps API (падение Maps кладёт платформу); hot row на `trips.status` (нужны append-only events + materialized view).",
@@ -1656,7 +1656,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Sequential matching без таймаута — нормальная практика: если драйвер долго думает над offer, система просто терпеливо ждёт его ответа сколько угодно, не предлагая следующему в очереди.",
+              "text": "Sequential matching без таймаута — нормальная практика: если драйвер долго думает над offer, система просто терпеливо ждёт его ответа сколько угодно, не предлагая следующему в очереди. Один набор сигналов используется для любого решения; cross-region routing не выделяется отдельно.",
               "correct": false,
               "sections": {
                 "what_actually": "Sequential без таймаута — anti-pattern: зависший на offer драйвер заставляет райдера ждать; обязателен timeout 10-15 сек на ответ.",
@@ -1668,7 +1668,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Single global matching service — правильный выбор: один deployment на весь мир проще в эксплуатации и не создаёт проблем с latency даже из Asia в US-East при 200+ мс RTT.",
+              "text": "Single global matching service — правильный выбор: один deployment на весь мир проще в эксплуатации и не создаёт проблем с latency даже из Asia в US-East при 200+ мс RTT. Региональная нагрузка не меняет архитектурный путь; cross-region routing не выделяется отдельно.",
               "correct": false,
               "sections": {
                 "what_actually": "Один глобальный matching-service — anti-pattern: из Asia latency 200+ мс; регионализация обязательна, матчинг должен быть рядом с пользователем.",
@@ -1691,7 +1691,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Pool/shared rides матчат тем же алгоритмом, что и обычные поездки, — просто сажают в одну машину первых попавшихся райдеров без учёта совпадения маршрутов и отдельного batched-сервиса.",
+              "text": "Pool/shared rides матчат тем же алгоритмом, что и обычные поездки, — просто сажают в одну машину первых попавшихся райдеров без учёта совпадения маршрутов и отдельного batched-сервиса. Один набор сигналов используется для любого решения; cross-region routing не выделяется отдельно.",
               "correct": false,
               "sections": {
                 "what_actually": "Pool требует отдельный batched ride-sharing алгоритм, ищущий 2-3 trip с пересекающимися маршрутами, а не случайных райдеров; ETA усложняется доп. waypoints.",
@@ -1715,7 +1715,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Scheduled → таблица `scheduled_rides`, за ~15 мин cron/Temporal триггерит обычный matching (backup за 5 мин); multi-stop → `waypoints[]`, ETA = sum сегментов, маршрут TSP; pool — отдельный сервис.",
+              "text": "Scheduled → таблица `scheduled_rides`, за ~15 мин cron/Temporal триггерит обычный matching (backup за 5 мин); multi-stop → `waypoints[]`, ETA = sum сегментов, маршрут TSP; pool — отдельный сервис. Scheduled и pool — это самостоятельные потоки с собственными очередями и orchestration.",
               "correct": true,
               "sections": {
                 "explanation": "Scheduled и pool — это самостоятельные потоки с собственными очередями и orchestration. Scheduled rides → отдельная таблица `scheduled_rides`, за ~15 мин до времени cron/Quartz/Temporal триггерит обычный matching (плюс backup matching за 5 мин на случай cancel основного драйвера). Multi-stop → `waypoints: [pickup, stop1, stop2, dropoff]`, ETA = sum сегментов, pricing = суммарная дистанция + waiting fee, маршрут — TSP (гибкий порядок) или fixed. Pool — отдельный batched ride-sharing. Reality: scheduled и pool — отдельные microservices с собственной orchestration (Temporal/Cadence).",
@@ -1728,7 +1728,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Scheduled rides гарантируют подачу драйвера ровно в назначенную секунду — система резервирует конкретного водителя заранее на точное время, поэтому backup matching за 5 мин не нужен.",
+              "text": "Scheduled rides гарантируют подачу драйвера ровно в назначенную секунду — система резервирует конкретного водителя заранее на точное время, поэтому backup matching за 5 мин не нужен. Региональная нагрузка не меняет архитектурный путь; промежуточное состояние операции не сохраняется.",
               "correct": false,
               "sections": {
                 "what_actually": "Гарантия мягче: за ~15 мин до времени запускают обычный matching, не raised expectation «ровно в 19:00»; конкретного водителя заранее не бронируют.",
@@ -1751,7 +1751,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Multi-region active-active выбирают потому, что у него нет недостатков по сравнению с одним глобальным деплоем — он и проще, и дешевле, и не добавляет сложности синхронизации между DC.",
+              "text": "Multi-region active-active выбирают потому, что у него нет недостатков по сравнению с одним глобальным деплоем — он и проще, и дешевле, и не добавляет сложности синхронизации между DC. В предложенной схеме не было бы причин вообще рассматривать single global deployment.",
               "correct": false,
               "sections": {
                 "what_actually": "Multi-region active-active даёт низкую latency, но ценой сложности синхронизации, конфликтов и большего COGS — это именно trade-off, а не бесплатный выигрыш.",
@@ -1763,7 +1763,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Каждый выбор — компромисс: H3 vs простота, batched matching vs latency, eventual locations vs strong payments, multi-region active-active vs сложность синка. Принцип: разные SLA — разные решения.",
+              "text": "Каждый выбор — компромисс: H3 vs простота, batched matching vs latency, eventual locations vs strong payments, multi-region active-active vs сложность синка. Принцип: разные SLA — разные решения. H3 для production (сложнее интеграция, 12 pentagons) batched matching в hot, parallel top-K в норме (риск race condition).",
               "correct": true,
               "sections": {
                 "explanation": "Каждый ключевой выбор — это осознанный компромисс. H3 для production (сложнее интеграция, 12 pentagons); batched matching в hot, parallel top-K в норме (риск race condition); custom H3 grid поверх Redis (своя логика, но auto-partitioning); Cassandra для trips (нет JOIN); WebSocket (sticky LB); eventual для locations vs strong для payments (ACID + ledger, дороже по cross-region latency); multi-region active-active (сложность синка); async payment capture с Outbox. Объединяет их принцип: разные части — разные SLA, БД и consistency, не унифицировать.",
@@ -1776,7 +1776,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Async payment capture с Outbox — чистый выигрыш без издержек: receipts всегда мгновенны, reconciliation не требуется, и race condition при двойной доставке webhook исключён сам собой.",
+              "text": "Async payment capture с Outbox — чистый выигрыш без издержек: receipts всегда мгновенны, reconciliation не требуется, и race condition при двойной доставке webhook исключён сам собой. Failure recovery повторяет пользовательскую операцию целиком. Одновременно промежуточное состояние операции не сохраняется.",
               "correct": false,
               "sections": {
                 "what_actually": "Async capture даёт устойчивость к падению PSP, но ценой возможных задержек в receipts и необходимости reconciliation — это компромисс, а не бесплатный плюс.",

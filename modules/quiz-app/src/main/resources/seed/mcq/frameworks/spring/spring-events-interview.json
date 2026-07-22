@@ -23,38 +23,38 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Spring Events` позволяют напрямую вызвать метод другого бина по ссылке: публикатор сам достаёт слушатель из контекста и синхронно его дёргает. Событие тут остаётся обёрткой над обычным вызовом, поэтому зависимость между модулями сохраняется.",
+              "text": "`Spring Events` позволяют напрямую вызвать метод другого бина по ссылке: публикатор сам достаёт слушатель из контекста и синхронно его дёргает. Событие здесь остаётся лишь обёрткой над обычным вызовом, поэтому зависимость между модулями сохраняется.",
               "correct": false,
               "sections": {
-                "what_actually": "Публикатор вызывает `publishEvent(...)` и не обращается к слушателям напрямую: `ApplicationEventMulticaster` находит их по типу события, поэтому прямой ссылки на бин-обработчик у издателя нет.",
-                "source_of_confusion": "Синхронная доставка по умолчанию идёт в том же потоке, и это создаёт впечатление обычного вызова метода по ссылке.",
-                "if_it_were_true": "Тогда публикатор держал бы поле с типом слушателя и компилировался бы вместе с ним, но он знает лишь `ApplicationEventPublisher` и тип события.",
-                "how_it_should_be": "Событие развязывает стороны: издатель не зависит от классов слушателей, связь устанавливается по типу события в рантайме."
+                "what_actually": "События — общий механизм слабого связывания: их применяют для side effects, domain events и межмодульного взаимодействия, а не только для логов.",
+                "source_of_confusion": "Логирование — частый учебный пример аспектов и слушателей, поэтому события сводят только к нему.",
+                "if_it_were_true": "Тогда `@TransactionalEventListener` и `@DomainEvents` были бы бессмысленны, но они существуют именно для бизнес-сценариев.",
+                "how_it_should_be": "Логирование — лишь один из случаев; события покрывают любой сценарий уведомления о произошедшем действии."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`Spring Events` работают асинхронно по умолчанию: публикация события сразу возвращает управление, а каждый слушатель уходит в отдельный поток из пула. Публикатор при этом не ждёт завершения обработки и продолжает свою транзакцию.",
-              "correct": false,
-              "sections": {
-                "what_actually": "По умолчанию события синхронны: `publishEvent(...)` возвращает управление после того, как все слушатели отработали в потоке публикатора.",
-                "source_of_confusion": "Событийные системы ассоциируют с очередями и фоновой обработкой, поэтому асинхронность кажется поведением по умолчанию.",
-                "if_it_were_true": "Тогда исключение слушателя не долетало бы до публикатора и не участвовало бы в его транзакции, но без `@Async` слушатель выполняется синхронно внутри той же транзакции.",
-                "how_it_should_be": "Асинхронность включают явно через `@Async` и `@EnableAsync`; без них доставка синхронна и блокирующая."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "`Spring Events` — реализация паттерна Observer/Publisher-Subscriber внутри Spring-контекста: компонент публикует событие, не зная о подписчиках, а слушатели реагируют независимо. Это убирает прямые зависимости между модулями.",
+              "text": "`Spring Events` — реализация паттерна Observer/Publisher-Subscriber внутри Spring-контекста: компонент публикует событие, не зная о подписчиках, а слушатели реагируют независимо. Это убирает прямые зависимости между модулями и позволяет вынести side effects из бизнес-операции.",
               "correct": true,
               "sections": {
                 "explanation": "Публикатор вызывает `publishEvent(...)` и не знает, кто обработает событие. Слушатели подписываются через `@EventListener` и реагируют на нужный тип, что даёт слабое связывание модулей.",
                 "example": "`OrderService.save()` публикует `OrderCreatedEvent`, а `EmailListener` и `InventoryListener` обрабатывают его независимо, не упоминаясь в коде `OrderService`.",
                 "when_to_apply": "Применяют, когда на одно действие реагирует несколько компонентов или когда нужно отвязать модули в DDD через domain events, не меняя код публикатора.",
                 "edge_cases": "Не подходят, когда логика обязана быть синхронной частью транзакции или когда нужен гарантированный результат от обработчика: события по сути fire-and-forget.",
-                "related": "[[spring-events-interview#Q2]] как опубликовать и обработать событие; [[spring-events-interview#Q15]] события против прямого вызова; [[spring-events-interview#Q16]] отличие от Kafka/RabbitMQ."
+                "related": "[[spring-events-interview#Q2]] как опубликовать и обработать событие в Spring; [[spring-events-interview#Q3]] как создать кастомное событие в Spring; [[spring-events-interview#Q4]] какие встроенные Spring-события (context events) существуют."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Events` работают асинхронно по умолчанию: публикация события сразу возвращает управление, а каждый слушатель уходит в отдельный поток из пула. Публикатор при этом не ждёт завершения их обработки.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Внедрение зависимостей и события — разные механизмы: DI собирает граф бинов, а события передают сообщения между уже собранными бинами в рантайме.",
+                "source_of_confusion": "И DI, и события — части ядра Spring и оба про связь бинов, поэтому их легко перепутать как одно и то же.",
+                "if_it_were_true": "Тогда `publishEvent(...)` управлял бы инъекцией зависимостей, но он лишь рассылает объект события подписанным слушателям.",
+                "how_it_should_be": "DI решает, какой объект подставить; события решают, кого уведомить о произошедшем действии."
               }
             }
           ]
@@ -71,7 +71,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Создают `Runnable` с логикой обработки и передают его в `ThreadPoolTaskExecutor`, который дёрнет слушатель при следующем событии. Помечать метод `@EventListener` тогда не требуется — регистрацию берёт на себя пул потоков.",
+              "text": "Инжектируют `ApplicationEventPublisher` и вызывают `publisher.publishEvent(new OrderCreatedEvent(...))`, а обработчик помечают `@EventListener` на методе с параметром-типом события. Spring сам находит подходящие слушатели по типу аргумента.",
+              "correct": true,
+              "sections": {
+                "explanation": "Публикатор зависит только от узкого интерфейса `ApplicationEventPublisher`, а слушатель — это бин с методом, аннотированным `@EventListener`, чей параметр задаёт тип обрабатываемого события.",
+                "example": "`OrderService` инжектирует `ApplicationEventPublisher` и в `createOrder` вызывает `publishEvent(new OrderCreatedEvent(order))`; метод `@EventListener void onOrderCreated(OrderCreatedEvent e)` срабатывает автоматически.",
+                "when_to_apply": "Используют, когда сервису нужно опубликовать доменное или прикладное событие и не зависеть напрямую от одного или нескольких in-process обработчиков.",
+                "edge_cases": "Можно публиковать через `ApplicationContext`, но это даёт слишком широкий контракт: лучше инжектировать `ApplicationEventPublisher`, который умеет только публиковать.",
+                "related": "[[spring-events-interview#Q3]] как создать кастомное событие в Spring; [[spring-events-interview#Q1]] что такое Spring Events и зачем они нужны; [[spring-events-interview#Q4]] какие встроенные Spring-события (context events) существуют."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Создают `Runnable` с логикой обработки и передают его в `ThreadPoolTaskExecutor`, который дёрнет слушатель при следующем событии. Помечать метод `@EventListener` тогда не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Слушатель — это обычный бин с методом `@EventListener` (или реализующий `ApplicationListener`); `Runnable` и executor к подписке на события отношения не имеют.",
@@ -81,9 +94,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Метод помечают `@Bean` вместо `@EventListener` (доступно с Spring 4.2), и контейнер регистрирует его как слушатель по типу возвращаемого значения. Возвращать `ApplicationEvent` при этом не нужно.",
+              "order": 2,
+              "label": "C",
+              "text": "Метод помечают `@Bean` вместо `@EventListener` (доступно с Spring 4.2), и контейнер регистрирует его как слушатель. Возвращать `ApplicationEvent` при этом не нужно.",
               "correct": false,
               "sections": {
                 "what_actually": "Слушателя помечают `@EventListener`; `@Bean` объявляет фабричный метод бина и подпиской на события не управляет.",
@@ -93,28 +106,15 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Обработчик связывают с событием по имени метода: `onOrderCreated` матчится со `OrderCreatedEvent` по совпадению строки, а `@EventListener` помечает метод как слушатель. Тип параметра при выборе обработчика роли не играет.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Слушатель выбирается по типу параметра метода, а не по имени: `@EventListener void onX(OrderCreatedEvent e)` сработает на `OrderCreatedEvent` при любом названии метода.",
-                "source_of_confusion": "Имя метода вроде `onOrderCreated` совпадает с именем события, из-за чего кажется, что связывание идёт по строке.",
-                "if_it_were_true": "Тогда переименование метода ломало бы подписку, но обработчик продолжает работать при любом имени, если тип параметра совпадает.",
-                "how_it_should_be": "Тип события в сигнатуре определяет обработчик; имя метода на выбор слушателя не влияет."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "Инжектируют `ApplicationEventPublisher` и вызывают `publisher.publishEvent(new OrderCreatedEvent(...))`, а обработчик помечают `@EventListener` на методе с параметром-типом события. Spring сам находит слушатели по типу аргумента.",
-              "correct": true,
+              "text": "Обработчик связывают с событием по имени: `onOrderCreated` матчится со `OrderCreatedEvent` по строке, а `@EventListener` лишь помечает метод. Тип параметра роли не играет.",
+              "correct": false,
               "sections": {
-                "explanation": "Публикатор зависит только от узкого интерфейса `ApplicationEventPublisher`, а слушатель — это бин с методом, аннотированным `@EventListener`, чей параметр задаёт тип обрабатываемого события.",
-                "example": "`OrderService` инжектирует `ApplicationEventPublisher` и в `createOrder` вызывает `publishEvent(new OrderCreatedEvent(order))`; метод `@EventListener void onOrderCreated(OrderCreatedEvent e)` срабатывает автоматически.",
-                "when_to_apply": "Используют всегда, когда нужно опубликовать доменное или прикладное событие из сервиса и обработать его в одном или нескольких компонентах.",
-                "edge_cases": "Можно публиковать через `ApplicationContext`, но это даёт слишком широкий контракт: лучше инжектировать `ApplicationEventPublisher`, который умеет только публиковать.",
-                "related": "[[spring-events-interview#Q1]] зачем нужны события; [[spring-events-interview#Q3]] как создать кастомное событие; [[spring-events-interview#Q5]] как сделать обработку асинхронной."
+                "what_actually": "`refresh()` пересоздаёт контекст и публикует `ContextRefreshedEvent`, но обычное прикладное событие шлют через `publishEvent(...)`.",
+                "source_of_confusion": "`refresh()` действительно порождает системное событие, и его путают с публикацией пользовательских событий.",
+                "if_it_were_true": "Тогда каждое доменное событие требовало бы пересоздания контекста, что разрушило бы приложение на каждом заказе.",
+                "how_it_should_be": "Прикладные события публикуют через `ApplicationEventPublisher.publishEvent(...)`, не трогая жизненный цикл контекста."
               }
             }
           ]
@@ -131,32 +131,32 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Начиная со Spring 4.2 событие — обычный POJO или `record`, наследовать `ApplicationEvent` не нужно. Событие делают immutable (`record`, `final`-поля), потому что один объект читают несколько слушателей; наследование `ApplicationEvent` — легаси-стиль.",
+              "text": "Чтобы `ApplicationEventMulticaster` смог доставить событие всем зарегистрированным слушателям, класс обязан реализовать `Serializable`: Spring копирует его отдельно для каждого подписчика; поэтому `record` годится лишь при полностью сериализуемых полях.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Никакой регистрации в конфигурации не требуется: событие — это просто класс, передаваемый в `publishEvent`.",
+                "source_of_confusion": "Многие компоненты Spring настраиваются через YAML, и кажется, что события тоже надо где-то декларировать.",
+                "if_it_were_true": "Тогда добавление нового события требовало бы правки конфигурации, но достаточно создать класс и опубликовать его.",
+                "how_it_should_be": "События не объявляют в конфигурации; их создают как обычные классы и публикуют через паблишер."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Начиная со Spring 4.2 событие — это обычный POJO (или `record`), его не нужно наследовать от `ApplicationEvent`. Событие делают immutable (`record`, `final`-поля), потому что один объект могут читать несколько слушателей; наследование `ApplicationEvent` — легаси-стиль.",
               "correct": true,
               "sections": {
                 "explanation": "Любой класс может быть событием: Spring определяет тип по аргументу слушателя. Immutability важна, ведь одно событие проходит через несколько обработчиков и не должно меняться по дороге.",
                 "example": "`public record OrderCreatedEvent(Long orderId, String customerId, Instant occurredAt) {}` — компактное immutable-событие без зависимости от Spring API.",
                 "when_to_apply": "Создают кастомное событие, когда нужно передать факт произошедшего действия с его данными: заказ создан, оплата прошла, пользователь зарегистрирован.",
                 "edge_cases": "Расширение `ApplicationEvent` всё ещё работает и требует `super(source)`, но добавляет связанность с Spring и оправдано лишь в старом коде.",
-                "related": "[[spring-events-interview#Q2]] как опубликовать событие; [[spring-events-interview#Q10]] возврат значения как нового события; [[spring-events-interview#Q11]] domain events в агрегате."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Чтобы `ApplicationEventMulticaster` доставил событие слушателям, класс обязан реализовать `Serializable`: Spring копирует его для каждого подписчика, поэтому `record` подходит при сериализуемых полях, а несериализуемое поле ломает доставку.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Событие не обязано быть `Serializable`: `ApplicationEventMulticaster` передаёт один и тот же экземпляр слушателям в памяти, ничего не сериализуя и не копируя.",
-                "source_of_confusion": "Опыт с брокерами и распределёнными очередями, где сообщения сериализуются, переносят на внутрипроцессные события.",
-                "if_it_were_true": "Тогда несериализуемое поле ломало бы доставку, но in-memory событие передаётся по ссылке без требований к `Serializable`.",
-                "how_it_should_be": "Событие — обычный POJO или `record`; сериализация нужна лишь при externalization во внешний брокер, а не для локальной доставки."
+                "related": "[[spring-events-interview#Q4]] какие встроенные Spring-события (context events) существуют; [[spring-events-interview#Q2]] как опубликовать и обработать событие в Spring; [[spring-events-interview#Q5]] как сделать обработку события асинхронной."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Событие стоит делать mutable: тот же экземпляр последовательно проходит через всех слушателей, и каждый дописывает в его поля данные для следующего. Поэтому `record` не годится — нужен класс с сеттерами вроде `setResult()`.",
+              "text": "Событие стоит делать mutable: тот же экземпляр последовательно проходит через всех слушателей, и каждый дописывает в его поля данные для следующего; поэтому `record` не годится — нужен класс с сеттерами вроде `setResult()`.",
               "correct": false,
               "sections": {
                 "what_actually": "Событие делают immutable: его читают несколько слушателей, и изменение состояния привело бы к гонкам и непредсказуемому поведению.",
@@ -168,7 +168,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Кастомное событие обязано наследовать `ApplicationEvent` и звать в конструкторе `super(source)`, иначе `publishEvent` его отвергнет. Источник достаётся через `getSource()`, а `record`-события Spring пока не поддерживает.",
+              "text": "Кастомное событие обязано наследовать `ApplicationEvent` и в конструкторе звать `super(source)`; иначе `publishEvent` его вовсе отвергнет. Из-за этого источник события достаётся через `getSource()`, а `record`-события Spring пока не поддерживает.",
               "correct": false,
               "sections": {
                 "what_actually": "Со Spring 4.2 `publishEvent` принимает любой POJO; наследование `ApplicationEvent` необязательно и считается легаси.",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Spring публикует `ContextRefreshedEvent`, `ContextClosedEvent` и Boot-события `ApplicationReadyEvent`, `ApplicationStartedEvent`. Но слушать их получится, реализовав `ApplicationListener`; `@EventListener` на контекстных событиях не срабатывает.",
+              "text": "Spring публикует `ContextRefreshedEvent`, `ContextClosedEvent` и Boot-события `ApplicationReadyEvent`, `ApplicationStartedEvent`. Но слушать их можно, лишь реализовав `ApplicationListener` — `@EventListener` на контекстных событиях не срабатывает.",
               "correct": false,
               "sections": {
                 "what_actually": "Встроенных событий много (`ContextRefreshed/Closed`, `ApplicationReady/Started/Failed`), а `ApplicationStartedEvent` публикуется ДО `CommandLineRunner`, а не после.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Контекстные события — ранние хуки: `ContextRefreshedEvent` приходит до инициализации бинов, поэтому к другим бинам из такого слушателя обращаться нельзя. Старт приложения ловят через `ApplicationReadyEvent` уже после сборки контекста.",
+              "text": "Контекстные события — ранние хуки: `ContextRefreshedEvent` приходит до инициализации бинов, поэтому к другим бинам из такого слушателя обращаться нельзя. Старт ловят через `ApplicationReadyEvent`.",
               "correct": false,
               "sections": {
                 "what_actually": "`ContextRefreshedEvent` публикуется при инициализации или обновлении контекста, а не на запрос; для HTTP-запросов есть `RequestHandledEvent`.",
@@ -215,7 +215,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Событий жизненного цикла у контекста нет: старт и остановку ловят через `@PostConstruct`, `@PreDestroy`, `InitializingBean`, `DisposableBean` и `SmartLifecycle`. Их вешают на бины для startup/shutdown-логики, а событий контекста среди них не найти.",
+              "text": "Событий жизненного цикла у контекста нет: старт и остановку ловят через `@PostConstruct`, `@PreDestroy`, `InitializingBean`, `DisposableBean` и `SmartLifecycle`. Их вешают на бины для startup/shutdown-логики.",
               "correct": false,
               "sections": {
                 "what_actually": "Spring публикует `ContextRefreshedEvent`, `ContextClosedEvent` и др., а Spring Boot — `ApplicationReadyEvent`; колбэки `@PostConstruct`/`@PreDestroy` относятся к отдельному бину, а не к контексту.",
@@ -227,14 +227,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Spring публикует события жизненного цикла контекста — `ContextRefreshedEvent`, `ContextStartedEvent`, `ContextStoppedEvent`, `ContextClosedEvent`, а Spring Boot добавляет `ApplicationReadyEvent`, `ApplicationStartedEvent`, `ApplicationFailedEvent`.",
+              "text": "Spring публикует события жизненного цикла контекста — `ContextRefreshedEvent`, `ContextStartedEvent`, `ContextStoppedEvent`, `ContextClosedEvent`, а Spring Boot добавляет `ApplicationReadyEvent`, `ApplicationStartedEvent`, `ApplicationFailedEvent`. Их слушают через `@EventListener` для startup/shutdown-логики.",
               "correct": true,
               "sections": {
                 "explanation": "Эти события отражают фазы жизненного цикла: обновление контекста, старт/стоп, закрытие. Spring Boot уточняет их событиями готовности приложения и обработки HTTP-запроса (`RequestHandledEvent`).",
                 "example": "`@EventListener(ApplicationReadyEvent.class) void onStartup()` прогревает кэш после полной инициализации, а `@EventListener(ContextClosedEvent.class)` выполняет очистку при остановке.",
                 "when_to_apply": "Слушают встроенные события, когда нужно выполнить действие при старте (прогрев, инициализация) или корректно завершить ресурсы при остановке приложения.",
                 "edge_cases": "`ApplicationReadyEvent` лучше для startup-логики, чем `ContextRefreshedEvent`: к нему все бины готовы, Tomcat слушает порт и `CommandLineRunner` уже отработали.",
-                "related": "[[spring-events-interview#Q2]] как обрабатывать событие через @EventListener; [[spring-events-interview#Q5]] асинхронная обработка; [[spring-events-interview#Q9]] условная обработка."
+                "related": "[[spring-events-interview#Q5]] как сделать обработку события асинхронной; [[spring-events-interview#Q3]] как создать кастомное событие в Spring; [[spring-events-interview#Q6]] что такое @TransactionalEventListener и зачем он нужен."
               }
             }
           ]
@@ -251,19 +251,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Отдельная настройка не требуется: `publishEvent()` и так возвращает управление немедленно, а слушателей Spring раскидывает по фоновому `ThreadPoolTaskExecutor`. Синхронной доставки в потоке публикатора у событий по умолчанию не бывает.",
+              "text": "Дополнительная настройка не нужна: стандартный `ApplicationEventMulticaster` всегда отправляет listeners в общий `ThreadPoolTaskExecutor`, поэтому publisher не ждёт их завершения.",
               "correct": false,
               "sections": {
-                "what_actually": "По умолчанию `publishEvent(...)` синхронен и возвращается после всех слушателей; фонового `ThreadPoolTaskExecutor` без `@Async` не задействуется.",
-                "source_of_confusion": "Ожидание, что событийная модель неблокирующая по природе, выдаёт синхронную доставку за асинхронную.",
-                "if_it_were_true": "Тогда порядок `@Order` и транзакционная связь слушателя с публикатором были бы недостижимы, но синхронная доставка обеспечивает и то, и другое.",
-                "how_it_should_be": "Неблокирующее выполнение включает `@Async` с `@EnableAsync`; по умолчанию слушатели держат поток публикатора."
+                "what_actually": "`@Transactional` управляет границей транзакции, а не асинхронностью; синхронные слушатели всё равно выполняются до возврата `publishEvent`.",
+                "source_of_confusion": "Транзакции и асинхронность часто обсуждают вместе (`@TransactionalEventListener`), поэтому роли смешивают.",
+                "if_it_were_true": "Тогда любая транзакционная публикация была бы неблокирующей, но без `@Async` слушатели держат поток публикатора.",
+                "how_it_should_be": "За неблокирующее выполнение отвечает `@Async`; `@Transactional` лишь определяет транзакционные границы."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Событие-класс помечают `@Async`, и `ApplicationEventMulticaster` разошлёт его через общий пул потоков (`ThreadPoolTaskExecutor`) без блокировки публикатора. Аннотация на методе с `@EventListener` тогда не нужна — Spring смотрит на тип события.",
+              "text": "Аннотацию `@Async` ставят на класс события; multicaster определяет асинхронность по типу payload, а метод `@EventListener` и executor настраивать не требуется.",
               "correct": false,
               "sections": {
                 "what_actually": "Тип события (POJO или `record`) не влияет на асинхронность: за неё отвечает `@Async` на слушателе, а не форма события.",
@@ -275,26 +275,26 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Асинхронность задаётся флагом прямо в аннотации — `@EventListener(async = true)`, атрибут стал доступен со Spring 5.2. Отдельный `Executor` и подключение `@EnableAsync` для такого варианта уже не требуются.",
+              "text": "Слушатель помечают `@Async`, включают async-инфраструктуру через `@EnableAsync` и настраивают подходящий `Executor`. Обычные listeners стандартный multicaster вызывает синхронно в потоке publisher.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@EventListener` не имеет универсального `async=true`. Асинхронность задаётся AOP-аннотацией `@Async` либо кастомным multicaster с executor.",
+                "example": "`@Async(\"eventsExecutor\") @EventListener void onOrderCreated(OrderCreatedEvent event)` отправляет письмо в executor событий, не задерживая поток, который опубликовал событие.",
+                "when_to_apply": "Делают слушателя async, когда side effect долгий (email, внешний вызов) и его не нужно ждать в основном потоке бизнес-операции.",
+                "edge_cases": "Асинхронный listener не может надёжно публиковать новое событие возвратом метода, а исключение не возвращается publisher; требуется отдельная обработка ошибок.",
+                "related": "[[spring-events-interview#Q6]] что такое @TransactionalEventListener и зачем он нужен; [[spring-events-interview#Q4]] какие встроенные Spring-события (context events) существуют; [[spring-events-interview#Q7]] какие фазы транзакции поддерживает @TransactionalEventListener."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "У `@EventListener` задают атрибут `async=true`; он создаёт отдельный поток для метода без `@Async`, `@EnableAsync` и регистрации executor.",
               "correct": false,
               "sections": {
                 "what_actually": "У `@EventListener` нет параметра `async`; асинхронность задаёт `@Async`, и для контроля пула обычно настраивают свой `Executor`.",
                 "source_of_confusion": "Логично ожидать флаг прямо в аннотации слушателя, поэтому несуществующий `async = true` кажется правдоподобным.",
                 "if_it_were_true": "Тогда не нужны были бы `@Async` и `@EnableAsync`, но именно они и переключают выполнение в пул потоков.",
                 "how_it_should_be": "Используют `@Async` совместно с `@EnableAsync` и желательно собственный `Executor` для управления пулом."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "На метод-слушатель добавляют `@Async` (вместе с `@EnableAsync` и сконфигурированным `Executor`), тогда обработчик выполняется в отдельном потоке и не блокирует публикатора. По умолчанию события синхронны: `publishEvent()` ждёт всех слушателей.",
-              "correct": true,
-              "sections": {
-                "explanation": "`@Async` переносит выполнение слушателя в пул потоков, разрывая его связь с потоком и транзакцией публикатора. Нужны `@EnableAsync` и бин `Executor`, иначе используется дефолтный пул.",
-                "example": "`@Async(\"eventsExecutor\") @EventListener void onOrderCreated(OrderCreatedEvent e)` отправляет email в потоке `event-…`, не задерживая ответ `createOrder`.",
-                "when_to_apply": "Делают слушателя async, когда side effect долгий (email, внешний вызов) и его не нужно ждать в основном потоке бизнес-операции.",
-                "edge_cases": "Исключение в async-слушателе не пробрасывается публикатору, транзакция публикатора недоступна, и для своей транзакции слушателю нужен отдельный `@Transactional`.",
-                "related": "[[spring-events-interview#Q6]] @TransactionalEventListener и транзакции; [[spring-events-interview#Q8]] порядок слушателей; [[spring-events-interview#Q1]] синхронная природа событий по умолчанию."
               }
             }
           ]
@@ -306,12 +306,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое `@TransactionalEventListener` и зачем он нужен?",
+          "question_text": "Как `@TransactionalEventListener` связывает обработчик с фазой транзакции?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "`@TransactionalEventListener` — это переименованный `@EventListener`, появившийся в Spring 5.3, и ведёт себя так же. Особой привязки к фазам транзакции за этой аннотацией по сути не стоит, это синоним для читаемости, а параметр `phase` погоды не делает.",
+              "text": "`@TransactionalEventListener` — это просто переименованный `@EventListener`, появившийся в Spring 5.3, и ведёт он себя точно так же. Особой привязки к конкретным фазам транзакции за этой аннотацией по сути так и не стоит.",
               "correct": false,
               "sections": {
                 "what_actually": "Поведение различается: `@EventListener` срабатывает сразу при публикации, а `@TransactionalEventListener` ждёт фазу транзакции (по умолчанию коммит).",
@@ -323,20 +323,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@TransactionalEventListener` привязывает выполнение слушателя к фазе транзакции публикатора: по умолчанию `AFTER_COMMIT`, слушатель сработает после успешного коммита. Это решает проблему обычного `@EventListener`, который отрабатывает даже при последующем откате.",
-              "correct": true,
-              "sections": {
-                "explanation": "Обычный `@EventListener` внутри транзакции выполняется до её завершения, поэтому email о «созданном» заказе мог уйти и при последующем rollback. `@TransactionalEventListener` откладывает реакцию до нужной фазы.",
-                "example": "`@TransactionalEventListener(phase = AFTER_COMMIT) void onOrderCreated(OrderCreatedEvent e)` отправляет подтверждение строго после успешного коммита заказа.",
-                "when_to_apply": "Применяют для side effects, которые недопустимы при откате: отправка писем, постановка задач, публикация во внешний брокер после фиксации изменений в БД.",
-                "edge_cases": "По умолчанию слушатель выполняется уже после закрытия транзакции (она закоммичена), поэтому для записи в БД нужна новая транзакция через `@Transactional(propagation = REQUIRES_NEW)`.",
-                "related": "[[spring-events-interview#Q7]] фазы транзакции; [[spring-events-interview#Q5]] асинхронная обработка; [[spring-events-interview#Q16]] публикация в Kafka после коммита."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`@TransactionalEventListener` переносит обработку в отдельный поток из пула, чтобы слушатель не задерживал коммит у публикатора. Асинхронная доставка включается по умолчанию, и подключать `@Async` или `@EnableAsync` не приходится.",
+              "text": "`@TransactionalEventListener` переносит обработку события в отдельный поток из пула, чтобы слушатель не задерживал коммит транзакции у публикатора. Асинхронная доставка включается по умолчанию, и отдельно подключать `@Async` или `@EnableAsync` уже не приходится.",
               "correct": false,
               "sections": {
                 "what_actually": "Он управляет привязкой к фазе транзакции, а не асинхронностью; для отдельного потока всё равно нужен `@Async`.",
@@ -346,9 +333,22 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "`@TransactionalEventListener` регистрирует callback для выбранной фазы транзакции; по умолчанию это `AFTER_COMMIT`. Он не создаёт автоматически новую транзакцию и не делает publisher с listener одной атомарной операцией.",
+              "correct": true,
+              "sections": {
+                "explanation": "Listener вызывается через transaction synchronization: `BEFORE_COMMIT`, `AFTER_COMMIT`, `AFTER_ROLLBACK` или `AFTER_COMPLETION`. Без активной транзакции событие пропускается, если не включён `fallbackExecution`.",
+                "example": "`@TransactionalEventListener(phase = AFTER_COMMIT) void onOrderCreated(OrderCreatedEvent e)` отправляет подтверждение строго после успешного коммита заказа.",
+                "when_to_apply": "Применяют для side effects, которые недопустимы при откате: отправка писем, постановка задач, публикация во внешний брокер после фиксации изменений в БД.",
+                "edge_cases": "После commit ресурсы транзакции могут ещё быть доступны, но новые изменения не будут автоматически зафиксированы в исходной транзакции. Для записи обычно нужна отдельная транзакция, например `REQUIRES_NEW`. Reactive transactions требуют передать transaction context вместе с event.",
+                "related": "[[spring-events-interview#Q7]] какие фазы транзакции поддерживает @TransactionalEventListener; [[spring-events-interview#Q5]] как сделать обработку события асинхронной; [[spring-events-interview#Q8]] как управлять порядком обработчиков одного события."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "`@TransactionalEventListener` включает слушателя в ту же транзакцию, что открыл публикатор через `@Transactional`, поэтому ошибка в обработчике откатывает всю исходную операцию. Обработчик и бизнес-код коммитятся вместе как одна атомарная единица.",
+              "text": "`@TransactionalEventListener` всегда выполняет handler внутри той же транзакции, что и publisher, поэтому исключение после публикации откатывает бизнес-операцию независимо от выбранной phase.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию (`AFTER_COMMIT`) слушатель выполняется уже после коммита, когда транзакция закрыта, и откатить её он не может.",
@@ -371,20 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Поддерживаются `AFTER_COMMIT` (по умолчанию), `AFTER_ROLLBACK`, `AFTER_COMPLETION` и `BEFORE_COMMIT`. Они задают момент срабатывания слушателя относительно коммита или отката транзакции публикатора, покрывая все исходы.",
-              "correct": true,
-              "sections": {
-                "explanation": "`AFTER_COMMIT` — после успешной фиксации, `AFTER_ROLLBACK` — после отката (компенсация), `AFTER_COMPLETION` — после завершения любым исходом, `BEFORE_COMMIT` — ещё внутри транзакции до коммита.",
-                "example": "`@TransactionalEventListener(phase = BEFORE_COMMIT)` с `@Transactional(propagation = MANDATORY)` пишет аудит в той же транзакции до коммита; `AFTER_ROLLBACK` шлёт алерт об откате заказа.",
-                "when_to_apply": "Выбирают фазу по семантике: коммит — для безопасных side effects, BEFORE_COMMIT — для записи в ту же транзакцию, ROLLBACK — для компенсирующих действий.",
-                "edge_cases": "Если у публикатора нет активной транзакции, слушатель по умолчанию не выполнится; `fallbackExecution = true` разрешает выполнение и без транзакции.",
-                "related": "[[spring-events-interview#Q6]] зачем нужен @TransactionalEventListener; [[spring-events-interview#Q8]] порядок слушателей; [[spring-events-interview#Q9]] условная обработка."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "Enum `TransactionPhase` ограничен двумя значениями — `AFTER_COMMIT` и `AFTER_ROLLBACK`, оба срабатывают после завершения транзакции. Момента до коммита среди них нет, поэтому участвовать в открытой транзакции слушатель не может.",
+              "text": "Enum `TransactionPhase` ограничен двумя значениями — `AFTER_COMMIT` и `AFTER_ROLLBACK`, оба срабатывают после завершения транзакции. Момента до коммита среди них нет.",
               "correct": false,
               "sections": {
                 "what_actually": "Кроме `AFTER_COMMIT` есть `AFTER_ROLLBACK`, `AFTER_COMPLETION` и `BEFORE_COMMIT`; `AFTER_COMMIT` лишь значение по умолчанию.",
@@ -394,9 +381,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Фаза `BEFORE_COMMIT` срабатывает уже после закрытия транзакции, наравне с `AFTER_COMMIT`. Писать в БД в той же транзакции из неё не выйдет, потому что коммит к этому моменту уже прошёл, а соединение освобождено.",
+              "order": 1,
+              "label": "B",
+              "text": "Фаза `BEFORE_COMMIT` срабатывает уже после закрытия транзакции, наравне с `AFTER_COMMIT`. Писать в БД в той же транзакции в ней не выйдет.",
               "correct": false,
               "sections": {
                 "what_actually": "`BEFORE_COMMIT` срабатывает до коммита, ещё внутри активной транзакции, и в нём как раз можно участвовать в ней (например, через `MANDATORY`).",
@@ -406,15 +393,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Названия фаз совпадают с состояниями транзакции — `COMMIT`, `ROLLBACK` и `SAVEPOINT`, по аналогии с `Propagation`. Значения «до коммита» среди них не заводят, момент срабатывания ограничен этими тремя состояниями.",
+              "order": 2,
+              "label": "C",
+              "text": "Названия фаз совпадают с состояниями транзакции — `COMMIT`, `ROLLBACK` и `SAVEPOINT`, как у `Propagation`. Значения «до коммита» среди них не заводят.",
               "correct": false,
               "sections": {
                 "what_actually": "Значения фаз — `BEFORE_COMMIT`, `AFTER_COMMIT`, `AFTER_ROLLBACK`, `AFTER_COMPLETION`; `SAVEPOINT` относится к вложенным транзакциям, а не к фазам слушателя.",
                 "source_of_confusion": "Термины транзакций (`Propagation`, savepoint) смешивают с перечислением `TransactionPhase`.",
                 "if_it_were_true": "Тогда `phase = TransactionPhase.SAVEPOINT` компилировался бы, но такого значения в перечислении нет.",
                 "how_it_should_be": "Используют значения `TransactionPhase`; savepoint — это про `NESTED`-распространение, а не про фазу слушателя."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "Поддерживаются `AFTER_COMMIT` (по умолчанию), `AFTER_ROLLBACK`, `AFTER_COMPLETION` и `BEFORE_COMMIT`. Они задают момент срабатывания слушателя относительно коммита или отката транзакции публикатора.",
+              "correct": true,
+              "sections": {
+                "explanation": "`AFTER_COMMIT` — после успешной фиксации, `AFTER_ROLLBACK` — после отката (компенсация), `AFTER_COMPLETION` — после завершения любым исходом, `BEFORE_COMMIT` — ещё внутри транзакции до коммита.",
+                "example": "`@TransactionalEventListener(phase = BEFORE_COMMIT)` с `@Transactional(propagation = MANDATORY)` пишет аудит в той же транзакции до коммита; `AFTER_ROLLBACK` шлёт алерт об откате заказа.",
+                "when_to_apply": "Выбирают фазу по семантике: коммит — для безопасных side effects, BEFORE_COMMIT — для записи в ту же транзакцию, ROLLBACK — для компенсирующих действий.",
+                "edge_cases": "Если у публикатора нет активной транзакции, слушатель по умолчанию не выполнится; `fallbackExecution = true` разрешает выполнение и без транзакции.",
+                "related": "[[spring-events-interview#Q8]] как управлять порядком обработчиков одного события; [[spring-events-interview#Q6]] как @TransactionalEventListener связывает обработчик с фазой транзакции; [[spring-events-interview#Q9]] как условно обработать событие."
               }
             }
           ]
@@ -426,24 +426,11 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как управлять порядком обработчиков одного события?",
+          "question_text": "Как задаётся порядок слушателей и почему он не является гарантией для асинхронной обработки?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "На методы-слушатели с `@EventListener` ставят `@Order(n)`: меньшее число — выше приоритет, обработчики идут по возрастанию. Без `@Order` порядок не гарантирован, и распространяется он на синхронные слушатели в потоке публикатора.",
-              "correct": true,
-              "sections": {
-                "explanation": "`@Order` задаёт относительный приоритет среди слушателей одного события. `Ordered.HIGHEST_PRECEDENCE = Integer.MIN_VALUE` — максимальный приоритет; чем меньше число, тем раньше выполнится метод.",
-                "example": "`@Order(1) validate(...)`, `@Order(2) audit(...)`, `@Order(3) notify(...)` гарантируют, что валидация пройдёт перед аудитом, а уведомление — последним.",
-                "when_to_apply": "Используют, когда несколько слушателей реагируют на одно событие и между ними есть логическая зависимость по последовательности (сначала проверить, потом уведомить).",
-                "edge_cases": "Для async-слушателей порядок не определён: `@Order` влияет только на синхронное выполнение в одном потоке публикатора.",
-                "related": "[[spring-events-interview#Q5]] асинхронные слушатели и отсутствие порядка; [[spring-events-interview#Q2]] базовая обработка события; [[spring-events-interview#Q9]] условная обработка."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
               "text": "Аннотация `@Order` одинаково управляет очередью и для синхронных, и для асинхронных обработчиков, гарантируя строгую последовательность вызовов. Пул из четырёх потоков всё равно вызывает слушатели по возрастанию `@Order`.",
               "correct": false,
               "sections": {
@@ -454,9 +441,22 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "Для синхронных listeners порядок можно задать `@Order`/`Ordered`: меньшее значение выполняется раньше. После перевода listeners на разные executors фактический порядок завершения не гарантируется и не должен использоваться как бизнес-протокол.",
+              "correct": true,
+              "sections": {
+                "explanation": "Ordering относится к последовательности вызова слушателей multicaster, а не к распределённой доставке или завершению фоновых задач.",
+                "example": "`@Order(1) validate(...)`, `@Order(2) audit(...)`, `@Order(3) notify(...)` гарантируют, что валидация пройдёт перед аудитом, а уведомление — последним.",
+                "when_to_apply": "Используют, когда несколько слушателей реагируют на одно событие и между ними есть логическая зависимость по последовательности (сначала проверить, потом уведомить).",
+                "edge_cases": "Если обработчики зависят друг от друга, лучше сделать явную orchestration/цепочку или один listener, а не полагаться на порядок независимых event handlers.",
+                "related": "[[spring-events-interview#Q9]] как условно обработать событие; [[spring-events-interview#Q7]] какие фазы транзакции поддерживает @TransactionalEventListener; [[spring-events-interview#Q10]] может ли @EventListener возвращать значение."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
-              "text": "Без явного `@Order` Spring раскладывает методы `@EventListener` по алфавиту их имён, поэтому итоговый порядок детерминирован сам по себе. Отдельно настраивать приоритет в этом случае не приходится, имена задают очередь.",
+              "text": "Без явного `@Order` Spring раскладывает методы `@EventListener` по алфавиту их имён, поэтому итоговый порядок детерминирован сам по себе. Отдельно настраивать приоритет в этом случае не приходится.",
               "correct": false,
               "sections": {
                 "what_actually": "Без `@Order` порядок слушателей не гарантирован и на него полагаться нельзя; алфавитной сортировки Spring не обещает.",
@@ -468,7 +468,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Без `@Order` слушатели вызываются в порядке объявления методов в классе (`@EventListener` сверху вниз), поэтому порядок обычно предсказуем и так. Аннотацию `@Order(n)` ставят редко — когда обработчики разнесены по разным `@Component`.",
+              "text": "Без `@Order` слушатели вызываются в порядке объявления методов в классе (`@EventListener` сверху вниз), поэтому порядок обычно предсказуем и так. Аннотацию `@Order(n)` ставят редко — лишь когда обработчики разнесены по разным `@Component`.",
               "correct": false,
               "sections": {
                 "what_actually": "Порядок задаёт аннотация `@Order`, а не имя метода; и приоритет выше у меньшего числа, а не у большего.",
@@ -503,20 +503,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В `@EventListener` указывают атрибут `condition` со SpEL-выражением: слушатель срабатывает, если выражение истинно. В выражении доступен `#event` (по имени параметра), его поля и методы, что позволяет фильтровать события без `if` в теле.",
-              "correct": true,
-              "sections": {
-                "explanation": "`condition` вычисляется до вызова метода: Spring проверяет SpEL-предикат и пропускает обработчик, если результат `false`. Это переносит фильтр из тела метода в декларацию слушателя.",
-                "example": "`@EventListener(condition = \"#event.total > 10000\")` обрабатывает только крупные заказы; `condition = \"#event.customerId.startsWith('VIP')\"` — только VIP-клиентов.",
-                "when_to_apply": "Применяют, когда на один тип события нужно реагировать выборочно по значениям полей, не загромождая метод проверками и не публикуя несколько типов событий.",
-                "edge_cases": "В SpEL доступны `#event` (имя параметра) и `#root.event`; обращение к несуществующему полю даёт ошибку выражения, а не молчаливый пропуск.",
-                "related": "[[spring-events-interview#Q2]] базовая обработка через @EventListener; [[spring-events-interview#Q8]] порядок слушателей; [[spring-events-interview#Q10]] возврат значения из слушателя."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "SpEL-условие вычисляется над корневым контекстом приложения: доступны бины и `@Value`-свойства окружения, а обратиться к полям самого события через `#event` из выражения нельзя. Их читают уже в теле метода вторым аргументом слушателя.",
+              "text": "SpEL-условие вычисляется над корневым контекстом приложения: доступны бины и `@Value`-свойства окружения, а обратиться к полям самого события через `#event` из выражения нельзя. Их читают уже в теле метода (обычно второй аргумент слушателя).",
               "correct": false,
               "sections": {
                 "what_actually": "В `condition` доступны `#event`, его поля и методы, что и позволяет фильтровать по значениям конкретного события.",
@@ -526,9 +513,22 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "В `@EventListener` указывают атрибут `condition` со SpEL-выражением: слушатель срабатывает, только если выражение истинно. В выражении доступен `#event` (по имени параметра метода), его поля и методы, что позволяет фильтровать события без `if` в теле.",
+              "correct": true,
+              "sections": {
+                "explanation": "`condition` вычисляется до вызова метода: Spring проверяет SpEL-предикат и пропускает обработчик, если результат `false`. Это переносит фильтр из тела метода в декларацию слушателя.",
+                "example": "`@EventListener(condition = \"#event.total > 10000\")` обрабатывает только крупные заказы; `condition = \"#event.customerId.startsWith('VIP')\"` — только VIP-клиентов.",
+                "when_to_apply": "Применяют, когда на один тип события нужно реагировать выборочно по значениям полей, не загромождая метод проверками и не публикуя несколько типов событий.",
+                "edge_cases": "В SpEL доступны `#event` (имя параметра) и `#root.event`; обращение к несуществующему полю даёт ошибку выражения, а не молчаливый пропуск.",
+                "related": "[[spring-events-interview#Q10]] может ли @EventListener возвращать значение; [[spring-events-interview#Q8]] как задаётся порядок слушателей и почему он не является гарантией для асинхронной обработки; [[spring-events-interview#Q11]] что такое @DomainEvents в Spring Data."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "Условие описывают Java-предикатом: в `condition` передают ссылку на метод-предикат `Predicate<Object>`, а Spring вызывает его `test()` перед доставкой и пропускает событие при `true`. SpEL здесь не задействован, синтаксис ограничен Java-кодом.",
+              "text": "Условие описывают Java-предикатом: в `condition` (`@EventListener`) передают ссылку на метод-предикат `Predicate<Object>`, а Spring вызывает его метод `test()` перед доставкой и пропускает событие при `true`. SpEL здесь не задействован, синтаксис ограничен обычным Java-кодом.",
               "correct": false,
               "sections": {
                 "what_actually": "Атрибут называется `condition` и принимает SpEL-строку, а не Java-`Predicate`; параметра `filter` у `@EventListener` нет.",
@@ -551,20 +551,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Да: если метод-слушатель возвращает объект, Spring автоматически публикует его как новое событие; если возвращена коллекция — каждый элемент публикуется как отдельное событие. Это позволяет строить цепочки реакций без явного `publishEvent`.",
+              "text": "Да: если метод-слушатель возвращает объект, Spring автоматически публикует его как новое событие; если возвращена коллекция — каждый элемент публикуется как отдельное событие. Это позволяет строить цепочки реакций без явного вызова `publishEvent`.",
               "correct": true,
               "sections": {
                 "explanation": "Spring проверяет возвращаемое значение слушателя: ненулевой результат становится следующим событием. Так из `OrderPaidEvent` можно породить `OrderShippedEvent`, не дергая паблишер вручную.",
                 "example": "`@EventListener OrderShippedEvent onOrderPaid(OrderPaidEvent e)` возвращает `OrderShippedEvent`, который Spring опубликует, и его подхватит отдельный слушатель `onOrderShipped`.",
                 "when_to_apply": "Применяют для последовательных доменных переходов (оплачен → отгружен → доставлен), когда одно событие естественно порождает следующее.",
                 "edge_cases": "Если вернуть коллекцию (например, `List<NotificationEvent>`), каждый элемент публикуется отдельно; `null` или `void` не публикуют ничего.",
-                "related": "[[spring-events-interview#Q3]] immutable-события для цепочек; [[spring-events-interview#Q2]] явная публикация через publishEvent; [[spring-events-interview#Q9]] условная обработка."
+                "related": "[[spring-events-interview#Q11]] что такое @DomainEvents в Spring Data; [[spring-events-interview#Q9]] как условно обработать событие; [[spring-events-interview#Q12]] зачем нужен @AfterDomainEventPublication."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Да, при этом коллекция из слушателя публикуется как одно событие типа `List` — подписчикам приходит ровно один объект-контейнер. Рассылка по одному тут не срабатывает; каждый элемент публикуют вручную сами.",
+              "text": "Да, при этом коллекция из слушателя публикуется целиком как одно событие типа `List` — подписчикам приходит ровно один объект-контейнер. Рассылка по одному тут не срабатывает; каждый элемент публикуют вручную сами.",
               "correct": false,
               "sections": {
                 "what_actually": "Spring разворачивает коллекцию: каждый её элемент публикуется как отдельное событие, а не весь список целиком.",
@@ -576,7 +576,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Да, однако возвращённый объект становится результатом вызова `publishEvent` и передаётся обратно вызывающему коду как обычное значение метода публикации. Отдельным событием он не делается, поэтому другим слушателям он не достаётся.",
+              "text": "Да, однако возвращённый объект становится результатом вызова `publishEvent` и передаётся обратно вызывающему коду как обычное значение метода публикации. Отдельным событием он не делается; поэтому другим слушателям он не достаётся вовсе.",
               "correct": false,
               "sections": {
                 "what_actually": "`publishEvent` возвращает `void`; результат слушателя публикуется как самостоятельное событие, а не отдаётся публикатору.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@DomainEvents`-события уходят подписчикам сразу в момент вызова бизнес-метода агрегата — публикация происходит синхронно ещё до того, как репозиторий выполнит `save()`. Метод `registerEvent(...)` тут означает немедленную рассылку, а не накопление.",
+              "text": "`@DomainEvents`-события уходят подписчикам сразу в момент вызова бизнес-метода агрегата — публикация происходит синхронно ещё до того, как репозиторий выполнит `save()`. Метод `registerEvent(...)` здесь означает немедленную рассылку, а не накопление.",
               "correct": false,
               "sections": {
                 "what_actually": "События лишь накапливаются в агрегате при вызове методов; публикуются они позже, в момент `repository.save(...)`.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@DomainEvents` работает при условии, что агрегат реализует интерфейс `ApplicationListener` (появившийся ещё в Spring Data 2.0), иначе события не собираются. Именно через `onApplicationEvent` репозиторий узнаёт, что публиковать при `save()`.",
+              "text": "`@DomainEvents` работает при условии, что агрегат реализует интерфейс `ApplicationListener` (появившийся ещё в Spring Data 2.0), — иначе события не собираются. Именно через `onApplicationEvent` репозиторий узнаёт, что публиковать при `save()`.",
               "correct": false,
               "sections": {
                 "what_actually": "Агрегату не нужно реализовывать `ApplicationListener`; достаточно метода `@DomainEvents` (или наследования `AbstractAggregateRoot`).",
@@ -635,20 +635,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@DomainEvents` — механизм Spring Data, при котором агрегат накапливает доменные события, а репозиторий публикует их при `save()`. Обычно берут `AbstractAggregateRoot` с методом `registerEvent(...)`: при сохранении Spring Data публикует накопленные события и очищает список.",
+              "text": "`@DomainEvents` — механизм Spring Data, при котором агрегат сам накапливает доменные события, а репозиторий публикует их при `save()`. Обычно используют `AbstractAggregateRoot` с методом `registerEvent(...)`: при сохранении Spring Data публикует накопленные события и очищает список.",
               "correct": true,
               "sections": {
                 "explanation": "Агрегат регистрирует события (`registerEvent`) во время бизнес-операций. При `repository.save(aggregate)` Spring Data берёт события из метода `@DomainEvents`, публикует их через `ApplicationEventPublisher` и очищает через `@AfterDomainEventPublication`.",
                 "example": "`Order extends AbstractAggregateRoot<Order>`: метод `pay(...)` вызывает `registerEvent(new OrderPaidEvent(...))`, и при `orderRepository.save(order)` событие публикуется автоматически.",
                 "when_to_apply": "Применяют в DDD, когда события должны рождаться внутри агрегата по факту изменения его состояния, а публикация привязана к сохранению в БД.",
                 "edge_cases": "Без `AbstractAggregateRoot` события собирают вручную: поле `@Transient` со списком, метод `@DomainEvents`, возвращающий его, и `@AfterDomainEventPublication` для очистки.",
-                "related": "[[spring-events-interview#Q12]] зачем @AfterDomainEventPublication; [[spring-events-interview#Q6]] @TransactionalEventListener для domain events; [[spring-events-interview#Q3]] создание событий."
+                "related": "[[spring-events-interview#Q12]] зачем нужен @AfterDomainEventPublication; [[spring-events-interview#Q10]] может ли @EventListener возвращать значение; [[spring-events-interview#Q13]] что такое Spring Modulith и как события используются для межмодульного взаимодействия."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`@DomainEvents` вешают прямо на метод сервисного бина, и Spring оборачивает его так, что после каждого успешного вызова публикуется одно доменное событие. Агрегат, `AbstractAggregateRoot` и репозиторный `save()` в этом сценарии не задействованы.",
+              "text": "`@DomainEvents` вешают прямо на метод сервисного бина, и Spring оборачивает его так, что после каждого успешного вызова автоматически публикуется одно соответствующее доменное событие. Агрегат, `AbstractAggregateRoot` и репозиторный `save()` в этом сценарии не задействованы вовсе.",
               "correct": false,
               "sections": {
                 "what_actually": "`@DomainEvents` — это метод агрегата (entity), возвращающий накопленные события; на сервисы он не ставится и методы автоматически не оборачивает.",
@@ -666,12 +666,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Зачем нужен `@AfterDomainEventPublication`?",
+          "question_text": "Когда Spring Data вызывает метод с `@AfterDomainEventPublication`?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "`@AfterDomainEventPublication` повторно рассылает те же события после их публикации, добавляя вторую попытку доставки. Это страхует от потерь, если проход при `save()` не дошёл до части слушателей. `AbstractAggregateRoot` включает такое поведение.",
+              "text": "`@AfterDomainEventPublication` запускается после любого `ApplicationEventPublisher.publishEvent`, даже если объект не сохранялся repository и не объявлял метод `@DomainEvents`.",
               "correct": false,
               "sections": {
                 "what_actually": "Метод не публикует, а очищает список событий, чтобы они не ушли повторно при следующем `save()`.",
@@ -683,7 +683,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@AfterDomainEventPublication` откатывает текущую транзакцию, если какой-либо из слушателей опубликованного события завершился с исключением. Метод служит точкой компенсации после рассылки, транзакционным хуком `AbstractAggregateRoot` поверх `save()`.",
+              "text": "Метод с этой аннотацией откатывает repository-транзакцию, если любой listener завершился ошибкой; это встроенный compensation hook для `AbstractAggregateRoot`.",
               "correct": false,
               "sections": {
                 "what_actually": "Метод занимается очисткой событий и к управлению транзакцией отношения не имеет; откат определяется самой транзакцией.",
@@ -695,20 +695,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@AfterDomainEventPublication` помечает метод очистки накопленных domain events после их публикации. Без очистки те же события публиковались бы повторно при каждом следующем `save()`, вызывая дубли писем и записей. `AbstractAggregateRoot` делает это автоматически.",
+              "text": "После публикации значений из `@DomainEvents` Spring Data вызывает `@AfterDomainEventPublication`, чтобы aggregate очистил накопленные события. Это repository lifecycle, а не реакция на произвольный `publishEvent`.",
               "correct": true,
               "sections": {
-                "explanation": "После того как Spring Data опубликовала события из `@DomainEvents`, она вызывает метод `@AfterDomainEventPublication`, чтобы очистить список. Это разрывает связь между уже отправленными событиями и будущими сохранениями.",
+                "explanation": "`AbstractAggregateRoot` предоставляет готовые методы регистрации и очистки событий, но собственная реализация должна явно определить оба callback-а.",
                 "example": "Вручную: `@AfterDomainEventPublication void clearDomainEvents() { events.clear(); }`. С `AbstractAggregateRoot` метод реализован за вас и вызывается после публикации.",
-                "when_to_apply": "Нужен всегда, когда события собираются вручную через `@DomainEvents`: без очистки повторный `save()` опубликует старые события снова.",
-                "edge_cases": "Если забыть очистку, один `OrderPaidEvent` уйдёт при каждом сохранении агрегата, что приведёт к повторным email и дублям в downstream-системах.",
-                "related": "[[spring-events-interview#Q11]] @DomainEvents и AbstractAggregateRoot; [[spring-events-interview#Q6]] @TransactionalEventListener; [[spring-events-interview#Q3]] immutable-события."
+                "when_to_apply": "Нужен для aggregate, который вручную накапливает события через `@DomainEvents`: очистка предотвращает повторную публикацию уже обработанных элементов при следующей repository operation.",
+                "edge_cases": "Domain events публикуются вокруг поддерживаемых repository operations; обход репозитория или bulk SQL не запускает этот lifecycle автоматически.",
+                "related": "[[spring-events-interview#Q13]] что такое Spring Modulith и как события используются для межмодульного взаимодействия; [[spring-events-interview#Q11]] что такое @DomainEvents в Spring Data; [[spring-events-interview#Q14]] как тестировать публикацию и обработку Spring Events."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`@AfterDomainEventPublication` требуется для `AbstractAggregateRoot`, тогда как при ручной реализации `@DomainEvents` очистку списка Spring Data берёт на себя. Помечать собственный метод очистки в таком варианте не нужно — накопитель обнуляется прозрачно.",
+              "text": "Spring Data всегда очищает список domain events сам; `@AfterDomainEventPublication` вызывается только для наследников `AbstractAggregateRoot` и не поддерживается в собственных aggregate-классах.",
               "correct": false,
               "sections": {
                 "what_actually": "При ручной сборке очистка обязательна, иначе события публикуются снова; `AbstractAggregateRoot` лишь делает её за вас.",
@@ -731,7 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Spring Modulith` в первую очередь проверяет границы модулей на сборке (через `ArchUnit`), а взаимодействие через события считает вспомогательным приёмом. `@ApplicationModuleListener` он трактует как обычный `@EventListener`, без влияния на транзакции, повторы и `@Async`.",
+              "text": "`Spring Modulith` в первую очередь проверяет границы модулей на этапе сборки (через `ArchUnit`), а взаимодействие компонентов через события считает лишь вспомогательным документирующим приёмом. Аннотацию `@ApplicationModuleListener` он трактует как обычный маркер `@EventListener`, без влияния на транзакции, повторы и `@Async`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Spring Modulith` нацелен на модульные монолиты внутри одного процесса; для межсервисной доставки он использует внешние брокеры через externalization, а не заменяет их.",
@@ -743,20 +743,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Spring Modulith` — библиотека для модульных монолитов, где модули общаются через события, а не прямые зависимости. `@ApplicationModuleListener` объединяет `@TransactionalEventListener` и `@Async`, а externalization публикует события во внешние брокеры с транзакционным outbox.",
-              "correct": true,
-              "sections": {
-                "explanation": "Модуль публикует событие, другой модуль обрабатывает его через `@ApplicationModuleListener`, не зная о сервисе-источнике. Так монолит остаётся слабо связанным, а границы модулей контролируются и тестируются.",
-                "example": "Модуль `Order` публикует `OrderCompleted`, модуль `Inventory` обрабатывает его через `@ApplicationModuleListener`, не имея зависимости на `OrderService`.",
-                "when_to_apply": "Применяют в модульных монолитах, когда нужно изолировать модули и обмениваться между ними событиями, при этом сохраняя возможность вынести модуль в сервис позже.",
-                "edge_cases": "`@Externalized(\"orders.completed\")` отправляет событие в Kafka-топик; Spring Modulith хранит невыполненные события в БД и гарантирует доставку (outbox pattern из коробки).",
-                "related": "[[spring-events-interview#Q16]] отличие событий от Kafka и outbox; [[spring-events-interview#Q6]] @TransactionalEventListener в основе модульного слушателя; [[spring-events-interview#Q1]] слабое связывание через события."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "`@ApplicationModuleListener` выполняет обработчик синхронно в той же транзакции ещё до коммита, поэтому исключение в слушателе откатывает всю операцию издателя. По сути это `@TransactionalEventListener(phase = BEFORE_COMMIT)` без `@Async`, повторов и outbox.",
+              "text": "`@ApplicationModuleListener` выполняет обработчик синхронно в той же транзакции ещё до коммита, поэтому исключение в слушателе откатывает всю операцию издателя. По сути это `@TransactionalEventListener(phase = BEFORE_COMMIT)` без `@Async`, без повторов и без встроенного outbox.",
               "correct": false,
               "sections": {
                 "what_actually": "`@ApplicationModuleListener` сочетает `@TransactionalEventListener`, `@Async` и повторные попытки, то есть это не голый `@EventListener`.",
@@ -766,15 +753,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "`@Externalized` в Spring Modulith отправляет событие во внешний брокер синхронно прямо в `publishEvent`, поэтому при недоступности брокера падает и доменная операция. Транзакционного outbox тут нет, а `@ApplicationModuleListener` его не добавляет.",
+              "order": 2,
+              "label": "C",
+              "text": "`@Externalized` в Spring Modulith отправляет событие во внешний брокер синхронно прямо в `publishEvent`, поэтому при недоступности брокера падает и доменная операция. Транзакционного outbox из коробки нет, а `@ApplicationModuleListener` его не добавляет.",
               "correct": false,
               "sections": {
                 "what_actually": "Externalization отправляет события во внешние брокеры и хранит невыполненные в БД (outbox), обеспечивая надёжную доставку.",
                 "source_of_confusion": "Обычные Spring Events действительно in-memory, и это свойство ошибочно переносят на externalization.",
                 "if_it_were_true": "Тогда `@Externalized` ничем не отличался бы от обычного события, но он гарантирует доставку через outbox.",
                 "how_it_should_be": "Externalization сохраняет события в БД и публикует в брокер с гарантией, в отличие от in-memory событий."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "`Spring Modulith` помогает строить модульный монолит: модули обмениваются событиями без прямых сервисных зависимостей, `@ApplicationModuleListener` связывает transactional event processing с publication registry, а externalization передаёт выбранные события настроенному внешнему брокеру.",
+              "correct": true,
+              "sections": {
+                "explanation": "Модуль-источник публикует событие, а модуль-получатель обрабатывает его без прямой зависимости на сервис источника. Event Publication Registry фиксирует публикации для transactional listeners и позволяет обнаруживать или повторно отправлять незавершённые обработки.",
+                "example": "Модуль `Order` публикует `OrderCompleted`, а `Inventory` обрабатывает его через `@ApplicationModuleListener`. Для внешней интеграции подходящее событие можно пометить для externalization в настроенный брокер.",
+                "when_to_apply": "Применяют в модульных монолитах, когда нужно изолировать модули и обмениваться между ними событиями, при этом сохраняя возможность вынести модуль в сервис позже.",
+                "edge_cases": "Надёжность зависит от транзакционных границ, конфигурации publication registry, выбранного broker adapter и политики повторов. Это не универсальная exactly-once гарантия: внешняя сторона по-прежнему должна учитывать дубликаты и идемпотентность.",
+                "related": "[[spring-events-interview#Q14]] как тестировать публикацию и обработку Spring Events; [[spring-events-interview#Q12]] когда Spring Data вызывает метод с @AfterDomainEventPublication; [[spring-events-interview#Q15]] когда использовать Spring Events, а когда прямой вызов метода."
               }
             }
           ]
@@ -803,19 +803,6 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В Spring Boot 2.7+ тест помечают `@RecordApplicationEvents` и инжектируют `ApplicationEvents`, чтобы проверить факт и содержимое опубликованных событий. Альтернативы: `@SpyBean` на слушателе с `verify(...)` или тестовый компонент-коллектор событий.",
-              "correct": true,
-              "sections": {
-                "explanation": "`@RecordApplicationEvents` включает запись всех событий контекста; `events.stream(OrderCreatedEvent.class)` даёт доступ к опубликованным экземплярам для ассертов по количеству и полям.",
-                "example": "`assertThat(events.stream(OrderCreatedEvent.class)).hasSize(1)` проверяет, что `createOrder` опубликовал ровно одно событие нужного типа.",
-                "when_to_apply": "Используют, когда нужно проверить, что сервис публикует ожидаемое событие или что слушатель вызывается на нужное событие, без хрупких моков всего контекста.",
-                "edge_cases": "Для проверки самого вызова слушателя берут `@SpyBean` и `verify(listener, times(1)).onOrderCreated(any())`; для накопления событий — тестовый `@TestComponent`-коллектор.",
-                "related": "[[spring-events-interview#Q2]] публикация и обработка событий; [[spring-events-interview#Q5]] нюансы тестирования async-слушателей; [[spring-events-interview#Q6]] транзакционные слушатели в тестах."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
               "text": "Аннотация `@RecordApplicationEvents` перехватывает публикацию и подавляет доставку, поэтому реальные `@EventListener` во время теста не вызываются. Проверить удаётся факт публикации через `ApplicationEvents`, но не побочные эффекты обработчиков.",
               "correct": false,
               "sections": {
@@ -826,15 +813,28 @@
               }
             },
             {
-              "order": 3,
-              "label": "D",
-              "text": "Чаще всего `ApplicationEventPublisher` подменяют Mockito-моком и проверяют вызов через `verify(publisher).publishEvent(...)` с нужным классом события. Содержимое самого `OrderCreatedEvent` при таком подходе для ассертов недоступно, его нагрузку не проверяют.",
+              "order": 2,
+              "label": "C",
+              "text": "Чаще всего `ApplicationEventPublisher` подменяют Mockito-моком и проверяют вызов через `verify(publisher).publishEvent(...)` с нужным классом события. Содержимое самого `OrderCreatedEvent` при таком подходе для ассертов недоступно, поэтому его полезную нагрузку не проверяют.",
               "correct": false,
               "sections": {
                 "what_actually": "Внутрипроцессные события тестируют без брокера через `@RecordApplicationEvents`/`ApplicationEvents`, `@SpyBean` или тестовый коллектор.",
                 "source_of_confusion": "Тестирование сообщений часто требует embedded-брокера, и это переносят на in-memory события.",
                 "if_it_were_true": "Тогда любой unit-тест событий тянул бы Kafka, но `ApplicationEvents` проверяет события прямо в контексте.",
                 "how_it_should_be": "Для событий используют встроенные средства Spring Test; embedded-брокер нужен лишь при externalization в Kafka."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "В Spring Boot 2.7+ тест помечают `@RecordApplicationEvents` и инжектируют `ApplicationEvents`, чтобы проверить факт и содержимое опубликованных событий. Альтернативы: `@SpyBean` на слушателе с `verify(...)` или тестовый компонент-коллектор, складывающий полученные события.",
+              "correct": true,
+              "sections": {
+                "explanation": "`@RecordApplicationEvents` включает запись всех событий контекста; `events.stream(OrderCreatedEvent.class)` даёт доступ к опубликованным экземплярам для ассертов по количеству и полям.",
+                "example": "`assertThat(events.stream(OrderCreatedEvent.class)).hasSize(1)` проверяет, что `createOrder` опубликовал ровно одно событие нужного типа.",
+                "when_to_apply": "Используют, когда нужно проверить, что сервис публикует ожидаемое событие или что слушатель вызывается на нужное событие, без хрупких моков всего контекста.",
+                "edge_cases": "Для проверки самого вызова слушателя берут `@SpyBean` и `verify(listener, times(1)).onOrderCreated(any())`; для накопления событий — тестовый `@TestComponent`-коллектор.",
+                "related": "[[spring-events-interview#Q15]] когда использовать Spring Events, а когда прямой вызов метода; [[spring-events-interview#Q13]] что такое Spring Modulith и как события используются для межмодульного взаимодействия; [[spring-events-interview#Q16]] в чём разница между Spring Events и Kafka/RabbitMQ-сообщениями."
               }
             }
           ]
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Событийная модель гарантирует, что все получатели отработают в одной транзакции атомарно, поэтому о частичных сбоях обработчиков можно не заботиться. Из-за этой надёжности через события стоит вести и сценарии, где нужен прямой результат от получателя.",
+              "text": "Событийная модель гарантирует, что все получатели отработают в одной транзакции атомарно, поэтому о частичных сбоях обработчиков можно не заботиться. Из-за этой надёжности через события стоит вести и те сценарии, где нужен прямой результат от одного получателя.",
               "correct": false,
               "sections": {
                 "what_actually": "Прямой вызов тестируется через мок зависимости, а события — через spy слушателя или `ApplicationEvents`; оба подхода тестируемы.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Публикация события по умолчанию выполняется асинхронно в отдельном потоке (пул из нескольких воркеров), поэтому издатель не блокируется и получает управление сразу. Ради этой скорости и слабой связанности события чаще предпочитают прямому вызову.",
+              "text": "Публикация события по умолчанию выполняется асинхронно в отдельном потоке (пул из нескольких воркеров), поэтому издатель не блокируется и получает управление сразу. Ради этой скорости и слабой связанности события чаще предпочитают прямому вызову даже для простых зависимостей.",
               "correct": false,
               "sections": {
                 "what_actually": "События уместны не всегда: они дают неявный поток и не возвращают результат, поэтому для простой зависимости с нужным ответом лучше прямой вызов.",
@@ -875,20 +875,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "События выбирают при слабом связывании: несколько получателей реагируют на одно действие, нужно отвязать модули (DDD) или выполнить side effect после коммита либо асинхронно. Прямой вызов лучше при одной простой зависимости, когда нужен результат и важна очевидность потока.",
+              "text": "События подходят для слабой связанности, нескольких получателей и side effects после commit; прямой вызов лучше при одной зависимости, необходимом результате и явном control flow.",
               "correct": true,
               "sections": {
                 "explanation": "События дают слабую связь и неявный поток (надо искать слушателей), прямой вызов — тесную связь и явный поток. Выбор зависит от числа получателей, нужды в результате и важности читаемости.",
                 "example": "Один publish `OrderCreatedEvent` запускает и email, и обновление склада без правок `OrderService`; а валидацию баланса, чей результат нужен немедленно, делают прямым вызовом.",
                 "when_to_apply": "События — когда несколько компонентов реагируют на действие, нужно отвязать модули или отложить/защитить side effect от rollback; прямой вызов — для одной зависимости с нужным результатом.",
                 "edge_cases": "У событий неявный flow: при чтении кода неочевидно, кто отреагирует; если нужен возврат значения или строгая транзакционная связность, прямой вызов предпочтительнее.",
-                "related": "[[spring-events-interview#Q1]] зачем нужны события; [[spring-events-interview#Q6]] @TransactionalEventListener для безопасных side effects; [[spring-events-interview#Q16]] границы внутрипроцессных событий."
+                "related": "[[spring-events-interview#Q16]] в чём разница между Spring Events и Kafka/RabbitMQ-сообщениями; [[spring-events-interview#Q14]] как тестировать публикацию и обработку Spring Events; [[spring-events-interview#Q13]] что такое Spring Modulith и как события используются для межмодульного взаимодействия."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Прямой вызов не даёт подключить нового получателя без правки кода, а событие само доставляется всем слушателям в кластере, включая другие JVM-узлы. Поэтому для распределённых сценариев между сервисами событийная модель удобнее и масштабируемее.",
+              "text": "Прямой вызов не даёт подключить нового получателя без правки кода, а событие само доставляется всем слушателям в кластере, включая другие JVM-узлы. Поэтому для распределённых сценариев между сервисами событийная модель оказывается удобнее и масштабируемее обычного прямого вызова.",
               "correct": false,
               "sections": {
                 "what_actually": "При прямом вызове нужно явно вызвать каждого получателя; единый `publish → все слушатели` — свойство именно событий.",
@@ -911,50 +911,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Асинхронный слушатель с включённым retry обеспечивает Spring Events доставку at-least-once с автоповтором до трёх раз. По надёжности такие события сопоставимы с Kafka и не требуют развёртывания отдельного брокера рядом с приложением.",
+              "text": "Асинхронный слушатель с включённым retry обеспечивает Spring Events доставку at-least-once с автоповтором до трёх раз. По надёжности такие события сопоставимы с Kafka и не требуют развёртывания отдельного брокера.",
               "correct": false,
               "sections": {
-                "what_actually": "Это разные механизмы: Spring Events — in-memory внутри процесса, а Kafka — внешний персистентный брокер между процессами; Spring Boot его не встраивает.",
-                "source_of_confusion": "Оба про «события», и Spring интегрируется с Kafka, отсюда впечатление, что это одна технология.",
-                "if_it_were_true": "Тогда Spring Events переживали бы рестарт и доходили до других сервисов, но они теряются при сбое и не покидают JVM.",
-                "how_it_should_be": "Spring Events — внутрипроцессный механизм; Kafka — отдельная инфраструктура с персистентностью и доставкой."
+                "what_actually": "`@Async` и retry-логика могут повторять обработчик в текущем процессе, но базовые Spring Events не создают durable message log и не гарантируют восстановление публикации после crash.",
+                "source_of_confusion": "Асинхронный executor и retry создают похожее внешнее поведение, поэтому их легко принять за полноценную broker delivery semantics.",
+                "if_it_were_true": "Не потребовались бы durable storage, publication registry или внешний broker: незавершённое событие автоматически восстанавливалось бы после рестарта приложения.",
+                "how_it_should_be": "Для внутрипроцессной обработки используйте Spring Events; требования к durable delivery реализуйте отдельно через broker, outbox или event publication registry."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Разница в основном в модели вызова: Spring Events синхронны, а Kafka асинхронна, но обе доставляют сообщения между разными сервисами и обе персистентны. Разве что Spring Events обходятся без топиков и брокера, хотя гарантии доставки у них одинаковые.",
+              "text": "Разница в основном в модели вызова: Spring Events синхронны, а Kafka асинхронна, но обе доставляют сообщения между разными сервисами и обе персистентны. Просто Spring Events обходятся без топиков и брокера.",
               "correct": false,
               "sections": {
-                "what_actually": "Kafka и RabbitMQ как раз предназначены для межпроцессного и межсервисного обмена; внутрипроцессная связь — это про Spring Events.",
-                "source_of_confusion": "Свойства внутрипроцессных Spring Events ошибочно переносят на внешние брокеры.",
-                "if_it_were_true": "Тогда микросервисы не могли бы общаться через Kafka, но именно это её основное применение.",
-                "how_it_should_be": "Брокеры обслуживают межсервисный обмен; внутри процесса достаточно Spring Events."
+                "what_actually": "Spring Events предназначены прежде всего для взаимодействия компонентов одного application context. Kafka и RabbitMQ обеспечивают межпроцессный обмен через внешнюю инфраструктуру и настраиваемую персистентность/redelivery.",
+                "source_of_confusion": "Синхронность — заметное различие по умолчанию, но она не определяет границу процесса и долговечность сообщения.",
+                "if_it_were_true": "Обычный `publishEvent()` мог бы адресовать другой сервис и восстановить сообщение после перезапуска без broker client и durable storage.",
+                "how_it_should_be": "Сначала разделяйте механизмы по границе: in-process application event против broker message; затем отдельно учитывайте sync/async и delivery configuration."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Spring Events работают внутри одного JVM-процесса, in-memory, без персистентности и гарантии доставки. Kafka/RabbitMQ работают между процессами, персистентны, дают at-least-once/exactly-once доставку и replay, но требуют внешней инфраструктуры.",
+              "text": "Spring Events по умолчанию работают внутри application context без durable log. Kafka/RabbitMQ связывают процессы и поддерживают storage/redelivery по настройкам; Kafka хранит читаемый журнал.",
               "correct": true,
               "sections": {
-                "explanation": "Ключевое различие — границы и надёжность: Spring Events не покидают процесс и не переживают сбой, брокеры обеспечивают межсервисную доставку с гарантиями и хранением. Latency у событий микросекунды, у брокеров миллисекунды.",
-                "example": "Внутри сервиса `OrderCreatedEvent` уведомляет слушателей мгновенно; для уведомления другого сервиса публикуют сообщение в Kafka-топик с гарантией доставки.",
-                "when_to_apply": "Spring Events — для внутрипроцессного слабого связывания; Kafka/RabbitMQ — когда нужны межсервисная доставка, персистентность, replay или горизонтальное масштабирование.",
-                "edge_cases": "Мост между мирами — `@TransactionalEventListener` (после коммита) или Spring Modulith outbox: событие сохраняется в БД, затем надёжно публикуется в Kafka/RabbitMQ.",
-                "related": "[[spring-events-interview#Q1]] природа внутрипроцессных событий; [[spring-events-interview#Q13]] Spring Modulith externalization; [[spring-events-interview#Q6]] @TransactionalEventListener как мост к брокеру."
+                "explanation": "Spring Framework публикует application events в текущем процессе; стандартные listeners по умолчанию вызываются синхронно. Broker semantics зависят от продукта и настроек: нельзя универсально обещать exactly-once или одинаковый replay для Kafka и RabbitMQ.",
+                "example": "Изменение состояния внутри модульного монолита можно сообщить через `ApplicationEventPublisher`. Для уведомления отдельного сервиса событие отправляют через Kafka или AMQP и отдельно настраивают durability, acknowledgements, retries и идемпотентность consumer.",
+                "when_to_apply": "Spring Events подходят для слабого связывания компонентов одного приложения. Broker нужен, когда сообщение пересекает границу процесса либо требуются durable buffering, независимое масштабирование consumers и восстановление доставки.",
+                "edge_cases": "`@TransactionalEventListener` связывает вызов listener с фазой локальной транзакции, но сам не создаёт durable outbox. Spring Modulith Event Publication Registry или полноценный outbox добавляются отдельно; их гарантии зависят от выбранной конфигурации.",
+                "related": "[[spring-events-interview#Q15]] когда использовать Spring Events, а когда прямой вызов метода; [[spring-events-interview#Q14]] как тестировать публикацию и обработку Spring Events; [[spring-events-interview#Q13]] что такое Spring Modulith и как события используются для межмодульного взаимодействия."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "События Spring хранятся в контексте приложения и переживают перезапуск, поэтому после сбоя их можно перечитать и повторно обработать, как записи в топике. Персистентность здесь встроенная, внешнее хранилище не нужно, состояние держит сам контекст.",
+              "text": "События Spring хранятся в контексте приложения и переживают перезапуск, поэтому после сбоя их можно перечитать и повторно обработать, как записи в топике. Персистентность здесь встроенная, внешнее хранилище не нужно.",
               "correct": false,
               "sections": {
-                "what_actually": "Spring Events не персистентны и не поддерживают replay: они живут в памяти и теряются при ошибке или рестарте.",
-                "source_of_confusion": "Spring Modulith добавляет outbox-персистентность, и её ошибочно приписывают обычным Spring Events.",
-                "if_it_were_true": "Тогда после рестарта можно было бы переиграть события, но in-memory события просто исчезают.",
-                "how_it_should_be": "Персистентность и replay дают Kafka или Spring Modulith outbox, а не базовые Spring Events."
+                "what_actually": "Базовый механизм Spring Events не сохраняет публикации между рестартами и не предоставляет журнал для последующего перечитывания.",
+                "source_of_confusion": "Spring Modulith умеет сохранять transactional event publications, поэтому дополнительную возможность легко ошибочно приписать самому `ApplicationEventPublisher`.",
+                "if_it_were_true": "После запуска нового процесса обычные application events можно было бы прочитать из application context как backlog, хотя такого хранилища у контекста нет.",
+                "how_it_should_be": "Для durable recovery добавляйте Event Publication Registry, outbox или broker; обычные Spring Events рассматривайте как in-process уведомления."
               }
             }
           ]

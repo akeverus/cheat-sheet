@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`jmh-runtime` (рантайм-движок) плюс `jmh-generator-annprocess` (annotation processor) в scope `provided`",
+              "text": "`jmh-runtime` (рантайм-движок) плюс `jmh-generator-annprocess` (annotation processor) в scope `provided`.",
               "correct": false,
               "sections": {
                 "what_actually": "Артефакта `jmh-runtime` в JMH не существует; рантайм-движок (раннер, аннотации, `Blackhole`, профилировщики) поставляется именно в `jmh-core`.",
@@ -83,7 +83,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`jmh-core` (рантайм-движок) плюс `jmh-generator-annprocess` (annotation processor) в scope `runtime`",
+              "text": "`jmh-core` (рантайм-движок) плюс `jmh-generator-annprocess` (annotation processor) в scope `runtime`.",
               "correct": false,
               "sections": {
                 "what_actually": "Scope `runtime` означает, что зависимость недоступна при компиляции и подтягивается только в рантайме — ровно когда annotation processor уже бесполезен.",
@@ -95,20 +95,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`jmh-core` (рантайм-движок) плюс `jmh-generator-annprocess` (annotation processor) в scope `provided`",
+              "text": "Нужны `jmh-core` и `jmh-generator-annprocess`; annotation processor должен быть подключён через механизм сборки, чтобы сгенерировать benchmark harness.",
               "correct": true,
               "sections": {
-                "explanation": "Нужны ровно оба: `jmh-core` даёт раннер, аннотации, `Blackhole` и профилировщики, а `jmh-generator-annprocess` на этапе компиляции генерирует обвязку — синтетические классы-раннеры вокруг `@Benchmark`-методов. Без annotation processor бенчмарки физически не соберутся в исполняемый вид.",
-                "example": "В Maven обе зависимости с `groupId` `org.openjdk.jmh` и одной версией `1.37`; у `jmh-generator-annprocess` ставят `<scope>provided</scope>`, так как процессор нужен только при компиляции.",
-                "when_to_apply": "При ручной настройке Maven/Gradle-модуля под бенчмарки, когда не используется готовый архетип и зависимости прописываются вручную.",
-                "edge_cases": "Если забыть `jmh-generator-annprocess`, сборка пройдёт, но ни одного синтетического раннера не появится — `java -jar` просто не найдёт бенчмарков. Архетип `jmh-java-benchmark-archetype` подключает оба артефакта и `maven-shade-plugin` за вас.",
+                "explanation": "`jmh-core` содержит annotations и runtime, а processor генерирует классы, которые JMH запускает с нужными forks, warmup и measurement phases.",
+                "example": "В Maven processor можно подключить как dependency по рекомендуемому archetype, а в Gradle — через `annotationProcessor`; конкретный configuration name зависит от build tool.",
+                "when_to_apply": "Используйте официальный JMH archetype или plugin, чтобы не потерять generated metadata при packaging.",
+                "edge_cases": "Scope вроде `provided` не является универсальным требованием: корректная конфигурация зависит от Maven, Gradle, plugin-а и способа сборки fat JAR.",
                 "related": "Архетип настраивает fat-jar с `Main-Class: org.openjdk.jmh.Main`; бенчмарки держат в отдельном модуле, а не в `src/test`, чтобы процессор и shade-плагин не конфликтовали с обычной сборкой."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`jmh-core` (рантайм-движок) плюс `jmh-generator-reflection` (annotation processor) в scope `provided`",
+              "text": "`jmh-core` (рантайм-движок) плюс `jmh-generator-reflection` (annotation processor) в scope `provided`.",
               "correct": false,
               "sections": {
                 "what_actually": "`jmh-generator-reflection` — это реальный, но альтернативный генератор обвязки, работающий через рефлексию по уже скомпилированным классам, а не как annotation processor на этапе компиляции.",
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "по одному экземпляру state на каждую итерацию измерения",
+              "text": "`Scope.Benchmark` создаёт новый экземпляр state перед каждой measurement iteration и удаляет его сразу после завершения итерации.",
               "correct": false,
               "sections": {
                 "what_actually": "Частоту пересоздания/сброса состояния по итерациям задаёт не `Scope`, а `@Setup`/`@TearDown` с `Level.Iteration`; `Scope` управляет шарингом между потоками, а не временем жизни по итерациям.",
@@ -203,7 +203,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "по одному экземпляру state на каждую группу потоков",
+              "text": "`Scope.Benchmark` создаёт отдельный state для каждой `@Group`, но все worker threads внутри группы используют его совместно.",
               "correct": false,
               "sections": {
                 "what_actually": "Это поведение `Scope.Group`: один экземпляр на каждую группу потоков, объявленную через `@Group`, — для асимметричных сценариев producer/consumer.",
@@ -215,20 +215,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "один экземпляр state на весь бенчмарк, общий для всех потоков",
+              "text": "`Scope.Benchmark` создаёт один экземпляр state на benchmark и разделяет его между всеми worker threads данного trial.",
               "correct": true,
               "sections": {
-                "explanation": "`Scope.Benchmark` создаёт ровно один экземпляр state-класса и шарит его между всеми рабочими потоками. Поэтому замер включает стоимость конкуренции (contention) и возможный false sharing на общих данных — это нужно, когда меряют именно shared-структуры.",
-                "example": "`@State(Scope.Benchmark)` с полем `final Map<Integer,Integer> map = new ConcurrentHashMap<>()`: при `-t 4` все 4 потока бьют в одну и ту же мапу, и замер `map.put(...)` отражает реальную конкуренцию.",
-                "when_to_apply": "Когда цель — измерить поведение разделяемой структуры под нагрузкой: конкурентные коллекции (`ConcurrentHashMap`), общий счётчик/`AtomicLong`, очереди producer/consumer.",
-                "edge_cases": "Тот же `Scope.Benchmark` для обычного `HashMap` под несколькими потоками измерит ещё и contention/false sharing, исказив однопоточную стоимость операции; для чистой стоимости берут `Scope.Thread`.",
+                "explanation": "`Scope.Benchmark` создаёт один shared state, поэтому benchmark включает contention, memory visibility и возможный false sharing на общих данных.",
+                "example": "`@State(Scope.Benchmark)` с `ConcurrentHashMap` заставляет все threads работать с одной map и измеряет конкурентный сценарий.",
+                "when_to_apply": "Используйте для shared structures и coordination; для независимой стоимости операции выбирайте `Scope.Thread`, для actor-групп — `Scope.Group`.",
+                "edge_cases": "Lifecycle всё равно зависит от forks/trials и уровней `@Setup`; non-thread-safe state при нескольких workers может создавать races вместо полезного измерения.",
                 "related": "Дополняет `Scope.Thread` (изолированное состояние на поток) и `Scope.Group` (экземпляр на группу потоков `@Group`); сам state готовится через `@Setup`/`@TearDown` с разными `Level`."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "по одному экземпляру state на каждый рабочий поток",
+              "text": "`Scope.Benchmark` создаёт независимый state для каждого worker thread, поэтому shared contention в измерение не попадает.",
               "correct": false,
               "sections": {
                 "what_actually": "Это поведение `Scope.Thread`: JMH создаёт отдельный экземпляр state для каждого потока, состояние изолировано, гонок и contention на самих данных нет.",
@@ -251,7 +251,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Level.Trial` — fixture вызывается один раз на форк, до всего прогрева и измерений",
+              "text": "`Level.Trial` — fixture вызывается один раз на форк, до всего прогрева и измерений.",
               "correct": true,
               "sections": {
                 "explanation": "`Level.Trial` — это уровень по умолчанию: `@Setup(Level.Trial)` отрабатывает ровно один раз за запуск форка, ещё до warmup-итераций, а `@TearDown(Level.Trial)` — после всех измерений. Поэтому он подходит для разовой дорогой подготовки состояния.",
@@ -264,7 +264,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Level.Iteration` — fixture вызывается один раз на форк, до всего прогрева и измерений",
+              "text": "`Level.Iteration` — fixture вызывается один раз на форк, до всего прогрева и измерений.",
               "correct": false,
               "sections": {
                 "what_actually": "`Level.Iteration` вызывает fixture перед и после каждой итерации (и прогревочной, и измеряемой), а не один раз на форк.",
@@ -276,7 +276,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Level.Fork` — fixture вызывается один раз на форк, до всего прогрева и измерений",
+              "text": "`Level.Fork` — fixture вызывается один раз на форк, до всего прогрева и измерений.",
               "correct": false,
               "sections": {
                 "what_actually": "Значения `Level.Fork` в JMH не существует: enum `Level` содержит только `Trial`, `Iteration` и `Invocation`.",
@@ -288,7 +288,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Level.Invocation` — fixture вызывается один раз на форк, до всего прогрева и измерений",
+              "text": "`Level.Invocation` — fixture вызывается один раз на форк, до всего прогрева и измерений.",
               "correct": false,
               "sections": {
                 "what_actually": "`Level.Invocation` вызывает fixture перед и после каждого вызова метода `@Benchmark` — это самый частый и самый опасный уровень.",
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "JMH прогонит одну комбинацию из последних значений обоих полей",
+              "text": "JMH прогонит одну комбинацию из последних значений обоих полей.",
               "correct": false,
               "sections": {
                 "what_actually": "JMH не схлопывает массивы значений в один прогон и не берёт только последнее значение каждого поля.",
@@ -323,7 +323,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "JMH прогонит только первое значение остальных полей при переборе одного поля",
+              "text": "JMH прогонит только первое значение остальных полей при переборе одного поля.",
               "correct": false,
               "sections": {
                 "what_actually": "JMH не фиксирует остальные поля на первом значении — он перебирает все их значения тоже, как отдельные оси.",
@@ -335,7 +335,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "JMH прогонит декартово произведение всех комбинаций значений обоих полей",
+              "text": "JMH прогонит декартово произведение всех комбинаций значений обоих полей.",
               "correct": true,
               "sections": {
                 "explanation": "Каждый `@Param` задаёт независимое измерение пространства параметров. JMH перебирает все сочетания значений, давая отдельную строку результата на каждую комбинацию — это и есть декартово произведение.",
@@ -348,7 +348,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "JMH прогонит параллельные пары значений обоих полей по позициям в массивах",
+              "text": "JMH прогонит параллельные пары значений обоих полей по позициям в массивах.",
               "correct": false,
               "sections": {
                 "what_actually": "Позиционного спаривания значений у `@Param` нет; JMH трактует каждое поле как независимую ось и не привязывает i-е значение одного к i-му значению другого.",
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`SampleTime` — среднее время одного вызова, «меньше — лучше»",
+              "text": "`SampleTime` — среднее время одного вызова, «меньше — лучше».",
               "correct": false,
               "sections": {
                 "what_actually": "`SampleTime` сэмплирует время вызовов и строит распределение с перцентилями p50/p99/p999; он не печатает простое «среднее время» и не является режимом по умолчанию.",
@@ -383,7 +383,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`SingleShotTime` — время одного вызова без прогрева, «меньше — лучше»",
+              "text": "`SingleShotTime` — время одного вызова без прогрева, «меньше — лучше».",
               "correct": false,
               "sections": {
                 "what_actually": "`SingleShotTime` меряет один-единственный вызов и сознательно не прогревает код многократно; он про cold-start и разовые операции, а не про дефолтный непрерывный замер.",
@@ -395,7 +395,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`AverageTime` — среднее время одного вызова, «меньше — лучше»",
+              "text": "`AverageTime` — среднее время одного вызова, «меньше — лучше».",
               "correct": false,
               "sections": {
                 "what_actually": "`AverageTime` действительно существует и меряет среднее время одного вызова в ns/op или us/op, но включается только при явном указании `@BenchmarkMode(Mode.AverageTime)`.",
@@ -407,7 +407,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Throughput` — число операций в единицу времени, «больше — лучше»",
+              "text": "`Throughput` — число операций в единицу времени, «больше — лучше».",
               "correct": true,
               "sections": {
                 "explanation": "Если `@BenchmarkMode` не задан явно, JMH использует `Throughput`: он считает, сколько вызовов `@Benchmark` укладывается в единицу времени и печатает результат в ops/s, где «больше — лучше».",
@@ -431,7 +431,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Задаёт единицу времени, в которой JMH выставляет таймаут на весь прогон бенчмарка",
+              "text": "Задаёт единицу времени, в которой JMH выставляет таймаут на весь прогон бенчмарка.",
               "correct": false,
               "sections": {
                 "what_actually": "Глобальный таймаут задаётся опцией `@Timeout` (или `-to` в CLI), и его превышение прерывает прогон, тогда как `@OutputTimeUnit` ничего не прерывает.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Задаёт единицу времени, в которой JMH ограничивает длительность одной итерации замера",
+              "text": "Задаёт единицу времени, в которой JMH ограничивает длительность одной итерации замера.",
               "correct": false,
               "sections": {
                 "what_actually": "Длительность итерации задаётся через `@Measurement(time=..., timeUnit=...)` и `@Warmup`, а не через `@OutputTimeUnit`.",
@@ -455,7 +455,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Задаёт единицу времени, в которой JMH выполняет замер, влияя на точность результата",
+              "text": "Задаёт единицу времени, в которой JMH выполняет замер, влияя на точность результата.",
               "correct": false,
               "sections": {
                 "what_actually": "Точность замера определяется числом итераций, форками и warmup, а не единицей вывода; JMH всегда меряет в наносекундах внутри и лишь конвертирует при печати.",
@@ -467,7 +467,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Задаёт единицу времени, в которой JMH печатает результат, не влияя на сам замер",
+              "text": "Задаёт единицу времени, в которой JMH печатает результат, не влияя на сам замер.",
               "correct": true,
               "sections": {
                 "explanation": "`@OutputTimeUnit` управляет только форматом вывода: JMH пересчитывает уже измеренное значение в указанную единицу при печати отчёта. На точность, длительность или ход самого замера она не влияет — это чисто косметическая настройка читаемости.",
@@ -516,7 +516,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@Warmup` задаёт прогревочные итерации, результаты которых отбрасываются, а `@Measurement` — итерации, чьи цифры идут только в лог, но не в отчёт.",
+              "text": "`@Warmup` задаёт прогревочные итерации, результаты которых отбрасываются, а `@Measurement` — итерации, чьи цифры идут только в лог.",
               "correct": false,
               "sections": {
                 "what_actually": "Итерации `@Measurement` агрегируются в финальный `score` и `± error` и попадают именно в итоговую таблицу отчёта, а не только в промежуточный лог.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`@Fork` запускает бенчмарк в отдельном потоке JVM, изолируя профиль JIT между бенчмарками",
+              "text": "`@Fork` запускает бенчмарк в отдельном потоке JVM, изолируя профиль JIT между бенчмарками.",
               "correct": false,
               "sections": {
                 "what_actually": "Количеством потоков в JMH управляет флаг `-t N` (или `@Threads`), а не `@Fork`; потоки делят одну JVM и один общий профиль JIT.",
@@ -563,7 +563,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`@Fork` запускает бенчмарк в отдельной итерации JVM, изолируя профиль JIT между бенчмарками",
+              "text": "`@Fork` запускает бенчмарк в отдельной итерации JVM, изолируя профиль JIT между бенчмарками.",
               "correct": false,
               "sections": {
                 "what_actually": "Итерациями управляют `@Warmup`/`@Measurement` внутри одного процесса; это окна замера, а не отдельные запуски JVM.",
@@ -575,7 +575,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`@Fork` запускает бенчмарк в отдельном `ClassLoader` JVM, изолируя профиль JIT между бенчмарками",
+              "text": "`@Fork` запускает бенчмарк в отдельном `ClassLoader` JVM, изолируя профиль JIT между бенчмарками.",
               "correct": false,
               "sections": {
                 "what_actually": "Отдельный `ClassLoader` изолирует загруженные классы внутри одной JVM, но не сбрасывает накопленный профиль JIT и не даёт свежий C2.",
@@ -587,7 +587,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`@Fork` запускает бенчмарк в отдельном свежем процессе JVM, изолируя профиль JIT между бенчмарками",
+              "text": "`@Fork` запускает бенчмарк в отдельном свежем процессе JVM, изолируя профиль JIT между бенчмарками.",
               "correct": true,
               "sections": {
                 "explanation": "`@Fork` задаёт, сколько раз бенчмарк запускается в отдельном свежем процессе JVM. Свежая JVM на каждый бенчмарк сбрасывает накопленный профиль JIT, поэтому один бенчмарк не отравляет оптимизации следующего. Поэтому `@Fork ≥ 1` — это условие корректности, а не перестраховка.",
@@ -671,20 +671,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Как обычное `public` поле без модификатора `final`",
+              "text": "Вход хранят в изменяемом поле `@State` или задают через `@Param`, чтобы JIT не видел compile-time constant в benchmark method.",
               "correct": true,
               "sections": {
-                "explanation": "Constant folding срабатывает, когда JIT может доказать, что значение известно на этапе компиляции. Нефинальное поле `@State`-объекта JIT не вправе считать константой, поэтому он честно компилирует вычисление, а не подставляет готовый результат.",
-                "example": "`public double x = 42.0;` внутри `@State(Scope.Thread)`; метод `Math.sqrt(in.x)` реально вычисляется, тогда как `Math.sqrt(42.0)` с литералом свернулся бы в константу.",
-                "when_to_apply": "Всегда, когда у бенчмарка есть входные данные: размер коллекции, число для арифметики, ключ для поиска — их кладут в `@State` нефинальными полями вместо литералов в теле метода.",
-                "edge_cases": "Даже значение, выглядящее «случайным», но присвоенное литералом в коде, свернётся; важна именно невозможность для JIT доказать константность, а не визуальная «непредсказуемость» числа.",
+                "explanation": "Цель — сделать значение неизвестным как compile-time constant для оптимизируемого метода. Одного визуального отсутствия литерала недостаточно, если JIT всё равно доказывает константность.",
+                "example": "`@Param({\"42\", \"100\"}) public int value;` либо изменяемое `@State`-поле подаётся в `@Benchmark` вместо вызова с литералом.",
+                "when_to_apply": "Используйте `@Param` для набора входов и state fields для runtime data, проверяя generated code при особенно чувствительном benchmark.",
+                "edge_cases": "`final` не единственный фактор: interprocedural analysis и invariant state способны позволить folding. Защита должна соответствовать конкретному выражению, а не формальному модификатору.",
                 "related": "Симметрично Q11: dead-code elimination убирает «выход» бенчмарка (защита — `Blackhole`/return), а constant folding убирает «вход» (защита — нефинальное `@State`-поле)."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Как `public` поле, помеченное `@CompilerControl`",
+              "text": "Вход помечают `@CompilerControl`, поскольку эта аннотация превращает любое final поле в runtime value и запрещает constant folding.",
               "correct": false,
               "sections": {
                 "what_actually": "`@CompilerControl` управляет инлайнингом и компиляцией методов (`DONT_INLINE`/`INLINE`/`EXCLUDE`), а не «константностью» полей — на constant folding входных данных он не влияет.",
@@ -696,7 +696,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Как `public final` поле, присвоенное в конструкторе",
+              "text": "Вход объявляют `public final` и присваивают литералом в конструкторе state: final гарантирует выполнение вычисления при каждом вызове.",
               "correct": false,
               "sections": {
                 "what_actually": "`final`-поле, даже инициализированное в конструкторе, JIT в горячем коде часто трактует как стабильное и может свернуть выражение над ним — `final` подсказывает компилятору неизменность.",
@@ -708,7 +708,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Как `public static final` поле с инициализатором",
+              "text": "Вход задают как `public static final` constant; обращение через имя класса не позволяет JIT подставить известное значение.",
               "correct": false,
               "sections": {
                 "what_actually": "`static final`-поле с константным инициализатором — это class:constant, который JIT гарантированно сворачивает: значение известно на этапе компиляции и подставляется в место использования.",
@@ -731,7 +731,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Возврат значения — идиоматичная защита: обвязка JMH сама прогоняет его через `Blackhole`, и инлайнинг метода больше не искажает замер",
+              "text": "Возврат результата не запрещает inlining: JIT всё равно может встроить benchmark-метод в generated harness.",
               "correct": false,
               "sections": {
                 "what_actually": "Возврат через `Blackhole` не управляет инлайнингом вовсе — он лишь не даёт выбросить результат как мёртвый код. Инлайнингом управляет отдельная аннотация `@CompilerControl`.",
@@ -743,7 +743,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Возврат значения — идиоматичная защита: обвязка JMH сама прогоняет его через `Blackhole`, и dead-code elimination не выкинет вычисление",
+              "text": "JMH потребляет возвращаемое значение через harness/Blackhole, поэтому dead-code elimination не удаляет вычисление как неиспользуемое.",
               "correct": true,
               "sections": {
                 "explanation": "Если результат вычисления нигде не наблюдается, C2 имеет право выбросить всё вычисление целиком (dead-code elimination). Возврат значения делает его «наблюдаемым»: сгенерированная JMH обвязка автоматически пропускает возвращённое значение через `Blackhole`, поэтому компилятор не вправе соптимизировать вычисление.",
@@ -756,7 +756,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Возврат значения — идиоматичная защита: обвязка JMH сама прогоняет его через `Blackhole`, и constant folding не свернёт вычисление в константу",
+              "text": "Возврат результата полностью запрещает constant folding даже при compile-time constant inputs и неизменяемом состоянии.",
               "correct": false,
               "sections": {
                 "what_actually": "Возврат значения через `Blackhole` защищает именно от dead-code elimination (устранение неиспользуемого результата), а не от constant folding. Constant folding убирает «вход» бенчмарка, а не «выход».",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Возврат значения — идиоматичная защита: обвязка JMH сама прогоняет его через `Blackhole`, и результат усредняется между форками автоматически",
+              "text": "Возвращаемые результаты автоматически усредняются между forks и становятся итоговым benchmark score.",
               "correct": false,
               "sections": {
                 "what_actually": "`Blackhole` только потребляет значение, чтобы его нельзя было выкинуть; он не усредняет и не агрегирует результаты. Усреднение и доверительный интервал считает раннер по таймингам итераций и форков.",
@@ -786,25 +786,25 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Какой набор режимов `CompilerControl.Mode` управляет инлайнингом и компиляцией метода в JMH через `@CompilerControl`?",
+          "question_text": "Какие режимы `CompilerControl.Mode` управляют инлайнингом и исключением метода из JIT-компиляции?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "`DONT_INLINE` (запретить инлайн), `INLINE` (форсировать), `EXCLUDE` (не компилировать метод)",
+              "text": "`DONT_INLINE`, `INLINE` и `EXCLUDE` управляют инлайнингом либо исключением метода из JIT-компиляции; это часть более широкого `CompilerControl.Mode`.",
               "correct": true,
               "sections": {
-                "explanation": "`@CompilerControl` точечно управляет тем, как JIT обращается с конкретным методом, и реальные режимы перечисления `CompilerControl.Mode` — это `DONT_INLINE`, `INLINE` и `EXCLUDE`. `EXCLUDE` исключает метод из компиляции, оставляя его исполняться в интерпретаторе.",
-                "example": "`@CompilerControl(CompilerControl.Mode.DONT_INLINE)` над приватным `hotPath()` запрещает инлайн, и метод виден в профиле как отдельный фрейм, а не растворяется в вызывающем коде.",
-                "when_to_apply": "Достают в тонких сценариях: когда инлайнинг искажает замер, мешает разделить вклад частей метода или нужно воспроизвести реальный вызов через границу метода. В большинстве бенчмарков трогать не надо — JMH меряет код так, как его реально оптимизирует JVM.",
-                "edge_cases": "`EXCLUDE` оставляет метод в интерпретаторе — это крайний диагностический случай для исследования поведения JIT, а не способ ускорения. По умолчанию инлайнинг включён, и это правильное поведение для большинства замеров.",
+                "explanation": "`@CompilerControl` передаёт JVM compiler commands для указанного метода. `DONT_INLINE` запрещает inline, `INLINE` запрашивает его, а `EXCLUDE` исключает метод из compilation.",
+                "example": "В исследовательском benchmark можно запретить inline boundary, чтобы отдельно измерить call overhead, а затем проверить generated assembly.",
+                "when_to_apply": "Используйте только для контролируемого эксперимента, когда оптимизация JIT мешает измеряемой гипотезе; обычный production-like benchmark лучше не искажать без причины.",
+                "edge_cases": "Enum также содержит другие режимы, например `BREAK`, `COMPILE_ONLY` и `PRINT`; compiler directive может не поддерживаться или вести себя иначе в конкретной JVM, поэтому нужны forks и верификация.",
                 "related": "Дополняет другие средства борьбы с артефактами JIT: `Blackhole` против dead-code elimination (Q11) и `@State` без `final` против constant folding (Q12). `@CompilerControl` же управляет именно компиляцией/инлайнингом конкретного метода."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`DONT_INLINE` (запретить инлайн), `INLINE` (форсировать), `DONT_COMPILE` (не компилировать метод)",
+              "text": "`DONT_INLINE`, `INLINE` и несуществующий `DONT_COMPILE` являются полным набором официальных режимов управления компиляцией JMH.",
               "correct": false,
               "sections": {
                 "what_actually": "Режима `DONT_COMPILE` в `CompilerControl.Mode` нет. Запрет компиляции (оставить метод в интерпретаторе) выражается режимом `EXCLUDE`.",
@@ -816,7 +816,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`DONT_INLINE` (запретить инлайн), `INLINE` (форсировать), `INTERPRET_ONLY` (не компилировать метод)",
+              "text": "`DONT_INLINE`, `INLINE` и несуществующий `INTERPRET_ONLY` задают запрет инлайна, принудительный inline и выполнение только интерпретатором.",
               "correct": false,
               "sections": {
                 "what_actually": "Режима `INTERPRET_ONLY` в `CompilerControl.Mode` нет. Оставить метод только в интерпретаторе (исключить из компиляции) делает режим `EXCLUDE`.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`DONT_INLINE` (запретить инлайн), `FORCE_INLINE` (форсировать), `EXCLUDE` (не компилировать метод)",
+              "text": "`DONT_INLINE`, несуществующий `FORCE_INLINE` и `EXCLUDE` — точные имена режимов, которые принимает аннотация `@CompilerControl`.",
               "correct": false,
               "sections": {
                 "what_actually": "Режима `FORCE_INLINE` в `CompilerControl.Mode` нет: принудительный инлайн выражается режимом `INLINE`.",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Половина доверительного интервала, по умолчанию для уровня доверия 95%",
+              "text": "Половина доверительного интервала, по умолчанию для уровня доверия 95%.",
               "correct": false,
               "sections": {
                 "what_actually": "95% — это распространённый дефолт в общей статистике и многих инструментах, но не дефолт JMH; JMH использует более строгие 99.9%.",
@@ -863,7 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Половина доверительного интервала, по умолчанию для уровня доверия 99.9%",
+              "text": "JMH `Error` показывает половину доверительного интервала результата при выбранном confidence level.",
               "correct": true,
               "sections": {
                 "explanation": "JMH печатает `score ± error`, где `error` — это половина ширины доверительного интервала (отступ в обе стороны от точечной оценки). Дефолтный уровень доверия — 99.9%, поэтому это разброс между итерациями и форками, а не «погрешность прибора».",
@@ -876,7 +876,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Полная ширина доверительного интервала, по умолчанию для уровня доверия 99.9%",
+              "text": "Полная ширина доверительного интервала, по умолчанию для уровня доверия 99.9%.",
               "correct": false,
               "sections": {
                 "what_actually": "Полная ширина интервала — это удвоенный `error`: от `score - error` до `score + error`. JMH печатает именно половину, а не всю ширину.",
@@ -888,7 +888,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Половина диапазона между минимальной и максимальной итерацией, по уровню доверия 99.9%",
+              "text": "Половина диапазона между минимальной и максимальной итерацией, по уровню доверия 99.9%.",
               "correct": false,
               "sections": {
                 "what_actually": "Половина размаха (max−min)/2 — это другая статистика, чувствительная к единичным выбросам; `error` же считается из дисперсии по итерациям и форкам.",
@@ -911,7 +911,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Обходит safepoint bias, сэмплируя стек через `GetStackTrace` (JVMTI)",
+              "text": "async-profiler снимает stacks через обычный JVMTI `GetStackTrace`, доступный только на safepoints, но отдельный sampling timer устраняет bias.",
               "correct": false,
               "sections": {
                 "what_actually": "`GetStackTrace` из JVMTI снимает стек только тогда, когда поток приведён в safepoint, поэтому он подвержен ровно тому же safepoint bias, что и `-prof stack`.",
@@ -923,7 +923,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Обходит safepoint bias, сэмплируя стек через `Blackhole.consume`",
+              "text": "async-profiler получает stacks через `Blackhole.consume`, поэтому каждый consumed benchmark result одновременно становится CPU sample.",
               "correct": false,
               "sections": {
                 "what_actually": "`Blackhole.consume` — это API JMH для защиты от dead-code elimination: оно «потребляет» результат, чтобы JIT не выкинул вычисление. К профилированию и снятию стека оно отношения не имеет.",
@@ -935,7 +935,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Обходит safepoint bias, сэмплируя стек по таймеру safepoint-поллинга",
+              "text": "async-profiler синхронизирует samples с safepoint polls, что делает его точнее встроенного profiler-а при длинных участках между polls.",
               "correct": false,
               "sections": {
                 "what_actually": "Сэмплирование «по таймеру safepoint-поллинга» — это и есть механизм обычных safepoint-профайлеров вроде `-prof stack`: стек снимается, когда поток дошёл до safepoint, что как раз и создаёт смещение.",
@@ -947,13 +947,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Обходит safepoint bias, сэмплируя стек через `AsyncGetCallTrace`",
+              "text": "async-profiler использует асинхронный stack walking и системные events, уменьшая safepoint bias и показывая Java/native stacks; `-prof stack` грубее.",
               "correct": true,
               "sections": {
-                "explanation": "Встроенный `-prof stack` снимает стек только в safepoint'ах, поэтому сэмплы смещены к точкам, где поток успевает остановиться (safepoint bias), и горячий код между ними недооценивается. async-profiler сэмплирует через `AsyncGetCallTrace`, который снимает стек в произвольный момент по сигналу, а не на safepoint, и потому даёт несмещённую картину при низком overhead.",
-                "example": "Запуск: `-prof async:libPath=/opt/async-profiler/libasyncProfiler.so;output=flamegraph;event=cpu`. На выходе — flame-graph, где видно реальное распределение CPU, а не только safepoint-кадры.",
-                "when_to_apply": "Когда нужно понять, где именно горит CPU в бенчмарке, а грубый `-prof stack` показывает смазанную из-за safepoint bias картину; также для alloc/lock-профилирования с выводом во flame-graph или JFR.",
-                "edge_cases": "Требует нативной библиотеки `libasyncProfiler.so` и обычно прав на perf-события ОС (Linux); это внешний профилировщик, а не часть `jmh-core`.",
+                "explanation": "Встроенный stack profiler JMH периодически собирает Java stacks и может быть смещён доступными точками остановки. async-profiler работает через native mechanisms и поддерживает CPU, wall, allocation и lock events.",
+                "example": "`-prof async:output=flamegraph;event=cpu` связывает samples с Java и native frames и помогает проверить, где benchmark действительно расходует CPU.",
+                "when_to_apply": "Выбирайте async-profiler, когда нужен flame graph, native frames или меньший safepoint bias; `-prof stack` подходит для быстрой грубой ориентации без внешней библиотеки.",
+                "edge_cases": "Конкретный stack-walking mechanism зависит от JVM, OS и версии async-profiler; нужны нативная библиотека и разрешения для perf events. Ни один profiler не делает measurement бесплатным.",
                 "related": "Дополняет `-prof gc` (аллокации, `B/op`) и `-prof perfasm` (горячий ассемблер): gc отвечает «сколько аллоцируем», async-profiler — «где горит CPU»."
               }
             }
@@ -971,7 +971,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Constant folding — подали литералы вместо `@State`, измерили возврат константы",
+              "text": "Constant folding — подали литералы вместо `@State`, измерили возврат константы.",
               "correct": true,
               "sections": {
                 "explanation": "Constant folding — это сворачивание выражения над константами на этапе компиляции: если вход известен заранее (литерал или `final`-поле), C2 вычислит ответ один раз и подставит его, и бенчмарк измерит лишь возврат готового значения, а не работу алгоритма. Именно про подмену реальных входов литералами и идёт речь в формулировке.",
@@ -984,7 +984,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Dead-code elimination — подали литералы вместо `@State`, измерили возврат константы",
+              "text": "Dead-code elimination — подали литералы вместо `@State`, измерили возврат константы.",
               "correct": false,
               "sections": {
                 "what_actually": "Dead-code elimination — выкидывание вычисления, чьи результаты нигде не наблюдаются (не потреблены): JIT убирает «выход» бенчмарка, и вы измеряете пустоту.",
@@ -996,7 +996,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Profile pollution — подали литералы вместо `@State`, измерили возврат константы",
+              "text": "Profile pollution — подали литералы вместо `@State`, измерили возврат константы.",
               "correct": false,
               "sections": {
                 "what_actually": "Profile pollution — это взаимное «отравление» профиля JIT при прогоне нескольких бенчмарков в одной JVM, лечится форком (`@Fork ≥ 1`), а `@Fork(0)` его как раз провоцирует.",
@@ -1008,7 +1008,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Insufficient warmup — подали литералы вместо `@State`, измерили возврат константы",
+              "text": "Insufficient warmup — подали литералы вместо `@State`, измерили возврат константы.",
               "correct": false,
               "sections": {
                 "what_actually": "Insufficient warmup — это нехватка прогревочных итераций, из-за чего меряется интерпретатор или C1 вместо стационарного C2-кода; лечится увеличением `@Warmup`.",
@@ -1031,7 +1031,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Какие события рантайма JVM накопились на проде за последний час",
+              "text": "JMH отвечает, какие runtime events, locks и GC phases накопились в работающем production-процессе за выбранный временной интервал.",
               "correct": false,
               "sections": {
                 "what_actually": "Это делает JFR: встроенный в JVM механизм записи событий с минимальными накладными, который пишет timeline рантайма на проде непрерывно или по триггеру для последующего разбора в JMC.",
@@ -1043,20 +1043,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Какой из двух вариантов реализации быстрее и на сколько",
+              "text": "JMH измеряет throughput, latency или allocation изолированной операции при контролируемых warmup и forks; JFR/JMC диагностируют живую JVM.",
               "correct": true,
               "sections": {
-                "explanation": "JMH — это микробенчмарк-харнесс: он изолированно сравнивает конкретные реализации одного фрагмента (синтетический бенчмарк, прогрев, форк) и выдаёт `score ± error` для каждого варианта. Его вопрос — сравнение «A против B», а не диагностика живой системы.",
-                "example": "Сравнить `stream().mapToInt().sum()` против обычного `for`-цикла на размерах входа 10/1000/100000: JMH прогонит оба варианта и покажет, что у стримов score хуже на малых N и сравним на больших.",
-                "when_to_apply": "Когда уже известна горячая точка и нужно выбрать между двумя конкретными способами её оптимизации перед тем, как катить изменение в прод.",
-                "edge_cases": "JMH не скажет, какой метод в вашем сервисе горячий: если гонять бенчмарк, не зная узкого места, легко оптимизировать код, который в проде вообще не нагружен.",
+                "explanation": "JMH создаёт воспроизводимый microbenchmark context и защищает измерение от типичных JIT-ловушек. JFR записывает runtime events приложения, а JMC помогает исследовать их корреляции.",
+                "example": "Сначала JFR или profiler находит allocation hotspot, затем JMH сравнивает две реализации метода по `ns/op`, `ops/s` и `B/op`.",
+                "when_to_apply": "Используйте JMH для проверки узкой гипотезы и выбора реализации, а JFR/JMC — для поиска bottleneck-а и анализа GC, locks, I/O и compilation в системе.",
+                "edge_cases": "Microbenchmark не воспроизводит автоматически production workload, contention, data distribution или end-to-end latency; его результат требует проверки на более высоком уровне.",
                 "related": "Симметрично JFR/JMC, которые отвечают на макро-вопрос «что тормозит в реальном приложении»; правильный порядок — сначала профайлер находит точку, затем JMH сравнивает варианты её правки."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Какой метод в реальном приложении самый горячий и почему",
+              "text": "JMH автоматически находит самый горячий метод реального сервиса, не требуя отдельного profiler-а или воспроизведения production workload.",
               "correct": false,
               "sections": {
                 "what_actually": "На этот вопрос отвечает связка JFR + JMC (или async-profiler): low-overhead запись событий рантайма прямо в проде даёт timeline аллокаций, GC, lock contention и список hot methods всей живой JVM.",
@@ -1068,7 +1068,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Сколько аллокаций и пауз GC создаёт работающий сервис под нагрузкой",
+              "text": "JMH измеряет end-to-end GC pauses и allocation всего работающего сервиса, подключаясь к нему как фоновый production recorder.",
               "correct": false,
               "sections": {
                 "what_actually": "Это поле JFR: он с минимальными накладными записывает события рантайма — аллокации, GC-паузы, lock contention — на живом сервисе, а JMC потом визуализирует эту запись.",

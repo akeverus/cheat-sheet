@@ -11,7 +11,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ELK Stack` = `Elasticsearch` + `Logstash` + `Kibana` (сейчас официально `Elastic Stack`, включая `Beats`): `Elasticsearch` хранит и ищет логи, `Logstash` — pipeline для ingest и трансформации, `Kibana` — UI для поиска и дашбордов.",
+              "text": "`ELK` — `Elasticsearch`, `Logstash` и `Kibana`; современный `Elastic Stack` также использует `Elastic Agent` или Beats для сбора данных и дополнительные observability-компоненты.",
               "correct": true,
               "sections": {
                 "explanation": "Это связка из трёх продуктов плюс `Beats` (lightweight shippers): данные собираются `Beats`, обрабатываются `Logstash`, индексируются в `Elasticsearch` и визуализируются в `Kibana`. Главный use case — log aggregation, но также поиск, SIEM и APM.",
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Логи сначала попадают в `Kibana`, которая парсит их `grok`-ом и затем кладёт в `Elasticsearch`; `Logstash` и `Beats` в схеме не нужны.",
+              "text": "Логи сначала попадают в `Kibana`, которая парсит их `grok`-ом и затем кладёт в `Elasticsearch`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Kibana` — только UI для чтения данных из `Elasticsearch`; она не принимает и не парсит логи, этим занимаются `Beats` и `Logstash`.",
@@ -95,7 +95,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Приложения пишут логи в файлы/`stdout` → `Filebeat` (sidecar или DaemonSet) читает их → `Logstash` парсит и обогащает (опционально) → `Elasticsearch` индексирует и хранит → `Kibana` запрашивает и визуализирует. Опционально между `Filebeat` и `Logstash` ставят `Kafka` как буфер.",
+              "text": "Приложения пишут логи в файлы/`stdout` → `Filebeat` читает их → `Logstash` парсит и обогащает (опционально) → `Elasticsearch` индексирует и хранит → `Kibana` запрашивает и визуализирует.",
               "correct": true,
               "sections": {
                 "explanation": "Поток данных однонаправленный: shipper собирает логи у источника, опциональный processing-слой трансформирует их, хранилище индексирует, а UI отдаёт поиск. `Logstash` можно пропустить, если приложение уже пишет структурированный JSON.",
@@ -108,7 +108,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В типовой архитектуре `Elasticsearch` сам ходит к хостам приложений и забирает логи по `pull`-модели, как `Prometheus` скрейпит метрики.",
+              "text": "В типовой архитектуре `Elasticsearch` сам ходит к хостам приложений и забирает логи по `pull`-модели.",
               "correct": false,
               "sections": {
                 "what_actually": "ELK использует `push`-модель: shipper (`Filebeat`) сам отправляет логи дальше; `Elasticsearch` не ходит за логами на хосты.",
@@ -143,7 +143,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`PLG`-стек (`Promtail` + `Loki` + `Grafana`) индексирует полный текст логов так же, как `Elasticsearch`, и поэтому стоит столько же.",
+              "text": "`PLG`-стек (`Grafana Alloy` + `Loki` + `Grafana`) индексирует полный текст логов так же, как `Elasticsearch`, и поэтому стоит столько же.",
               "correct": false,
               "sections": {
                 "what_actually": "`Loki` индексирует только метки (labels), а не полный текст, что делает хранение в разы дешевле, чем в ELK.",
@@ -167,13 +167,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`ELK` = `Elasticsearch` + `Logstash` + `Kibana`; `EFK` заменяет `Logstash` на `Fluentd` (популярен в `K8s`, гибче); `EFLK` добавляет `Fluent Bit`. Есть и легче/дешевле варианты: `PLG` (`Promtail` + `Loki` + `Grafana`), `OpenSearch`, `ClickHouse` + `Grafana`.",
+              "text": "`ELK` использует Logstash, `EFK` — Fluentd/Fluent Bit; альтернативы включают OpenSearch и связку Grafana Alloy + Loki + Grafana.",
               "correct": true,
               "sections": {
                 "explanation": "Разница в основном в слое сбора и обработки: `Logstash` тяжёлый (JVM), `Fluentd`/`Fluent Bit` легче и лучше интегрированы с контейнерами, а `Loki`/`ClickHouse` дают радикально дешевле хранение за счёт меньшего индексирования.",
                 "example": "В `Kubernetes` команды чаще берут `Fluent Bit` как DaemonSet вместо `Filebeat`+`Logstash`: меньше памяти и нативная поддержка контейнерных метаданных.",
                 "when_to_apply": "Выбор стека делают по приоритету: ELK/EFK — когда нужен мощный поиск и аналитика; PLG/ClickHouse — когда критична стоимость хранения.",
-                "edge_cases": "Буква в аббревиатуре меняет только processing-слой; хранилище (`Elasticsearch`) и UI (`Kibana`) у ELK и EFK одинаковые.",
+                "edge_cases": "Название PLG с Promtail осталось историческим: Promtail завершил жизненный цикл в 2026 году, поэтому новые Loki-пайплайны строят на Grafana Alloy или другом поддерживаемом агенте.",
                 "related": "[[elk-stack-interview#Q1]] что такое ELK; [[elk-stack-interview#Q24]] Loki vs ELK; [[elk-stack-interview#Q9]] что такое Logstash."
               }
             }
@@ -191,7 +191,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Elasticsearch` обновляет документы синхронно и делает их доступными для поиска только после явного коммита, как реляционная транзакция.",
+              "text": "`Elasticsearch` обновляет документы синхронно и делает их доступными для поиска только после явного коммита.",
               "correct": false,
               "sections": {
                 "what_actually": "Документ становится searchable почти сразу после indexing через refresh (near real-time), без явного транзакционного коммита.",
@@ -227,13 +227,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Elasticsearch` — распределённый поисковый движок на базе `Apache Lucene`: полнотекстовый поиск через inverted index, sharding и репликация для распределённости, schema-flexible JSON-документы, REST API и почти real-time поиск после индексации.",
+              "text": "`Elasticsearch` — распределённый поисковый движок на базе `Apache Lucene`: полнотекстовый поиск через inverted index.",
               "correct": true,
               "sections": {
                 "explanation": "Это general-purpose поисковый движок, а не только хранилище логов: он умеет агрегации (аналитика), масштабируется горизонтально шардами и реплицируется для HA. Основной use case в ELK — логирование, но возможностей больше.",
                 "example": "Документ становится доступным для поиска почти сразу после indexing (через refresh, по умолчанию ~1s), поэтому ошибка из лога видна в `Kibana` практически в реальном времени.",
                 "when_to_apply": "`Elasticsearch` берут, когда нужен быстрый полнотекстовый поиск, аналитические агрегации по большим объёмам или distributed-хранилище документов с REST-доступом.",
-                "edge_cases": "С 2021 года лицензия сменилась (Apache 2.0 → SSPL/Elastic License), что и породило форк `OpenSearch` от AWS.",
+                "edge_cases": "В 2021 году Elastic заменила Apache 2.0 для исходного кода Elasticsearch/Kibana на SSPL и ELv2, а в 2024 добавила AGPLv3 как вариант для свободной части исходников. Официальные бинарные дистрибутивы по-прежнему выпускаются под ELv2; OpenSearch возник после изменения 2021 года.",
                 "related": "[[elk-stack-interview#Q5]] index, shards, replicas; [[elk-stack-interview#Q8]] inverted index; [[elk-stack-interview#Q22]] почему появился OpenSearch."
               }
             }
@@ -275,7 +275,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Index` — namespace для документов (≈ table в SQL). `Shard` — физическое деление индекса, распределённое по нодам: `primary shard` — оригинал, `replica shard` — копия для HA и read-scaling. Число primary-шардов задаётся при создании индекса и не меняется; рекомендуемый размер шарда — 10–50 GB.",
+              "text": "`Index` группирует documents; каждый primary `shard` — отдельный Lucene index с частью данных, а replicas копируют primary для availability и reads.",
               "correct": true,
               "sections": {
                 "explanation": "Индекс разбивается на шарды, чтобы данные распределялись по кластеру; реплики обеспечивают отказоустойчивость (если нода с primary падает, replica становится primary) и ускоряют чтение. С ES 7+ дефолт — 1 primary-шард.",
@@ -311,7 +311,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Mapping` в `Elasticsearch` — это правила маршрутизации документов по шардам, а не схема типов полей.",
+              "text": "`Mapping` в `Elasticsearch` — это правила маршрутизации документов по шардам.",
               "correct": false,
               "sections": {
                 "what_actually": "`Mapping` — это схема, описывающая типы полей документа (`date`, `keyword`, `text`); маршрутизация по шардам определяется routing-ом и хэшем `_id`.",
@@ -323,7 +323,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Концепция нескольких `types` внутри одного индекса (как нескольких таблиц в БД) активно используется и в актуальных версиях ES.",
+              "text": "Концепция нескольких `types` внутри одного индекса активно используется и в актуальных версиях ES.",
               "correct": false,
               "sections": {
                 "what_actually": "Множественные `types` удалены начиная с ES 7+: теперь один тип на индекс, эта концепция признана устаревшей.",
@@ -335,7 +335,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Document` — JSON-запись (одна единица данных). `Mapping` — схема, определяющая типы полей (`date`, `keyword` для exact match, `text` для full-text, `long` и т.д.); может авто-определяться или задаваться вручную. `Types` — концепция, удалённая в ES 7+: теперь один тип на индекс.",
+              "text": "Document — JSON-запись, mapping задаёт типы полей и анализаторы; mapping types удалены.",
               "correct": true,
               "sections": {
                 "explanation": "Документ — это просто JSON; mapping говорит `Elasticsearch`, как индексировать каждое поле. Ключевая разница — `keyword` (хранится как есть, для точного совпадения и агрегаций) vs `text` (разбивается на токены для полнотекстового поиска).",
@@ -348,7 +348,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Типы полей `text` и `keyword` взаимозаменяемы: оба одинаково работают и для полнотекстового поиска, и для точных агрегаций.",
+              "text": "Типы полей `text` и `keyword` взаимозаменяемы: оба одинаково работают и для полнотекстового поиска.",
               "correct": false,
               "sections": {
                 "what_actually": "`text` токенизируется для full-text поиска, а `keyword` хранится целиком для exact match и агрегаций; путать их нельзя.",
@@ -371,7 +371,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Cluster` — группа из одной и более нод. Роли нод: `master` управляет состоянием кластера (минимум 3 master-eligible для HA), `data` хранит данные и выполняет запросы, `ingest` — preprocessing-пайплайны, `coordinating` маршрутизирует запросы (без данных), плюс `machine learning`. В проде: 3+ выделенных master-нод и несколько data-нод.",
+              "text": "Cluster объединяет nodes; master-eligible управляют cluster state, data nodes хранят и обрабатывают данные.",
               "correct": true,
               "sections": {
                 "explanation": "Разделение ролей повышает стабильность: выделенные master-ноды не отвлекаются на тяжёлые запросы и надёжно управляют cluster state, а data-ноды занимаются хранением и поиском. Против split-brain нужно нечётное число master-eligible нод.",
@@ -384,7 +384,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Для HA достаточно одной master-eligible ноды, так как master выбирается автоматически и резерв не нужен.",
+              "text": "Для отказоустойчивого выбора master достаточно единственной master-eligible ноды без резервных участников.",
               "correct": false,
               "sections": {
                 "what_actually": "Для HA и защиты от split-brain нужно минимум 3 master-eligible ноды (нечётное число), иначе при сбое кластер теряет управление.",
@@ -396,7 +396,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Master`-нода хранит все данные кластера и выполняет тяжёлые поисковые запросы, поэтому ей нужны самые быстрые диски.",
+              "text": "Master-нода хранит все шарды и выполняет основные поисковые запросы вместо data nodes.",
               "correct": false,
               "sections": {
                 "what_actually": "Данные хранят и запросы выполняют `data`-ноды; `master`-нода управляет cluster state и в проде её выделяют, чтобы не нагружать запросами.",
@@ -408,7 +408,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Coordinating`-нода — это нода, которая хранит копии всех шардов и служит резервным хранилищем для data-нод.",
+              "text": "Coordinating-нода хранит резервные копии всех шардов и заменяет data nodes при отказе.",
               "correct": false,
               "sections": {
                 "what_actually": "`Coordinating`-нода не хранит данные вообще: она только маршрутизирует запросы и агрегирует ответы от data-нод.",
@@ -443,7 +443,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Inverted index` — структура для быстрого текстового поиска: вместо отображения «документ → его слова» (forward index) строится обратное «слово → список документов». Поиск слова сводится к мгновенному lookup-у списка документов. Это ядро `Lucene`/`Elasticsearch`; trade-off — медленная запись, быстрое чтение.",
+              "text": "`Inverted index` — структура для быстрого текстового поиска: вместо отображения «документ → его слова» строится обратное «слово → список документов».",
               "correct": true,
               "sections": {
                 "explanation": "При индексации текст разбивается на токены (термы), и для каждого терма хранится postings list — список документов, где он встречается. Запрос по слову не сканирует все документы, а сразу берёт готовый список из индекса.",
@@ -456,7 +456,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Inverted index` хранит документы целиком в отсортированном по дате виде и ищет по нему бинарным поиском, без разбиения текста на слова.",
+              "text": "`Inverted index` хранит документы целиком в отсортированном по дате виде и ищет по нему бинарным поиском.",
               "correct": false,
               "sections": {
                 "what_actually": "Текст разбивается на токены (термы), и для каждого терма хранится postings list документов; поиск идёт по термам, а не по целым отсортированным документам.",
@@ -491,32 +491,32 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Logstash` — server-side pipeline для обработки данных: ingest → transform → output. Конфигурируется на Ruby-like синтаксисе из трёх стадий: `input` (откуда брать), `filter` (как трансформировать, например `grok`), `output` (куда писать, обычно `Elasticsearch`). Тяжёлый (JVM, ~1 GB RAM), поэтому многие переходят на `Fluent Bit`.",
+              "text": "`Logstash` — JVM-based server-side pipeline: inputs принимают события, filters преобразуют, outputs отправляют их дальше.",
               "correct": true,
               "sections": {
                 "explanation": "`Logstash` принимает сырые логи, парсит и обогащает их (grok-парсинг, geoip, конвертация типов, парсинг дат) и складывает в хранилище. Это центральный processing-слой ELK, когда приложение пишет неструктурированные логи.",
                 "example": "Пайплайн: `input { beats { port => 5044 } }` → `filter { grok {...} date {...} }` → `output { elasticsearch { hosts => [...] index => \"logs-%{+YYYY.MM.dd}\" } }`.",
                 "when_to_apply": "`Logstash` ставят, когда нужна богатая трансформация логов на лету (парсинг неструктурированного текста, обогащение), которую не сделают lightweight-shippers.",
-                "edge_cases": "Из-за веса JVM (~1 GB RAM) `Logstash` дорог в эксплуатации; если приложение уже пишет JSON, его часто пропускают или заменяют на `Fluent Bit`.",
+                "edge_cases": "Logstash требует заметно больше ресурсов, чем lightweight agents. Если события уже структурированы, pipeline иногда упрощают и отправляют их через Elastic Agent, Beats или Fluent Bit.",
                 "related": "[[elk-stack-interview#Q10]] стадии Input/Filter/Output; [[elk-stack-interview#Q11]] grok-паттерны; [[elk-stack-interview#Q13]] Beats vs Logstash."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Logstash` — это lightweight shipper на Go (~50 MB RAM), устанавливаемый прямо на каждый хост вместо тяжёлых агентов.",
+              "text": "`Logstash` — lightweight Go-shipper, который ставят как минимальный agent на каждый host.",
               "correct": false,
               "sections": {
-                "what_actually": "Lightweight Go-shipper на ~50 MB — это `Filebeat`/`Beats`; `Logstash` написан на Java, работает на JVM и потребляет ~1 GB RAM.",
-                "source_of_confusion": "И `Beats`, и `Logstash` участвуют в доставке логов, поэтому их роли и ресурсы смешивают.",
-                "if_it_were_true": "Тогда не было бы смысла переходить с `Logstash` на `Fluent Bit` ради экономии памяти, но именно вес — причина миграции.",
-                "how_it_should_be": "`Logstash` — тяжёлый JVM-processing-слой; роль lightweight shipper выполняют `Beats`."
+                "what_actually": "Lightweight shippers — Beats или Elastic Agent components; Logstash работает на JVM и предназначен для более тяжёлого server-side processing.",
+                "source_of_confusion": "Все компоненты входят в Elastic ecosystem, поэтому роль компактного shipper легко приписать Logstash.",
+                "if_it_were_true": "Logstash обычно разворачивали бы как минимальный DaemonSet на каждом узле вместо специализированных agents.",
+                "how_it_should_be": "Используйте lightweight agent для shipping, а Logstash — когда нужны развитые transformations и plugins."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`Logstash` — это хранилище логов с inverted index, в которое `Kibana` обращается напрямую за результатами поиска.",
+              "text": "`Logstash` — долговременное хранилище с inverted index, которое заменяет Elasticsearch.",
               "correct": false,
               "sections": {
                 "what_actually": "Хранилище с inverted index — это `Elasticsearch`; `Logstash` лишь обрабатывает и пересылает данные, ничего не храня долговременно.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Конфигурация `Logstash` состоит из двух стадий — `query` и `dashboard`, — описывающих поиск и визуализацию.",
+              "text": "`Logstash` конфигурируется только стадиями query и dashboard для поиска и визуализации.",
               "correct": false,
               "sections": {
                 "what_actually": "Пайплайн `Logstash` состоит из трёх стадий — `input`, `filter`, `output`; поиск и визуализация — это `Kibana`, а не `Logstash`.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Плагин `geoip` в стадии `filter` нужен для шифрования IP-адресов перед отправкой в хранилище.",
+              "text": "`geoip` в стадии filter шифрует IP-адреса перед передачей события в хранилище.",
               "correct": false,
               "sections": {
                 "what_actually": "`geoip` обогащает событие геоданными по IP (страна, город, координаты), а не шифрует адреса.",
@@ -563,7 +563,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "В `Logstash` стадия `filter` отвечает только за фильтрацию (drop) ненужных событий и не умеет трансформировать или обогащать поля.",
+              "text": "Стадия filter умеет только удалять события и не преобразует или не обогащает поля.",
               "correct": false,
               "sections": {
                 "what_actually": "`filter` — это полноценная трансформация: `grok`-парсинг, `mutate`, `geoip`, `date`, парсинг JSON, а не только отбрасывание событий.",
@@ -575,7 +575,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Input` (50+ плагинов): file, syslog, beats, kafka, http, tcp, udp. `Filter` (50+): `grok` (regex-парсинг), `mutate` (трансформация полей), `date` (парсинг таймстампов), `geoip` (IP→локация), `useragent`, `json`, `ruby`. `Output` (40+): elasticsearch, kafka, s3, file, http. В одном инстансе возможно несколько pipelines.",
+              "text": "Input принимает события, Filter парсит и обогащает их, Output отправляет в один или несколько backends.",
               "correct": true,
               "sections": {
                 "explanation": "Каждая стадия — это набор подключаемых плагинов. `input` определяет источник, `filter` цепочкой преобразований приводит лог к структуре, `output` направляет результат в одно или несколько мест. Стадии выполняются последовательно для каждого события.",
@@ -588,7 +588,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Стадия `output` в `Logstash` может писать результат только в `Elasticsearch` и больше никуда.",
+              "text": "Output поддерживает только Elasticsearch и не может писать в Kafka, S3, файл или HTTP.",
               "correct": false,
               "sections": {
                 "what_actually": "`output` имеет 40+ плагинов: kafka, s3, file, http и другие — `Elasticsearch` лишь один из множества приёмников.",
@@ -611,7 +611,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Суффикс `:int` в паттерне `%{NUMBER:status:int}` задаёт имя поля, а не его тип, и на тип данных никак не влияет.",
+              "text": "Суффикс `:int` в паттерне `%{NUMBER:status:int}` задаёт имя поля, а не его тип.",
               "correct": false,
               "sections": {
                 "what_actually": "Первая часть (`status`) — имя поля, а `:int` — это приведение типа к целому числу; суффикс именно меняет тип.",
@@ -623,7 +623,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Grok`-паттерны работают тем быстрее, чем больше объём логов, поэтому их особенно рекомендуют для high-volume потоков.",
+              "text": "`Grok`-паттерны работают тем быстрее, чем больше объём логов.",
               "correct": false,
               "sections": {
                 "what_actually": "Grok как раз медленный на больших объёмах (дорогой regex); для high-volume предпочтительнее структурированные JSON-логи без парсинга.",
@@ -635,7 +635,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Grok` — это формат хранения логов на диске в `Elasticsearch`, альтернатива inverted index для текстовых полей.",
+              "text": "`Grok` — это формат хранения логов на диске в `Elasticsearch`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Grok` — это механизм парсинга текста на стадии `filter` в `Logstash`, а не формат хранения данных в `Elasticsearch`.",
@@ -647,7 +647,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Grok` — это regex с именованными паттернами для структурированного парсинга текста. Шаблон вроде `%{IP:client} %{HTTPDATE:timestamp} %{NUMBER:status:int}` превращает строку лога в JSON с типизированными полями. Есть готовые паттерны (IP, USER, HTTPDATE, WORD, URIPATH, NUMBER, EMAILADDRESS) и debugger в `Kibana`.",
+              "text": "`Grok` — это regex с именованными паттернами для структурированного парсинга текста.",
               "correct": true,
               "sections": {
                 "explanation": "Grok накладывает поверх «голого» regex словарь именованных паттернов, чтобы из неструктурированной строки извлечь поля. Каждый `%{PATTERN:field}` именует совпадение; суффикс `:int` ещё и приводит тип.",
@@ -683,13 +683,13 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Beats` — lightweight shippers на Go (~50 MB RAM). `Filebeat` шлёт лог-файлы (самый популярный). `Metricbeat` — метрики систем/сервисов (CPU, MySQL, nginx). `Packetbeat` — анализатор сетевых протоколов. Также: `Auditbeat` (security-аудит), `Heartbeat` (uptime), `Functionbeat` (AWS Lambda), `Winlogbeat` (Windows event logs).",
+              "text": "Elastic Agent — рекомендуемый унифицированный агент; Beats остаются специализированными shippers, например Filebeat для логов и Metricbeat для метрик.",
               "correct": true,
               "sections": {
                 "explanation": "Каждый `Beat` — узкоспециализированный лёгкий агент для конкретного типа данных. В отличие от тяжёлого `Logstash`, они минимально нагружают хост и шлют данные напрямую в `Elasticsearch` или в `Logstash` для обработки.",
                 "example": "Конфиг `Filebeat`: `filebeat.inputs: [{ type: filestream, paths: [/var/log/*.log] }]` и `output.elasticsearch: { hosts: [\"es-cluster:9200\"] }`.",
                 "when_to_apply": "Конкретный `Beat` выбирают по типу данных: `Filebeat` для логов, `Metricbeat` для метрик, `Packetbeat` для сетевого трафика, `Winlogbeat` для Windows-событий.",
-                "edge_cases": "Beats почти не трансформируют данные (single purpose); для богатой обработки их связывают с `Logstash`, иначе обработку делать негде.",
+                "edge_cases": "Elastic Agent объединяет многие integration scenarios отдельных Beats. Beats и Agent поддерживают processors, но сложный stateful parsing, enrichment и routing обычно выносят в ingest pipeline, Logstash или другой collector.",
                 "related": "[[elk-stack-interview#Q13]] Beats vs Logstash для shipping; [[elk-stack-interview#Q2]] архитектура ELK; [[elk-stack-interview#Q9]] что такое Logstash."
               }
             },
@@ -708,13 +708,13 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Beats` — это тяжёлые JVM-агенты (~1 GB RAM каждый), выполняющие полноценную трансформацию и обогащение данных на хосте.",
+              "text": "`Beats` — тяжёлые JVM-agents, которые индексируют данные локально и выполняют сложные transformations перед отправкой.",
               "correct": false,
               "sections": {
-                "what_actually": "`Beats` написаны на Go и легковесны (~50 MB RAM); тяжёлая JVM-трансформация — это про `Logstash`, а не про `Beats`.",
-                "source_of_confusion": "И `Beats`, и `Logstash` — части ingest-слоя, поэтому их вес и возможности путают.",
-                "if_it_were_true": "Тогда не было бы смысла ставить `Beats` на каждый хост ради экономии ресурсов, но именно лёгкость — их фишка.",
-                "how_it_should_be": "`Beats` — lightweight Go-shippers на ~50 MB; тяжёлая обработка остаётся за `Logstash`."
+                "what_actually": "Beats — специализированные lightweight shippers; тяжёлую многостадийную обработку обычно выполняют Logstash или ingest pipelines.",
+                "source_of_confusion": "Наличие processors в Beats создаёт впечатление, что они заменяют полноценный transformation engine.",
+                "if_it_were_true": "Установка Beats требовала бы JVM и ресурсов, сопоставимых с Logstash, а их роль lightweight shippers исчезла бы.",
+                "how_it_should_be": "Beats собирают конкретный тип telemetry с ограниченной обработкой; сложные transformations выносят дальше по pipeline."
               }
             }
           ]
@@ -731,32 +731,32 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для shipping логов всегда предпочтительнее `Logstash` на каждом хосте, потому что он легче `Beats` по памяти.",
+              "text": "Для shipping всегда ставят Logstash на каждый host, потому что он легче специализированных agents.",
               "correct": false,
               "sections": {
-                "what_actually": "`Logstash` тяжелее (~1 GB RAM против ~50 MB у `Beats`); для shipping на хостах легче и предпочтительнее именно `Beats`.",
-                "source_of_confusion": "`Logstash` мощнее по функциям, и мощность ошибочно отождествляют с лёгкостью.",
-                "if_it_were_true": "Тогда `Logstash` ставили бы на каждый хост ради экономии, но из-за веса так не делают.",
-                "how_it_should_be": "На хостах для shipping держат лёгкие `Beats`; тяжёлый `Logstash` выносят централизованно."
+                "what_actually": "Logstash обычно потребляет больше CPU и memory, чем lightweight agents; shipping на hosts чаще поручают Elastic Agent, Beats, Fluent Bit или другому collector.",
+                "source_of_confusion": "Более богатый набор transformations ошибочно принимают за меньший runtime footprint.",
+                "if_it_were_true": "Logstash был бы типичным минимальным agent на каждом host, а отдельная категория lightweight shippers почти не требовалась бы.",
+                "how_it_should_be": "Размещайте лёгкий shipper рядом с workload, а Logstash используйте централизованно, когда нужны сложные transformations."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`Beats` — lightweight (~50 MB RAM), single purpose, ограниченная трансформация. `Logstash` — тяжёлый (JVM, ~1 GB RAM), мощная трансформация, много плагинов. Best practice: `Beats` на хостах для shipping → `Logstash` централизованно для трансформации → `Elasticsearch`. В `K8s` `Fluent Bit`/`Fluentd` часто заменяют оба.",
+              "text": "Beats или Elastic Agent легче и специализированнее; Logstash выбирают для сложных transformations и множества plugins.",
               "correct": true,
               "sections": {
-                "explanation": "Это не «или-или», а разделение ролей: лёгкий shipper стоит на каждом хосте и только собирает/отправляет, а тяжёлый processing-слой централизован и трансформирует. Так минимизируют нагрузку на хосты при сохранении мощной обработки.",
-                "example": "Поток `Apps → Filebeat (ship) → Kafka (buffer) → Logstash (transform) → Elasticsearch`: shipper лёгкий на каждой ноде, обработка вынесена в централизованный `Logstash`.",
-                "when_to_apply": "Связку `Beats` + `Logstash` выбирают, когда нужны и лёгкий сбор у источника, и богатая централизованная трансформация; чисто `Beats` — когда логи уже структурированы.",
-                "edge_cases": "В `Kubernetes` `Fluent Bit`/`Fluentd` часто заменяют обе роли сразу — и shipping, и часть трансформации — из-за лучшей контейнерной экосистемы.",
-                "related": "[[elk-stack-interview#Q12]] какие бывают Beats; [[elk-stack-interview#Q9]] что такое Logstash; [[elk-stack-interview#Q3]] ELK vs EFK."
+                "explanation": "Lightweight agent удобен для сбора и доставки на каждом host, а Logstash оправдан как централизованный transformation layer. Их можно использовать вместе или заменить другими поддерживаемыми agents.",
+                "example": "Elastic Agent собирает container logs и отправляет структурированные события напрямую в Elasticsearch; при сложном parsing pipeline между ними добавляют Logstash.",
+                "when_to_apply": "Выбирайте agent-only путь для простой доставки готового JSON, а Logstash добавляйте при сложном parsing, enrichment или routing.",
+                "edge_cases": "Elastic Agent постепенно объединяет сценарии отдельных Beats. В Kubernetes часто используют Fluent Bit или другой OpenTelemetry-compatible collector.",
+                "related": "[[elk-stack-interview#Q9]] Logstash; [[elk-stack-interview#Q12]] Elastic Agent и Beats; [[elk-stack-interview#Q2]] поток данных ELK."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`Beats` и `Logstash` — взаимоисключающие альтернативы: в pipeline можно использовать только один из них, но не оба сразу.",
+              "text": "Beats и Logstash взаимоисключающи, поэтому их нельзя соединять последовательно в одном pipeline.",
               "correct": false,
               "sections": {
                 "what_actually": "Их типично используют вместе: `Beats` шлют логи, `Logstash` централизованно трансформирует — это дополняющие роли, а не альтернативы.",
@@ -768,7 +768,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "В `Kubernetes` связку `Beats` + `Logstash` нельзя заменить ничем, так как `Fluentd`/`Fluent Bit` не умеют shipping логов.",
+              "text": "В Kubernetes Fluent Bit и другие agents не умеют shipping logs, поэтому Beats с Logstash обязательны.",
               "correct": false,
               "sections": {
                 "what_actually": "В `K8s` `Fluent Bit`/`Fluentd` как раз часто заменяют обе роли сразу благодаря лучшей контейнерной экосистеме.",
@@ -803,7 +803,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Kibana` — web UI для `Elasticsearch`. Возможности: `Discover` (поиск и просмотр сырых документов), `Dashboards` (комбинации визуализаций), `Visualize`/`Lens` (графики, drag-and-drop), `Canvas`, `Maps` (гео), `Machine Learning` (anomaly detection, paid), `Security` (SIEM, paid), `APM` и `Alerting`.",
+              "text": "`Kibana` — Elastic UI для Discover, Lens/dashboards, alerts, data management, security и observability workflows поверх Elasticsearch.",
               "correct": true,
               "sections": {
                 "explanation": "`Kibana` ничего не хранит сама — она лишь визуализирует и запрашивает данные из `Elasticsearch` через REST API. Это окно в стек: через неё инженер ищет логи, строит дашборды и настраивает алерты.",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`KQL` — современный язык запросов `Kibana` (с версии 7.0+). Поддерживает фильтры вида `status:200`, булеву логику `status:200 AND method:GET`, диапазоны `status >= 400 AND status < 500`, фразы `message:\"connection refused\"`, проверку существования `user_id:*` и wildcards `service:order-*`. Старый Lucene-синтаксис тоже поддерживается.",
+              "text": "`KQL` фильтрует документы в Kibana по полям, значениям, диапазонам и логическим условиям.",
               "correct": true,
               "sections": {
                 "explanation": "`KQL` — это удобная надстройка над поиском в `Elasticsearch`: пользователь пишет простой запрос в строке `Kibana`, который транслируется в REST-запрос к `Elasticsearch`. Поддерживает поля, операторы сравнения, логику и wildcards.",
@@ -947,7 +947,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Типы визуализаций: line/area chart, bar chart, pie chart, data table, gauge/metric, heatmap, maps (гео), TSVB (time series). `Dashboard` — это grid из визуализаций. Best practices: фильтры наверху (time range, environment), RED-метрики (Rate, Errors, Duration), drill-down по клику, не более 10–15 панелей на дашборд.",
+              "text": "Типы визуализаций: line/area chart, bar chart, pie chart, data table, gauge/metric, heatmap, maps (гео).",
               "correct": true,
               "sections": {
                 "explanation": "Визуализация — это один график над агрегированными данными `Elasticsearch`; дашборд собирает несколько визуализаций в сетку с общими фильтрами. Хорошие дашборды читаются с одного взгляда и позволяют углубляться в подмножество данных.",
@@ -971,50 +971,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`ILM` — это механизм репликации индексов между дата-центрами для географической отказоустойчивости.",
+              "text": "`ILM` прежде всего реплицирует индексы между кластерами и переключает трафик при региональном отказе, а retention настраивается отдельной snapshot-политикой.",
               "correct": false,
               "sections": {
-                "what_actually": "Кросс-ДЦ репликацию делает `CCR` (Cross-Cluster Replication); `ILM` управляет жизненным циклом индекса (фазы hot/warm/cold/delete).",
-                "source_of_confusion": "И ILM, и репликация работают с индексами на уровне кластера, поэтому их функции смешивают.",
-                "if_it_were_true": "Тогда ILM не удалял бы старые индексы по ретеншену, но именно фаза delete — его ключевая задача.",
-                "how_it_should_be": "`ILM` автоматизирует переходы индекса по фазам и удаление; кросс-ДЦ репликация — это `CCR`."
+                "what_actually": "Кросс-кластерную репликацию выполняет `CCR`; ILM управляет фазами, rollover, data tiers, searchable snapshots и удалением данных по retention.",
+                "source_of_confusion": "Оба механизма работают с индексами и могут участвовать в disaster-recovery архитектуре, поэтому управление жизненным циклом путают с репликацией.",
+                "if_it_were_true": "ILM требовал бы второго кластера и не умел бы удалять старые backing indices, но его политика работает и внутри одного кластера.",
+                "how_it_should_be": "Используйте ILM для жизненного цикла индексов, `CCR` — для репликации между кластерами, а SLM — для расписания snapshot-ов."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`ILM` — автоматизация управления индексами по их жизненному циклу через фазы: `hot` (свежие, частые чтения/записи) → `warm` (реже, оптимизированные) → `cold` (редкие чтения, дешёвое хранилище) → `frozen` (почти не читаются, очень дёшево) → `delete`. Переходы по условиям (rollover по размеру/возрасту, min_age). Цель — cost optimization: старые данные на дешёвом хранилище.",
+              "text": "`ILM` автоматизирует rollover, переходы между data tiers, retention и удаление индексов или backing indices по заданной политике.",
               "correct": true,
               "sections": {
-                "explanation": "ILM-политика описывает, что делать с индексом на каждой фазе: rollover в hot, shrink/forcemerge в warm, freeze в cold, удаление в delete. Это снимает с инженера ручное управление ретеншеном и оптимизирует стоимость хранения.",
-                "example": "Политика: `hot` rollover при 50 GB или 7 днях → `warm` через 30 дней (shrink до 1 шарда, forcemerge) → `cold` через 90 дней (freeze) → `delete` через 365 дней.",
-                "when_to_apply": "ILM включают всегда, когда логи накапливаются постоянно: без него индексы растут бесконечно, а ретеншен приходится чистить вручную.",
-                "edge_cases": "Отсутствие ILM — частая причина аварий: индексы растут forever, кластер упирается в диск и падает (red state); ретеншен без политики ведёт к cost runaway.",
-                "related": "[[elk-stack-interview#Q18]] hot-warm-cold-frozen архитектура; [[elk-stack-interview#Q21]] sharding strategy; [[elk-stack-interview#Q26]] частые ошибки в проде."
+                "explanation": "ILM применяет действия по фазам жизненного цикла: rollover в hot, migrate/shrink/forcemerge в подходящих фазах, searchable snapshot в cold или frozen и delete после retention. Устаревшее действие `freeze` удалено в Elasticsearch 8.0.",
+                "example": "Например: rollover при `max_primary_shard_size: 50gb` или `max_age: 7d`, warm через 30 дней с `forcemerge`, cold через 90 дней с `searchable_snapshot`, delete через 365 дней. Конкретные пороги задаются из объёма и требований.",
+                "when_to_apply": "Применяйте ILM или data stream lifecycle для постоянно растущих time-series данных, когда нужны предсказуемые rollover, размещение по tiers и документированный retention.",
+                "edge_cases": "`searchable_snapshot` требует snapshot repository и имеет ограничения по сочетанию фазовых действий. ILM не заменяет резервное копирование, legal hold и проверку восстановления.",
+                "related": "[[elk-stack-interview#Q18]] data tiers и searchable snapshots; [[elk-stack-interview#Q21]] sharding strategy; [[elk-stack-interview#Q26]] эксплуатационные ошибки."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "`ILM` хранит все индексы вечно в фазе `hot`, гарантируя максимальную скорость доступа к любым данным.",
+              "text": "`ILM` оставляет каждый индекс навсегда в hot tier и только вращает aliases, не перемещая данные и не удаляя старые backing indices.",
               "correct": false,
               "sections": {
-                "what_actually": "Смысл ILM как раз в переводе старых данных в более дешёвые фазы (warm/cold/frozen) и удалении по ретеншену, а не в вечном hot.",
-                "source_of_confusion": "Желание держать всё «горячим» для скорости противоречит цели экономии, но звучит привлекательно.",
-                "if_it_were_true": "Тогда ILM не давал бы cost optimization, но именно ради неё его и вводят.",
-                "how_it_should_be": "ILM перемещает стареющие данные на дешёвое хранилище и удаляет их, экономя стоимость."
+                "what_actually": "ILM может автоматически переносить read-only данные в warm/cold/frozen tiers и удалять их после заданного срока; rollover — лишь одно из действий.",
+                "source_of_confusion": "Rollover часто настраивают первым, поэтому его ошибочно принимают за весь жизненный цикл индекса.",
+                "if_it_were_true": "Старые данные продолжали бы занимать hot storage без ограничения и ILM не давал бы управлять стоимостью хранения.",
+                "how_it_should_be": "Рассматривайте rollover как начало политики, после которого следуют tiering, optional searchable snapshots и delete."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Переходы между фазами в `ILM` запускаются только вручную администратором, автоматических условий нет.",
+              "text": "Переходы ILM между hot, warm, cold, frozen и delete выполняются только после ручной команды администратора для каждого индекса.",
               "correct": false,
               "sections": {
-                "what_actually": "Переходы автоматические по условиям: rollover при достижении размера/возраста, `min_age` для перехода в warm/cold/delete.",
-                "source_of_confusion": "Сложность настройки политики создаёт впечатление, что переходы инициируют вручную.",
-                "if_it_were_true": "Тогда ILM не снимал бы ручную работу по ретеншену, но автоматизация — его главная ценность.",
-                "how_it_should_be": "ILM переключает фазы автоматически по rollover-условиям и `min_age` без ручного вмешательства."
+                "what_actually": "ILM проверяет условия и выполняет переходы автоматически; оператор заранее задаёт actions и `min_age`, а не запускает каждую фазу вручную.",
+                "source_of_confusion": "Политику и исправление ошибок действительно настраивает оператор, но обычное исполнение lifecycle автоматизировано.",
+                "if_it_were_true": "Для каждого rollover и удаления требовалась бы ручная операция, что противоречило бы назначению Index Lifecycle Management.",
+                "how_it_should_be": "Опишите policy, привяжите её к index template или data stream и наблюдайте за автоматическим выполнением и ошибками."
               }
             }
           ]
@@ -1031,50 +1031,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Frozen`-нода хранит данные на самых быстрых NVMe-дисках, обеспечивая мгновенный доступ к архивным логам.",
+              "text": "Frozen tier полностью хранит архивные индексы на локальных NVMe-дисках и поэтому гарантирует такую же latency поиска, как hot tier.",
               "correct": false,
               "sections": {
-                "what_actually": "`Frozen` использует searchable snapshots в S3 (очень дёшево и медленно); самые быстрые NVMe — это `hot`-фаза.",
-                "source_of_confusion": "Слово «frozen» можно ошибочно связать с «замороженной» быстрой памятью, а не с дешёвым архивом.",
-                "if_it_were_true": "Тогда frozen не давал бы экономии, но его смысл — почти бесплатное хранение редко читаемых данных.",
-                "how_it_should_be": "`Frozen` — это searchable snapshots в S3, дешёвые и медленные; быстрые NVMe относятся к `hot`."
+                "what_actually": "Frozen tier хранит partially mounted searchable snapshots и по необходимости читает части данных из snapshot repository; hot tier рассчитан на активную запись и быстрый локальный доступ.",
+                "source_of_confusion": "Название frozen иногда воспринимают как отдельный быстрый cache tier, хотя его цель — минимизировать локальное хранение редко читаемых данных.",
+                "if_it_were_true": "Frozen требовал бы сопоставимого с hot объёма быстрых дисков и не давал бы основной экономии на длительном retention.",
+                "how_it_should_be": "Hot оптимизируйте под ingestion и частые запросы; frozen — под редкий поиск с восстановлением данных из snapshot repository."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "В этой архитектуре все фазы хранят данные на одинаковых быстрых NVMe-дисках, различаясь лишь числом реплик.",
+              "text": "Все data tiers используют одинаковое хранилище и производительность; различаются только числом replica shards и приоритетом восстановления.",
               "correct": false,
               "sections": {
-                "what_actually": "Фазы намеренно используют разное хранилище: hot — NVMe SSD, warm — медленнее SSD, cold — HDD/S3, frozen — только S3 (дёшево).",
-                "source_of_confusion": "Кажется, что для надёжности везде нужны быстрые диски, но смысл архитектуры — в разной стоимости.",
-                "if_it_were_true": "Тогда хранение 100 TB логов оставалось бы дорогим, но архитектура снижает цену на порядки.",
-                "how_it_should_be": "Чем холоднее фаза, тем дешевле и медленнее хранилище — от NVMe до чистого S3."
+                "what_actually": "Tiers различаются workload-ролью и обычно hardware/storage profile; cold и frozen дополнительно могут использовать searchable snapshots для уменьшения локального объёма.",
+                "source_of_confusion": "Все tiers остаются частью одного Elasticsearch-кластера, поэтому их ошибочно считают одинаковыми nodes с разными allocation labels.",
+                "if_it_were_true": "Перемещение индекса между tiers почти не меняло бы стоимость и latency, лишая архитектуру практического смысла.",
+                "how_it_should_be": "Подбирайте ресурсы tier под частоту записи и чтения, а не только меняйте replica count."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Hot-Warm-Cold-Frozen — это уровни приоритета запросов, при которых hot-запросы выполняются первыми, а frozen откладываются в очередь.",
+              "text": "Hot, warm, cold и frozen — это приоритеты очереди запросов, которые не меняют размещение, формат или стоимость хранения данных.",
               "correct": false,
               "sections": {
-                "what_actually": "Это разделение нод по типу хранилища в зависимости от возраста данных (NVMe → SSD → HDD → S3), а не приоритеты очереди запросов.",
-                "source_of_confusion": "Слова hot/cold ассоциируются с приоритетом задач, а не с температурой данных.",
-                "if_it_were_true": "Тогда не было бы экономии на дисках для старых данных, но именно она — цель архитектуры.",
-                "how_it_should_be": "Это tiering данных по хранилищу разной стоимости; приоритизация запросов тут ни при чём."
+                "what_actually": "Data tiers определяют размещение time-series данных и способ доступа к ним; это не scheduler приоритетов отдельных запросов.",
+                "source_of_confusion": "Термины hot и cold также применяют к priority queues и caches, но в Elasticsearch они обозначают роли data nodes.",
+                "if_it_were_true": "Shard allocation и searchable snapshots не зависели бы от фазы, а ILM не переносил бы данные между node roles.",
+                "how_it_should_be": "Связывайте hot/warm/cold/frozen с возрастом, изменяемостью и частотой доступа к данным."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Это разделение нод по «температуре» данных ради экономии. `Hot` — быстрые диски (NVMe SSD), свежие индексы, высокий I/O. `Warm` — медленнее SSD, индексы старше 7 дней. `Cold` — HDD, данные из object storage (S3). `Frozen` — searchable snapshots в S3 (очень дёшево). Чем холоднее данные, тем дешевле хранилище.",
+              "text": "Hot tier принимает запись, warm обслуживает менее активные read-only данные, cold оптимизирует редкий доступ, а frozen использует partially mounted searchable snapshots.",
               "correct": true,
               "sections": {
-                "explanation": "Идея в том, что свежие логи читают часто (нужна скорость), а старые — почти никогда (важна цена). Размещая данные на нодах разной стоимости в зависимости от возраста, получают огромную экономию при длинном retention.",
-                "example": "Hot (50 GB) — дорогая нода $$$, Warm (1 TB) — стандартная $$, Cold (10 TB) — дешёвая + S3 $, Frozen (100 TB) — только S3 ¢; основной объём лежит на самом дешёвом уровне.",
-                "when_to_apply": "Архитектуру применяют для логов с длинным сроком хранения (compliance, аудит), когда держать всё на быстрых дисках экономически бессмысленно.",
-                "edge_cases": "`Frozen`-фаза использует searchable snapshots: данные физически в S3, поиск возможен, но с заметной задержкой при первом обращении (mount snapshot).",
-                "related": "[[elk-stack-interview#Q17]] что такое ILM; [[elk-stack-interview#Q21]] sharding strategy; [[elk-stack-interview#Q20]] проблемы performance."
+                "explanation": "Hot tier обслуживает active indexing и частые запросы; warm — более старые, обычно read-only индексы; cold оптимизирован под редкий поиск и может использовать fully mounted searchable snapshots; frozen хранит только partially mounted searchable snapshots и подгружает данные из repository.",
+                "example": "Логи проходят hot для ingestion, затем warm после снижения частоты запросов, cold с fully mounted searchable snapshot для редкого поиска и frozen с partially mounted snapshot для архива. Возраст и размеры — параметры конкретной политики, а не универсальные числа.",
+                "when_to_apply": "Используйте tiering для time-series данных с длинным retention и предсказуемым снижением частоты доступа, предварительно измерив latency холодных запросов и стоимость repository.",
+                "edge_cases": "Cold может хранить и обычные индексы с replicas, и fully mounted snapshots; frozen требует snapshot repository. Searchable snapshots не равны резервной копии без отдельно проверенной snapshot/restore стратегии.",
+                "related": "[[elk-stack-interview#Q17]] ILM; [[elk-stack-interview#Q21]] sharding strategy; [[elk-stack-interview#Q20]] performance и capacity."
               }
             }
           ]
@@ -1103,7 +1103,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Index template` — это настройки + mappings, автоматически применяемые к новым индексам, чьё имя совпадает с заданным паттерном. Например template с `index_patterns: [\"logs-*\"]` задаёт number_of_shards, number_of_replicas и типы полей; когда создаётся новый индекс `logs-2025-04-19`, шаблон применяется автоматически.",
+              "text": "Index templates применяют settings, mappings и aliases к новым индексам или data streams.",
               "correct": true,
               "sections": {
                 "explanation": "Шаблон решает проблему повторяющихся ежедневных/rollover-индексов: вместо ручного задания настроек для каждого нового индекса они наследуются из template по совпадению имени с паттерном. Так гарантируется единообразный mapping и sharding.",
@@ -1116,7 +1116,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`Index template` применяется ко всем уже существующим индексам сразу после его изменения, обновляя их mapping на лету.",
+              "text": "`Index template` применяется ко всем уже существующим индексам сразу после его изменения.",
               "correct": false,
               "sections": {
                 "what_actually": "Template применяется только в момент создания нового индекса; существующие индексы он не трогает — для них нужен reindex.",
@@ -1151,7 +1151,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Частые причины: тяжёлые запросы (wildcards, regex, агрегации на огромных индексах); mapping explosion (слишком много полей, глубокая вложенность); too many shards (overhead на cluster state) или too few shards (один горячий шард, нет параллелизма); heap pressure (GC-паузы, OOM); медленные диски (HDD под hot); большие документы; отсутствие bulk API; лаг репликации; split-brain.",
+              "text": "Частые причины — дорогие queries/aggregations, oversharding, mapping explosion, heap/GC pressure, slow disks, hot nodes и unbounded ingest.",
               "correct": true,
               "sections": {
                 "explanation": "Проблемы делятся на запросные (тяжёлые запросы, агрегации), структурные (число шардов, mapping explosion) и ресурсные (heap, диски, single inserts). Часто несколько причин накладываются, и узкое место смещается по мере роста объёма.",
@@ -1164,7 +1164,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Главная и единственная причина проблем с performance — нехватка реплик; добавление реплик всегда ускоряет и запись, и чтение.",
+              "text": "Единственная причина degradation — недостаток replicas; добавление replica всегда снижает indexing latency и устраняет heap pressure.",
               "correct": false,
               "sections": {
                 "what_actually": "Причин много (запросы, шарды, heap, диски, single inserts); реплики ускоряют чтение, но добавляют накладные расходы на запись, так что это не универсальное лекарство.",
@@ -1176,7 +1176,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Single-document inserts (по одному документу) индексируются так же быстро, как bulk API, разницы в throughput нет.",
+              "text": "Single-document indexing имеет ту же throughput и merge cost, что bulk API, поэтому batch size не влияет на ingest performance.",
               "correct": false,
               "sections": {
                 "what_actually": "Single-document inserts заметно медленнее: bulk API батчит документы и резко повышает throughput индексации.",
@@ -1188,7 +1188,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Чем больше шардов на индекс, тем лучше performance, поэтому рекомендуется создавать тысячи мелких шардов.",
+              "text": "Чем больше shards на index, тем быстрее любые searches: cluster-state size, fan-out и segment overhead при этом не растут.",
               "correct": false,
               "sections": {
                 "what_actually": "Too many shards раздувают cluster state и heap; рекомендуется размер шарда 10–50 GB, а не тысячи мелких.",
@@ -1211,50 +1211,50 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Рекомендуемый размер одного шарда — 1–2 GB, а на ноду стоит размещать как можно больше шардов для параллелизма.",
+              "text": "Создавайте много мелких shards ради параллелизма: чем меньше shard, тем дешевле cluster state, recovery и search fan-out.",
               "correct": false,
               "sections": {
-                "what_actually": "Рекомендуемый размер шарда — 10–50 GB, а число шардов на ноду ограничено (< ~600) из-за heap memory.",
-                "source_of_confusion": "Мелкие шарды кажутся легче и параллельнее, поэтому размер занижают, а число завышают.",
-                "if_it_were_true": "Тогда тысячи мелких шардов не давали бы heap pressure, но именно они — частая причина деградации.",
-                "how_it_should_be": "Целятся в шарды по 10–50 GB и держат их число на ноду в разумных пределах (< ~600)."
+                "what_actually": "Each shard consumes cluster-state, heap, file handles and query coordination resources; many tiny shards can be more expensive than fewer appropriately sized shards.",
+                "source_of_confusion": "Shard-level parallelism is useful, but extrapolating “more shards means faster” ignores per-shard overhead and search fan-out.",
+                "if_it_were_true": "Thousands of tiny shards would reduce overhead and speed recovery, while real clusters commonly suffer from oversharding.",
+                "how_it_should_be": "Start from workload and recovery goals; use rollover and measured shard size instead of maximizing shard count."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Time-based indices невозможно использовать для управления ретеншеном, потому что старые индексы нельзя удалять.",
+              "text": "`Time-based indices` не подходят для retention: Elasticsearch запрещает удалять старые backing indices целиком через ILM.",
               "correct": false,
               "sections": {
-                "what_actually": "Наоборот: главный плюс time-based — простой ретеншен через удаление старых daily-индексов целиком.",
-                "source_of_confusion": "Удаление документов внутри индекса дорого, и это переносят на удаление индексов целиком.",
-                "if_it_were_true": "Тогда time-based не имел бы преимуществ по ретеншену, но именно это его сильная сторона.",
-                "how_it_should_be": "Time-based индексы удаляют целиком по возрасту — это удобный способ ретеншена."
+                "what_actually": "Time-based data streams and indices are commonly retained by deleting whole backing indices through ILM, which is cheaper than deleting documents individually.",
+                "source_of_confusion": "Document deletion cost is mistakenly transferred to index deletion, although they use different mechanisms.",
+                "if_it_were_true": "ILM delete phases and time-based data streams could not implement retention by removing old backing indices.",
+                "how_it_should_be": "Use ILM/data streams to roll over and delete old backing indices according to retention policy."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Два подхода. Time-based indices — один индекс на день (`logs-2025-04-19`): легко чистить ретеншен удалением старых индексов, но при низком объёме много мелких шардов. Size-based через ILM rollover (`logs-000001`, ...): индекс роллится при достижении 50 GB / 7 дней, шарды более ровные по размеру. Best practices: размер шарда 10–50 GB, 1 primary + 1 replica, < 600 шардов на ноду.",
+              "text": "Выбирайте primary-shard count по объёму и нагрузке; ILM rollover удерживает shards в целевом диапазоне и удаляет старые backing indices.",
               "correct": true,
               "sections": {
-                "explanation": "Выбор зависит от объёма и предсказуемости: time-based проще для ретеншена, но плодит мелкие шарды при малом трафике; rollover держит размер шарда стабильным независимо от суточного объёма. Цель обоих — не выйти за рамки 10–50 GB на шард.",
-                "example": "Для 100 GB/день и 30 дней retention: ~10 индексов × 5 шардов × 2 (с репликой) = 100 шардов — укладывается в лимит < 600 шардов на ноду.",
-                "when_to_apply": "Time-based выбирают при стабильном суточном объёме и простом ретеншене; size-based rollover — при неравномерном трафике, чтобы избежать слишком мелких или слишком крупных шардов.",
-                "edge_cases": "При низком объёме time-based daily-индексы создают много почти пустых шардов; в таком случае лучше rollover по размеру или индекс на неделю/месяц.",
-                "related": "[[elk-stack-interview#Q5]] index, shards, replicas; [[elk-stack-interview#Q17]] что такое ILM; [[elk-stack-interview#Q20]] проблемы performance."
+                "explanation": "Sharding strategy balances shard size, document count, indexing/search concurrency and recovery time. Elastic recommends using rollover and observing real workload; 10–50 GB and up to about 200M documents per shard are starting points, not universal guarantees.",
+                "example": "Data stream rolls over when a backing index reaches a chosen `max_primary_shard_size` or age. `_cat/shards`, indexing latency, search fan-out and recovery tests verify whether the resulting shard count is sustainable.",
+                "when_to_apply": "Use ILM/data-stream rollover for variable ingest and retention. Revisit primary count after load testing or when shard size, recovery time or query fan-out drifts outside targets.",
+                "edge_cases": "`cluster.max_shards_per_node` is a safety limit, not a sizing recommendation. Small workloads may need weekly/monthly rollover, while very large shards can slow recovery and searches.",
+                "related": "[[elk-stack-interview#Q5]] indices, shards and replicas; [[elk-stack-interview#Q17]] ILM; [[elk-stack-interview#Q20]] performance diagnostics."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Number of shards стоит задавать максимально большим заранее, ведь его легко уменьшить позже, если шардов окажется слишком много.",
+              "text": "Задавайте максимально возможное число primary shards заранее: его всегда можно уменьшить online без shrink, split or reindex.",
               "correct": false,
               "sections": {
-                "what_actually": "Число primary-шардов фиксируется при создании индекса и не уменьшается просто так; over-sharding раздувает cluster state, поэтому планируют умеренно (10–50 GB на шард).",
-                "source_of_confusion": "Динамическая смена числа реплик создаёт иллюзию, что и шарды легко перенастроить.",
-                "if_it_were_true": "Тогда не было бы строгих рекомендаций по размеру шарда заранее, но они существуют именно из-за неизменности.",
-                "how_it_should_be": "Число шардов планируют сразу под целевой размер 10–50 GB; задним числом его не уменьшить без reindex/shrink."
+                "what_actually": "Primary-shard count is not freely reducible in place. Changing it usually requires shrink under constraints, split or reindex into a new index.",
+                "source_of_confusion": "Replica count is dynamic, which creates the false impression that primary-shard count is equally flexible.",
+                "if_it_were_true": "Oversharding could be fixed by one online setting change without data movement or index recreation.",
+                "how_it_should_be": "Choose a moderate primary count and use rollover; correct a bad layout through supported shrink/split/reindex workflows."
               }
             }
           ]
@@ -1307,7 +1307,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`OpenSearch` — форк `Elasticsearch`, созданный `AWS` в 2021 году. Причина: `Elastic` сменила лицензию (Apache 2.0 → SSPL/Elastic License), ограничив коммерческое использование в managed-сервисах; `AWS` форкнула последнюю Apache 2.0 версию в `OpenSearch`. Поддерживается AWS, IBM, SAP, Logz.io под управлением Linux Foundation (с 2024). В основном совместим с API `Elasticsearch`, но расходится.",
+              "text": "`OpenSearch` — Apache 2.0 форк Elasticsearch и Kibana, развиваемый отдельным сообществом и AWS после изменения лицензирования Elastic.",
               "correct": true,
               "sections": {
                 "explanation": "Это история про лицензию, а не про технологию: смена лицензии `Elastic` закрыла бесплатное использование в чужих SaaS, и `AWS` отделила open-source ветку. Форк сохранил API-совместимость, но со временем экосистемы расходятся.",
@@ -1331,44 +1331,44 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Ключевые отличия: лицензия (`OpenSearch` — Apache 2.0; `Elasticsearch` — Elastic License, ограничивает SaaS); вендор (`OpenSearch` — AWS/Linux Foundation, `Elasticsearch` — Elastic); API в основном совместимы; продвинутые фичи (ML, security, alerting) бесплатны в `OpenSearch` и платные у `Elastic`; разные экосистемы плагинов. В 2025: AWS-юзеры → OpenSearch Service, self-hosted open-source → OpenSearch, платная поддержка Elastic → Elasticsearch.",
+              "text": "OpenSearch вырос из Elasticsearch, но теперь отличается лицензированием, API, функциями и экосистемой плагинов.",
               "correct": true,
               "sections": {
-                "explanation": "Главные оси сравнения — лицензия, вендор и модель платности фич. `OpenSearch` отдаёт бесплатно то, что `Elastic` продаёт (ML, расширенный security/SIEM, alerting), но цена этого — отдельная экосистема и расхождение API со временем.",
-                "example": "Команде, которой нужны бесплатные anomaly detection и SIEM, выгоднее `OpenSearch`; компании, готовой платить за поддержку и фичи `Elastic`, — `Elasticsearch`.",
-                "when_to_apply": "Сравнение используют при выборе стека: open-source без ограничений и бесплатные фичи → `OpenSearch`; managed в AWS → OpenSearch Service; вендорская поддержка → `Elasticsearch`.",
-                "edge_cases": "Миграция legacy `Elasticsearch` → `OpenSearch` обычно smooth, но обратный путь и новые фичи `Elasticsearch` 8+ усложняют переход из-за расходящихся экосистем.",
-                "related": "[[elk-stack-interview#Q22]] почему появился OpenSearch; [[elk-stack-interview#Q25]] когда выбрать ELK; [[elk-stack-interview#Q14]] что такое Kibana."
+                "explanation": "Проекты имеют общее происхождение, но теперь различаются governance, лицензированием, release cadence, API, plugins и коммерческими предложениями. Набор бесплатных и платных возможностей нужно сравнивать по конкретной версии и subscription matrix, а не по старому лозунгу.",
+                "example": "Перед миграцией команда проверяет используемые clients, mappings, security model, ingest pipelines, snapshots и plugins на целевых версиях, а затем проводит restore и query benchmarks в staging.",
+                "when_to_apply": "Используйте сравнение при выборе self-managed или managed search platform, учитывая лицензионные условия, cloud vendor, поддержку, совместимость и стоимость эксплуатации.",
+                "edge_cases": "Совместимость наследованных Elasticsearch APIs не означает двустороннюю drop-in замену современных версий: форматы snapshot, plugins и новые функции расходятся.",
+                "related": "[[elk-stack-interview#Q22]] происхождение OpenSearch; [[elk-stack-interview#Q4]] Elasticsearch; [[elk-stack-interview#Q25]] выбор стека."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`OpenSearch` и `Elasticsearch` распространяются под одной и той же лицензией Apache 2.0, поэтому юридической разницы между ними нет.",
+              "text": "OpenSearch и Elasticsearch по-прежнему распространяются исключительно под одной лицензией Apache 2.0.",
               "correct": false,
               "sections": {
-                "what_actually": "Лицензии разные: `OpenSearch` — Apache 2.0, а `Elasticsearch` — Elastic License (SSPL), ограничивающая использование в SaaS; именно это породило форк.",
-                "source_of_confusion": "Общее происхождение кода создаёт впечатление одинаковых лицензий.",
-                "if_it_were_true": "Тогда `AWS` не пришлось бы форкать `OpenSearch`, но смена лицензии `Elastic` была причиной форка.",
-                "how_it_should_be": "`OpenSearch` — Apache 2.0, `Elasticsearch` — Elastic License; это ключевое юридическое различие."
+                "what_actually": "OpenSearch распространяется под Apache 2.0. Исходники свободной части Elasticsearch/Kibana доступны по SSPL, ELv2 или AGPLv3, тогда как официальный дистрибутив Elasticsearch остаётся под ELv2.",
+                "source_of_confusion": "Общее происхождение кода и несколько вариантов лицензирования исходников Elasticsearch легко свести к ошибочной формуле «оба Apache 2.0» или «Elasticsearch только SSPL».",
+                "if_it_were_true": "Изменение лицензирования Elastic в 2021 году не создало бы причины отделять Apache 2.0 ветку OpenSearch.",
+                "how_it_should_be": "Сравнивайте лицензию конкретного source file и дистрибутива: OpenSearch — Apache 2.0, официальный Elasticsearch distribution — ELv2."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Продвинутые фичи (ML, security, alerting) бесплатны в `Elasticsearch`, но платные в `OpenSearch`.",
+              "text": "Все расширенные security, ML и alerting-функции бесплатны только в Elasticsearch, но платны в OpenSearch.",
               "correct": false,
               "sections": {
-                "what_actually": "Всё наоборот: в `OpenSearch` ML/security/alerting бесплатны, а в `Elasticsearch` многие из них — платные функции `Elastic`.",
-                "source_of_confusion": "`Elasticsearch` старше и популярнее, поэтому ему ошибочно приписывают больше бесплатных фич.",
-                "if_it_were_true": "Тогда не было бы мотивации выбирать `OpenSearch` ради бесплатных фич, но это одна из главных причин.",
-                "how_it_should_be": "Бесплатные ML/security/alerting — у `OpenSearch`; у `Elastic` они входят в платные подписки."
+                "what_actually": "Оба проекта имеют бесплатные возможности, а отдельные advanced features и support зависят от версии, distribution и subscription. Нельзя описывать различие зеркальным правилом «всё бесплатно только у одного».",
+                "source_of_confusion": "Маркетинговые comparison tables быстро устаревают и часто смешивают source license, бесплатный basic tier, managed service и enterprise subscription.",
+                "if_it_were_true": "Достаточно было бы одного feature flag для выбора продукта, но реальные миграции требуют сравнивать API, plugins, operations и коммерческие условия.",
+                "how_it_should_be": "Проверяйте нужные функции по актуальным matrices обоих продуктов и отдельно оценивайте лицензию, support и managed-service стоимость."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`OpenSearch` и `Elasticsearch` используют один общий репозиторий плагинов, поэтому любой плагин работает в обоих без изменений.",
+              "text": "Оба продукта используют единый репозиторий плагинов, поэтому расширения бинарно совместимы между ними.",
               "correct": false,
               "sections": {
                 "what_actually": "После форка экосистемы плагинов разошлись: у `OpenSearch` своя экосистема, у `Elasticsearch` — оригинальная, и они несовместимы напрямую.",
@@ -1391,7 +1391,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`Loki` индексирует полное содержимое логов так же, как ELK, поэтому его запросы по тексту такие же быстрые.",
+              "text": "Loki полнотекстово индексирует содержимое каждой строки логов так же, как Elasticsearch.",
               "correct": false,
               "sections": {
                 "what_actually": "`Loki` индексирует только labels, а не содержимое; поиск по тексту у него медленнее (grep-based) именно из-за отсутствия полнотекстового индекса.",
@@ -1403,7 +1403,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`Loki` индексирует только метки (labels), а ELK индексирует всё; отсюда у `Loki` низкая стоимость хранения ($) против высокой у ELK ($$$), но запросы медленнее (grep-based) против быстрых indexed-запросов ELK. Язык: `LogQL` (PromQL-like) против KQL/Lucene/DSL. Ресурсы: `Loki` лёгкий (Go) против тяжёлого ELK (JVM, много RAM). `Loki` дешевле в ~10x для того же объёма.",
+              "text": "Loki индексирует labels и хранит compressed chunks, а Elastic индексирует поля документов для сложного поиска.",
               "correct": true,
               "sections": {
                 "explanation": "Философия `Loki`: «логи дёшево хранить, дорого только при query-time grep». ELK индексирует содержимое (дорого, но быстрый поиск), `Loki` — только labels (дёшево, но поиск по тексту медленнее). Выбор — это trade-off между стоимостью хранения и скоростью запросов.",
@@ -1416,7 +1416,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Язык запросов `Loki` — это `KQL`, тот же, что используется в `Kibana` для ELK.",
+              "text": "Loki использует KQL и тот же query engine, что Kibana поверх Elasticsearch.",
               "correct": false,
               "sections": {
                 "what_actually": "Запросы в `Loki` пишутся на `LogQL` (PromQL-like); `KQL` — это язык `Kibana` в стеке ELK.",
@@ -1428,7 +1428,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`Loki` тяжелее ELK по ресурсам, так как написан на JVM и требует больше RAM, чем `Elasticsearch`.",
+              "text": "Loki работает на JVM и обычно требует больше памяти и CPU, чем Elastic Stack.",
               "correct": false,
               "sections": {
                 "what_actually": "`Loki` написан на Go и легче по ресурсам; тяжёлый JVM с большим RAM — это как раз `Elasticsearch`/ELK.",
@@ -1451,7 +1451,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "ELK выбирают, когда нужны быстрые сложные запросы по логам, важен full-text поиск, критичны агрегации (аналитические дашборды), уже есть Elastic-экосистема, нужны APM и SIEM в одном инструменте, сильный язык запросов (KQL) и compliance/audit (SIEM-фичи). Не стоит выбирать при чувствительности к стоимости (дешевле `Loki`/`ClickHouse`), для простого поиска логов, без потребности в полном фичесете и при малой ops-команде (ELK сложен в эксплуатации).",
+              "text": "Elastic Stack выбирают для сложного поиска, аналитики, SIEM/APM и развитых агрегаций.",
               "correct": true,
               "sections": {
                 "explanation": "Главный аргумент за ELK — мощный поиск и аналитика плюс единый инструмент для логов, APM и SIEM. Главный аргумент против — стоимость и операционная сложность: ELK тяжело эксплуатировать и дорого хранить большие объёмы.",
@@ -1464,7 +1464,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "ELK особенно хорош для маленьких команд без ops-экспертизы, потому что почти не требует обслуживания.",
+              "text": "ELK оптимален для небольшой команды без ops-экспертизы, поскольку почти не требует обслуживания.",
               "correct": false,
               "sections": {
                 "what_actually": "ELK как раз сложен в эксплуатации (heap, ILM, master-ноды, мониторинг); для малой ops-команды это минус, а не плюс.",
@@ -1476,7 +1476,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "ELK выбирают именно тогда, когда full-text поиск и агрегации не нужны, а достаточно простого просмотра логов по меткам.",
+              "text": "ELK выбирают, когда полнотекстовый поиск и агрегации не нужны, а достаточно labels.",
               "correct": false,
               "sections": {
                 "what_actually": "Для простого просмотра по меткам достаточно `Loki`; ELK оправдан как раз когда нужны full-text поиск и агрегации.",
@@ -1488,7 +1488,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "ELK стоит выбирать в первую очередь когда главный приоритет — минимальная стоимость хранения логов.",
+              "text": "ELK прежде всего выбирают ради минимальной стоимости длительного хранения больших объёмов логов.",
               "correct": false,
               "sections": {
                 "what_actually": "При приоритете стоимости как раз выбирают `Loki`/`ClickHouse`; сила ELK — поиск и аналитика, но хранение у него дорогое.",
@@ -1517,7 +1517,7 @@
                 "what_actually": "Дефолтный heap 1 GB под нагрузкой ведёт к OOM; в проде heap обязательно тюнят под объём данных.",
                 "source_of_confusion": "Дефолты кажутся разумными «из коробки», и их оставляют без изменений.",
                 "if_it_were_true": "Тогда не было бы рекомендаций настраивать heap, но дефолтный размер — частая причина OOM.",
-                "how_it_should_be": "Heap настраивают под нагрузку (обычно ≤ 50% RAM, до ~31 GB); дефолтные 1 GB для прода мало."
+                "how_it_should_be": "Используйте автоматическую sizing-конфигурацию или рассчитывайте heap по роли и нагрузке; произвольный маленький фиксированный heap опасен для production."
               }
             },
             {
@@ -1535,7 +1535,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Типичные грабли: нет ILM (индексы растут forever → cluster crash); нет retention policy (cost runaway); single-node кластер (production fail); дефолтный heap (1 GB → OOM); слишком много шардов на ноду (heap pressure); mapping conflicts (разные сервисы перезаписывают mapping); нет структурированных логов (grok везде = медленно); нет бэкапов; открытый доступ без auth; медленные запросы к hot-индексам; saturated network; disk full (кластер уходит в red). Best practice: ILM, dedicated master-ноды, мониторинг, бэкапы.",
+              "text": "Типовые ошибки: нет ILM/retention, oversharding, dynamic-mapping explosion, недостаточная disk capacity, небезопасная публикация cluster и непроверенное recovery.",
               "correct": true,
               "sections": {
                 "explanation": "Ошибки группируются: ресурсные (heap, диски, шарды), архитектурные (single-node, нет master-нод), эксплуатационные (нет ILM, ретеншена, бэкапов) и безопасность (открытый доступ). Большинство аварий — про неконтролируемый рост и отсутствие базовой обвязки.",
@@ -1551,7 +1551,7 @@
               "text": "Главная ошибка в проде — использовать ILM, потому что автоматическое удаление индексов слишком рискованно и ведёт к потере данных.",
               "correct": false,
               "sections": {
-                "what_actually": "Наоборот: отсутствие ILM — частая причина аварий (индексы растут forever → crash); ILM как раз рекомендуемая best practice.",
+                "what_actually": "Наоборот: отсутствие ILM — частая причина аварий (индексы растут без ограничения срока → crash); ILM как раз рекомендуемая best practice.",
                 "source_of_confusion": "Автоудаление данных пугает, поэтому ILM ошибочно записывают в риски.",
                 "if_it_were_true": "Тогда ILM не входил бы в список best practices, но он там на первом месте.",
                 "how_it_should_be": "ILM — это решение, а не ошибка; его отсутствие приводит к неконтролируемому росту и падению кластера."

@@ -11,7 +11,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`R2DBC` — реактивный адаптер над существующими `JDBC`-драйверами: он оборачивает `ResultSet` в `Flux`, а блокирующие вызовы выполняет на вынесенном пуле потоков.",
+              "text": "`R2DBC` — Reactive Streams SPI для неблокирующего SQL-доступа через `ConnectionFactory`, backpressure-aware publishers и reactive transactions вместо JDBC `DataSource`/`ResultSet`.",
+              "correct": true,
+              "sections": {
+                "explanation": "R2DBC определяет собственные `ConnectionFactory`, `Connection`, `Statement`, `Result` и reactive publishers. Драйвер должен реализовать неблокирующее взаимодействие с источником данных; JDBC-драйвер автоматически переиспользовать нельзя.",
+                "example": "`DatabaseClient.sql(\"select * from orders\").fetch().all()` возвращает `Flux<Map<String,Object>>`; данные поступают по подписке без блокирующего `ResultSet.next()` в пользовательском потоке.",
+                "when_to_apply": "Используйте R2DBC внутри сквозного reactive stack, когда база и драйвер поддерживают нужные возможности, а приложение действительно обслуживает высокую I/O-конкурентность без blocking calls.",
+                "edge_cases": "Reactive API не делает запрос быстрее сам по себе и не отменяет лимит соединений. Конкретные batching, savepoints, isolation levels и generated keys зависят от драйвера и СУБД.",
+                "related": "[[spring-r2dbc-interview#Q5]] реактивные транзакции; [[spring-r2dbc-interview#Q7]] connection pool; [[spring-r2dbc-interview#Q15]] сквозной стек WebFlux."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "`R2DBC` оборачивает JDBC-драйвер и выполняет каждый блокирующий вызов на worker-пуле; `ResultSet` преобразуется в `Flux`, но соединения и транзакции остаются JDBC-объектами.",
               "correct": false,
               "sections": {
                 "what_actually": "`R2DBC` — полностью отдельный API с собственными неблокирующими драйверами (`r2dbc-postgresql` и др.), он не вызывает `JDBC` под капотом.",
@@ -21,22 +34,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "`R2DBC` — реактивный неблокирующий API к реляционным БД: вместо `ResultSet` возвращается `Publisher<Row>` (`Flux`/`Mono`), без привязки thread-per-connection.",
-              "correct": true,
-              "sections": {
-                "explanation": "`JDBC` блокирует поток на время запроса (thread-per-connection), а `R2DBC` освобождает поток и доставляет строки через `Publisher`, что лучше масштабируется под высоким concurrency. Это совершенно разные API.",
-                "example": "Метод репозитория `Flux<Order> findByCustomerId(String id)` в `R2DBC` возвращает поток строк лениво, тогда как `JDBC` отдал бы синхронный `ResultSet` и держал поток до конца выборки.",
-                "when_to_apply": "Выбирают `R2DBC`, когда приложение полностью реактивное на `WebFlux` и нужен неблокирующий доступ к БД при высоком числе одновременных соединений и высоком I/O.",
-                "edge_cases": "`R2DBC` не даёт lazy loading и ORM-маппинга связей — joins пишут вручную, поэтому для сложных реляционных моделей он сложнее, чем `JPA`.",
-                "related": "[[spring-r2dbc-interview#Q9]] когда `R2DBC`, а когда `JPA`; [[spring-r2dbc-interview#Q5]] реактивные транзакции; [[spring-r2dbc-interview#Q15]] интеграция с `WebFlux`."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "`R2DBC` расшифровывается как Reactive Document Connectivity и ориентирован на key-value и документные хранилища; реляционные БД остаются за `JDBC`.",
+              "text": "`R2DBC` предназначен для document- и key-value-хранилищ, а реляционные СУБД доступны только через JDBC; слово Relational относится к формату данных в приложении.",
               "correct": false,
               "sections": {
                 "what_actually": "`R2DBC` расшифровывается как `Reactive Relational Database Connectivity` и работает именно с реляционными БД через драйверы `r2dbc-postgresql`, `r2dbc-mysql`.",
@@ -48,7 +48,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`R2DBC` использует ту же блокирующую модель I/O, что и `JDBC`: поток ждёт ответ БД, а реактивность добавляется на уровне возвращаемого `Optional<Row>`.",
+              "text": "`R2DBC` сохраняет блокирующую I/O-модель JDBC, но заменяет `ResultSet` на `Optional` и допускает выполнение запроса без выделения отдельного соединения.",
               "correct": false,
               "sections": {
                 "what_actually": "`R2DBC` неблокирующий и возвращает `Publisher<Row>` (`Flux`/`Mono`), а не `Optional`; блокирующая модель — это как раз `JDBC`.",
@@ -71,7 +71,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Реактивный доступ поднимается на общем `spring.datasource.url` вместе со стартером `spring-boot-starter-data-jpa`; отдельный стартер для `R2DBC` не заводят.",
+              "text": "Подключают `spring-boot-starter-data-jpa`, задают `spring.datasource.*`, а Boot автоматически создаёт R2DBC `ConnectionFactory` поверх того же `DataSource` и JDBC-драйвера.",
               "correct": false,
               "sections": {
                 "what_actually": "Для `R2DBC` нужен стартер `spring-boot-starter-data-r2dbc` и схема URL `r2dbc:`, а `spring-boot-starter-data-jpa` поднимает блокирующий `JPA`-слой.",
@@ -83,7 +83,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Схема URL в `R2DBC` совпадает с `JDBC` и начинается с `jdbc:`, например `jdbc:postgresql://localhost:5432/db`; драйвер выбирается по этому префиксу.",
+              "text": "Используют JDBC URL вида `jdbc:postgresql://...`; R2DBC provider распознаёт его по драйверу и заменяет blocking connection на reactive proxy при старте.",
               "correct": false,
               "sections": {
                 "what_actually": "URL `R2DBC` начинается с `r2dbc:` (`r2dbc:postgresql://...`); префикс `jdbc:` относится к блокирующим драйверам.",
@@ -95,7 +95,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Пул `R2DBC` конфигурируют свойствами `spring.datasource.hikari.*`, поскольку соединения обслуживает адаптированный под реактивность `HikariCP`.",
+              "text": "Пул настраивается через `spring.datasource.hikari.*`, поскольку `HikariDataSource` является стандартной реализацией `ConnectionFactory` и работает с publishers.",
               "correct": false,
               "sections": {
                 "what_actually": "`R2DBC` использует свой `ConnectionPool` из `r2dbc-pool` с параметрами `pool.initial-size`/`pool.max-size`, а не `HikariCP`.",
@@ -107,14 +107,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Подключают стартер `spring-boot-starter-data-r2dbc` и драйвер (`r2dbc-postgresql`), задают `spring.r2dbc.url`, `username`/`password` и параметры пула.",
+              "text": "Подключите starter и R2DBC driver, задайте `spring.r2dbc.url`; pooling и vendor options настраиваются через `spring.r2dbc.*` или `ConnectionFactory`.",
               "correct": true,
               "sections": {
-                "explanation": "Базовая настройка декларативна: стартер даёт auto-configuration, а драйвер реализует протокол конкретной СУБД. URL начинается с `r2dbc:`, а не `jdbc:`, что и переключает Spring на реактивный доступ.",
-                "example": "В `application.yml` пишут `spring.r2dbc.url: r2dbc:postgresql://localhost:5432/mydb` с `pool.initial-size: 5` и `pool.max-size: 20`; для тонкого контроля объявляют `@Bean ConnectionFactory` через `ConnectionFactories.get(...)`.",
-                "when_to_apply": "Декларативной настройки через `application.yml` достаточно для большинства приложений; ручной `@Bean ConnectionFactory` нужен для нестандартных опций драйвера и пула.",
-                "edge_cases": "URL `r2dbc:` и `jdbc:` несовместимы: если оставить `jdbc:`-схему в `spring.r2dbc.url`, драйвер `R2DBC` не подхватится и контекст не поднимется.",
-                "related": "[[spring-r2dbc-interview#Q7]] настройка `Connection Pool`; [[spring-r2dbc-interview#Q1]] отличия от `JDBC`; [[spring-r2dbc-interview#Q3]] реактивный репозиторий."
+                "explanation": "Spring Boot создаёт `ConnectionFactory` через R2DBC discovery по URL и драйверам classpath. `DataSource` и driver-class-name для этого не требуются, а параметры URL имеют приоритет над отдельными properties.",
+                "example": "Для PostgreSQL достаточно starter, `org.postgresql:r2dbc-postgresql` и `spring.r2dbc.url=r2dbc:postgresql://db/orders`; при наличии `r2dbc-pool` URL или pool-properties включают connection pooling.",
+                "when_to_apply": "Оставляйте конфигурацию Boot, пока нужны стандартные параметры. Собственный `ConnectionFactory` или options customizer вводите для SSL, session variables, failover и нестандартных vendor options.",
+                "edge_cases": "Flyway и Liquibase используют JDBC, поэтому для миграций может понадобиться отдельный JDBC driver/DataSource или отдельный migration job. Наличие R2DBC не создаёт JDBC datasource автоматически.",
+                "related": "[[spring-r2dbc-interview#Q7]] параметры пула; [[spring-r2dbc-interview#Q14]] миграции; [[spring-r2dbc-interview#Q15]] интеграция с WebFlux."
               }
             }
           ]
@@ -131,7 +131,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Реактивный репозиторий наследует `JpaRepository<T, ID>`, а его методы оборачивают в `Mono.fromCallable`, чтобы выполнять на реактивном `Scheduler`.",
+              "text": "Repository наследует `JpaRepository`, а Spring оборачивает его blocking methods в `Mono.fromCallable` и автоматически выбирает bounded-elastic scheduler для каждого вызова.",
               "correct": false,
               "sections": {
                 "what_actually": "Для `R2DBC` базовый интерфейс — `ReactiveCrudRepository`, а `JpaRepository` принадлежит блокирующему `JPA` и возвращает синхронные типы.",
@@ -143,7 +143,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Методы репозитория возвращают `List<Order>`/`Optional<Order>`, а Spring переносит их выполнение на внутренний `Scheduler`, делая вызовы неблокирующими.",
+              "text": "Repository расширяет reactive contract и возвращает `Mono`/`Flux`; relational entities описываются mapping metadata и annotations `@Table`, `@Id`.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring Data R2DBC строит repository proxy, который выполняет SQL через reactive infrastructure и возвращает Publisher. Blocking wrappers не используются, поэтому контракт метода должен сохранять реактивную семантику.",
+                "example": "`interface OrderRepository extends ReactiveCrudRepository<Order, UUID> { Flux<Order> findByCustomerId(UUID id); @Query(\"select count(*) from orders\") Mono<Long> countAll(); }`.",
+                "when_to_apply": "Используйте repository для стандартного aggregate CRUD и устойчивых query methods. Сложные динамические запросы лучше выражать через `R2dbcEntityTemplate` или `DatabaseClient`.",
+                "edge_cases": "Возврат `Mono<List<T>>` допустим только когда намеренно материализуется вся выборка; обычно `Flux<T>` лучше сохраняет streaming/backpressure. Нельзя вызывать `.block()` в event-loop обработчике.",
+                "related": "[[spring-r2dbc-interview#Q4]] template API; [[spring-r2dbc-interview#Q11]] raw SQL; [[spring-r2dbc-interview#Q15]] reactive controller contracts."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "Методы возвращают `List`, `Page` и `Optional`; repository proxy собирает reactive result целиком, после чего публикует готовое значение без блокировки caller thread.",
               "correct": false,
               "sections": {
                 "what_actually": "Реактивные методы возвращают `Flux<Order>` и `Mono<Order>`; `List`/`Optional` синхронны и блокируют поток при материализации.",
@@ -153,22 +166,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Объявляют интерфейс-наследник `ReactiveCrudRepository<T, ID>`: производные методы генерируют SQL, сложное задают через `@Query`, типы реактивные (`Flux`/`Mono`).",
-              "correct": true,
-              "sections": {
-                "explanation": "`ReactiveCrudRepository` — реактивный аналог `CrudRepository`: Spring Data сам реализует методы и парсит имена в SQL. Все результаты неблокирующие, поэтому возвращаются `Mono`/`Flux`, которые подписчик потребляет лениво.",
-                "example": "`public interface OrderRepository extends ReactiveCrudRepository<Order, Long> { Flux<Order> findByCustomerId(String customerId); }` — Spring сгенерирует `SELECT ... WHERE customer_id = ?` и вернёт поток заказов.",
-                "when_to_apply": "Используют для стандартных CRUD и простых выборок по полям; именованные методы и `@Query` покрывают большинство повседневных запросов без ручного SQL.",
-                "edge_cases": "Возврат `List`/`Optional` из реактивного репозитория недопустим — он заблокирует поток; в `R2DBC` все методы должны отдавать `Mono`/`Flux`.",
-                "related": "[[spring-r2dbc-interview#Q4]] `R2dbcEntityTemplate` для сложных запросов; [[spring-r2dbc-interview#Q1]] реактивные типы `Mono`/`Flux`; [[spring-r2dbc-interview#Q11]] `DatabaseClient` для raw SQL."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "В `R2DBC` производные методы требуют явного `@Query` с SQL: запрос по имени метода не выводится, поэтому такие методы сопровождают `@Query(nativeQuery)`.",
+              "text": "Каждый метод обязан иметь `@Query` с vendor SQL, поскольку derived query parser и базовые `save`/`findById` недоступны для reactive repositories.",
               "correct": false,
               "sections": {
                 "what_actually": "`R2DBC` поддерживает derived query methods — Spring Data парсит имена вроде `findByStatus` в SQL без `@Query`.",
@@ -191,20 +191,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`R2dbcEntityTemplate` — fluent-API поверх `Criteria` (`select`/`update`/`delete` с `query(where(...))`) для запросов, не выразимых именованными методами.",
-              "correct": true,
+              "text": "Template синхронно возвращает entity и коллекции, а reactive adapter добавляется контроллером; поэтому внутри WebFlux его всегда нужно оборачивать в `Mono.fromCallable`.",
+              "correct": false,
               "sections": {
-                "explanation": "`R2dbcEntityTemplate` занимает промежуточный уровень: репозиторий — для стандартного CRUD, `R2dbcEntityTemplate` — для сложной фильтрации и частичных апдейтов через `Criteria`, `DatabaseClient` — для полностью ручного SQL.",
-                "example": "`template.select(Order.class).matching(query(where(\"total\").greaterThan(threshold).and(\"status\").is(CONFIRMED))).all()` собирает условный `SELECT` без написания SQL-строки руками.",
-                "when_to_apply": "Применяют, когда нужны динамические условия, частичные обновления (`update(\"status\", ...)`) или удаление по предикату, а именованный метод репозитория получился бы слишком громоздким.",
-                "edge_cases": "`R2dbcEntityTemplate` оперирует `Criteria` и не покрывает произвольный SQL с оконными функциями или сложными join — для них берут `DatabaseClient` с raw-запросом.",
-                "related": "[[spring-r2dbc-interview#Q3]] репозиторий для CRUD; [[spring-r2dbc-interview#Q11]] `DatabaseClient` для raw SQL; [[spring-r2dbc-interview#Q6]] ручные join при N+1."
+                "what_actually": "`R2dbcEntityTemplate` полностью реактивен: его методы `select/update/delete` возвращают `Mono`/`Flux` и отлично работают в `WebFlux`.",
+                "source_of_confusion": "Шаблоны вроде `JdbcTemplate` действительно синхронны, и это переносят на реактивный `R2dbcEntityTemplate`.",
+                "if_it_were_true": "Тогда его вызов блокировал бы event loop `WebFlux`, и фреймворк не предлагал бы его как часть реактивного стека.",
+                "how_it_should_be": "`R2dbcEntityTemplate` неблокирующий и возвращает реактивные типы, в отличие от синхронного `JdbcTemplate`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "`R2dbcEntityTemplate` покрывает операции над схемой — создание таблиц, индексов и представлений; данные читают и меняют через репозиторий или `DatabaseClient`.",
+              "text": "Template предназначен исключительно для DDL и schema initialization; чтение и DML доступны только через repository interfaces или низкоуровневый R2DBC `Connection`.",
               "correct": false,
               "sections": {
                 "what_actually": "`R2dbcEntityTemplate` предназначен для DML: `select`, `insert`, `update`, `delete` сущностей через `Criteria`, а не для управления схемой.",
@@ -216,19 +215,20 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`R2dbcEntityTemplate` выполняет запросы синхронно и отдаёт готовые объекты, поэтому в `WebFlux`-цепочку его оборачивают через `Mono.fromCallable`.",
-              "correct": false,
+              "text": "`R2dbcEntityTemplate` даёт mapping-aware fluent `select`/`insert`/`update`/`delete` с entity conversion и callbacks между repositories и низкоуровневым `DatabaseClient`.",
+              "correct": true,
               "sections": {
-                "what_actually": "`R2dbcEntityTemplate` полностью реактивен: его методы `select/update/delete` возвращают `Mono`/`Flux` и отлично работают в `WebFlux`.",
-                "source_of_confusion": "Шаблоны вроде `JdbcTemplate` действительно синхронны, и это переносят на реактивный `R2dbcEntityTemplate`.",
-                "if_it_were_true": "Тогда его вызов блокировал бы event loop `WebFlux`, и фреймворк не предлагал бы его как часть реактивного стека.",
-                "how_it_should_be": "`R2dbcEntityTemplate` неблокирующий и возвращает реактивные типы, в отличие от синхронного `JdbcTemplate`."
+                "explanation": "Template использует relational converter и dialect, поэтому умеет маппить entities и строить criteria-based операции, но не поддерживает ORM session, lazy loading или identity map.",
+                "example": "`template.select(Order.class).matching(query(where(\"status\").is(PAID)).limit(100)).all()` возвращает `Flux<Order>`; `template.update(Order.class).matching(...).apply(update(...))` возвращает update count.",
+                "when_to_apply": "Выбирайте template для динамических criteria, partial updates и custom repository implementations, когда method-name query неудобен, а ручное row mapping ещё не требуется.",
+                "edge_cases": "Criteria API покрывает не весь vendor SQL. Для CTE, window functions, сложных joins и нестандартных result shapes обычно удобнее `DatabaseClient` с явным mapping.",
+                "related": "[[spring-r2dbc-interview#Q3]] repositories; [[spring-r2dbc-interview#Q11]] `DatabaseClient`; [[spring-r2dbc-interview#Q12]] converters."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`R2dbcEntityTemplate` удерживает загруженные сущности между запросами, играя роль кэша первого уровня по аналогии с `Hibernate Session`.",
+              "text": "`R2dbcEntityTemplate` — persistence context и second-level cache: повторный запрос по ID возвращает сохранённый объект, пока приложение не очистит template.",
               "correct": false,
               "sections": {
                 "what_actually": "`R2dbcEntityTemplate` — это fluent-API для построения и выполнения запросов, в `R2DBC` нет кэша уровня сессии, как в Hibernate.",
@@ -251,7 +251,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `R2DBC` `@Transactional` не действует на реактивные методы, поэтому транзакцией управляют вручную через `connection.beginTransaction()`.",
+              "text": "Spring transaction abstraction не поддерживает R2DBC; приложение обязано вручную получить `Connection`, вызвать `beginTransaction`, а затем самостоятельно выполнить commit или rollback.",
               "correct": false,
               "sections": {
                 "what_actually": "`@Transactional` полностью работает в `R2DBC` через `R2dbcTransactionManager`; ручное управление соединением — лишь крайний низкоуровневый вариант.",
@@ -263,7 +263,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Реактивная транзакция откатывается при синхронном `throw` в операторе; сигнал `Mono.error(...)` до `TransactionalOperator` не доходит и rollback не запускает.",
+              "text": "Rollback выполняется только для синхронно выброшенного исключения; сигнал `onError` считается обычным reactive result и после него transaction manager фиксирует изменения.",
               "correct": false,
               "sections": {
                 "what_actually": "В реактивном стеке rollback срабатывает именно на ошибочный сигнал (`onError`/`Mono.error`), так как ошибки распространяются по цепочке, а не через `throw`.",
@@ -275,7 +275,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Контекст реактивной транзакции хранится в `ThreadLocal`, как в `JDBC`, поэтому всю цепочку выполняют на одном потоке через `publishOn`.",
+              "text": "Transaction state хранится в `ThreadLocal`, поэтому `publishOn` и смена worker thread всегда разрывают транзакцию; все операторы должны выполняться на одном scheduler.",
               "correct": false,
               "sections": {
                 "what_actually": "В реактивном стеке контекст транзакции живёт в `Reactor Context`, а не в `ThreadLocal`, потому что поток может меняться между операторами.",
@@ -287,14 +287,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Контекст транзакции живёт в `Reactor Context`, а не в `ThreadLocal`; `@Transactional` работает через AOP поверх `R2dbcTransactionManager`.",
+              "text": "Reactive transaction manager связывает connection с subscriber context; `@Transactional` или `TransactionalOperator` охватывает одну subscription chain и rolls back при terminal error.",
               "correct": true,
               "sections": {
-                "explanation": "В блокирующем стеке транзакция живёт в `ThreadLocal`, но в реактивном поток может меняться, поэтому Spring переносит контекст в `Reactor Context`. Откат происходит, когда цепочка завершается ошибочным сигналом.",
-                "example": "Метод с `@Transactional`, возвращающий `Mono<Order>` (save + reserve), при `Mono.error(...)` внутри цепочки автоматически откатит обе записи; альтернатива — `.as(transactionalOperator::transactional)`.",
-                "when_to_apply": "Декларативный `@Transactional` подходит для большинства сервисных методов; `TransactionalOperator` берут для программного контроля границ транзакции внутри реактивной цепочки.",
-                "edge_cases": "Транзакция распространяется только по реактивной цепочке через `Reactor Context`: если уйти в блокирующий `JDBC`-вызов или потерять контекст, транзакция к нему не применится.",
-                "related": "[[spring-r2dbc-interview#Q1]] почему контекст не в `ThreadLocal`; [[spring-r2dbc-interview#Q10]] обработка ошибок и rollback; [[spring-r2dbc-interview#Q15]] транзакции в `WebFlux`-сервисе."
+                "explanation": "Reactive transaction context распространяется через Reactor Context, а не через текущий Java thread. Все database operations должны выполняться внутри возвращаемого publisher и использовать совместимый `ConnectionFactory`.",
+                "example": "`operator.transactional(orderRepository.save(order).then(outboxRepository.save(event)))` выполняет обе операции в одной транзакции; `Mono.error(...)` до успешного завершения инициирует rollback.",
+                "when_to_apply": "Используйте declarative boundary на методе, который возвращает `Mono`/`Flux`, или `TransactionalOperator` для точного ограничения части цепочки и функциональной композиции.",
+                "edge_cases": "Работа, выполненная до создания publisher или в отдельной независимой подписке, не входит в транзакцию. Cancellation и nested propagation зависят от manager semantics; side effects после commit нужно моделировать отдельно.",
+                "related": "[[spring-r2dbc-interview#Q1]] reactive SPI; [[spring-r2dbc-interview#Q10]] error signals; [[spring-transaction-interview#Q10]] reactive transaction context."
               }
             }
           ]
@@ -311,19 +311,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "В `R2DBC` `flatMap`-подзапросы выполняются конкурентно, поэтому N+1 проявляется ростом задержки, а число запросов к БД драйвер сводит к одному.",
-              "correct": false,
+              "text": "ORM lazy loading отсутствует, но N+1 возникает при запросе children для каждого parent; используйте join/projection или batch load по IDs.",
+              "correct": true,
               "sections": {
-                "what_actually": "Параллельность `flatMap` не объединяет запросы — это по-прежнему N отдельных обращений к БД, просто конкурентных, то есть N+1 остаётся.",
-                "source_of_confusion": "Конкурентность `flatMap` создаёт иллюзию, что много мелких запросов «бесплатны» и не считаются N+1.",
-                "if_it_were_true": "Тогда любой набор реактивных запросов автоматически батчился бы драйвером, но он шлёт их по отдельности.",
-                "how_it_should_be": "N+1 в `R2DBC` реален; его убирают `JOIN`-ом или batch-запросом, а не надеждой на параллелизм."
+                "explanation": "Reactive execution меняет способ ожидания I/O, но не количество SQL round trips. `flatMap(parent -> childRepo.findByParentId(...))` по-прежнему создаёт отдельную command для каждого parent.",
+                "example": "Сначала получите `Flux<Order>`, соберите ограниченную страницу ID, затем одним `findByOrderIdIn(ids)` загрузите позиции и сгруппируйте их. Альтернатива — SQL join в read projection.",
+                "when_to_apply": "Проверяйте SQL и query count для list endpoints. Выбирайте join, batching или denormalized read model исходя из размера страницы и требуемой формы результата.",
+                "edge_cases": "Join может дублировать parent rows и увеличивать payload; сбор ID материализует страницу в память. Неконтролируемый concurrent `flatMap` маскирует latency, но повышает нагрузку и не решает N+1.",
+                "related": "[[spring-r2dbc-interview#Q4]] template queries; [[spring-r2dbc-interview#Q11]] complex SQL; [[hibernate-interview#Q8]] N+1 в ORM."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "N+1 закрывают ленивой загрузкой: аннотация `@OneToMany(fetch = LAZY)` на поле сущности заставляет `R2DBC` подтягивать детей при обращении.",
+              "text": "Для отношений включают JPA lazy proxy через `@OneToMany(fetch = LAZY)`; дочерний `Flux` выполняется при обращении к property и использует текущий reactive transaction.",
               "correct": false,
               "sections": {
                 "what_actually": "`R2DBC` не поддерживает `@OneToMany` и lazy loading — нет прокси сущностей; связи всегда загружают явным запросом.",
@@ -335,20 +336,19 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`R2DBC` не умеет lazy loading, поэтому загрузка связей через `flatMap` даёт N+1; решают `@Query` с `JOIN` либо batch-запросом `findByOrderIdIn(ids)`.",
-              "correct": true,
+              "text": "N+1 отсутствует, поскольку параллельные `flatMap` автоматически объединяются драйвером в один prepared statement и одна подписка всегда соответствует одному round trip.",
+              "correct": false,
               "sections": {
-                "explanation": "N+1 возникает, когда на каждую из N родительских записей делается отдельный запрос за детьми. Без lazy-прокси `R2DBC` не скроет это автоматически — связи грузят явно одним `JOIN` или одним batch-запросом по списку id.",
-                "example": "Вместо `findByCustomerId(...).flatMap(o -> itemRepo.findByOrderId(o.id())...)` пишут `@Query(... LEFT JOIN order_items ...)` либо собирают `ids` и зовут `itemRepository.findByOrderIdIn(ids).collectMultimap(...)`.",
-                "when_to_apply": "Оптимизируют, когда на странице/в ответе много родителей с детьми и наивный код порождает десятки запросов; `JOIN` или batch сводят их к одному-двум.",
-                "edge_cases": "`JOIN` денормализует строки (родитель дублируется на каждого ребёнка) — результат нужно вручную свернуть в объект с коллекцией, маппер сам этого не сделает.",
-                "related": "[[spring-r2dbc-interview#Q3]] методы вроде `findByOrderIdIn`; [[spring-r2dbc-interview#Q11]] `DatabaseClient` для сложного `JOIN`; [[spring-r2dbc-interview#Q9]] почему нет lazy loading как в `JPA`."
+                "what_actually": "Параллельность `flatMap` не объединяет запросы — это по-прежнему N отдельных обращений к БД, просто конкурентных, то есть N+1 остаётся.",
+                "source_of_confusion": "Конкурентность `flatMap` создаёт иллюзию, что много мелких запросов «бесплатны» и не считаются N+1.",
+                "if_it_were_true": "Тогда любой набор реактивных запросов автоматически батчился бы драйвером, но он шлёт их по отдельности.",
+                "how_it_should_be": "N+1 в `R2DBC` реален; его убирают `JOIN`-ом или batch-запросом, а не надеждой на параллелизм."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "N+1 в `R2DBC` устраняют кэшем второго уровня: он удерживает детей после первой выборки и на следующих итерациях в БД не обращается.",
+              "text": "N+1 устраняет second-level cache Spring Data R2DBC: первый child query сохраняет результат, а последующие родители получают связанные строки без обращения к базе.",
               "correct": false,
               "sections": {
                 "what_actually": "В `R2DBC` нет кэша второго уровня; N+1 устраняют сокращением числа запросов через `JOIN` или batch, а не кэшированием.",
@@ -371,20 +371,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Используют `ConnectionPool` из `r2dbc-pool` поверх базового `ConnectionFactory` (`ConnectionPoolConfiguration.builder`); опции — через `spring.r2dbc.pool.*`.",
-              "correct": true,
+              "text": "Используется `HikariDataSource`, адаптированный в `ConnectionFactory`; JDBC pool выполняет blocking acquisition на bounded-elastic scheduler и возвращает connection в `Mono`.",
+              "correct": false,
               "sections": {
-                "explanation": "Пул переиспользует соединения, чтобы не открывать их на каждый запрос. Ключевые параметры ограничивают размер пула и время жизни/ожидания соединений, защищая БД от перегрузки и зависаний.",
-                "example": "`ConnectionPoolConfiguration.builder(pgFactory).initialSize(5).maxSize(20).maxIdleTime(Duration.ofMinutes(30)).maxAcquireTime(Duration.ofSeconds(5)).validationQuery(\"SELECT 1\").build()` создаёт пул на 5..20 соединений.",
-                "when_to_apply": "Пул настраивают всегда в продакшене: подбирают `maxSize` под нагрузку и лимиты БД, а `maxAcquireTime` — чтобы запросы не висели бесконечно при исчерпании пула.",
-                "edge_cases": "Слишком большой `maxSize` упрётся в лимит соединений `PostgreSQL` (`max_connections`); при исчерпании пула новые запросы ждут до `maxAcquireTime`, после чего падают с таймаутом.",
-                "related": "[[spring-r2dbc-interview#Q2]] базовая настройка через `application.yml`; [[spring-r2dbc-interview#Q1]] почему нет thread-per-connection; [[spring-r2dbc-interview#Q10]] таймауты и обработка ошибок пула."
+                "what_actually": "`R2DBC` использует `ConnectionPool` из библиотеки `r2dbc-pool`, а не `HikariCP`; `HikariCP` — блокирующий пул для `JDBC`-`DataSource`.",
+                "source_of_confusion": "`HikariCP` — дефолт в Spring Boot для `JDBC`, и его API механически переносят на реактивный стек.",
+                "if_it_were_true": "Тогда реактивный доступ опирался бы на блокирующий пул, что разрушило бы неблокирующую модель `R2DBC`.",
+                "how_it_should_be": "Пул `R2DBC` строят через `ConnectionPoolConfiguration`/`r2dbc-pool`, а `HikariCP` остаётся в `JDBC`-мире."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Реактивный драйвер мультиплексирует запросы поверх одного физического соединения, поэтому пул обычно ограничивают одним-двумя коннектами.",
+              "text": "Pooling не нужен: одно R2DBC-соединение безопасно multiplex-ит неограниченное число concurrent statements, поэтому приложение всегда создаёт ровно один connection.",
               "correct": false,
               "sections": {
                 "what_actually": "Пул в `R2DBC` есть и важен (`r2dbc-pool`): одно соединение не может параллельно выполнять несколько независимых запросов, нужен набор соединений.",
@@ -396,7 +395,7 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Параметр `maxAcquireTime` задаёт, сколько соединение может простаивать в пуле перед закрытием, а `maxIdleTime` — таймаут ожидания свободного соединения.",
+              "text": "`maxAcquireTime` определяет срок простоя connection, а `maxIdleTime` — ожидание свободного slot; перестановка параметров нужна из-за reactive backpressure.",
               "correct": false,
               "sections": {
                 "what_actually": "Параметры перепутаны: `maxIdleTime` — время простоя до закрытия, `maxAcquireTime` — максимум ожидания свободного соединения из пула.",
@@ -408,13 +407,14 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Пул `R2DBC` настраивают через `HikariConfig`/`HikariDataSource`: `HikariCP` адаптирован к реактивному `ConnectionFactory` обёрткой над драйвером.",
-              "correct": false,
+              "text": "`r2dbc-pool` оборачивает `ConnectionFactory`; Boot properties настраивают pool size, acquisition timeout, idle/lifetime, validation и connection lifecycle limits.",
+              "correct": true,
               "sections": {
-                "what_actually": "`R2DBC` использует `ConnectionPool` из библиотеки `r2dbc-pool`, а не `HikariCP`; `HikariCP` — блокирующий пул для `JDBC`-`DataSource`.",
-                "source_of_confusion": "`HikariCP` — дефолт в Spring Boot для `JDBC`, и его API механически переносят на реактивный стек.",
-                "if_it_were_true": "Тогда реактивный доступ опирался бы на блокирующий пул, что разрушило бы неблокирующую модель `R2DBC`.",
-                "how_it_should_be": "Пул `R2DBC` строят через `ConnectionPoolConfiguration`/`r2dbc-pool`, а `HikariCP` остаётся в `JDBC`-мире."
+                "explanation": "Неблокирующий protocol не отменяет стоимость соединений и лимиты сервера. Pool выдаёт отдельные logical connections publishers и применяет backpressure/timeout, когда `maxSize` исчерпан.",
+                "example": "Для API можно задать `spring.r2dbc.pool.initial-size=5`, `max-size=30`, `max-acquire-time=2s` и `max-idle-time=30m`, затем наблюдать pending acquisitions и database connection count.",
+                "when_to_apply": "Размер пула согласуйте с лимитом БД, concurrency запросов и временем query. Acquisition timeout должен завершать перегрузку контролируемой ошибкой, а не бесконечным ожиданием.",
+                "edge_cases": "Названия и поддержка options зависят от версии `r2dbc-pool` и Boot. Validation query создаёт дополнительную нагрузку; иногда достаточно local validation depth, если driver её поддерживает.",
+                "related": "[[spring-r2dbc-interview#Q2]] Boot configuration; [[spring-r2dbc-interview#Q5]] connection в транзакции; [[performance-testing-interview#Q4]] измерение saturation."
               }
             }
           ]
@@ -431,20 +431,19 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Для слайс-тестов берут `@DataR2dbcTest` и проверяют потоки через `StepVerifier`; для интеграции — `@SpringBootTest` с `@Testcontainers` и реальной БД.",
-              "correct": true,
+              "text": "Единственный корректный способ — `.block()` в каждом тесте; StepVerifier предназначен только для Reactor operators и не может проверять repository publishers.",
+              "correct": false,
               "sections": {
-                "explanation": "`@DataR2dbcTest` изолирует слой доступа к данным, ускоряя тест. `StepVerifier` — стандартный способ проверять `Mono`/`Flux`: он подписывается, сверяет элементы и завершение. Testcontainers даёт настоящую СУБД для интеграции.",
-                "example": "`StepVerifier.create(repository.save(order).flatMap(s -> repository.findById(s.id()))).assertNext(found -> assertThat(found.customerId()).isEqualTo(\"customer-1\")).verifyComplete();`",
-                "when_to_apply": "Слайс `@DataR2dbcTest` — для быстрых тестов запросов и маппинга; полноценный `@SpringBootTest` + Testcontainers — когда нужно проверить поведение на реальной СУБД и миграциях.",
-                "edge_cases": "Нельзя проверять реактивный поток через `.block()` и обычные ассерты — это скрывает ошибки timing и backpressure; для потоков используют `StepVerifier`.",
-                "related": "[[spring-r2dbc-interview#Q3]] репозитории, которые тестируют; [[spring-r2dbc-interview#Q14]] миграции для тестовой схемы; [[spring-r2dbc-interview#Q5]] проверка транзакционного поведения."
+                "what_actually": "Каноничный способ — `StepVerifier`, который подписывается на поток и проверяет сигналы; `.block()` скрывает ошибки timing и backpressure.",
+                "source_of_confusion": "`.block()` даёт привычный синхронный результат, и кажется, что обычных ассертов достаточно.",
+                "if_it_were_true": "Тогда нельзя было бы проверить порядок элементов, ошибочные сигналы и завершение потока, которые видит `StepVerifier`.",
+                "how_it_should_be": "Реактивные тесты пишут на `StepVerifier` (`assertNext`, `verifyComplete`), а не на блокирующий `.block()`."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Слайс `@DataJpaTest` поднимает и реактивные репозитории на встроенной `H2`, подключая их через общий с `JPA` контекст персистентности и `EntityManager`.",
+              "text": "`@DataJpaTest` автоматически переключается на R2DBC, если на classpath нет Hibernate; `TestEntityManager` при этом выполняет SQL через `ConnectionFactory`.",
               "correct": false,
               "sections": {
                 "what_actually": "Реактивный слой тестируют слайсом `@DataR2dbcTest`; `@DataJpaTest` поднимает блокирующий `JPA` `EntityManager`, а не `R2DBC`.",
@@ -456,25 +455,26 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Testcontainers для `R2DBC` не подходит: контейнер `PostgreSQL` публикует `JDBC`-порт, к которому реактивный клиент подключиться не может.",
+              "text": "Testcontainers не подходит, поскольку контейнер предоставляет TCP-порт только JDBC-клиентам; R2DBC требует отдельный server protocol и специальный образ базы.",
               "correct": false,
               "sections": {
                 "what_actually": "Testcontainers работает с `R2DBC`: контейнер открывает обычный порт БД, а URL прокидывают как `r2dbc:postgresql://...` через `@DynamicPropertySource`.",
                 "source_of_confusion": "Многие примеры Testcontainers показывают `jdbc:`-URL, и кажется, что `r2dbc:` не поддерживается.",
-                "if_it_were_true": "Тогда реактивные приложения нельзя было бы интеграционно тестировать на реальной БД, что неверно.",
+                "if_it_were_true": "R2DBC driver не мог бы подключиться к обычному PostgreSQL/MySQL container port, и integration tests потребовали бы отдельного server image или protocol endpoint.",
                 "how_it_should_be": "Тот же контейнер `PostgreSQL` обслуживает `R2DBC` — нужно лишь задать `spring.r2dbc.url` со схемой `r2dbc:`."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "Реактивные потоки в тестах разворачивают вызовом `.block()` на `Mono`/`Flux`, а полученное значение сверяют обычным `assertEquals`, как в синхронном тесте.",
-              "correct": false,
+              "text": "`@DataR2dbcTest` поднимает relational slice; publishers проверяют `StepVerifier`, а vendor behavior — Testcontainers с real R2DBC driver.",
+              "correct": true,
               "sections": {
-                "what_actually": "Каноничный способ — `StepVerifier`, который подписывается на поток и проверяет сигналы; `.block()` скрывает ошибки timing и backpressure.",
-                "source_of_confusion": "`.block()` даёт привычный синхронный результат, и кажется, что обычных ассертов достаточно.",
-                "if_it_were_true": "Тогда нельзя было бы проверить порядок элементов, ошибочные сигналы и завершение потока, которые видит `StepVerifier`.",
-                "how_it_should_be": "Реактивные тесты пишут на `StepVerifier` (`assertNext`, `verifyComplete`), а не на блокирующий `.block()`."
+                "explanation": "Slice test ограничивает context R2DBC infrastructure и repositories. `StepVerifier` проверяет values, completion и error signals, а контейнер гарантирует совпадение dialect/driver semantics с production.",
+                "example": "Тест сохраняет `Order`, затем `StepVerifier.create(repository.findById(id)).assertNext(order -> ...).verifyComplete()`. Connection properties контейнера передаются через service connection или dynamic properties.",
+                "when_to_apply": "Используйте slice для repository mapping и queries, full context — для transaction/web integration. Реальную СУБД выбирайте для JSON, arrays, locking и vendor SQL.",
+                "edge_cases": "Reactive tests не обязаны избегать `.block()` абсолютно, но StepVerifier лучше моделирует signals и cancellation. Не рассчитывайте на автоматический rollback теста, пока не подтверждены reactive transaction semantics конфигурации.",
+                "related": "[[junit-interview#Q3]] parameterized tests; [[reactive-testing-interview#Q1]] StepVerifier; [[testcontainers-interview#Q1]] database containers."
               }
             }
           ]
@@ -491,20 +491,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`R2DBC` берут для полностью реактивного (`WebFlux`) приложения с высоким I/O-concurrency; `JPA`/Hibernate — для сервлетного стека и сложного ORM.",
-              "correct": true,
-              "sections": {
-                "explanation": "Выбор определяется стеком и сложностью модели. `R2DBC` выигрывает под нагрузкой с большим числом одновременных соединений, но требует ручных join. `JPA` проще для богатых реляционных моделей, но блокирует поток.",
-                "example": "Высоконагруженный стриминговый API на `WebFlux`, отдающий заказы через `Flux`, — кандидат на `R2DBC`; классический CRUD-сервис на `Spring MVC` со сложными связями — на `JPA`.",
-                "when_to_apply": "`R2DBC` — если весь стек реактивный и узкое место в I/O-concurrency; `JPA` — если `Spring MVC` или нужны ORM-возможности (lazy, кэш, автоматический маппинг связей).",
-                "edge_cases": "Смешивать в одном `WebFlux`-потоке `R2DBC` и блокирующий `JPA` нельзя — блокирующий вызов остановит event loop и разрушит backpressure всего приложения.",
-                "related": "[[spring-r2dbc-interview#Q1]] неблокирующая модель `R2DBC`; [[spring-r2dbc-interview#Q6]] почему нет lazy loading; [[spring-r2dbc-interview#Q15]] запрет блокировок в `WebFlux`."
-              }
-            },
-            {
-              "order": 1,
-              "label": "B",
-              "text": "`R2DBC` воспроизводит модель Hibernate, включая ленивую загрузку связей и кэш второго уровня, поэтому маппинг сущностей переносится с минимальной правкой.",
+              "text": "R2DBC повторяет Hibernate mapping, persistence context и L2 cache, поэтому migration сводится к замене repository return types с entity на `Mono<Entity>`.",
               "correct": false,
               "sections": {
                 "what_actually": "У `R2DBC` нет ни кэша уровней, ни lazy loading — связи и кэширование делают вручную; переход с `JPA` требует переписывания маппингов.",
@@ -514,9 +501,22 @@
               }
             },
             {
+              "order": 1,
+              "label": "B",
+              "text": "R2DBC выбирают для end-to-end reactive I/O; JPA — для blocking stack, rich object graph, unit of work и зрелой ORM-семантики.",
+              "correct": true,
+              "sections": {
+                "explanation": "Reactive database access полезен при большом числе одновременно ожидающих I/O операций и сквозной non-blocking архитектуре. Он не заменяет ORM-функции и повышает сложность composition/debugging.",
+                "example": "Gateway с WebFlux, streaming responses и PostgreSQL R2DBC может обслуживать много waiting requests небольшим числом threads. Back-office CRUD на Spring MVC часто проще реализовать через JPA.",
+                "when_to_apply": "Сравнивайте под реальной нагрузкой и учитывайте командную экспертизу, driver maturity, transaction patterns, mapping complexity и observability. Не выбирайте R2DBC как локальную оптимизацию одного repository.",
+                "edge_cases": "Blocking library можно изолировать на выделенном scheduler, но это не превращает её в R2DBC и требует собственного capacity planning. В одном приложении допустимы два стека при чёткой изоляции use cases.",
+                "related": "[[spring-r2dbc-interview#Q1]] модель R2DBC; [[spring-r2dbc-interview#Q15]] WebFlux pipeline; [[spring-data-jdbc-interview#Q3]] выбор persistence technology."
+              }
+            },
+            {
               "order": 2,
               "label": "C",
-              "text": "`JPA`- и `R2DBC`-вызовы совмещают в одном `WebFlux`-обработчике: блокирующие обращения Spring выносит на пул `boundedElastic` через `subscribeOn`.",
+              "text": "JPA-вызов внутри WebFlux автоматически распознаётся как blocking и переносится Spring на worker pool; смешивание не требует scheduler boundary или отдельной архитектуры.",
               "correct": false,
               "sections": {
                 "what_actually": "Смешивать их в одном реактивном потоке нельзя: блокирующий `JPA`-вызов остановит event loop `WebFlux` и сломает backpressure.",
@@ -528,7 +528,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "`R2DBC` опережает `JPA` по пропускной способности за счёт неблокирующего I/O, поэтому его выбирают и для CRUD-приложений со сложным доменным маппингом.",
+              "text": "R2DBC всегда обеспечивает меньшую latency и больший throughput независимо от driver, SQL, pool и нагрузки, поэтому JPA не следует использовать в новых приложениях.",
               "correct": false,
               "sections": {
                 "what_actually": "`R2DBC` выигрывает при высоком I/O-concurrency, но для CRUD с небольшим числом потоков и сложных маппингов `JPA` нередко удобнее и не медленнее.",
@@ -551,7 +551,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Отсутствие записи обрабатывают `orElseThrow()` на результате `findById`, как с `Optional` в `JPA` — он поднимает исключение на пустом значении.",
+              "text": "Отсутствующий результат обрабатывают `orElseThrow()` непосредственно после `findById`; repository возвращает `Optional` внутри `Mono`, поэтому исключение возникает до подписки.",
               "correct": false,
               "sections": {
                 "what_actually": "`findById` возвращает `Mono`, у которого нет `orElseThrow`; пустой результат превращают в ошибку через `switchIfEmpty(Mono.error(...))`.",
@@ -563,7 +563,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "`retryWhen` в `R2DBC` повторяет цепочку на любом сбое, включая нарушение уникального ключа, поэтому тип исключения обычно не фильтруют.",
+              "text": "Empty и error — разные signals: применяйте `switchIfEmpty`, `onErrorMap`/`onErrorResume`, retry только для transient idempotent operations и domain mapping на boundary.",
+              "correct": true,
+              "sections": {
+                "explanation": "Reactive method обычно лишь собирает pipeline; database error приходит после subscription через `onError`. Пустой `Mono` не является ошибкой, поэтому 404-модель создают отдельно через `switchIfEmpty`.",
+                "example": "`repository.findById(id).switchIfEmpty(Mono.error(new NotFound(id))).onErrorMap(DataAccessException.class, StorageFailure::new)` сохраняет различие между отсутствием и техническим сбоем.",
+                "when_to_apply": "Классифицируйте ошибки на domain, transient и permanent. Retry добавляйте с лимитом/backoff только для operations, повтор которых не создаёт дубликаты или нарушенные side effects.",
+                "edge_cases": "Timeout, cancellation и pool acquisition failure также приходят как signals. Constraint violation обычно permanent; retry без фильтра увеличивает нагрузку и задерживает корректный ответ клиенту.",
+                "related": "[[spring-r2dbc-interview#Q5]] rollback on error; [[spring-retry-interview#Q4]] retry filtering; [[webflux-interview#Q8]] reactive exception handling."
+              }
+            },
+            {
+              "order": 2,
+              "label": "C",
+              "text": "`retryWhen` применяют ко всем ошибкам, включая constraints и invalid SQL; повтор гарантированно безопасен, поскольку R2DBC автоматически откатывает и дедуплицирует операции.",
               "correct": false,
               "sections": {
                 "what_actually": "Повторять стоит только транзиентные ошибки (`R2dbcTransientResourceException`); ретрай нарушения уникальности бессмыслен и лишь нагружает БД.",
@@ -573,22 +586,9 @@
               }
             },
             {
-              "order": 2,
-              "label": "C",
-              "text": "Ошибки ловят операторами: `switchIfEmpty(Mono.error(...))` для пустого результата, `retryWhen(...)` для повторов, `onErrorMap(...)` для перевода в доменные.",
-              "correct": true,
-              "sections": {
-                "explanation": "В реактивной цепочке ошибки распространяются как сигнал `onError`, поэтому их перехватывают операторами, а не `try/catch`. Транзиентные ошибки повторяют, нарушения целостности маппят в осмысленные доменные исключения.",
-                "example": "`orderRepository.save(order).retryWhen(Retry.backoff(3, Duration.ofMillis(100)).filter(e -> e instanceof R2dbcTransientResourceException)).onErrorMap(R2dbcDataIntegrityViolationException.class, e -> new DuplicateOrderException(order.id()))`.",
-                "when_to_apply": "`retryWhen` — для временных сбоев соединения; `onErrorMap` — чтобы не светить технические `R2dbc*Exception` наружу; `switchIfEmpty` — когда пустой `Mono` должен стать ошибкой «не найдено».",
-                "edge_cases": "Нельзя ловить реактивные ошибки обычным `try/catch` вокруг вызова — там вернётся `Mono`, ошибка придёт позже сигналом, и блок `catch` её не увидит.",
-                "related": "[[spring-r2dbc-interview#Q5]] rollback при ошибке транзакции; [[spring-r2dbc-interview#Q15]] обработка ошибок в `WebFlux`-контроллере; [[spring-r2dbc-interview#Q7]] таймауты при исчерпании пула."
-              }
-            },
-            {
               "order": 3,
               "label": "D",
-              "text": "Ошибки репозитория `R2DBC` перехватывают `try/catch` вокруг вызова, так как исключение возникает синхронно в момент обращения к методу.",
+              "text": "`try/catch` вокруг вызова repository перехватывает database exception, потому что SQL выполняется сразу при построении `Mono`, до возврата publisher вызывающему коду.",
               "correct": false,
               "sections": {
                 "what_actually": "Метод репозитория возвращает `Mono`/`Flux` сразу, а ошибка приходит позже как сигнал `onError` — `try/catch` вокруг вызова её не перехватит.",
@@ -611,19 +611,20 @@
             {
               "order": 0,
               "label": "A",
-              "text": "`DatabaseClient` маппит строки результата в сущности по аннотациям `@Table`/`@Column`, поэтому ручной `map((row, meta) -> ...)` при выборке не требуется.",
-              "correct": false,
+              "text": "`DatabaseClient` выполняет arbitrary SQL, bind-ит parameters и предоставляет mapping/fetch API для сложных projections, joins и direct DML.",
+              "correct": true,
               "sections": {
-                "what_actually": "При raw-запросе через `DatabaseClient` маппинг пишут вручную в `map((row, meta) -> ...)`; автоматический маппинг по `@Table` — это уровень репозитория и `R2dbcEntityTemplate`.",
-                "source_of_confusion": "Репозиторий действительно маппит строки в сущности автоматически, и это ожидают и от `DatabaseClient`.",
-                "if_it_were_true": "Тогда произвольный `SELECT` с агрегатами не во что было бы маппить автоматически, ведь это не сущность таблицы.",
-                "how_it_should_be": "Raw SQL через `DatabaseClient` требует ручного маппинга строки; авто-маппинг даёт репозиторий или `R2dbcEntityTemplate`."
+                "explanation": "Spring Framework `DatabaseClient` управляет acquisition/release connection, statement execution и exception translation. Mapping остаётся явным, если result shape не сводится к простому value или map.",
+                "example": "`client.sql(\"select status, count(*) c from orders group by status\").map((row, meta) -> new Stat(row.get(\"status\", String.class), row.get(\"c\", Long.class))).all()`.",
+                "when_to_apply": "Используйте для vendor SQL, CTE, window functions, bulk DML и custom result shapes. Повторяемый mapping выносите в функции или custom repository fragment.",
+                "edge_cases": "Parameter markers внутри R2DBC SPI vendor-specific, но `DatabaseClient` предоставляет named binding abstraction. Row действителен только внутри mapping callback; LOB resources требуют корректного consumption/discard.",
+                "related": "[[spring-r2dbc-interview#Q4]] template API; [[spring-r2dbc-interview#Q12]] converters; [[spring-r2dbc-interview#Q13]] statement batching."
               }
             },
             {
               "order": 1,
               "label": "B",
-              "text": "Параметры в `DatabaseClient` подставляют форматированием строки запроса перед выполнением; именованных `bind`-плейсхолдеров у клиента нет.",
+              "text": "SQL параметры вставляются string concatenation, поскольку SPI поддерживает только готовый statement; безопасного `bind` по имени или позиции в client API нет.",
               "correct": false,
               "sections": {
                 "what_actually": "`DatabaseClient` поддерживает безопасный `bind(\"name\", value)` для именованных параметров; конкатенация строк открыла бы SQL-инъекцию.",
@@ -635,20 +636,19 @@
             {
               "order": 2,
               "label": "C",
-              "text": "`DatabaseClient` — низкоуровневый клиент для произвольного SQL: `sql(...)`, `bind(...)` для параметров и `map((row, meta) -> ...)` для ручного маппинга строк.",
-              "correct": true,
+              "text": "`DatabaseClient` всегда выполняет entity mapping по `@Table` и `@Column`; `map` нужен только для stored procedure OUT parameters, но не для обычного `SELECT`.",
+              "correct": false,
               "sections": {
-                "explanation": "`DatabaseClient` даёт полный контроль над SQL без ORM-абстракций. Параметры биндят по имени (`:from`), а маппинг строки в DTO пишут руками через лямбду `(row, meta)`, что максимально гибко, но требует ручной работы.",
-                "example": "`client.sql(\"SELECT customer_id, SUM(total) AS total_amount FROM orders WHERE created_at BETWEEN :from AND :to GROUP BY customer_id\").bind(\"from\", from).bind(\"to\", to).map((row, meta) -> new OrderSummary(...)).all()`.",
-                "when_to_apply": "Берут для отчётов, агрегаций (`GROUP BY`, `SUM`), оконных функций и кастомных join, которые не ложатся ни на репозиторий, ни на `Criteria` `R2dbcEntityTemplate`.",
-                "edge_cases": "Маппинг строки полностью ручной — забытая колонка или неверный тип в `row.get(...)` выстрелит в рантайме, компилятор это не проверит; SQL также не валидируется до выполнения.",
-                "related": "[[spring-r2dbc-interview#Q4]] `R2dbcEntityTemplate` против raw SQL; [[spring-r2dbc-interview#Q13]] batch insert через `DatabaseClient`; [[spring-r2dbc-interview#Q6]] ручной `JOIN` против N+1."
+                "what_actually": "При raw-запросе через `DatabaseClient` маппинг пишут вручную в `map((row, meta) -> ...)`; автоматический маппинг по `@Table` — это уровень репозитория и `R2dbcEntityTemplate`.",
+                "source_of_confusion": "Репозиторий действительно маппит строки в сущности автоматически, и это ожидают и от `DatabaseClient`.",
+                "if_it_were_true": "Тогда произвольный `SELECT` с агрегатами не во что было бы маппить автоматически, ведь это не сущность таблицы.",
+                "how_it_should_be": "Raw SQL через `DatabaseClient` требует ручного маппинга строки; авто-маппинг даёт репозиторий или `R2dbcEntityTemplate`."
               }
             },
             {
               "order": 3,
               "label": "D",
-              "text": "`DatabaseClient` рассчитан на вызов хранимых процедур и функций БД; произвольные `SELECT`/`INSERT` выполняют через `R2dbcEntityTemplate` или репозиторий.",
+              "text": "Client предназначен только для вызова stored procedures и transaction commands; обычные select/insert/update должны проходить через `R2dbcEntityTemplate`.",
               "correct": false,
               "sections": {
                 "what_actually": "`DatabaseClient.sql(\"...\")` выполняет любой SQL: `SELECT`, `INSERT`, `UPDATE`, `DELETE`, а вызов процедур — лишь частный случай.",
@@ -671,7 +671,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Конвертеры `R2DBC` подхватываются контейнером при пометке `@Component` или `@ReadingConverter`, поэтому регистрировать их в конфигурации не требуется.",
+              "text": "Любой Spring `@Component` с интерфейсом `Converter` автоматически включается в relational mapping; отдельная регистрация не нужна и направление определяется generic-параметрами.",
               "correct": false,
               "sections": {
                 "what_actually": "Конвертеры регистрируют явно в `AbstractR2dbcConfiguration#getCustomConverters()`; одной `@Component`-аннотации недостаточно для их применения маппером.",
@@ -683,20 +683,20 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Пишут `Converter` с `@WritingConverter` и `@ReadingConverter`, регистрируя их в `AbstractR2dbcConfiguration#getCustomConverters()` — так хранят enum строкой.",
+              "text": "Read/write converters преобразуют domain и native database types; при неоднозначности их помечают `@ReadingConverter` или `@WritingConverter` и регистрируют.",
               "correct": true,
               "sections": {
-                "explanation": "Конвертеры расширяют систему маппинга `R2DBC`: один отвечает за запись (`@WritingConverter`), другой за чтение (`@ReadingConverter`). Регистрация в `getCustomConverters()` делает их видимыми для конвертационной службы маппера.",
-                "example": "`@WritingConverter class OrderStatusWriteConverter implements Converter<OrderStatus, String>` возвращает `source.name()`, а парный `@ReadingConverter` делает `OrderStatus.valueOf(source)`; оба добавляют в `getCustomConverters()`.",
-                "when_to_apply": "Применяют для enum как строки, кастомных value-объектов, JSON-колонок и нестандартных типов, которые драйвер не маппит из коробки нужным образом.",
-                "edge_cases": "Нужны оба направления: только `@WritingConverter` запишет строку, но чтение упадёт без парного `@ReadingConverter`, и наоборот; забыть регистрацию — конвертер просто не применится.",
-                "related": "[[spring-r2dbc-interview#Q2]] кастомная конфигурация `R2DBC`; [[spring-r2dbc-interview#Q3]] маппинг полей сущности; [[spring-r2dbc-interview#Q11]] ручной маппинг через `DatabaseClient`."
+                "explanation": "Mapping converter должен понимать, какая сторона является native database type. Direction annotations устраняют неоднозначность, а registration через `R2dbcCustomConversions` делает converters частью конкретного mapping context.",
+                "example": "`@WritingConverter Converter<Email, String>` записывает value object, а `@ReadingConverter Converter<String, Email>` восстанавливает его. Оба converter добавляются в конфигурацию custom conversions.",
+                "when_to_apply": "Используйте для value objects, vendor types, enum policy, JSON wrappers и legacy columns. Для type, который driver уже умеет кодировать нативно, converter может быть лишним.",
+                "edge_cases": "Глобальный converter применяется ко всем matching properties и может неожиданно изменить mapping. Проверяйте null handling и не выполняйте blocking I/O внутри converter.",
+                "related": "[[spring-r2dbc-interview#Q4]] entity mapping; [[spring-r2dbc-interview#Q11]] ручной row mapping; [[spring-data-jdbc-interview#Q9]] relational annotations."
               }
             },
             {
               "order": 2,
               "label": "C",
-              "text": "Перечисления `R2DBC` по умолчанию сохраняет строкой через `name()`, поэтому `@WritingConverter` для них подключают лишь при нестандартном представлении.",
+              "text": "Enum всегда сохраняется как имя константы независимо от driver и target column; custom converter для enum считается конфликтом с встроенным mapping и игнорируется.",
               "correct": false,
               "sections": {
                 "what_actually": "По умолчанию enum часто маппится по ordinal/индексу либо зависит от драйвера; чтобы гарантированно хранить имя, пишут конвертер с `name()`/`valueOf()`.",
@@ -708,7 +708,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Custom converter в `R2DBC` реализуют одним классом с методами `read()` и `write()` для обоих направлений; отдельные аннотации преобразования ему не нужны.",
+              "text": "Один converter обязан реализовать методы `read` и `write` одновременно; отдельные Spring `Converter<S,T>` для направлений приводят к циклической регистрации.",
               "correct": false,
               "sections": {
                 "what_actually": "В `R2DBC` направления разделены на два конвертера: `@WritingConverter` и `@ReadingConverter`, каждый реализует `Converter` для своего направления.",
@@ -726,12 +726,12 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Как выполнить batch insert в `Spring Data R2DBC`?",
+          "question_text": "Как реализовать настоящий batch insert через R2DBC?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "`repository.saveAll(list)` в `R2DBC` собирает все переданные записи в один `INSERT` с несколькими группами `VALUES` и отправляет его за один проход.",
+              "text": "`ReactiveCrudRepository.saveAll` гарантирует один multi-values `INSERT` для любого driver; publisher только разбивает возвращённые generated IDs на отдельные элементы.",
               "correct": false,
               "sections": {
                 "what_actually": "`saveAll` выполняет вставки асинхронно, но по одной (отдельный запрос на запись); единый батч собирают через `Statement.add()` в `DatabaseClient`.",
@@ -743,7 +743,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Драйвер `R2DBC` сам делит переданный список на сетевые пакеты подходящего размера и выполняет их последовательно, поэтому ручная буферизация по N избыточна.",
+              "text": "Размер batch не ограничивают, потому что backpressure автоматически сокращает SQL packet; driver отправляет бесконечный набор bindings без буферизации в памяти.",
               "correct": false,
               "sections": {
                 "what_actually": "Очень большой батч упирается в лимиты драйвера и память, поэтому записи буферизуют вручную (`buffer(500)`); автоматического разбиения нет.",
@@ -755,26 +755,26 @@
             {
               "order": 2,
               "label": "C",
-              "text": "Чтобы накопить строки в `Statement`, `execute()` вызывают для каждой из них, а `add()` в конце отправляет собранный батч на сервер одним вызовом.",
+              "text": "`saveAll` не гарантирует batching; настоящий batch строят на одном connection через repeated `bind(...).add()` и единый `execute()`.",
+              "correct": true,
+              "sections": {
+                "explanation": "R2DBC SPI определяет multiple binding sets через `Statement.add()` и выполнение через `execute()`. Реальная оптимизация и число server round trips зависят от driver, поэтому repository `saveAll` нельзя считать batch contract.",
+                "example": "В `inConnectionMany` создают `INSERT ... VALUES ($1,$2)`, для каждой строки bind-ят параметры и вызывают `add()`, кроме последнего набора, затем потребляют все `Result.getRowsUpdated()`.",
+                "when_to_apply": "Используйте для больших импортов после профилирования. Ограничивайте chunk, transaction duration и memory; для PostgreSQL COPY или vendor bulk protocol может быть быстрее стандартного batch.",
+                "edge_cases": "`add()` без полного набора bindings и непотреблённые Results приводят к ошибкам или утечке resources. Generated keys и error semantics batch различаются по driver.",
+                "related": "[[spring-r2dbc-interview#Q11]] raw SQL; [[spring-r2dbc-interview#Q5]] transaction boundary; [[database-performance-interview#Q6]] batching."
+              }
+            },
+            {
+              "order": 3,
+              "label": "D",
+              "text": "После каждого набора bindings вызывают `execute()`, а `Statement.add()` вызывается один раз после последней строки для отправки уже выполненных commands.",
               "correct": false,
               "sections": {
                 "what_actually": "Роли перепутаны: `add()` накапливает очередной набор bind-параметров в батч, а `execute()` отправляет весь накопленный батч на сервер.",
                 "source_of_confusion": "Оба метода про выполнение запроса, и их назначение легко поменять местами.",
                 "if_it_were_true": "Тогда `execute()` на каждой строке давал бы по запросу на запись, что и есть отсутствие батчинга.",
                 "how_it_should_be": "`add()` добавляет строку в батч; единственный `execute()` в конце отправляет батч целиком."
-              }
-            },
-            {
-              "order": 3,
-              "label": "D",
-              "text": "Для настоящего батча берут `DatabaseClient.inConnectionMany`: на одном соединении создают `Statement`, биндят и зовут `add()` на запись, затем `execute()`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`saveAll` удобен, но шлёт отдельный запрос на запись. Истинный батч объединяет много `INSERT` в одну отправку через `Statement.add()` на одном соединении, что резко сокращает round-trip к БД при больших объёмах.",
-                "example": "`client.inConnectionMany(conn -> Flux.fromIterable(orders).buffer(500).flatMap(batch -> { Statement s = conn.createStatement(\"INSERT INTO orders(...) VALUES($1,$2,$3)\"); batch.forEach(o -> s.bind(...).add()); return s.execute(); })).then()`.",
-                "when_to_apply": "Батч через `Statement.add()` берут при массовой загрузке тысяч строк, где сетевые round-trip доминируют; `saveAll` достаточно для умеренных объёмов с простой логикой.",
-                "edge_cases": "Очень большой батч без буферизации может упереться в лимиты драйвера/памяти — записи разбивают на части (`buffer(500)`); `add()` без финального `execute()` ничего не отправит.",
-                "related": "[[spring-r2dbc-interview#Q11]] `DatabaseClient` и raw SQL; [[spring-r2dbc-interview#Q3]] `saveAll` репозитория; [[spring-r2dbc-interview#Q7]] переиспользование соединения из пула."
               }
             }
           ]
@@ -786,12 +786,25 @@
       "blocks": [
         {
           "block_idx": 0,
-          "question_text": "Что такое реактивные миграции в `R2DBC` и как их применять?",
+          "question_text": "Как выполнять миграции схемы в R2DBC-приложении?",
           "options": [
             {
               "order": 0,
               "label": "A",
-              "text": "Flyway работает с `R2DBC` напрямую: в `spring.flyway.url` указывают `r2dbc:`-URL, и миграции применяются реактивно на старте.",
+              "text": "Flyway/Liquibase остаются blocking JDBC-инструментами: их запускают до обслуживания трафика через отдельный JDBC connection, init container/job или deployment pipeline.",
+              "correct": true,
+              "sections": {
+                "explanation": "Reactive runtime и schema migration — разные lifecycle phases. Flyway и Liquibase работают через JDBC, но их blocking выполнение до запуска request handling не нарушает non-blocking обработку production traffic.",
+                "example": "Deployment job с JDBC URL применяет versioned migrations, затем запускается приложение с `spring.r2dbc.url`. В одном Boot process можно отдельно настроить JDBC connection только для migration.",
+                "when_to_apply": "Предпочитайте отдельный migration step для нескольких replicas и контролируемого rollback/locking. Startup migration допустима для небольших single-instance deployments.",
+                "edge_cases": "Не запускайте schema-changing DDL из request pipeline. Несколько replicas должны координироваться migration lock; JDBC и R2DBC credentials/SSL options могут различаться.",
+                "related": "[[spring-r2dbc-interview#Q2]] два типа подключения; [[flyway-liquibase-interview#Q1]] migration tools; [[spring-r2dbc-interview#Q15]] runtime WebFlux pipeline."
+              }
+            },
+            {
+              "order": 1,
+              "label": "B",
+              "text": "Flyway принимает `r2dbc:` URL и выполняет migrations через `ConnectionFactory`; достаточно starter R2DBC, отдельный JDBC driver или datasource не нужен.",
               "correct": false,
               "sections": {
                 "what_actually": "Flyway синхронный и работает только через `JDBC`; для `R2DBC`-приложения миграции запускают на отдельном `jdbc:`-`DataSource` или берут `r2dbc-migrate`.",
@@ -801,22 +814,9 @@
               }
             },
             {
-              "order": 1,
-              "label": "B",
-              "text": "Flyway синхронный: миграции гонят через отдельный блокирующий `jdbc:`-`DataSource` (`@Bean(initMethod = \"migrate\")`), авто-Flyway отключают.",
-              "correct": true,
-              "sections": {
-                "explanation": "Схему БД мигрируют один раз при старте, и блокирующий вызов здесь допустим, так как event loop ещё не обслуживает запросы. Поэтому держат отдельный `jdbc:`-`DataSource` только для Flyway, а рантайм работает через `r2dbc:`.",
-                "example": "`@Bean(initMethod = \"migrate\") Flyway flyway(DataSource ds) { return Flyway.configure().dataSource(ds).locations(\"classpath:db/migration\").load(); }` плюс `spring.flyway.enabled: false` и отдельный `spring.datasource.url: jdbc:postgresql://...`.",
-                "when_to_apply": "Связку «Flyway через `JDBC` + рантайм через `R2DBC`» применяют почти в каждом `R2DBC`-проекте; `r2dbc-migrate` берут, когда хотят полностью реактивный инструмент без второго `DataSource`.",
-                "edge_cases": "Держат два URL — `r2dbc:` для приложения и `jdbc:` для Flyway; забыть `spring.flyway.enabled=false` опасно — авто-Flyway попытается стартовать сам и может конфликтовать с ручным бином.",
-                "related": "[[spring-r2dbc-interview#Q2]] настройка `r2dbc:`-URL; [[spring-r2dbc-interview#Q8]] миграции для тестовой схемы; [[spring-r2dbc-interview#Q1]] почему блокирующий Flyway несовместим с `R2DBC`."
-              }
-            },
-            {
               "order": 2,
               "label": "C",
-              "text": "Синхронный вызов Flyway недопустим в реактивном приложении, поэтому схему поднимают реактивным раннером вместо блокирующего `DataSource`.",
+              "text": "Blocking migration при startup навсегда занимает WebFlux event loop, поэтому reactive application может изменять схему только runtime DDL через `DatabaseClient` после первого запроса.",
               "correct": false,
               "sections": {
                 "what_actually": "Миграция при инициализации выполняется до запуска обработки запросов, поэтому разовый блокирующий Flyway здесь безопасен и не вешает event loop в рантайме.",
@@ -828,7 +828,7 @@
             {
               "order": 3,
               "label": "D",
-              "text": "Конфликт миграций снимают, включив `spring.flyway.enabled=true` вместе с ручным бином Flyway — Spring выбирает подходящий из них.",
+              "text": "Нужно одновременно включить Boot Flyway auto-configuration и создать второй ручной Flyway bean для той же schema; двойной запуск обеспечивает reactive consistency.",
               "correct": false,
               "sections": {
                 "what_actually": "При ручном управлении Flyway авто-Flyway отключают (`spring.flyway.enabled=false`), иначе оба механизма запустятся и могут конфликтовать; Spring не выбирает один автоматически.",
@@ -851,7 +851,7 @@
             {
               "order": 0,
               "label": "A",
-              "text": "Блокирующий `JPA`-репозиторий вызывают прямо внутри `R2DBC`-цепочки: event loop `WebFlux` переносит такой вызов на пул потоков и не блокируется.",
+              "text": "JPA repository внутри WebFlux безопасен без дополнительной настройки: framework обнаруживает blocking call и автоматически переносит его на bounded-elastic scheduler.",
               "correct": false,
               "sections": {
                 "what_actually": "Блокирующий `JPA`-вызов в `WebFlux`-потоке вешает event loop и разрушает backpressure; автоматического переключения на отдельный пул нет.",
@@ -863,20 +863,7 @@
             {
               "order": 1,
               "label": "B",
-              "text": "Контроллер возвращает `Flux<OrderDto>` для коллекций, `Mono<OrderDto>` для одного объекта; для стриминга — `Flux` с `produces = TEXT_EVENT_STREAM_VALUE` (SSE).",
-              "correct": true,
-              "sections": {
-                "explanation": "`WebFlux` ждёт реактивные типы возврата, а `R2DBC` их и отдаёт, поэтому поток данных от БД до HTTP-ответа остаётся неблокирующим с сохранением backpressure на всём пути.",
-                "example": "`@GetMapping(\"/{customerId}\") Flux<OrderDto> getOrders(@PathVariable String id)` отдаёт поток заказов; `@GetMapping(value=\"/stream\", produces=TEXT_EVENT_STREAM_VALUE) Flux<OrderDto> streamOrders()` шлёт SSE-обновления.",
-                "when_to_apply": "Связку применяют для реактивных API, особенно стриминговых (`SSE`, бесконечные потоки), где `R2DBC` поставляет данные, а `WebFlux` отдаёт их клиенту по мере поступления.",
-                "edge_cases": "Один блокирующий `JPA`/`JDBC`-вызов в `WebFlux`-потоке остановит event loop и убьёт backpressure всего приложения — нельзя смешивать блокирующий и реактивный доступ к БД в одной цепочке.",
-                "related": "[[spring-r2dbc-interview#Q9]] `R2DBC` против `JPA` и запрет смешивания; [[spring-r2dbc-interview#Q3]] репозиторий, отдающий `Flux`; [[spring-r2dbc-interview#Q5]] транзакции в `WebFlux`-сервисе."
-              }
-            },
-            {
-              "order": 2,
-              "label": "C",
-              "text": "Для Server-Sent Events метод возвращает `Mono<List<OrderDto>>`, а `WebFlux` разбивает эту коллекцию на отдельные события потока при отправке клиенту.",
+              "text": "Для SSE repository result сначала собирают в `Mono<List<T>>`; WebFlux затем автоматически превращает элементы списка в отдельные события с backpressure.",
               "correct": false,
               "sections": {
                 "what_actually": "Для `SSE` метод возвращает `Flux<OrderDto>` с `produces = TEXT_EVENT_STREAM_VALUE`; каждый элемент `Flux` становится отдельным событием по мере эмиссии.",
@@ -886,9 +873,22 @@
               }
             },
             {
+              "order": 2,
+              "label": "C",
+              "text": "WebFlux и Spring Data R2DBC сохраняют non-blocking publisher до driver; blocking API нужно исключить или явно изолировать из pipeline.",
+              "correct": true,
+              "sections": {
+                "explanation": "WebFlux понимает Publisher return type и управляет subscription, demand и cancellation. R2DBC продолжает эту модель до database protocol, поэтому request thread не ждёт blocking result.",
+                "example": "`@GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE) Flux<OrderDto> stream()` может непосредственно трансформировать `repository.findAll()` и отдавать элементы по мере появления.",
+                "when_to_apply": "Сохраняйте reactive contracts через service и repository layers. Любой blocking SDK изолируйте на bounded pool с лимитами либо вынесите в отдельный blocking service.",
+                "edge_cases": "Обычный JSON array может потребовать буферизацию encoder/client; SSE и streaming JSON сохраняют incremental delivery. Backpressure не отменяет database pool limits и slow-client memory concerns.",
+                "related": "[[spring-r2dbc-interview#Q1]] non-blocking driver; [[spring-r2dbc-interview#Q9]] выбор JPA/R2DBC; [[webflux-interview#Q1]] event-loop model."
+              }
+            },
+            {
               "order": 3,
               "label": "D",
-              "text": "Метод контроллера возвращает `List<OrderDto>`; `WebFlux` сам подписывается на репозиторий и собирает результат в список перед формированием ответа.",
+              "text": "Controller должен вернуть обычный `List`, поскольку подписка на repository выполняется внутри dispatcher; reactive return types разрешены только в functional endpoints.",
               "correct": false,
               "sections": {
                 "what_actually": "Реактивный контроллер возвращает `Flux<OrderDto>`/`Mono<OrderDto>`; `List` материализуется синхронно и нарушает неблокирующий поток.",

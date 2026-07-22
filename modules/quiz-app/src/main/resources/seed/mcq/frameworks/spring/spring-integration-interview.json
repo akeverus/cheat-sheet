@@ -9,20 +9,20 @@
           "question_text": "Что такое `Spring Integration` и какие EIP-паттерны он реализует?",
           "options": [
             {
-              "text": "Реализация Enterprise Integration Patterns (Hohpe & Woolf) поверх Spring: строит конвейеры из слабосвязанных компонентов, связанных через `Message Channel` — `Router`, `Transformer`, `Filter`, `Splitter`, `Aggregator`.",
+              "text": "`Spring Integration` реализует Enterprise Integration Patterns в единой messaging model через messages, channels, routers, transformers, filters, splitters, aggregators, gateways и adapters.",
               "correct": true,
               "sections": {
-                "explanation": "EIP — каталог типовых решений для обмена сообщениями между системами. `Spring Integration` даёт готовые реализации этих паттернов как Spring-бины, соединённые каналами.",
-                "example": "Поток `IntegrationFlow.from(\"in\").transform(...).filter(...).route(...).get()` — это цепочка EIP-паттернов: трансформер, фильтр и роутер, связанные каналами.",
-                "when_to_apply": "Применяют, когда нужно связать несколько систем (`Kafka`, `JMS`, `FTP`, `HTTP`) с маршрутизацией, трансформацией и развязкой компонентов внутри Spring-приложения.",
-                "edge_cases": "Набор EIP в `Spring Integration` уже, чем полный каталог из книги: реализованы основные паттерны (роутер, сплиттер, агрегатор), но не все 65, — в отличие от `Apache Camel`, который покрывает их почти полностью.",
-                "related": "[[spring-integration-interview#Q2]] типы каналов; [[spring-integration-interview#Q5]] описание потока через Java DSL; [[spring-integration-interview#Q11]] сравнение с `Apache Camel`."
+                "explanation": "Фреймворк переносит каталог EIP в модель Spring-бинов: `Message` проходит через связанные `MessageChannel` и endpoint-компоненты, а адаптеры соединяют внутренний поток с внешними системами.",
+                "example": "`IntegrationFlow.from(\"orders.in\").filter(Order::isValid).transform(orderMapper).handle(orderService, \"process\").get()` описывает фильтрацию, преобразование и вызов сервиса как единый messaging-поток.",
+                "when_to_apply": "Используйте его, когда внутри Spring-приложения нужно связать несколько систем или протоколов и выразить маршрутизацию, преобразование, буферизацию, агрегацию и обработку ошибок через EIP.",
+                "edge_cases": "Фреймворк не заменяет брокер, ORM или stream-processing engine: он оркестрирует сообщения и подключает внешние технологии через адаптеры; конкретный набор модулей зависит от используемых транспортов.",
+                "related": "[[spring-integration-interview#Q2]] семантика каналов; [[spring-integration-interview#Q5]] Java DSL; [[spring-integration-interview#Q11]] сравнение с Apache Camel."
               },
               "order": 0,
               "label": "A"
             },
             {
-              "text": "ORM-фреймворк для интеграции базы данных с Java-объектами: маппит таблицы на `@Entity`-классы, ведёт сессию с кешем первого уровня и заменяет собой `Hibernate` как слой доступа к данным и генерации SQL в Spring-проектах.",
+              "text": "`Spring Integration` — ORM-слой для отображения таблиц на Java-объекты: он управляет сущностями, связями и репозиториями и используется вместо `Hibernate` в Spring-приложениях.",
               "correct": false,
               "sections": {
                 "what_actually": "`Spring Integration` строит конвейеры обмена сообщениями между системами, а маппинг таблиц на объекты делает `Spring Data`/`Hibernate`, а не он.",
@@ -34,7 +34,7 @@
               "label": "B"
             },
             {
-              "text": "Надстройка над `Kafka` для продюсеров и консьюмеров: оборачивает топики, партиции и consumer-группы удобным API, а другие транспорты и EIP-паттерны в него не входят и подключаются отдельно.",
+              "text": "`Spring Integration` — специализированная оболочка над `Kafka`: она строит потоки только между Kafka-топиками, а другие транспорты и универсальные EIP-компоненты не поддерживает.",
               "correct": false,
               "sections": {
                 "what_actually": "`Kafka` — лишь один из адаптеров; фреймворк поддерживает `JMS`, `AMQP`, `FTP`, `HTTP`, файлы и реализует множество EIP-паттернов.",
@@ -46,7 +46,7 @@
               "label": "C"
             },
             {
-              "text": "Библиотека для интеграционных тестов Spring-бинов: поднимает контекст, упрощает мокирование зависимостей и проверку взаимодействия компонентов между собой в рамках одного тестового прогона.",
+              "text": "`Spring Integration` — тестовая библиотека для проверки взаимодействия Spring-бинов: она поднимает интеграционный контекст, подменяет зависимости моками и не участвует в production-runtime.",
               "correct": false,
               "sections": {
                 "what_actually": "Тестирование бинов обеспечивает `spring-boot-test`, а `Spring Integration` — это рантайм-фреймворк для построения messaging-потоков.",
@@ -69,7 +69,7 @@
           "question_text": "Какие типы `MessageChannel` существуют в `Spring Integration` и чем они отличаются?",
           "options": [
             {
-              "text": "Канал по сути один — `DirectChannel`; остальные сценарии вроде буферизации, broadcast и приоритета включаются его параметрами и настройками, а не отдельными классами каналов со своей семантикой доставки и потоковой моделью.",
+              "text": "В `Spring Integration` существует только `DirectChannel`; очередь, приоритет, broadcast и реактивная доставка включаются флагами этого же класса без выбора другого типа канала.",
               "correct": false,
               "sections": {
                 "what_actually": "Типов каналов несколько (`QueueChannel`, `PublishSubscribeChannel`, `ExecutorChannel` и др.), и каждый — отдельный класс со своей семантикой.",
@@ -81,7 +81,7 @@
               "label": "A"
             },
             {
-              "text": "`PublishSubscribeChannel` доставляет каждое сообщение одному из подписчиков по очереди в стиле round-robin, распределяя нагрузку между несколькими потребителями подобно балансировщику запросов.",
+              "text": "`PublishSubscribeChannel` распределяет каждое сообщение ровно одному подписчику по round-robin, поэтому его используют как competing-consumers канал для балансировки нагрузки.",
               "correct": false,
               "sections": {
                 "what_actually": "`PublishSubscribeChannel` рассылает (broadcast) сообщение всем подписчикам; round-robin к одному из нескольких потребителей — это поведение `DirectChannel` с несколькими подписчиками.",
@@ -93,20 +93,20 @@
               "label": "B"
             },
             {
-              "text": "Каналов несколько: `DirectChannel` (синхронный, держит транзакцию), `PublishSubscribeChannel` (broadcast), `QueueChannel` (in-memory FIFO с поллером), `ExecutorChannel` (async через `TaskExecutor`) и `PriorityChannel`.",
+              "text": "`DirectChannel` вызывает subscriber синхронно, publish-subscribe рассылает всем, queue channels poll-ятся, `ExecutorChannel` использует executor, а `FluxMessageChannel` задаёт reactive boundary.",
               "correct": true,
               "sections": {
-                "explanation": "Каналы делятся на синхронные (`DirectChannel`, `PublishSubscribeChannel`) и буферизующие/асинхронные (`QueueChannel`, `ExecutorChannel`). Выбор канала определяет потоковую модель и транзакционность.",
-                "example": "`@Bean public MessageChannel ordersInput() { return new DirectChannel(); }` — синхронный канал, а `new QueueChannel(100)` создаёт буфер на 100 сообщений, который нужно вычитывать поллером.",
-                "when_to_apply": "Применяют разные каналы под задачу: `DirectChannel` для транзакционной синхронной обработки, `QueueChannel` для буферизации, `ExecutorChannel` для параллелизма, `PublishSubscribeChannel` для событий.",
-                "edge_cases": "Только `DirectChannel` прозрачно пропускает транзакцию от отправителя; `QueueChannel` и `ExecutorChannel` разрывают транзакционный контекст и поток отправителя.",
-                "related": "[[spring-integration-interview#Q1]] обзор EIP и каналов; [[spring-integration-interview#Q9]] транзакции через `DirectChannel`; [[spring-integration-interview#Q5]] как каналы соединяются в Java DSL."
+                "explanation": "Канал определяет способ передачи сообщения и границу потока выполнения. Subscribable-каналы вызывают подписчиков при отправке, pollable-каналы хранят сообщения до `receive()` или poller-а, а executor/reactive варианты меняют модель планирования.",
+                "example": "`new DirectChannel()` оставляет обработку в текущем потоке; `new QueueChannel(100)` создаёт ограниченный буфер, который endpoint читает настроенным poller-ом; `new ExecutorChannel(taskExecutor)` передаёт вызов пулу.",
+                "when_to_apply": "Выбирайте канал по требуемой семантике: синхронный call stack, broadcast, буферизация и back-pressure через polling, приоритет, отдельный executor или интеграция с reactive publisher.",
+                "edge_cases": "`PublishSubscribeChannel` синхронен без executor-а и асинхронен с executor-ом. Транзакционный контекст обычно сохраняется только пока обработка остаётся в том же потоке; async и очередь создают новую границу.",
+                "related": "[[spring-integration-interview#Q5]] соединение каналов в DSL; [[spring-integration-interview#Q7]] обработка ошибок; [[spring-integration-interview#Q9]] транзакционные границы."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "`QueueChannel` по умолчанию передаёт сообщение подписчику сразу в потоке отправителя, синхронно и без отдельного поллера, работая как прямой вызов метода-обработчика в той же нити исполнения.",
+              "text": "`QueueChannel` немедленно вызывает подписчика в потоке отправителя и сохраняет его транзакцию; очередь служит только для статистики, а poller требуется лишь для ограничения частоты вызовов.",
               "correct": false,
               "sections": {
                 "what_actually": "`QueueChannel` буферизует сообщения в памяти, и их вычитывает отдельный poller; синхронно в потоке отправителя работает `DirectChannel`.",
@@ -129,7 +129,7 @@
           "question_text": "Что такое `Service Activator` в `Spring Integration`?",
           "options": [
             {
-              "text": "Аннотация, которая регистрирует бин в контексте и делает его синглтоном, выступая заменой `@Component` для компонентов интеграционного слоя приложения и управляя их жизненным циклом.",
+              "text": "`Service Activator` регистрирует класс как singleton-бин и заменяет `@Component`; его параметры управляют scope и временем создания экземпляра бизнес-сервиса.",
               "correct": false,
               "sections": {
                 "what_actually": "`Service Activator` подключает метод к каналу для обработки сообщений; регистрацию бина делает `@Component`/`@Bean`, а скоуп — `@Scope`.",
@@ -141,20 +141,7 @@
               "label": "A"
             },
             {
-              "text": "Endpoint, связывающий входной канал с методом бизнес-компонента: берёт сообщение из `inputChannel`, вызывает метод, а результат при наличии `outputChannel` отправляет дальше по потоку следующему эндпоинту.",
-              "correct": true,
-              "sections": {
-                "explanation": "`Service Activator` — это мост между messaging-инфраструктурой и обычным бизнес-кодом: он адаптирует `Message` к сигнатуре метода и оборачивает возврат обратно в сообщение.",
-                "example": "`@ServiceActivator(inputChannel = \"ordersInput\", outputChannel = \"ordersOutput\") public OrderResult processOrder(Order order) { return orderService.process(order); }` — метод вызывается на каждое сообщение из канала.",
-                "when_to_apply": "Применяют, когда нужно вызвать бизнес-логику в ответ на сообщение в канале — это самый частый способ «приземлить» поток на сервисный метод.",
-                "edge_cases": "Если у метода нет возврата (`void`) или `outputChannel` не задан, поток на этом эндпоинте завершается; для request/reply нужен возвращающий результат метод и reply-канал.",
-                "related": "[[spring-integration-interview#Q2]] каналы, к которым подключается активатор; [[spring-integration-interview#Q4]] `Gateway` как точка входа; [[spring-integration-interview#Q5]] аналог `.handle(...)` в Java DSL."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "Асинхронный обработчик, который выполняет привязанный метод в отдельном пуле потоков независимо от типа входного канала, разгружая поток отправителя от бизнес-логики обработки.",
+              "text": "`Service Activator` всегда запускает метод в отдельном пуле и возвращает `CompletableFuture`; синхронное выполнение через него не поддерживается независимо от входного канала.",
               "correct": false,
               "sections": {
                 "what_actually": "Асинхронность определяет канал (`ExecutorChannel`/`QueueChannel`), а не активатор; на `DirectChannel` он выполняется синхронно в потоке отправителя.",
@@ -162,17 +149,30 @@
                 "if_it_were_true": "Если бы он всегда был async, транзакция отправителя не доходила бы до бизнес-метода через `DirectChannel`.",
                 "how_it_should_be": "Синхронность/асинхронность задаёт входной канал; активатор сам по себе пул потоков не создаёт."
               },
-              "order": 2,
-              "label": "C"
+              "order": 1,
+              "label": "B"
             },
             {
-              "text": "Компонент, который принимает сообщение-коллекцию и раскладывает её на отдельные сообщения, отправляя каждый элемент дальше по потоку самостоятельным сообщением с исходными заголовками.",
+              "text": "`Service Activator` автоматически разбивает коллекцию из payload на несколько сообщений, присваивает correlation id и ждёт обратной агрегации результатов.",
               "correct": false,
               "sections": {
                 "what_actually": "Разбивку коллекции на отдельные сообщения делает `Splitter`; `Service Activator` просто вызывает метод на сообщении.",
                 "source_of_confusion": "И активатор, и сплиттер — эндпоинты, обрабатывающие сообщения, поэтому их роли смешивают.",
                 "if_it_were_true": "Если бы активатор сплитил, у него был бы output из N сообщений на одно входное, но он отдаёт один результат.",
                 "how_it_should_be": "Для разбивки берут `@Splitter`; `Service Activator` отвечает за вызов бизнес-метода, а не за расщепление."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "`Service Activator` вызывает business method для входного message, адаптирует payload/headers к arguments и отправляет returned value в reply channel.",
+              "correct": true,
+              "sections": {
+                "explanation": "Это endpoint-адаптер между messaging-моделью и обычным методом. Инфраструктура выбирает подходящий метод, преобразует аргументы, вызывает его и превращает возвращаемое значение в reply-сообщение.",
+                "example": "`@ServiceActivator(inputChannel=\"orders.in\", outputChannel=\"orders.out\") OrderResult process(Order order)` вызывается для каждого сообщения и публикует возвращённый `OrderResult` дальше.",
+                "when_to_apply": "Используйте активатор как конечный или промежуточный шаг, когда поток должен вызвать существующую бизнес-логику без внедрения API каналов в доменный сервис.",
+                "edge_cases": "Модель выполнения задаёт канал, а не активатор. `void` завершает request/reply-цепочку; исключение в синхронном потоке может вернуться отправителю, а на async-границе обычно маршрутизируется как `ErrorMessage`.",
+                "related": "[[spring-integration-interview#Q2]] модель каналов; [[spring-integration-interview#Q4]] messaging gateway; [[spring-integration-interview#Q5]] оператор `.handle(...)`."
               },
               "order": 3,
               "label": "D"
@@ -189,31 +189,7 @@
           "question_text": "Как работает `MessagingGateway` в `Spring Integration`?",
           "options": [
             {
-              "text": "Работает в fire-and-forget режиме: отправляет сообщение в канал и сразу продолжает выполнение, не дожидаясь обработки и не возвращая какой-либо ответ или статус вызывающему коду потока.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`Gateway` поддерживает и синхронный request/reply (метод с возвращаемым типом ждёт ответ), и асинхронный (`void` или `Future`).",
-                "source_of_confusion": "Messaging ассоциируется с fire-and-forget, поэтому reply-режим упускают.",
-                "if_it_were_true": "Если бы ответ был невозможен, не существовало бы `defaultReplyChannel` и методов с возвращаемым значением.",
-                "how_it_should_be": "Метод с результатом синхронно получает reply из reply-канала; асинхронность — это лишь один из режимов."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "HTTP-эндпоинт наподобие REST-контроллера: принимает внешние сетевые запросы по URL, разбирает их тело, заголовки и параметры и отдаёт ответ клиенту, напрямую с каналами внутри приложения не работая.",
-              "correct": false,
-              "sections": {
-                "what_actually": "`MessagingGateway` — это мост из Java-кода в каналы внутри приложения; приём HTTP-запросов делает HTTP inbound adapter, а не он.",
-                "source_of_confusion": "Слово «gateway» ассоциируется с API Gateway/сетевым шлюзом.",
-                "if_it_were_true": "Если бы это был HTTP-эндпоинт, у него были бы URL и HTTP-методы, а не `requestChannel`/`replyChannel`.",
-                "how_it_should_be": "Для приёма HTTP берут HTTP inbound gateway/adapter; `@MessagingGateway` — это внутренний мост к каналам."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "Класс, который разработчик реализует вручную, самостоятельно описывая логику упаковки данных в `Message`, отправки их в нужные каналы и получения ответных сообщений обратно из reply-канала.",
+              "text": "`MessagingGateway` — REST-контроллер, который сам публикует HTTP endpoint, преобразует JSON в сообщения и настраивает web server без MVC/WebFlux-конфигурации.",
               "correct": false,
               "sections": {
                 "what_actually": "Реализацию интерфейса `Gateway` генерирует сам `Spring Integration` через прокси; вручную пишут только интерфейс с аннотациями.",
@@ -221,18 +197,42 @@
                 "if_it_were_true": "Если бы реализацию писали руками, не нужна была бы аннотация `@MessagingGateway` и автогенерация прокси.",
                 "how_it_should_be": "Достаточно объявить интерфейс с `@MessagingGateway`; прокси с логикой каналов создаёт фреймворк."
               },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`MessagingGateway` поддерживает только fire-and-forget: каждый метод интерфейса обязан возвращать `void`, а reply channel, timeout и преобразование результата для него не предусмотрены.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`Gateway` поддерживает и синхронный request/reply (метод с возвращаемым типом ждёт ответ), и асинхронный (`void` или `Future`).",
+                "source_of_confusion": "Messaging ассоциируется с fire-and-forget, поэтому reply-режим упускают.",
+                "if_it_were_true": "Если бы ответ был невозможен, не существовало бы `defaultReplyChannel` и методов с возвращаемым значением.",
+                "how_it_should_be": "Метод с результатом синхронно получает reply из reply-канала; асинхронность — это лишь один из режимов."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "`MessagingGateway` — базовый класс, который разработчик реализует вручную: он сам создаёт `Message`, вызывает `send()` и затем блокирующий `receive()` для каждого метода интерфейса.",
+              "correct": false,
+              "sections": {
+                "what_actually": "`MessagingGateway` — это мост из Java-кода в каналы внутри приложения; приём HTTP-запросов делает HTTP inbound adapter, а не он.",
+                "source_of_confusion": "Слово «gateway» ассоциируется с API Gateway/сетевым шлюзом.",
+                "if_it_were_true": "Если бы это был HTTP-эндпоинт, у него были бы URL и HTTP-методы, а не `requestChannel`/`replyChannel`.",
+                "how_it_should_be": "Для приёма HTTP берут HTTP inbound gateway/adapter; `@MessagingGateway` — это внутренний мост к каналам."
+              },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "Интерфейс с `@MessagingGateway`, реализацию которого генерирует `Spring Integration`: вызов Java-метода становится отправкой в request-канал, а результат приходит из reply-канала, пряча messaging за обычным API.",
+              "text": "`@MessagingGateway` создаёт proxy Java interface: arguments становятся message data, request идёт в channel, reply преобразуется в return type с заданной timeout semantics.",
               "correct": true,
               "sections": {
-                "explanation": "`Gateway` инкапсулирует messaging за чистым Java-интерфейсом: клиентский код вызывает метод как у обычного бина, не зная про каналы и сообщения.",
-                "example": "`@MessagingGateway(defaultRequestChannel=\"ordersInput\", defaultReplyChannel=\"ordersOutput\") interface OrderGateway { OrderResult placeOrder(Order order); }` — вызов `placeOrder` шлёт сообщение и ждёт ответ.",
-                "when_to_apply": "Применяют как точку входа в интеграционный поток из обычного кода: контроллер или сервис инжектит интерфейс и вызывает метод вместо ручной сборки `Message`.",
-                "edge_cases": "Метод с возвращаемым типом синхронно ждёт reply; `void`-метод (или `@Gateway` на async-канал) делает fire-and-forget; для неблокирующего ответа можно вернуть `Future`/`Mono`.",
-                "related": "[[spring-integration-interview#Q3]] `Service Activator` на другом конце потока; [[spring-integration-interview#Q2]] reply/request каналы; [[spring-integration-interview#Q10]] инжект `Gateway` в тестах."
+                "explanation": "Gateway скрывает messaging API за типизированным интерфейсом. Proxy строит сообщение по аргументам, использует настроенные request/reply channels и преобразует результат или исключение к контракту метода.",
+                "example": "`@MessagingGateway(defaultRequestChannel=\"orders.in\") interface Orders { @Gateway OrderResult place(Order command); }` позволяет вызывающему коду работать как с обычным сервисом.",
+                "when_to_apply": "Используйте gateway на границе приложения или модуля, чтобы клиенты не зависели от `Message`, `MessageChannel` и деталей маршрутизации.",
+                "edge_cases": "Метод может быть one-way (`void`) или request/reply. Для async-результатов доступны поддерживаемые future/reactive типы; reply timeout и error handling следует настраивать явно для выбранной модели.",
+                "related": "[[spring-integration-interview#Q3]] service activator; [[spring-integration-interview#Q5]] вход в IntegrationFlow; [[spring-integration-interview#Q7]] ошибки и error channel."
               },
               "order": 3,
               "label": "D"
@@ -249,7 +249,7 @@
           "question_text": "Как устроен `Java DSL` в `Spring Integration`?",
           "options": [
             {
-              "text": "Требует, чтобы каждый шаг потока был отдельным `@Bean`-методом с явно объявленными между шагами каналами, которые разработчик заводит и связывает в контексте руками, шаг за шагом.",
+              "text": "Java DSL требует отдельного `@Bean` для каждого фильтра, канала и handler-а; один `IntegrationFlow` не может описывать несколько шагов или создавать неявные компоненты.",
               "correct": false,
               "sections": {
                 "what_actually": "Весь поток описывается одним `@Bean`, а промежуточные каналы между шагами DSL создаёт неявно; отдельные бины на каждый шаг не нужны.",
@@ -261,38 +261,38 @@
               "label": "A"
             },
             {
-              "text": "Рассчитан на линейные цепочки шагов; ветвление, маршрутизацию по содержимому и вложенные sub-flows выносят за пределы DSL — в отдельные бины или XML-конфигурацию потока приложения.",
-              "correct": false,
+              "text": "Java DSL собирает `IntegrationFlow` из source, channels и EIP operators; при startup context infrastructure регистрирует из `@Bean` definition соответствующие endpoints.",
+              "correct": true,
               "sections": {
-                "what_actually": "DSL поддерживает `.route(...)` с `subFlowMapping`, `.filter()` с discard-каналом и вложенные sub-flows — ветвление есть.",
-                "source_of_confusion": "Fluent-цепочка визуально линейна, поэтому ветвление кажется недоступным.",
-                "if_it_were_true": "Если бы ветвления не было, нельзя было бы реализовать Content-Based Router, который штатно делается через `.route(...)`.",
-                "how_it_should_be": "Маршрутизацию и ветки описывают через `.route(...)` и sub-flow-маппинги; DSL не ограничен линейными цепочками."
+                "explanation": "DSL является типобезопасным способом собрать те же каналы и endpoints, что доступны в XML или аннотациях. Вызовы спецификаций регистрируют инфраструктурные компоненты и их связи в Spring-контексте.",
+                "example": "`@Bean IntegrationFlow orders() { return IntegrationFlow.from(\"orders.in\").filter(Order::isValid).route(Order::type, m -> m.subFlowMapping(\"VIP\", sf -> sf.handle(vipService))).get(); }`.",
+                "when_to_apply": "Используйте DSL для сложных потоков, где важно видеть маршрут целиком, переиспользовать subflow и конфигурировать endpoints рядом с бизнес-операциями.",
+                "edge_cases": "В современных версиях способ завершения builder-а зависит от конкретного API/версии; существенна регистрация `IntegrationFlow` как Spring-бина, а не механическое наличие `.get()` в каждой форме определения.",
+                "related": "[[spring-integration-interview#Q1]] EIP-компоненты; [[spring-integration-interview#Q2]] каналы; [[spring-integration-interview#Q6]] split и aggregate."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "Fluent-API для описания всего потока в одном `@Bean`, возвращающем `IntegrationFlow`: цепочка `.from(...)`, `.transform(...)`, `.filter(...)`, `.handle(...)`, `.route(...)`, завершаемая вызовом `.get()`.",
-              "correct": true,
-              "sections": {
-                "explanation": "DSL заменяет россыпь аннотаций и XML на один читаемый builder: каждый шаг — это EIP-эндпоинт, а каналы между ними создаются неявно.",
-                "example": "`IntegrationFlow.from(\"ordersInput\").transform(Transformers.fromJson(Order.class)).filter((Order o) -> o.amount().signum() > 0).handle(orderService::process).get();` — поток из инбаунда, трансформера, фильтра и активатора.",
-                "when_to_apply": "Применяют, когда поток нетривиальный (несколько шагов, маршрутизация, sub-flows) и хочется видеть всю цепочку в одном месте, а не собирать её из разрозненных `@ServiceActivator`.",
-                "edge_cases": "Метод обязан вернуть `IntegrationFlow` (вызвать `.get()`); забытый `.get()` или возврат промежуточного билдера сломает регистрацию потока, а имена каналов в `.from(\"...\")` должны существовать.",
-                "related": "[[spring-integration-interview#Q3]] `.handle(...)` как Service Activator; [[spring-integration-interview#Q6]] `.split()`/`.aggregate()`; [[spring-integration-interview#Q8]] `.from(adapter)` для `Kafka`."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
-              "text": "XML-конфигурация в файле `integration.xml`, которую Spring парсит на старте; весь поток описывают тегами namespace, а Java-код для программной сборки цепочки шагов не пишут.",
+              "text": "Java DSL — это XML-файл `integration.xml`, который генерируется Java-компилятором; сами потоки нельзя определять через fluent API и `@Bean`.",
               "correct": false,
               "sections": {
                 "what_actually": "`Java DSL` — это именно Java fluent-API (`IntegrationFlow`), альтернатива XML; XML — отдельный, более старый способ конфигурации.",
                 "source_of_confusion": "У `Spring Integration` исторически был XML namespace, поэтому DSL путают с ним.",
                 "if_it_were_true": "Если бы DSL был XML, не было бы класса `IntegrationFlow` и методов вроде `.transform()`/`.get()` в Java.",
                 "how_it_should_be": "XML и Java DSL — два разных стиля конфигурации; DSL описывает поток программно в `@Bean`."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Java DSL поддерживает только линейную цепочку `.transform().handle()`; route, split, aggregate, publish-subscribe и вложенные subflow доступны исключительно в XML.",
+              "correct": false,
+              "sections": {
+                "what_actually": "DSL поддерживает `.route(...)` с `subFlowMapping`, `.filter()` с discard-каналом и вложенные sub-flows — ветвление есть.",
+                "source_of_confusion": "Fluent-цепочка визуально линейна, поэтому ветвление кажется недоступным.",
+                "if_it_were_true": "Если бы ветвления не было, нельзя было бы реализовать Content-Based Router, который штатно делается через `.route(...)`.",
+                "how_it_should_be": "Маршрутизацию и ветки описывают через `.route(...)` и sub-flow-маппинги; DSL не ограничен линейными цепочками."
               },
               "order": 3,
               "label": "D"
@@ -309,20 +309,7 @@
           "question_text": "Как реализовать `Splitter` и `Aggregator` в `Spring Integration`?",
           "options": [
             {
-              "text": "`Splitter` разбивает одно сообщение (обычно с коллекцией) на N отдельных, а `Aggregator` собирает N обратно в одно по корреляционному ключу; в DSL это `.split(...)` и `.aggregate(...)` с `correlationExpression`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`Splitter` и `Aggregator` — парные EIP-паттерны scatter-gather: первый размножает сообщение, второй ждёт группу по корреляции и собирает результат, когда выполнено условие release.",
-                "example": "Сплиттер: `@Splitter public List<Order> split(BatchOrderRequest b) { return b.orders(); }`; агрегатор: `.aggregate(a -> a.correlationExpression(\"headers['batchId']\").releaseExpression(\"size() == headers['batchSize']\"))`.",
-                "when_to_apply": "Применяют для batch-обработки: разбить пакет заказов на отдельные, обработать каждый параллельно, затем собрать результаты обратно в один `BatchResult`.",
-                "edge_cases": "Если группа никогда не достигает release-условия, агрегатор зависнет; на этот случай задают `groupTimeout` и `sendPartialResultOnExpiry(true)`, чтобы отдать частичный результат по таймауту.",
-                "related": "[[spring-integration-interview#Q5]] `.split()`/`.aggregate()` в DSL; [[spring-integration-interview#Q2]] каналы между сплиттером и агрегатором; [[spring-integration-interview#Q14]] `Enricher` как другой EIP-эндпоинт."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "`Aggregator` собирает сообщения по порядку их прихода в канал, накапливая подряд идущие сообщения в одну группу и закрывая её по таймауту, без корреляционных ключей и идентификаторов групп.",
+              "text": "`Aggregator` объединяет сообщения только по времени поступления: первые N элементов образуют группу независимо от correlation id, а release strategy не настраивается.",
               "correct": false,
               "sections": {
                 "what_actually": "`Aggregator` группирует сообщения по `correlationExpression` (например `headers['batchId']`), а не по порядку прихода.",
@@ -330,11 +317,24 @@
                 "if_it_were_true": "Если бы корреляции не было, нельзя было бы одновременно собирать несколько разных групп в смешанном потоке.",
                 "how_it_should_be": "Группировка идёт по корреляционному ключу; порядок прихода значения для принадлежности к группе не имеет."
               },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "`Splitter` создаёт correlated messages, `Aggregator` группирует их по correlation key, хранит incomplete group и выпускает result после выполнения release strategy.",
+              "correct": true,
+              "sections": {
+                "explanation": "Splitter реализует one-to-many и обычно добавляет correlation/sequence headers. Aggregator реализует many-to-one: ведёт группы, проверяет условие завершения и формирует итоговый payload.",
+                "example": "Коллекцию позиций заказа разбивают `.split()`, обрабатывают параллельно и собирают `.aggregate(a -> a.correlationStrategy(...).releaseStrategy(...))` после получения всех ожидаемых частей.",
+                "when_to_apply": "Используйте пару для параллельной обработки составной команды, scatter-gather, пакетной нормализации и сценариев, где результат выпускается после полного или частичного набора ответов.",
+                "edge_cases": "Нужно продумать timeout, истечение неполных групп, persistent `MessageGroupStore`, повторные сообщения и конкуренцию. Иначе незавершённые группы могут накапливаться или выпускаться повторно.",
+                "related": "[[spring-integration-interview#Q5]] Java DSL; [[spring-integration-interview#Q9]] транзакции; [[spring-integration-interview#Q15]] наблюдаемость потока."
+              },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "`Splitter` и `Aggregator` решают одну и ту же задачу — оба объединяют несколько сообщений в одно и различаются разве что синтаксисом настройки в аннотациях и Java DSL, но не смыслом.",
+              "text": "`Splitter` и `Aggregator` выполняют одну операцию — объединяют несколько сообщений в одно; различие состоит только в XML- и Java-синтаксисе.",
               "correct": false,
               "sections": {
                 "what_actually": "Это противоположные паттерны: `Splitter` разбивает одно на N, а `Aggregator` собирает N в одно; они дополняют друг друга, а не дублируют.",
@@ -346,7 +346,7 @@
               "label": "C"
             },
             {
-              "text": "`Splitter` принимает поток уже отдельных сообщений и раскидывает их по разным каналам в зависимости от содержимого, выполняя маршрутизацию между несколькими ветками потока обработки.",
+              "text": "`Splitter` принимает только одиночные сообщения и распределяет их между каналами по условию, не меняя количество сообщений и не создавая correlation metadata.",
               "correct": false,
               "sections": {
                 "what_actually": "`Splitter` получает одно сообщение и сам порождает из него несколько; маршрутизация по каналам — это задача `Router`.",
@@ -369,7 +369,20 @@
           "question_text": "Как обрабатывать ошибки в `Spring Integration`?",
           "options": [
             {
-              "text": "Повторные попытки включаются глобальной настройкой `spring.integration.retry=true` в `application.yml` и распространяются на все эндпоинты потока сразу, без отдельного advice или `RetryTemplate` на самом обработчике.",
+              "text": "Async error flow отправляет `ErrorMessage` в `errorChannel`; retry/recovery добавляют endpoint advice с endpoint-specific policy и recovery callback.",
+              "correct": true,
+              "sections": {
+                "explanation": "Семантика зависит от границы выполнения: в синхронной цепочке exception может быть выброшен вызывающему коду, а async endpoint публикует `ErrorMessage`, содержащий причину и часто failed message, в настроенный error channel.",
+                "example": "Handler получает `RequestHandlerRetryAdvice` с `RetryTemplate`; после исчерпания попыток recovery callback отправляет `ErrorMessage` в канал, где service activator записывает DLQ-событие.",
+                "when_to_apply": "Настраивайте error flow и advice там, где нужны централизованное логирование, retries с backoff, классификация исключений, dead-letter обработка и отделение технических сбоев от бизнес-отказов.",
+                "edge_cases": "Не всякая синхронная ошибка автоматически уходит в глобальный канал: без async/poller boundary она может распространиться по call stack. Retry должен учитывать идемпотентность и не повторять необратимые side effects.",
+                "related": "[[spring-integration-interview#Q2]] sync и async каналы; [[spring-integration-interview#Q9]] транзакции; [[spring-integration-interview#Q15]] метрики ошибок."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Retry включается свойством `spring.integration.retry=true` для всех endpoints; число попыток и recovery одинаковы глобально и не требуют advice.",
               "correct": false,
               "sections": {
                 "what_actually": "Retry настраивают через `RequestHandlerRetryAdvice` с `RetryTemplate` на конкретном эндпоинте; единого флага `spring.integration.retry` нет.",
@@ -377,11 +390,11 @@
                 "if_it_were_true": "Если бы хватало флага, не нужны были бы `RetryTemplate.builder()` с `maxAttempts` и `exponentialBackoff`.",
                 "how_it_should_be": "Повторы вешают как advice (`RequestHandlerRetryAdvice`) на handler; политику задаёт `RetryTemplate`."
               },
-              "order": 0,
-              "label": "A"
+              "order": 1,
+              "label": "B"
             },
             {
-              "text": "В `errorChannel` приходит сообщение с текстом исключения в payload, без ссылки на исходное сообщение и без структурированной причины сбоя, пригодной для повторной отправки или логирования.",
+              "text": "При ошибке в `errorChannel` попадает исходный payload без exception и headers, поэтому определить причину или failed message через инфраструктуру нельзя.",
               "correct": false,
               "sections": {
                 "what_actually": "В `errorChannel` приходит `ErrorMessage`, payload которого — `MessagingException` с `getCause()` и `getFailedMessage()`, то есть и причина, и исходное сообщение доступны.",
@@ -389,30 +402,17 @@
                 "if_it_were_true": "Если бы контекста не было, нельзя было бы переотправить `failedMessage` в DLQ или повторить обработку.",
                 "how_it_should_be": "`ErrorMessage` несёт `MessagingException` с причиной и `failedMessage` — это и используют при обработке."
               },
-              "order": 1,
-              "label": "B"
+              "order": 2,
+              "label": "C"
             },
             {
-              "text": "Ошибки перехватывают классическими `try/catch` внутри каждого бизнес-метода: централизованного канала для сбоев фреймворк не предоставляет, каждый обработчик разбирается со сбоем сам.",
+              "text": "Ошибки можно обрабатывать только локальным `try/catch` в каждом сервисном методе; у message flow нет системного представления исключения или общего error channel.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть централизованный механизм: исключения автоматически уходят в `errorChannel` как `ErrorMessage`, без ручного `try/catch` в каждом методе.",
                 "source_of_confusion": "Привычка к императивному `try/catch` заслоняет messaging-подход с каналом ошибок.",
                 "if_it_were_true": "Если бы централизованного канала не было, не существовало бы `errorChannel` и типа `ErrorMessage`.",
                 "how_it_should_be": "Глобальную обработку дают `errorChannel` и `ErrorMessage`; `try/catch` остаётся лишь для локальных решений."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
-              "text": "Через `errorChannel`: исключение оборачивается в `ErrorMessage` и уходит в глобальный (или локальный) канал ошибок, где его обрабатывает `@ServiceActivator`; повторы добавляют через `RequestHandlerRetryAdvice`.",
-              "correct": true,
-              "sections": {
-                "explanation": "При сбое `Spring Integration` оборачивает исключение в `ErrorMessage` (содержит cause и `failedMessage`) и публикует его в канал ошибок, где висит обработчик; ретраи добавляют как advice на эндпоинт.",
-                "example": "`@ServiceActivator(inputChannel=\"errorChannel\") public void handle(ErrorMessage em) { Throwable c = em.getPayload().getCause(); log.error(\"err\", c); }` — глобальный обработчик ошибок.",
-                "when_to_apply": "Применяют, чтобы централизованно логировать сбои, отправлять сообщения в DLQ/алертинг и делать повторные попытки на временных ошибках (`IOException`, сетевые таймауты).",
-                "edge_cases": "Глобальный `errorChannel` ловит всё, но можно задать локальный `errorChannel` на конкретном эндпоинте; для retry порядок важен — `RequestHandlerRetryAdvice` срабатывает до отправки в error-канал.",
-                "related": "[[spring-integration-interview#Q2]] `errorChannel` как обычный канал; [[spring-integration-interview#Q3]] `Service Activator` для обработки ошибок; [[spring-integration-interview#Q5]] `.handle(..., e -> e.advice(retry))` в DSL."
               },
               "order": 3,
               "label": "D"
@@ -429,32 +429,7 @@
           "question_text": "Как подключить `Kafka` через `Spring Integration`?",
           "options": [
             {
-              "text": "`Kafka` подключают, реализуя интерфейс `MessageChannel` напрямую поверх топика: методы `send`/`receive` канала самостоятельно оборачивают Kafka-клиент, продюсера и консьюмера вручную в коде.",
-              "correct": false,
-              "sections": {
-                "what_actually": "Связь с `Kafka` дают готовые адаптеры (`KafkaMessageDrivenChannelAdapter`, `KafkaProducerMessageHandler`), а не самописная реализация `MessageChannel`.",
-                "source_of_confusion": "Кажется логичным, что топик — это просто ещё один канал, который надо реализовать руками.",
-                "if_it_were_true": "Если бы канал реализовывали вручную, не существовало бы готовых Kafka-адаптеров в `spring-integration-kafka`.",
-                "how_it_should_be": "Берут готовые inbound/outbound адаптеры; они инкапсулируют listener-контейнер и `KafkaTemplate`."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "Через адаптеры: входящие принимает `KafkaMessageDrivenChannelAdapter` (listener-контейнер шлёт записи в канал), исходящие — `KafkaProducerMessageHandler` поверх `KafkaTemplate`; в DSL — `.from(kafkaAdapter)`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`Kafka` интегрируется как inbound/outbound адаптеры: inbound превращает Kafka-записи в `Message` для канала, outbound публикует payload сообщения в топик через `KafkaTemplate`.",
-                "example": "`var adapter = new KafkaMessageDrivenChannelAdapter<>(factory.createContainer(\"orders-topic\"), ListenerMode.record); adapter.setOutputChannelName(\"ordersInput\");` — записи топика идут в `ordersInput`.",
-                "when_to_apply": "Применяют, когда `Kafka` — один из источников/приёмников в интеграционном конвейере с маршрутизацией и трансформацией, а не простой одиночный `@KafkaListener`.",
-                "edge_cases": "Inbound-адаптер сам управляет offset-ами через listener-контейнер; топик для outbound задаётся через `setTopicExpression(...)`, а не хардкодом, и может вычисляться из заголовков сообщения.",
-                "related": "[[spring-integration-interview#Q5]] `.from(adapter)` в Java DSL; [[spring-integration-interview#Q12]] когда брать `Spring Integration` vs `Spring Kafka`; [[spring-integration-interview#Q3]] `.handle(...)` после трансформации записи."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "Топик для исходящих сообщений фиксируют статической константой в конфигурации адаптера, одинаковой для всех сообщений потока независимо от их заголовков, ключа и содержимого самого payload.",
+              "text": "`KafkaProducerMessageHandler` принимает записи из consumer container и публикует их во входной канал, а `KafkaMessageDrivenChannelAdapter` отправляет исходящие данные через `KafkaTemplate`.",
               "correct": false,
               "sections": {
                 "what_actually": "Топик задают через `setTopicExpression(...)` (SpEL), что позволяет вычислять его из payload/заголовков сообщения, а не только литералом.",
@@ -462,11 +437,36 @@
                 "if_it_were_true": "Если бы топик был только статическим, нельзя было бы маршрутизировать сообщения в разные топики из одного потока.",
                 "how_it_should_be": "Через `setTopicExpression(...)` топик можно вычислять динамически; `LiteralExpression` — лишь частный случай."
               },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Исходящий topic задаётся только строковой константой в конфигурации `KafkaProducerMessageHandler`; выбор topic, key или partition из message headers не поддерживается.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Связь с `Kafka` дают готовые адаптеры (`KafkaMessageDrivenChannelAdapter`, `KafkaProducerMessageHandler`), а не самописная реализация `MessageChannel`.",
+                "source_of_confusion": "Кажется логичным, что топик — это просто ещё один канал, который надо реализовать руками.",
+                "if_it_were_true": "Если бы канал реализовывали вручную, не существовало бы готовых Kafka-адаптеров в `spring-integration-kafka`.",
+                "how_it_should_be": "Берут готовые inbound/outbound адаптеры; они инкапсулируют listener-контейнер и `KafkaTemplate`."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Inbound Kafka adapter передаёт listener records в channel, outbound handler использует `KafkaTemplate`; topic, key и partition задаются config или headers.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring Integration Kafka предоставляет inbound/outbound adapters поверх Spring Kafka. Они переводят `ConsumerRecord` и сообщения приложения между транспортной моделью Kafka и общим `Message`/`MessageChannel` потоком.",
+                "example": "Inbound flow начинается с adapter-а, преобразует record и вызывает сервис; outbound flow заканчивается handler-ом, который извлекает topic/key из headers и отправляет через настроенный `KafkaTemplate`.",
+                "when_to_apply": "Используйте адаптер, когда Kafka является одной из границ более широкого EIP-потока с маршрутизацией, трансформацией, gateway, retry или несколькими выходными системами.",
+                "edge_cases": "Commit/ack mode, транзакции Kafka, retries и error handling зависят от listener container и Spring Kafka. Интеграционный flow не отменяет необходимость корректно настроить consumer group и delivery semantics.",
+                "related": "[[spring-integration-interview#Q7]] retries и error flow; [[spring-integration-interview#Q9]] транзакции; [[spring-integration-interview#Q12]] выбор Spring Kafka или Integration."
+              },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "Для приёма сообщений из `Kafka` берут `KafkaProducerMessageHandler`, а для отправки в топик — `KafkaMessageDrivenChannelAdapter`, подключая каждый из них к своему отдельному каналу входа или выхода в конкретном потоке.",
+              "text": "Kafka-топик реализуют собственным классом `MessageChannel`: он напрямую вызывает Kafka client и заменяет входные и выходные channel adapters.",
               "correct": false,
               "sections": {
                 "what_actually": "Роли перепутаны: `KafkaMessageDrivenChannelAdapter` принимает (inbound), а `KafkaProducerMessageHandler` отправляет (outbound).",
@@ -489,20 +489,7 @@
           "question_text": "Как работают транзакции в `Spring Integration`?",
           "options": [
             {
-              "text": "Транзакция проходит через `DirectChannel`: он синхронный, поэтому `@Transactional` на входе охватывает весь поток; `QueueChannel`/`ExecutorChannel` рвут контекст — транзакцию для них настраивают на стороне потребителя.",
-              "correct": true,
-              "sections": {
-                "explanation": "Транзакция в `Spring Integration` привязана к потоку: пока сообщение идёт по `DirectChannel` в том же потоке, оно остаётся в одной транзакции; смена потока (очередь, executor) обрывает её.",
-                "example": "`@Transactional public void receiveAndProcess(Order o) { orderGateway.placeOrder(o); }` — при `DirectChannel` вся обработка в потоке входит в одну транзакцию.",
-                "when_to_apply": "Применяют, когда нужна атомарность всего конвейера (например, БД-операция и публикация результата) — для этого канал между шагами должен быть `DirectChannel`.",
-                "edge_cases": "На `QueueChannel`/`ExecutorChannel` транзакция отправителя не доходит до потребителя; для поллируемого `QueueChannel` её задают на поллере через `.poller(Pollers.fixedDelay(...).transactional())`, а `ExecutorChannel` выполняет обработчик в потоке executor'а, где транзакцию открывают на самом обработчике.",
-                "related": "[[spring-integration-interview#Q2]] почему только `DirectChannel` держит транзакцию; [[spring-integration-interview#Q4]] `Gateway` как точка входа в транзакцию; [[spring-integration-interview#Q7]] откат и `errorChannel` при сбое."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "На асинхронном `QueueChannel` потребление идёт вне транзакции: сообщения из очереди в своём отдельном потоке обрабатывает поллер, для которого транзакционная обёртка и откат изменений на стороне потребителя не предусмотрены.",
+              "text": "Асинхронный consumer `QueueChannel` принципиально не может работать в транзакции: poller всегда выполняется без transaction manager, transaction interceptor и возможности отката receive вместе с обработкой.",
               "correct": false,
               "sections": {
                 "what_actually": "Транзакцию для `QueueChannel` настраивают на его поллере через `.poller(Pollers.fixedDelay(...).transactional())`, так что потребление идёт в транзакции.",
@@ -510,11 +497,24 @@
                 "if_it_were_true": "Если бы транзакция была невозможна, не было бы метода `.transactional()` и `transactionSynchronizationFactory` на поллере.",
                 "how_it_should_be": "Поллер запускает новую транзакцию на стороне потребителя; нужно лишь явно её сконфигурировать."
               },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Синхронный `DirectChannel` сохраняет caller thread и transaction; async/queue boundary не переносит её, но downstream component может открыть новую.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring-транзакция привязана к текущему потоку, а не сериализуется в `Message`. Поэтому синхронный вызов сохраняет контекст, тогда как очередь или executor начинают независимую обработку, для которой transaction advice настраивается отдельно.",
+                "example": "Метод с `@Transactional` отправляет в `DirectChannel`, и handler пишет в ту же БД-транзакцию. После `QueueChannel` poller читает сообщение и открывает новую транзакцию для receive/process.",
+                "when_to_apply": "Проектируйте channel boundary вместе с atomicity: используйте синхронную цепочку для одной локальной транзакции либо durable messaging/outbox и отдельные транзакции для асинхронных этапов.",
+                "edge_cases": "Transaction synchronization, broker transactions и pseudo-transactions адаптеров имеют отдельные гарантии. Нельзя считать несколько ресурсов атомарными без подходящего transaction manager или архитектурного паттерна.",
+                "related": "[[spring-integration-interview#Q2]] типы каналов; [[spring-integration-interview#Q7]] retry и recovery; [[spring-integration-interview#Q8]] Kafka adapter."
+              },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "Транзакции в `Spring Integration` требуют распределённого XA-менеджера: поток считается пересекающим границы систем, поэтому его оборачивают в 2PC-транзакцию поверх нескольких ресурсов сразу.",
+              "text": "Любой integration flow требует XA-транзакции между каналами, базой и брокером; обычный локальный `@Transactional` не способен охватить handler даже в синхронной цепочке.",
               "correct": false,
               "sections": {
                 "what_actually": "Для синхронного потока через `DirectChannel` достаточно обычного локального `@Transactional`; XA нужен лишь при нескольких независимых ресурсах.",
@@ -526,7 +526,7 @@
               "label": "C"
             },
             {
-              "text": "Транзакция сохраняется через любой канал, включая `QueueChannel` и `ExecutorChannel`: фреймворк переносит транзакционный контекст вслед за сообщением даже при смене потока обработки на поллере.",
+              "text": "Транзакция отправителя переносится через любой канал, включая `QueueChannel`, `ExecutorChannel` и reactive boundary, потому что transaction context сериализуется в message headers и восстанавливается consumer-ом.",
               "correct": false,
               "sections": {
                 "what_actually": "Транзакция переживает только `DirectChannel` (один поток); `QueueChannel`/`ExecutorChannel` меняют поток и разрывают транзакционный контекст.",
@@ -549,7 +549,7 @@
           "question_text": "Как тестировать потоки `Spring Integration`?",
           "options": [
             {
-              "text": "Чтобы прочитать результат потока в тесте, ставят `Thread.sleep(...)` на время обработки и затем читают значение из статического поля-накопителя, куда обработчик складывает готовый результат.",
+              "text": "Результат integration flow проверяют через `Thread.sleep()` и общую статическую переменную, потому что test API не умеет отправлять или получать сообщения из каналов.",
               "correct": false,
               "sections": {
                 "what_actually": "Результат читают из выходного `PollableChannel` методом `receive(timeout)`, который сам ждёт сообщение; `Thread.sleep` и статические поля не нужны.",
@@ -561,7 +561,20 @@
               "label": "A"
             },
             {
-              "text": "Подменить обработчик на мок прямо в работающем потоке нельзя — под каждый тест заводят отдельную конфигурацию потока с заранее подставленными вместо реальных эндпоинтами и каналами.",
+              "text": "`@SpringIntegrationTest` поднимает integration context; scenario запускают gateway/channel, результат получают с timeout без fixed sleeps, а `MockIntegrationContext` заменяет endpoints.",
+              "correct": true,
+              "sections": {
+                "explanation": "Тестовые средства позволяют управлять integration endpoints и заменять внешние границы, сохраняя реальную конфигурацию маршрута. Синхронные части проверяются непосредственно, а pollable/async результаты ожидаются ограниченное время.",
+                "example": "Тест отправляет команду через gateway, читает reply из `QueueChannel` с timeout и использует `MockIntegrationContext.substituteMessageHandlerFor(...)`, чтобы заменить внешний outbound handler мок-обработчиком.",
+                "when_to_apply": "Используйте unit-тесты для чистых transformers/routers, context tests для wiring и message semantics, а Testcontainers — только для контрактов с реальным Kafka/JMS/FTP/DB transport.",
+                "edge_cases": "Не заменяйте ожидание безусловным `sleep`: применяйте timeout receive, latch или Awaitility. После подмены handler-а нужно корректно восстановить контекст, чтобы тесты не влияли друг на друга.",
+                "related": "[[spring-integration-interview#Q4]] тестирование gateway; [[spring-integration-interview#Q7]] error channel; [[spring-integration-interview#Q8]] Kafka integration."
+              },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Подменить endpoint handler в работающем тестовом контексте невозможно; для каждого теста нужно создавать отдельную production-конфигурацию потока с другим сервисом.",
               "correct": false,
               "sections": {
                 "what_actually": "`MockIntegrationContext.substituteMessageHandlerFor(\"orderHandler\", mock)` подменяет обработчик на лету без переписывания конфигурации.",
@@ -569,24 +582,11 @@
                 "if_it_were_true": "Если бы подмена была невозможна, не существовало бы `MockIntegrationContext` с методом `substituteMessageHandlerFor`.",
                 "how_it_should_be": "Обработчик подменяют через `MockIntegrationContext` по имени бина; отдельная тестовая конфигурация не требуется."
               },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "`@SpringIntegrationTest` вместе с `@SpringBootTest`: инжектят `Gateway`, шлют сообщение и читают результат из `PollableChannel` через `receive(timeout)`; обработчики подменяют на моки через `MockIntegrationContext`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Тестирование строят вокруг реальных каналов: `Gateway` подаёт вход, `PollableChannel.receive(...)` снимает выход, а `MockIntegrationContext` позволяет заменить любой эндпоинт моком прямо в потоке.",
-                "example": "`@SpringIntegrationTest @SpringBootTest class T { @Autowired OrderGateway g; @Autowired @Qualifier(\"ordersOutput\") PollableChannel out; @Test void t() { g.placeOrder(o); assertThat(out.receive(5000)).isNotNull(); } }`.",
-                "when_to_apply": "Применяют, чтобы проверить поток целиком (вход через `Gateway` → выход на канал) и негативные сценарии — например, что сбой обработчика попадает в `errorChannel`.",
-                "edge_cases": "`receive(timeout)` блокирующий и вернёт `null` по таймауту — assert на `isNotNull()` обязателен; подмену через `MockIntegrationContext` нужно делать по точному имени бина-handler-а, иначе мок не применится.",
-                "related": "[[spring-integration-interview#Q4]] инжект `Gateway` для подачи входа; [[spring-integration-interview#Q2]] `PollableChannel`/`QueueChannel` для чтения выхода; [[spring-integration-interview#Q7]] проверка попадания сбоя в `errorChannel`."
-              },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "Потоки `Spring Integration` проверяют, поднимая всё приложение и дёргая его HTTP-эндпоинты вручную; отдельного тестового среза для контекста у фреймворка нет, всё гоняют end-to-end.",
+              "text": "Поток можно тестировать только end-to-end через внешний HTTP endpoint и полностью поднятые брокеры; компоненты и каналы внутри Spring-контекста недоступны тесту.",
               "correct": false,
               "sections": {
                 "what_actually": "Есть штатная поддержка: `@SpringIntegrationTest` и `MockIntegrationContext` тестируют потоки прямо в контексте без ручного подъёма всего приложения.",
@@ -609,7 +609,7 @@
           "question_text": "Чем `Spring Integration` отличается от `Apache Camel`?",
           "options": [
             {
-              "text": "`Spring Integration` предлагает больше готовых коннекторов, чем `Apache Camel`, и полностью покрывает все 65 EIP-паттернов из каталога Hohpe & Woolf, тогда как у Camel набор компонентов и адаптеров заметно уже.",
+              "text": "`Spring Integration` предоставляет больше транспортных компонентов и полностью реализует весь каталог EIP, тогда как `Apache Camel` ограничен несколькими адаптерами, ориентированными исключительно на Spring-приложения.",
               "correct": false,
               "sections": {
                 "what_actually": "Наоборот: у `Camel` 200+ компонентов и более полное покрытие EIP, а `Spring Integration` имеет ~30 адаптеров и реализует основные паттерны.",
@@ -621,20 +621,7 @@
               "label": "A"
             },
             {
-              "text": "`Spring Integration` глубоко интегрирован в Spring, имеет ~30 адаптеров, низкий порог входа и покрывает основные EIP; `Apache Camel` независим от Spring и даёт 200+ компонентов с почти полным покрытием EIP.",
-              "correct": true,
-              "sections": {
-                "explanation": "Главное различие — экосистема и широта коннекторов: `Spring Integration` «родной» для Spring и компактный, `Apache Camel` — самостоятельный и максимально богатый по компонентам и паттернам.",
-                "example": "Поток на `Spring Integration` пишется через `IntegrationFlow` в Spring-бине, а на `Camel` — через `RouteBuilder.from(\"kafka:...\").to(\"...\")` с собственным DSL и 200+ компонентами.",
-                "when_to_apply": "Применяют `Spring Integration`, когда проект уже на Spring и нужны базовые EIP; `Apache Camel` — когда требуется множество специфических коннекторов или почти полное покрытие EIP.",
-                "edge_cases": "Различие в коннекторах не абсолютное: `Spring Integration` тоже расширяем, а `Camel` отлично работает и внутри Spring Boot (`camel-spring-boot`), так что выбор чаще про экосистему и опыт команды.",
-                "related": "[[spring-integration-interview#Q1]] какие EIP покрывает `Spring Integration`; [[spring-integration-interview#Q12]] выбор vs `Spring Kafka`; [[spring-integration-interview#Q8]] адаптер `Kafka` как пример коннектора."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "`Apache Camel` написан на Scala и рассчитан на Scala-проекты: его маршруты описывают на Scala DSL и запускают в Scala-окружении вместе с остальным кодом приложения и его JVM-зависимостями.",
+              "text": "`Apache Camel` работает только на Scala и не может запускаться в Java-приложении или Spring Boot; его DSL компилируется отдельным runtime и несовместим со Spring-бинами.",
               "correct": false,
               "sections": {
                 "what_actually": "`Camel` в первую очередь Java-фреймворк (есть Java/XML/Scala DSL) и прекрасно интегрируется со Spring Boot через `camel-spring-boot`.",
@@ -642,11 +629,24 @@
                 "if_it_were_true": "Если бы Camel был только на Scala, не существовало бы стартера `camel-spring-boot` для Java-проектов.",
                 "how_it_should_be": "Основной язык Camel — Java; Spring Boot-интеграция штатная, а Scala DSL — лишь один из вариантов."
               },
+              "order": 1,
+              "label": "B"
+            },
+            {
+              "text": "Оба реализуют EIP: Spring Integration глубоко использует Spring messaging/container, Camel предлагает собственный routing DSL и более широкий component catalog.",
+              "correct": true,
+              "sections": {
+                "explanation": "Оба решения строят message routes по EIP. Spring Integration естественно сочетается с Spring-бинами, channels и lifecycle, тогда как Camel ориентирован на универсальную интеграционную платформу с большим каталогом компонентов и собственными route concepts.",
+                "example": "В Spring-centric сервисе flow вызывает Spring beans через `.handle(...)`; в интеграционном hub с множеством SaaS/legacy transports Camel route может дать готовый компонент и более переносимую конфигурацию.",
+                "when_to_apply": "Выбирайте по существующей платформе, доступным connectors, операционной модели и сложности маршрутов, а не по фиксированному числу компонентов, которое меняется между релизами.",
+                "edge_cases": "Проекты могут использоваться совместно, но это увеличивает число моделей сообщений и эксплуатационных абстракций. Утверждения о точном количестве адаптеров или «полном» EIP-покрытии быстро устаревают.",
+                "related": "[[spring-integration-interview#Q1]] EIP-модель; [[spring-integration-interview#Q5]] Java DSL; [[spring-integration-interview#Q12]] выбор уровня Kafka-интеграции."
+              },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "`Spring Integration` и `Apache Camel` — это один и тот же проект под двумя именами: общий код и общий DSL, отличающиеся разве что брендингом Spring и Apache да названиями пакетов и артефактов.",
+              "text": "`Spring Integration` и `Apache Camel` используют один runtime с двумя API; их endpoints, DSL, компоненты и message model взаимозаменяемы без bridge, конвертации или изменения конфигурации.",
               "correct": false,
               "sections": {
                 "what_actually": "Это разные продукты разных команд: `Spring Integration` от Spring (VMware), `Apache Camel` — проект Apache с собственным DSL и компонентной моделью.",
@@ -669,7 +669,20 @@
           "question_text": "Когда использовать `Spring Integration`, а когда `Spring Kafka`?",
           "options": [
             {
-              "text": "Даже для чтения одного топика заводят полноценный `IntegrationFlow` со `Spring Integration`, а аннотацию `@KafkaListener` из `Spring Kafka` оставляют разве что для маленьких учебных примеров.",
+              "text": "Для direct Kafka producer/consumer достаточно Spring Kafka; Spring Integration нужен для EIP across systems, Kafka Streams — для stateful stream processing.",
+              "correct": true,
+              "sections": {
+                "explanation": "Spring Kafka предоставляет нативные producer/consumer abstractions и container semantics. Spring Integration использует их через adapters, когда Kafka становится частью более общего message flow; stream processors решают stateful непрерывные вычисления.",
+                "example": "Сервис с одним listener-ом обрабатывает событие через `@KafkaListener`. Flow Kafka → validate → route → HTTP/JMS использует Integration adapters. Join двух бесконечных topics по окну реализуется Kafka Streams.",
+                "when_to_apply": "Выбирайте минимальный слой, выражающий задачу: Spring Kafka для транспорта, Spring Integration для orchestration/EIP, Kafka Streams или Flink для stateful stream processing.",
+                "edge_cases": "Компоненты совместимы и часто работают вместе. Retry, ordering, exactly-once и transactions определяются прежде всего Spring Kafka/Kafka конфигурацией, даже если endpoint включён в IntegrationFlow.",
+                "related": "[[spring-integration-interview#Q8]] Kafka adapters; [[spring-integration-interview#Q6]] конечная агрегация сообщений; [[spring-integration-interview#Q11]] выбор integration framework."
+              },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Даже для одного consumer-а обязательно строить `IntegrationFlow` с Kafka adapter-ом; использование `@KafkaListener` и `KafkaTemplate` напрямую считается неподдерживаемым обходом интеграционной модели.",
               "correct": false,
               "sections": {
                 "what_actually": "Для простого consumer/producer достаточно `@KafkaListener`/`KafkaTemplate` из `Spring Kafka`; `IntegrationFlow` оправдан для многошаговых конвейеров.",
@@ -677,11 +690,11 @@
                 "if_it_were_true": "Если бы простой случай требовал DSL, `Spring Kafka` с `@KafkaListener` был бы бесполезен.",
                 "how_it_should_be": "Простой обмен решается аннотациями `Spring Kafka`; `Spring Integration` берут под сложную маршрутизацию и трансформации."
               },
-              "order": 0,
-              "label": "A"
+              "order": 1,
+              "label": "B"
             },
             {
-              "text": "Для real-time stream processing с оконными агрегациями и join-ами потоков лучше всего подходит именно `Spring Integration`, а не `Kafka Streams` или `Flink` с их отдельным рантаймом обработки.",
+              "text": "Оконные агрегации, event-time joins и state stores следует реализовывать через `Splitter` и `Aggregator` Spring Integration, потому что Kafka Streams предназначен только для доставки записей между топиками.",
               "correct": false,
               "sections": {
                 "what_actually": "Для windowing и join-ов поверх потоков берут `Kafka Streams` или `Flink`; `Spring Integration` — это messaging-конвейеры, а не stream-processing движок.",
@@ -689,30 +702,17 @@
                 "if_it_were_true": "Если бы `Spring Integration` делал stream-processing, не нужны были бы `Kafka Streams`/`Flink` для оконных агрегаций.",
                 "how_it_should_be": "Оконные операции и join-ы — это `Kafka Streams`/`Flink`; `Spring Integration` оркеструет обмен сообщениями."
               },
-              "order": 1,
-              "label": "B"
+              "order": 2,
+              "label": "C"
             },
             {
-              "text": "`Spring Integration` и `Spring Kafka` конкурируют за одну конфигурацию: в приложении задействуют либо один стартер, либо другой, но не оба сразу из-за конфликта их автоконфигураций Boot.",
+              "text": "Spring Kafka и Spring Integration нельзя подключить вместе: они регистрируют несовместимые consumer factories, конфликтующие Kafka clients и требуют взаимоисключающих starter-ов в одном ApplicationContext.",
               "correct": false,
               "sections": {
                 "what_actually": "Они комбинируются: Kafka-адаптеры `Spring Integration` построены поверх `spring-kafka`, так что оба работают вместе.",
                 "source_of_confusion": "Кажется, что это конкурирующие библиотеки, которые нельзя совмещать.",
                 "if_it_were_true": "Если бы они исключали друг друга, `KafkaMessageDrivenChannelAdapter` не мог бы использовать listener-контейнеры `spring-kafka`.",
                 "how_it_should_be": "`Spring Integration` опирается на `spring-kafka` для интеграции с `Kafka`; их часто применяют совместно."
-              },
-              "order": 2,
-              "label": "C"
-            },
-            {
-              "text": "Простой producer/consumer одного топика — `Spring Kafka` (`@KafkaListener`); несколько источников с маршрутизацией, трансформациями и retry — `Spring Integration` с Kafka-адаптером; окна и join-ы — `Kafka Streams`/`Flink`.",
-              "correct": true,
-              "sections": {
-                "explanation": "Выбор по сложности конвейера: чем больше шагов (маршрутизация, трансформации, агрегация, обработка ошибок), тем уместнее `Spring Integration`; для тривиального обмена с одним топиком хватает `Spring Kafka`.",
-                "example": "Простой случай: `@KafkaListener(topics=\"orders\") void on(Order o){...}` на `Spring Kafka`; сложный ETL с фильтром, роутером и retry удобнее описать как `IntegrationFlow` в `Spring Integration`.",
-                "when_to_apply": "Применяют `Spring Kafka` для прямой работы с топиками, а `Spring Integration` — когда `Kafka` лишь один из узлов многошагового интеграционного потока с несколькими транспортами.",
-                "edge_cases": "Границы размыты: `Spring Integration` под капотом использует тот же `spring-kafka` для Kafka-адаптеров, а для stream-processing (windowing, joins) оба не подходят — там нужны `Kafka Streams`/`Flink`.",
-                "related": "[[spring-integration-interview#Q8]] Kafka-адаптер в `Spring Integration`; [[spring-integration-interview#Q11]] сравнение с `Apache Camel`; [[spring-integration-interview#Q5]] описание многошагового потока в Java DSL."
               },
               "order": 3,
               "label": "D"
@@ -729,7 +729,7 @@
           "question_text": "Что такое паттерн `Claim Check` и как его реализовать в `Spring Integration`?",
           "options": [
             {
-              "text": "Паттерн аутентификации: каждое сообщение подписывается токеном безопасности, по которому получатель на входе проверяет права отправителя, срок действия и целостность данных ещё перед началом обработки сообщения.",
+              "text": "`Claim Check` подписывает каждое сообщение security-токеном, сохраняет claims пользователя в headers и проверяет права отправителя перед прохождением следующего channel endpoint.",
               "correct": false,
               "sections": {
                 "what_actually": "`Claim Check` про разгрузку канала от тяжёлого payload через внешнее хранилище, а не про аутентификацию; токен здесь — ссылка на данные, а не credential.",
@@ -741,20 +741,7 @@
               "label": "A"
             },
             {
-              "text": "EIP-паттерн: большой payload сохраняется во внешнее хранилище (S3, БД), а по каналу идёт лёгкая ссылка-токен; позже по токену данные извлекают обратно. Реализуют через трансформеры `store` и `retrieve`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`Claim Check` уменьшает размер сообщений в очереди: тяжёлые данные «сдают в камеру хранения», а в потоке гуляет только квитанция-ключ, по которой их затем «забирают».",
-                "example": "`IntegrationFlow.from(\"largeOrdersInput\").transform(claimCheck::store).channel(\"lightweightChannel\").get();` — store кладёт payload в S3 и возвращает ключ, дальше идёт только ключ.",
-                "when_to_apply": "Применяют, когда сообщения слишком велики для брокера/очереди (большие файлы, документы) или когда не хочется гонять тяжёлый payload через все шаги конвейера.",
-                "edge_cases": "Нужно следить за временем жизни данных в хранилище: если payload удалят раньше, чем сработает `retrieve`, поток упадёт; полезно очищать данные после успешного извлечения.",
-                "related": "[[spring-integration-interview#Q14]] `Enricher` как другой паттерн работы с данными; [[spring-integration-interview#Q2]] каналы для передачи лёгкого токена; [[spring-integration-interview#Q1]] место `Claim Check` среди EIP."
-              },
-              "order": 1,
-              "label": "B"
-            },
-            {
-              "text": "Весь большой payload передаётся по каналу как обычно, а во внешнее хранилище дополнительно кладётся его копия для надёжности и восстановления сообщения при сбое обработки в потоке.",
+              "text": "`Claim Check` передаёт полный payload по каждому каналу и параллельно сохраняет его копию во внешнем store, чтобы downstream всегда получал оба представления.",
               "correct": false,
               "sections": {
                 "what_actually": "Смысл паттерна в обратном: по каналу идёт только лёгкий токен, а тяжёлый payload по каналу не передаётся вообще.",
@@ -762,17 +749,30 @@
                 "if_it_were_true": "Если бы payload всё равно шёл по каналу, паттерн не уменьшал бы размер сообщений в очереди.",
                 "how_it_should_be": "По каналу гуляет только ключ; тяжёлый payload лежит во внешнем сторе и не нагружает брокер."
               },
-              "order": 2,
-              "label": "C"
+              "order": 1,
+              "label": "B"
             },
             {
-              "text": "Каждое сообщение проверяется фильтром на валидность по заданным правилам и отбрасывается, если проверку не прошло, — так канал очищается от некорректных и повреждённых входных данных.",
+              "text": "`Claim Check` является разновидностью message filter: он валидирует payload по набору assertions и без внешнего хранения отбрасывает сообщение при отрицательном результате проверки.",
               "correct": false,
               "sections": {
                 "what_actually": "Отбрасывание невалидных сообщений — это паттерн `Message Filter`; `Claim Check` сохраняет payload снаружи и передаёт по каналу токен.",
                 "source_of_confusion": "И там, и там фигурирует «проверка», поэтому паттерны путают.",
                 "if_it_were_true": "Если бы `Claim Check` фильтровал, у него не было бы шагов store/retrieve во внешнее хранилище.",
                 "how_it_should_be": "Отсев сообщений делает `Filter`; `Claim Check` уменьшает размер сообщения, вынося данные в стор."
+              },
+              "order": 2,
+              "label": "C"
+            },
+            {
+              "text": "Claim Check сохраняет большой или sensitive payload в message store, передаёт token и позднее восстанавливает content по этому key.",
+              "correct": true,
+              "sections": {
+                "explanation": "Паттерн уменьшает размер сообщения и отделяет транспорт от хранения содержимого. Первый шаг сохраняет payload и выпускает идентификатор, второй по идентификатору восстанавливает данные для нужного участка потока.",
+                "example": "Документ сохраняют в БД/S3, а сообщение содержит `documentId`; после маршрутизации retrieve-step загружает документ только перед сервисом, которому требуется полный payload.",
+                "when_to_apply": "Используйте при больших payload, ограничениях брокера, передаче чувствительных данных через несколько посредников или когда разные этапы должны работать только с metadata.",
+                "edge_cases": "Store должен иметь TTL, cleanup, контроль доступа и идемпотентную retrieval-семантику. Потеря либо преждевременное удаление claim превращает сообщение в недоступную ссылку.",
+                "related": "[[spring-integration-interview#Q5]] transformers в DSL; [[spring-integration-interview#Q7]] recovery; [[spring-integration-interview#Q9]] границы хранения и транзакций."
               },
               "order": 3,
               "label": "D"
@@ -789,20 +789,7 @@
           "question_text": "Как работает `Enricher` (Content Enricher) в `Spring Integration`?",
           "options": [
             {
-              "text": "Обогащает сообщение данными из внешнего источника: делает запрос в `requestChannel` (lookup клиента по `customerId`), а ответ кладёт в заголовки или поля payload через `propertyFunction`/`headerFunction`.",
-              "correct": true,
-              "sections": {
-                "explanation": "`Enricher` дополняет сообщение недостающими данными: исходный payload остаётся, но к нему добавляются атрибуты, полученные синхронным запросом в отдельный канал-источник.",
-                "example": "`.enrich(e -> e.requestChannel(\"customerLookupChannel\").requestPayloadExpression(\"payload.customerId\").propertyFunction(\"customerName\", r -> ((CustomerInfo) r.getPayload()).name()))` — заказ обогащается именем клиента.",
-                "when_to_apply": "Применяют, когда для дальнейшей обработки сообщению не хватает данных (имя клиента, кредитный лимит), и их нужно подтянуть из другого сервиса/канала прямо в потоке.",
-                "edge_cases": "Запрос в `requestChannel` синхронный и блокирует поток на время lookup; если источник медленный или недоступен, это тормозит весь конвейер — нужны таймауты и обработка ошибок.",
-                "related": "[[spring-integration-interview#Q13]] `Claim Check` как другой паттерн работы с payload; [[spring-integration-interview#Q2]] `requestChannel` для lookup; [[spring-integration-interview#Q6]] `Aggregator` как ещё один EIP-эндпоинт."
-              },
-              "order": 0,
-              "label": "A"
-            },
-            {
-              "text": "Удаляет из сообщения лишние поля, оставляя для следующего шага компактный payload с минимально необходимым набором данных и отбрасывая всё, что дальше по потоку не потребуется.",
+              "text": "Content Enricher удаляет поля и headers, оставляя минимальный payload; для добавления внешних данных используется исключительно отдельный transformer.",
               "correct": false,
               "sections": {
                 "what_actually": "`Enricher` добавляет данные в сообщение, а не удаляет; усечение/преобразование структуры — это задача `Transformer`/`Filter`.",
@@ -810,11 +797,23 @@
                 "if_it_were_true": "Если бы `Enricher` удалял поля, его нельзя было бы использовать для подтягивания имени клиента в заказ.",
                 "how_it_should_be": "Для удаления полей берут Content Filter/Transformer; `Enricher` именно обогащает сообщение новыми данными."
               },
+              "order": 0,
+              "label": "A"
+            },
+            {
+              "text": "Enricher всегда отправляет запрос асинхронно и немедленно продолжает основной flow с пустыми полями, которые автоматически заполняются после получения ответа.",
+              "correct": false,
+              "sections": {
+                "what_actually": "Lookup в `requestChannel` синхронный: `Enricher` ждёт ответ, прежде чем обогатить сообщение и пропустить его дальше.",
+                "source_of_confusion": "Хочется верить, что обогащение происходит «в фоне» без задержки потока.",
+                "if_it_were_true": "Если бы запрос был неблокирующим, обогащённые поля могли бы отсутствовать в момент передачи сообщения дальше.",
+                "how_it_should_be": "`Enricher` блокирует поток на время запроса; для неблокирующего обогащения нужны другие реактивные подходы."
+              },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "Обогащает сообщение значениями из статической конфигурации в коде, проставляя заранее заданные константы и дефолты без обращения к другим каналам, сервисам или базе данных.",
+              "text": "Enricher может читать значения только из статических constants конфигурации; обращения к service, gateway или request channel нарушают его контракт.",
               "correct": false,
               "sections": {
                 "what_actually": "`Enricher` штатно делает запрос в `requestChannel` (к сервису/БД через канал) и кладёт ответ в сообщение; он не ограничен статикой.",
@@ -826,13 +825,14 @@
               "label": "C"
             },
             {
-              "text": "Обращается к источнику данных асинхронно и не блокирует поток: обработка продолжается дальше, а обогащённые поля подставляются в сообщение позже, по мере прихода ответа от источника.",
-              "correct": false,
+              "text": "Content Enricher получает дополнительные данные и записывает их в payload properties или headers, сохраняя исходный message как основу результата.",
+              "correct": true,
               "sections": {
-                "what_actually": "Lookup в `requestChannel` синхронный: `Enricher` ждёт ответ, прежде чем обогатить сообщение и пропустить его дальше.",
-                "source_of_confusion": "Хочется верить, что обогащение происходит «в фоне» без задержки потока.",
-                "if_it_were_true": "Если бы запрос был неблокирующим, обогащённые поля могли бы отсутствовать в момент передачи сообщения дальше.",
-                "how_it_should_be": "`Enricher` блокирует поток на время запроса; для неблокирующего обогащения нужны другие реактивные подходы."
+                "explanation": "Паттерн Content Enricher добавляет недостающий контекст к сообщению. Spring Integration поддерживает header enrichment и payload/property enrichment, включая request/reply обращение к дополнительному flow.",
+                "example": "По `customerId` enrichment flow получает профиль клиента и устанавливает `payload.customerTier`, либо добавляет header `region`, после чего router принимает решение без повторного lookup.",
+                "when_to_apply": "Используйте, когда downstream-компоненту нужен контекст из справочника или сервиса, но исходное сообщение должно оставаться основным объектом обработки.",
+                "edge_cases": "Request/reply enrichment может блокировать синхронный поток и требует timeout/error strategy. Для immutable payload удобнее вернуть новый объект или обогащать headers, а не пытаться менять свойства.",
+                "related": "[[spring-integration-interview#Q4]] request/reply gateway; [[spring-integration-interview#Q5]] DSL; [[spring-integration-interview#Q7]] ошибки внешнего lookup."
               },
               "order": 3,
               "label": "D"
@@ -849,7 +849,7 @@
           "question_text": "Как мониторить `Spring Integration`?",
           "options": [
             {
-              "text": "Эндпоинт `/actuator/integrationgraph` выводит плоский список бинов контекста, из которого структуру каналов и связей между эндпоинтами потока приходится восстанавливать и собирать самостоятельно.",
+              "text": "`/actuator/integrationgraph` возвращает только плоский список всех Spring-бинов и не содержит узлов, каналов, endpoints или связей integration flow.",
               "correct": false,
               "sections": {
                 "what_actually": "`/actuator/integrationgraph` отдаёт именно граф интеграционных потоков — узлы (каналы, эндпоинты) и связи между ними, а не общий список бинов.",
@@ -861,32 +861,32 @@
               "label": "A"
             },
             {
-              "text": "Метрики `Spring Integration` публикуются в JMX и снимаются JMX-консолью или JMX-экспортёром, отдельно от стека `Micrometer`/Prometheus, куда они при стандартной настройке не попадают.",
+              "text": "Наблюдаемость доступна только через JMX: Micrometer registry и Prometheus не получают метрики Spring Integration даже при наличии actuator.",
               "correct": false,
               "sections": {
-                "what_actually": "Метрики интегрированы именно с `Micrometer`, откуда уходят в Prometheus/Grafana и другие бэкенды, не только в JMX.",
-                "source_of_confusion": "Исторически Spring отдавал метрики через JMX, отсюда устаревшее представление.",
-                "if_it_were_true": "Если бы поддерживался только JMX, серии `spring.integration.*` не появлялись бы в `MeterRegistry`/Prometheus.",
-                "how_it_should_be": "Метрики идут через `Micrometer` в любой настроенный бэкенд (Prometheus, Grafana); JMX — лишь один из вариантов."
+                "what_actually": "Spring Integration instruments components through Micrometer/Observation integration, поэтому metrics могут экспортироваться в любой configured registry, включая Prometheus; JMX не является единственным channel.",
+                "source_of_confusion": "Исторические Spring monitoring examples часто использовали JMX, и старую operational model переносят на современную Micrometer infrastructure.",
+                "if_it_were_true": "При наличии Prometheus registry Spring Integration meters не появлялись бы в registry и actuator metrics endpoints, независимо от enabled instrumentation.",
+                "how_it_should_be": "Подключайте Micrometer registry и настраивайте instrumentation/observation; конкретные meter names проверяйте по версии Spring Integration и runtime configuration."
               },
               "order": 1,
               "label": "B"
             },
             {
-              "text": "Через `Micrometer`: публикуются таймер `spring.integration.send`, счётчик `spring.integration.receive` и gauge `spring.integration.channels`/`handlers`/`sources`; а `/actuator/integrationgraph` отдаёт граф потоков.",
+              "text": "С Micrometer доступны send/receive meters и channel gauges; `/actuator/integrationgraph` показывает runtime graph channels и endpoints.",
               "correct": true,
               "sections": {
-                "explanation": "Мониторинг строится на `Micrometer`-метриках по каналам/хендлерам плюс эндпоинте `integrationgraph`, который показывает топологию потоков для отладки и наблюдаемости.",
-                "example": "В `application.yml`: `management.endpoints.web.exposure.include: integrationgraph` открывает `/actuator/integrationgraph`, а метрики `spring.integration.*` уходят в Prometheus/Grafana через `MeterRegistry`.",
-                "when_to_apply": "Применяют, чтобы видеть пропускную способность каналов, время работы обработчиков, число активных каналов и источников, а также общую структуру потоков в продакшене.",
-                "edge_cases": "Таймер `spring.integration.send` навешивается на каждый канал и обработчик с тегами `name`/`type`/`result`, поэтому метрики можно разбить по конкретному компоненту; счётчик `spring.integration.receive` появляется только у поллируемых каналов вроде `QueueChannel`.",
-                "related": "[[spring-integration-interview#Q2]] типы каналов, которые отражают метрики; [[spring-integration-interview#Q7]] метрики и `errorChannel` для наблюдения за сбоями; [[spring-integration-interview#Q5]] потоки, которые показывает `integrationgraph`."
+                "explanation": "Интеграция с Micrometer регистрирует meter-ы вроде `spring.integration.send` и `spring.integration.receive`, component gauges и queue gauges; actuator graph помогает увидеть фактическую topology зарегистрированных flows.",
+                "example": "Prometheus собирает latency/count по `spring.integration.send` с тегами типа компонента, а оператор открывает `/actuator/integrationgraph`, чтобы найти канал и handler на проблемном участке.",
+                "when_to_apply": "Используйте метрики для throughput, latency, failures и заполнения очередей, а graph — для диагностики wiring, документации runtime topology и поиска неактивных endpoints.",
+                "edge_cases": "Имена и набор meter-ов зависят от версии и включённой observation/metrics configuration. Не следует придумывать `spring.integration.handlers` или `channels.queueSize`, если официальные meter names отличаются.",
+                "related": "[[spring-integration-interview#Q2]] queue channels; [[spring-integration-interview#Q7]] ошибки; [[spring-integration-interview#Q10]] тестирование topology."
               },
               "order": 2,
               "label": "C"
             },
             {
-              "text": "Мониторинг `Spring Integration` строят на стороннем APM-агенте: встроенных метрик и Actuator-эндпоинтов для наблюдения за каналами, очередями и обработчиками у фреймворка для этого нет.",
+              "text": "Встроенных observation/metrics и integration graph нет; для измерения handlers обязательно внедрять сторонний APM-агент и вручную инструктировать каждый метод.",
               "correct": false,
               "sections": {
                 "what_actually": "У `Spring Integration` есть встроенные метрики `spring.integration.*` через `Micrometer` и эндпоинт `/actuator/integrationgraph`.",
