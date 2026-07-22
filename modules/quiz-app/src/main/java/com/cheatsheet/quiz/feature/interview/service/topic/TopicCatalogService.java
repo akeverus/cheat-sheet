@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Каталог тем: группы, порядок и учебные траектории из YAML-конфига.
@@ -208,7 +209,7 @@ public class TopicCatalogService {
                 if (!(loaded instanceof Map<?, ?> rootMap)) {
                     throw new IllegalStateException("Topic groups config has invalid root structure");
                 }
-                Map<String, Object> root = castRoot(rootMap);
+                Map<String, Object> root = toStringKeyedMap(rootMap);
                 return parseTopicConfig(root);
             }
         } catch (Exception e) {
@@ -216,7 +217,7 @@ public class TopicCatalogService {
         }
     }
 
-    private static Map<String, Object> castRoot(Map<?, ?> raw) {
+    private static Map<String, Object> toStringKeyedMap(Map<?, ?> raw) {
         Map<String, Object> result = new LinkedHashMap<>();
         for (Map.Entry<?, ?> entry : raw.entrySet()) {
             if (entry.getKey() != null) {
@@ -261,7 +262,7 @@ public class TopicCatalogService {
         List<Map<String, Object>> result = new ArrayList<>();
         for (Object item : collection) {
             if (item instanceof Map<?, ?> map) {
-                result.add(castRoot(map));
+                result.add(toStringKeyedMap(map));
             }
         }
         return result;
@@ -365,7 +366,7 @@ public class TopicCatalogService {
     }
 
     private static void ensurePrerequisites(List<TopicDef> topics) {
-        Set<String> keys = topics.stream().map(TopicDef::key).collect(java.util.stream.Collectors.toSet());
+        Set<String> keys = topics.stream().map(TopicDef::key).collect(Collectors.toSet());
         for (TopicDef topic : topics) {
             for (String prerequisite : topic.prerequisites()) {
                 if (!keys.contains(prerequisite)) {
