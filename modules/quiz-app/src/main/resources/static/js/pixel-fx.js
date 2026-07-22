@@ -59,16 +59,6 @@
     return allowFx() && pixelLevel() === 'high';
   }
 
-  /** Decorative combo/XP/fake lives HUD — high only */
-  function allowDecorativeHud() {
-    return allowFx() && pixelLevel() === 'high';
-  }
-
-  /** Exam lives HUD — med + high when session is EXAM */
-  function allowExamHud() {
-    return allowFx() && isExamMode();
-  }
-
   var CRUMBS = [
     '/img/pixel/crumb-teal.png', '/img/pixel/crumb-amber.png', '/img/pixel/crumb-purple.png',
     '/img/pixel/crumb-green.png', '/img/pixel/crumb-blue.png', '/img/pixel/crumb-red.png',
@@ -113,21 +103,13 @@
   ];
 
   var OK_TEXT = ['PERFECT!', 'CRITICAL!', 'NICE!', 'COMBO!', 'YEAH!', 'PIXEL WIN!'];
-  var BAD_TEXT = ['MISS...', 'OUCH!', 'NOPE', 'TRY AGAIN'];
   var OK_TEXT_MED = ['Верно!', 'Отлично!', 'Так держать!', 'Ещё один!', 'Супер!', 'Хорошо!'];
-  var BAD_TEXT_MED = ['Не то', 'Ошибка', 'Попробуй ещё', 'Не верно'];
 
-  var HEART_LIFE = '/img/pixel/heart-life.png';
-  var HEART_EMPTY = '/img/pixel/hp.png';
-  var MAX_EXAM_LIVES = 3;
-  var examLives = MAX_EXAM_LIVES;
   var mascotTimer = null;
   var activeTimers = [];
 
   var trailIdx = 0;
   var trailLast = 0;
-  var combo = 0;
-  var comboTimer = null;
   var trailBound = false;
   var clickBound = false;
 
@@ -163,10 +145,6 @@
       clearInterval(mascotTimer);
       mascotTimer = null;
     }
-    if (comboTimer) {
-      clearTimeout(comboTimer);
-      comboTimer = null;
-    }
   }
 
   function preloadPixelAssets() {
@@ -174,23 +152,11 @@
     [
       '/img/pixel/portal-sheet.png', '/img/pixel/coin-spin-sheet.png',
       '/img/pixel/heart-sheet.png', '/img/pixel/fire-sheet.png',
-      '/img/pixel/mascot.png', '/img/pixel/mascot-2.png',
-      '/img/pixel/heart-life.png', '/img/pixel/hp.png'
+      '/img/pixel/mascot.png', '/img/pixel/mascot-2.png'
     ].forEach(function (src) {
       var img = new Image();
       img.src = src;
     });
-  }
-
-  function isExamMode() {
-    var root = document.querySelector('.app[data-session-mode]') || document.body;
-    return root.getAttribute('data-session-mode') === 'EXAM';
-  }
-
-  function readSessionWrong() {
-    var root = document.querySelector('.app[data-session-wrong]') || document.body;
-    var n = parseInt(root.getAttribute('data-session-wrong') || '0', 10);
-    return isNaN(n) ? 0 : Math.max(0, n);
   }
 
   function clearAmbientLayers() {
@@ -245,101 +211,24 @@
     }
   }
 
-  /** Decorative arcade HUD (high) + exam lives HUD (med+high, EXAM only) */
-  function spawnHud() {
-    if (!allowDecorativeHud() && !allowExamHud()) return;
-    if (document.querySelector('.pixel-hud')) return;
-    var exam = isExamMode();
-    examLives = Math.max(0, MAX_EXAM_LIVES - readSessionWrong());
-    var hud = document.createElement('div');
-    hud.className = 'pixel-hud' + (exam ? ' is-exam' : '');
-    hud.setAttribute('aria-hidden', 'true');
-    hud.setAttribute('role', 'presentation');
-    var hearts = '';
-    if (exam && allowExamHud()) {
-      for (var i = 0; i < MAX_EXAM_LIVES; i++) {
-        var lost = i >= examLives;
-        hearts += '<img src="' + (lost ? HEART_EMPTY : HEART_LIFE) + '" alt="" data-heart="' + i + '"'
-          + (lost ? ' class="is-lost"' : '') + ' aria-hidden="true">';
-      }
-    } else if (allowDecorativeHud()) {
-      for (var j = 0; j < MAX_EXAM_LIVES; j++) {
-        hearts += '<span class="pixel-heart-css" data-heart="' + j + '" aria-hidden="true"></span>';
-      }
-    }
-    var comboHtml = allowDecorativeHud()
-      ? '<div class="pixel-hud-combo" id="pixel-combo">COMBO x0</div>'
-      : '';
-    var xpHtml = allowDecorativeHud()
-      ? '<div class="pixel-hud-xp"><span class="pixel-hud-xp-fill"></span></div>'
-      : '';
-    hud.innerHTML =
-      '<div class="pixel-hud-lives">' + hearts + '</div>' +
-      comboHtml +
-      xpHtml;
-    document.body.appendChild(hud);
-  }
-
-  function loseExamLife() {
-    if (!isExamMode() || !allowExamHud()) return;
-    if (examLives <= 0) return;
-    examLives -= 1;
-    var imgs = document.querySelectorAll('.pixel-hud-lives img');
-    imgs.forEach(function (img, i) {
-      if (i >= examLives) {
-        img.src = HEART_EMPTY;
-        img.classList.add('is-lost');
-      }
-    });
-    var hud = document.querySelector('.pixel-hud');
-    if (hud) {
-      hud.classList.add('is-hit');
-      later(function () { hud.classList.remove('is-hit'); }, 420);
-    }
-  }
-
+  // §12: fake HUD (исчезающие «жизни» EXAM, декоративный COMBO/XP) удалён целиком —
+  // это ложные метрики, запрещённые инвариантом. Осталась только defensive-чистка
+  // removeHud() на случай устаревшего .pixel-hud из кэша/старого состояния.
   function removeHud() {
     var hud = document.querySelector('.pixel-hud');
     if (hud) hud.remove();
   }
 
-  function updateCombo(correct) {
-    var el = document.getElementById('pixel-combo');
-    if (!el) return;
-    if (correct) {
-      combo += 1;
-      el.textContent = 'COMBO x' + combo;
-      el.classList.add('is-hot');
-      if (combo >= 3) el.classList.add('is-on-fire');
-      clearTimeout(comboTimer);
-      comboTimer = setTimeout(function () {
-        el.classList.remove('is-hot');
-      }, 900);
-    } else {
-      combo = 0;
-      el.textContent = 'COMBO x0';
-      el.classList.remove('is-hot', 'is-on-fire');
-    }
-    var fill = document.querySelector('.pixel-hud-xp-fill');
-    if (fill) {
-      fill.style.width = Math.min(100, combo * 12) + '%';
-    }
+  // Только позитивные лейблы: неверный ответ не вызывает floatText (§10), поэтому
+  // ветка BAD_TEXT (MISS/OUCH/NOPE) удалена. pickFloatLabel зовётся лишь для
+  // correct=true (celebrate); combo-лейблы PERFECT/«Серия!» убраны вместе с
+  // fake-combo, которого больше нет.
+  function floatLabelPack() {
+    return pixelLevel() === 'high' ? OK_TEXT : OK_TEXT_MED;
   }
 
-  function floatLabelPack(correct) {
-    if (pixelLevel() === 'high') {
-      return correct ? OK_TEXT : BAD_TEXT;
-    }
-    if (pixelLevel() === 'med') {
-      return correct ? OK_TEXT_MED : BAD_TEXT_MED;
-    }
-    return correct ? OK_TEXT_MED : BAD_TEXT_MED;
-  }
-
-  function pickFloatLabel(correct, comboHot) {
-    if (correct && comboHot && pixelLevel() === 'high') return 'PERFECT';
-    if (correct && comboHot && pixelLevel() === 'med') return 'Серия!';
-    var pack = floatLabelPack(!!correct);
+  function pickFloatLabel() {
+    var pack = floatLabelPack();
     return pack[Math.floor(Math.random() * pack.length)];
   }
 
@@ -455,22 +344,6 @@
     }
     var r = el.getBoundingClientRect();
     burstAt(r.left + r.width / 2, r.top + r.height / 2, correct);
-  }
-
-  function shake(correct) {
-    if (!allowArcadeWrongFx() || correct) return;
-    // Не трогаем body/html transform — это containing block для position:fixed
-    // (mobile-nav, sticky submit, back-to-top). Визуальный miss — inset flash overlay.
-    var layer = document.getElementById('px-shake-layer');
-    if (!layer) {
-      layer = document.createElement('div');
-      layer.id = 'px-shake-layer';
-      layer.className = 'px-shake-layer';
-      layer.setAttribute('aria-hidden', 'true');
-      document.body.appendChild(layer);
-    }
-    layer.classList.add('is-on');
-    later(function () { layer.classList.remove('is-on'); }, 480);
   }
 
   function clickSpark(x, y) {
@@ -758,7 +631,7 @@
       // coinRain и «LEVEL UP» — они держались на fake-combo, которого больше нет.
       burstFromEl(target, true);
       screenFlash(true);
-      floatText(pickFloatLabel(true, false), true, x, y - 24);
+      floatText(pickFloatLabel(), true, x, y - 24);
       var xp = Number(opts.xp || 0);
       if (xp > 0) coinSpinPickup(xp);
     } else {
