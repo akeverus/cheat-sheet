@@ -5,17 +5,20 @@
  * Gated by data-pixel (low|med|high) + motion. No pixel typeface.
  *
  * Feedback contract (инварианты §10–§12):
- *   Правильный ответ — ОДИН спокойный позитив (burst + мягкая вспышка + один
- *     положительный label + coin при реальном XP). Без combo-каскадов / LEVEL UP.
+ *   Правильный ответ — ОДИН спокойный позитив (мягкая вспышка + один положительный
+ *     label + coin при реальном XP; particle-burst только на high). Без combo / LEVEL UP.
  *   Неверный ответ — НЕ наказание: одна короткая incorrect-subtle анимация.
  *     Запрещено и удалено: red-flash, red/skull burst, shake, негативные
  *     floating labels (MISS/OUCH/«Ошибка»…), исчезающие «жизни».
  *   Fake HUD (lives / COMBO / псевдо-XP) — НЕ рендерится (§12: без ложных метрик).
  *
  * Intensity tiers:
- *   low  — no bursts/celebrate; ambient off.
- *   med  — positive burst + один positive label; incorrect-subtle на ошибке.
- *   high — + ambient floaters/trail (декоративный слой); поток обратной связи тот же.
+ *   low  — no fx; ambient off.
+ *   med  — короткий status: мягкая вспышка + positive label + coin при реальном XP;
+ *          incorrect-subtle на ошибке. БЕЗ particle-burst / coin-rain / click-spark
+ *          (GFX-006 / PIXEL_ART_CONTRACT_V2: med = только короткий status).
+ *   high — + particle burst / coin-rain / click-spark / ambient floaters / trail
+ *          (декоративный слой); поток обратной связи тот же.
  *
  * Asset inventory (decorative PNG under /img/pixel/):
  *   KEEP     — crumbs, dots, confetti, boom, fire, coin*, gem, star, mascot, hero,
@@ -57,6 +60,12 @@
   /** Full arcade wrong feedback (shake, MISS text, skull rain) — high only */
   function allowArcadeWrongFx() {
     return allowFx() && pixelLevel() === 'high';
+  }
+
+  /** Декоративные particle-эффекты (burst / coin-rain / click-spark) — HIGH only.
+   *  GFX-006 / PIXEL_ART_CONTRACT_V2: med = только короткий status, БЕЗ particles/bursts. */
+  function allowBurst() {
+    return motionAllowed() && pixelLevel() === 'high';
   }
 
   var CRUMBS = [
@@ -274,7 +283,7 @@
   }
 
   function coinRain(opts) {
-    if (!allowFx()) return;
+    if (!allowBurst()) return;
     opts = opts || {};
     var layer = document.createElement('div');
     layer.className = 'pixel-coin-rain';
@@ -292,9 +301,10 @@
           '/img/pixel/star-big.png', '/img/pixel/gem.png',
           '/img/pixel/confetti-1.png', '/img/pixel/confetti-2.png'
         ];
+    // coinRain — high-only (allowBurst), поэтому med-ветка счётчика удалена
     var n = opts.heavy
-      ? (window.innerWidth < 700 ? 20 : (pixelLevel() === 'med' ? 28 : 48))
-      : (window.innerWidth < 700 ? 12 : (pixelLevel() === 'med' ? 18 : 36));
+      ? (window.innerWidth < 700 ? 20 : 48)
+      : (window.innerWidth < 700 ? 12 : 36);
     for (var i = 0; i < n; i++) {
       var img = document.createElement('img');
       img.src = coins[i % coins.length];
@@ -312,14 +322,13 @@
   }
 
   function burstAt(x, y, correct) {
-    if (!allowFx()) return;
+    if (!allowBurst()) return;
     var layer = document.createElement('div');
     layer.className = 'pixel-burst';
     layer.setAttribute('aria-hidden', 'true');
     var pack = correct ? BURST_OK : (allowArcadeWrongFx() ? BURST_BAD : BURST_BAD_MED);
-    var n = pixelLevel() === 'med'
-      ? (correct ? 18 : 14)
-      : (correct ? 36 : 28);
+    // burstAt — high-only (allowBurst), med-ветка счётчика удалена
+    var n = correct ? 36 : 28;
     for (var i = 0; i < n; i++) {
       var img = document.createElement('img');
       img.className = 'pixel-burst-bit';
@@ -352,7 +361,7 @@
   }
 
   function clickSpark(x, y) {
-    if (!allowFx()) return;
+    if (!allowBurst()) return;
     var el = document.createElement('div');
     el.className = 'pixel-click-spark';
     el.setAttribute('aria-hidden', 'true');
