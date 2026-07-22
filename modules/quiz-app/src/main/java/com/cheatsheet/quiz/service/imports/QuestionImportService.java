@@ -135,7 +135,8 @@ public class QuestionImportService {
      * @return количество вставленных и обновлённых вопросов
      */
     private ImportResult importFile(Path root, Path file) {
-        String relativePath = root.relativize(file).toString().replace("\\", "/");
+        Path relPath = root.relativize(file);
+        String relativePath = relPath.toString().replace("\\", "/");
         String topic = relativePath.replaceAll(MarkdownQuestionParser.REGEX_MARKDOWN_EXTENSION, StringUtils.EMPTY);
         int inserted = 0;
         int updated = 0;
@@ -164,7 +165,6 @@ public class QuestionImportService {
         }
 
         // Загружаем MCQ-сиды из JSON один раз на файл (не на вопрос).
-        Path relPath = root.relativize(file);
         String categoryPath = relPath.getParent() == null ? "" : relPath.getParent().toString().replace("\\", "/");
         String topicSlug = relPath.getFileName().toString().replaceFirst("\\.md$", "");
         try {
@@ -215,8 +215,8 @@ public class QuestionImportService {
             return UpsertOutcome.INSERT;
         }
 
-        if (!existing.get().sourceHash().equals(sourceHash)) {
-            Question current = existing.get();
+        Question current = existing.get();
+        if (!current.sourceHash().equals(sourceHash)) {
             // diagramMermaid перечитываем из parsed (контент изменился → диаграмма
             // могла появиться/исчезнуть/поменяться), а не сохраняем старое current-значение.
             Question updatedQuestion = new Question(current.id(), current.slug(), current.sourceSlug(), relativePath, topic,
