@@ -13,6 +13,7 @@ import com.cheatsheet.quiz.feature.interview.service.page.FocusTrainingPageServi
 import com.cheatsheet.quiz.feature.interview.service.review.ReviewReasonService;
 import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
+import com.cheatsheet.quiz.persistence.QuestionRevisionRepository;
 import com.cheatsheet.quiz.persistence.QuestionStatsRepository;
 import com.cheatsheet.quiz.persistence.ReviewStateRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +39,8 @@ class FocusTrainingPageServiceTest {
     @Mock
     QuestionRepository questionRepository;
     @Mock
+    QuestionRevisionRepository questionRevisionRepository;
+    @Mock
     QuestionStatsRepository questionStatsRepository;
     @Mock
     TopicCatalogService topicCatalogService;
@@ -45,6 +48,10 @@ class FocusTrainingPageServiceTest {
     ReviewStateRepository reviewStateRepository;
     @Mock
     ReviewReasonService reviewReasonService;
+    @Mock
+    com.cheatsheet.quiz.feature.interview.usecase.stats.LearningMetricsService learningMetricsService;
+    @Mock
+    com.cheatsheet.quiz.feature.interview.mapper.ContentBlockMapper contentBlockMapper;
     @Mock
     InterviewQuestion interviewQuestion;
 
@@ -56,11 +63,14 @@ class FocusTrainingPageServiceTest {
         service = new FocusTrainingPageService(
                 facade,
                 questionRepository,
+                questionRevisionRepository,
                 questionStatsRepository,
                 topicCatalogService,
                 appProperties,
                 reviewStateRepository,
-                reviewReasonService
+                reviewReasonService,
+                learningMetricsService,
+                contentBlockMapper
         );
     }
 
@@ -68,7 +78,12 @@ class FocusTrainingPageServiceTest {
     void returnsEmptyStateWhenFacadeHasNoQuestion() {
         InterviewFilter filter = new InterviewFilter("java", "backend", false, false, false, true);
         when(facade.nextQuestion(any(), anyBoolean(), anyLong())).thenReturn(Optional.empty());
+        when(learningMetricsService.compute()).thenReturn(new com.cheatsheet.quiz.domain.LearningMetrics(
+                10, 5, 2, 10, 7, 3, 70.0, 70.0, -1.0, -1.0, 3, 0, 1000.0));
         when(facade.getStats(any())).thenReturn(new InterviewStats(10, 3, 2, 7, 3));
+        when(questionStatsRepository.countAllFiltered(null, true, null)).thenReturn(4L);
+        when(questionStatsRepository.countAllFiltered(null, null, true)).thenReturn(6L);
+        when(questionStatsRepository.countWeakTopics(any(Double.class))).thenReturn(2L);
         when(questionRepository.findTopics()).thenReturn(List.of("java"));
         when(topicCatalogService.normalizeGroup("backend")).thenReturn("backend");
         when(topicCatalogService.filterAndSortTopics(any(), any(), anyBoolean())).thenReturn(List.of("java"));
@@ -83,13 +98,22 @@ class FocusTrainingPageServiceTest {
         );
 
         assertThat(state.current()).isEmpty();
+        assertThat(state.surface().dueFiltered()).isEqualTo(3L);
+        assertThat(state.surface().filterFavoritesCount()).isEqualTo(4L);
+        assertThat(state.surface().filterWrongCount()).isEqualTo(6L);
+        assertThat(state.surface().filterWeakTopicsCount()).isEqualTo(2L);
     }
 
     @Test
     void keepsCurrentQuestionWhenFacadeReturnsIt() {
         InterviewFilter filter = new InterviewFilter("java", "backend", false, false, false, true);
         when(facade.nextQuestion(any(), anyBoolean(), anyLong())).thenReturn(Optional.of(interviewQuestion));
+        when(learningMetricsService.compute()).thenReturn(new com.cheatsheet.quiz.domain.LearningMetrics(
+                10, 5, 2, 10, 7, 3, 70.0, 70.0, -1.0, -1.0, 3, 0, 1000.0));
         when(facade.getStats(any())).thenReturn(new InterviewStats(10, 3, 2, 7, 3));
+        when(questionStatsRepository.countAllFiltered(null, true, null)).thenReturn(0L);
+        when(questionStatsRepository.countAllFiltered(null, null, true)).thenReturn(0L);
+        when(questionStatsRepository.countWeakTopics(any(Double.class))).thenReturn(0L);
         when(questionRepository.findTopics()).thenReturn(List.of("java"));
         when(topicCatalogService.normalizeGroup("backend")).thenReturn("backend");
         when(topicCatalogService.filterAndSortTopics(any(), any(), anyBoolean())).thenReturn(List.of("java"));

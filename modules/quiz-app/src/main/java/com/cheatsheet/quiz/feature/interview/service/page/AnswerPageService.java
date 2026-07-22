@@ -7,9 +7,11 @@ import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewSession;
 import com.cheatsheet.quiz.domain.InterviewStats;
+import com.cheatsheet.quiz.domain.LearningMetrics;
 import com.cheatsheet.quiz.domain.ReviewState;
 import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
 import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
+import com.cheatsheet.quiz.feature.interview.usecase.stats.LearningMetricsService;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
 import com.cheatsheet.quiz.persistence.ReviewStateRepository;
 import lombok.experimental.FieldDefaults;
@@ -31,12 +33,14 @@ public class AnswerPageService {
     QuestionRepository questionRepository;
     TopicCatalogService topicCatalogService;
     ReviewStateRepository reviewStateRepository;
+    LearningMetricsService learningMetricsService;
 
     /**
      * Строит state для отображения страницы результата ответа.
      */
     public AnswerPageState build(AnswerResult result, InterviewFilter filter, InterviewSession interviewSession) {
-        InterviewStats stats = facade.getStats(filter);
+        LearningMetrics metrics = learningMetricsService.compute();
+        InterviewStats stats = InterviewStats.from(metrics);
         List<String> availableTopics = questionRepository.findTopics();
         String selectedGroup = topicCatalogService.normalizeGroup(filter.group());
         List<String> topics = topicCatalogService.filterAndSortTopics(

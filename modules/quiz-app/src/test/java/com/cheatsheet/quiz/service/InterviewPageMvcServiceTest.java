@@ -37,6 +37,10 @@ class InterviewPageMvcServiceTest {
     @Mock
     private StatsPageService statsPageService;
     @Mock
+    private com.cheatsheet.quiz.feature.interview.service.page.BookmarksPageService bookmarksPageService;
+    @Mock
+    private com.cheatsheet.quiz.feature.interview.usecase.BookmarkApiService bookmarkApiService;
+    @Mock
     private com.cheatsheet.quiz.feature.interview.service.flow.PauseService pauseService;
     @Mock
     private ReviewModeService reviewModeService;
@@ -61,6 +65,8 @@ class InterviewPageMvcServiceTest {
                 sessionSupport,
                 focusTrainingPageService,
                 statsPageService,
+                bookmarksPageService,
+                bookmarkApiService,
                 pauseService,
                 reviewModeService,
                 navigationService,
@@ -82,12 +88,13 @@ class InterviewPageMvcServiceTest {
         when(requestMapper.resolveMode(interviewSession, "TRAINING")).thenReturn(InterviewMode.TRAINING);
         when(requestMapper.resolveFilter(interviewSession, "java", "backend", true, false, true, true))
                 .thenReturn(filter);
-        when(focusTrainingPageService.buildFocusPageState(interviewSession, filter, InterviewMode.TRAINING, true, 17L))
+        when(focusTrainingPageService.buildFocusPageState(
+                interviewSession, filter, InterviewMode.TRAINING, true, 17L, null))
                 .thenReturn(pageState);
         when(navigationService.focusView()).thenReturn("focus");
 
         String view = service.index(
-                "java", "backend", true, false, true, true, true, 17L, "TRAINING", session, model
+                "java", "backend", true, false, true, true, true, 17L, null, "TRAINING", session, model
         );
 
         assertThat(view).isEqualTo("focus");
@@ -107,11 +114,13 @@ class InterviewPageMvcServiceTest {
         when(requestMapper.resolveMode(interviewSession, "EXAM")).thenReturn(InterviewMode.EXAM);
         when(requestMapper.resolveReviewBaseFilter("java", "backend", true, true, true)).thenReturn(baseFilter);
         when(reviewModeService.apply(baseFilter)).thenReturn(reviewFilter);
-        when(focusTrainingPageService.buildFocusPageState(interviewSession, reviewFilter, InterviewMode.EXAM, false, 9L))
+        when(focusTrainingPageService.buildFocusPageState(
+                interviewSession, reviewFilter, InterviewMode.EXAM, false, 9L, null))
                 .thenReturn(pageState);
         when(navigationService.focusView()).thenReturn("focus-review");
 
-        String view = service.review("java", "backend", true, true, false, true, 9L, "EXAM", session, model);
+        String view = service.review(
+                "java", "backend", true, true, false, true, 9L, null, "EXAM", session, model);
 
         assertThat(view).isEqualTo("focus-review");
         verify(modelAttributeMapper).applyFocusPageState(model, pageState, true);

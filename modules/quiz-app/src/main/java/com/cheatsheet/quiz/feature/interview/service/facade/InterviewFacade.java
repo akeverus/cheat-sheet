@@ -38,6 +38,10 @@ public class InterviewFacade {
         return interviewService.questionForSession(session);
     }
 
+    public Optional<InterviewQuestion> questionById(long questionId) {
+        return interviewService.questionById(questionId);
+    }
+
     public InterviewStats getStats(InterviewFilter filter) {
         return interviewService.getStats(filter);
     }

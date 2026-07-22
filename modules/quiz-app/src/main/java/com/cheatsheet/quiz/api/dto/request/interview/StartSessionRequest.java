@@ -22,7 +22,8 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class StartSessionRequest {
 
-    @Pattern(regexp = "(?i)TRAINING|EXAM|MARATHON|STUDY|FLASHCARD", message = "mode must be TRAINING, EXAM, MARATHON, STUDY or FLASHCARD")
+    @Pattern(regexp = "(?i)TRAINING|EXAM|MARATHON|STUDY|FLASHCARD|TYPED_RECALL|INTERVIEW|CODE_CHALLENGE",
+            message = "mode must be TRAINING, EXAM, MARATHON, STUDY, FLASHCARD, TYPED_RECALL, INTERVIEW or CODE_CHALLENGE")
     private String mode;
 
     @Positive(message = "count must be greater than 0")

@@ -22,4 +22,5 @@ public class ApiErrorTypes {
     public static final String AI_GENERATION_FAILED = "AI_GENERATION_FAILED";
     public static final String QUESTION_STATE_INVALID = "QUESTION_STATE_INVALID";
     public static final String CONFLICT = "CONFLICT";
+    public static final String REVISION_MISMATCH = "REVISION_MISMATCH";
 }

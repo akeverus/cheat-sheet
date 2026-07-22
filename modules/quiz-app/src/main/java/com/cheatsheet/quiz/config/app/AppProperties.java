@@ -196,8 +196,82 @@ public class AppProperties {
      */
     @Getter @Setter
     public static class Security {
+        /**
+         * Trust boundary: {@code local} (single-user, permitAll) or {@code multi} (auth required for mutating).
+         */
+        @Pattern(regexp = "local|multi", message = "app.security.mode must be local or multi")
+        private String mode = "local";
+
+        /**
+         * Explicit ack that local mode may be exposed (required under prod + mode=local).
+         */
+        private boolean allowInsecurePublic = false;
+
+        /**
+         * In-memory accounts for {@code mode=multi} skeleton (HTTP Basic / form login).
+         */
+        @Valid @NotNull
+        private MultiUser multi = new MultiUser();
+
+        /**
+         * OAuth2/OIDC login (opt-in). Requires {@code mode=multi} and
+         * {@code spring.security.oauth2.client.registration.*}.
+         */
+        @Valid @NotNull
+        private Oauth oauth = new Oauth();
+
         @Valid @NotNull
         private Cors cors = new Cors();
+    }
+
+    @Getter @Setter
+    public static class MultiUser {
+        @NotBlank
+        private String username = "trainer";
+
+        @NotBlank
+        private String password = "trainer";
+
+        /** Additional in-memory accounts (each needs username+password). */
+        @Valid
+        private List<Account> extraUsers = List.of();
+    }
+
+    @Getter @Setter
+    public static class Oauth {
+        /** Enable oauth2Login wiring (default off — no IdP required for local). */
+        private boolean enabled = false;
+
+        /**
+         * Registration id under {@code spring.security.oauth2.client.registration.<id>}.
+         */
+        @NotBlank
+        private String registrationId = "oidc";
+
+        /** Button label on /login (e.g. "Google", "Org SSO"). */
+        @NotBlank
+        private String displayName = "OIDC";
+
+        /**
+         * Claim / user-info attribute holding group memberships (e.g. {@code groups}, {@code roles}).
+         */
+        @NotBlank
+        private String groupsClaim = "groups";
+
+        /**
+         * IdP group names that map to {@code ROLE_ADMIN} (sensitive endpoints).
+         * Empty = no admin via groups (admin-token only).
+         */
+        private List<String> adminGroups = List.of();
+    }
+
+    @Getter @Setter
+    public static class Account {
+        @NotBlank
+        private String username;
+
+        @NotBlank
+        private String password;
     }
 
     /**
@@ -212,7 +286,8 @@ public class AppProperties {
         private List<String> allowedMethods = List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
 
         /** Разрешённые заголовки запроса. */
-        private List<String> allowedHeaders = List.of("Content-Type", "X-Admin-Token", "X-CSRF-TOKEN");
+        private List<String> allowedHeaders = List.of(
+                "Content-Type", "X-Admin-Token", "X-CSRF-TOKEN", "X-XSRF-TOKEN", "Authorization");
 
         /** Разрешённые заголовки ответа. */
         private List<String> exposedHeaders = List.of("Retry-After");

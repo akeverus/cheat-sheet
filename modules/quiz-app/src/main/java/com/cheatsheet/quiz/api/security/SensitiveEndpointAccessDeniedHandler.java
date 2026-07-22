@@ -23,8 +23,8 @@ import java.io.IOException;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class SensitiveEndpointAccessDeniedHandler implements AccessDeniedHandler {
 
-    private final ObjectMapper objectMapper;
-    private final SensitiveEndpointAccessService accessService;
+    ObjectMapper objectMapper;
+    SensitiveEndpointAccessService accessService;
 
     @Override
     public void handle(
@@ -32,7 +32,9 @@ public class SensitiveEndpointAccessDeniedHandler implements AccessDeniedHandler
             HttpServletResponse response,
             AccessDeniedException accessDeniedException
     ) throws IOException, ServletException {
-        if (!isApiLikeRequest(request)) {
+        // Browser navigation (Accept: text/html) → error.html.
+        // XHR/API (/export download, /api/*) without HTML Accept → JSON.
+        if (prefersHtml(request) || !isApiLikeRequest(request)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
             return;
         }
@@ -42,6 +44,12 @@ public class SensitiveEndpointAccessDeniedHandler implements AccessDeniedHandler
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
         objectMapper.writeValue(response.getOutputStream(), error);
+    }
+
+    /** True only when the client explicitly asks for HTML (browser address bar / link). */
+    private static boolean prefersHtml(HttpServletRequest request) {
+        String accept = request.getHeader("Accept");
+        return accept != null && accept.contains(MediaType.TEXT_HTML_VALUE);
     }
 
     private static boolean isApiLikeRequest(HttpServletRequest request) {

@@ -4,6 +4,24 @@
 spring:
   thymeleaf:
     cache: true
+  datasource:
+    hikari:
+      # leak-detection — только для dev/default (30s в application.yml).
+      # В prod отключаем: иначе ложные stack trace на длинных batch/import.
+      leak-detection-threshold: 0
+  web:
+    resources:
+      # Content-hash версионирование статики (OPS-004): Thymeleaf @{/css/app.css}
+      # → /css/app-<hash>.css через ResourceUrlEncodingFilter. Ручные ?v=N в head
+      # entry-point'ах убраны; vendor/fonts self-hosted (hljs/mermaid/chart) — см. DEPLOYMENT.md OPS-005.
+      chain:
+        strategy:
+          content:
+            enabled: true
+      cache:
+        cachecontrol:
+          max-age: ${STATIC_RESOURCES_CACHE_SECONDS:31536000}s
+          must-revalidate: true
 
 # В prod-профиле метрики тегаются env=prod по умолчанию. Можно перекрыть
 # APP_ENV=staging если ставится staging-вариант на тот же образ.
@@ -24,5 +42,8 @@ app:
   # В production токен обязателен: без него приложение не стартует.
   admin-token: ${APP_ADMIN_TOKEN}
   security:
+    # Hybrid: local требует явного ack для public/prod deploy.
+    mode: ${APP_SECURITY_MODE:local}
+    allow-insecure-public: ${APP_SECURITY_ALLOW_INSECURE_PUBLIC:false}
     cors:
       allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:https://localhost}

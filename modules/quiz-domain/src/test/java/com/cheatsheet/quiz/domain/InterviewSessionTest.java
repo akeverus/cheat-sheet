@@ -6,10 +6,6 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
-/**
- * Тесты инвариантов {@link InterviewSession}.
- */
 class InterviewSessionTest {
 
     @Test
@@ -154,5 +150,33 @@ class InterviewSessionTest {
         return new InterviewSession(
                 InterviewMode.TRAINING, List.of(1L, 2L),
                 null, null, null, null, Instant.now());
+    }
+
+    @Test
+    void recallModesInitializeFlashcardPhaseAndFlag() {
+        InterviewSession typedRecall = new InterviewSession(
+                InterviewMode.TYPED_RECALL, List.of(1L), null, null, null, null, Instant.now());
+        InterviewSession interview = new InterviewSession(
+                InterviewMode.INTERVIEW, List.of(1L), null, null, null, null, Instant.now());
+        InterviewSession code = new InterviewSession(
+                InterviewMode.CODE_CHALLENGE, List.of(1L), null, null, null, null, Instant.now());
+
+        assertThat(typedRecall.getFlashcardPhase()).isEqualTo(FlashcardPhase.QUESTION);
+        assertThat(interview.getFlashcardPhase()).isEqualTo(FlashcardPhase.QUESTION);
+        assertThat(code.getFlashcardPhase()).isEqualTo(FlashcardPhase.QUESTION);
+        assertThat(typedRecall.isFlashcardMode()).isTrue();
+        assertThat(interview.isFlashcardMode()).isTrue();
+        assertThat(code.isFlashcardMode()).isTrue();
+    }
+
+    @Test
+    void resetFlashcardPhaseWorksForAllRecallModes() {
+        InterviewSession session = new InterviewSession(
+                InterviewMode.TYPED_RECALL, List.of(1L, 2L), null, null, null, null, Instant.now());
+        session.revealFlashcard();
+        assertThat(session.getFlashcardPhase()).isEqualTo(FlashcardPhase.REVEALED);
+        session.advanceFlashcard();
+        session.resetFlashcardPhase();
+        assertThat(session.getFlashcardPhase()).isEqualTo(FlashcardPhase.QUESTION);
     }
 }

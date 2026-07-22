@@ -176,6 +176,14 @@ public class InterviewService {
     }
 
     /**
+     * Загружает конкретный вопрос по ID (deep-link из закладок / аналитики).
+     */
+    public Optional<InterviewQuestion> questionById(long questionId) {
+        return questionRepository.findById(questionId)
+                .flatMap(question -> buildInterviewQuestion(question, clock.instant().getEpochSecond()));
+    }
+
+    /**
      * Проверяет существование вопроса и выбрасывает исключение, если вопрос не найден.
      */
     public void ensureQuestionExists(long questionId) {

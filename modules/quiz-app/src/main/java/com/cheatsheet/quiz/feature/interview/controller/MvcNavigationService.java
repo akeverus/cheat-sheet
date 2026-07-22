@@ -54,6 +54,13 @@ public class MvcNavigationService {
     }
 
     /**
+     * View страницы закладок и заметок (UI-014).
+     */
+    public String bookmarksView() {
+        return "bookmarks";
+    }
+
+    /**
      * View страницы summary завершенной сессии.
      */
     public String sessionSummaryView() {

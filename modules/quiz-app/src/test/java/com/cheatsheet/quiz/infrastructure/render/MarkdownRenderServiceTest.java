@@ -98,6 +98,18 @@ class MarkdownRenderServiceTest {
     }
 
     @Test
+    void stripsUnsafeAnchorHrefs() {
+        String html = service.toHtml(
+                "click [x](javascript:alert(1)) and [y](/path) and [z](https://example.com) and [w](data:text/html,hi)");
+
+        assertThat(html).contains("<a");
+        assertThat(html).doesNotContain("javascript:");
+        assertThat(html).doesNotContain("data:");
+        assertThat(html).contains("href=\"/path\"");
+        assertThat(html).contains("href=\"https://example.com\"");
+    }
+
+    @Test
     void returnsEmptyOnNullOrBlankInput() {
         assertThat(service.toHtml(null)).isEmpty();
         assertThat(service.toHtml("")).isEmpty();
@@ -179,11 +191,68 @@ class MarkdownRenderServiceTest {
     }
 
     @Test
+    void stripsScriptTagsEmbeddedInMermaidFence() {
+        String html = service.toHtml("```mermaid\ngraph TD;\nA-->B;\n<script>alert(1)</script>\n```");
+
+        assertThat(html).contains("<div class=\"mermaid\">");
+        assertThat(html).doesNotContain("<script");
+        assertThat(html).doesNotContain("alert(1)");
+    }
+
+    @Test
+    void stripsJavascriptProtocolInMarkdownLinkNearMermaid() {
+        String md = "Before [x](javascript:alert(1)).\n\n```mermaid\nflowchart LR\n  A --> B\n```\n\nAfter.";
+        String html = service.toHtml(md);
+
+        assertThat(html).doesNotContain("javascript:");
+        assertThat(html).contains("<div class=\"mermaid\">");
+        assertThat(html).contains("Before");
+        assertThat(html).contains("After");
+    }
+
+    @Test
+    void stripsDataUriInMarkdownLinkNearMermaid() {
+        String md = "See [payload](data:text/html,<script>alert(1)</script>).\n\n```mermaid\npie title T\n  \"A\" : 1\n```";
+        String html = service.toHtml(md);
+
+        assertThat(html).doesNotContain("data:");
+        assertThat(html).contains("<div class=\"mermaid\">");
+    }
+
+    @Test
+    void stripsProtocolRelativeMarkdownLinks() {
+        String html = service.toHtml("Go [elsewhere](//evil.example/phish).");
+
+        assertThat(html).doesNotContain("//evil.example");
+        assertThat(html).doesNotContain("href=\"//");
+        assertThat(html).contains("elsewhere");
+    }
+
+    @Test
     void inlineHtmlStripsLanguageClassButKeepsCode() {
         // INLINE_SAFELIST не разрешает атрибуты — class на <code> отбрасывается,
         // но сам инлайн-код сохраняется.
         String html = service.toInlineHtml("`x`");
 
         assertThat(html).isEqualTo("<code>x</code>");
+    }
+
+    @Test
+    void allowsSafeSvgAndStripsScriptInsideSvg() {
+        String html = service.toHtml(
+                "Icon <svg viewBox=\"0 0 10 10\"><path d=\"M0 0h10v10H0z\"/><script>alert(1)</script></svg>");
+
+        assertThat(html).contains("<svg");
+        assertThat(html).contains("<path");
+        assertThat(html).doesNotContain("<script");
+        assertThat(html).doesNotContain("alert(1)");
+    }
+
+    @Test
+    void stripsExternalUseHrefOnSvg() {
+        String html = service.toHtml(
+                "<svg><use href=\"https://evil.example/x.svg#i\"></use></svg>");
+
+        assertThat(html).doesNotContain("https://evil.example");
     }
 }

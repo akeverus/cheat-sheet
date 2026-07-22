@@ -17,6 +17,7 @@ class MvcNavigationServiceTest {
         assertThat(service.settingsView()).isEqualTo("settings");
         assertThat(service.resultView()).isEqualTo("result");
         assertThat(service.statsView()).isEqualTo("stats");
+        assertThat(service.bookmarksView()).isEqualTo("bookmarks");
         assertThat(service.sessionSummaryView()).isEqualTo("session-summary");
     }
 }

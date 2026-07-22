@@ -192,6 +192,24 @@ class AttemptRepositoryTest extends AbstractPostgresRepositoryTest {
     }
 
     @Test
+    void insertAllowsOnlyOneFirstAttemptPerQuestion() {
+        long firstId = repository.insert(Attempt.builder()
+                .questionId(1L).outcome(AttemptOutcome.CORRECT).firstAttempt(true)
+                .idempotencyKey("first-a").createdAt(1000L).build());
+        long secondId = repository.insert(Attempt.builder()
+                .questionId(1L).outcome(AttemptOutcome.WRONG).firstAttempt(true)
+                .idempotencyKey("first-b").createdAt(1001L).build());
+
+        Attempt first = repository.findByQuestionId(1L).stream()
+                .filter(a -> a.id() == firstId).findFirst().orElseThrow();
+        Attempt second = repository.findByQuestionId(1L).stream()
+                .filter(a -> a.id() == secondId).findFirst().orElseThrow();
+
+        assertThat(first.firstAttempt()).isTrue();
+        assertThat(second.firstAttempt()).isFalse();
+    }
+
+    @Test
     void findByQuestionIdReturnsNewestFirst() {
         repository.insert(Attempt.builder()
                 .questionId(1L).outcome(AttemptOutcome.WRONG).firstAttempt(true).createdAt(1000L).build());
@@ -203,5 +221,33 @@ class AttemptRepositoryTest extends AbstractPostgresRepositoryTest {
         assertThat(attempts).hasSize(2);
         assertThat(attempts.get(0).createdAt()).isEqualTo(2000L);
         assertThat(attempts.get(1).createdAt()).isEqualTo(1000L);
+    }
+
+    @Test
+    void tryClaimIdempotencyKeyAllowsOnlyOneWinnerUnderConcurrency() throws Exception {
+        String key = "concurrent-claim-key";
+        int threads = 10;
+        java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(threads);
+        java.util.concurrent.CountDownLatch start = new java.util.concurrent.CountDownLatch(1);
+        java.util.concurrent.atomic.AtomicInteger winners = new java.util.concurrent.atomic.AtomicInteger();
+        java.util.List<java.util.concurrent.Future<?>> futures = new java.util.ArrayList<>();
+        for (int i = 0; i < threads; i++) {
+            futures.add(pool.submit(() -> {
+                try {
+                    start.await();
+                    if (repository.tryClaimIdempotencyKey(key, 1_700_000_000L)) {
+                        winners.incrementAndGet();
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }));
+        }
+        start.countDown();
+        for (java.util.concurrent.Future<?> f : futures) {
+            f.get();
+        }
+        pool.shutdown();
+        assertThat(winners.get()).isEqualTo(1);
     }
 }

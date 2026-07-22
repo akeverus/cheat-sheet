@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.cheatsheet.quiz.TestInterviewPath;
@@ -75,6 +76,7 @@ class InterviewControllerApiTest {
         AnswerOption selected = options.get(0);
 
         MvcResult result = mockMvc.perform(post("/api/answer")
+                        .with(csrf())
                         .param("questionId", String.valueOf(q.id()))
                         .param("optionId", String.valueOf(selected.id())))
                 .andExpect(status().isOk())
@@ -93,6 +95,7 @@ class InterviewControllerApiTest {
         Question q = firstQuestionOrSkip();
 
         MvcResult result = mockMvc.perform(post("/api/favorite")
+                        .with(csrf())
                         .param("questionId", String.valueOf(q.id())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.favorite").isBoolean())
@@ -106,6 +109,7 @@ class InterviewControllerApiTest {
     @Test
     void apiFavoriteWithNonExistentQuestionReturns404() throws Exception {
         mockMvc.perform(post("/api/favorite")
+                        .with(csrf())
                         .param("questionId", "999999"))
                 .andExpect(status().isNotFound());
     }
@@ -189,6 +193,7 @@ class InterviewControllerApiTest {
     void apiConfidencePostReturns200() throws Exception {
         Question q = firstQuestionOrSkip();
         mockMvc.perform(post("/api/confidence")
+                        .with(csrf())
                         .param("questionId", String.valueOf(q.id()))
                         .param("grade", "5"))
                 .andExpect(status().isOk())
@@ -202,6 +207,7 @@ class InterviewControllerApiTest {
         Question q = firstQuestionOrSkip();
 
         mockMvc.perform(post("/api/confidence")
+                        .with(csrf())
                         .param("questionId", String.valueOf(q.id()))
                         .param("grade", "0"))
                 .andExpect(status().isBadRequest())
@@ -215,6 +221,7 @@ class InterviewControllerApiTest {
         Question q = firstQuestionOrSkip();
 
         mockMvc.perform(post("/api/confidence")
+                        .with(csrf())
                         .param("questionId", String.valueOf(q.id()))
                         .param("grade", "abc"))
                 .andExpect(status().isBadRequest())
@@ -226,6 +233,7 @@ class InterviewControllerApiTest {
     @Test
     void apiConfidenceWithNonNumericQuestionIdReturnsValidationError() throws Exception {
         mockMvc.perform(post("/api/confidence")
+                        .with(csrf())
                         .param("questionId", "abc")
                         .param("grade", "5"))
                 .andExpect(status().isBadRequest())
@@ -237,6 +245,7 @@ class InterviewControllerApiTest {
     @Test
     void apiConfidenceWithInvalidQuestionIdReturnsValidationError() throws Exception {
         mockMvc.perform(post("/api/confidence")
+                        .with(csrf())
                         .param("questionId", "0")
                         .param("grade", "5"))
                 .andExpect(status().isBadRequest())
@@ -248,6 +257,7 @@ class InterviewControllerApiTest {
     @Test
     void apiAnswerWithInvalidQuestionIdReturns404() throws Exception {
         mockMvc.perform(post("/api/answer")
+                        .with(csrf())
                         .param("questionId", "999999")
                         .param("optionId", "1"))
                 .andExpect(status().isNotFound())
@@ -259,6 +269,7 @@ class InterviewControllerApiTest {
         Question q = firstQuestionOrSkip();
 
         mockMvc.perform(post("/api/answer")
+                        .with(csrf())
                         .param("questionId", String.valueOf(q.id()))
                         .param("optionId", "0"))
                 .andExpect(status().isBadRequest())
@@ -275,12 +286,14 @@ class InterviewControllerApiTest {
         MockHttpSession session = new MockHttpSession();
 
         mockMvc.perform(post("/start")
+                        .with(csrf())
                         .session(session)
                         .param("mode", "TRAINING")
                         .param("count", "20"))
                 .andExpect(status().is3xxRedirection());
 
         mockMvc.perform(post("/api/answer")
+                        .with(csrf())
                         .session(session)
                         .param("questionId", String.valueOf(q.id()))
                         .param("optionId", String.valueOf(options.get(0).id())))

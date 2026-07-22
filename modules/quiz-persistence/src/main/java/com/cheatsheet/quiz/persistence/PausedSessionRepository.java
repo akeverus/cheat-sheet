@@ -14,16 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Репозиторий для таблицы {@code paused_session} (FLOW-01).
- *
- * <p>Хранит единственную приостановленную сессию (single-user приложение →
- * singleton-строка с {@code id = 1}). {@code session_blob} — Java-сериализованный
- * {@link com.cheatsheet.quiz.domain.InterviewSession}; денормализованные колонки
- * позволяют показать баннер «продолжить?» без десериализации.</p>
- *
- * <p>Upsert реализован через UPDATE-then-INSERT (а не ON CONFLICT) — тот же
- * подход, что в {@link DailyActivityRepository}: ON CONFLICT в Testcontainers
- * PG 16 с binary-протоколом даёт «bad SQL grammar».</p>
+ * Приостановленная сессия ({@code paused_session}), one row per {@link OwnerContext}.
  */
 @Repository
 @RequiredArgsConstructor
@@ -32,63 +23,51 @@ public class PausedSessionRepository {
 
     JdbcTemplate jdbcTemplate;
 
-    /**
-     * Сохраняет (перезаписывает) приостановленную сессию. Так как строка одна,
-     * повторный вызов заменяет предыдущую паузу.
-     */
     public void save(byte[] sessionBlob, InterviewMode mode, String topic,
                      int total, int answered, Instant pausedAt) {
         Timestamp ts = Timestamp.from(pausedAt);
+        String owner = OwnerContext.current();
         int updated = jdbcTemplate.update(
                 "UPDATE paused_session SET session_blob = ?, mode = ?, topic = ?, " +
-                        "total = ?, answered = ?, paused_at = ? WHERE id = 1",
-                sessionBlob, mode.name(), topic, total, answered, ts);
+                        "total = ?, answered = ?, paused_at = ? WHERE owner_key = ?",
+                sessionBlob, mode.name(), topic, total, answered, ts, owner);
         if (updated == 0) {
             jdbcTemplate.update(
-                    "INSERT INTO paused_session (id, session_blob, mode, topic, total, answered, paused_at) " +
-                            "VALUES (1, ?, ?, ?, ?, ?, ?)",
-                    sessionBlob, mode.name(), topic, total, answered, ts);
+                    "INSERT INTO paused_session (owner_key, session_blob, mode, topic, total, answered, paused_at) " +
+                            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    owner, sessionBlob, mode.name(), topic, total, answered, ts);
         }
     }
 
-    /**
-     * Возвращает сериализованный блоб приостановленной сессии или пусто, если паузы нет.
-     */
     public Optional<byte[]> findBlob() {
         List<byte[]> rows = jdbcTemplate.query(
-                "SELECT session_blob FROM paused_session WHERE id = 1",
-                (rs, rowNum) -> rs.getBytes("session_blob"));
+                "SELECT session_blob FROM paused_session WHERE owner_key = ?",
+                (rs, rowNum) -> rs.getBytes("session_blob"),
+                OwnerContext.current());
         return rows.isEmpty() ? Optional.empty() : Optional.ofNullable(rows.get(0));
     }
 
-    /**
-     * Возвращает метаданные приостановленной сессии (без блоба) или пусто.
-     */
     public Optional<PausedSessionInfo> findInfo() {
         List<PausedSessionInfo> rows = jdbcTemplate.query(
-                "SELECT mode, topic, total, answered, paused_at FROM paused_session WHERE id = 1",
+                "SELECT mode, topic, total, answered, paused_at FROM paused_session WHERE owner_key = ?",
                 (rs, rowNum) -> new PausedSessionInfo(
                         InterviewMode.valueOf(rs.getString("mode")),
                         rs.getString("topic"),
                         rs.getInt("total"),
                         rs.getInt("answered"),
-                        rs.getTimestamp("paused_at").toInstant()));
+                        rs.getTimestamp("paused_at").toInstant()),
+                OwnerContext.current());
         return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
     }
 
-    /**
-     * Есть ли приостановленная сессия.
-     */
     public boolean exists() {
         Boolean present = jdbcTemplate.queryForObject(
-                "SELECT EXISTS(SELECT 1 FROM paused_session WHERE id = 1)", Boolean.class);
+                "SELECT EXISTS(SELECT 1 FROM paused_session WHERE owner_key = ?)",
+                Boolean.class, OwnerContext.current());
         return Boolean.TRUE.equals(present);
     }
 
-    /**
-     * Удаляет приостановленную сессию (после resume или отмены).
-     */
     public void clear() {
-        jdbcTemplate.update("DELETE FROM paused_session WHERE id = 1");
+        jdbcTemplate.update("DELETE FROM paused_session WHERE owner_key = ?", OwnerContext.current());
     }
 }

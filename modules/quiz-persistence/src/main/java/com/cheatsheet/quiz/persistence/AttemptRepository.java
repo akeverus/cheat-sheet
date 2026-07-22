@@ -5,6 +5,7 @@ import com.cheatsheet.quiz.domain.AttemptOutcome;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -34,27 +35,19 @@ public class AttemptRepository {
 
     /**
      * Сохраняет попытку и возвращает присвоенный идентификатор.
+     * {@code is_first_attempt} вычисляется атомарно (BE-006); при гонке двух
+     * concurrent first attempts partial unique index даёт retry с {@code false}.
      */
     public long insert(Attempt attempt) {
-        Long id = jdbcTemplate.queryForObject(
-                "INSERT INTO attempt " +
-                        "(question_id, question_revision_id, selected_option_id, outcome, " +
-                        "is_first_attempt, response_time_ms, memory_grade, session_token, " +
-                        "idempotency_key, opened_content_block_ids, created_at) " +
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id",
-                Long.class,
-                attempt.questionId(),
-                attempt.questionRevisionId(),
-                attempt.selectedOptionId(),
-                attempt.outcome().name(),
-                attempt.firstAttempt(),
-                attempt.responseTimeMs(),
-                attempt.memoryGrade(),
-                attempt.sessionToken(),
-                attempt.idempotencyKey(),
-                attempt.openedContentBlockIds(),
-                attempt.createdAt());
-        return id == null ? 0L : id;
+        try {
+            return executeInsert(attempt);
+        } catch (DuplicateKeyException ex) {
+            if (isFirstAttemptRace(ex)) {
+                Attempt retry = attempt.toBuilder().firstAttempt(false).build();
+                return executeInsert(retry);
+            }
+            throw ex;
+        }
     }
 
     /**
@@ -62,10 +55,10 @@ public class AttemptRepository {
      */
     public List<Attempt> findByQuestionId(long questionId) {
         return jdbcTemplate.query(
-                "SELECT " + COLUMNS + " FROM attempt WHERE question_id = ? " +
+                "SELECT " + COLUMNS + " FROM attempt WHERE question_id = ? AND owner_key = ? " +
                         "ORDER BY created_at DESC, id DESC",
                 (rs, rowNum) -> mapRow(rs),
-                questionId);
+                questionId, OwnerContext.current());
     }
 
     /**
@@ -73,8 +66,8 @@ public class AttemptRepository {
      */
     public boolean existsByQuestionId(long questionId) {
         Long count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM attempt WHERE question_id = ?",
-                Long.class, questionId);
+                "SELECT COUNT(*) FROM attempt WHERE question_id = ? AND owner_key = ?",
+                Long.class, questionId, OwnerContext.current());
         return count != null && count > 0;
     }
 
@@ -86,10 +79,97 @@ public class AttemptRepository {
             return Optional.empty();
         }
         List<Attempt> rows = jdbcTemplate.query(
-                "SELECT " + COLUMNS + " FROM attempt WHERE idempotency_key = ? LIMIT 1",
+                "SELECT " + COLUMNS + " FROM attempt WHERE idempotency_key = ? AND owner_key = ? LIMIT 1",
                 (rs, rowNum) -> mapRow(rs),
-                idempotencyKey);
+                idempotencyKey, OwnerContext.current());
         return rows.stream().findFirst();
+    }
+
+    /**
+     * Атомарно резервирует ключ идемпотентности до side effects (BE-001).
+     *
+     * @return {@code true}, если этот вызов первым занял ключ; {@code false}, если ключ уже занят
+     */
+    public boolean tryClaimIdempotencyKey(String idempotencyKey, long createdAtEpochSeconds) {
+        if (idempotencyKey == null || idempotencyKey.isBlank()) {
+            return true;
+        }
+        List<Integer> claimed = jdbcTemplate.query(
+                "INSERT INTO attempt_idempotency_claim (owner_key, idempotency_key, created_at) VALUES (?, ?, ?) "
+                        + "ON CONFLICT (owner_key, idempotency_key) DO NOTHING RETURNING 1",
+                (rs, rowNum) -> 1,
+                OwnerContext.current(),
+                idempotencyKey,
+                createdAtEpochSeconds);
+        return !claimed.isEmpty();
+    }
+
+    /**
+     * INSERT с игнором конфликта по idempotency_key (partial unique).
+     *
+     * @return id вставленной строки или empty, если ключ уже есть
+     */
+    public Optional<Long> insertIgnoreDuplicate(Attempt attempt) {
+        if (attempt.idempotencyKey() == null || attempt.idempotencyKey().isBlank()) {
+            return Optional.of(insert(attempt));
+        }
+        try {
+            return Optional.of(executeInsert(attempt));
+        } catch (DuplicateKeyException ex) {
+            if (isIdempotencyConflict(ex)) {
+                return Optional.empty();
+            }
+            if (isFirstAttemptRace(ex)) {
+                Attempt retry = attempt.toBuilder().firstAttempt(false).build();
+                try {
+                    return Optional.of(executeInsert(retry));
+                } catch (DuplicateKeyException retryEx) {
+                    if (isIdempotencyConflict(retryEx)) {
+                        return Optional.empty();
+                    }
+                    throw retryEx;
+                }
+            }
+            throw ex;
+        }
+    }
+
+    private long executeInsert(Attempt attempt) {
+        String owner = OwnerContext.current();
+        Long id = jdbcTemplate.queryForObject(
+                "INSERT INTO attempt "
+                        + "(owner_key, question_id, question_revision_id, selected_option_id, outcome, "
+                        + "is_first_attempt, response_time_ms, memory_grade, session_token, "
+                        + "idempotency_key, opened_content_block_ids, created_at) "
+                        + "VALUES (?, ?, ?, ?, ?, "
+                        + "(SELECT COUNT(*) = 0 FROM attempt WHERE question_id = ? AND owner_key = ?), "
+                        + "?, ?, ?, ?, ?, ?) RETURNING id",
+                Long.class,
+                owner,
+                attempt.questionId(),
+                attempt.questionRevisionId(),
+                attempt.selectedOptionId(),
+                attempt.outcome().name(),
+                attempt.questionId(),
+                owner,
+                attempt.responseTimeMs(),
+                attempt.memoryGrade(),
+                attempt.sessionToken(),
+                attempt.idempotencyKey(),
+                attempt.openedContentBlockIds(),
+                attempt.createdAt());
+        return id == null ? 0L : id;
+    }
+
+    private static boolean isFirstAttemptRace(DuplicateKeyException ex) {
+        String message = ex.getMessage();
+        return message != null && (message.contains("uq_attempt_first_per_owner_question")
+                || message.contains("uq_attempt_first_per_question"));
+    }
+
+    private static boolean isIdempotencyConflict(DuplicateKeyException ex) {
+        String message = ex.getMessage();
+        return message != null && message.contains("uq_attempt_idempotency_key");
     }
 
     /**
@@ -116,7 +196,7 @@ public class AttemptRepository {
                         "COALESCE(SUM(CASE WHEN NOT is_first_attempt AND outcome IN ('CORRECT','WRONG','UNKNOWN') AND created_at >= ? THEN 1 ELSE 0 END), 0) AS rev30_total, " +
                         "COALESCE(SUM(CASE WHEN NOT is_first_attempt AND outcome = 'CORRECT' AND created_at >= ? THEN 1 ELSE 0 END), 0) AS rev30_correct, " +
                         "AVG(response_time_ms) AS avg_response_ms " +
-                        "FROM attempt",
+                        "FROM attempt WHERE owner_key = ?",
                 (rs, rowNum) -> {
                     double avg = rs.getDouble("avg_response_ms");
                     double avgResponse = rs.wasNull() ? -1.0 : avg;
@@ -133,7 +213,8 @@ public class AttemptRepository {
                             rs.getLong("rev30_correct"),
                             avgResponse);
                 },
-                sevenDayCutoffEpoch, sevenDayCutoffEpoch, thirtyDayCutoffEpoch, thirtyDayCutoffEpoch);
+                sevenDayCutoffEpoch, sevenDayCutoffEpoch, thirtyDayCutoffEpoch, thirtyDayCutoffEpoch,
+                OwnerContext.current());
         return rows.isEmpty() ? AttemptAggregate.EMPTY : rows.get(0);
     }
 
@@ -177,7 +258,7 @@ public class AttemptRepository {
                         "  SELECT option_text FROM answer_options " +
                         "  WHERE question_id = a.question_id AND is_correct = 1 LIMIT 1" +
                         ") cor ON true " +
-                        "WHERE a.outcome IN ('WRONG', 'UNKNOWN') " +
+                        "WHERE a.outcome IN ('WRONG', 'UNKNOWN') AND a.owner_key = ? " +
                         "ORDER BY a.created_at DESC, a.id DESC LIMIT ?",
                 (rs, rowNum) -> new MistakeAttempt(
                         rs.getLong("question_id"),
@@ -188,6 +269,7 @@ public class AttemptRepository {
                         rs.getString("outcome"),
                         getNullableInt(rs, "response_time_ms"),
                         rs.getLong("created_at")),
+                OwnerContext.current(),
                 limit);
     }
 

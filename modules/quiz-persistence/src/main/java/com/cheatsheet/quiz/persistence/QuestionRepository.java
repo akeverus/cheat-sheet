@@ -189,6 +189,15 @@ public class QuestionRepository {
     }
 
     /**
+     * ID вопросов с {@code is_important = 1} (синхронизация с таблицей bookmark, UI-014).
+     */
+    public List<Long> findImportantQuestionIds() {
+        return jdbcTemplate.query(
+                "SELECT id FROM questions WHERE is_important = 1 ORDER BY id",
+                (rs, rowNum) -> rs.getLong("id"));
+    }
+
+    /**
      * Обновляет существующий вопрос (при изменении контента markdown-файла).
      *
      * @param question обновлённый вопрос (id должен быть задан)
@@ -536,7 +545,7 @@ public class QuestionRepository {
                         "CASE WHEN (COALESCE(rs.correct_count, 0) + COALESCE(rs.wrong_count, 0)) > 0 " +
                         "  THEN CAST(COALESCE(rs.correct_count, 0) AS REAL) * 100.0 / (COALESCE(rs.correct_count, 0) + COALESCE(rs.wrong_count, 0)) " +
                         "  ELSE -1 END AS accuracy " +
-                        "FROM questions q LEFT JOIN review_state rs ON rs.question_id = q.id " +
+                        "FROM questions q LEFT JOIN review_state rs ON rs.question_id = q.id AND rs.owner_key = ? " +
                         "WHERE q.topic = ? AND q.id != ? " +
                         "ORDER BY COALESCE(rs.wrong_count, 0) DESC, RANDOM() " +
                         "LIMIT ?",
@@ -546,7 +555,7 @@ public class QuestionRepository {
                         rs.getString("topic"),
                         rs.getDouble("accuracy")
                 ),
-                topic, excludeId, limit
+                OwnerContext.current(), topic, excludeId, limit
         );
     }
 

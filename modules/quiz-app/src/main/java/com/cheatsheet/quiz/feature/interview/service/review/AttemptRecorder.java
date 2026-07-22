@@ -18,8 +18,7 @@ import java.time.Clock;
  *
  * <p>Отдельно от {@link ReviewService} (агрегаты SM-2): {@link ReviewService}
  * держит текущее состояние повторений, а {@link AttemptRecorder} — неизменяемый
- * журнал каждого ответа для честной аналитики (first-attempt accuracy, response
- * time, retention) и истории грейдов FSRS. Запись идёт в собственной транзакции
+ * журнал каждого ответа для честной аналитики. Запись идёт в собственной транзакции
  * и НЕ должна ронять пользовательский флоу — вызывающий оборачивает её в
  * try/catch (журнал — не критичный путь ответа).</p>
  */
@@ -32,23 +31,6 @@ public class AttemptRecorder {
     QuestionRevisionRepository questionRevisionRepository;
     Clock clock;
 
-    /**
-     * Записывает одну попытку ответа.
-     *
-     * <p>{@code is_first_attempt} определяется по отсутствию прежних попыток
-     * ({@link AttemptRepository#existsByQuestionId}). Попытка привязывается к
-     * последней ревизии контента вопроса, если она есть.</p>
-     *
-     * @param questionId       вопрос
-     * @param outcome          исход попытки
-     * @param memoryGrade      объявленный грейд (уверенность 3–5 / 0 для «не знаю»); {@code null} если нет
-     * @param selectedOptionId выбранный вариант ({@code null} для флешкарт/«не знаю»)
-     * @param responseTimeMs   время ответа в мс ({@code null} если не измерено)
-     * @param sessionToken     токен HTTP-сессии тренажёра ({@code null} допустим)
-     * @param clientAttemptId  клиентский ключ идемпотентности (BE-003): один на вопрос,
-     *                         тот же при retry после сетевой ошибки; {@code null} допустим
-     *                         (skip/флешкарта/no-JS) — тогда дедупликация не применяется
-     */
     @Transactional
     public void record(long questionId,
                        AttemptOutcome outcome,
@@ -58,15 +40,9 @@ public class AttemptRecorder {
                        String sessionToken,
                        String clientAttemptId) {
         record(questionId, outcome, memoryGrade, selectedOptionId, responseTimeMs,
-                sessionToken, clientAttemptId, null);
+                sessionToken, clientAttemptId, null, null);
     }
 
-    /**
-     * То же, что {@link #record(long, AttemptOutcome, Integer, Long, Integer, String, String)},
-     * но дополнительно фиксирует {@code openedContentBlockIds} — id блоков контента
-     * (код/схема/доп-материал), раскрытых пользователем перед ответом (телеметрия
-     * REST-пути, хендофф-3). Comma-separated список; {@code null} допустим.
-     */
     @Transactional
     public void record(long questionId,
                        AttemptOutcome outcome,
@@ -76,40 +52,91 @@ public class AttemptRecorder {
                        String sessionToken,
                        String clientAttemptId,
                        String openedContentBlockIds) {
-        // BE-003: если попытка с этим клиентским ключом уже записана (retry после
-        // сетевой ошибки, двойной submit в обход клиентского guard) — не дублируем.
-        // Ключ null/blank (skip, no-JS-фоллбэк) дедупликацию отключает: journal тогда
-        // ведёт себя как раньше. Дополняет сессионный FLOW-02 (InterviewSessionSupport)
-        // на путях без активной сессии (TRAINING) и finished-сессии.
-        if (clientAttemptId != null && !clientAttemptId.isBlank()
-                && attemptRepository.findByIdempotencyKey(clientAttemptId).isPresent()) {
+        record(questionId, outcome, memoryGrade, selectedOptionId, responseTimeMs,
+                sessionToken, clientAttemptId, openedContentBlockIds, null);
+    }
+
+    /**
+     * @param questionRevisionId ревизия, которую видел пользователь; {@code null} → latest fallback
+     */
+    @Transactional
+    public void record(long questionId,
+                       AttemptOutcome outcome,
+                       Integer memoryGrade,
+                       Long selectedOptionId,
+                       Integer responseTimeMs,
+                       String sessionToken,
+                       String clientAttemptId,
+                       String openedContentBlockIds,
+                       Long questionRevisionId) {
+        String key = normalizeKey(clientAttemptId);
+        if (key != null && attemptRepository.findByIdempotencyKey(key).isPresent()) {
             return;
         }
-        boolean firstAttempt = !attemptRepository.existsByQuestionId(questionId);
-        Long revisionId = questionRevisionRepository.findLatest(questionId)
-                .map(QuestionRevision::id)
-                .orElse(null);
+        Long revisionId = resolveRevisionId(questionId, questionRevisionId);
         Attempt attempt = Attempt.builder()
                 .questionId(questionId)
                 .questionRevisionId(revisionId)
                 .selectedOptionId(selectedOptionId)
                 .outcome(outcome)
-                .firstAttempt(firstAttempt)
+                .firstAttempt(false)
                 .responseTimeMs(responseTimeMs)
                 .memoryGrade(memoryGrade)
                 .sessionToken(sessionToken)
-                .idempotencyKey(normalizeKey(clientAttemptId))
+                .idempotencyKey(key)
                 .openedContentBlockIds(normalizeKey(openedContentBlockIds))
                 .createdAt(clock.instant().getEpochSecond())
                 .build();
-        attemptRepository.insert(attempt);
+        if (key != null) {
+            attemptRepository.insertIgnoreDuplicate(attempt);
+        } else {
+            attemptRepository.insert(attempt);
+        }
     }
 
     /**
-     * Нормализует клиентский ключ: blank → {@code null}, чтобы в БД не попадали
-     * пустые строки (partial unique index {@code uq_attempt_idempotency_key}
-     * покрывает только {@code idempotency_key IS NOT NULL}).
+     * Резервирует ключ до SM-2/session (BE-001). Без ключа всегда {@code true}.
      */
+    @Transactional
+    public boolean tryClaimIdempotencyKey(String clientAttemptId) {
+        String key = normalizeKey(clientAttemptId);
+        if (key == null) {
+            return true;
+        }
+        return attemptRepository.tryClaimIdempotencyKey(key, clock.instant().getEpochSecond());
+    }
+
+    /**
+     * Hard-check: если клиент прислал revisionId — он должен существовать и
+     * принадлежать вопросу. Иначе {@link RevisionMismatchException} (409).
+     * {@code null}/неположительный id допускается (no-JS → latest при record).
+     */
+    public void requireValidRevision(long questionId, Long clientRevisionId) {
+        if (clientRevisionId == null || clientRevisionId <= 0) {
+            return;
+        }
+        boolean ok = questionRevisionRepository.findById(clientRevisionId)
+                .filter(rev -> rev.questionId() == questionId)
+                .isPresent();
+        if (!ok) {
+            throw new RevisionMismatchException(
+                    "Question revision does not match the question shown; refresh and retry");
+        }
+    }
+
+    private Long resolveRevisionId(long questionId, Long clientRevisionId) {
+        if (clientRevisionId != null && clientRevisionId > 0) {
+            return questionRevisionRepository.findById(clientRevisionId)
+                    .filter(rev -> rev.questionId() == questionId)
+                    .map(QuestionRevision::id)
+                    .orElseThrow(() -> new RevisionMismatchException(
+                            "Question revision does not match the question shown; refresh and retry"));
+        }
+        return questionRevisionRepository.findLatest(questionId)
+                .map(QuestionRevision::id)
+                .orElse(null);
+    }
+
     private String normalizeKey(String clientAttemptId) {
         return clientAttemptId == null || clientAttemptId.isBlank() ? null : clientAttemptId;
     }

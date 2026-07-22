@@ -13,12 +13,16 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Сервис переключения состояния «избранное» для вопроса.
  * Флаг {@code important} хранится только в БД — markdown-файлы с вопросами read-only.
+ *
+ * <p>UI-014: при добавлении в избранное создаётся запись в {@code bookmark}
+ * (для страницы закладок и заметок); при снятии — закладка удаляется.</p>
  */
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class FavoriteService {
     QuestionRepository questionRepository;
+    BookmarkService bookmarkService;
 
     /**
      * Переключает флаг избранного для вопроса в БД.
@@ -32,6 +36,11 @@ public class FavoriteService {
                 .orElseThrow(() -> new QuestionNotFoundException("Вопрос не найден: id=" + questionId));
         boolean newFavorite = !question.important();
         questionRepository.updateImportant(questionId, newFavorite);
+        if (newFavorite) {
+            bookmarkService.ensure(questionId);
+        } else {
+            bookmarkService.remove(questionId);
+        }
         return new FavoriteResult(questionId, newFavorite);
     }
 

@@ -16,7 +16,11 @@ dependencies {
     implementation(libs.spring.boot.starter.jdbc)
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.boot.starter.actuator)
+    // Prometheus scrape endpoint /actuator/prometheus (Grafana dashboard in release package)
+    runtimeOnly("io.micrometer:micrometer-registry-prometheus")
     implementation(libs.spring.boot.starter.security)
+    // Optional IdP login when app.security.oauth.enabled=true + spring.security.oauth2.client.*
+    implementation(libs.spring.boot.starter.oauth2.client)
 
     // --- Flyway миграции ---
     implementation(libs.flyway.core)

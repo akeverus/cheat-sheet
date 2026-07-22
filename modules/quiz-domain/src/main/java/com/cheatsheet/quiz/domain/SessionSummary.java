@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.experimental.FieldDefaults;
 import java.io.Serializable;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -26,6 +27,7 @@ public class SessionSummary implements Serializable {
     int dueCount;
     double accuracy;
     Duration duration;
+    Instant completedAt;
     InterviewMode mode;
     List<TopicResult> topicResults;
     List<MistakeDetail> mistakes;
@@ -49,6 +51,7 @@ public class SessionSummary implements Serializable {
         this.accuracy = answered > 0
                 ? (builder.correctCount * 100.0) / answered : 0.0;
         this.duration = builder.duration;
+        this.completedAt = builder.completedAt;
         this.mode = builder.mode;
         this.topicResults = List.copyOf(builder.topicResults);
         this.mistakes = List.copyOf(builder.mistakes);
@@ -64,6 +67,7 @@ public class SessionSummary implements Serializable {
     public int getDueCount() { return dueCount; }
     public double getAccuracy() { return accuracy; }
     public Duration getDuration() { return duration; }
+    public Instant getCompletedAt() { return completedAt; }
     public InterviewMode getMode() { return mode; }
     public List<TopicResult> getTopicResults() { return topicResults; }
     public List<MistakeDetail> getMistakes() { return mistakes; }
@@ -146,6 +150,7 @@ public class SessionSummary implements Serializable {
         private int unknownCount;
         private int dueCount;
         private Duration duration;
+        private Instant completedAt;
         private InterviewMode mode;
         private final List<TopicResult> topicResults = new ArrayList<>();
         private final List<MistakeDetail> mistakes = new ArrayList<>();
@@ -159,6 +164,7 @@ public class SessionSummary implements Serializable {
         public Builder unknownCount(int val) { this.unknownCount = val; return this; }
         public Builder dueCount(int val) { this.dueCount = val; return this; }
         public Builder duration(Duration val) { this.duration = val; return this; }
+        public Builder completedAt(Instant val) { this.completedAt = val; return this; }
         public Builder mode(InterviewMode val) { this.mode = val; return this; }
 
         public Builder addTopicResult(TopicResult result) {

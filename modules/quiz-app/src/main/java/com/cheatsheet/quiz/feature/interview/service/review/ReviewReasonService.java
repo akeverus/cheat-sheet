@@ -43,6 +43,34 @@ public class ReviewReasonService {
     public Optional<ReviewReason> classify(Optional<ReviewState> reviewState,
                                            Optional<FsrsState> fsrsState,
                                            double topicAccuracy) {
+        return classify(reviewState, fsrsState, topicAccuracy, false);
+    }
+
+    /**
+     * @param bookmarked {@code true}, если вопрос в избранном пользователя
+     */
+    public Optional<ReviewReason> classify(Optional<ReviewState> reviewState,
+                                           Optional<FsrsState> fsrsState,
+                                           double topicAccuracy,
+                                           boolean bookmarked) {
+        return classify(reviewState, fsrsState, topicAccuracy, bookmarked, false);
+    }
+
+    /**
+     * @param bookmarked {@code true}, если вопрос в избранном пользователя
+     * @param examMode   {@code true}, если текущая сессия в режиме {@code EXAM}
+     */
+    public Optional<ReviewReason> classify(Optional<ReviewState> reviewState,
+                                           Optional<FsrsState> fsrsState,
+                                           double topicAccuracy,
+                                           boolean bookmarked,
+                                           boolean examMode) {
+        // Экзамен: контекст сессии важнее FSRS-причины (вопрос в наборе экзамена).
+        if (examMode) {
+            return Optional.of(new ReviewReason(ReviewReason.Type.EXAM,
+                    "Часть экзаменационной сессии"));
+        }
+
         long now = clock.instant().getEpochSecond();
         ReviewState state = reviewState.orElse(null);
         Long lastReviewedAt = fsrsState.map(FsrsState::lastReviewedAt).orElse(null);
@@ -50,8 +78,8 @@ public class ReviewReasonService {
         // 1) Недавний лапс: последний ответ был неверным / «не знаю».
         if (state != null && isLapse(state.lastResult())) {
             String message = lastReviewedAt != null
-                    ? "Последняя ошибка: " + formatDay(lastReviewedAt)
-                    : "Последняя попытка была неверной";
+                    ? "Недавно была ошибка (" + formatDay(lastReviewedAt) + ") — повторим, пока не закрепится"
+                    : "Последний ответ был неверным — повторим сейчас";
             return Optional.of(new ReviewReason(ReviewReason.Type.RECENT_LAPSE, message));
         }
 
@@ -60,15 +88,28 @@ public class ReviewReasonService {
             long overdueDays = (now - state.nextReviewAt()) / SECONDS_PER_DAY;
             if (overdueDays >= 1) {
                 return Optional.of(new ReviewReason(ReviewReason.Type.OVERDUE,
-                        "Повторение просрочено на " + overdueDays + " " + pluralizeDays(overdueDays)));
+                        "Повторение просрочено на " + overdueDays + " " + pluralizeDays(overdueDays)
+                                + " — интервал уже вышел"));
             }
         }
 
-        // 3) Слабый навык: общая точность по теме ниже порога (и данные есть).
+        // 3) Закладка пользователя.
+        if (bookmarked) {
+            return Optional.of(new ReviewReason(ReviewReason.Type.BOOKMARK,
+                    "В избранном — ты сам отметил этот вопрос для повтора"));
+        }
+
+        // 4) Слабый навык: общая точность по теме ниже порога (и данные есть).
         if (topicAccuracy >= 0 && topicAccuracy < WEAK_SKILL_ACCURACY_THRESHOLD) {
             long percent = Math.round(topicAccuracy);
             return Optional.of(new ReviewReason(ReviewReason.Type.WEAK_SKILL,
-                    "Слабый навык — точность по теме " + percent + "%"));
+                    "Тема пока слабая (точность " + percent + "%) — подтянем в этой сессии"));
+        }
+
+        // 5) Новая карточка: ещё не было попыток.
+        if (state == null) {
+            return Optional.of(new ReviewReason(ReviewReason.Type.NEW,
+                    "Новый вопрос — ещё не отвечал, самое время познакомиться"));
         }
 
         return Optional.empty();

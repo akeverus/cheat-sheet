@@ -37,6 +37,7 @@ class InterviewApiControllerUnitTest {
     @Mock private ConfidenceApiService confidenceApiService;
     @Mock private NextQuestionApiService nextQuestionApiService;
     @Mock private FavoriteApiService favoriteApiService;
+    @Mock private com.cheatsheet.quiz.feature.interview.usecase.BookmarkApiService bookmarkApiService;
     @Mock private StreakApiService streakApiService;
     @Mock private StatsApiService statsApiService;
     @Mock private IssueReportApiService issueReportApiService;
@@ -50,6 +51,7 @@ class InterviewApiControllerUnitTest {
                 confidenceApiService,
                 nextQuestionApiService,
                 favoriteApiService,
+                bookmarkApiService,
                 streakApiService,
                 statsApiService,
                 issueReportApiService,

@@ -10,7 +10,10 @@ import lombok.extern.slf4j.Slf4j;
  *   <li>{@link #EXAM} — экзамен с фиксированным числом вопросов и штрафными при ошибках;</li>
  *   <li>{@link #MARATHON} — марафон с большим количеством вопросов подряд;</li>
  *   <li>{@link #STUDY} — двухфазный режим: сначала изучение (показ ответа), затем проверка;</li>
- *   <li>{@link #FLASHCARD} — режим флешкарт (active recall): вопрос → мысленный ответ → раскрытие → самооценка.</li>
+ *   <li>{@link #FLASHCARD} — режим флешкарт (active recall): вопрос → мысленный ответ → раскрытие → самооценка;</li>
+ *   <li>{@link #TYPED_RECALL} — печатный ответ в textarea → раскрытие → самооценка;</li>
+ *   <li>{@link #INTERVIEW} — устный/развёрнутый ответ (textarea как заметки) → раскрытие → самооценка;</li>
+ *   <li>{@link #CODE_CHALLENGE} — код в monospace-textarea → раскрытие → самооценка.</li>
  * </ul>
  */
 @Slf4j
@@ -29,7 +32,31 @@ public enum InterviewMode {
     STUDY,
 
     /** Флешкарты: вопрос → раскрытие ответа → самооценка (как Anki). */
-    FLASHCARD;
+    FLASHCARD,
+
+    /** Печатный active recall: textarea → раскрытие → самооценка. */
+    TYPED_RECALL,
+
+    /** Интервью: развёрнутый ответ (textarea как заметки) → раскрытие → самооценка. */
+    INTERVIEW,
+
+    /** Код-челлендж: monospace-textarea → раскрытие → самооценка. */
+    CODE_CHALLENGE;
+
+    /** Режимы семейства active recall (флешкарта + typed/interview/code). */
+    public boolean isRecallMode() {
+        return this == FLASHCARD || this == TYPED_RECALL || this == INTERVIEW || this == CODE_CHALLENGE;
+    }
+
+    /** Режимы с обязательным/ожидаемым вводом в textarea перед reveal. */
+    public boolean usesTypedInput() {
+        return this == TYPED_RECALL || this == INTERVIEW || this == CODE_CHALLENGE;
+    }
+
+    /** Режим с monospace-textarea для кода. */
+    public boolean usesCodeEditor() {
+        return this == CODE_CHALLENGE;
+    }
 
     /**
      * Парсинг строки в {@link InterviewMode}.

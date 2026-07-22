@@ -2,8 +2,12 @@ package com.cheatsheet.quiz.api.security;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.util.ArrayDeque;
 
@@ -16,10 +20,14 @@ import java.util.ArrayDeque;
  * предотвращая утечку памяти при большом количестве уникальных клиентов.</p>
  */
 @Component
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class RequestRateLimiter {
 
     private static final int MAX_ENTRIES = 10_000;
     private static final Duration EVICTION_AFTER_ACCESS = Duration.ofMinutes(5);
+
+    Clock clock;
 
     private final Cache<String, ArrayDeque<Long>> windows = Caffeine.newBuilder()
             .maximumSize(MAX_ENTRIES)
@@ -35,7 +43,7 @@ public class RequestRateLimiter {
      * @return true, если запрос разрешён
      */
     public boolean allow(String key, int maxRequests, Duration window) {
-        long now = System.currentTimeMillis();
+        long now = clock.millis();
         long cutoff = now - window.toMillis();
         ArrayDeque<Long> timestamps = windows.get(key, ignored -> new ArrayDeque<>());
 

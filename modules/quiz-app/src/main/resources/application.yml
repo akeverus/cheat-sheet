@@ -4,6 +4,13 @@ server:
   # но даёт активным завершиться. K8s/docker compose шлют SIGTERM до SIGKILL
   # (по умолчанию 30s grace), поэтому Spring lifecycle тоже 30s.
   shutdown: graceful
+  servlet:
+    session:
+      # Только cookie. URL rewriting (;jsessionid=…) ломает статику: браузер
+      # запрашивает /css/shell.css;jsessionid=… → 400, mobile shell не грузится
+      # (sidebar виден, mobile-nav не fixed) на первой HTML-странице без cookie
+      # (live: Accept:text/html GET /export → error.html без стилей).
+      tracking-modes: cookie
   # При работе за reverse proxy (nginx, Cloudflare, K8s Ingress) поднимаем
   # X-Forwarded-* headers, чтобы Spring видел реальную схему (https) и IP
   # клиента. Без этого Spring Security ломает same-site cookies, а
@@ -57,9 +64,9 @@ spring:
     clean-disabled: ${FLYWAY_CLEAN_DISABLED:true}
   thymeleaf:
     cache: false
-  # Статика (CSS/JS/images) — version-busted через ?v=N в head fragment,
-  # поэтому безопасно кэшировать агрессивно. В dev переопредели
-  # через STATIC_RESOURCES_CACHE_SECONDS=0 если правишь editorial.css вживую.
+  # Статика (CSS/JS/images). Dev: короткий cache + без content-hash chain
+  # (удобно править CSS/JS вживую). Prod: chain.strategy.content + длинный
+  # cache — см. application-prod.yml (OPS-004).
   web:
     resources:
       cache:
@@ -119,6 +126,28 @@ app:
 
   # --- Security ---
   security:
+    # Hybrid: local (default single-user) | multi (mutating endpoints require auth)
+    mode: ${APP_SECURITY_MODE:local}
+    # Required under Spring profile prod when mode=local (fail-fast otherwise)
+    allow-insecure-public: ${APP_SECURITY_ALLOW_INSECURE_PUBLIC:false}
+    multi:
+      username: ${APP_SECURITY_MULTI_USERNAME:trainer}
+      password: ${APP_SECURITY_MULTI_PASSWORD:trainer}
+      # Optional extra in-memory accounts for mode=multi:
+      # extra-users:
+      #   - username: alice
+      #     password: alice
+    # OAuth2/OIDC (opt-in). Also set spring.security.oauth2.client.registration.<id>.*
+    # Example overlay (not on classpath): modules/quiz-app/examples/application-oauth.yml
+    oauth:
+      enabled: ${APP_SECURITY_OAUTH_ENABLED:false}
+      registration-id: ${APP_SECURITY_OAUTH_REGISTRATION_ID:oidc}
+      display-name: ${APP_SECURITY_OAUTH_DISPLAY_NAME:OIDC}
+      # IdP claim with group list; groups listed in admin-groups get ROLE_ADMIN
+      groups-claim: ${APP_SECURITY_OAUTH_GROUPS_CLAIM:groups}
+      admin-groups: []
+      # admin-groups:
+      #   - cheat-sheet-admins
     cors:
       allowed-origins:
         - http://localhost:8080
@@ -134,6 +163,8 @@ app:
         - Content-Type
         - X-Admin-Token
         - X-CSRF-TOKEN
+        - X-XSRF-TOKEN
+        - Authorization
       exposed-headers:
         - Retry-After
       allow-credentials: true
@@ -144,7 +175,8 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        # metrics — Micrometer; prometheus — exposition for Grafana/Prometheus scrape
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       # Включаем /actuator/health/liveness и /actuator/health/readiness —

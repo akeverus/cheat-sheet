@@ -17,6 +17,7 @@ public record AnswerResponse(
         long correctOptionId,
         long selectedOptionId,
         String correctOptionLetter,
+        String selectedOptionLetter,
         String answerHtml,
         String answerLeadHtml,
         String answerRestHtml,
@@ -31,7 +32,7 @@ public record AnswerResponse(
         long xpTotal,
         int level
 ) {
-    /** Обратная совместимость: без полей интервала/XP (хендофф-3). */
+    /** Обратная совместимость: без selectedOptionLetter / интервала / XP. */
     public AnswerResponse(
             boolean correct,
             long correctOptionId,
@@ -46,8 +47,34 @@ public record AnswerResponse(
             List<RelatedQuestionDto> relatedQuestions,
             SessionInfoDto session
     ) {
-        this(correct, correctOptionId, selectedOptionId, correctOptionLetter, answerHtml,
-                answerLeadHtml, answerRestHtml, optionExplanations, answerDisplayMode, repetitions,
-                relatedQuestions, session, 0L, 0, 0L, 0L, 0);
+        this(correct, correctOptionId, selectedOptionId, correctOptionLetter, "",
+                answerHtml, answerLeadHtml, answerRestHtml, optionExplanations, answerDisplayMode,
+                repetitions, relatedQuestions, session, 0L, 0, 0L, 0L, 0);
+    }
+
+    /** Обратная совместимость: без selectedOptionLetter. */
+    public AnswerResponse(
+            boolean correct,
+            long correctOptionId,
+            long selectedOptionId,
+            String correctOptionLetter,
+            String answerHtml,
+            String answerLeadHtml,
+            String answerRestHtml,
+            List<OptionExplanationDto> optionExplanations,
+            String answerDisplayMode,
+            int repetitions,
+            List<RelatedQuestionDto> relatedQuestions,
+            SessionInfoDto session,
+            long nextReviewAt,
+            int intervalDays,
+            long xpAwarded,
+            long xpTotal,
+            int level
+    ) {
+        this(correct, correctOptionId, selectedOptionId, correctOptionLetter, "",
+                answerHtml, answerLeadHtml, answerRestHtml, optionExplanations, answerDisplayMode,
+                repetitions, relatedQuestions, session, nextReviewAt, intervalDays,
+                xpAwarded, xpTotal, level);
     }
 }

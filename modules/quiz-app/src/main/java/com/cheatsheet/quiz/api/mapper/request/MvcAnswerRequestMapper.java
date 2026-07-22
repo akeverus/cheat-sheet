@@ -24,7 +24,10 @@ public class MvcAnswerRequestMapper {
                 request.getShuffle(),
                 request.getOrdered(),
                 request.getConfidence(),
-                request.getClientAttemptId()
+                request.getClientAttemptId(),
+                request.getOpenedContentBlockIds(),
+                request.getResponseTimeMs(),
+                request.getQuestionRevisionId()
         );
     }
 }

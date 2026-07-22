@@ -30,9 +30,13 @@ class SecurityConfigWebMvcTest {
     }
 
     @Test
-    void csrfIsIgnoredForApiEndpoints() throws Exception {
+    void csrfIsRequiredForApiMutatingEndpoints() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.post("/api/favorite"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/favorite")
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(result -> assertThat(result.getResponse().getStatus()).isNotEqualTo(403));
     }
 
     @Test
@@ -65,23 +69,34 @@ class SecurityConfigWebMvcTest {
     }
 
     @Test
-    void contentSecurityPolicyAllowsKnownCdnDeps() throws Exception {
-        // Шаблоны грузят шрифты с Google Fonts, highlight.js с cdnjs и
-        // mermaid с jsdelivr. Если кто-то снова сожмёт CSP до "self
-        // 'unsafe-inline'" — страницы посыпятся console errors. Этот тест —
-        // защита от такой регрессии.
+    void contentSecurityPolicyIsSelfHostedOnly() throws Exception {
+        // OPS-005: hljs/mermaid/chart/fonts self-hosted; CSP не должен whitelisting'ить CDN.
         String csp = mockMvc.perform(MockMvcRequestBuilders.get("/"))
                 .andReturn()
                 .getResponse()
                 .getHeader("Content-Security-Policy");
 
         assertThat(csp).isNotNull();
-        assertThat(csp).contains("https://cdnjs.cloudflare.com");
-        assertThat(csp).contains("https://cdn.jsdelivr.net");
-        assertThat(csp).contains("https://fonts.googleapis.com");
-        assertThat(csp).contains("https://fonts.gstatic.com");
+        assertThat(csp).doesNotContain("https://cdnjs.cloudflare.com");
+        assertThat(csp).doesNotContain("https://cdn.jsdelivr.net");
+        assertThat(csp).doesNotContain("https://fonts.googleapis.com");
+        assertThat(csp).doesNotContain("https://fonts.gstatic.com");
+        assertThat(csp).contains("script-src 'self'");
+        assertThat(csp).contains("style-src 'self'");
+        assertThat(csp).contains("font-src 'self'");
+        assertThat(csp).contains("connect-src 'self'");
         assertThat(csp).contains("script-src-elem");
         assertThat(csp).contains("style-src-elem");
-        assertThat(csp).contains("font-src");
+        assertThat(csp).contains("style-src-attr 'none'");
+        assertThat(csp).contains("'nonce-");
+        assertThat(csp).doesNotContain("script-src 'self' 'unsafe-inline'");
+        assertThat(csp).doesNotContain("unsafe-inline");
+    }
+
+    @Test
+    void exportRemainsCsrfIgnoredButAdminGated() throws Exception {
+        // CSRF ignored for /export; without admin token still 403.
+        mockMvc.perform(MockMvcRequestBuilders.get("/export"))
+                .andExpect(status().isForbidden());
     }
 }

@@ -7,13 +7,17 @@ import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Node;
 import com.vladsch.flexmark.util.data.MutableDataSet;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Locale;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.safety.Safelist;
 import org.springframework.stereotype.Service;
 
@@ -64,11 +68,21 @@ public class MarkdownRenderService {
 
     /** Safelist для HTML после markdown: только безопасные теги, без script/iframe/form. Подходит для th:utext. */
     private static final Safelist HTML_SAFELIST = Safelist.relaxed()
-            .addTags("pre", "code", "table", "thead", "tbody", "tr", "th", "td")
-            .removeTags("script", "iframe", "object", "embed", "form")
+            .addTags("pre", "code", "table", "thead", "tbody", "tr", "th", "td",
+                    "svg", "path", "g", "use", "title", "desc", "circle", "rect", "line", "polyline", "polygon")
+            .removeTags("script", "iframe", "object", "embed", "form", "foreignObject")
             .addAttributes("div", "class")   // mermaid diagrams: <div class="mermaid">
             .addAttributes("code", "class")  // highlight.js language hints: <code class="language-java">
             .addAttributes("a", "class")
+            .addAttributes("svg", "viewBox", "width", "height", "xmlns", "aria-hidden", "focusable", "role", "class", "fill", "stroke")
+            .addAttributes("path", "d", "fill", "stroke", "stroke-width", "transform", "class")
+            .addAttributes("g", "transform", "fill", "stroke", "class")
+            .addAttributes("use", "href")
+            .addAttributes("circle", "cx", "cy", "r", "fill", "stroke", "class")
+            .addAttributes("rect", "x", "y", "width", "height", "rx", "ry", "fill", "stroke", "class")
+            .addAttributes("line", "x1", "y1", "x2", "y2", "stroke", "class")
+            .addAttributes("polyline", "points", "fill", "stroke", "class")
+            .addAttributes("polygon", "points", "fill", "stroke", "class")
             // wiki-link даёт relative href вида /?topic=foo — без preserveRelativeLinks
             // jsoup пытается «отабсолютить» его и убирает href; без removeProtocols
             // protocol-whitelist отбрасывает href, у которого нет схемы.
@@ -107,7 +121,68 @@ public class MarkdownRenderService {
         processed = preprocessWikiLinks(processed);
         Node document = PARSER.parse(processed);
         String html = HTML_RENDERER.render(document);
-        return Jsoup.clean(html, "", HTML_SAFELIST, NO_PRETTY_PRINT);
+        String cleaned = Jsoup.clean(html, "", HTML_SAFELIST, NO_PRETTY_PRINT);
+        return sanitizeAnchorsAndSvg(cleaned);
+    }
+
+    /**
+     * Post-clean: href allow-list + SVG use/href only same-document fragments.
+     */
+    private String sanitizeAnchorsAndSvg(String html) {
+        if (html == null || html.isBlank()) {
+            return html == null ? "" : html;
+        }
+        Document doc = Jsoup.parseBodyFragment(html);
+        doc.outputSettings(NO_PRETTY_PRINT);
+        for (Element anchor : doc.select("a[href]")) {
+            if (!isSafeHref(anchor.attr("href"))) {
+                anchor.removeAttr("href");
+            }
+        }
+        for (Element use : doc.select("use[href], use[xlink:href]")) {
+            String href = use.hasAttr("href") ? use.attr("href") : use.attr("xlink:href");
+            if (href == null || !href.startsWith("#")) {
+                use.removeAttr("href");
+                use.removeAttr("xlink:href");
+            }
+        }
+        // Strip event-handler attributes that might survive if added outside safelist attrs.
+        for (Element el : doc.getAllElements()) {
+            el.attributes().asList().stream()
+                    .filter(a -> a.getKey().startsWith("on"))
+                    .toList()
+                    .forEach(a -> el.removeAttr(a.getKey()));
+        }
+        return doc.body().html();
+    }
+
+    private boolean isSafeHref(String href) {
+        if (href == null || href.isBlank()) {
+            return false;
+        }
+        String trimmed = href.trim();
+        String decoded;
+        try {
+            decoded = URLDecoder.decode(trimmed, StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException ex) {
+            return false;
+        }
+        String normalized = decoded.trim().replaceAll("\\s+", "").toLowerCase(Locale.ROOT);
+        if (normalized.startsWith("javascript:")
+                || normalized.startsWith("data:")
+                || normalized.startsWith("vbscript:")
+                || normalized.startsWith("//")) {
+            return false;
+        }
+        if (trimmed.startsWith("#")) {
+            return true;
+        }
+        // Same-origin paths only — reject protocol-relative "//evil".
+        if (trimmed.startsWith("/") && !trimmed.startsWith("//")) {
+            return true;
+        }
+        String lower = trimmed.toLowerCase(Locale.ROOT);
+        return lower.startsWith("http:") || lower.startsWith("https:") || lower.startsWith("mailto:");
     }
 
     /**

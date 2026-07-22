@@ -57,6 +57,7 @@ public class AnswerApiService {
                 ctx.result().correct().id(),
                 ctx.result().selected().id(),
                 correctOptionLetter(ctx.result()),
+                selectedOptionLetter(ctx.result()),
                 answerHtml,
                 split.leadHtml(),
                 split.restHtml(),
@@ -79,9 +80,17 @@ public class AnswerApiService {
      * строка — если правильный не найден в списке (не должно случаться).
      */
     private String correctOptionLetter(AnswerResult result) {
+        return optionLetter(result, result.correct().id());
+    }
+
+    private String selectedOptionLetter(AnswerResult result) {
+        return optionLetter(result, result.selected().id());
+    }
+
+    private String optionLetter(AnswerResult result, long optionId) {
         List<AnswerOption> options = result.options();
         for (int i = 0; i < options.size(); i++) {
-            if (options.get(i).id() == result.correct().id()) {
+            if (options.get(i).id() == optionId) {
                 return String.valueOf((char) ('A' + i));
             }
         }
@@ -104,7 +113,9 @@ public class AnswerApiService {
                 command.ordered(),
                 command.confidence(),
                 command.clientAttemptId(),
-                command.openedContentBlockIds()
+                command.openedContentBlockIds(),
+                command.responseTimeMs(),
+                command.questionRevisionId()
         );
     }
 
@@ -148,14 +159,33 @@ public class AnswerApiService {
             Boolean ordered,
             Integer confidence,
             String clientAttemptId,
-            String openedContentBlockIds
+            String openedContentBlockIds,
+            Integer responseTimeMs,
+            Long questionRevisionId
     ) {
-        /** Обратная совместимость: без {@code openedContentBlockIds}. */
+        /** Обратная совместимость: без {@code openedContentBlockIds}/responseTimeMs/revision. */
         public AnswerCommand(long questionId, long optionId, String topic, String group,
                              Boolean important, Boolean onlyWrong, Boolean shuffle, Boolean ordered,
                              Integer confidence, String clientAttemptId) {
             this(questionId, optionId, topic, group, important, onlyWrong, shuffle, ordered,
-                    confidence, clientAttemptId, null);
+                    confidence, clientAttemptId, null, null, null);
+        }
+
+        /** Обратная совместимость: без {@code responseTimeMs}/revision. */
+        public AnswerCommand(long questionId, long optionId, String topic, String group,
+                             Boolean important, Boolean onlyWrong, Boolean shuffle, Boolean ordered,
+                             Integer confidence, String clientAttemptId, String openedContentBlockIds) {
+            this(questionId, optionId, topic, group, important, onlyWrong, shuffle, ordered,
+                    confidence, clientAttemptId, openedContentBlockIds, null, null);
+        }
+
+        /** Обратная совместимость: без {@code questionRevisionId}. */
+        public AnswerCommand(long questionId, long optionId, String topic, String group,
+                             Boolean important, Boolean onlyWrong, Boolean shuffle, Boolean ordered,
+                             Integer confidence, String clientAttemptId, String openedContentBlockIds,
+                             Integer responseTimeMs) {
+            this(questionId, optionId, topic, group, important, onlyWrong, shuffle, ordered,
+                    confidence, clientAttemptId, openedContentBlockIds, responseTimeMs, null);
         }
     }
 }

@@ -218,7 +218,7 @@ class InterviewControllerTest {
         assertThat(body).contains("id=\"filters-form\"");
         assertThat(body).contains("id=\"session-form\"");
         assertThat(body).contains("Применить");
-        assertThat(body).contains("Начать сессию");
+        assertThat(body).contains("Начать тренировку");
     }
 
     @Test
@@ -488,6 +488,21 @@ class InterviewControllerTest {
     }
 
     @Test
+    void bookmarksPageRendersEmptyStateAndNavLink() throws Exception {
+        String body = mockMvc.perform(get("/bookmarks"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        assertThat(body).contains("bookmarks-page");
+        assertThat(body).contains("Закладки");
+        assertThat(body).contains("href=\"/bookmarks\"");
+        assertThat(body).containsAnyOf("Пока нет закладок", "Список");
+        assertThat(body).doesNotContain("href=\"/stats?important=true\"");
+    }
+
+    @Test
     void statsTableHeadersExposeKeyboardSortableContract() throws Exception {
         String body = mockMvc.perform(get("/stats"))
                 .andExpect(status().isOk())
@@ -737,7 +752,7 @@ class InterviewControllerTest {
             String body = index.getContentAsString();
             if (body.contains("id=\"interview-form\"")) {
                 assertThat(body).contains("Пост-разбор");
-                assertThat(body).contains("Сначала итог, затем объяснение и дополнительные блоки");
+                assertThat(body).contains("Сначала разбор ответа, затем итог и дополнительные блоки");
                 // AIR-1: AI-разбор вырезан → единственный пост-ответный блок «Похожие
                 // вопросы» (кнопка extra-analysis раскрывает relatedQuestions).
                 assertThat(body).contains("Похожие вопросы");
@@ -750,7 +765,7 @@ class InterviewControllerTest {
             String body = training.getContentAsString();
             if (body.contains("id=\"interview-form\"")) {
                 assertThat(body).contains("Пост-разбор");
-                assertThat(body).contains("Сначала итог, затем объяснение и дополнительные блоки");
+                assertThat(body).contains("Сначала разбор ответа, затем итог и дополнительные блоки");
                 assertThat(body).contains("Похожие вопросы");
                 assertThat(body).doesNotContain("Подробнее");
             }

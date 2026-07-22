@@ -14,10 +14,13 @@ import com.cheatsheet.quiz.domain.InterviewSession;
 import com.cheatsheet.quiz.feature.interview.service.page.FocusTrainingPageService;
 import com.cheatsheet.quiz.feature.interview.service.flow.PauseService;
 import com.cheatsheet.quiz.feature.interview.service.flow.ReviewModeService;
+import com.cheatsheet.quiz.feature.interview.service.page.BookmarksPageService;
 import com.cheatsheet.quiz.feature.interview.service.page.StatsPageService;
+import com.cheatsheet.quiz.feature.interview.usecase.BookmarkApiService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * Use-case orchestration для MVC page endpoint-ов.
@@ -29,6 +32,8 @@ public class InterviewPageMvcService {
     InterviewSessionSupport sessionSupport;
     FocusTrainingPageService focusTrainingPageService;
     StatsPageService statsPageService;
+    BookmarksPageService bookmarksPageService;
+    BookmarkApiService bookmarkApiService;
     PauseService pauseService;
     ReviewModeService reviewModeService;
     MvcNavigationService navigationService;
@@ -45,6 +50,7 @@ public class InterviewPageMvcService {
             Boolean weakTopics,
             Boolean ordered,
             Long excludeQuestionId,
+            Long questionId,
             String mode,
             HttpSession session,
             Model model
@@ -60,6 +66,7 @@ public class InterviewPageMvcService {
                 selectedMode,
                 weakTopics,
                 excludeQuestionId,
+                questionId,
                 false,
                 session,
                 model
@@ -74,6 +81,7 @@ public class InterviewPageMvcService {
             Boolean weakTopics,
             Boolean ordered,
             Long excludeQuestionId,
+            Long questionId,
             String mode,
             HttpSession session,
             Model model
@@ -90,6 +98,7 @@ public class InterviewPageMvcService {
                 selectedMode,
                 weakTopics,
                 excludeQuestionId,
+                questionId,
                 true,
                 session,
                 model
@@ -149,12 +158,31 @@ public class InterviewPageMvcService {
         return navigationService.statsView();
     }
 
+    public String bookmarks(Model model) {
+        BookmarksPageService.BookmarksPageState state = bookmarksPageService.build();
+        modelAttributeMapper.applyBookmarksPageState(model, state);
+        return navigationService.bookmarksView();
+    }
+
+    public String saveBookmarkNote(long questionId, String note, RedirectAttributes redirectAttributes) {
+        bookmarkApiService.saveNote(questionId, note);
+        redirectAttributes.addFlashAttribute("bookmarkSaved", true);
+        return "redirect:/bookmarks#q-" + questionId;
+    }
+
+    public String removeBookmark(long questionId, RedirectAttributes redirectAttributes) {
+        bookmarkApiService.remove(questionId);
+        redirectAttributes.addFlashAttribute("bookmarkRemoved", true);
+        return "redirect:/bookmarks";
+    }
+
     private String renderFocusPage(
             InterviewSession interviewSession,
             InterviewFilter filter,
             InterviewMode selectedMode,
             Boolean weakTopics,
             Long excludeQuestionId,
+            Long questionId,
             boolean reviewMode,
             HttpSession session,
             Model model
@@ -165,7 +193,8 @@ public class InterviewPageMvcService {
                 filter,
                 selectedMode,
                 weakTopicsPriority,
-                excludeQuestionId
+                excludeQuestionId,
+                questionId
         );
         modelAttributeMapper.applyFocusPageState(model, pageState, reviewMode);
         // Метка показа вопроса для измерения времени ответа (Фаза 4): только когда

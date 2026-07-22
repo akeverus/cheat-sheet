@@ -44,7 +44,8 @@ class ReviewReasonServiceTest {
 
         assertThat(reason).isPresent();
         assertThat(reason.get().type()).isEqualTo(ReviewReason.Type.RECENT_LAPSE);
-        assertThat(reason.get().message()).isEqualTo("Последняя ошибка: 05.03");
+        assertThat(reason.get().message())
+                .isEqualTo("Недавно была ошибка (05.03) — повторим, пока не закрепится");
     }
 
     @Test
@@ -56,16 +57,16 @@ class ReviewReasonServiceTest {
 
         assertThat(reason).isPresent();
         assertThat(reason.get().type()).isEqualTo(ReviewReason.Type.RECENT_LAPSE);
-        assertThat(reason.get().message()).isEqualTo("Последняя попытка была неверной");
+        assertThat(reason.get().message()).isEqualTo("Последний ответ был неверным — повторим сейчас");
     }
 
     @Test
     void overdueUsesRussianDayPluralization() {
-        assertThat(overdueMessage(1)).isEqualTo("Повторение просрочено на 1 день");
-        assertThat(overdueMessage(3)).isEqualTo("Повторение просрочено на 3 дня");
-        assertThat(overdueMessage(5)).isEqualTo("Повторение просрочено на 5 дней");
-        assertThat(overdueMessage(11)).isEqualTo("Повторение просрочено на 11 дней");
-        assertThat(overdueMessage(21)).isEqualTo("Повторение просрочено на 21 день");
+        assertThat(overdueMessage(1)).isEqualTo("Повторение просрочено на 1 день — интервал уже вышел");
+        assertThat(overdueMessage(3)).isEqualTo("Повторение просрочено на 3 дня — интервал уже вышел");
+        assertThat(overdueMessage(5)).isEqualTo("Повторение просрочено на 5 дней — интервал уже вышел");
+        assertThat(overdueMessage(11)).isEqualTo("Повторение просрочено на 11 дней — интервал уже вышел");
+        assertThat(overdueMessage(21)).isEqualTo("Повторение просрочено на 21 день — интервал уже вышел");
     }
 
     private String overdueMessage(int days) {
@@ -98,7 +99,8 @@ class ReviewReasonServiceTest {
 
         assertThat(reason).isPresent();
         assertThat(reason.get().type()).isEqualTo(ReviewReason.Type.WEAK_SKILL);
-        assertThat(reason.get().message()).isEqualTo("Слабый навык — точность по теме 40%");
+        assertThat(reason.get().message())
+                .isEqualTo("Тема пока слабая (точность 40%) — подтянем в этой сессии");
     }
 
     @Test
@@ -139,12 +141,61 @@ class ReviewReasonServiceTest {
     }
 
     @Test
-    void overdueTakesPriorityOverWeakSkill() {
+    void bookmarkWhenImportantAndNoStrongerReason() {
         Optional<ReviewReason> reason = service.classify(
-                Optional.of(stateWith(ReviewResult.CORRECT, NOW - 4 * DAY)),
+                Optional.of(stateWith(ReviewResult.CORRECT, NOW)),
                 Optional.empty(),
-                10.0);
+                90.0,
+                true);
+
         assertThat(reason).isPresent();
-        assertThat(reason.get().type()).isEqualTo(ReviewReason.Type.OVERDUE);
+        assertThat(reason.get().type()).isEqualTo(ReviewReason.Type.BOOKMARK);
+        assertThat(reason.get().message())
+                .isEqualTo("В избранном — ты сам отметил этот вопрос для повтора");
+    }
+
+    @Test
+    void newCardWhenNoReviewStateAndHealthyAccuracy() {
+        Optional<ReviewReason> reason = service.classify(Optional.empty(), Optional.empty(), 90.0);
+
+        assertThat(reason).isPresent();
+        assertThat(reason.get().type()).isEqualTo(ReviewReason.Type.NEW);
+        assertThat(reason.get().message())
+                .isEqualTo("Новый вопрос — ещё не отвечал, самое время познакомиться");
+    }
+
+    @Test
+    void weakSkillTakesPriorityOverNew() {
+        Optional<ReviewReason> reason = service.classify(Optional.empty(), Optional.empty(), 40.0);
+
+        assertThat(reason).isPresent();
+        assertThat(reason.get().type()).isEqualTo(ReviewReason.Type.WEAK_SKILL);
+    }
+
+    @Test
+    void examModeReturnsExamReason() {
+        Optional<ReviewReason> reason = service.classify(
+                Optional.of(stateWith(ReviewResult.CORRECT, NOW)),
+                Optional.empty(),
+                90.0,
+                false,
+                true);
+
+        assertThat(reason).isPresent();
+        assertThat(reason.get().type()).isEqualTo(ReviewReason.Type.EXAM);
+        assertThat(reason.get().message()).isEqualTo("Часть экзаменационной сессии");
+    }
+
+    @Test
+    void examModeTakesPriorityOverLapse() {
+        Optional<ReviewReason> reason = service.classify(
+                Optional.of(stateWith(ReviewResult.WRONG, NOW)),
+                Optional.empty(),
+                10.0,
+                true,
+                true);
+
+        assertThat(reason).isPresent();
+        assertThat(reason.get().type()).isEqualTo(ReviewReason.Type.EXAM);
     }
 }

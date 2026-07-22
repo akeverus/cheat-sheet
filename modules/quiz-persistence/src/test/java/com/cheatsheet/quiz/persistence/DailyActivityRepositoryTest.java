@@ -85,4 +85,29 @@ class DailyActivityRepositoryTest extends AbstractPostgresRepositoryTest {
         StreakInfo info = repository.findStreak();
         assertThat(info.currentStreak()).isEqualTo(4); // today + 3 предыдущих
     }
+
+    @Test
+    void findRecentDaysReturnsOnlyDaysInsideWindowNewestFirstChronological() {
+        DateTimeFormatter fmt = DateTimeFormatter.ISO_LOCAL_DATE;
+        LocalDate today = LocalDate.now();
+        jdbcTemplate.update(
+                "INSERT INTO daily_activity (activity_date, questions_answered, correct_count, daily_goal) VALUES (?, 4, 3, 10)",
+                today.format(fmt));
+        jdbcTemplate.update(
+                "INSERT INTO daily_activity (activity_date, questions_answered, correct_count, daily_goal) VALUES (?, 2, 1, 10)",
+                today.minusDays(2).format(fmt));
+        jdbcTemplate.update(
+                "INSERT INTO daily_activity (activity_date, questions_answered, correct_count, daily_goal) VALUES (?, 5, 5, 10)",
+                today.minusDays(20).format(fmt)); // вне окна 14 дней
+
+        var days = repository.findRecentDays(14);
+
+        assertThat(days).hasSize(2);
+        assertThat(days.get(0).day()).isEqualTo(today.minusDays(2).format(fmt));
+        assertThat(days.get(0).answered()).isEqualTo(2);
+        assertThat(days.get(0).correct()).isEqualTo(1);
+        assertThat(days.get(1).day()).isEqualTo(today.format(fmt));
+        assertThat(days.get(1).answered()).isEqualTo(4);
+        assertThat(days.get(1).correct()).isEqualTo(3);
+    }
 }

@@ -3,6 +3,7 @@ package com.cheatsheet.quiz.service;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.domain.QuestionType;
 import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
+import com.cheatsheet.quiz.feature.interview.service.progress.BookmarkService;
 import com.cheatsheet.quiz.feature.interview.service.progress.FavoriteService;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,12 +26,14 @@ class FavoriteServiceTest {
 
     @Mock
     private QuestionRepository questionRepository;
+    @Mock
+    private BookmarkService bookmarkService;
 
     private FavoriteService service;
 
     @BeforeEach
     void setUp() {
-        service = new FavoriteService(questionRepository);
+        service = new FavoriteService(questionRepository, bookmarkService);
     }
 
     @Test
@@ -44,6 +47,7 @@ class FavoriteServiceTest {
         assertThat(result.questionId()).isEqualTo(questionId);
         assertThat(result.favorite()).isTrue();
         verify(questionRepository).updateImportant(eq(questionId), eq(true));
+        verify(bookmarkService).ensure(questionId);
     }
 
     @Test
@@ -57,6 +61,7 @@ class FavoriteServiceTest {
         assertThat(result.questionId()).isEqualTo(questionId);
         assertThat(result.favorite()).isFalse();
         verify(questionRepository).updateImportant(eq(questionId), eq(false));
+        verify(bookmarkService).remove(questionId);
     }
 
     @Test

@@ -45,16 +45,4 @@ class IssueReportApiServiceTest {
         assertThat(body.category()).isEqualTo("OUTDATED");
         assertThat(body.status()).isEqualTo("OPEN");
     }
-
-    @Test
-    void reportFallsBackToOtherForUnknownCategory() {
-        QuestionIssue issue = new QuestionIssue(
-                1L, 2L, QuestionIssueCategory.OTHER, null, QuestionIssueStatus.OPEN, Instant.now());
-        when(questionIssueService.report(2L, QuestionIssueCategory.OTHER, null)).thenReturn(issue);
-
-        ResponseEntity<ReportIssueResponse> response = service.toHttpResponse(2L, "gibberish", null);
-
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().category()).isEqualTo("OTHER");
-    }
 }

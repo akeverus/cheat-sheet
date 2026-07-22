@@ -14,12 +14,7 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Репозиторий для таблицы {@code question_issue} (FLOW-REPORT).
- *
- * <p>Хранит жалобы пользователя на вопросы. Запись создаётся со статусом
- * {@link QuestionIssueStatus#OPEN}; смена статуса — вручную (single-user
- * инструмент). {@code created_at} задаётся вызывающим (через {@code Clock}),
- * чтобы поведение было детерминированным в тестах.</p>
+ * Репозиторий {@code question_issue}, scoped by {@link OwnerContext}.
  */
 @Repository
 @RequiredArgsConstructor
@@ -33,31 +28,33 @@ public class QuestionIssueRepository {
      */
     public long save(long questionId, QuestionIssueCategory category, String comment, Instant createdAt) {
         Long id = jdbcTemplate.queryForObject(
-                "INSERT INTO question_issue (question_id, category, comment, status, created_at) " +
-                        "VALUES (?, ?, ?, ?, ?) RETURNING id",
+                "INSERT INTO question_issue (owner_key, question_id, category, comment, status, created_at) " +
+                        "VALUES (?, ?, ?, ?, ?, ?) RETURNING id",
                 Long.class,
+                OwnerContext.current(),
                 questionId, category.name(), comment, QuestionIssueStatus.OPEN.name(), Timestamp.from(createdAt));
         return id == null ? 0L : id;
     }
 
     /**
-     * Возвращает все жалобы по вопросу, новые первыми.
+     * Возвращает жалобы текущего владельца по вопросу, новые первыми.
      */
     public List<QuestionIssue> findByQuestionId(long questionId) {
         return jdbcTemplate.query(
                 "SELECT id, question_id, category, comment, status, created_at " +
-                        "FROM question_issue WHERE question_id = ? ORDER BY created_at DESC, id DESC",
+                        "FROM question_issue WHERE question_id = ? AND owner_key = ? " +
+                        "ORDER BY created_at DESC, id DESC",
                 (rs, rowNum) -> mapRow(rs),
-                questionId);
+                questionId, OwnerContext.current());
     }
 
     /**
-     * Количество жалоб в заданном статусе (например, сколько OPEN на разбор).
+     * Количество жалоб текущего владельца в заданном статусе.
      */
     public long countByStatus(QuestionIssueStatus status) {
         Long count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM question_issue WHERE status = ?",
-                Long.class, status.name());
+                "SELECT COUNT(*) FROM question_issue WHERE status = ? AND owner_key = ?",
+                Long.class, status.name(), OwnerContext.current());
         return count == null ? 0L : count;
     }
 

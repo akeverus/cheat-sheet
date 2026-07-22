@@ -50,9 +50,10 @@ public class SessionSummaryService {
         List<SessionSummary.TopicResult> topicResults = collectTopicResults(session);
         List<SessionSummary.MistakeDetail> mistakes = findMistakes(session);
 
+        Instant completedAt = clock.instant();
         Duration duration = session.getStartedAt() != null
-                ? Duration.between(session.getStartedAt(), Instant.now())
-                : null;
+                ? Duration.between(session.getStartedAt(), completedAt)
+                : Duration.ZERO;
 
         int dueCount = countDue(session);
 
@@ -63,6 +64,7 @@ public class SessionSummaryService {
                 .unknownCount(session.getUnknown())
                 .dueCount(dueCount)
                 .duration(duration)
+                .completedAt(completedAt)
                 .mode(session.getMode());
 
         addTopicResultsAndWeakRecommendations(builder, topicResults);

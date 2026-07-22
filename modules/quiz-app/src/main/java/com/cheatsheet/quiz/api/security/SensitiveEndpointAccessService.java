@@ -14,6 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -31,6 +34,7 @@ import java.util.Arrays;
 public class SensitiveEndpointAccessService {
 
     public static final String ADMIN_TOKEN_HEADER = "X-Admin-Token";
+    public static final String ROLE_ADMIN = OrgIdpGroupAuthoritiesMapper.ROLE_ADMIN;
     private static final Duration REGENERATE_WINDOW = Duration.ofMinutes(1);
     private static final int REGENERATE_WINDOW_SECONDS = 60;
     private static final String REGENERATE_RATE_LIMIT_KEY = "regenerate";
@@ -63,33 +67,48 @@ public class SensitiveEndpointAccessService {
         );
     }
 
+    /**
+     * Sensitive endpoints: valid {@code X-Admin-Token} or authenticated principal with {@code ROLE_ADMIN}.
+     */
+    public boolean isAuthorizedForSensitive(@Nullable String token) {
+        return isAuthorized(token) || hasAdminRole();
+    }
+
+    public boolean hasAdminRole() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return false;
+        }
+        for (GrantedAuthority authority : authentication.getAuthorities()) {
+            if (ROLE_ADMIN.equals(authority.getAuthority())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean isTokenConfigured() {
         String configuredToken = appProperties.getAdminToken();
         return configuredToken != null && !configuredToken.isBlank();
     }
 
     /**
-     * Строит единообразный 403 ответ для чувствительных endpoint.
-     *
-     * @param token значение заголовка X-Admin-Token (может быть null)
-     * @return 403 + ApiError: если токен не настроен — «Операция запрещена: app.admin-token не настроен», иначе «Недостаточно прав»
+     * Строит единообразный 403 ответ для чувствительных endpoint (без раскрытия конфигурации).
      */
     public ResponseEntity<ApiError> buildForbiddenResponse(@Nullable String token) {
-        String message = isTokenConfigured()
-                ? "Недостаточно прав"
-                : "Операция запрещена: app.admin-token не настроен";
-        ApiError error = new ApiError(HttpStatus.FORBIDDEN.value(), ApiErrorTypes.FORBIDDEN, message, null);
+        ApiError error = new ApiError(HttpStatus.FORBIDDEN.value(), ApiErrorTypes.FORBIDDEN,
+                "Недостаточно прав", null);
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(error);
     }
 
     /**
-     * Возвращает {@code null}, если токен валиден; иначе возвращает стандартный 403 и пишет security-log.
+     * Возвращает {@code null}, если доступ разрешён; иначе возвращает стандартный 403 и пишет security-log.
      */
     @Nullable
     public ResponseEntity<ApiError> forbiddenIfUnauthorized(@Nullable String token, String action) {
-        if (isAuthorized(token)) {
+        if (isAuthorizedForSensitive(token)) {
             return null;
         }
         log.warn("Неавторизованная попытка {}", action);

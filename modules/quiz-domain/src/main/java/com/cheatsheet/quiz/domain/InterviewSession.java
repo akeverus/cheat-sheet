@@ -123,7 +123,7 @@ public class InterviewSession implements Serializable {
         this.wrong = 0;
         this.unknown = 0;
         this.studyPhase = (mode == InterviewMode.STUDY) ? StudyPhase.LEARN : null;
-        this.flashcardPhase = (mode == InterviewMode.FLASHCARD) ? FlashcardPhase.QUESTION : null;
+        this.flashcardPhase = mode.isRecallMode() ? FlashcardPhase.QUESTION : null;
     }
 
     /**
@@ -273,7 +273,7 @@ public class InterviewSession implements Serializable {
 
     /** Сбрасывает flashcard-фазу на QUESTION для следующего вопроса. */
     public synchronized void resetFlashcardPhase() {
-        if (mode == InterviewMode.FLASHCARD) {
+        if (mode.isRecallMode()) {
             flashcardPhase = FlashcardPhase.QUESTION;
         }
     }
@@ -283,8 +283,8 @@ public class InterviewSession implements Serializable {
         index++;
     }
 
-    /** Проверяет, является ли сессия режимом FLASHCARD. */
+    /** Проверяет, является ли сессия режимом active recall (флешкарта и typed-family). */
     public boolean isFlashcardMode() {
-        return mode == InterviewMode.FLASHCARD;
+        return mode.isRecallMode();
     }
 }

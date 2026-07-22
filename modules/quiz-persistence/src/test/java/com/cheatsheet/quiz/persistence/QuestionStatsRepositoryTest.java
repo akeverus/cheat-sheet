@@ -110,6 +110,53 @@ class QuestionStatsRepositoryTest extends AbstractPostgresRepositoryTest {
         assertThat(agg.overdue()).isZero();
     }
 
+    @Test
+    void findRecentWrongQuestionsOrdersByLastWrongAttemptThenWrongCount() {
+        long qOld = insertWrongCard("wrong-old", "spring", "Old wrong?", 1, 0);
+        long qFresh = insertWrongCard("wrong-fresh", "java", "Fresh wrong?", 2, 0);
+        insertWrongCard("never-wrong", "java", "Never wrong?", 0, 3); // wrong_count=0 — не в списке
+
+        long t1 = 1_700_000_000L;
+        long t2 = 1_700_000_100L;
+        jdbcTemplate.update(
+                "INSERT INTO attempt (question_id, outcome, is_first_attempt, created_at) VALUES (?, 'WRONG', true, ?)",
+                qOld, t1);
+        jdbcTemplate.update(
+                "INSERT INTO attempt (question_id, outcome, is_first_attempt, created_at) VALUES (?, 'WRONG', true, ?)",
+                qFresh, t2);
+
+        var rows = repository.findRecentWrongQuestions(10);
+
+        assertThat(rows).hasSize(2);
+        assertThat(rows.get(0).questionId()).isEqualTo(qFresh);
+        assertThat(rows.get(0).topic()).isEqualTo("java");
+        assertThat(rows.get(0).wrongCount()).isEqualTo(2);
+        assertThat(rows.get(0).lastWrongAt()).isEqualTo(t2);
+        assertThat(rows.get(1).questionId()).isEqualTo(qOld);
+        assertThat(rows.get(1).lastWrongAt()).isEqualTo(t1);
+    }
+
+    @Test
+    void findRecentWrongQuestionsRespectsLimit() {
+        insertWrongCard("w1", "java", "Q1?", 1, 0);
+        insertWrongCard("w2", "java", "Q2?", 1, 0);
+        insertWrongCard("w3", "java", "Q3?", 1, 0);
+
+        assertThat(repository.findRecentWrongQuestions(2)).hasSize(2);
+    }
+
+    private long insertWrongCard(String slug, String topic, String text, int wrongCount, int correctCount) {
+        Long id = jdbcTemplate.queryForObject(
+                "INSERT INTO questions (slug, source_slug, file_path, topic, question_text, answer_markdown, source_hash) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id",
+                Long.class, slug, slug, slug + ".md", topic, text, "A.", "h-" + slug);
+        jdbcTemplate.update(
+                "INSERT INTO review_state (question_id, repetitions, interval_days, ease_factor, " +
+                        "next_review_at, last_result, correct_count, wrong_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                id, 1, 1, 2.5, 1_800_000_000L, wrongCount > 0 ? "WRONG" : "CORRECT", correctCount, wrongCount);
+        return id;
+    }
+
     private void insertCard(String slug, int repetitions, long nextReviewAt, int correctCount) {
         Long id = jdbcTemplate.queryForObject(
                 "INSERT INTO questions (slug, source_slug, file_path, topic, question_text, answer_markdown, source_hash) " +

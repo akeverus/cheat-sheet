@@ -63,6 +63,22 @@ class SensitiveEndpointAccessServiceTest {
     }
 
     @Test
+    void forbiddenIfUnauthorizedReturnsNullForAdminRoleWithoutToken() {
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                        "admin-user",
+                        "n/a",
+                        java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority(
+                                SensitiveEndpointAccessService.ROLE_ADMIN))));
+        try {
+            ResponseEntity<ApiError> response = service.forbiddenIfUnauthorized(null, "test action");
+            assertThat(response).isNull();
+        } finally {
+            org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        }
+    }
+
+    @Test
     void allowRegenerateUsesRemoteAddrWhenForwardedHeaderIsNotTrusted() {
         appProperties.setTrustForwardedForHeader(false);
         when(request.getRemoteAddr()).thenReturn("10.1.2.3");
@@ -91,14 +107,15 @@ class SensitiveEndpointAccessServiceTest {
     }
 
     @Test
-    void buildForbiddenResponseExplainsMissingTokenConfiguration() {
+    void buildForbiddenResponseDoesNotRevealAdminTokenConfiguration() {
         appProperties.setAdminToken(" ");
 
         ResponseEntity<ApiError> response = service.buildForbiddenResponse("any");
 
         assertThat(response.getStatusCode().value()).isEqualTo(403);
         assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().message()).contains("app.admin-token не настроен");
+        assertThat(response.getBody().message()).isEqualTo("Недостаточно прав");
+        assertThat(response.getBody().message()).doesNotContain("app.admin-token");
     }
 
     @Test

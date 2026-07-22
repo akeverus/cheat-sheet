@@ -1,6 +1,7 @@
 package com.cheatsheet.quiz.common.exception;
 
 import com.cheatsheet.quiz.common.constants.ApiErrorTypes;
+import com.cheatsheet.quiz.feature.interview.service.review.RevisionMismatchException;
 import com.cheatsheet.quiz.common.web.CorrelationIdFilter;
 import com.cheatsheet.quiz.domain.exception.OptionNotFoundException;
 import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
@@ -85,6 +86,16 @@ public class GlobalExceptionHandler {
     public Object handleTypeMismatchException(MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
         String message = ex.getName() + ": unsupported format";
         return badRequest(request, ApiErrorTypes.VALIDATION_ERROR, "Некорректные параметры запроса", List.of(message));
+    }
+
+    @ExceptionHandler(RevisionMismatchException.class)
+    public Object handleRevisionMismatch(RevisionMismatchException ex, HttpServletRequest request) {
+        log.warn("Revision mismatch on {}: {}", safeUri(request), safeMessage(ex));
+        if (isApiRequest(request)) {
+            return apiErrorResponse(HttpStatus.CONFLICT, ApiErrorTypes.REVISION_MISMATCH,
+                    "Контент вопроса обновился — обновите страницу и ответьте снова", null);
+        }
+        return redirectToHome();
     }
 
     @ExceptionHandler(IllegalStateException.class)

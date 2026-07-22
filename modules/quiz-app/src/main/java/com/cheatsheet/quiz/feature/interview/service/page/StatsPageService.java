@@ -2,14 +2,17 @@ package com.cheatsheet.quiz.feature.interview.service.page;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import com.cheatsheet.quiz.common.util.TopicUtils;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewStats;
 import com.cheatsheet.quiz.domain.LearningMetrics;
 import com.cheatsheet.quiz.domain.TopicStats;
 import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
 import com.cheatsheet.quiz.feature.interview.usecase.stats.LearningMetricsService;
+import com.cheatsheet.quiz.feature.interview.usecase.stats.MetricDefinitions;
 import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
 import com.cheatsheet.quiz.infrastructure.search.SearchService;
+import com.cheatsheet.quiz.persistence.DailyActivityRepository;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
 import com.cheatsheet.quiz.persistence.QuestionStatsRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -19,6 +22,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import lombok.Builder;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -36,6 +41,9 @@ public class StatsPageService {
     private static final int COVERAGE_GAP_THRESHOLD = 5;
     private static final int COVERAGE_GAP_LIMIT = 10;
     private static final int FORECAST_DAYS = 7;
+    private static final int WRONG_DRILLDOWN_LIMIT = 30;
+    private static final int ACCURACY_TREND_DAYS = 14;
+    private static final int QUESTION_PREVIEW_MAX = 160;
 
     InterviewFacade facade;
     QuestionRepository questionRepository;
@@ -44,6 +52,8 @@ public class StatsPageService {
     ObjectMapper objectMapper;
     QuestionStatsRepository questionStatsRepository;
     LearningMetricsService learningMetricsService;
+    TopicUtils topicUtils;
+    DailyActivityRepository dailyActivityRepository;
 
     /**
      * Строит state страницы статистики по фильтру и поисковому запросу.
@@ -60,7 +70,7 @@ public class StatsPageService {
             // через [(...)] без HTML-escape). Jackson по умолчанию НЕ экранирует '<' и '/',
             // поэтому имя темы с подстрокой "</script>" закрыло бы тег и пробило бы в HTML-
             // контекст. Экранируем юникод-эскейпами (OWASP JSON-in-HTML) — см. escapeForHtmlScript.
-            topicStatsJson = escapeForHtmlScript(objectMapper.writeValueAsString(topicStats));
+            topicStatsJson = escapeForHtmlScript(objectMapper.writeValueAsString(toChartPayload(topicStats)));
         } catch (JsonProcessingException e) {
             log.error("stats_page_topic_stats_json_failed size={}", topicStats.size(), e);
         }
@@ -79,6 +89,19 @@ public class StatsPageService {
         } catch (JsonProcessingException e) {
             log.error("stats_page_difficulty_json_failed", e);
         }
+        List<WrongQuestionItem> recentWrongQuestions = questionStatsRepository
+                .findRecentWrongQuestions(WRONG_DRILLDOWN_LIMIT)
+                .stream()
+                .map(this::toWrongQuestionItem)
+                .toList();
+        List<AccuracyTrendDay> accuracyTrend = buildAccuracyTrend(
+                dailyActivityRepository.findRecentDays(ACCURACY_TREND_DAYS));
+        String accuracyTrendJson = "[]";
+        try {
+            accuracyTrendJson = escapeForHtmlScript(objectMapper.writeValueAsString(accuracyTrend));
+        } catch (JsonProcessingException e) {
+            log.error("stats_page_accuracy_trend_json_failed", e);
+        }
         return new StatsPageState(
                 stats,
                 topics,
@@ -93,8 +116,41 @@ public class StatsPageService {
                 forecast,
                 metrics,
                 difficultyDistribution,
-                difficultyJson
+                difficultyJson,
+                MetricDefinitions.catalog(),
+                findWeakestTopic(topicStats),
+                recentWrongQuestions,
+                accuracyTrend,
+                accuracyTrendJson
         );
+    }
+
+    /**
+     * Topic with lowest accuracy among those that have at least one attempt.
+     * Tie-break: more attempts first (stronger signal).
+     */
+    public static String findWeakestTopic(List<TopicStats> topicStats) {
+        if (topicStats == null || topicStats.isEmpty()) {
+            return null;
+        }
+        TopicStats weakest = null;
+        double weakestAccuracy = Double.POSITIVE_INFINITY;
+        long weakestAttempts = 0;
+        for (TopicStats ts : topicStats) {
+            long attempts = ts.correct() + ts.wrong();
+            if (attempts <= 0) {
+                continue;
+            }
+            double accuracy = (double) ts.correct() / (double) attempts;
+            if (weakest == null
+                    || accuracy < weakestAccuracy
+                    || (Double.compare(accuracy, weakestAccuracy) == 0 && attempts > weakestAttempts)) {
+                weakest = ts;
+                weakestAccuracy = accuracy;
+                weakestAttempts = attempts;
+            }
+        }
+        return weakest == null ? null : weakest.topic();
     }
 
     /** Порядок и русские подписи уровней сложности для доната (Этап 6). */
@@ -134,6 +190,68 @@ public class StatsPageService {
         return slices;
     }
 
+    private WrongQuestionItem toWrongQuestionItem(QuestionStatsRepository.WrongQuestionRow row) {
+        return new WrongQuestionItem(
+                row.questionId(),
+                row.topic(),
+                topicUtils.displayName(row.topic()),
+                truncatePreview(row.questionText()),
+                row.wrongCount(),
+                row.correctCount(),
+                row.nextReviewAt(),
+                row.lastWrongAt());
+    }
+
+    private static String truncatePreview(String text) {
+        if (text == null || text.isBlank()) {
+            return "";
+        }
+        String normalized = text.replaceAll("\\s+", " ").strip();
+        if (normalized.length() <= QUESTION_PREVIEW_MAX) {
+            return normalized;
+        }
+        return normalized.substring(0, QUESTION_PREVIEW_MAX - 1).stripTrailing() + "…";
+    }
+
+    /**
+     * Заполняет непрерывный ряд дней (включая нули) для sparkline/bars на вкладке «Динамика».
+     */
+    private List<AccuracyTrendDay> buildAccuracyTrend(List<DailyActivityRepository.DayAccuracy> rows) {
+        Map<String, DailyActivityRepository.DayAccuracy> byDay = new LinkedHashMap<>();
+        if (rows != null) {
+            for (DailyActivityRepository.DayAccuracy row : rows) {
+                byDay.put(row.day(), row);
+            }
+        }
+        List<AccuracyTrendDay> trend = new ArrayList<>(ACCURACY_TREND_DAYS);
+        LocalDate cursor = LocalDate.now().minusDays(ACCURACY_TREND_DAYS - 1L);
+        DateTimeFormatter fmt = DateTimeFormatter.ISO_LOCAL_DATE;
+        for (int i = 0; i < ACCURACY_TREND_DAYS; i++) {
+            String day = cursor.plusDays(i).format(fmt);
+            DailyActivityRepository.DayAccuracy row = byDay.get(day);
+            int answered = row == null ? 0 : row.answered();
+            int correct = row == null ? 0 : row.correct();
+            Double accuracy = answered > 0 ? (correct * 100.0 / answered) : null;
+            trend.add(new AccuracyTrendDay(day, answered, correct, accuracy));
+        }
+        return trend;
+    }
+
+    private List<TopicStatsChartPayload> toChartPayload(List<TopicStats> topicStats) {
+        return topicStats.stream()
+                .map(ts -> new TopicStatsChartPayload(
+                        ts.topic(),
+                        topicUtils.displayName(ts.topic()),
+                        ts.total(),
+                        ts.due(),
+                        ts.learned(),
+                        ts.correct(),
+                        ts.wrong(),
+                        ts.regenSum(),
+                        ts.maturityScore()))
+                .toList();
+    }
+
     /**
      * Экранирует символы, способные пробить тег &lt;script&gt; при literal-вставке JSON
      * в HTML (без th-escape): '&lt;', '&gt;', '&amp;' → юникод-эскейпы. Эти символы встречаются
@@ -167,7 +285,12 @@ public class StatsPageService {
             List<QuestionStatsRepository.ForecastDay> reviewForecast,
             LearningMetrics metrics,
             List<DifficultySlice> difficultyDistribution,
-            String difficultyJson
+            String difficultyJson,
+            Map<String, MetricDefinitions.Definition> metricDefinitions,
+            String weakestTopic,
+            List<WrongQuestionItem> recentWrongQuestions,
+            List<AccuracyTrendDay> accuracyTrend,
+            String accuracyTrendJson
     ) {
         public StatsPageState(InterviewStats stats, List<String> topics, List<?> groups,
                               String selectedGroup, InterviewFilter filter, String searchQuery,
@@ -175,7 +298,8 @@ public class StatsPageService {
                               List<TopicStats> topicStats, String topicStatsJson) {
             this(stats, topics, groups, selectedGroup, filter, searchQuery, searchResults,
                     topicStats, topicStatsJson, List.of(), List.of(), LearningMetrics.EMPTY,
-                    List.of(), "[]");
+                    List.of(), "[]", MetricDefinitions.catalog(), findWeakestTopic(topicStats),
+                    List.of(), List.of(), "[]");
         }
     }
 
@@ -184,4 +308,36 @@ public class StatsPageService {
      * число вопросов и доля в процентах.
      */
     public record DifficultySlice(String level, String label, long count, double percent) {}
+
+    /**
+     * Карточка ошибки для вкладки «Ошибки»: превью вопроса + счётчики + deep-link данные.
+     */
+    public record WrongQuestionItem(
+            long questionId,
+            String topic,
+            String topicDisplayName,
+            String questionPreview,
+            int wrongCount,
+            int correctCount,
+            long nextReviewAt,
+            Long lastWrongAt
+    ) {}
+
+    /**
+     * День тренда точности: ISO-дата, ответов, верных, % или null если нет ответов.
+     */
+    public record AccuracyTrendDay(String day, int answered, int correct, Double accuracyPercent) {}
+
+    /** JSON для Chart.js на /stats: slug + displayName из TopicUtils. */
+    private record TopicStatsChartPayload(
+            String topic,
+            String displayName,
+            long total,
+            long due,
+            long learned,
+            long correct,
+            long wrong,
+            long regenSum,
+            double maturityScore
+    ) {}
 }

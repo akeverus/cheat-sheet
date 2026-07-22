@@ -125,6 +125,21 @@ class SessionFlowServiceTest {
     }
 
     @Test
+    void applyFlashcardRevealAndGradeWorksForTypedRecall() {
+        InterviewSession session = new InterviewSession(
+                InterviewMode.TYPED_RECALL, List.of(1L, 2L), "java", "backend", false, false, false, true);
+        assertThat(session.getFlashcardPhase()).isEqualTo(FlashcardPhase.QUESTION);
+
+        assertThat(service.applyFlashcardReveal(session)).isTrue();
+        assertThat(session.getFlashcardPhase()).isEqualTo(FlashcardPhase.REVEALED);
+
+        assertThat(service.applyFlashcardGrade(session, 1L, 3)).isTrue();
+        verify(facade).submitFlashcardGrade(eq(1L), anyBoolean(), anyInt());
+        assertThat(session.getIndex()).isEqualTo(1);
+        assertThat(session.getFlashcardPhase()).isEqualTo(FlashcardPhase.QUESTION);
+    }
+
+    @Test
     void applyFlashcardRevealReturnsFalseWhenPhaseAlreadyRevealed() {
         InterviewSession session = new InterviewSession(InterviewMode.FLASHCARD, List.of(1L), "java", "backend", false, false, false, true);
         assertThat(session.getFlashcardPhase()).isEqualTo(FlashcardPhase.QUESTION);

@@ -10,11 +10,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 /**
- * Репозиторий синглтон-строки {@code user_experience} (id = 1).
+ * Репозиторий {@code user_experience}, scoped by {@link OwnerContext}.
  *
- * <p>Строка гарантированно создана миграцией V19, поэтому все изменения — через
- * UPDATE без предварительной проверки существования. {@code level} не хранится:
- * выводится доменом {@link UserExperience#level()}.</p>
+ * <p>{@code level} не хранится: выводится доменом {@link UserExperience#level()}.</p>
  */
 @Repository
 @RequiredArgsConstructor
@@ -23,14 +21,16 @@ public class UserExperienceRepository {
 
     JdbcTemplate jdbcTemplate;
 
-    /** Текущий опыт; {@link UserExperience#EMPTY} если строки почему-то нет. */
+    /** Текущий опыт; создаёт строку владельца при первом обращении. */
     public UserExperience find() {
+        ensureRow();
         List<UserExperience> rows = jdbcTemplate.query(
-                "SELECT xp, best_streak, updated_at FROM user_experience WHERE id = 1",
+                "SELECT xp, best_streak, updated_at FROM user_experience WHERE owner_key = ?",
                 (rs, rowNum) -> new UserExperience(
                         rs.getLong("xp"),
                         rs.getInt("best_streak"),
-                        rs.getLong("updated_at")));
+                        rs.getLong("updated_at")),
+                OwnerContext.current());
         return rows.isEmpty() ? UserExperience.EMPTY : rows.get(0);
     }
 
@@ -38,9 +38,10 @@ public class UserExperienceRepository {
      * Начисляет {@code delta} XP (может быть 0). Возвращает опыт после начисления.
      */
     public UserExperience addXp(long delta, long now) {
+        ensureRow();
         jdbcTemplate.update(
-                "UPDATE user_experience SET xp = xp + ?, updated_at = ? WHERE id = 1",
-                delta, now);
+                "UPDATE user_experience SET xp = xp + ?, updated_at = ? WHERE owner_key = ?",
+                delta, now, OwnerContext.current());
         return find();
     }
 
@@ -48,9 +49,17 @@ public class UserExperienceRepository {
      * Поднимает рекорд серии до {@code streak}, если он больше текущего (иначе no-op).
      */
     public void raiseBestStreak(int streak, long now) {
+        ensureRow();
         jdbcTemplate.update(
                 "UPDATE user_experience SET best_streak = ?, updated_at = ? " +
-                        "WHERE id = 1 AND best_streak < ?",
-                streak, now, streak);
+                        "WHERE owner_key = ? AND best_streak < ?",
+                streak, now, OwnerContext.current(), streak);
+    }
+
+    private void ensureRow() {
+        jdbcTemplate.update(
+                "INSERT INTO user_experience (owner_key, xp, best_streak, updated_at) VALUES (?, 0, 0, 0) "
+                        + "ON CONFLICT (owner_key) DO NOTHING",
+                OwnerContext.current());
     }
 }

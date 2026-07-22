@@ -17,26 +17,30 @@ class TopicUtilsTest {
     @ValueSource(strings = {" ", "   "})
     void displayNameReturnsEmptyForBlank(String input) {
         assertThat(utils.displayName(input)).isEmpty();
+        assertThat(utils.slug(input)).isEmpty();
     }
 
     @ParameterizedTest
     @CsvSource({
-            "java/collections-interview.md, collections",
-            "java/collections-interview, collections",
-            "java/collections.md, collections",
-            "collections-interview, collections",
-            "collections, collections",
-            "ai-ml/rag-interview.md, rag",
-            "deep/nested/path/topic-interview.md, topic"
+            "java/collections-interview.md, Коллекции, collections",
+            "java/collections-interview, Коллекции, collections",
+            "java/collections.md, Коллекции, collections",
+            "collections-interview, Коллекции, collections",
+            "collections, Коллекции, collections",
+            "ai-ml/rag-interview.md, Rag, rag",
+            "deep/nested/path/topic-interview.md, Topic, topic",
+            "database-transactions, Транзакции БД, database-transactions"
     })
-    void displayNameStripsPrefixAndSuffix(String input, String expected) {
-        assertThat(utils.displayName(input)).isEqualTo(expected);
+    void displayNameIsHumanReadableAndSlugIsRaw(String input, String display, String slug) {
+        assertThat(utils.displayName(input)).isEqualTo(display);
+        assertThat(utils.slug(input)).isEqualTo(slug);
     }
 
     @Test
     void displayNameKeepsTrailingSlashLiterally() {
         // Документирует текущее поведение: slug с trailing slash не «зачёркивается»
         // (для реальных тем такой кейс не встречается, но тест фиксирует контракт).
-        assertThat(utils.displayName("category/")).isEqualTo("category/");
+        assertThat(utils.slug("category/")).isEqualTo("category/");
+        assertThat(utils.displayName("category/")).isEqualTo("Category/");
     }
 }

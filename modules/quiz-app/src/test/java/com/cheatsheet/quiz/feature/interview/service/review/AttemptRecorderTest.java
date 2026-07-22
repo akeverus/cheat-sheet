@@ -37,7 +37,6 @@ class AttemptRecorderTest {
     @Test
     void recordMarksFirstAttemptAndLinksLatestRevision() {
         when(attemptRepository.findByIdempotencyKey("attempt-1")).thenReturn(Optional.empty());
-        when(attemptRepository.existsByQuestionId(7L)).thenReturn(false);
         when(questionRevisionRepository.findLatest(7L)).thenReturn(Optional.of(
                 new QuestionRevision(55L, 7L, 3, "hash", "PUBLISHED", 100L)));
         Clock clock = Clock.fixed(Instant.parse("2026-07-15T12:00:00Z"), ZoneOffset.UTC);
@@ -45,10 +44,10 @@ class AttemptRecorderTest {
         newRecorder(clock).record(7L, AttemptOutcome.CORRECT, 5, 42L, 3200, "sess-1", "attempt-1");
 
         ArgumentCaptor<Attempt> captor = ArgumentCaptor.forClass(Attempt.class);
-        verify(attemptRepository).insert(captor.capture());
+        verify(attemptRepository).insertIgnoreDuplicate(captor.capture());
         Attempt attempt = captor.getValue();
         assertThat(attempt.questionId()).isEqualTo(7L);
-        assertThat(attempt.firstAttempt()).isTrue();
+        // is_first_attempt вычисляется атомарно в AttemptRepository (BE-006).
         assertThat(attempt.questionRevisionId()).isEqualTo(55L);
         assertThat(attempt.outcome()).isEqualTo(AttemptOutcome.CORRECT);
         assertThat(attempt.memoryGrade()).isEqualTo(5);
@@ -61,7 +60,6 @@ class AttemptRecorderTest {
 
     @Test
     void recordMarksNonFirstAttemptAndNullRevisionWhenAbsent() {
-        when(attemptRepository.existsByQuestionId(7L)).thenReturn(true);
         when(questionRevisionRepository.findLatest(7L)).thenReturn(Optional.empty());
         Clock clock = Clock.fixed(Instant.parse("2026-07-15T12:00:00Z"), ZoneOffset.UTC);
 
@@ -70,7 +68,6 @@ class AttemptRecorderTest {
         ArgumentCaptor<Attempt> captor = ArgumentCaptor.forClass(Attempt.class);
         verify(attemptRepository).insert(captor.capture());
         Attempt attempt = captor.getValue();
-        assertThat(attempt.firstAttempt()).isFalse();
         assertThat(attempt.questionRevisionId()).isNull();
         assertThat(attempt.selectedOptionId()).isNull();
         assertThat(attempt.responseTimeMs()).isNull();
@@ -90,13 +87,50 @@ class AttemptRecorderTest {
         newRecorder(clock).record(7L, AttemptOutcome.CORRECT, 5, 42L, 3200, "sess-1", "attempt-dup");
 
         verify(attemptRepository, never()).insert(any());
+        verify(attemptRepository, never()).insertIgnoreDuplicate(any());
+    }
+
+    @Test
+    void recordUsesClientRevisionWhenBelongsToQuestion() {
+        when(questionRevisionRepository.findById(99L)).thenReturn(Optional.of(
+                new QuestionRevision(99L, 7L, 3, "hash", "PUBLISHED", 100L)));
+        Clock clock = Clock.fixed(Instant.parse("2026-07-15T12:00:00Z"), ZoneOffset.UTC);
+
+        newRecorder(clock).record(7L, AttemptOutcome.CORRECT, 5, 42L, 3200, "sess-1", "attempt-1", null, 99L);
+
+        ArgumentCaptor<Attempt> captor = ArgumentCaptor.forClass(Attempt.class);
+        verify(attemptRepository).insertIgnoreDuplicate(captor.capture());
+        assertThat(captor.getValue().questionRevisionId()).isEqualTo(99L);
+        verify(questionRevisionRepository, never()).findLatest(7L);
+    }
+
+    @Test
+    void recordRejectsWhenClientRevisionBelongsToOtherQuestion() {
+        when(questionRevisionRepository.findById(88L)).thenReturn(Optional.of(
+                new QuestionRevision(88L, 99L, 3, "hash", "PUBLISHED", 100L)));
+        Clock clock = Clock.fixed(Instant.parse("2026-07-15T12:00:00Z"), ZoneOffset.UTC);
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+                RevisionMismatchException.class,
+                () -> newRecorder(clock).record(7L, AttemptOutcome.CORRECT, 5, 42L, 3200, "sess-1", "attempt-1", null, 88L));
+
+        verify(attemptRepository, never()).insertIgnoreDuplicate(any());
+    }
+
+    @Test
+    void requireValidRevisionThrowsOnUnknownId() {
+        when(questionRevisionRepository.findById(1L)).thenReturn(Optional.empty());
+        Clock clock = Clock.fixed(Instant.parse("2026-07-15T12:00:00Z"), ZoneOffset.UTC);
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+                RevisionMismatchException.class,
+                () -> newRecorder(clock).requireValidRevision(7L, 1L));
     }
 
     @Test
     void recordBlankClientAttemptIdSkipsLookupAndStoresNullKey() {
         // Пустой ключ (blank) не должен ни триггерить lookup, ни попадать в БД —
         // partial unique index покрывает только idempotency_key IS NOT NULL.
-        when(attemptRepository.existsByQuestionId(7L)).thenReturn(false);
         when(questionRevisionRepository.findLatest(7L)).thenReturn(Optional.empty());
         Clock clock = Clock.fixed(Instant.parse("2026-07-15T12:00:00Z"), ZoneOffset.UTC);
 

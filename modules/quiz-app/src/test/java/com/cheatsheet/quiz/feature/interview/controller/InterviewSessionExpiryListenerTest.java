@@ -42,7 +42,7 @@ class InterviewSessionExpiryListenerTest {
         when(session.isFinished()).thenReturn(false);
         when(session.getIndex()).thenReturn(3);
         lenient().when(session.getTotal()).thenReturn(20);
-        when(httpSessionStateService.getInterviewSession(httpSession)).thenReturn(session);
+        when(httpSessionStateService.peekInterviewSession(httpSession)).thenReturn(session);
 
         listener.sessionDestroyed(event);
 
@@ -54,7 +54,7 @@ class InterviewSessionExpiryListenerTest {
         InterviewSession session = mock(InterviewSession.class);
         when(session.isFinished()).thenReturn(false);
         when(session.getIndex()).thenReturn(0);
-        when(httpSessionStateService.getInterviewSession(httpSession)).thenReturn(session);
+        when(httpSessionStateService.peekInterviewSession(httpSession)).thenReturn(session);
 
         listener.sessionDestroyed(event);
 
@@ -65,7 +65,7 @@ class InterviewSessionExpiryListenerTest {
     void ignoresFinishedSession() {
         InterviewSession session = mock(InterviewSession.class);
         when(session.isFinished()).thenReturn(true);
-        when(httpSessionStateService.getInterviewSession(httpSession)).thenReturn(session);
+        when(httpSessionStateService.peekInterviewSession(httpSession)).thenReturn(session);
 
         listener.sessionDestroyed(event);
 
@@ -74,7 +74,7 @@ class InterviewSessionExpiryListenerTest {
 
     @Test
     void ignoresMissingSession() {
-        when(httpSessionStateService.getInterviewSession(httpSession)).thenReturn(null);
+        when(httpSessionStateService.peekInterviewSession(httpSession)).thenReturn(null);
 
         listener.sessionDestroyed(event);
 
@@ -86,12 +86,27 @@ class InterviewSessionExpiryListenerTest {
         InterviewSession session = mock(InterviewSession.class);
         when(session.isFinished()).thenReturn(false);
         when(session.getIndex()).thenReturn(5);
-        when(httpSessionStateService.getInterviewSession(httpSession)).thenReturn(session);
+        when(httpSessionStateService.peekInterviewSession(httpSession)).thenReturn(session);
         doThrow(new RuntimeException("db down")).when(pauseService).pause(session);
 
         // Не должно пробрасывать — best-effort автосейв не ломает teardown сессии.
         listener.sessionDestroyed(event);
 
         verify(pauseService).pause(session);
+    }
+
+    @Test
+    void bindsStoredOwnerKeyForPause() {
+        InterviewSession session = mock(InterviewSession.class);
+        when(session.isFinished()).thenReturn(false);
+        when(session.getIndex()).thenReturn(2);
+        lenient().when(session.getTotal()).thenReturn(10);
+        when(httpSessionStateService.peekInterviewSession(httpSession)).thenReturn(session);
+        when(httpSessionStateService.peekOwnershipKey(httpSession)).thenReturn("alice");
+
+        listener.sessionDestroyed(event);
+
+        verify(pauseService).pause(session);
+        verify(httpSessionStateService).peekOwnershipKey(httpSession);
     }
 }

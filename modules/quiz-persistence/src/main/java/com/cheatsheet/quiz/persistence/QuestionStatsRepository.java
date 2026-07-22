@@ -183,13 +183,13 @@ public class QuestionStatsRepository {
                         "COALESCE(SUM(CASE WHEN repetitions >= ? THEN 1 ELSE 0 END), 0) AS cards_mastered, " +
                         "COALESCE(SUM(CASE WHEN next_review_at <= ? THEN 1 ELSE 0 END), 0) AS due_now, " +
                         "COALESCE(SUM(CASE WHEN next_review_at <= ? THEN 1 ELSE 0 END), 0) AS overdue " +
-                        "FROM review_state",
+                        "FROM review_state WHERE owner_key = ?",
                 (rs, rowNum) -> new ScheduleAggregate(
                         rs.getLong("cards_total"),
                         rs.getLong("cards_mastered"),
                         rs.getLong("due_now"),
                         rs.getLong("overdue")),
-                minRepetitions, nowEpoch, overdueCutoffEpoch);
+                minRepetitions, nowEpoch, overdueCutoffEpoch, OwnerContext.current());
         return rows.isEmpty() ? ScheduleAggregate.EMPTY : rows.get(0);
     }
 
@@ -241,6 +241,7 @@ public class QuestionStatsRepository {
                         "SUM(q.regen_count) AS regen_sum, " +
                         "AVG(rs.ease_factor * rs.interval_days) AS maturity_score " +
                         "FROM questions q JOIN review_state rs ON rs.question_id = q.id " +
+                        "WHERE rs.owner_key = ? " +
                         "GROUP BY q.topic ORDER BY q.topic",
                 (rs, rowNum) -> new TopicStats(
                         rs.getString("topic"), rs.getLong("total"),
@@ -248,7 +249,7 @@ public class QuestionStatsRepository {
                         rs.getLong("correct"), rs.getLong("wrong"),
                         rs.getLong("regen_sum"),
                         rs.getDouble("maturity_score")),
-                nowEpoch, learnedThreshold);
+                nowEpoch, learnedThreshold, OwnerContext.current());
     }
 
     /**
@@ -265,13 +266,40 @@ public class QuestionStatsRepository {
                 "SELECT q.topic, SUM(rs.correct_count) AS c, SUM(rs.wrong_count) AS w, " +
                         accuracyExpr + " AS accuracy " +
                         "FROM questions q JOIN review_state rs ON rs.question_id = q.id " +
+                        "WHERE rs.owner_key = ? " +
                         "GROUP BY q.topic " +
                         "HAVING (SUM(rs.correct_count) + SUM(rs.wrong_count)) > 0 AND (" + accuracyExpr + ") < ? " +
                         "ORDER BY accuracy ASC LIMIT 1",
                 (rs, rowNum) -> rs.getString("topic"),
+                OwnerContext.current(),
                 accuracyThreshold
         );
         return result.isEmpty() ? null : result.get(0);
+    }
+
+    /**
+     * Число тем с точностью ниже порога (есть хотя бы одна попытка).
+     *
+     * @param accuracyThreshold порог точности (например, 70.0)
+     * @return число слабых тем
+     */
+    public long countWeakTopics(double accuracyThreshold) {
+        String accuracyExpr = "CASE WHEN (SUM(rs.correct_count) + SUM(rs.wrong_count)) > 0 " +
+                "THEN CAST(SUM(rs.correct_count) AS REAL) * 100.0 / (SUM(rs.correct_count) + SUM(rs.wrong_count)) " +
+                "ELSE 100 END";
+        Long count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM (" +
+                        "SELECT q.topic " +
+                        "FROM questions q JOIN review_state rs ON rs.question_id = q.id " +
+                        "WHERE rs.owner_key = ? " +
+                        "GROUP BY q.topic " +
+                        "HAVING (SUM(rs.correct_count) + SUM(rs.wrong_count)) > 0 AND (" + accuracyExpr + ") < ?" +
+                        ") weak",
+                Long.class,
+                OwnerContext.current(),
+                accuracyThreshold
+        );
+        return count != null ? count : 0L;
     }
 
     /**
@@ -283,9 +311,9 @@ public class QuestionStatsRepository {
     public QuestionDifficulty getDifficulty(long questionId) {
         List<QuestionDifficulty> result = jdbcTemplate.query(
                 "SELECT COALESCE(rs.correct_count, 0) AS c, COALESCE(rs.wrong_count, 0) AS w " +
-                        "FROM review_state rs WHERE rs.question_id = ?",
+                        "FROM review_state rs WHERE rs.question_id = ? AND rs.owner_key = ?",
                 (rs, rowNum) -> QuestionDifficulty.fromStats(rs.getInt("c"), rs.getInt("w")),
-                questionId);
+                questionId, OwnerContext.current());
         return result.isEmpty() ? QuestionDifficulty.NEW : result.get(0);
     }
 
@@ -300,9 +328,9 @@ public class QuestionStatsRepository {
                 "SELECT CASE WHEN (SUM(rs.correct_count) + SUM(rs.wrong_count)) > 0 " +
                         "  THEN CAST(SUM(rs.correct_count) AS REAL) * 100.0 / (SUM(rs.correct_count) + SUM(rs.wrong_count)) " +
                         "  ELSE -1 END AS accuracy " +
-                        "FROM questions q JOIN review_state rs ON rs.question_id = q.id WHERE q.topic = ?",
+                        "FROM questions q JOIN review_state rs ON rs.question_id = q.id WHERE q.topic = ? AND rs.owner_key = ?",
                 (rs, rowNum) -> rs.getDouble("accuracy"),
-                topic);
+                topic, OwnerContext.current());
         return result.isEmpty() ? -1 : result.get(0);
     }
 
@@ -337,13 +365,66 @@ public class QuestionStatsRepository {
         return jdbcTemplate.query(
                 "SELECT to_timestamp(next_review_at)::date AS day, COUNT(*) AS cnt " +
                         "FROM review_state " +
-                        "WHERE next_review_at >= ? AND next_review_at < ? " +
+                        "WHERE owner_key = ? AND next_review_at >= ? AND next_review_at < ? " +
                         "GROUP BY day ORDER BY day",
                 (rs, rowNum) -> new ForecastDay(rs.getString("day"), rs.getLong("cnt")),
-                nowEpoch, endEpoch);
+                OwnerContext.current(), nowEpoch, endEpoch);
     }
 
     public record ForecastDay(String day, long count) {}
+
+    /**
+     * Вопросы с ошибками для drill-down вкладки «Ошибки» на /stats (UI-012).
+     * Сортировка: последняя WRONG/UNKNOWN попытка (если есть), иначе по числу ошибок.
+     *
+     * @param limit максимум строк (обычно 30)
+     */
+    public List<WrongQuestionRow> findRecentWrongQuestions(int limit) {
+        int safeLimit = Math.max(1, Math.min(limit, 100));
+        String owner = OwnerContext.current();
+        return jdbcTemplate.query(
+                """
+                        SELECT q.id AS question_id, q.topic, q.question_text,
+                               rs.wrong_count, rs.correct_count, rs.next_review_at,
+                               latest.created_at AS last_wrong_at
+                        FROM questions q
+                        JOIN review_state rs ON rs.question_id = q.id AND rs.owner_key = ?
+                        LEFT JOIN LATERAL (
+                            SELECT a.created_at
+                            FROM attempt a
+                            WHERE a.question_id = q.id
+                              AND a.owner_key = ?
+                              AND a.outcome IN ('WRONG', 'UNKNOWN')
+                            ORDER BY a.created_at DESC, a.id DESC
+                            LIMIT 1
+                        ) latest ON true
+                        WHERE rs.wrong_count > 0
+                        ORDER BY COALESCE(latest.created_at, 0) DESC, rs.wrong_count DESC, q.id ASC
+                        LIMIT ?
+                        """,
+                (rs, rowNum) -> new WrongQuestionRow(
+                        rs.getLong("question_id"),
+                        rs.getString("topic"),
+                        rs.getString("question_text"),
+                        rs.getInt("wrong_count"),
+                        rs.getInt("correct_count"),
+                        rs.getLong("next_review_at"),
+                        rs.getObject("last_wrong_at") == null ? null : rs.getLong("last_wrong_at")),
+                owner, owner, safeLimit);
+    }
+
+    /**
+     * Строка drill-down ошибок: вопрос + счётчики + время последней ошибочной попытки.
+     */
+    public record WrongQuestionRow(
+            long questionId,
+            String topic,
+            String questionText,
+            int wrongCount,
+            int correctCount,
+            long nextReviewAt,
+            Long lastWrongAt
+    ) {}
 
     /**
      * Возвращает полный дамп прогресса для экспорта (JSON/CSV).
@@ -351,10 +432,12 @@ public class QuestionStatsRepository {
     public List<ProgressExportRow> findProgressForExport() {
         return jdbcTemplate.query(
                 "SELECT q.slug, q.topic, rs.correct_count, rs.wrong_count, rs.next_review_at, rs.repetitions " +
-                        "FROM questions q JOIN review_state rs ON rs.question_id = q.id ORDER BY q.topic, q.slug",
+                        "FROM questions q JOIN review_state rs ON rs.question_id = q.id " +
+                        "WHERE rs.owner_key = ? ORDER BY q.topic, q.slug",
                 (rs, rowNum) -> new ProgressExportRow(
                         rs.getString("slug"), rs.getString("topic"),
                         rs.getInt("correct_count"), rs.getInt("wrong_count"),
-                        rs.getLong("next_review_at"), rs.getInt("repetitions")));
+                        rs.getLong("next_review_at"), rs.getInt("repetitions")),
+                OwnerContext.current());
     }
 }

@@ -1,8 +1,10 @@
 package com.cheatsheet.quiz.api.dto.request.interview;
 
+import com.cheatsheet.quiz.common.constants.QuizConstants;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -43,11 +45,30 @@ public class SubmitAnswerRequest {
      * Позволяет серверу дедуплицировать запись попытки. Может отсутствовать
      * (no-JS-фоллбэк формы) — тогда дедупликация по ключу не применяется.
      */
+    @Size(max = QuizConstants.CLIENT_ATTEMPT_ID_MAX_LENGTH,
+            message = "clientAttemptId must be at most 64 characters")
     private String clientAttemptId;
 
     /**
      * Comma-separated id блоков контента (код/схема/доп), которые пользователь
      * раскрывал перед ответом (телеметрия, хендофф-3). Может отсутствовать.
      */
+    @Size(max = QuizConstants.OPENED_CONTENT_BLOCK_IDS_MAX_LENGTH,
+            message = "openedContentBlockIds must be at most 2000 characters")
     private String openedContentBlockIds;
+
+    /**
+     * Клиентское think-time (мс) от показа вопроса до сабмита ({@code performance.now()}).
+     * Сервер валидирует диапазон и при отсутствии падает на серверный замер.
+     */
+    @Min(0)
+    @Max(QuizConstants.RESPONSE_TIME_MS_MAX)
+    private Integer responseTimeMs;
+
+    /**
+     * Ревизия вопроса, которую видел пользователь (BE-002). При отсутствии —
+     * сервер пишет latest; при несовпадении questionId — fallback на latest.
+     */
+    @Positive(message = "questionRevisionId must be greater than 0")
+    private Long questionRevisionId;
 }

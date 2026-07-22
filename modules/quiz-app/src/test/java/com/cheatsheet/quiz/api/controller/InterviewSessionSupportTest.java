@@ -13,8 +13,10 @@ import com.cheatsheet.quiz.domain.ReviewResult;
 import com.cheatsheet.quiz.domain.ReviewState;
 import com.cheatsheet.quiz.feature.interview.controller.HttpSessionStateService;
 import com.cheatsheet.quiz.feature.interview.controller.InterviewSessionSupport;
+import com.cheatsheet.quiz.feature.interview.service.command.SubmitAnswerCommand;
 import com.cheatsheet.quiz.feature.interview.service.core.InterviewService;
 import com.cheatsheet.quiz.feature.interview.service.review.AttemptRecorder;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import jakarta.servlet.http.HttpSession;
 import java.time.Clock;
 import java.time.Instant;
@@ -50,6 +52,8 @@ class InterviewSessionSupportTest {
     @Mock
     private AttemptRecorder attemptRecorder;
     @Mock
+    private SubmitAnswerCommand submitAnswerCommand;
+    @Mock
     private HttpSession session;
     @Mock
     private InterviewSession interviewSession;
@@ -60,10 +64,11 @@ class InterviewSessionSupportTest {
 
     @BeforeEach
     void setUp() {
-        support = new InterviewSessionSupport(interviewService, httpSessionStateService, attemptRecorder, CLOCK);
-        // По умолчанию время ответа не измерено (метки показа нет) → null. Mockito
-        // иначе вернул бы 0 для Integer-метода, что исказило бы «неизмеренное».
+        support = new InterviewSessionSupport(
+                interviewService, httpSessionStateService, attemptRecorder, submitAnswerCommand,
+                CLOCK, new SimpleMeterRegistry());
         lenient().when(interviewSession.takeResponseTimeMs(anyLong())).thenReturn(null);
+        lenient().when(session.getId()).thenReturn("sess-test");
     }
 
     @Test
@@ -79,7 +84,8 @@ class InterviewSessionSupportTest {
         when(interviewSession.isFinished()).thenReturn(false);
         when(interviewSession.currentQuestionId()).thenReturn(10L);
         when(interviewSession.getMode()).thenReturn(InterviewMode.EXAM);
-        when(interviewService.submitAnswer(eq(10L), eq(3L), any(InterviewFilter.class), eq(4))).thenReturn(answerResult);
+        when(submitAnswerCommand.executeOrNullIfDuplicate(any(), any(), eq("sess-test"), isNull()))
+                .thenReturn(answerResult);
         InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
                 10L, 3L, null, null, null, null, null, null, 4, "ca-1"
         );
@@ -91,9 +97,7 @@ class InterviewSessionSupportTest {
         verify(interviewSession).registerAnswer(false, "java");
         verify(interviewService).addExamPenaltyQuestions(interviewSession);
         verify(httpSessionStateService).setInterviewSession(session, interviewSession);
-        // Фаза 2: реальный сабмит пишет попытку (WRONG, грейд=уверенность, выбранный вариант).
-        // BE-003: clientAttemptId прокидывается до AttemptRecorder без изменений.
-        verify(attemptRecorder).record(eq(10L), eq(AttemptOutcome.WRONG), eq(4), eq(3L), isNull(), any(), eq("ca-1"), isNull());
+        verify(submitAnswerCommand).executeOrNullIfDuplicate(any(), any(), eq("sess-test"), isNull());
     }
 
     @Test
@@ -109,9 +113,8 @@ class InterviewSessionSupportTest {
         when(interviewSession.isFinished()).thenReturn(false);
         when(interviewSession.currentQuestionId()).thenReturn(10L);
         when(interviewSession.getMode()).thenReturn(InterviewMode.MARATHON);
-        // Измеренное время ответа (think-time) прокидывается в лог попытки.
         when(interviewSession.takeResponseTimeMs(anyLong())).thenReturn(4200);
-        when(interviewService.submitAnswer(eq(10L), eq(3L), any(InterviewFilter.class), eq(null)))
+        when(submitAnswerCommand.executeOrNullIfDuplicate(any(), any(), eq("sess-test"), eq(4200)))
                 .thenReturn(answerResult);
         InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
                 10L, 3L, null, null, null, null, null, null, null, null
@@ -119,7 +122,7 @@ class InterviewSessionSupportTest {
 
         support.processAnswer(submission, session);
 
-        verify(attemptRecorder).record(eq(10L), eq(AttemptOutcome.CORRECT), isNull(), eq(3L), eq(4200), any(), isNull(), isNull());
+        verify(submitAnswerCommand).executeOrNullIfDuplicate(any(), any(), eq("sess-test"), eq(4200));
     }
 
     @Test
@@ -141,7 +144,8 @@ class InterviewSessionSupportTest {
     void processAnswerUsesRequestFilterWhenSessionMissing() {
         AnswerResult answerResult = sampleAnswerResult(true);
         when(httpSessionStateService.getInterviewSession(session)).thenReturn(null);
-        when(interviewService.submitAnswer(eq(20L), eq(5L), any(InterviewFilter.class), eq(null))).thenReturn(answerResult);
+        when(submitAnswerCommand.executeOrNullIfDuplicate(any(), any(), eq("sess-test"), isNull()))
+                .thenReturn(answerResult);
         InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
                 20L,
                 5L,
@@ -158,7 +162,7 @@ class InterviewSessionSupportTest {
         support.processAnswer(submission, session);
 
         ArgumentCaptor<InterviewFilter> filterCaptor = ArgumentCaptor.forClass(InterviewFilter.class);
-        verify(interviewService).submitAnswer(eq(20L), eq(5L), filterCaptor.capture(), eq(null));
+        verify(submitAnswerCommand).executeOrNullIfDuplicate(any(), filterCaptor.capture(), eq("sess-test"), isNull());
         InterviewFilter filter = filterCaptor.getValue();
         assertThat(filter.topic()).isEqualTo("java");
         assertThat(filter.group()).isEqualTo("backend");
@@ -176,7 +180,8 @@ class InterviewSessionSupportTest {
         when(interviewSession.getShuffle()).thenReturn(true);
         when(interviewSession.getOrdered()).thenReturn(false);
         when(interviewSession.isFinished()).thenReturn(true);
-        when(interviewService.submitAnswer(eq(11L), eq(2L), any(InterviewFilter.class), eq(3))).thenReturn(answerResult);
+        when(submitAnswerCommand.executeOrNullIfDuplicate(any(), any(), eq("sess-test"), isNull()))
+                .thenReturn(answerResult);
         InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
                 11L, 2L, null, null, null, null, null, null, 3, null
         );
@@ -201,7 +206,8 @@ class InterviewSessionSupportTest {
         when(interviewSession.isFinished()).thenReturn(false);
         when(interviewSession.currentQuestionId()).thenReturn(31L);
         when(interviewSession.getMode()).thenReturn(InterviewMode.STUDY);
-        when(interviewService.submitAnswer(eq(31L), eq(9L), any(InterviewFilter.class), eq(5))).thenReturn(answerResult);
+        when(submitAnswerCommand.executeOrNullIfDuplicate(any(), any(), eq("sess-test"), isNull()))
+                .thenReturn(answerResult);
         InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
                 31L, 9L, null, null, null, null, null, null, 5, null
         );
@@ -215,9 +221,27 @@ class InterviewSessionSupportTest {
     }
 
     @Test
+    void processAnswerReplaysWhenIdempotencyClaimFails() {
+        AnswerResult replay = sampleAnswerResult(true);
+        when(httpSessionStateService.getInterviewSession(session)).thenReturn(interviewSession);
+        when(interviewSession.isFinished()).thenReturn(false);
+        when(interviewSession.currentQuestionId()).thenReturn(10L);
+        when(submitAnswerCommand.executeOrNullIfDuplicate(any(), any(), eq("sess-test"), isNull()))
+                .thenReturn(null);
+        when(interviewService.evaluateAnswer(10L, 3L)).thenReturn(replay);
+        InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
+                10L, 3L, null, null, null, null, null, null, 4, "dup-key"
+        );
+
+        InterviewSessionSupport.AnswerContext context = support.processAnswer(submission, session);
+
+        assertThat(context.result()).isSameAs(replay);
+        verify(interviewService).evaluateAnswer(10L, 3L);
+        verify(interviewSession, never()).registerAnswer(anyBoolean(), anyString());
+    }
+
+    @Test
     void processAnswerReplaysWithoutSideEffectsOnStaleDuplicate() {
-        // FLOW-02: устаревший дубль — сессия ушла вперёд (currentQuestionId != submission.questionId).
-        // Ожидаем read-only повтор через evaluateAnswer, БЕЗ записи SM-2 и БЕЗ продвижения сессии.
         AnswerResult replay = sampleAnswerResult(true);
         when(httpSessionStateService.getInterviewSession(session)).thenReturn(interviewSession);
         when(interviewSession.isFinished()).thenReturn(false);
@@ -232,23 +256,22 @@ class InterviewSessionSupportTest {
         assertThat(context.result()).isSameAs(replay);
         assertThat(context.interviewSession()).isSameAs(interviewSession);
         verify(interviewService).evaluateAnswer(10L, 3L);
-        verify(interviewService, never()).submitAnswer(anyLong(), anyLong(), any(InterviewFilter.class), any());
+        verify(submitAnswerCommand, never()).executeOrNullIfDuplicate(any(), any(), any(), any());
         verify(interviewSession, never()).registerAnswer(anyBoolean(), anyString());
         verify(interviewService, never()).addExamPenaltyQuestions(any());
         verify(httpSessionStateService, never()).setInterviewSession(any(), any());
-        // FLOW-02: устаревший дубль НЕ пишет вторую попытку.
-        verify(attemptRecorder, never()).record(anyLong(), any(), any(), any(), any(), any(), any(), any());
     }
 
     @Test
     void processSkipAppliesUnknownAndExamPenaltyAndPersists() {
-        // FLOW-03: «не знаю» на текущем вопросе EXAM → SM-2-лапс + штрафные вопросы + persist.
         Question question = sampleQuestion("java");
         when(httpSessionStateService.getInterviewSession(session)).thenReturn(interviewSession);
         when(interviewSession.isFinished()).thenReturn(false);
         when(interviewSession.currentQuestionId()).thenReturn(10L);
         when(interviewSession.getMode()).thenReturn(InterviewMode.EXAM);
         when(interviewService.submitUnknown(10L)).thenReturn(question);
+        when(attemptRecorder.tryClaimIdempotencyKey(anyString())).thenReturn(true);
+        when(session.getId()).thenReturn("sess-1");
 
         InterviewSession result = support.processSkip(10L, session);
 
@@ -257,9 +280,7 @@ class InterviewSessionSupportTest {
         verify(interviewSession).registerUnknown("java");
         verify(interviewService).addExamPenaltyQuestions(interviewSession);
         verify(httpSessionStateService).setInterviewSession(session, interviewSession);
-        // «Не знаю» логируется как UNKNOWN, грейд 0, без выбранного варианта.
-        // Skip не несёт клиентского ключа → clientAttemptId=null.
-        verify(attemptRecorder).record(eq(10L), eq(AttemptOutcome.UNKNOWN), eq(0), isNull(), isNull(), any(), isNull(), isNull());
+        verify(attemptRecorder).record(eq(10L), eq(AttemptOutcome.UNKNOWN), eq(0), isNull(), isNull(), any(), anyString(), isNull(), isNull());
     }
 
     @Test
@@ -270,6 +291,8 @@ class InterviewSessionSupportTest {
         when(interviewSession.currentQuestionId()).thenReturn(31L);
         when(interviewSession.getMode()).thenReturn(InterviewMode.STUDY);
         when(interviewService.submitUnknown(31L)).thenReturn(question);
+        when(attemptRecorder.tryClaimIdempotencyKey(anyString())).thenReturn(true);
+        when(session.getId()).thenReturn("sess-2");
 
         support.processSkip(31L, session);
 
@@ -281,7 +304,6 @@ class InterviewSessionSupportTest {
 
     @Test
     void processSkipIsNoOpOnStaleDuplicate() {
-        // Текущий вопрос сессии уже не тот, что пришёл в skip → без побочных эффектов.
         when(httpSessionStateService.getInterviewSession(session)).thenReturn(interviewSession);
         when(interviewSession.isFinished()).thenReturn(false);
         when(interviewSession.currentQuestionId()).thenReturn(99L);

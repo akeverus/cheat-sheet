@@ -39,12 +39,14 @@ class AnswerPageServiceTest {
     TopicCatalogService topicCatalogService;
     @Mock
     ReviewStateRepository reviewStateRepository;
+    @Mock
+    com.cheatsheet.quiz.feature.interview.usecase.stats.LearningMetricsService learningMetricsService;
 
     AnswerPageService service;
 
     @BeforeEach
     void setUp() {
-        service = new AnswerPageService(facade, questionRepository, topicCatalogService, reviewStateRepository);
+        service = new AnswerPageService(facade, questionRepository, topicCatalogService, reviewStateRepository, learningMetricsService);
     }
 
     @Test
@@ -63,7 +65,8 @@ class AnswerPageServiceTest {
                 AnswerDisplayMode.FULL
         );
         InterviewFilter filter = new InterviewFilter("java", "backend", false, false, false, true);
-        when(facade.getStats(filter)).thenReturn(new InterviewStats(10, 5, 2, 7, 3));
+        when(learningMetricsService.compute()).thenReturn(new com.cheatsheet.quiz.domain.LearningMetrics(
+                10, 8, 2, 10, 7, 3, 70.0, 70.0, -1.0, -1.0, 5, 0, 1200.0));
         when(questionRepository.findTopics()).thenReturn(List.of("java"));
         when(topicCatalogService.normalizeGroup("backend")).thenReturn("backend");
         when(topicCatalogService.filterAndSortTopics(List.of("java"), "backend", true)).thenReturn(List.of("java"));

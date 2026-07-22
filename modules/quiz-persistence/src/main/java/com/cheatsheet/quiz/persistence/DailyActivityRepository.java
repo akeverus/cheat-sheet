@@ -14,10 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Репозиторий для таблицы {@code daily_activity}.
- *
- * <p>Хранит ежедневную статистику: количество ответов, правильных ответов,
- * цель на день. Используется для подсчёта streak и прогресса.</p>
+ * Репозиторий {@code daily_activity}, scoped by {@link OwnerContext}.
  */
 @Repository
 @RequiredArgsConstructor
@@ -31,27 +28,22 @@ public class DailyActivityRepository {
     /**
      * Инкрементирует счётчик ответов на сегодня.
      * При первом вызове за день создаёт запись.
-     *
-     * <p>Реализовано через UPDATE-then-INSERT (а не ON CONFLICT), чтобы не
-     * зависеть от диалектных особенностей upsert: ON CONFLICT в Postgres 16
-     * с TEXT PK + binary-protocol JDBC выдаёт «bad SQL grammar». UPDATE-первый
-     * паттерн работает на любых RDBMS и даёт корректное поведение
-     * single-user app, где race на одну дату маловероятен.
      */
     public void incrementToday(boolean correct, int defaultGoal) {
         String today = LocalDate.now().format(DATE_FMT);
+        String owner = OwnerContext.current();
         int correctInc = correct ? 1 : 0;
 
         int updated = jdbcTemplate.update(
                 "UPDATE daily_activity SET questions_answered = questions_answered + 1, " +
-                        "correct_count = correct_count + ? WHERE activity_date = ?",
-                correctInc, today
+                        "correct_count = correct_count + ? WHERE activity_date = ? AND owner_key = ?",
+                correctInc, today, owner
         );
         if (updated == 0) {
             jdbcTemplate.update(
-                    "INSERT INTO daily_activity (activity_date, questions_answered, correct_count, daily_goal) " +
-                            "VALUES (?, 1, ?, ?)",
-                    today, correctInc, defaultGoal
+                    "INSERT INTO daily_activity (owner_key, activity_date, questions_answered, correct_count, daily_goal) " +
+                            "VALUES (?, ?, 1, ?, ?)",
+                    owner, today, correctInc, defaultGoal
             );
         }
     }
@@ -63,7 +55,8 @@ public class DailyActivityRepository {
         String today = LocalDate.now().format(DATE_FMT);
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
                 "SELECT activity_date, questions_answered, correct_count, daily_goal " +
-                        "FROM daily_activity WHERE activity_date = ?", today);
+                        "FROM daily_activity WHERE activity_date = ? AND owner_key = ?",
+                today, OwnerContext.current());
         if (rows.isEmpty()) {
             return null;
         }
@@ -75,15 +68,12 @@ public class DailyActivityRepository {
     }
 
     /**
-     * Подсчитывает текущую серию дней (streak).
-     * Считает подряд идущие дни назад от вчера, у которых questions_answered > 0.
-     * Сегодняшний день считается, если есть ответы.
+     * Подсчитывает текущую серию дней (streak) для текущего владельца.
      */
     public StreakInfo findStreak() {
         LocalDate date = LocalDate.now();
         int streak = 0;
 
-        // Проверяем сегодня
         DailyProgress today = findToday();
         if (today != null && today.questionsAnswered() > 0) {
             streak = 1;
@@ -91,11 +81,12 @@ public class DailyActivityRepository {
             return new StreakInfo(0);
         }
 
-        // Считаем дни назад
+        String owner = OwnerContext.current();
         for (int i = 1; i <= 365; i++) {
             String dateStr = date.minusDays(i).format(DATE_FMT);
             List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                    "SELECT questions_answered FROM daily_activity WHERE activity_date = ?", dateStr);
+                    "SELECT questions_answered FROM daily_activity WHERE activity_date = ? AND owner_key = ?",
+                    dateStr, owner);
             if (rows.isEmpty() || ((Number) rows.get(0).get("questions_answered")).intValue() == 0) {
                 break;
             }
@@ -105,19 +96,46 @@ public class DailyActivityRepository {
     }
 
     /**
-     * Обновляет цель на сегодня. UPDATE-first, иначе INSERT (тот же подход
-     * что в {@link #incrementToday}, см. комментарий там).
+     * Активность за последние {@code days} дней (включая сегодня) для тренда точности.
+     * Дни без записей не включаются — UI заполняет пропуски нулями при необходимости.
+     *
+     * @param days горизонт (обычно 14)
+     */
+    public List<DayAccuracy> findRecentDays(int days) {
+        int safeDays = Math.max(1, Math.min(days, 90));
+        LocalDate from = LocalDate.now().minusDays(safeDays - 1L);
+        return jdbcTemplate.query(
+                "SELECT activity_date, questions_answered, correct_count " +
+                        "FROM daily_activity " +
+                        "WHERE owner_key = ? AND activity_date >= ? " +
+                        "ORDER BY activity_date ASC",
+                (rs, rowNum) -> new DayAccuracy(
+                        rs.getString("activity_date"),
+                        rs.getInt("questions_answered"),
+                        rs.getInt("correct_count")),
+                OwnerContext.current(),
+                from.format(DATE_FMT));
+    }
+
+    /**
+     * День активности: дата ISO, ответов всего, верных.
+     */
+    public record DayAccuracy(String day, int answered, int correct) {}
+
+    /**
+     * Обновляет цель на сегодня.
      */
     public void updateDailyGoal(int goal) {
         String today = LocalDate.now().format(DATE_FMT);
+        String owner = OwnerContext.current();
         int updated = jdbcTemplate.update(
-                "UPDATE daily_activity SET daily_goal = ? WHERE activity_date = ?",
-                goal, today);
+                "UPDATE daily_activity SET daily_goal = ? WHERE activity_date = ? AND owner_key = ?",
+                goal, today, owner);
         if (updated == 0) {
             jdbcTemplate.update(
-                    "INSERT INTO daily_activity (activity_date, questions_answered, correct_count, daily_goal) " +
-                            "VALUES (?, 0, 0, ?)",
-                    today, goal);
+                    "INSERT INTO daily_activity (owner_key, activity_date, questions_answered, correct_count, daily_goal) " +
+                            "VALUES (?, ?, 0, 0, ?)",
+                    owner, today, goal);
         }
     }
 }

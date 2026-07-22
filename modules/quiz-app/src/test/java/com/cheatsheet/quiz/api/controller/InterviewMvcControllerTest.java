@@ -29,6 +29,8 @@ class InterviewMvcControllerTest {
     @Mock
     private AdminMaintenanceService adminMaintenanceService;
     @Mock
+    private com.cheatsheet.quiz.api.security.SensitiveEndpointAccessService sensitiveEndpointAccessService;
+    @Mock
     private HttpSession session;
     @Mock
     private Model model;
@@ -37,21 +39,28 @@ class InterviewMvcControllerTest {
 
     @BeforeEach
     void setUp() {
-        controller = new InterviewMvcController(interviewPageMvcService, interviewFlowMvcService, adminMaintenanceService);
+        controller = new InterviewMvcController(
+                interviewPageMvcService,
+                interviewFlowMvcService,
+                adminMaintenanceService,
+                sensitiveEndpointAccessService);
     }
 
     @Test
     void indexAndTrainingDelegateToSamePageServiceMethod() {
-        when(interviewPageMvcService.index("java", "core", true, false, true, false, true, 77L, "EXAM", session, model))
+        when(interviewPageMvcService.index(
+                "java", "core", true, false, true, false, true, 77L, null, "EXAM", session, model))
                 .thenReturn("focus");
 
-        String indexView = controller.index("java", "core", true, false, true, false, true, 77L, "EXAM", session, model);
-        String trainingView = controller.training("java", "core", true, false, true, false, true, 77L, "EXAM", session, model);
+        String indexView = controller.index(
+                "java", "core", true, false, true, false, true, 77L, null, "EXAM", session, model);
+        String trainingView = controller.training(
+                "java", "core", true, false, true, false, true, 77L, null, "EXAM", session, model);
 
         assertThat(indexView).isEqualTo("focus");
         assertThat(trainingView).isEqualTo("focus");
         verify(interviewPageMvcService, times(2))
-                .index("java", "core", true, false, true, false, true, 77L, "EXAM", session, model);
+                .index("java", "core", true, false, true, false, true, 77L, null, "EXAM", session, model);
     }
 
     @Test

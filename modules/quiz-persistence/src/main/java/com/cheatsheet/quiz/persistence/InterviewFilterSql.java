@@ -31,6 +31,7 @@ public class InterviewFilterSql {
      */
     public static void appendFilters(StringBuilder sql, List<Object> params,
                                      String topic, Boolean important, Boolean onlyWrong) {
+        appendOwner(sql, params);
         if (topic != null && !topic.isBlank()) {
             sql.append(" AND q.topic = ? ");
             params.add(topic);
@@ -41,6 +42,15 @@ public class InterviewFilterSql {
         if (onlyWrong != null && onlyWrong) {
             sql.append(" AND rs.wrong_count > 0 ");
         }
+    }
+
+    /**
+     * Scopes {@code review_state rs} rows to the current {@link OwnerContext}.
+     * Call for every query that joins {@code review_state} (including when other filters are null).
+     */
+    public static void appendOwner(StringBuilder sql, List<Object> params) {
+        sql.append(" AND rs.owner_key = ? ");
+        params.add(OwnerContext.current());
     }
 
     /**

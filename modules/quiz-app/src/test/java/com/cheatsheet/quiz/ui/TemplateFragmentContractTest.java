@@ -21,10 +21,36 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TemplateFragmentContractTest {
 
+    /** Wave C: structural CSS split из base.css; порядок = head.html. */
+    private static final String[] STRUCTURAL_CSS_CHAIN = {
+            "static/css/reset.css",
+            "static/css/utilities-core.css",
+            "static/css/reset-layout.css",
+            "static/css/components-masthead.css",
+            "static/css/pages-focus.css",
+            "static/css/pages-settings.css",
+            "static/css/pages-stats.css",
+            "static/css/pages-summary.css",
+            "static/css/pages-error.css",
+            "static/css/pages-result.css",
+            "static/css/components-widgets.css",
+            "static/css/pages-layout.css",
+            "static/css/components-signatures.css",
+            "static/css/utilities-overrides.css"
+    };
+
     private String readTemplate(String classpathLocation) throws IOException {
         ClassPathResource resource = new ClassPathResource(classpathLocation);
         byte[] bytes = resource.getInputStream().readAllBytes();
         return new String(bytes, StandardCharsets.UTF_8);
+    }
+
+    private String readStructuralCss() throws IOException {
+        StringBuilder sb = new StringBuilder();
+        for (String path : STRUCTURAL_CSS_CHAIN) {
+            sb.append(readTemplate(path));
+        }
+        return sb.toString();
     }
 
     @Test
@@ -92,7 +118,9 @@ class TemplateFragmentContractTest {
         assertThat(focusTraining).contains("fragments/post-answer-controls :: post-answer-controls");
         assertThat(focusTraining).doesNotContain("focus-surface-tabs");
         assertThat(focusTraining).contains("chipText='Пост-разбор'");
-        assertThat(focusTraining).contains("hintText='Сначала итог, затем объяснение и дополнительные блоки'");
+        assertThat(focusTraining).contains("hintText='Сначала разбор ответа, затем итог и дополнительные блоки'");
+        assertThat(focusTraining).contains("focus-session-more");
+        assertThat(focusTraining).contains("data-confirm-title=\"Завершить сессию?\"");
         assertThat(focusTraining).contains("extraButtonText='Похожие вопросы'");
         // Трек гейтится th:if="${interviewSession != null}" (вне сессии пустой
         // progressbar 0/0 не рендерится) → null-ветки тернарников не нужны.
@@ -196,30 +224,30 @@ class TemplateFragmentContractTest {
     @Test
     void settingsPersonalizationAnnouncesPersistedChanges() throws IOException {
         String settings = readTemplate("templates/settings.html");
-        String appJs = readTemplate("static/js/app.js");
+        String personalizationJs = readTemplate("static/js/settings/personalization.js");
 
         assertThat(settings).contains("id=\"personalization-status\"");
         assertThat(settings).contains("role=\"status\" aria-live=\"polite\" aria-atomic=\"true\"");
-        assertThat(appJs).contains("Сохранено на этом устройстве: ");
-        assertThat(appJs).contains("if (getCurrent() === next) return;");
-        assertThat(appJs).contains("announceSaved('Размер шрифта'");
+        assertThat(personalizationJs).contains("Сохранено на этом устройстве: ");
+        assertThat(personalizationJs).contains("if (getCurrent() === next) return;");
+        assertThat(personalizationJs).contains("announceSaved('Размер шрифта'");
     }
 
     @Test
     void settingsFontStepperExposesPercentAndResetExplicitly() throws IOException {
         String settings = readTemplate("templates/settings.html");
-        String appJs = readTemplate("static/js/app.js");
+        String personalizationJs = readTemplate("static/js/settings/personalization.js");
 
         assertThat(settings).contains("id=\"font-scale-value\"");
         assertThat(settings).contains(">100%</span>");
         assertThat(settings).contains("id=\"font-reset\">Сбросить</button>");
-        assertThat(appJs).contains("valEl.textContent = Math.round(s * 100) + '%'");
-        assertThat(appJs).contains("resetBtn.setAttribute('aria-disabled', s === 1 ? 'true' : 'false')");
+        assertThat(personalizationJs).contains("valEl.textContent = Math.round(s * 100) + '%'");
+        assertThat(personalizationJs).contains("resetBtn.setAttribute('aria-disabled', s === 1 ? 'true' : 'false')");
     }
 
     @Test
     void focusPageMastheadYieldsToQuestionOnMobile() throws IOException {
-        String css = readTemplate("static/css/base.css");
+        String css = readStructuralCss();
 
         // Desktop focus: title capped at 2xl so question (3xl) dominates.
         assertThat(css).contains("html[data-design] .focus-page .ed-masthead-title {");
@@ -253,7 +281,7 @@ class TemplateFragmentContractTest {
         // сортировки лимит применяется заново к новому DOM-порядку.
         assertThat(stats).contains("row.hidden = collapsed && index >= limit");
         assertThat(stats).contains("new MutationObserver(sync).observe(tbody, { childList: true })");
-        assertThat(readTemplate("static/css/base.css"))
+        assertThat(readStructuralCss())
             .contains(".stats-page .topic-table tr[hidden] { display: none !important; }")
             .contains(".stats-page .topic-table tr[hidden] { display: table-row !important; }");
         // STA-5/STJ-1: читаемые labels + без декоративной x-сетки.
@@ -271,7 +299,7 @@ class TemplateFragmentContractTest {
         //     html[data-design] (не протекают между страницами, не цепляют чужой
         //     каркас, работают под любым дизайном),
         // (2) самодостаточен: bare-reset + утилиты, на которые опираются шаблоны.
-        String css = readTemplate("static/css/base.css");
+        String css = readStructuralCss();
 
         assertThat(css).contains("html[data-design] .focus-page");
         assertThat(css).contains("html[data-design] .result-page");
@@ -371,7 +399,11 @@ class TemplateFragmentContractTest {
         assertThat(summary).contains("<h2 class=\"summary-section-title visually-hidden\">Результат сессии</h2>");
         assertThat(summary).contains("class=\"summary-score-value\"");
         // SUM-3: dual-path действия (повтор ошибок / продолжить) в nav с меткой.
-        assertThat(summary).contains("<nav class=\"summary-actions\" aria-label=\"Что дальше\">");
+        assertThat(summary).contains("class=\"summary-actions\"");
+        assertThat(summary).contains("aria-label=\"Что дальше\"");
+        assertThat(summary).contains("class=\"summary-more\"");
+        assertThat(summary).contains("Ещё");
+        assertThat(summary).contains("Продолжить тренировку");
         // Таблица по темам: CSS display:block сбрасывает нативную семантику в
         // Safari/VoiceOver → явные ARIA-роли её восстанавливают; tabindex=0 делает
         // скролл-контейнер доступным с клавиатуры (WCAG 2.1.11). Аддитивно.
@@ -387,23 +419,29 @@ class TemplateFragmentContractTest {
     @Test
     void headFragmentAppliesPersonalizationAxesBeforeFirstPaint() throws IOException {
         String head = readTemplate("templates/fragments/head.html");
+        String bootstrapJs = readTemplate("static/js/settings/personalization-bootstrap.js");
 
         assertThat(head).contains("th:fragment=\"head(title, includeMermaid, includeChart)\"");
         assertThat(head).contains("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">");
         assertThat(head).contains("<title th:text=\"${title}\">");
-        // Оси персонализации применяются на <html> ДО первого кадра (анти-FOUC):
-        // design/theme/layout выставляются, motion/reading-width/density —
-        // set-или-remove (дефолт = отсутствие атрибута).
+        // FOUC-critical оси — inline в head до первого кадра.
         assertThat(head).contains("setAttribute('data-design'");
         assertThat(head).contains("setAttribute('data-theme'");
-        assertThat(head).contains("setAttribute('data-layout'");
         assertThat(head).contains("setAttribute('data-motion'");
-        assertThat(head).contains("setAttribute('data-reading-width'");
-        assertThat(head).contains("setAttribute('data-density'");
-        // CDN-ресурсы пиннятся SRI (integrity, sha512) + crossorigin — защита от
-        // компрометации CDN. Префикс sha512- устойчив к бампу версии библиотеки.
-        assertThat(head).contains("integrity=\"sha512-");
-        assertThat(head).contains("crossorigin=\"anonymous\"");
+        assertThat(head).contains("setAttribute('data-pixel'");
+        // Остальные оси — personalization-bootstrap.js (module load).
+        assertThat(bootstrapJs).contains("setAttribute('data-layout'");
+        assertThat(bootstrapJs).contains("setAttribute('data-reading-width'");
+        assertThat(bootstrapJs).contains("setAttribute('data-density'");
+        // OPS-005: vendor-ассеты self-hosted, без CDN SRI.
+        assertThat(head).contains("th:href=\"@{/css/fonts-local.css}\"");
+        assertThat(head).contains("th:src=\"@{/vendor/hljs/highlight.min.js}\"");
+        assertThat(head).contains("th:src=\"@{/vendor/mermaid/mermaid.min.js}\"");
+        assertThat(head).contains("th:src=\"@{/vendor/chart/chart.umd.min.js}\"");
+        assertThat(head).doesNotContain("cdnjs.cloudflare.com");
+        assertThat(head).doesNotContain("cdn.jsdelivr.net");
+        assertThat(head).doesNotContain("fonts.googleapis.com");
+        assertThat(head).doesNotContain("integrity=\"sha512-");
     }
 
     @Test
@@ -616,47 +654,38 @@ class TemplateFragmentContractTest {
     }
 
     @Test
-    void versionedAssetsAreConsistentAcrossTemplates() throws IOException {
-        // Cache-busting контракт (HEAD-1/APP-7/FT-17/SET-12): ассет, подключённый
-        // из НЕСКОЛЬКИХ шаблонов через @{/js|css/NAME(v=N)}, обязан нести ОДНУ версию
-        // во всех точках. Дрейф (result.html app.js=v=64, focus=v=63) = устаревший JS
-        // на части страниц после правки. PERF-01: app.js вынесен в единый фрагмент
-        // fragments/scripts.html (focus/result/settings подключают через th:replace),
-        // поэтому версия структурно одна. CSS — единый head.html (per-file версии
-        // независимы: tokens и base не обязаны быть равны). App не нужен.
-        Path templatesDir = new ClassPathResource("templates").getFile().toPath();
-        Pattern assetPattern = Pattern.compile("/(?:js|css)/([a-zA-Z._-]+\\.(?:js|css))\\(v=(\\d+)\\)");
+    void staticEntryPointsUseThymeleafUrlsWithoutManualVersionQuery() throws IOException {
+        // OPS-004: prod content-hash через @{...}; ручные ?v=N убраны с entry-point CSS/JS.
+        String head = readTemplate("templates/fragments/head.html");
+        String scripts = readTemplate("templates/fragments/scripts.html");
 
-        Map<String, Set<String>> versionsByAsset = new LinkedHashMap<>();
-        try (Stream<Path> walk = Files.walk(templatesDir)) {
-            for (Path p : (Iterable<Path>) walk.filter(p -> p.toString().endsWith(".html")).sorted()::iterator) {
-                String html = new String(Files.readAllBytes(p), StandardCharsets.UTF_8);
-                Matcher m = assetPattern.matcher(html);
-                while (m.find()) {
-                    versionsByAsset.computeIfAbsent(m.group(1), k -> new LinkedHashSet<>()).add(m.group(2));
-                }
-            }
-        }
-
-        // Санити: контракт реально нашёл версионированные ассеты (app.js в 3 шаблонах).
-        assertThat(versionsByAsset).containsKey("app.js");
-
-        for (Map.Entry<String, Set<String>> e : versionsByAsset.entrySet()) {
-            assertThat(e.getValue())
-                .as("ассет '%s' должен нести одну версию во всех шаблонах, найдено: %s", e.getKey(), e.getValue())
-                .hasSize(1);
-        }
+        assertThat(head).contains("th:href=\"@{/css/tokens.css}\"");
+        assertThat(head).contains("th:href=\"@{/css/pixel-fx.css}\"");
+        assertThat(head).doesNotContain("(v=");
+        assertThat(scripts).contains("th:src=\"@{/js/app-entry.js}\"");
+        assertThat(scripts).doesNotContain("(v=");
     }
 
     @Test
-    void appJsIsSingleSourcedInFragment() throws IOException {
-        // PERF-01: тег <script src="/js/app.js(v=N)"> должен встречаться в дереве шаблонов
+    void pixelAndMotionContractPresentInHeadAndCss() throws IOException {
+        String head = readTemplate("templates/fragments/head.html");
+        String pixelCss = readTemplate("static/css/pixel-fx.css");
+        String layoutCss = readTemplate("static/css/reset-layout.css");
+
+        assertThat(head).contains("setAttribute('data-pixel'");
+        assertThat(head).contains("setAttribute('data-motion'");
+        assertThat(head).contains("PIXEL_LEVELS = ['low', 'med', 'high']");
+        assertThat(pixelCss).contains("[data-pixel=");
+        assertThat(layoutCss).contains("[data-motion=\"off\"]");
+    }
+
+    @Test
+    void appEntryJsIsSingleSourcedInFragment() throws IOException {
+        // PERF-01: тег app-entry.js должен встречаться в дереве шаблонов
         // РОВНО один раз — в fragments/scripts.html; страницы подключают его через
-        // th:replace="~{fragments/scripts :: app-script}". Это делает дрейф версии
-        // структурно невозможным (нет второй точки правки). Инлайн-возврат тега в любую
-        // страницу «отвяжет» версию — ассерт ловит регресс.
+        // th:replace="~{fragments/scripts :: app-script}".
         Path templatesDir = new ClassPathResource("templates").getFile().toPath();
-        Pattern includePattern = Pattern.compile("/js/app\\.js\\(v=\\d+\\)");
+        Pattern includePattern = Pattern.compile("/js/app-entry\\.js");
 
         List<Path> filesWithInclude = new ArrayList<>();
         try (Stream<Path> walk = Files.walk(templatesDir)) {
@@ -669,7 +698,7 @@ class TemplateFragmentContractTest {
         }
 
         assertThat(filesWithInclude)
-            .as("app.js должен подключаться из единственного файла (fragments/scripts.html), найдено: %s", filesWithInclude)
+            .as("app-entry.js должен подключаться из единственного файла (fragments/scripts.html), найдено: %s", filesWithInclude)
             .hasSize(1);
         assertThat(filesWithInclude.get(0).toString().replace('\\', '/'))
             .isEqualTo("fragments/scripts.html");

@@ -143,6 +143,56 @@ class MvcModelAttributeMapperTest {
     }
 
     @Test
+    void appliesFocusModeDerivedAttributesForTypedRecallModes() {
+        FocusTrainingPageService.FocusPageState typedRecallState = new FocusTrainingPageService.FocusPageState(
+                Optional.empty(),
+                false,
+                true,
+                false,
+                true,
+                true,
+                false,
+                null,
+                null,
+                null,
+                0.0,
+                new FocusTrainingPageService.SurfaceState(
+                        new InterviewStats(0, 0, 0, 0, 0),
+                        List.of(),
+                        List.of(),
+                        null,
+                        new InterviewFilter(null, null, false, false, false, true),
+                        InterviewMode.TYPED_RECALL,
+                        null,
+                        false
+                ),
+                null,
+                List.of(),
+                null
+        );
+
+        ExtendedModelMap model = new ExtendedModelMap();
+        mapper.applyFocusPageState(model, typedRecallState, false);
+
+        assertThat(model.getAttribute("sessionRecallMode")).isEqualTo(true);
+        assertThat(model.getAttribute("typedInputMode")).isEqualTo(true);
+        assertThat(model.getAttribute("codeChallengeMode")).isEqualTo(false);
+        assertThat(model.getAttribute("focusModeChipText")).isEqualTo("Печатный ответ");
+        assertThat(model.getAttribute("focusModeHintText"))
+                .isEqualTo("Печатный ответ: напиши ответ, затем раскрой эталон и оцени себя.");
+        assertThat(model.getAttribute("focusEmptyRetryHref")).isEqualTo("/training?mode=TYPED_RECALL");
+        assertThat(model.getAttribute("focusEmptyRetryText")).isEqualTo("Обновить печатный ответ");
+    }
+
+    @Test
+    void modeUtilsDisplayNamesForStage6Modes() {
+        ModeUtils modeUtils = new ModeUtils();
+        assertThat(modeUtils.displayName(InterviewMode.TYPED_RECALL)).isEqualTo("Печатный ответ");
+        assertThat(modeUtils.displayName(InterviewMode.INTERVIEW)).isEqualTo("Интервью");
+        assertThat(modeUtils.displayName(InterviewMode.CODE_CHALLENGE)).isEqualTo("Код-челлендж");
+    }
+
+    @Test
     void flashcardChipAndHintWhenQuestionHasNoOptionsInTrainingMode() {
         // Вопрос без вариантов форсит флешкарту даже при session-mode=TRAINING.
         // Чип/подсказка обязаны отражать флешкарту, а не «Выбери один вариант».

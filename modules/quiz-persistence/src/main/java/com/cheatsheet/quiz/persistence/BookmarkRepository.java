@@ -13,11 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Репозиторий закладок на вопросы ({@code bookmark}, UI-014).
- *
- * <p>Одна закладка на вопрос (UNIQUE {@code question_id}). Upsert реализован
- * UPDATE-first-then-INSERT — тем же паттерном, что {@code DailyActivityRepository},
- * чтобы не зависеть от диалектных особенностей ON CONFLICT в рантайме.</p>
+ * Закладки ({@code bookmark}), scoped by {@link OwnerContext}.
  */
 @Repository
 @RequiredArgsConstructor
@@ -29,46 +25,42 @@ public class BookmarkRepository {
     private static final String COLUMNS =
             "id, question_id, note, created_at, updated_at";
 
-    /** Закладка по вопросу, если есть. */
     public Optional<Bookmark> findByQuestionId(long questionId) {
         List<Bookmark> rows = jdbcTemplate.query(
-                "SELECT " + COLUMNS + " FROM bookmark WHERE question_id = ? LIMIT 1",
-                (rs, rowNum) -> mapRow(rs), questionId);
+                "SELECT " + COLUMNS + " FROM bookmark WHERE question_id = ? AND owner_key = ? LIMIT 1",
+                (rs, rowNum) -> mapRow(rs), questionId, OwnerContext.current());
         return rows.stream().findFirst();
     }
 
-    /** Все закладки, новые первыми. */
     public List<Bookmark> findAll() {
         return jdbcTemplate.query(
-                "SELECT " + COLUMNS + " FROM bookmark ORDER BY created_at DESC, id DESC",
-                (rs, rowNum) -> mapRow(rs));
+                "SELECT " + COLUMNS + " FROM bookmark WHERE owner_key = ? ORDER BY created_at DESC, id DESC",
+                (rs, rowNum) -> mapRow(rs), OwnerContext.current());
     }
 
-    /** Число закладок. */
     public long count() {
-        Long count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM bookmark", Long.class);
+        Long count = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM bookmark WHERE owner_key = ?",
+                Long.class, OwnerContext.current());
         return count == null ? 0L : count;
     }
 
-    /**
-     * Создаёт закладку или обновляет заметку существующей (UPDATE-first).
-     * {@code createdAt} у существующей закладки сохраняется.
-     */
     public void upsert(long questionId, String note, long now) {
         int updated = jdbcTemplate.update(
-                "UPDATE bookmark SET note = ?, updated_at = ? WHERE question_id = ?",
-                note, now, questionId);
+                "UPDATE bookmark SET note = ?, updated_at = ? WHERE question_id = ? AND owner_key = ?",
+                note, now, questionId, OwnerContext.current());
         if (updated == 0) {
             jdbcTemplate.update(
-                    "INSERT INTO bookmark (question_id, note, created_at, updated_at) " +
-                            "VALUES (?, ?, ?, ?)",
-                    questionId, note, now, now);
+                    "INSERT INTO bookmark (owner_key, question_id, note, created_at, updated_at) " +
+                            "VALUES (?, ?, ?, ?, ?)",
+                    OwnerContext.current(), questionId, note, now, now);
         }
     }
 
-    /** Удаляет закладку вопроса (no-op если её нет). */
     public void delete(long questionId) {
-        jdbcTemplate.update("DELETE FROM bookmark WHERE question_id = ?", questionId);
+        jdbcTemplate.update(
+                "DELETE FROM bookmark WHERE question_id = ? AND owner_key = ?",
+                questionId, OwnerContext.current());
     }
 
     private static Bookmark mapRow(ResultSet rs) throws SQLException {

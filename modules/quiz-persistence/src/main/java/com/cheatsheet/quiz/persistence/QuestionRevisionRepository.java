@@ -60,6 +60,18 @@ public class QuestionRevisionRepository {
     }
 
     /**
+     * Ревизия по первичному ключу.
+     */
+    public Optional<QuestionRevision> findById(long revisionId) {
+        List<QuestionRevision> rows = jdbcTemplate.query(
+                "SELECT id, question_id, revision_number, checksum, publication_status, created_at " +
+                        "FROM question_revision WHERE id = ? LIMIT 1",
+                (rs, rowNum) -> mapRow(rs),
+                revisionId);
+        return rows.stream().findFirst();
+    }
+
+    /**
      * Все ревизии вопроса, новые первыми.
      */
     public List<QuestionRevision> findByQuestionId(long questionId) {

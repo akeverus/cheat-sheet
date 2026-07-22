@@ -8,6 +8,7 @@ import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.SessionSummary;
 import com.cheatsheet.quiz.infrastructure.render.AnswerHtmlSplitter;
 import com.cheatsheet.quiz.feature.interview.service.page.AnswerPageService;
+import com.cheatsheet.quiz.feature.interview.service.page.BookmarksPageService;
 import com.cheatsheet.quiz.feature.interview.service.page.FocusTrainingPageService;
 import com.cheatsheet.quiz.feature.interview.service.page.StatsPageService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ public class MvcModelAttributeMapper {
      */
     public void applySurfaceState(Model model, FocusTrainingPageService.SurfaceState surfaceState) {
         model.addAttribute("stats", surfaceState.stats());
+        model.addAttribute("dueFiltered", surfaceState.dueFiltered());
         model.addAttribute("topics", surfaceState.topics());
         model.addAttribute("groups", surfaceState.groups());
         model.addAttribute("selectedGroup", surfaceState.selectedGroup());
@@ -39,6 +41,9 @@ public class MvcModelAttributeMapper {
         model.addAttribute("mode", surfaceState.mode());
         model.addAttribute("interviewSession", surfaceState.interviewSession());
         model.addAttribute("weakTopics", surfaceState.weakTopics());
+        model.addAttribute("filterFavoritesCount", surfaceState.filterFavoritesCount());
+        model.addAttribute("filterWrongCount", surfaceState.filterWrongCount());
+        model.addAttribute("filterWeakTopicsCount", surfaceState.filterWeakTopicsCount());
     }
 
     /**
@@ -50,6 +55,9 @@ public class MvcModelAttributeMapper {
         model.addAttribute("studyLearnPhase", pageState.studyLearnPhase());
         model.addAttribute("flashcardMode", pageState.flashcardMode());
         model.addAttribute("flashcardRevealed", pageState.flashcardRevealed());
+        model.addAttribute("sessionRecallMode", pageState.sessionRecallMode());
+        model.addAttribute("typedInputMode", pageState.typedInputMode());
+        model.addAttribute("codeChallengeMode", pageState.codeChallengeMode());
         if (pageState.diagram() != null) {
             model.addAttribute("diagram", pageState.diagram());
         }
@@ -62,8 +70,14 @@ public class MvcModelAttributeMapper {
         if (pageState.reviewReason() != null) {
             model.addAttribute("reviewReason", pageState.reviewReason());
         }
+        model.addAttribute("contentBlocks", pageState.contentBlocks() != null
+                ? pageState.contentBlocks() : java.util.List.of());
+        model.addAttribute("questionRevisionId", pageState.questionRevisionId());
         model.addAttribute("progressPercent", pageState.progressPercent());
         model.addAttribute("reviewMode", reviewMode);
+        // Lazy Mermaid: load vendor only when the current question has a diagram.
+        boolean needsMermaid = pageState.diagram() != null && !pageState.diagram().isBlank();
+        model.addAttribute("needsMermaid", needsMermaid);
         InterviewMode mode = pageState.surface().mode();
         // flashcardMode — фактическое состояние UI: вопрос без вариантов форсит
         // флешкарту при любом session-mode. Чип/подсказка должны отражать именно
@@ -88,6 +102,9 @@ public class MvcModelAttributeMapper {
         if (reviewMode) {
             return "Повтор ошибок";
         }
+        if (mode != null && mode.usesTypedInput()) {
+            return modeUtils.displayName(mode);
+        }
         if (flashcard || mode == InterviewMode.FLASHCARD) {
             return "Флешкарты";
         }
@@ -100,6 +117,15 @@ public class MvcModelAttributeMapper {
     private String resolveFocusModeHintText(boolean reviewMode, InterviewMode mode, boolean flashcard) {
         if (reviewMode) {
             return "Режим review: отвечай на вопросы с ошибками.";
+        }
+        if (mode == InterviewMode.TYPED_RECALL) {
+            return "Печатный ответ: напиши ответ, затем раскрой эталон и оцени себя.";
+        }
+        if (mode == InterviewMode.INTERVIEW) {
+            return "Интервью: сформулируй развёрнутый ответ (можно записать заметки), затем сверь с эталоном.";
+        }
+        if (mode == InterviewMode.CODE_CHALLENGE) {
+            return "Код-челлендж: напиши решение, затем раскрой эталон и оцени себя.";
         }
         if (flashcard || mode == InterviewMode.FLASHCARD) {
             return "Флешкарты: сначала вспомни ответ, затем раскрой и оцени себя.";
@@ -114,8 +140,8 @@ public class MvcModelAttributeMapper {
         if (reviewMode) {
             return "/review";
         }
-        if (mode == InterviewMode.FLASHCARD) {
-            return "/training?mode=FLASHCARD";
+        if (mode != null && mode.isRecallMode()) {
+            return "/training?mode=" + mode.name();
         }
         if (mode == InterviewMode.STUDY) {
             return "/training?mode=STUDY";
@@ -129,6 +155,15 @@ public class MvcModelAttributeMapper {
         }
         if (mode == InterviewMode.FLASHCARD) {
             return "Обновить флешкарты";
+        }
+        if (mode == InterviewMode.TYPED_RECALL) {
+            return "Обновить печатный ответ";
+        }
+        if (mode == InterviewMode.INTERVIEW) {
+            return "Обновить интервью";
+        }
+        if (mode == InterviewMode.CODE_CHALLENGE) {
+            return "Обновить код-челлендж";
         }
         if (mode == InterviewMode.STUDY) {
             return "Обновить изучение";
@@ -179,6 +214,11 @@ public class MvcModelAttributeMapper {
         if (state.diagram() != null) {
             model.addAttribute("diagram", state.diagram());
         }
+        boolean needsMermaid = state.diagram() != null && !state.diagram().isBlank();
+        if (!needsMermaid && state.answerHtml() != null) {
+            needsMermaid = state.answerHtml().contains("class=\"mermaid\"");
+        }
+        model.addAttribute("needsMermaid", needsMermaid);
         model.addAttribute("relatedQuestions", state.relatedQuestions());
         model.addAttribute("aiEnabled", false);
         model.addAttribute("reviewState", state.reviewState());
@@ -217,6 +257,11 @@ public class MvcModelAttributeMapper {
         model.addAttribute("metrics", state.metrics());
         model.addAttribute("difficultyDistribution", state.difficultyDistribution());
         model.addAttribute("difficultyJson", state.difficultyJson());
+        model.addAttribute("metricDefinitions", state.metricDefinitions());
+        model.addAttribute("weakestTopic", state.weakestTopic());
+        model.addAttribute("recentWrongQuestions", state.recentWrongQuestions());
+        model.addAttribute("accuracyTrend", state.accuracyTrend());
+        model.addAttribute("accuracyTrendJson", state.accuracyTrendJson());
         // Передаём max(count) уже вычисленный — Thymeleaf 3.1 запрещает
         // T(java.util.Collections) в SpEL, считать в шаблоне нельзя.
         long maxForecast = state.reviewForecast() == null ? 1L
@@ -224,6 +269,19 @@ public class MvcModelAttributeMapper {
                         .mapToLong(com.cheatsheet.quiz.persistence.QuestionStatsRepository.ForecastDay::count)
                         .max().orElse(1L);
         model.addAttribute("reviewForecastMax", Math.max(maxForecast, 1L));
+        int maxTrendAnswered = state.accuracyTrend() == null ? 1
+                : state.accuracyTrend().stream()
+                        .mapToInt(com.cheatsheet.quiz.feature.interview.service.page.StatsPageService.AccuracyTrendDay::answered)
+                        .max().orElse(1);
+        model.addAttribute("accuracyTrendMaxAnswered", Math.max(maxTrendAnswered, 1));
+    }
+
+    /**
+     * Маппит state страницы закладок (UI-014).
+     */
+    public void applyBookmarksPageState(Model model, BookmarksPageService.BookmarksPageState state) {
+        model.addAttribute("bookmarks", state.items());
+        model.addAttribute("bookmarksTotal", state.total());
     }
 
     /**

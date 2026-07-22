@@ -1,5 +1,6 @@
 package com.cheatsheet.quiz.persistence;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -12,15 +13,20 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class InterviewFilterSqlTest {
 
+    @AfterEach
+    void clearOwner() {
+        OwnerContext.clear();
+    }
+
     @Test
-    void noFiltersAppendsNothing() {
+    void alwaysAppendsOwnerScope() {
         StringBuilder sql = new StringBuilder("WHERE 1=1");
         List<Object> params = new ArrayList<>();
 
         InterviewFilterSql.appendFilters(sql, params, null, null, null);
 
-        assertThat(sql.toString()).isEqualTo("WHERE 1=1");
-        assertThat(params).isEmpty();
+        assertThat(sql.toString()).contains("rs.owner_key = ?");
+        assertThat(params).containsExactly("local");
     }
 
     @Test
@@ -31,7 +37,7 @@ class InterviewFilterSqlTest {
         InterviewFilterSql.appendFilters(sql, params, "Java", null, null);
 
         assertThat(sql.toString()).contains("q.topic = ?");
-        assertThat(params).containsExactly("Java");
+        assertThat(params).containsExactly("local", "Java");
     }
 
     @Test
@@ -42,7 +48,7 @@ class InterviewFilterSqlTest {
         InterviewFilterSql.appendFilters(sql, params, null, true, null);
 
         assertThat(sql.toString()).contains("q.is_important = 1");
-        assertThat(params).isEmpty();
+        assertThat(params).containsExactly("local");
     }
 
     @Test
@@ -53,7 +59,7 @@ class InterviewFilterSqlTest {
         InterviewFilterSql.appendFilters(sql, params, null, null, true);
 
         assertThat(sql.toString()).contains("rs.wrong_count > 0");
-        assertThat(params).isEmpty();
+        assertThat(params).containsExactly("local");
     }
 
     @Test
@@ -66,28 +72,29 @@ class InterviewFilterSqlTest {
         assertThat(sql.toString()).contains("q.topic = ?");
         assertThat(sql.toString()).contains("q.is_important = 1");
         assertThat(sql.toString()).contains("rs.wrong_count > 0");
-        assertThat(params).containsExactly("Spring");
+        assertThat(params).containsExactly("local", "Spring");
     }
 
     @Test
-    void blankTopicIsIgnored() {
+    void blankTopicIsIgnoredButOwnerRemains() {
         StringBuilder sql = new StringBuilder("WHERE 1=1");
         List<Object> params = new ArrayList<>();
 
         InterviewFilterSql.appendFilters(sql, params, "   ", null, null);
 
-        assertThat(sql.toString()).isEqualTo("WHERE 1=1");
-        assertThat(params).isEmpty();
+        assertThat(sql.toString()).contains("rs.owner_key = ?");
+        assertThat(sql.toString()).doesNotContain("q.topic");
+        assertThat(params).containsExactly("local");
     }
 
     @Test
-    void falseImportantAndOnlyWrongAreIgnored() {
+    void falseImportantAndOnlyWrongAreIgnoredButOwnerRemains() {
         StringBuilder sql = new StringBuilder("WHERE 1=1");
         List<Object> params = new ArrayList<>();
 
         InterviewFilterSql.appendFilters(sql, params, null, false, false);
 
-        assertThat(sql.toString()).isEqualTo("WHERE 1=1");
-        assertThat(params).isEmpty();
+        assertThat(sql.toString()).contains("rs.owner_key = ?");
+        assertThat(params).containsExactly("local");
     }
 }

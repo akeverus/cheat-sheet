@@ -1,9 +1,11 @@
 package com.cheatsheet.quiz.feature.interview.controller;
 
+import com.cheatsheet.quiz.api.dto.request.interview.BookmarkNoteRequest;
 import com.cheatsheet.quiz.api.dto.request.interview.QuestionIdRequest;
 import com.cheatsheet.quiz.api.dto.request.interview.ReportIssueRequest;
 import com.cheatsheet.quiz.api.dto.request.interview.SubmitAnswerRequest;
 import com.cheatsheet.quiz.feature.interview.dto.response.answer.AnswerResponse;
+import com.cheatsheet.quiz.feature.interview.dto.response.progress.BookmarkResponse;
 import com.cheatsheet.quiz.feature.interview.dto.response.progress.ConfidenceResponse;
 import com.cheatsheet.quiz.feature.interview.dto.response.progress.FavoriteResponse;
 import com.cheatsheet.quiz.feature.interview.dto.response.progress.ReportIssueResponse;
@@ -13,6 +15,7 @@ import com.cheatsheet.quiz.feature.interview.dto.response.progress.TopicStatsRes
 import com.cheatsheet.quiz.feature.interview.dto.response.NextQuestionResponse;
 import com.cheatsheet.quiz.api.mapper.request.ApiRequestMapper;
 import com.cheatsheet.quiz.feature.interview.usecase.AnswerApiService;
+import com.cheatsheet.quiz.feature.interview.usecase.BookmarkApiService;
 import com.cheatsheet.quiz.feature.interview.usecase.ConfidenceApiService;
 import com.cheatsheet.quiz.feature.interview.usecase.FavoriteApiService;
 import com.cheatsheet.quiz.feature.interview.usecase.IssueReportApiService;
@@ -49,6 +52,7 @@ public class InterviewApiController {
     ConfidenceApiService confidenceApiService;
     NextQuestionApiService nextQuestionApiService;
     FavoriteApiService favoriteApiService;
+    BookmarkApiService bookmarkApiService;
     StreakApiService streakApiService;
     StatsApiService statsApiService;
     IssueReportApiService issueReportApiService;
@@ -130,6 +134,27 @@ public class InterviewApiController {
             @Valid @ModelAttribute QuestionIdRequest request
     ) {
         return favoriteApiService.toHttpResponse(request.getQuestionId());
+    }
+
+    @PostMapping("/api/bookmark")
+    public ResponseEntity<BookmarkResponse> toggleBookmark(
+            @Valid @ModelAttribute QuestionIdRequest request
+    ) {
+        return bookmarkApiService.toToggleHttpResponse(request.getQuestionId());
+    }
+
+    @PostMapping("/api/bookmark/note")
+    public ResponseEntity<BookmarkResponse> saveBookmarkNote(
+            @Valid @ModelAttribute BookmarkNoteRequest request
+    ) {
+        return bookmarkApiService.toSaveNoteHttpResponse(request.getQuestionId(), request.getNote());
+    }
+
+    @PostMapping("/api/bookmark/remove")
+    public ResponseEntity<BookmarkResponse> removeBookmark(
+            @Valid @ModelAttribute QuestionIdRequest request
+    ) {
+        return bookmarkApiService.toRemoveHttpResponse(request.getQuestionId());
     }
 
     @PostMapping("/api/report")

@@ -13,19 +13,21 @@ import org.springframework.stereotype.Component;
 public class ApiRequestMapper {
 
     public AnswerApiService.AnswerCommand toAnswerCommand(SubmitAnswerRequest request) {
-        return new AnswerApiService.AnswerCommand(
-                request.getQuestionId(),
-                request.getOptionId(),
-                request.getTopic(),
-                request.getGroup(),
-                request.getImportant(),
-                request.getOnlyWrong(),
-                request.getShuffle(),
-                request.getOrdered(),
-                request.getConfidence(),
-                request.getClientAttemptId(),
-                request.getOpenedContentBlockIds()
-        );
+        return AnswerApiService.AnswerCommand.builder()
+                .questionId(request.getQuestionId())
+                .optionId(request.getOptionId())
+                .topic(request.getTopic())
+                .group(request.getGroup())
+                .important(request.getImportant())
+                .onlyWrong(request.getOnlyWrong())
+                .shuffle(request.getShuffle())
+                .ordered(request.getOrdered())
+                .confidence(request.getConfidence())
+                .clientAttemptId(request.getClientAttemptId())
+                .openedContentBlockIds(request.getOpenedContentBlockIds())
+                .responseTimeMs(request.getResponseTimeMs())
+                .questionRevisionId(request.getQuestionRevisionId())
+                .build();
     }
 
     public StatsApiService.StatsCommand toStatsCommand(

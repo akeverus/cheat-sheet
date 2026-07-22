@@ -30,6 +30,9 @@ public class ModeUtils {
             case TRAINING -> "Тренировка";
             case STUDY -> "Изучение";
             case FLASHCARD -> "Флешкарты";
+            case TYPED_RECALL -> "Печатный ответ";
+            case INTERVIEW -> "Интервью";
+            case CODE_CHALLENGE -> "Код-челлендж";
             case EXAM -> "Экзамен";
             case MARATHON -> "Интенсив";
         };

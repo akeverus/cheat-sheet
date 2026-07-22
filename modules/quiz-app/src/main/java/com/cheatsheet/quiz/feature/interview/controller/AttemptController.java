@@ -10,25 +10,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Каноничный REST-ресурс попыток сессии (хендофф-3, Этап 9):
- * {@code POST /api/sessions/{sessionId}/attempts}.
+ * Каноничный REST-ресурс попыток (BE-003, модель B):
+ * {@code POST /api/attempts} — cookie-сессия, без декоративного {@code {sessionId}} в path.
  *
- * <p>Тонкий фасад: делегирует в {@link AnswerApiService} — ту же application-логику,
- * что обслуживает {@code /api/answer}. Так соблюдён REST-контракт хендоффа без
- * дублирования бизнес-логики; идемпотентность по {@code clientAttemptId}, начисление
- * XP и следующий интервал повторения приходят «из коробки». Ошибки этого пути
- * ({@code /api/**}) отдаются как {@code ProblemDetail} с {@code correlationId}
- * (см. {@code GlobalExceptionHandler}). {@code sessionId} в пути — RESTful-идентификатор
- * сессии; состоянием тренажёра управляет HTTP-сессия.</p>
+ * <p>Тонкий фасад: делегирует в {@link AnswerApiService}. Идемпотентность по
+ * {@code clientAttemptId}, XP и SM-2 приходят из общего пайплайна. Ошибки
+ * {@code /api/**} — {@code ProblemDetail} с {@code correlationId}.</p>
  */
 @RestController
-@RequestMapping("/api/sessions/{sessionId}/attempts")
+@RequestMapping("/api/attempts")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AttemptController {
@@ -36,16 +31,17 @@ public class AttemptController {
     AnswerApiService answerApiService;
 
     @PostMapping
-    public ResponseEntity<AnswerResponse> submit(@PathVariable String sessionId,
-                                                 @Valid @ModelAttribute SubmitAttemptRequest request,
+    public ResponseEntity<AnswerResponse> submit(@Valid @ModelAttribute SubmitAttemptRequest request,
                                                  HttpSession session) {
-        AnswerApiService.AnswerCommand command = new AnswerApiService.AnswerCommand(
-                request.getQuestionId(),
-                request.getSelectedOptionId(),
-                null, null, null, null, null, null,
-                request.getConfidence(),
-                request.getClientAttemptId(),
-                request.getOpenedContentBlockIds());
+        AnswerApiService.AnswerCommand command = AnswerApiService.AnswerCommand.builder()
+                .questionId(request.getQuestionId())
+                .optionId(request.getSelectedOptionId())
+                .confidence(request.getConfidence())
+                .clientAttemptId(request.getClientAttemptId())
+                .openedContentBlockIds(request.getOpenedContentBlockIds())
+                .responseTimeMs(request.getResponseTimeMs())
+                .questionRevisionId(request.getQuestionRevisionId())
+                .build();
         return answerApiService.toHttpResponse(command, session);
     }
 }

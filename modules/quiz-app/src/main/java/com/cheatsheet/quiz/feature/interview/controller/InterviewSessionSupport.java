@@ -1,16 +1,18 @@
 package com.cheatsheet.quiz.feature.interview.controller;
 
 import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
 import com.cheatsheet.quiz.domain.AnswerResult;
 import com.cheatsheet.quiz.domain.AttemptOutcome;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewSession;
 import com.cheatsheet.quiz.domain.Question;
+import com.cheatsheet.quiz.feature.interview.service.command.SubmitAnswerCommand;
 import com.cheatsheet.quiz.feature.interview.service.core.InterviewService;
 import com.cheatsheet.quiz.feature.interview.service.review.AttemptRecorder;
 import com.cheatsheet.quiz.common.util.FilterUtils;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Component;
 import lombok.Builder;
@@ -25,13 +27,34 @@ import java.time.Clock;
  */
 @Component
 @Slf4j
-@RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class InterviewSessionSupport {
     InterviewService interviewService;
     HttpSessionStateService httpSessionStateService;
     AttemptRecorder attemptRecorder;
+    SubmitAnswerCommand submitAnswerCommand;
     Clock clock;
+    Counter attemptJournalFailureCounter;
+    Counter duplicateSubmitCounter;
+
+    public InterviewSessionSupport(InterviewService interviewService,
+                                   HttpSessionStateService httpSessionStateService,
+                                   AttemptRecorder attemptRecorder,
+                                   SubmitAnswerCommand submitAnswerCommand,
+                                   Clock clock,
+                                   MeterRegistry meterRegistry) {
+        this.interviewService = interviewService;
+        this.httpSessionStateService = httpSessionStateService;
+        this.attemptRecorder = attemptRecorder;
+        this.submitAnswerCommand = submitAnswerCommand;
+        this.clock = clock;
+        this.attemptJournalFailureCounter = Counter.builder("attempt.journal.write.failure")
+                .description("Attempt journal write failures after SM-2/session commit (BE-007/OBS-001)")
+                .register(meterRegistry);
+        this.duplicateSubmitCounter = Counter.builder("attempt.submit.duplicate")
+                .description("Duplicate answer submits: failed idempotency claim or stale session question (OBS-002)")
+                .register(meterRegistry);
+    }
 
     public InterviewSession getSession(HttpSession session) {
         return httpSessionStateService.getInterviewSession(session);
@@ -68,46 +91,44 @@ public class InterviewSessionSupport {
                 submission.shuffle(),
                 submission.ordered()
         );
-        // FLOW-02 — серверная идемпотентность. Если у активной сессии текущий вопрос
-        // уже сменился (двойной/устаревший POST того же questionId: retry, двойной
-        // клик в обход клиентского guard, resubmit из истории), НЕ пишем SM-2 повторно
-        // и НЕ двигаем сессию: возвращаем read-only оценку (тот же вердикт) без
-        // побочных эффектов. Покрывает сессионные режимы (EXAM/MARATHON/STUDY/FLASHCARD);
-        // TRAINING без сессии (interviewSession == null) и finished-сессия — прежнее
-        // поведение (submitAnswer вызывается: последнее сохраняется контрактом теста
-        // processAnswerDoesNotMutateOrPersistWhenSessionAlreadyFinished).
+        // FLOW-02 — устаревший дубль сессии: evaluate-only без claim/SM-2.
         if (isStaleDuplicate(interviewSession, submission)) {
+            duplicateSubmitCounter.increment();
             AnswerResult replay = interviewService.evaluateAnswer(
                     submission.questionId(),
                     submission.optionId()
             );
             return new AnswerContext(replay, filter, interviewSession);
         }
-        AnswerResult result = interviewService.submitAnswer(
-                submission.questionId(),
-                submission.optionId(),
-                filter,
-                submission.confidence()
-        );
-        // Время ответа (think-time): дельта от показа вопроса до сабмита. Потребляем
-        // ДО applySessionProgress (которое сдвинет сессию к следующему вопросу).
-        Integer responseTimeMs = interviewSession != null
+        // Think-time до TX: consume server mark; HttpSession progress после commit.
+        Integer responseTimeMs = resolveResponseTimeMs(submission.responseTimeMs(), interviewSession);
+        // P0: claim + revision + SM-2 + journal в одной TX (SubmitAnswerCommand).
+        AnswerResult result = submitAnswerCommand.executeOrNullIfDuplicate(
+                submission, filter, session.getId(), responseTimeMs);
+        if (result == null) {
+            duplicateSubmitCounter.increment();
+            AnswerResult replay = interviewService.evaluateAnswer(
+                    submission.questionId(),
+                    submission.optionId()
+            );
+            return new AnswerContext(replay, filter, interviewSession);
+        }
+        applySessionProgress(interviewSession, result, session);
+        return new AnswerContext(result, filter, interviewSession);
+    }
+
+    /**
+     * Клиентский think-time (0…30 мин) или серверный fallback; иначе {@code null}.
+     * Серверный замер всё равно сбрасываем, чтобы следующий вопрос не унаследовал метку.
+     */
+    private Integer resolveResponseTimeMs(Integer clientMs, InterviewSession interviewSession) {
+        Integer serverMs = interviewSession != null
                 ? interviewSession.takeResponseTimeMs(clock.millis())
                 : null;
-        applySessionProgress(interviewSession, result, session);
-        // Построчный лог попытки (Фаза 2). Не критичный путь — журнал не должен
-        // ронять ответ, поэтому обёрнут в try/catch.
-        recordAttempt(
-                submission.questionId(),
-                AttemptOutcome.ofCorrect(result.correctAnswer()),
-                submission.confidence(),
-                submission.optionId(),
-                responseTimeMs,
-                session,
-                submission.clientAttemptId(),
-                submission.openedContentBlockIds());
-
-        return new AnswerContext(result, filter, interviewSession);
+        if (clientMs != null && clientMs >= 0 && clientMs <= 1_800_000) {
+            return clientMs;
+        }
+        return serverMs;
     }
 
     /**
@@ -145,8 +166,15 @@ public class InterviewSessionSupport {
         if (current == null || current != questionId) {
             return interviewSession;
         }
-        Question question = interviewService.submitUnknown(questionId);
-        interviewSession.registerUnknown(question.topic());
+        // Claim before SM-2 so double-skip / retry cannot lapse twice.
+        String skipKey = skipIdempotencyKey(session.getId(), questionId);
+        boolean claimed = attemptRecorder.tryClaimIdempotencyKey(skipKey);
+        String topic = interviewSession.getTopic();
+        if (claimed) {
+            Question question = interviewService.submitUnknown(questionId);
+            topic = question.topic();
+        }
+        interviewSession.registerUnknown(topic);
         if (interviewSession.getMode() == InterviewMode.EXAM) {
             interviewService.addExamPenaltyQuestions(interviewSession);
         }
@@ -155,11 +183,18 @@ public class InterviewSessionSupport {
         }
         Integer responseTimeMs = interviewSession.takeResponseTimeMs(clock.millis());
         httpSessionStateService.setInterviewSession(session, interviewSession);
-        // Лог попытки «не знаю» (UNKNOWN, грейд 0, без выбранного варианта).
-        // Skip не несёт клиентского ключа (нет выбранного варианта, retry по нему не
-        // ожидается) → clientAttemptId=null, дедупликация по ключу не применяется.
-        recordAttempt(questionId, AttemptOutcome.UNKNOWN, 0, null, responseTimeMs, session, null, null);
+        if (claimed) {
+            recordAttempt(questionId, AttemptOutcome.UNKNOWN, 0, null, responseTimeMs, session,
+                    skipKey, null, null);
+        }
         return interviewSession;
+    }
+
+    private static String skipIdempotencyKey(String sessionId, long questionId) {
+        String seed = (sessionId == null ? "" : sessionId) + ":" + questionId;
+        String key = "skip-" + questionId + "-" + Integer.toUnsignedString(seed.hashCode());
+        int max = com.cheatsheet.quiz.common.constants.QuizConstants.CLIENT_ATTEMPT_ID_MAX_LENGTH;
+        return key.length() <= max ? key : key.substring(0, max);
     }
 
     /**
@@ -168,7 +203,8 @@ public class InterviewSessionSupport {
      */
     private void recordAttempt(long questionId, AttemptOutcome outcome, Integer memoryGrade,
                                Long selectedOptionId, Integer responseTimeMs, HttpSession session,
-                               String clientAttemptId, String openedContentBlockIds) {
+                               String clientAttemptId, String openedContentBlockIds,
+                               Long questionRevisionId) {
         try {
             attemptRecorder.record(
                     questionId,
@@ -178,8 +214,10 @@ public class InterviewSessionSupport {
                     responseTimeMs,
                     session.getId(),
                     clientAttemptId,
-                    openedContentBlockIds);
+                    openedContentBlockIds,
+                    questionRevisionId);
         } catch (Exception e) {
+            attemptJournalFailureCounter.increment();
             log.warn("Не удалось записать attempt для вопроса id={}: {}", questionId, e.getMessage());
         }
     }
@@ -243,14 +281,33 @@ public class InterviewSessionSupport {
             Boolean ordered,
             Integer confidence,
             String clientAttemptId,
-            String openedContentBlockIds
+            String openedContentBlockIds,
+            Integer responseTimeMs,
+            Long questionRevisionId
     ) {
-        /** Обратная совместимость: без {@code openedContentBlockIds} (no-JS/старые вызовы). */
+        /** Обратная совместимость: без {@code openedContentBlockIds}/responseTimeMs/revision. */
         public AnswerSubmission(long questionId, long optionId, String topic, String group,
                                 Boolean important, Boolean onlyWrong, Boolean shuffle, Boolean ordered,
                                 Integer confidence, String clientAttemptId) {
             this(questionId, optionId, topic, group, important, onlyWrong, shuffle, ordered,
-                    confidence, clientAttemptId, null);
+                    confidence, clientAttemptId, null, null, null);
+        }
+
+        /** Обратная совместимость: без {@code responseTimeMs}/revision. */
+        public AnswerSubmission(long questionId, long optionId, String topic, String group,
+                                Boolean important, Boolean onlyWrong, Boolean shuffle, Boolean ordered,
+                                Integer confidence, String clientAttemptId, String openedContentBlockIds) {
+            this(questionId, optionId, topic, group, important, onlyWrong, shuffle, ordered,
+                    confidence, clientAttemptId, openedContentBlockIds, null, null);
+        }
+
+        /** Обратная совместимость: без {@code questionRevisionId}. */
+        public AnswerSubmission(long questionId, long optionId, String topic, String group,
+                                Boolean important, Boolean onlyWrong, Boolean shuffle, Boolean ordered,
+                                Integer confidence, String clientAttemptId, String openedContentBlockIds,
+                                Integer responseTimeMs) {
+            this(questionId, optionId, topic, group, important, onlyWrong, shuffle, ordered,
+                    confidence, clientAttemptId, openedContentBlockIds, responseTimeMs, null);
         }
     }
 }

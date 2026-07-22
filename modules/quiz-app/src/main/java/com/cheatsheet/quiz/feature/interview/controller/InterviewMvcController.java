@@ -2,9 +2,11 @@ package com.cheatsheet.quiz.feature.interview.controller;
 
 import com.cheatsheet.quiz.api.dto.request.interview.StartSessionRequest;
 import com.cheatsheet.quiz.api.dto.request.interview.SubmitAnswerRequest;
+import com.cheatsheet.quiz.api.security.SensitiveEndpointAccessService;
 import com.cheatsheet.quiz.feature.admin.service.AdminMaintenanceService;
 import com.cheatsheet.quiz.feature.interview.usecase.mvc.InterviewFlowMvcService;
 import com.cheatsheet.quiz.feature.interview.usecase.mvc.InterviewPageMvcService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -13,6 +15,7 @@ import jakarta.servlet.http.HttpSession;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
@@ -33,6 +37,7 @@ public class InterviewMvcController {
     InterviewPageMvcService interviewPageMvcService;
     InterviewFlowMvcService interviewFlowMvcService;
     AdminMaintenanceService adminMaintenanceService;
+    SensitiveEndpointAccessService sensitiveEndpointAccessService;
 
     @GetMapping("/")
     public String index(
@@ -44,6 +49,7 @@ public class InterviewMvcController {
             @RequestParam(value = "weakTopics", required = false) Boolean weakTopics,
             @RequestParam(value = "ordered", required = false) Boolean ordered,
             @RequestParam(value = "excludeQuestionId", required = false) Long excludeQuestionId,
+            @RequestParam(value = "questionId", required = false) Long questionId,
             @RequestParam(value = "mode", required = false) String mode,
             HttpSession session,
             Model model
@@ -57,6 +63,7 @@ public class InterviewMvcController {
                 weakTopics,
                 ordered,
                 excludeQuestionId,
+                questionId,
                 mode,
                 session,
                 model
@@ -73,6 +80,7 @@ public class InterviewMvcController {
             @RequestParam(value = "weakTopics", required = false) Boolean weakTopics,
             @RequestParam(value = "ordered", required = false) Boolean ordered,
             @RequestParam(value = "excludeQuestionId", required = false) Long excludeQuestionId,
+            @RequestParam(value = "questionId", required = false) Long questionId,
             @RequestParam(value = "mode", required = false) String mode,
             HttpSession session,
             Model model
@@ -86,6 +94,7 @@ public class InterviewMvcController {
                 weakTopics,
                 ordered,
                 excludeQuestionId,
+                questionId,
                 mode,
                 session,
                 model
@@ -101,6 +110,7 @@ public class InterviewMvcController {
             @RequestParam(value = "weakTopics", required = false) Boolean weakTopics,
             @RequestParam(value = "ordered", required = false) Boolean ordered,
             @RequestParam(value = "excludeQuestionId", required = false) Long excludeQuestionId,
+            @RequestParam(value = "questionId", required = false) Long questionId,
             @RequestParam(value = "mode", required = false) String mode,
             HttpSession session,
             Model model
@@ -113,6 +123,7 @@ public class InterviewMvcController {
                 weakTopics,
                 ordered,
                 excludeQuestionId,
+                questionId,
                 mode,
                 session,
                 model
@@ -160,7 +171,10 @@ public class InterviewMvcController {
     }
 
     @PostMapping("/flashcard-reveal")
-    public String flashcardReveal(HttpSession session) {
+    public String flashcardReveal(
+            @RequestParam(value = "typedAnswer", required = false) String typedAnswer,
+            HttpSession session
+    ) {
         return interviewFlowMvcService.flashcardReveal(session);
     }
 
@@ -219,6 +233,7 @@ public class InterviewMvcController {
             Boolean weakTopics,
             Boolean ordered,
             Long excludeQuestionId,
+            Long questionId,
             String mode,
             HttpSession session,
             Model model
@@ -232,6 +247,7 @@ public class InterviewMvcController {
                 weakTopics,
                 ordered,
                 excludeQuestionId,
+                questionId,
                 mode,
                 session,
                 model
@@ -239,7 +255,18 @@ public class InterviewMvcController {
     }
 
     @PostMapping("/settings/reset-options")
-    public String resetOptions(RedirectAttributes redirectAttributes) {
+    public String resetOptions(
+            HttpServletRequest request,
+            @RequestParam(value = "adminToken", required = false) String adminToken,
+            RedirectAttributes redirectAttributes
+    ) {
+        String token = request.getHeader(SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER);
+        if (token == null || token.isBlank()) {
+            token = adminToken;
+        }
+        if (!sensitiveEndpointAccessService.isAuthorizedForSensitive(token)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Недостаточно прав");
+        }
         int deleted = adminMaintenanceService.clearOptions();
         redirectAttributes.addFlashAttribute("resetDeleted", deleted);
         return "redirect:/settings";
@@ -264,6 +291,28 @@ public class InterviewMvcController {
                 query,
                 model
         );
+    }
+
+    @GetMapping("/bookmarks")
+    public String bookmarks(Model model) {
+        return interviewPageMvcService.bookmarks(model);
+    }
+
+    @PostMapping("/bookmarks/note")
+    public String saveBookmarkNote(
+            @RequestParam("questionId") @Positive long questionId,
+            @RequestParam(value = "note", required = false) String note,
+            RedirectAttributes redirectAttributes
+    ) {
+        return interviewPageMvcService.saveBookmarkNote(questionId, note, redirectAttributes);
+    }
+
+    @PostMapping("/bookmarks/remove")
+    public String removeBookmark(
+            @RequestParam("questionId") @Positive long questionId,
+            RedirectAttributes redirectAttributes
+    ) {
+        return interviewPageMvcService.removeBookmark(questionId, redirectAttributes);
     }
 
 }
