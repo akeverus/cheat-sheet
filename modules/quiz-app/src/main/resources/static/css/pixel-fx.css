@@ -842,7 +842,11 @@ html[data-design][data-pixel="high"] .pixel-floater {
   pointer-events: none;
   z-index: 0;
   image-rendering: pixelated;
-  width: 28px;
+  /* GFX-P1-07 (Graphics Review V2): 28px нарушал integer-scale контракт
+     (canonical 8/16/24/32) → мыльный ресемплинг pixel-сетки. 32px = чистый
+     2× для 16-px микроспрайтов / 1× для 32-px, image-rendering:pixelated
+     остаётся резким только на целочисленном масштабе. */
+  width: 32px;
   height: auto; /* аспект pixel-ассета — не сплющивать */
   opacity: 0.42;
   animation: floaterBob var(--bob, 3s) ease-in-out infinite;
