@@ -255,4 +255,80 @@ class MarkdownRenderServiceTest {
 
         assertThat(html).doesNotContain("https://evil.example");
     }
+
+    @Test
+    void stripsUrlEncodedJavascriptHref() {
+        // %73 = 's'; isSafeHref декодирует href перед проверкой, поэтому
+        // обфускация процент-кодированием не обходит запрет javascript:.
+        String html = service.toHtml("жми [x](java%73cript:alert(1))");
+
+        assertThat(html).doesNotContain("javascript");
+        assertThat(html).doesNotContain("%73cript");
+        assertThat(html).contains("<a"); // сам якорь остаётся, но без href
+    }
+
+    @Test
+    void stripsHrefWithMalformedPercentEncoding() {
+        // URLDecoder бросает IllegalArgumentException на битом %-encoding →
+        // isSafeHref возвращает false (fail-closed), href удаляется.
+        String html = service.toHtml("ссылка [x](%zz)");
+
+        assertThat(html).doesNotContain("href=\"%zz\"");
+    }
+
+    @Test
+    void stripsVbscriptHref() {
+        String html = service.toHtml("[x](vbscript:msgbox(1))");
+
+        assertThat(html).doesNotContain("vbscript");
+    }
+
+    @Test
+    void preservesMailtoHref() {
+        String html = service.toHtml("напиши [нам](mailto:team@example.com)");
+
+        assertThat(html).contains("href=\"mailto:team@example.com\"");
+    }
+
+    @Test
+    void preservesSameDocumentFragmentHref() {
+        String html = service.toHtml("к [разделу](#section-2)");
+
+        assertThat(html).contains("href=\"#section-2\"");
+    }
+
+    @Test
+    void rendersWikiLinkWithAnchorKeptInLabelNotUrl() {
+        // [[topic#Qn]] без явного label: якорь #Qn уходит в ВИДИМЫЙ label,
+        // но НЕ в URL (мы не маршрутизируем якоря вопросов).
+        String html = service.toHtml("см. [[java-generics-interview#Q5]]");
+
+        assertThat(html).contains("href=\"/?topic=java-generics-interview\"");
+        assertThat(html).contains(">java-generics-interview#Q5</a>");
+    }
+
+    @Test
+    void plainTextPreviewReturnsShortTextUnchanged() {
+        // Длина <= maxLength — без обрезки и без «…». Overload без maxLength
+        // использует app.search.preview-max-length (=200 в setUp).
+        assertThat(service.toPlainTextPreview("короткий текст", 200)).isEqualTo("короткий текст");
+        assertThat(service.toPlainTextPreview("короткий текст")).isEqualTo("короткий текст");
+    }
+
+    @Test
+    void plainTextPreviewTruncatesAtWordBoundaryWithEllipsis() {
+        // maxLength=10: последний пробел на позиции 7 (>= maxLength/2) → режем по слову.
+        String preview = service.toPlainTextPreview("one two three four five six", 10);
+
+        assertThat(preview).isEqualTo("one two…");
+    }
+
+    @Test
+    void plainTextPreviewHardCutsWhenNoEarlyWordBoundary() {
+        // Первое слово длиннее maxLength: пробел (поз. 16) слишком поздно
+        // (cut < maxLength/2) → жёсткая обрезка ровно по maxLength=10.
+        String preview = service.toPlainTextPreview("abcdefghijklmnop qrst", 10);
+
+        assertThat(preview).isEqualTo("abcdefghij…");
+    }
 }
