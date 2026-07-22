@@ -313,9 +313,20 @@
                 <label th:each="opt, iterStat : ${current.options}"
                        th:data-option-id="${opt.id}"
                        th:aria-label="${'Вариант ' + (iterStat.index + 1) + ': ' + @markdownRenderService.toPlainText(opt.optionText)}">
+                    <!-- aria-invalid="false" ОБЯЗАТЕЛЕН: с `required` невыбранный
+                         radio нативно матчит :invalid (valueMissing) сразу при загрузке,
+                         и Chromium экспонирует это в a11y-дерево как invalid=true на ВСЕХ
+                         вариантах до любого действия → скринридер ложно озвучивает
+                         «недействительно» на каждом варианте (нарушает дух WCAG 3.3.1 —
+                         ошибка идентифицируется когда происходит, не превентивно). Явный
+                         aria-invalid="false" переопределяет экспонируемое состояние, НЕ
+                         трогая native-валидацию: `required` цел → no-JS пустой submit
+                         по-прежнему ловится нативным bubble. После выбора группа нативно
+                         :valid, так что статический false корректен на всех стадиях. -->
                     <input type="radio"
                            name="optionId"
                            th:value="${opt.id}"
+                           aria-invalid="false"
                            required>
                     <!-- optionText в БД хранится как "A. текст" (McqJsonLoader склеивает
                          label+text — это удобно для контекстов без буквенного бейджа:
