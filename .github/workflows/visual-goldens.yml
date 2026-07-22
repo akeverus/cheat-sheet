@@ -1,0 +1,116 @@
+name: Visual goldens
+
+# Manual / ops: regenerate or verify Playwright baselines on ubuntu (CI OS).
+# Darwin baselines in repo may differ slightly — use --update on this runner
+# and commit the artifact output when intentionally refreshing.
+
+on:
+  workflow_dispatch:
+    inputs:
+      update_snapshots:
+        description: 'Rewrite e2e/visual-baselines (upload as artifact)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: visual-goldens-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual:
+    name: Visual matrix · chromium
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: interview
+          POSTGRES_USER: interview
+          POSTGRES_PASSWORD: interview
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U interview -d interview"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: e2e/package-lock.json
+
+      - name: Install e2e deps + Chromium
+        working-directory: e2e
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Boot app (background)
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/interview
+          SPRING_DATASOURCE_USERNAME: interview
+          SPRING_DATASOURCE_PASSWORD: interview
+          APP_SECURITY_MODE: local
+          APP_ADMIN_TOKEN: ci-visual-token
+        run: |
+          ./gradlew :quiz-app:bootRun -q > /tmp/bootRun.log 2>&1 &
+          echo $! > /tmp/bootRun.pid
+          for i in $(seq 1 90); do
+            if curl -sf http://localhost:8080/actuator/health >/dev/null \
+              || curl -sf http://localhost:8080/ >/dev/null; then
+              echo "app up after ${i}s"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "bootRun failed to become ready" >&2
+          tail -n 200 /tmp/bootRun.log >&2 || true
+          exit 1
+
+      - name: Run visual matrix
+        working-directory: e2e
+        env:
+          VISUAL_GOLDEN: '1'
+          E2E_BASE_URL: http://localhost:8080
+          UPDATE_SNAPSHOTS: ${{ inputs.update_snapshots }}
+        run: |
+          if [ "$UPDATE_SNAPSHOTS" = "true" ]; then
+            npx playwright test visual-matrix.spec.js --update-snapshots
+          else
+            npx playwright test visual-matrix.spec.js
+          fi
+
+      - name: Upload baselines + results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-goldens-${{ github.run_id }}
+          path: |
+            e2e/visual-baselines/
+            e2e/visual-results/
+            e2e/test-results/
+          retention-days: 14
+
+      - name: Stop app
+        if: always()
+        run: |
+          if [ -f /tmp/bootRun.pid ]; then
+            kill "$(cat /tmp/bootRun.pid)" 2>/dev/null || true
+          fi

@@ -1,0 +1,42 @@
+# Example OAuth2/OIDC overlay for mode=multi.
+# Lives outside the classpath (modules/quiz-app/examples/) so Spring will not
+# auto-load it as a profile. Copy into a local file or import explicitly:
+#   spring.config.import=optional:file:./modules/quiz-app/examples/application-oauth.yml
+# Do NOT commit real secrets — override via OAUTH_CLIENT_ID / OAUTH_CLIENT_SECRET.
+#
+# Also required:
+#   export APP_SECURITY_MODE=multi
+#   export APP_SECURITY_OAUTH_ENABLED=true
+
+app:
+  security:
+    mode: multi
+    oauth:
+      enabled: true
+      registration-id: oidc
+      display-name: Org SSO
+      groups-claim: groups
+      admin-groups:
+        - cheat-sheet-admins
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          oidc:
+            client-id: ${OAUTH_CLIENT_ID:change-me}
+            client-secret: ${OAUTH_CLIENT_SECRET:change-me}
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope: openid,profile
+            provider: oidc
+        provider:
+          oidc:
+            # Prefer issuer-uri when IdP supports OIDC discovery:
+            # issuer-uri: https://login.example.com/realms/cheat-sheet
+            authorization-uri: https://idp.example/authorize
+            token-uri: https://idp.example/token
+            user-info-uri: https://idp.example/userinfo
+            jwk-set-uri: https://idp.example/jwks
+            user-name-attribute: sub
