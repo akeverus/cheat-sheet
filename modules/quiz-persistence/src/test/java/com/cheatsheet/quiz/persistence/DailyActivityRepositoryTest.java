@@ -12,9 +12,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration-тесты {@link DailyActivityRepository} на реальном PostgreSQL.
- * Раньше использовался ON CONFLICT, который ломался в Testcontainers PG 16
- * («bad SQL grammar»). Переписано на UPDATE-then-INSERT — теперь работает
- * на любых RDBMS и покрыто этим тестом.
+ * Upsert выполняется атомарно через {@code INSERT … ON CONFLICT (owner_key, activity_date)}.
+ * Прежний «bad SQL grammar» возникал ДО появления PK (owner_key, activity_date) —
+ * констрейнта, под который делается инференс. После owner-scoping (V24) констрейнт есть,
+ * и ON CONFLICT — общий паттерн persistence-слоя (ReviewState/UserTopicStats/Attempt/
+ * UserExperience). Тест покрывает инкремент, перезапись цели и подсчёт серии.
  */
 class DailyActivityRepositoryTest extends AbstractPostgresRepositoryTest {
 

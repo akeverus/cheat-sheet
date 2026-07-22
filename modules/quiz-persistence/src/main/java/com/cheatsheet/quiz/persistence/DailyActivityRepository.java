@@ -34,18 +34,18 @@ public class DailyActivityRepository {
         String owner = OwnerContext.current();
         int correctInc = correct ? 1 : 0;
 
-        int updated = jdbcTemplate.update(
-                "UPDATE daily_activity SET questions_answered = questions_answered + 1, " +
-                        "correct_count = correct_count + ? WHERE activity_date = ? AND owner_key = ?",
-                correctInc, today, owner
+        // Атомарный upsert (ср. BookmarkRepository): прежняя схема UPDATE→(если 0)→INSERT
+        // проигрывала гонку на ПЕРВОМ ответе дня — два параллельных сабмита оба видели
+        // updated=0 и второй INSERT падал на daily_activity_pkey (owner_key, activity_date),
+        // роняя сам сабмит ответа в 500. ON CONFLICT инкрементирует существующую строку.
+        jdbcTemplate.update(
+                "INSERT INTO daily_activity (owner_key, activity_date, questions_answered, correct_count, daily_goal) " +
+                        "VALUES (?, ?, 1, ?, ?) " +
+                        "ON CONFLICT (owner_key, activity_date) DO UPDATE SET " +
+                        "questions_answered = daily_activity.questions_answered + 1, " +
+                        "correct_count = daily_activity.correct_count + EXCLUDED.correct_count",
+                owner, today, correctInc, defaultGoal
         );
-        if (updated == 0) {
-            jdbcTemplate.update(
-                    "INSERT INTO daily_activity (owner_key, activity_date, questions_answered, correct_count, daily_goal) " +
-                            "VALUES (?, ?, 1, ?, ?)",
-                    owner, today, correctInc, defaultGoal
-            );
-        }
     }
 
     /**
@@ -128,14 +128,13 @@ public class DailyActivityRepository {
     public void updateDailyGoal(int goal) {
         String today = LocalDate.now().format(DATE_FMT);
         String owner = OwnerContext.current();
-        int updated = jdbcTemplate.update(
-                "UPDATE daily_activity SET daily_goal = ? WHERE activity_date = ? AND owner_key = ?",
-                goal, today, owner);
-        if (updated == 0) {
-            jdbcTemplate.update(
-                    "INSERT INTO daily_activity (owner_key, activity_date, questions_answered, correct_count, daily_goal) " +
-                            "VALUES (?, ?, 0, 0, ?)",
-                    owner, today, goal);
-        }
+        // Атомарный upsert (ср. BookmarkRepository): UPDATE→(если 0)→INSERT проигрывал
+        // гонку с daily_activity_pkey; ON CONFLICT делает всё одной операцией, не трогая
+        // накопленные счётчики (обновляется только daily_goal).
+        jdbcTemplate.update(
+                "INSERT INTO daily_activity (owner_key, activity_date, questions_answered, correct_count, daily_goal) " +
+                        "VALUES (?, ?, 0, 0, ?) " +
+                        "ON CONFLICT (owner_key, activity_date) DO UPDATE SET daily_goal = EXCLUDED.daily_goal",
+                owner, today, goal);
     }
 }

@@ -27,16 +27,16 @@ public class PausedSessionRepository {
                      int total, int answered, Instant pausedAt) {
         Timestamp ts = Timestamp.from(pausedAt);
         String owner = OwnerContext.current();
-        int updated = jdbcTemplate.update(
-                "UPDATE paused_session SET session_blob = ?, mode = ?, topic = ?, " +
-                        "total = ?, answered = ?, paused_at = ? WHERE owner_key = ?",
-                sessionBlob, mode.name(), topic, total, answered, ts, owner);
-        if (updated == 0) {
-            jdbcTemplate.update(
-                    "INSERT INTO paused_session (owner_key, session_blob, mode, topic, total, answered, paused_at) " +
-                            "VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    owner, sessionBlob, mode.name(), topic, total, answered, ts);
-        }
+        // Атомарный upsert (ср. BookmarkRepository): прежняя схема UPDATE→(если 0)→INSERT
+        // проигрывала гонку — два параллельных первых save одного owner оба видели
+        // updated=0 и второй INSERT падал на paused_session_pkey (owner_key).
+        jdbcTemplate.update(
+                "INSERT INTO paused_session (owner_key, session_blob, mode, topic, total, answered, paused_at) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?) " +
+                        "ON CONFLICT (owner_key) DO UPDATE SET " +
+                        "session_blob = EXCLUDED.session_blob, mode = EXCLUDED.mode, topic = EXCLUDED.topic, " +
+                        "total = EXCLUDED.total, answered = EXCLUDED.answered, paused_at = EXCLUDED.paused_at",
+                owner, sessionBlob, mode.name(), topic, total, answered, ts);
     }
 
     public Optional<byte[]> findBlob() {
