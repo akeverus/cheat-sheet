@@ -653,21 +653,29 @@ html[data-design] .sidebar .nav a[href*="settings"] .icon { color: var(--px-gree
   50% { background: linear-gradient(90deg, rgba(57, 208, 199, 0.38), transparent); }
 }
 
-/* Nav labels — keep system/UI font, only pixel icons animate */
+/* Nav labels — keep system/UI font, only pixel icons animate.
+   Активный пункт «вставлен в pixel-socket»: teal-well + верхний lit-индикатор.
+   §16.3: активность через socket + фон + контраст (НЕ бесконечная пульсация).
+   box-shadow НЕ используем — он зарезервирован под focus-visible (shell.css:451),
+   иначе socket перекрыл бы focus-ring активного пункта (a11y-регресс). */
 html[data-design] .mobile-nav a.active {
-  /* Тема-корректный акцент: фикс. --px-teal на белом фоне mobile-nav в light
-     давал контраст 1.91 (провал WCAG 1.4.3 для 9px-текста). --color-accent-strong
-     даёт 6.36 (light) / 11.9 (dark). Иконка следует currentColor. Совпадает с
-     намерением shell.css. */
+  /* accent-strong на accent-wash: 5.5 (light) / 8.9 (dark) — AA для 11px-подписи.
+     Иконка следует currentColor. */
   color: var(--color-accent-strong);
-  text-shadow: 0 0 10px rgba(57, 208, 199, 0.6);
+  background: var(--color-accent-wash);   /* teal-well слота */
 }
-html[data-design][data-pixel="high"] .mobile-nav a.active {
-  animation: iconPulse 1.4s steps(2) infinite;
+html[data-design] .mobile-nav a.active::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--px-teal);              /* верхний lit-индикатор socket (pixel-crisp) */
 }
+/* high: активная иконка статично «подсвечена» в слоте — без infinite-пульса */
 html[data-design][data-pixel="high"] .mobile-nav a.active .icon {
-  animation: iconPulse 1.4s steps(2) infinite;
-  filter: drop-shadow(0 0 6px rgba(57, 208, 199, 0.8));
+  filter: drop-shadow(0 0 5px rgba(57, 208, 199, 0.7));
 }
 html[data-design] .mobile-nav {
   border-radius: 0 !important;
@@ -676,10 +684,6 @@ html[data-design] .mobile-nav {
 html[data-design] .mobile-nav a .icon {
   display: block;
   margin: 0 auto 4px;
-}
-html[data-design][data-pixel="high"] .mobile-nav a .icon {
-  animation: mascotIdle 2s steps(2) infinite;
-  animation-delay: calc(var(--i, 0) * 0.15s);
 }
 
 /* ---- Badges pixel ---- */
