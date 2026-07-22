@@ -171,7 +171,9 @@
     var layer = document.createElement('div');
     layer.className = 'pixel-ambient';
     layer.setAttribute('aria-hidden', 'true');
-    var count = window.innerWidth < 700 ? 14 : 28;
+    // Плотность к целевому балансу «5-10% декоративные» (инвариант): периферийный
+    // фон, не ковёр. Слой за контентом (z-index:0), текст всегда сверху.
+    var count = window.innerWidth < 700 ? 10 : 20;
     for (var i = 0; i < count; i++) {
       var img = document.createElement('img');
       img.className = 'pixel-crumb';
@@ -196,7 +198,7 @@
   function spawnFloaters() {
     if (!allowAmbient()) return;
     if (document.querySelector('.pixel-floater')) return;
-    var n = window.innerWidth < 700 ? 5 : 10;
+    var n = window.innerWidth < 700 ? 4 : 7;
     for (var i = 0; i < n; i++) {
       var img = document.createElement('img');
       img.className = 'pixel-floater';

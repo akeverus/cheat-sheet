@@ -833,18 +833,21 @@ html[data-design] .pixel-burst-bit {
   100% { opacity: 0; transform: translate(var(--bx), var(--by)) scale(0.3) rotate(220deg); }
 }
 
-/* Floating HUD sprites (JS injects .pixel-floater) — HIGH only */
+/* Decorative floating sprites (JS injects .pixel-floater) — HIGH only.
+   z-index:0 → рисуются ЗА .shell-main/.sidebar (z-index:1), как ambient-crumbs:
+   декор остаётся периферийной фоновой глубиной и НИКОГДА не перекрывает читаемый
+   текст (инвариант «декор не мешает чтению / не перекрывать контент» даже в high). */
 html[data-design][data-pixel="high"] .pixel-floater {
   position: fixed;
   pointer-events: none;
-  z-index: 2;
+  z-index: 0;
   image-rendering: pixelated;
   width: 28px;
   height: auto; /* аспект pixel-ассета — не сплющивать */
-  opacity: 0.55;
+  opacity: 0.42;
   animation: floaterBob var(--bob, 3s) ease-in-out infinite;
   animation-delay: var(--delay, 0s);
-  filter: drop-shadow(0 0 6px rgba(57, 208, 199, 0.4));
+  filter: drop-shadow(0 0 5px rgba(57, 208, 199, 0.3));
 }
 @keyframes floaterBob {
   0%, 100% { transform: translateY(0) rotate(0deg); }
