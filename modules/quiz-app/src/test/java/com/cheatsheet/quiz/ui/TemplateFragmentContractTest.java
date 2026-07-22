@@ -421,9 +421,14 @@ class TemplateFragmentContractTest {
         String head = readTemplate("templates/fragments/head.html");
         String bootstrapJs = readTemplate("static/js/settings/personalization-bootstrap.js");
 
-        assertThat(head).contains("th:fragment=\"head(title, includeMermaid, includeChart, includeHighlight)\"");
+        assertThat(head).contains("th:fragment=\"head(title, includeMermaid, includeChart, includeHighlight, page)\"");
         // PERF: hljs гейтится includeHighlight (только страницы с кодом), как mermaid/chart.
         assertThat(head).contains("th:if=\"${includeHighlight}\"");
+        // PERF: page-scoped CSS (summary/error/login/bookmarks — 0 утечки) грузятся только на своей странице.
+        assertThat(head).contains("th:if=\"${page == 'bookmarks'}\"");
+        assertThat(head).contains("th:if=\"${page == 'summary'}\"");
+        assertThat(head).contains("th:if=\"${page == 'error'}\"");
+        assertThat(head).contains("th:if=\"${page == 'login'}\"");
         assertThat(head).contains("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">");
         assertThat(head).contains("<title th:text=\"${title}\">");
         // FOUC-critical оси — inline в head до первого кадра.
