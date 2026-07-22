@@ -46,15 +46,18 @@ public class BookmarkRepository {
     }
 
     public void upsert(long questionId, String note, long now) {
-        int updated = jdbcTemplate.update(
-                "UPDATE bookmark SET note = ?, updated_at = ? WHERE question_id = ? AND owner_key = ?",
-                note, now, questionId, OwnerContext.current());
-        if (updated == 0) {
-            jdbcTemplate.update(
-                    "INSERT INTO bookmark (owner_key, question_id, note, created_at, updated_at) " +
-                            "VALUES (?, ?, ?, ?, ?)",
-                    OwnerContext.current(), questionId, note, now, now);
-        }
+        // Атомарный upsert. Прежняя схема UPDATE→(если 0 строк)→INSERT проигрывала
+        // гонку: два параллельных ПЕРВЫХ сохранения оба видели updated=0 и второй
+        // INSERT падал на uq_bookmark_owner_question (DuplicateKeyException → 500).
+        // ON CONFLICT делает вставку-или-обновление одной атомарной операцией.
+        // created_at НЕ трогаем (EXCLUDED только для note/updated_at) — момент первого
+        // сохранения сохраняется, ровно как в старом UPDATE.
+        jdbcTemplate.update(
+                "INSERT INTO bookmark (owner_key, question_id, note, created_at, updated_at) " +
+                        "VALUES (?, ?, ?, ?, ?) " +
+                        "ON CONFLICT (owner_key, question_id) DO UPDATE " +
+                        "SET note = EXCLUDED.note, updated_at = EXCLUDED.updated_at",
+                OwnerContext.current(), questionId, note, now, now);
     }
 
     public void delete(long questionId) {
