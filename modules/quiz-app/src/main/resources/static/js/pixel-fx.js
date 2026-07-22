@@ -1,16 +1,21 @@
 /**
- * pixel-fx.js — ARCADE PIXEL MODE (wave 4–7)
- * Crumbs, floaters, trail, sparks, burst, shake, combo, HUD, stage intro,
- * portal wipe, exam lives, coin XP pickup.
+ * pixel-fx.js — PIXEL DECORATIVE LAYER (calm & honest feedback)
+ * Crumbs, floaters, trail, sparks, positive burst, stage intro, portal wipe.
  * Frame cycles prefer CSS steps() on horizontal sprite sheets; JS only spawns/removes.
  * Gated by data-pixel (low|med|high) + motion. No pixel typeface.
  *
- * Intensity tiers (med = calm, high = full arcade):
+ * Feedback contract (инварианты §10–§12):
+ *   Правильный ответ — ОДИН спокойный позитив (burst + мягкая вспышка + один
+ *     положительный label + coin при реальном XP). Без combo-каскадов / LEVEL UP.
+ *   Неверный ответ — НЕ наказание: одна короткая incorrect-subtle анимация.
+ *     Запрещено и удалено: red-flash, red/skull burst, shake, негативные
+ *     floating labels (MISS/OUCH/«Ошибка»…), исчезающие «жизни».
+ *   Fake HUD (lives / COMBO / псевдо-XP) — НЕ рендерится (§12: без ложных метрик).
+ *
+ * Intensity tiers:
  *   low  — no bursts/celebrate; ambient off.
- *   med  — bursts + float labels (RU: «Не то», «Ошибка»…), exam lives HUD;
- *          NO body shake, NO skull/coin-rain on wrong, NO arcade EN labels
- *          (MISS/OUCH/NOPE/TRY AGAIN — high-only via allowArcadeWrongFx).
- *   high — full arcade wrong FX (shake, skull rain, heavy coinRain, EN labels).
+ *   med  — positive burst + один positive label; incorrect-subtle на ошибке.
+ *   high — + ambient floaters/trail (декоративный слой); поток обратной связи тот же.
  *
  * Asset inventory (decorative PNG under /img/pixel/):
  *   KEEP     — crumbs, dots, confetti, boom, fire, coin*, gem, star, mascot, hero,
@@ -80,11 +85,12 @@
     '/img/pixel/confetti-1.png', '/img/pixel/confetti-2.png'
   ];
 
+  // §10: без черепов / punitive-иконографики. Спокойные нейтральные частицы —
+  // используется только экспортируемым __pixelFx.burst; на неверный ответ
+  // celebrate() больше НЕ вызывает wrong-burst.
   var BURST_BAD = [
-    '/img/pixel/skull.png', '/img/pixel/skull.png', '/img/pixel/skull.png',
-    '/img/pixel/flag.png', '/img/pixel/btn-x.png',
     '/img/pixel/crumb-red.png', '/img/pixel/boom-1.png', '/img/pixel/boom-2.png', '/img/pixel/boom-3.png',
-    '/img/pixel/coin.png', '/img/pixel/coin-2.png', '/img/pixel/coin-spin-1.png', '/img/pixel/coin-spin-2.png'
+    '/img/pixel/crumb-amber.png', '/img/pixel/crumb-purple.png'
   ];
 
   /** med wrong: no skull / heavy arcade bits — calm crumb+boom only */
@@ -383,9 +389,8 @@
       ? [
           '/img/pixel/coin.png', '/img/pixel/coin-2.png', '/img/pixel/coin-3.png',
           '/img/pixel/coin-spin-1.png', '/img/pixel/coin-spin-2.png',
-          '/img/pixel/skull.png', '/img/pixel/skull.png',
           '/img/pixel/star-big.png', '/img/pixel/gem.png',
-          '/img/pixel/confetti-1.png', '/img/pixel/confetti-2.png', '/img/pixel/btn-x.png'
+          '/img/pixel/confetti-1.png', '/img/pixel/confetti-2.png'
         ]
       : [
           '/img/pixel/coin.png', '/img/pixel/coin-2.png', '/img/pixel/coin-3.png',
@@ -676,7 +681,9 @@
       spawnAmbient();
       spawnFloaters();
     }
-    if (allowDecorativeHud() || allowExamHud()) spawnHud();
+    // §12: fake HUD (исчезающие «жизни», COMBO, псевдо-XP) НЕ спавнится —
+    // это ложные метрики, запрещённые инвариантом. removeHud() выше вычищает
+    // любой ранее созданный HUD при смене интенсивности.
   }
 
   function syncTrailListener() {
@@ -702,6 +709,36 @@
     applyIntensityLayers();
   }
 
+  /**
+   * §10: неверный ответ — НЕ наказание. Единственный допустимый cue —
+   * одна короткая спокойная incorrect-subtle анимация (64px, один проход,
+   * respects data-motion / prefers-reduced-motion на CSS-уровне).
+   */
+  function subtleIncorrect(target) {
+    if (!allowFx()) return;
+    var cue = document.createElement('span');
+    cue.className = 'pixel-incorrect-cue';
+    cue.setAttribute('data-sprite-anim', 'incorrect-subtle');
+    cue.setAttribute('aria-hidden', 'true');
+    var x = window.innerWidth / 2;
+    var y = window.innerHeight * 0.32;
+    if (target) {
+      var r = target.getBoundingClientRect();
+      // только видимый target с ненулевым размером; иначе центр экрана
+      if (r.width > 0 && r.height > 0) {
+        x = r.left + r.width / 2;
+        y = r.top + r.height / 2;
+      }
+    }
+    cue.style.position = 'fixed';
+    cue.style.left = (x - 32) + 'px';
+    cue.style.top = (y - 32) + 'px';
+    cue.style.zIndex = '110';
+    cue.style.pointerEvents = 'none';
+    document.body.appendChild(cue);
+    later(function () { cue.remove(); }, 900);
+  }
+
   function celebrate(correct, opts) {
     if (!allowFx()) return;
     opts = opts || {};
@@ -715,41 +752,21 @@
       x = r.left + r.width / 2;
       y = r.top + r.height / 2;
     }
-    if (correct || allowArcadeWrongFx()) {
-      burstFromEl(target, !!correct);
-    } else {
-      burstAt(x, y, false);
-    }
-    shake(!!correct);
-    screenFlash(!!correct);
-    updateCombo(!!correct);
     if (correct) {
-      var label = pickFloatLabel(true, combo >= 3);
-      floatText(label, true, x, y - 24);
+      // §11: один спокойный позитивный state — burst + мягкая вспышка + один
+      // положительный label (+ coin, если начислён реальный XP). Без combo-каскадов,
+      // coinRain и «LEVEL UP» — они держались на fake-combo, которого больше нет.
+      burstFromEl(target, true);
+      screenFlash(true);
+      floatText(pickFloatLabel(true, false), true, x, y - 24);
       var xp = Number(opts.xp || 0);
       if (xp > 0) coinSpinPickup(xp);
-      setTimeout(function () {
-        burstAt(window.innerWidth * 0.25, window.innerHeight * 0.22, true);
-        burstAt(window.innerWidth * 0.75, window.innerHeight * 0.28, true);
-      }, 160);
-      if (combo >= 2) coinRain();
-      if (combo >= 5) {
-        floatText(pixelLevel() === 'high' ? 'LEVEL UP!' : 'Новый уровень!', true, window.innerWidth / 2, window.innerHeight * 0.2);
-      }
-    } else if (allowArcadeWrongFx()) {
-      var badLabel = pickFloatLabel(false, false);
-      floatText(badLabel, false, x, y - 24);
-      loseExamLife();
-      coinRain({ heavy: true });
-      setTimeout(function () {
-        burstAt(window.innerWidth * 0.35, window.innerHeight * 0.3, false);
-        burstAt(window.innerWidth * 0.65, window.innerHeight * 0.35, false);
-      }, 120);
     } else {
-      loseExamLife();
-      if (allowFx() && pixelLevel() === 'med') {
-        floatText(pickFloatLabel(false, false), false, x, y - 24);
-      }
+      // §10/§12: убрано full-screen red flash, red/skull burst, негативные
+      // floating labels, shake и исчезающие «жизни». Структурный вердикт
+      // (result-surface: «Неверно» → правильный ответ → различие → разбор) —
+      // самодостаточная спокойная обратная связь.
+      subtleIncorrect(target);
     }
   }
 
