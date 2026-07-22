@@ -442,6 +442,11 @@ class TemplateFragmentContractTest {
         assertThat(bootstrapJs).contains("setAttribute('data-density'");
         // OPS-005: vendor-ассеты self-hosted, без CDN SRI.
         assertThat(head).contains("th:href=\"@{/css/fonts-local.css}\"");
+        // PERF: preload двух критичных Inter-сабсетов (короче swap-флэш, above-the-fold на каждой странице).
+        // Cyrillic = русский блок U+0400-045F (файл ...SjIa0Z...), НЕ cyrillic-ext (...SjIa2J... = "unused preload").
+        assertThat(head).contains("rel=\"preload\" as=\"font\" type=\"font/woff2\" crossorigin");
+        assertThat(head).contains("th:href=\"@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa0ZL7W0Q5n-wU.woff2}\"");
+        assertThat(head).contains("th:href=\"@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2}\"");
         assertThat(head).contains("th:src=\"@{/vendor/hljs/highlight.min.js}\"");
         assertThat(head).contains("th:src=\"@{/vendor/mermaid/mermaid.min.js}\"");
         assertThat(head).contains("th:src=\"@{/vendor/chart/chart.umd.min.js}\"");

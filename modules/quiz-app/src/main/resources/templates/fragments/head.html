@@ -150,6 +150,16 @@
     <title th:text="${title}">Подготовка к собеседованию</title>
     <!-- OPS-005: Inter + JetBrains Mono self-hosted (static/fonts + css/fonts-local.css).
          Семейства совпадают с --font-family-* в tokens.css; pixel-слой body не подменяет. -->
+    <!-- PERF: preload двух критичных Inter-сабсетов (above-the-fold на КАЖДОЙ странице):
+         Cyrillic (U+0400-045F — русские А-я, весь UI) + basic Latin (U+0000-00FF — цифры/пунктуация).
+         ВАЖНО: русский блок = U+0400-045F (файл ...SjIa0ZL7W0Q5n-wU), НЕ cyrillic-ext U+0460-052F
+         (...SjIa2JL7W0Q5n-wU) — последний почти не используется, дал бы "unused preload".
+         Старт fetch'а ДО парса fonts-local.css → короче swap-флэш. Mono НЕ preload'им (только код,
+         below-the-fold → был бы "unused preload"). crossorigin обязателен: шрифты грузятся в CORS-режиме. -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin
+          th:href="@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa0ZL7W0Q5n-wU.woff2}">
+    <link rel="preload" as="font" type="font/woff2" crossorigin
+          th:href="@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2}">
     <link rel="stylesheet" th:href="@{/css/fonts-local.css}">
     <!-- Cascade layers (Wave C): tokens → reset → shell → components → pages →
          utilities → pixel. Порядок <link> = порядок внутри слоя; @layer в
