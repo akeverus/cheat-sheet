@@ -16,4 +16,14 @@ class CspNonceFilterTest {
         assertThat(policy).contains("style-src-attr 'none'");
         assertThat(policy).doesNotContain("unsafe-inline");
     }
+
+    @Test
+    void buildPolicyHardensDocumentDirectives() {
+        String policy = CspNonceFilter.buildPolicy("abc123");
+
+        // base-uri/form-action/object-src не наследуются от default-src → должны быть заданы явно.
+        assertThat(policy).contains("base-uri 'self'");
+        assertThat(policy).contains("form-action 'self'");
+        assertThat(policy).contains("object-src 'none'");
+    }
 }

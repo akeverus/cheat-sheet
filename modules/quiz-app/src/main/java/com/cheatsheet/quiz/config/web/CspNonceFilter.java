@@ -33,7 +33,14 @@ public final class CspNonceFilter extends OncePerRequestFilter {
     static String buildPolicy(String nonce) {
         // Script + style elements: nonce only (early head script stamps nonce on Mermaid/hljs <style>).
         // style-src-attr none: ban HTML style=; CSSOM (element.style) remains allowed by browsers.
+        // base-uri/form-action/object-src НЕ наследуются от default-src → задаём явно:
+        //   base-uri 'self'   — блокирует <base href="//evil"> при HTML-инъекции в markdown-рендер;
+        //   form-action 'self' — не даёт угнать POST-форму на чужой origin (OAuth-редиректы — 302, не form-submit);
+        //   object-src 'none'  — режет legacy-плагины (<object>/<embed>) как вектор XSS.
         return "default-src 'self'; "
+                + "base-uri 'self'; "
+                + "form-action 'self'; "
+                + "object-src 'none'; "
                 + "script-src 'self' 'nonce-" + nonce + "'; "
                 + "script-src-elem 'self' 'nonce-" + nonce + "'; "
                 + "style-src 'self' 'nonce-" + nonce + "'; "
