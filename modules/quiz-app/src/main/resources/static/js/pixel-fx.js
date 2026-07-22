@@ -180,8 +180,11 @@
       img.setAttribute('aria-hidden', 'true');
       img.style.left = (Math.random() * 100) + '%';
       var s = pxScale('sm');
+      // Аспект: часть pixel-ассетов НЕ квадратные (star 40×32, key 20×12, gem 32×28).
+      // Квадратный box их сплющивал (искажение pixel-сетки + провал Lighthouse
+      // image-aspect-ratio). height:auto — равномерный масштаб по натуральному аспекту.
       img.style.width = s + 'px';
-      img.style.height = s + 'px';
+      img.style.height = 'auto';
       img.style.setProperty('--crumb-dur', (7 + Math.random() * 18) + 's');
       img.style.setProperty('--crumb-delay', (-Math.random() * 16) + 's');
       img.style.setProperty('--crumb-drift', ((Math.random() * 140) - 70) + 'px');
@@ -204,7 +207,7 @@
       img.style.top = (10 + Math.random() * 72) + 'vh';
       var s = pxScale('lg');
       img.style.width = s + 'px';
-      img.style.height = s + 'px';
+      img.style.height = 'auto'; // аспект pixel-ассета (pad 39×18, power 36×27) — не сплющивать
       img.style.setProperty('--bob', (2.2 + Math.random() * 3.2) + 's');
       img.style.setProperty('--delay', (-Math.random() * 3) + 's');
       document.body.appendChild(img);
@@ -330,7 +333,7 @@
       img.style.setProperty('--burst-dur', (0.7 + Math.random() * 0.7) + 's');
       var s = pxScale(correct ? 'lg' : 'sm');
       img.style.width = s + 'px';
-      img.style.height = s + 'px';
+      img.style.height = 'auto'; // burst-биты тоже держат натуральный аспект pixel-ассета
       layer.appendChild(img);
     }
     document.body.appendChild(layer);
