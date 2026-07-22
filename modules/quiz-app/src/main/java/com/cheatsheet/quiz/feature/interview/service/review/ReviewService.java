@@ -56,7 +56,7 @@ public class ReviewService {
         }
         long questionId = question.id();
         ReviewState current = reviewStateRepository.findByQuestionId(questionId)
-                .orElse(ReviewDefaults.initialState(questionId, clock.instant().getEpochSecond()));
+                .orElseGet(() -> ReviewDefaults.initialState(questionId, clock.instant().getEpochSecond()));
         ReviewState updated = confidence != null
                 ? spacedRepetitionService.applyAnswer(current, correct, confidence)
                 : spacedRepetitionService.applyAnswer(current, correct);
@@ -80,7 +80,7 @@ public class ReviewService {
         }
         long questionId = question.id();
         ReviewState current = reviewStateRepository.findByQuestionId(questionId)
-                .orElse(ReviewDefaults.initialState(questionId, clock.instant().getEpochSecond()));
+                .orElseGet(() -> ReviewDefaults.initialState(questionId, clock.instant().getEpochSecond()));
         ReviewState updated = spacedRepetitionService.applyUnknown(current);
         reviewStateRepository.update(updated);
         userTopicStatsRepository.recordAnswer(question.topic(), false);
@@ -100,9 +100,9 @@ public class ReviewService {
         long questionId = question.id();
         long now = clock.instant().getEpochSecond();
         ReviewState sm2 = reviewStateRepository.findByQuestionId(questionId)
-                .orElse(ReviewDefaults.initialState(questionId, now));
+                .orElseGet(() -> ReviewDefaults.initialState(questionId, now));
         FsrsState fsrs = reviewStateRepository.findFsrsState(questionId)
-                .orElse(new FsrsState(questionId, null, null, 0, null, null));
+                .orElseGet(() -> new FsrsState(questionId, null, null, 0, null, null));
         if (fsrs.isNew() && sm2.repetitions() > 0) {
             FsrsService.Seed seed = fsrsService.seedFromSm2(sm2.intervalDays(), sm2.easeFactor());
             fsrs = fsrs.toBuilder().stability(seed.stability()).difficulty(seed.difficulty()).build();
@@ -153,7 +153,7 @@ public class ReviewService {
     @Transactional(readOnly = true)
     public ReviewState currentState(long questionId) {
         return reviewStateRepository.findByQuestionId(questionId)
-                .orElse(ReviewDefaults.initialState(questionId, clock.instant().getEpochSecond()));
+                .orElseGet(() -> ReviewDefaults.initialState(questionId, clock.instant().getEpochSecond()));
     }
 
     /**
@@ -190,7 +190,7 @@ public class ReviewService {
     @Transactional
     public void submitFlashcardGrade(long questionId, boolean correct, int sm2Grade) {
         ReviewState current = reviewStateRepository.findByQuestionId(questionId)
-                .orElse(ReviewDefaults.initialState(questionId, clock.instant().getEpochSecond()));
+                .orElseGet(() -> ReviewDefaults.initialState(questionId, clock.instant().getEpochSecond()));
         ReviewState updated = spacedRepetitionService.applyAnswer(current, correct, sm2Grade);
         reviewStateRepository.update(updated);
 

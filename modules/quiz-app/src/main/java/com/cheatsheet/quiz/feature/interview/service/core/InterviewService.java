@@ -381,7 +381,7 @@ public class InterviewService {
     private Optional<InterviewQuestion> buildInterviewQuestion(Question question, long nowEpoch) {
         reviewStateRepository.insertIfAbsent(question.id(), nowEpoch);
         ReviewState reviewState = reviewStateRepository.findByQuestionId(question.id())
-                .orElse(ReviewDefaults.initialState(question.id(), nowEpoch));
+                .orElseGet(() -> ReviewDefaults.initialState(question.id(), nowEpoch));
         List<AnswerOption> options = optionLookupService.getOrCreateOptions(question);
         return Optional.of(new InterviewQuestion(question, options, reviewState));
     }
