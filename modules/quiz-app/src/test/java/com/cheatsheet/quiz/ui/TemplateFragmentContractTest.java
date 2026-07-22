@@ -421,7 +421,9 @@ class TemplateFragmentContractTest {
         String head = readTemplate("templates/fragments/head.html");
         String bootstrapJs = readTemplate("static/js/settings/personalization-bootstrap.js");
 
-        assertThat(head).contains("th:fragment=\"head(title, includeMermaid, includeChart)\"");
+        assertThat(head).contains("th:fragment=\"head(title, includeMermaid, includeChart, includeHighlight)\"");
+        // PERF: hljs гейтится includeHighlight (только страницы с кодом), как mermaid/chart.
+        assertThat(head).contains("th:if=\"${includeHighlight}\"");
         assertThat(head).contains("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">");
         assertThat(head).contains("<title th:text=\"${title}\">");
         // FOUC-critical оси — inline в head до первого кадра.

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:fragment="head(title, includeMermaid, includeChart)">
+<head th:fragment="head(title, includeMermaid, includeChart, includeHighlight)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- CSP nonce for scripts + dynamically injected <style> (Mermaid/hljs). -->
@@ -178,17 +178,21 @@
     <!-- pixel-fx — @layer pixel: декор/FX; не трогает skip-link и MCQ-grid. -->
     <link rel="stylesheet" th:href="@{/css/pixel-fx.css}">
     <link rel="stylesheet" th:href="@{/css/pixel/sprite-anim.css}">
-    <!-- OPS-005: highlight.js 11.9.0 self-hosted. -->
-    <link rel="stylesheet" th:href="@{/vendor/hljs/styles/atom-one-dark.min.css}">
-    <!-- defer: highlight.js — DOMContentLoaded ниже и app-entry на AJAX-контенте. -->
-    <script defer th:src="@{/vendor/hljs/highlight.min.js}" th:attr="nonce=${cspNonce}"></script>
-    <script th:attr="nonce=${cspNonce}">
-        document.addEventListener('DOMContentLoaded', function() {
-            // Guard: hljs может не подгрузиться (CSP, offline) — оставляем код без подсветки, без падения.
-            if (typeof hljs === 'undefined') return;
-            document.querySelectorAll('.markdown-content pre code').forEach(function(b) { hljs.highlightElement(b); });
-        });
-    </script>
+    <!-- OPS-005: highlight.js 11.9.0 self-hosted. PERF: гейт includeHighlight —
+         hljs (~120KB js+css) грузится ТОЛЬКО на страницах с кодом (focus-training/result),
+         а не на stats/bookmarks/settings/login/session-summary/error. Как includeMermaid/includeChart. -->
+    <th:block th:if="${includeHighlight}">
+        <link rel="stylesheet" th:href="@{/vendor/hljs/styles/atom-one-dark.min.css}">
+        <!-- defer: highlight.js — DOMContentLoaded ниже и app-entry на AJAX-контенте. -->
+        <script defer th:src="@{/vendor/hljs/highlight.min.js}" th:attr="nonce=${cspNonce}"></script>
+        <script th:attr="nonce=${cspNonce}">
+            document.addEventListener('DOMContentLoaded', function() {
+                // Guard: hljs может не подгрузиться (CSP, offline) — оставляем код без подсветки, без падения.
+                if (typeof hljs === 'undefined') return;
+                document.querySelectorAll('.markdown-content pre code').forEach(function(b) { hljs.highlightElement(b); });
+            });
+        </script>
+    </th:block>
     <th:block th:if="${includeMermaid}">
         <!-- mermaid 11.12.0 self-hosted (OPS-005). НЕ deferим: mermaid-renderer.js
              инициализирует во время парсинга. securityLevel: 'antiscript'. -->
