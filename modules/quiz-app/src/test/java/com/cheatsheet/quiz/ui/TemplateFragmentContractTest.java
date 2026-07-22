@@ -380,10 +380,11 @@ class TemplateFragmentContractTest {
         // skip-link клавиатурно обходит шапку к сообщению об ошибке.
         assertThat(error).contains("href=\"#main-content\"");
         assertThat(error).contains("id=\"main-content\"");
-        // Секция ошибки подписана своим заголовком: aria-labelledby ↔ h2 id
-        // (реальный заголовок — h2, а не декоративный код-номер).
+        // Секция ошибки подписана своим заголовком: aria-labelledby ↔ h1 id.
+        // Реальный заголовок — h1 (единственный на странице), а не декоративный
+        // код-номер (aria-hidden). Даёт SR-навигации якорь верхнего уровня.
         assertThat(error).contains("aria-labelledby=\"error-heading\"");
-        assertThat(error).contains("id=\"error-heading\"");
+        assertThat(error).contains("<h1 id=\"error-heading\" class=\"error-title\"");
         // Декоративные эйбрау и статус-номер скрыты от SR.
         assertThat(error).contains("class=\"error-eyebrow\" aria-hidden=\"true\"");
         assertThat(error).contains("class=\"error-code\"");
@@ -398,9 +399,10 @@ class TemplateFragmentContractTest {
         assertThat(summary).contains("<body class=\"summary-page\">");
         assertThat(summary).contains("href=\"#main-content\"");
         assertThat(summary).contains("id=\"main-content\"");
-        // SUM-9: визуально скрытый h2 счёта — якорь H-навигации на главный
-        // результат (паритет с h2 секций-сестёр «по темам»/«ошибки»/«рекомендации»).
-        assertThat(summary).contains("<h2 class=\"summary-section-title visually-hidden\">Результат сессии</h2>");
+        // SUM-9: визуально скрытый h1 счёта — единственный h1 страницы итогов и якорь
+        // H-навигации на главный результат; секции «по темам»/«ошибки»/«рекомендации» (h2)
+        // выстраиваются под ним в корректную иерархию (одна страница — один h1).
+        assertThat(summary).contains("<h1 class=\"summary-section-title visually-hidden\">Результат сессии</h1>");
         assertThat(summary).contains("class=\"summary-score-value\"");
         // SUM-3: dual-path действия (повтор ошибок / продолжить) в nav с меткой.
         assertThat(summary).contains("class=\"summary-actions\"");

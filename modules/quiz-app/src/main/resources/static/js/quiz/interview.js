@@ -374,7 +374,7 @@ export function initInterviewForm() {
 
     const relatedDiv = document.createElement('div');
     relatedDiv.className = 'related-questions';
-    let relatedHtml = '<h3 class="related-questions-title">' + icon('link', 'ed-icon-lead') + 'Похожие вопросы для закрепления:</h3>';
+    let relatedHtml = '<h2 class="related-questions-title">' + icon('link', 'ed-icon-lead') + 'Похожие вопросы для закрепления:</h2>';
     relatedHtml += '<div class="related-questions-list" role="list">';
     data.relatedQuestions.forEach((rq) => {
       relatedHtml += '<div role="listitem"><a class="related-question-item" href="/?topic=' + encodeURIComponent(rq.topic)

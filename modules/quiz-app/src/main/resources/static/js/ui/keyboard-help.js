@@ -22,7 +22,7 @@ export function initKeyboardHelp() {
   overlay.setAttribute('aria-labelledby', 'kbd-help-title');
   overlay.innerHTML =
     '<div class="kbd-help-modal">' +
-    '<h3 id="kbd-help-title">Горячие клавиши</h3>' +
+    '<h2 id="kbd-help-title">Горячие клавиши</h2>' +
     '<dl class="kbd-help-list">' +
     shortcuts.map((s) =>
       '<dt>' + s.keys.map((k) => '<kbd>' + k + '</kbd>').join(' ') + '</dt>' +
