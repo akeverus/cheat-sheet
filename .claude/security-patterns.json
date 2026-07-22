@@ -1,0 +1,30 @@
+{
+  "patterns": [
+    {
+      "rule_name": "hardcoded_provider_key",
+      "substrings": ["sk_live_", "sk-proj-", "sk-ant-", "AKIA"],
+      "reminder": "Похоже на захардкоженный API-ключ. Грузить из env (OPENAI_API_KEY / DEEPSEEK_API_KEY), не из исходников.",
+      "exclude_paths": ["**/test/**", "**/*Test.java"]
+    },
+    {
+      "rule_name": "thymeleaf_unescaped_output",
+      "substrings": ["th:utext"],
+      "reminder": "th:utext выводит HTML без экранирования. Убедись, что источник — контролируемый server-side/sanitized HTML, а не пользовательский ввод (иначе XSS).",
+      "paths": ["**/templates/**", "**/fragments/**"]
+    },
+    {
+      "rule_name": "sql_string_concatenation",
+      "regex": "(SELECT|INSERT|UPDATE|DELETE)\\b[^\"]*\"\\s*\\+",
+      "reminder": "Похоже на конкатенацию в SQL-строке. Использовать параметризованный JdbcTemplate/NamedParameterJdbcTemplate (SQL injection).",
+      "paths": ["**/persistence/**", "**/*Repository*.java"],
+      "exclude_paths": ["**/test/**"]
+    },
+    {
+      "rule_name": "owner_scope_unfiltered_read",
+      "substrings": [".query(", ".queryForList(", ".queryForObject("],
+      "reminder": "JDBC-чтение в persistence-слое: в multi-user режиме проверь фильтрацию по owner_key (IDOR). Игнорируй, если данные не пользовательские.",
+      "paths": ["**/persistence/**"],
+      "exclude_paths": ["**/test/**"]
+    }
+  ]
+}
