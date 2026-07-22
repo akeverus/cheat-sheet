@@ -124,9 +124,15 @@ public class ReviewStateRepository {
 
     @Transactional
     public void reset(long questionId, long nowEpoch) {
+        // Контент вопроса изменился → забываем весь выученный прогресс. Раньше сбрасывались
+        // только SM-2-поля, а FSRS-память (stability/difficulty/lapses/algo_version) переживала
+        // reset — в FSRS-режиме изменённый вопрос сохранял устаревшую mastery. Обнуляем FSRS в
+        // «свежее» состояние (null-память, lapses=0), идентичное только что вставленной строке.
         jdbcTemplate.update(
                 "UPDATE review_state SET repetitions = 0, interval_days = 0, ease_factor = ?, " +
-                        "next_review_at = ?, last_result = ? WHERE question_id = ? AND owner_key = ?",
+                        "next_review_at = ?, last_result = ?, " +
+                        "stability = NULL, difficulty = NULL, lapses = 0, algo_version = NULL " +
+                        "WHERE question_id = ? AND owner_key = ?",
                 ReviewDefaults.DEFAULT_EASE_FACTOR,
                 nowEpoch,
                 ReviewResult.RESET.name(),

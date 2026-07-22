@@ -104,6 +104,35 @@ class ReviewStateRepositoryTest extends AbstractPostgresRepositoryTest {
     }
 
     @Test
+    void resetClearsBothSm2AndFsrsMemory() {
+        repository.insertIfAbsent(1L, 1000L);
+        // Наполняем и SM-2, и FSRS-память «выученным» прогрессом.
+        repository.update(new ReviewState(1L, 6, 30, 2.6, 1000L, ReviewResult.CORRECT, 8, 1));
+        repository.updateFsrs(
+                new FsrsState(1L, 20.0, 7.5, 3, "fsrs-4.5-default", 1_800_000_000L),
+                1_800_500_000L, ReviewResult.CORRECT, 8, 1);
+
+        repository.reset(1L, 9_000L);
+
+        // SM-2 сброшен к дефолтам.
+        ReviewState sm2 = repository.findByQuestionId(1L).orElseThrow();
+        assertThat(sm2.repetitions()).isZero();
+        assertThat(sm2.intervalDays()).isZero();
+        assertThat(sm2.easeFactor()).isEqualTo(ReviewDefaults.DEFAULT_EASE_FACTOR);
+        assertThat(sm2.nextReviewAt()).isEqualTo(9_000L);
+        assertThat(sm2.lastResult()).isEqualTo(ReviewResult.RESET);
+
+        // FSRS-память тоже сброшена в «свежую»: до фикса stability/difficulty/lapses/algo_version
+        // переживали reset, и в FSRS-режиме изменённый вопрос сохранял устаревшую mastery.
+        FsrsState fsrs = repository.findFsrsState(1L).orElseThrow();
+        assertThat(fsrs.isNew()).isTrue();
+        assertThat(fsrs.stability()).isNull();
+        assertThat(fsrs.difficulty()).isNull();
+        assertThat(fsrs.lapses()).isZero();
+        assertThat(fsrs.algoVersion()).isNull();
+    }
+
+    @Test
     void updateModifiesAllFields() {
         repository.insertIfAbsent(1L, 1000L);
 
