@@ -79,6 +79,10 @@ class TemplateFragmentContractTest {
 
         assertThat(postAnswerControls).contains("data-ui-fragment=\"post-answer-controls\"");
         assertThat(postAnswerControls).contains("id=\"result-feedback\"");
+        // WCAG 4.1.3: краткий SR-анонс вердикта — отдельный live-регион #result-announce.
+        // #result-feedback (полный разбор ~2900 симв.) НЕ live-регион, чтобы SR не зачитывал
+        // весь блок атомарно; туда переносится focus, детали читаются в своём темпе.
+        assertThat(postAnswerControls).contains("id=\"result-announce\"");
         assertThat(postAnswerControls).contains("aria-atomic=\"true\"");
         // Кнопка «доп. анализ» раскрывает sink #extra-analysis-content,
         // стоящий ПОСЛЕ неё (appendAnalysisBlock складывает блоки под кнопку).

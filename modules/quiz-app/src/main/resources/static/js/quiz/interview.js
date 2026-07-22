@@ -88,7 +88,9 @@ export function initInterviewForm() {
   let clientAttemptId = null;
   let clientAttemptQuestionId = null;
 
-  if (feedbackDiv) feedbackDiv.setAttribute('aria-live', 'polite');
+  // #result-feedback НЕ live-регион (иначе SR зачитывает весь ~2900-симв. разбор атомарно).
+  // Краткий вердикт анонсируется через #result-announce; сюда переносится focus (см. ниже).
+  const announceEl = document.getElementById('result-announce');
 
   function setInteractionBusy(busy) {
     form.setAttribute('aria-busy', busy ? 'true' : 'false');
@@ -313,6 +315,10 @@ export function initInterviewForm() {
     `;
     feedbackDiv.classList.remove('hidden');
     renderDynamicContent(feedbackDiv);
+    // WCAG 4.1.3: лаконичный статус — только строка вердикта, а не весь разбор.
+    if (announceEl) {
+      announceEl.textContent = feedbackDiv.querySelector('.result-verdict')?.textContent?.trim() || '';
+    }
     const hasExplanation = hasLead || fullHtml.trim().length > 0;
     const celebrateDelay = hasExplanation ? 360 : 80;
     window.setTimeout(() => {

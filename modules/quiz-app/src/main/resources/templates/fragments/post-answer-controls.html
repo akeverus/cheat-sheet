@@ -4,7 +4,13 @@
 <div th:fragment="post-answer-controls(extraButtonText)"
      data-ui-fragment="post-answer-controls">
     <div th:replace="~{fragments/inline-alert :: inline-alert(id='interview-alert', hidden=true)}"></div>
-    <div id="result-feedback" class="result-feedback hidden" role="status" aria-live="polite" aria-atomic="true"></div>
+    <!-- WCAG 4.1.3: краткий SR-анонс — только строка вердикта («Ты выбрал… Правильный ответ…»).
+         Полный разбор (~2900 симв.: правильный ответ + ключевое отличие + подробнее + дистракторы)
+         инъектится в #result-feedback, который НЕ является live-регионом — иначе SR зачитывал бы
+         весь блок атомарно (флуд). Вместо этого interview.js переносит focus на #result-feedback,
+         и пользователь читает детали в своём темпе. -->
+    <p id="result-announce" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
+    <div id="result-feedback" class="result-feedback hidden"></div>
     <button type="button"
             id="extra-analysis-toggle"
             class="btn secondary-btn hidden"
