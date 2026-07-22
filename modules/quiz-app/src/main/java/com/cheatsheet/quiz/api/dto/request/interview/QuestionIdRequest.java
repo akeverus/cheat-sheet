@@ -1,5 +1,6 @@
 package com.cheatsheet.quiz.api.dto.request.interview;
 
+import com.cheatsheet.quiz.common.constants.ValidationMessages;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +20,6 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class QuestionIdRequest {
 
-    @Positive(message = "questionId must be greater than 0")
+    @Positive(message = ValidationMessages.QUESTION_ID_POSITIVE)
     private long questionId;
 }

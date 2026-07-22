@@ -1,6 +1,7 @@
 package com.cheatsheet.quiz.api.dto.request.interview;
 
 import com.cheatsheet.quiz.common.constants.QuizConstants;
+import com.cheatsheet.quiz.common.constants.ValidationMessages;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
@@ -23,7 +24,7 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class SubmitAnswerRequest {
 
-    @Positive(message = "questionId must be greater than 0")
+    @Positive(message = ValidationMessages.QUESTION_ID_POSITIVE)
     private long questionId;
 
     @Positive(message = "optionId must be greater than 0")
@@ -46,7 +47,7 @@ public class SubmitAnswerRequest {
      * (no-JS-фоллбэк формы) — тогда дедупликация по ключу не применяется.
      */
     @Size(max = QuizConstants.CLIENT_ATTEMPT_ID_MAX_LENGTH,
-            message = "clientAttemptId must be at most 64 characters")
+            message = ValidationMessages.CLIENT_ATTEMPT_ID_MAX)
     private String clientAttemptId;
 
     /**
@@ -54,7 +55,7 @@ public class SubmitAnswerRequest {
      * раскрывал перед ответом (телеметрия, хендофф-3). Может отсутствовать.
      */
     @Size(max = QuizConstants.OPENED_CONTENT_BLOCK_IDS_MAX_LENGTH,
-            message = "openedContentBlockIds must be at most 2000 characters")
+            message = ValidationMessages.OPENED_CONTENT_BLOCK_IDS_MAX)
     private String openedContentBlockIds;
 
     /**
@@ -69,6 +70,6 @@ public class SubmitAnswerRequest {
      * Ревизия вопроса, которую видел пользователь (BE-002). При отсутствии —
      * сервер пишет latest; при несовпадении questionId — fallback на latest.
      */
-    @Positive(message = "questionRevisionId must be greater than 0")
+    @Positive(message = ValidationMessages.QUESTION_REVISION_ID_POSITIVE)
     private Long questionRevisionId;
 }

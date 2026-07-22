@@ -1,5 +1,6 @@
 package com.cheatsheet.quiz.api.dto.request.interview;
 
+import com.cheatsheet.quiz.common.constants.ValidationMessages;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -20,7 +21,7 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class BookmarkNoteRequest {
 
-    @Positive(message = "questionId must be greater than 0")
+    @Positive(message = ValidationMessages.QUESTION_ID_POSITIVE)
     private long questionId;
 
     @Size(max = 2000, message = "note must be at most 2000 characters")

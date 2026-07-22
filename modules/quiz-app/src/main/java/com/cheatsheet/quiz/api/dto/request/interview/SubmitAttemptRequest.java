@@ -1,6 +1,7 @@
 package com.cheatsheet.quiz.api.dto.request.interview;
 
 import com.cheatsheet.quiz.common.constants.QuizConstants;
+import com.cheatsheet.quiz.common.constants.ValidationMessages;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
@@ -24,11 +25,11 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 public class SubmitAttemptRequest {
 
-    @Positive(message = "questionId must be greater than 0")
+    @Positive(message = ValidationMessages.QUESTION_ID_POSITIVE)
     private long questionId;
 
     /** Ревизия контента, на которой отвечали (опционально, для полноты контракта). */
-    @Positive(message = "questionRevisionId must be greater than 0")
+    @Positive(message = ValidationMessages.QUESTION_REVISION_ID_POSITIVE)
     private Long questionRevisionId;
 
     @Positive(message = "selectedOptionId must be greater than 0")
@@ -44,11 +45,11 @@ public class SubmitAttemptRequest {
 
     /** Клиентский ключ идемпотентности (см. {@link SubmitAnswerRequest#getClientAttemptId()}). */
     @Size(max = QuizConstants.CLIENT_ATTEMPT_ID_MAX_LENGTH,
-            message = "clientAttemptId must be at most 64 characters")
+            message = ValidationMessages.CLIENT_ATTEMPT_ID_MAX)
     private String clientAttemptId;
 
     /** Comma-separated id раскрытых перед ответом блоков контента (телеметрия). */
     @Size(max = QuizConstants.OPENED_CONTENT_BLOCK_IDS_MAX_LENGTH,
-            message = "openedContentBlockIds must be at most 2000 characters")
+            message = ValidationMessages.OPENED_CONTENT_BLOCK_IDS_MAX)
     private String openedContentBlockIds;
 }
