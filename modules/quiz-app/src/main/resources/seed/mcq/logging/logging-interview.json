@@ -69,13 +69,14 @@
           "question_text": "Из каких частей состоит система журналирования `Log4j`/`Logback`?",
           "options": [
             {
-              "text": "Logger создаёт событие, Filter принимает решение, Encoder или Layout форматирует, а Appender доставляет запись в назначение.",
-              "correct": false,
+              "text": "`Logger` создаёт событие, `Filter` принимает решение, `Encoder` или `Layout` форматирует, а `Appender` доставляет запись в назначение.",
+              "correct": true,
               "sections": {
-                "what_actually": "Роли перепутаны: запись создаёт `Logger`, форматирует `Layout`/`Encoder`, а доставляет (в том числе в файл) `Appender`.",
-                "source_of_confusion": "Слово «logger» ассоциируется с «пишет лог в файл», отсюда подмена ролей `Logger` и `Appender`.",
-                "if_it_were_true": "Будь это правдой, нельзя было бы привязать к одному `Logger` несколько `Appender` (консоль + файл) — а это штатная конфигурация.",
-                "how_it_should_be": "`Logger` создаёт событие, `Appender` доставляет его в назначение, `Encoder` форматирует."
+                "explanation": "Конвейер журналирования разбит на роли: `Logger` порождает событие с уровнем и сообщением, `Filter` решает пропустить или отбросить, `Encoder`/`Layout` превращает событие в строку или JSON, `Appender` пишет результат в назначение (консоль, файл, сокет).",
+                "example": "В `Logback` под `Spring Boot`: `ROOT`-логгер → `ThresholdFilter` (INFO+) → `ConsoleAppender` с `PatternLayoutEncoder` и `RollingFileAppender` с `LogstashEncoder` — одно событие, разные форматы вывода.",
+                "when_to_apply": "Эту декомпозицию держат в голове при настройке маршрутизации логов, добавлении JSON-формата для сбора в ELK или подключении второго назначения без переписывания кода приложения.",
+                "edge_cases": "В `Log4j2` терминология чуть иная (`Layout` вместо `Encoder`), а `Filter` можно навесить на четырёх уровнях: контекст, логгер, аппендер и сам фильтр-цепочку.",
+                "related": "[[logging-interview#Q3]] что такое `Logger`; [[logging-interview#Q4]] типы `Appender`; [[logging-interview#Q5]] `Layout` и `Encoder`."
               },
               "label": "A",
               "order": 0
@@ -93,14 +94,13 @@
               "order": 1
             },
             {
-              "text": "Разделение создания, фильтрации, форматирования и доставки позволяет одному logger направлять события в несколько appenders с разными правилами.",
-              "correct": true,
+              "text": "Один `Appender` шлёт только в одно назначение, поэтому консоль и файл требуют двух отдельных `Logger`; привязать один `Logger` сразу к нескольким `Appender` нельзя.",
+              "correct": false,
               "sections": {
-                "explanation": "Компоненты разделяют создание, фильтрацию, форматирование и доставку события. Это позволяет одному logger направлять записи в несколько appenders с разными фильтрами и форматами.",
-                "example": "В `Logback` под `Spring Boot`: `ROOT`-логгер → `ConsoleAppender` + `RollingFileAppender`, оба используют `LogstashEncoder` для единого JSON-формата.",
-                "when_to_apply": "Эту схему держат в голове, когда настраивают multi-destination (один логгер → несколько аппендеров) или маршрутизацию по маркеру в отдельный файл.",
-                "edge_cases": "В `Logback` потоковые appenders обычно принимают `Encoder`; `Layout` при необходимости оборачивают в `LayoutWrappingEncoder`. Некоторые appenders используют собственный фиксированный формат.",
-                "related": "[[logging-interview#Q3]] что такое Logger; [[logging-interview#Q4]] типы Appender; [[logging-interview#Q5]] Layout и Encoder."
+                "what_actually": "Один `Logger` штатно ссылается на несколько `Appender`: `ROOT` → консоль + файл одновременно — это базовая конфигурация, а не исключение.",
+                "source_of_confusion": "Путают отношения: у аппендера действительно одно назначение, но из этого неверно выводят, что и логгер привязан к одному аппендеру.",
+                "if_it_were_true": "Будь это правдой, нельзя было бы включить дублирование INFO-логов в файл и в консоль без копирования вызовов `log.info(...)` — а это делается одной строкой в конфиге.",
+                "how_it_should_be": "`Logger` держит список `Appender` (`addAppender`), и одно событие рассылается всем подходящим назначениям с их собственными фильтрами и форматами."
               },
               "label": "C",
               "order": 2
