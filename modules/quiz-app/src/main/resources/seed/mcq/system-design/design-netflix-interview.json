@@ -345,7 +345,7 @@
               "order": 2
             },
             {
-              "text": "Трёхтировая модель: hot; SSD на OCA (200-400 TB) только под top-контент (top 5% тайтлов даёт 80% watch-hours), latency < 50 ms; warm; региональный `S3` (US-East/EU-West/APAC-Tokyo) с active-контентом и fallback при OCA miss, latency 100-300 ms.",
+              "text": "Трёхтировая модель: hot; SSD на OCA (200-400 TB) только под top-контент (top 5% тайтлов даёт 80% watch-hours), latency < 50 ms; warm; региональный `S3` (US-East/EU-West/APAC-Tokyo) с active-контентом и fallback при OCA miss, latency 100-300 ms; cold; `S3 Glacier` для архива и редкого long-tail (≈`$0.004/GB/мес`), latency секунды-минуты.",
               "correct": true,
               "sections": {
                 "explanation": "Тиринг следует за паттерном доступа: горячее и маленькое держат на дорогом быстром SSD у пользователя, тёплое — в региональном S3, холодное — в дешёвом Glacier. Репликация тоже дифференцирована: active-контент 3× по регионам, long tail — один регион (экономия), мастера 3× плюс Glacier-бэкап.",
@@ -1305,7 +1305,7 @@
               "order": 2
             },
             {
-              "text": "Прогресс хранится в `Cassandra` (таблица watch_progress с `PRIMARY KEY (user_id, title_id)`: partition по user_id; весь прогресс одного юзера на одной ноде, eventual consistency на `LOCAL_QUORUM`); Partition по user_id выбран потому, что типичный запрос.",
+              "text": "Прогресс хранится в `Cassandra` (таблица watch_progress с `PRIMARY KEY (user_id, title_id)`: partition по user_id; весь прогресс одного юзера на одной ноде, eventual consistency на `LOCAL_QUORUM`); Partition по user_id выбран потому, что типичный запрос — «весь прогресс этого пользователя», поэтому все его строки лежат на одной ноде; `Kafka` развязывает запись прогресса и её потребителей (sync между устройствами, аналитику), чтобы плеер их не ждал.",
               "correct": true,
               "sections": {
                 "explanation": "Partition по user_id выбран потому, что типичный запрос — 'весь прогресс этого пользователя', и так все его строки лежат на одной ноде (быстрое чтение). `Kafka` развязывает запись прогресса и его побочные потребители: плеер не ждёт аналитику и sync.",
