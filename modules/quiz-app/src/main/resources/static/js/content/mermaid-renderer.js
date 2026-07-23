@@ -119,7 +119,17 @@ export async function renderAllMermaid(force, root) {
       if (applySvgToElement(el, safeSvg)) {
         el.setAttribute('data-rendered', 'true');
         const qd = el.closest('.question-diagram');
-        if (qd) qd.removeAttribute('data-render-failed');
+        if (qd) {
+          qd.removeAttribute('data-render-failed');
+          // Свежий <svg> заменяет старый без inline-transform, но pan/zoom-state
+          // в diagramUiState переживает ре-рендер (WeakMap по .question-diagram).
+          // После смены темы переносим transform на новый SVG — иначе визуал
+          // сбрасывается в scale=1, а следующий zoom прыгает от сохранённого стейта.
+          const st = diagramUiState.get(qd);
+          if (st && (st.scale !== 1 || st.panX !== 0 || st.panY !== 0)) {
+            applyDiagramTransform(qd, st);
+          }
+        }
       } else {
         failDiagram(el);
       }
