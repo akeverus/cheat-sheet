@@ -111,7 +111,11 @@
     '/img/pixel/cherry.png', '/img/pixel/cloud.png', '/img/pixel/key.png'
   ];
 
-  var OK_TEXT = ['PERFECT!', 'CRITICAL!', 'NICE!', 'COMBO!', 'YEAH!', 'PIXEL WIN!'];
+  // high-tier arcade-похвала. НЕ ложные метрики: убраны COMBO!/CRITICAL!/PERFECT!
+  // (претендовали на несуществующие combo/crit-механики — §12 «без fake-метрик»,
+  //  совпадает с шапкой файла «Без combo / LEVEL UP» и §10 calm-honest). Оставлены
+  //  честные позитивы без заявки на механику.
+  var OK_TEXT = ['NICE!', 'YEAH!', 'PIXEL WIN!', 'GREAT!', 'CLEAN!', 'SHARP!'];
   var OK_TEXT_MED = ['Верно!', 'Отлично!', 'Так держать!', 'Ещё один!', 'Супер!', 'Хорошо!'];
 
   var mascotTimer = null;
