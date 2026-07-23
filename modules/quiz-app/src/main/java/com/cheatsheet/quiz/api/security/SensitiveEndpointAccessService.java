@@ -6,8 +6,10 @@ import lombok.experimental.FieldDefaults;
 import com.cheatsheet.quiz.common.constants.ApiErrorTypes;
 import com.cheatsheet.quiz.common.model.ApiError;
 import com.cheatsheet.quiz.config.app.AppProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
@@ -19,6 +21,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Duration;
@@ -43,6 +46,7 @@ public class SensitiveEndpointAccessService {
     private final AppProperties appProperties;
     private final Environment environment;
     private final RequestRateLimiter requestRateLimiter;
+    private final ObjectMapper objectMapper;
 
     @PostConstruct
     void validateProductionTokenConfiguration() {
@@ -101,6 +105,26 @@ public class SensitiveEndpointAccessService {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(error);
+    }
+
+    /**
+     * True, если запрос адресован API-подобному пути ({@code /api/**} или {@code /export}).
+     * Общий предикат для security-хендлеров: определяет JSON-ответ vs HTML/redirect.
+     */
+    public boolean isApiLikeRequest(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        return uri != null && (uri.startsWith("/api/") || uri.startsWith("/export"));
+    }
+
+    /**
+     * Единая точка сериализации {@link ApiError} в JSON-тело ответа (UTF-8) с заданным статусом.
+     * Централизует идентичную запись, ранее продублированную в обоих security-хендлерах.
+     */
+    public void writeJson(HttpServletResponse response, int status, ApiError error) throws IOException {
+        response.setStatus(status);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        objectMapper.writeValue(response.getOutputStream(), error);
     }
 
     /**

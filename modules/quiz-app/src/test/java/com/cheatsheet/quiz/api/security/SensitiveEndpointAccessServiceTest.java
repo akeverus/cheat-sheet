@@ -2,6 +2,7 @@ package com.cheatsheet.quiz.api.security;
 
 import com.cheatsheet.quiz.common.model.ApiError;
 import com.cheatsheet.quiz.config.app.AppProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,7 +11,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.time.Duration;
 
@@ -42,7 +45,7 @@ class SensitiveEndpointAccessServiceTest {
         appProperties.setAdminToken("top-secret");
         appProperties.setRegenerateRateLimitPerMinute(20);
         lenient().when(environment.getActiveProfiles()).thenReturn(new String[]{"test"});
-        service = new SensitiveEndpointAccessService(appProperties, environment, requestRateLimiter);
+        service = new SensitiveEndpointAccessService(appProperties, environment, requestRateLimiter, new ObjectMapper());
     }
 
     @Test
@@ -119,11 +122,46 @@ class SensitiveEndpointAccessServiceTest {
     }
 
     @Test
+    void isApiLikeRequestTrueForApiAndExportPaths() {
+        when(request.getRequestURI()).thenReturn("/api/admin/reset");
+        assertThat(service.isApiLikeRequest(request)).isTrue();
+    }
+
+    @Test
+    void isApiLikeRequestTrueForExportPath() {
+        when(request.getRequestURI()).thenReturn("/export/all.zip");
+        assertThat(service.isApiLikeRequest(request)).isTrue();
+    }
+
+    @Test
+    void isApiLikeRequestFalseForBrowserPathAndNullUri() {
+        when(request.getRequestURI()).thenReturn("/interview/start");
+        assertThat(service.isApiLikeRequest(request)).isFalse();
+        when(request.getRequestURI()).thenReturn(null);
+        assertThat(service.isApiLikeRequest(request)).isFalse();
+    }
+
+    @Test
+    void writeJsonSerializesApiErrorWithStatusAndUtf8() throws Exception {
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        ApiError error = new ApiError(403, "FORBIDDEN", "Недостаточно прав", null);
+
+        service.writeJson(response, 403, error);
+
+        assertThat(response.getStatus()).isEqualTo(403);
+        // MockHttpServletResponse дописывает ;charset=UTF-8 к content-type.
+        assertThat(response.getContentType()).startsWith(MediaType.APPLICATION_JSON_VALUE);
+        assertThat(response.getCharacterEncoding()).isEqualToIgnoringCase("UTF-8");
+        // Кириллица не должна биться → UTF-8 round-trip.
+        assertThat(response.getContentAsString()).contains("Недостаточно прав").contains("FORBIDDEN");
+    }
+
+    @Test
     void validateProductionTokenConfigurationThrowsWhenTokenMissing() {
         appProperties.setAdminToken(" ");
         when(environment.getActiveProfiles()).thenReturn(new String[]{"prod"});
         SensitiveEndpointAccessService prodService =
-                new SensitiveEndpointAccessService(appProperties, environment, requestRateLimiter);
+                new SensitiveEndpointAccessService(appProperties, environment, requestRateLimiter, new ObjectMapper());
 
         assertThatThrownBy(prodService::validateProductionTokenConfiguration)
                 .isInstanceOf(IllegalStateException.class)

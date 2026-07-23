@@ -5,7 +5,6 @@ import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import com.cheatsheet.quiz.common.model.ApiError;
 import com.cheatsheet.quiz.config.app.AppProperties;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,7 +25,6 @@ import java.io.IOException;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class SensitiveEndpointAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
-    ObjectMapper objectMapper;
     SensitiveEndpointAccessService accessService;
     AppProperties appProperties;
     AuthenticationEntryPoint formLoginEntryPoint = new LoginUrlAuthenticationEntryPoint("/login");
@@ -40,21 +38,18 @@ public class SensitiveEndpointAuthenticationEntryPoint implements Authentication
         if (isAdminSensitive(request)) {
             // Browser link/nav (Accept includes text/html) → error.html.
             // XHR/API without HTML Accept (MockMvc, apiFetch) → JSON.
-            if (acceptsHtml(request) || !isApiLikeRequest(request)) {
+            if (acceptsHtml(request) || !accessService.isApiLikeRequest(request)) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
                 return;
             }
             String token = request.getHeader(SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER);
             ApiError error = accessService.buildForbiddenResponse(token).getBody();
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-            response.setCharacterEncoding("UTF-8");
-            objectMapper.writeValue(response.getOutputStream(), error);
+            accessService.writeJson(response, HttpServletResponse.SC_FORBIDDEN, error);
             return;
         }
 
         boolean multi = "multi".equalsIgnoreCase(appProperties.getSecurity().getMode());
-        if (multi && !isApiLikeRequest(request) && prefersHtml(request)) {
+        if (multi && !accessService.isApiLikeRequest(request) && prefersHtml(request)) {
             formLoginEntryPoint.commence(request, response, authException);
             return;
         }
@@ -63,15 +58,12 @@ public class SensitiveEndpointAuthenticationEntryPoint implements Authentication
             response.setHeader("WWW-Authenticate", "Basic realm=\"cheat-sheet\"");
         }
 
-        if (!isApiLikeRequest(request)) {
+        if (!accessService.isApiLikeRequest(request)) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
             return;
         }
 
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setCharacterEncoding("UTF-8");
-        objectMapper.writeValue(response.getOutputStream(),
+        accessService.writeJson(response, HttpServletResponse.SC_UNAUTHORIZED,
                 new ApiError(HttpServletResponse.SC_UNAUTHORIZED, "UNAUTHORIZED",
                         "Authentication required", null));
     }
@@ -100,10 +92,5 @@ public class SensitiveEndpointAuthenticationEntryPoint implements Authentication
                 || uri.startsWith("/api/regenerate")
                 || uri.startsWith("/export")
                 || uri.startsWith("/settings/reset-options");
-    }
-
-    private static boolean isApiLikeRequest(HttpServletRequest request) {
-        String uri = request.getRequestURI();
-        return uri != null && (uri.startsWith("/api/") || uri.startsWith("/export"));
     }
 }
