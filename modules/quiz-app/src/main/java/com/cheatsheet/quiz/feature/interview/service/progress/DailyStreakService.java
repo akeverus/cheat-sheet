@@ -9,8 +9,9 @@ import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
  * Сервис ежедневных целей и серий (Observer pattern).
@@ -34,7 +35,13 @@ public class DailyStreakService {
         this.defaultDailyGoal = defaultDailyGoal;
     }
 
-    @EventListener
+    // AFTER_COMMIT, а не @EventListener: слушатель издаётся внутри @Transactional
+    // submitAnswer/submitUnknown/submitFlashcardGrade. Синхронный @EventListener
+    // выполнялся бы в ТОЙ ЖЕ TX, и SQL-сбой здесь переводил бы её в aborted (25P02) —
+    // try/catch глотает Java-исключение, но финальный COMMIT ответа падал бы и весь
+    // ответ (включая review_state) откатывался. Пост-коммит-фаза начисляет streak
+    // только за уже закоммиченный ответ и физически не может отравить его TX.
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onAnswer(AnswerEvent event) {
         try {
             dailyActivityRepository.incrementToday(event.isCorrect(), defaultDailyGoal);

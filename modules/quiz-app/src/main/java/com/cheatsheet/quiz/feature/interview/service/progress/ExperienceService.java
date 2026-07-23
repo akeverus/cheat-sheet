@@ -11,8 +11,9 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.time.Clock;
 
@@ -46,8 +47,14 @@ public class ExperienceService {
     /**
      * Начисляет XP за ответ и поднимает рекорд серии. Обёрнуто в try/catch —
      * геймификация не критичный путь и не должна ронять ответ пользователя.
+     *
+     * <p>AFTER_COMMIT (не {@code @EventListener}): событие издаётся внутри
+     * {@code @Transactional} submit-методов. Синхронный слушатель в той же TX при
+     * SQL-сбое (addXp/raiseBestStreak) переводил бы её в aborted (25P02), и финальный
+     * COMMIT ответа падал — try/catch не спасал, ответ откатывался целиком. Пост-коммит
+     * начисляет XP только за закоммиченный ответ и не может отравить его TX.</p>
      */
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onAnswer(AnswerEvent event) {
         try {
             Difficulty difficulty = questionRepository.findById(event.getQuestionId())
