@@ -3,6 +3,7 @@ package com.cheatsheet.quiz.service.imports;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 class HashingServiceTest {
 
@@ -41,5 +42,12 @@ class HashingServiceTest {
         String hashA = service.sha256("a");
         String hashB = service.sha256("b");
         assertThat(hashA).isNotEqualTo(hashB);
+    }
+
+    @Test
+    void sha256SurfacesNullArgumentHonestlyNotAsHashError() {
+        // После сужения catch до NoSuchAlgorithmException null-аргумент всплывает
+        // как NPE, а не маскируется под вводящее в заблуждение «алгоритм недоступен».
+        assertThatNullPointerException().isThrownBy(() -> service.sha256(null));
     }
 }

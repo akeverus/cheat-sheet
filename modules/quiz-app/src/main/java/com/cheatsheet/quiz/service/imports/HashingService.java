@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * Сервис для вычисления SHA-256 хешей.
@@ -35,7 +36,10 @@ public class HashingService {
                 hex.append(String.format("%02x", b));
             }
             return hex.toString();
-        } catch (Exception e) {
+        } catch (NoSuchAlgorithmException e) {
+            // Единственное checked-исключение getInstance. Широкий catch (Exception)
+            // прежде глотал и unchecked (напр. NPE при value==null), пряча их за
+            // вводящим в заблуждение «алгоритм недоступен» — теперь они всплывают честно.
             throw new IllegalStateException("Не удалось вычислить хеш: " + ALGORITHM, e);
         }
     }
