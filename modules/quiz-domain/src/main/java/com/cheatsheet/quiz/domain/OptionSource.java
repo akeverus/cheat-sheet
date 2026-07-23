@@ -33,17 +33,12 @@ public enum OptionSource {
             return OPENAI;
         }
         String normalized = value.strip().toUpperCase().replace("-", "_");
-        switch (normalized) {
-            case "OPENAI":
-                return OPENAI;
-            case "DEEPSEEK":
-                return DEEPSEEK;
-            case "CLAUDE":
-                return CLAUDE;
-            case "MARKDOWN":
-                return MARKDOWN;
-            default:
-                return OPENAI;
-        }
+        return switch (normalized) {
+            case "DEEPSEEK" -> DEEPSEEK;
+            case "CLAUDE" -> CLAUDE;
+            case "MARKDOWN" -> MARKDOWN;
+            // "OPENAI" и любое неизвестное значение → дефолтный OPENAI.
+            default -> OPENAI;
+        };
     }
 }
