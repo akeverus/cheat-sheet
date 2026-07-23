@@ -47,8 +47,12 @@ public class SessionSummaryService {
      * @return объект сводки
      */
     public SessionSummary buildSummary(InterviewSession session) {
-        List<SessionSummary.TopicResult> topicResults = collectTopicResults(session);
-        List<SessionSummary.MistakeDetail> mistakes = findMistakes(session);
+        // Загружаем карту вопросов ОДИН раз и делим между обоими проходами:
+        // collectTopicResults и findMistakes прежде каждый звал loadQuestionMap →
+        // findByIds по одному и тому же набору id (дубль batch-SQL на каждый summary).
+        Map<Long, Question> questionMap = loadQuestionMap(session.getAnswerHistory());
+        List<SessionSummary.TopicResult> topicResults = collectTopicResults(session, questionMap);
+        List<SessionSummary.MistakeDetail> mistakes = findMistakes(session, questionMap);
 
         Instant completedAt = clock.instant();
         Duration duration = session.getStartedAt() != null
@@ -190,9 +194,9 @@ public class SessionSummaryService {
     /**
      * Группирует ответы по темам и вычисляет correct/wrong по каждой теме.
      */
-    private List<SessionSummary.TopicResult> collectTopicResults(InterviewSession session) {
+    private List<SessionSummary.TopicResult> collectTopicResults(InterviewSession session,
+                                                                 Map<Long, Question> questionMap) {
         List<InterviewSession.AnswerRecord> history = session.getAnswerHistory();
-        Map<Long, Question> questionMap = loadQuestionMap(history);
         Map<String, int[]> topicCounts = new HashMap<>(); // topic -> [correct, wrong]
         for (var record : history) {
             String topic = record.topic();
@@ -222,9 +226,9 @@ public class SessionSummaryService {
     /**
      * Извлекает вопросы, на которые пользователь ответил неправильно.
      */
-    private List<SessionSummary.MistakeDetail> findMistakes(InterviewSession session) {
+    private List<SessionSummary.MistakeDetail> findMistakes(InterviewSession session,
+                                                            Map<Long, Question> questionMap) {
         List<InterviewSession.AnswerRecord> history = session.getAnswerHistory();
-        Map<Long, Question> questionMap = loadQuestionMap(history);
         List<SessionSummary.MistakeDetail> result = new java.util.ArrayList<>();
         for (var record : history) {
             if (!record.correct()) {

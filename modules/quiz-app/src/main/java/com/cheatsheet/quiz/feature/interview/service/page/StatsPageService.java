@@ -25,6 +25,7 @@ import lombok.Builder;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -64,16 +65,12 @@ public class StatsPageService {
         String selectedGroup = topicCatalogService.normalizeGroup(filter.group());
         List<String> topics = topicCatalogService.filterAndSortTopics(availableTopics, selectedGroup, filter.isOrdered());
         List<TopicStats> topicStats = facade.getTopicStats();
-        String topicStatsJson = "[]";
-        try {
-            // C35: JSON встраивается literal-ом в <script id="topic-stats-data"> (stats.html,
-            // через [(...)] без HTML-escape). Jackson по умолчанию НЕ экранирует '<' и '/',
-            // поэтому имя темы с подстрокой "</script>" закрыло бы тег и пробило бы в HTML-
-            // контекст. Экранируем юникод-эскейпами (OWASP JSON-in-HTML) — см. escapeForHtmlScript.
-            topicStatsJson = escapeForHtmlScript(objectMapper.writeValueAsString(toChartPayload(topicStats)));
-        } catch (JsonProcessingException e) {
-            log.error("stats_page_topic_stats_json_failed size={}", topicStats.size(), e);
-        }
+        // C35: JSON встраивается literal-ом в <script id="topic-stats-data"> (stats.html,
+        // через [(...)] без HTML-escape). Jackson по умолчанию НЕ экранирует '<' и '/',
+        // поэтому имя темы с подстрокой "</script>" закрыло бы тег и пробило бы в HTML-
+        // контекст. Экранируем юникод-эскейпами (OWASP JSON-in-HTML) — см. escapeForHtmlScript.
+        String topicStatsJson = writeJsonForHtml(toChartPayload(topicStats),
+                "stats_page_topic_stats_json_failed size={}", topicStats.size());
         log.info("stats_page_state_built topic={} group={} searchQueryPresent={}",
                 filter.topic(), selectedGroup, query != null && !query.isBlank());
         List<QuestionStatsRepository.TopicCoverage> coverageGaps =
@@ -83,12 +80,7 @@ public class StatsPageService {
                 questionStatsRepository.findReviewForecast(nowEpoch, FORECAST_DAYS);
         LearningMetrics metrics = learningMetricsService.compute();
         List<DifficultySlice> difficultyDistribution = buildDifficultyDistribution();
-        String difficultyJson = "[]";
-        try {
-            difficultyJson = escapeForHtmlScript(objectMapper.writeValueAsString(difficultyDistribution));
-        } catch (JsonProcessingException e) {
-            log.error("stats_page_difficulty_json_failed", e);
-        }
+        String difficultyJson = writeJsonForHtml(difficultyDistribution, "stats_page_difficulty_json_failed");
         List<WrongQuestionItem> recentWrongQuestions = questionStatsRepository
                 .findRecentWrongQuestions(WRONG_DRILLDOWN_LIMIT)
                 .stream()
@@ -96,12 +88,7 @@ public class StatsPageService {
                 .toList();
         List<AccuracyTrendDay> accuracyTrend = buildAccuracyTrend(
                 dailyActivityRepository.findRecentDays(ACCURACY_TREND_DAYS));
-        String accuracyTrendJson = "[]";
-        try {
-            accuracyTrendJson = escapeForHtmlScript(objectMapper.writeValueAsString(accuracyTrend));
-        } catch (JsonProcessingException e) {
-            log.error("stats_page_accuracy_trend_json_failed", e);
-        }
+        String accuracyTrendJson = writeJsonForHtml(accuracyTrend, "stats_page_accuracy_trend_json_failed");
         return new StatsPageState(
                 stats,
                 topics,
@@ -268,6 +255,23 @@ public class StatsPageService {
                 .replace("<", "\\u003C")
                 .replace(">", "\\u003E")
                 .replace("&", "\\u0026");
+    }
+
+    /**
+     * Сериализует payload в HTML-safe JSON для literal-вставки в &lt;script&gt; ({@link
+     * #escapeForHtmlScript}); при сбое Jackson логирует {@code errorKey} (SLF4J-плейсхолдеры
+     * заполняются {@code logArgs}, исключение добавляется последним аргументом) и возвращает
+     * {@code "[]"}-фолбэк. Централизует три идентичных try/catch-блока {@link #build}.
+     */
+    private String writeJsonForHtml(Object payload, String errorKey, Object... logArgs) {
+        try {
+            return escapeForHtmlScript(objectMapper.writeValueAsString(payload));
+        } catch (JsonProcessingException e) {
+            Object[] args = Arrays.copyOf(logArgs, logArgs.length + 1);
+            args[logArgs.length] = e;
+            log.error(errorKey, args);
+            return "[]";
+        }
     }
 
     @Builder(toBuilder = true)
