@@ -717,6 +717,14 @@
           }
         }
       });
+      // Chart.js успешно отрисовал canvas — прячем SSR-fallback bars, иначе те же
+      // данные дублируются вторым столбчатым блоком справа от графика (UI-баг:
+      // ось дат + ось номеров дней рядом). На no-Chart.js/ошибке (catch) SSR bars
+      // остаются как визуальный fallback.
+      var trendBars = document.querySelector('.accuracy-trend-bars');
+      if (trendBars) trendBars.hidden = true;
+      var trendRow = canvas.closest('.accuracy-trend-row');
+      if (trendRow) trendRow.classList.add('is-chart-only');
     } catch (e) { /* таблица и SSR bars остаются */ }
   }
 
