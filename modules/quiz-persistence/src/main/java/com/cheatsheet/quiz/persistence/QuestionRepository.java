@@ -47,6 +47,15 @@ public class QuestionRepository {
                     "q.question_type, q.code_snippet, q.diagram_mermaid, q.regen_count, q.takeaway, q.difficulty, " +
                     "q.short_explanation, q.detailed_explanation, q.common_mistake, q.tags";
 
+    /**
+     * Хвост сортировки «приоритет повторения», общий для 6 запросов выборки вопросов:
+     * первыми — ближайшие к сроку повторения ({@code next_review_at}), при равенстве —
+     * с меньшим числом ответов (недоученные), затем по возрастанию id. Завершается
+     * {@code LIMIT ?} (значение лимита добавляется в params отдельно).
+     */
+    static final String ORDER_BY_REVIEW_PRIORITY =
+            "rs.next_review_at ASC, (rs.correct_count + rs.wrong_count) ASC, q.id ASC LIMIT ?";
+
     JdbcTemplate jdbcTemplate;
 
     /**
@@ -246,7 +255,7 @@ public class QuestionRepository {
         var params = new ArrayList<Object>();
         params.add(nowEpoch);
         InterviewFilterSql.appendFilters(sql, params, topic, important, onlyWrong);
-        sql.append(" ORDER BY rs.next_review_at ASC, (rs.correct_count + rs.wrong_count) ASC, q.id ASC LIMIT ?");
+        sql.append(" ORDER BY " + ORDER_BY_REVIEW_PRIORITY);
         params.add(limit);
         return jdbcTemplate.query(sql.toString(), questionRowMapper(), params.toArray());
     }
@@ -267,7 +276,7 @@ public class QuestionRepository {
         InterviewFilterSql.appendFilters(sql, params, null, important, onlyWrong);
         sql.append(" ORDER BY ");
         appendTopicOrderCase(sql, params, topics);
-        sql.append(", rs.next_review_at ASC, (rs.correct_count + rs.wrong_count) ASC, q.id ASC LIMIT ?");
+        sql.append(", " + ORDER_BY_REVIEW_PRIORITY);
         params.add(limit);
         return jdbcTemplate.query(sql.toString(), questionRowMapper(), params.toArray());
     }
@@ -281,7 +290,7 @@ public class QuestionRepository {
                         "JOIN review_state rs ON rs.question_id = q.id WHERE 1=1 ");
         var params = new ArrayList<Object>();
         InterviewFilterSql.appendFilters(sql, params, topic, important, onlyWrong);
-        sql.append(" ORDER BY rs.next_review_at ASC, (rs.correct_count + rs.wrong_count) ASC, q.id ASC LIMIT ?");
+        sql.append(" ORDER BY " + ORDER_BY_REVIEW_PRIORITY);
         params.add(limit);
         return jdbcTemplate.query(sql.toString(), questionRowMapper(), params.toArray());
     }
@@ -301,7 +310,7 @@ public class QuestionRepository {
         InterviewFilterSql.appendFilters(sql, params, null, important, onlyWrong);
         sql.append(" ORDER BY ");
         appendTopicOrderCase(sql, params, topics);
-        sql.append(", rs.next_review_at ASC, (rs.correct_count + rs.wrong_count) ASC, q.id ASC LIMIT ?");
+        sql.append(", " + ORDER_BY_REVIEW_PRIORITY);
         params.add(limit);
         return jdbcTemplate.query(sql.toString(), questionRowMapper(), params.toArray());
     }
@@ -317,7 +326,7 @@ public class QuestionRepository {
                         "ON ao.question_id = q.id WHERE ao.cnt IS NULL ");
         var params = new ArrayList<Object>();
         InterviewFilterSql.appendFilters(sql, params, topic, important, onlyWrong);
-        sql.append(" ORDER BY rs.next_review_at ASC, (rs.correct_count + rs.wrong_count) ASC, q.id ASC LIMIT ?");
+        sql.append(" ORDER BY " + ORDER_BY_REVIEW_PRIORITY);
         params.add(limit);
         return jdbcTemplate.query(sql.toString(), (rs, rowNum) -> rs.getLong("id"), params.toArray());
     }
@@ -339,7 +348,7 @@ public class QuestionRepository {
         InterviewFilterSql.appendFilters(sql, params, null, important, onlyWrong);
         sql.append(" ORDER BY ");
         appendTopicOrderCase(sql, params, topics);
-        sql.append(", rs.next_review_at ASC, (rs.correct_count + rs.wrong_count) ASC, q.id ASC LIMIT ?");
+        sql.append(", " + ORDER_BY_REVIEW_PRIORITY);
         params.add(limit);
         return jdbcTemplate.query(sql.toString(), (rs, rowNum) -> rs.getLong("id"), params.toArray());
     }
