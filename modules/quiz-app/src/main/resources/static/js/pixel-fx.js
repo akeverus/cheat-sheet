@@ -52,7 +52,9 @@
     return motionAllowed() && pixelLevel() === 'high';
   }
 
-  /** Bursts, celebrate, stage intro, HUD — med + high */
+  /** Короткий med-status: celebrate / floatText / screenFlash / incorrect-subtle /
+   *  coin-pickup real-XP — med + high. Full-screen portal-wipe и stage-intro
+   *  вынесены в allowStageFx (high only, §4). */
   function allowFx() {
     return motionAllowed() && pixelLevel() !== 'low';
   }
@@ -65,6 +67,12 @@
   /** Декоративные particle-эффекты (burst / coin-rain / click-spark) — HIGH only.
    *  GFX-006 / PIXEL_ART_CONTRACT_V2: med = только короткий status, БЕЗ particles/bursts. */
   function allowBurst() {
+    return motionAllowed() && pixelLevel() === 'high';
+  }
+
+  /** Full-screen stage-intro / portal-wipe — HIGH only.
+   *  §4 / PIXEL_ART_CONTRACT_V2: med = только короткий status, БЕЗ portal / stage-intro / HUD. */
+  function allowStageFx() {
     return motionAllowed() && pixelLevel() === 'high';
   }
 
@@ -427,7 +435,7 @@
 
   function showStageIntro(opts) {
     opts = opts || {};
-    if (!allowFx()) return;
+    if (!allowStageFx()) return;
     if (document.querySelector('.pixel-stage-intro')) return;
     var title = opts.title || 'STAGE START';
     var subtitle = opts.subtitle || '';
@@ -663,7 +671,7 @@
 
   /** Short portal overlay before navigating to the next question. */
   function portalWipe(done) {
-    if (!allowFx() || pixelLevel() === 'low') {
+    if (!allowStageFx()) {
       if (typeof done === 'function') done();
       return;
     }
