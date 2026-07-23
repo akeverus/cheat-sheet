@@ -15,9 +15,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Тесты {@link CorrelationIdFilter} — фильтра на {@code HIGHEST_PRECEDENCE},
  * присваивающего correlation-id каждому запросу. Покрывают все ветки {@code resolve}:
- * эхо валидного заголовка (с trim), генерация UUID для null/blank и защитный cap
- * длины (>128 → UUID, а не отражение произвольно длинного значения в лог/заголовок),
- * а также очистку MDC после запроса.
+ * эхо валидного заголовка (с trim), генерация UUID для null/blank, защитный cap
+ * длины (>128 → UUID) и allowlist по charset (управляющие/спец-символы не отражаются
+ * в лог/заголовок — защита от CWE-117 log injection), а также очистку MDC после запроса.
  */
 class CorrelationIdFilterTest {
 
@@ -92,6 +92,31 @@ class CorrelationIdFilterTest {
     void echoesHeaderAtExactly128CharBoundary() throws Exception {
         String maxLen = "y".repeat(128);
         assertThat(run(maxLen).getHeader(CorrelationIdFilter.HEADER)).isEqualTo(maxLen);
+    }
+
+    @Test
+    void echoesValidUuidHeader() throws Exception {
+        String uuid = "550e8400-e29b-41d4-a716-446655440000";
+        assertThat(run(uuid).getHeader(CorrelationIdFilter.HEADER)).isEqualTo(uuid);
+    }
+
+    @Test
+    void generatesUuidWhenHeaderContainsControlCharacters() throws Exception {
+        // Управляющие байты (backspace \b) переживают strip(), поэтому
+        // allowlist по charset обязателен — иначе они попали бы в MDC/лог/заголовок
+        // ответа (CWE-117 log injection / спуфинг лог-вьювера ANSI-escape).
+        String malicious = "trace\bctrl[31mFAKE";
+        String value = run(malicious).getHeader(CorrelationIdFilter.HEADER);
+        assertThat(value).isNotEqualTo(malicious);
+        assertThat(value).doesNotContain("\b");
+        assertThat(isUuid(value)).isTrue();
+    }
+
+    @Test
+    void generatesUuidWhenHeaderContainsSpaceOrSlash() throws Exception {
+        // Интерьерный пробел и '/' не входят в allowlist — подмена на UUID.
+        assertThat(isUuid(run("has space").getHeader(CorrelationIdFilter.HEADER))).isTrue();
+        assertThat(isUuid(run("a/b").getHeader(CorrelationIdFilter.HEADER))).isTrue();
     }
 
     @Test
