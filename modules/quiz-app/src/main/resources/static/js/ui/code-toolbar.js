@@ -1,6 +1,22 @@
 let codeToolbarBound = false;
 let copyCodeBound = false;
 
+// Общий visually-hidden aria-live регион для озвучки результата копирования кода
+// (используется и toolbar-кнопкой, и плавающей code-copy-btn). WCAG 4.1.3.
+function announceCopyStatus(msg) {
+  let region = document.getElementById('code-copy-status');
+  if (!region) {
+    region = document.createElement('div');
+    region.id = 'code-copy-status';
+    region.className = 'visually-hidden';
+    region.setAttribute('role', 'status');
+    region.setAttribute('aria-live', 'polite');
+    document.body.appendChild(region);
+  }
+  region.textContent = '';
+  requestAnimationFrame(() => { region.textContent = msg; });
+}
+
 export function initCodeToolbar() {
   if (codeToolbarBound) return;
   codeToolbarBound = true;
@@ -21,8 +37,11 @@ export function initCodeToolbar() {
             await navigator.clipboard.writeText(codeEl.innerText);
             const prev = btn.textContent;
             btn.textContent = 'Скопировано';
+            announceCopyStatus('Код скопирован в буфер обмена');
             setTimeout(() => { btn.textContent = prev; }, 1600);
-          } catch (_) {}
+          } catch (_) {
+            announceCopyStatus('Не удалось скопировать код');
+          }
         } else if (action === 'fullscreen') {
           if (!document.fullscreenElement && wrap.requestFullscreen) wrap.requestFullscreen();
           else if (document.exitFullscreen) document.exitFullscreen();
@@ -41,22 +60,12 @@ export function initCopyCode() {
   const blocks = document.querySelectorAll('.markdown-content pre, .question-code-details pre, pre.question-code');
   if (!blocks.length) return;
 
-  let copyStatus = document.getElementById('code-copy-status');
-  if (!copyStatus) {
-    copyStatus = document.createElement('div');
-    copyStatus.id = 'code-copy-status';
-    copyStatus.className = 'visually-hidden';
-    copyStatus.setAttribute('role', 'status');
-    copyStatus.setAttribute('aria-live', 'polite');
-    document.body.appendChild(copyStatus);
-  }
-  const announceCopy = (msg) => {
-    copyStatus.textContent = '';
-    requestAnimationFrame(() => { copyStatus.textContent = msg; });
-  };
-
   blocks.forEach((pre) => {
     if (pre.parentElement?.classList.contains('code-copy-wrap')) return;
+    // У блока со своим тулбаром (.question-code-wrap → кнопка data-code-action="copy",
+    // навешивается initCodeToolbar) copy уже есть — не дублируем плавающей кнопкой.
+    const toolbarWrap = pre.closest('.question-code-wrap');
+    if (toolbarWrap && toolbarWrap.querySelector('[data-code-action="copy"]')) return;
     const wrap = document.createElement('div');
     wrap.className = 'code-copy-wrap';
     pre.parentNode.insertBefore(wrap, pre);
@@ -82,11 +91,11 @@ export function initCopyCode() {
       navigator.clipboard.writeText(codeEl.innerText)
         .then(() => {
           flash('is-copied', svgIcon('check') + '<span class="code-copy-label">Скопировано</span>');
-          announceCopy('Код скопирован в буфер обмена');
+          announceCopyStatus('Код скопирован в буфер обмена');
         })
         .catch(() => {
           flash('is-error', svgIcon('x') + '<span class="code-copy-label">Ошибка</span>');
-          announceCopy('Не удалось скопировать код');
+          announceCopyStatus('Не удалось скопировать код');
         });
     });
   });
