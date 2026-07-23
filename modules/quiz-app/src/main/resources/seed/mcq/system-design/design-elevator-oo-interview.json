@@ -309,25 +309,25 @@
           "question_text": "Как устроены классы `Floor`, `Display`, `Door` и `Request`?",
           "options": [
             {
-              "text": "`Floor` хранит `number`, флаги `hasUpButton`/`hasDownButton` (на крайних этажах одна из кнопок false) и методы `pressUp`/`pressDown`, публикующие external Request. `Display` в отдельном потоке каждые 100 ms опрашивает `Elevator.getCurrentFloor()` и перерисовывает этаж+направление. `Door` держит `AtomicReference<DoorState>` и `ObstructionSensor`, методы `open`/`close` (при `sensor.detected()` → reopen).",
+              "text": "`Floor` хранит `number` и флаги `hasUpButton`/`hasDownButton`, но `pressUp`/`pressDown` напрямую вызывают `elevator.moveTo(number)` в обход объекта `Request` и планировщика. `Display` в отдельном потоке каждые 100 ms опрашивает `Elevator.getCurrentFloor()` и перерисовывает этаж+направление. `Door` держит `AtomicReference<DoorState>` и `ObstructionSensor`, методы `open`/`close` (при `sensor.detected()` → reopen).",
               "correct": false,
               "sections": {
-                "what_actually": "`Display` реализует `ElevatorListener` (Observer) и обновляется по событию `onStateChange(e)` — pull-поллинг даёт tight coupling и лишнюю нагрузку.",
-                "source_of_confusion": "Поллинг кажется простым и «всегда актуальным», отсюда соблазн опрашивать лифт по таймеру.",
-                "if_it_were_true": "Если бы `Display` поллил каждые 100 ms, он жёстко зависел бы от внутренностей `Elevator` и грузил систему вхолостую.",
-                "how_it_should_be": "`Display` подписывается как listener и рендерит этаж/направление по push-событию, а не опрашивает лифт в цикле."
+                "what_actually": "Нажатие кнопки этажа должно порождать объект `Request`, который поступает планировщику (Strategy) — только так система обслуживает несколько лифтов и оптимизирует маршрут; прямой `elevator.moveTo()` из `Floor` разрушает эту архитектуру.",
+                "source_of_confusion": "Классы `Door` и `Display` описаны правдоподобно, и легко упустить, что `Floor.pressUp/pressDown`, минуя `Request`, жёстко привязывают этаж к конкретному лифту.",
+                "if_it_were_true": "Будь вызов лифта прямым `moveTo()` в обход планировщика, невозможно было бы ни выбрать оптимальную кабину в банке, ни применить SCAN/LOOK — каждый вопрос сводился бы к FCFS одной кабины.",
+                "how_it_should_be": "`pressUp`/`pressDown` публикуют external `Request`; планировщик назначает кабину и порядок остановок, а `Display` обновляется по событию (`ElevatorListener`), как в варианте C."
               },
               "label": "A",
               "order": 0
             },
             {
-              "text": "`Floor` хранит `number`, флаги `hasUpButton`/`hasDownButton` (на крайних этажах одна из кнопок false), `Display` и методы `pressUp`/`pressDown`, публикующие запрос. `Display implements ElevatorListener` и в `onStateChange` рендерит этаж+направление. `Door` держит `AtomicReference<DoorState>` и `ObstructionSensor`, методы `open`/`close` (при `sensor.detected()` → reopen).",
+              "text": "`Floor` хранит `number`, флаги `hasUpButton`/`hasDownButton` (на крайних этажах одна из кнопок false), `Display`, и методы `pressUp`/`pressDown`, публикующие external Request. `Display implements ElevatorListener` и в `onStateChange` рендерит этаж+направление. `Door` держит `AtomicReference<DoorState>` и `ObstructionSensor`, но `close()` игнорирует `sensor.detected()` и всегда закрывается до конца — препятствие лишь логируется постфактум.",
               "correct": false,
               "sections": {
-                "what_actually": "`Request` — это типизированный immutable value object с явными полями (`sourceFloor`, `destinationFloor`, `direction`, `type`); `Map` теряет типобезопасность и инварианты.",
-                "source_of_confusion": "`Map` выглядит «гибким» и быстрым в написании, поэтому им заменяют value object.",
-                "if_it_were_true": "Если бы запрос был `Map`, опечатка в ключе или null в обязательном поле всплыли бы только в рантайме, а не на компиляции.",
-                "how_it_should_be": "Команду-запрос моделируют классом с final-полями: это и Command-паттерн, и защита инвариантов на этапе компиляции."
+                "what_actually": "На реальном лифте `Door.close()` обязан прерываться при срабатывании `ObstructionSensor.detected()` и немедленно выполнять reopen — иначе дверь зажмёт пассажира или груз.",
+                "source_of_confusion": "Поля `AtomicReference<DoorState>` и `ObstructionSensor` выглядят корректно, и легко не заметить, что ошибка спрятана именно в поведении `close()`, а не в наборе полей класса.",
+                "if_it_were_true": "Если бы `close()` мог игнорировать датчик и лишь логировать препятствие, дизайн нарушал бы базовое требование безопасности (EN 81) и травмировал бы пассажиров.",
+                "how_it_should_be": "`close()` в цикле проверяет `sensor.detected()` и при срабатывании немедленно вызывает `open()` (reopen) — как в корректном варианте C."
               },
               "label": "B",
               "order": 1
@@ -921,13 +921,13 @@
               "order": 0
             },
             {
-              "text": "Таблица trade-off: FCFS — плохой wait/energy, `O(1)`, учебный пример. SCAN — средний wait, средняя энергия (до края), `O(log n)` с TreeSet. LOOK — лучше SCAN по wait и energy, `O(log n)`, большинство реальных лифтов. Nearest-Car — хорош при низкой нагрузке, `O(N)` per request, small banks (2-4 лифта).",
+              "text": "Таблица trade-off: FCFS — плохой wait/energy, `O(1)`, учебный пример. SCAN — средний wait, средняя энергия (до края), `O(log n)` с TreeSet. LOOK — лучше SCAN по wait и energy, `O(log n)`, большинство реальных лифтов. Nearest-Car — игнорирует направление кабины и потому по среднему времени ожидания эквивалентен FCFS, `O(N)` per request, small banks (2-4 лифта).",
               "correct": false,
               "sections": {
-                "what_actually": "Destination dispatching сложен в моделировании и оправдан в premium-системах больших зданий; для small banks (2-4 лифта) хватает LOOK + Nearest-Car.",
-                "source_of_confusion": "«Лучшие метрики» подталкивают применять самый продвинутый алгоритм всегда.",
-                "if_it_were_true": "Если бы destination был уместен везде, его не выделяли бы как premium-решение Schindler/KONE/Otis для крупных объектов.",
-                "how_it_should_be": "Выбор алгоритма — это trade-off под нагрузку и размер банка: маленьким зданиям destination-сложность не нужна."
+                "what_actually": "Nearest-Car выбирает кабину по близости И направлению её движения к вызову, поэтому по среднему времени ожидания он заметно лучше FCFS, а не эквивалентен ему.",
+                "source_of_confusion": "Строки по FCFS, SCAN и LOOK здесь верны, и на их фоне ошибочное приравнивание Nearest-Car к FCFS по wait-time легко проскакивает мимо внимания.",
+                "if_it_were_true": "Будь Nearest-Car эквивалентен FCFS по ожиданию, не было бы смысла применять его в small banks — а именно там учёт направления даёт основной выигрыш.",
+                "how_it_should_be": "Nearest-Car лучше FCFS по wait за счёт учёта направления кабины, `O(N)` per request; полную картину компромисса трёх осей даёт вариант D."
               },
               "label": "B",
               "order": 1
@@ -1293,13 +1293,13 @@
               "order": 1
             },
             {
-              "text": "Optimization-уровень использует паттерны загрузки во времени: morning peak (08-10) — parked на ground, едут up; evening peak (17-19) — parked на верхних, едут down; lunch (12-14) — inter-floor two-way; off-peak (ночь) — один лифт активен, остальные idle. Реализация — `IdleParkingPolicy` и ML-модели (gradient boosting на признаках time-of-day, day-of-week, building events) предсказывают next-likely-call floor.",
+              "text": "Optimization-уровень использует паттерны загрузки во времени: morning peak (08-10) — parked на ground, едут up; evening peak (17-19) — parked на верхних, едут down; lunch (12-14) — inter-floor two-way; off-peak (ночь) — один лифт активен, остальные idle. Реализация — `IdleParkingPolicy` и ML-модели (gradient boosting), обучаемые на лету только по текущему вызову, без накопленной истории и признаков time-of-day/day-of-week.",
               "correct": false,
               "sections": {
-                "what_actually": "KPI для tuning — это average waiting time (AWT) и average journey time (AJT); CPU и объём логов к качеству обслуживания пассажиров отношения не имеют.",
-                "source_of_confusion": "Привычные инфраструктурные метрики подменяют доменные KPI лифта.",
-                "if_it_were_true": "Если бы tuning шёл по CPU, можно было бы «оптимизировать» систему, ухудшив реальное ожидание пассажиров.",
-                "how_it_should_be": "Стратегию настраивают по пассажирским метрикам (AWT, AJT), а не по нагрузке на сервер или размеру логов."
+                "what_actually": "Прогнозная парковка по определению строится на НАКОПЛЕННОЙ истории вызовов (time-of-day, day-of-week, building events); модель, обучаемая «на лету по одному текущему вызову», ничего предсказать не способна.",
+                "source_of_confusion": "Упоминание gradient boosting и `IdleParkingPolicy` звучит технологично, поэтому подмена «обучение на исторических паттернах» на «на лету без истории» легко остаётся незамеченной.",
+                "if_it_were_true": "Без исторических признаков модель выродилась бы в случайный выбор этажа и не давала бы никакого выигрыша по average waiting time.",
+                "how_it_should_be": "Модель обучается на исторических паттернах трафика и предсказывает next-likely-call floor; минимальная корректная реализация — `IdleParkingPolicy` по историческим данным (вариант D)."
               },
               "label": "C",
               "order": 2
