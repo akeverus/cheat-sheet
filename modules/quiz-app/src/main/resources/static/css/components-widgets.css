@@ -181,14 +181,21 @@ html[data-design] .personalization-row:last-child { margin-bottom: 0; }
 html[data-design] .personalization-card .field-label { display: block; margin-bottom: var(--space-2); }
 
 /* Сегментированный контрол темы (radiogroup) */
+/* BASE-03 (редиз-программа iter-7): раньше .seg-control был inline-flex+flex-wrap с
+   широким паддингом кнопок (space-5). В 2-колоночной раскладке /settings 3-опционные
+   контролы (Тема/Раскладка/Движение/Пиксель-эффекты) не влезали в ряд → 3-я опция
+   переносилась в одиночку, оставляя пустую ячейку («дыра»). Grid с равными колонками
+   (auto-flow column, auto-columns 1fr, width 100%) держит ВСЕ опции в один ряд равной
+   ширины — «дыры» нет ни при 2, ни при 3 опциях; контролы выровнены по ширине поля. */
 html[data-design] .seg-control {
-  display: inline-flex; max-width: 100%; flex-wrap: wrap;
+  display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+  width: 100%; max-width: 100%;
   border: var(--rule-weight) solid var(--color-border-primary);
   border-radius: var(--border-radius-md); overflow: hidden; background: var(--color-bg-secondary);
 }
 html[data-design] .seg-btn {
   appearance: none; -webkit-appearance: none;
-  min-height: 44px; padding: var(--space-2) var(--space-5);
+  min-width: 0; min-height: 44px; padding: var(--space-2) var(--space-3);
   font-family: var(--font-family-body); font-size: var(--font-size-base);
   color: var(--color-text-secondary); background: transparent; border: 0;
   border-right: var(--rule-weight) solid var(--color-border-primary);
