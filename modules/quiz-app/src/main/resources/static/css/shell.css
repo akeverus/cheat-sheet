@@ -379,6 +379,26 @@ html[data-design] .explanation-eyebrow {
   text-transform: uppercase;
   color: var(--color-text-tertiary);
 }
+/* Раскрывающийся вариант эйбрау: <summary class="explanation-eyebrow"> («Подробнее»)
+   — интерактивный триггер <details>, в отличие от статичных <span>-эйбрау
+   («Правильный ответ», «Ключевое отличие»). Базовый .explanation-eyebrow делал его
+   неотличимым от заголовка (block, tertiary, без курсора; disclosure-треугольник
+   подавлен display:block) → скрытый разбор был недискаверабелен. Даём pointer +
+   trailing ▸/▾ (та же disclosure-конвенция, что .question-code-summary / .sm2-details),
+   но шеврон accent-strong (teal) — привлекает взгляд к «есть ещё разбор». */
+html[data-design] summary.explanation-eyebrow {
+  list-style: none;
+  cursor: pointer;
+}
+html[data-design] summary.explanation-eyebrow::-webkit-details-marker { display: none; }
+html[data-design] summary.explanation-eyebrow::after {
+  content: "▸";
+  margin-inline-start: var(--space-2);
+  color: var(--color-accent-strong);
+  font-size: var(--font-size-sm);
+}
+html[data-design] details[open] > summary.explanation-eyebrow::after { content: "▾"; }
+html[data-design] summary.explanation-eyebrow:hover { color: var(--color-text-primary); }
 /* Лид объяснения в панели — без верхнего отступа (эйбрау уже отбил). */
 html[data-design] .explanation-panel .result-lead { margin-top: 0; }
 
