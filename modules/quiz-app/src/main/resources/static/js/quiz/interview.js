@@ -342,8 +342,12 @@ export function initInterviewForm() {
         label.classList.add('option-wrong');
         statusLabelText = 'Твой выбор (ошибка)';
       } else {
+        // Нейтральный вариант: приглушаем визуально, но БЕЗ метки-чипа —
+        // зеркалим канон server-шаблона result.html (UX-13: «опции = только
+        // марка состояния»). Три чипа «Не выбран» на каждый отвеченный вопрос
+        // = шум; значимы лишь «Правильный ответ» и «Твой выбор». option-dimmed
+        // достаточно как affordance «это не ответ и ты его не выбирал».
         label.classList.add('option-dimmed');
-        statusLabelText = 'Не выбран';
       }
       if (statusLabelText) {
         label.setAttribute('aria-label', (statusLabelText + ': ' + optionText).trim());
