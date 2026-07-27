@@ -136,7 +136,7 @@
                 <span class="stats-next-action-label">Тренировать слабые темы</span>
                 <span class="stats-next-action-topic" data-weak-topic-summary
                       th:text="${weakestTopic != null
-                        ? ('Слабее всего: ' + #strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(weakestTopic), '-', ' '), '_', ' ')))
+                        ? ('Слабее всего: ' + @topicUtils.displayName(weakestTopic))
                         : (topicStats != null and !topicStats.isEmpty() ? 'Слабая тема появится после первых ответов' : 'Тем пока нет')}">Самая слабая тема</span>
                 <strong th:text="${topicStats != null ? topicStats.size() : 0}">0</strong>
                 <span class="stats-next-action-detail">тем в аналитике</span>
@@ -173,7 +173,7 @@
                         <select name="topic">
                             <option value="">Все</option>
                             <option th:each="topic : ${topics != null ? topics : T(java.util.Collections).emptyList()}" th:value="${topic}"
-                                    th:text="${#strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(topic), '-', ' '), '_', ' '))}" th:title="${topic}"
+                                    th:text="${@topicUtils.displayName(topic)}" th:title="${topic}"
                                     th:selected="${filter != null and filter.topic != null and filter.topic == topic}"></option>
                         </select>
                     </label>
@@ -217,7 +217,7 @@
         <ul class="search-results">
             <li th:each="item : ${searchResults}" class="search-result-item">
                 <div class="search-question"><strong th:utext="${@markdownRenderService.toInlineHtml(item.questionText)}">Вопрос</strong></div>
-                <div class="muted" th:text="${#strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(item.topic), '-', ' '), '_', ' '))}" th:title="${item.topic}">Тема</div>
+                <div class="muted" th:text="${@topicUtils.displayName(item.topic)}" th:title="${item.topic}">Тема</div>
                 <div class="search-answer-preview" th:text="${item.answerPreview}">Превью</div>
                 <a th:href="@{/(topic=${item.topic != null ? item.topic : ''}, group=${selectedGroup != null ? selectedGroup : ''}, ordered=${filter == null or filter.ordered != false}, important=${filter != null and filter.importantOnly == true}, onlyWrong=${filter != null and filter.onlyWrong == true})}">Перейти к теме<span aria-hidden="true"> →</span></a>
             </li>
@@ -299,7 +299,7 @@
             <tr th:each="item : ${topicStats}">
                 <th scope="row" class="topic-name" data-label="Тема">
                     <a th:href="@{/(topic=${item.topic}, group=${selectedGroup != null ? selectedGroup : ''}, ordered=${filter == null or filter.ordered != false})}"
-                       th:text="${#strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(item.topic), '-', ' '), '_', ' '))}"
+                       th:text="${@topicUtils.displayName(item.topic)}"
                        th:title="${item.topic}">topic</a>
                 </th>
                 <td th:text="${item.total}" class="text-center" data-label="Всего">0</td>
@@ -394,7 +394,7 @@
             </thead>
             <tbody>
             <tr th:each="gap : ${coverageGaps}">
-                <td th:text="${#strings.capitalize(#strings.replace(#strings.replace(@topicUtils.displayName(gap.topic()), '-', ' '), '_', ' '))}">тема</td>
+                <td th:text="${@topicUtils.displayName(gap.topic())}">тема</td>
                 <td class="text-center" th:text="${gap.total()}">0</td>
             </tr>
             </tbody>

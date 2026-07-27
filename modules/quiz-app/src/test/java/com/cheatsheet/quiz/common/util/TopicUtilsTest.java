@@ -27,9 +27,18 @@ class TopicUtilsTest {
             "java/collections.md, Коллекции, collections",
             "collections-interview, Коллекции, collections",
             "collections, Коллекции, collections",
-            "ai-ml/rag-interview.md, Rag, rag",
+            "ai-ml/rag-interview.md, RAG, rag",
             "deep/nested/path/topic-interview.md, Topic, topic",
-            "database-transactions, Транзакции БД, database-transactions"
+            "database-transactions, Транзакции БД, database-transactions",
+            "api-gateway, API gateway, api-gateway",
+            "cqrs-event-sourcing, CQRS event sourcing, cqrs-event-sourcing",
+            "jwt, JWT, jwt",
+            "grpc, gRPC, grpc",
+            "oauth2, OAuth2, oauth2",
+            "mtls, mTLS, mtls",
+            "tls-ssl, TLS/SSL, tls-ssl",
+            "owasp-top10, OWASP Top 10, owasp-top10",
+            "spring-data-jpa, Spring data JPA, spring-data-jpa"
     })
     void displayNameIsHumanReadableAndSlugIsRaw(String input, String display, String slug) {
         assertThat(utils.displayName(input)).isEqualTo(display);

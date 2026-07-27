@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Преобразование slug-а темы в человекочитаемое название для UI.
@@ -35,7 +36,30 @@ public class TopicUtils {
             Map.entry("security", "Безопасность"),
             Map.entry("networking", "Сети"),
             Map.entry("algorithms", "Алгоритмы"),
-            Map.entry("data-structures", "Структуры данных")
+            Map.entry("data-structures", "Структуры данных"),
+            Map.entry("tls-ssl", "TLS/SSL")
+    );
+
+    /**
+     * Токены-аббревиатуры, которые в fallback-имени пишутся целиком заглавными
+     * ("jwt" → "JWT", "cqrs" → "CQRS"). Иначе наивная капитализация первой буквы
+     * даёт "Jwt", "Cqrs", "Api" — визуально неряшливо в селекте тем и на аналитике.
+     */
+    private static final Set<String> UPPER_TOKENS = Set.of(
+            "jwt", "api", "sql", "http", "https", "cdn", "dns", "ddd", "cqrs",
+            "tls", "ssl", "aws", "gcp", "mcp", "rag", "llm", "ai", "jvm", "jpa",
+            "orm", "jdbc", "rest", "bff", "owasp", "io", "nio", "jms", "dto",
+            "dao", "acid", "cap", "wal", "mvcc", "dsl", "sns", "sqs", "ml", "url",
+            "uri"
+    );
+
+    /** Аббревиатуры со смешанным регистром — задаются явным написанием. */
+    private static final Map<String, String> MIXED_TOKENS = Map.ofEntries(
+            Map.entry("grpc", "gRPC"),
+            Map.entry("oauth2", "OAuth2"),
+            Map.entry("oauth", "OAuth"),
+            Map.entry("mtls", "mTLS"),
+            Map.entry("top10", "Top 10")
     );
 
     /**
@@ -66,11 +90,34 @@ public class TopicUtils {
         if (DISPLAY_NAMES.containsKey(lookup)) {
             return DISPLAY_NAMES.get(lookup);
         }
-        // "database-transactions" → "Database transactions"
+        // Пословный fallback: аббревиатуры → верхний/смешанный регистр,
+        // первое слово — с заглавной, остальные обычные слова остаются строчными.
+        // "api-gateway" → "API gateway", "cqrs-event-sourcing" → "CQRS event sourcing",
+        // "grpc" → "gRPC", "database-transactions" → "Database transactions".
         String spaced = key.replace('-', ' ').replace('_', ' ').trim();
         if (spaced.isEmpty()) {
             return "";
         }
-        return Character.toUpperCase(spaced.charAt(0)) + spaced.substring(1);
+        String[] words = spaced.split("\\s+");
+        StringBuilder result = new StringBuilder(spaced.length());
+        for (int i = 0; i < words.length; i++) {
+            String word = words[i];
+            String lower = word.toLowerCase(Locale.ROOT);
+            String rendered;
+            if (MIXED_TOKENS.containsKey(lower)) {
+                rendered = MIXED_TOKENS.get(lower);
+            } else if (UPPER_TOKENS.contains(lower)) {
+                rendered = lower.toUpperCase(Locale.ROOT);
+            } else if (i == 0) {
+                rendered = Character.toUpperCase(word.charAt(0)) + word.substring(1);
+            } else {
+                rendered = word;
+            }
+            if (i > 0) {
+                result.append(' ');
+            }
+            result.append(rendered);
+        }
+        return result.toString();
     }
 }
