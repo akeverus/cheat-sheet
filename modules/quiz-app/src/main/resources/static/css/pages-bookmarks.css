@@ -74,6 +74,24 @@ html[data-design] .bookmarks-page .bookmark-note-actions {
   gap: var(--space-3);
   margin-top: var(--space-2);
 }
+/* Карточки без заметки: свернуть форму заметки до компактного «плюс-поля»,
+   чтобы список закладок сканировался (главный сценарий), а не тонул в пустых
+   textarea. Раскрывается на :focus-within для написания — CSS-only, работает
+   без JS, a11y цела (таб в поле → раскрытие → кнопка). motion гейтит reset-layout. */
+html[data-design] .bookmarks-page .bookmark-item.no-note .bookmark-note-form textarea {
+  min-height: 0;
+  height: 2.75rem;               /* одна строка: перебивает rows="3" (rows = пол, не потолок) */
+  transition: height var(--duration-fast) var(--easing-default);
+}
+html[data-design] .bookmarks-page .bookmark-item.no-note .bookmark-note-form:focus-within textarea {
+  height: 7.4rem;                /* раскрытие под ~3 строки, как у карточек с заметкой */
+}
+html[data-design] .bookmarks-page .bookmark-item.no-note .bookmark-note-actions {
+  display: none;
+}
+html[data-design] .bookmarks-page .bookmark-item.no-note .bookmark-note-form:focus-within .bookmark-note-actions {
+  display: flex;
+}
 html[data-design] .bookmarks-page .bookmark-actions {
   flex: 0 0 auto;
   display: flex;
