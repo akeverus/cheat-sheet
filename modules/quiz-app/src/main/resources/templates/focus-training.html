@@ -80,12 +80,16 @@
                 <!-- Прогресс-строка и трек гейтятся th:if: вне сессии раньше в DOM
                      висела видимая пустая полоска 254×2px с aria-valuemax="0"
                      (progressbar «0 из 0» для скринридера). round-01 C-live-1. -->
-                <div class="focus-progress-line" th:if="${interviewSession != null or reviewMode}">
-                    <span class="muted tiny kpi-role" th:if="${interviewSession != null}">Прогресс сессии</span>
-                    <span th:if="${interviewSession != null}">
+                <!-- Прогресс-строка только для реальной сессии. Раньше здесь же
+                     висел дубль-эйбрау «Режим review: только вопросы с ошибками» —
+                     он повторял и chip «Повтор ошибок», и zone-hint «Режим review:
+                     отвечай на вопросы с ошибками» (три подписи одного режима
+                     подряд). Убран: chip = метка, hint = описание, этого хватает. -->
+                <div class="focus-progress-line" th:if="${interviewSession != null}">
+                    <span class="muted tiny kpi-role">Прогресс сессии</span>
+                    <span>
                         <span class="session-progress" th:text="${interviewSession.getIndex() + 1}">1</span>/<span th:text="${interviewSession.getTotal()}">1</span>
                     </span>
-                    <span th:if="${reviewMode}">Режим review: только вопросы с ошибками</span>
                 </div>
                 <div class="session-progress-track"
                      role="progressbar"
