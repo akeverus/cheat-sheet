@@ -27,7 +27,13 @@
      всей БД, лог попыток + review_state). У каждой доли явный знаменатель;
      NO_DATA (нет знаменателя) показываем как «—», а не «0 %». Подробная
      разбивка (первая попытка/удержание) — во вкладке «Динамика» ниже. -->
-<section class="dashboard-grid" th:if="${metrics != null}" aria-label="Ключевые метрики обучения">
+<!-- periodLabels: человекочитаемая подпись периода. Значения period ('lifetime'/
+     'now'/'7d'/'30d') — контрактные ключи (MetricDefinitionsTest, доменная логика),
+     их НЕ меняем; гуманизируем только ОТОБРАЖЕНИЕ, чтобы на карточке не было
+     англо-токена рядом с русской формулой. Фолбэк на сам ключ, если незнаком. -->
+<section class="dashboard-grid" th:if="${metrics != null}"
+         th:with="periodLabels=${ {'lifetime':'всё время','now':'сейчас','7d':'7 дней','30d':'30 дней'} }"
+         aria-label="Ключевые метрики обучения">
     <article class="card metric accent">
         <span class="eyebrow">Точность попыток</span>
         <div class="metric-value"
@@ -37,7 +43,8 @@
               th:text="${metrics.attemptsCorrect} + ' верных попыток из ' + ${nonSkip} + ' (без пропусков)'">0 верных попыток из 0</span>
         <span class="muted tiny metric-formula"
               th:if="${metricDefinitions != null and metricDefinitions['overallAccuracy'] != null}"
-              th:text="${metricDefinitions['overallAccuracy'].formula} + ' · период: ' + ${metricDefinitions['overallAccuracy'].period}">formula</span>
+              th:with="def=${metricDefinitions['overallAccuracy']}"
+              th:text="${def.formula} + ' · период: ' + ${periodLabels.get(def.period) ?: def.period}">formula</span>
     </article>
     <article class="card metric good"
              th:with="masteredPct=${metrics.cardsTotal > 0 ? (metrics.cardsMastered * 100.0 / metrics.cardsTotal) : -1}">
@@ -48,7 +55,8 @@
               th:text="${metrics.cardsMastered} + ' из ' + ${metrics.cardsTotal} + ' карточек'">0 из 0 карточек</span>
         <span class="muted tiny metric-formula"
               th:if="${metricDefinitions != null and metricDefinitions['cardsMastered'] != null}"
-              th:text="${metricDefinitions['cardsMastered'].formula} + ' · период: ' + ${metricDefinitions['cardsMastered'].period}">formula</span>
+              th:with="def=${metricDefinitions['cardsMastered']}"
+              th:text="${def.formula} + ' · период: ' + ${periodLabels.get(def.period) ?: def.period}">formula</span>
     </article>
     <article class="card metric">
         <span class="eyebrow">Среднее время</span>
@@ -57,7 +65,8 @@
         <span class="muted tiny">на один ответ</span>
         <span class="muted tiny metric-formula"
               th:if="${metricDefinitions != null and metricDefinitions['averageResponseMs'] != null}"
-              th:text="${metricDefinitions['averageResponseMs'].formula} + ' · период: ' + ${metricDefinitions['averageResponseMs'].period}">formula</span>
+              th:with="def=${metricDefinitions['averageResponseMs']}"
+              th:text="${def.formula} + ' · период: ' + ${periodLabels.get(def.period) ?: def.period}">formula</span>
     </article>
     <article class="card metric" th:classappend="${metrics.dueNow > 0} ? ' bad'">
         <span class="eyebrow">К повторению</span>
@@ -66,7 +75,8 @@
               th:text="${metrics.overdue > 0 ? metrics.overdue + ' просрочено' : 'нет просроченных'}">нет просроченных</span>
         <span class="muted tiny metric-formula"
               th:if="${metricDefinitions != null and metricDefinitions['dueNow'] != null}"
-              th:text="${metricDefinitions['dueNow'].formula} + ' · период: ' + ${metricDefinitions['dueNow'].period}">formula</span>
+              th:with="def=${metricDefinitions['dueNow']}"
+              th:text="${def.formula} + ' · период: ' + ${periodLabels.get(def.period) ?: def.period}">formula</span>
     </article>
 </section>
 

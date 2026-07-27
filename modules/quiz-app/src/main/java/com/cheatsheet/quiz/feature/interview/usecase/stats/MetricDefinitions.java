@@ -14,24 +14,28 @@ public final class MetricDefinitions {
 
     public static Map<String, Definition> catalog() {
         Map<String, Definition> m = new LinkedHashMap<>();
+        // formula — user-facing проза для карточек аналитики: человекочитаемое
+        // определение метрики (что честно считается), БЕЗ имён DB-колонок/enum/
+        // код-полей. Точный знаменатель несёт поле denominator, период — period;
+        // «формула» их не дублирует машинными токенами (иначе UI = debug-вывод).
         m.put("cardsTotal", def("Карточки всего", "count", "все карточки в каталоге", "lifetime", null));
-        m.put("cardsSeen", def("Карточки с попыткой", "count", "карточки с ≥1 попыткой", "lifetime", "cardsTotal"));
-        m.put("cardsMastered", def("Освоенные", "count", "repetitions ≥ порога mastered", "lifetime", "cardsTotal"));
+        m.put("cardsSeen", def("Карточки с попыткой", "count", "карточки хотя бы с одной попыткой", "lifetime", "cardsTotal"));
+        m.put("cardsMastered", def("Освоенные", "count", "повторений не меньше порога освоения", "lifetime", "cardsTotal"));
         m.put("attemptsTotal", def("Попытки всего", "count", "все попытки в журнале", "lifetime", null));
-        m.put("attemptsCorrect", def("Верные попытки", "count", "outcome=CORRECT", "lifetime", "attemptsTotal"));
-        m.put("attemptsIncorrect", def("Неверные попытки", "count", "WRONG+UNKNOWN", "lifetime", "attemptsTotal"));
+        m.put("attemptsCorrect", def("Верные попытки", "count", "отмечены как верные", "lifetime", "attemptsTotal"));
+        m.put("attemptsIncorrect", def("Неверные попытки", "count", "неверные и «не знаю»", "lifetime", "attemptsTotal"));
         m.put("firstAttemptAccuracy", def("Точность первой попытки", "percent",
                 "верные среди первых попыток / число первых попыток", "lifetime", "firstAttempts"));
         m.put("overallAccuracy", def("Общая точность", "percent",
-                "верные среди non-SKIP попыток / non-SKIP попытки", "lifetime", "nonSkipAttempts"));
+                "верные среди попыток без пропусков / попытки без пропусков", "lifetime", "nonSkipAttempts"));
         m.put("retention7d", def("Удержание 7д", "percent",
                 "верные повторные попытки за 7 дней / повторные за 7 дней", "7d", "reviews7d"));
         m.put("retention30d", def("Удержание 30д", "percent",
                 "верные повторные попытки за 30 дней / повторные за 30 дней", "30d", "reviews30d"));
-        m.put("dueNow", def("К повторению", "count", "nextReview ≤ now", "now", null));
-        m.put("overdue", def("Просрочено", "count", "nextReview ≤ now−1d", "now", null));
+        m.put("dueNow", def("К повторению", "count", "срок повторения наступил", "now", null));
+        m.put("overdue", def("Просрочено", "count", "срок повторения просрочен больше суток", "now", null));
         m.put("averageResponseMs", def("Среднее время ответа", "ms",
-                "среднее response_time_ms по попыткам с временем", "lifetime", "timedAttempts"));
+                "среднее время ответа по попыткам с замером", "lifetime", "timedAttempts"));
         return m;
     }
 
