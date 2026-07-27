@@ -6,7 +6,7 @@
 <svg th:replace="~{fragments/pixel-sprite :: sprite}"></svg>
 <svg th:replace="~{fragments/icons :: sprite}"></svg>
 <div class="app">
-    <aside th:replace="~{fragments/sidebar :: sidebar(active=${filter != null and filter.onlyWrong} ? 'review' : 'focus')}"></aside>
+    <aside th:replace="~{fragments/sidebar :: sidebar(active=${filter != null and filter.onlyWrong == true} ? 'review' : 'focus')}"></aside>
     <div class="shell-main">
         <th:block th:replace="~{fragments/topbar :: topbar}"></th:block>
 <main id="main-content" class="ed-page" tabindex="-1">
@@ -135,7 +135,14 @@
                     <dt>Интервал</dt><dd><span th:text="${reviewState.intervalDays()}">0</span> дн.</dd>
                     <dt>Ease factor</dt><dd th:text="${#numbers.formatDecimal(reviewState.easeFactor(), 1, 2)}">2.50</dd>
                     <dt>Следующее повторение</dt><dd th:text="${#dates.format(new java.util.Date(reviewState.nextReviewAt() * 1000), 'yyyy-MM-dd HH:mm')}">—</dd>
-                    <dt>Последний результат</dt><dd th:text="${reviewState.lastResult().name()}">NEW</dd>
+                    <dt>Последний результат</dt><dd th:switch="${reviewState.lastResult().name()}">
+                        <span th:case="'NEW'">Ещё не отвечали</span>
+                        <span th:case="'CORRECT'">Верно</span>
+                        <span th:case="'WRONG'">Неверно</span>
+                        <span th:case="'UNKNOWN'">Не знаю</span>
+                        <span th:case="'RESET'">Сброшен</span>
+                        <span th:case="*" th:text="${reviewState.lastResult().name()}">—</span>
+                    </dd>
                     <dt>Правильно / неправильно</dt><dd><span th:text="${reviewState.correctCount()}">0</span> / <span th:text="${reviewState.wrongCount()}">0</span></dd>
                 </dl>
             </details>
@@ -154,7 +161,7 @@
             <div th:replace="~{fragments/inline-alert :: inline-alert(id='interview-alert', hidden=true)}"></div>
             <div class="result-actions">
                 <a class="btn next-btn"
-                   th:with="nextBase=${filter != null and filter.onlyWrong}"
+                   th:with="nextBase=${filter != null and filter.onlyWrong == true}"
                    th:href="${nextBase}
                        ? @{/review(topic=${filter?.topic},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}
                        : @{/(topic=${filter?.topic},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}">
@@ -198,7 +205,7 @@
 </main>
     </div>
 </div>
-<nav th:replace="~{fragments/mobile-nav :: mobile-nav(active=${filter != null and filter.onlyWrong} ? 'review' : 'focus')}"></nav>
+<nav th:replace="~{fragments/mobile-nav :: mobile-nav(active=${filter != null and filter.onlyWrong == true} ? 'review' : 'focus')}"></nav>
 <th:block th:replace="~{fragments/shell-scripts :: shell-scripts}"></th:block>
 <!-- app.js перенесён в конец body (был внутри main между секциями — структурная
      аномалия, см. остальные страницы: focus-training/settings). Критика C31. -->
