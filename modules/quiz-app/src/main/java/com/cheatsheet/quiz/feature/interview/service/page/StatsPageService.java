@@ -77,7 +77,7 @@ public class StatsPageService {
                 questionStatsRepository.findTopicCoverageGaps(COVERAGE_GAP_THRESHOLD, COVERAGE_GAP_LIMIT);
         long nowEpoch = System.currentTimeMillis() / 1000L;
         List<QuestionStatsRepository.ForecastDay> forecast =
-                questionStatsRepository.findReviewForecast(nowEpoch, FORECAST_DAYS);
+                densifyForecast(questionStatsRepository.findReviewForecast(nowEpoch, FORECAST_DAYS));
         LearningMetrics metrics = learningMetricsService.compute();
         List<DifficultySlice> difficultyDistribution = buildDifficultyDistribution();
         String difficultyJson = writeJsonForHtml(difficultyDistribution, "stats_page_difficulty_json_failed");
@@ -207,6 +207,36 @@ public class StatsPageService {
             return normalized;
         }
         return normalized.substring(0, QUESTION_PREVIEW_MAX - 1).stripTrailing() + "…";
+    }
+
+    /**
+     * Разворачивает прогноз повторений в непрерывный ряд из {@link #FORECAST_DAYS} дней
+     * (сегодня … +6), заполняя дни без due-вопросов нулём. SQL (GROUP BY) отдаёт ТОЛЬКО дни
+     * с данными → без этого при разрежённой очереди рендерилась одна строка «Завтра N» с
+     * полосой во всю ширину (одинокое значение масштабируется к max=N), что читается как пик
+     * нагрузки, хотя это «N вопросов завтра, дальше пусто». Пустые дни рисуются пустым треком —
+     * так же честно, как «Дни без ответов — пустые столбики» в «Динамике точности».
+     *
+     * <p>Полностью пустая очередь (SQL вернул 0 строк) остаётся пустым списком → секция
+     * скрывается через {@code th:if}, а не показывает 7 плоских строк ни о чём.
+     */
+    private List<QuestionStatsRepository.ForecastDay> densifyForecast(
+            List<QuestionStatsRepository.ForecastDay> sparse) {
+        if (sparse == null || sparse.isEmpty()) {
+            return List.of();
+        }
+        Map<String, Long> byDay = new LinkedHashMap<>();
+        for (QuestionStatsRepository.ForecastDay day : sparse) {
+            byDay.merge(day.day(), day.count(), Long::sum);
+        }
+        List<QuestionStatsRepository.ForecastDay> dense = new ArrayList<>(FORECAST_DAYS);
+        LocalDate cursor = LocalDate.now();
+        DateTimeFormatter fmt = DateTimeFormatter.ISO_LOCAL_DATE;
+        for (int i = 0; i < FORECAST_DAYS; i++) {
+            String day = cursor.plusDays(i).format(fmt);
+            dense.add(new QuestionStatsRepository.ForecastDay(day, byDay.getOrDefault(day, 0L)));
+        }
+        return dense;
     }
 
     /**
