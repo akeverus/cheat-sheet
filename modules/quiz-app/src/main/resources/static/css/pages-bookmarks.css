@@ -83,6 +83,17 @@ html[data-design] .bookmarks-page .bookmark-item.no-note .bookmark-note-form tex
   height: 2.75rem;               /* одна строка: перебивает rows="3" (rows = пол, не потолок) */
   transition: height var(--duration-fast) var(--easing-default);
 }
+/* Карточки С заметкой: auto-grow по контенту (bookmarks.js). Короткая заметка
+   («Повторить equals/hashCode») больше не резервирует ~118px как rows="3" — JS
+   ужимает к высоте текста, растит при вводе. Понижаем min-height, чтобы JS мог
+   ужать до одной строки; без JS rows="3" остаётся разумным дефолтом. */
+html[data-design] .bookmarks-page .bookmark-item.has-note .bookmark-note-form textarea {
+  min-height: 2.75rem;
+  /* Без transition на height: auto-grow измеряет контент через height:0 +
+     scrollHeight, а анимация height не даёт боксу синхронно схлопнуться →
+     scrollHeight застревает на старой высоте и сжатие ломается. Мгновенный
+     ресайз — стандарт для авто-растущих textarea. */
+}
 html[data-design] .bookmarks-page .bookmark-item.no-note .bookmark-note-form:focus-within textarea {
   height: 7.4rem;                /* раскрытие под ~3 строки, как у карточек с заметкой */
 }

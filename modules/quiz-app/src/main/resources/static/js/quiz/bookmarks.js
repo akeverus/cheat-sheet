@@ -4,6 +4,24 @@ import { clearInlineAlert, setInlineAlert } from '../ui/alerts.js';
 
 let bookmarksBound = false;
 
+/**
+ * Auto-grow заметки закладки под её содержимое. Серверный rows="3" резервирует
+ * ~118px даже под однострочную заметку → список тонет в пустоте. Подгоняем
+ * высоту к тексту (короткая — компактна, длинная — растёт). Только для карточек
+ * .has-note: пустые (.no-note) свёрнуты CSS-ом через :focus-within (не трогаем,
+ * иначе inline-height перебьёт элегантный collapse). box-sizing:border-box →
+ * scrollHeight не включает border, добавляем его, чтобы не появился микро-скролл.
+ */
+function autosizeNote(textarea) {
+  // height:'0' (не 'auto') — у textarea 'auto' резолвится в высоту по атрибуту
+  // rows="3", поэтому scrollHeight застыл бы на 3 строках; обнуление даёт
+  // scrollHeight = реальная высота контента. min-height (CSS) держит нижний пол.
+  textarea.style.height = '0px';
+  const cs = getComputedStyle(textarea);
+  const border = parseFloat(cs.borderTopWidth || 0) + parseFloat(cs.borderBottomWidth || 0);
+  textarea.style.height = (textarea.scrollHeight + border) + 'px';
+}
+
 function setStatus(form, message, isError) {
   const status = form.querySelector('.bookmark-save-status');
   if (!status) return;
@@ -36,6 +54,11 @@ async function saveNote(form) {
     const data = await resp.json();
     textarea.value = data.note == null ? '' : data.note;
     const item = form.closest('.bookmark-item');
+    // Пересчитать высоту под нормализованный сервером текст (только has-note —
+    // no-note держит CSS-collapse, inline-height его бы сломал).
+    if (item?.classList.contains('has-note')) {
+      autosizeNote(textarea);
+    }
     const noteStatus = item?.querySelector('.bookmark-note-status');
     if (noteStatus) {
       noteStatus.textContent = data.note ? 'есть заметка' : 'без заметки';
@@ -87,6 +110,13 @@ export function initBookmarksPage() {
       e.preventDefault();
       void saveNote(form);
     });
+  });
+
+  // Auto-grow заметок с содержимым (см. autosizeNote). no-note исключены —
+  // их сжатие/раскрытие держит CSS :focus-within.
+  document.querySelectorAll('.bookmark-item.has-note .bookmark-note-form textarea[name="note"]').forEach((textarea) => {
+    autosizeNote(textarea);
+    textarea.addEventListener('input', () => autosizeNote(textarea));
   });
 
   document.querySelectorAll('.bookmark-remove-form').forEach((form) => {
