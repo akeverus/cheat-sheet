@@ -263,17 +263,52 @@ html[data-design] .stats-page .stats-next-action {
   display: grid;
   gap: var(--space-1);
   min-width: 0;
-  padding: var(--space-4);
+  position: relative;
+  /* BASE-05 (редиз-программа iter-5): резерв справа под стрелку-афорданс. Карточки —
+     рабочие ссылки (@{/}, onlyWrong, weakTopics), но без is-recommended читались как
+     статичные stat-панели. Постоянная стрелка + accent-hover делают весь блок «Что
+     делать дальше» очевидно кликабельным (принцип «аналитика → действие», §29). */
+  padding: var(--space-4) calc(var(--space-4) + var(--space-6)) var(--space-4) var(--space-4);
   border: var(--rule-weight) solid var(--color-border-primary);
   border-radius: var(--border-radius-md);
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
   text-decoration: none;
+  transition: border-color var(--duration-fast) var(--easing-default),
+              background var(--duration-fast) var(--easing-default),
+              transform var(--duration-fast) var(--easing-default);
 }
 
-html[data-design] .stats-page .stats-next-action:hover {
-  border-color: var(--color-text-secondary);
+/* Стрелка-указатель: декоративный псевдоэлемент (в a11y-дерево не попадает),
+   роль ссылки уже несёт сам <a>. В покое — приглушённая, на hover/focus — accent+сдвиг. */
+html[data-design] .stats-page .stats-next-action::after {
+  content: "\2192"; /* → */
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-md);
+  line-height: 1;
+  color: var(--color-text-secondary);
+  transition: transform var(--duration-fast) var(--easing-default),
+              color var(--duration-fast) var(--easing-default);
+}
+
+html[data-design] .stats-page .stats-next-action:hover,
+html[data-design] .stats-page .stats-next-action:focus-visible {
+  border-color: var(--color-accent-primary);
   background: var(--color-bg-tertiary);
+  transform: translateY(-2px);
+}
+
+html[data-design] .stats-page .stats-next-action:hover::after,
+html[data-design] .stats-page .stats-next-action:focus-visible::after {
+  color: var(--color-accent-strong);
+  transform: translateX(3px);
+}
+
+html[data-design] .stats-page .stats-next-action.is-recommended::after {
+  color: var(--color-accent-strong);
 }
 
 html[data-design] .stats-page .stats-next-action.is-recommended {
