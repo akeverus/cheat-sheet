@@ -57,7 +57,14 @@
      слева, sticky при прокрутке — наполняет правый жёлоб реальным контентом. */
   html[data-design] .focus-page .focus-training:has(.session-progress-track) .focus-aside {
     grid-column: 2;
-    grid-row: 1;
+    /* Спаним ВСЕ неявные ряды (не только row 1): иначе рельс раздувает ряд 1 до
+       своей высоты (~135px), а мета-бейджи с align-items:start виснут вверху с
+       мёртвым провалом под ними, топбар вопроса уезжает вниз. Спан 99 также
+       занимает col-2 целиком, поэтому display:contents-дети .focus-rail
+       (тема/политика повторений) не авто-раскладываются в правый жёлоб под
+       сессионную карту, а падают в левую читательскую колонку к вопросу.
+       (-1 тут не работает: ряды неявные, grid-template-rows: none.) */
+    grid-row: 1 / span 99;
     align-self: start;
     position: sticky;
     top: var(--space-6);
