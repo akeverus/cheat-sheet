@@ -59,7 +59,7 @@
   function renderCompactTopicCards(topicStats, el1, el2, progressFallback, accuracyFallback) {
     if (el1) el1.classList.add('hidden');
     if (el2) el2.classList.add('hidden');
-    function fill(fallback, title) {
+    function fill(fallback) {
       if (!fallback) return;
       fallback.classList.remove('hidden');
       var rows = topicStats.map(function (t) {
@@ -80,10 +80,13 @@
             : '')
           + '</div>';
       }).join('');
-      fallback.innerHTML = '<p class="muted tiny">' + title + '</p><div class="topic-compact-list">' + rows + '</div>';
+      // BASE-15: НЕ дублируем заголовок секции — его уже даёт H2 карточки
+      // (stats.html «Прогресс по темам» / «Точность по темам»). Прежний
+      // <p class="muted tiny">${title}</p> печатал ту же строку вторично.
+      fallback.innerHTML = '<div class="topic-compact-list">' + rows + '</div>';
     }
-    fill(progressFallback, 'Прогресс по темам');
-    fill(accuracyFallback, 'Точность по темам');
+    fill(progressFallback);
+    fill(accuracyFallback);
     document.querySelectorAll('.topic-compact-bar-fill[data-bar-pct]').forEach(function (el) {
       var pct = Number(el.getAttribute('data-bar-pct'));
       if (!Number.isFinite(pct)) return;
