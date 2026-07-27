@@ -168,6 +168,15 @@ public class StatsPageService {
         if (total == 0) {
             return List.of();
         }
+        // Один уровень на весь банк — не распределение, а константа: донат из
+        // единственной 100%-доли не несёт информации, но выглядит «распределением»,
+        // которого нет (сейчас все вопросы — MEDIUM). Скрываем так же, как пустой
+        // случай выше — честная аналитика не рисует мнимое распределение. Как только
+        // появится реальная вариативность (≥2 уровня с данными), донат вернётся сам.
+        long nonZeroLevels = byLevel.values().stream().filter(count -> count > 0).count();
+        if (nonZeroLevels <= 1) {
+            return List.of();
+        }
         List<DifficultySlice> slices = new ArrayList<>();
         for (Map.Entry<String, String> entry : DIFFICULTY_LABELS.entrySet()) {
             long count = byLevel.getOrDefault(entry.getKey(), 0L);
