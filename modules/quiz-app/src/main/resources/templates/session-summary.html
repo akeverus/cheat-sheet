@@ -18,7 +18,8 @@
      из duration/totalQuestions (готового поля нет, но арифметика честная). -->
 <section class="card summary-hero"
          th:with="accInt=${#numbers.formatDecimal(summary.accuracy, 1, 0)},
-                  summaryTone=${summary.accuracy >= 80 ? 'great' : (summary.accuracy >= 50 ? 'ok' : 'low')}"
+                  noAnswers=${summary.totalQuestions == 0},
+                  summaryTone=${noAnswers ? 'none' : (summary.accuracy >= 80 ? 'great' : (summary.accuracy >= 50 ? 'ok' : 'low'))}"
          th:attr="data-summary-tone=${summaryTone}">
     <!-- Заголовок карточки счёта: скрыт визуально (ring-число + метки несут смысл
          на экране), но даёт SR-навигации по заголовкам якорь на главный результат.
@@ -26,15 +27,15 @@
          выстраиваются под ним в корректную иерархию (страница получает ровно один h1). -->
     <h1 class="summary-section-title visually-hidden">Результат сессии</h1>
     <div class="score-ring"
-         th:classappend="${summary.accuracy >= 80} ? ' ring-success' : (${summary.accuracy >= 50} ? ' ring-warning' : ' ring-danger')">
+         th:classappend="${noAnswers} ? ' ring-neutral' : (${summary.accuracy >= 80} ? ' ring-success' : (${summary.accuracy >= 50} ? ' ring-warning' : ' ring-danger'))">
         <svg class="score-ring-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
             <circle class="score-ring-track" cx="60" cy="60" r="52"></circle>
             <circle class="score-ring-value" cx="60" cy="60" r="52"
                     th:attr="stroke-dasharray=${#numbers.formatDecimal(summary.accuracy * 3.26726, 1, 2) + ' 400'}"></circle>
         </svg>
         <strong class="summary-score-value"
-                th:classappend="${summary.accuracy >= 80} ? ' text-success' : (${summary.accuracy >= 50} ? ' text-warning' : ' text-danger')"
-                th:text="${summary.accuracyFormatted + '%'}">0%</strong>
+                th:classappend="${noAnswers} ? ' text-muted' : (${summary.accuracy >= 80} ? ' text-success' : (${summary.accuracy >= 50} ? ' text-warning' : ' text-danger'))"
+                th:text="${noAnswers} ? '—' : ${summary.accuracyFormatted + '%'}">0%</strong>
     </div>
     <div class="summary-hero-body">
         <span class="badge summary-mode-line" th:text="${@modeUtils.displayName(summary.mode)}">Режим</span>
@@ -47,7 +48,7 @@
         <p class="summary-headline"
            th:with="needs=${summary.wrongCount + summary.unknownCount},
                     w=${needs % 10 == 1 and needs % 100 != 11 ? 'вопрос требует' : ((needs % 10 >= 2 and needs % 10 <= 4) and (needs % 100 &lt; 12 or needs % 100 &gt; 14) ? 'вопроса требуют' : 'вопросов требуют')}"
-           th:text="${needs > 0 ? needs + ' ' + w + ' разбора' : 'Без ошибок — отличный результат'}">Итог</p>
+           th:text="${noAnswers ? 'Сессия завершена без ответов' : (needs > 0 ? needs + ' ' + w + ' разбора' : 'Без ошибок — отличный результат')}">Итог</p>
         <!-- Этап 5 (handoff-3): 4 KPI сессии — Опыт / Время / Ошибки / Серия.
              Опыт и Серия — из реальной геймификации (summary.gamification, XP
              суммирован из истории ответов). Когда геймификации нет (null) —
