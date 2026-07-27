@@ -83,8 +83,14 @@ public class MvcModelAttributeMapper {
         // флешкарту при любом session-mode. Чип/подсказка должны отражать именно
         // его, иначе над флешкардой висело «Выбери один вариант» (MCQ-копирайт).
         boolean flashcard = pageState.flashcardMode();
-        model.addAttribute("focusModeChipText", resolveFocusModeChipText(reviewMode, mode, flashcard));
-        model.addAttribute("focusModeHintText", resolveFocusModeHintText(reviewMode, mode, flashcard));
+        // STUDY проходит две под-фазы: LEARN (читаем эталон) и QUIZ (отвечаем на
+        // MCQ после /study-confirm). Чип/подсказка обязаны отражать под-фазу —
+        // иначе на этапе проверки над вариантами висит «Изучение: разберись…»,
+        // инструктируя сделать уже сделанное (та же MCQ-копирайт-рассинхронизация,
+        // что чинилась для флешкарты выше).
+        boolean studyLearnPhase = pageState.studyLearnPhase();
+        model.addAttribute("focusModeChipText", resolveFocusModeChipText(reviewMode, mode, flashcard, studyLearnPhase));
+        model.addAttribute("focusModeHintText", resolveFocusModeHintText(reviewMode, mode, flashcard, studyLearnPhase));
         model.addAttribute("focusEmptyRetryHref", resolveFocusEmptyRetryHref(reviewMode, mode));
         model.addAttribute("focusEmptyRetryText", resolveFocusEmptyRetryText(reviewMode, mode));
     }
@@ -98,7 +104,7 @@ public class MvcModelAttributeMapper {
      * review/flashcard над session-mode (flashcard форсится при вопросе без
      * вариантов независимо от режима сессии).
      */
-    private String resolveFocusModeChipText(boolean reviewMode, InterviewMode mode, boolean flashcard) {
+    private String resolveFocusModeChipText(boolean reviewMode, InterviewMode mode, boolean flashcard, boolean studyLearnPhase) {
         if (reviewMode) {
             return "Повтор ошибок";
         }
@@ -111,10 +117,16 @@ public class MvcModelAttributeMapper {
         if (mode == null) {
             return "Тренировка";
         }
+        // STUDY в QUIZ-под-фазе (эталон изучен, идёт проверка вариантами) — чип
+        // отражает шаг проверки, а не «Изучение» (mode-display), которое течёт из
+        // общего fallthrough и лжёт про текущую стадию.
+        if (mode == InterviewMode.STUDY && !studyLearnPhase) {
+            return "Проверка";
+        }
         return modeUtils.displayName(mode);
     }
 
-    private String resolveFocusModeHintText(boolean reviewMode, InterviewMode mode, boolean flashcard) {
+    private String resolveFocusModeHintText(boolean reviewMode, InterviewMode mode, boolean flashcard, boolean studyLearnPhase) {
         if (reviewMode) {
             return "Режим review: отвечай на вопросы с ошибками.";
         }
@@ -131,7 +143,10 @@ public class MvcModelAttributeMapper {
             return "Флешкарты: сначала вспомни ответ, затем раскрой и оцени себя.";
         }
         if (mode == InterviewMode.STUDY) {
-            return "Изучение: разберись с материалом, затем переходи к проверке.";
+            // Под-фаза: LEARN направляет к изучению, QUIZ — к выбору варианта.
+            return studyLearnPhase
+                    ? "Изучение: разберись с материалом, затем переходи к проверке."
+                    : "Проверь себя: выбери верный вариант — разбор появится после ответа.";
         }
         return "Выбери один вариант. Проверка и разбор идут по шагам.";
     }

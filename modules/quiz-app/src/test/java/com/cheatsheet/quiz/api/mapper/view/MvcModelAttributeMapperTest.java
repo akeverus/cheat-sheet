@@ -140,6 +140,18 @@ class MvcModelAttributeMapperTest {
                 .isEqualTo("Изучение: разберись с материалом, затем переходи к проверке.");
         assertThat(studyModel.getAttribute("focusEmptyRetryHref")).isEqualTo("/training?mode=STUDY");
         assertThat(studyModel.getAttribute("focusEmptyRetryText")).isEqualTo("Обновить изучение");
+
+        // STUDY QUIZ-под-фаза (после /study-confirm): studyLearnPhase=false → чип и
+        // подсказка отражают проверку, а не изучение (иначе над MCQ висит инструкция
+        // «разберись с материалом», предлагая сделать уже сделанное).
+        FocusTrainingPageService.FocusPageState studyQuizState = studyState.toBuilder()
+                .studyLearnPhase(false)
+                .build();
+        ExtendedModelMap studyQuizModel = new ExtendedModelMap();
+        mapper.applyFocusPageState(studyQuizModel, studyQuizState, false);
+        assertThat(studyQuizModel.getAttribute("focusModeChipText")).isEqualTo("Проверка");
+        assertThat(studyQuizModel.getAttribute("focusModeHintText"))
+                .isEqualTo("Проверь себя: выбери верный вариант — разбор появится после ответа.");
     }
 
     @Test
