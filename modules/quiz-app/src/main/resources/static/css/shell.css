@@ -607,7 +607,11 @@ html[data-design] .score-ring {
   display: grid;
   place-items: center;
 }
-html[data-design] .score-ring-svg { grid-area: 1 / 1; width: 100%; height: 100%; transform: rotate(-90deg); }
+/* SVG заполняет кольцо через absolute (родитель .score-ring — position:relative).
+   Прежний grid-area+height:100% схлопывал SVG в 0 по высоте: процентная высота
+   SVG внутри auto-размерного grid-трека (place-items:center) не разрешается —
+   дуга не рисовалась вовсе. Absolute-fill декуплирует от размера трека. */
+html[data-design] .score-ring-svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
 html[data-design] .score-ring-track {
   fill: none;
   stroke: var(--color-border-secondary);
