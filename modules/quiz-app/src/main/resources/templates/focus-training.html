@@ -259,6 +259,7 @@
             <!-- Активная recall-сессия (FLASHCARD / typed-family): серверный reveal двигает SM-2 фазу. -->
             <div th:if="${sessionRecallMode and !flashcardRevealed and typedInputMode}">
                 <form method="post" th:action="@{/flashcard-reveal}" class="typed-answer-input"
+                      th:data-question-id="${current.question.id}"
                       th:classappend="${codeChallengeMode} ? ' is-code' : ''">
                     <label class="field">
                         <span class="field-label" th:text="${codeChallengeMode} ? 'Твой код' : (${mode != null and mode.name() == 'INTERVIEW'} ? 'Заметки к ответу' : 'Твой ответ')">Твой ответ</span>
@@ -273,6 +274,19 @@
                 </form>
             </div>
             <div th:if="${sessionRecallMode and flashcardRevealed}" class="flashcard-answer">
+                <!-- Typed-recall / code-challenge / interview: эхо ответа пользователя
+                     над эталоном для само-сверки («напиши → сравни»). Текст живёт в
+                     sessionStorage (сохраняется JS при сабмите reveal-формы, т.к.
+                     серверный /flashcard-reveal его не персистит) и подставляется
+                     initRecallTypedEcho по совпадению data-question-id. По умолчанию
+                     hidden: без JS или при пустом вводе блок не появляется (PE). -->
+                <div th:if="${typedInputMode}" class="recall-your-answer" hidden
+                     th:classappend="${codeChallengeMode} ? ' is-code' : ''"
+                     th:data-question-id="${current.question.id}">
+                    <div class="recall-answer-heading" th:text="${codeChallengeMode} ? 'Твой код' : 'Твой ответ'">Твой ответ</div>
+                    <pre class="recall-your-answer-body"></pre>
+                </div>
+                <div th:if="${typedInputMode}" class="recall-answer-heading recall-etalon-heading">Эталон</div>
                 <div class="answer markdown-content" th:utext="${studyAnswerHtml}"></div>
                 <div class="flashcard-grade-buttons" role="group" aria-labelledby="flashcard-grade-label">
                     <span class="flashcard-grade-label" id="flashcard-grade-label">Насколько уверенно ты ответил?</span>

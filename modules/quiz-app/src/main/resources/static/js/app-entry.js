@@ -47,7 +47,7 @@ async function loadSettingsModules() {
 
 async function loadQuizModules() {
   const [
-    { initFlashcardShortcuts, initBrowseFlashcardReveal },
+    { initFlashcardShortcuts, initBrowseFlashcardReveal, initRecallTypedEcho },
     { initInterviewForm }
   ] = await Promise.all([
     import('./quiz/flashcard.js'),
@@ -55,6 +55,7 @@ async function loadQuizModules() {
   ]);
   initBrowseFlashcardReveal();
   initFlashcardShortcuts();
+  initRecallTypedEcho();
   initInterviewForm();
 }
 

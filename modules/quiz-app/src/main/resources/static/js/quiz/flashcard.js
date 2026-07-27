@@ -2,6 +2,9 @@ import { renderDynamicContent } from '../content/dynamic-content.js';
 
 let browseBound = false;
 let flashShortcutsBound = false;
+let recallEchoBound = false;
+
+const RECALL_ECHO_KEY = 'recall-typed-answer';
 
 export function initBrowseFlashcardReveal() {
   if (browseBound) return;
@@ -18,6 +21,64 @@ export function initBrowseFlashcardReveal() {
       renderDynamicContent(answer);
     }
   });
+}
+
+/**
+ * Typed-recall / code-challenge / interview: серверный /flashcard-reveal НЕ
+ * персистит введённый ответ, поэтому после раскрытия эталона пользователю нечего
+ * было бы сравнить со своим ответом. Сохраняем его в sessionStorage при сабмите
+ * reveal-формы и подставляем в блок «Твой ответ» на раскрытой странице по
+ * совпадению questionId. Чистим после оценки, чтобы не протёк в следующий вопрос.
+ * Полностью клиентский, без бэкенд-состояния (progressive enhancement).
+ */
+export function initRecallTypedEcho() {
+  if (recallEchoBound) return;
+  recallEchoBound = true;
+
+  const readStore = () => {
+    try { return JSON.parse(sessionStorage.getItem(RECALL_ECHO_KEY) || 'null'); }
+    catch (e) { return null; }
+  };
+
+  // 1) Захват ответа при сабмите reveal-формы (до навигации).
+  const typedForm = document.querySelector('form.typed-answer-input');
+  if (typedForm) {
+    typedForm.addEventListener('submit', () => {
+      const qid = typedForm.getAttribute('data-question-id');
+      const textarea = typedForm.querySelector('textarea[name="typedAnswer"]');
+      const text = textarea ? textarea.value : '';
+      if (!qid || !text.trim()) return;
+      try { sessionStorage.setItem(RECALL_ECHO_KEY, JSON.stringify({ id: qid, text })); }
+      catch (e) { /* приватный режим / переполнение — тихо пропускаем */ }
+    });
+  }
+
+  // 2) Эхо на раскрытой странице, если сохранённый ответ относится к этому вопросу.
+  const echo = document.querySelector('.recall-your-answer');
+  if (echo) {
+    const stored = readStore();
+    const curId = echo.getAttribute('data-question-id');
+    const hasEcho = stored && String(stored.id) === String(curId) && stored.text && stored.text.trim();
+    if (hasEcho) {
+      const body = echo.querySelector('.recall-your-answer-body');
+      if (body) body.textContent = stored.text; // textContent → экранирование, без XSS
+      echo.hidden = false;
+    } else {
+      // Ввод пропущен → сравнивать не с чем: убираем одинокую метку «Эталон»,
+      // чтобы раскрытый ответ выглядел как обычная флешкарта, без висящего лейбла.
+      const etalonHeading = document.querySelector('.recall-etalon-heading');
+      if (etalonHeading) etalonHeading.hidden = true;
+    }
+  }
+
+  // 3) Очистка после оценки — ответ отыграл свою роль, дальше он лишний.
+  const gradeForm = document.querySelector('.flashcard-grade-buttons form');
+  if (gradeForm) {
+    gradeForm.addEventListener('submit', () => {
+      try { sessionStorage.removeItem(RECALL_ECHO_KEY); }
+      catch (e) { /* no-op */ }
+    });
+  }
 }
 
 export function initFlashcardShortcuts() {
