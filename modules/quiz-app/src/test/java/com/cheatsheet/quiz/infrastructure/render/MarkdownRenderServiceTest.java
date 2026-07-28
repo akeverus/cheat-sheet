@@ -85,6 +85,22 @@ class MarkdownRenderServiceTest {
     }
 
     @Test
+    void escapesBrTagInsideMermaidSoLineBreaksSurviveTextContent() {
+        // <br/> в подписях узлов mermaid обязан доехать до клиента ЛИТЕРАЛЬНЫМ текстом:
+        // mermaid-renderer.js берёт источник через el.textContent, а реальный DOM-<br>
+        // даёт пустую строку → «Atomicity<br/>Всё» схлопывалось в «AtomicityВсё».
+        // Эскейпим в сущность &lt;br/&gt; — mermaid сам рисует перенос.
+        String html = service.toHtml("```mermaid\nflowchart TD\n  T --> A[Atomicity<br/>Всё или ничего]\n```");
+
+        assertThat(html).contains("<div class=\"mermaid\">");
+        assertThat(html).contains("Atomicity&lt;br/&gt;Всё или ничего");
+        // Реального <br>-элемента в источнике диаграммы быть не должно — иначе
+        // textContent снова схлопнет подпись.
+        assertThat(html).doesNotContain("<br>");
+        assertThat(html).doesNotContain("<br/>");
+    }
+
+    @Test
     void rendersGfmTableAsHtmlTable() {
         // Регрессия: без TablesExtension flexmark схлопывал строки таблицы в <p>,
         // и пользователь видел сырой pipe-текст в пояснениях/чек-листах.

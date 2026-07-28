@@ -105,6 +105,10 @@ public class MarkdownRenderService {
     private static final java.util.regex.Pattern MERMAID_BLOCK =
             java.util.regex.Pattern.compile("```mermaid\\s*\n([\\s\\S]*?)```", java.util.regex.Pattern.MULTILINE);
 
+    /** {@code <br>} / {@code <br/>} / {@code <br />} внутри mermaid-подписей (любой регистр). */
+    private static final java.util.regex.Pattern MERMAID_BR =
+            java.util.regex.Pattern.compile("<\\s*br\\s*/?\\s*>", java.util.regex.Pattern.CASE_INSENSITIVE);
+
     /**
      * Конвертирует markdown в HTML, санитизированный для безопасного отображения (th:utext / innerHTML).
      * Удаляются script, iframe, event-атрибуты и опасные теги.
@@ -223,8 +227,19 @@ public class MarkdownRenderService {
 
     /** Заменяет ```mermaid ... ``` блоки на &lt;div class="mermaid"&gt; для рендеринга mermaid.js. */
     private String preprocessMermaid(String markdown) {
-        return MERMAID_BLOCK.matcher(markdown).replaceAll(
-                mr -> "\n<div class=\"mermaid\">\n" + java.util.regex.Matcher.quoteReplacement(mr.group(1).trim()) + "\n</div>\n\n");
+        return MERMAID_BLOCK.matcher(markdown).replaceAll(mr -> {
+            // Источник mermaid кладётся в <div class="mermaid"> как ТЕКСТ, но <br/> в
+            // подписях узлов иначе распарсится flexmark/jsoup как реальный DOM-элемент
+            // <br>. Клиент (mermaid-renderer.js) читает источник через el.textContent,
+            // а <br>-элемент даёт пустую строку → «Atomicity<br/>Всё или ничего»
+            // рендерилось как «AtomicityВсё или ничего» (перенос строки терялся во всех
+            // диаграммах тела ответа: 2513 узлов в 181 файле). Эскейпим ТОЛЬКО <br> в
+            // сущность — он доезжает до mermaid литеральным текстом, и mermaid сам рисует
+            // перенос. Прочие теги (в т.ч. <script>) идут прежним путём: их вырезает
+            // jsoup-санитайзер в toHtml, security-инвариант сохранён.
+            String source = MERMAID_BR.matcher(mr.group(1).trim()).replaceAll("&lt;br/&gt;");
+            return "\n<div class=\"mermaid\">\n" + java.util.regex.Matcher.quoteReplacement(source) + "\n</div>\n\n";
+        });
     }
 
     /**
