@@ -273,7 +273,15 @@ html[data-design] .focus-question {
 }
 
 /* Код-блок — нативный <details> (PE: раскрытие без JS) */
-html[data-design] .question-code-wrap {
+/* D4-batch2 (анкер-фаза): question-code + diagram кластеры — focus-only (код-блок и
+   диаграмма УСЛОВИЯ вопроса рендерятся в .focus-training; в result.html код идёт через
+   .result-page .question-code / pages-result, диаграммы там нет — completeness sweep).
+   Заякорено под .focus-page. Каскад-нейтрально: pixel-fx (@pixel) выигрывает; shell
+   .content-box-оверрайды (@shell, ниже) @pages и так бьёт; pages-layout print
+   `display:none !important` (@media print) иммунен к спец-бампу; pages-result scope
+   .result-page отдельный. .question-code-summary .ed-icon оставлен focus-only оверрайд
+   (перебивает @components-базу .ed-icon по слою — сохранено). */
+html[data-design] .focus-page .question-code-wrap {
   margin-bottom: var(--space-5);
   /* pre/white-space:pre иначе задаёт min-content по самой длинной строке
      (~480px) и распирает .ed-page / mobile-nav на 390px (live: scrollWidth 530). */
@@ -281,26 +289,26 @@ html[data-design] .question-code-wrap {
   min-width: 0;
   overflow-x: auto;
 }
-html[data-design] .question-code-wrap .code-copy-wrap,
-html[data-design] .question-code-wrap .question-code-details,
-html[data-design] .question-code-wrap pre.question-code,
-html[data-design] .question-code-wrap pre {
+html[data-design] .focus-page .question-code-wrap .code-copy-wrap,
+html[data-design] .focus-page .question-code-wrap .question-code-details,
+html[data-design] .focus-page .question-code-wrap pre.question-code,
+html[data-design] .focus-page .question-code-wrap pre {
   max-width: 100%;
   min-width: 0;
 }
-html[data-design] .question-code-wrap pre.question-code,
-html[data-design] .question-code-wrap pre {
+html[data-design] .focus-page .question-code-wrap pre.question-code,
+html[data-design] .focus-page .question-code-wrap pre {
   overflow-x: auto;
 }
 /* Зазор между summary «Пример кода» и код-блоком. Целим ОБА случая: без JS <pre> —
    прямой потомок details; с JS app.js оборачивает его в .code-copy-wrap (тогда прямой
    потомок details = wrap, а старый `> pre` не матчил → зазор пропадал, CLEAN-01B). */
-html[data-design] .question-code-details > pre,
-html[data-design] .question-code-details > .code-copy-wrap { margin-top: var(--space-3); }
+html[data-design] .focus-page .question-code-details > pre,
+html[data-design] .focus-page .question-code-details > .code-copy-wrap { margin-top: var(--space-3); }
 /* #7: summary — код-аффорданс (mono-лейбл + иконка ⟨⟩), НЕ нейтральная кнопка.
    Читается как заголовок код-блока, а не «необязательное действие». Гасим
    нативный треугольник; состояние раскрытия — ▸/▾ (как в .sm2-details). */
-html[data-design] .question-code-summary {
+html[data-design] .focus-page .question-code-summary {
   list-style: none;
   display: inline-flex;
   align-items: center;
@@ -312,11 +320,11 @@ html[data-design] .question-code-summary {
   text-transform: uppercase;
   color: var(--color-text-secondary);
 }
-html[data-design] .question-code-summary:hover { color: var(--color-text-primary); }
-html[data-design] .question-code-summary .ed-icon { width: 1em; height: 1em; color: var(--color-text-tertiary); }
-html[data-design] .question-code-summary::-webkit-details-marker { display: none; }
-html[data-design] .question-code-summary::after { content: "▸"; color: var(--color-text-tertiary); font-size: var(--font-size-sm); margin-inline-start: auto; }
-html[data-design] .question-code-details[open] .question-code-summary::after { content: "▾"; }
+html[data-design] .focus-page .question-code-summary:hover { color: var(--color-text-primary); }
+html[data-design] .focus-page .question-code-summary .ed-icon { width: 1em; height: 1em; color: var(--color-text-tertiary); }
+html[data-design] .focus-page .question-code-summary::-webkit-details-marker { display: none; }
+html[data-design] .focus-page .question-code-summary::after { content: "▸"; color: var(--color-text-tertiary); font-size: var(--font-size-sm); margin-inline-start: auto; }
+html[data-design] .focus-page .question-code-details[open] .question-code-summary::after { content: "▾"; }
 
 /* Варианты MCQ — editorial-строки с буквенным маркером */
 html[data-design] #interview-options { counter-reset: opt; display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-6); max-width: var(--max-width-options); }
@@ -787,40 +795,40 @@ html[data-design] #extra-analysis-toggle[aria-disabled="true"] { opacity: 0.45; 
    ломает его только при выходе за строку. */
 html[data-design] .focus-question,
 html[data-design] #interview-options label { overflow-wrap: break-word; }
-html[data-design] .question-diagram { overflow-x: auto; }
+html[data-design] .focus-page .question-diagram { overflow-x: auto; }
 /* P0.2: diagram_mermaid условия вопроса рендерится вне .markdown-content
    (прямой .question-diagram в .focus-training), поэтому дублируем hide-until-rendered
    и центрирование — иначе до отрисовки мелькает сырой `graph LR ...`. */
-html[data-design] .question-diagram .mermaid:not([data-rendered="true"]) { visibility: hidden; }
-html[data-design] .question-diagram .mermaid { display: block; margin: var(--space-4) 0; overflow-x: auto; text-align: center; }
-html[data-design] .question-diagram .mermaid svg { max-width: 100%; height: auto; transition: transform 120ms ease; }
-html[data-design] .code-toolbar {
+html[data-design] .focus-page .question-diagram .mermaid:not([data-rendered="true"]) { visibility: hidden; }
+html[data-design] .focus-page .question-diagram .mermaid { display: block; margin: var(--space-4) 0; overflow-x: auto; text-align: center; }
+html[data-design] .focus-page .question-diagram .mermaid svg { max-width: 100%; height: auto; transition: transform 120ms ease; }
+html[data-design] .focus-page .code-toolbar {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
   gap: var(--space-2); margin-bottom: var(--space-2);
 }
-html[data-design] .code-toolbar-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); }
-html[data-design] .question-code-wrap.is-code-wrap pre,
-html[data-design] .question-code-wrap.is-code-wrap code {
+html[data-design] .focus-page .code-toolbar-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+html[data-design] .focus-page .question-code-wrap.is-code-wrap pre,
+html[data-design] .focus-page .question-code-wrap.is-code-wrap code {
   white-space: pre-wrap; word-break: break-word;
 }
-html[data-design] .question-code-wrap:fullscreen {
+html[data-design] .focus-page .question-code-wrap:fullscreen {
   padding: var(--space-4); background: var(--color-bg-primary); overflow: auto;
 }
-html[data-design] .diagram-toolbar-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); }
-html[data-design] .diagram-toolbar-actions .diagram-action {
+html[data-design] .focus-page .diagram-toolbar-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+html[data-design] .focus-page .diagram-toolbar-actions .diagram-action {
   min-height: 32px; padding: 0.35rem 0.6rem; font-size: var(--font-size-sm);
 }
-html[data-design] .diagram-viewport {
+html[data-design] .focus-page .diagram-viewport {
   overflow: auto; max-height: min(70vh, 640px); padding: var(--space-2);
   background: var(--color-bg-tertiary);
   cursor: grab;
   touch-action: none;
 }
-html[data-design] .diagram-viewport.is-panning { cursor: grabbing; user-select: none; }
-html[data-design] .question-diagram:fullscreen {
+html[data-design] .focus-page .diagram-viewport.is-panning { cursor: grabbing; user-select: none; }
+html[data-design] .focus-page .question-diagram:fullscreen {
   padding: var(--space-4); background: var(--color-bg-primary);
 }
-html[data-design] .question-diagram:fullscreen .diagram-viewport { max-height: none; }
+html[data-design] .focus-page .question-diagram:fullscreen .diagram-viewport { max-height: none; }
 
 /* Пост-ответная зона. `.result-zone-head` (линейка-разделитель) вынесена в
    components-answer.css (@layer components): общая — рендерится и на result.html (D2d).
