@@ -104,8 +104,9 @@ global            print.css (~108, @media print, always-loaded)
   - `.{page}-page`-якорь (точный гейт): stats=**5** unanchored (2 control-focus + 3 чужих `.settings-page`), settings=**15** (кластер content-tabs + хвосты); summary/bookmarks/error/login=**0** (уже scoped).
   - семантический якорь (worklist, не финальный leak): focus=187, result=69 — требуют per-селектор классификации в Волне 3. Кросс-страничные корни (`.options` focus+result, `.today-*` focus+settings, `.question-materials`) намеренно НЕ в `EXCLUSIVE_ROOTS` → всплывают как unanchored → это сигнал «выносить в общий компонент».
 
-- **Волна 1 — `pages-stats` (leak=4). Эталонный quick win.**
-  Вынести 4 протекающих правила (control-focus → `components-controls`; чужие `.settings-page` → `pages-settings`). Проверить leak=0. `th:if page==stats`. Скрин stats + одна не-stats страница (что ничего не потеряно), dark+light. → ~735 строк долой с каждой не-stats страницы.
+- **Волна 1 — `pages-stats` (leak=5). ✅ ВЫПОЛНЕНА (`264957fc`).**
+  Вынесены 5 правил: select-стрелка (обе страницы) + checkbox/radio `:focus-visible` ring → `utilities-overrides.css` (**@layer utilities ≥ pages**); `.settings-page .stats-grid` респонсив → `pages-settings.css`; base `.settings-page select`: `background`→`background-color`. leak-audit stats=0. `th:if page==stats`. Верифицировано (CSSOM + скрин dark/light): −760 строк/не-stats страница, парити обеих тем, ring в @layer utilities бьёт `.stats-page input:focus{outline:none}`.
+  **Урок (в §Self-review C1):** перенос `@layer pages → components` роняет приоритет по ВСЕМ конфликтующим свойствам (background И padding-right) — global-override-правила класть в @layer utilities, НЕ components.
 
 - **Волна 2 — `pages-settings` (leak=13).**
   Вынести content-tabs (~42 → `components-content-tabs`) + form-controls хвост (~4). `th:if page==settings`.
@@ -170,3 +171,20 @@ global            print.css (~108, @media print, always-loaded)
 - Визуальные изменения любого рода (это чистый рефактор).
 - Токены/палитра/типографика — не трогаем.
 - Страницы вне 8 существующих шаблонов.
+
+## 10. Self-review (адверсариальный, агент aaf47edf — полный лог `work/superpowers/01_REVIEW_FINDINGS.md`)
+
+**Применено в Волне 1:**
+- **C1 — control-focus flip.** Перенос `input[type=checkbox/radio]:focus-visible` в @layer components дал бы победу `.stats-page input:focus{outline:none}` (@layer pages) → кольцо исчезло бы (WCAG 2.4.7). Фикс: ring в @layer utilities. Плюс тот же механизм по `padding-right` у settings-select → арроу тоже в @layer utilities.
+- leak считать по селекторам: stats=**5**, не 4 (#2/#3 = глобальный ring на все native checkbox/radio, не «чужие settings»).
+
+**Предупреждения для Волны 3 (focus/result) — обязательно учесть при извлечении:**
+- **D1 — `.inline-alert` незаинвентаризирована.** Глобальные селекторы `.inline-alert(.success)` в `pages-focus.css:1048-1052` (@layer pages), но рендерятся вне focus: `topbar.html:15` (все 7 shell-страниц) + `result.html:161` (no-JS). После `th:if page==focus` base-стиль алерта исчезнет на 6 страницах. → **добавить `components-alert.css` (global)** в §3.1. Бьёт no-JS аудиторию; `.ed-noscript` скрыт под JS → JS-скрин-гейт НЕ поймает.
+- **D2 — answer/verdict surface разъединён по ДВУМ файлам.** Не только `pages-result:213-253`, но и `pages-focus:939-943` (`.result-zone-head` divider/flex, `.result-feedback` margin). Извлечение обязано собирать из ОБОИХ (иначе `.result-zone-head` на result теряет divider).
+- **C2 — титул модалок flip semibold→medium.** `pages-result:401-403/468-469` (semibold @pages) vs `components-signatures:23-26` (medium @components, равная спецификичность). После переезда модалок в @components решает порядок `<link>` → signatures грузится поздно → medium победит. Резолв станет порядок-зависимым, на JS-оверлее.
+- **C3 — pages-result грузится ПОЗЖЕ pages-focus** (head: focus174<result185). На focus при равной спец. сейчас выигрывает result (позже). После скоупа — pages-focus. Проверять КАЖДУЮ пару feedback/verdict/option/.btn focus↔result.
+- **press-feedback leak:** `pages-focus:673-688` единый `…:active{transform}` мешает global .btn + `.result-page`/`.settings-page`/`.stats-action-btn` — расщепить по владельцам.
+
+**Правка §5 (стратегия верификации) — дыра гейта:** регрессии D1/C2/confidence/answer живут на JS-триггерных/скрытых поверхностях (modals.js prompt-overlay/confirm/report; keyboard-help.js на всех). Скрин «при загрузке» их НЕ откроет. **Дополнить гейт:** прогон confirm/kbd-help/answer-flow + рендер с ОТКЛЮЧЁННЫМ JS (no-JS фоллбэк).
+
+**Подтверждено верным:** data-pixel=high не SSR-гейтится; answer/markdown = focus+result; today-widget/back-to-top/skip-link безопасны (ядро в always-loaded components-widgets/reset-layout); content-tabs только на focus (Волна 2 верна); @media print слой-безопасен. Не проверено глубоко: shell.css leak=71 (отдельный проход перед Волной 4).
