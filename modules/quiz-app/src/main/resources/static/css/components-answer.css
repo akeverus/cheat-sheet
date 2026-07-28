@@ -320,4 +320,29 @@ html[data-design] .focus-page .related-question-item {
 html[data-design] .result-page .related-question-item:hover,
 html[data-design] .focus-page .related-question-item:hover { background: var(--color-bg-tertiary); }
 
+/* option-other + чип статуса варианта — ВЫНЕСЕНО из pages-result.css (Волна 3, ШАГ R /
+   Cluster B). Answer/verdict surface: ОБЩАЯ для result.html (no-JS фоллбэк) и JS-флоу
+   focus (app.js инжектит те же классы option-status и option-other). Жили в page-файле
+   result и пропали бы на focus при page-scope. Каскад-безопасно (проверено computed-diff):
+   pages-focus:400 (#interview-options label .option-status-label, @pages, спец выше) задаёт
+   grid-column/min-width — ДИЗЪЮНКТНЫЕ свойства, оба применяются; utilities:220
+   (@utilities > @components, @media≤760) скрывает muted внутри .option-other display:none —
+   дизъюнктно; @components-конкурентов нет. Дословный перенос. */
+/* option-other = невыбранный неправильный вариант ПОСЛЕ проверки (app.js на focus ТОЖЕ
+   вешает при наличии пояснения) — 0.85: рецессивно к correct/your-wrong, но читаемее
+   пустого .option-dimmed 0.55. */
+html[data-design] .option-other { opacity: 0.85; }
+/* Чип статуса варианта — ОБЩИЙ для result.html и JS-флоу focus (mono/рамка/капс). */
+html[data-design] .option-status-label {
+  display: inline-block; margin-top: var(--space-2);
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+  padding: 0.15em var(--space-2); border-radius: var(--border-radius-sm); background: transparent;
+}
+html[data-design] .option-status-correct { color: var(--color-status-success); border: var(--rule-weight) solid var(--color-status-success); }
+html[data-design] .option-status-selected { color: var(--color-status-error); border: var(--rule-weight) solid var(--color-status-error); }
+/* muted — невыбранный неправильный вариант (только JS-флоу focus, текст «Не выбран»):
+   нейтральная рамка/текст, без статус-цвета. */
+html[data-design] .option-status-muted { color: var(--color-text-tertiary); border: var(--rule-weight) solid var(--color-border-secondary); }
+
 }
