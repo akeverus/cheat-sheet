@@ -780,51 +780,16 @@ html[data-design] #extra-analysis-toggle[aria-disabled="true"] { opacity: 0.45; 
    меру строки держат сами абзацы (html[data-design] p → max-width:var(--measure)),
    а широкие дети — mermaid-диаграммы, <pre>-код, таблицы — тянутся на всю ширину
    карты и не сплющиваются в узкую прозо-колонку. */
-html[data-design] .markdown-content { font-size: var(--font-size-md); line-height: var(--line-height-relaxed); }
-html[data-design] .markdown-content > *:first-child { margin-top: 0; }
-/* Защита от горизонтального переполнения на узких экранах. Длинный неразрывный
-   токен в ПРОЗЕ — FQCN (org.springframework.boot.autoconfigure...), package-path,
-   URL — при overflow-wrap:normal расталкивает вёрстку вширь: на 375px любой такой
-   токен даёт ~390-750px горизонтального скролла во ВСЕХ дизайнах (замерено live в
-   .markdown-content/.focus-question/#interview-options). break-word ломает токен
-   ТОЛЬКО когда он иначе вышел бы за строку — обычные слова не трогает. Инлайн-`code`
-   уже защищён (overflow-wrap:anywhere, см. выше), блочный <pre> скроллится
-   (overflow-x:auto) — здесь добираем именно прозу/заголовок/вариант. overflow-wrap
-   наследуется, поэтому на контейнере покрывает и вложенные p/li/td/span. */
-html[data-design] .markdown-content,
+/* Прозо-кластер .markdown-content* (кегль/overflow-wrap/table/th/td/task-list/del/s/
+   mermaid) вынесен в components-prose.css (@layer components, глобально, D3e Волны 3):
+   markdown-тело рендерится и на no-JS result.html — нельзя терять при page-scope
+   focus. Здесь остаётся focus-only часть смешанного selector-list (overflow-wrap на
+   .focus-question / #interview-options label) и .question-diagram (diagram-кластер,
+   отдельный шаг). Защита от гориз-переполнения: длинный неразрывный токен (FQCN,
+   package-path, URL) при overflow-wrap:normal расталкивает вёрстку вширь; break-word
+   ломает его только при выходе за строку. */
 html[data-design] .focus-question,
 html[data-design] #interview-options label { overflow-wrap: break-word; }
-html[data-design] .markdown-content table { width: 100%; border-collapse: collapse; margin: var(--space-4) 0; font-size: var(--font-size-sm); display: block; overflow-x: auto; }
-html[data-design] .markdown-content th, html[data-design] .markdown-content td { border: var(--rule-weight) solid var(--color-border-primary); padding: var(--space-2) var(--space-3); text-align: left; }
-html[data-design] .markdown-content th { background: var(--color-bg-tertiary); font-family: var(--font-family-mono); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: var(--letter-spacing-wide); }
-
-/* GFM task-list (- [ ] / - [x], напр. security-чек-лист TLS): чекбоксы вместо
-   литеральных «[ ]». Убираем маркер только у пунктов-задач (обычные пункты списка
-   не трогаем), выравниваем disabled-чекбокс с текстом и красим акцентом. Чекбокс
-   read-only — cursor:default, без hover-намёка на кликабельность. */
-html[data-design] .markdown-content li.task-list-item { list-style: none; }
-html[data-design] .markdown-content li.task-list-item .task-list-item-checkbox {
-  margin-right: var(--space-1);
-  accent-color: var(--color-accent-primary);
-  vertical-align: middle;
-  cursor: default;
-}
-/* ~~зачёркнуто~~ (напр. «~~SPA~~ (устарел)» в сравнениях) — приглушаем цвет,
-   чтобы устаревший/отменённый вариант читался как второстепенный. */
-html[data-design] .markdown-content del,
-html[data-design] .markdown-content s { color: var(--color-text-tertiary); }
-
-/* Mermaid-диаграммы (возвращены 2026-06-17). Источник: ```mermaid в .md →
-   MarkdownRenderService оборачивает в <div class="mermaid"> → mermaid.js рисует SVG
-   (fragments/mermaid-init + app.js renderDynamicContent для AJAX-контента).
-   До рендера .mermaid держит сырой текст графа — прячем, чтобы не мелькал
-   `graph LR ...`; после рендера data-rendered=true показывает SVG. .question-diagram —
-   обёртка для выделенного diagramMermaid-поля (pathway 1, если будет включён рендер). */
-html[data-design] .markdown-content .mermaid:not([data-rendered="true"]) { visibility: hidden; }
-html[data-design] .markdown-content .mermaid {
-  display: block; margin: var(--space-4) 0; overflow-x: auto; text-align: center;
-}
-html[data-design] .markdown-content .mermaid svg { max-width: 100%; height: auto; }
 html[data-design] .question-diagram { overflow-x: auto; }
 /* P0.2: diagram_mermaid условия вопроса рендерится вне .markdown-content
    (прямой .question-diagram в .focus-training), поэтому дублируем hide-until-rendered

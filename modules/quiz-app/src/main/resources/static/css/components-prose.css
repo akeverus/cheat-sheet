@@ -1,0 +1,53 @@
+/* @layer components — прозо-поверхность отрендеренного markdown (.markdown-content).
+   Вынесено из pages-focus.css при page-scope focus (Волна 3, D3e): кластер
+   ГЛОБАЛЬНЫЙ — markdown-тело рендерится и на .focus-page (вопрос/ответ), и на
+   no-JS result.html; жил в page-файле focus и пропал бы на result при скоупе.
+
+   Каскад-безопасно (замкнутый набор, D2a-правило): все .markdown-content-правила
+   были в pages-focus @pages; единственный сосед — reset-layout.css
+   `.markdown-content :not(pre) > code{color}` (@reset, инлайн-код) — другое
+   свойство, @reset НИЖЕ components (кластер выигрывает и как @pages, и как
+   @components). Конкурентов на .markdown-content* в @components/@shell/@utilities/
+   @pixel нет → нечему оживать (D3b). Focus-only части смешанного selector-list
+   (.focus-question / #interview-options label { overflow-wrap }) и .question-diagram
+   оставлены в pages-focus. */
+@layer components {
+
+/* Прозо-колонка: базовый кегль/интерлиньяж + первый ребёнок без верхнего отступа. */
+html[data-design] .markdown-content { font-size: var(--font-size-md); line-height: var(--line-height-relaxed); }
+html[data-design] .markdown-content > *:first-child { margin-top: 0; }
+/* Защита от горизонтального переполнения: длинный неразрывный токен в ПРОЗЕ (FQCN,
+   package-path, URL) при overflow-wrap:normal расталкивает вёрстку вширь. break-word
+   ломает токен только когда он иначе вышел бы за строку. overflow-wrap наследуется →
+   покрывает вложенные p/li/td/span. (Focus-only .focus-question/#interview-options
+   label с тем же правилом — в pages-focus.) */
+html[data-design] .markdown-content { overflow-wrap: break-word; }
+/* Таблицы: блочные, со скроллом по X на узких экранах. */
+html[data-design] .markdown-content table { width: 100%; border-collapse: collapse; margin: var(--space-4) 0; font-size: var(--font-size-sm); display: block; overflow-x: auto; }
+html[data-design] .markdown-content th, html[data-design] .markdown-content td { border: var(--rule-weight) solid var(--color-border-primary); padding: var(--space-2) var(--space-3); text-align: left; }
+html[data-design] .markdown-content th { background: var(--color-bg-tertiary); font-family: var(--font-family-mono); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: var(--letter-spacing-wide); }
+
+/* GFM task-list (- [ ] / - [x]): чекбоксы вместо литеральных «[ ]». Убираем маркер
+   только у пунктов-задач, выравниваем disabled-чекбокс с текстом, красим акцентом.
+   Чекбокс read-only — cursor:default, без hover-намёка на кликабельность. */
+html[data-design] .markdown-content li.task-list-item { list-style: none; }
+html[data-design] .markdown-content li.task-list-item .task-list-item-checkbox {
+  margin-right: var(--space-1);
+  accent-color: var(--color-accent-primary);
+  vertical-align: middle;
+  cursor: default;
+}
+/* ~~зачёркнуто~~ — приглушаем цвет, чтобы отменённый вариант читался вторичным. */
+html[data-design] .markdown-content del,
+html[data-design] .markdown-content s { color: var(--color-text-tertiary); }
+
+/* Mermaid-диаграммы: ```mermaid → <div class="mermaid"> → mermaid.js рисует SVG.
+   До рендера .mermaid держит сырой текст графа — прячем (visibility:hidden), чтобы
+   не мелькал `graph LR ...`; после рендера data-rendered=true показывает SVG. */
+html[data-design] .markdown-content .mermaid:not([data-rendered="true"]) { visibility: hidden; }
+html[data-design] .markdown-content .mermaid {
+  display: block; margin: var(--space-4) 0; overflow-x: auto; text-align: center;
+}
+html[data-design] .markdown-content .mermaid svg { max-width: 100%; height: auto; }
+
+}
