@@ -1,0 +1,78 @@
+/* @layer components — глобальные модалки/оверлеи (JS-триггерные, вне экрана вопроса).
+   Вынесено из pages-result.css при подготовке page-scope result (Волна 3 CSS-архитектуры):
+   модалки открываются на ЛЮБОЙ странице (kbd-help по «?» — все shell-страницы), но жили
+   в page-файле result → при page-scope result сломались бы везде. Первый вынесенный
+   кластер — kbd-help (клавиатурная справка). prompt/report-модалки — следующими шагами.
+
+   ВАЖНО (каскад C2): этот файл ОБЯЗАН грузиться в head.html ПОСЛЕ components-signatures.css.
+   Заголовок `.kbd-help-modal h3` тут = semibold (0,2,2), а signatures даёт
+   `[data-design=instrument] .kbd-help-modal h3` = medium (0,2,2, равная спец.). Пока h3
+   жил в @layer pages (result) — pages > components, semibold выигрывал (рендер = 600).
+   После переноса оба в @layer components → решает ПОРЯДОК исходника: грузим ПОЗЖЕ
+   signatures, чтобы semibold сохранился (иначе титул флипнет в medium — регрессия). */
+@layer components {
+
+/* Модалка горячих клавиш (app.js initKeyboardHelp, открывается по «?», role=dialog).
+   .hidden (global, display:none !important) гасит её → отдельное правило не нужно.
+   Подложка/тень/z — из общих токенов. */
+html[data-design] .kbd-help-overlay {
+  /* role=dialog — единственная модалка на modal-слое (--z-modal 100, не overlay 40). */
+  position: fixed; inset: 0; z-index: var(--z-modal);
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--space-4); background: var(--color-surface-overlay);
+}
+html[data-design] .kbd-help-modal {
+  position: relative; width: 100%; max-width: 420px;
+  /* overscroll-behavior:contain — список шорткатов скроллится внутри карточки, не
+     цепляя страницу под диалогом (фон не залочен, open() ставит только inert/aria-hidden). */
+  max-height: calc(100dvh - var(--space-7)); overflow-y: auto; overscroll-behavior: contain;
+  padding: var(--space-6);
+  background: var(--color-bg-primary);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-lg); box-shadow: var(--shadow-lg);
+}
+html[data-design] .kbd-help-modal h3 {
+  font-family: var(--font-family-display); font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold); color: var(--color-text-primary);
+  margin: 0 0 var(--space-4); padding-right: var(--space-6);
+}
+html[data-design] .kbd-help-list {
+  display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-4); margin: 0;
+}
+html[data-design] .kbd-help-list dt {
+  margin: 0; display: flex; gap: var(--space-1); flex-wrap: wrap; align-items: center;
+}
+html[data-design] .kbd-help-list dd {
+  margin: 0; align-self: center; color: var(--color-text-secondary); font-size: var(--font-size-sm);
+}
+html[data-design] .kbd-help-close {
+  position: absolute; top: var(--space-3); right: var(--space-3);
+  min-width: 44px; min-height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: 0; color: var(--color-text-secondary);
+  font-size: var(--font-size-xl); line-height: 1; cursor: pointer;
+  border-radius: var(--border-radius-md); transition: background var(--duration-fast) var(--easing-default), color var(--duration-fast) var(--easing-default);
+}
+html[data-design] .kbd-help-close:hover { color: var(--color-text-primary); background: var(--color-bg-secondary); }
+
+/* Mobile: карточка не должна садиться под fixed .mobile-nav (z=40) — flex-start +
+   ограниченная max-height (доля общего @media модалок, prompt-часть — в pages-result
+   до её выноса следующим шагом). */
+@media (max-width: 900px) {
+  html[data-design] .kbd-help-overlay {
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: var(--space-4);
+    padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-4));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  html[data-design] .kbd-help-modal {
+    max-height: calc(
+      100dvh - var(--mobile-nav-height) - env(safe-area-inset-bottom, 0px)
+      - var(--space-4) - var(--space-4)
+    );
+  }
+}
+
+}

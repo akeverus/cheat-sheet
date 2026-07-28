@@ -373,54 +373,10 @@ html[data-design] .focus-page .related-question-item:hover { background: var(--c
   }
 }
 
-/* Модалка горячих клавиш (app.js initKeyboardHelp, открывается по «?», role=dialog).
-   Классов kbd-help-* в CSS не было → оверлей раскрывался как обычный блок в конце
-   страницы (position:static, без подложки, y≈1158 под сгибом) — нажатие «?» по сути
-   ничего видимого не показывало. Делаем настоящую модалку: fixed-оверлей с подложкой,
-   карточка по центру. .hidden (global, display:none !important) гасит её → отдельное
-   правило на .hidden не нужно. Подложка/тень/z — из общих токенов. */
-html[data-design] .kbd-help-overlay {
-  /* role=dialog — единственная модалка приложения; место ей на modal-слое.
-     Раньше сидела на --z-overlay (40), а семантический --z-modal (100) был мёртв
-     (round-01 C5): любой будущий элемент на overlay-слое встал бы поверх диалога. */
-  position: fixed; inset: 0; z-index: var(--z-modal);
-  display: flex; align-items: center; justify-content: center;
-  padding: var(--space-4); background: var(--color-surface-overlay);
-}
-html[data-design] .kbd-help-modal {
-  position: relative; width: 100%; max-width: 420px;
-  /* overscroll-behavior:contain — на коротких экранах список шорткатов скроллится
-     внутри карточки; без contain докрутка до края цепляет скролл страницы под
-     диалогом (фон не залочен, open() ставит только inert/aria-hidden). */
-  max-height: calc(100dvh - var(--space-7)); overflow-y: auto; overscroll-behavior: contain;
-  padding: var(--space-6);
-  background: var(--color-bg-primary);
-  border: var(--rule-weight) solid var(--color-border-primary);
-  border-radius: var(--border-radius-lg); box-shadow: var(--shadow-lg);
-}
-html[data-design] .kbd-help-modal h3 {
-  font-family: var(--font-family-display); font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-semibold); color: var(--color-text-primary);
-  margin: 0 0 var(--space-4); padding-right: var(--space-6);
-}
-html[data-design] .kbd-help-list {
-  display: grid; grid-template-columns: auto 1fr; gap: var(--space-2) var(--space-4); margin: 0;
-}
-html[data-design] .kbd-help-list dt {
-  margin: 0; display: flex; gap: var(--space-1); flex-wrap: wrap; align-items: center;
-}
-html[data-design] .kbd-help-list dd {
-  margin: 0; align-self: center; color: var(--color-text-secondary); font-size: var(--font-size-sm);
-}
-html[data-design] .kbd-help-close {
-  position: absolute; top: var(--space-3); right: var(--space-3);
-  min-width: 44px; min-height: 44px;
-  display: inline-flex; align-items: center; justify-content: center;
-  background: transparent; border: 0; color: var(--color-text-secondary);
-  font-size: var(--font-size-xl); line-height: 1; cursor: pointer;
-  border-radius: var(--border-radius-md); transition: background var(--duration-fast) var(--easing-default), color var(--duration-fast) var(--easing-default);
-}
-html[data-design] .kbd-help-close:hover { color: var(--color-text-primary); background: var(--color-bg-secondary); }
+/* Модалка горячих клавиш (kbd-help-*) вынесена в components-modals.css
+   (@layer components, глобально): открывается по «?» на любой странице — нельзя
+   терять при page-scope result (Волна 3). prompt/report-модалки ниже — следующими
+   шагами. Общий mobile-@media модалок расщеплён: kbd-help-часть уехала с ней. */
 
 /* Модалка ввода (promptModal в app.js) — доступная замена window.prompt для
    admin-токена (native prompt() при вводе учётных данных выглядит фишингово и
@@ -448,8 +404,7 @@ html[data-design] .prompt-modal {
    flex-start + max-height: при center высокая карточка всё равно вылезала
    в padding-bottom (live после 1-го фикса: gap=-28). */
 @media (max-width: 900px) {
-  html[data-design] .prompt-overlay,
-  html[data-design] .kbd-help-overlay {
+  html[data-design] .prompt-overlay {
     align-items: flex-start;
     justify-content: center;
     padding-top: var(--space-4);
@@ -457,8 +412,7 @@ html[data-design] .prompt-modal {
     overflow-y: auto;
     overscroll-behavior: contain;
   }
-  html[data-design] .prompt-modal,
-  html[data-design] .kbd-help-modal {
+  html[data-design] .prompt-modal {
     max-height: calc(
       100dvh - var(--mobile-nav-height) - env(safe-area-inset-bottom, 0px)
       - var(--space-4) - var(--space-4)
