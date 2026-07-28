@@ -187,13 +187,14 @@
          table/task-list/del/mermaid). @layer components, глобально — рендерится на
          .focus-page (вопрос/ответ) и на result.html. Вынесено из pages-focus (D3e). -->
     <link rel="stylesheet" th:href="@{/css/components-prose.css}">
-    <link rel="stylesheet" th:href="@{/css/pages-focus.css}">
     <!-- PERF: page-scoped CSS — эти файлы на 100% под .{page}-page (0 утечки, гейт
          scripts/css-leak-audit.py), поэтому грузятся ТОЛЬКО на своей странице (как includeChart).
          pages-stats заскоуплен Волной 1, pages-settings — Волной 2 (кластер content-tabs
          экрана вопроса → components-content-tabs.css; хвосты stat-value tnum → utilities-overrides,
          select:disabled → pages-stats, .is-disabled-control → components-controls).
-         pages-focus/result пока глобальны — экстракция в следующих волнах. -->
+         pages-focus заскоуплен Волной 3 (D4, leak=0 → все правила под .focus-page, а .focus-page
+         только на focus-training.html); pages-result пока глобален — следующий шаг Волны 3. -->
+    <link rel="stylesheet" th:if="${page == 'focus'}" th:href="@{/css/pages-focus.css}">
     <link rel="stylesheet" th:if="${page == 'settings'}" th:href="@{/css/pages-settings.css}">
     <link rel="stylesheet" th:if="${page == 'stats'}" th:href="@{/css/pages-stats.css}">
     <link rel="stylesheet" th:if="${page == 'bookmarks'}" th:href="@{/css/pages-bookmarks.css}">
