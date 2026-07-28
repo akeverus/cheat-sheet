@@ -81,14 +81,63 @@ html[data-design] .result-detail-disclosure[open] > .result-detail-summary::befo
 html[data-design] .result-detail-disclosure[open] > .result-detail-summary { margin-bottom: var(--space-3); }
 html[data-design] .result-detail-body { display: flow-root; }
 
-/* ПРИМЕЧАНИЕ: кластер `.option-breakdown*` (разбор вариантов внутри «Подробнее»)
-   НАМЕРЕННО оставлен в pages-result (@layer pages). Он каскадно переплетён с
-   generic focus-правилами `.explanation-correct/.explanation-wrong` (border:1px, для
-   inline-объяснений опций) и `.option-explanation` (margin-top): `.option-breakdown-item`
-   бьёт их border-left:2px по ПОРЯДКУ в @layer pages, а `.option-breakdown-item
-   .option-explanation{margin:0}` — по специфичности там же. Слой доминирует над
-   специфичностью → перенос в @layer components флипнул бы победителей (проверено:
-   border-left 2px→1px). Безопасный вынос требует перенести весь option-explanation-
-   подсистему focus вместе — это отдельный шаг (D2b/полный D2), не эта чистая половина. */
+/* Объяснения вариантов (app.js/result.html: .option-explanation +
+   .explanation-correct/.explanation-wrong). Общая поверхность (рендерятся и на
+   .focus-page, и на .result-page) → сюда из pages-focus (D2b). Старые правила
+   тянут холодный лавандовый фон/текст — приводим к тёплой палитре.
+   ВАЖНО ПОРЯДОК: эти generic (0,2,1) идут ПЕРЕД .option-breakdown* — тот бьёт их
+   border-left:2px по порядку в этом же @layer components (см. ниже, D2a-урок). */
+html[data-design] .option-explanation {
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-relaxed);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--border-radius-md);
+  margin-top: var(--space-3);
+}
+html[data-design] .explanation-correct {
+  background: var(--color-status-success-wash);
+  color: var(--color-text-primary);
+  border: var(--rule-weight) solid var(--color-status-success);
+}
+html[data-design] .explanation-wrong {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  border: var(--rule-weight) solid var(--color-border-primary);
+}
+html[data-design] .explanation-correct strong { color: var(--color-status-success); }
+html[data-design] .explanation-wrong strong { color: var(--color-text-primary); }
+
+/* Разбор вариантов внутри «Подробнее»: по букве + тег «верный/ваш ответ».
+   Переехал из pages-result (D2b) ВМЕСТЕ с generic .explanation-* выше — иначе слой
+   флипнул бы победителей (D2a-урок: @layer доминирует над спец.). Здесь base
+   .option-breakdown-item{border-left:2px} стоит ПОСЛЕ .explanation-correct{border:1px}
+   → выигрывает border-left порядком (обе 0,2,1, один слой); а .option-breakdown-item
+   .option-explanation{margin:0}(0,2,2) бьёт base .option-explanation{margin-top}(0,2,1)
+   специфичностью. */
+html[data-design] .option-breakdown {
+  margin-top: var(--space-4);
+  display: flex; flex-direction: column; gap: var(--space-3);
+}
+html[data-design] .option-breakdown-item {
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--color-border-secondary);
+}
+html[data-design] .option-breakdown-item.explanation-correct { border-left-color: var(--color-status-success); }
+html[data-design] .option-breakdown-item.explanation-wrong { border-left-color: var(--color-status-error); }
+html[data-design] .option-breakdown-head {
+  display: flex; align-items: center; gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+html[data-design] .option-breakdown-letter {
+  font-family: var(--font-family-mono); font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm); color: var(--color-text-primary);
+}
+html[data-design] .option-breakdown-tag {
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+html[data-design] .option-breakdown-item .option-explanation { margin: 0; }
 
 }
