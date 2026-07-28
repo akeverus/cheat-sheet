@@ -290,40 +290,11 @@ html[data-design] .focus-page .related-question-item:hover { background: var(--c
    .report-zone/.report-trigger уехал в pages-focus (рендерится на экране вопроса);
    автозаполнение .stats-page .search-input — в pages-stats (его дом). */
 
-/* Кнопки самооценки уверенности (app.js attachConfidenceButtons — показываются
-   ПОСЛЕ верного ответа в обычном режиме, шлют grade в /api/confidence для SM-2;
-   это не AI-вызов, поэтому доступны и без AI). Классов confidence-* в CSS не было
-   → рендерились нативные серые кнопки (#efefef на тёмной теме, без паддингов).
-   Стилизуем единообразно с .flashcard-grade-* (та же суть — самооценка после ответа).
-   Выбранную кнопку (app.js вешает .selected + disabled на все) НЕ гасим: она
-   остаётся выделенной accent-wash, остальные disabled — приглушаются. */
-html[data-design] .confidence-buttons {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin-top: var(--space-5);
-}
-html[data-design] .confidence-label {
-  grid-column: 1 / -1; font-family: var(--font-family-mono); font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary);
-}
-html[data-design] .confidence-btn {
-  min-height: 48px; padding: var(--space-2) var(--space-4);
-  font-family: var(--font-family-body); font-size: var(--font-size-base);
-  background: var(--color-bg-secondary); color: var(--color-text-primary);
-  border: var(--rule-weight) solid var(--color-border-primary); border-radius: 0; /* B5: единообразно с плоской .flashcard-grade-btn */
-  cursor: pointer; touch-action: manipulation;
-  transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
-}
-html[data-design] .confidence-btn:hover:not(:disabled) { border-color: var(--color-text-secondary); background: var(--color-bg-tertiary); }
-/* Низкая/высокая уверенность — те же edge-washes, что у .flashcard-grade-btn
-   grade-1/grade-4: «угадал» тонирован ошибкой, «знал точно» — успехом. Текст
-   несёт смысл, цвет лишь подсказывает полюс (раньше его несли эмодзи 🎲/💪). */
-html[data-design] .confidence-btn.confidence-guess:hover:not(:disabled) { border-color: var(--color-status-error); background: var(--color-status-error-wash); }
-html[data-design] .confidence-btn.confidence-sure:hover:not(:disabled) { border-color: var(--color-status-success); background: var(--color-status-success-wash); }
-html[data-design] .confidence-btn.selected { border-color: var(--color-accent-primary); background: var(--color-accent-wash); }
-html[data-design] .confidence-btn:disabled { cursor: default; }
-html[data-design] .confidence-btn:disabled:not(.selected) { opacity: 0.5; }
-@media (max-width: 600px) {
-  html[data-design] .confidence-buttons { grid-template-columns: 1fr; }
-}
+/* Кнопки самооценки уверенности (.confidence-*) ВЫНЕСЕНЫ в pages-focus.css
+   (Волна 3, ШАГ R / Cluster D): инъектятся interview.js ТОЛЬКО на focus-page
+   (attachConfidenceButtons, ПОСЛЕ ответа), в no-JS result.html не рендерятся →
+   не result-only, а focus-only; жили тут ошибочно (глобальная загрузка pages-result
+   их доносила до focus). После page-scope pages-result сломались бы на focus. */
 
 /* =============================================================================
    C3-i — Instrument: результат ответа (.result-page, no-JS фоллбэк /answer).
