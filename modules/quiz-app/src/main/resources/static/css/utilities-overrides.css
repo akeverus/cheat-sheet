@@ -1,5 +1,26 @@
 /* Wave C split from base.css — @utilities layer */
 @layer utilities {
+/* Глобальный focus-ring на нативных checkbox/radio. В @layer utilities (≥ pages),
+   чтобы бить страничный `.{page}-page input:focus{outline:none}` (напр. stats/settings,
+   где box-shadow-фокус не рендерится на native-контролах) — иначе кольцо исчезает
+   (WCAG 2.4.7). Перенесён из pages-stats при page-scope stats (Волна 1, фикс каскада C1). */
+html[data-design] input[type="checkbox"]:focus-visible,
+html[data-design] input[type="radio"]:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+/* Кастомная select-стрелка (appearance + два gradient) для settings/stats —
+   глобальный control-override. В @layer utilities (≥ pages), т.к. base-правило
+   `.settings-page select` (@layer pages) задаёт `padding` shorthand — арроу нужен
+   padding-right(48px) поверх него, иначе текст налезает на стрелку. background-image
+   переживает благодаря background-COLOR в base. Перенесён из pages-stats (Волна 1). */
+html[data-design] .settings-page select,
+html[data-design] .stats-page select {
+  appearance: none; -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--color-text-secondary) 50%), linear-gradient(135deg, var(--color-text-secondary) 50%, transparent 50%);
+  background-position: calc(100% - 18px) center, calc(100% - 12px) center;
+  background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; padding-right: var(--space-7);
+}
 /* ===========================================================================
    UX REVIEW PASS — 2026-07-01.
    Точечные исправления после просмотра реальных desktop/mobile скриншотов:

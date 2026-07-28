@@ -151,7 +151,10 @@ html[data-design] .settings-page select,
 html[data-design] .settings-page input[type="number"] {
   width: 100%; max-width: 100%; min-height: 44px; padding: var(--space-2) var(--space-3);
   font-family: var(--font-family-body); font-size: var(--font-size-base);
-  color: var(--color-text-primary); background: var(--color-bg-secondary);
+  /* background-COLOR (не shorthand): не сбрасывает background-image кастомной
+     select-стрелки → рецепт стрелки (components-controls.css) больше не зависит
+     от порядка загрузки страничных файлов. Снято при page-scope stats (Волна 1). */
+  color: var(--color-text-primary); background-color: var(--color-bg-secondary);
   border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-sm);
   transition: border-color var(--duration-fast) var(--easing-default), box-shadow var(--duration-fast) var(--easing-default);
 }
@@ -306,6 +309,15 @@ html[data-design] .settings-page .streak-progress-fill { height: 100%; backgroun
    скролл на 375. min(…,100%) не даёт колонке быть шире контейнера, min-width:0
    позволяет 1fr-треку ужаться под доступную ширину. */
 html[data-design] .settings-page .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr)); gap: var(--space-3); }
+/* Респонсив settings-грида (перенесён из pages-stats при page-scope stats, Волна 1):
+   <540 → 2 колонки (2+2+2, парити с аналитикой), 540-842 → 3 колонки (ровные 3+3;
+   settings-контейнер капится ~860). Замерено Playwright. */
+@media (max-width: 539px) {
+  html[data-design] .settings-page .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 540px) and (max-width: 842px) {
+  html[data-design] .settings-page .stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 html[data-design] .settings-page .stat-item {
   min-width: 0;
   padding: var(--space-3) var(--space-4); border: var(--rule-weight) solid var(--color-border-primary);

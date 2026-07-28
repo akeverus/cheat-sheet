@@ -173,11 +173,12 @@
     <link rel="stylesheet" th:href="@{/css/components-controls.css}">
     <link rel="stylesheet" th:href="@{/css/pages-focus.css}">
     <link rel="stylesheet" th:href="@{/css/pages-settings.css}">
-    <link rel="stylesheet" th:href="@{/css/pages-stats.css}">
-    <!-- PERF: page-scoped CSS — эти 4 файла на 100% под .{page}-page (0 утечки),
-         поэтому грузятся ТОЛЬКО на своей странице (как includeChart). Экономия ~17-35KB/страница.
-         pages-focus/result/stats/settings пока глобальны — содержат global-правила
-         (напр. input[type=radio]:focus-visible), нужна экстракция — отдельный заход. -->
+    <!-- PERF: page-scoped CSS — эти файлы на 100% под .{page}-page (0 утечки, гейт
+         scripts/css-leak-audit.py), поэтому грузятся ТОЛЬКО на своей странице (как includeChart).
+         pages-stats заскоуплен Волной 1 (экстракция select-стрелки → components-controls,
+         checkbox/radio focus-ring → utilities-overrides, settings-grid → pages-settings).
+         pages-focus/result/settings пока глобальны — экстракция в следующих волнах. -->
+    <link rel="stylesheet" th:if="${page == 'stats'}" th:href="@{/css/pages-stats.css}">
     <link rel="stylesheet" th:if="${page == 'bookmarks'}" th:href="@{/css/pages-bookmarks.css}">
     <link rel="stylesheet" th:if="${page == 'summary'}" th:href="@{/css/pages-summary.css}">
     <link rel="stylesheet" th:if="${page == 'error'}" th:href="@{/css/pages-error.css}">

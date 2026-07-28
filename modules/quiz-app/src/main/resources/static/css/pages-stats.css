@@ -89,32 +89,15 @@ html[data-design] .stats-page input[type="search"] {
 }
 html[data-design] .stats-page .filter-row > label,
 html[data-design] .stats-page .search-form > label { min-width: 0; }
-/* C6: единый рецепт кастомной select-стрелки для обеих страниц. Стоит ПОСЛЕ
-   base-правил и settings (L1147), и stats (L1345) — поэтому их `background`-shorthand
-   не перетирает background-image стрелки. Меняешь геометрию стрелки/градиент — в
-   одном месте, страницы не разъедутся. */
-html[data-design] .settings-page select,
-html[data-design] .stats-page select {
-  appearance: none; -webkit-appearance: none;
-  background-image: linear-gradient(45deg, transparent 50%, var(--color-text-secondary) 50%), linear-gradient(135deg, var(--color-text-secondary) 50%, transparent 50%);
-  background-position: calc(100% - 18px) center, calc(100% - 12px) center;
-  background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; padding-right: var(--space-7);
-}
+/* Рецепт select-стрелки для обеих страниц вынесен в components-controls.css
+   (глобальный control-компонент, Волна 1) — чтобы stats-файл стал page-pure. */
 html[data-design] .stats-page select:focus,
 html[data-design] .stats-page input:focus {
   outline: none; border-color: var(--color-border-focus); box-shadow: var(--shadow-focus);
 }
-/* Нативные checkbox/radio: box-shadow (var(--shadow-focus)) не рендерится на
-   appearance:auto-контролах, а .stats-page input:focus + :focus:not(:focus-visible)
-   снимают outline — итог был БЕЗ индикатора фокуса у видимых фильтр-чекбоксов
-   (WCAG 2.4.7). Возвращаем видимый outline: на нативных контролах он рисуется
-   надёжно, где box-shadow игнорируется. Токен --color-border-focus (уже ≥3:1,
-   design/theme-aware). R1.62. */
-html[data-design] input[type="checkbox"]:focus-visible,
-html[data-design] input[type="radio"]:focus-visible {
-  outline: 2px solid var(--color-focus-ring);
-  outline-offset: 2px;
-}
+/* Глобальный focus-ring нативных checkbox/radio вынесен в utilities-overrides.css
+   (@layer utilities ≥ pages, бьёт `.stats-page input:focus{outline:none}` ниже) —
+   Волна 1, чтобы stats-файл стал page-pure без потери WCAG 2.4.7 индикатора. */
 html[data-design] .stats-page .search-input { flex: 1 1 160px; min-width: 0; }
 
 /* Кнопки фильтра/поиска */
@@ -146,7 +129,6 @@ html[data-design] .stats-page .stats-grid { display: grid; grid-template-columns
   /* minmax(0,1fr) (не 1fr): при крупном масштабе шрифта (A+) 1fr-трек не ужимался
      ниже min-content плиток и распирал сетку → гориз. скролл. min(0,…) + min-width:0
      на .stat-item дают плиткам всегда влезать в две колонки. */
-  html[data-design] .settings-page .stats-grid,
   html[data-design] .stats-page .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 /* Планшетная полоса: auto-fit упаковывает 6 stat-плиток как 5+1 / 4+2 — одинокая
@@ -155,9 +137,6 @@ html[data-design] .stats-page .stats-grid { display: grid; grid-template-columns
    при ~843px вьюпорта; .stats-grid на аналитике полноширинный (offset ~129) и
    доходит до 6 в ряд только при ~909px. Замерено Playwright. Вне полос:
    <540 auto-fit → 2+2+2 (мобайл), выше — 6 в ряд (десктоп). */
-@media (min-width: 540px) and (max-width: 842px) {
-  html[data-design] .settings-page .stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
 @media (min-width: 540px) and (max-width: 908px) {
   html[data-design] .stats-page .stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
