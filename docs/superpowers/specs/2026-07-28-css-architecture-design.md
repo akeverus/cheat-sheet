@@ -98,8 +98,11 @@ global            print.css (~108, @media print, always-loaded)
 
 Каждая волна = 1–2 самостоятельных, откатываемых коммита. Порядок выбран по (безопасность × ценность).
 
-- **Волна 0 — инструментовка (0 визуальных изменений).**
-  `scripts/css-leak-audit.py`: для каждого page-scoped-кандидата парсит селекторы и проверяет, что каждый top-level селектор вложен под `.{page}-page` (или `html[data-*]...{page}-page`). Отчёт leak=0/N. Это **гейт** для последующих волн. Коммит — только скрипт.
+- **Волна 0 — инструментовка (0 визуальных изменений). ✅ ВЫПОЛНЕНА (`b37d5021`).**
+  `scripts/css-leak-audit.py`: парсит селекторы (учёт @layer/@media как прозрачных, @keyframes как непрозрачных), проверяет привязку к page-root — `.{page}-page` **ИЛИ** страничный семантический корень (`EXCLUSIVE_ROOTS`: focus→`.focus-`/`#interview`, result→`.result-`/`.distractor-` и т.д.). Exit 1 если leak>0 — гейт для последующих волн.
+  **Механически подтвердил карту workflow (важное уточнение — способ якорения различается):**
+  - `.{page}-page`-якорь (точный гейт): stats=**5** unanchored (2 control-focus + 3 чужих `.settings-page`), settings=**15** (кластер content-tabs + хвосты); summary/bookmarks/error/login=**0** (уже scoped).
+  - семантический якорь (worklist, не финальный leak): focus=187, result=69 — требуют per-селектор классификации в Волне 3. Кросс-страничные корни (`.options` focus+result, `.today-*` focus+settings, `.question-materials`) намеренно НЕ в `EXCLUSIVE_ROOTS` → всплывают как unanchored → это сигнал «выносить в общий компонент».
 
 - **Волна 1 — `pages-stats` (leak=4). Эталонный quick win.**
   Вынести 4 протекающих правила (control-focus → `components-controls`; чужие `.settings-page` → `pages-settings`). Проверить leak=0. `th:if page==stats`. Скрин stats + одна не-stats страница (что ничего не потеряно), dark+light. → ~735 строк долой с каждой не-stats страницы.
