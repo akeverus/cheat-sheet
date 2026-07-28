@@ -205,78 +205,19 @@ html[data-design] .result-page .sm2-grid {
 html[data-design] .result-page .sm2-grid dt { font-family: var(--font-family-mono); font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-tertiary); margin: 0; }
 html[data-design] .result-page .sm2-grid dd { margin: 0; font-size: var(--font-size-sm); color: var(--color-text-primary); }
 
-/* ===========================================================================
-   UX-13 — иерархия пост-разбора (Wave 4–7, content-first):
-   вердикт → правильный ответ → ключевое отличие → пояснение → XP/интервал.
-   Общий scope: JS #result-feedback и no-JS result.html.
-   =========================================================================== */
-html[data-design] .feedback-flow {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-html[data-design] .feedback-verdict { order: 1; }
-html[data-design] .feedback-correct-answer { order: 2; margin-top: var(--space-3); }
-html[data-design] .feedback-key-difference { order: 3; }
-html[data-design] .feedback-explanation { order: 4; }
-html[data-design] .feedback-flow > .distractor-panel { order: 5; }
-html[data-design] .feedback-meta {
-  order: 6;
-  margin-top: var(--space-4);
-  padding-top: var(--space-4);
-  border-top: var(--rule-weight) solid var(--color-border-secondary);
-}
-html[data-design] .feedback-meta .result-xp {
-  display: inline-block;
-  margin-bottom: var(--space-2);
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-accent-secondary);
-}
-html[data-design] .feedback-block-eyebrow {
-  display: block;
-  font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide);
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-2);
-}
-html[data-design] .feedback-correct-answer-line {
-  margin: 0;
-  font-size: var(--font-size-base);
-  color: var(--color-text-primary);
-}
-html[data-design] .feedback-option-letter {
-  font-family: var(--font-family-mono);
-  color: var(--color-status-success);
-}
+/* Поверхность разбора ответа (feedback-flow: вердикт→ответ→отличие→пояснение→
+   XP/интервал, «Подробнее»/result-detail, result-lead) вынесена в components-answer.css
+   (@layer components, глобально): рендерится и в JS #result-feedback на .focus-page,
+   и в no-JS result.html — нельзя терять при page-scope result (Волна 3, D2a). Вердикт-
+   баннер .result-correct/.result-wrong и option-explanation-подсистема пока в
+   pages-focus; option-breakdown (ниже) остаётся тут — оба выносятся шагом D2b. */
 
-/* Краткий лид — первый абзац разбора, показан сразу под вердиктом (.explain макета) */
-html[data-design] .result-lead { margin-top: var(--space-3); }
-html[data-design] .result-lead > :last-child { margin-bottom: 0; }
-
-/* «Подробнее» — раскрытие глубокого разбора */
-html[data-design] .result-detail-disclosure {
-  margin-top: var(--space-4);
-  padding-top: var(--space-3);
-  border-top: var(--rule-weight) solid var(--color-border-secondary);
-}
-html[data-design] .result-detail-summary {
-  cursor: pointer; list-style: none;
-  display: inline-flex; align-items: center; gap: var(--space-2);
-  font-family: var(--font-family-mono); font-size: var(--font-size-sm);
-  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
-  color: var(--color-text-secondary);
-}
-html[data-design] .result-detail-summary:hover { color: var(--color-text-primary); }
-html[data-design] .result-detail-summary::-webkit-details-marker { display: none; }
-html[data-design] .result-detail-summary::before { content: "▸"; color: var(--color-text-tertiary); }
-html[data-design] .result-detail-disclosure[open] > .result-detail-summary::before { content: "▾"; }
-html[data-design] .result-detail-disclosure[open] > .result-detail-summary { margin-bottom: var(--space-3); }
-html[data-design] .result-detail-body { display: flow-root; }
-
-/* Разбор вариантов внутри «Подробнее»: по букве + тег «верный/ваш ответ» */
+/* Разбор вариантов внутри «Подробнее»: по букве + тег «верный/ваш ответ».
+   ОСТАЁТСЯ в @layer pages (см. примечание в components-answer.css): каскадно
+   переплетён с generic `.explanation-correct/.explanation-wrong` (border) и
+   `.option-explanation` (margin) из pages-focus — бьёт их порядком/спец. в этом слое;
+   перенос в @layer components флипнул бы border-left 2px→1px. Уедет вместе с
+   option-explanation-подсистемой focus в D2b. */
 html[data-design] .option-breakdown {
   margin-top: var(--space-4);
   display: flex; flex-direction: column; gap: var(--space-3);

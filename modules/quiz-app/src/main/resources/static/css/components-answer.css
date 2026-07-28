@@ -1,0 +1,94 @@
+/* @layer components — общая поверхность разбора ответа (post-answer feedback-flow).
+   Вынесено из pages-result.css при подготовке page-scope result (Волна 3 CSS-архитектуры):
+   этот кластер рендерится на ДВУХ экранах — JS `#result-feedback` на .focus-page
+   (app.js после ответа) и no-JS result.html на .result-page. Пока жил в page-файле
+   result → при page-scope result пропал бы на focus. Селекторы уникальны (не
+   дублируются в pages-focus) → перенос из @layer pages в @layer components безопасен:
+   page-scoped overrides (.result-feedback…/.explanation-panel…) более специфичны и
+   продолжают выигрывать; equal-spec одноимённых пар между файлами нет.
+   Вердикт-баннер (.result-correct/.result-wrong) — отдельный кластер в pages-focus,
+   выносится следующим шагом (D2b). */
+@layer components {
+
+/* ===========================================================================
+   UX-13 — иерархия пост-разбора (Wave 4–7, content-first):
+   вердикт → правильный ответ → ключевое отличие → пояснение → XP/интервал.
+   Общий scope: JS #result-feedback и no-JS result.html.
+   =========================================================================== */
+html[data-design] .feedback-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+html[data-design] .feedback-verdict { order: 1; }
+html[data-design] .feedback-correct-answer { order: 2; margin-top: var(--space-3); }
+html[data-design] .feedback-key-difference { order: 3; }
+html[data-design] .feedback-explanation { order: 4; }
+html[data-design] .feedback-flow > .distractor-panel { order: 5; }
+html[data-design] .feedback-meta {
+  order: 6;
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: var(--rule-weight) solid var(--color-border-secondary);
+}
+html[data-design] .feedback-meta .result-xp {
+  display: inline-block;
+  margin-bottom: var(--space-2);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-accent-secondary);
+}
+html[data-design] .feedback-block-eyebrow {
+  display: block;
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-2);
+}
+html[data-design] .feedback-correct-answer-line {
+  margin: 0;
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+}
+html[data-design] .feedback-option-letter {
+  font-family: var(--font-family-mono);
+  color: var(--color-status-success);
+}
+
+/* Краткий лид — первый абзац разбора, показан сразу под вердиктом (.explain макета) */
+html[data-design] .result-lead { margin-top: var(--space-3); }
+html[data-design] .result-lead > :last-child { margin-bottom: 0; }
+
+/* «Подробнее» — раскрытие глубокого разбора */
+html[data-design] .result-detail-disclosure {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: var(--rule-weight) solid var(--color-border-secondary);
+}
+html[data-design] .result-detail-summary {
+  cursor: pointer; list-style: none;
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  font-family: var(--font-family-mono); font-size: var(--font-size-sm);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+html[data-design] .result-detail-summary:hover { color: var(--color-text-primary); }
+html[data-design] .result-detail-summary::-webkit-details-marker { display: none; }
+html[data-design] .result-detail-summary::before { content: "▸"; color: var(--color-text-tertiary); }
+html[data-design] .result-detail-disclosure[open] > .result-detail-summary::before { content: "▾"; }
+html[data-design] .result-detail-disclosure[open] > .result-detail-summary { margin-bottom: var(--space-3); }
+html[data-design] .result-detail-body { display: flow-root; }
+
+/* ПРИМЕЧАНИЕ: кластер `.option-breakdown*` (разбор вариантов внутри «Подробнее»)
+   НАМЕРЕННО оставлен в pages-result (@layer pages). Он каскадно переплетён с
+   generic focus-правилами `.explanation-correct/.explanation-wrong` (border:1px, для
+   inline-объяснений опций) и `.option-explanation` (margin-top): `.option-breakdown-item`
+   бьёт их border-left:2px по ПОРЯДКУ в @layer pages, а `.option-breakdown-item
+   .option-explanation{margin:0}` — по специфичности там же. Слой доминирует над
+   специфичностью → перенос в @layer components флипнул бы победителей (проверено:
+   border-left 2px→1px). Безопасный вынос требует перенести весь option-explanation-
+   подсистему focus вместе — это отдельный шаг (D2b/полный D2), не эта чистая половина. */
+
+}
