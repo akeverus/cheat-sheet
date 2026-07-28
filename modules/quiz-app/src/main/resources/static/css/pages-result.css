@@ -57,39 +57,13 @@ html[data-design] .result-page .question-header h1 {
   font-size: var(--font-size-2xl); line-height: var(--line-height-tight);
   color: var(--color-text-primary); margin: 0; flex: 1 1 60%; min-width: 0; overflow-wrap: break-word; text-wrap: balance;
 }
-/* Инлайн-код в ТЕКСТЕ ВОПРОСА (display-заголовки + титулы-ссылки) — без «чипа».
-   Глобальный :not(pre) > code даёт beige-бокс с em-паддингом: в 48px Fraunces-
-   заголовке это 44px моно в бежевой плашке, доминирует над display-типографикой
-   и распирает заголовок (см. `O(1)?`). Оставляем моноширинный шрифт, но прозрачный
-   фон, без паддинга и чуть мельче — код читается как код, не ломая элегантность
-   заголовка. В тексте ВАРИАНТОВ (body-проза) чип ОСТАВЛЯЕМ — там он читается. */
-html[data-design] .focus-question code,
-html[data-design] .result-page .question-header h1 code,
-html[data-design] .related-question-item code,
-html[data-design] .summary-mistake-question code,
-html[data-design] .search-question code {
-  background: transparent;
-  padding: 0;
-  font-size: 0.84em;
-  font-weight: inherit;
-  color: inherit;
-}
-/* Инлайн-`code` в ТЕКСТЕ ВАРИАНТА ответа — честность важнее «чипа» (AF-5).
-   Глобальный :not(pre) > code даёт залитый beige-бокс. Если правильный вариант
-   несёт `code` (а в технических MCQ верный термин ЧАСТО в бэктиках), залитая
-   плашка «выпрыгивает» и подсвечивает correct ещё ДО проверки — UI усиливает
-   контентный перекос (задача UI — НЕ усиливать). Гасим ТОЛЬКО заливку/паддинг в
-   тексте выбора (моноширинный шрифт остаётся — код читается формой, не плашкой;
-   color: inherit → ноль цвет-сдвига, максимально нейтрально между вариантами).
-   Прицел узкий: `.options label code` (фокус, до проверки — критичный кейс) и
-   прямой текст-span результата — НЕ трогаем `.option-explanation` (там проза,
-   чип помогает читать) и не переопределяем overflow-wrap (long-token guard цел). */
-html[data-design] .options label code,
-html[data-design] .options > [role="listitem"] > span code {
-  background: transparent;
-  padding: 0;
-  color: inherit;
-}
+/* Инлайн-`code` в ТЕКСТЕ ВОПРОСА/ВАРИАНТА (гашение beige-чипа: .focus-question /
+   .result-page .question-header h1 / .related-question-item / .summary-mistake-question
+   / .search-question / .options label / .options>listitem>span) ВЫНЕСЕНО в
+   components-prose.css (@layer components, глобально; Волна 3 ШАГ R / Cluster A):
+   кластер кросс-страничный (focus/result/summary/stats/related), жил тут ошибочно —
+   пропал бы на не-result при page-scope. Override бьёт базу :not(pre)>code (@reset)
+   и как @pages, и как @components. */
 html[data-design] .result-page .question-meta { display: inline-flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
 html[data-design] .result-page .topic-badge {
   font-family: var(--font-family-mono); font-size: var(--font-size-xs);

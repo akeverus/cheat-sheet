@@ -50,4 +50,34 @@ html[data-design] .markdown-content .mermaid {
 }
 html[data-design] .markdown-content .mermaid svg { max-width: 100%; height: auto; }
 
+/* Инлайн-`code` в ТЕКСТЕ ВОПРОСА/ВАРИАНТА — гашение глобального beige-чипа
+   (:not(pre)>code, @reset). ВЫНЕСЕНО из pages-result.css (Волна 3, ШАГ R / Cluster A):
+   кластер кросс-страничный (рендерится на focus/result/summary/stats/related), жил
+   в page-файле result и пропал бы на не-result при page-scope. Каскад-безопасно:
+   override бил базу @reset и как @pages, и теперь как @components (@components > @reset);
+   @components-конкурентов на этих `code`-селекторах нет; @media-print `!important`
+   (#f0f0f0) иммунен (бьёт normal и до, и после), off-screen. Дословный перенос. */
+/* (1) ТЕКСТ ВОПРОСА (display-заголовки + титулы-ссылки): beige-бокс в 48px Fraunces-
+   заголовке распирал бы вёрстку. Прозрачный фон, без паддинга, чуть мельче (0.84em). */
+html[data-design] .focus-question code,
+html[data-design] .result-page .question-header h1 code,
+html[data-design] .related-question-item code,
+html[data-design] .summary-mistake-question code,
+html[data-design] .search-question code {
+  background: transparent;
+  padding: 0;
+  font-size: 0.84em;
+  font-weight: inherit;
+  color: inherit;
+}
+/* (2) ТЕКСТ ВАРИАНТА ответа (AF-5): залитая плашка подсвечивала бы correct с `code`
+   ДО проверки → UI усиливал бы контентный перекос. Гасим ТОЛЬКО заливку/паддинг
+   (моношрифт остаётся; color:inherit → ноль цвет-сдвига между вариантами). */
+html[data-design] .options label code,
+html[data-design] .options > [role="listitem"] > span code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
+
 }
