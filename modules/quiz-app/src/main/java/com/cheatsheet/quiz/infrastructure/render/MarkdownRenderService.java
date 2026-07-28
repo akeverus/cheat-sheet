@@ -1,6 +1,8 @@
 package com.cheatsheet.quiz.infrastructure.render;
 
 import com.cheatsheet.quiz.config.app.AppProperties;
+import com.vladsch.flexmark.ext.gfm.strikethrough.StrikethroughExtension;
+import com.vladsch.flexmark.ext.gfm.tasklist.TaskListExtension;
 import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
@@ -35,13 +37,23 @@ public class MarkdownRenderService {
     /** Regex: один и более пробельных символов. */
     private static final String REGEX_WHITESPACE = "\\s+";
 
-    // GFM-таблицы (| col | col |). Без TablesExtension flexmark схлопывал
-    // строки таблицы в один <p> и пользователь видел сырой markdown-pipe-текст
-    // в пояснениях/чек-листах. GFM-флаги выравнивают поведение с GitHub:
-    // лишние колонки отбрасываются, недостающие добиваются, шапка матчится
-    // по разделителю — это устойчивее к слегка кривым таблицам в контенте.
+    // GFM-расширения для тела ответа:
+    //  • TablesExtension — GFM-таблицы (| col | col |); без него flexmark схлопывал
+    //    строки в один <p> и показывал сырой pipe-текст.
+    //  • StrikethroughExtension — ~~зачёркнуто~~ (напр. «~~SPA~~ (устарел)» в сравнениях);
+    //    без него ~~ рендерился литеральными тильдами.
+    //  • TaskListExtension — GFM-чек-листы (- [ ] / - [x]); без него пункты
+    //    показывались литеральными «[ ]»/«[x]» вместо чекбоксов (напр. security-чек-листы
+    //    TLS). Дефолтный рендер = disabled+readonly <input type=checkbox> (GFM-стандарт,
+    //    доступно скринридеру, рисуется браузером). Safelist ниже пропускает такой input;
+    //    sanitizeAnchorsAndSvg срезает любой НЕ-checkbox input (defense-in-depth).
+    // GFM-флаги таблиц выравнивают поведение с GitHub (лишние колонки отбрасываются,
+    // недостающие добиваются, шапка матчится по разделителю).
     private static final MutableDataSet MARKDOWN_OPTIONS = new MutableDataSet()
-            .set(Parser.EXTENSIONS, List.of(TablesExtension.create()))
+            .set(Parser.EXTENSIONS, List.of(
+                    TablesExtension.create(),
+                    StrikethroughExtension.create(),
+                    TaskListExtension.create()))
             .set(TablesExtension.COLUMN_SPANS, false)
             .set(TablesExtension.APPEND_MISSING_COLUMNS, true)
             .set(TablesExtension.DISCARD_EXTRA_COLUMNS, true)
@@ -69,10 +81,18 @@ public class MarkdownRenderService {
     /** Safelist для HTML после markdown: только безопасные теги, без script/iframe/form. Подходит для th:utext. */
     private static final Safelist HTML_SAFELIST = Safelist.relaxed()
             .addTags("pre", "code", "table", "thead", "tbody", "tr", "th", "td",
-                    "svg", "path", "g", "use", "title", "desc", "circle", "rect", "line", "polyline", "polygon")
+                    "svg", "path", "g", "use", "title", "desc", "circle", "rect", "line", "polyline", "polygon",
+                    "del", "s", "input")   // del/s: ~~strikethrough~~; input: GFM task-list checkbox
             .removeTags("script", "iframe", "object", "embed", "form", "foreignObject")
             .addAttributes("div", "class")   // mermaid diagrams: <div class="mermaid">
             .addAttributes("code", "class")  // highlight.js language hints: <code class="language-java">
+            // GFM task-list: <li class="task-list-item"><input type=checkbox class=.. disabled readonly>.
+            // sanitizeAnchorsAndSvg вырезает любой input с type!=checkbox (defense-in-depth).
+            .addAttributes("input", "type", "checked", "disabled", "readonly", "class")
+            .addAttributes("li", "class")
+            .addAttributes("ul", "class")
+            .addAttributes("ol", "class")
+            .addAttributes("p", "class")
             .addAttributes("a", "class")
             .addAttributes("svg", "viewBox", "width", "height", "xmlns", "aria-hidden", "focusable", "role", "class", "fill", "stroke")
             .addAttributes("path", "d", "fill", "stroke", "stroke-width", "transform", "class")
@@ -170,6 +190,16 @@ public class MarkdownRenderService {
             if (href == null || !href.startsWith("#")) {
                 use.removeAttr("href");
                 use.removeAttr("xlink:href");
+            }
+        }
+        // Defense-in-depth: safelist пропускает <input> ради GFM-чекбоксов task-list,
+        // но допустим ТОЛЬКО disabled-checkbox. Любой иной input (text/hidden/…) — вон.
+        for (Element input : doc.select("input")) {
+            if (!"checkbox".equalsIgnoreCase(input.attr("type"))) {
+                input.remove();
+            } else {
+                input.attr("disabled", "disabled");
+                input.attr("readonly", "readonly");
             }
         }
         // Strip event-handler attributes that might survive if added outside safelist attrs.

@@ -131,6 +131,41 @@ class MarkdownRenderServiceTest {
     }
 
     @Test
+    void rendersStrikethrough() {
+        // ~~SPA~~ (устарел) в сравнительных таблицах должен зачёркиваться, а не
+        // показывать литеральные тильды.
+        String html = service.toHtml("Клиент: ~~SPA~~ (устарел)");
+
+        assertThat(html).contains("<del>SPA</del>");
+        assertThat(html).doesNotContain("~~");
+    }
+
+    @Test
+    void rendersTaskListAsDisabledCheckboxes() {
+        // GFM чек-лист (- [ ] / - [x]) — например security-чек-лист TLS — должен
+        // рендериться чекбоксами, а не литеральными «[ ]»/«[x]».
+        String html = service.toHtml("- [ ] Включены только TLS 1.2\n- [x] Отключены SSLv3");
+
+        assertThat(html).contains("class=\"task-list-item\"");
+        assertThat(html).contains("type=\"checkbox\"");
+        assertThat(html).contains("checked");
+        assertThat(html).contains("disabled");
+        assertThat(html).doesNotContain("[ ]");
+        assertThat(html).doesNotContain("[x]");
+    }
+
+    @Test
+    void stripsNonCheckboxInputInjectedInMarkdown() {
+        // Safelist пропускает <input> ради task-list, но defense-in-depth срезает
+        // любой input с type!=checkbox (text/hidden/…).
+        String html = service.toHtml("Текст <input type=\"text\" name=\"x\"> и <input type=\"hidden\" value=\"y\">.");
+
+        assertThat(html).doesNotContain("type=\"text\"");
+        assertThat(html).doesNotContain("type=\"hidden\"");
+        assertThat(html).doesNotContain("name=\"x\"");
+    }
+
+    @Test
     void rendersGfmTableAsHtmlTable() {
         // Регрессия: без TablesExtension flexmark схлопывал строки таблицы в <p>,
         // и пользователь видел сырой pipe-текст в пояснениях/чек-листах.
