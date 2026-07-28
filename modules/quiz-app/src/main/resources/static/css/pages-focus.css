@@ -622,36 +622,10 @@ html[data-design="instrument"] .focus-page #interview-submit.is-submitting {
    display:flex из @media-правила (0,3,1) и действует на всех ширинах. */
 html[data-design] .focus-page [data-ui-fragment="training-actions"].is-answered { display: none; }
 
-html[data-design] .btn,
-html[data-design] .secondary-btn,
-html[data-design] .next-btn,
-html[data-design] #extra-analysis-toggle {
-  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
-  /* width:auto гасит протёкший .secondary-btn{width:100%} из styles.css —
-     editorial-кнопки по умолчанию shrink-to-content чипы (full-width задаём
-     точечно: мобилки/самодостаточные сабмиты). */
-  width: auto;
-  min-height: 44px; padding: var(--space-2) var(--space-5);
-  font-family: var(--font-family-body); font-size: var(--font-size-base); font-weight: var(--font-weight-medium);
-  background: transparent; color: var(--color-text-primary);
-  border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-md);
-  text-decoration: none; cursor: pointer; touch-action: manipulation;
-  transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
-}
-html[data-design] .btn:hover:not(:disabled),
-html[data-design] .secondary-btn:hover:not(:disabled),
-html[data-design] #extra-analysis-toggle:hover:not(:disabled) { background: var(--color-bg-tertiary); border-color: var(--color-text-secondary); }
-html[data-design] .next-btn { background: var(--color-accent-primary); color: var(--color-accent-on); border-color: var(--color-accent-primary); }
-/* .next-btn — primary (accent-fill): hover красит И фон, И бордер в accent-hover,
-   как #session-form / .summary-actions .next-btn.
-   ВАЖНО про специфичность: реальная кнопка в шаблоне — class="btn next-btn",
-   поэтому к ней применяется и .btn:hover:not(:disabled) (специфичность 0,4,1
-   за счёт :not()). Голый .next-btn:hover (0,3,1) проигрывал ему → на hover
-   главная кнопка «Следующий вопрос» уходила в нейтральный bg-tertiary + серый
-   бордер + тёмный accent-on текст = тёмное-по-тёмному, почти нечитаемо.
-   :not(:disabled) поднимает специфичность до 0,4,1 (== .btn-правилу), а так
-   как это правило ниже по исходнику — оно выигрывает. */
-html[data-design] .next-btn:hover:not(:disabled) { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); color: var(--color-accent-on); }
+/* Базовая геометрия кнопок (.btn/.secondary-btn/.next-btn/#extra-analysis-toggle)
+   + hover + .next-btn accent-fill вынесены в components-controls.css (@layer
+   components, глобально, D3a Волны 3): блок глобальный — кнопки на всех страницах,
+   нельзя терять при page-scope focus. Каскад-нейтральность доказана там же. */
 /* Press-feedback (лёгкий «нажим» :active на все кнопки) вынесен в
    components-controls.css (@layer components, глобально): блок глобальный, кнопки
    есть на всех страницах — нельзя терять при page-scope focus (Волна 3). */
