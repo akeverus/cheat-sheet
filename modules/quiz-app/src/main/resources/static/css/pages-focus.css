@@ -726,17 +726,8 @@ html[data-design] .flashcard-reveal-summary { list-style: none; gap: var(--space
 html[data-design] .flashcard-reveal-summary::-webkit-details-marker { display: none; }
 html[data-design] .flashcard-reveal-summary::before { content: "\25B8"; font-size: var(--font-size-sm); }
 html[data-design] .flashcard-browse-details[open] .flashcard-reveal-summary::before { content: "\25BE"; }
-/* Раскрытый ответ — тёплая reading-панель в рамке-линейке (editorial),
-   вместо старого индиго-well. Действует и на разбор на result.html (C3). */
-html[data-design] .answer {
-  background: var(--color-bg-secondary);
-  border: var(--rule-weight) solid var(--color-border-primary);
-  border-radius: var(--border-radius-md);
-  padding: var(--space-4) var(--space-5);
-  margin-top: var(--space-3);
-}
-html[data-design] .answer > *:first-child { margin-top: 0; }
-html[data-design] .answer > *:last-child { margin-bottom: 0; }
+/* Прозаическая панель `.answer` (+first/last-child) вынесена в components-answer.css
+   (@layer components): общая — и на .focus-page, и на result.html (C3), D2c. */
 
 /* Typed-recall / code-challenge / interview — эхо ответа пользователя над
    эталоном для само-сверки. Метки «Твой ответ» / «Эталон» задают ритм сравнения;
@@ -953,83 +944,13 @@ html[data-design] .focus-training .report-trigger {
 html[data-design] .focus-training .report-trigger:hover,
 html[data-design] .focus-training .report-trigger:focus-visible { color: var(--color-text-primary); }
 
-/* Вердикт ответа (.result-correct/.result-wrong, app.js рендерит в #result-feedback).
-   Editorial: статус-wash + левая цветная линейка, крупный сериф-вердикт.
-   Вложенный .answer делаем плоским, чтобы не было панели-в-панели и терракоты
-   внутри зелёного/красного. */
-/* Peak-end момент петли MCQ: вердикт раскрывается app.js'ом (снимает .hidden) и
-   до этого ВСТАВАЛ мгновенно. Один сдержанный fade+сдвиг (250ms, штатный easing-out)
-   = «информация прибывает», а не «выпрыгивает» — спокойная уверенность бренда, без
-   дофаминовой хореографии. ОДИН слой (не каскад). reduced-motion уже покрыт глобально
-   (@media ~стр.251 глушит animation-duration до 0.001ms для html[data-design] *),
-   отдельный guard не нужен. both: держит from-кадр (opacity:0) до старта — без
-   вспышки. Анимация играет на месте (контент видим по умолчанию) → на скрытой
-   вкладке/headless вердикт всё равно отрисован, не залипает невидимым. */
-@keyframes verdictReveal {
-  from { opacity: 0; transform: translateY(-3px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-html[data-design] .result-correct,
-html[data-design] .result-wrong {
-  padding: var(--space-4) var(--space-5);
-  border: var(--rule-weight) solid var(--color-border-primary);
-  border-radius: var(--border-radius-md);
-  margin-top: var(--space-2);
-  animation: verdictReveal var(--duration-normal) var(--easing-out) both;
-}
-html[data-design] .result-correct {
-  background: var(--color-status-success-wash);
-  border-color: var(--color-status-success);
-}
-html[data-design] .result-wrong {
-  background: var(--color-status-error-wash);
-  border-color: var(--color-status-error);
-}
-html[data-design] .result-correct > strong,
-html[data-design] .result-wrong > strong {
-  display: block;
-  font-family: var(--font-family-display);
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-lg);
-  margin-bottom: var(--space-2);
-}
-html[data-design] .result-correct > strong { color: var(--color-status-success); }
-html[data-design] .result-wrong > strong { color: var(--color-status-error); }
-/* P1.1: красный/зелёный только у ResultBanner; ExplanationCard — нейтральный. */
-html[data-design] .result-banner.result-correct,
-html[data-design] .result-banner.result-wrong {
-  margin-bottom: var(--space-4);
-}
-html[data-design] .explanation-panel {
-  margin: var(--space-4) 0;
-  padding: var(--space-4) var(--space-5);
-  border: var(--rule-weight) solid var(--color-border-primary);
-  border-radius: var(--border-radius-md);
-  background: var(--color-bg-secondary);
-  color: var(--color-text-primary);
-}
-html[data-design] .explanation-eyebrow {
-  display: block;
-  font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide);
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-2);
-}
-html[data-design] .explanation-panel .answer,
-html[data-design] .explanation-panel .result-lead {
-  background: transparent;
-  border: 0;
-  padding: 0;
-  margin: 0;
-  color: var(--color-text-primary);
-}
-html[data-design] .result-correct .answer,
-html[data-design] .result-wrong .answer,
-html[data-design] .option-correct .answer,
-html[data-design] .option-wrong .answer {
-  background: transparent; border: 0; padding: 0; margin-top: var(--space-2);
-}
+/* Вердикт ответа (.result-correct/.result-wrong, verdictReveal @keyframes), ResultBanner,
+   ExplanationCard (.explanation-panel/.explanation-eyebrow) и плоский вложенный .answer
+   (.result-correct/.result-wrong/.option-correct/.option-wrong .answer) вынесены в
+   components-answer.css (@layer components): общая поверхность — app.js #result-feedback
+   на .focus-page + no-JS result.html (D2c). Партнёры в своих слоях остаются: shell.css
+   .result-banner-flex/.explanation-panel-base (@shell ниже), pixel-fx декор (@pixel выше),
+   utilities-mobile padding (@utilities выше). */
 /* Глобальный `.inline-alert` (error/success) вынесен в components-alert.css
    (@layer components, грузится всегда): рендерится на topbar/result/post-answer —
    вне экрана вопроса, нельзя терять при page-scope focus (Волна 3). */

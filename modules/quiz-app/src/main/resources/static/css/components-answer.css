@@ -140,4 +140,92 @@ html[data-design] .option-breakdown-tag {
 }
 html[data-design] .option-breakdown-item .option-explanation { margin: 0; }
 
+/* Раскрытый ответ — тёплая reading-панель в рамке-линейке (editorial), вместо
+   старого индиго-well. Действует и на разбор на result.html (C3) → общая, из
+   pages-focus (D2c). */
+html[data-design] .answer {
+  background: var(--color-bg-secondary);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-md);
+  padding: var(--space-4) var(--space-5);
+  margin-top: var(--space-3);
+}
+html[data-design] .answer > *:first-child { margin-top: 0; }
+html[data-design] .answer > *:last-child { margin-bottom: 0; }
+
+/* Вердикт ответа (.result-correct/.result-wrong, app.js рендерит в #result-feedback +
+   no-JS result.html). Editorial: статус-wash + цветная рамка, крупный сериф-вердикт.
+   Вложенный .answer делаем плоским, чтобы не было панели-в-панели. Общая поверхность
+   → из pages-focus (D2c). Партнёры в своих слоях НЕ затронуты: shell.css
+   .result-banner-flex/.explanation-panel-base (@shell — НИЖЕ components, наши правила
+   остаются выше), pixel-fx декор `::after` (@pixel — выше), utilities-mobile padding
+   (@utilities — выше). */
+/* Peak-end момент петли MCQ: вердикт раскрывается app.js'ом (снимает .hidden). Один
+   сдержанный fade+сдвиг = «информация прибывает». reduced-motion покрыт глобально. */
+@keyframes verdictReveal {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+html[data-design] .result-correct,
+html[data-design] .result-wrong {
+  padding: var(--space-4) var(--space-5);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-md);
+  margin-top: var(--space-2);
+  animation: verdictReveal var(--duration-normal) var(--easing-out) both;
+}
+html[data-design] .result-correct {
+  background: var(--color-status-success-wash);
+  border-color: var(--color-status-success);
+}
+html[data-design] .result-wrong {
+  background: var(--color-status-error-wash);
+  border-color: var(--color-status-error);
+}
+html[data-design] .result-correct > strong,
+html[data-design] .result-wrong > strong {
+  display: block;
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--space-2);
+}
+html[data-design] .result-correct > strong { color: var(--color-status-success); }
+html[data-design] .result-wrong > strong { color: var(--color-status-error); }
+/* P1.1: красный/зелёный только у ResultBanner; ExplanationCard — нейтральный. */
+html[data-design] .result-banner.result-correct,
+html[data-design] .result-banner.result-wrong {
+  margin-bottom: var(--space-4);
+}
+html[data-design] .explanation-panel {
+  margin: var(--space-4) 0;
+  padding: var(--space-4) var(--space-5);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-md);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+html[data-design] .explanation-eyebrow {
+  display: block;
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-2);
+}
+html[data-design] .explanation-panel .answer,
+html[data-design] .explanation-panel .result-lead {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  color: var(--color-text-primary);
+}
+html[data-design] .result-correct .answer,
+html[data-design] .result-wrong .answer,
+html[data-design] .option-correct .answer,
+html[data-design] .option-wrong .answer {
+  background: transparent; border: 0; padding: 0; margin-top: var(--space-2);
+}
+
 }
