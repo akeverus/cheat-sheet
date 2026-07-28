@@ -110,6 +110,16 @@ public class MarkdownRenderService {
             java.util.regex.Pattern.compile("<\\s*br\\s*/?\\s*>", java.util.regex.Pattern.CASE_INSENSITIVE);
 
     /**
+     * Стереотипы class-диаграмм mermaid: {@code <<interface>>}, {@code <<abstract>>},
+     * {@code <<sealed>>}, {@code <<record>>}, {@code <<enumeration>>} и т.п. Как и {@code <br>},
+     * их надо доставить в mermaid ЛИТЕРАЛОМ (см. preprocessMermaid), иначе jsoup распарсит
+     * {@code <interface>} как неизвестный элемент, развернёт его и {@code <<interface>>}
+     * схлопнется в {@code <>}. Ограничение длины — защита от захвата неродственных {@code <}.
+     */
+    private static final java.util.regex.Pattern MERMAID_STEREOTYPE =
+            java.util.regex.Pattern.compile("<<[^<>\\n]{1,40}>>");
+
+    /**
      * Конвертирует markdown в HTML, санитизированный для безопасного отображения (th:utext / innerHTML).
      * Удаляются script, iframe, event-атрибуты и опасные теги.
      * Mermaid-блоки (```mermaid) конвертируются в {@code <div class="mermaid">} для рендеринга mermaid.js.
@@ -236,8 +246,14 @@ public class MarkdownRenderService {
             // диаграммах тела ответа: 2513 узлов в 181 файле). Эскейпим ТОЛЬКО <br> в
             // сущность — он доезжает до mermaid литеральным текстом, и mermaid сам рисует
             // перенос. Прочие теги (в т.ч. <script>) идут прежним путём: их вырезает
-            // jsoup-санитайзер в toHtml, security-инвариант сохранён.
+            // jsoup-санитайзер в toHtml, security-инвариант сохранён. Аналогично —
+            // стереотипы class-диаграмм <<interface>>/<<abstract>>/…: без эскейпа jsoup
+            // разворачивает мнимый <interface> и <<interface>> схлопывается в <>. Эскейпим
+            // только угловые скобки самого стереотипа (внутренний текст цел).
             String source = MERMAID_BR.matcher(mr.group(1).trim()).replaceAll("&lt;br/&gt;");
+            source = MERMAID_STEREOTYPE.matcher(source).replaceAll(
+                    sm -> java.util.regex.Matcher.quoteReplacement(
+                            sm.group().replace("<", "&lt;").replace(">", "&gt;")));
             return "\n<div class=\"mermaid\">\n" + java.util.regex.Matcher.quoteReplacement(source) + "\n</div>\n\n";
         });
     }

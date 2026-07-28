@@ -101,6 +101,19 @@ class MarkdownRenderServiceTest {
     }
 
     @Test
+    void escapesClassDiagramStereotypeSoItSurvivesTextContent() {
+        // <<interface>> в class-диаграммах mermaid обязан доехать до клиента литералом:
+        // без эскейпа jsoup разворачивает мнимый элемент <interface> и <<interface>>
+        // схлопывается в «<>», ломая стереотип узла.
+        String md = "```mermaid\nclassDiagram\n    class Builder {\n        <<interface>>\n        buildPartA()\n    }\n```";
+        String html = service.toHtml(md);
+
+        assertThat(html).contains("<div class=\"mermaid\">");
+        assertThat(html).contains("&lt;&lt;interface&gt;&gt;");
+        assertThat(html).doesNotContain("&lt;&gt;");
+    }
+
+    @Test
     void rendersGfmTableAsHtmlTable() {
         // Регрессия: без TablesExtension flexmark схлопывал строки таблицы в <p>,
         // и пользователь видел сырой pipe-текст в пояснениях/чек-листах.
