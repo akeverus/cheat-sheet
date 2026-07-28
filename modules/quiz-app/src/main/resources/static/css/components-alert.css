@@ -1,0 +1,18 @@
+/* @layer components — глобальный inline-alert (error / success).
+   Вынесено из pages-focus.css при подготовке page-scope focus (Волна 3 CSS-архитектуры):
+   селекторы `.inline-alert` / `.inline-alert.success` ГЛОБАЛЬНЫЕ, рендерятся вне
+   экрана вопроса — topbar.html (все 7 shell-страниц), result.html (no-JS answer),
+   post-answer-controls.html, fragment inline-alert.html. Если бы остались в
+   page-scoped pages-focus, база алерта исчезла бы на stats/settings/bookmarks/
+   result/summary/error и била бы no-JS аудиторию (JS-скриншот это скрывает —
+   `.ed-noscript` спрятан под JS). Каскад-нейтрально: ни один другой CSS не трогает
+   `.inline-alert` (grep) → нет конкурента в слоях ≥ components, демоушен безопасен. */
+@layer components {
+
+html[data-design] .inline-alert { padding: var(--space-3) var(--space-4); border: var(--rule-weight) solid var(--color-status-error); border-radius: var(--border-radius-md); background: var(--color-status-error-wash); color: var(--color-text-primary); margin: var(--space-3) 0; }
+/* Успех (app.js setInlineAlert(..,'success'), напр. после перегенерации вариантов):
+   .success-модификатор красит в success-токен — иначе позитивное сообщение рисуется
+   в КРАСНОЙ error-рамке/фоне (success-uses-error semantics). Зеркалит .toast-success. */
+html[data-design] .inline-alert.success { border-color: var(--color-status-success); background: var(--color-status-success-wash); }
+
+}
