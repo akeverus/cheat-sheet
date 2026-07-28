@@ -337,4 +337,63 @@ html[data-design] .settings-page .toast-success { background: var(--color-status
   }
 }
 
+/* ---- Filter chips охвата (ВОЛНА 4, type-B из shell.css @shell) ----------------
+   Возвращены в свой page-файл: раньше жили в глобальном shell.css и грузились на
+   всех 8 страницах, хотя матчат только .settings-page. Перенос @shell в @pages
+   каскад-нейтрален: pixel-fx @pixel на .filter-chip задаёт лишь position:relative +
+   pseudo-маркер checkbox на .filter-chip-label::before (дизъюнктные свойства);
+   @components/@pages-конкурентов на .filter-chip* нет (единств. pages-settings
+   трогает .toggle-item:not(.filter-chip) — исключает). Декларации дословны из
+   shell.css:910-960. */
+html[data-design] .settings-page .filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+html[data-design] .settings-page .filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  margin: 0;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--border-radius-full);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  user-select: none;
+  transition: background var(--duration-fast) var(--easing-default),
+              border-color var(--duration-fast) var(--easing-default),
+              color var(--duration-fast) var(--easing-default);
+}
+html[data-design] .settings-page .filter-chip:has(input:checked) {
+  background: color-mix(in srgb, var(--color-accent-primary) 16%, var(--color-bg-secondary));
+  border-color: var(--color-accent-primary);
+  color: var(--color-text-primary);
+}
+html[data-design] .settings-page .filter-chip input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+html[data-design] .settings-page .filter-chip-count {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-tertiary);
+  background: var(--color-surface-soft);
+  border-radius: var(--border-radius-full);
+  padding: 1px 7px;
+  min-width: 1.4em;
+  text-align: center;
+}
+html[data-design] .settings-page .filter-chip:has(input:checked) .filter-chip-count {
+  color: var(--color-accent-strong);
+}
+
 }
