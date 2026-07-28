@@ -106,6 +106,19 @@ html[data-design] .stats-page select:disabled {
    (@layer utilities ≥ pages, бьёт `.stats-page input:focus{outline:none}` ниже) —
    Волна 1, чтобы stats-файл стал page-pure без потери WCAG 2.4.7 индикатора. */
 html[data-design] .stats-page .search-input { flex: 1 1 160px; min-width: 0; }
+/* Автозаполнение (менеджер паролей) перекрашивает поле поиска своим UA-фоном →
+   гасим inset-тенью на bg-primary (свой фон поиска, у prompt-модалки — bg-secondary,
+   её правило в components-modals). Приехало из pages-result при выносе модалок
+   (Волна 3): search-input живёт только на stats — тут его законный дом. */
+html[data-design] .stats-page .search-input:-webkit-autofill,
+html[data-design] .stats-page .search-input:-webkit-autofill:hover,
+html[data-design] .stats-page .search-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--color-bg-primary) inset;
+  box-shadow: 0 0 0 1000px var(--color-bg-primary) inset;
+  -webkit-text-fill-color: var(--color-text-primary);
+  caret-color: var(--color-text-primary);
+  transition: background-color 600000s 0s, color 600000s 0s;
+}
 
 /* Кнопки фильтра/поиска */
 html[data-design] .stats-page .stats-action-btn {
