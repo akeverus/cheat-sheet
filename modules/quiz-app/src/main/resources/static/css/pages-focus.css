@@ -101,7 +101,14 @@ html[data-design] .focus-progress-line {
 /* Чернила, не Clay: акцент на ivory — 2.96:1, для 12px нужно 4.5:1 (см. round-01 A1). */
 html[data-design] .focus-progress-line .session-progress { color: var(--color-text-primary); font-weight: var(--font-weight-semibold); }
 
-html[data-design] .session-progress-track {
+/* D4 (анкер-фаза Волны 3): весь кластер session-rail + resume/recoverable-баннеров —
+   focus-only (рейка сессии / приостановленная-восстанавливаемая сессия отсутствуют в
+   result.html и во всех фрагментах не-focus страниц). Заякорено под .focus-page, чтобы
+   pages-focus.css стал page-pure для th:if page=='focus'. Каскад-нейтрально (замерено
+   0-diff, 140 точек, dark+light): pixel-fx (@pixel) выигрывает свои свойства и до/после;
+   reset-layout forced-colors (@reset, ниже) без изменений; pages-layout :has() (0,5,0)
+   специфичнее моего 0,2,0 после анкеринга → всё ещё выигрывает width. */
+html[data-design] .focus-page .session-progress-track {
   height: 2px;
   /* bg-tertiary (как у ВСЕХ прочих треков прогресса: streak/accuracy/topic/forecast).
      Прежний border-secondary под hairline-дизайнами (notion/mintlify/linear) —
@@ -113,21 +120,21 @@ html[data-design] .session-progress-track {
 
 /* Досрочное завершение сессии из рейки (round-01 B3). На узких экранах —
    обычный блок в потоке перед вопросом, на >=1200px — элемент sticky-рейки. */
-html[data-design] .rail-finish { margin-bottom: var(--space-6); }
+html[data-design] .focus-page .rail-finish { margin-bottom: var(--space-6); }
 /* FLOW-01b: пауза сессии из рейки — ниже-эмфазная, чем «Завершить» (обратимое
    действие). Text-only без рамки; на wide-рельсе тянется в full-width как rail-finish. */
-html[data-design] .rail-pause { margin-bottom: var(--space-3); }
-html[data-design] .rail-pause-btn {
+html[data-design] .focus-page .rail-pause { margin-bottom: var(--space-3); }
+html[data-design] .focus-page .rail-pause-btn {
   border-color: transparent; color: var(--color-text-secondary);
   padding-left: 0; padding-right: 0;
 }
-html[data-design] .rail-pause-btn:hover:not(:disabled) {
+html[data-design] .focus-page .rail-pause-btn:hover:not(:disabled) {
   background: transparent; border-color: transparent;
   color: var(--color-text-primary); text-decoration: underline;
 }
 /* FLOW-01b: resume-баннер приостановленной сессии — callout вверху фокус-страницы
    (accent-wash фон + accent-бордер). На узких стекается: действие уходит под текст. */
-html[data-design] .resume-banner {
+html[data-design] .focus-page .resume-banner {
   display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
   flex-wrap: wrap;
   margin-bottom: var(--space-6); padding: var(--space-4) var(--space-5);
@@ -135,13 +142,13 @@ html[data-design] .resume-banner {
   border: var(--rule-weight) solid var(--color-accent-primary);
   border-radius: var(--border-radius-md);
 }
-html[data-design] .resume-banner-body { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
-html[data-design] .resume-banner-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-html[data-design] .resume-banner-text strong { font-weight: var(--font-weight-semibold); color: var(--color-text-primary); }
-html[data-design] .resume-banner-meta { font-family: var(--font-family-mono); font-size: var(--font-size-sm); color: var(--color-text-secondary); }
+html[data-design] .focus-page .resume-banner-body { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+html[data-design] .focus-page .resume-banner-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+html[data-design] .focus-page .resume-banner-text strong { font-weight: var(--font-weight-semibold); color: var(--color-text-primary); }
+html[data-design] .focus-page .resume-banner-meta { font-family: var(--font-family-mono); font-size: var(--font-size-sm); color: var(--color-text-secondary); }
 
 /* FLOW-04: recoverable offline / expired banners */
-html[data-design] .recoverable-banner {
+html[data-design] .focus-page .recoverable-banner {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2);
   margin: 0 0 var(--space-3);
   padding: var(--space-3) var(--space-4);
@@ -150,25 +157,25 @@ html[data-design] .recoverable-banner {
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
 }
-html[data-design] .recoverable-banner.hidden,
-html[data-design] .recoverable-banner[hidden] { display: none !important; }
-html[data-design] .recoverable-banner-offline {
+html[data-design] .focus-page .recoverable-banner.hidden,
+html[data-design] .focus-page .recoverable-banner[hidden] { display: none !important; }
+html[data-design] .focus-page .recoverable-banner-offline {
   border-color: var(--color-status-warning);
   background: var(--color-status-warning-wash, var(--color-bg-tertiary));
   align-items: center;   /* GFX-008: pixel-offline глиф выравнивается по центру текста */
 }
 /* Текст-обёртка offline-баннера: сохраняет прежний baseline-flow strong+span,
    а pixel-глиф остаётся отдельным нешринкующимся flex-элементом слева. */
-html[data-design] .recoverable-banner-text {
+html[data-design] .focus-page .recoverable-banner-text {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2);
   flex: 1 1 0; min-width: 0;
 }
-html[data-design] .recoverable-banner-expired {
+html[data-design] .focus-page .recoverable-banner-expired {
   border-color: var(--color-status-error);
   background: var(--color-status-error-wash);
 }
-html[data-design] .resume-banner-action { flex-shrink: 0; }
-html[data-design] .session-progress-fill {
+html[data-design] .focus-page .resume-banner-action { flex-shrink: 0; }
+html[data-design] .focus-page .session-progress-fill {
   height: 100%; width: 0;
   background: var(--color-accent-primary);
   transition: width var(--duration-slow) var(--easing-out);
