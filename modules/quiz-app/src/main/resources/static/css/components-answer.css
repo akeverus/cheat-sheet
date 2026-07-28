@@ -228,6 +228,20 @@ html[data-design] .option-wrong .answer {
   background: transparent; border: 0; padding: 0; margin-top: var(--space-2);
 }
 
+/* Пост-ответная разметка MCQ-вариантов (app.js вешает .option-correct/-wrong на
+   выбранную/правильную опцию; рендерится и на no-JS result.html) — статус-рамка +
+   wash + цветной буквенный маркер ::before. Общая поверхность → из pages-focus
+   (D3d Волны 3). Все декларации !important: должны бить дефолтную рамку опции
+   независимо от пиксель-декора. Каскад-безопасно даже при инверсии слоёв для
+   !important (@components раньше @pages → приоритет РАСТЁТ): конкуренты pixel-fx
+   `#interview-options label.option-correct` и utilities `:has(input:checked)`
+   трогают ТОЛЬКО box-shadow/animation/::after — не border-color/background/::before,
+   те свойства база задаёт единолично. option-dimmed (focus-only) не тронут. */
+html[data-design] .option-correct { border-color: var(--color-status-success) !important; background: var(--color-status-success-wash) !important; }
+html[data-design] .option-correct::before { background: var(--color-status-success) !important; border-color: var(--color-status-success) !important; color: var(--color-status-success-on) !important; }
+html[data-design] .option-wrong { border-color: var(--color-status-error) !important; background: var(--color-status-error-wash) !important; }
+html[data-design] .option-wrong::before { background: var(--color-status-error) !important; border-color: var(--color-status-error) !important; color: var(--color-status-error-on) !important; }
+
 /* «Голова» пост-ответной зоны — линейка-разделитель над разбором. Общая: рендерится
    на .focus-page (fragments/result-zone-head.html) И на result.html (D2d). Уникальный
    селектор; split-layout grid-column на ОБЁРТКЕ (pages-layout `:has()`) — другое
