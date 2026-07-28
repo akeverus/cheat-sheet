@@ -198,39 +198,12 @@ html[data-design] .result-page .question-code code { font-family: var(--font-fam
    во всю ширину; форсим row (на мобиле media ниже возвращает column). */
 html[data-design] .result-page .result-actions { display: flex; flex-direction: row; align-items: center; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-6); }
 
-/* Похожие вопросы — тёплый блок-список (гасим indigo).
-   ВАЖНО: блок инжектится JS-ом (app.js) в пост-ответный фидбэк и на .result-page
-   (мёртвый result.html), и на ЖИВОЙ .focus-page. Раньше правила были только под
-   .result-page → на focus-page .related-question-item оставались дефолтными inline
-   <a> и слипались в одну строку («…Phone Number?Шаблон backtracking?Rat in a Maze?»).
-   Дублируем селекторы под .focus-page — та же специфичность, без регрессий. */
-html[data-design] .result-page #result-related-questions,
-html[data-design] .result-page .related-questions,
-html[data-design] .focus-page #result-related-questions,
-html[data-design] .focus-page .related-questions {
-  background: transparent; border: 0; border-top: var(--rule-weight-strong) solid var(--color-border-primary);
-  margin-top: var(--space-7); padding-top: var(--space-5);
-}
-html[data-design] .result-page .related-questions-title,
-html[data-design] .focus-page .related-questions-title {
-  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
-  color: var(--color-accent-strong); margin: 0 0 var(--space-3);
-}
-html[data-design] .result-page .related-question-item,
-html[data-design] .focus-page .related-question-item {
-  /* overflow-wrap: длинные неразрывные токены в заголовках похожих вопросов
-     (camelCase «SecurityMockMvcRequestPostProcessors», слэш-ран «Cloudflare/
-     Akamai/CloudFront») переполняли sticky-рейку (≥1200px) и узкий стек (320px) —
-     этот контейнер не в глобальном overflow-wrap списке (1005). Как .options>div. */
-  display: block; padding: var(--space-3) var(--space-4); margin: 0 0 var(--space-2); overflow-wrap: break-word; word-break: break-word;
-  font-family: var(--font-family-body); font-size: var(--font-size-base);
-  color: var(--color-text-primary); text-decoration: none; background: transparent;
-  border: var(--rule-weight) solid var(--color-border-secondary); border-radius: var(--border-radius-md);
-  transition: background var(--duration-fast) var(--easing-default);
-}
-html[data-design] .result-page .related-question-item:hover,
-html[data-design] .focus-page .related-question-item:hover { background: var(--color-bg-tertiary); }
+/* Похожие вопросы (#result-related-questions / .related-questions / -title /
+   .related-question-item + :hover) ВЫНЕСЕНЫ в components-answer.css (@layer components,
+   глобально; Волна 3 ШАГ R / Cluster C). Блок инъектит JS (interview.js) в пост-ответный
+   фидбэк на ЖИВОЙ .focus-page + статика на .result-page (no-JS result.html) → кросс-стр.:
+   правила уже были selector-list с обоими вариантами, оба выживают глобально. При
+   page-scope pages-result focus-вариант бы пропал. @pages/@components-конкурентов нет. */
 
 @media (max-width: 600px) {
   html[data-design] .result-page .result-actions { flex-direction: column; }
