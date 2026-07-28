@@ -114,6 +114,23 @@ class MarkdownRenderServiceTest {
     }
 
     @Test
+    void escapesInlineFormattingTagsInsideMermaidSoBoldItalicSurvive() {
+        // <b>/<i> в подписях узлов (STAR-мнемоника «<b>S</b>ituation») mermaid рендерит
+        // жирным/курсивом через htmlLabels — но только если доедут литералом. Без эскейпа
+        // el.textContent снимает разметку → плоский текст. Эскейпим сами теги в сущности;
+        // generic-типы (List<items>) НЕ трогаем — не в whitelist.
+        String md = "```mermaid\nflowchart TD\n  A[\"<b>S</b>ituation<br/><i>детали</i>\"]\n  P->>W: write(List<items>)\n```";
+        String html = service.toHtml(md);
+
+        assertThat(html).contains("<div class=\"mermaid\">");
+        assertThat(html).contains("&lt;b&gt;S&lt;/b&gt;ituation");
+        assertThat(html).contains("&lt;i&gt;детали&lt;/i&gt;");
+        // Реальных <b>/<i>-элементов в источнике диаграммы быть не должно.
+        assertThat(html).doesNotContain("<b>");
+        assertThat(html).doesNotContain("<i>");
+    }
+
+    @Test
     void rendersGfmTableAsHtmlTable() {
         // Регрессия: без TablesExtension flexmark схлопывал строки таблицы в <p>,
         // и пользователь видел сырой pipe-текст в пояснениях/чек-листах.

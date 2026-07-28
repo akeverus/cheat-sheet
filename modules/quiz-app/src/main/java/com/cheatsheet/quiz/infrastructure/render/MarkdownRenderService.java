@@ -120,6 +120,18 @@ public class MarkdownRenderService {
             java.util.regex.Pattern.compile("<<[^<>\\n]{1,40}>>");
 
     /**
+     * Инлайн-теги форматирования в mermaid-подписях: {@code <b>}/{@code <i>}/{@code <strong>}/
+     * {@code <em>}/{@code <u>}/{@code <sub>}/{@code <sup>} (и закрывающие). mermaid (htmlLabels,
+     * securityLevel=strict через DOMPurify) их рендерит жирным/курсивом — напр. STAR-мнемоника
+     * {@code <b>S</b>ituation}. Без эскейпа (см. preprocessMermaid) jsoup оставляет их реальными
+     * DOM-элементами, а клиентский {@code el.textContent} снимает разметку → в mermaid уходит
+     * плоский текст без выделения. Эскейпим ТОЛЬКО эти теги — {@code <br>} обрабатывается отдельно
+     * (нормализация), generic-типы вроде {@code List<items>} НЕ трогаем (не в списке).
+     */
+    private static final java.util.regex.Pattern MERMAID_INLINE_FMT =
+            java.util.regex.Pattern.compile("</?(?:b|i|strong|em|u|sub|sup)\\s*>", java.util.regex.Pattern.CASE_INSENSITIVE);
+
+    /**
      * Конвертирует markdown в HTML, санитизированный для безопасного отображения (th:utext / innerHTML).
      * Удаляются script, iframe, event-атрибуты и опасные теги.
      * Mermaid-блоки (```mermaid) конвертируются в {@code <div class="mermaid">} для рендеринга mermaid.js.
@@ -254,6 +266,9 @@ public class MarkdownRenderService {
             source = MERMAID_STEREOTYPE.matcher(source).replaceAll(
                     sm -> java.util.regex.Matcher.quoteReplacement(
                             sm.group().replace("<", "&lt;").replace(">", "&gt;")));
+            source = MERMAID_INLINE_FMT.matcher(source).replaceAll(
+                    fm -> java.util.regex.Matcher.quoteReplacement(
+                            fm.group().replace("<", "&lt;").replace(">", "&gt;")));
             return "\n<div class=\"mermaid\">\n" + java.util.regex.Matcher.quoteReplacement(source) + "\n</div>\n\n";
         });
     }
