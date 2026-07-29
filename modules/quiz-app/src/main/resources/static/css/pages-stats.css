@@ -791,4 +791,22 @@ html[data-design] .stats-page .stats-panel:last-child { margin-bottom: 0; }
 html[data-design] .stats-page.js-tabs .stats-panel { display: none; margin: 0; }
 html[data-design] .stats-page.js-tabs .stats-panel.is-active { display: block; }
 
+
+/* --- STATS: дашборд-сетка (вынесено из pages-layout.css, Волна 5 под-шаг 3).
+   Грид ≥1200: таблица тем (2/3, спан 2 ряда) + правая колонка forecast/gaps (1/3);
+   :has-гейт — только когда есть и таблица, и хотя бы одна правая карта. */
+@media (min-width: 1200px) {
+  html[data-design] .stats-page .main-content:has(> .overflow-x-auto):has(> .review-forecast, > .coverage-gaps) {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    column-gap: var(--space-6);
+    align-items: start;
+  }
+  html[data-design] .stats-page .main-content > * { grid-column: 1 / -1; min-width: 0; }
+  html[data-design] .stats-page .main-content > .overflow-x-auto { grid-column: 1; grid-row: span 2; }
+  /* forecast и gaps кладутся auto-flow'ом в соседние ряды 2-й колонки; если
+     прогноза нет — gaps сам займёт верхний ряд (auto-placement, не areas). */
+  html[data-design] .stats-page .main-content > .review-forecast,
+  html[data-design] .stats-page .main-content > .coverage-gaps { grid-column: 2; }
+}
 }
