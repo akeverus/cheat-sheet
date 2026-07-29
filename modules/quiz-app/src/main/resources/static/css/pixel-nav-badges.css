@@ -1,0 +1,111 @@
+/* =============================================================================
+   pixel-nav-badges.css — PIXEL NAV ICONS + BADGES (мелкий периферийный chrome)
+   Вынесено из pixel-fx.css (Волна 7 concern-split, cut 5). Два смежных мелких
+   concern'а объединены, чтобы не плодить 24-строчные файлы:
+   • Nav icons: .sidebar/.mobile-nav .icon — colorful socket + iconPulse/activeGlow.
+   • Badges: .badge/.zone-chip/.topic-badge — pixel-outline + gem::before/gemTwinkle.
+   Загружается МЕЖДУ pixel-fx.css и pixel-cards.css → относит. порядок @layer pixel
+   идентичен монолиту (nav+badges были перед cards). gemTwinkle ПОТРЕБЛЯЕТСЯ также в
+   pixel-fx.css и pixel-animations.css — document-global, резолвится кросс-файл.
+   ========================================================================== */
+@layer pixel {
+/* ---- Nav icons colorful + bounce ---- */
+html[data-design] .sidebar .nav a .icon,
+html[data-design] .sidebar .nav .nav-link .icon,
+html[data-design] .mobile-nav a .icon {
+  transition: none;
+  image-rendering: pixelated;
+}
+html[data-design] .sidebar .nav a:hover .icon,
+html[data-design] .mobile-nav a:hover .icon {
+  color: var(--px-teal);
+  filter: drop-shadow(0 0 6px rgba(57, 208, 199, 0.7));
+  animation: iconWiggle 0.35s steps(3);
+}
+html[data-design] .sidebar .nav a.active {
+  box-shadow: inset 4px 0 0 var(--px-teal);
+}
+html[data-design][data-pixel="high"] .sidebar .nav a.active {
+  animation: activeGlow 1.6s ease-in-out infinite;
+}
+html[data-design] .sidebar .nav a.active .icon {
+  color: var(--px-teal);
+}
+html[data-design][data-pixel="high"] .sidebar .nav a.active .icon {
+  animation: iconPulse 1.2s steps(2) infinite;
+}
+html[data-design] .sidebar .nav a[href="/"] .icon,
+html[data-design] .sidebar .nav a[href$="/"] .icon { color: var(--px-teal); }
+html[data-design] .sidebar .nav a[href*="stats"] .icon { color: var(--px-blue); }
+html[data-design] .sidebar .nav a[href*="review"] .icon { color: var(--px-amber); }
+html[data-design] .sidebar .nav a[href*="important"] .icon { color: var(--px-purple); }
+html[data-design] .sidebar .nav a[href*="settings"] .icon { color: var(--px-green); }
+
+@keyframes iconPulse {
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(57, 208, 199, 0.3)); transform: scale(1); }
+  50% { filter: drop-shadow(0 0 10px rgba(57, 208, 199, 0.85)); transform: scale(1.12); }
+}
+@keyframes activeGlow {
+  0%, 100% { background: linear-gradient(90deg, rgba(57, 208, 199, 0.22), transparent); }
+  50% { background: linear-gradient(90deg, rgba(57, 208, 199, 0.38), transparent); }
+}
+
+/* Nav labels — keep system/UI font, only pixel icons animate.
+   Активный пункт «вставлен в pixel-socket»: teal-well + верхний lit-индикатор.
+   §16.3: активность через socket + фон + контраст (НЕ бесконечная пульсация).
+   box-shadow НЕ используем — он зарезервирован под focus-visible (shell.css:451),
+   иначе socket перекрыл бы focus-ring активного пункта (a11y-регресс). */
+html[data-design] .mobile-nav a.active {
+  /* accent-strong на accent-wash: 5.5 (light) / 8.9 (dark) — AA для 11px-подписи.
+     Иконка следует currentColor. */
+  color: var(--color-accent-strong);
+  background: var(--color-accent-wash);   /* teal-well слота */
+}
+html[data-design] .mobile-nav a.active::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--px-teal);              /* верхний lit-индикатор socket (pixel-crisp) */
+}
+/* high: активная иконка статично «подсвечена» в слоте — без infinite-пульса */
+html[data-design][data-pixel="high"] .mobile-nav a.active .icon {
+  filter: drop-shadow(0 0 5px rgba(57, 208, 199, 0.7));
+}
+html[data-design] .mobile-nav {
+  border-radius: 0 !important;
+  box-shadow: 0 -3px 0 #0a1a20;
+}
+html[data-design] .mobile-nav a .icon {
+  display: block;
+  margin: 0 auto 4px;
+}
+
+/* ---- Badges pixel ---- */
+html[data-design] .badge,
+html[data-design] .zone-chip,
+html[data-design] .topic-badge {
+  border-radius: 0 !important;
+  box-shadow: 2px 0 0 currentColor, -2px 0 0 currentColor, 0 2px 0 currentColor, 0 -2px 0 currentColor;
+  border: 0 !important;
+}
+html[data-design] .badge.accent::before {
+  content: "";
+  display: inline-block;
+  width: var(--px-s);
+  height: var(--px-s);
+  margin-right: 6px;
+  vertical-align: -2px;
+  background: url("/img/pixel/gem.png") center / contain no-repeat;
+  image-rendering: pixelated;
+}
+html[data-design][data-pixel="high"] .badge.accent::before {
+  animation: gemTwinkle 0.8s steps(2) infinite;
+}
+@keyframes gemTwinkle {
+  0%, 100% { filter: brightness(1); transform: scale(1); }
+  50% { filter: brightness(1.5); transform: scale(1.15); }
+}
+}
