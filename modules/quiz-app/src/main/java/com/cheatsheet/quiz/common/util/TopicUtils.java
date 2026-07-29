@@ -37,7 +37,12 @@ public class TopicUtils {
             Map.entry("networking", "Сети"),
             Map.entry("algorithms", "Алгоритмы"),
             Map.entry("data-structures", "Структуры данных"),
-            Map.entry("tls-ssl", "TLS/SSL")
+            Map.entry("tls-ssl", "TLS/SSL"),
+            // Непереводная англо-проза категории верхнего уровня: без записи fallback
+            // давал англоязычное «Interview preparation» эйбрау над русским вопросом
+            // в TRAINING/марафоне — рассинхрон с языком UI. Совпадает с заголовком приложения.
+            Map.entry("interview-preparation", "Подготовка к собеседованию"),
+            Map.entry("interview preparation", "Подготовка к собеседованию")
     );
 
     /**

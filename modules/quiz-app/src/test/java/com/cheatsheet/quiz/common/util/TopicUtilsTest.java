@@ -38,7 +38,9 @@ class TopicUtilsTest {
             "mtls, mTLS, mtls",
             "tls-ssl, TLS/SSL, tls-ssl",
             "owasp-top10, OWASP Top 10, owasp-top10",
-            "spring-data-jpa, Spring data JPA, spring-data-jpa"
+            "spring-data-jpa, Spring data JPA, spring-data-jpa",
+            "interview-preparation, Подготовка к собеседованию, interview-preparation",
+            "soft-skills/interview-preparation-interview.md, Подготовка к собеседованию, interview-preparation"
     })
     void displayNameIsHumanReadableAndSlugIsRaw(String input, String display, String slug) {
         assertThat(utils.displayName(input)).isEqualTo(display);
