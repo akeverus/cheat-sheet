@@ -139,14 +139,19 @@
             </a>
             <a class="stats-next-action stats-next-action-weak"
                th:href="@{/(weakTopics=true, ordered=true, topic=${weakestTopic})}"
+               th:with="weakTopicCount=${topicStats != null ? topicStats.size() : 0}"
                th:classappend="${stats.due == 0 and stats.wrong == 0 and topicStats != null and !topicStats.isEmpty()} ? ' is-recommended'">
                 <span class="stats-next-action-label">Тренировать слабые темы</span>
                 <span class="stats-next-action-topic" data-weak-topic-summary
                       th:text="${weakestTopic != null
                         ? ('Слабее всего: ' + @topicUtils.displayName(weakestTopic))
                         : (topicStats != null and !topicStats.isEmpty() ? 'Слабая тема появится после первых ответов' : 'Тем пока нет')}">Самая слабая тема</span>
-                <strong th:text="${topicStats != null ? topicStats.size() : 0}">0</strong>
-                <span class="stats-next-action-detail">тем в аналитике</span>
+                <strong th:text="${weakTopicCount}">0</strong>
+                <!-- Плюрализация как в соседних карточках (@plural.pick): «1 тема» / «4 темы» /
+                     «5 тем». Раньше суффикс «тем» был захардкожен → «1 тем»/«4 тем» (неверно
+                     для 1 и 2–4). -->
+                <span class="stats-next-action-detail"
+                      th:text="${@plural.pick(weakTopicCount, 'тема в аналитике', 'темы в аналитике', 'тем в аналитике')}">тем в аналитике</span>
             </a>
         </div>
     </section>
