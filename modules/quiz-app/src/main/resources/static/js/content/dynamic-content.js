@@ -1,5 +1,6 @@
 import { highlightContainer } from './highlight.js';
 import { renderAllMermaid } from './mermaid-renderer.js';
+import { enhanceScrollableTables } from './table-scroll.js';
 
 const OPTION_EXPLANATION_COLLAPSE_QUERY = '(max-width: 760px)';
 
@@ -40,4 +41,5 @@ export function renderDynamicContent(container) {
   enhanceOptionExplanationDisclosure(container);
   highlightContainer(container);
   renderAllMermaid(false, container);
+  enhanceScrollableTables(container);
 }
