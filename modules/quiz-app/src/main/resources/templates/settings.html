@@ -36,7 +36,14 @@
                     aria-controls="panel-session" aria-selected="true" tabindex="0">Сессия</button>
             <button type="button" class="settings-tab" role="tab" id="tab-appearance"
                     aria-controls="panel-appearance" aria-selected="false" tabindex="-1">Оформление</button>
+            <!-- Вкладка «Данные» — только когда в панели реально есть контент: экспорт/
+                 опасная зона (optionsBankResetAllowed) или аккаунт (multiSecurityMode).
+                 В дефолтном single-user без admin-гейта оба флага false → панель была бы
+                 ровно заголовок «Данные» → пустая вкладка (клик ведёт в blank). Не рендерим
+                 ни вкладку, ни панель. JS initSettingsTabs динамичен (по количеству [role=tab]),
+                 2 вкладки обрабатывает корректно. -->
             <button type="button" class="settings-tab" role="tab" id="tab-data"
+                    th:if="${optionsBankResetAllowed or multiSecurityMode}"
                     aria-controls="panel-data" aria-selected="false" tabindex="-1">Данные</button>
         </div>
 
@@ -314,7 +321,10 @@
         </section>
 
         <!-- ============================ ПАНЕЛЬ: ДАННЫЕ ============================ -->
+        <!-- Панель «Данные» рендерится только вместе со своей вкладкой (см. th:if на
+             #tab-data): без контента (single-user без admin-гейта) была бы пустой. -->
         <section class="settings-panel" role="tabpanel" id="panel-data"
+                 th:if="${optionsBankResetAllowed or multiSecurityMode}"
                  aria-labelledby="tab-data" tabindex="0">
             <h2 class="settings-panel-title">Данные</h2>
 
