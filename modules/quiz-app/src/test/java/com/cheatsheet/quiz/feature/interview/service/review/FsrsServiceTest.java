@@ -107,4 +107,54 @@ class FsrsServiceTest {
         assertThat(hard.difficulty()).isBetween(1.0, 10.0);
         assertThat(easy.difficulty()).isBetween(1.0, 10.0);
     }
+
+    @Test
+    void lowerRetrievabilityYieldsLargerStabilityGain() {
+        // Определяющее свойство интервального повторения (эффект распределённости):
+        // успешное припоминание ПОЗЖЕ (память забыта сильнее, R ниже) укрепляет её
+        // сильнее, чем то же припоминание вскоре после прошлого повтора. В формуле —
+        // множитель (e^((1−R)·w10) − 1) растёт при падении R.
+        FsrsState reviewedRecently = established(10.0, 5.0, 0, NOW - 5 * DAY);
+        FsrsState reviewedLater = established(10.0, 5.0, 0, NOW - 30 * DAY);
+
+        double stabilityRecent = fsrs.schedule(reviewedRecently, FsrsRating.GOOD, NOW).stability();
+        double stabilityLater = fsrs.schedule(reviewedLater, FsrsRating.GOOD, NOW).stability();
+
+        assertThat(stabilityLater).isGreaterThan(stabilityRecent);
+    }
+
+    @Test
+    void recallStabilityOrderedByRatingHardGoodEasy() {
+        // При одинаковом состоянии итоговая стабильность растёт с оценкой:
+        // HARD штрафует (w15 < 1), EASY бонусит (w16 > 1), GOOD — нейтрально.
+        FsrsState state = established(10.0, 5.0, 0, NOW - 10 * DAY);
+
+        double hard = fsrs.schedule(state, FsrsRating.HARD, NOW).stability();
+        double good = fsrs.schedule(state, FsrsRating.GOOD, NOW).stability();
+        double easy = fsrs.schedule(state, FsrsRating.EASY, NOW).stability();
+
+        assertThat(hard).isLessThan(good);
+        assertThat(good).isLessThan(easy);
+    }
+
+    @Test
+    void nonAgainRatingsDoNotIncrementLapses() {
+        // Лапс — только при AGAIN; HARD/GOOD/EASY счётчик забываний не трогают.
+        FsrsState state = established(10.0, 5.0, 3, NOW - 10 * DAY);
+        assertThat(fsrs.schedule(state, FsrsRating.HARD, NOW).lapses()).isEqualTo(3);
+        assertThat(fsrs.schedule(state, FsrsRating.GOOD, NOW).lapses()).isEqualTo(3);
+        assertThat(fsrs.schedule(state, FsrsRating.EASY, NOW).lapses()).isEqualTo(3);
+    }
+
+    @Test
+    void difficultySaturatesAtUpperBoundUnderRepeatedAgain() {
+        // Многократное «забыл» не может утащить сложность выше 10 (clamp [1..10]).
+        FsrsState state = established(20.0, 9.5, 0, NOW - 20 * DAY);
+        for (int i = 0; i < 8; i++) {
+            FsrsService.Result r = fsrs.schedule(state, FsrsRating.AGAIN, NOW);
+            assertThat(r.difficulty()).isLessThanOrEqualTo(10.0);
+            state = established(r.stability(), r.difficulty(), r.lapses(), NOW - 20 * DAY);
+        }
+        assertThat(state.difficulty()).isLessThanOrEqualTo(10.0);
+    }
 }
