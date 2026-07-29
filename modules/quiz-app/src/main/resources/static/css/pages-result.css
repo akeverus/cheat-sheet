@@ -263,4 +263,45 @@ html[data-design="instrument"] .result-page .sm2-grid {
   border-top-color: var(--color-border-primary);
 }
 
+
+/* --- RESULT wide-layout (min-width 1200) — вынесено из pages-layout.css (Волна 5
+   под-шаг 3). Сетка на .ed-page: карточка разбора 1fr + related-рейка sticky справа.
+   @pages -> @pages (тот же слой), append в конец: same-property конкурентов нет —
+   база L9 .ed-page{max-width} дизъюнктна; related-контент в components-answer ниже
+   слоем и менее специфичен, наши layout-правила выигрывают как и в монолите. */
+@media (min-width: 1200px) {
+  /* --- RESULT (no-JS разбор /answer): сетка на main — карточка разбора в 1fr,
+     «Похожие вопросы» уезжают в правую sticky-рейку. Грид включён ВСЕГДА
+     (ширина карточки не прыгает между вопросами с related и без): без related
+     карточка просто спанит обе колонки. */
+  /* Грид включаем ТОЛЬКО когда есть related-рейка (:has-гейт на самом гриде) —
+     браузер без :has() остаётся на полноширинном блочном стеке (PE, как обещает
+     шапка секции), а не получает 2-колонку с мёртвым жёлобом справа. Round-01 C2.
+     Прежний :not(:has(...)) -> full-width больше не нужен: без related грид просто
+     не применяется. */
+  html[data-design] .result-page .ed-page:has(> #result-related-questions) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+    column-gap: var(--space-7);
+    align-items: start;
+  }
+  html[data-design] .result-page .ed-page > * { grid-column: 1 / -1; min-width: 0; }
+  html[data-design] .result-page .ed-page > #interview-card { grid-column: 1; }
+  /* Рейка related: из «блока после карточки» (border-top + отступ) превращается
+     в editorial-панель; при длинном списке скроллится внутри вьюпорта. */
+  html[data-design] .result-page .ed-page > #result-related-questions {
+    grid-column: 2;
+    align-self: start;
+    position: sticky;
+    top: var(--space-5);
+    margin-top: 0;
+    border-top: 0;
+    border: var(--rule-weight) solid var(--color-border-primary);
+    border-radius: var(--border-radius-lg);
+    background: var(--color-bg-secondary);
+    padding: var(--space-5);
+    max-height: calc(100dvh - var(--space-7));
+    overflow-y: auto;
+  }
+}
 }
