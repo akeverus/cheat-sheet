@@ -125,6 +125,24 @@ html[data-design] .nav .is-disabled {
 }
 html[data-design] .sidebar-spacer { flex: 1; }
 html[data-design] .sidebar-footer { display: grid; gap: 4px; }
+/* Футер сайдбара: тоггл темы и «Выйти» — полноширинные строки «иконка + подпись»,
+   как nav-ссылки выше (базовый .side-action в этом же файле, строки 92–110).
+   pixel-sweep («Icon buttons» в pixel-animations.css) ошибочно заклампил ЛЮБОЙ
+   .side-action в 40×40 icon-box + px-edge + border-radius:0, из-за чего подпись
+   «Тёмная тема»/«Светлая тема»/«Выйти» вылезала за 40px-бокс и переносилась на
+   2 строки (scrollWidth ~111 > clientWidth 40). Топбар-версия
+   (.top-actions .side-action) icon-only и правомерно 40×40 — здесь скоупим
+   только футер, восстанавливая nav-подобную строку. pixel-animations.css лежит
+   в БОЛЕЕ ПОЗДНЕМ @layer, поэтому обычные декларации (width/height) там бьют
+   специфичность; для !important порядок слоёв реверсируется и наш ранний слой
+   выигрывает — значит все переопределения ставим !important. */
+html[data-design] .sidebar-footer .side-action {
+  width: 100% !important;
+  height: auto !important;
+  min-height: 40px;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
 
 /* ---- Topbar + mobile-header ------------------------------------------- */
 html[data-design] .topbar {
