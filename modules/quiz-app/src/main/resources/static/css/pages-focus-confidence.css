@@ -1,0 +1,43 @@
+/* pages-focus-confidence.css — Волна 8 cut 1 (2026-07-29)
+   Пост-ответный виджет самооценки уверенности (.confidence-*), вынесен из
+   хвоста pages-focus.css. interview.js инъектит ТОЛЬКО на focus-page после
+   ответа (grade -> /api/confidence, SM-2). Грузится тем же th:if page=='focus'
+   СРАЗУ после pages-focus.css (порядок @layer pages сохранён). @pages-конкурент
+   только pages-layout @media print `display:none!important` (off-screen, иммунен). */
+@layer pages {
+/* Кнопки самооценки уверенности (.confidence-*) — ВЫНЕСЕНЫ сюда из pages-result.css
+   (Волна 3, ШАГ R / Cluster D). interview.js (attachConfidenceButtons) инъектит их
+   ТОЛЬКО на focus-page ПОСЛЕ ответа (grade → /api/confidence для SM-2, не AI-вызов);
+   no-JS result.html их не рендерит → focus-only (жили в pages-result ошибочно, туда
+   их доносила глобальная загрузка). Заякорены под .focus-page (гейт css-leak-audit);
+   @pages-конкурентов нет → анкер behavior-neutral. Стиль единообразен с .flashcard-
+   grade-* (та же суть — самооценка после ответа); выбранную кнопку (app.js: .selected +
+   disabled на все) не гасим — accent-wash, прочие disabled приглушаются. Внешний вид
+   частично доминирует pixel-fx (@pixel > @pages) — переезд его не трогает. */
+html[data-design] .focus-page .confidence-buttons {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin-top: var(--space-5);
+}
+html[data-design] .focus-page .confidence-label {
+  grid-column: 1 / -1; font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary);
+}
+html[data-design] .focus-page .confidence-btn {
+  min-height: 48px; padding: var(--space-2) var(--space-4);
+  font-family: var(--font-family-body); font-size: var(--font-size-base);
+  background: var(--color-bg-secondary); color: var(--color-text-primary);
+  border: var(--rule-weight) solid var(--color-border-primary); border-radius: 0; /* B5: единообразно с плоской .flashcard-grade-btn */
+  cursor: pointer; touch-action: manipulation;
+  transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
+}
+html[data-design] .focus-page .confidence-btn:hover:not(:disabled) { border-color: var(--color-text-secondary); background: var(--color-bg-tertiary); }
+/* Низкая/высокая уверенность — те же edge-washes, что у .flashcard-grade-btn grade-1/grade-4:
+   «угадал» тонирован ошибкой, «знал точно» — успехом (текст несёт смысл, цвет — полюс). */
+html[data-design] .focus-page .confidence-btn.confidence-guess:hover:not(:disabled) { border-color: var(--color-status-error); background: var(--color-status-error-wash); }
+html[data-design] .focus-page .confidence-btn.confidence-sure:hover:not(:disabled) { border-color: var(--color-status-success); background: var(--color-status-success-wash); }
+html[data-design] .focus-page .confidence-btn.selected { border-color: var(--color-accent-primary); background: var(--color-accent-wash); }
+html[data-design] .focus-page .confidence-btn:disabled { cursor: default; }
+html[data-design] .focus-page .confidence-btn:disabled:not(.selected) { opacity: 0.5; }
+@media (max-width: 600px) {
+  html[data-design] .focus-page .confidence-buttons { grid-template-columns: 1fr; }
+}
+}
