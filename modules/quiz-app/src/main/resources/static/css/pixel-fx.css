@@ -524,102 +524,10 @@ html[data-design] .btn-favorite:hover {
   75% { transform: rotate(8deg); }
 }
 
-/* ---- Options as pixel cards ---- */
-html[data-design] #interview-options label,
-html[data-design] .options label,
-html[data-design] .option {
-  border-radius: 0 !important;
-  box-shadow: var(--px-edge);
-  border: 0 !important;
-  transition: none !important;
-  background: rgba(8, 20, 26, 0.85);
-  image-rendering: pixelated;
-}
-html[data-design][data-theme="light"] #interview-options label,
-html[data-design][data-theme="light"] .options label,
-html[data-design][data-theme="light"] .option {
-  background: rgba(255, 255, 255, 0.92);
-}
-html[data-design] #interview-options label:hover,
-html[data-design] .options label:hover,
-html[data-design] .option:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 4px 0 0 #1a4a48, -2px 0 0 #1a4a48, 0 4px 0 #1a4a48, 0 -2px 0 #1a4a48, 5px 5px 0 rgba(0,0,0,.3);
-}
-/* Unchecked radio/checkbox sprites (off-states) */
-html[data-design] #interview-options label:has(input[type="radio"]):not(:has(input:checked)):not(.option-correct):not(.option-wrong),
-html[data-design] .options label:has(input[type="radio"]):not(:has(input:checked)):not(.option-correct):not(.option-wrong) {
-  background:
-    url("/img/pixel/radio-off.png") right 10px top 10px / 16px 16px no-repeat;
-}
-html[data-design] #interview-options label:has(input[type="checkbox"]):not(:has(input:checked)):not(.option-correct):not(.option-wrong),
-html[data-design] .options label:has(input[type="checkbox"]):not(:has(input:checked)):not(.option-correct):not(.option-wrong) {
-  background:
-    url("/img/pixel/checkbox-off.png") right 10px top 10px / 16px 16px no-repeat;
-}
-html[data-design] #interview-options label:has(input:checked):not(.option-correct):not(.option-wrong),
-html[data-design] .options label:has(input:checked):not(.option-correct):not(.option-wrong),
-html[data-design] .option:has(input:checked):not(.option-correct):not(.option-wrong) {
-  background:
-    url("/img/pixel/radio-on.png") right 10px top 10px / 16px 16px no-repeat,
-    rgba(57, 208, 199, 0.12) !important;
-  box-shadow: var(--px-edge-teal) !important;
-  animation: optionSelectFlash 0.4s steps(4), optionSelectPop 0.35s steps(3);
-}
-html[data-design] #interview-options label:has(input[type="checkbox"]:checked):not(.option-correct):not(.option-wrong),
-html[data-design] .options label:has(input[type="checkbox"]:checked):not(.option-correct):not(.option-wrong) {
-  background:
-    url("/img/pixel/checkbox-on.png") right 10px top 10px / 16px 16px no-repeat,
-    rgba(57, 208, 199, 0.12) !important;
-}
-html[data-design] #interview-options label::before {
-  border-radius: 0 !important;
-  box-shadow: 2px 2px 0 rgba(0,0,0,.4);
-}
-@keyframes optionSelectPop {
-  0% { transform: scale(1); }
-  40% { transform: scale(1.03) translate(-2px, -2px); }
-  100% { transform: scale(1); }
-}
-html[data-design] #interview-options label.option-correct {
-  box-shadow: 3px 0 0 var(--px-green), -3px 0 0 var(--px-green), 0 3px 0 var(--px-green), 0 -3px 0 var(--px-green),
-              4px 4px 0 rgba(53, 201, 135, 0.35) !important;
-  animation: correctFlash 0.55s steps(4);
-}
-html[data-design] #interview-options label.option-correct::after {
-  content: "";
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  width: var(--px-m);
-  height: var(--px-m);
-  background: url("/img/pixel/btn-check.png") center / contain no-repeat;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  animation: optionStampIn 0.35s steps(3);
-}
-html[data-design] #interview-options label.option-wrong {
-  /* Неверный ответ = спокойный (§10): честный статичный красный pixel-edge,
-     без shake-анимации всей карточки. */
-  box-shadow: 3px 0 0 var(--px-red), -3px 0 0 var(--px-red), 0 3px 0 var(--px-red), 0 -3px 0 var(--px-red) !important;
-}
-html[data-design] #interview-options label.option-wrong::after {
-  content: "";
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  width: 16px;
-  height: 14px;
-  background: url("/img/pixel/btn-x.png") center / contain no-repeat;
-  image-rendering: pixelated;
-  /* Одна короткая спокойная incorrect-subtle: крестик мягко «штампуется»,
-     зеркально галочке .option-correct::after. Никакой тряски. */
-  animation: optionStampIn 0.35s steps(3);
-}
-@keyframes correctFlash {
-  0%, 100% { filter: brightness(1); }
-  30% { filter: brightness(1.35) saturate(1.4); }
-}
+/* Options as pixel cards (#interview-options label / .options label / .option +
+   optionSelectPop/correctFlash; потребляет optionStampIn из pixel-animations.css)
+   ВЫНЕСЕНЫ в pixel-options.css — Волна 7 cut 6. Link между pixel-fx.css и
+   pixel-nav-badges.css → порядок @layer pixel 1:1 (options были перед nav). */
 
 /* Nav-icons (.sidebar .nav .icon / .mobile-nav .icon + iconPulse/activeGlow) и
    Badges (.badge/.zone-chip/.topic-badge + gem::before + gemTwinkle) ВЫНЕСЕНЫ в
