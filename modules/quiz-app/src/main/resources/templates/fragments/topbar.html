@@ -20,17 +20,24 @@
     </noscript>
     <div th:replace="~{fragments/recoverable-banners :: recoverable-banners}"></div>
     <header class="topbar">
-        <div class="crumb" th:if="${(interviewSession != null or (reviewMode != null and reviewMode)) and progressPercent != null}">
+        <!-- Прогресс-крамб показываем только когда есть что показывать: сессия С
+             вопросами (total>0) ИЛИ режим повтора. Пустая сессия (total=0, напр.
+             узкий охват без доступных вопросов) больше НЕ рендерит «Прогресс в
+             сессии» — иначе крамб противоречил бы экрану «Сессия завершена». -->
+        <div class="crumb" th:if="${((interviewSession != null and interviewSession.getTotal() > 0) or (reviewMode != null and reviewMode)) and progressPercent != null}">
             <span class="eyebrow">Прогресс в сессии</span>
             <div class="progress-mini" role="progressbar"
                  th:attr="aria-valuenow=${#numbers.formatDecimal(progressPercent, 1, 0)},aria-valuemin=0,aria-valuemax=100">
                 <span th:attr="data-progress=${#numbers.formatDecimal(progressPercent, 1, 1)}"></span>
             </div>
-            <b class="mono tiny" th:if="${interviewSession != null}">
+            <!-- Счётчик «текущий / всего» — ТОЛЬКО когда есть текущий вопрос
+                 (index < total). Иначе пустая сессия давала бы «1 / 0», а
+                 завершённая (index==total) — «N+1 / N» (off-by-one за концом). -->
+            <b class="mono tiny" th:if="${interviewSession != null and interviewSession.getIndex() < interviewSession.getTotal()}">
                 <span th:text="${interviewSession.getIndex() + 1}">1</span>&nbsp;/&nbsp;<span th:text="${interviewSession.getTotal()}">10</span>
             </b>
         </div>
-        <div class="crumb" th:unless="${(interviewSession != null or (reviewMode != null and reviewMode)) and progressPercent != null}"></div>
+        <div class="crumb" th:unless="${((interviewSession != null and interviewSession.getTotal() > 0) or (reviewMode != null and reviewMode)) and progressPercent != null}"></div>
         <div class="top-actions">
             <a class="icon-button" th:href="@{/}" aria-label="Тренировка" title="Тренировка">
                 <svg class="icon" aria-hidden="true"><use href="#home"></use></svg>
