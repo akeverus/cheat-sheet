@@ -204,13 +204,21 @@
 
                 <!-- Сводка: контекст решения справа (на мобиле — под конструктором). -->
                 <aside class="builder-aside" aria-label="Сводка прогресса">
-                    <div class="card builder-card" id="builder-review-card">
+                    <div class="card builder-card" id="builder-review-card"
+                         th:with="dueCount=${dueFiltered != null ? dueFiltered : (stats != null ? stats.due() : 0)}">
                         <p class="eyebrow">Повторение</p>
                         <p class="muted tiny kpi-role">Фильтр · к повтору в выбранном наборе</p>
-                        <p class="builder-card-value" th:text="${dueFiltered != null ? dueFiltered : (stats != null ? stats.due() : 0)}">0</p>
-                        <p class="muted tiny" th:text="${(dueFiltered != null ? dueFiltered : (stats != null ? stats.due() : 0)) > 0}
-                               ? 'карточек ждут повтора — планировщик подмешает их в тренировку'
-                               : 'очередь пуста — всё повторено вовремя'">нет карточек к повтору</p>
+                        <p class="builder-card-value" th:text="${dueCount}">0</p>
+                        <!-- Склонение всей фразы под числом (@plural.pick): существительное,
+                             глагол и местоимение согласуются с dueCount. Раньше был жёсткий
+                             «карточек ждут … их» → при 1 «1 карточек ждут … их», при 2–4
+                             «2 карточек ждут» (неверно; нужно «карточка ждёт … её» / «карточки ждут»). -->
+                        <p class="muted tiny" th:text="${dueCount > 0
+                               ? @plural.pick(dueCount,
+                                   'карточка ждёт повтора — планировщик подмешает её в тренировку',
+                                   'карточки ждут повтора — планировщик подмешает их в тренировку',
+                                   'карточек ждут повтора — планировщик подмешает их в тренировку')
+                               : 'очередь пуста — всё повторено вовремя'}">нет карточек к повтору</p>
                     </div>
                     <div class="card builder-card" id="builder-stats-card">
                         <p class="eyebrow">Статистика</p>
