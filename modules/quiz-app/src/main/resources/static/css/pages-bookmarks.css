@@ -81,6 +81,12 @@ html[data-design] .bookmarks-page .bookmark-note-actions {
 html[data-design] .bookmarks-page .bookmark-item.no-note .bookmark-note-form textarea {
   min-height: 0;
   height: 2.75rem;               /* одна строка: перебивает rows="3" (rows = пол, не потолок) */
+  /* rows="3" держит intrinsic-контент ~3 строки (scrollHeight ~55px), а height 44px
+     его меньше → overflow-y:auto рисовал спурьёзный вертикальный скроллбар на ПУСТОМ
+     свёрнутом поле (визуальный глитч, ломал компактный «плюс-филд»). Свёрнутое поле —
+     одностро́чная превью-аффорданс, скроллить нечего → прячем overflow. На :focus-within
+     (раскрытие до 7.4rem) overflow возвращаем для ввода длинного текста. */
+  overflow-y: hidden;
   transition: height var(--duration-fast) var(--easing-default);
 }
 /* Карточки С заметкой: auto-grow по контенту (bookmarks.js). Короткая заметка
@@ -96,6 +102,7 @@ html[data-design] .bookmarks-page .bookmark-item.has-note .bookmark-note-form te
 }
 html[data-design] .bookmarks-page .bookmark-item.no-note .bookmark-note-form:focus-within textarea {
   height: 7.4rem;                /* раскрытие под ~3 строки, как у карточек с заметкой */
+  overflow-y: auto;              /* раскрыто → длинный ввод скроллится (свёрнутое поле прячет overflow) */
 }
 html[data-design] .bookmarks-page .bookmark-item.no-note .bookmark-note-actions {
   display: none;
