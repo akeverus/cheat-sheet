@@ -1,9 +1,12 @@
 /* @layer pixel — декор/FX только; layout/skip-link/MCQ-grid живут в pages/reset. */
 @layer pixel {
 /* =============================================================================
-   pixel-fx.css — PIXEL VISUALS ONLY (icons / sprites / FX)
-   Typography stays on the design-system fonts — no pixel typeface.
-   After shell.css. Respects prefers-reduced-motion / data-motion=off.
+   pixel-fx.css — PIXEL БАЗА / ТОКЕНЫ (корень concern-семейства pixel-*.css)
+   После Волны 7 распила здесь остаётся ЯДРО: --px-* токены (цвета/scale/edge-тени)
+   + глобальный pixel-rendering (image-rendering / box-sizing / functional icon-sizing).
+   Все визуальные concern'ы вынесены в pixel-*.css (см. манифест ниже) — они
+   РЕ-ОТКРЫВАЮТ @layer pixel и зависят от токенов этого файла.
+   Typography stays on the design-system fonts — no pixel typeface. After shell.css.
    ========================================================================== */
 
 html[data-design] {
@@ -62,43 +65,22 @@ html[data-design] .top-actions .icon-button .icon {
   fill: currentColor;
 }
 
-/* Ambient FX — CRT scanlines + атмосфера-фон + floating crumbs + cursor trail
-   (все [data-pixel=high]-gated; keyframes bgScroll/pixelFloat/trailFade) ВЫНЕСЕНЫ
-   в pixel-ambient.css — Волна 7 cut 9 (финал распила). Link между pixel-fx.css и
-   pixel-mascot.css → порядок @layer pixel 1:1 (ambient был перед mascot). */
+/* ─── МАНИФЕСТ Волны 7: pixel-fx монолит (1614 стр.) распилён на 9 concern-файлов ──
+   Каждый РЕ-ОТКРЫВАЕТ @layer pixel и грузится ПОСЛЕ этого файла в head.html.
+   Порядок ниже = исходный порядок секций монолита → каскад @layer pixel сохранён 1:1:
 
-/* Brand mascot + hero walk (.brand .avatar / mascot + mascotIdle/mascotBounce/
-   heroWalk) ВЫНЕСЕНЫ в pixel-mascot.css — Волна 7 cut 8. Link между pixel-fx.css
-   и pixel-buttons.css → порядок @layer pixel 1:1 (mascot был перед buttons). */
+     pixel-ambient.css       CRT/атмосфера/crumbs/trail (high-gated)     [cut 9]
+     pixel-mascot.css        brand-маскот + hero-walk                    [cut 8]
+     pixel-buttons.css       pixel-кнопки (центральный concern, 281 стр) [cut 7]
+     pixel-options.css       MCQ-опции как pixel-карточки                [cut 6]
+     pixel-nav-badges.css    nav-иконки + badges                         [cut 5]
+     pixel-cards.css         chunky карточки/панели                      [cut 4]
+     pixel-result-banner.css .result-banner штампы                       [cut 3]
+     pixel-animations.css    анимации/celebration-FX                     [cut 2]
+     pixel-motion-parity.css reduced-motion / data-motion=off гашение    [cut 1]
 
-/* PIXEL BUTTONS — the whole point (.btn/.next-btn/.primary-btn/… + hover/press/
-   CTA-rainbow/arrow-nudge/icon-wiggle, keyframes arrowNudge/ctaRainbow/iconWiggle)
-   ВЫНЕСЕНЫ в pixel-buttons.css — Волна 7 cut 7 (крупнейшая секция). Link между
-   pixel-fx.css и pixel-options.css → порядок @layer pixel 1:1 (buttons перед options). */
-
-/* Options as pixel cards (#interview-options label / .options label / .option +
-   optionSelectPop/correctFlash; потребляет optionStampIn из pixel-animations.css)
-   ВЫНЕСЕНЫ в pixel-options.css — Волна 7 cut 6. Link между pixel-fx.css и
-   pixel-nav-badges.css → порядок @layer pixel 1:1 (options были перед nav). */
-
-/* Nav-icons (.sidebar .nav .icon / .mobile-nav .icon + iconPulse/activeGlow) и
-   Badges (.badge/.zone-chip/.topic-badge + gem::before + gemTwinkle) ВЫНЕСЕНЫ в
-   pixel-nav-badges.css — Волна 7 cut 5. Link между pixel-fx.css и pixel-cards.css
-   → порядок @layer pixel 1:1. NB: gemTwinkle потребляется и здесь (стр.~413) и в
-   pixel-animations.css — @keyframes document-global, резолвится кросс-файл. */
-
-/* Cards/panels chunky (.card/.panel/.explanation-panel/.question-code-wrap/
-   .resume-banner/.empty-card-inner/.error-card/.summary-hero/.builder-card/.metric
-   + star::before + starSpin) ВЫНЕСЕНЫ в pixel-cards.css — Волна 7 cut 4.
-   Link между pixel-fx.css и pixel-result-banner.css → порядок @layer pixel 1:1. */
-
-/* Result banner stamps (.result-banner + resultStampIn/boomPulse/portalSheet/
-   coinSpinSheet/fireSheet/fireBob) ВЫНЕСЕНЫ в pixel-result-banner.css —
-   Волна 7 concern-split, cut 3. Link между pixel-fx.css и pixel-animations.css
-   → порядок @layer pixel сохранён 1:1 (banner был перед анимациями). */
-
-/* Анимации/celebration-FX (burst/confetti, floaters, xp/ring, page-enter,
-   glitch/coin/spark, option-flash, stage-intro, trophy, portal, mascot-hint,
-   option-stamp) ВЫНЕСЕНЫ в pixel-animations.css — Волна 7 concern-split, cut 2.
-   Link идёт СРАЗУ после pixel-fx.css → порядок @layer pixel сохранён 1:1. */
+   NB кросс-файл @keyframes (document-global, определены в одном — потребляются в
+   другом, резолвятся между файлами): gemTwinkle · iconWiggle · mascotBounce ·
+   portalSheet · coinSpinSheet · fireSheet · fireBob · optionStampIn · optionSelectFlash.
+   ─────────────────────────────────────────────────────────────────────────────── */
 }
