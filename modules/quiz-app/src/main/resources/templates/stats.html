@@ -60,8 +60,15 @@
     </article>
     <article class="card metric">
         <span class="eyebrow">Среднее время</span>
+        <!-- Единица «с» отделена от числа УЗКИМ НЕРАЗРЫВНЫМ пробелом (U+202F), а не
+             обычным (U+0020): в моноширинном JetBrains Mono display-число + обычный
+             пробел = полная ячейка (~21px при 36px кегле) — «с» отрывалась от «33,3»
+             визуальным провалом. U+202F даёт плотный зазор (~11px, как и требует
+             ГОСТ 8.417 для пары «значение+единица») И неразрывность — «с» не уедет
+             переносом на новую строку в узкой KPI-карточке на мобильном. НЕ менять на
+             обычный пробел. У «%» пробела нет намеренно (36,6%). -->
         <div class="metric-value"
-             th:text="${metrics.hasAverageResponse()} ? ${#numbers.formatDecimal(metrics.averageResponseMs / 1000.0, 1, 1)} + ' с' : '—'">—</div>
+             th:text="${metrics.hasAverageResponse()} ? ${#numbers.formatDecimal(metrics.averageResponseMs / 1000.0, 1, 1)} + ' с' : '—'">—</div>
         <span class="muted tiny">на один ответ</span>
         <span class="muted tiny metric-formula"
               th:if="${metricDefinitions != null and metricDefinitions['averageResponseMs'] != null}"
