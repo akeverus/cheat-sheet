@@ -128,7 +128,7 @@ public class MvcModelAttributeMapper {
 
     private String resolveFocusModeHintText(boolean reviewMode, InterviewMode mode, boolean flashcard, boolean studyLearnPhase) {
         if (reviewMode) {
-            return "Режим review: отвечай на вопросы с ошибками.";
+            return "Повтор ошибок: отвечай на вопросы, где раньше были ошибки.";
         }
         if (mode == InterviewMode.TYPED_RECALL) {
             return "Печатный ответ: напиши ответ, затем раскрой эталон и оцени себя.";
@@ -166,7 +166,7 @@ public class MvcModelAttributeMapper {
 
     private String resolveFocusEmptyRetryText(boolean reviewMode, InterviewMode mode) {
         if (reviewMode) {
-            return "Обновить review";
+            return "Обновить повтор ошибок";
         }
         if (mode == InterviewMode.FLASHCARD) {
             return "Обновить флешкарты";

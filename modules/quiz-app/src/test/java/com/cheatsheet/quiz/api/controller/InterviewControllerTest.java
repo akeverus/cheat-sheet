@@ -427,12 +427,12 @@ class InterviewControllerTest {
 
         if (result.getStatus() == 200) {
             assertThat(body).containsAnyOf(
-                    "Режим review: только вопросы с ошибками",
-                    "Нет вопросов с ошибками для review."
+                    "Повтор ошибок: отвечай на вопросы, где раньше были ошибки.",
+                    "Нет вопросов с ошибками для повтора."
             );
             if (body.contains("class=\"zone-chip\"")) {
                 assertThat(body).contains("Повтор ошибок");
-                assertThat(body).contains("Режим review: отвечай на вопросы с ошибками.");
+                assertThat(body).contains("Повтор ошибок: отвечай на вопросы, где раньше были ошибки.");
             }
         }
     }
@@ -638,10 +638,10 @@ class InterviewControllerTest {
         assertThat(result.getStatus()).isIn(200, 503);
         if (result.getStatus() == 200) {
             String body = result.getContentAsString();
-            if (body.contains("Нет вопросов с ошибками для review.")) {
+            if (body.contains("Нет вопросов с ошибками для повтора.")) {
                 assertThat(body).contains("empty-action-retry");
                 assertThat(body).contains("href=\"/review\"");
-                assertThat(body).contains("Обновить review");
+                assertThat(body).contains("Обновить повтор ошибок");
             }
         }
     }

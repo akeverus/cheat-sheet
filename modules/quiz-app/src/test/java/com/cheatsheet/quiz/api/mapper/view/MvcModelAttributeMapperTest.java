@@ -61,9 +61,9 @@ class MvcModelAttributeMapperTest {
         assertThat(model.getAttribute("stats")).isEqualTo(surfaceState.stats());
         assertThat(model.getAttribute("reviewReason")).isEqualTo(reviewReason);
         assertThat(model.getAttribute("focusModeChipText")).isEqualTo("Повтор ошибок");
-        assertThat(model.getAttribute("focusModeHintText")).isEqualTo("Режим review: отвечай на вопросы с ошибками.");
+        assertThat(model.getAttribute("focusModeHintText")).isEqualTo("Повтор ошибок: отвечай на вопросы, где раньше были ошибки.");
         assertThat(model.getAttribute("focusEmptyRetryHref")).isEqualTo("/review");
-        assertThat(model.getAttribute("focusEmptyRetryText")).isEqualTo("Обновить review");
+        assertThat(model.getAttribute("focusEmptyRetryText")).isEqualTo("Обновить повтор ошибок");
     }
 
     @Test
