@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="ru" data-design="instrument" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head(title='Подготовка к собеседованию', includeMermaid=${needsMermaid == true}, includeChart=false, includeHighlight=true, page='focus')}"></head>
+<!-- Title режим-зависимый: /review (reviewMode) и / рендерят один focus-training.html,
+     но раньше оба давали одинаковый <title> «Подготовка к собеседованию» → неразличимы во
+     вкладках браузера и SR не сообщал уникальное назначение (WCAG 2.4.2 Page Titled). Как в
+     sidebar/mobile-nav (active=reviewMode?…), title теперь ветвится по reviewMode. -->
+<head th:replace="~{fragments/head :: head(title=${reviewMode != null and reviewMode} ? 'Разбор ошибок — Подготовка к собеседованию' : 'Подготовка к собеседованию', includeMermaid=${needsMermaid == true}, includeChart=false, includeHighlight=true, page='focus')}"></head>
 <body class="focus-page">
 <a class="skip-link" href="#main-content">Перейти к вопросу</a>
 <svg th:replace="~{fragments/pixel-sprite :: sprite}"></svg>
