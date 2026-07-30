@@ -302,7 +302,8 @@
                 { label: 'Осталось', data: progressData.map(function (t) { return Math.max(0, t.total - t.learned); }), backgroundColor: p.remaining, borderRadius: 3 }
               ]
             },
-            options: { animation: anim, scales: { x: Object.assign({}, commonOpts.scales.x, { stacked: true }), y: Object.assign({}, commonOpts.scales.y, { stacked: true }) }, responsive: commonOpts.responsive, maintainAspectRatio: commonOpts.maintainAspectRatio, plugins: commonOpts.plugins }
+            // y — количество карточек: только целые деления (0,1,2,3), без дробных 0.5/1.5
+            options: { animation: anim, scales: { x: Object.assign({}, commonOpts.scales.x, { stacked: true }), y: Object.assign({}, commonOpts.scales.y, { stacked: true, ticks: Object.assign({}, commonOpts.scales.y.ticks, { precision: 0 }) }) }, responsive: commonOpts.responsive, maintainAspectRatio: commonOpts.maintainAspectRatio, plugins: commonOpts.plugins }
           }));
         } catch (_) {
           showChartFallback(el1, progressFallback, 'Не удалось отрисовать график прогресса. Используй таблицу ниже.', 'topicProgressChartTable');
@@ -337,7 +338,8 @@
                 borderRadius: 3
               }]
             },
-            options: { animation: anim, scales: { x: commonOpts.scales.x, y: Object.assign({}, commonOpts.scales.y, { max: 100 }) }, responsive: commonOpts.responsive, maintainAspectRatio: commonOpts.maintainAspectRatio, plugins: commonOpts.plugins }
+            // y — проценты: суффикс «%» на делениях (единообразие с графиком тренда точности)
+            options: { animation: anim, scales: { x: commonOpts.scales.x, y: Object.assign({}, commonOpts.scales.y, { max: 100, ticks: Object.assign({}, commonOpts.scales.y.ticks, { callback: function (v) { return v + '%'; } }) }) }, responsive: commonOpts.responsive, maintainAspectRatio: commonOpts.maintainAspectRatio, plugins: commonOpts.plugins }
           }));
         } catch (_) {
           showChartFallback(el2, accuracyFallback, 'Не удалось отрисовать график точности. Используй таблицу ниже.', 'topicAccuracyChartTable');
