@@ -161,7 +161,7 @@ public class SpacedRepetitionService {
 
         // Пересчёт ease factor по формуле SM-2
         double oldEase = ease;
-        int oldInterval = interval;
+        int oldInterval = current.intervalDays(); // «до» для лога — interval выше уже обновлён на новый
         ease = ease + computeEaseDelta(grade);
         if (ease < ReviewDefaults.MIN_EASE_FACTOR) {
             ease = ReviewDefaults.MIN_EASE_FACTOR;
