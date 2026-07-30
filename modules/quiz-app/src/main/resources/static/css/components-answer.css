@@ -153,6 +153,24 @@ html[data-design] .answer {
 html[data-design] .answer > *:first-child { margin-top: 0; }
 html[data-design] .answer > *:last-child { margin-bottom: 0; }
 
+/* Шкала заголовков-секций ВНУТРИ тела разбора (.answer). Базовый reset даёт
+   фикс. h2=2.25rem / h3=1.75rem / h4=1.375rem. Заголовок-ВОПРОС
+   (.focus-question) при этом clamp'ится вниз и на узком экране упирается в пол
+   1.75rem — ровно размер базового h3 → секции разбора («Форматы», «Чеклист…»)
+   читались как ⩾ вопрос: на мобильном (замер 390px) h1-вопрос=28.08px, а h3
+   тела ответа=28px → визуальная иерархия «вопрос → его разбор» схлопывалась
+   («разбор важнее вопроса», WCAG 2.4.10 / 1.3.1 контекст). Даём телу ответа
+   собственную FLUID-шкалу: на десктопе она упирается в те же reset-значения
+   (десктоп-вид не меняется — зрелый экран не трогаем), а на мобильном плавно
+   уменьшается, оставляя секции явно подчинёнными вопросу. Порядок h2>h3>h4
+   сохранён на всех ширинах. @layer components НИЖЕ reset в каскаде слоёв
+   (tokens.css: tokens,reset,shell,components,…) → перебивает базовые h*-размеры
+   без !important. Действует на всех трёх поверхностях разбора (flashcard-browse,
+   JS #result-feedback, no-JS result.html — общий контейнер .answer). */
+html[data-design] .answer h2 { font-size: clamp(1.625rem, 1.3rem + 1.4vw, var(--font-size-2xl)); }
+html[data-design] .answer h3 { font-size: clamp(1.375rem, 1.1rem + 1.2vw, var(--font-size-xl)); }
+html[data-design] .answer h4 { font-size: clamp(1.25rem, 1.15rem + 0.45vw, var(--font-size-lg)); }
+
 /* Вердикт ответа (.result-correct/.result-wrong, app.js рендерит в #result-feedback +
    no-JS result.html). Editorial: статус-wash + цветная рамка, крупный сериф-вердикт.
    Вложенный .answer делаем плоским, чтобы не было панели-в-панели. Общая поверхность
