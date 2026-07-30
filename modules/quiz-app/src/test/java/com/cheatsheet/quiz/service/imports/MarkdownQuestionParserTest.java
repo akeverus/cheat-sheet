@@ -108,6 +108,30 @@ class MarkdownQuestionParserTest {
     }
 
     @Test
+    void doesNotSplitOnQuestionHeaderInsideCodeFence() throws IOException {
+        // Строка "## Q99 ..." внутри fenced-блока — это контент примера, а не новый
+        // вопрос. До fence-aware разбора парсер резал ответ здесь и порождал спурьёзный
+        // вопрос (2 вместо 1). Проверяем, что заголовок-в-блоке остаётся телом ответа.
+        Path file = tempDir.resolve("nested-header.md");
+        Files.writeString(file, """
+                ## Q1. Как выглядит формат вопроса?
+                Пример разметки вопроса ниже.
+
+                ```markdown
+                ## Q99 Пример заголовка внутри блока кода
+                Это тело примера, не настоящий вопрос.
+                ```
+                """);
+
+        List<MarkdownQuestionParser.ParsedQuestion> questions = parser().parse(file);
+
+        assertThat(questions).hasSize(1);
+        assertThat(questions.get(0).questionNumber()).isEqualTo("1");
+        // Заголовок-в-блоке не отделился — он часть ответа первого вопроса.
+        assertThat(questions.get(0).answerMarkdown()).contains("## Q99");
+    }
+
+    @Test
     void parsesMarkdownWithoutMcqBlocks() throws IOException {
         Path file = tempDir.resolve("clean.md");
         Files.writeString(file, """

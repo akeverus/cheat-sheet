@@ -102,24 +102,39 @@ public class MarkdownQuestionParser {
 
         ParsedQuestionBuilder current = null;
         StringBuilder answer = new StringBuilder();
+        boolean insideFence = false;
 
         for (String line : lines) {
             String trimmed = line.trim();
-            Matcher matcher = QUESTION_PATTERN.matcher(trimmed);
 
-            if (matcher.matches()) {
+            // Fenced-блок ``` — это контент ответа, а не структура файла: строка вида
+            // "## Q5 ..." внутри блока кода НЕ должна приниматься за новый заголовок
+            // вопроса (иначе ответ обрежется и появится спурьёзный вопрос). Сам тег
+            // открытия/закрытия остаётся частью ответа.
+            if (trimmed.startsWith("```")) {
+                insideFence = !insideFence;
                 if (current != null) {
-                    current.answerMarkdown(answer.toString().trim());
-                    questions.add(current.build(filePath));
+                    answer.append(line).append('\n');
                 }
-                answer.setLength(0);
-                String number = matcher.group(1);
-                String title = matcher.group(2);
-                boolean important = title.contains(IMPORTANT_MARKER)
-                        || title.toUpperCase().contains(LEGACY_IMPORTANT_MARKER.toUpperCase());
-                String questionText = normalizeQuestionText(title);
-                current = new ParsedQuestionBuilder(number, questionText, important);
                 continue;
+            }
+
+            if (!insideFence) {
+                Matcher matcher = QUESTION_PATTERN.matcher(trimmed);
+                if (matcher.matches()) {
+                    if (current != null) {
+                        current.answerMarkdown(answer.toString().trim());
+                        questions.add(current.build(filePath));
+                    }
+                    answer.setLength(0);
+                    String number = matcher.group(1);
+                    String title = matcher.group(2);
+                    boolean important = title.contains(IMPORTANT_MARKER)
+                            || title.toUpperCase().contains(LEGACY_IMPORTANT_MARKER.toUpperCase());
+                    String questionText = normalizeQuestionText(title);
+                    current = new ParsedQuestionBuilder(number, questionText, important);
+                    continue;
+                }
             }
 
             if (current != null) {
