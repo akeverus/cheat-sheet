@@ -12,10 +12,12 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputFilter;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.time.Clock;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Пауза/возобновление активной сессии тренировки (FLOW-01).
@@ -36,6 +38,56 @@ public class PauseService {
 
     PausedSessionRepository pausedSessionRepository;
     Clock clock;
+
+    /** Разрешённый пакет доменного графа сессии (InterviewSession, enums, AnswerRecord). */
+    private static final String ALLOWED_DOMAIN_PREFIX = "com.cheatsheet.quiz.domain.";
+
+    /** Узкий JDK-набор, реально встречающийся в графе InterviewSession. */
+    private static final Set<String> ALLOWED_JDK_CLASSES = Set.of(
+            "java.util.ArrayList",
+            "java.lang.Object", // компонент Object[] в графе; каждый элемент фильтруется отдельно
+            "java.lang.Long", "java.lang.Boolean", "java.lang.Integer",
+            "java.lang.Number", "java.lang.String", "java.lang.Enum",
+            "java.time.Instant", "java.time.Ser"
+    );
+
+    // Лимиты против «десериализационных бомб» (глубина/ссылки/размер/длина массива).
+    private static final long MAX_STREAM_BYTES = 1L << 20; // 1 МБ на приостановленную сессию
+    private static final long MAX_REFERENCES = 10_000;
+    private static final long MAX_DEPTH = 50;
+    private static final long MAX_ARRAY_LENGTH = 100_000;
+
+    /**
+     * Allowlist-фильтр десериализации (CWE-502): пропускает только классы графа
+     * {@link InterviewSession} и узкий JDK-набор, всё прочее — {@code REJECTED}.
+     * Даже если блоб в БД подменён, gadget-цепочка не инстанцируется.
+     */
+    private static final ObjectInputFilter SESSION_FILTER = PauseService::filterSessionClass;
+
+    private static ObjectInputFilter.Status filterSessionClass(ObjectInputFilter.FilterInfo info) {
+        if (info.references() > MAX_REFERENCES
+                || info.depth() > MAX_DEPTH
+                || info.streamBytes() > MAX_STREAM_BYTES
+                || (info.arrayLength() >= 0 && info.arrayLength() > MAX_ARRAY_LENGTH)) {
+            return ObjectInputFilter.Status.REJECTED;
+        }
+        Class<?> clazz = info.serialClass();
+        if (clazz == null) {
+            // Проверка лимитов без конкретного класса — не решаем здесь.
+            return ObjectInputFilter.Status.UNDECIDED;
+        }
+        while (clazz.isArray()) {
+            clazz = clazz.getComponentType();
+        }
+        if (clazz.isPrimitive()) {
+            return ObjectInputFilter.Status.ALLOWED;
+        }
+        String name = clazz.getName();
+        if (name.startsWith(ALLOWED_DOMAIN_PREFIX) || ALLOWED_JDK_CLASSES.contains(name)) {
+            return ObjectInputFilter.Status.ALLOWED;
+        }
+        return ObjectInputFilter.Status.REJECTED;
+    }
 
     /**
      * Ставит активную сессию на паузу: сериализует и сохраняет её. Завершённые
@@ -98,9 +150,12 @@ public class PauseService {
 
     private InterviewSession deserialize(byte[] blob) {
         try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(blob))) {
+            ois.setObjectInputFilter(SESSION_FILTER);
             Object read = ois.readObject();
             return read instanceof InterviewSession session ? session : null;
         } catch (IOException | ClassNotFoundException e) {
+            // Сюда же попадает InvalidClassException от отклонённого фильтром класса —
+            // подменённый/несовместимый блоб безопасно отбрасывается (resume его удалит).
             log.warn("Не удалось десериализовать приостановленную сессию (несовместимый формат?): {}", e.getMessage());
             return null;
         }

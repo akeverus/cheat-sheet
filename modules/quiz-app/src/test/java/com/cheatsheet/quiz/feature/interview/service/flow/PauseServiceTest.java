@@ -11,10 +11,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectOutputStream;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -124,6 +128,29 @@ class PauseServiceTest {
         assertThat(service.resume()).isEmpty();
 
         verify(repository).clear(); // битый блоб отбрасывается
+    }
+
+    @Test
+    void resumeRejectsBlobWithClassOutsideSessionGraph() throws Exception {
+        // CWE-502: валидный Java-сериализованный объект, но НЕ из графа InterviewSession
+        // (HashMap не в allowlist). Фильтр обязан отклонить его, не инстанцируя.
+        Map<String, String> notASession = new HashMap<>();
+        notASession.put("gadget", "payload");
+        byte[] hostileBlob = serializeRaw(notASession);
+        when(repository.findBlob()).thenReturn(Optional.of(hostileBlob));
+
+        assertThat(service.resume()).isEmpty(); // класс отклонён → десериализация вернула null
+
+        verify(repository).clear(); // отклонённый блоб отбрасывается
+    }
+
+    private static byte[] serializeRaw(Object object) throws Exception {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+             ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+            oos.writeObject(object);
+            oos.flush();
+            return bos.toByteArray();
+        }
     }
 
     @Test
