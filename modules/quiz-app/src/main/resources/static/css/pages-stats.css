@@ -519,11 +519,28 @@ html[data-design] .stats-page .topic-table th.topic-name { font-weight: var(--fo
 html[data-design] .stats-page .topic-name a { color: var(--color-text-link); text-decoration: none; }
 html[data-design] .stats-page .topic-name a:hover { text-decoration: underline; }
 
-/* мини-бар прогресса в таблице */
-html[data-design] .stats-page .topic-progress-bar { display: flex; height: 6px; width: 120px; background: var(--color-bg-tertiary); border-radius: var(--border-radius-full); overflow: hidden; }
-html[data-design] .stats-page .topic-progress-learned { background: var(--color-status-success); }
-html[data-design] .stats-page .topic-progress-due { background: var(--color-accent-primary); }
-html[data-design] .stats-page .topic-progress-label { font-family: var(--font-family-mono); font-size: var(--font-size-xs); color: var(--color-text-secondary); display: inline-block; margin-top: var(--space-1); }
+/* Мини-бар освоенности темы: одиночная зелёная заливка «освоено/всего».
+   Прежний стек из двух сегментов (learned + due) был математически неверен —
+   due (next_review_at<=now) и learned (repetitions>=порог) пересекаются, ширины
+   могли давать >100% и обрезались overflow:hidden, а «0 освоено / всё к повтору»
+   рисовалось сплошной полосой «как будто готово». Теперь бар = корректный
+   0–100% раздел освоено/не-освоено, а «к повтору» — отдельный чип рядом. */
+html[data-design] .stats-page .topic-progress { display: flex; flex-direction: column; gap: var(--space-1); }
+html[data-design] .stats-page .topic-progress-bar { height: 6px; width: 120px; max-width: 100%; background: var(--color-bg-tertiary); border-radius: var(--border-radius-full); overflow: hidden; }
+html[data-design] .stats-page .topic-progress-learned { height: 100%; background: var(--color-status-success); border-radius: inherit; }
+html[data-design] .stats-page .topic-progress-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+html[data-design] .stats-page .topic-progress-label { font-family: var(--font-family-mono); font-size: var(--font-size-xs); color: var(--color-text-secondary); }
+/* Чип «N к повтору» — состояние «требует внимания сейчас»: семантический warning-акцент
+   (те же токены, что accuracy-mid / maturity-mid). Виден только при due>0. */
+html[data-design] .stats-page .topic-due-chip {
+  display: inline-flex; align-items: center;
+  padding: 0.1em var(--space-2);
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  color: var(--color-status-warning);
+  border: var(--rule-weight) solid var(--color-status-warning);
+  border-radius: var(--border-radius-full);
+  white-space: nowrap;
+}
 
 /* точность по порогам */
 html[data-design] .stats-page .accuracy-high { color: var(--color-status-success); font-weight: var(--font-weight-semibold); }

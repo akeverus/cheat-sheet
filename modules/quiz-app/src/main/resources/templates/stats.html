@@ -323,16 +323,27 @@
                 </th>
                 <td th:text="${item.total}" class="text-center" data-label="Всего">0</td>
                 <td data-label="Прогресс">
-                    <div class="topic-progress-bar">
-                        <div class="topic-progress-learned"
-                             th:attr="data-progress=${item.total != 0 ? (item.learned * 100.0 / item.total) : 0}"
-                             th:title="'Выучено: ' + ${item.learned}"></div>
-                        <div class="topic-progress-due"
-                             th:attr="data-progress=${item.total != 0 ? (item.due * 100.0 / item.total) : 0}"
-                             th:title="'К повтору: ' + ${item.due}"></div>
+                    <!-- Бар = освоенность темы (learned/total): корректный 0–100% раздел
+                         освоено/не-освоено. Прежний стек learned+due был неверен: due
+                         (next_review_at<=now) и learned (repetitions>=порог) — НЕзависимые
+                         пересекающиеся множества, их ширины могли давать >100% и обрезались.
+                         «К повтору» вынесено в отдельный явный чип-счётчик (абсолютное число,
+                         только при due>0). Бар несёт role=img+aria-label; визуальная подпись
+                         aria-hidden, чтобы SR не дублировал. -->
+                    <div class="topic-progress">
+                        <div class="topic-progress-bar" role="img"
+                             th:attr="aria-label='Освоено ' + ${item.learned} + ' из ' + ${item.total} + ' вопросов темы'">
+                            <div class="topic-progress-learned"
+                                 th:attr="data-progress=${item.total != 0 ? (item.learned * 100.0 / item.total) : 0}"></div>
+                        </div>
+                        <span class="topic-progress-meta">
+                            <span class="topic-progress-label" aria-hidden="true"
+                                  th:text="${item.learned} + '/' + ${item.total}">0/0</span>
+                            <span class="topic-due-chip" th:if="${item.due > 0}"
+                                  th:text="${item.due} + ' к повтору'"
+                                  th:title="'Готово к повторению сейчас: ' + ${item.due}">3 к повтору</span>
+                        </span>
                     </div>
-                    <span class="topic-progress-label"
-                          th:text="${item.learned} + '/' + ${item.total}">0/0</span>
                 </td>
                 <td class="accuracy-cell text-center"
                     data-label="Точность"
