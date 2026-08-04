@@ -1,9 +1,6 @@
 # DESIGN.md — quiz-app (cheat-sheet interview trainer)
 
-> **Status:** master spec for the radical switchable-design redesign (директива 2026-06-18).
-> Drives all UI work per `/frontend-design` + `/design-tokens` («DESIGN.md is mandatory»).
-> Per-design specs: [`systems/`](systems/). Craft rules vendored from
-> [`open-design`](https://github.com/nexu-io/open-design) (`craft/`) + refero.design.
+> **Status:** актуальная спека UI (Instrument + terminal handoff-3, 2026-07).
 > Язык интерфейса — русский; имена файлов/токенов/классов — английские.
 
 ---
@@ -13,28 +10,72 @@
 Тренажёр для подготовки к собеседованиям: reading-heavy Q&A (markdown), код
 (highlight.js), диаграммы (mermaid), флешкарты (SM-2), сессии/прогресс/стрик,
 статистика (chart.js). Аудитория — разработчики. **Главная задача —
-безупречные читаемость и UX**, с возможностью на лету **переключать дизайн**.
+безупречные читаемость и UX.**
 
-### Принцип переключаемых дизайнов
+**Единственный скин:** `html[data-design="instrument"]` (SSR, без переключателя).
+`data-theme` ∈ {light, dark} — ортогональная ось (localStorage `theme`, дефолт dark).
+
+**Шрифты runtime** (Google Fonts в `head.html`, токены `:root`):
+- **Inter** — display + body (`--font-family-display`, `--font-family-body`)
+- **JetBrains Mono** — код, эйбрау, mono-лейблы (`--font-family-mono`)
+
+Pixel-слой **не** подменяет body/display шрифты — только иконки, спрайты, FX.
+
+### Пиксельный хром (arcade overlay)
+
+Поверх Instrument-скина живёт декоративный слой `pixel-fx` (`static/css|js/pixel-fx.*`,
+`static/img/pixel/*`):
+
+- **Текст и шрифты** — только design-system (не pixel-typeface).
+- **Пиксель** — functional SVG sprite (`fragments/pixel-sprite.html`, `currentColor`) + PNG-спрайты/FX.
+- **Интенсивность** — `html[data-pixel="low|med|high"]` (localStorage `pixelIntensity`,
+  дефолт `med`). CRT/scanlines/crumbs/trail — только на `high`.
+- **Motion** — уважает `prefers-reduced-motion` и `data-motion=off`.
+- Переключатель — Настройки → Персонализация; API `window.__pixelIntensity` /
+  `window.__pixelFx`.
+
+#### Intensity matrix
+
+| FX / слой | low | med | high |
+|-----------|-----|-----|------|
+| Functional icons (SVG `<use>`, semantic `color`) | ✓ | ✓ | ✓ |
+| Chunky кнопки / MCQ chrome | ✓ | ✓ | ✓ |
+| Burst, float text, screen flash | — | ✓ (RU) | ✓ (+ EN arcade) |
+| Exam lives HUD (backend wrong count) | — | ✓ EXAM | ✓ EXAM |
+| Fake combo/XP HUD | — | — | ✓ |
+| Ambient crumbs, floaters, CRT | — | — | ✓ |
+| Pointer trail | — | — | ✓ + motion |
+| Stage intro / portal wipe / coin pickup | — | ✓ | ✓ |
+| Infinite filter/bg loops | — | — | ✓ |
+
+#### Asset inventory (PNG under `static/img/pixel/`)
+
+| Disposition | Assets |
+|-------------|--------|
+| **KEEP** | crumbs, dots, confetti, boom, coin*, gem, star, mascot, hero, UI chrome (tab/radio/checkbox/btn), xp-bar, corners, spark, skull, potion, trophy, heart-life, hp, portal frames |
+| **MERGE** | portal / coin-spin / heart / fire → `*-sheet.png` + CSS `steps()` |
+| **HIGH_ONLY** | pad, power, sword, shield, lightning, cloud, flag, cherry, key |
+| **REMOVE** | nav-home/stats/settings PNG (→ SVG sprite) |
+
+Canonical bitmap scale: `--px-s/m/l/xl` = 8/16/24/32; только целые кратные + `image-rendering: pixelated`.
+
+### Принцип CSS (Wave C — cascade layers)
 
 ```
-<html data-design="anthropic" data-theme="dark">
-        └─ выбор «скина» (палитра+шрифты+характер)   └─ ортогональная тема
+@layer tokens, reset, shell, components, pages, utilities, pixel;
 ```
 
-- `data-design` ∈ роестр (§5). `data-theme` ∈ {light, dark}. **Ортогональны**:
-  любой дизайн × любая тема = валидно.
-- **Структурный CSS design-agnostic** и читает ТОЛЬКО токены (§2). Хардкод
-  цвета/шрифта/радиуса/тени в структуре запрещён.
-- **Каждый дизайн = полный набор токенов** в `[data-design="X"]` (+ тёмные
-  оверрайды в `[data-design="X"][data-theme="dark"]`). Добавить дизайн = один
-  блок токенов + один файл `systems/<name>.md` + запись в `head.html`
-  (`DESIGNS[]`, `THEME_COLORS`, при нужде шрифт). Структуру/шаблоны не трогаем.
-- Переключение — без перезагрузки: `window.__design.set()` флипает атрибут
-  (см. `fragments/head.html`). FOUC-safe: атрибут ставится инлайн до 1-го кадра.
-- Дизайны **различаются не только цветом**, но и характером: радиусы, стиль
-  рамок, высота над поверхностью (тень/ring/flat), плотность, шрифтовые пары,
-  ритм. Для этого токен-контракт включает component-level токены (§2.4).
+| Слой | Файлы | Назначение |
+|------|-------|------------|
+| tokens | `tokens.css` | `:root` + light/dark; **Inter/JetBrains** в `--font-family-*` |
+| reset | `reset.css`, `reset-layout.css` | reset, типографика body, a11y, motion, `.ed-page` |
+| shell | `shell.css` | AppShell: sidebar, topbar, mobile-nav |
+| components | `components-*.css` | masthead, widgets, signatures |
+| pages | `pages-*.css` | focus, settings, stats, summary, result, error, layout |
+| utilities | `utilities-*.css` | `.hidden`, UX-review overrides, print |
+| pixel | `pixel-fx.css` | декор/FX; **не** layout skip-link / MCQ-grid / form flow |
+
+Структурный CSS читает **только** `var(--token)`. Хардкод цвета/шрифта в pages/components запрещён.
 
 ---
 
@@ -176,20 +217,35 @@ inline-ошибок; role=status (polite) для тостов без перен�
 
 ```
 static/css/
-  tokens.css     :root контракт-дефолты + [data-design=X] блоки + dark-оверрайды (ВСЕ дизайны)
-  base.css       design-agnostic структура: reset, layout, компоненты, утилиты, a11y, motion
-                 (= переписанный editorial.css; сохранить контракт editorial-теста ИЛИ обновить тест)
+  tokens.css                  @layer tokens — палитра handoff-3, шрифты Inter/Mono
+  reset.css                   @layer reset
+  reset-layout.css            @layer reset — a11y, skip-link, motion, .ed-page
+  utilities-core.css          @layer utilities — .hidden, layout utils
+  components-masthead.css       @layer components — legacy ed-masthead (header fragment)
+  components-widgets.css        @layer components — back-to-top, today-hero, personalization
+  components-signatures.css     @layer components — instrument h1..h6 voice
+  pages-focus.css               @layer pages — тренировка, MCQ, flashcard
+  pages-settings.css            @layer pages
+  pages-stats.css               @layer pages
+  pages-summary.css             @layer pages
+  pages-error.css               @layer pages
+  pages-result.css              @layer pages
+  pages-layout.css              @layer pages — wide layout, data-layout, @media print
+  utilities-overrides.css       @layer utilities — UX-review pass
+  base.css                      @import-агрегатор (dev); prod — цепочка в head.html
+  shell.css                     @layer shell — AppShell редизайна
+  pixel-fx.css                  @layer pixel — декор (не body-font, не core layout)
 static/js/
-  app.js         поведение (перепривязать селекторы к новым шаблонам, поведение сохранить)
-  stats.js       графики (redraw на data-theme/data-design)
-templates/       переписать с нуля (см. §4); fragments/head.html — загрузчик+switcher
+  app.js, stats.js, settings/*
+templates/
+  fragments/head.html         загрузчик CSS + theme/pixel bootstrap
 docs/design/
-  DESIGN.md      этот файл
-  systems/*.md   per-design спеки
+  DESIGN.md                     этот файл
 ```
 
-Загрузка в `head.html`: preload+link `tokens.css` → `base.css` (порядок важен:
-токены до структуры). Версионирование `?v=N` бампать при каждой правке.
+**Загрузка** (`fragments/head.html`): tokens → reset/utilities/components/pages
+(14 файлов, `?v=123`) → shell → pixel-fx. Google Fonts: Inter + JetBrains Mono
+(non-blocking `media=print` + onload). Версии `?v=N` бампать при правке файла.
 
 ---
 
@@ -221,8 +277,8 @@ difficulty, coverageGaps, answerHtml, answerDisplayMode`.
 - body-классы: `focus-page`/`stats-page`/`settings-page`/`result-page`/summary/error.
 - settings: каркас `app-layout` + `#left-sidebar-card`/`#left-sidebar-content`/`#main-content`
   (можно эволюционировать — синхронно с тестом).
-- Структурные CSS-ассерты (`html[data-design] .*-page`, утилиты) — обновить под
-  base.css (имя/селекторы) синхронно.
+- Структурные CSS-ассерты — `readStructuralCss()` в `TemplateFragmentContractTest`
+  (split CSS, Wave C).
 
 **Mermaid pathway** (см. [[feedback_diagrams_non_mermaid_ok]]): `includeMermaid`
 в head → `mermaid@11.12.0` + `fragments/mermaid-init.html` (securityLevel
@@ -238,47 +294,23 @@ pre code` — селектор highlight.js.
 
 ---
 
-## 5. Роестр дизайнов (расширяемый; источники — open-design)
+## 5. Дизайн Instrument (единственный runtime)
 
-| id | характер | accent | display / body / mono | bg light / dark | open-design источник |
-|----|----------|--------|----------------------|-----------------|----------------------|
-| **editorial** (default) | тёплая бумага, серифный display, интеллектуально-спокойно (Anthropic-якорь) | terracotta `#C96442`/`#D97757` | Lora · Inter · JetBrains Mono | `#FAF9F5` / `#262624` | claude, warm-editorial |
-| **linear** | dark-native, инженерная точность, ахроматика | indigo `#5E6AD2`/`#7170FF` | Inter(510) · Inter · Berkeley/Geist Mono | `#FFFFFF` / `#08090A` | linear-app |
-| **swiss** | интернац. типографика, сетка, B/W + 1 красный, flat, rules | red `#E5231B` | Geist · Geist · Geist Mono | `#FFFFFF` / `#0A0A0A` | swiss philosophy / shadcn |
-| **notion** | тёплый минимализм, near-black, whisper-рамки, soft | blue `#0075DE` | Inter · Inter · JetBrains Mono | `#FFFFFF` / `#191919` | notion |
-| **mintlify** | docs-as-product, воздух, крупные радиусы, mono-CAPS лейблы | green `#18E299`/`#0FA76E` | Inter · Inter · Geist Mono | `#FFFFFF` / `#0D0D0D` | mintlify |
-| **broadsheet** | газетный editorial, Source Serif, фолио-детали, сдержанно | ink + 1 тон | Source Serif 4 · Inter · JetBrains Mono | `#FEFFFC` / `#15151D` | theverge, wired, publication |
-| **superhuman** | премиум-инструмент, тёплая бумага, аметистовый акцент, mysteria-purple dark | amethyst `#714CB6` / lavender-fill `#CBB7FB` | Inter(460/540) · Inter · JetBrains Mono | `#FFFFFF` / `#1B1938` | superhuman |
-| **stripe** | инженерная ясность, navy-ink, сине-подкрашенные тени (signature) | indigo-violet `#533AFD` / link `#4434D4` | Inter · Inter · JetBrains Mono | `#FFFFFF` / `#0A2540` | stripe |
-| **claude** | пергамент, серифный display (Lora), синий focus-ring — отстройка от editorial | terracotta `#D97757` / strong `#C16040` | Lora · Inter · JetBrains Mono | `#F5F4ED` / `#141413` | claude / anthropic |
-| **theverge** | bold tech-media, jelly-mint neon, pill-радиусы 20/24, heavy 800, zero-shadow | jelly-mint `#3CFFD0` / dark-mint `#157A52` | Inter(800) · Inter · Geist Mono | `#FFFFFF` / `#131313` | theverge |
+| id | характер | accent | display / body / mono | bg dark / light |
+|----|----------|--------|----------------------|-------------------|
+| **instrument** | terminal handoff-3, teal-signal, dark-default | `#39d0c7` | **Inter · Inter · JetBrains Mono** | `#071116` / `#f5f8f8` |
 
-**Решение по id (минимум churn):** дефолтный warm-paper дизайн оставляем под id
-`editorial` (он = `:root` в tokens.css; уже зашит в head SSR, base.css signature,
-`data-design` шаблонов, NAMES-map тоггла, seg-control). НЕ переименовываем в
-`anthropic`. Итоговый роестр id (10 дизайнов): `editorial` (default), `swiss`,
-`linear`, `notion`, `mintlify`, `broadsheet`, плюс волна 2026-06-23 —
-`superhuman`, `stripe`, `claude`, `theverge`. `swiss`/`linear`/`broadsheet`
-переоснащены полноценными токен-наборами (вместо тонких рекрасок-оверлеев);
-`notion`/`mintlify` и 4 дизайна второй волны — новые. Спека warm-paper лежит как
-`systems/editorial.md` (Anthropic/claude-якорь); вторая волна — `systems/{superhuman,
-stripe,claude,theverge}.md`. Примечание: `claude` ≠ `editorial` — оба
-Anthropic-производные, но `claude` берёт более тёплый пергамент `#F5F4ED`,
-серифный Lora-display и **синий** focus-ring (`#2476C4`) как точку отстройки.
+SSR всегда `data-design="instrument"`. Исторический роестр switchable-дизайнов
+(editorial, linear, swiss, …) удалён из tokens/CSS (FE-CMP-1); `systems/*.md` —
+архив для референса.
 
 ---
 
-## 6. Порядок исполнения (эпик #59–#67)
+## 6. История эпика (#59–#67)
 
-1. **#59** этот DESIGN.md + токен-контракт ✔(в работе)
-2. **#60** per-design спеки `systems/*.md` (workflow fan-out из open-design)
-3. **#61** `tokens.css` (контракт + блоки всех дизайнов, light+dark, контраст-гейты)
-4. **#62** `base.css` — design-agnostic структура (rewrite editorial.css)
-5. **#63** rewrite шаблонов с нуля (fragments + страницы), контракты §4 целы
-6. **#64** switcher UI (settings + шапка) + head.html роестр/шрифты/THEME_COLORS
-7. **#65** выровнять app.js/stats.js под новую разметку
-8. **#66** обновить `TemplateFragmentContractTest`
-9. **#67** live-верификация Playwright × 7 вьюпортов × 2 темы × дизайны + `/design-review` + `/emil-design-eng` полировка
+1. **#59** DESIGN.md + токен-контракт ✔
+2. **#61** `tokens.css` — single-source `:root` Instrument ✔
+3. **#62** structural CSS — split + `@layer` (Wave C) ✔
+4. **#63–#67** шаблоны, app.js, тесты, live-verify — по backlog
 
-Каждый шаг — отдельные коммиты (русские сообщения, Co-Authored-By). Не запускать
-gradle при живом devtools-bootRun. JSON-вопросы не трогать.
+---
