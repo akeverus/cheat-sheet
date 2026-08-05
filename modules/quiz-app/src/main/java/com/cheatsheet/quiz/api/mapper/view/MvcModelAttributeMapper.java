@@ -4,6 +4,7 @@ import com.cheatsheet.quiz.common.util.ModeUtils;
 import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
+import com.cheatsheet.quiz.domain.QuestionIssueCategory;
 import com.cheatsheet.quiz.domain.SessionSummary;
 import com.cheatsheet.quiz.infrastructure.render.AnswerHtmlSplitter;
 import com.cheatsheet.quiz.feature.interview.service.copy.AnswerCopy;
@@ -119,6 +120,10 @@ public class MvcModelAttributeMapper {
         model.addAttribute("focusModeHintText", resolveFocusModeHintText(reviewMode, mode, flashcard, studyLearnPhase));
         model.addAttribute("recallBadgeText", resolveRecallBadgeText(mode, pageState.typedInputMode(), pageState.codeChallengeMode()));
         model.addAttribute("typedAnswerLabel", resolveTypedAnswerLabel(mode, pageState.codeChallengeMode()));
+        // Категории жалобы рисует <template> в разметке, а не таблица в modals.js:
+        // подпись — свойство константы, и вторая её копия в JS расходилась бы молча
+        // (fromString снисходителен, неизвестное имя уезжает в OTHER).
+        model.addAttribute("reportCategories", QuestionIssueCategory.values());
         model.addAttribute("focusEmptyRetryHref", resolveFocusEmptyRetryHref(reviewMode, mode));
         model.addAttribute("focusEmptyRetryText", resolveFocusEmptyRetryText(reviewMode, mode));
         model.addAttribute("focusBrowseNextHref", resolveBrowseNextHref(pageState, reviewMode));

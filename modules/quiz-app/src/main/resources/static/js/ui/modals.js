@@ -1,13 +1,19 @@
 import { apiFetch, parseApiError } from '../core/api-client.js';
 import { API } from '../core/constants.js';
 
-const REPORT_CATEGORIES = [
-  { value: 'INCORRECT_ANSWER', label: 'Неверный ответ' },
-  { value: 'TYPO', label: 'Опечатка' },
-  { value: 'UNCLEAR', label: 'Непонятная формулировка' },
-  { value: 'OUTDATED', label: 'Устаревшая информация' },
-  { value: 'OTHER', label: 'Другое' }
-];
+/**
+ * Радиокнопки категорий жалобы, отрисованные сервером в инертный <template>
+ * (focus-training.html). Своей таблицы категорий здесь нет намеренно: это была
+ * копия QuestionIssueCategory, невидимая компилятору, а серверный fromString
+ * снисходителен к неизвестному имени и молча кладёт жалобу в OTHER — то есть
+ * расхождение проявилось бы не ошибкой, а неправильно классифицированной жалобой.
+ * Нет шаблона — нет и группы: категория необязательна, сервер подставит «Другое».
+ */
+function categoryOptions() {
+  const tpl = document.getElementById('report-category-options');
+  if (!tpl || !tpl.content.querySelector('input[name="report-category"]')) return null;
+  return tpl.content.cloneNode(true);
+}
 
 export function promptModal(opts = {}) {
   const isConfirm = opts.mode === 'confirm';
@@ -92,13 +98,13 @@ export function reportModal(questionId) {
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-modal', 'true');
   overlay.setAttribute('aria-labelledby', 'report-modal-title');
-  const radios = REPORT_CATEGORIES.map((c, i) =>
-    '<label class="report-cat"><input type="radio" name="report-category" value="' + c.value + '"' +
-    (i === 0 ? ' checked' : '') + '><span></span></label>').join('');
+  const categories = categoryOptions();
   overlay.innerHTML =
     '<form class="prompt-modal report-modal" novalidate>' +
     '<h3 id="report-modal-title" class="prompt-modal-title">Сообщить о проблеме</h3>' +
-    '<fieldset class="report-fieldset"><legend class="report-legend">Что не так с вопросом?</legend>' + radios + '</fieldset>' +
+    (categories
+      ? '<fieldset class="report-fieldset"><legend class="report-legend">Что не так с вопросом?</legend></fieldset>'
+      : '') +
     '<label class="prompt-modal-label" for="report-comment">Комментарий (необязательно)</label>' +
     '<textarea id="report-comment" class="report-comment" maxlength="2000" rows="3"></textarea>' +
     '<p class="report-error hidden" role="alert"></p>' +
@@ -106,7 +112,7 @@ export function reportModal(questionId) {
     '<button type="button" class="btn secondary-btn" data-report-cancel>Отмена</button>' +
     '<button type="submit" class="btn next-btn" data-report-ok>Отправить</button>' +
     '</div></form>';
-  overlay.querySelectorAll('.report-cat span').forEach((s, i) => { s.textContent = REPORT_CATEGORIES[i].label; });
+  if (categories) overlay.querySelector('.report-fieldset').appendChild(categories);
   document.body.appendChild(overlay);
 
   const inerted = [];
@@ -120,8 +126,13 @@ export function reportModal(questionId) {
   const form = overlay.querySelector('.report-modal');
   const okBtn = overlay.querySelector('[data-report-ok]');
   const errEl = overlay.querySelector('.report-error');
-  const firstRadio = overlay.querySelector('input[name="report-category"]');
-  requestAnimationFrame(() => firstRadio.focus());
+  // Ни одна категория заранее не выбрана: предвыбор первой отправлял каждую
+  // неосознанную жалобу как «Неверный ответ» — самую тревожную из пяти. В
+  // незаполненной радиогруппе первая кнопка всё равно попадает в Tab-порядок,
+  // так что фокус ставится туда же, куда и раньше.
+  const initialFocus = overlay.querySelector('input[name="report-category"]')
+    || overlay.querySelector('#report-comment');
+  requestAnimationFrame(() => initialFocus.focus());
 
   let done = false;
   let inFlight = false;
@@ -168,11 +179,14 @@ export function reportModal(questionId) {
     okBtn.setAttribute('aria-busy', 'true');
     okBtn.setAttribute('aria-disabled', 'true');
     errEl.classList.add('hidden');
+    // Категория не выбрана → уходит пустой, а не своё 'OTHER': правило
+    // «неизвестное/пустое → OTHER» принадлежит серверу (QuestionIssueCategory)
+    // и должно жить в одном месте.
     const checked = overlay.querySelector('input[name="report-category"]:checked');
-    const category = checked ? checked.value : 'OTHER';
     const comment = overlay.querySelector('#report-comment').value.trim();
-    let body = 'questionId=' + encodeURIComponent(questionId) + '&category=' + encodeURIComponent(category);
-    if (comment) body += '&comment=' + encodeURIComponent(comment);
+    const body = new URLSearchParams({ questionId: String(questionId) });
+    if (checked) body.set('category', checked.value);
+    if (comment) body.set('comment', comment);
     try {
       const resp = await apiFetch(API.REPORT, {
         method: 'POST',

@@ -516,6 +516,19 @@
                     th:attr="data-question-id=${current.question.id}">
                 <svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-flag"></use></svg>Сообщить о проблеме
             </button>
+            <!--/* Категории жалобы приходят с сервера готовой разметкой, а не таблицей
+                 в JS. Своя копия перечисления там была опаснее обычного дубля:
+                 QuestionIssueCategory.fromString намеренно снисходителен (неизвестное
+                 имя → OTHER, чтобы жалоба не потерялась), поэтому переименование
+                 константы не уронило бы запрос — пользователь выбирал бы «Опечатка»,
+                 а на проверку уезжало «Другое». <template> инертен: без JS модалки
+                 нет, и разметка ничего не рисует. */-->
+            <template id="report-category-options">
+                <label class="report-cat" th:each="cat : ${reportCategories}">
+                    <input type="radio" name="report-category" th:value="${cat.name()}">
+                    <span th:text="${cat.label()}">Другое</span>
+                </label>
+            </template>
         </div>
     </section>
 
