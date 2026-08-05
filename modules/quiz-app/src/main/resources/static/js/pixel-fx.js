@@ -21,16 +21,44 @@
  *          (декоративный слой); поток обратной связи тот же.
  *
  * Asset inventory (decorative PNG under /img/pixel/):
- *   KEEP     — crumbs, dots, confetti, boom, fire, coin*, gem, star, mascot, hero,
+ *   KEEP     — crumbs, dots, confetti, boom, fire-1, coin*, gem, star, mascot,
  *              tab/radio/checkbox, btn-*, xp-bar, corners, spark, skull, potion,
  *              trophy-pixel, heart-life, hp, portal* (burst/floaters), *-sheet.png
  *   HIGH_ONLY — pad, power, sword, shield, lightning, cloud, flag, cherry, key
  *               (ambient floaters / burst packs only; not functional UI)
  *   MERGE    — portal/coin-spin/heart/fire → *-sheet.png (CSS steps cycles)
- *   REMOVE   — nav-home.png, nav-stats.png, nav-settings.png (→ SVG pixel-sprite)
+ *   REMOVED  — nav-home/nav-stats/nav-settings (→ SVG pixel-sprite); hero-1..3,
+ *              bar-l/bar-r, book, fire-2/3, heart-2 (осиротевшие кадры слитых
+ *              спрайтов — на них не ссылались ни CSS, ни этот файл).
+ *
+ * Инвентарь — не декларация намерений, а список того, что реально грузится.
+ * Файл, попавший в KEEP «на будущее», молча превращается в вес репозитория:
+ * hero-1..3 пролежали здесь именно так. Строка KEEP обязана иметь ссылку.
  */
 (function () {
   'use strict';
+
+  /**
+   * Канонический путь спрайта → версионированный URL.
+   *
+   * Пути ниже зашиты строками, через Thymeleaf `@{...}` не проходят и content-hash
+   * их не касается. Карту кладёт в разметку StaticVersionAdvice (#pixel-asset-map);
+   * без неё (dev) путь возвращается как есть. Инвентарь остаётся читаемым —
+   * версия подставляется на границе, в момент присваивания в img.src.
+   */
+  var ASSET_MAP = (function () {
+    var node = document.getElementById('pixel-asset-map');
+    if (!node) return null;
+    try {
+      return JSON.parse(node.textContent);
+    } catch (e) {
+      return null;
+    }
+  })();
+
+  function asset(path) {
+    return (ASSET_MAP && ASSET_MAP[path]) || path;
+  }
 
   function motionAllowed() {
     var root = document.documentElement;
@@ -176,7 +204,7 @@
       '/img/pixel/mascot.png', '/img/pixel/mascot-2.png'
     ].forEach(function (src) {
       var img = new Image();
-      img.src = src;
+      img.src = asset(src);
     });
   }
 
@@ -198,7 +226,7 @@
     for (var i = 0; i < count; i++) {
       var img = document.createElement('img');
       img.className = 'pixel-crumb';
-      img.src = CRUMBS[i % CRUMBS.length];
+      img.src = asset(CRUMBS[i % CRUMBS.length]);
       img.alt = '';
       img.setAttribute('aria-hidden', 'true');
       img.style.left = (Math.random() * 100) + '%';
@@ -223,7 +251,7 @@
     for (var i = 0; i < n; i++) {
       var img = document.createElement('img');
       img.className = 'pixel-floater';
-      img.src = FLOATERS[i % FLOATERS.length];
+      img.src = asset(FLOATERS[i % FLOATERS.length]);
       img.alt = '';
       img.setAttribute('aria-hidden', 'true');
       img.style.left = (6 + Math.random() * 88) + 'vw';
@@ -319,7 +347,7 @@
       : (window.innerWidth < 700 ? 12 : 36);
     for (var i = 0; i < n; i++) {
       var img = document.createElement('img');
-      img.src = coins[i % coins.length];
+      img.src = asset(coins[i % coins.length]);
       img.alt = '';
       img.setAttribute('aria-hidden', 'true');
       img.style.left = (Math.random() * 100) + 'vw';
@@ -344,7 +372,7 @@
     for (var i = 0; i < n; i++) {
       var img = document.createElement('img');
       img.className = 'pixel-burst-bit';
-      img.src = pack[i % pack.length];
+      img.src = asset(pack[i % pack.length]);
       img.alt = '';
       img.setAttribute('aria-hidden', 'true');
       img.style.left = x + 'px';
@@ -399,7 +427,7 @@
     trailLast = now;
     var img = document.createElement('img');
     img.className = 'pixel-trail-dot';
-    img.src = TRAIL[trailIdx++ % TRAIL.length];
+    img.src = asset(TRAIL[trailIdx++ % TRAIL.length]);
     img.alt = '';
     img.setAttribute('aria-hidden', 'true');
     img.style.left = e.clientX + 'px';
@@ -416,7 +444,7 @@
     if (t.closest(
       'button, .btn, .next-btn, .primary-btn, .secondary-btn, a.btn, .icon-button, ' +
       '.side-action, .btn-favorite, .chip, .filter-chip, .content-tab, .section-tab, ' +
-      '.confidence-btn, .flashcard-grade-btn, .skip-btn, .danger-btn, .btn-finish, ' +
+      '.confidence-btn, .flashcard-grade-btn, .skip-btn, .danger-btn, ' +
       '.btn-finish-small, label[data-option-id], #interview-options label, .option, .options label'
     )) {
       clickSpark(e.clientX, e.clientY);
@@ -452,7 +480,7 @@
     overlay.setAttribute('aria-hidden', 'true');
     overlay.innerHTML =
       '<div class="pixel-stage-intro-inner">' +
-        '<img class="pixel-stage-intro-mascot" src="/img/pixel/mascot.png" alt="">' +
+        '<img class="pixel-stage-intro-mascot" src="' + asset('/img/pixel/mascot.png') + '" alt="">' +
         '<p class="pixel-stage-intro-title"></p>' +
         '<p class="pixel-stage-intro-sub"></p>' +
       '</div>';
@@ -487,13 +515,10 @@
           || dataTotal.getAttribute('data-total-questions');
       }
     }
-    if (!count) {
-      var mono = document.querySelector('.topbar .crumb .mono, .topbar .progress-mini + .mono, .topbar b.mono');
-      if (mono) {
-        var m = (mono.textContent || '').match(/\/\s*(\d+)/);
-        if (m) count = m[1];
-      }
-    }
+    // Здесь была четвёртая попытка — вычитать «N / M» из счётчика в топбаре.
+    // Топбар больше не печатает прогресс сессии (fragments/topbar.html), так что
+    // ветка не могла совпасть ни разу; первая же попытка выше читает тот самый
+    // рельс, который её вытеснил.
     if (!count) {
       var totalEl = document.querySelector(
         '.focus-progress-line span:last-child, .session-progress + span, [aria-valuemax]'
@@ -514,8 +539,7 @@
     var hasSession = !!(
       document.querySelector('.focus-session-rail .session-progress') ||
       document.querySelector('.focus-progress-line .session-progress') ||
-      document.querySelector('form.rail-finish, form.rail-pause') ||
-      document.querySelector('.topbar .progress-mini')
+      document.querySelector('form.rail-finish, form.rail-pause')
     );
     if (!hasSession) return;
     var key = 'pixelStageIntroShown';
@@ -741,8 +765,12 @@
     document.addEventListener('motionchange', applyIntensityLayers);
 
     if (!allowFx()) return;
-    var wrong = document.querySelector('.result-wrong, .status-wrong');
-    var ok = document.querySelector('.result-correct, .status-correct');
+    // Один селектор на оба пути: no-JS `result.html` строит тот же вердикт
+    // `.result-banner.result-correct/.result-wrong`, что и AJAX-разбор на фокусе.
+    // Ветка `.status-correct/.status-wrong` относилась ко второму, отдельному
+    // компоненту вердикта на странице результата — его больше нет.
+    var wrong = document.querySelector('.result-wrong');
+    var ok = document.querySelector('.result-correct');
     if (ok) {
       later(function () { celebrate(true); }, 200);
     } else if (wrong) {

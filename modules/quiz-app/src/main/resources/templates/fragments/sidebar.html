@@ -1,12 +1,21 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-<!-- Sidebar (редизайн ui-redesign-handoff): постоянная левая колонка 232px на
+<!--/* Sidebar (редизайн ui-redesign-handoff): постоянная левая колонка 232px на
      десктопе (на мобильном скрыта — см. shell.css, там работает mobile-nav).
-     8 пунктов из макета; разделы без страниц (Вопросы, Достижения) показаны
-     неактивными (aria-disabled) — новые разделы не строим (вне 6 экранов).
-     active ∈ {focus, analytics, review, settings, bookmarks}. -->
-<aside th:fragment="sidebar(active)" class="sidebar">
+     active ∈ {focus, analytics, review, settings, bookmarks}.
+
+     В списке только те разделы, куда можно перейти. Заглушки «Вопросы скоро» и
+     «Достижения скоро» убраны: они занимали два из восьми слотов главной
+     навигации (четверть), кликнуть их было нельзя, а «Вопросы» ещё и путались
+     с существующими «Темами». Анонс дорожной карты — не навигация; когда
+     разделы появятся, они встанут сюда обычными ссылками.
+
+     Метка обязательна: на экране фокуса это не единственный complementary —
+     рядом живёт focus-session-rail, и без label скринридер объявляет два
+     безымянных «дополнения» подряд, различить которые в списке ориентиров
+     нельзя. Внутренний nav подписан отдельно: он часть панели, а не вся она. */-->
+<aside th:fragment="sidebar(active)" class="sidebar" aria-label="Боковая панель">
     <a class="brand" th:href="@{/}">
         <span class="avatar" aria-hidden="true">
             <img th:src="@{/img/pixel/mascot.png}" width="24" height="24" alt="" decoding="async">
@@ -18,10 +27,6 @@
            th:attr="aria-current=${active == 'focus'} ? 'page' : null">
             <svg class="icon" aria-hidden="true"><use href="#training"></use></svg><span>Тренировка</span>
         </a>
-        <span class="nav-link is-disabled" role="link" aria-disabled="true" tabindex="-1"
-              title="Раздел в разработке">
-            <svg class="icon" aria-hidden="true"><use href="#questions"></use></svg><span>Вопросы</span><span class="nav-soon" aria-hidden="true">скоро</span>
-        </span>
         <a th:href="@{/stats} + '#topics'">
             <svg class="icon" aria-hidden="true"><use href="#topics"></use></svg><span>Темы</span>
         </a>
@@ -38,10 +43,6 @@
            th:attr="aria-current=${active == 'bookmarks'} ? 'page' : null">
             <svg class="icon" aria-hidden="true"><use href="#bookmark"></use></svg><span>Закладки</span>
         </a>
-        <span class="nav-link is-disabled" role="link" aria-disabled="true" tabindex="-1"
-              title="Раздел в разработке">
-            <svg class="icon" aria-hidden="true"><use href="#trophy"></use></svg><span>Достижения</span><span class="nav-soon" aria-hidden="true">скоро</span>
-        </span>
         <a th:href="@{/settings}" th:classappend="${active == 'settings'} ? 'active'"
            th:attr="aria-current=${active == 'settings'} ? 'page' : null">
             <svg class="icon" aria-hidden="true"><use href="#settings"></use></svg><span>Настройки</span>
@@ -49,13 +50,10 @@
     </nav>
     <div class="sidebar-spacer"></div>
     <div class="sidebar-footer">
-        <!-- PE: тоггл темы раскрывается только при работающем JS (shell-scripts
-             снимает hidden). Без JS мёртвого контрола нет. -->
-        <button type="button" class="side-action hidden" data-theme-toggle
-                aria-pressed="false" aria-label="Переключить тему">
-            <svg class="icon" aria-hidden="true"><use href="#theme"></use></svg>
-            <span data-theme-label>Тема</span>
-        </button>
+        <!--/* Тоггл темы отсюда переехал в topbar (fragments/topbar.html): он не
+             раздел, а переключатель отображения, и внизу списка разделов читался
+             как ещё один пункт навигации. В topbar он совпадает по месту с
+             mobile-header — один контрол, одна позиция на всех ширинах. */-->
         <form th:if="${multiSecurityMode}" class="sidebar-logout" th:action="@{/logout}" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
             <button type="submit" class="side-action"

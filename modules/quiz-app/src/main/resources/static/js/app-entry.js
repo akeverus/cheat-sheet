@@ -14,7 +14,7 @@ import { initDangerousFormGuard, initSubmitOnceGuard } from './ui/form-guards.js
 import { initKeyboardHelp } from './ui/keyboard-help.js';
 import { initCopyCode, initCodeToolbar } from './ui/code-toolbar.js';
 import { initReportTriggers } from './ui/modals.js';
-import { enhanceOptionExplanationDisclosure } from './content/dynamic-content.js';
+import { initShell } from './ui/shell.js';
 
 let booted = false;
 
@@ -29,7 +29,7 @@ async function loadSettingsModules() {
     { initShuffleTopic, initSessionModeForm, initLiveFilters, initSessionFormSync },
     { initExportButtons },
     { initPersonalization },
-    { initSettingsTabs, initContentTabs }
+    { initSettingsTabs }
   ] = await Promise.all([
     import('./settings/session-form.js'),
     import('./ui/export.js'),
@@ -43,21 +43,33 @@ async function loadSettingsModules() {
   initExportButtons();
   initPersonalization();
   initSettingsTabs();
-  initContentTabs();
 }
 
 async function loadQuizModules() {
   const [
     { initFlashcardShortcuts, initBrowseFlashcardReveal, initRecallTypedEcho },
-    { initInterviewForm }
+    { initInterviewForm },
+    { initContentTabs }
   ] = await Promise.all([
     import('./quiz/flashcard.js'),
-    import('./quiz/interview.js')
+    import('./quiz/interview.js'),
+    import('./content/materials-tabs.js')
   ]);
   initBrowseFlashcardReveal();
   initFlashcardShortcuts();
   initRecallTypedEcho();
   initInterviewForm();
+  initContentTabs();
+}
+
+async function loadStatsModules() {
+  const { initStatsPage } = await import('./stats/index.js');
+  initStatsPage();
+}
+
+async function loadSummaryModules() {
+  const { initSummaryTools } = await import('./summary/share-tools.js');
+  initSummaryTools();
 }
 
 function boot() {
@@ -67,6 +79,7 @@ function boot() {
   registerLifecycle('app-core', {
     async init() {
       initPersonalizationBootstrap();
+      initShell();
       initOfflineBanner();
       hydrateProgressBarsFromData();
       highlightPageCodeBlocks();
@@ -79,19 +92,28 @@ function boot() {
       initKeyboardHelp();
       initCopyCode();
       initCodeToolbar();
-      enhanceOptionExplanationDisclosure(document);
       initReportTriggers();
 
+      // Тяжёлые кластеры грузим по классу body. Признак именно такой, а не
+      // «есть ли на странице узел X»: якоря каждого кластера (#session-form,
+      // #interview-form, #stats-tablist, .summary-hero) встречаются ровно на
+      // одном шаблоне, так что проверка по узлу повторяла бы класс страницы.
       const tasks = [];
-      // Settings surface owns session builder / tabs / export.
-      if (pageIs('settings-page') || document.getElementById('session-form') || document.getElementById('settings-tablist')) {
+      // Настройки: конструктор сессии, вкладки, экспорт.
+      if (pageIs('settings-page')) {
         tasks.push(loadSettingsModules());
       }
-      // Quiz interaction modules for focus/result/summary (or any page with interview form).
-      if (pageIs('focus-page', 'result-page', 'summary-page')
-          || document.getElementById('interview-form')
-          || document.querySelector('[data-interview-form]')) {
+      // Ответ на вопрос: флешкарты, шорткаты, отправка формы, вкладки материалов.
+      if (pageIs('focus-page')) {
         tasks.push(loadQuizModules());
+      }
+      // Аналитика: вкладки, графики, сортировка таблицы тем.
+      if (pageIs('stats-page')) {
+        tasks.push(loadStatsModules());
+      }
+      // Итоги сессии: копирование и печать результата.
+      if (pageIs('summary-page')) {
+        tasks.push(loadSummaryModules());
       }
       await Promise.all(tasks);
     }

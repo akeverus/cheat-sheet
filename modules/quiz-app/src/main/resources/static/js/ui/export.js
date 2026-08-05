@@ -54,6 +54,19 @@ async function obtainAdminToken() {
   return token;
 }
 
+/** Retry-After (секунды) → человеческая подсказка. Заголовка нет — общая фраза. */
+function retryHint(retryAfter) {
+  const seconds = Number.parseInt(retryAfter, 10);
+  if (!Number.isFinite(seconds) || seconds <= 0) {
+    return 'Подожди немного и повтори экспорт.';
+  }
+  if (seconds >= 60) {
+    const minutes = Math.ceil(seconds / 60);
+    return 'Повтори экспорт через ' + minutes + ' мин.';
+  }
+  return 'Повтори экспорт через ' + seconds + ' с.';
+}
+
 async function runExport(format, buttons, notify, block) {
   if (exportInFlight) return;
   const needToken = tokenRequired(block);
@@ -74,6 +87,13 @@ async function runExport(format, buttons, notify, block) {
       notify(needToken
         ? 'Недостаточно прав. Проверь admin-токен (APP_ADMIN_TOKEN) и попробуй снова.'
         : 'Недостаточно прав для экспорта (нужна роль администратора).', true);
+      return;
+    }
+    if (resp.status === 429) {
+      // Сервер прямо сообщает, сколько ждать (Retry-After в секундах). Показывать
+      // вместо этого «HTTP 429» — терять единственную полезную часть ответа:
+      // пользователь не поймёт, что делать, и будет жать кнопку в цикле.
+      notify('Слишком часто. ' + retryHint(resp.headers.get('Retry-After')), true);
       return;
     }
     if (!resp.ok) {

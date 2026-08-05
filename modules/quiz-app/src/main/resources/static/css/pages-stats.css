@@ -10,14 +10,12 @@ html[data-design] .stats-page .app-layout {
 }
 html[data-design] .stats-page .main-content { width: auto; max-width: none; margin: 0; padding: 0; }
 
-/* Секции-панели */
+/* Секции-панели. Поверхность и поля — у общего `.card` (components-card.css);
+   здесь только отличия страницы: карточка не участвует в центрирующей колонке
+   (её ведёт .stats-page .main-content) и держит вертикальный ритм аналитики. */
 html[data-design] .stats-page .card {
   width: auto; max-width: none; position: static;
-  background: var(--color-bg-secondary);
-  border: var(--rule-weight) solid var(--color-border-primary);
-  border-radius: var(--border-radius-lg);
-  box-shadow: none; backdrop-filter: none;
-  padding: var(--space-6); margin: 0 0 var(--space-6);
+  margin: 0 0 var(--space-6);
 }
 html[data-design] .stats-page .card h2 {
   font-family: var(--font-family-display);
@@ -141,36 +139,12 @@ html[data-design] .stats-page .stats-search-action {
 }
 html[data-design] .stats-page .stats-search-action:hover { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); }
 
-/* Сводка stats-grid + accuracy-bar */
-html[data-design] .stats-page .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr)); gap: var(--space-3); }
-/* Мобайл (<540px): оба stat-грида в 2 колонки (2+2+2) — единообразие. У аналитики
-   контейнер уже (offset ~129), и auto-fit падал в 1 колонку (6 плиток в высокий
-   столбец, много пустоты справа), расходясь с настройками (2+2+2). Проверено @375:
-   2 колонки по 115px, без переполнения плиток и страницы. */
-@media (max-width: 539px) {
-  /* minmax(0,1fr) (не 1fr): при крупном масштабе шрифта (A+) 1fr-трек не ужимался
-     ниже min-content плиток и распирал сетку → гориз. скролл. min(0,…) + min-width:0
-     на .stat-item дают плиткам всегда влезать в две колонки. */
-  html[data-design] .stats-page .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-/* Планшетная полоса: auto-fit упаковывает 6 stat-плиток как 5+1 / 4+2 — одинокая
-   плитка-сирота справа. Форсим 3 колонки → ровные 3+3. Границы РАЗНЫЕ у страниц,
-   т.к. контейнеры разной ширины: settings капится на 860 и доходит до «6 в ряд»
-   при ~843px вьюпорта; .stats-grid на аналитике полноширинный (offset ~129) и
-   доходит до 6 в ряд только при ~909px. Замерено Playwright. Вне полос:
-   <540 auto-fit → 2+2+2 (мобайл), выше — 6 в ряд (десктоп). */
-@media (min-width: 540px) and (max-width: 908px) {
-  html[data-design] .stats-page .stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-html[data-design] .stats-page .stat-item {
-  min-width: 0;
-  padding: var(--space-3) var(--space-4); border: var(--rule-weight) solid var(--color-border-primary);
-  border-radius: var(--border-radius-md); background: var(--color-bg-primary); text-align: left;
-}
-html[data-design] .stats-page .stat-value { font-family: var(--font-family-display); font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); display: block; }
-html[data-design] .stats-page .stat-label { font-family: var(--font-family-mono); font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary); }
-html[data-design] .stats-page .accuracy-bar { height: 4px; margin-top: var(--space-4); background: var(--color-bg-tertiary); border-radius: var(--border-radius-full); overflow: hidden; }
-html[data-design] .stats-page .accuracy-bar-fill { height: 100%; background: var(--color-accent-primary); }
+/* Правила `.stats-page .stats-grid / .stat-item / .stat-value / .stat-label /
+   .accuracy-bar` удалены: сводка из шести плиток на аналитике не рендерится —
+   страница показывает метрики обучения с явными знаменателями (ниже), а
+   плиточную сводку подключает только «Прогресс» в настройках. Разметка ушла
+   раньше правил, и полсотни строк адаптивных грид-медиазапросов держались за
+   классы, которых на странице нет. */
 
 /* Actionable analytics: первый экран не только показывает KPI, но и предлагает
    следующий учебный шаг. Карточки остаются нейтральными; recommended — через
@@ -335,7 +309,12 @@ html[data-design] .stats-page .stats-next-action strong {
   line-height: var(--line-height-tight);
 }
 
+/* Уточнение про самую слабую тему — последняя строка карточки, после числа и его
+   расшифровки. Отбивка сверху отделяет её от пары «число + расшифровка»: без неё
+   четыре строки с одинаковым gap читались как один список, и было неясно, к чему
+   относится название темы. */
 html[data-design] .stats-page .stats-next-action-topic {
+  margin-top: var(--space-2);
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
   line-height: var(--line-height-normal);
@@ -391,6 +370,16 @@ html[data-design] .stats-page .metric-formula {
   margin-top: var(--space-1);
   opacity: 0.85;
 }
+/* Тревога плитки «Очередь». Раньше её нёс класс `.bad` на всей плитке, а он красит
+   `.metric-value` — то есть размер очереди. При 2 просроченных из 9802 красным
+   горело 9802: цвет обвинял банк, который просто ещё не открывали. Здесь красное
+   ровно на просрочке; вес шрифта даёт второй, не-цветовой канал (WCAG 1.4.1), а
+   слово «просрочено» — третий. Родитель `.muted` задаёт цвет наследованием,
+   поэтому цвет здесь объявлен явно. */
+html[data-design] .stats-page .metric-alarm {
+  color: var(--color-status-error);
+  font-weight: var(--font-weight-semibold);
+}
 /* Подзаголовок графика: называет срез/порядок данных — график рисует не все ~300
    тем, а релевантный top-25 (прогресс — по активности, точность — от слабых к
    сильным; полный список ниже в таблице). Иначе 25 баров под «…по темам» читаются
@@ -419,12 +408,19 @@ html[data-design] .stats-page .difficulty-legend {
 html[data-design] .stats-page .difficulty-legend-item {
   display: flex; align-items: center; gap: var(--space-3); font-size: var(--font-size-md);
 }
+/* Точка легенды обязана повторять цвет своего сектора в донате — иначе легенда
+   подписывает не тот сегмент. Цвета секторов задаёт `difficulty-donut.js` из тех же
+   токенов (EASY→accent, MEDIUM→status-warning, HARD→status-error), уровней ровно три
+   (`DIFFICULTY_LABELS`). Правило для HARD отсутствовало: сектор рисовался красным, а
+   точка оставалась серой от базового значения ниже — легенда молча расходилась с
+   графиком на трети данных. Серый остаётся только фоллбэком на неизвестный уровень. */
 html[data-design] .stats-page .difficulty-dot {
   width: 12px; height: 12px; border-radius: var(--border-radius-sm); flex: 0 0 auto;
   background: var(--color-text-tertiary);
 }
 html[data-design] .stats-page .difficulty-easy .difficulty-dot { background: var(--color-accent-primary); }
 html[data-design] .stats-page .difficulty-medium .difficulty-dot { background: var(--color-status-warning); }
+html[data-design] .stats-page .difficulty-hard .difficulty-dot { background: var(--color-status-error); }
 html[data-design] .stats-page .topic-compact-list {
   display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-2);
 }
@@ -440,7 +436,7 @@ html[data-design] .stats-page .topic-compact-bar {
 }
 html[data-design] .stats-page .topic-compact-bar > span,
 html[data-design] .stats-page .topic-compact-bar-fill {
-  display: block; height: 100%; width: 0; background: var(--color-accent-primary);
+  display: block; height: 100%; width: calc(var(--progress, 0) * 1%); background: var(--color-accent-primary);
 }
 html[data-design] .stats-page .difficulty-legend-label { color: var(--color-text-primary); }
 html[data-design] .stats-page .difficulty-legend-value { margin-left: auto; color: var(--color-text-secondary); }
@@ -516,7 +512,17 @@ html[data-design] .stats-page .topic-compact-action {
    даёт th font-weight:bold — гасим, чтобы тема-ссылка осталась обычного веса
    (визуальный паритет с прежним <td>; text-align:left уже задан выше на th+td). */
 html[data-design] .stats-page .topic-table th.topic-name { font-weight: var(--font-weight-normal); }
-html[data-design] .stats-page .topic-name a { color: var(--color-text-link); text-decoration: none; }
+/* Ссылка на тему — основной вход в тренировку с этого экрана, но по умолчанию это
+   inline-строка высотой 17px: цель ниже минимума 24×24 (WCAG 2.5.8), а промахнуться
+   в длинном списке одинаковых строк легко. Добираем высоту паддингом до 25px.
+   Именно inline-block, а не flex: на мобильной карточной раскладке ссылка полагается
+   на `overflow-wrap: anywhere` для длинных слагов, а флекс-элемент не сжимается ниже
+   min-content и дал бы там переполнение. Высота строки не меняется — контентная
+   коробка ячейки и так 35px. */
+html[data-design] .stats-page .topic-name a {
+  color: var(--color-text-link); text-decoration: none;
+  display: inline-block; padding-block: 4px;
+}
 html[data-design] .stats-page .topic-name a:hover { text-decoration: underline; }
 
 /* Мини-бар освоенности темы: одиночная зелёная заливка «освоено/всего».
@@ -527,20 +533,130 @@ html[data-design] .stats-page .topic-name a:hover { text-decoration: underline; 
    0–100% раздел освоено/не-освоено, а «к повтору» — отдельный чип рядом. */
 html[data-design] .stats-page .topic-progress { display: flex; flex-direction: column; gap: var(--space-1); }
 html[data-design] .stats-page .topic-progress-bar { height: 6px; width: 120px; max-width: 100%; background: var(--color-bg-tertiary); border-radius: var(--border-radius-full); overflow: hidden; }
-html[data-design] .stats-page .topic-progress-learned { height: 100%; background: var(--color-status-success); border-radius: inherit; }
+html[data-design] .stats-page .topic-progress-learned { height: 100%; width: calc(var(--progress, 0) * 1%); background: var(--color-status-success); border-radius: inherit; }
 html[data-design] .stats-page .topic-progress-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 html[data-design] .stats-page .topic-progress-label { font-family: var(--font-family-mono); font-size: var(--font-size-xs); color: var(--color-text-secondary); }
-/* Чип «N к повтору» — состояние «требует внимания сейчас»: семантический warning-акцент
-   (те же токены, что accuracy-mid / maturity-mid). Виден только при due>0. */
-html[data-design] .stats-page .topic-due-chip {
+/* Два чипа очереди — и они не взаимозаменяемы.
+   «N к повтору» — долг: срок прошёл, память проседает, это состояние «требует
+   внимания сейчас», отсюда warning-акцент (те же токены, что accuracy-mid).
+   «N новых» — не долг, а запас: пропустить их нечем, они просто не начаты.
+   Красить запас тревожным цветом означало бы делать из полного банка вопросов
+   вечный красный счётчик. Поэтому нейтральный контур вторичного текста. */
+html[data-design] .stats-page .topic-due-chip,
+html[data-design] .stats-page .topic-fresh-chip {
   display: inline-flex; align-items: center;
   padding: 0.1em var(--space-2);
   font-family: var(--font-family-mono); font-size: var(--font-size-xs);
-  color: var(--color-status-warning);
-  border: var(--rule-weight) solid var(--color-status-warning);
   border-radius: var(--border-radius-full);
   white-space: nowrap;
 }
+html[data-design] .stats-page .topic-due-chip {
+  color: var(--color-status-warning);
+  border: var(--rule-weight) solid var(--color-status-warning);
+}
+html[data-design] .stats-page .topic-fresh-chip {
+  color: var(--color-text-secondary);
+  border: var(--rule-weight) solid var(--color-border-strong);
+}
+
+/* Каталог разделов — обзорный вход в банк из ~320 тем.
+   auto-fill + minmax: число колонок диктует ширина, а не медиазапросы — при
+   десяти карточках любой фиксированный брейкпоинт всё равно был бы угадыванием.
+
+   На карточке два действия: заголовок ведёт к разбору раздела (/stats?group=…),
+   «Тренировать» уводит в сессию (/?group=…). Поэтому карточка — контейнер, а не
+   ссылка. Основное действие растянуто на всю площадь через ::after, вторичное
+   поднято над этим слоем z-index'ом. Фокус-кольцо карточка получает только когда
+   сфокусировано именно растянутое действие (:has), иначе клавиатурный фокус на
+   «Тренировать» подсвечивал бы область, которая ведёт в другое место. */
+html[data-design] .stats-page .topic-catalog-hint { margin: calc(-1 * var(--space-2)) 0 var(--space-4); }
+html[data-design] .stats-page .topic-catalog-grid {
+  display: grid; gap: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  margin: 0; padding: 0; list-style: none;
+}
+html[data-design] .stats-page .topic-catalog-card {
+  position: relative;
+  display: flex; gap: var(--space-3); height: 100%;
+  padding: var(--space-3);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-md);
+  background: var(--color-bg-secondary);
+  transition: border-color var(--duration-fast) var(--easing-default),
+              background-color var(--duration-fast) var(--easing-default);
+}
+html[data-design] .stats-page .topic-catalog-card:hover {
+  border-color: var(--color-accent-primary); background: var(--color-bg-tertiary);
+}
+html[data-design] .stats-page .topic-catalog-card:has(.topic-catalog-detail:focus-visible) {
+  outline: 2px solid var(--color-focus-ring); outline-offset: 2px;
+}
+/* Выбранный раздел помечен не только цветом: рамка утолщается, и карточка
+   несёт aria-current — иначе состояние было бы недоступно ни SR, ни в
+   монохроме (WCAG 1.4.1 «не только цветом»). */
+html[data-design] .stats-page .topic-catalog-card.is-current {
+  border-color: var(--color-accent-primary);
+  box-shadow: inset 0 0 0 var(--rule-weight) var(--color-accent-primary);
+}
+/* Пиксель-арт: апскейл без сглаживания, иначе 64px-спрайт мылится.
+   align-self: карточка тянет колонки по высоте, значок обязан остаться у верха. */
+html[data-design] .stats-page .topic-catalog-icon {
+  flex: 0 0 auto; align-self: flex-start; width: 48px; height: 48px;
+  image-rendering: pixelated;
+}
+html[data-design] .stats-page .topic-catalog-body {
+  display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; flex: 1 1 auto;
+}
+html[data-design] .stats-page .topic-catalog-name {
+  margin: 0;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+/* Растяжка основного действия. Ссылка остаётся текстом в заголовке (SR читает
+   осмысленную строку), но кликабельна вся карточка. */
+html[data-design] .stats-page .topic-catalog-detail {
+  color: var(--color-text-primary); text-decoration: none;
+}
+html[data-design] .stats-page .topic-catalog-detail::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+}
+html[data-design] .stats-page .topic-catalog-detail:focus-visible { outline: none; }
+html[data-design] .stats-page .topic-catalog-desc,
+html[data-design] .stats-page .topic-catalog-counts { margin: 0; }
+html[data-design] .stats-page .topic-catalog-desc {
+  font-size: var(--font-size-sm); color: var(--color-text-secondary);
+}
+html[data-design] .stats-page .topic-catalog-counts {
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+/* Вторичное действие: подчёркнутая ссылка, а не кнопка — заливка перетянула бы
+   внимание с самого каталога. margin-top:auto прижимает её к низу, поэтому в
+   ряду карточек с описаниями разной длины действия стоят на одной линии. */
+html[data-design] .stats-page .topic-catalog-start {
+  position: relative; z-index: 1;
+  align-self: flex-start;
+  margin-top: auto; padding-top: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  text-decoration: underline; text-underline-offset: 2px;
+}
+html[data-design] .stats-page .topic-catalog-start:hover,
+html[data-design] .stats-page .topic-catalog-start:focus-visible { color: var(--color-accent-primary); }
+/* Бар в карточке — span: инлайн по умолчанию, поэтому высота и ширина из
+   .topic-progress-bar не применились бы без display:block. */
+html[data-design] .stats-page .topic-catalog-card .topic-progress-bar {
+  display: block; width: 100%; margin-top: var(--space-1);
+}
+html[data-design] .stats-page .topic-catalog-card .topic-progress-learned { display: block; }
+html[data-design] .stats-page .topic-catalog-meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2);
+}
+html[data-design] .stats-page .topic-catalog-accuracy {
+  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
+}
+html[data-design] .stats-page .topic-catalog-accuracy.is-untouched { color: var(--color-text-tertiary); }
 
 /* точность по порогам */
 html[data-design] .stats-page .accuracy-high { color: var(--color-status-success); font-weight: var(--font-weight-semibold); }
@@ -581,7 +697,7 @@ html[data-design] .stats-page .forecast-list { list-style: none; margin: 0; padd
 html[data-design] .stats-page .forecast-row { display: grid; grid-template-columns: 100px 1fr 44px; align-items: center; gap: var(--space-3); }
 html[data-design] .stats-page .forecast-day { font-family: var(--font-family-mono); font-size: var(--font-size-xs); color: var(--color-text-secondary); }
 html[data-design] .stats-page .forecast-bar { height: 10px; background: var(--color-bg-tertiary); border-radius: var(--border-radius-full); overflow: hidden; }
-html[data-design] .stats-page .forecast-bar-fill { display: block; height: 100%; background: var(--color-accent-primary); }
+html[data-design] .stats-page .forecast-bar-fill { display: block; height: 100%; width: calc(var(--progress, 0) * 1%); background: var(--color-accent-primary); }
 html[data-design] .stats-page .forecast-count { font-family: var(--font-family-mono); font-size: var(--font-size-sm); color: var(--color-text-primary); text-align: right; }
 
 /* data-table (пробелы банка) */

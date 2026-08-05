@@ -3,7 +3,7 @@
 /* ===========================================================================
    SETTINGS (C4) — «Настроить сессию». Старый .app-layout — сломанный sidebar-rail
    (всё в 230px). В editorial разворачиваем в чистую читаемую колонку. Структуру и
-   ID шаблона сохраняем (app.js: #filter-mode-hint, #shuffle-checkbox,
+   ID шаблона сохраняем (settings/session-form.js: #filter-mode-hint, #shuffle-checkbox,
    streak-*, data-sidebar-form) — только relayout+restyle.
    Гейт под .settings-page, чтобы не задеть .app-layout на ещё не мигрированных
    страницах (stats/result, если используют).
@@ -13,7 +13,7 @@
    разнородных карточек давала ~3.6 экрана вертикального скролла и «кашу»
    (прямая претензия пользователя). Теперь — ARIA-вкладки: Сессия | Оформление |
    Данные, видна одна за раз. Структура/ID форм сохранены (relayout, не смена
-   поведения). PE: tablist скрыт без JS, app.js (initSettingsTabs) раскрывает его
+   поведения). PE: tablist скрыт без JS, settings/tabs.js (initSettingsTabs) раскрывает его
    и ставит .js-tabs на <body> → панели переключаемы; без JS все три в стопке.
    -------------------------------------------------------------------------- */
 html[data-design] .settings-page .settings-shell { max-width: var(--max-width-settings); margin: 0 auto; }
@@ -94,7 +94,10 @@ html[data-design] .settings-page .personalization-grid {
   gap: var(--space-6) var(--space-7); align-items: start;
 }
 html[data-design] .settings-page .personalization-grid .personalization-row { margin-bottom: 0; min-width: 0; }
-html[data-design] .settings-page .personalization-row--wide { grid-column: 1 / -1; }
+/* Модификатора `--wide` (`grid-column: 1 / -1`) здесь больше нет: его не носил ни один
+   из семи рядов — он остался от сетки с фиксированным числом колонок, где последнюю
+   настройку приходилось растягивать руками. `auto-fit` раскладывает ряды сам, а все
+   семь — сегмент-контролы одного веса, растягивать нечего. */
 
 html[data-design] .settings-page .control-inline-hint {
   color: var(--color-text-secondary); font-size: var(--font-size-sm); margin: var(--space-3) 0 0; max-width: var(--measure);

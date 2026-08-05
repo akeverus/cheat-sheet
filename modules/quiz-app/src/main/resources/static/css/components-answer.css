@@ -1,7 +1,7 @@
 /* @layer components — общая поверхность разбора ответа (post-answer feedback-flow).
    Вынесено из pages-result.css при подготовке page-scope result (Волна 3 CSS-архитектуры):
    этот кластер рендерится на ДВУХ экранах — JS `#result-feedback` на .focus-page
-   (app.js после ответа) и no-JS result.html на .result-page. Пока жил в page-файле
+   (quiz/interview.js после ответа) и no-JS result.html на .result-page. Пока жил в page-файле
    result → при page-scope result пропал бы на focus. Селекторы уникальны (не
    дублируются в pages-focus) → перенос из @layer pages в @layer components безопасен:
    page-scoped overrides (.result-feedback…/.explanation-panel…) более специфичны и
@@ -11,134 +11,61 @@
 @layer components {
 
 /* ===========================================================================
-   UX-13 — иерархия пост-разбора (Wave 4–7, content-first):
-   вердикт → правильный ответ → ключевое отличие → пояснение → XP/интервал.
-   Общий scope: JS #result-feedback и no-JS result.html.
+   Пост-разбор ответа: вердикт → варианты → «Почему это так?» → разбор неверных
+   → «Подробнее» → мета (XP, следующий повтор).
+   Общий scope: JS #result-feedback (.focus-page) и no-JS result.html.
+
+   Порядок задаёт DOM, а не CSS. Раньше здесь стоял `.feedback-flow` c
+   `display:flex` и шестью `order: 1..6` — и все шесть значений в точности
+   повторяли порядок узлов в разметке. Механика, которая ничего не
+   переставляла, но обязывала оба рендерера строить лишнюю обёртку и держать
+   её содержимое в согласованном порядке под страхом невидимой перетасовки.
+   Вместе с ней убраны классы отдельного блока «Правильный ответ: C. …»
+   (`.feedback-correct-answer`, `-line`, `.feedback-option-letter`,
+   `.feedback-block-eyebrow`): сам блок удалён — букву называет вердикт, а
+   вариант в списке несёт зелёную рамку и чип. `.feedback-key-difference` и
+   `.feedback-explanation` были двумя именами одной панели разбора (лид и
+   остальное), теперь это один `.explanation-panel`.
    =========================================================================== */
-html[data-design] .feedback-flow {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-html[data-design] .feedback-verdict { order: 1; }
-html[data-design] .feedback-correct-answer { order: 2; margin-top: var(--space-3); }
-html[data-design] .feedback-key-difference { order: 3; }
-html[data-design] .feedback-explanation { order: 4; }
-html[data-design] .feedback-flow > .distractor-panel { order: 5; }
 html[data-design] .feedback-meta {
-  order: 6;
   margin-top: var(--space-4);
   padding-top: var(--space-4);
   border-top: var(--rule-weight) solid var(--color-border-secondary);
 }
+/* Только раскладка. Вид самого бейджа «+N XP» — одна декларация `.result-xp` в
+   shell.css: здесь он переопределялся вторым набором (другой цвет, другой вес,
+   без капсулы), и, поскольку @components идёт после @shell, на поверхности
+   разбора получалась капсула с teal-рамкой и текстом другого цвета — половина
+   одного компонента от одного правила, половина от другого. */
 html[data-design] .feedback-meta .result-xp {
   display: inline-block;
   margin-bottom: var(--space-2);
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-accent-secondary);
-}
-html[data-design] .feedback-block-eyebrow {
-  display: block;
-  font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide);
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-2);
-}
-html[data-design] .feedback-correct-answer-line {
-  margin: 0;
-  font-size: var(--font-size-base);
-  color: var(--color-text-primary);
-}
-html[data-design] .feedback-option-letter {
-  font-family: var(--font-family-mono);
-  color: var(--color-status-success);
 }
 
 /* Краткий лид — первый абзац разбора, показан сразу под вердиктом (.explain макета) */
 html[data-design] .result-lead { margin-top: var(--space-3); }
 html[data-design] .result-lead > :last-child { margin-bottom: 0; }
 
-/* «Подробнее» — раскрытие глубокого разбора */
-html[data-design] .result-detail-disclosure {
-  margin-top: var(--space-4);
-  padding-top: var(--space-3);
-  border-top: var(--rule-weight) solid var(--color-border-secondary);
-}
-html[data-design] .result-detail-summary {
-  cursor: pointer; list-style: none;
-  display: inline-flex; align-items: center; gap: var(--space-2);
-  font-family: var(--font-family-mono); font-size: var(--font-size-sm);
-  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
-  color: var(--color-text-secondary);
-}
-html[data-design] .result-detail-summary:hover { color: var(--color-text-primary); }
-html[data-design] .result-detail-summary::-webkit-details-marker { display: none; }
-html[data-design] .result-detail-summary::before { content: "▸"; color: var(--color-text-tertiary); }
-html[data-design] .result-detail-disclosure[open] > .result-detail-summary::before { content: "▾"; }
-html[data-design] .result-detail-disclosure[open] > .result-detail-summary { margin-bottom: var(--space-3); }
-html[data-design] .result-detail-body { display: flow-root; }
+/* Разбор вариантов был здесь дважды, двумя поколениями компонентов.
+   Удалены оба старых:
 
-/* Объяснения вариантов (app.js/result.html: .option-explanation +
-   .explanation-correct/.explanation-wrong). Общая поверхность (рендерятся и на
-   .focus-page, и на .result-page) → сюда из pages-focus (D2b). Старые правила
-   тянут холодный лавандовый фон/текст — приводим к тёплой палитре.
-   ВАЖНО ПОРЯДОК: эти generic (0,2,1) идут ПЕРЕД .option-breakdown* — тот бьёт их
-   border-left:2px по порядку в этом же @layer components (см. ниже, D2a-урок). */
-html[data-design] .option-explanation {
-  font-family: var(--font-family-body);
-  font-size: var(--font-size-base);
-  line-height: var(--line-height-relaxed);
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--border-radius-md);
-  margin-top: var(--space-3);
-}
-html[data-design] .explanation-correct {
-  background: var(--color-status-success-wash);
-  color: var(--color-text-primary);
-  border: var(--rule-weight) solid var(--color-status-success);
-}
-html[data-design] .explanation-wrong {
-  background: var(--color-bg-tertiary);
-  color: var(--color-text-secondary);
-  border: var(--rule-weight) solid var(--color-border-primary);
-}
-html[data-design] .explanation-correct strong { color: var(--color-status-success); }
-html[data-design] .explanation-wrong strong { color: var(--color-text-primary); }
+   — `.result-detail-disclosure/-summary/-body` — своя рамка раскрытия «Подробнее»
+     с mono-заголовком и ▸/▾-маркером. Сейчас и SSR (`result.html`), и AJAX
+     (`interview.js`) рисуют обычный `<details class="explanation-panel
+     additional-panel">` c `.explanation-eyebrow` в summary — одна отбивка
+     раскрытий на оба пути вместо второй, похожей, но чуть иной.
 
-/* Разбор вариантов внутри «Подробнее»: по букве + тег «верный/ваш ответ».
-   Переехал из pages-result (D2b) ВМЕСТЕ с generic .explanation-* выше — иначе слой
-   флипнул бы победителей (D2a-урок: @layer доминирует над спец.). Здесь base
-   .option-breakdown-item{border-left:2px} стоит ПОСЛЕ .explanation-correct{border:1px}
-   → выигрывает border-left порядком (обе 0,2,1, один слой); а .option-breakdown-item
-   .option-explanation{margin:0}(0,2,2) бьёт base .option-explanation{margin-top}(0,2,1)
-   специфичностью. */
-html[data-design] .option-breakdown {
-  margin-top: var(--space-4);
-  display: flex; flex-direction: column; gap: var(--space-3);
-}
-html[data-design] .option-breakdown-item {
-  padding-left: var(--space-3);
-  border-left: 2px solid var(--color-border-secondary);
-}
-html[data-design] .option-breakdown-item.explanation-correct { border-left-color: var(--color-status-success); }
-html[data-design] .option-breakdown-item.explanation-wrong { border-left-color: var(--color-status-error); }
-html[data-design] .option-breakdown-head {
-  display: flex; align-items: center; gap: var(--space-2);
-  margin-bottom: var(--space-1);
-}
-html[data-design] .option-breakdown-letter {
-  font-family: var(--font-family-mono); font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-sm); color: var(--color-text-primary);
-}
-html[data-design] .option-breakdown-tag {
-  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
-  color: var(--color-text-tertiary);
-}
-html[data-design] .option-breakdown-item .option-explanation { margin: 0; }
+   — `.option-explanation` + `.explanation-correct/.explanation-wrong` +
+     `.option-breakdown*` — пояснение, приклеенное к каждому варианту, и его
+     «разбор по буквам» внутри «Подробнее». Разбор неверных вариантов давно
+     оформлен отдельной панелью `.distractor-panel` (строки «B — неверно. …»,
+     одинаковые в обоих путях), а варианты после ответа несут только марку
+     состояния. Разметку с этими классами не строит ни один шаблон, ни JS, ни
+     сервер — правила пережили свой компонент, включая комментарии про порядок
+     каскада между двумя мёртвыми группами. Вместе с ними убран
+     `enhanceOptionExplanationDisclosure` (`content/dynamic-content.js`), который
+     на каждой странице искал `.option-explanation`, чтобы завернуть их в
+     мобильные disclosure. */
 
 /* Раскрытый ответ — тёплая reading-панель в рамке-линейке (editorial), вместо
    старого индиго-well. Действует и на разбор на result.html (C3) → общая, из
@@ -171,14 +98,14 @@ html[data-design] .answer h2 { font-size: clamp(1.625rem, 1.3rem + 1.4vw, var(--
 html[data-design] .answer h3 { font-size: clamp(1.375rem, 1.1rem + 1.2vw, var(--font-size-xl)); }
 html[data-design] .answer h4 { font-size: clamp(1.25rem, 1.15rem + 0.45vw, var(--font-size-lg)); }
 
-/* Вердикт ответа (.result-correct/.result-wrong, app.js рендерит в #result-feedback +
+/* Вердикт ответа (.result-correct/.result-wrong, quiz/interview.js рендерит в #result-feedback +
    no-JS result.html). Editorial: статус-wash + цветная рамка, крупный сериф-вердикт.
    Вложенный .answer делаем плоским, чтобы не было панели-в-панели. Общая поверхность
    → из pages-focus (D2c). Партнёры в своих слоях НЕ затронуты: shell.css
    .result-banner-flex/.explanation-panel-base (@shell — НИЖЕ components, наши правила
    остаются выше), pixel-fx декор `::after` (@pixel — выше), utilities-mobile padding
    (@utilities — выше). */
-/* Peak-end момент петли MCQ: вердикт раскрывается app.js'ом (снимает .hidden). Один
+/* Peak-end момент петли MCQ: вердикт раскрывается quiz/interview.js'ом (снимает .hidden). Один
    сдержанный fade+сдвиг = «информация прибывает». reduced-motion покрыт глобально. */
 @keyframes verdictReveal {
   from { opacity: 0; transform: translateY(-3px); }
@@ -246,7 +173,7 @@ html[data-design] .option-wrong .answer {
   background: transparent; border: 0; padding: 0; margin-top: var(--space-2);
 }
 
-/* Пост-ответная разметка MCQ-вариантов (app.js вешает .option-correct/-wrong на
+/* Пост-ответная разметка MCQ-вариантов (quiz/interview.js вешает .option-correct/-wrong на
    выбранную/правильную опцию; рендерится и на no-JS result.html) — статус-рамка +
    wash + цветной буквенный маркер ::before. Общая поверхность → из pages-focus
    (D3d Волны 3). Все декларации !important: должны бить дефолтную рамку опции
@@ -291,8 +218,7 @@ html[data-design] .zone-hint { color: var(--color-text-secondary); font-size: va
 
 /* Политика повторения — мелкая мета-строка под интервалом. Общая: рендерится на
    .focus-page (пост-ответная мета) И на result.html:104 (`.review-policy muted
-   tiny`). Вынесено из pages-focus (D3c Волны 3, расщепление selector-list с
-   focus-only .focus-review-policy). Без !important; focus-only оверрайды
+   tiny`). Вынесено из pages-focus (D3c Волны 3). Без !important; focus-only оверрайды
    .result-feedback .review-policy / .feedback-meta .review-policy (специфичнее,
    @pages) остаются в pages-focus и продолжают выигрывать на focus. Descendant-
    оверрайдов .X .review-policy в @components/@shell нет → нечему оживать (D3b). */
@@ -338,18 +264,14 @@ html[data-design] .focus-page .related-question-item {
 html[data-design] .result-page .related-question-item:hover,
 html[data-design] .focus-page .related-question-item:hover { background: var(--color-bg-tertiary); }
 
-/* option-other + чип статуса варианта — ВЫНЕСЕНО из pages-result.css (Волна 3, ШАГ R /
-   Cluster B). Answer/verdict surface: ОБЩАЯ для result.html (no-JS фоллбэк) и JS-флоу
-   focus (app.js инжектит те же классы option-status и option-other). Жили в page-файле
-   result и пропали бы на focus при page-scope. Каскад-безопасно (проверено computed-diff):
-   pages-focus:400 (#interview-options label .option-status-label, @pages, спец выше) задаёт
-   grid-column/min-width — ДИЗЪЮНКТНЫЕ свойства, оба применяются; utilities:220
-   (@utilities > @components, @media≤760) скрывает muted внутри .option-other display:none —
-   дизъюнктно; @components-конкурентов нет. Дословный перенос. */
-/* option-other = невыбранный неправильный вариант ПОСЛЕ проверки (app.js на focus ТОЖЕ
-   вешает при наличии пояснения) — 0.85: рецессивно к correct/your-wrong, но читаемее
-   пустого .option-dimmed 0.55. */
-html[data-design] .option-other { opacity: 0.85; }
+/* Класса `.option-other` больше нет. Он означал ровно то же, что `.option-dimmed`
+   (невыбранный неверный вариант после проверки), но существовал только на
+   серверном пути: `result.html` вешал `option-other`, а `quiz/interview.js` на том
+   же состоянии — `option-dimmed`. Два имени под одну роль и два разных механизма
+   рецессивности (opacity против цвета), то есть один и тот же экран приглушал
+   варианты по-разному в зависимости от того, включён ли JS. Оставлен
+   `.option-dimmed` — он гасит цветом, а не прозрачностью, и потому не тянет за
+   собой весь слой (рамку, чип, фон) вниз по контрасту. */
 /* Чип статуса варианта — ОБЩИЙ для result.html и JS-флоу focus (mono/рамка/капс). */
 html[data-design] .option-status-label {
   display: inline-block; margin-top: var(--space-2);
@@ -359,8 +281,9 @@ html[data-design] .option-status-label {
 }
 html[data-design] .option-status-correct { color: var(--color-status-success); border: var(--rule-weight) solid var(--color-status-success); }
 html[data-design] .option-status-selected { color: var(--color-status-error); border: var(--rule-weight) solid var(--color-status-error); }
-/* muted — невыбранный неправильный вариант (только JS-флоу focus, текст «Не выбран»):
-   нейтральная рамка/текст, без статус-цвета. */
-html[data-design] .option-status-muted { color: var(--color-text-tertiary); border: var(--rule-weight) solid var(--color-border-secondary); }
+/* Третьего чипа — `.option-status-muted` («Не выбран») — здесь больше нет: марку
+   получают ровно два варианта, верный и выбранный. Три «Не выбран» на каждый
+   отвеченный вопрос были шумом, их убрали из разметки (см. option-dimmed в
+   quiz/interview.js), а правило пережило свой чип. */
 
 }

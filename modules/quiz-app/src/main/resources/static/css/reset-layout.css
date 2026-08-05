@@ -21,11 +21,10 @@ html[data-design] :not(pre) > code {
 }
 /* старый .markdown-content code красит инлайн-код холодным индиго — перебиваем.
    ВАЖНО: только :not(pre) > code (инлайн). Широкий `.markdown-content code` (без
-   :not(pre)) перекрывал и БЛОЧНЫЙ `pre code.hljs` (специфичность выше, чем у
-   atom-one-dark `.hljs{color:#abb2bf}`), перекрашивая базовый текст подсветки в
-   --color-text-primary. В тёмной теме это светлый цвет (читаемо), но в СВЕТЛОЙ —
-   тёмный (#211C15) поверх тёмного фона hljs (#282c34) → код-блок становился
-   нечитаемым (контраст ~1.1). Оставляем подсветке её собственный базовый цвет. */
+   :not(pre)) перекрывал и БЛОЧНЫЙ `pre code.hljs`, перекрашивая базовый текст
+   подсветки в --color-text-primary и стирая всю грамматику листинга. Сейчас это
+   защищено ещё и слоями (подсветка живёт в @layer components, выше reset), но
+   сужение до инлайна оставляем: правило и по смыслу про инлайн-чипы. */
 html[data-design] .markdown-content :not(pre) > code { color: var(--color-text-primary); }
 html[data-design] pre {
   font-family: var(--font-family-mono);
@@ -123,8 +122,10 @@ html[data-design] .skip-link:focus { transform: translateY(0); }
 html[data-design] #main-content:focus,
 html[data-design] #main-content:focus-visible { outline: none; }
 
-html[data-design] .visually-hidden,
-html[data-design] .sr-only {
+/* Имя одно — `.visually-hidden`. Псевдоним `.sr-only` (бутстраповская привычка)
+   отсюда убран: его не носил ни один узел, зато он предлагал второе имя для того
+   же приёма — и первый же его пользователь развёл бы разметку на два словаря. */
+html[data-design] .visually-hidden {
   position: absolute !important;
   width: 1px; height: 1px;
   padding: 0; margin: -1px;

@@ -10,37 +10,52 @@
 @media print {
   html[data-design],
   html[data-design] body { background: #fff !important; color: #141413 !important; }
+  /* Каркас приложения на бумаге не нужен: сайдбар (232px), топбар и мобильная
+     нижняя навигация — экранные органы управления, на листе они съедали бы
+     колонку и печатали список ссылок. До этого здесь стояли .ed-masthead-*:
+     селекторы editorial-шапки, удалённой ещё при редизайне, — печать тихо
+     выводила ВЕСЬ текущий каркас, включая сайдбар. Заметно на «Печать / PDF»
+     в итогах сессии. */
   html[data-design] .skip-link,
-  html[data-design] .ed-masthead-actions,
-  html[data-design] .ed-masthead-progress,
+  html[data-design] .sidebar,
+  html[data-design] .topbar,
+  html[data-design] .mobile-header,
+  html[data-design] .mobile-nav,
   html[data-design] .back-to-top,
   html[data-design] .summary-actions,
   html[data-design] .summary-tools,
   html[data-design] .result-page .result-actions,
-  html[data-design] .result-page .session-bar form,
   html[data-design] .result-page .btn-favorite,
   html[data-design] .kbd-help-overlay,
   html[data-design] .prompt-overlay,
   html[data-design] noscript { display: none !important; }
-  /* Страница вопроса (фокус): интерактивный хром на бумаге бессмыслен — топбар
-     сессии (прогресс/чип/«Завершить»), submit-футер с таймером, клавиатурная
-     подсказка, reveal/оценочные формы флешкарты, кнопка-summary «Пример кода»
-     (открытый <details> печатает код и без неё), пост-ответные кнопки
-     (уверенность, «Похожие вопросы») и CTA пустого состояния. Сам вопрос,
-     радио-варианты и вердикт #result-feedback остаются — печать вопроса для
-     офлайн-разбора. */
-  html[data-design] .focus-topbar,
+  /* Страница вопроса (фокус): интерактивный хром на бумаге бессмыслен — рельс
+     сессии (прогресс/стрик/«Завершить»), подсказка «как отвечать», submit-футер
+     с таймером, клавиатурная подсказка, reveal/оценочные формы флешкарты,
+     кнопка-summary «Пример кода» (открытый <details> печатает код и без неё),
+     пост-ответные кнопки (уверенность, «Похожие вопросы») и CTA пустого
+     состояния. Сам вопрос, радио-варианты и вердикт #result-feedback остаются —
+     печать вопроса для офлайн-разбора.
+
+     Строка идентичности (.focus-topbar) на бумаге ОСТАЁТСЯ: тема и сложность
+     отвечают «откуда этот вопрос», а на распечатке без навигации это
+     единственный источник контекста. Раньше её прятали заодно с рельсом сессии —
+     под комментарием «топбар сессии», хотя сессия жила в другом элементе, и он-то
+     как раз печатался. */
+  html[data-design] .focus-aside.focus-session-rail,
+  html[data-design] #interview-form > .zone-hint,
   html[data-design] .action-footer,
   html[data-design] .keyboard-hint,
   html[data-design] .flashcard-badge,
   html[data-design] .flashcard-phase form,
   html[data-design] .flashcard-grade-buttons,
   html[data-design] .flashcard-reveal-summary,
-  html[data-design] .question-code-summary,
   html[data-design] .confidence-buttons,
   html[data-design] #extra-analysis-toggle,
   html[data-design] .empty-actions { display: none !important; }
-  html[data-design] .ed-masthead { border-bottom: 1px solid #ccc; }
+  /* Сайдбар скрыт — оболочка обязана перестать резервировать под него колонку,
+     иначе grid оставляет пустые 232px слева на каждой странице печати. */
+  html[data-design] .app { display: block !important; }
   html[data-design] .card {
     box-shadow: none !important; border: 1px solid #ccc !important;
     break-inside: avoid; background: #fff !important;
@@ -60,7 +75,7 @@
   /* Код-блоки печатаются на белом листе (браузер не печатает фоны). В тёмной теме
      --color-text-primary = светлый крем (#F0EEE6) → светлый-по-белому, контраст
      ~1.2:1, невидимо. Форсим серый фон + чернильный текст для pre/inline-code/
-     question-code и нейтрализуем токены подсветки atom-one-dark (.hljs + потомки).
+     question-code и нейтрализуем цвета подсветки (.hljs + потомки).
      Чинит печать вопроса-с-кодом (focus/result) для офлайн-изучения. */
   html[data-design] pre,
   html[data-design] code,
@@ -74,6 +89,13 @@
   html[data-design] :not(pre) > code {
     background: #f0f0f0 !important;
     color: #141413 !important;
+  }
+  /* На экране листинг и диаграмма прокручиваются внутри рамки — на бумаге прокрутки
+     нет, и лимит высоты просто отрежет всё, что не поместилось. Печатаем целиком. */
+  html[data-design] .code-viewport,
+  html[data-design] .diagram-viewport {
+    max-height: none !important;
+    overflow: visible !important;
   }
   html[data-design] pre code.hljs,
   html[data-design] pre code[class*="hljs"],
@@ -95,7 +117,8 @@
      ответ) и строки таблиц не должны рваться пополам между листами. Браузеры
      соблюдают break-inside на flow-блоках и table-row при печати. orphans/
      widows держат минимум по 2 строки абзаца на стыке листов — без одиночек. */
-  html[data-design] .result-page .option-explanation,
+  html[data-design] .result-page .explanation-panel,
+  html[data-design] .result-page .distractor-row,
   html[data-design] .result-page .sm2-grid,
   html[data-design] .result-page .answer {
     break-inside: avoid;
@@ -108,9 +131,10 @@
     break-inside: avoid;
     page-break-inside: avoid;
   }
+  /* `.summary-recommendation-item` из этого списка убран вместе с самим блоком
+     рекомендаций на итогах — печатать нечего. */
   html[data-design] .summary-page .summary-table tbody tr,
-  html[data-design] .summary-page .summary-mistakes li,
-  html[data-design] .summary-page .summary-recommendation-item {
+  html[data-design] .summary-page .summary-mistakes li {
     break-inside: avoid;
     page-break-inside: avoid;
   }

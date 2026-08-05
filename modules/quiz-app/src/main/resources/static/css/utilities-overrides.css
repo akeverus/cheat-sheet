@@ -38,14 +38,6 @@ html[data-design] .stats-page .stats-filter-card {
   padding: var(--space-5);
 }
 
-html[data-design] .stats-page .stats-grid {
-  margin-bottom: var(--space-5);
-}
-
-html[data-design] .stats-page .stats-grid + .stats-filter-card {
-  margin-top: 0;
-}
-
 html[data-design] #interview-options label {
   text-align: left;
 }
@@ -217,55 +209,14 @@ html[data-design] #interview-options label.option-wrong:has(input:checked) {
     justify-self: end;
   }
 
-  html[data-design] .focus-page #interview-options .option-other .option-explanation,
-  html[data-design] .focus-page #interview-options .option-other .option-explanation-disclosure,
-  html[data-design] .focus-page #interview-options .option-other .option-status-muted {
-    display: none;
-  }
+  /* Здесь пряталось на мобиле «лишнее» у невыбранных вариантов: их пояснение,
+     раскрывашка и серый чип «Не выбран». Прятать больше нечего и не у кого:
+     пояснений в вариантах нет (разбор — в панели под вопросом), чипа «Не выбран»
+     тоже (марку несут ровно два варианта), а селектор целился в `.option-other` —
+     класс, который вешал только SSR-шаблон и которого больше не существует. */
 }
 
 @media (max-width: 600px) {
-  html[data-design] .ed-masthead-inner {
-    row-gap: var(--space-2);
-  }
-
-  html[data-design] .ed-masthead-title {
-    font-size: clamp(1.15rem, 5vw, 1.35rem);
-    line-height: 1.12;
-    overflow-wrap: normal;
-    word-break: normal;
-    hyphens: auto;
-  }
-
-  /* HDR-1: без этого focus-page title (0,3,1) перебивает compact-clamp выше
-     и оставляет ~25px рядом с вопросом ~26px (ratio ≈1.05). */
-  html[data-design] .focus-page .ed-masthead-title {
-    font-size: clamp(1.15rem, 5vw, 1.35rem);
-    line-height: 1.12;
-  }
-
-  html[data-design] .focus-page .ed-masthead:has(.ed-masthead-progress) .ed-masthead-inner {
-    padding-block: var(--space-2);
-    row-gap: var(--space-1);
-  }
-
-  html[data-design] .ed-masthead-kicker {
-    font-size: 0.68rem;
-  }
-
-  html[data-design] .ed-masthead-toggles {
-    gap: var(--space-2);
-  }
-
-  html[data-design] .ed-theme-toggle {
-    width: 40px;
-    height: 40px;
-  }
-
-  html[data-design] .ed-nav-link {
-    min-height: 40px;
-  }
-
   html[data-design] .ed-page {
     padding-top: var(--space-5);
   }
@@ -277,8 +228,12 @@ html[data-design] #interview-options label.option-wrong:has(input:checked) {
     font-size: clamp(1.55rem, 7.2vw, 2rem);
   }
 
+  /* Обёртка .focus-topbar отбивку не держит — её держит последняя реальная
+     мета-строка (см. «Ритм пред-вопросной меты» в pages-focus.css). Здесь
+     обнуляем явно: правило живёт в @layer utilities и иначе перебило бы
+     мета-ритм именно на мобильных, где лишние 16px дороже всего. */
   html[data-design] .focus-topbar {
-    margin-bottom: var(--space-4);
+    margin-bottom: 0;
   }
 
   html[data-design] #interview-options {
@@ -303,12 +258,6 @@ html[data-design] #interview-options label.option-wrong:has(input:checked) {
 
   html[data-design] #interview-options label > span:not([class]) {
     max-width: none;
-  }
-
-  html[data-design] .option-explanation {
-    padding: var(--space-3);
-    font-size: var(--font-size-sm);
-    line-height: 1.55;
   }
 
   html[data-design] .result-correct,

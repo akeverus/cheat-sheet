@@ -1,12 +1,21 @@
 /**
- * Single Mermaid renderer for SSR fragments and dynamic AJAX content.
- * Exposes window.initMermaid / window.renderAllMermaid for legacy hooks.
+ * Единственный рендерер Mermaid — и для SSR-фрагментов, и для AJAX-контента.
+ *
+ * Библиотека грузится лениво (см. loadMermaid): сам модуль весит килобайты, а
+ * mermaid.min.js — мегабайты, поэтому платить за него имеет смысл только когда
+ * схему действительно смотрят. Точка входа — observeDiagrams; renderAllMermaid
+ * остаётся публичной для принудительной перерисовки (смена темы, legacy-хуки
+ * window.initMermaid / window.renderAllMermaid).
  */
 
 let mermaidReady = false;
 let themeRerenderTimer = null;
 let toolbarDelegated = false;
+let mermaidLoad = null;
+let diagramObserver = null;
 const THEME_RERENDER_MS = 120;
+/** Начинаем тянуть библиотеку чуть раньше, чем схема доедет до вьюпорта. */
+const DIAGRAM_PRELOAD_MARGIN = '300px';
 /** Per-diagram pan/zoom state; survives theme re-render without rebinding listeners. */
 const diagramUiState = new WeakMap();
 
@@ -39,6 +48,51 @@ function readThemeVars() {
     textColor: mmTok('--color-text-secondary', '#a8b9bd'),
     accent: mmTok('--color-accent-primary', '#39d0c7')
   };
+}
+
+/**
+ * Семантические классы узлов: фон-подложка, контурный цвет статуса, текст темы.
+ * Импорт (DiagramPaletteNormalizer) заменяет захардкоженные в markdown цвета на
+ * `class <узел> dgm<Semantic>` — конкретные значения подставляются здесь, из тех же
+ * токенов, что и остальная тема, поэтому диаграмма переключается вместе с ней.
+ */
+const DIAGRAM_CLASS_TOKENS = {
+  dgmDanger: ['--color-status-error-wash', '--color-status-error'],
+  dgmWarning: ['--color-status-warning-wash', '--color-status-warning'],
+  dgmSuccess: ['--color-status-success-wash', '--color-status-success'],
+  dgmInfo: ['--color-status-info-wash', '--color-status-info'],
+  dgmAccent: ['--color-accent-wash', '--color-accent-primary'],
+  dgmNeutral: ['--color-bg-tertiary', '--color-border-strong']
+};
+
+const DIAGRAM_CLASS_REFERENCE = /\bdgm(?:Danger|Warning|Success|Info|Accent|Neutral)\b/;
+
+/**
+ * Дописывает в диаграмму определения семантических классов.
+ *
+ * Mermaid принимает `classDef` только после строки с типом диаграммы, поэтому
+ * вставляем сразу за первой содержательной строкой, а не в начало. Диаграммы без
+ * семантических классов не трогаем: `classDef` валиден не во всех типах графов,
+ * и лишняя строка сломала бы, например, sequenceDiagram.
+ */
+function withSemanticClassDefs(source) {
+  if (!DIAGRAM_CLASS_REFERENCE.test(source)) return source;
+  const style = getComputedStyle(document.documentElement);
+  const token = (name) => (style.getPropertyValue(name) || '').trim();
+  const ink = token('--color-text-primary') || '#eef6f5';
+
+  const defs = Object.entries(DIAGRAM_CLASS_TOKENS)
+    .filter(([name]) => new RegExp('\\b' + name + '\\b').test(source))
+    .map(([name, [fill, stroke]]) => '  classDef ' + name
+      + ' fill:' + token(fill) + ',stroke:' + token(stroke)
+      + ',color:' + ink + ',stroke-width:1.5px');
+  if (!defs.length) return source;
+
+  const lines = source.split('\n');
+  const head = lines.findIndex((l) => l.trim() && !l.trim().startsWith('%%'));
+  if (head < 0) return source;
+  lines.splice(head + 1, 0, ...defs);
+  return lines.join('\n');
 }
 
 function stripScriptsFromSvg(svg) {
@@ -87,6 +141,100 @@ function applySvgToElement(el, svgString) {
   return true;
 }
 
+/**
+ * Догружает mermaid по требованию. Резолвится в `true`, если глобальный `mermaid`
+ * доступен, и в `false`, если библиотеки нет и не будет (нет meta, сеть, CSP).
+ *
+ * Инъекция без nonce — сознательно: политика разрешает `script-src 'self'`, а тег
+ * создан кодом, который сам уже прошёл проверку. Пробрасывать сюда nonce значило бы
+ * копировать его в ещё одно место без выигрыша в безопасности.
+ */
+function loadMermaid() {
+  if (typeof mermaid !== 'undefined') return Promise.resolve(true);
+  if (mermaidLoad) return mermaidLoad;
+
+  const meta = document.querySelector('meta[name="mermaid-src"]');
+  const src = meta && meta.getAttribute('content');
+  if (!src) return Promise.resolve(false);
+
+  mermaidLoad = new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = () => resolve(typeof mermaid !== 'undefined');
+    script.onerror = () => resolve(false);
+    document.head.appendChild(script);
+  });
+  return mermaidLoad;
+}
+
+/**
+ * Пока библиотека едет, блок обязан объяснить паузу, а не стоять пустым.
+ *
+ * Заодно убираем из элемента сырой текст графа: до отрисовки он невидим, но
+ * держит высоту в несколько экранов, и подпись уезжала бы под этот пустой столб.
+ * Источник не теряется — он уже лежит в data-mermaid-source, откуда его и читает
+ * рендер.
+ */
+function markDiagramLoading(scope, loading) {
+  scope.querySelectorAll('.mermaid:not([data-rendered="true"])').forEach((el) => {
+    if (!loading) {
+      el.removeAttribute('data-diagram-loading');
+      el.removeAttribute('aria-busy');
+      return;
+    }
+    if (!el.getAttribute('data-mermaid-source') && el.textContent) {
+      el.setAttribute('data-mermaid-source', el.textContent);
+    }
+    el.textContent = '';
+    el.setAttribute('data-diagram-loading', 'true');
+    el.setAttribute('aria-busy', 'true');
+  });
+}
+
+/**
+ * Схема лежит во вкладке, которую ещё не успели развести?
+ *
+ * До инициализации вкладок обе панели раскрыты (прогрессивное улучшение: без JS
+ * пользователь обязан видеть и код, и схему). Модуль вкладок приезжает роутовым
+ * чанком, то есть позже, и в этом окне закрытая по итогу схема выглядит видимой.
+ * Такие блоки пропускаем — их поставит в очередь событие `contenttabsready`.
+ */
+function isAwaitingTabs(el) {
+  const materials = el.closest('.question-materials');
+  return !!materials
+    && !!materials.querySelector('.content-tablist')
+    && materials.getAttribute('data-content-tabs-ready') !== 'true';
+}
+
+/**
+ * Ставит схемы в очередь на ленивую отрисовку.
+ *
+ * Скрытая вкладка «Схема» — `display: none`, то есть нулевой прямоугольник, и
+ * IntersectionObserver молчит до тех пор, пока её не откроют. Ровно этого мы и
+ * хотим: 2.7 МБ платятся за просмотренную схему, а не за существующую.
+ */
+export function observeDiagrams(root) {
+  const scope = root && root.querySelectorAll ? root : document;
+  const els = Array.from(scope.querySelectorAll('.mermaid:not([data-rendered="true"])'))
+    .filter((el) => !isAwaitingTabs(el));
+  if (!els.length) return;
+
+  if (typeof IntersectionObserver === 'undefined') {
+    renderAllMermaid(false, scope);
+    return;
+  }
+  if (!diagramObserver) {
+    diagramObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        observer.unobserve(entry.target);
+        renderAllMermaid(false, entry.target.closest('.question-diagram') || entry.target.parentElement);
+      });
+    }, { rootMargin: DIAGRAM_PRELOAD_MARGIN });
+  }
+  els.forEach((el) => diagramObserver.observe(el));
+}
+
 export function initMermaid() {
   if (typeof mermaid === 'undefined') return;
   mermaid.initialize({
@@ -99,11 +247,18 @@ export function initMermaid() {
 }
 
 export async function renderAllMermaid(force, root) {
-  if (typeof mermaid === 'undefined') return;
-  if (!mermaidReady) initMermaid();
-
   const scope = root && root.querySelectorAll ? root : document;
   const els = scope.querySelectorAll('.mermaid');
+  if (!els.length) return;
+
+  markDiagramLoading(scope, true);
+  const loaded = await loadMermaid();
+  markDiagramLoading(scope, false);
+  if (!loaded) {
+    els.forEach(failDiagram);
+    return;
+  }
+  if (!mermaidReady) initMermaid();
 
   for (const el of els) {
     if (!force && el.getAttribute('data-rendered') === 'true') continue;
@@ -114,7 +269,7 @@ export async function renderAllMermaid(force, root) {
     }
     try {
       const id = 'mmd-' + Math.random().toString(36).slice(2);
-      const res = await mermaid.render(id, source);
+      const res = await mermaid.render(id, withSemanticClassDefs(source));
       const safeSvg = stripScriptsFromSvg(res.svg);
       if (applySvgToElement(el, safeSvg)) {
         el.setAttribute('data-rendered', 'true');
@@ -179,7 +334,10 @@ export function wireDiagramToolbar(root) {
     });
   }
 
-  scope.querySelectorAll('.question-diagram').forEach((qd) => {
+  // Только mermaid-блоки: зум и панорама двигают SVG, который рисует mermaid.js.
+  // У текстовой схемы (ASCII_DIAGRAM) SVG нет — панорама там перехватывала бы
+  // pointer-события и мешала выделять текст, ничего при этом не двигая.
+  scope.querySelectorAll('.question-diagram[data-content-type="MERMAID"]').forEach((qd) => {
     ensureDiagramState(qd);
     qd.querySelectorAll('[data-diagram-action]').forEach((btn) => {
       if (!btn.hasAttribute('tabindex')) btn.setAttribute('tabindex', '0');
@@ -254,6 +412,9 @@ function applyDiagramTransform(qd, state) {
 }
 
 function scheduleThemeRerender() {
+  // Смена темы не повод грузить библиотеку: если ни одной схемы ещё не открывали,
+  // перекрашивать нечего, а тянуть 2.7 МБ ради невидимого элемента — тем более.
+  if (typeof mermaid === 'undefined') return;
   clearTimeout(themeRerenderTimer);
   themeRerenderTimer = setTimeout(() => {
     initMermaid();
@@ -269,18 +430,11 @@ function scheduleThemeRerender() {
 }
 
 function bootMermaidModule() {
-  if (typeof mermaid === 'undefined') {
-    document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('.mermaid').forEach(failDiagram);
-    });
-    return;
-  }
-
-  initMermaid();
   window.initMermaid = initMermaid;
   window.renderAllMermaid = renderAllMermaid;
 
-  document.addEventListener('DOMContentLoaded', () => renderAllMermaid(false));
+  document.addEventListener('DOMContentLoaded', () => observeDiagrams(document));
+  document.addEventListener('contenttabsready', (e) => observeDiagrams(e.detail && e.detail.root));
   document.addEventListener('themechange', scheduleThemeRerender);
 
   if (typeof MutationObserver !== 'undefined') {

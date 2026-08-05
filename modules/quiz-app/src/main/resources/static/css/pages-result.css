@@ -8,47 +8,13 @@
    (.option-correct/.option-wrong/.explanation-*) уже глобальные — не дублируем. */
 html[data-design] .result-page .ed-page { max-width: var(--max-width-result); }
 
-/* Карточки — тёплые плоские панели (гасим navy-border + cold shadow). */
-html[data-design] .result-page .card {
-  background: var(--color-bg-secondary);
-  border: var(--rule-weight) solid var(--color-border-primary);
-  border-radius: var(--border-radius-lg); box-shadow: none;
-  padding: var(--space-6);
-}
+/* Своего `.card` у страницы вердикта нет — правило здесь дословно повторяло
+   общее (components-card.css) и ничем от него не отличалось. */
 
-/* Верхняя строка: stats-grid + session-bar — слим editorial-полоса. */
-html[data-design] .result-page .top-row { display: flex; flex-wrap: wrap; align-items: stretch; gap: var(--space-4); margin-bottom: var(--space-5); }
-html[data-design] .result-page .top-row > * { flex: 1 1 320px; min-width: 0; }
-html[data-design] .result-page .top-row .card { padding: var(--space-4) var(--space-5); }
-/* Слим-полоса прогресса: 6 ячеек в один ряд, разделённые border-right у .stat-item.
-   Без display:grid .stats-grid падал в block → 6 ячеек вставали столбиком, и
-   карточка вытягивалась до ~470px вместо тонкой editorial-полосы (latent-баг:
-   .stat-item был стилизован под горизонтальный ряд, но раскладку не задавали). */
-html[data-design] .result-page .stats-grid {
-  display: grid; grid-template-columns: repeat(6, 1fr); align-items: center;
-}
-html[data-design] .result-page .stat-item {
-  min-width: 0;
-  background: transparent; border: 0; border-right: var(--rule-weight) solid var(--color-border-secondary);
-  padding: 0 var(--space-4); text-align: center;
-}
-html[data-design] .result-page .stat-item:last-child { border-right: 0; }
-html[data-design] .result-page .stat-value { font-family: var(--font-family-display); font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); }
-html[data-design] .result-page .stat-label { font-family: var(--font-family-mono); font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary); }
-html[data-design] .result-page .session-bar {
-  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4);
-  font-family: var(--font-family-mono); font-size: var(--font-size-sm); color: var(--color-text-secondary);
-}
-html[data-design] .result-page .session-bar strong { color: var(--color-text-primary); }
-/* .btn-finish: старый styles.css даёт white-on-white (невидимо на light) — чиним. */
-html[data-design] .result-page .btn-finish {
-  display: inline-flex; align-items: center; min-height: 44px; padding: var(--space-1) var(--space-4); touch-action: manipulation;
-  font-family: var(--font-family-body); font-size: var(--font-size-sm); font-weight: var(--font-weight-medium);
-  background: transparent; color: var(--color-status-error);
-  border: var(--rule-weight) solid var(--color-status-error); border-radius: 0; /* B5: danger-утилитарная → плоская */
-  cursor: pointer; box-shadow: none; transition: background var(--duration-fast) var(--easing-default);
-}
-html[data-design] .result-page .btn-finish:hover { background: var(--color-status-error-wash); }
+/* Верхняя полоса (.top-row: stats-grid + session-bar + .btn-finish) удалена вместе
+   с разметкой — глобальные KPI и прогресс сессии на экране вердикта были дублем
+   аналитики и топбара. Завершение сессии теперь обычная вторичная кнопка в
+   .result-actions и берёт стиль .secondary-btn — своих правил не имеет. */
 
 /* Заголовок вопроса */
 html[data-design] .result-page .question-header { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
@@ -94,26 +60,13 @@ html[data-design] .result-page .btn-favorite.active { color: var(--color-accent-
    primary-чернил на hover; :not(.active) не трогает акцент активной звезды. */
 html[data-design] .result-page .btn-favorite:hover:not(.active) { color: var(--color-text-primary); }
 
-/* Вердикт. SVG-иконка (circle-check/x) в статус-цвете + слово несут смысл
-   (не только цвет — слово «Верно»/«Неверно» дублирует для дальтоников). */
-html[data-design] .result-page .status {
-  font-family: var(--font-family-display); font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-xl); color: var(--color-text-primary);
-  /* Тот же вертикальный ритм (space-5 над/под линией), что у .question-main h3 ниже,
-     чтобы два секционных разделителя в одной карте стояли на общей сетке. Иерархию
-     «вердикт громче пояснения» несёт цвет линии (primary ↔ secondary) и размер xl. */
-  margin: var(--space-5) 0 0; padding-top: var(--space-5);
-  border-top: var(--rule-weight) solid var(--color-border-primary);
-}
-/* Семантический цвет вердикта в no-JS фоллбэке (/answer без JS): иконка уже
-   красится через .ed-icon-success/error, но само слово «Верно!/Неверно» сидело
-   нейтральным --color-text-primary — единственный пост-ответный сигнал нёс только
-   мелкий значок. Красим слово статус-чернилами, как делает primary JS-флоу для
-   .result-correct/.result-wrong > strong (см. ~844). Тона restrained (forest/brick),
-   AA-проверены — честно, без наказывающего alarm-red. .status.status-* = (0,4,1),
-   перебивает базовое .result-page .status (0,3,1). */
-html[data-design] .result-page .status.status-correct { color: var(--color-status-success); }
-html[data-design] .result-page .status.status-wrong { color: var(--color-status-error); }
+/* Вердикта у страницы результата больше нет своего. Здесь стоял `.status` со
+   своей типографикой и своими модификаторами `.status-correct/.status-wrong` —
+   второй компонент вердикта, существовавший ровно для no-JS-пути, тогда как
+   JS-путь на фокусе рисовал `.result-banner`/`.result-verdict`. Один и тот же
+   момент («ты ответил») выглядел и звучал по-разному в зависимости от того,
+   включён ли JS. Сейчас `result.html` строит тот же `.feedback-verdict
+   .result-banner` (стили — shell.css), а правила остались бы без разметки. */
 
 /* Варианты-результат (.options[role=list], элементы — div[role=listitem],
    без #interview-options-маркера). */
@@ -125,14 +78,17 @@ html[data-design] .result-page .options > div {
   font-size: var(--font-size-md); box-shadow: none;
   min-width: 0; overflow-wrap: break-word; word-break: break-word;
 }
-/* option-other (opacity) + чип статуса варианта (.option-status-label/-correct/
-   -selected/-muted) ВЫНЕСЕНЫ в components-answer.css (@layer components, глобально;
-   Волна 3 ШАГ R / Cluster B). Answer/verdict surface — ОБЩАЯ для result.html (no-JS
-   фоллбэк) и JS-флоу focus (app.js инжектит те же классы). Жили тут ошибочно — пропали
-   бы на focus при page-scope pages-result. Каскад-безопасно: pages-focus:400
-   (#interview-options label .option-status-label, @pages) задаёт grid-column/min-width
-   — ДИЗЪЮНКТНЫЕ свойства (не конфликт); utilities:220 (@utilities>@components) скрывает
-   muted внутри .option-other на ≤760 — тоже дизъюнктно (display). */
+/* Приглушение невыбранного неверного варианта. Правило выше (`.options > div`,
+   0,3,1) жёстко ставит `color: primary` — общий `.option-dimmed` из
+   @layer components ниже по каскаду и проигрывал бы ему на этой странице, так
+   что переопределение нужно здесь, в том же слое, спецификой 0,4,1.
+   Гасим цветом, а не opacity: прозрачность тянет вниз заодно рамку и чип, а
+   на этом фоне 0.55 давала 3.71:1 — ниже AA. */
+html[data-design] .result-page .options > div.option-dimmed { color: var(--color-text-tertiary); }
+/* Чип статуса варианта (.option-status-label/-correct/-selected) живёт в
+   components-answer.css (@layer components, глобально): поверхность разбора —
+   ОБЩАЯ для result.html (no-JS) и JS-флоу focus, оба вешают те же классы.
+   В page-файле она пропала бы на фокусе при page-scope. */
 
 /* «📖 Пояснение» */
 html[data-design] .result-page .question-main h3 {
@@ -161,18 +117,22 @@ html[data-design] .result-page .sm2-grid {
 html[data-design] .result-page .sm2-grid dt { font-family: var(--font-family-mono); font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-tertiary); margin: 0; }
 html[data-design] .result-page .sm2-grid dd { margin: 0; font-size: var(--font-size-sm); color: var(--color-text-primary); }
 
-/* Поверхность разбора ответа (feedback-flow, «Подробнее»/result-detail, result-lead —
-   D2a; option-explanation-база + .explanation-correct/.explanation-wrong + option-breakdown
-   разбор вариантов — D2b) вынесена в components-answer.css (@layer components, глобально):
-   рендерится и в JS #result-feedback на .focus-page, и в no-JS result.html — нельзя
-   терять при page-scope result (Волна 3). Вердикт-баннер .result-correct/.result-wrong
-   + `.answer` + glue пока в pages-focus (выносятся шагом D2c). */
+/* Разбор ответа целиком живёт в components-answer.css (@layer components), а не
+   здесь: `.explanation-panel` (+ `.distractor-panel`/`.distractor-row`,
+   `.explanation-eyebrow`, `.additional-panel`) рисуют ОБА пути — и JS в
+   #result-feedback на .focus-page, и no-JS result.html. Page-scoped файл грузится
+   только на /answer, так что общая поверхность в нём потерялась бы на фокусе.
+   Здесь остаётся то, что существует лишь на самой странице результата. */
 
-/* Код вопроса (CODE-тип) */
+/* Код вопроса (CODE-тип). Отбивка --space-5, а не --space-4: до удаления вендорной
+   темы hljs листинг получал ещё 1em от её `pre code.hljs{padding:1em}` — 32px в
+   сумме. Та добавка была случайной (чужая тема поверх нашей), но воздух она давала
+   верный: панель на всю ширину колонки с 16px по краю читается тесно. Держим
+   отбивку на самой панели одним значением из шкалы. */
 html[data-design] .result-page .question-code {
   background: var(--color-bg-tertiary); color: var(--color-text-primary);
   border: var(--rule-weight) solid var(--color-border-secondary); border-radius: var(--border-radius-md);
-  padding: var(--space-4); overflow-x: auto;
+  padding: var(--space-5); overflow-x: auto;
 }
 html[data-design] .result-page .question-code code { font-family: var(--font-family-mono); font-size: var(--font-size-sm); background: transparent; }
 
@@ -190,26 +150,10 @@ html[data-design] .result-page .result-actions { display: flex; flex-direction: 
 @media (max-width: 600px) {
   html[data-design] .result-page .result-actions { flex-direction: column; }
   html[data-design] .result-page .result-actions .btn { width: 100%; }
+  /* «Завершить сессию» лежит в <form> (POST): без этого форма ужимается по
+     содержимому и кнопка теряет общую с «Следующим вопросом» ширину. */
+  html[data-design] .result-page .result-finish-form { width: 100%; }
   html[data-design] .result-page .question-header h1 { flex-basis: 100%; }
-}
-
-/* Слим-полоса с вертикальными разделителями держит 6 ячеек в ряд только при
-   ширине грида ~690px+. Ниже (планшет/телефон) ячейки теснятся, «К ПОВТОРУ»
-   переносится на 2 строки и из-за align-items:center числа теряют общую базовую
-   линию, а border-right у крайних ячеек повисает на краю ряда. Поэтому ниже 880px
-   показываем сводку карточками — ровно тем же паттерном auto-fit, что stats-grid
-   на страницах статистики/настроек: единый вид сводки по всему приложению, и
-   auto-fit сам аккуратно раскладывает 6 карточек на любой ширине без сирот-рядов.
-   Скоуп .stats-grid .stat-item (0,4,0) перекрывает базовый border-right и :last-child. */
-@media (max-width: 880px) {
-  html[data-design] .result-page .stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: var(--space-2);
-  }
-  html[data-design] .result-page .stats-grid .stat-item {
-    border: var(--rule-weight) solid var(--color-border-secondary);
-    border-radius: var(--border-radius-md);
-    padding: var(--space-3) var(--space-2);
-  }
 }
 
 /* Модалки (kbd-help, prompt/confirm, «Сообщить о проблеме») вынесены в
@@ -228,8 +172,7 @@ html[data-design] .result-page .result-actions { display: flex; flex-direction: 
 /* =============================================================================
    C3-i — Instrument: результат ответа (.result-page, no-JS фоллбэк /answer).
    CSS-only рестайл СУЩЕСТВУЮЩИХ хуков (DOM result.html не меняется), та же
-   линия, что C1-i/C6-i/C7-i: строчный mono-шёпот бейджа темы, medium-вердикт
-   (семантические цвета status-correct/wrong работают через статус-токены),
+   линия, что C1-i/C6-i/C7-i: строчный mono-шёпот бейджа темы,
    mono/tabular цифры топ-плиток, sm2-панель на приподнятой tertiary-карте.
    Пост-ответные состояния опций/объяснений — глобальные, наследуются.
    Специфичность равна generic-правилам §C3 выше — выигрыш по порядку. ======= */
@@ -242,10 +185,6 @@ html[data-design="instrument"] .result-page .topic-badge {
   color: var(--color-text-tertiary);
 }
 
-/* Вердикт: display medium — не кричит болдом; цвет несут status-правила (0,4,1). */
-html[data-design="instrument"] .result-page .status {
-  font-weight: var(--font-weight-medium);
-}
 
 /* Цифры топ-плиток: mono/tabular — приборная панель (линия C6-i плиток). */
 html[data-design="instrument"] .result-page .stat-value {

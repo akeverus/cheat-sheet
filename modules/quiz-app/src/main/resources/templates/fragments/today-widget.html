@@ -1,76 +1,124 @@
 <!DOCTYPE html>
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <body>
-<!--
-  Fragment: today-widget — виджет «Сегодня к повтору».
-  due (stats.due) серверный (есть в модели focus и settings). Стрик догружает
-  app.js initStreakBar (multi-instance, по data-streak-bar). CTA ведёт в /, где
-  трейнер по умолчанию отдаёт due-вопросы первыми (DefaultSelectionStrategy).
+<!--/*
+  Fragment: today-widget — виджет «Сегодня».
+  Стрик догружает quiz/streak.js initStreakBar (multi-instance, по data-streak-bar).
+  CTA ведёт в /, где трейнер отдаёт due-вопросы первыми (DefaultSelectionStrategy).
+
+  Числа берём из filteredStats (границы текущего фильтра) с откатом на глобальные
+  stats: числитель и знаменатель обязаны быть из одной выборки, иначе получается
+  «4 из 9818» — четыре по фильтру, девять тысяч по всей базе.
+
+  Ключевое различие: очередь (due) = повторения + ни разу не открытые вопросы.
+  Виджет их не смешивает. На пустом прогрессе весь банк попадает в очередь, и
+  общий счётчик обещал бы «9818 к повтору» человеку, который не видел ни одного
+  вопроса. Повторять предлагаем только dueRepeats, остальное честно называем новым.
 
   today-hero(stats)  — крупная карточка для /settings (лэндинг сессии).
   today-chip(stats)  — компактная строка для /focus (информативная, без CTA —
                        на самой тренировке кнопка «повторить» избыточна).
--->
+*/-->
 
-<section th:fragment="today-hero(stats)" class="card today-hero" th:if="${stats != null}" aria-labelledby="today-hero-title">
+<section th:fragment="today-hero(stats)" class="card today-hero" th:if="${stats != null}" aria-labelledby="today-hero-title"
+         th:with="scope=${filteredStats != null ? filteredStats : stats},
+                  repeats=${scope.dueRepeats()}, fresh=${scope.fresh}">
     <div class="today-hero-head">
         <span class="ed-eyebrow">Сегодня</span>
-        <!-- Стрик: скрыт без JS (data приходит из /api/streak). C29: без aria-live —
+        <!--/* Стрик: скрыт без JS (data приходит из /api/streak). C29: без aria-live —
              initStreakBar наполняет чип при КАЖДОЙ загрузке (на /focus — каждый
              вопрос), это обычная загрузка контента, а не смена состояния; live-region
-             заставлял SR озвучивать «N дней» после каждого перехода. -->
+             заставлял SR озвучивать «N дней» после каждого перехода. */-->
         <span class="streak-inline hidden" data-streak-bar>
             <svg class="ed-icon" aria-hidden="true"><use href="#i-flame"></use></svg>
             <span class="streak-inline-days" data-streak-days>0 дней</span>
         </span>
     </div>
     <div class="today-hero-body">
-        <div class="today-hero-figure">
-            <span class="today-hero-due" data-stat-field="due"
-                  th:text="${dueFiltered != null ? dueFiltered : stats.due}">0</span>
-            <!-- «N из M вопросов к повтору» вместо голого «N вопросов к повтору»:
-                 тот же осознанный паттерн, что у today-chip ниже (знаменатель = честная
-                 пропорция, а не интимидирующая 4-5-значная стена). Hero — самая заметная
-                 поверхность (верх /settings), поэтому бренд-решение «информативный
-                 прогресс без дофамина» здесь важнее всего. Знаменатель показываем только
-                 когда осмыслен (total > due); если всё просрочено (total == due) —
-                 нейтральное «N вопросов к повтору», чтобы не подсвечивать «ты ничего не
-                 сделал». Существительное (вопрос/вопроса/вопросов) у hero сохраняем
-                 (есть место, читается полнее, чем терсный chip). -->
-            <!-- dueNow==0: не пишем «из N …» под голым 0 — это читается как «0 из N к повтору»,
-                 хотя смысл другой («очередь пуста»). Чип уже прячет due при 0; hero оставляет
-                 цифру 0 + CTA «Учить новое», поэтому лейбл должен говорить прямо. -->
+        <!--/* Крупная цифра отвечает на «что делать сейчас», а не «сколько всего лежит».
+             Есть долг по повторениям — показываем его: это то, что теряется без
+             внимания. Долга нет — показываем запас новых, потому что предлагать
+             «повторить 0» бессмысленно. Знаменатель берём из той же выборки, что
+             и числитель, и только когда он осмыслен (total > числителя): иначе
+             «9818 из 9818» — это стена, а не пропорция. */-->
+        <div class="today-hero-figure" th:if="${repeats > 0}">
+            <span class="today-hero-due" data-stat-field="repeats" th:text="${repeats}">0</span>
             <span class="today-hero-due-label"
-                  th:with="dueNow=${dueFiltered != null ? dueFiltered : stats.due}"
-                  th:text="${dueNow == 0
-                      ? 'к повтору — очередь пуста'
-                      : (stats.total > dueNow
-                          ? 'из ' + stats.total + ' ' + @plural.pick(stats.total, 'вопрос', 'вопроса', 'вопросов') + ' к повтору'
-                          : @plural.pick(dueNow, 'вопрос', 'вопроса', 'вопросов') + ' к повтору')}">вопросов к повтору</span>
+                  th:text="${scope.total > repeats
+                      ? 'из ' + scope.total + ' ' + @plural.pick(scope.total, 'вопрос', 'вопроса', 'вопросов') + ' к повтору'
+                      : @plural.pick(repeats, 'вопрос', 'вопроса', 'вопросов') + ' к повтору'}">вопросов к повтору</span>
         </div>
-        <h2 id="today-hero-title" class="visually-hidden">Сегодня к повтору</h2>
-        <div class="today-hero-cta" th:with="dueNow=${dueFiltered != null ? dueFiltered : stats.due}">
-            <a th:if="${dueNow > 0}" class="btn next-btn"
-               th:href="@{/(topic=${filter?.topic}, group=${selectedGroup}, important=${filter?.importantOnly}, onlyWrong=${filter?.onlyWrong}, shuffle=${filter?.shuffle}, weakTopics=${weakTopics}, ordered=${filter == null or filter.ordered != false})}">Начать повторение</a>
-            <a th:if="${dueNow == 0}" class="btn next-btn"
-               th:href="@{/(topic=${filter?.topic}, group=${selectedGroup}, important=${filter?.importantOnly}, onlyWrong=${filter?.onlyWrong}, shuffle=${filter?.shuffle}, weakTopics=${weakTopics}, ordered=${filter == null or filter.ordered != false})}">Учить новое</a>
-            <p class="today-hero-hint" th:if="${dueNow > 0}">Трейнер начнёт с просроченных карточек.</p>
-            <p class="today-hero-hint" th:if="${dueNow == 0}">Всё повторено — самое время для новых тем.</p>
+        <div class="today-hero-figure" th:if="${repeats == 0 and fresh > 0}">
+            <span class="today-hero-due" data-stat-field="fresh" th:text="${fresh}">0</span>
+            <span class="today-hero-due-label"
+                  th:text="${scope.total > fresh
+                      ? 'из ' + scope.total + ' ' + @plural.pick(scope.total, 'вопрос', 'вопроса', 'вопросов') + ' ещё не открывали'
+                      : @plural.pick(fresh, 'новый вопрос', 'новых вопроса', 'новых вопросов')}">новых вопросов</span>
+        </div>
+        <!--/* Ни долга, ни новых: банк пройден и ближайший срок ещё не наступил.
+             Цифра здесь была бы нулём ради нуля — говорим словами. */-->
+        <div class="today-hero-figure" th:if="${repeats == 0 and fresh == 0}">
+            <span class="today-hero-due-label">Ничего не ждёт повторения</span>
+        </div>
+        <h2 id="today-hero-title" class="visually-hidden">Сегодня</h2>
+        <div class="today-hero-cta">
+            <a class="btn next-btn"
+               th:href="@{/(topic=${filter?.topic}, group=${selectedGroup}, important=${filter?.importantOnly}, onlyWrong=${filter?.onlyWrong}, shuffle=${filter?.shuffle}, weakTopics=${weakTopics}, ordered=${filter == null or filter.ordered != false})}"
+               th:text="${repeats > 0 ? 'Начать повторение' : (fresh > 0 ? 'Учить новое' : 'Открыть тренажёр')}">Начать повторение</a>
+            <p class="today-hero-hint" th:if="${repeats > 0 and fresh > 0}"
+               th:text="'Сначала просроченное, дальше ' + ${fresh} + ' ' + ${@plural.pick(fresh, 'новый', 'новых', 'новых')}">Сначала просроченное.</p>
+            <p class="today-hero-hint" th:if="${repeats > 0 and fresh == 0}">Трейнер начнёт с просроченных карточек.</p>
+            <p class="today-hero-hint" th:if="${repeats == 0 and fresh > 0}">Повторять пока нечего — берите новую тему.</p>
+            <p class="today-hero-hint" th:if="${repeats == 0 and fresh == 0}">Срок ближайших карточек ещё не наступил.</p>
         </div>
     </div>
 </section>
 
-<!-- Компактный чип для /focus: стрик + due, без CTA. -->
+<!--/* Компактный чип для /focus: стрик + очередь, без CTA. */-->
 <div th:fragment="today-chip(stats)" class="today-chip" th:if="${stats != null}"
-     th:with="dueNow=${dueFiltered != null ? dueFiltered : stats.due}">
-    <span class="muted tiny kpi-role">К повтору · фильтр</span>
+     th:with="scope=${filteredStats != null ? filteredStats : stats},
+              repeats=${scope.dueRepeats()}, fresh=${scope.fresh}">
+    <!--/* Стрик идёт первым: это личный факт про меня («второй день подряд»), а не
+         часть очереди, и он не претендует на подпись соседа. */-->
     <span class="streak-inline hidden" data-streak-bar>
         <svg class="ed-icon" aria-hidden="true"><use href="#i-flame"></use></svg>
         <span class="streak-inline-days" data-streak-days>0 дней</span>
     </span>
-    <span class="today-chip-due" th:if="${dueNow > 0}">
-        <svg class="ed-icon" aria-hidden="true"><use href="#i-target"></use></svg>
-        <span th:text="${stats.total > dueNow} ? |${dueNow} из ${stats.total} к повтору| : |${dueNow} к повтору|">0 к повтору</span>
+    <!--/* Подпись и число очереди — одна группа, и рвать её переносом нельзя: рельс
+         шириной 288px не держит три текстовых элемента в строку, каждый из них
+         ломался на две строки, а «Очередь ·» и «фильтр» оказывались на разных.
+         Оборачиваем пару в общий контейнер — переносится он целиком, стрик
+         остаётся на своей строке.
+
+         Порядок внутри группы: подпись вплотную к числу, которое описывает.
+         Раньше подпись открывала строку, а между ней и очередью вклинивался
+         стрик — и «Очередь · весь банк» читалась как заголовок к «2 дня».
+
+         Подпись без слова «к повтору»: оно уже стоит в самом значении справа
+         («4 из 6 к повтору»), и в одной строке фраза читалась дважды подряд.
+         Подпись отвечает на «что это за число», значение — на «сколько»,
+         единица остаётся при значении.
+
+         Уточнение границ обязано быть правдой: без фильтра scope — это весь банк,
+         и подпись «фильтр» описывала бы то, чего пользователь не задавал.
+
+         Вся группа висит на «есть что показать»: подпись без числа — это ярлык,
+         которому нечего называть, и до этой правки при пустой очереди в рельсе
+         оставалось одинокое «Очередь · весь банк». */-->
+    <span class="today-chip-queue" th:if="${repeats > 0 or fresh > 0}">
+        <span class="muted tiny kpi-role"
+              th:with="filtered=${(filter != null and filter.narrowed) or weakTopics == true}"
+              th:text="${filtered} ? 'Очередь · фильтр' : 'Очередь · весь банк'">Очередь · весь банк</span>
+        <!--/* Показываем ведущее число, а не оба: долг важнее запаса, и только когда
+             долга нет — счётчик новых. */-->
+        <span class="today-chip-due" th:if="${repeats > 0}">
+            <svg class="ed-icon" aria-hidden="true"><use href="#i-target"></use></svg>
+            <span th:text="${scope.total > repeats} ? |${repeats} из ${scope.total} к повтору| : |${repeats} к повтору|">0 к повтору</span>
+        </span>
+        <span class="today-chip-due" th:if="${repeats == 0 and fresh > 0}">
+            <svg class="ed-icon" aria-hidden="true"><use href="#i-target"></use></svg>
+            <span th:text="${scope.total > fresh} ? |${fresh} из ${scope.total} новых| : |${fresh} новых|">0 новых</span>
+        </span>
     </span>
 </div>
 </body>

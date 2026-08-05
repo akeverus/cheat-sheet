@@ -14,6 +14,11 @@ function applyStatsPayload(stats) {
   if (!stats || typeof stats !== 'object') return;
   writeStatField('total', Number(stats.total || 0));
   writeStatField('due', Number(stats.due || 0));
+  writeStatField('fresh', Number(stats.fresh || 0));
+  // Очередь состоит из повторений и вопросов, которые ни разу не открывали.
+  // Считаем остаток здесь, а не отдельным полем API: сервер уже прислал оба
+  // слагаемых, и разность не может разойтись с ними по времени.
+  writeStatField('repeats', Math.max(0, Number(stats.due || 0) - Number(stats.fresh || 0)));
   writeStatField('learned', Number(stats.learned || 0));
   writeStatField('correct', Number(stats.correct || 0));
   writeStatField('wrong', Number(stats.wrong || 0));
@@ -24,22 +29,23 @@ function applyStatsPayload(stats) {
   if (barFill) setProgressValue(barFill, accuracy);
 }
 
+/**
+ * Обновляет сайдбар-статистику. Параметры порядка (shuffle/ordered) не шлём:
+ * на агрегат они не влияют, а раньше shuffle=true заставлял сервер считать
+ * статистику по всему банку вопросов вместо выбранной темы.
+ */
 export function refreshStatsFromServer(form) {
   if (!form) return Promise.resolve();
   const topic = form.querySelector('input[name="topic"]')?.value || '';
   const group = form.querySelector('input[name="group"]')?.value || '';
   const important = form.querySelector('input[name="important"]')?.value === 'true';
   const onlyWrong = form.querySelector('input[name="onlyWrong"]')?.value === 'true';
-  const shuffle = form.querySelector('input[name="shuffle"]')?.value === 'true';
-  const ordered = form.querySelector('input[name="ordered"]')?.value !== 'false';
 
   const params = new URLSearchParams();
   if (topic) params.set('topic', topic);
   if (group) params.set('group', group);
   if (important) params.set('important', 'true');
   if (onlyWrong) params.set('onlyWrong', 'true');
-  if (shuffle) params.set('shuffle', 'true');
-  params.set('ordered', ordered ? 'true' : 'false');
 
   const query = params.toString();
   const url = query ? (API.STATS + '?' + query) : API.STATS;

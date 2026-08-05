@@ -1,15 +1,20 @@
 <!DOCTYPE html>
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <body>
-<!--
+<!--/*
   Fragment: stats-grid(stats)
   KPI через InterviewStats.from(LearningMetrics) — карточки и попытки с разными
   знаменателями; подписи согласованы с docs/METRICS_GLOSSARY.md.
--->
+*/-->
 <div th:fragment="stats-grid-content(stats)" th:if="${stats != null}">
     <div class="stats-grid" id="sidebar-stats-grid">
         <div class="stat-item" title="Карточек в банке вопросов"><span class="stat-label">Карточек</span><div class="stat-value" data-stat-field="total" th:text="${stats.total}">0</div></div>
-        <div class="stat-item" title="Карточки, у которых по расписанию подошло время повторения"><span class="stat-label">К повтору</span><div class="stat-value" data-stat-field="due" th:text="${stats.due}">0</div></div>
+        <!--/* Именно dueRepeats, а не due: очередь включает вопросы, которые ни разу
+             не открывали, и плитка с подписью «К повтору» на пустом прогрессе
+             показывала весь банк — девять тысяч «повторений» у человека, который
+             не ответил ещё ни на один вопрос. Сколько всего не начато, говорит
+             виджет «Сегодня» и чипы разделов; здесь — только реальный долг. */-->
+        <div class="stat-item" title="Карточки, у которых уже есть история и по расписанию подошло время повторения"><span class="stat-label">К повтору</span><div class="stat-value" data-stat-field="repeats" th:text="${stats.dueRepeats()}">0</div></div>
         <div class="stat-item" title="Освоенные карточки (достаточно успешных повторений)"><span class="stat-label">Освоено</span><div class="stat-value" data-stat-field="learned" th:text="${stats.learned}">0</div></div>
         <div class="stat-item" title="Число верных попыток (не карточек)"><span class="stat-label">Верных попыток</span><div class="stat-value" data-stat-field="correct" th:text="${stats.correct}">0</div></div>
         <div class="stat-item" title="Число ошибочных попыток (не карточек)"><span class="stat-label">Ошибочных попыток</span><div class="stat-value" data-stat-field="wrong" th:text="${stats.wrong}">0</div></div>
@@ -18,16 +23,17 @@
             <div class="stat-value"><span data-stat-field="accuracy" th:text="${stats.correct + stats.wrong > 0 ? #numbers.formatDecimal((stats.correct * 100.0) / (stats.correct + stats.wrong), 1, 1) : '—'}">—</span><th:block th:if="${stats.correct + stats.wrong > 0}">%</th:block></div>
         </div>
     </div>
-    <!-- Декоративный дубль точности: aria-hidden — значение озвучивает текстовая плитка. -->
+    <!--/* Декоративный дубль точности: aria-hidden — значение озвучивает текстовая плитка. */-->
     <div class="accuracy-bar" aria-hidden="true">
         <div class="accuracy-bar-fill"
              id="sidebar-accuracy-bar-fill"
-             th:attr="data-progress=${stats.correct + stats.wrong > 0 ? #numbers.formatDecimal((stats.correct * 100.0) / (stats.correct + stats.wrong), 1, 1) : '0.0'}"></div>
+             th:attr="data-progress=${stats.correct + stats.wrong > 0 ? #numbers.formatDecimal((stats.correct * 100.0) / (stats.correct + stats.wrong), 1, 'NONE', 1, 'POINT') : '0.0'}"></div>
     </div>
 </div>
 
-<section class="card" th:if="${stats != null}" th:fragment="stats-grid(stats)">
-    <div th:replace="~{fragments/stats-grid :: stats-grid-content(stats=${stats})}"></div>
-</section>
+<!--/* Обёртки stats-grid(stats) (тот же контент в .card) больше нет: её звал только
+     экран результата, где сводка за всё время стояла над вердиктом. Единственный
+     потребитель сводки — «Прогресс» в настройках, и он подключает контент напрямую,
+     своей карточкой. */-->
 </body>
 </html>

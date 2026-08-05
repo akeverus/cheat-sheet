@@ -1,4 +1,11 @@
-/* UI-014: страница закладок и заметок. Спокойный контент; pixel-акцент только в empty. */
+/* UI-014: страница закладок и заметок. Спокойный контент; pixel-акцент только в empty.
+
+   @layer pages — как у всех восьми страничных файлов. Этот был единственным
+   БЕЗ слоя, а неслоёные правила по спецификации выигрывают у любого слоя: одна
+   страница из девяти играла по другим правилам каскада и молча перебивала
+   utilities и pixel. Замером computed-стилей после переноса в слой на
+   /bookmarks ничего не поехало — то есть выигрыш был не нужен, только опасен. */
+@layer pages {
 
 html[data-design] .bookmarks-page .bookmarks-intro {
   margin-bottom: var(--space-6);
@@ -118,8 +125,22 @@ html[data-design] .bookmarks-page .bookmark-actions {
   align-items: stretch;
   min-width: 7.5rem;
 }
+/* Форму растягивает `align-items: stretch` колонки, а кнопку внутри — нет:
+   «Убрать» получалось у́же «Открыть», и правый край колонки действий рвался на
+   каждой карточке. Ширину задаём кнопке, а не колонке. */
 html[data-design] .bookmarks-page .bookmark-remove-form {
   margin: 0;
+}
+html[data-design] .bookmarks-page .bookmark-remove-btn {
+  width: 100%;
+}
+/* Разрушающее действие не кричит в покое (в списке из 20 закладок это был бы
+   красный частокол), но и не притворяется равным «Открыть»: намерение
+   проявляется на наведении и с клавиатуры. */
+html[data-design] .bookmarks-page .bookmark-remove-btn:hover,
+html[data-design] .bookmarks-page .bookmark-remove-btn:focus-visible {
+  color: var(--color-status-error);
+  border-color: var(--color-status-error);
 }
 
 html[data-design] .bookmarks-page .bookmarks-empty {
@@ -167,4 +188,6 @@ html[data-design] .bookmarks-page .bookmarks-empty-icon {
   html[data-design] .bookmarks-page .bookmark-item {
     scroll-margin-top: var(--space-4);
   }
+}
+
 }

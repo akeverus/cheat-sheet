@@ -36,15 +36,21 @@ html[data-design][data-pixel="high"] body::after {
   z-index: 91;
   background: radial-gradient(ellipse at center, transparent 62%, rgba(0, 0, 0, 0.18) 100%);
 }
-/* Content above CRT overlays so text stays readable */
+/* Content above CRT overlays so text stays readable.
+   .sidebar сюда НЕ входит: shell.css делает её position:sticky (навигация должна
+   оставаться на экране при прокрутке длинного разбора), а это правило лежит в
+   @layer pixel — оно перебивало sticky на relative, и на странице в 1757px
+   сайдбар обрывался на 892px, оставляя под собой пустую колонку, а навигация
+   уезжала за верхний край. Для z-index достаточно того, что sticky —
+   позиционированный элемент; переопределять position не нужно. */
 html[data-design] .app,
 html[data-design] .shell-main,
-html[data-design] .sidebar,
 html[data-design] .card,
 html[data-design] .ed-page {
   position: relative;
   z-index: 1;
 }
+html[data-design] .sidebar { z-index: 1; }
 
 /* ---- Атмосфера фона: MED — спокойная сетка, HIGH — анимированная «checkerboard» ----
    MED (дефолт): редкая teal graph-paper сетка точек. Задаёт «инженерно-
@@ -78,8 +84,10 @@ html[data-design][data-pixel="high"] .pixel-ambient {
   z-index: 0;
   overflow: hidden;
 }
-html[data-design] .shell-main,
-html[data-design] .sidebar { position: relative; z-index: 1; }
+/* Тот же подъём над ambient-слоем, что и выше (дубль оставлен рядом со своим
+   .pixel-ambient-контекстом). .sidebar снова без position — см. комментарий выше. */
+html[data-design] .shell-main { position: relative; z-index: 1; }
+html[data-design] .sidebar { z-index: 1; }
 html[data-design][data-pixel="high"] .pixel-crumb {
   position: absolute;
   width: var(--px-s);

@@ -17,7 +17,7 @@
     <span class="eyebrow">Личная коллекция</span>
     <h1 class="bookmarks-title">Закладки</h1>
     <p class="muted bookmarks-intro-lead">
-        Вопросы со звездой и ваши заметки. Откройте вопрос в тренировке или сохраните подсказку на потом.
+        Вопросы со звездой и твои заметки. Открой вопрос в тренировке или сохрани подсказку на потом.
         <span class="kpi-role" th:if="${bookmarksTotal != null}"
               th:text="${bookmarksTotal + ' ' + @plural.pick(bookmarksTotal, 'закладка', 'закладки', 'закладок')}">0 закладок</span>
     </p>
@@ -39,7 +39,7 @@
 <section class="card" th:if="${bookmarks != null and !bookmarks.isEmpty()}"
          aria-labelledby="bookmarks-list-title">
     <h2 id="bookmarks-list-title" class="mt-0">Список</h2>
-    <p class="muted chart-subtitle">Новые сверху. Заметка сохраняется без JS через форму; с JS — мгновенно.</p>
+    <p class="muted chart-subtitle">Новые сверху.</p>
     <ul class="bookmark-list">
         <li th:each="item : ${bookmarks}" class="bookmark-item"
             th:classappend="${item.note != null and !item.note.isBlank()} ? ' has-note' : ' no-note'"
@@ -47,8 +47,7 @@
             <div class="bookmark-main">
                 <div class="bookmark-text" th:text="${item.questionPreview}">Текст вопроса</div>
                 <div class="bookmark-meta muted">
-                    <span th:text="${#strings.capitalize(#strings.replace(#strings.replace(item.topicDisplayName, '-', ' '), '_', ' '))}"
-                          th:title="${item.topic}">Тема</span>
+                    <span th:text="${item.topicDisplayName}" th:title="${item.topic}">Тема</span>
                     <span aria-hidden="true">·</span>
                     <span class="bookmark-note-status"
                           th:text="${item.note != null and !item.note.isBlank()} ? 'есть заметка' : 'без заметки'">без заметки</span>
@@ -70,7 +69,11 @@
                 </form>
             </div>
             <div class="bookmark-actions">
-                <a class="btn next-btn"
+                <!--/* secondary, а не next-btn: акцентная заливка повторялась на КАЖДОЙ
+                     строке списка и обнуляла собственный акцент страницы — «Тренировать
+                     избранные» вверху тонул среди N одинаковых бирюзовых плашек.
+                     Заливка на странице теперь ровно одна, у главного действия. */-->
+                <a class="btn secondary-btn"
                    th:href="@{/(questionId=${item.questionId})}"
                    th:aria-label="${'Открыть вопрос: ' + item.questionPreview}">Открыть</a>
                 <form method="post" th:action="@{/bookmarks/remove}" class="bookmark-remove-form"
@@ -91,7 +94,7 @@
         <svg class="icon bookmarks-empty-icon"><use href="#bookmark"></use></svg>
     </div>
     <h2 class="mt-0">Пока нет закладок</h2>
-    <p class="muted">Отметьте вопрос звездой на экране ответа — он появится здесь, и к нему можно добавить заметку.</p>
+    <p class="muted">Отметь вопрос звездой на экране ответа — он появится здесь, и к нему можно добавить заметку.</p>
     <p><a class="btn next-btn" th:href="@{/}">Начать тренировку</a></p>
 </section>
 

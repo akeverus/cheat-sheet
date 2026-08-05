@@ -4,10 +4,11 @@
    Утилиты чтения и навигации (Bundle: back-to-top + копирование кода)
    =========================================================================== */
 
-/* Кнопка «наверх»: инжектится из header-фрагмента (на всех страницах, в т.ч.
-   /stats без app.js). Круглая bordered-кнопка в editorial-стиле (не material-FAB
-   с заливкой). Скрыта по умолчанию, .is-visible (JS, после ~1.5 экрана прокрутки)
-   проявляет. z ниже модалок/оверлеев, выше контента. */
+/* Кнопка «наверх»: инжектит ui/shell.js на всех страницах. Круглая bordered-кнопка
+   в editorial-стиле (не material-FAB с заливкой). Скрыта по умолчанию, .is-visible
+   (JS, после ~1.5 экрана прокрутки) проявляет. z ниже модалок/оверлеев, выше
+   контента. Размер иконки внутри — в shell.css: спрайт тут пиксельный (.icon),
+   а не монохромный Lucide (.ed-icon). */
 html[data-design] .back-to-top {
   position: fixed; right: var(--space-5); bottom: var(--space-5);
   z-index: var(--z-dropdown);
@@ -26,7 +27,6 @@ html[data-design] .back-to-top {
 }
 html[data-design] .back-to-top.is-visible { opacity: 1; visibility: visible; transform: translateY(0); }
 html[data-design] .back-to-top:hover { color: var(--color-accent-primary); border-color: var(--color-accent-primary); }
-html[data-design] .back-to-top .ed-icon { width: 1.25rem; height: 1.25rem; }
 /* Над fixed mobile-nav: иначе «наверх» попадает под таббар (live a11y: under-nav). */
 @media (max-width: 900px) {
   html[data-design] .back-to-top {
@@ -34,7 +34,7 @@ html[data-design] .back-to-top .ed-icon { width: 1.25rem; height: 1.25rem; }
   }
 }
 
-/* Копирование код-блоков: app.js оборачивает <pre> в .code-copy-wrap и вешает
+/* Копирование код-блоков: ui/code-toolbar.js оборачивает <pre> в .code-copy-wrap и вешает
    кнопку в верхний-правый угол. Кнопка проявляется на hover/focus-within (десктоп)
    и всегда видна на touch (нет hover). Не перекрывает скролл — сидит в паддинге pre. */
 html[data-design] .code-copy-wrap { position: relative; }
@@ -74,7 +74,7 @@ html[data-design] .code-copy-btn .ed-icon { width: 0.875rem; height: 0.875rem; }
    Виджет «Сегодня к повтору» (Bundle: today-hero на /settings, today-chip на /focus)
    =========================================================================== */
 
-/* Инлайн-стрик: 🔥 + «N дней». Скрыт без JS (.hidden), app.js снимает после /api/streak. */
+/* Инлайн-стрик: 🔥 + «N дней». Скрыт без JS (.hidden), quiz/streak.js снимает после /api/streak. */
 html[data-design] .streak-inline {
   display: inline-flex; align-items: center; gap: var(--space-1);
   font-family: var(--font-family-mono); font-size: var(--font-size-xs);
@@ -90,14 +90,9 @@ html[data-design] .today-hero { margin-bottom: var(--space-5); }
    ширину main → левый/правый край не совпадал с контентом под ним (jut наружу). */
 html[data-design] .settings-page .today-hero {
   max-width: var(--max-width-settings); margin-left: auto; margin-right: auto;
-  /* Поверхность карты: на /stats/.summary/.result есть page-scoped `.card`, а
-     `.settings-page .card` НЕТ (generic `.card` выжил только под @media print при
-     split editorial.css→base.css). Без этого hero-блок «N к повтору / Начать» висел
-     голым текстом на фоне страницы. Те же 4 свойства, что у .stats/.summary/.result .card. */
-  background: var(--color-bg-secondary);
-  border: var(--rule-weight) solid var(--color-border-primary);
-  border-radius: var(--border-radius-lg);
-  padding: var(--space-6);
+  /* Поверхность и поля пришли с общего `.card` (components-card.css) — блок и в
+     разметке `class="card today-hero"`. Раньше их приходилось выписывать здесь
+     пятой копией, потому что общего `.card` в проекте не существовало. */
 }
 html[data-design] .today-hero-head {
   display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
@@ -137,12 +132,31 @@ html[data-design] .today-hero-hint { margin: 0; font-size: var(--font-size-sm); 
   html[data-design] .today-hero-cta .btn { width: 100%; text-align: center; }
 }
 
-/* Компактный чип на /focus: тонкая строка стрик + due, не спорит с вопросом. */
+/* Компактный чип на /focus: тонкая строка стрик + очередь, не спорит с вопросом.
+   Переносится: в рельсе шириной 288px стрик и группа очереди в строку не встают,
+   и без wrap каждый элемент ломался внутри себя — «Очередь ·» и «фильтр»
+   оказывались на разных строках. Строчный gap меньше колоночного: две строки
+   одного чипа должны читаться как один блок, а не как два. */
 html[data-design] .today-chip {
-  display: flex; align-items: center; gap: var(--space-4);
+  display: flex; align-items: center; flex-wrap: wrap;
+  column-gap: var(--space-4); row-gap: var(--space-1);
   margin-bottom: var(--space-4); min-height: 1.25rem;
 }
-html[data-design] .today-chip:empty { display: none; }
+/* Подпись очереди и её число — неразрывная пара: переносится группа целиком,
+   иначе ярлык уезжает от числа, которое называет.
+
+   Внутри группы перенос допустим, но только между подписью и числом, не внутри
+   них: в самом узком случае («Очередь · весь банк» + «128 из 9818 к повтору»)
+   пара не влезает в рельс, и без nowrap ломались обе фразы — «Очередь ·» и
+   «весь банк» вставали на разные строки. Подпись над числом — законное чтение
+   от общего к частному, разорванная подпись — нет. Строки такой пары стоят
+   вплотную (row-gap: 0): это одна мысль в две строки. */
+html[data-design] .today-chip-queue {
+  display: inline-flex; align-items: center; flex-wrap: wrap;
+  column-gap: var(--space-2); row-gap: 0;
+}
+html[data-design] .today-chip-queue .kpi-role,
+html[data-design] .today-chip-due { white-space: nowrap; }
 html[data-design] .today-chip-due {
   display: inline-flex; align-items: center; gap: var(--space-1);
   font-family: var(--font-family-mono); font-size: var(--font-size-xs);
@@ -157,11 +171,10 @@ html[data-design] .today-chip-due .ed-icon { width: 0.875rem; height: 0.875rem; 
    по порядку. Вкладки/seg-controls/danger-zone/toggles несут instrument-токены
    без правок (baseline R0.36). Карточная сетка осей и switch-вид тогглов —
    структурный рестайл ВСЕХ дизайнов, не instrument-scoped → отложено (README). */
-/* Карта hero: приподнятая поверхность instrument (bg-tertiary светлее фона). */
-html[data-design="instrument"] .settings-page .today-hero {
-  background: var(--color-bg-tertiary);
-  border-color: var(--color-border-primary);
-}
+/* Отдельной поверхности у hero нет — она общая карточная (components-card.css).
+   Свой оттенок tertiary имел смысл, пока дизайнов было несколько; сейчас он
+   означал бы «один блок на /settings другого цвета, чем все карточки продукта».
+   `border-color` вдобавок был мёртв: рамкой владеет слой pixel (`border: 0`). */
 /* Цифра due — приборная: mono вместо display, semibold вместо bold (как .stat-value C6-i). */
 html[data-design="instrument"] .settings-page .today-hero-due {
   font-family: var(--font-family-mono);
@@ -174,7 +187,7 @@ html[data-design="instrument"] .settings-page .settings-panel-title {
 
 /* ===========================================================================
    ПЕРСОНАЛИЗАЦИЯ (Bundle 4) — тема (авто/светлая/тёмная) + размер шрифта.
-   Клиентский блок на /settings; раскрывается app.js (initPersonalization).
+   Клиентский блок на /settings; раскрывается settings/personalization.js (initPersonalization).
    =========================================================================== */
 html[data-design] .personalization-row { margin-bottom: var(--space-5); }
 html[data-design] .personalization-row:last-child { margin-bottom: 0; }

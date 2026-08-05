@@ -1,11 +1,11 @@
 import { apiFetch, apiPostJson, parseApiError } from '../core/api-client.js';
 import { API } from '../core/constants.js';
-import { icon, escapeHtml, pluralRu, pluralDays } from '../core/dom.js';
+import { icon, escapeHtml, pluralRu } from '../core/dom.js';
 import { sanitizeHtml } from '../content/sanitize.js';
 import { renderDynamicContent } from '../content/dynamic-content.js';
 import { clearInlineAlert, setInlineAlert } from '../ui/alerts.js';
 import { confirmModal } from '../ui/modals.js';
-import { refreshStatsFromServer, updateSessionProgress } from './stats.js';
+import { refreshStatsFromServer, updateSessionProgress } from './session-stats.js';
 
 let interviewBound = false;
 
@@ -256,15 +256,14 @@ export function initInterviewForm() {
   // mid-page (дальше по форме → «Сообщить о проблеме»), а skip-link обходится.
   // Выбор 1–9 / стрелки остаётся; фокус ставит selectOptionByIndex по действию.
 
+  // Формулировку вердикта здесь больше не собирают: её присылает сервер
+  // (`verdictText`, общий AnswerCopy). Раньше строку строили дважды — тут и в
+  // Java для no-JS-страницы, — и редакции разъезжались.
   function buildVerdictLine(data) {
-    if (data.correct) return icon('circle-check', 'ed-icon-lead') + 'Верно';
-    const selected = data.selectedOptionLetter
-      ? 'Ты выбрал ' + escapeHtml(data.selectedOptionLetter) + '. '
-      : '';
-    const letter = data.correctOptionLetter
-      ? 'Правильный ответ ' + escapeHtml(data.correctOptionLetter)
-      : 'Неверно';
-    return icon('circle-x', 'ed-icon-lead') + selected + letter;
+    const name = data.correct ? 'circle-check' : 'circle-x';
+    const tone = data.correct ? 'ed-icon-success' : 'ed-icon-error';
+    return icon(name, 'ed-icon-lead ' + tone)
+      + `<span>${escapeHtml(data.verdictText || '')}</span>`;
   }
 
   function buildXpBadge(data) {
@@ -274,10 +273,10 @@ export function initInterviewForm() {
   }
 
   function buildNextReviewLine(data) {
-    const days = Number(data.intervalDays || 0);
-    const when = days > 0
-      ? (days === 1 ? 'завтра' : ('через ' + days + ' ' + pluralDays(days)))
-      : '—';
+    // Срок тоже приходит готовым (`nextReviewText`): склонение «день/дня/дней» и
+    // подмена «через 1 день» на «завтра» — один раз в AnswerCopy, а не по разу
+    // на каждом рендерере.
+    const when = escapeHtml(data.nextReviewText || '—');
     return `<p class="next-review">`
       + `<span class="next-review-eyebrow">Следующее повторение:</span> `
       + `<span class="next-review-when">${when}</span></p>`
@@ -286,18 +285,13 @@ export function initInterviewForm() {
       + `</p>`;
   }
 
-  function buildCorrectAnswerBlock(data) {
-    const letter = data.correctOptionLetter;
-    if (!letter) return '';
-    const label = optionsContainer.querySelector(`label[data-option-id="${data.correctOptionId}"] span`);
-    const text = label ? (label.textContent || '').trim() : '';
-    return `<div class="feedback-correct-answer">`
-      + `<span class="feedback-block-eyebrow">Правильный ответ</span>`
-      + `<p class="feedback-correct-answer-line">`
-      + `<strong class="feedback-option-letter">${escapeHtml(letter)}.</strong> `
-      + (text ? escapeHtml(text) : '')
-      + `</p></div>`;
-  }
+  // Отдельного блока «Правильный ответ: C. <текст варианта>» здесь больше нет.
+  // Тот же факт уже сказан дважды выше: вердикт называет букву («Правильный
+  // ответ C»), а сам вариант в списке несёт зелёную рамку и чип «Правильный
+  // ответ». Третье повторение — ровно тот случай, против которого написан
+  // комментарий в result.html («повторяло бы то же самое третий раз»), и
+  // одновременно единственное место, где два пути разбора расходились по
+  // составу блоков.
 
   function buildDistractorPanel(data) {
     const opts = data.optionExplanations || [];
@@ -325,39 +319,35 @@ export function initInterviewForm() {
     const restHtml = sanitizeHtml(data.answerRestHtml || '');
     const hasLead = leadHtml.trim().length > 0;
     const fullHtml = sanitizeHtml(data.answerHtml || '');
-    const keyDifferencePanel = hasLead
-      ? `<div class="feedback-key-difference explanation-panel">`
-        + `<span class="explanation-eyebrow">Ключевое отличие</span>`
-        + `<div class="result-lead answer markdown-content">${leadHtml}</div>`
-        + `</div>`
-      : '';
-    const explanationPanel = (!hasLead && fullHtml.trim())
-      ? `<div class="feedback-explanation explanation-panel">`
+    // Лид и «весь разбор» — одна и та же панель под одним заголовком: это первый
+    // абзац объяснения, а не сравнение с выбранным вариантом. Заголовок
+    // «Ключевое отличие» обещал сопоставление, которого в тексте нет, и вдобавок
+    // расходился с no-JS-страницей, где тот же лид всегда назывался «Почему это
+    // так?». Классы-носители `feedback-key-difference` / `feedback-explanation`
+    // ушли вместе с `order`-раскладкой: порядок задаёт сам DOM.
+    const explanationPanel = (hasLead || fullHtml.trim())
+      ? `<div class="explanation-panel">`
         + `<span class="explanation-eyebrow">Почему это так?</span>`
-        + `<div class="result-lead answer markdown-content">${fullHtml}</div>`
+        + `<div class="result-lead answer markdown-content">${hasLead ? leadHtml : fullHtml}</div>`
         + `</div>`
       : '';
     const additionalPanel = (hasLead && restHtml.trim())
-      ? `<details class="feedback-explanation explanation-panel additional-panel explanation-more">`
+      ? `<details class="explanation-panel additional-panel">`
         + `<summary class="explanation-eyebrow">Подробнее</summary>`
         + `<div class="answer markdown-content">${restHtml}</div>`
         + `</details>`
       : '';
 
     feedbackDiv.innerHTML = `
-      <div class="feedback-flow">
-        <div class="feedback-verdict ${isCorrect ? 'result-correct' : 'result-wrong'} result-banner">
-          <strong class="result-verdict">${buildVerdictLine(data)}</strong>
-        </div>
-        ${buildCorrectAnswerBlock(data)}
-        ${keyDifferencePanel}
-        ${explanationPanel}
-        ${buildDistractorPanel(data)}
-        ${additionalPanel}
-        <div class="feedback-meta">
-          ${buildXpBadge(data)}
-          ${buildNextReviewLine(data)}
-        </div>
+      <div class="feedback-verdict result-banner ${isCorrect ? 'result-correct' : 'result-wrong'}">
+        <strong class="result-verdict">${buildVerdictLine(data)}</strong>
+      </div>
+      ${explanationPanel}
+      ${buildDistractorPanel(data)}
+      ${additionalPanel}
+      <div class="feedback-meta">
+        ${buildXpBadge(data)}
+        ${buildNextReviewLine(data)}
       </div>
     `;
     feedbackDiv.classList.remove('hidden');
@@ -378,6 +368,13 @@ export function initInterviewForm() {
   function applyOptionStyles(data) {
     const labels = optionsContainer.querySelectorAll('label[data-option-id]');
     optionInputs.forEach((input) => { input.disabled = true; });
+    // «Выбери один вариант» над списком, в котором уже ничего не выбрать, —
+    // инструкция к действию, которое кончилось. Снимаем вместе с блокировкой
+    // радиокнопок: с этого момента список читается как разбор, а не как форма.
+    // aria-describedby на радиогруппе указывает на удалённый id — это валидно
+    // (ссылка на несуществующий элемент просто игнорируется), но и группа уже
+    // disabled, так что описание всё равно не озвучивается.
+    document.getElementById('options-flow-hint')?.remove();
     labels.forEach((label) => {
       const optionId = parseInt(label.getAttribute('data-option-id'), 10);
       const optionText = label.querySelector('span')?.textContent?.trim() || '';
@@ -387,7 +384,10 @@ export function initInterviewForm() {
         statusLabelText = 'Правильный ответ';
       } else if (optionId === data.selectedOptionId) {
         label.classList.add('option-wrong');
-        statusLabelText = 'Твой выбор (ошибка)';
+        // Без «(ошибка)»: вариант уже в красной рамке, а вердикт над списком
+        // сказал, что ответ неверный. Формулировка ровно та же, что печатает
+        // сервер на result.html — один компонент, один текст.
+        statusLabelText = 'Твой выбор';
       } else {
         // Нейтральный вариант: приглушаем визуально, но БЕЗ метки-чипа —
         // зеркалим канон server-шаблона result.html (UX-13: «опции = только
@@ -399,9 +399,12 @@ export function initInterviewForm() {
       if (statusLabelText) {
         label.setAttribute('aria-label', (statusLabelText + ': ' + optionText).trim());
         const statusLabel = document.createElement('span');
+        // Ветки ровно две: чип ставится только когда statusLabelText непуст, а он
+        // непуст только для верного и для выбранного. Третьей марки («не выбран»)
+        // здесь быть не может — нейтральный вариант уходит в option-dimmed выше.
         statusLabel.className = 'option-status-label ' + (optionId === data.correctOptionId
           ? 'option-status-correct'
-          : (optionId === data.selectedOptionId ? 'option-status-selected' : 'option-status-muted'));
+          : 'option-status-selected');
         statusLabel.textContent = statusLabelText;
         label.appendChild(statusLabel);
       }
@@ -467,12 +470,6 @@ export function initInterviewForm() {
         confidenceBtns.forEach((b) => { b.disabled = true; });
         const grade = btn.getAttribute('data-grade');
         try {
-          // Единственный из POST /api/**, чьи параметры сервер читает
-          // как @RequestParam, а не из тела. Раньше они ехали телом
-          // form-urlencoded — Servlet-контейнер разбирает такое тело в
-          // getParameter(), и работало это ровно до тех пор, пока форма
-          // остаётся формой. Теперь тела нет вовсе, и способ чтения на
-          // сервере виден по самому запросу.
           const confidenceResp = await apiFetch(
             API.CONFIDENCE + '?questionId=' + encodeURIComponent(questionId)
               + '&grade=' + encodeURIComponent(grade),
