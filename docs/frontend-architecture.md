@@ -339,6 +339,8 @@ settings/  personalization, personalization-bootstrap, session-form, tabs
 абстрактный долг, а конкретный класс багов, где правка в модуле не доезжает до
 страницы, которая его не грузит.
 
+### Дубли между JS и сервером
+
 Отдельный случай — дублирование не между JS и JS, а между JS и сервером. Модуль
 `stats/next-actions.js` пересчитывал на клиенте «самую слабую тему» — правило,
 которое сервер уже считает для режима «Слабые темы». Две независимые реализации
@@ -346,6 +348,34 @@ settings/  personalization, personalization-bootstrap, session-form, tabs
 карточки показывала тему без точности. Правило осталось одно, серверное
 (`QuestionStatsRepository.findWeakestTopic`, см. `docs/backend-architecture.md`);
 тема и процент приезжают в модель, модуль удалён.
+
+Второй такой дубль был не правилом, а **таблицей**. `settings/session-form.js` держал
+объект `MODE_CTA` с подписью кнопки старта для каждого режима, а ключами были имена
+enum-констант. Копия невидима вдвойне: имя константы в строковом литерале не проверяет
+компилятор, а сам файл не проверил бы и гейт по шаблонам — он лежит в `static/js/`.
+Рядом жила третья копия: восемь рукописных `<option>` в `settings.html` со своими
+подписями и своими `data-default-count`.
+
+Теперь список приезжает готовым: `${sessionModes}` (`ModeUtils.options`, см.
+`docs/backend-architecture.md` §3b) → `th:each` по одному `<option>` с
+`data-cta`/`data-unlimited`/`data-default-count`. JS больше ничего не знает о режимах —
+он читает датасет выбранного `<option>`:
+
+```js
+const opt = modeSelect.selectedOptions[0];
+countField.classList.toggle('hidden', opt?.dataset.unlimited === 'true');
+startBtn.textContent = opt?.dataset.cta || 'Начать сессию';
+```
+
+Так подпись, порядок и дефолтное число вопросов физически не могут разойтись с Java, а
+не «не должны» по соглашению. Закреплено `EnumLabelSourceContractTest`: он требует
+`th:each` в разметке и запрещает `MODE_CTA`/`'TRAINING'` в `session-form.js`.
+
+Тот же приём применён к подписям на фокус-экране. Бейдж фазы был четырьмя
+взаимоисключающими `th:if` по имени режима, подпись поля ответа — тернарной цепочкой;
+переименование константы оставило бы карточку **вообще без подписи**, ничего не сломав.
+Обе подписи считает `MvcModelAttributeMapper` (`recallBadgeText`, `typedAnswerLabel`) —
+в шаблоне остался один `th:text`.
 
 ### Графики: сколько рисовать — решает коробка, а не данные
 
