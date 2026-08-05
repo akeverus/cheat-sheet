@@ -1,9 +1,11 @@
 package com.cheatsheet.quiz.ui;
 
+import com.cheatsheet.quiz.config.web.JsPreloadService;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,23 +23,43 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TemplateFragmentContractTest {
 
-    /** Wave C: structural CSS split из base.css; порядок = head.html. */
-    private static final String[] STRUCTURAL_CSS_CHAIN = {
-            "static/css/reset.css",
-            "static/css/utilities-core.css",
-            "static/css/reset-layout.css",
-            "static/css/components-masthead.css",
-            "static/css/pages-focus.css",
-            "static/css/pages-settings.css",
-            "static/css/pages-stats.css",
-            "static/css/pages-summary.css",
-            "static/css/pages-error.css",
-            "static/css/pages-result.css",
-            "static/css/components-widgets.css",
-            "static/css/pages-layout.css",
-            "static/css/components-signatures.css",
-            "static/css/utilities-overrides.css"
-    };
+    /**
+     * Строка манифеста каскада: {@code <гейт> <путь>}. Комментарии и пустые строки
+     * отсеиваются до применения.
+     */
+    private static final Pattern MANIFEST_ENTRY = Pattern.compile("^(\\S+)\\s+(\\S+)$");
+
+    /**
+     * Комментарии CSS. Вырезаются перед всеми проверками каскада: браузер их не
+     * видит, а тесты — видели. На этом уже споткнулся гвард мёртвой шапки:
+     * комментарий, объясняющий удаление {@code .ed-masthead}, сам содержал этот
+     * селектор и «воскрешал» правило для теста. Проза о правиле не должна ломать
+     * проверку правила.
+     */
+    private static final Pattern CSS_COMMENT = Pattern.compile("/\\*.*?\\*/", Pattern.DOTALL);
+
+    /**
+     * Якорь прогрессивного улучшения → модуль, который его оживляет.
+     *
+     * <p>Каждая строка — разметка, которую сервер отдаёт в развёрнутом,
+     * работающем без JS виде: стопка панелей вместо вкладок, страница итогов без
+     * кнопок «скопировать». Пока модуль не выполнится, пользователь видит именно
+     * этот запасной вариант — и видит его молча. Ошибки в консоли нет, вёрстка
+     * цела, 404 нет; отличить «улучшение выключено» от «улучшение сломано»
+     * глазами нельзя.
+     *
+     * <p>Так и жили вкладки материалов вопроса: {@code initContentTabs} лежала в
+     * {@code settings/tabs.js} и попадала в чанк, который грузится только на
+     * {@code body.settings-page}. Разметка {@code .question-materials} есть лишь в
+     * {@code focus-training.html}, поэтому функция не находила её ни разу — на
+     * settings нечего активировать, а на focus её просто не было. Вкладки не
+     * открылись ни у одного пользователя за всё время существования фичи.
+     */
+    private static final Map<String, String> PROGRESSIVE_ENHANCEMENT_ANCHORS = Map.of(
+            ".question-materials", "./content/materials-tabs.js",
+            "#settings-tablist", "./settings/tabs.js",
+            "#stats-tablist", "./stats/index.js",
+            ".summary-hero", "./summary/share-tools.js");
 
     private String readTemplate(String classpathLocation) throws IOException {
         ClassPathResource resource = new ClassPathResource(classpathLocation);
@@ -45,10 +67,39 @@ class TemplateFragmentContractTest {
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
+    /**
+     * Пути CSS в порядке каскада — так, как их склеивает {@code CssBundleService}.
+     *
+     * <p>Список намеренно не захардкожен в тесте: файлы дробят и переименовывают,
+     * и копия молча разъезжается с реальностью (так и случилось с
+     * {@code pages-layout.css}) — контракт тогда проверяет не то, что грузится.
+     * Раньше источником был список {@code <link>} в {@code head.html}; после
+     * склейки в одну ленту порядок живёт в манифесте, и читаем мы его.</p>
+     */
+    private List<String> manifestPaths() throws IOException {
+        List<String> paths = new ArrayList<>();
+        for (String raw : readTemplate("css-bundle-manifest.txt").split("\n")) {
+            Matcher matcher = MANIFEST_ENTRY.matcher(raw.strip());
+            if (matcher.matches() && !raw.strip().startsWith("#")) {
+                paths.add(matcher.group(2));
+            }
+        }
+        assertThat(paths).as("манифест каскада не должен быть пустым").isNotEmpty();
+        return paths;
+    }
+
+    /**
+     * Склейка всего структурного CSS в порядке каскада — ровно то, что получает
+     * браузер. Фильтр {@code /css/} оставляет только наши файлы; вендорных CSS в
+     * манифесте больше нет (тема подсветки своя, на токенах), но фильтр держим —
+     * он же гарантирует, что вендорный CSS туда не вернётся незаметно.
+     */
     private String readStructuralCss() throws IOException {
         StringBuilder sb = new StringBuilder();
-        for (String path : STRUCTURAL_CSS_CHAIN) {
-            sb.append(readTemplate(path));
+        for (String path : manifestPaths()) {
+            if (path.startsWith("/css/")) {
+                sb.append(CSS_COMMENT.matcher(readTemplate("static" + path)).replaceAll("\n"));
+            }
         }
         return sb.toString();
     }
@@ -95,6 +146,24 @@ class TemplateFragmentContractTest {
     }
 
     @Test
+    void questionMaterialLabelsComeFromBlocksAndAreNotWrittenByHand() throws IOException {
+        String focusTraining = readTemplate("templates/focus-training.html");
+
+        // Подпись вкладки и заголовок её панели — одна строка из блока. Пока их
+        // писали руками, у двух объектов было четыре имени: вкладка «Пример кода»
+        // вела к заголовку «Код к вопросу», вкладка «Схема» — к «Диаграмме».
+        assertThat(focusTraining).contains("th:text=\"${codeBlock.title()}\"");
+        assertThat(focusTraining).contains("th:text=\"${diagramBlock.title()}\"");
+        assertThat(focusTraining).doesNotContain(">Код к вопросу<");
+        assertThat(focusTraining).doesNotContain(">Диаграмма<");
+
+        // Тип блока назначает ContentBlockMapper; шаблон не читает codeSnippet и
+        // diagramMermaid напрямую — в codeSnippet может лежать нарисованная схема.
+        assertThat(focusTraining).doesNotContain("current.question.codeSnippet");
+        assertThat(focusTraining).doesNotContain("current.question.diagramMermaid");
+    }
+
+    @Test
     void keyPagesReferenceSharedFragmentsInsteadOfLocalCopies() throws IOException {
         String focusTraining = readTemplate("templates/focus-training.html");
         String stats = readTemplate("templates/stats.html");
@@ -130,7 +199,7 @@ class TemplateFragmentContractTest {
         // progressbar 0/0 не рендерится) → null-ветки тернарников не нужны.
         assertThat(focusTraining).contains("aria-valuemax=${interviewSession.getTotal()}");
         assertThat(focusTraining).contains("aria-valuenow=${interviewSession.getIndex() + 1}");
-        assertThat(focusTraining).contains("data-progress=${#numbers.formatDecimal(progressPercent, 1, 1)}");
+        assertThat(focusTraining).contains("data-progress=${#numbers.formatDecimal(progressPercent, 1, 'NONE', 1, 'POINT')}");
         assertThat(focusTraining).contains("th:text=\"${focusModeChipText}\"");
         assertThat(focusTraining).contains("th:text=\"${focusModeHintText}\"");
         assertThat(focusTraining).doesNotContain("aria-valuemax=\"100\"");
@@ -190,7 +259,7 @@ class TemplateFragmentContractTest {
         String settings = readTemplate("templates/settings.html");
         // Редизайн: 4-карточная стопка заменена вкладками (Сессия | Оформление |
         // Данные). Один раздел за раз вместо ~3.6 экрана скролла. PE: tablist скрыт
-        // без JS, app.js (initSettingsTabs) раскрывает + ставит .js-tabs.
+        // без JS, settings/tabs.js (initSettingsTabs) раскрывает + ставит .js-tabs.
         assertThat(settings).contains("id=\"main-content\"");
         assertThat(settings).contains("id=\"settings-tablist\"");
         assertThat(settings).contains("role=\"tablist\"");
@@ -249,32 +318,36 @@ class TemplateFragmentContractTest {
         assertThat(personalizationJs).contains("resetBtn.setAttribute('aria-disabled', s === 1 ? 'true' : 'false')");
     }
 
+    /**
+     * Мёртвой editorial-шапки .ed-masthead в каскаде быть не должно. Она пережила
+     * редизайн только в CSS: разметка (topbar/sidebar) не выводит ни одного
+     * класса семейств {@code ed-masthead}, {@code ed-nav} и {@code ed-theme-toggle}
+     * с тех пор, как шапку заменил топбар.
+     * Правила без разметки не «безвредный хвост» — они выглядят как
+     * действующий контракт и приглашают чинить иерархию заголовков там, где её
+     * уже нет (прежний тест ровно это и охранял). Актуальный контракт топбара —
+     * {@code shellFragmentsExposeNavLandmarksAndActiveContract} ниже.
+     */
     @Test
-    void focusPageMastheadYieldsToQuestionOnMobile() throws IOException {
+    void structuralCssKeepsNoDeadMastheadRules() throws IOException {
         String css = readStructuralCss();
 
-        // Desktop focus: title capped at 2xl so question (3xl) dominates.
-        assertThat(css).contains("html[data-design] .focus-page .ed-masthead-title {");
-        assertThat(css).contains("var(--font-size-2xl)");
-        // Mobile focus must restate the compact clamp — otherwise the desktop
-        // focus rule (higher specificity) blocks the generic mobile title rule.
-        assertThat(css).contains("html[data-design] .focus-page .ed-masthead-title {\n    font-size: clamp(1.15rem, 5vw, 1.35rem);");
-        // Session-only compact padding; never sticky (FNO).
-        assertThat(css).contains(".focus-page .ed-masthead:has(.ed-masthead-progress) .ed-masthead-inner");
-        assertThat(css).doesNotContain(".ed-masthead { position: sticky");
-        assertThat(css).doesNotContain(".ed-masthead{\n  position: sticky");
+        assertThat(css).doesNotContain(".ed-masthead");
+        assertThat(css).doesNotContain(".ed-nav-link");
+        assertThat(css).doesNotContain(".ed-theme-toggle");
     }
 
     @Test
     void statsTemplateKeepsSortableLiveRegionAccessibilityContract() throws IOException {
         String stats = readTemplate("templates/stats.html");
-        String statsJs = readTemplate("static/js/stats.js");
+        String tableSortJs = readTemplate("static/js/stats/table-sort.js");
+        String topicChartsJs = readTemplate("static/js/stats/topic-charts.js");
         assertThat(stats).contains("id=\"table-sort-status\"");
         assertThat(stats).contains("aria-live=\"polite\"");
         assertThat(stats).contains("aria-atomic=\"true\"");
-        // aria-keyshortcuts сортируемым th проставляет stats.js (прогрессивное
+        // aria-keyshortcuts сортируемым th проставляет table-sort.js (прогрессивное
         // улучшение: без JS сортировки нет — атрибут в шаблоне был бы враньём).
-        assertThat(statsJs).contains("aria-keyshortcuts', 'Enter Space'");
+        assertThat(tableSortJs).contains("aria-keyshortcuts', 'Enter Space'");
         assertThat(stats).contains("role=\"columnheader\"");
         assertThat(stats).contains("id=\"topicProgressChartFallback\"");
         assertThat(stats).contains("id=\"topicAccuracyChartFallback\"");
@@ -289,20 +362,63 @@ class TemplateFragmentContractTest {
             .contains(".stats-page .topic-table tr[hidden] { display: none !important; }")
             .contains(".stats-page .topic-table tr[hidden] { display: table-row !important; }");
         // STA-5/STJ-1: читаемые labels + без декоративной x-сетки.
-        assertThat(statsJs).contains("font: { size: 12 }");
-        assertThat(statsJs).contains("grid: { display: false }");
-        assertThat(statsJs).contains("tooltip: { enabled: true }");
+        assertThat(topicChartsJs).contains("font: { size: 12 }");
+        assertThat(topicChartsJs).contains("grid: { display: false }");
+        assertThat(topicChartsJs).contains("tooltip: { enabled: true }");
+    }
+
+    /**
+     * Подписи оси X графиков «Темы» обязаны иметь записанный бюджет.
+     *
+     * <p>Текст подписи приходит из данных (имя темы), а коробка графика задана
+     * снаружи (фикс. {@code .chart-wrapper}). Канвас на перебор реагирует молча:
+     * ни переполнения в DOM, ни ошибки — Chart.js просто выбрасывает подписи
+     * своим {@code autoSkip}. Замер до правки на 1440 (коробка 465×320, 25 баров):
+     * 13 подписей из 25, ось 151px из 320 — подписи весили больше данных.</p>
+     *
+     * <p>Гейт держит три условия, каждое из которых по отдельности возвращает
+     * молчаливую потерю: бюджет считается от КОРОБКИ (а не от длины пришедших
+     * имён), лишнее обрезается видимым многоточием, и число баров берётся из
+     * бюджета, а не из константы {@code MAX_BARS}. Полное имя обязано пережить
+     * обрезку — в тултипе и в табличном дубле.</p>
+     */
+    @Test
+    void topicChartsRecordLabelBudgetForXAxisLabels() throws IOException {
+        String js = readTemplate("static/js/stats/topic-charts.js");
+
+        // Бюджет выводится из геометрии коробки: ширина → число баров,
+        // высота → длина подписи. Канвас до первой отрисовки отдаёт свой
+        // интринсик 300×150, поэтому мерить обязаны родителя.
+        assertThat(js).contains("canvas?.parentElement ?? canvas");
+        assertThat(js).contains("box.width - Y_AXIS_RESERVE_PX) / MIN_BAR_SLOT_PX");
+        assertThat(js).contains("box.height * X_AXIS_MAX_SHARE");
+
+        // Промах виден: обрезка многоточием, а не тихий клип канваса.
+        assertThat(js).contains("const ELLIPSIS = '…';");
+        assertThat(js).contains("shortenToWidth(ctx, labels[index]");
+
+        // autoSkip «решал» проблему, выбрасывая каждую вторую подпись.
+        assertThat(js).contains("autoSkip: false");
+
+        // Число баров — из бюджета. Возврат к константе снова оставит бары
+        // без подписей: MAX_BARS ничего не знает о ширине коробки.
+        assertThat(js).contains("progressRanked.slice(0, progressBudget.bars)");
+        assertThat(js).contains("accuracyRanked.slice(0, accuracyBudget.bars)");
+        assertThat(js).doesNotContain(".slice(0, MAX_BARS)");
+
+        // Обрезка ничего не теряет: полное имя в тултипе и в таблице-дубле.
+        assertThat(js).contains("title: (items) => labels[items[0]?.dataIndex]");
+        assertThat(js).contains("progressData.map((t) => [t.name,");
+        assertThat(js).contains("accuracyData.map((t) => [t.name,");
     }
 
     @Test
-    void baseCssScopesPageOverridesToBodyClassAndIsSelfContained() throws IOException {
-        // Двухслойная архитектура switchable-дизайнов: tokens.css определяет ВСЕ
-        // токены, base.css — design-agnostic структуру (потребляет только
-        // var(--token)). Контракт base.css:
-        // (1) страничные оверрайды неймспейснуты body-классом под нейтральным
-        //     html[data-design] (не протекают между страницами, не цепляют чужой
-        //     каркас, работают под любым дизайном),
-        // (2) самодостаточен: bare-reset + утилиты, на которые опираются шаблоны.
+    void baseCssScopesPageOverridesToBodyClass() throws IOException {
+        // Двухслойная архитектура: tokens.css определяет ВСЕ токены, структурный
+        // CSS — design-agnostic каркас (потребляет только var(--token)). Контракт:
+        // страничные оверрайды неймспейснуты body-классом под нейтральным
+        // html[data-design] — не протекают между страницами, не цепляют чужой
+        // каркас, работают под любым дизайном.
         String css = readStructuralCss();
 
         assertThat(css).contains("html[data-design] .focus-page");
@@ -312,14 +428,54 @@ class TemplateFragmentContractTest {
         assertThat(css).contains("html[data-design] .summary-page");
         assertThat(css).contains("html[data-design] .error-page");
 
-        // Самодостаточность: глобальный reset + утилиты, на которые опираются шаблоны.
+        // Самодостаточность: глобальный reset. Набор атомарных утилит проверяет
+        // тест ниже — выведением из разметки, а не списком имён.
         assertThat(css).contains("box-sizing: border-box");
-        assertThat(css).contains(".d-inline");
-        assertThat(css).contains(".flex-shrink-0");
-        assertThat(css).contains(".flex-1");
-        assertThat(css).contains(".mt-3");
-        assertThat(css).contains(".overflow-x-auto");
-        assertThat(css).contains(".hidden");
+    }
+
+    /**
+     * Каждая атомарная утилита обязана иметь носителя в разметке или в JS.
+     *
+     * <p>Раньше здесь стоял список имён ({@code .d-inline}, {@code .flex-1},
+     * {@code .flex-shrink-0}…) с намерением «утилиты, на которые опираются
+     * шаблоны». Список — не инвариант: {@code .flex-shrink-0} не носил ни один
+     * узел, и тест не просто пропускал мёртвое правило, а ТРЕБОВАЛ его наличия —
+     * то есть охранял мусор от удаления. Проверяем само намерение: утилита
+     * существует ровно пока ею кто-то пользуется.
+     */
+    @Test
+    void everyAtomicUtilityHasAUserInMarkupOrScripts() throws IOException {
+        String utilities = CSS_COMMENT.matcher(readTemplate("static/css/utilities-core.css")).replaceAll("\n");
+        String consumers = readTemplatesAndScriptsBlob();
+
+        List<String> unused = new ArrayList<>();
+        Matcher declared = Pattern.compile("html\\[data-design]\\s+\\.([a-z0-9-]+)\\s*\\{").matcher(utilities);
+        while (declared.find()) {
+            String utility = declared.group(1);
+            if (!Pattern.compile("\\b" + Pattern.quote(utility) + "\\b").matcher(consumers).find()) {
+                unused.add(utility);
+            }
+        }
+
+        assertThat(unused)
+            .as("утилиты в utilities-core.css без единого носителя в templates/ или static/js/ — "
+                + "правило пережило свою разметку и должно быть удалено, а не законсервировано "
+                + "тестом. Мёртвые: %s", unused)
+            .isEmpty();
+    }
+
+    /** Всё, что может носить класс: шаблоны + клиентские скрипты. */
+    private String readTemplatesAndScriptsBlob() throws IOException {
+        StringBuilder sb = new StringBuilder();
+        for (String root : List.of("templates", "static/js")) {
+            Path dir = new ClassPathResource(root).getFile().toPath();
+            try (Stream<Path> walk = Files.walk(dir)) {
+                for (Path p : (Iterable<Path>) walk.filter(Files::isRegularFile).sorted()::iterator) {
+                    sb.append(new String(Files.readAllBytes(p), StandardCharsets.UTF_8)).append('\n');
+                }
+            }
+        }
+        return sb.toString();
     }
 
     @Test
@@ -417,9 +573,11 @@ class TemplateFragmentContractTest {
         assertThat(summary).contains("<caption class=\"visually-hidden\">");
         assertThat(summary).contains("scope=\"col\" role=\"columnheader\"");
         assertThat(summary).contains("role=\"rowheader\"");
-        // Share/print-тулбар инжектится PE-скриптом; статус-регион вежливый.
-        assertThat(summary).contains("'role', 'status'");
-        assertThat(summary).contains("'aria-live', 'polite'");
+        // Share/print-тулбар инжектится модулем (PE: без JS нет мёртвых кнопок),
+        // результат копирования озвучивается вежливым статус-регионом.
+        String shareToolsJs = readTemplate("static/js/summary/share-tools.js");
+        assertThat(shareToolsJs).contains("'role', 'status'");
+        assertThat(shareToolsJs).contains("'aria-live', 'polite'");
     }
 
     @Test
@@ -430,11 +588,14 @@ class TemplateFragmentContractTest {
         assertThat(head).contains("th:fragment=\"head(title, includeMermaid, includeChart, includeHighlight, page)\"");
         // PERF: hljs гейтится includeHighlight (только страницы с кодом), как mermaid/chart.
         assertThat(head).contains("th:if=\"${includeHighlight}\"");
-        // PERF: page-scoped CSS (summary/error/login/bookmarks — 0 утечки) грузятся только на своей странице.
-        assertThat(head).contains("th:if=\"${page == 'bookmarks'}\"");
-        assertThat(head).contains("th:if=\"${page == 'summary'}\"");
-        assertThat(head).contains("th:if=\"${page == 'error'}\"");
-        assertThat(head).contains("th:if=\"${page == 'login'}\"");
+        // PERF: page-scoped CSS (0 утечки) едет только на своей странице; гейт переехал
+        // из th:if шапки в манифест ленты, но остаётся обязательным.
+        String manifest = readTemplate("css-bundle-manifest.txt");
+        for (String page : List.of("bookmarks", "summary", "error", "login", "settings", "stats")) {
+            assertThat(manifest)
+                    .as("pages-%s.css должен быть гейтнут страницей %s", page, page)
+                    .contains(page + " /css/pages-" + page + ".css");
+        }
         assertThat(head).contains("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">");
         assertThat(head).contains("<title th:text=\"${title}\">");
         // FOUC-critical оси — inline в head до первого кадра.
@@ -446,15 +607,19 @@ class TemplateFragmentContractTest {
         assertThat(bootstrapJs).contains("setAttribute('data-layout'");
         assertThat(bootstrapJs).contains("setAttribute('data-reading-width'");
         assertThat(bootstrapJs).contains("setAttribute('data-density'");
-        // OPS-005: vendor-ассеты self-hosted, без CDN SRI.
-        assertThat(head).contains("th:href=\"@{/css/fonts-local.css}\"");
+        // OPS-005: vendor-ассеты self-hosted, без CDN SRI. @font-face едет первой строкой ленты.
+        assertThat(manifest).contains("* /css/fonts-local.css");
         // PERF: preload двух критичных Inter-сабсетов (короче swap-флэш, above-the-fold на каждой странице).
         // Cyrillic = русский блок U+0400-045F (файл ...SjIa0Z...), НЕ cyrillic-ext (...SjIa2J... = "unused preload").
         assertThat(head).contains("rel=\"preload\" as=\"font\" type=\"font/woff2\" crossorigin");
         assertThat(head).contains("th:href=\"@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa0ZL7W0Q5n-wU.woff2}\"");
         assertThat(head).contains("th:href=\"@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2}\"");
         assertThat(head).contains("th:src=\"@{/vendor/hljs/highlight.min.js}\"");
-        assertThat(head).contains("th:src=\"@{/vendor/mermaid/mermaid.min.js}\"");
+        // mermaid — единственный vendor без своего <script>: 2.7 МБ грузит
+        // mermaid-renderer.js по видимости схемы, а путь (с content-hash в prod)
+        // получает из этой meta. Тег скрипта здесь = возврат блокирующей загрузки.
+        assertThat(head).contains("<meta name=\"mermaid-src\" th:content=\"@{/vendor/mermaid/mermaid.min.js}\">");
+        assertThat(head).doesNotContain("th:src=\"@{/vendor/mermaid/mermaid.min.js}\"");
         assertThat(head).contains("th:src=\"@{/vendor/chart/chart.umd.min.js}\"");
         assertThat(head).doesNotContain("cdnjs.cloudflare.com");
         assertThat(head).doesNotContain("cdn.jsdelivr.net");
@@ -466,21 +631,36 @@ class TemplateFragmentContractTest {
     void shellFragmentsExposeNavLandmarksAndActiveContract() throws IOException {
         // Редизайн (ui-redesign-handoff): masthead → каркас shell. Контракт:
         // sidebar — nav-landmark с меткой + aria-current на активном пункте;
-        // topbar — прогресс-progressbar сессии + тоггл темы (aria-pressed);
+        // topbar — прогресс-progressbar сессии + тоггл темы;
         // mobile-nav — nav-landmark нижней навигации.
         String sidebar = readTemplate("templates/fragments/sidebar.html");
         String topbar = readTemplate("templates/fragments/topbar.html");
         String mobileNav = readTemplate("templates/fragments/mobile-nav.html");
 
         assertThat(sidebar).contains("th:fragment=\"sidebar(active)\"");
+        // Сам <aside> тоже обязан быть подписан, не только вложенный <nav>. На
+        // экране фокуса рядом стоит второй complementary (focus-session-rail):
+        // безымянный сайдбар давал бы SR два неразличимых «дополнения» подряд.
+        assertThat(sidebar).contains("class=\"sidebar\" aria-label=\"Боковая панель\"");
         assertThat(sidebar).contains("<nav class=\"nav\" aria-label=\"Основная навигация\">");
         assertThat(sidebar).contains("aria-current=${active == 'focus'} ? 'page' : null");
-        // Тоггл темы — aria-pressed; PE: раскрывается только при JS (класс hidden).
-        assertThat(sidebar).contains("data-theme-toggle");
-        assertThat(sidebar).contains("aria-pressed=\"false\"");
+        // Тоггл темы живёт ТОЛЬКО в topbar (desktop-панель + mobile-header). Раньше
+        // он дублировался ещё и в футере сайдбара: два одинаковых переключателя на
+        // одном экране → SR объявлял состояние темы дважды, и было непонятно, какой
+        // «настоящий». Регресс-гвард: в сайдбаре его быть не должно.
+        assertThat(sidebar).doesNotContain("data-theme-toggle");
 
         assertThat(topbar).contains("th:fragment=\"topbar\"");
         assertThat(topbar).contains("role=\"progressbar\"");
+        // PE: тоггл раскрывается только при JS (класс hidden снимает ui/shell.js).
+        assertThat(topbar).contains("data-theme-toggle");
+        assertThat(topbar).contains("class=\"icon-button hidden\" data-theme-toggle");
+        // aria-pressed на тоггле темы быть НЕ должно: светлая и тёмная — два
+        // равноправных режима, а не вкл/выкл одного состояния. «Не нажата» на
+        // кнопке в светлой теме SR читает как «тема выключена», что бессмысленно.
+        // Актуальный режим объявляет aria-label, который shell.js держит в
+        // согласии с темой.
+        assertThat(topbar).doesNotContain("aria-pressed=");
 
         assertThat(mobileNav).contains("th:fragment=\"mobile-nav(active)\"");
         assertThat(mobileNav).contains("class=\"mobile-nav\" aria-label=\"Мобильная навигация\"");
@@ -517,13 +697,13 @@ class TemplateFragmentContractTest {
             .as("объявленные th:fragment под templates/")
             .contains("head", "sprite", "sidebar", "topbar", "mobile-nav", "shell-scripts",
                       "inline-alert", "post-answer-controls",
-                      "result-zone-head", "stats-grid", "stats-grid-content",
+                      "result-zone-head", "stats-grid-content",
                       "today-hero", "today-chip", "training-actions", "mermaid-init");
 
         for (String name : fragmentNames) {
             // Ссылка — либо параметризованная `:: name(`, либо bare `:: name}`.
-            // Граница (`(`/`}`) не даёт `stats-grid` ложно засчитаться через
-            // `stats-grid-content`, а `head` — через `header`.
+            // Граница (`(`/`}`) не даёт короткому имени засчитаться через длинное
+            // (`head` через `header`, `sprite` через `sprite-extra`).
             boolean referenced = corpus.contains(":: " + name + "(")
                               || corpus.contains(":: " + name + "}");
             assertThat(referenced)
@@ -536,8 +716,8 @@ class TemplateFragmentContractTest {
     void iconSpriteHasNoOrphanSymbols() throws IOException {
         // Регресс-гвард против «сироты-иконки»: каждый <symbol id="i-X"> в спрайте
         // (fragments/icons.html) обязан использоваться хотя бы одной ссылкой — либо
-        // <use href="#i-X"> в шаблоне, либо JS-хелпером icon('X')/svgIcon('X')
-        // (аргумент БЕЗ префикса i-, хелпер сам добавляет #i-, см. app.js:38/1876).
+        // <use href="#i-X"> в шаблоне, либо JS-хелпером icon('X')
+        // (аргумент БЕЗ префикса i-, хелпер сам добавляет #i-, см. core/dom.js).
         // Неиспользуемый символ грузится на КАЖДОЙ странице (спрайт инлайнится через
         // header-фрагмент) = мёртвый payload. App не нужен: чтение ресурсов.
         // Ручной orphan-аудит R0.137 (снял i-bot/chart/lightbulb/refresh/search,
@@ -565,13 +745,13 @@ class TemplateFragmentContractTest {
         String refs = corpusBuilder.toString();
 
         // Использованные = прямые #i-X (шаблонный <use>) + аргументы хелперов
-        // icon('X')/svgIcon('X') (в них имя без i-, добавляем префикс).
+        // icon('X') (в нём имя без i-, добавляем префикс).
         Set<String> referenced = new LinkedHashSet<>();
         Matcher hrefMatcher = Pattern.compile("#(i-[a-z0-9-]+)").matcher(refs);
         while (hrefMatcher.find()) {
             referenced.add(hrefMatcher.group(1));
         }
-        Matcher helperMatcher = Pattern.compile("(?:svgIcon|icon)\\([\"']([a-z0-9-]+)").matcher(refs);
+        Matcher helperMatcher = Pattern.compile("icon\\([\"']([a-z0-9-]+)").matcher(refs);
         while (helperMatcher.find()) {
             referenced.add("i-" + helperMatcher.group(1));
         }
@@ -677,24 +857,121 @@ class TemplateFragmentContractTest {
         String head = readTemplate("templates/fragments/head.html");
         String scripts = readTemplate("templates/fragments/scripts.html");
 
-        assertThat(head).contains("th:href=\"@{/css/tokens.css}\"");
-        assertThat(head).contains("th:href=\"@{/css/pixel-fx.css}\"");
+        // CSS едет одной лентой: content-hash несёт её собственное имя, а вложенные
+        // url() переписывает CssBundleService через ResourceUrlProvider.
+        assertThat(head).contains("@{__${@cssBundle.pathFor(page)}__}");
+        assertThat(head).doesNotContain("rel=\"stylesheet\" th:href=\"@{/css/");
         assertThat(head).doesNotContain("(v=");
         assertThat(scripts).contains("th:src=\"@{/js/app-entry.js}\"");
         assertThat(scripts).doesNotContain("(v=");
     }
 
+    /**
+     * Манифест обязан покрывать ровно те CSS, что лежат в проекте.
+     *
+     * <p>Пока файлы перечисляла шапка, забытый файл был виден глазами при правке
+     * разметки. Теперь список ушёл в манифест, и новый {@code components-*.css}
+     * легко создать, подключить нигде и долго гадать, почему правила не
+     * применяются. Обратная сторона — путь в манифесте без файла: лента тогда
+     * падает на первом рендере.</p>
+     *
+     * <p>{@code base.css} — dev-агрегатор через {@code @import}, в ленту не едет
+     * намеренно.</p>
+     */
+    @Test
+    void cssBundleManifestCoversEveryProjectStylesheet() throws IOException {
+        List<String> manifest = manifestPaths();
+        for (String path : manifest) {
+            assertThat(new ClassPathResource("static" + path).exists())
+                    .as("манифест ссылается на несуществующий файл %s", path)
+                    .isTrue();
+        }
+
+        Path cssDir = new ClassPathResource("static/css").getFile().toPath();
+        List<String> onDisk;
+        try (Stream<Path> walk = Files.walk(cssDir)) {
+            onDisk = walk.filter(Files::isRegularFile)
+                    .map(p -> "/css/" + cssDir.relativize(p).toString().replace('\\', '/'))
+                    .filter(p -> p.endsWith(".css") && !p.equals("/css/base.css"))
+                    .sorted()
+                    .toList();
+        }
+        assertThat(manifest)
+                .as("каждый CSS проекта должен быть в css-bundle-manifest.txt (иначе он не грузится ни на одной странице)")
+                .containsAll(onDisk);
+    }
+
+    /**
+     * Каждый динамический {@code import()} обязан быть строкой манифеста preload.
+     *
+     * <p>О модуле за статическим {@code import} браузер узнаёт, распарсив
+     * импортёра, — цепочку {@code JsPreloadService} разворачивает сам. А модуль за
+     * {@code import('./x.js')} не виден вообще ничему до момента исполнения: он
+     * поедет отдельной волной ровно так, как ехали все шесть до preload. Ровно
+     * поэтому такие модули перечисляются руками — и ровно поэтому забыть строку
+     * здесь ничем себя не проявляет: страница работает, просто медленнее.</p>
+     *
+     * <p>Сверка двусторонняя. Лишняя строка манифеста так же вредна, как
+     * пропущенная: preload неиспользованного модуля Chrome пишет предупреждением в
+     * консоль и тратит канал на байты, которые странице не нужны.</p>
+     */
+    @Test
+    void everyDynamicImportIsGatedInJsPreloadManifest() throws IOException {
+        Path jsDir = new ClassPathResource("static/js").getFile().toPath();
+        Pattern dynamicImport = Pattern.compile("\\bimport\\(\\s*['\"](\\.[^'\"]+)['\"]");
+
+        Set<String> dynamic = new LinkedHashSet<>();
+        try (Stream<Path> walk = Files.walk(jsDir)) {
+            for (Path p : (Iterable<Path>) walk.filter(p -> p.toString().endsWith(".js")).sorted()::iterator) {
+                String dir = "/js/" + jsDir.relativize(p).getParent();
+                dir = dir.equals("/js/null") ? "/js/" : dir.replace('\\', '/') + "/";
+                Matcher m = dynamicImport.matcher(new String(Files.readAllBytes(p), StandardCharsets.UTF_8));
+                while (m.find()) {
+                    dynamic.add(URI.create(dir + m.group(1)).normalize().getPath());
+                }
+            }
+        }
+        assertThat(dynamic).as("динамических import() в проекте не должно стать ноль незаметно").isNotEmpty();
+
+        List<String> entries = new ArrayList<>();
+        Set<String> gated = new LinkedHashSet<>();
+        for (String raw : readTemplate(JsPreloadService.MANIFEST_PATH).split("\n")) {
+            Matcher matcher = MANIFEST_ENTRY.matcher(raw.strip());
+            if (!matcher.matches() || raw.strip().startsWith("#")) {
+                continue;
+            }
+            entries.add(matcher.group(2));
+            if (!"*".equals(matcher.group(1))) {
+                gated.add(matcher.group(2));
+            }
+        }
+
+        for (String path : entries) {
+            assertThat(new ClassPathResource("static" + path).exists())
+                    .as("манифест preload ссылается на несуществующий модуль %s", path)
+                    .isTrue();
+        }
+        assertThat(gated)
+                .as("набор постранично гейтнутых строк манифеста обязан совпадать с набором import() в /js")
+                .containsExactlyInAnyOrderElementsOf(dynamic);
+    }
+
     @Test
     void pixelAndMotionContractPresentInHeadAndCss() throws IOException {
         String head = readTemplate("templates/fragments/head.html");
-        String pixelCss = readTemplate("static/css/pixel-fx.css");
-        String layoutCss = readTemplate("static/css/reset-layout.css");
+        String css = readStructuralCss();
 
         assertThat(head).contains("setAttribute('data-pixel'");
         assertThat(head).contains("setAttribute('data-motion'");
         assertThat(head).contains("PIXEL_LEVELS = ['low', 'med', 'high']");
-        assertThat(pixelCss).contains("[data-pixel=");
-        assertThat(layoutCss).contains("[data-motion=\"off\"]");
+        // Каждый уровень, который объявляет head.html, обязан что-то менять в
+        // каскаде — иначе переключатель в настройках врёт пользователю.
+        // Проверяем по всему каскаду, а не по одному файлу: правила уровней
+        // распределены по pixel-*.css и мигрируют между ними.
+        assertThat(css).contains("[data-pixel=\"low\"]");
+        assertThat(css).contains("[data-pixel=\"med\"]");
+        assertThat(css).contains("[data-pixel=\"high\"]");
+        assertThat(css).contains("[data-motion=\"off\"]");
     }
 
     @Test
@@ -720,5 +997,155 @@ class TemplateFragmentContractTest {
             .hasSize(1);
         assertThat(filesWithInclude.get(0).toString().replace('\\', '/'))
             .isEqualTo("fragments/scripts.html");
+    }
+
+    /**
+     * Модуль обязан грузиться на той странице, чью разметку он оживляет.
+     *
+     * <p>{@code app-entry.js} делит код на кластеры по классу {@code body}: тяжёлые
+     * модули не едут на страницы, где им нечего делать. Цена деления — новая
+     * возможность ошибиться: инициализатор можно приписать к чужому кластеру, и
+     * тогда он не выполнится нигде. Компилятор молчит (модуль импортирован и
+     * вызван), браузер молчит (исключения нет), UI молчит (остаётся корректный
+     * no-JS-вид). Единственный способ это заметить — сверить, где разметка, с тем,
+     * где код.
+     *
+     * <p>Проверка идёт от разметки: якорь ищется в шаблонах страниц, класс
+     * {@code body} читается оттуда же, и уже он сверяется с кластером в
+     * {@code app-entry.js}. Поэтому переезд блока на другую страницу тест ловит
+     * так же, как и переезд модуля в другой кластер.
+     */
+    @Test
+    void progressiveEnhancementModulesLoadOnThePageThatRendersTheirMarkup() throws IOException {
+        Map<String, Set<String>> clusters = readPageClusters();
+        Map<String, String> pageClassByTemplate = readPageClasses();
+
+        List<String> problems = new ArrayList<>();
+        for (Map.Entry<String, String> entry : PROGRESSIVE_ENHANCEMENT_ANCHORS.entrySet()) {
+            String anchor = entry.getKey();
+            String module = entry.getValue();
+            String name = anchor.substring(1);
+
+            List<String> pages = new ArrayList<>();
+            for (Map.Entry<String, String> template : pageClassByTemplate.entrySet()) {
+                if (readTemplate("templates/" + template.getKey()).contains(name)) {
+                    pages.add(template.getValue());
+                }
+            }
+
+            if (pages.isEmpty()) {
+                problems.add(anchor + ": разметки нет ни в одном шаблоне страницы — "
+                        + "модуль " + module + " активировать нечего");
+                continue;
+            }
+            for (String pageClass : pages) {
+                Set<String> modules = clusters.getOrDefault(pageClass, Set.of());
+                if (!modules.contains(module)) {
+                    problems.add(anchor + " рендерится на ." + pageClass + ", но кластер этой "
+                            + "страницы грузит " + modules + " — без " + module);
+                }
+            }
+        }
+
+        assertThat(problems)
+                .as("Прогрессивное улучшение отваливается молча: пользователь остаётся с "
+                        + "рабочим no-JS-видом и не понимает, что фича сломана. Нарушения: %s", problems)
+                .isEmpty();
+    }
+
+    /** Класс {@code body} → модули, которые {@code app-entry.js} грузит для этой страницы. */
+    private Map<String, Set<String>> readPageClusters() throws IOException {
+        String entry = Files.readString(
+                new ClassPathResource("static/js/app-entry.js").getFile().toPath(), StandardCharsets.UTF_8);
+
+        Map<String, Set<String>> modulesByLoader = new LinkedHashMap<>();
+        Matcher loader = Pattern.compile("async function (\\w+)\\(\\)\\s*\\{(.*?)\\n}", Pattern.DOTALL)
+                .matcher(entry);
+        while (loader.find()) {
+            Set<String> modules = new LinkedHashSet<>();
+            Matcher imported = Pattern.compile("import\\('(\\./[\\w./-]+)'\\)").matcher(loader.group(2));
+            while (imported.find()) {
+                modules.add(imported.group(1));
+            }
+            modulesByLoader.put(loader.group(1), modules);
+        }
+
+        Map<String, Set<String>> clusters = new LinkedHashMap<>();
+        Matcher wiring = Pattern.compile("pageIs\\('([\\w-]+)'\\)\\)\\s*\\{\\s*tasks\\.push\\((\\w+)\\(\\)\\)")
+                .matcher(entry);
+        while (wiring.find()) {
+            clusters.put(wiring.group(1), modulesByLoader.getOrDefault(wiring.group(2), Set.of()));
+        }
+
+        assertThat(clusters).as("кластеры страниц в app-entry.js").isNotEmpty();
+        return clusters;
+    }
+
+    /** Шаблон страницы → класс её {@code body}. Фрагменты сюда не попадают: у них нет body. */
+    private Map<String, String> readPageClasses() throws IOException {
+        Path templatesDir = new ClassPathResource("templates").getFile().toPath();
+        Pattern bodyClass = Pattern.compile("<body[^>]*class=\"([^\"]*?)\"");
+
+        Map<String, String> pages = new LinkedHashMap<>();
+        try (Stream<Path> walk = Files.walk(templatesDir)) {
+            for (Path p : (Iterable<Path>) walk.filter(p -> p.toString().endsWith(".html")).sorted()::iterator) {
+                Matcher m = bodyClass.matcher(Files.readString(p, StandardCharsets.UTF_8));
+                if (!m.find()) {
+                    continue;
+                }
+                for (String token : m.group(1).split("\\s+")) {
+                    if (token.endsWith("-page")) {
+                        pages.put(templatesDir.relativize(p).toString().replace('\\', '/'), token);
+                    }
+                }
+            }
+        }
+
+        assertThat(pages).as("шаблоны страниц с классом *-page").isNotEmpty();
+        return pages;
+    }
+
+    /**
+     * Числа, которые читает машина, не должны зависеть от локали.
+     *
+     * <p>Приложение русское, и {@code #numbers.formatDecimal(x, 1, 1)} честно печатает
+     * «34,8» — это правильно для {@code th:text}. Но тот же вызов стоял в атрибутах,
+     * которые разбирает не человек. Для {@code data-progress} запятую молча гасил
+     * {@code .replace(',', '.')} в JS-гидраторе; у {@code stroke-dasharray} SSR-дуги
+     * на итогах сессии гасить было некому — а в SVG запятая такой же разделитель
+     * списка, как пробел, поэтому «326,73 400» читалось как ТРИ значения, нечётный
+     * список удваивался, и сплошная дуга становилась пунктиром. Отказ был бесшумным
+     * и невидимым на нулевой точности.
+     *
+     * <p>Гвард требует явного {@code 'POINT'} в таких атрибутах. Сырое число
+     * ({@code data-progress=${item.percent}}) под проверку не попадает намеренно:
+     * {@code Double.toString} от локали не зависит.
+     */
+    @Test
+    void machineReadableNumericAttributesUseExplicitPointSeparator() throws IOException {
+        Path templatesDir = new ClassPathResource("templates").getFile().toPath();
+        // Атрибут + formatDecimal до закрывающей `}`: ловим ровно форматированное
+        // значение, а не соседние выражения в том же теге.
+        Pattern formatted = Pattern.compile(
+            "(data-progress|stroke-dasharray)=\\$\\{[^}]*#numbers\\.formatDecimal\\([^}]*\\}");
+
+        List<String> localeDependent = new ArrayList<>();
+        try (Stream<Path> walk = Files.walk(templatesDir)) {
+            for (Path p : (Iterable<Path>) walk.filter(p -> p.toString().endsWith(".html")).sorted()::iterator) {
+                String html = new String(Files.readAllBytes(p), StandardCharsets.UTF_8);
+                Matcher m = formatted.matcher(html);
+                while (m.find()) {
+                    if (!m.group().contains("'POINT'")) {
+                        localeDependent.add(templatesDir.relativize(p) + ": " + m.group());
+                    }
+                }
+            }
+        }
+
+        assertThat(localeDependent)
+            .as("data-progress / stroke-dasharray обязаны печатать разделитель дроби явно "
+                + "(#numbers.formatDecimal(x, 1, 'NONE', N, 'POINT')), иначе русская локаль "
+                + "подставит запятую и значение прочитается неверно. Нарушения: %s", localeDependent)
+            .isEmpty();
     }
 }
