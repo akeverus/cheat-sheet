@@ -31,21 +31,12 @@ html[data-design] .focus-aside .session-progress-track,
 html[data-design] .focus-aside .today-chip {
   opacity: 0.88;
 }
-/* Ряд мета-бейджей шапки экрана вопроса (сложность + «К повторению»): flex-ряд с
-   переносом, отбивка до heading-героя. ВЫНЕСЕН из shell.css @shell (Волна 4, type-B):
-   .focus-training-предок существует только на focus → грузится th:if page==focus.
-   Размещён ПЕРЕД @media(max-width:600) ниже, где .focus-page .question-meta переопределяет
-   margin-bottom (space-4 → space-2): равная спец (0,3,1), @media LATER в файле выигрывает
-   mobile-margin = как было при @pages(1032) над @shell(268). Остальные свойства
-   (display/flex-wrap/align/gap) задаёт только это правило. */
-html[data-design] .focus-training .question-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  margin-bottom: var(--space-4);
-}
-html[data-design] .focus-page .question-meta .badge {
+/* Отдельного .question-meta на focus больше нет: бейдж сложности переехал в
+   .question-zone-head к чипу режима (см. focus-training.html) — два ярлыка по
+   25 символов держали две строки, отвечая на один вопрос «что передо мной».
+   Стилевая метка бейджа переехала следом: тише обычного .badge, чтобы мета не
+   спорила по весу с самим вопросом. */
+html[data-design] .focus-page .question-zone-head .badge {
   color: var(--color-text-tertiary);
   border-color: var(--color-border-secondary);
   background: transparent;
@@ -54,9 +45,12 @@ html[data-design] .focus-topbar .zone-chip {
   color: var(--color-text-tertiary);
   border-color: var(--color-border-secondary);
 }
-html[data-design] .focus-topbar .zone-hint {
+/* Подсказка потока стоит над радиогруппой (см. focus-training.html), а не в
+   шапке вопроса. Тише вариантов: это инструкция к действию, а не его предмет. */
+html[data-design] .focus-page #interview-form > .zone-hint {
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
+  margin: 0 0 var(--space-2);
 }
 html[data-design] .focus-question {
   color: var(--color-text-primary);
@@ -190,25 +184,55 @@ html[data-design] .focus-page .recoverable-banner-expired {
 }
 html[data-design] .focus-page .resume-banner-action { flex-shrink: 0; }
 html[data-design] .focus-page .session-progress-fill {
-  height: 100%; width: 0;
+  height: 100%;
+  width: calc(var(--progress, 0) * 1%);
   background: var(--color-accent-primary);
   transition: width var(--duration-slow) var(--easing-out);
 }
 
-/* Зона-голова вопроса (chip + hint) */
+/* Зона-голова вопроса — строка идентичности: тема + сложность + режим. Три
+   коротких ярлыка об одном («что передо мной»), поэтому один ряд с переносом,
+   а не три строки. Тема первой и чуть заметнее соседей: она ориентир, а
+   сложность и режим — уточнения к нему. */
 html[data-design] .focus-page .question-zone-head {
-  display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1);
-  margin-bottom: var(--space-3);
+  display: flex; flex-wrap: wrap; align-items: center;
+  column-gap: var(--space-2); row-gap: var(--space-1);
 }
+
+/* ---- Ритм пред-вопросной меты -------------------------------------------
+   Над вопросом идут две короткие строки: статус сессии («где я вообще») →
+   идентичность вопроса («что передо мной»), и условная третья — причина
+   повторения («почему именно он»). Порядок вложенный: от самого общего к
+   самому частному, дальше сразу заголовок.
+
+   Раньше строк было пять: чипы → очередь сессии → тема → причина → h1. Тема
+   стояла четвёртой и самой мелкой, хотя как ориентир полезнее всего, а блок
+   сессии вклинивался между чипами вопроса и его темой — разрывал одну группу
+   фактов другой. Выровненный шаг это маскировал, но не лечил: пять равных по
+   типографике серых строк не говорят, что из них важно.
+
+   Шаг между строками — space-2; единственный крупный разрыв стоит там, где
+   он что-то значит: между последней мета-строкой и вопросом. Обёртке
+   .focus-topbar марджин обнулён: расстояние держит последний реальный элемент
+   группы, а не пустой контейнер. */
+html[data-design] .focus-page .focus-topbar { margin-bottom: 0; }
+html[data-design] .focus-page .question-zone-head,
+html[data-design] .focus-page .focus-aside.focus-session-rail { margin-bottom: var(--space-2); }
+html[data-design] .focus-page .focus-aside .today-chip { margin-bottom: 0; }
+html[data-design] .focus-page .focus-question-reason { margin-bottom: var(--space-4); }
 /* .zone-chip / .zone-hint (база) вынесены в components-answer.css (@layer
    components, D3f Волны 3): shared — рендерятся через fragments/result-zone-head.html,
-   включаемый и result.html. focus-only .focus-topbar .zone-chip/.zone-hint (выше)
-   остаются здесь. */
+   включаемый и result.html. focus-only .focus-topbar .zone-chip и подсказка над
+   радиогруппой (выше) остаются здесь. */
 
 /* Заголовок вопроса — герой */
-/* Тема вопроса — эйбрау-кикер над заголовком вопроса. Mono/uppercase/wide как
-   у .ed-eyebrow и .zone-chip — единый язык метаданных. Даёт ориентир «из какой
-   области вопрос» в TRAINING/марафоне, где темы вперемешку. */
+/* Тема вопроса — первый ярлык строки идентичности. Mono/uppercase/wide как у
+   .ed-eyebrow и .zone-chip — единый язык метаданных. Даёт ориентир «из какой
+   области вопрос» в TRAINING/марафоне, где темы вперемешку.
+
+   Единственная в ряду в secondary, а не tertiary: рядом стоят сложность и
+   режим, и без разницы в тоне три ярлыка читались бы как равноправный список,
+   хотя ориентир среди них один. */
 html[data-design] .focus-question-topic {
   font-family: var(--font-family-mono);
   font-size: var(--font-size-xs);
@@ -216,12 +240,19 @@ html[data-design] .focus-question-topic {
   letter-spacing: var(--letter-spacing-wide);
   text-transform: uppercase;
   color: var(--color-text-secondary);
-  margin: 0 0 var(--space-2);
+  margin: 0;
 }
 
 /* Explainable-причина повторения. Тихая подпись под темой: текст в secondary
    (AA), смысл несёт текст. Цветная точка-маркер (::before) — декоративный
-   сигнал категории (просрочка/ошибка/слабый навык), не требует контраста. */
+   сигнал категории, не требует контраста.
+
+   Категорий ровно столько, сколько констант в ReviewReason.Type — их пять, и
+   каждая обязана иметь своё правило. Базовый серый ниже это НЕ дефолт «на все
+   остальные», а фон под точку: причина без своего правила падает в него молча
+   и выглядит рабочей, просто теряет категорию. Так и было с NEW и BOOKMARK.
+   Держит соответствие ReviewReasonPaletteTest (обе стороны: константа без
+   правила и правило без константы). */
 html[data-design] .focus-question-reason {
   display: flex;
   align-items: baseline;
@@ -250,15 +281,21 @@ html[data-design] .focus-question-reason[data-reason-type="OVERDUE"]::before {
 html[data-design] .focus-question-reason[data-reason-type="WEAK_SKILL"]::before {
   background: var(--color-accent-primary);
 }
-/* .review-policy (голая, shared focus+result) вынесена в components-answer.css
-   (@layer components, D3c Волны 3): рендерится и на result.html:104. Здесь остаётся
-   focus-only .focus-review-policy (скрыт на .focus-page split-layout ниже, ~1054). */
-html[data-design] .focus-review-policy {
-  margin: calc(-1 * var(--space-2)) 0 var(--space-4);
-  font-size: var(--font-size-xs);
-  line-height: 1.4;
-  color: var(--color-text-tertiary);
+/* Ещё не изучалась — не тревога и не достижение: нейтрально-информационный
+   синий, тот же токен, что несёт информационный смысл в остальном продукте. */
+html[data-design] .focus-question-reason[data-reason-type="NEW"]::before {
+  background: var(--color-status-info);
 }
+/* Закладка пользователя. Фиолетовый взят не произвольно: этим же токеном
+   покрашен пункт закладок в сайдбаре (pixel-nav-badges.css) — один смысл
+   держит один цвет. Teal сюда нельзя: он уже занят WEAK_SKILL. */
+html[data-design] .focus-question-reason[data-reason-type="BOOKMARK"]::before {
+  background: var(--color-status-purple);
+}
+/* .review-policy (голая, shared focus+result) вынесена в components-answer.css
+   (@layer components, D3c Волны 3): рендерится и на result.html:104, и в разборе
+   после ответа. Правила для .focus-review-policy убраны вместе с самим элементом
+   (см. focus-training.html: политика SRS перед вопросом ничего не решает). */
 html[data-design] .focus-page .result-feedback .review-policy {
   margin: var(--space-2) 0 0;
 }
@@ -286,15 +323,14 @@ html[data-design] .focus-question {
   min-height: calc(var(--focus-question-lines, 2) * var(--line-height-tight) * 1em + var(--space-5) + var(--rule-weight));
 }
 
-/* Код-блок — нативный <details> (PE: раскрытие без JS) */
+/* Код-блок условия вопроса */
 /* D4-batch2 (анкер-фаза): question-code + diagram кластеры — focus-only (код-блок и
    диаграмма УСЛОВИЯ вопроса рендерятся в .focus-training; в result.html код идёт через
    .result-page .question-code / pages-result, диаграммы там нет — completeness sweep).
    Заякорено под .focus-page. Каскад-нейтрально: pixel-fx (@pixel) выигрывает; shell
    .content-box-оверрайды (@shell, ниже) @pages и так бьёт; pages-layout print
    `display:none !important` (@media print) иммунен к спец-бампу; pages-result scope
-   .result-page отдельный. .question-code-summary .ed-icon оставлен focus-only оверрайд
-   (перебивает @components-базу .ed-icon по слою — сохранено). */
+   .result-page отдельный. */
 html[data-design] .focus-page .question-code-wrap {
   margin-bottom: var(--space-5);
   /* pre/white-space:pre иначе задаёт min-content по самой длинной строке
@@ -304,7 +340,7 @@ html[data-design] .focus-page .question-code-wrap {
   overflow-x: auto;
 }
 html[data-design] .focus-page .question-code-wrap .code-copy-wrap,
-html[data-design] .focus-page .question-code-wrap .question-code-details,
+html[data-design] .focus-page .question-code-wrap .code-viewport,
 html[data-design] .focus-page .question-code-wrap pre.question-code,
 html[data-design] .focus-page .question-code-wrap pre {
   max-width: 100%;
@@ -313,32 +349,28 @@ html[data-design] .focus-page .question-code-wrap pre {
 html[data-design] .focus-page .question-code-wrap pre.question-code,
 html[data-design] .focus-page .question-code-wrap pre {
   overflow-x: auto;
+  /* Отбивка --space-5, а не унаследованный от `pre` --space-4: до удаления вендорной
+     темы hljs листинг получал ещё 1em от её `pre code.hljs{padding:1em}`. Добавка
+     была случайной (чужая тема поверх нашей), но воздух давала верный — панель во
+     всю ширину колонки с 16px по краю читается тесно. Теперь отбивка одна и своя. */
+  padding: var(--space-5);
 }
-/* Зазор между summary «Пример кода» и код-блоком. Целим ОБА случая: без JS <pre> —
-   прямой потомок details; с JS app.js оборачивает его в .code-copy-wrap (тогда прямой
-   потомок details = wrap, а старый `> pre` не матчил → зазор пропадал, CLEAN-01B). */
-html[data-design] .focus-page .question-code-details > pre,
-html[data-design] .focus-page .question-code-details > .code-copy-wrap { margin-top: var(--space-3); }
-/* #7: summary — код-аффорданс (mono-лейбл + иконка ⟨⟩), НЕ нейтральная кнопка.
-   Читается как заголовок код-блока, а не «необязательное действие». Гасим
-   нативный треугольник; состояние раскрытия — ▸/▾ (как в .sm2-details). */
-html[data-design] .focus-page .question-code-summary {
-  list-style: none;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  cursor: pointer;
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide);
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
+/* Рамка листинга — та же прокручиваемая область, что .diagram-viewport у соседней
+   диаграммы: длинный код скроллится внутри блока, а не выдавливает варианты за
+   нижний край экрана. max-height в vh, потому что «поместиться» — это про вьюпорт,
+   а не про абсолютные пиксели; на низком окне лимит ужимается вместе с ним. */
+html[data-design] .focus-page .question-code-wrap .code-viewport {
+  overflow: auto;
+  max-height: min(60vh, 520px);
+  overscroll-behavior: contain;
+  padding: var(--space-2);
 }
-html[data-design] .focus-page .question-code-summary:hover { color: var(--color-text-primary); }
-html[data-design] .focus-page .question-code-summary .ed-icon { width: 1em; height: 1em; color: var(--color-text-tertiary); }
-html[data-design] .focus-page .question-code-summary::-webkit-details-marker { display: none; }
-html[data-design] .focus-page .question-code-summary::after { content: "▸"; color: var(--color-text-tertiary); font-size: var(--font-size-sm); margin-inline-start: auto; }
-html[data-design] .focus-page .question-code-details[open] .question-code-summary::after { content: "▾"; }
+/* На телефоне те же 60vh — это уже больше половины экрана под контекст, а задача
+   (варианты) уезжает за два экрана. Код остаётся читаемым куском, но перестаёт
+   быть главным содержимым страницы. */
+@media (max-width: 767px) {
+  html[data-design] .focus-page .question-code-wrap .code-viewport { max-height: min(42vh, 340px); }
+}
 
 /* Варианты MCQ — editorial-строки с буквенным маркером */
 html[data-design] #interview-options { counter-reset: opt; display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-6); max-width: var(--max-width-options); }
@@ -366,7 +398,7 @@ html[data-design] #interview-options label {
    до ~88ch и хуже сканировались в момент выбора — прямое попадание в претензию
    «ответы расположены плохо» (адверсари-ревью p1 focus-flow). В 2×2 (grid) кап не
    срабатывает: ячейка уже 68ch. :not([class]) бьёт только по тексту, не по
-   добавляемым app.js .option-status-label/.option-explanation. */
+   добавляемому quiz/interview.js .option-status-label. */
 html[data-design] #interview-options label > span:not([class]) { max-width: 68ch; }
 html[data-design] #interview-options label::before {
   content: counter(opt, upper-latin);
@@ -406,20 +438,40 @@ html[data-design] #interview-options label:has(input:focus-visible) {
 /* Пост-ответные состояния .option-correct/.option-wrong (+::before-маркер, все
    !important) вынесены в components-answer.css (@layer components, D3d Волны 3):
    shared — рендерятся и на no-JS result.html. Каскад-безопасность !important
-   проверена там же. .option-dimmed (focus-only, ниже) остаётся здесь. */
-html[data-design] .focus-page .option-dimmed { opacity: 0.55; }
-/* Пост-ответный статус-лейбл и объяснение тянем на всю ширину карточки
-   (под строку «[A] текст»), чтобы auto-колонка badge не раздувалась статусом
-   до 109px и не зажимала текст в узкую колонку на мобиле. */
-html[data-design] #interview-options label .option-status-label,
-html[data-design] #interview-options label .option-explanation { grid-column: 1 / -1; min-width: 0; }
+   проверена там же. Ниже — только focus-анкор `.option-dimmed`: сам класс теперь
+   общий словарь (result.html вешает его же вместо своего `.option-other`), но
+   на каждой из страниц его перебивает СВОЁ базовое правило цвета варианта, и
+   победить их можно только по месту — здесь через #interview-options, на
+   странице результата через `.options > div` (pages-result.css). */
+/* Невыбранный неправильный вариант после проверки. Рецессивность задаём ЦВЕТОМ,
+   а не `opacity`: прозрачность гасит слой целиком и роняла разом и текст (3.71:1),
+   и буквенный чип (2.36:1) — при том что собственный цвет чипа
+   (--color-text-secondary) сам по себе ~7:1. Формально это «неактивный контрол»
+   (input.disabled) и под исключение WCAG 1.4.3 подпадает, но по сути дистрактор —
+   учебный текст: сравнить его с верным ответом и есть смысл разбора. Чип держим
+   в полную силу отдельно — вердикт ссылается на варианты по буквам («Ты выбрал A.
+   Правильный ответ D»), и буква работает якорем сопоставления.
+   Селектор с #interview-options намеренно: базовое `html[data-design]
+   #interview-options label` задаёт color: --color-text-primary со
+   специфичностью (1,2,1) и побило бы «плоское» .option-dimmed (0,3,1) в том же
+   слое @pages. Здесь (1,3,2) — выигрываем каскад без !important.
+   Рамку тут НЕ трогаем: @layer pixel держит на вариантах
+   `border-color: currentcolor !important`, и она сама следует за приглушённым
+   текстом — отдельная декларация была бы мёртвой. */
+html[data-design] .focus-page #interview-options label.option-dimmed {
+  color: var(--color-text-tertiary);
+}
+/* Пост-ответный статус-лейбл тянем на всю ширину карточки (под строку
+   «[A] текст»), чтобы auto-колонка badge не раздувалась статусом до 109px и
+   не зажимала текст в узкую колонку на мобиле. */
+html[data-design] #interview-options label .option-status-label { grid-column: 1 / -1; min-width: 0; }
 
 /* =============================================================================
    C1-i — Instrument: фокус-тренировка. CSS-only рестайл СУЩЕСТВУЮЩИХ хуков
-   (DOM focus-training.html и app.js НЕ меняются): paper-карты вариантов с
+   (DOM focus-training.html и quiz/interview.js НЕ меняются): paper-карты вариантов с
    ring-hover вместо заливки, строчный mono-шёпот темы, medium-вопрос,
    mono-цифры прогресса. Буква варианта остаётся CSS-счётчиком ::before,
-   пост-ответные классы app.js (.option-correct/-wrong/-dimmed) работают через
+   пост-ответные классы quiz/interview.js (.option-correct/-wrong/-dimmed) работают через
    статус-токены instrument сами; grade-1/4-акценты уже design-agnostic.
    Специфичность равна generic-правилам выше — выигрыш по порядку. =========== */
 
@@ -451,6 +503,13 @@ html[data-design="instrument"] .focus-progress-line .session-progress {
    прибора: акцентная граница БЕЗ заливки (как hover ошибок в C6-i). */
 html[data-design="instrument"] #interview-options label {
   background: var(--color-bg-primary);
+  /* Компактные строки-варианты (макет): меньше воздуха и кегль ближе к базовому,
+     чтобы 4 варианта читались как список выбора, а не как крупные карточки. */
+  padding: 15px 16px;
+  gap: 12px;
+  font-size: var(--font-size-base);
+  line-height: 1.48;
+  align-items: start;
 }
 html[data-design="instrument"] #interview-options label:hover {
   border-color: var(--color-accent-strong);
@@ -476,64 +535,11 @@ html[data-design="instrument"] #interview-options label::before {
   align-self: start;
 }
 
-/* Компактные строки-варианты (макет): меньше воздуха и кегль ближе к базовому,
-   чтобы 4 варианта читались как список выбора, а не как крупные карточки. */
-html[data-design="instrument"] #interview-options label {
-  padding: 15px 16px;
-  gap: 12px;
-  font-size: var(--font-size-base);
-  line-height: 1.48;
-  align-items: start;
-}
-
-/* Базовые объяснения вариантов (.option-explanation + .explanation-correct/
-   .explanation-wrong, +strong) вынесены в components-answer.css (@layer components):
-   общая поверхность — рендерятся и на .focus-page (app.js), и на .result-page (no-JS),
-   вместе с .option-breakdown* (D2b). Здесь остаётся ТОЛЬКО focus-специфичный
-   интерактивный disclosure (#interview-options-раскрывашка «Почему?»). Более
-   специфичные `.option-explanation-disclosure .option-explanation` (ниже) и
-   `#interview-options label .option-explanation` (выше) продолжают переопределять
-   базу — они специфичнее и/или в @layer pages (выше components). */
-html[data-design] #interview-options label .option-explanation-disclosure {
-  grid-column: 1 / -1;
-  min-width: 0;
-}
-
-html[data-design] .focus-page .option-explanation-disclosure {
-  margin-top: var(--space-3);
-}
-
-html[data-design] .focus-page .option-explanation-disclosure .option-explanation {
-  margin-top: var(--space-2);
-}
-
-html[data-design] .focus-page .option-explanation-summary {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  cursor: pointer;
-  color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-normal);
-  list-style: none;
-  padding: var(--space-2) 0;
-}
-
-html[data-design] .focus-page .option-explanation-summary::-webkit-details-marker {
-  display: none;
-}
-
-html[data-design] .focus-page .option-explanation-summary::before {
-  content: "▸";
-  color: var(--color-text-secondary);
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-xs);
-}
-
-html[data-design] .focus-page .option-explanation-disclosure[open] > .option-explanation-summary::before {
-  content: "▾";
-}
+/* Здесь была ещё одна раскрывашка «Почему?» — `.option-explanation-disclosure`
+   со своим ▸/▾-маркером, в которую JS на мобиле заворачивал пояснение каждого
+   варианта. Компонент удалён целиком (см. components-answer.css): разбор
+   неверных вариантов живёт в `.distractor-panel`, а раскрытие «Подробнее» — в
+   `<details class="explanation-panel additional-panel">`, одинаково на SSR и AJAX. */
 
 /* Кнопки в фокусе. Старый styles.css бьёт по ID/фикс-позиционированию
    (#interview-submit (1,0,0); .focus-page .focus-training #interview-submit (1,2,0);
@@ -569,7 +575,7 @@ html[data-design] .focus-page #interview-submit.is-disabled {
 }
 /* P0.3: submitting — третье явное состояние (disabled → enabled → submitting).
    Кнопка ОСТАЁТСЯ акцентной (не бледный disabled), приглушена и с крутящимся
-   индикатором; текст app.js меняет на «Проверяю…». Идёт ПОСЛЕ :disabled/.is-disabled:
+   индикатором; текст quiz/interview.js меняет на «Проверяю…». Идёт ПОСЛЕ :disabled/.is-disabled:
    специфичность равная (#id+class == #id+:pseudo), решает порядок — иначе бледное
    disabled-правило перекрасило бы submitting-кнопку (она тоже disabled=true). */
 html[data-design] .focus-page #interview-submit.is-submitting {
@@ -624,7 +630,7 @@ html[data-design="instrument"] .focus-page #interview-submit.is-submitting {
    сцены: главное действие слева ↔ клавиатурная подсказка справа. Кнопка и хинт
    держат края меры, действие читается завершением композиции. На узких — штатный
    стек (кнопка над подсказкой; на ≤600px сабмит full-width, см. ниже). После
-   ответа app.js прячет submit и показывает #next-question в той же .action-footer —
+   ответа quiz/interview.js прячет submit и показывает #next-question в той же .action-footer —
    баланс «действие слева / хинт справа» сохраняется. */
 @media (min-width: 768px) {
   html[data-design] .focus-page [data-ui-fragment="training-actions"] {
@@ -635,7 +641,7 @@ html[data-design="instrument"] .focus-page #interview-submit.is-submitting {
   html[data-design] .focus-page [data-ui-fragment="training-actions"] .action-footer { margin: 0; }
   html[data-design] .focus-page [data-ui-fragment="training-actions"] .keyboard-hint { margin: 0; text-align: right; }
 }
-/* После ответа app.js (showResult) переносит #next-question вниз зоны разбора и
+/* После ответа quiz/interview.js (showResult) переносит #next-question вниз зоны разбора и
    помечает опустевший training-actions классом is-answered. Прячем его целиком:
    пустой flex-блок со своим margin-top (см. @media выше) иначе оставлял бы
    фантомный ~37px зазор над «Пост-разбором». Специфичность (0,4,1) перебивает
@@ -654,8 +660,7 @@ html[data-design] .focus-page [data-ui-fragment="training-actions"].is-answered 
    .ed-icon-error/.btn-favorite.active .ed-icon) вынесена в components-icons.css
    (@layer components, глобально, D3b Волны 3): блок глобальный — иконки на всех
    страницах, нельзя терять при page-scope focus. Перенос оживил подавленные
-   @components-оверрайды размера (см. компонент-файл). Focus-specific
-   `.question-code-summary .ed-icon` (выше) остаётся здесь. */
+   @components-оверрайды размера (см. компонент-файл). */
 
 html[data-design] .focus-page .question-timer { font-family: var(--font-family-mono); font-size: var(--font-size-sm); color: var(--color-text-secondary); }
 /* text-secondary, не tertiary: 12px mono на фоне страницы должен держать AA 4.5:1
@@ -703,13 +708,24 @@ html[data-design] .focus-page .flashcard-browse { margin-bottom: var(--space-4);
 html[data-design] .focus-page .flashcard-answer { margin-top: var(--space-5); text-align: left; }
 /* Browse-флешкарта — нативный <details> (PE: раскрытие без JS). summary носит
    .flashcard-reveal-btn (accent-кнопка) + .flashcard-reveal-summary: гасим
-   нативный треугольник, показываем ▸/▾ (как в .question-code-details). Маркер
+   нативный треугольник, показываем ▸/▾ (как в .diagram-source-details). Маркер
    скоупим к summary, чтобы серверный POST-reveal <button> остался без стрелки.
    gap разводит ▸ и текст внутри центрированного inline-flex кнопки. */
 html[data-design] .focus-page .flashcard-reveal-summary { list-style: none; gap: var(--space-2); }
 html[data-design] .focus-page .flashcard-reveal-summary::-webkit-details-marker { display: none; }
 html[data-design] .focus-page .flashcard-reveal-summary::before { content: "\25B8"; font-size: var(--font-size-sm); }
 html[data-design] .focus-page .flashcard-browse-details[open] .flashcard-reveal-summary::before { content: "\25BE"; }
+/* «Следующий вопрос» — единственный выход из browse-флешкарты (см. шаблон).
+   Пока ответ скрыт, главное действие — раскрыть его, поэтому ссылка тихая
+   (secondary) и не спорит с summary-кнопкой. После раскрытия задача решена и
+   единственный оставшийся шаг — идти дальше: подсвечиваем акцентной рамкой,
+   не поднимая до заливки (полноценный primary тут перетянул бы внимание с
+   самого ответа, ради которого экран и открыт). */
+html[data-design] .focus-page .flashcard-browse-next { margin-top: var(--space-4); }
+html[data-design] .focus-page .flashcard-browse-details[open] + .flashcard-browse-next {
+  border-color: var(--color-accent-strong);
+  color: var(--color-accent-strong);
+}
 /* Прозаическая панель `.answer` (+first/last-child) вынесена в components-answer.css
    (@layer components): общая — и на .focus-page, и на result.html (C3), D2c. */
 
@@ -786,7 +802,7 @@ html[data-design] .focus-page .typed-answer-input.is-code textarea {
   min-height: 10rem;
 }
 /* Единый disabled-аффорданс для focus-кнопок без спец-правила (#interview-submit
-   имеет своё на L896). app.js навешивает [disabled] на grade/reveal/toggle.
+   имеет своё на L896). quiz/interview.js навешивает [disabled] на grade/reveal/toggle.
    Кнопки доп. анализа используют [aria-disabled] вместо native disabled
    (сохраняет фокус клавиатуры), поэтому матчим оба состояния; pointer-events
    гасит клик мышью, повтор с клавиатуры отсекает JS-гард. */
@@ -816,10 +832,11 @@ html[data-design] .focus-page .question-diagram { overflow-x: auto; }
 html[data-design] .focus-page .question-diagram .mermaid:not([data-rendered="true"]) { visibility: hidden; }
 html[data-design] .focus-page .question-diagram .mermaid { display: block; margin: var(--space-4) 0; overflow-x: auto; text-align: center; }
 html[data-design] .focus-page .question-diagram .mermaid svg { max-width: 100%; height: auto; transition: transform 120ms ease; }
-html[data-design] .focus-page .code-toolbar {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
-  gap: var(--space-2); margin-bottom: var(--space-2);
-}
+/* Раскладку полосы задаёт .content-toolbar в shell.css — она одинакова у кода и
+   диаграммы. Здесь стоял её дубль под `.code-toolbar` (те же flex/align/justify),
+   доставшийся от эпохи до content-box. Дубль не просто повторял: он лежал в слое
+   `pages`, то есть перебивал `components` — и правило режима вкладок, прижимающее
+   действия вправо после скрытия заголовка, молча не срабатывало. */
 html[data-design] .focus-page .code-toolbar-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); }
 html[data-design] .focus-page .question-code-wrap.is-code-wrap pre,
 html[data-design] .focus-page .question-code-wrap.is-code-wrap code {
@@ -829,16 +846,41 @@ html[data-design] .focus-page .question-code-wrap:fullscreen {
   padding: var(--space-4); background: var(--color-bg-primary); overflow: auto;
 }
 html[data-design] .focus-page .diagram-toolbar-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); }
-html[data-design] .focus-page .diagram-toolbar-actions .diagram-action {
+/* Кнопки обоих тулбаров — компактные: это вспомогательное управление материалом,
+   а не действия страницы, и по весу они не имеют права спорить с «Ответить».
+   Компактный размер был прописан только диаграмме, из-за чего две одинаковые по
+   роли полосы в одном экране несли кнопки разной высоты. */
+html[data-design] .focus-page .diagram-toolbar-actions .diagram-action,
+html[data-design] .focus-page .code-toolbar-actions .code-action {
   min-height: 32px; padding: 0.35rem 0.6rem; font-size: var(--font-size-sm);
 }
 html[data-design] .focus-page .diagram-viewport {
   overflow: auto; max-height: min(70vh, 640px); padding: var(--space-2);
   background: var(--color-bg-tertiary);
+}
+/* Хват и перехват тача — только у mermaid-схемы: там их обслуживает панорама SVG.
+   Текстовая схема прокручивается как обычный блок, и `touch-action: none` на ней
+   означал бы, что палец по схеме не листает страницу вообще. */
+html[data-design] .focus-page .question-diagram[data-content-type="MERMAID"] .diagram-viewport {
   cursor: grab;
   touch-action: none;
 }
 html[data-design] .focus-page .diagram-viewport.is-panning { cursor: grabbing; user-select: none; }
+
+/* Схема, нарисованная псевдографикой в самой шпаргалке. Рамки в ней держатся на
+   том, что все символы одной ширины, поэтому: моноширинный шрифт, никаких
+   переносов, tab-size как у кода. Подсветки синтаксиса тут быть не должно —
+   highlight.js раскрасил бы слова внутри рисунка. */
+html[data-design] .focus-page .ascii-diagram {
+  margin: 0;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  line-height: 1.45;
+  white-space: pre;
+  tab-size: 4;
+  color: var(--color-text-secondary);
+  background: none;
+}
 html[data-design] .focus-page .question-diagram:fullscreen {
   padding: var(--space-4); background: var(--color-bg-primary);
 }
@@ -849,10 +891,10 @@ html[data-design] .focus-page .question-diagram:fullscreen .diagram-viewport { m
    Ниже — focus-only glue (.result-feedback контейнер только на .focus-page,
    result-контекст=0): остаётся здесь, будет заанкорено под .focus-page в финале Волны 3. */
 html[data-design] .focus-page .result-feedback { margin-top: var(--space-4); }
-html[data-design] .focus-page .result-feedback .feedback-flow .feedback-verdict { margin-top: 0; }
+html[data-design] .focus-page .result-feedback .feedback-verdict { margin-top: 0; }
 html[data-design] .focus-page .result-feedback .feedback-meta .next-review { margin-top: var(--space-2); }
 html[data-design] .focus-page .result-feedback .feedback-meta .review-policy { margin-top: var(--space-1); }
-/* Заметка о штрафных вопросах EXAM (app.js appendPenaltyNotice, round-01 B2):
+/* Заметка о штрафных вопросах EXAM (quiz/interview.js appendPenaltyNotice, round-01 B2):
    warning-тон, мелкий кегль — сообщение о росте сессии, не часть вердикта. */
 html[data-design] .focus-page .result-penalty-note {
   margin: var(--space-2) 0 0;
@@ -868,7 +910,7 @@ html[data-design] .focus-page .result-penalty-note {
    (прямо под .result-feedback) ответа. */
 html[data-design] .focus-page #extra-analysis-toggle { margin-top: var(--space-5); }
 
-/* После ответа app.js (showResult, IA-фикс) переносит «Следующий вопрос»
+/* После ответа quiz/interview.js (showResult, IA-фикс) переносит «Следующий вопрос»
    (#next-question) в самый низ пост-ответной зоны — под вердикт, пояснения и
    доп. анализ, чтобы primary-CTA «дальше» не стоял ВЫШЕ итога (раньше жил в
    .action-footer формы, над зоной разбора). Здесь он финальный аккорд сцены:
@@ -894,11 +936,18 @@ html[data-design] .focus-training .report-trigger {
 }
 html[data-design] .focus-training .report-trigger:hover,
 html[data-design] .focus-training .report-trigger:focus-visible { color: var(--color-text-primary); }
+/* На сенсорных экранах цель 189×35 попадает пальцем плохо (24×24 WCAG 2.5.8 формально
+   пройдены, но 35px — ниже комфортных 44). Добираем высоту только при coarse-указателе:
+   на десктопе кнопка должна оставаться тихой строкой, а не набивать вертикальный воздух
+   рядом с основным действием. */
+@media (pointer: coarse) {
+  html[data-design] .focus-training .report-trigger { min-height: 44px; }
+}
 
 /* Вердикт ответа (.result-correct/.result-wrong, verdictReveal @keyframes), ResultBanner,
    ExplanationCard (.explanation-panel/.explanation-eyebrow) и плоский вложенный .answer
    (.result-correct/.result-wrong/.option-correct/.option-wrong .answer) вынесены в
-   components-answer.css (@layer components): общая поверхность — app.js #result-feedback
+   components-answer.css (@layer components): общая поверхность — quiz/interview.js #result-feedback
    на .focus-page + no-JS result.html (D2c). Партнёры в своих слоях остаются: shell.css
    .result-banner-flex/.explanation-panel-base (@shell ниже), pixel-fx декор (@pixel выше),
    utilities-mobile padding (@utilities выше). */
@@ -982,10 +1031,10 @@ html[data-design] .focus-page .empty-actions { display: flex; gap: var(--space-3
   /* Ревью #3 / макет Instrument (focus-question.html: `.state--active .submit-row`
      fixed bottom + safe-area): на мобиле главное действие MCQ-ответа — закреплённая
      нижняя панель, а не кнопка, тонущая под длинным списком вариантов (палец у
-     нижнего края экрана). Гейтим `:not(.is-answered)` — ПОСЛЕ ответа app.js метит
+     нижнего края экрана). Гейтим `:not(.is-answered)` — ПОСЛЕ ответа quiz/interview.js метит
      training-actions `.is-answered` и прячет его (см. ~стр.1005), а #next-question
      уезжает в зону разбора → фикс-панель живёт ТОЛЬКО в pre-answer-состоянии
-     (идентично во всех версиях app.js, без завязки на пост-ответный флоу). Скоуп —
+     (идентично во всех версиях quiz/interview.js, без завязки на пост-ответный флоу). Скоуп —
      только основной #interview-form (флешкарта/study-confirm — свои состояния). */
   html[data-design] .focus-page #interview-form
       [data-ui-fragment="training-actions"]:not(.is-answered) .action-footer {
@@ -1032,21 +1081,19 @@ html[data-design] .focus-page .empty-actions { display: flex; gap: var(--space-3
 
 /* BASE-01 (редиз-программа iter-4, 2026-07-27): на mobile суть вопроса (заголовок +
    первый вариант) была утоплена под ~7 строками меты — на 390×844 вопрос начинался
-   на ~344px (41% высоты viewport), до ответа требовался скролл. Сжимаем ВТОРИЧНУЮ
-   мету на mobile, не трогая desktop и не переписывая экран (DECISION-003):
-   (1) SRS-политика («Интервальные повторения: верный ответ отодвигает…») — генерик-
-       туториал механики, повторяется на КАЖДОМ review-вопросе, без aria-ссылок →
-       скрываем на mobile (desktop сохраняет полный текст).
-   (2) уплотняем вертикальный ритм мета-блоков (badges / topbar / topic / reason).
-   НЕ трогаем .zone-hint (id=options-flow-hint) — он под aria-describedby радиогруппы
-   вариантов, скрытие сломало бы описание для скринридера.
-   Цель: заголовок вопроса виден в первом экране без скролла. */
+   на ~344px (41% высоты viewport), до ответа требовался скролл. Уплотняем
+   вертикальный ритм вторичных мета-блоков. Цель: заголовок вопроса виден в первом
+   экране без скролла.
+
+   Дальше лечили уже не отбивками, а составом: SRS-политика, дубль-бейдж
+   «К повторению» и flashcard-hint удалены из focus-training.html целиком (а не
+   спрятаны на узких), тема свёрнута в строку идентичности к сложности и режиму,
+   подсказка потока переехала к радиогруппе. Перед вопросом осталось две строки
+   меты плюс условная причина повторения — здесь только их шаг. */
 @media (max-width: 600px) {
-  html[data-design] .focus-page .focus-review-policy { display: none; }
-  html[data-design] .focus-page .question-meta,
-  html[data-design] .focus-page .focus-topbar,
+  html[data-design] .focus-page .question-zone-head,
+  html[data-design] .focus-page .focus-aside.focus-session-rail,
   html[data-design] .focus-page .focus-question-reason { margin-bottom: var(--space-2); }
-  html[data-design] .focus-page .focus-question-topic { margin-bottom: var(--space-1); }
 }
 
 
@@ -1154,13 +1201,17 @@ html[data-design] .focus-page .empty-actions { display: flex; gap: var(--space-3
   /* FOCUS wide-layout — правый рельс .focus-aside (PROC-07, DEC-003=B, переподтверждено
      пользователем 2026-07-16 с полным контекстом истории) — реализован в отдельном
      @media (min-width: 1080px) ВЫШЕ (grid на --max-width-page, БЕЗ edge-to-edge). Здесь
-     .focus-topbar остаётся лишь узкой мета-полосой головы вопроса (chip+hint) в главной
-     колонке. */
-  html[data-design] .focus-page .focus-topbar { margin-bottom: var(--space-5); }
+     .focus-topbar остаётся лишь строкой идентичности вопроса (тема + сложность +
+     режим) в главной колонке.
+
+     Отбивку под ней задаёт общий мета-ритм (см. «Ритм пред-вопросной меты» выше) —
+     отдельного space-5 тут больше нет: вместе с внутренним марджином
+     .question-zone-head он давал 36px разрыва под чипами при 8px между темой и
+     причиной, и группа меты читалась как два не связанных блока. */
 
   /* Опции по умолчанию остаются одноколоночными: для обучающих MCQ это честнее,
      потому что длинный вариант не получает лишнюю визуальную важность в 2×2.
-     app.js ставит data-answer-layout="balanced" только когда варианты близки по
+     quiz/interview.js ставит data-answer-layout="balanced" только когда варианты близки по
      длине и inline-code не сконцентрирован в одной карточке. */
   html[data-design] .focus-page #interview-options {
     display: grid;
@@ -1174,14 +1225,12 @@ html[data-design] .focus-page .empty-actions { display: flex; gap: var(--space-3
     grid-template-columns: repeat(2, minmax(0, 1fr));
     max-width: none;
   }
-  /* После ответа app.js дорисовывает в каждый вариант .option-explanation —
-     раскрытые объяснения удобнее читать вертикальным сканом (как на result-
-     странице /answer), а не сравнивать в 2×2 с рваными по высоте ячейками.
-     Возвращаем одну колонку с читаемым капом измерения. */
-  html[data-design] .focus-page #interview-options:has(.option-explanation) {
-    grid-template-columns: minmax(0, 1fr);
-    max-width: var(--max-width-options);
-  }
+  /* 2×2 после ответа больше НЕ схлопывается в одну колонку. Правило схлопывало
+     сетку по `:has(.option-explanation)` — когда в каждый вариант дорисовывалось
+     собственное пояснение и ячейки расходились по высоте. Пояснений в вариантах
+     нет: разбор ушёл в панель под вопросом, а вариант получает только марку
+     состояния. Схлопывать стало не из-за чего — остался бы лишь скачок раскладки
+     ровно в тот момент, когда взгляд ищет свой вариант среди четырёх. */
 
   /* Пустое состояние фокуса: «окно» тянется на всю ширину (карточка-сообщение
      остаётся центрированной композицией внутри). */
@@ -1320,3 +1369,4 @@ html[data-design] .focus-rail { display: contents; }
      Ось «Раскладка» по-прежнему меняет композицию страницы «Фокус» (правила выше). */
 }
 
+}
