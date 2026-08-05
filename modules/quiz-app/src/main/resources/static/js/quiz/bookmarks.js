@@ -1,4 +1,4 @@
-import { apiFetch, parseApiError } from '../core/api-client.js';
+import { apiFetch, apiPostJson, parseApiError } from '../core/api-client.js';
 import { API } from '../core/constants.js';
 import { clearInlineAlert, setInlineAlert } from '../ui/alerts.js';
 
@@ -36,14 +36,7 @@ async function saveNote(form) {
   const note = textarea.value || '';
   setStatus(form, 'Сохраняю…', false);
   try {
-    const body = new URLSearchParams();
-    body.set('questionId', questionId);
-    body.set('note', note);
-    const resp = await apiFetch(API.BOOKMARK_NOTE, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString()
-    });
+    const resp = await apiPostJson(API.BOOKMARK_NOTE, { questionId: Number(questionId), note });
     if (!resp.ok) {
       await parseApiError(resp);
       setStatus(form, 'Не удалось сохранить', true);
@@ -75,13 +68,7 @@ async function removeBookmark(form) {
   const questionId = form.getAttribute('data-question-id');
   if (!questionId) return;
   try {
-    const body = new URLSearchParams();
-    body.set('questionId', questionId);
-    const resp = await apiFetch(API.BOOKMARK_REMOVE, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString()
-    });
+    const resp = await apiPostJson(API.BOOKMARK_REMOVE, { questionId: Number(questionId) });
     if (!resp.ok) {
       await parseApiError(resp);
       setInlineAlert('Не удалось убрать закладку. Обнови страницу и повтори.');

@@ -70,7 +70,6 @@ export async function apiFetch(url, options = {}) {
     signal: externalSignal,
     headers: optHeaders,
     method: optMethod,
-    idempotencyKey,
     ...rest
   } = options;
 
@@ -88,9 +87,9 @@ export async function apiFetch(url, options = {}) {
     headers['X-XSRF-TOKEN'] = token;
   }
 
-  if (idempotencyKey) {
-    headers['Idempotency-Key'] = String(idempotencyKey);
-  }
+  // Заголовок Idempotency-Key отсюда убран намеренно: сервер его не читает.
+  // Ключ идемпотентности POST /api/answer — поле тела `clientAttemptId`. Ветка
+  // не имела ни одного вызывающего и обещала защиту, которой не было бы.
 
   const timeoutController = new AbortController();
   const timeoutId = setTimeout(() => timeoutController.abort(), timeoutMs);
@@ -131,6 +130,21 @@ export async function parseApiError(response) {
   } catch (_) {
     return new ApiError(raw, { status, raw });
   }
+}
+
+/**
+ * POST JSON на /api/**. Тело сериализуется здесь, чтобы вызывающий код не
+ * собирал его руками — раньше каждый вызов строил form-urlencoded по-своему
+ * (строкой, URLSearchParams, FormData), и правки контракта приходилось
+ * повторять в пяти местах.
+ */
+export function apiPostJson(url, payload, options = {}) {
+  return apiFetch(url, {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    body: JSON.stringify(payload)
+  });
 }
 
 export function apiGet(url) {

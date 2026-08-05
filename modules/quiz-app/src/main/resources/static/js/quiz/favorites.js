@@ -1,4 +1,4 @@
-import { apiFetch, parseApiError } from '../core/api-client.js';
+import { apiFetch, apiPostJson, parseApiError } from '../core/api-client.js';
 import { API, UI } from '../core/constants.js';
 import { clearInlineAlert, setInlineAlert } from '../ui/alerts.js';
 
@@ -17,11 +17,7 @@ export function applyFavoriteButtonState(button, isFavorite) {
 async function toggleFavorite(questionId, button) {
   if (!questionId || !button) return;
   try {
-    const resp = await apiFetch(API.FAVORITE, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'questionId=' + encodeURIComponent(questionId)
-    });
+    const resp = await apiPostJson(API.FAVORITE, { questionId: Number(questionId) });
     if (resp.ok) {
       clearInlineAlert();
       const data = await resp.json();

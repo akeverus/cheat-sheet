@@ -1,4 +1,4 @@
-import { apiFetch, parseApiError } from '../core/api-client.js';
+import { apiFetch, apiPostJson, parseApiError } from '../core/api-client.js';
 import { API } from '../core/constants.js';
 import { icon, escapeHtml, pluralRu, pluralDays } from '../core/dom.js';
 import { sanitizeHtml } from '../content/sanitize.js';
@@ -8,6 +8,53 @@ import { confirmModal } from '../ui/modals.js';
 import { refreshStatsFromServer, updateSessionProgress } from './stats.js';
 
 let interviewBound = false;
+
+/**
+ * Поля SubmitAnswerRequest и способ приведения типа. Список явный, а не
+ * «всё что есть в форме»: в форме живут и `_csrf` (уходит заголовком
+ * X-XSRF-TOKEN), и `weakTopics` — параметр выборки вопросов, которого в DTO
+ * нет. Слепая сериализация FormData в JSON роняла бы привязку на них.
+ */
+const ANSWER_FIELD_TYPES = {
+  questionId: 'number',
+  optionId: 'number',
+  questionRevisionId: 'number',
+  confidence: 'number',
+  responseTimeMs: 'number',
+  important: 'boolean',
+  onlyWrong: 'boolean',
+  shuffle: 'boolean',
+  ordered: 'boolean',
+  topic: 'string',
+  group: 'string',
+  clientAttemptId: 'string',
+  openedContentBlockIds: 'string'
+};
+
+/** FormData формы ответа → JSON-тело для POST /api/answer. */
+function formDataToAnswerPayload(formData) {
+  const payload = {};
+  Object.keys(ANSWER_FIELD_TYPES).forEach((field) => {
+    const raw = formData.get(field);
+    if (raw === null || raw === '') return;
+    const value = String(raw);
+    switch (ANSWER_FIELD_TYPES[field]) {
+      case 'number': {
+        const num = Number(value);
+        if (Number.isFinite(num)) payload[field] = num;
+        break;
+      }
+      case 'boolean':
+        // Чекбокс присылает своё value только когда отмечен, поэтому само
+        // присутствие поля уже значит true — кроме явного "false".
+        payload[field] = value !== 'false' && value !== '0';
+        break;
+      default:
+        payload[field] = value;
+    }
+  });
+  return payload;
+}
 
 function appendPenaltyNotice(added, total) {
   const feedback = document.getElementById('result-feedback');
@@ -420,11 +467,17 @@ export function initInterviewForm() {
         confidenceBtns.forEach((b) => { b.disabled = true; });
         const grade = btn.getAttribute('data-grade');
         try {
-          const confidenceResp = await apiFetch(API.CONFIDENCE, {
-            method: 'POST',
-            body: new URLSearchParams({ questionId, grade }),
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-          });
+          // Единственный из POST /api/**, чьи параметры сервер читает
+          // как @RequestParam, а не из тела. Раньше они ехали телом
+          // form-urlencoded — Servlet-контейнер разбирает такое тело в
+          // getParameter(), и работало это ровно до тех пор, пока форма
+          // остаётся формой. Теперь тела нет вовсе, и способ чтения на
+          // сервере виден по самому запросу.
+          const confidenceResp = await apiFetch(
+            API.CONFIDENCE + '?questionId=' + encodeURIComponent(questionId)
+              + '&grade=' + encodeURIComponent(grade),
+            { method: 'POST' }
+          );
           if (!confidenceResp.ok) throw await parseApiError(confidenceResp);
           clearInlineAlert();
         } catch (err) {
@@ -602,11 +655,7 @@ export function initInterviewForm() {
     formData.set('responseTimeMs', String(thinkTime.currentResponseTimeMs()));
 
     try {
-      const response = await apiFetch(API.ANSWER, {
-        method: 'POST',
-        body: new URLSearchParams(formData),
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-      });
+      const response = await apiPostJson(API.ANSWER, formDataToAnswerPayload(formData));
 
       if (!response.ok) {
         answered = false;
