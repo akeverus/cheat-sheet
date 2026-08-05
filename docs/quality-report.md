@@ -47,8 +47,8 @@ pip install pre-commit && pre-commit install
 |---|---|
 | `quiz-domain` | 232 |
 | `quiz-persistence` | 117 |
-| `quiz-app` | 1098 |
-| **Итого** | **1447** |
+| `quiz-app` | 1157 |
+| **Итого** | **1506** |
 
 `failures=0 errors=0 skipped=2`. `BUILD SUCCESSFUL`.
 
