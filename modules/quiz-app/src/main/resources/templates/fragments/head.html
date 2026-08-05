@@ -3,13 +3,32 @@
 <head th:fragment="head(title, includeMermaid, includeChart, includeHighlight, page)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- CSP nonce for scripts + dynamically injected <style> (Mermaid/hljs). -->
+    <!--/* CSP nonce for scripts + dynamically injected <style> (Mermaid/hljs). */-->
     <meta name="csp-nonce" th:content="${cspNonce}">
-    <!-- Цвет браузерного chrome для мобильных (Android Chrome, iOS Safari). -->
+    <!--/* Цвет браузерного chrome для мобильных (Android Chrome, iOS Safari). */-->
     <meta name="theme-color" content="#071116">
     <meta name="color-scheme" content="dark light">
-    <!-- FOUC bootstrap: только theme / pixel / motion (+ маркеры JS/settings-tab).
-         Layout, reading-width, density, fontScale — settings/personalization-bootstrap.js -->
+    <!--/* Версия для модулей, которых не видит шаблонизатор. Относительные
+         `import '../core/dom.js'` живут внутри .js, через @{...} не проходят и
+         content-hash их не касается; import map переписывает уже РАЗРЕШЁННЫЙ URL,
+         поэтому версию получают все 39 модулей, а не три точки входа. Карта в
+         HTML (no-store) — правка модуля доезжает со следующей навигацией, что и
+         позволяет держать годовой max-age на самой статике. Собирает
+         StaticVersionAdvice; без версионирования атрибут null и тега нет.
+         Должен стоять ДО первого type="module" — отсюда место в <head>. */-->
+    <script type="importmap" th:if="${jsImportMap}" th:attr="nonce=${cspNonce}"
+            th:utext="${jsImportMap}"></script>
+    <!--/* PERF: модули страницы — одной волной. О существовании core/api-client.js
+         браузер узнаёт, только распарсив quiz/streak.js, а о нём — распарсив
+         app-entry.js; замер на Slow 4G дал цепочку в шесть RTT и 5,2 с при 181 КБ
+         кода. Список считает JsPreloadService: точки входа с гейтами — в
+         js-preload-manifest.txt, зависимости берутся обходом самих import'ов.
+         Место — сразу за import map: версию накладывает @{...}, тем же механизмом,
+         что и в карте, поэтому адреса совпадают байт в байт и preload попадает
+         ровно в тот запрос, который потом сделает загрузчик модулей. */-->
+    <link rel="modulepreload" th:each="module : ${@jsPreload.pathsFor(page)}" th:href="@{${module}}">
+    <!--/* FOUC bootstrap: только theme / pixel / motion (+ маркеры JS/settings-tab).
+         Layout, reading-width, density, fontScale — settings/personalization-bootstrap.js */-->
     <script th:attr="nonce=${cspNonce}">
       (function () {
         // Stamp CSP nonce on createElement('style') so Mermaid/hljs work without style unsafe-inline.
@@ -159,153 +178,60 @@
         };
       })();
     </script>
-    <!-- Приложение — личная подготовка к интервью, не public web-site:
+    <!--/* Приложение — личная подготовка к интервью, не public web-site:
          запрещаем индексацию поисковиками, чтобы случайный публичный деплой
-         не светил вопросы/ответы в Google. Снимай если нужен SEO. -->
+         не светил вопросы/ответы в Google. Снимай если нужен SEO. */-->
     <meta name="robots" content="noindex,nofollow">
-    <!-- SVG favicon как /favicon.svg (static resource). Без него браузер делал
+    <!--/* SVG favicon как /favicon.svg (static resource). Без него браузер делал
          фоновый запрос /favicon.ico → 404 в access logs. SVG-файл вместо
-         data: URL — для совместимости с CSP default-src 'self'. -->
+         data: URL — для совместимости с CSP default-src 'self'. */-->
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}" href="/favicon.svg">
     <title th:text="${title}">Подготовка к собеседованию</title>
-    <!-- OPS-005: Inter + JetBrains Mono self-hosted (static/fonts + css/fonts-local.css).
-         Семейства совпадают с --font-family-* в tokens.css; pixel-слой body не подменяет. -->
-    <!-- PERF: preload двух критичных Inter-сабсетов (above-the-fold на КАЖДОЙ странице):
+    <!--/* OPS-005: Inter + JetBrains Mono self-hosted (static/fonts + css/fonts-local.css).
+         Семейства совпадают с --font-family-* в tokens.css; pixel-слой body не подменяет. */-->
+    <!--/* PERF: preload двух критичных Inter-сабсетов (above-the-fold на КАЖДОЙ странице):
          Cyrillic (U+0400-045F — русские А-я, весь UI) + basic Latin (U+0000-00FF — цифры/пунктуация).
          ВАЖНО: русский блок = U+0400-045F (файл ...SjIa0ZL7W0Q5n-wU), НЕ cyrillic-ext U+0460-052F
          (...SjIa2JL7W0Q5n-wU) — последний почти не используется, дал бы "unused preload".
-         Старт fetch'а ДО парса fonts-local.css → короче swap-флэш. Mono НЕ preload'им (только код,
-         below-the-fold → был бы "unused preload"). crossorigin обязателен: шрифты грузятся в CORS-режиме. -->
+         Старт fetch'а ДО парса CSS → короче swap-флэш. crossorigin обязателен: шрифты в CORS-режиме.
+         Mono не в preload, хотя выше сгиба он есть (чипы и счётчики в шапке — «2 дня», «Тренировка»):
+         это третий шрифт в критической волне ради нескольких коротких надписей. Раньше он ждал
+         конца очереди из 33 CSS-запросов; теперь CSS один, и mono стартует сразу за ним. */-->
     <link rel="preload" as="font" type="font/woff2" crossorigin
           th:href="@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa0ZL7W0Q5n-wU.woff2}">
     <link rel="preload" as="font" type="font/woff2" crossorigin
           th:href="@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2}">
-    <link rel="stylesheet" th:href="@{/css/fonts-local.css}">
-    <!-- Cascade layers (Wave C): tokens → reset → shell → components → pages →
-         utilities → pixel. Порядок <link> = порядок внутри слоя; @layer в
-         tokens.css задаёт приоритет слоёв. Structural CSS split из бывшего
-         monolith base.css; агрегатор base.css (@import) — для dev-only. -->
-    <link rel="stylesheet" th:href="@{/css/tokens.css}">
-    <link rel="stylesheet" th:href="@{/css/reset.css}">
-    <link rel="stylesheet" th:href="@{/css/utilities-core.css}">
-    <link rel="stylesheet" th:href="@{/css/reset-layout.css}">
-    <link rel="stylesheet" th:href="@{/css/components-masthead.css}">
-    <link rel="stylesheet" th:href="@{/css/components-controls.css}">
-    <!-- components-icons: базовая геометрия .ed-icon (@layer components, глобально).
-         Вынесено из pages-focus (Волна 3, D3b). Грузится ДО content-tabs/widgets,
-         но их descendant-оверрайды размера (.content-tab/.streak-inline… .ed-icon)
-         бьют базу по специфичности независимо от порядка. -->
-    <link rel="stylesheet" th:href="@{/css/components-icons.css}">
-    <link rel="stylesheet" th:href="@{/css/components-content-tabs.css}">
-    <link rel="stylesheet" th:href="@{/css/components-alert.css}">
-    <!-- components-answer: поверхность разбора ответа (feedback-flow/«Подробнее»/
-         option-breakdown). @layer components, глобально — рендерится и на .focus-page
-         (JS #result-feedback), и на .result-page (no-JS). Вынесено из pages-result
-         (Волна 3, D2a). Селекторы уникальны → позиция среди components не критична. -->
-    <link rel="stylesheet" th:href="@{/css/components-answer.css}">
-    <!-- components-prose: прозо-поверхность отрендеренного markdown (.markdown-content
-         table/task-list/del/mermaid). @layer components, глобально — рендерится на
-         .focus-page (вопрос/ответ) и на result.html. Вынесено из pages-focus (D3e). -->
-    <link rel="stylesheet" th:href="@{/css/components-prose.css}">
-    <!-- PERF: page-scoped CSS — эти файлы на 100% под .{page}-page (0 утечки, гейт
-         scripts/css-leak-audit.py), поэтому грузятся ТОЛЬКО на своей странице (как includeChart).
-         pages-stats заскоуплен Волной 1, pages-settings — Волной 2 (кластер content-tabs
-         экрана вопроса → components-content-tabs.css; хвосты stat-value tnum → utilities-overrides,
-         select:disabled → pages-stats, .is-disabled-control → components-controls).
-         pages-focus заскоуплен Волной 3 (D4, leak=0 → все правила под .focus-page, а .focus-page
-         только на focus-training.html); pages-result заскоуплен Волной 3 (ШАГ R — 4 кросс-стр.
-         кластера [confidence/inline-code/related-questions/option-status] вынесены в
-         components-answer/components-prose+pages-focus, leak=0 → все правила под .result-page,
-         а page='result' и .result-page только на result.html). -->
-    <link rel="stylesheet" th:if="${page == 'focus'}" th:href="@{/css/pages-focus.css}">
-    <!-- Волна 8 cut 1: пост-ответный confidence-виджет вынесен из хвоста pages-focus.css;
-         тот же th:if focus, СРАЗУ после pages-focus.css → порядок @layer pages 1:1. -->
-    <link rel="stylesheet" th:if="${page == 'focus'}" th:href="@{/css/pages-focus-confidence.css}">
-    <link rel="stylesheet" th:if="${page == 'settings'}" th:href="@{/css/pages-settings.css}">
-    <link rel="stylesheet" th:if="${page == 'stats'}" th:href="@{/css/pages-stats.css}">
-    <link rel="stylesheet" th:if="${page == 'bookmarks'}" th:href="@{/css/pages-bookmarks.css}">
-    <link rel="stylesheet" th:if="${page == 'summary'}" th:href="@{/css/pages-summary.css}">
-    <link rel="stylesheet" th:if="${page == 'error'}" th:href="@{/css/pages-error.css}">
-    <link rel="stylesheet" th:if="${page == 'login'}" th:href="@{/css/pages-login.css}">
-    <link rel="stylesheet" th:if="${page == 'result'}" th:href="@{/css/pages-result.css}">
-    <link rel="stylesheet" th:href="@{/css/components-widgets.css}">
-    <!-- Волна 5 финал: pages-layout.css УДАЛЁН — focus-раскладка (WIDE + data-layout flow/split)
-         вынесена в pages-focus.css; print → print.css; --page-gutter → tokens.css; stats/settings/
-         result/summary wide → их страничные файлы. print.css = единственный @media print во всём
-         CSS (@layer pages, на экране не применяется → позиция среди @pages нерелевантна). -->
-    <link rel="stylesheet" th:href="@{/css/print.css}">
-    <link rel="stylesheet" th:href="@{/css/components-signatures.css}">
-    <!-- components-modals ОБЯЗАН быть ПОСЛЕ components-signatures: оба @layer components,
-         заголовок модалки (semibold) должен победить signatures-medium равной спец. по
-         порядку исходника (Волна 3, C2). -->
-    <link rel="stylesheet" th:href="@{/css/components-modals.css}">
-    <link rel="stylesheet" th:href="@{/css/utilities-overrides.css}">
-    <!-- shell.css — AppShell (sidebar/topbar/mobile-nav). @layer shell. -->
-    <link rel="stylesheet" th:href="@{/css/shell.css}">
-    <!-- pixel-fx — @layer pixel: декор/FX; не трогает skip-link и MCQ-grid. -->
-    <link rel="stylesheet" th:href="@{/css/pixel-fx.css}">
-    <!-- pixel-ambient — @layer pixel: high-only атмосфера — CRT scanlines, фон-сетка,
-         floating crumbs, cursor trail (bgScroll/pixelFloat/trailFade). Волна 7 cut 9.
-         Между pixel-fx и pixel-mascot (ambient был перед mascot) → порядок 1:1. -->
-    <link rel="stylesheet" th:href="@{/css/pixel-ambient.css}">
-    <!-- pixel-mascot — @layer pixel: brand-маскот + hero-walk (.brand .avatar +
-         mascotIdle/mascotBounce/heroWalk). Волна 7 cut 8. Между pixel-fx и pixel-buttons
-         (mascot был перед buttons) → порядок @layer pixel 1:1. -->
-    <link rel="stylesheet" th:href="@{/css/pixel-mascot.css}">
-    <!-- pixel-buttons — @layer pixel: центральный concern — chunky pixel-кнопки
-         (.btn/.next-btn/.primary-btn/…) + hover/press/CTA-rainbow/arrow-nudge/icon-wiggle
-         (arrowNudge/ctaRainbow/iconWiggle). Волна 7 cut 7. Сразу после pixel-fx, перед
-         pixel-options → порядок @layer pixel 1:1 (buttons были перед options). -->
-    <link rel="stylesheet" th:href="@{/css/pixel-buttons.css}">
-    <!-- pixel-options — @layer pixel: MCQ-варианты как pixel-карточки (#interview-options
-         label/.options label/.option) + optionSelectPop/correctFlash. Волна 7 cut 6.
-         Между pixel-fx и pixel-nav-badges (options были перед nav) → порядок 1:1. -->
-    <link rel="stylesheet" th:href="@{/css/pixel-options.css}">
-    <!-- pixel-nav-badges — @layer pixel: nav-иконки (.sidebar/.mobile-nav .icon +
-         iconPulse/activeGlow) и badges (.badge/.zone-chip/.topic-badge + gemTwinkle).
-         Волна 7 concern-split, cut 5. Между pixel-fx и pixel-cards (nav+badges были
-         перед cards) → порядок @layer pixel 1:1. -->
-    <link rel="stylesheet" th:href="@{/css/pixel-nav-badges.css}">
-    <!-- pixel-cards — @layer pixel: chunky карточки/панели (.card/.panel/.metric/…)
-         px-edge box-shadow + star::before + starSpin. Волна 7 concern-split, cut 4.
-         Между pixel-fx и pixel-result-banner (cards были перед banner) → порядок 1:1. -->
-    <link rel="stylesheet" th:href="@{/css/pixel-cards.css}">
-    <!-- pixel-result-banner — @layer pixel: .result-banner штампы/печати + их keyframes.
-         Волна 7 concern-split, cut 3. Между pixel-fx и pixel-animations (banner был
-         перед анимациями) → относит. порядок @layer pixel сохранён 1:1. -->
-    <link rel="stylesheet" th:href="@{/css/pixel-result-banner.css}">
-    <!-- pixel-animations — @layer pixel: анимации/celebration-FX (burst/confetti,
-         floaters, xp/ring, page-enter, glitch/coin/spark, option-flash, stage-intro,
-         trophy, portal, mascot-hint, option-stamp). Волна 7 concern-split, cut 2.
-         Идёт СРАЗУ после pixel-fx → относит. порядок @layer pixel идентичен монолиту. -->
-    <link rel="stylesheet" th:href="@{/css/pixel-animations.css}">
-    <!-- pixel-motion-parity — @layer pixel: reduced-motion/data-motion=off гашение
-         (Волна 7 concern-split, cut 1). Порядок: после pixel-fx, до sprite-anim. -->
-    <link rel="stylesheet" th:href="@{/css/pixel-motion-parity.css}">
-    <link rel="stylesheet" th:href="@{/css/pixel/sprite-anim.css}">
-    <!-- OPS-005: highlight.js 11.9.0 self-hosted. PERF: гейт includeHighlight —
-         hljs (~120KB js+css) грузится ТОЛЬКО на страницах с кодом (focus-training/result),
-         а не на stats/bookmarks/settings/login/session-summary/error. Как includeMermaid/includeChart. -->
+    <!--/* PERF: один блокирующий CSS-запрос на страницу вместо 33 <link>.
+         Порядок каскада и постраничные гейты — в css-bundle-manifest.txt; лента
+         склеивается CssBundleService, имя несёт хеш содержимого. Замер на Slow 4G
+         до склейки: 33 запроса стартуют одновременно, сериализуются в шесть волн
+         HTTP/1.1 и держат FCP на 4,4 с — платили не 130 КБ, а латентность. */-->
+    <link rel="stylesheet" th:href="@{__${@cssBundle.pathFor(page)}__}">
+    <!--/* OPS-005: highlight.js 11.9.0 self-hosted. PERF: гейт includeHighlight —
+         скрипт hljs (~110 КБ) грузится ТОЛЬКО на страницах с кодом (focus-training/result),
+         а не на stats/bookmarks/settings/login/session-summary/error. Как includeMermaid/includeChart.
+         Тема — своя, components-code-highlight.css на токенах --code-*; едет внутри
+         CSS-ленты с тем же гейтом (css-bundle-manifest.txt).
+         Вызов подсветки здесь НЕ дублируется: единственная точка входа —
+         highlightPageCodeBlocks() в js/content/highlight.js, её зовёт app-entry.
+         defer + module оба исполняются до DOMContentLoaded в порядке документа,
+         поэтому hljs уже определён к моменту вызова. */-->
     <th:block th:if="${includeHighlight}">
-        <link rel="stylesheet" th:href="@{/vendor/hljs/styles/atom-one-dark.min.css}">
-        <!-- defer: highlight.js — DOMContentLoaded ниже и app-entry на AJAX-контенте. -->
         <script defer th:src="@{/vendor/hljs/highlight.min.js}" th:attr="nonce=${cspNonce}"></script>
-        <script th:attr="nonce=${cspNonce}">
-            document.addEventListener('DOMContentLoaded', function() {
-                // Guard: hljs может не подгрузиться (CSP, offline) — оставляем код без подсветки, без падения.
-                if (typeof hljs === 'undefined') return;
-                document.querySelectorAll('.markdown-content pre code').forEach(function(b) { hljs.highlightElement(b); });
-            });
-        </script>
     </th:block>
     <th:block th:if="${includeMermaid}">
-        <!-- mermaid 11.12.0 self-hosted (OPS-005). НЕ deferим: mermaid-renderer.js
-             инициализирует во время парсинга. securityLevel: 'antiscript'. -->
-        <script th:src="@{/vendor/mermaid/mermaid.min.js}" th:attr="nonce=${cspNonce}"></script>
+        <!--/* mermaid 11.12.0 self-hosted (OPS-005), 2.7 МБ распакованного JS — самый
+             тяжёлый ассет приложения. Тега <script> здесь нет намеренно: библиотеку
+             подгружает mermaid-renderer.js, когда диаграмма реально попадает в вид.
+             Схема живёт во вкладке «Схема», которая по умолчанию закрыта, поэтому
+             блокирующая загрузка оплачивала контент, который часто не открывают.
+             Путь отдаём через meta, а не строкой в JS: @{...} проходит через
+             ResourceUrlProvider и в prod несёт content-hash — знает его только шаблон. */-->
+        <meta name="mermaid-src" th:content="@{/vendor/mermaid/mermaid.min.js}">
         <script th:replace="~{fragments/mermaid-init :: mermaid-init}"></script>
     </th:block>
     <th:block th:if="${includeChart}">
-        <!-- chart.js 4.5.0 UMD self-hosted (OPS-005). defer → Chart готов до DOMContentLoaded. -->
+        <!--/* chart.js 4.5.0 UMD self-hosted (OPS-005). defer → Chart готов до DOMContentLoaded. */-->
         <script defer th:src="@{/vendor/chart/chart.umd.min.js}" th:attr="nonce=${cspNonce}"></script>
     </th:block>
 </head>

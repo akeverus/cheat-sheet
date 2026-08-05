@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="ru" data-design="instrument" xmlns:th="http://www.thymeleaf.org">
-<!-- Title режим-зависимый: /review (reviewMode) и / рендерят один focus-training.html,
+<!--/* Title режим-зависимый: /review (reviewMode) и / рендерят один focus-training.html,
      но раньше оба давали одинаковый <title> «Подготовка к собеседованию» → неразличимы во
      вкладках браузера и SR не сообщал уникальное назначение (WCAG 2.4.2 Page Titled). Как в
-     sidebar/mobile-nav (active=reviewMode?…), title теперь ветвится по reviewMode. -->
+     sidebar/mobile-nav (active=reviewMode?…), title теперь ветвится по reviewMode. */-->
 <head th:replace="~{fragments/head :: head(title=${reviewMode != null and reviewMode} ? 'Разбор ошибок — Подготовка к собеседованию' : 'Подготовка к собеседованию', includeMermaid=${needsMermaid == true}, includeChart=false, includeHighlight=true, page='focus')}"></head>
 <body class="focus-page">
 <a class="skip-link" href="#main-content">Перейти к вопросу</a>
@@ -17,9 +17,9 @@
         <th:block th:replace="~{fragments/topbar :: topbar}"></th:block>
 
 <main id="main-content" class="ed-page" tabindex="-1">
-    <!-- FLOW-01b: resume-баннер приостановленной сессии. Показывается только когда
+    <!--/* FLOW-01b: resume-баннер приостановленной сессии. Показывается только когда
          активной сессии нет (pausedInfo не-null задаётся сервером лишь при interviewSession==null).
-         «Продолжить» → POST /resume восстанавливает сессию из БД в HTTP-сессию. -->
+         «Продолжить» → POST /resume восстанавливает сессию из БД в HTTP-сессию. */-->
     <div class="resume-banner" role="region" aria-label="Незавершённая сессия"
          th:if="${pausedInfo != null}">
         <div class="resume-banner-body">
@@ -37,13 +37,13 @@
         </form>
     </div>
     <section class="focus-training" th:if="${current != null}">
-        <!-- Топ-бар головы вопроса: eyebrow-chip режима + подсказка потока. Узкая
+        <!--/* Топ-бар головы вопроса: eyebrow-chip режима + подсказка потока. Узкая
              мета-полоса в ГЛАВНОЙ колонке (не путать с правым рельсом ниже). Раньше
              сюда же вклинивался статус сессии справа (горизонтальный бар), но по
              DEC-003=B (переподтв. 2026-07-16) статус сессии вынесен в отдельный
              .focus-aside — на >=1080px он становится правым рельсом grid'а, на узких
-             стекается в потоке (см. base.css, PROC-07). -->
-        <!-- P0.1: левая колонка split-раскладки как ОДИН grid-элемент (.focus-rail).
+             стекается в потоке (см. base.css, PROC-07). */-->
+        <!--/* P0.1: левая колонка split-раскладки как ОДИН grid-элемент (.focus-rail).
              Раньше topbar/рельс/тема/причина/вопрос/код/диаграмма были плоскими прямыми
              детьми .focus-training; в split высокая форма (col2) через grid-ряды
              раздувала первый ряд и отрывала топбар от остального стека (~500px зазор),
@@ -52,42 +52,40 @@
              рейка сама стекается flex-column, форма — своя колонка, лента — под обеими.
              ВНЕ split (flow/grid/PROC-07) .focus-rail = display:contents → прозрачна,
              дети хойстятся как прямые grid-элементы .focus-training (существующие
-             descendant-селекторы продолжают матчить). -->
+             descendant-селекторы продолжают матчить). */-->
         <div class="focus-rail"
-             th:with="hasCode=${current.question.codeSnippet() != null and !current.question.codeSnippet().isBlank()},
-                      hasDiagram=${current.question.diagramMermaid() != null and !current.question.diagramMermaid().isBlank()}">
-        <!-- hasCode/hasDiagram подняты сюда: th:with (precedence 500) выполняется
+             th:with="hasCode=${codeBlock != null},
+                      hasDiagram=${diagramBlock != null}">
+        <!--/* hasCode/hasDiagram подняты сюда: th:with (precedence 500) выполняется
              ПОЗЖЕ th:if (300), поэтому на одном элементе с th:if переменные ещё null.
-             Тут они в scope для th:if потомка .question-materials ниже. -->
-        <!-- Этап 2 редизайна: ряд мета-бейджей в шапке левого пейна (макет
-             question-desktop) — быстрый контекст «что за вопрос». Сложность из
-             Question.difficulty (EASY/MEDIUM/HARD → Лёгкий/Средний/Сложный);
-             accent-бейдж «К повторению» показывается только когда планировщик дал
-             повод (reviewReason != null) и согласован с .focus-question-reason ниже.
-             Не дублирует zone-chip (режим сессии) и topic-эйбрау (область). -->
-        <div class="question-meta" th:with="diff=${current.question.difficulty() != null ? current.question.difficulty().name() : 'MEDIUM'}">
-            <span class="badge" th:text="${diff == 'EASY' ? 'Лёгкий' : (diff == 'HARD' ? 'Сложный' : 'Средний')}">Средний</span>
-            <span class="badge accent" th:if="${reviewReason != null}">К повторению</span>
-        </div>
-        <div class="focus-topbar">
-            <div class="question-zone-head">
-                <span class="zone-chip" th:text="${focusModeChipText}">Тренировка</span>
-                <span class="zone-hint" id="options-flow-hint" th:text="${focusModeHintText}">Выбери один вариант. Проверка и разбор идут по шагам.</span>
-            </div>
-        </div>
-        <!-- PROC-07 (DEC-003=B, переподтверждено пользователем 2026-07-16 с полным
+             Тут они в scope для th:if потомка .question-materials ниже.
+
+             Сами блоки приходят с backend (ContentBlockMapper) — шаблон больше не
+             читает codeSnippet/diagramMermaid напрямую. В codeSnippet импортёр
+             складывает любой не-mermaid блок ```…```, включая схемы, нарисованные
+             псевдографикой: на 70 вопросах такой «код» дословно повторял соседнюю
+             mermaid-схему, ещё на ~90 был единственной схемой вопроса под ярлыком
+             «Пример кода». Разделение живёт в одном месте, на backend. */-->
+        <!--/* PROC-07 (DEC-003=B, переподтверждено пользователем 2026-07-16 с полным
              контекстом истории): вспомогательный правый рельс. Прямой ребёнок
              .focus-training → на >=1080px становится правой колонкой grid'а (сессия/
              хоткеи/мета), главная колонка вопроса доминирует. Ниже 1080px — обычный
-             блок в потоке (head → рельс → вопрос), как раньше. -->
-        <aside class="focus-aside focus-session-rail" aria-label="Сессия">
-                <!-- Прогресс-строка и трек гейтятся th:if: вне сессии раньше в DOM
+             блок в потоке (head → рельс → вопрос), как раньше. */-->
+        <!--/* Метка лендмарка зависит от того, что в нём реально лежит. Вне сессии
+             прогресс-строка, трек и меню «Сессия» не рендерятся, остаётся один
+             чип очереди — а скринридер объявлял регион «Сессия», которой нет. */-->
+        <!--/* Статический aria-label="Сессия" рядом с th:aria-label убран: прототипное
+             значение здесь не безобидно — оно повторяет ровно ту неверную метку,
+             которую условие выше и исправляет, и всплыло бы при сбое выражения. */-->
+        <aside class="focus-aside focus-session-rail"
+               th:aria-label="${interviewSession != null ? 'Сессия' : 'Очередь повторений'}">
+                <!--/* Прогресс-строка и трек гейтятся th:if: вне сессии раньше в DOM
                      висела видимая пустая полоска 254×2px с aria-valuemax="0"
-                     (progressbar «0 из 0» для скринридера). round-01 C-live-1. -->
-                <!-- Прогресс-строка только для реальной сессии. Раньше здесь же
+                     (progressbar «0 из 0» для скринридера). round-01 C-live-1. */-->
+                <!--/* Прогресс-строка только для реальной сессии. Раньше здесь же
                      висел третий дубль-эйбрау режима повтора ошибок — он повторял
                      и chip «Повтор ошибок», и zone-hint под ним (три подписи одного
-                     режима подряд). Убран: chip = метка, hint = описание, этого хватает. -->
+                     режима подряд). Убран: chip = метка, hint = описание, этого хватает. */-->
                 <div class="focus-progress-line" th:if="${interviewSession != null}">
                     <span class="muted tiny kpi-role">Прогресс сессии</span>
                     <span>
@@ -100,14 +98,14 @@
                      th:if="${interviewSession != null}"
                      th:attr="aria-valuemin=0,aria-valuemax=${interviewSession.getTotal()},aria-valuenow=${interviewSession.getIndex() + 1}">
                     <div class="session-progress-fill"
-                         th:attr="data-progress=${#numbers.formatDecimal(progressPercent, 1, 1)}"></div>
+                         th:attr="data-progress=${#numbers.formatDecimal(progressPercent, 1, 'NONE', 1, 'POINT')}"></div>
                 </div>
 
-                <!-- Компактный «сегодня»-чип: стрик (🔥) + due. Информативный, без CTA. -->
+                <!--/* Компактный «сегодня»-чип: стрик (🔥) + due. Информативный, без CTA. */-->
                 <div th:replace="~{fragments/today-widget :: today-chip(stats=${stats})}"></div>
 
-                <!-- UX-003: пауза и завершение — в overflow-меню с confirm перед finish.
-                     Прямой one-click finish убран: случайное нажатие не обрывает сессию. -->
+                <!--/* UX-003: пауза и завершение — в overflow-меню с confirm перед finish.
+                     Прямой one-click finish убран: случайное нажатие не обрывает сессию. */-->
                 <details class="focus-session-more" th:if="${interviewSession != null and !interviewSession.finished}">
                     <summary class="focus-session-more-summary btn secondary-btn"
                              aria-label="Действия сессии">Сессия</summary>
@@ -126,50 +124,111 @@
                     </div>
                 </details>
             </aside>
-        <!-- Тема вопроса как эйбрау-кикер: в TRAINING/марафоне вопросы идут вперемешку
-             по 310 темам — без подписи непонятно, из какой области вопрос (ориентир для
-             ответа). Серверный рендер (работает без JS). Скрыт, если topic пуст. -->
-        <p class="focus-question-topic"
-           th:if="${current.question.topic != null and !current.question.topic.isBlank()}"
-           th:attr="data-topic-slug=${@topicUtils.slug(current.question.topic)}"
-           th:text="${@topicUtils.displayName(current.question.topic)}">Тема</p>
-        <!-- Explainable-причина повторения (FSRS/SM-2): почему вопрос сейчас перед
+        <!--/* Строка идентичности вопроса: «из какой области» + «насколько трудный» +
+             «в каком режиме отвечаю». Все три отвечают на один вопрос — «что передо
+             мной» — поэтому стоят одной строкой, а не тремя.
+
+             Раньше между вопросом и его заголовком лежало ПЯТЬ отдельных строк
+             серой меты (чипы → очередь сессии → тема → причина → и лишь потом h1):
+             тема была четвёртой и самой мелкой, хотя как ориентир полезнее всего,
+             а статус сессии вклинивался между чипами вопроса и его темой, разрывая
+             одну группу фактов другой. Теперь порядок вложенный: сессия (где я
+             вообще) → этот вопрос (что передо мной) → почему именно он → сам
+             вопрос. Заголовок поднимается на ~85px — на мобильном это прямо решает,
+             виден ли вопрос без скролла.
+
+             Бейдж «К повторению» здесь не нужен: он висел под тем же условием
+             (reviewReason != null), что и .focus-question-reason строкой ниже, но
+             говорил строго меньше — «К повторению» против «Повторение просрочено
+             на 7 дней». Два бейджа об одном факте читаются как два разных факта.
+
+             Тема первой: в TRAINING/марафоне вопросы идут вперемешку по 320 темам,
+             и «из какой области» — первое, что нужно знать, чтобы понять вопрос.
+             Серверный рендер, работает без JS; скрыта, если topic пуст. */-->
+        <div class="focus-topbar">
+            <div class="question-zone-head"
+                 th:with="diff=${current.question.difficulty()}">
+                <span class="focus-question-topic"
+                      th:if="${current.question.topic != null and !current.question.topic.isBlank()}"
+                      th:attr="data-topic-slug=${@topicUtils.slug(current.question.topic)}"
+                      th:text="${@topicUtils.displayName(current.question.topic)}">Тема</span>
+                <!--/* Бейдж сложности — только когда уровень что-то говорит об этом вопросе.
+                     `MEDIUM` — значение по умолчанию (в него сводятся null, пустая строка и
+                     нераспознанный уровень), и весь банк сейчас в нём: замер дал 9818 из
+                     9818. Значит «Средний» стоял тут на каждом вопросе, ничего не различая, —
+                     ровно то, за что отсюда уже убрали «Часть экзаменационной сессии», и
+                     ровно то, за что /stats прячет донат сложности. Подпись и критерий —
+                     в `Difficulty`, а не в тернарнике: тернарник на новый уровень не падал,
+                     а молча печатал «Средний». */-->
+                <span class="badge" th:if="${diff != null and diff.informative()}"
+                      th:classappend="'badge--difficulty-' + ${#strings.toLowerCase(diff.name())}"
+                      th:text="${diff.label()}">Сложный</span>
+                <span class="zone-chip" th:text="${focusModeChipText}">Тренировка</span>
+            </div>
+        </div>
+        <!--/* Explainable-причина повторения (FSRS/SM-2): почему вопрос сейчас перед
              тобой. Серверный рендер, без JS. Показывается только если планировщик
-             дал явный повод (просрочка / недавняя ошибка / слабый навык). -->
+             дал явный повод (просрочка / недавняя ошибка / слабый навык).
+
+             На экзамене строки здесь нет вовсе: причины — тренерские подсказки и
+             перед вопросом экзамена подсказывают ответ. Раньше вместо них печаталось
+             «Часть экзаменационной сессии» — факт о сессии, а не об этом вопросе,
+             дублировавший чип режима строкой выше и рельс прогресса справа. */-->
         <p class="focus-question-reason"
            th:if="${reviewReason != null}"
            th:attr="data-reason-type=${reviewReason.type().name()}"
            th:text="${reviewReason.message()}">Причина повторения</p>
-        <p class="focus-review-policy muted tiny" th:if="${reviewReason != null}">
-            Интервальные повторения: верный ответ отодвигает карточку, ошибка возвращает её раньше.
-        </p>
+        <!--/* .focus-review-policy («Интервальные повторения: верный ответ
+             отодвигает карточку…») отсюда убрана. Это описание МЕХАНИКИ, а не
+             факт об этом вопросе: оно одинаково на каждом review-вопросе и
+             ничего не меняет в том, что делать сейчас. Своё место у неё после
+             ответа — в result.html и в разборе interview.js, где интервал
+             только что реально сдвинулся и объяснение отвечает на возникший
+             вопрос «почему следующий показ через N дней». Раньше на mobile её
+             и так скрывали медиазапросом (pages-focus.css, BASE-01) — то же
+             решение, доведённое до конца, а не спрятанное по ширине. */-->
         <h1 class="focus-question" th:utext="${@markdownRenderService.toInlineHtml(current.question.questionText)}">Вопрос</h1>
 
-        <!-- Этап 3 редизайна: материалы к вопросу (код + схема). Когда есть ОБА,
+        <!--/* Этап 3 редизайна: материалы к вопросу (код + схема). Когда есть ОБА,
              макет хендоффа-3 показывает их вкладками «Пример кода / Схема» вместо
              двух стопкой. PE: список вкладок отрендерен с [hidden] и включается
-             app.js (initContentTabs) — без JS обе панели видны стопкой, контент
+             settings/tabs.js (initContentTabs) — без JS обе панели видны стопкой, контент
              не теряется. tabpanel-семантика (role/id/aria-labelledby) навешивается
-             ТОЛЬКО когда есть оба материала (иначе tabpanel без tab — невалидный ARIA). -->
+             ТОЛЬКО когда есть оба материала (иначе tabpanel без tab — невалидный ARIA). */-->
         <div class="question-materials"
              th:if="${hasCode or hasDiagram}">
 
             <div class="content-tablist" role="tablist" aria-label="Материалы к вопросу"
                  th:if="${hasCode and hasDiagram}" hidden>
+                <!--/* Подпись у вкладки и у заголовка её панели — одна и та же строка
+                     из блока. Пока их писали руками, у двух объектов было четыре
+                     имени: вкладка «Пример кода» вела к заголовку «Код к вопросу»,
+                     вкладка «Схема» — к заголовку «Диаграмма». */-->
                 <button type="button" class="content-tab" role="tab" id="qmtab-code"
                         aria-controls="qmpanel-code" aria-selected="true">
-                    <svg class="ed-icon" aria-hidden="true"><use href="#i-code"></use></svg><span>Пример кода</span>
+                    <svg class="ed-icon" aria-hidden="true"><use href="#i-code"></use></svg><span th:text="${codeBlock.title()}">Пример кода</span>
                 </button>
                 <button type="button" class="content-tab" role="tab" id="qmtab-diagram"
                         aria-controls="qmpanel-diagram" aria-selected="false" tabindex="-1">
-                    <svg class="ed-icon" aria-hidden="true"><use href="#i-diagram"></use></svg><span>Схема</span>
+                    <svg class="ed-icon" aria-hidden="true"><use href="#i-diagram"></use></svg><span th:text="${diagramBlock.title()}">Схема</span>
                 </button>
             </div>
 
-            <!-- #7: код — часть условия вопроса, а не «необязательный пример». Поэтому
-                 <details open> (раскрыт по умолчанию, свернуть можно), а summary — код-
-                 аффорданс (mono + иконка ⟨⟩). Под вкладками (js-content-tabs) summary
-                 прячется — панель уже подписана вкладкой «Пример кода». -->
+            <!--/* Код — часть условия вопроса, а не «необязательный пример»: он всегда
+                 раскрыт и подписан ровно один раз — заголовком toolbar'а, как и
+                 соседняя диаграмма. Иконка ⟨⟩ стоит в этом же заголовке и держит
+                 код-аффорданс.
+
+                 Здесь до Этапа 3 жил <details open> со своим <summary>, и когда
+                 сверху встал toolbar с `.content-box-title`, summary остался —
+                 «Код к вопросу» печаталось ДВАЖДЫ подряд, одинаковым mono/xs/
+                 uppercase, в двух строках друг под другом. Свернуть код этот
+                 details формально позволял, но смысла в этом не было (код нужен,
+                 чтобы ответить), а цена была велика: дубль подписи, лишний
+                 tab-stop перед вариантами и два спец-правила, гасивших summary
+                 во вкладках и в печати. Ограничение высоты снял не details, а
+                 `.code-viewport` — та же прокручиваемая рамка, что у диаграммы:
+                 длинный листинг больше не выдавливает варианты за экран. */-->
             <div class="question-code-wrap content-box content-tabpanel" id="qmpanel-code"
                  th:if="${hasCode}"
                  data-content-type="CODE"
@@ -177,7 +236,9 @@
                  th:attr="role=${hasDiagram} ? 'tabpanel' : null,
                           aria-labelledby=${hasDiagram} ? 'qmtab-code' : null">
                 <div class="content-toolbar code-toolbar">
-                    <span class="content-box-title">Код к вопросу</span>
+                    <span class="content-box-title">
+                        <svg class="ed-icon" aria-hidden="true"><use href="#i-code"></use></svg><span th:text="${codeBlock.title()}">Пример кода</span>
+                    </span>
                     <div class="code-toolbar-actions" role="group" aria-label="Управление кодом">
                         <button type="button" class="btn secondary-btn code-action" data-code-action="wrap"
                                 aria-pressed="false" aria-label="Перенос строк">Перенос</button>
@@ -187,25 +248,27 @@
                                 aria-label="Код на весь экран">Экран</button>
                     </div>
                 </div>
-                <details class="question-code-details" open>
-                    <summary class="question-code-summary">
-                        <svg class="ed-icon" aria-hidden="true"><use href="#i-code"></use></svg>
-                        <span>Код к вопросу</span>
-                    </summary>
-                    <pre class="question-code"><code th:text="${current.question.codeSnippet()}"></code></pre>
-                </details>
+                <div class="code-viewport">
+                    <pre class="question-code"><code th:text="${codeBlock.body()}"></code></pre>
+                </div>
             </div>
 
-            <!-- P0.2: typed MERMAID block + toolbar (fit/zoom/fullscreen/source). -->
+            <!--/* P0.2: typed MERMAID block + toolbar (fit/zoom/fullscreen/source). */-->
             <div class="question-diagram question-diagram-wrap content-box content-tabpanel" id="qmpanel-diagram"
                  th:if="${hasDiagram}"
-                 data-content-type="MERMAID"
-                 data-block-id="diagram"
-                 th:attr="role=${hasCode} ? 'tabpanel' : null,
+                 th:attr="data-content-type=${diagramBlock.type().name()},
+                          data-block-id='diagram',
+                          role=${hasCode} ? 'tabpanel' : null,
                           aria-labelledby=${hasCode} ? 'qmtab-diagram' : null">
                 <div class="content-toolbar diagram-toolbar">
-                    <span class="content-box-title">Диаграмма</span>
-                    <div class="diagram-toolbar-actions" role="group" aria-label="Управление диаграммой">
+                    <span class="content-box-title">
+                        <svg class="ed-icon" aria-hidden="true"><use href="#i-diagram"></use></svg><span th:text="${diagramBlock.title()}">Схема</span>
+                    </span>
+                    <!--/* Зум/вписать/экран управляют SVG, который рисует mermaid.js.
+                         У текстовой схемы такого SVG нет — там обычный <pre>, и кнопки
+                         не делали бы ничего. Вместо мёртвого тулбара его просто нет. */-->
+                    <div class="diagram-toolbar-actions" role="group" aria-label="Управление диаграммой"
+                         th:if="${diagramBlock.type().name() == 'MERMAID'}">
                         <button type="button" class="btn secondary-btn diagram-action" data-diagram-action="fit"
                                 aria-label="Вписать диаграмму">Вписать</button>
                         <button type="button" class="btn secondary-btn diagram-action" data-diagram-action="zoom-in"
@@ -217,25 +280,37 @@
                     </div>
                 </div>
                 <div class="diagram-viewport" data-diagram-scale="1">
-                    <pre class="mermaid" th:text="${current.question.diagramMermaid()}"
-                         th:attr="aria-label=${'Диаграмма к вопросу'}"></pre>
+                    <pre class="mermaid" th:if="${diagramBlock.type().name() == 'MERMAID'}"
+                         th:text="${diagramBlock.body()}"
+                         th:attr="aria-label=${diagramBlock.accessibilityDescription()}"></pre>
+                    <!--/* Схема, нарисованная псевдографикой прямо в шпаргалке. Её не
+                         надо рендерить — она уже картинка, просто из символов. Нужна
+                         только моноширинная сетка и запрет переносов, иначе рамки
+                         разъезжаются. */-->
+                    <pre class="ascii-diagram" th:unless="${diagramBlock.type().name() == 'MERMAID'}"
+                         th:text="${diagramBlock.body()}"
+                         th:attr="aria-label=${diagramBlock.accessibilityDescription()}"></pre>
                 </div>
-                <!-- GFX-008: fallback при ошибке рендера (mermaid-renderer ставит
+                <!--/* GFX-008: fallback при ошибке рендера (mermaid-renderer ставит
                      data-render-failed → .mermaid скрыт). Показываем спокойный
-                     pixel-глиф + честное объяснение; исходник ниже раскрыт. -->
-                <p class="diagram-fallback">
-                    <svg class="px-illus px-illus-sm" aria-hidden="true"><use href="#px-diagram-error"></use></svg>
-                    <span>Не удалось отрисовать диаграмму. Ниже — исходный код в текстовом виде.</span>
-                </p>
-                <details class="diagram-source-details">
-                    <summary class="diagram-source-summary">
-                        <svg class="ed-icon" aria-hidden="true"><use href="#i-code"></use></svg><span>Исходник</span>
-                    </summary>
-                    <pre class="diagram-source"><code th:text="${current.question.diagramMermaid()}"></code></pre>
-                </details>
+                     pixel-глиф + честное объяснение; исходник ниже раскрыт.
+                     У текстовой схемы рендера нет — падать нечему, и исходник
+                     совпадает с тем, что уже на экране. */-->
+                <th:block th:if="${diagramBlock.type().name() == 'MERMAID'}">
+                    <p class="diagram-fallback">
+                        <svg class="px-illus px-illus-sm" aria-hidden="true"><use href="#px-diagram-error"></use></svg>
+                        <span>Не удалось отрисовать диаграмму. Ниже — исходный код в текстовом виде.</span>
+                    </p>
+                    <details class="diagram-source-details">
+                        <summary class="diagram-source-summary">
+                            <svg class="ed-icon" aria-hidden="true"><use href="#i-code"></use></svg><span>Исходник</span>
+                        </summary>
+                        <pre class="diagram-source"><code th:text="${diagramBlock.body()}"></code></pre>
+                    </details>
+                </th:block>
             </div>
-        </div><!-- /.question-materials -->
-        </div><!-- /.focus-rail : конец левой колонки split -->
+        </div><!--/* /.question-materials */-->
+        </div><!--/* /.focus-rail : конец левой колонки split */-->
 
         <div th:if="${flashcardMode}" class="flashcard-phase">
             <div class="flashcard-badge" th:if="${!typedInputMode}">Флешкарта — вспомни ответ до раскрытия</div>
@@ -243,13 +318,13 @@
             <div class="flashcard-badge" th:if="${typedInputMode and !codeChallengeMode and mode != null and mode.name() == 'INTERVIEW'}">Интервью — устный/развёрнутый ответ (можно записать заметки)</div>
             <div class="flashcard-badge" th:if="${typedInputMode and !codeChallengeMode and mode != null and mode.name() == 'TYPED_RECALL'}">Печатный ответ — напиши ответ, затем проверь себя</div>
 
-            <!-- Browse / вне recall-сессии: серверный reveal невозможен (нет
+            <!--/* Browse / вне recall-сессии: серверный reveal невозможен (нет
                  активной recall-сессии для SM-2). Нативный <details> раскрывает
                  уже отрендеренный сервером ответ БЕЗ JS (раньше #browse-reveal-btn
                  был JS-only: без скриптов кнопка мертва, ответ навсегда скрыт).
                  По-прежнему закрыт по умолчанию — флешкарта прячет ответ до reveal.
-                 app.js (toggle-listener) лишь дорисовывает подсветку кода и меняет
-                 подпись summary; навигации/POST нет. -->
+                 quiz/interview.js (toggle-listener) лишь дорисовывает подсветку кода и меняет
+                 подпись summary; навигации/POST нет. */-->
             <div th:if="${!sessionRecallMode}" class="flashcard-browse">
                 <details id="browse-details" class="flashcard-browse-details">
                     <summary id="browse-reveal-btn" class="flashcard-reveal-btn flashcard-reveal-summary">Показать ответ</summary>
@@ -257,9 +332,16 @@
                         <div class="answer markdown-content" th:utext="${studyAnswerHtml}"></div>
                     </div>
                 </details>
+                <!--/* Выход к следующему вопросу. Без него browse-флешкарта была
+                     тупиком: формы ответа тут нет (её th:if гасит flashcardMode),
+                     кнопок само-оценки тоже (они только в recall-сессии), и после
+                     раскрытия ответа единственным путём дальше оставался сайдбар.
+                     Ссылка серверная (GET с тем же фильтром + excludeQuestionId),
+                     поэтому работает и без JS — как весь остальной browse-режим. */-->
+                <a class="btn secondary-btn flashcard-browse-next" th:href="${focusBrowseNextHref}">Следующий вопрос<span aria-hidden="true"> →</span></a>
             </div>
 
-            <!-- Активная recall-сессия (FLASHCARD / typed-family): серверный reveal двигает SM-2 фазу. -->
+            <!--/* Активная recall-сессия (FLASHCARD / typed-family): серверный reveal двигает SM-2 фазу. */-->
             <div th:if="${sessionRecallMode and !flashcardRevealed and typedInputMode}">
                 <form method="post" th:action="@{/flashcard-reveal}" class="typed-answer-input"
                       th:data-question-id="${current.question.id}"
@@ -277,12 +359,12 @@
                 </form>
             </div>
             <div th:if="${sessionRecallMode and flashcardRevealed}" class="flashcard-answer">
-                <!-- Typed-recall / code-challenge / interview: эхо ответа пользователя
+                <!--/* Typed-recall / code-challenge / interview: эхо ответа пользователя
                      над эталоном для само-сверки («напиши → сравни»). Текст живёт в
                      sessionStorage (сохраняется JS при сабмите reveal-формы, т.к.
                      серверный /flashcard-reveal его не персистит) и подставляется
                      initRecallTypedEcho по совпадению data-question-id. По умолчанию
-                     hidden: без JS или при пустом вводе блок не появляется (PE). -->
+                     hidden: без JS или при пустом вводе блок не появляется (PE). */-->
                 <div th:if="${typedInputMode}" class="recall-your-answer" hidden
                      th:classappend="${codeChallengeMode} ? ' is-code' : ''"
                      th:data-question-id="${current.question.id}">
@@ -304,7 +386,7 @@
             </div>
         </div>
 
-        <!-- STUDY / фаза LEARN: учебная карточка «вопрос + полный ответ». По контракту
+        <!--/* STUDY / фаза LEARN: учебная карточка «вопрос + полный ответ». По контракту
              StudyPhase.LEARN = показ полного ответа для изучения; кнопка «Проверить
              себя» шлёт POST /study-confirm → SessionFlowService.applyStudyConfirm
              переводит сессию в QUIZ (switchToQuizPhase), и ниже отрисуется форма
@@ -315,7 +397,7 @@
              была неотличима от проверки. RIA-2.
              !flashcardMode: у вопроса без seed-вариантов LEARN вырождается во
              флешкарту (блок flashcard-browse выше уже раскрывает ответ), а QUIZ там
-             всё равно был бы пуст — отдельная карточка изучения не нужна. -->
+             всё равно был бы пуст — отдельная карточка изучения не нужна. */-->
         <div th:if="${studyLearnPhase and !flashcardMode}" class="flashcard-phase study-learn-phase">
             <div class="flashcard-badge">Изучение — прочитай ответ, затем проверь себя</div>
             <div class="flashcard-answer">
@@ -337,11 +419,26 @@
             <input type="hidden" name="weakTopics" th:if="${weakTopics}" value="true">
             <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
 
+            <!--/* Подсказка потока стоит вплотную к тому, что объясняет. Раньше она
+                 жила в шапке вопроса — за ~300px и целый заголовок до первого
+                 варианта, то есть инструкция «выбери один вариант» читалась раньше,
+                 чем появлялись варианты, а на длинном вопросе с кодом уже уезжала
+                 из вида к моменту выбора. Здесь она и остаётся целью
+                 aria-describedby радиогруппы (id=options-flow-hint), и совпадает с
+                 местом действия для зрячего чтения.
+
+                 Рендерится только для MCQ: в флешкарта-режиме то же самое дословно
+                 написано в .flashcard-badge над кнопкой «Показать ответ». Условие
+                 th:if здесь избыточно — вся форма гейтится !flashcardMode, — поэтому
+                 его нет: ссылка aria-describedby не может повиснуть. */-->
+            <p class="zone-hint" id="options-flow-hint"
+               th:text="${focusModeHintText}">Выбери один вариант. Проверка и разбор идут по шагам.</p>
+
             <div class="options" id="interview-options" role="radiogroup" aria-label="Варианты ответа" aria-describedby="options-flow-hint">
                 <label th:each="opt, iterStat : ${current.options}"
                        th:data-option-id="${opt.id}"
                        th:aria-label="${'Вариант ' + (iterStat.index + 1) + ': ' + @markdownRenderService.toPlainText(opt.optionText)}">
-                    <!-- aria-invalid="false" ОБЯЗАТЕЛЕН: с `required` невыбранный
+                    <!--/* aria-invalid="false" ОБЯЗАТЕЛЕН: с `required` невыбранный
                          radio нативно матчит :invalid (valueMissing) сразу при загрузке,
                          и Chromium экспонирует это в a11y-дерево как invalid=true на ВСЕХ
                          вариантах до любого действия → скринридер ложно озвучивает
@@ -350,30 +447,30 @@
                          aria-invalid="false" переопределяет экспонируемое состояние, НЕ
                          трогая native-валидацию: `required` цел → no-JS пустой submit
                          по-прежнему ловится нативным bubble. После выбора группа нативно
-                         :valid, так что статический false корректен на всех стадиях. -->
+                         :valid, так что статический false корректен на всех стадиях. */-->
                     <input type="radio"
                            name="optionId"
                            th:value="${opt.id}"
                            aria-invalid="false"
                            required>
-                    <!-- optionText в БД хранится как "A. текст" (McqJsonLoader склеивает
+                    <!--/* optionText в БД хранится как "A. текст" (McqJsonLoader склеивает
                          label+text — это удобно для контекстов без буквенного бейджа:
                          фидбэк, CSV-экспорт, aria-label для скринридеров). Но в этом
                          списке букву уже рисует CSS-счётчик (label::before, content:
                          counter(opt, upper-latin)) → буква дублировалась (бейдж "A" +
                          "A. текст"). Срезаем ведущий "X. " ТОЛЬКО в видимом span;
                          aria-label выше оставляем с буквой (CSS-бейдж декоративный и
-                         скринридером не озвучивается). -->
+                         скринридером не озвучивается). */-->
                     <span th:utext="${opt.optionText != null ? @markdownRenderService.toInlineHtml(opt.optionText.replaceFirst('^[A-Z][.] ', '')) : ''}">Вариант</span>
                 </label>
             </div>
-            <!-- Диапазон «1–N» считаем server-side из реального числа вариантов
+            <!--/* Диапазон «1–N» считаем server-side из реального числа вариантов
                  (капом 9 — столько цифровых горячих клавиш). Раньше был статический
                  «1–9», который при 4 вариантах вводил в заблуждение (клавиши 5–9
-                 ничего не делают), тогда как title кнопки app.js уже правил динамически
+                 ничего не делают), тогда как title кнопки quiz/interview.js уже правил динамически
                  — рассинхрон (UX-ревью #14). Теперь оба источника согласованы, и no-JS
                  SSR-фоллбэк тоже корректен. Выражение инлайнится (не th:with): на одном
-                 элементе th:replace имеет приоритет над th:with → keyCount был бы пуст. -->
+                 элементе th:replace имеет приоритет над th:with → keyCount был бы пуст. */-->
             <div th:replace="~{fragments/training-actions :: training-actions(
                 submitId='interview-submit',
                 submitText='Проверить ответ',
@@ -382,7 +479,7 @@
                 hintText=${'1–' + (current.options.size() > 9 ? 9 : current.options.size()) + ' — выбор, ↑/↓ — навигация, Esc — снять, Enter — отправка'}
             )}"></div>
 
-            <!-- FLOW-03b: честный исход «Не знаю» (UNKNOWN) — не угадывание.
+            <!--/* FLOW-03b: честный исход «Не знаю» (UNKNOWN) — не угадывание.
                  formaction переопределяет action формы на POST /skip, а
                  formnovalidate снимает required с радиогруппы (вариант не
                  выбирается). Реюзит скрытый questionId + автоинъекцию _csrf этой
@@ -390,7 +487,7 @@
                  Гейтим активной незавершённой сессией: вне сессии processSkip —
                  no-op (session==null), кнопку не показываем, чтобы не обещать
                  действие, которого не будет. Стиль — низкоэмфазный текст (не .btn),
-                 primary «Проверить ответ» остаётся доминирующим. -->
+                 primary «Проверить ответ» остаётся доминирующим. */-->
             <div class="skip-action" th:if="${interviewSession != null and !interviewSession.finished}">
                 <button type="submit" class="skip-btn" formnovalidate th:formaction="@{/skip}"
                         title="Отметить вопрос как незнакомый — честный пропуск без угадывания">Не знаю ответа</button>
@@ -407,12 +504,12 @@
             extraButtonText='Похожие вопросы'
         )}"></div>
 
-        <!-- FLOW-REPORT-b: тихий триггер «Сообщить о проблеме» по текущему вопросу.
-             JS-gated (hidden → app.js раскрывает и вешает reportModal): без JS
+        <!--/* FLOW-REPORT-b: тихий триггер «Сообщить о проблеме» по текущему вопросу.
+             JS-gated (hidden → quiz/interview.js раскрывает и вешает reportModal): без JS
              модалка не работает, поэтому мёртвой кнопки без скриптов не показываем
              (тот же паттерн, что extra-analysis-toggle). Доступен на любой фазе
              вопроса, не только пост-ответ. POST /api/report — CSRF-exempt как
-             прочие /api/* (см. app.js toggleFavorite). -->
+             прочие /api/* (см. quiz/interview.js toggleFavorite). */-->
         <div class="report-zone">
             <button type="button" class="report-trigger hidden" data-report-trigger
                     th:attr="data-question-id=${current.question.id}">
@@ -422,16 +519,16 @@
     </section>
 
     <section class="empty empty-card-inner" th:if="${current == null}">
-        <!-- Pixel-маскот как в error.html/bookmarks-empty: empty-состояние —
+        <!--/* Pixel-маскот как в error.html/bookmarks-empty: empty-состояние —
              частая точка входа (узкий фильтр / нет ошибок для повтора /
              завершённая сессия), достойно той же тёплой pixel-идентичности,
-             а не голого текста. Декоративный (alt="") — заголовок ниже. -->
+             а не голого текста. Декоративный (alt="") — заголовок ниже. */-->
         <img class="empty-pixel-art" th:src="@{/img/pixel/mascot.png}" width="72" height="72" alt="" decoding="async">
         <h1 class="empty-title">Сейчас нет вопросов</h1>
-        <!-- AIR-6 (R0.129): AI вырезан → generationUnavailable был зашит в false
+        <!--/* AIR-6 (R0.129): AI вырезан → generationUnavailable был зашит в false
              (всегда). Плечо `!generationUnavailable and` снято из guard'ов как
              всегда-истинное вместе с model-атрибутом и plumbing (FocusPageState +
-             MvcModelAttributeMapper). Ветки взаимоисключающие по reviewMode / сессии. -->
+             MvcModelAttributeMapper). Ветки взаимоисключающие по reviewMode / сессии. */-->
 
         <p class="empty-description" th:if="${reviewMode}">Нет вопросов с ошибками для повтора.</p>
         <p class="empty-description" th:if="${!reviewMode and interviewSession == null}">Нет доступных вопросов по выбранным фильтрам. Открой настройки и расширь выборку.</p>
@@ -439,26 +536,26 @@
         <p class="empty-description" th:if="${!reviewMode and interviewSession != null and interviewSession.finished}"><svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-flag"></use></svg>Сессия завершена.</p>
         <div class="empty-actions" th:with="finished=${interviewSession != null and interviewSession.finished},
                                             settingsPrimary=${!reviewMode and interviewSession == null}">
-            <!-- Завершённая сессия: главный CTA — итоги, а не «обновить тренировку».
+            <!--/* Завершённая сессия: главный CTA — итоги, а не «обновить тренировку».
                  POST /finish сохраняет summary из ещё живой finished-сессии и
                  редиректит на /session-summary (InterviewFlowMvcService.finish);
                  без этого пользователь, доехавший до пустого «Сессия завершена»,
-                 упирался в тупик. d-contents — форма не ломает flex .empty-actions. -->
+                 упирался в тупик. d-contents — форма не ломает flex .empty-actions. */-->
             <form th:if="${finished}" method="post" th:action="@{/finish}" class="d-contents">
                 <button type="submit" class="btn next-btn empty-action-summary">Посмотреть итоги</button>
             </form>
-            <!-- «Фильтры пусты» (нет сессии, не review, AI в порядке): описание прямо
+            <!--/* «Фильтры пусты» (нет сессии, не review, AI в порядке): описание прямо
                  просит «Открой настройки и расширь выборку» → главный CTA здесь и есть
                  настройки, а не «Обновить тренировку» (перезагрузка того же фильтра —
                  no-op, уводит по кругу; primary-эмфаза должна совпадать с текстом-
                  инструкцией). В прочих ветках (AI недоступен / сессия не готова) refresh
                  осмыслен → там он остаётся primary. settingsPrimary и finished взаимо-
-                 исключающи (finished ⇒ interviewSession != null). -->
+                 исключающи (finished ⇒ interviewSession != null). */-->
             <a class="btn empty-action-settings" th:classappend="${settingsPrimary} ? ' next-btn' : ' secondary-btn'"
                th:href="@{/settings}">Открыть настройки</a>
-            <!-- retry: primary по умолчанию; опускаем до secondary при finished (primary —
+            <!--/* retry: primary по умолчанию; опускаем до secondary при finished (primary —
                  «итоги») ИЛИ при settingsPrimary (primary — настройки).
-                 th:href/th:text фиксирует TemplateFragmentContractTest. -->
+                 th:href/th:text фиксирует TemplateFragmentContractTest. */-->
             <a class="btn empty-action-retry" th:classappend="${finished or settingsPrimary} ? ' secondary-btn' : ' next-btn'"
                th:href="${focusEmptyRetryHref}" th:text="${focusEmptyRetryText}">Обновить тренировку</a>
         </div>

@@ -35,11 +35,33 @@ html[data-design] .focus-aside .today-chip {
    .question-zone-head к чипу режима (см. focus-training.html) — два ярлыка по
    25 символов держали две строки, отвечая на один вопрос «что передо мной».
    Стилевая метка бейджа переехала следом: тише обычного .badge, чтобы мета не
-   спорила по весу с самим вопросом. */
+   спорила по весу с самим вопросом.
+   Контур бейджа задаёт НЕ border: пиксельный слой гасит его без условий
+   (`html[data-design] .badge { border: 0 !important }`, pixel-nav-badges.css) и
+   рисует рамку четырьмя тенями по `currentColor`. Значит `border-color` здесь
+   мёртв в любой теме и при любом data-pixel, а цвет контура тянется за `color` —
+   он и остаётся единственной ручкой. Замер и держит гейт: правило бейджа
+   проверяется по `color`, и это не совпадение. */
 html[data-design] .focus-page .question-zone-head .badge {
   color: var(--color-text-tertiary);
-  border-color: var(--color-border-secondary);
   background: transparent;
+}
+/* Тихая база выше — для ярлыков, которые стоят всегда. Бейдж сложности теперь
+   не из таких: он появляется только когда уровень что-то различает (см.
+   `Difficulty.informative()`), то есть каждое его появление — сигнал, а не фон.
+   Гамма взята не своя, а та же, которой /stats красит донат сложности
+   (pages-stats.css: easy → accent, hard → error): один и тот же смысл на двух
+   экранах обязан выглядеть одинаково, иначе это два интерфейса, собранные в
+   разное время. `MEDIUM` модификатора не имеет намеренно — его не рисуют.
+   Контраст подписи на своей подложке замерен в обеих темах: easy 5.35/9.56,
+   hard 5.08/6.02 (светлая/тёмная) — AA с запасом. */
+html[data-design] .focus-page .question-zone-head .badge--difficulty-easy {
+  color: var(--color-accent-strong);
+  background: var(--color-accent-wash);
+}
+html[data-design] .focus-page .question-zone-head .badge--difficulty-hard {
+  color: var(--color-status-error);
+  background: var(--color-status-error-wash);
 }
 html[data-design] .focus-topbar .zone-chip {
   color: var(--color-text-tertiary);
