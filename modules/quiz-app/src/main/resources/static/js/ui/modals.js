@@ -1,4 +1,4 @@
-import { apiFetch, parseApiError } from '../core/api-client.js';
+import { apiPostJson } from '../core/api-client.js';
 import { API } from '../core/constants.js';
 
 /**
@@ -184,15 +184,11 @@ export function reportModal(questionId) {
     // и должно жить в одном месте.
     const checked = overlay.querySelector('input[name="report-category"]:checked');
     const comment = overlay.querySelector('#report-comment').value.trim();
-    const body = new URLSearchParams({ questionId: String(questionId) });
-    if (checked) body.set('category', checked.value);
-    if (comment) body.set('comment', comment);
+    const payload = { questionId: Number(questionId) };
+    if (checked) payload.category = checked.value;
+    if (comment) payload.comment = comment;
     try {
-      const resp = await apiFetch(API.REPORT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body
-      });
+      const resp = await apiPostJson(API.REPORT, payload);
       if (resp.ok) showSuccess();
       else showError('Не удалось отправить — возможно, вопрос устарел. Обнови страницу и повтори.');
     } catch (err) {
