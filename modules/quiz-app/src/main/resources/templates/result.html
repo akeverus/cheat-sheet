@@ -10,32 +10,21 @@
     <div class="shell-main">
         <th:block th:replace="~{fragments/topbar :: topbar}"></th:block>
 <main id="main-content" class="ed-page" tabindex="-1">
-<!-- Stats + Session — compact top row -->
-<div class="top-row">
-    <section th:replace="~{fragments/stats-grid :: stats-grid(stats=${stats})}"></section>
-
-    <section class="card flex-shrink-0" th:if="${interviewSession != null}">
-        <div class="session-bar">
-            <span>Сессия: <strong th:text="${@modeUtils.displayName(interviewSession.mode)}">MODE</strong></span>
-            <!-- getIndex() уже инкрементирован в registerAnswer ДО рендера /answer →
-                 = число отвеченных = 1-based номер только что отвеченного вопроса.
-                 БЕЗ +1 (на странице-вопроса +1 верен, тут переполнял бы: «11/10»). -->
-            <span>Прогресс: <span th:text="${interviewSession.getIndex()}">1</span>/<span th:text="${interviewSession.getTotal()}">0</span></span>
-            <span><svg class="ed-icon ed-icon-success" aria-hidden="true"><use href="#i-circle-check"></use></svg> <span class="visually-hidden">Верно:</span> <span th:text="${interviewSession.getCorrect()}">0</span></span>
-            <span><svg class="ed-icon ed-icon-error" aria-hidden="true"><use href="#i-circle-x"></use></svg> <span class="visually-hidden">Неверно:</span> <span th:text="${interviewSession.getWrong()}">0</span></span>
-            <form method="post" th:action="@{/finish}" class="d-inline">
-                <button type="submit" class="btn-finish">Завершить сессию</button>
-            </form>
-        </div>
-    </section>
-</div>
-
-<!-- Result card — fills remaining space -->
+<!--/* Здесь стояла верхняя полоса: шесть глобальных KPI банка вопросов
+     (карточек / к повтору / освоено / верных попыток / ошибочных / точность) и
+     плоская session-bar с прогрессом, счётом и one-click «Завершить сессию».
+     Всё три — чужое на этой странице. Экран отвечает на один вопрос: «я ответил
+     верно?» — и вердикт был третьим экраном сверху, после сводки за всё время.
+     Совокупные метрики живут на аналитике, прогресс сессии — в топбаре
+     (progressbar + «N / M», один источник), счёт сессии — в итогах. Осталось
+     только действие, и оно переехало вниз, к «Следующему вопросу», где решение
+     принимается — с confirm, как на экране вопроса. */-->
+<!--/* Result card — fills remaining space */-->
 <section class="card" id="interview-card">
-    <!-- Одноколоночный layout. Раньше грид становился двухколонным через
+    <!--/* Одноколоночный layout. Раньше грид становился двухколонным через
          :has(.question-side) (правый code-сайд AI-режима); .question-side удалён
          вместе с мёртвым AI-путём (R0.126, aiEnabled=false), :has()-правила сняты.
-         Код CODE-вопросов рендерится в .answer (не в удалённом сайде). Критика C24. -->
+         Код CODE-вопросов рендерится в .answer (не в удалённом сайде). Критика C24. */-->
     <div class="question-layout">
         <div class="question-main flow-stack-md">
             <div class="question-header">
@@ -55,35 +44,42 @@
                 </div>
             </div>
 
-            <!-- UX-13: вердикт по макету Instrument — при ошибке дописываем букву
-                 правильного варианта («Неверно — правильный ответ A»). correctOptionLetter
-                 зеркалит API-путь (MvcModelAttributeMapper.correctOptionLetter). -->
-            <p class="status" th:with="ok=${result.correctAnswer}" th:classappend="${ok} ? ' status-correct' : ' status-wrong'">
-                <svg class="ed-icon ed-icon-lead" th:classappend="${ok} ? 'ed-icon-success' : 'ed-icon-error'" aria-hidden="true">
-                    <use th:attr="href=${ok} ? '#i-circle-check' : '#i-circle-x'"></use>
-                </svg><span th:text="${ok ? 'Верно!' : (correctOptionLetter != null and !correctOptionLetter.isEmpty() ? 'Неверно — правильный ответ ' + correctOptionLetter : 'Неверно')}">Статус</span>
-            </p>
+            <!--/* Вердикт — тот же компонент, что и в JS-пути (.feedback-verdict.result-banner
+                 с .result-verdict внутри), и та же строка: её собирает Java
+                 (MvcModelAttributeMapper.verdictText), а не шаблон. Раньше здесь
+                 стоял отдельный `.status` со своей типографикой и своим текстом
+                 («Неверно — правильный ответ C») — то есть у одного экрана было два
+                 разных вердикта в зависимости от того, включён ли JS. */-->
+            <div class="feedback-verdict result-banner" th:with="ok=${result.correctAnswer}"
+                 th:classappend="${ok} ? 'result-correct' : 'result-wrong'">
+                <strong class="result-verdict">
+                    <svg class="ed-icon ed-icon-lead" th:classappend="${ok} ? 'ed-icon-success' : 'ed-icon-error'" aria-hidden="true">
+                        <use th:attr="href=${ok} ? '#i-circle-check' : '#i-circle-x'"></use>
+                    </svg><span th:text="${verdictText}">Статус</span>
+                </strong>
+            </div>
 
-            <!-- UX-13: опции = только марка состояния + тег (макет Instrument), БЕЗ
-                 inline-пояснений — они переехали в «Подробнее» (.option-breakdown ниже),
-                 чтобы не дублировать «почему» между вариантом, лидом и полным разбором. -->
+            <!--/* UX-13: опции = только марка состояния, БЕЗ inline-пояснений. «Почему»
+                 сказано один раз и ниже: лид в .explanation-panel и построчный разбор
+                 неверных в .distractor-panel. Пояснение у каждого варианта повторяло бы
+                 то же самое третий раз, рядом с текстом, который надо просто сверить. */-->
             <div class="options" role="list" aria-label="Варианты ответа (результат)">
-                <!-- div, не label: это display-only результат (нет <input>), а label
+                <!--/* div, не label: это display-only результат (нет <input>), а label
                      без управляемого контрола + вложенный блочный <div> внутри —
-                     невалидный HTML. role=listitem несёт семантику списка. -->
+                     невалидный HTML. role=listitem несёт семантику списка. */-->
                 <div th:each="opt : ${result.options}"
                        role="listitem"
-                       th:classappend="${opt.id == result.correct.id} ? 'option-correct' : (opt.id == result.selected.id ? 'option-wrong' : 'option-other')"
-                       th:aria-label="${(opt.id == result.correct.id ? 'Правильный: ' : (opt.id == result.selected.id ? 'Твой ответ: ' : '')) + @markdownRenderService.toPlainText(opt.optionText)}">
+                       th:classappend="${opt.id == result.correct.id ? 'option-correct' : (opt.id == result.selected.id ? 'option-wrong' : 'option-dimmed')}"
+                       th:aria-label="${(opt.id == result.correct.id ? 'Правильный ответ: ' : (opt.id == result.selected.id ? 'Твой выбор: ' : '')) + @markdownRenderService.toPlainText(opt.optionText)}">
                     <span th:utext="${@markdownRenderService.toInlineHtml(opt.optionText)}">Вариант</span>
                     <span th:if="${opt.id == result.correct.id}" class="option-status-label option-status-correct">Правильный ответ</span>
                     <span th:if="${opt.id == result.selected.id and opt.id != result.correct.id}" class="option-status-label option-status-selected">Твой выбор</span>
                 </div>
             </div>
 
-            <!-- Хендофф-3, Этап 4: разбор НА ПОВЕРХНОСТИ (зеркалит JS-путь
+            <!--/* Хендофф-3, Этап 4: разбор НА ПОВЕРХНОСТИ (зеркалит JS-путь
                  renderFeedbackHtml). «Почему это так?» — краткий лид (первый абзац);
-                 если сервер не выделил лид, как лид показываем весь answerHtml. -->
+                 если сервер не выделил лид, как лид показываем весь answerHtml. */-->
             <div th:if="${answerLeadHtml != null and !answerLeadHtml.isBlank()}" class="explanation-panel">
                 <span class="explanation-eyebrow">Почему это так?</span>
                 <div class="result-lead answer markdown-content" th:utext="${answerLeadHtml}"></div>
@@ -93,20 +89,8 @@
                 <div class="result-lead answer markdown-content" th:utext="${answerHtml}"></div>
             </div>
 
-            <!-- UI-013 / P2: всегда строка интервала (N дн. или —) + политика повторений. -->
-            <p class="next-review">
-                <span class="next-review-eyebrow">Следующее повторение:</span>
-                <span class="next-review-when"
-                      th:text="${reviewState != null and reviewState.intervalDays() > 0
-                          ? ('через ' + reviewState.intervalDays() + ' дн.')
-                          : '—'}">—</span>
-            </p>
-            <p class="review-policy muted tiny">
-                Интервальные повторения: верный ответ отодвигает карточку, ошибка возвращает её раньше.
-            </p>
-
-            <!-- Хендофф-3, Этап 4: distractor-анализ НА ПОВЕРХНОСТИ — компактные строки
-                 «B — неверно. <причина>» по каждому НЕверному варианту (не под «Подробнее»). -->
+            <!--/* Хендофф-3, Этап 4: distractor-анализ НА ПОВЕРХНОСТИ — компактные строки
+                 «B — неверно. <причина>» по каждому НЕверному варианту (не под «Подробнее»). */-->
             <div class="explanation-panel distractor-panel" th:if="${hasDistractorAnalysis}">
                 <span class="explanation-eyebrow">Почему другие варианты не подходят</span>
                 <div class="distractor-list">
@@ -119,13 +103,32 @@
                 </div>
             </div>
 
-            <!-- «Подробнее»: остаток разбора (после лид-абзаца). -->
-            <div th:if="${answerRestHtml != null and !answerRestHtml.isBlank() and answerLeadHtml != null and !answerLeadHtml.isBlank()}"
-                 class="explanation-panel additional-panel explanation-more">
-                <details>
-                    <summary class="explanation-eyebrow">Подробнее</summary>
-                    <div class="answer markdown-content" th:utext="${answerRestHtml}"></div>
-                </details>
+            <!--/* «Подробнее»: остаток разбора (после лид-абзаца). Панель — сам
+                 <details>, без div-обёртки: JS-путь строит именно так, а обёртка
+                 разводила два DOM под один класс — любое будущее правило вида
+                 `.additional-panel > summary` работало бы ровно на одном из путей. */-->
+            <details th:if="${answerRestHtml != null and !answerRestHtml.isBlank() and answerLeadHtml != null and !answerLeadHtml.isBlank()}"
+                     class="explanation-panel additional-panel">
+                <summary class="explanation-eyebrow">Подробнее</summary>
+                <div class="answer markdown-content" th:utext="${answerRestHtml}"></div>
+            </details>
+
+            <!--/* Мета разбора: заработанный опыт и следующий повтор. Раньше строка
+                 повторения стояла ВЫШЕ, между лидом и разбором неверных вариантов, и
+                 разрывала объяснение служебной информацией; «+N XP» на этой странице
+                 не показывался вовсе, хотя опыт начислялся (листенер на AnswerEvent
+                 общий для MVC и REST) — no-JS молча забирал награду. */-->
+            <div class="feedback-meta">
+                <span th:if="${xpAwarded != null and xpAwarded > 0}" class="result-xp"
+                      th:attr="aria-label='Начислено ' + ${xpAwarded} + ' XP'"
+                      th:text="'+' + ${xpAwarded} + ' XP'">+10 XP</span>
+                <p class="next-review">
+                    <span class="next-review-eyebrow">Следующее повторение:</span>
+                    <span class="next-review-when" th:text="${nextReviewText}">—</span>
+                </p>
+                <p class="review-policy muted tiny">
+                    Интервальные повторения: верный ответ отодвигает карточку, ошибка возвращает её раньше.
+                </p>
             </div>
 
             <details th:if="${reviewState != null}" class="sm2-details">
@@ -135,23 +138,19 @@
                     <dt>Интервал</dt><dd><span th:text="${reviewState.intervalDays()}">0</span> дн.</dd>
                     <dt>Ease factor</dt><dd th:text="${#numbers.formatDecimal(reviewState.easeFactor(), 1, 2)}">2.50</dd>
                     <dt>Следующее повторение</dt><dd th:text="${#dates.format(new java.util.Date(reviewState.nextReviewAt() * 1000), 'yyyy-MM-dd HH:mm')}">—</dd>
-                    <dt>Последний результат</dt><dd th:switch="${reviewState.lastResult().name()}">
-                        <span th:case="'NEW'">Ещё не отвечали</span>
-                        <span th:case="'CORRECT'">Верно</span>
-                        <span th:case="'WRONG'">Неверно</span>
-                        <span th:case="'UNKNOWN'">Не знаю</span>
-                        <span th:case="'RESET'">Сброшен</span>
-                        <span th:case="*" th:text="${reviewState.lastResult().name()}">—</span>
-                    </dd>
+                    <!--/* Подпись — свойство константы (ReviewResult.label), а не разметки.
+                         Раньше здесь был th:switch по пяти литералам с th:case="*",
+                         печатавшим сырое английское имя константы в русском интерфейсе. */-->
+                    <dt>Последний результат</dt><dd th:text="${reviewState.lastResult().label()}">—</dd>
                     <dt>Правильно / неправильно</dt><dd><span th:text="${reviewState.correctCount()}">0</span> / <span th:text="${reviewState.wrongCount()}">0</span></dd>
                 </dl>
             </details>
 
-            <!-- no-JS путь: весь разбор рендерится сервером на этой странице (вердикт,
+            <!--/* no-JS путь: весь разбор рендерится сервером на этой странице (вердикт,
                  варианты с пояснениями, «Пояснение», похожие вопросы — inline; SM-2 в
                  <details>). Прежний hint «доп. анализ — по кнопке» стал ложным после
                  вырезания AI-разбора (кнопка+контейнер удалены, см. коммент ниже) —
-                 в no-JS никаких доп-кнопок нет. UX-13 (no-JS consistency). -->
+                 в no-JS никаких доп-кнопок нет. UX-13 (no-JS consistency). */-->
             <div th:replace="~{fragments/result-zone-head :: result-zone-head(
                 id='result-zone-head-main',
                 chipText='Разбор ответа',
@@ -167,11 +166,20 @@
                        : @{/(topic=${filter?.topic},group=${filter?.group},ordered=${filter == null or filter.ordered != false},important=${filter?.importantOnly},onlyWrong=${filter?.onlyWrong},shuffle=${filter?.shuffle},weakTopics=${weakTopics})}">
                     Следующий вопрос
                 </a>
+                <!--/* Завершение сессии — вторичное действие рядом с основным, а не
+                     кнопка в шапке. Тот же контракт, что на экране вопроса (UX-003):
+                     подтверждение перед finish, чтобы промах не обрывал сессию. */-->
+                <form method="post" th:action="@{/finish}" class="result-finish-form"
+                      th:if="${interviewSession != null and !interviewSession.finished}">
+                    <button type="submit" class="btn secondary-btn result-finish-btn"
+                            data-confirm-title="Завершить сессию?"
+                            data-confirm="Прогресс сохранится в итогах. Завершить сессию сейчас?">Завершить сессию</button>
+                </form>
             </div>
-            <!-- «Похожие вопросы» рендерятся сервером ниже (#result-related-questions,
+            <!--/* «Похожие вопросы» рендерятся сервером ниже (#result-related-questions,
                  th:if relatedQuestions). AI-разбор (feedback/comparison/takeaway/трейс)
                  вырезан вместе с провайдерами — кнопка «доп. анализ» и её пустой
-                 контейнер удалены (иначе клик всегда падал в «Не удалось загрузить»). -->
+                 контейнер удалены (иначе клик всегда падал в «Не удалось загрузить»). */-->
 
 
             <div th:if="${interviewSession != null and interviewSession.finished}" class="mt-3 text-center">
@@ -181,18 +189,18 @@
     </div>
 </section>
 
-<!-- Связанные вопросы. Остаётся ПРЯМЫМ потомком .ed-page (id-якорь): на >=1200px
+<!--/* Связанные вопросы. Остаётся ПРЯМЫМ потомком .ed-page (id-якорь): на >=1200px
      CSS уводит блок в правую sticky-рейку через `.ed-page > #result-related-questions`
      и `:has(> #result-related-questions)` (base.css, WIDE LAYOUT) — обёртка в
      .card сломала бы грид. Поэтому тег меняем div→section + aria-labelledby (region-
-     лендмарк с доступным именем), но БЕЗ card-класса. Критика round-01 C31. -->
+     лендмарк с доступным именем), но БЕЗ card-класса. Критика round-01 C31. */-->
 <section th:if="${relatedQuestions != null and !relatedQuestions.isEmpty()}" id="result-related-questions" class="related-questions related-questions-block" aria-labelledby="related-questions-heading">
     <h2 id="related-questions-heading" class="related-questions-title"><svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-link"></use></svg>Похожие вопросы для закрепления:</h2>
-    <!-- RES-16 (R0.145): role=listitem на ОБЁРТКЕ-div, не на <a>. Раньше <a role=listitem>
+    <!--/* RES-16 (R0.145): role=listitem на ОБЁРТКЕ-div, не на <a>. Раньше <a role=listitem>
          перекрывал нативную link-роль → SR анонсировал «элемент списка», не «ссылка», и
          не находил в rotor'е ссылок (WCAG 4.1.2 role≠function). Канон списка-ссылок:
          role=list › role=listitem-обёртка › <a>. Класс .related-question-item остаётся
-         на <a> — CSS (base.css:2554, таргет по классу) не затронут. -->
+         на <a> — CSS (base.css:2554, таргет по классу) не затронут. */-->
     <div class="related-questions-list" role="list">
         <div th:each="rq : ${relatedQuestions}" role="listitem">
             <a class="related-question-item"
@@ -207,8 +215,6 @@
 </div>
 <nav th:replace="~{fragments/mobile-nav :: mobile-nav(active=${filter != null and filter.onlyWrong == true} ? 'review' : 'focus')}"></nav>
 <th:block th:replace="~{fragments/shell-scripts :: shell-scripts}"></th:block>
-<!-- app.js перенесён в конец body (был внутри main между секциями — структурная
-     аномалия, см. остальные страницы: focus-training/settings). Критика C31. -->
-<script th:replace="~{fragments/scripts :: app-script}"></script>
+<th:block th:replace="~{fragments/scripts :: app-script}"></th:block>
 </body>
 </html>

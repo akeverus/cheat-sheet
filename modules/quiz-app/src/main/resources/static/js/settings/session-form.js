@@ -53,16 +53,12 @@ export function initSessionModeForm() {
   if (!modeSelect || !countField || !startBtn) return;
   sessionModeBound = true;
 
-  const MODE_CTA = {
-    TRAINING: 'Начать тренировку',
-    STUDY: 'Начать изучение',
-    FLASHCARD: 'Начать флешкарты',
-    TYPED_RECALL: 'Начать печатный ответ',
-    INTERVIEW: 'Начать интервью',
-    CODE_CHALLENGE: 'Начать код-челлендж',
-    EXAM: 'Начать экзамен',
-    MARATHON: 'Начать интенсив'
-  };
+  // Подпись кнопки и признак «без счётчика» читаются с выбранного <option>
+  // (data-cta / data-unlimited из ModeUtils.options). Раньше здесь лежала своя
+  // копия всех восьми подписей, ключами — имена enum-констант: переименование
+  // константы молча роняло CTA в нейтральное «Начать сессию», а подпись могла
+  // разойтись с той же подписью в Java, ничего не сломав.
+  const selectedMode = () => modeSelect.selectedOptions[0];
   const countInput = countField.querySelector('input[name="count"]');
   const preview = document.getElementById('session-preview');
   const previewCount = preview?.querySelector('[data-preview-count]');
@@ -113,7 +109,7 @@ export function initSessionModeForm() {
   const updatePreview = () => {
     if (!preview) return;
     if (previewFilters) previewFilters.textContent = describeFilters();
-    if (modeSelect.value === 'TRAINING') {
+    if (selectedMode()?.dataset.unlimited === 'true') {
       if (previewCount) previewCount.textContent = 'Без ограничения по числу';
       if (previewTime) previewTime.textContent = 'сессия идёт, пока не остановишь';
       return;
@@ -132,9 +128,9 @@ export function initSessionModeForm() {
   };
 
   const sync = () => {
-    const isTraining = modeSelect.value === 'TRAINING';
-    countField.classList.toggle('hidden', isTraining);
-    startBtn.textContent = MODE_CTA[modeSelect.value] || 'Начать сессию';
+    const opt = selectedMode();
+    countField.classList.toggle('hidden', opt?.dataset.unlimited === 'true');
+    startBtn.textContent = opt?.dataset.cta || 'Начать сессию';
     const modeMirror = document.getElementById('filters-mode-mirror');
     if (modeMirror) modeMirror.value = modeSelect.value;
     updatePreview();
@@ -142,8 +138,7 @@ export function initSessionModeForm() {
 
   if (countInput) countInput.addEventListener('input', updatePreview);
   modeSelect.addEventListener('change', () => {
-    const opt = modeSelect.selectedOptions[0];
-    const def = opt?.getAttribute('data-default-count');
+    const def = selectedMode()?.dataset.defaultCount;
     if (countInput && def) countInput.value = def;
   });
   modeSelect.addEventListener('change', sync);

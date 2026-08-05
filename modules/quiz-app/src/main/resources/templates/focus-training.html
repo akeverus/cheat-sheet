@@ -268,7 +268,7 @@
                          У текстовой схемы такого SVG нет — там обычный <pre>, и кнопки
                          не делали бы ничего. Вместо мёртвого тулбара его просто нет. */-->
                     <div class="diagram-toolbar-actions" role="group" aria-label="Управление диаграммой"
-                         th:if="${diagramBlock.type().name() == 'MERMAID'}">
+                         th:if="${diagramBlock.type().rendersAsMermaid()}">
                         <button type="button" class="btn secondary-btn diagram-action" data-diagram-action="fit"
                                 aria-label="Вписать диаграмму">Вписать</button>
                         <button type="button" class="btn secondary-btn diagram-action" data-diagram-action="zoom-in"
@@ -280,14 +280,14 @@
                     </div>
                 </div>
                 <div class="diagram-viewport" data-diagram-scale="1">
-                    <pre class="mermaid" th:if="${diagramBlock.type().name() == 'MERMAID'}"
+                    <pre class="mermaid" th:if="${diagramBlock.type().rendersAsMermaid()}"
                          th:text="${diagramBlock.body()}"
                          th:attr="aria-label=${diagramBlock.accessibilityDescription()}"></pre>
                     <!--/* Схема, нарисованная псевдографикой прямо в шпаргалке. Её не
                          надо рендерить — она уже картинка, просто из символов. Нужна
                          только моноширинная сетка и запрет переносов, иначе рамки
                          разъезжаются. */-->
-                    <pre class="ascii-diagram" th:unless="${diagramBlock.type().name() == 'MERMAID'}"
+                    <pre class="ascii-diagram" th:unless="${diagramBlock.type().rendersAsMermaid()}"
                          th:text="${diagramBlock.body()}"
                          th:attr="aria-label=${diagramBlock.accessibilityDescription()}"></pre>
                 </div>
@@ -296,7 +296,7 @@
                      pixel-глиф + честное объяснение; исходник ниже раскрыт.
                      У текстовой схемы рендера нет — падать нечему, и исходник
                      совпадает с тем, что уже на экране. */-->
-                <th:block th:if="${diagramBlock.type().name() == 'MERMAID'}">
+                <th:block th:if="${diagramBlock.type().rendersAsMermaid()}">
                     <p class="diagram-fallback">
                         <svg class="px-illus px-illus-sm" aria-hidden="true"><use href="#px-diagram-error"></use></svg>
                         <span>Не удалось отрисовать диаграмму. Ниже — исходный код в текстовом виде.</span>
@@ -313,10 +313,11 @@
         </div><!--/* /.focus-rail : конец левой колонки split */-->
 
         <div th:if="${flashcardMode}" class="flashcard-phase">
-            <div class="flashcard-badge" th:if="${!typedInputMode}">Флешкарта — вспомни ответ до раскрытия</div>
-            <div class="flashcard-badge" th:if="${typedInputMode and codeChallengeMode}">Код-челлендж — напиши решение, затем сверь с эталоном</div>
-            <div class="flashcard-badge" th:if="${typedInputMode and !codeChallengeMode and mode != null and mode.name() == 'INTERVIEW'}">Интервью — устный/развёрнутый ответ (можно записать заметки)</div>
-            <div class="flashcard-badge" th:if="${typedInputMode and !codeChallengeMode and mode != null and mode.name() == 'TYPED_RECALL'}">Печатный ответ — напиши ответ, затем проверь себя</div>
+            <!--/* Одна подпись вместо четырёх взаимоисключающих th:if: выбор режима —
+                 серверный (resolveRecallBadgeText). Раньше две ветки из четырёх
+                 сравнивали mode.name() со строковым литералом, и переименование
+                 константы гасило их молча — над формой не оставалось ни одной. */-->
+            <div class="flashcard-badge" th:text="${recallBadgeText}">Флешкарта — вспомни ответ до раскрытия</div>
 
             <!--/* Browse / вне recall-сессии: серверный reveal невозможен (нет
                  активной recall-сессии для SM-2). Нативный <details> раскрывает
@@ -347,7 +348,7 @@
                       th:data-question-id="${current.question.id}"
                       th:classappend="${codeChallengeMode} ? ' is-code' : ''">
                     <label class="field">
-                        <span class="field-label" th:text="${codeChallengeMode} ? 'Твой код' : (${mode != null and mode.name() == 'INTERVIEW'} ? 'Заметки к ответу' : 'Твой ответ')">Твой ответ</span>
+                        <span class="field-label" th:text="${typedAnswerLabel}">Твой ответ</span>
                         <textarea name="typedAnswer" rows="6" placeholder="Напиши ответ перед раскрытием эталона…"></textarea>
                     </label>
                     <button type="submit" class="flashcard-reveal-btn">Показать ответ</button>

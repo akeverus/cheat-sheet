@@ -35,7 +35,7 @@ public class SessionFlowService {
      * Вычисляет результат старта сессии.
      */
     public StartFlowResult startSession(InterviewMode selected, Integer requestedCount, InterviewFilter filter) {
-        if (selected == InterviewMode.TRAINING) {
+        if (selected != null && selected.isUnlimited()) {
             return new StartFlowResult(true, null);
         }
         int total = resolveSessionTotal(selected, requestedCount);

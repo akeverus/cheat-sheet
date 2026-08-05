@@ -7,25 +7,43 @@ import org.slf4j.LoggerFactory;
  * Результат последнего ответа на вопрос в системе интервального повторения.
  *
  * <p>Хранится в БД как TEXT (через {@link #name()}).</p>
+ *
+ * <p>Подпись ({@link #label()}) — здесь, по критерию {@link Difficulty} и
+ * {@code ReviewReason.message}: она свойство самой константы, а не копирайт конкретного
+ * экрана. Раньше {@code result.html} расписывал все пять значений через
+ * {@code th:switch} с фоллбэком {@code th:case="*"}, печатающим {@link #name()} —
+ * новая константа немедленно выводила в полностью русский интерфейс сырое английское
+ * имя, ничего при этом не ломая.</p>
  */
 public enum ReviewResult {
 
     /** Вопрос ещё ни разу не был отвечен. */
-    NEW,
+    NEW("Ещё не отвечали"),
 
     /** Последний ответ был правильным. */
-    CORRECT,
+    CORRECT("Верно"),
 
     /** Последний ответ был неправильным. */
-    WRONG,
+    WRONG("Неверно"),
 
     /** Пользователь отметил «не знаю» — полный провал припоминания (лапс, отличный от WRONG). */
-    UNKNOWN,
+    UNKNOWN("Не знаю"),
 
     /** Прогресс по вопросу был сброшен (например, при обновлении контента). */
-    RESET;
+    RESET("Сброшен");
 
     private static final Logger log = LoggerFactory.getLogger(ReviewResult.class);
+
+    private final String label;
+
+    ReviewResult(String label) {
+        this.label = label;
+    }
+
+    /** Подпись для строки «Последний результат» на экране разбора. */
+    public String label() {
+        return label;
+    }
 
     /**
      * Парсинг строки из БД.

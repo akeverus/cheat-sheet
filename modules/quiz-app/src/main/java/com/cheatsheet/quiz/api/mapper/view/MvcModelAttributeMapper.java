@@ -2,18 +2,20 @@ package com.cheatsheet.quiz.api.mapper.view;
 
 import com.cheatsheet.quiz.common.util.ModeUtils;
 import com.cheatsheet.quiz.config.app.AppProperties;
-import com.cheatsheet.quiz.domain.AnswerOption;
-import com.cheatsheet.quiz.domain.AnswerResult;
+import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.SessionSummary;
 import com.cheatsheet.quiz.infrastructure.render.AnswerHtmlSplitter;
+import com.cheatsheet.quiz.feature.interview.service.copy.AnswerCopy;
 import com.cheatsheet.quiz.feature.interview.service.page.AnswerPageService;
 import com.cheatsheet.quiz.feature.interview.service.page.BookmarksPageService;
 import com.cheatsheet.quiz.feature.interview.service.page.FocusTrainingPageService;
 import com.cheatsheet.quiz.feature.interview.service.page.StatsPageService;
+import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
+import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * Централизованный mapper заполнения MVC-модели атрибутами.
@@ -27,14 +29,29 @@ public class MvcModelAttributeMapper {
 
     private final AppProperties appProperties;
     private final ModeUtils modeUtils;
+    private final TopicCatalogService topicCatalogService;
+
+    /**
+     * Кладёт список тем в модель дважды: плоским (совместимость с местами, где
+     * нужен просто перечень) и разбитым на секции групп — из него рендерится
+     * {@code <optgroup>} в селектах тем на /settings и /stats.
+     *
+     * <p>Секции считаются здесь, а не в page-сервисах: разбиение чисто
+     * презентационное и одинаково для всех трёх экранов, а состояния страниц
+     * несут доменный список.
+     */
+    private void applyTopics(Model model, java.util.List<String> topics) {
+        model.addAttribute("topics", topics);
+        model.addAttribute("topicSections", topicCatalogService.groupTopics(topics));
+    }
 
     /**
      * Маппит общий surface-state (фильтры, топики, статистика) в модель.
      */
     public void applySurfaceState(Model model, FocusTrainingPageService.SurfaceState surfaceState) {
         model.addAttribute("stats", surfaceState.stats());
-        model.addAttribute("dueFiltered", surfaceState.dueFiltered());
-        model.addAttribute("topics", surfaceState.topics());
+        model.addAttribute("filteredStats", surfaceState.filteredStats());
+        applyTopics(model, surfaceState.topics());
         model.addAttribute("groups", surfaceState.groups());
         model.addAttribute("selectedGroup", surfaceState.selectedGroup());
         model.addAttribute("filter", surfaceState.filter());
@@ -44,6 +61,10 @@ public class MvcModelAttributeMapper {
         model.addAttribute("filterFavoritesCount", surfaceState.filterFavoritesCount());
         model.addAttribute("filterWrongCount", surfaceState.filterWrongCount());
         model.addAttribute("filterWeakTopicsCount", surfaceState.filterWeakTopicsCount());
+        model.addAttribute("sessionModes", modeUtils.options(
+                surfaceState.mode(),
+                appProperties.getInterview().getDefaultExamCount(),
+                appProperties.getInterview().getDefaultMarathonCount()));
     }
 
     /**
@@ -72,6 +93,11 @@ public class MvcModelAttributeMapper {
         }
         model.addAttribute("contentBlocks", pageState.contentBlocks() != null
                 ? pageState.contentBlocks() : java.util.List.of());
+        // Вкладки «Пример кода / Схема» рендерятся из этих двух блоков. Шаблон
+        // раньше вычислял их сам из codeSnippet/diagramMermaid — и не знал, что в
+        // codeSnippet может лежать нарисованная схема, а не код.
+        model.addAttribute("codeBlock", pageState.codeBlock());
+        model.addAttribute("diagramBlock", pageState.diagramBlock());
         model.addAttribute("questionRevisionId", pageState.questionRevisionId());
         model.addAttribute("progressPercent", pageState.progressPercent());
         model.addAttribute("reviewMode", reviewMode);
@@ -91,8 +117,91 @@ public class MvcModelAttributeMapper {
         boolean studyLearnPhase = pageState.studyLearnPhase();
         model.addAttribute("focusModeChipText", resolveFocusModeChipText(reviewMode, mode, flashcard, studyLearnPhase));
         model.addAttribute("focusModeHintText", resolveFocusModeHintText(reviewMode, mode, flashcard, studyLearnPhase));
+        model.addAttribute("recallBadgeText", resolveRecallBadgeText(mode, pageState.typedInputMode(), pageState.codeChallengeMode()));
+        model.addAttribute("typedAnswerLabel", resolveTypedAnswerLabel(mode, pageState.codeChallengeMode()));
         model.addAttribute("focusEmptyRetryHref", resolveFocusEmptyRetryHref(reviewMode, mode));
         model.addAttribute("focusEmptyRetryText", resolveFocusEmptyRetryText(reviewMode, mode));
+        model.addAttribute("focusBrowseNextHref", resolveBrowseNextHref(pageState, reviewMode));
+    }
+
+    /**
+     * Адрес «следующего вопроса» для browse-флешкарты (флешкарта вне recall-сессии).
+     *
+     * <p>В этой ветке шаблона нет ни формы ответа, ни кнопок само-оценки: ответ
+     * раскрывается нативным {@code <details>}, и после раскрытия экран не давал
+     * НИ ОДНОГО пути дальше — тупик, из которого можно было выйти только через
+     * сайдбар. MCQ-ветка такой путь имеет (interview.js рисует «Следующий вопрос»
+     * после разбора), но она JS-овая и к флешкарте отношения не имеет.</p>
+     *
+     * <p>Ссылка серверная (работает без JS) и повторяет контракт
+     * {@code buildNextQuestionHref} из interview.js: та же поверхность, тот же
+     * фильтр, тот же {@code excludeQuestionId} — чтобы не выдать тот же вопрос
+     * снова.</p>
+     */
+    private String resolveBrowseNextHref(FocusTrainingPageService.FocusPageState pageState, boolean reviewMode) {
+        FocusTrainingPageService.SurfaceState surface = pageState.surface();
+        UriComponentsBuilder uri = UriComponentsBuilder.fromPath(reviewMode ? "/review" : "/");
+        InterviewFilter filter = surface.filter();
+        if (filter != null) {
+            if (filter.topic() != null) {
+                uri.queryParam("topic", filter.topic());
+            }
+            if (filter.group() != null) {
+                uri.queryParam("group", filter.group());
+            }
+            if (Boolean.TRUE.equals(filter.importantOnly())) {
+                uri.queryParam("important", "true");
+            }
+            if (Boolean.TRUE.equals(filter.onlyWrong())) {
+                uri.queryParam("onlyWrong", "true");
+            }
+            if (filter.isShuffled()) {
+                uri.queryParam("shuffle", "true");
+            }
+            if (!filter.isOrdered()) {
+                uri.queryParam("ordered", "false");
+            }
+        }
+        if (surface.weakTopics()) {
+            uri.queryParam("weakTopics", "true");
+        }
+        if (surface.mode() != null) {
+            uri.queryParam("mode", surface.mode().name());
+        }
+        pageState.current().ifPresent(current -> uri.queryParam("excludeQuestionId", current.question().id()));
+        return uri.build().encode().toUriString();
+    }
+
+    /**
+     * Подпись над формой recall-фазы («Флешкарта — вспомни ответ до раскрытия»).
+     *
+     * <p>Раньше это были четыре {@code <div th:if>} в {@code focus-training.html},
+     * два из них — со сравнением {@code mode.name() == 'INTERVIEW'}/{@code 'TYPED_RECALL'}.
+     * Переименование константы не ломало сборку: ветка просто переставала выбираться,
+     * и над формой развёрнутого ответа не оставалось ни одной подписи — из четырёх
+     * взаимоисключающих условий не срабатывало ни одно.
+     */
+    private String resolveRecallBadgeText(InterviewMode mode, boolean typedInput, boolean codeChallenge) {
+        if (!typedInput) {
+            return "Флешкарта — вспомни ответ до раскрытия";
+        }
+        if (codeChallenge) {
+            return "Код-челлендж — напиши решение, затем сверь с эталоном";
+        }
+        if (mode == InterviewMode.INTERVIEW) {
+            return "Интервью — устный/развёрнутый ответ (можно записать заметки)";
+        }
+        return "Печатный ответ — напиши ответ, затем проверь себя";
+    }
+
+    /**
+     * Подпись поля ввода в recall-фазе: код, заметки или обычный ответ.
+     */
+    private String resolveTypedAnswerLabel(InterviewMode mode, boolean codeChallenge) {
+        if (codeChallenge) {
+            return "Твой код";
+        }
+        return mode == InterviewMode.INTERVIEW ? "Заметки к ответу" : "Твой ответ";
     }
 
     /**
@@ -112,10 +221,10 @@ public class MvcModelAttributeMapper {
             return modeUtils.displayName(mode);
         }
         if (flashcard || mode == InterviewMode.FLASHCARD) {
-            return "Флешкарты";
+            return modeUtils.displayName(InterviewMode.FLASHCARD);
         }
         if (mode == null) {
-            return "Тренировка";
+            return modeUtils.displayName(InterviewMode.TRAINING);
         }
         // STUDY в QUIZ-под-фазе (эталон изучен, идёт проверка вариантами) — чип
         // отражает шаг проверки, а не «Изучение» (mode-display), которое течёт из
@@ -151,17 +260,18 @@ public class MvcModelAttributeMapper {
         return "Выбери один вариант. Проверка и разбор идут по шагам.";
     }
 
+    /** Канонический адрес тренировки — «/»; {@code /training} оставлен только как редирект. */
     private String resolveFocusEmptyRetryHref(boolean reviewMode, InterviewMode mode) {
         if (reviewMode) {
             return "/review";
         }
         if (mode != null && mode.isRecallMode()) {
-            return "/training?mode=" + mode.name();
+            return "/?mode=" + mode.name();
         }
         if (mode == InterviewMode.STUDY) {
-            return "/training?mode=STUDY";
+            return "/?mode=STUDY";
         }
-        return "/training";
+        return "/";
     }
 
     private String resolveFocusEmptyRetryText(boolean reviewMode, InterviewMode mode) {
@@ -199,10 +309,6 @@ public class MvcModelAttributeMapper {
         // юнит-тестов маппера с «пустым» state.
         if (state.result() != null) {
             AnswerHtmlSplitter.Split answerSplit = AnswerHtmlSplitter.split(state.answerHtml());
-            boolean leadPresent = !answerSplit.leadHtml().isBlank();
-            boolean restPresent = leadPresent && !answerSplit.restHtml().isBlank();
-            boolean anyOptionExplanation = state.result().options().stream()
-                    .anyMatch(o -> o.explanation() != null && !o.explanation().isBlank());
             // Хендофф-3, Этап 4: distractor-панель («Почему другие варианты не подходят»)
             // показываем, только если хотя бы у одного НЕверного варианта есть пояснение.
             // Флаг из Java, а не Thymeleaf-проекции (ссылка на correct.id внутри ?[] —
@@ -212,15 +318,17 @@ public class MvcModelAttributeMapper {
                     .anyMatch(o -> o.id() != correctOptionId && o.explanation() != null && !o.explanation().isBlank());
             model.addAttribute("answerLeadHtml", answerSplit.leadHtml());
             model.addAttribute("answerRestHtml", answerSplit.restHtml());
-            // «Подробнее» показываем, только если под ним реально что-то есть:
-            // остаток разбора (после лид-абзаца) или пояснения вариантов.
-            model.addAttribute("answerHasDetail", restPresent || anyOptionExplanation);
             model.addAttribute("hasDistractorAnalysis", anyDistractorExplanation);
-            model.addAttribute("correctOptionLetter", correctOptionLetter(state.result()));
+            // Готовая строка вердикта, а не тройной тернарник в th:text: формулировка
+            // — это копирайт, у неё есть автор и её читают вслух скринридером;
+            // собирать её в шаблоне значит прятать текст продукта в разметку.
+            // Слово в слово то же, что печатает JS-путь: строку собирает общий
+            // AnswerCopy, а не два разных места.
+            model.addAttribute("verdictText", AnswerCopy.verdict(state.result()));
         }
         model.addAttribute("answerDisplayMode", state.answerDisplayMode());
         model.addAttribute("stats", state.stats());
-        model.addAttribute("topics", state.topics());
+        applyTopics(model, state.topics());
         model.addAttribute("groups", state.groups());
         model.addAttribute("selectedGroup", state.selectedGroup());
         model.addAttribute("filter", state.filter());
@@ -237,21 +345,9 @@ public class MvcModelAttributeMapper {
         model.addAttribute("relatedQuestions", state.relatedQuestions());
         model.addAttribute("aiEnabled", false);
         model.addAttribute("reviewState", state.reviewState());
-    }
-
-    /**
-     * Буква правильного варианта (A/B/C/…) = 1-based позиция в списке вариантов
-     * (тот же порядок, что нумерует опции CSS-счётчиком). Зеркалит
-     * {@code AnswerApiService.correctOptionLetter} для no-JS SSR-пути.
-     */
-    private String correctOptionLetter(AnswerResult result) {
-        java.util.List<AnswerOption> options = result.options();
-        for (int i = 0; i < options.size(); i++) {
-            if (options.get(i).id() == result.correct().id()) {
-                return String.valueOf((char) ('A' + i));
-            }
-        }
-        return "";
+        model.addAttribute("xpAwarded", state.xpAwarded());
+        model.addAttribute("nextReviewText",
+                AnswerCopy.nextReview(state.reviewState() != null ? state.reviewState().intervalDays() : 0));
     }
 
     /**
@@ -259,7 +355,7 @@ public class MvcModelAttributeMapper {
      */
     public void applyStatsPageState(Model model, StatsPageService.StatsPageState state) {
         model.addAttribute("stats", state.stats());
-        model.addAttribute("topics", state.topics());
+        applyTopics(model, state.topics());
         model.addAttribute("groups", state.groups());
         model.addAttribute("selectedGroup", state.selectedGroup());
         model.addAttribute("filter", state.filter());
@@ -274,9 +370,11 @@ public class MvcModelAttributeMapper {
         model.addAttribute("difficultyJson", state.difficultyJson());
         model.addAttribute("metricDefinitions", state.metricDefinitions());
         model.addAttribute("weakestTopic", state.weakestTopic());
+        model.addAttribute("weakTopicCount", state.weakTopicCount());
         model.addAttribute("recentWrongQuestions", state.recentWrongQuestions());
         model.addAttribute("accuracyTrend", state.accuracyTrend());
         model.addAttribute("accuracyTrendJson", state.accuracyTrendJson());
+        model.addAttribute("groupCatalog", state.groupCatalog());
         // Передаём max(count) уже вычисленный — Thymeleaf 3.1 запрещает
         // T(java.util.Collections) в SpEL, считать в шаблоне нельзя.
         long maxForecast = state.reviewForecast() == null ? 1L
