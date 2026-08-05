@@ -1,15 +1,44 @@
-# Third-party / pixel assets
+# Происхождение графики
 
-Pixel art under `static/img/pixel/` is **original or generated for this project** (Python stdlib PNG writer / hand-authored sprites). Treat as **CC0-equivalent** for use inside Cheat Sheet — no external pack license applies unless noted below.
+Все PNG под `static/img/` — **сгенерированы или нарисованы внутри этого репозитория**
+(писатель PNG на stdlib `zlib`/`struct`, покадровая авторская отрисовка). Внешних паков
+нет ни одного, поэтому чужие лицензии не применяются: содержимое каталога эквивалентно
+CC0 в рамках проекта.
 
-## Generated / original (this repo)
+Проверяемый признак: у всех файлов структура чанков ровно `IHDR / IDAT / IEND`. Экспорт
+из редактора (Aseprite, Photoshop) и готовые паки почти всегда добавляют `pHYs`, `sRGB`,
+`gAMA` или `tEXt` — здесь их нет ни в одном файле.
 
-- Button chrome: `btn-play.png`, `btn-pause.png`, `btn-check.png`, `btn-x.png`
-- HUD / XP: `xp-bar-fill.png`, `bar-l.png`, `bar-r.png`, `checkbox-on.png`, `checkbox-off.png`
-- Wave 2 chrome (stdlib zlib/struct PNG writer, 16×16): `radio-on.png`, `radio-off.png`, `tab-l.png`, `tab-m.png`, `tab-r.png`, `heart-1.png`, `heart-2.png`, `portal-2.png`, `portal-3.png`, `coin-spin-1.png`, `coin-spin-2.png`, `streak-fire.png`
-- Wave E sprite sheets: `portal-sheet.png`, `coin-spin-sheet.png`, `heart-sheet.png`, `fire-sheet.png`
-- FX: `confetti-1.png`, `confetti-2.png`, crumbs, dots, boom/fire frames, mascot, heroes, etc.
+Файл лежит **рядом с ассетами, а не только в `docs/`**, намеренно: при копировании
+каталога сведения о происхождении обязаны ехать вместе с картинками.
 
-## External downloads
+## Состав
 
-None at the time of writing. Prefer generating new sprites in-repo over importing third-party packs. If an external asset is added later, document source URL, license, and file name here.
+| Каталог | Шт. | Что это |
+|---|---|---|
+| `pixel/` | 69 | декоративный слой и хром: фишки, крошки, точки, кадры анимаций, маскот |
+| `animations/sheets/` | 1 | лист кадров для CSS `steps()` — `incorrect-subtle` |
+| `animations/metadata/` | 1 | кадровка листа — источник истины для `sprite-anim.css` |
+| `stickers/` | 10 | опознавательные знаки разделов, ровно по одному на раздел |
+
+Лист один, и это осмысленное состояние, а не недоделка: атрибут `data-sprite-anim`
+код выставляет ровно для одного имени. Ещё двадцать листов лежали мёртвыми на
+уровень выше, чем видит инвентарь ассетов — CSS-правило ссылалось на файл через
+`url()`, поэтому «ссылка есть», а селектор правила не совпадал ни с одним элементом.
+Сверку «правила против кода» держит `SpriteAnimationContractTest`.
+
+Поимённый перечень не дублируется здесь намеренно: он разъезжается с диском молча.
+Список файлов даёт `ls`, а живость каждого из них проверяет `StaticAssetInventoryTest`.
+
+## Если появится внешний ассет
+
+1. положить рядом файл лицензии (`licenses/<pack>-LICENSE.txt`);
+2. внести его путь в `DOCUMENTATION_ONLY` в `StaticAssetInventoryTest` — иначе тест
+   объявит лицензию мёртвым весом;
+3. записать здесь имя файла, источник и условия.
+
+Обратное так же обязательно: лицензия без единого ассета из своего пака — не
+осторожность, а ложное заявление о происхождении. Так и было: две лицензии Kenney
+лежали при том, что ни один пиксель из этих паков в репозиторий не попал. Удалены.
+
+Предпочтительный путь — генерировать спрайты в репозитории, а не импортировать паки.
