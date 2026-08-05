@@ -1051,6 +1051,46 @@ class TemplateFragmentContractTest {
         assertThat(css).contains("[data-motion=\"off\"]");
     }
 
+    /**
+     * Оси персонализации со значением «auto» разрешаются системной настройкой. Прочитать
+     * её на загрузке недостаточно: настройку меняют при открытой странице, и ось, которая
+     * только спросила `matchMedia(...).matches`, остаётся с решением, принятым один раз.
+     * CSS-медиа перерисуется сама, а JS-потребители (pixel-fx, графики) читают значение
+     * вживую, но узнают о смене только из события — значит подписка обязательна.
+     */
+    @Test
+    void osResolvedAxesSubscribeToTheMediaQueryTheyRead() throws IOException {
+        String head = readTemplate("templates/fragments/head.html");
+
+        Matcher declarations = Pattern
+                .compile("var\\s+(\\w+)\\s*=\\s*window\\.matchMedia\\s*\\?\\s*window\\.matchMedia\\('([^']+)'\\)")
+                .matcher(head);
+        Map<String, String> queryByVar = new LinkedHashMap<>();
+        while (declarations.find()) {
+            queryByVar.put(declarations.group(1), declarations.group(2));
+        }
+
+        assertThat(queryByVar.values())
+                .as("head.html разрешает «auto» по системным настройкам темы и движения")
+                .contains("(prefers-color-scheme: light)", "(prefers-reduced-motion: reduce)");
+
+        for (Map.Entry<String, String> axis : queryByVar.entrySet()) {
+            assertThat(head)
+                    .as("ось %s читает %s, но не подписана на её смену — значение, прочитанное "
+                            + "на загрузке, доживёт до перезагрузки страницы", axis.getKey(), axis.getValue())
+                    .containsPattern(Pattern.compile(Pattern.quote(axis.getKey()) + "\\.addEventListener\\('change'"));
+        }
+
+        // Подписка бесполезна без адресата: сигнал для оси «движение» единый — motionchange.
+        assertThat(head).contains("new CustomEvent('motionchange'");
+        assertThat(readTemplate("static/js/pixel-fx.js"))
+                .as("pixel-fx решает про декор и подписку на pointermove — он обязан слышать motionchange")
+                .contains("addEventListener('motionchange'");
+        assertThat(readTemplate("static/js/stats/chart-theme.js"))
+                .as("анимация графиков включается флагом на постройке — без motionchange она не пересоберётся")
+                .contains("addEventListener('motionchange'");
+    }
+
     @Test
     void appEntryJsIsSingleSourcedInFragment() throws IOException {
         // PERF-01: тег app-entry.js должен встречаться в дереве шаблонов

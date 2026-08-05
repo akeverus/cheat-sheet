@@ -58,7 +58,9 @@ export function onChartThemeChange(redraw) {
     redraw();
   }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-design'] });
   // data-motion палитру не меняет, поэтому MutationObserver выше его пропустил бы;
-  // head.html шлёт motionchange — по нему включаем/выключаем анимацию сразу.
+  // head.html шлёт motionchange — по нему включаем/выключаем анимацию сразу. В режиме
+  // auto атрибута нет вовсе, и единственный сигнал о смене — та же подписка head.html
+  // на prefers-reduced-motion: без неё график остаётся с решением, принятым на загрузке.
   document.addEventListener('motionchange', redraw);
 }
 

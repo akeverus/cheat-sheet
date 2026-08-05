@@ -91,6 +91,8 @@
           toggle: function () { setPref(resolve(pref) === 'light' ? 'dark' : 'light'); }
         };
         var MOTIONS = ['auto', 'on', 'off'];
+        var motionMq = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+        function systemReduced() { return !!(motionMq && motionMq.matches); }
         function readMotion() {
           try { var m = localStorage.getItem('motion'); return MOTIONS.indexOf(m) >= 0 ? m : 'auto'; }
           catch (e) { return 'auto'; }
@@ -101,15 +103,33 @@
           else root.setAttribute('data-motion', m);
         }
         applyMotion(motion);
+        function notifyMotion() {
+          try {
+            document.dispatchEvent(new CustomEvent('motionchange', {
+              detail: { motion: motion, reduced: motion === 'auto' ? systemReduced() : motion === 'off' }
+            }));
+          } catch (e) {}
+        }
         function setMotion(next) {
           motion = (MOTIONS.indexOf(next) >= 0) ? next : 'auto';
           try { if (motion === 'auto') localStorage.removeItem('motion'); else localStorage.setItem('motion', motion); } catch (e) {}
           applyMotion(motion);
-          try { document.dispatchEvent(new CustomEvent('motionchange', { detail: { motion: motion } })); } catch (e) {}
+          notifyMotion();
+        }
+        /* Ось «движение» в режиме auto решается системной настройкой — значит на её
+           смену надо реагировать так же, как на смену системной темы выше. CSS-медиа
+           перерисуется сам, а JS-потребители (pixel-fx, графики) читают
+           prefers-reduced-motion вживую, но узнают о смене только из motionchange:
+           без этой подписки они остаются с решением, принятым на загрузке. */
+        if (motionMq) {
+          var onMotionSysChange = function () { if (motion === 'auto') notifyMotion(); };
+          if (motionMq.addEventListener) motionMq.addEventListener('change', onMotionSysChange);
+          else if (motionMq.addListener) motionMq.addListener(onMotionSysChange);
         }
         window.__motion = {
           current: function () { return motion; },
           list: MOTIONS.slice(),
+          reduced: function () { return motion === 'auto' ? systemReduced() : motion === 'off'; },
           set: setMotion
         };
         var PIXEL_LEVELS = ['low', 'med', 'high'];
