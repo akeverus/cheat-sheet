@@ -10,32 +10,35 @@
     <div class="shell-main">
         <th:block th:replace="~{fragments/topbar :: topbar}"></th:block>
 <main id="main-content" class="ed-page" tabindex="-1">
-<!-- Этап 6: hero-карточка итогов. Слева — score-ring (SSR-дуга по accuracy,
+<!--/* Этап 6: hero-карточка итогов. Слева — score-ring (SSR-дуга по accuracy,
      без инлайн-style: длина дуги задаётся presentation-атрибутом stroke-dasharray),
      справа — режим-бейдж + «N из M верных» + actionable-итог + 3 метрики
      (Время/Среднее/На повторение). XP и «новый рекорд» из прототипа НЕ рендерим:
      таких данных в SessionSummary нет — не фабрикуем. Среднее время вычисляется
-     из duration/totalQuestions (готового поля нет, но арифметика честная). -->
+     из duration/totalQuestions (готового поля нет, но арифметика честная). */-->
 <section class="card summary-hero"
-         th:with="accInt=${#numbers.formatDecimal(summary.accuracy, 1, 0)},
-                  noAnswers=${summary.totalQuestions == 0},
+         th:with="noAnswers=${summary.totalQuestions == 0},
                   summaryTone=${noAnswers ? 'none' : (summary.accuracy >= 80 ? 'great' : (summary.accuracy >= 50 ? 'ok' : 'low'))}"
          th:attr="data-summary-tone=${summaryTone}">
-    <!-- Заголовок карточки счёта: скрыт визуально (ring-число + метки несут смысл
+    <!--/* Заголовок карточки счёта: скрыт визуально (ring-число + метки несут смысл
          на экране), но даёт SR-навигации по заголовкам якорь на главный результат.
          Это h1 страницы итогов → секции «Результаты по темам»/«Ошибки» ниже (h2)
-         выстраиваются под ним в корректную иерархию (страница получает ровно один h1). -->
+         выстраиваются под ним в корректную иерархию (страница получает ровно один h1). */-->
     <h1 class="summary-section-title visually-hidden">Результат сессии</h1>
     <div class="score-ring"
          th:classappend="${noAnswers} ? ' ring-neutral' : (${summary.accuracy >= 80} ? ' ring-success' : (${summary.accuracy >= 50} ? ' ring-warning' : ' ring-danger'))">
         <svg class="score-ring-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
             <circle class="score-ring-track" cx="60" cy="60" r="52"></circle>
+            <!--/* Разделитель дроби — явный POINT, а не локаль. В русской локали
+                 formatDecimal отдаёт «326,73», а в SVG запятая — такой же разделитель
+                 списка, как пробел: «326,73 400» читается как ТРИ значения, нечётный
+                 список удваивается, и дуга вместо заливки становится пунктиром. */-->
             <circle class="score-ring-value" cx="60" cy="60" r="52"
-                    th:attr="stroke-dasharray=${#numbers.formatDecimal(summary.accuracy * 3.26726, 1, 2) + ' 400'}"></circle>
+                    th:attr="stroke-dasharray=${#numbers.formatDecimal(summary.accuracy * 3.26726, 1, 'NONE', 2, 'POINT') + ' 400'}"></circle>
         </svg>
         <strong class="summary-score-value"
                 th:classappend="${noAnswers} ? ' text-muted' : (${summary.accuracy >= 80} ? ' text-success' : (${summary.accuracy >= 50} ? ' text-warning' : ' text-danger'))"
-                th:text="${noAnswers} ? '—' : ${summary.accuracyFormatted + '%'}">0%</strong>
+                th:text="${noAnswers} ? '—' : ${summary.accuracyRounded + '%'}">0%</strong>
     </div>
     <div class="summary-hero-body">
         <span class="badge summary-mode-line" th:text="${@modeUtils.displayName(summary.mode)}">Режим</span>
@@ -43,80 +46,96 @@
             <strong th:text="${summary.correctCount}">0</strong> из
             <strong th:text="${summary.totalQuestions}">0</strong> верных ответов
         </p>
-        <!-- FLOW-SUMMARY-b: краткий actionable-итог. «Требуют разбора» = неверные +
-             «не знаю». Русская форма склоняется по mod-10/mod-100. -->
+        <!--/* FLOW-SUMMARY-b: краткий actionable-итог. «Требуют разбора» = неверные +
+             «не знаю». Русская форма склоняется по mod-10/mod-100. */-->
         <p class="summary-headline"
            th:with="needs=${summary.wrongCount + summary.unknownCount},
                     w=${needs % 10 == 1 and needs % 100 != 11 ? 'вопрос требует' : ((needs % 10 >= 2 and needs % 10 <= 4) and (needs % 100 &lt; 12 or needs % 100 &gt; 14) ? 'вопроса требуют' : 'вопросов требуют')}"
            th:text="${noAnswers ? 'Сессия завершена без ответов' : (needs > 0 ? needs + ' ' + w + ' разбора' : 'Без ошибок — отличный результат')}">Итог</p>
-        <!-- Этап 5 (handoff-3): 4 KPI сессии — Опыт / Время / Ошибки / Серия.
-             Опыт и Серия — из реальной геймификации (summary.gamification, XP
-             суммирован из истории ответов). Когда геймификации нет (null) —
-             откат на прежний набор Время/Среднее/На повторение, без фабрикации. -->
-        <div class="summary-kpis" th:if="${summary.gamification != null}"
-             th:with="g=${summary.gamification},
-                      errs=${summary.wrongCount + summary.unknownCount},
-                      avg=${summary.duration != null and summary.totalQuestions > 0 ? summary.duration.toSeconds() / summary.totalQuestions : 0},
-                      st=${g.currentStreak()},
-                      dw=${st % 10 == 1 and st % 100 != 11 ? 'день' : ((st % 10 >= 2 and st % 10 <= 4) and (st % 100 &lt; 12 or st % 100 &gt; 14) ? 'дня' : 'дней')}">
-            <div class="summary-kpi">
-                <span class="summary-kpi-label">Опыт</span>
-                <b class="summary-kpi-value text-success" th:text="'+' + ${g.sessionXp()} + ' XP'">+0 XP</b>
-                <span class="summary-kpi-sub" th:text="${g.newStreakRecord()} ? 'Новый рекорд' : ('Уровень ' + ${g.level()})">Уровень 1</span>
-            </div>
-            <div class="summary-kpi">
-                <span class="summary-kpi-label">Время</span>
-                <b class="summary-kpi-value summary-duration" th:text="${summary.formattedDuration}">—</b>
-                <span class="summary-kpi-sub" th:if="${avg > 0}"
-                      th:text="'Среднее ' + ${(avg / 60) + ':' + (avg % 60 < 10 ? '0' + (avg % 60) : (avg % 60))}">Среднее 0:00</span>
-            </div>
-            <div class="summary-kpi">
-                <span class="summary-kpi-label">Ошибки</span>
-                <b class="summary-kpi-value" th:classappend="${errs > 0} ? ' text-danger' : ' text-success'" th:text="${errs}">0</b>
-                <span class="summary-kpi-sub" th:text="${errs > 0} ? 'Нужен разбор' : 'Без ошибок'">Нужен разбор</span>
-            </div>
-            <div class="summary-kpi">
-                <span class="summary-kpi-label">Серия</span>
-                <b class="summary-kpi-value" th:text="${st} + ' ' + ${dw}">0 дней</b>
-                <span class="summary-kpi-sub" th:text="'Рекорд ' + ${g.bestStreak()}">Рекорд 0</span>
-            </div>
+    </div>
+    <!--/* Полоса KPI — отдельная строка геро во всю ширину карточки, а не блок
+         внутри текстового столбца. В столбце её ширину задавал сосед-кольцо: на
+         1440 под четыре тайла оставалось 463px, тайл выходил ~107px, и значения
+         вроде «+4000 XP» (марафон на 200 вопросов) в него не помещались. Своей
+         строкой полоса получает всю ширину карточки, и бюджет тайла перестаёт
+         зависеть от размера кольца. */-->
+    <!--/* Этап 5 (handoff-3): 4 KPI сессии — Опыт / Время / Ошибки / Серия.
+         Опыт и Серия — из реальной геймификации (summary.gamification, XP
+         суммирован из истории ответов). Когда геймификации нет (null) —
+         откат на прежний набор Время/Среднее/На повторение, без фабрикации. */-->
+    <div class="summary-kpis" th:if="${summary.gamification != null}"
+         th:with="g=${summary.gamification},
+                  errs=${summary.wrongCount + summary.unknownCount},
+                  avg=${summary.duration != null and summary.totalQuestions > 0 ? summary.duration.toSeconds() / summary.totalQuestions : 0},
+                  st=${g.currentStreak()},
+                  dw=${st % 10 == 1 and st % 100 != 11 ? 'день' : ((st % 10 >= 2 and st % 10 <= 4) and (st % 100 &lt; 12 or st % 100 &gt; 14) ? 'дня' : 'дней')}">
+        <div class="summary-kpi">
+            <span class="summary-kpi-label">Опыт</span>
+            <b class="summary-kpi-value text-success" th:text="'+' + ${g.sessionXp()} + ' XP'">+0 XP</b>
+            <span class="summary-kpi-sub" th:text="${g.newStreakRecord()} ? 'Новый рекорд' : ('Уровень ' + ${g.level()})">Уровень 1</span>
         </div>
-        <div class="summary-metrics" th:if="${summary.gamification == null}">
-            <div class="metric">
-                <span class="metric-label">Время</span>
-                <span class="metric-value summary-duration" th:text="${summary.formattedDuration}">—</span>
-            </div>
-            <div class="metric" th:if="${summary.duration != null and summary.totalQuestions > 0}"
-                 th:with="avg=${summary.duration.toSeconds() / summary.totalQuestions}">
-                <span class="metric-label">Среднее</span>
-                <span class="metric-value"
-                      th:text="${(avg / 60) + ':' + (avg % 60 < 10 ? '0' + (avg % 60) : (avg % 60))}">0:00</span>
-            </div>
-            <div class="metric metric-due" th:if="${summary.dueCount > 0}">
-                <span class="metric-label">На повторение</span>
-                <span class="metric-value" th:text="${summary.dueCount}">0</span>
-            </div>
+        <div class="summary-kpi">
+            <span class="summary-kpi-label">Время</span>
+            <!--/* Компактная форма — тайл фиксированной ширины, см. SessionSummary#getCompactDuration.
+                 Свободная строка метрик ниже (summary-metrics) остаётся на полной форме. */-->
+            <b class="summary-kpi-value summary-duration" th:text="${summary.compactDuration}">—</b>
+            <span class="summary-kpi-sub" th:if="${avg > 0}"
+                  th:text="'Среднее ' + ${(avg / 60) + ':' + (avg % 60 < 10 ? '0' + (avg % 60) : (avg % 60))}">Среднее 0:00</span>
+        </div>
+        <div class="summary-kpi">
+            <span class="summary-kpi-label">Ошибки</span>
+            <b class="summary-kpi-value" th:classappend="${errs > 0} ? ' text-danger' : ' text-success'" th:text="${errs}">0</b>
+            <span class="summary-kpi-sub" th:text="${errs > 0} ? 'Нужен разбор' : 'Без ошибок'">Нужен разбор</span>
+        </div>
+        <div class="summary-kpi">
+            <span class="summary-kpi-label">Серия</span>
+            <b class="summary-kpi-value" th:text="${st} + ' ' + ${dw}">0 дней</b>
+            <span class="summary-kpi-sub" th:text="'Рекорд ' + ${g.bestStreak()}">Рекорд 0</span>
+        </div>
+    </div>
+    <div class="summary-metrics" th:if="${summary.gamification == null}">
+        <div class="metric">
+            <span class="metric-label">Время</span>
+            <span class="metric-value summary-duration" th:text="${summary.formattedDuration}">—</span>
+        </div>
+        <div class="metric" th:if="${summary.duration != null and summary.totalQuestions > 0}"
+             th:with="avg=${summary.duration.toSeconds() / summary.totalQuestions}">
+            <span class="metric-label">Среднее</span>
+            <span class="metric-value"
+                  th:text="${(avg / 60) + ':' + (avg % 60 < 10 ? '0' + (avg % 60) : (avg % 60))}">0:00</span>
+        </div>
+        <div class="metric metric-due" th:if="${summary.dueCount > 0}">
+            <span class="metric-label">На повторение</span>
+            <span class="metric-value" th:text="${summary.dueCount}">0</span>
         </div>
     </div>
 </section>
 
-<!-- Тулбар «поделиться/печать»: инжектится скриптом ниже (PE — без JS нет
-     мёртвых кнопок). Сюда вставляется .summary-tools сразу после карточки счёта. -->
+<!--/* Тулбар «поделиться/печать»: инжектится скриптом ниже (PE — без JS нет
+     мёртвых кнопок). Сюда вставляется .summary-tools сразу после карточки счёта. */-->
 
-<!-- Что дальше — типизированный «короткий план» (FLOW-SUMMARY): сервер отдаёт
+<!--/* Что дальше — типизированный «короткий план» (FLOW-SUMMARY): сервер отдаёт
      summary.nextActions (NextActionType), шаблон рендерит кнопку по типу
      (иконка + ссылка), фронт НЕ парсит текст. Заменяет прежний ad-hoc
      mistakes-условный nav + свободные строки-рекомендации (тот же источник
      данных). Первое действие — primary, остальные — secondary; ниже общая
-     навигация, чтобы не было тупика IA даже при пустом плане. -->
+     навигация, чтобы не было тупика IA даже при пустом плане.
+
+     Адрес берётся из NextActionType.Destination, а НЕ из имени типа. Прежний
+     тернарник перечислял два типа из четырёх, остальные сваливались в «иначе»:
+     работало верно, но делало невидимым главное — сколько на экране разных мест
+     назначения. Из-за этого рядом с primary «Ждут повторения: N» (→ /) рисовалась
+     вторая кнопка «Продолжить тренировку» (тоже → /): выбор из одного варианта,
+     поданный как выбор из двух. Дедупликация теперь по назначению, не по имени
+     константы. Иконка, наоборот, осталась на типе — она и должна быть у каждого своя. */-->
 <nav class="summary-actions" aria-label="Что дальше"
      th:with="hasPlan=${summary.nextActions != null and !summary.nextActions.isEmpty()},
-              primaryType=${hasPlan ? summary.nextActions[0].type().name() : ''}">
-    <!-- Primary: первое nextAction (обычно «Разобрать ошибки»). Пустой план → продолжить. -->
-    <a th:if="${hasPlan}" th:with="na=${summary.nextActions[0]}, t=${primaryType}"
+              primaryDest=${hasPlan ? summary.nextActions[0].type().destination.name() : ''}">
+    <!--/* Primary: первое nextAction (обычно «Разобрать ошибки»). Пустой план → продолжить. */-->
+    <a th:if="${hasPlan}" th:with="na=${summary.nextActions[0]}, t=${na.type().name()}, d=${primaryDest}"
        class="btn next-btn"
-       th:href="${t == 'PRACTICE_WEAK_TOPIC'} ? @{/(topic=${na.target()})}
-                : (${t == 'REVIEW_MISTAKES'} ? @{/review}
+       th:href="${d == 'TOPIC'} ? @{/(topic=${na.target()})}
+                : (${d == 'MISTAKES'} ? @{/review}
                 : @{/})">
         <svg class="ed-icon ed-icon-lead" aria-hidden="true">
             <use th:attr="href=${t == 'REVIEW_MISTAKES' ? '#i-target' : (t == 'PRACTICE_WEAK_TOPIC' ? '#i-book-open' : (t == 'REVIEW_DUE' ? '#i-flag' : '#i-flame'))}"></use>
@@ -126,32 +145,35 @@
         <svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-flame"></use></svg>
         <span class="summary-next-label">Продолжить тренировку</span>
     </a>
-    <!-- Secondary — продолжить, только если primary уже не «продолжить» (KEEP_GOING). -->
-    <a th:if="${hasPlan and primaryType != 'KEEP_GOING'}" class="btn secondary-btn" th:href="@{/}">Продолжить тренировку</a>
+    <!--/* Secondary «Продолжить тренировку» — только если primary ведёт не туда же.
+         Когда primary и так ведёт в тренажёр, эта ссылка не появляется нигде: ни рядом,
+         ни в «Ещё». Понижение в меню не лечит дубль, а прячет его — подпись всё равно
+         обещает второе место, которого нет. Ход в тренажёр при этом не теряется: его
+         несёт сама primary-кнопка, но с числом и поводом. */-->
+    <a th:if="${hasPlan and primaryDest != 'TRAINING'}" class="btn secondary-btn" th:href="@{/}">Продолжить тренировку</a>
     <details class="summary-more">
         <summary class="summary-more-summary">Ещё</summary>
         <div class="summary-more-menu" role="group" aria-label="Дополнительные действия">
-            <a th:each="na,it : ${summary.nextActions}" th:unless="${it.first}" th:with="t=${na.type().name()}"
+            <a th:each="na,it : ${summary.nextActions}" th:unless="${it.first}" th:with="d=${na.type().destination.name()}"
                class="summary-more-link"
-               th:href="${t == 'PRACTICE_WEAK_TOPIC'} ? @{/(topic=${na.target()})}
-                        : (${t == 'REVIEW_MISTAKES'} ? @{/review}
+               th:href="${d == 'TOPIC'} ? @{/(topic=${na.target()})}
+                        : (${d == 'MISTAKES'} ? @{/review}
                         : @{/})"
                th:text="${na.label()}">Действие</a>
             <a class="summary-more-link" th:href="@{/settings}">Новая сессия</a>
             <a class="summary-more-link" th:href="@{/stats}">Аналитика</a>
-            <a th:if="${hasPlan and primaryType == 'KEEP_GOING'}" class="summary-more-link" th:href="@{/}">Продолжить тренировку</a>
         </div>
     </details>
 </nav>
 
-<!-- Результаты по темам -->
+<!--/* Результаты по темам */-->
 <section class="card" th:if="${!summary.topicResults.isEmpty()}">
     <h2 class="summary-section-title">Результаты по темам</h2>
-    <!-- ARIA-роли + tabindex здесь НЕ избыточны: CSS даёт таблице display:block
+    <!--/* ARIA-роли + tabindex здесь НЕ избыточны: CSS даёт таблице display:block
          (горизонтальный скролл на узких экранах), а это в Safari/VoiceOver сбрасывает
          нативную семантику таблицы. Явные role=table/rowgroup/row/columnheader/cell
          её восстанавливают; tabindex=0 делает скролл-контейнер доступным с клавиатуры
-         (WCAG 2.1.11 scrollable-region-focusable). Чисто аддитивно — отрисовку не меняет. -->
+         (WCAG 2.1.11 scrollable-region-focusable). Чисто аддитивно — отрисовку не меняет. */-->
     <table class="summary-table" role="table" tabindex="0">
         <caption class="visually-hidden">Результаты по темам</caption>
         <thead role="rowgroup">
@@ -172,15 +194,15 @@
             <td class="summary-td-center" role="cell" data-label="Всего" th:text="${tr.total()}">0</td>
             <td class="summary-td-center summary-td-correct" role="cell" data-label="Верно" th:text="${tr.correct()}">0</td>
             <td class="summary-td-center summary-td-wrong" role="cell" data-label="Ошибки" th:text="${tr.wrong()}">0</td>
-            <!-- Этап 6: topic progress-bar. Ширина заливки задаётся data-progress +
+            <!--/* Этап 6: topic progress-bar. Ширина заливки задаётся data-progress +
                  гидрацией скриптом (SSR без инлайн-style), цвет-тир — классом на
-                 сервере. Число сохранено рядом для точности и SR. -->
+                 сервере. Число сохранено рядом для точности и SR. */-->
             <td class="summary-td-center summary-td-accuracy" role="cell" data-label="Точность"
                 th:classappend="${tr.accuracy() >= 80} ? 'text-success' : (${tr.accuracy() >= 50} ? 'text-warning' : 'text-danger')">
                 <span class="topic-bar" aria-hidden="true">
                     <span class="topic-bar-fill"
                           th:classappend="${tr.accuracy() >= 80} ? ' fill-success' : (${tr.accuracy() >= 50} ? ' fill-warning' : ' fill-danger')"
-                          th:attr="data-progress=${#numbers.formatDecimal(tr.accuracy(), 1, 1)}"></span>
+                          th:attr="data-progress=${#numbers.formatDecimal(tr.accuracy(), 1, 'NONE', 1, 'POINT')}"></span>
                 </span>
                 <span class="summary-accuracy-num" th:text="${#numbers.formatDecimal(tr.accuracy(), 1, 1) + '%'}">0%</span>
             </td>
@@ -189,7 +211,7 @@
     </table>
 </section>
 
-<!-- Ошибки: кликабельны — ведут на тренировку по теме вопроса -->
+<!--/* Ошибки: кликабельны — ведут на тренировку по теме вопроса */-->
 <section class="card" th:if="${!summary.mistakes.isEmpty()}">
     <h2 class="summary-section-title">Ошибки</h2>
     <p class="summary-mistakes-hint">Нажми на вопрос, чтобы потренироваться по этой теме, или «Повторить ошибки» выше.</p>
@@ -209,82 +231,6 @@
 <nav th:replace="~{fragments/mobile-nav :: mobile-nav(active='focus')}"></nav>
 <th:block th:replace="~{fragments/shell-scripts :: shell-scripts}"></th:block>
 
-<!-- Шеринг и печать итогов. /session-summary НЕ грузит app.js, поэтому скрипт
-     самодостаточный. Текст итога собираем из уже отрендеренного DOM (не дублируем
-     данные на сервере). Кнопки инжектим (PE: без JS их нет). Печать — window.print
-     + @media print в base.css прячет навигацию и делает чистый лист. -->
-<script th:attr="nonce=${cspNonce}">
-  (function () {
-    var scoreCard = document.querySelector('.summary-hero');
-    if (!scoreCard) return;
-    function clean(s) { return (s || '').trim().replace(/\s+/g, ' '); }
-    function txt(sel, root) { var e = (root || document).querySelector(sel); return e ? clean(e.textContent) : ''; }
-    // Гидрация topic-bar: ширина заливки из data-progress (SSR не пишет инлайн-style).
-    document.querySelectorAll('.topic-bar-fill[data-progress]').forEach(function (el) {
-      var p = parseFloat(el.getAttribute('data-progress'));
-      if (!isNaN(p)) el.style.width = Math.max(0, Math.min(100, p)) + '%';
-    });
-    function buildShareText() {
-      var lines = ['Итоги сессии — Подготовка к собеседованию'];
-      var mode = txt('.summary-mode-line'); if (mode) lines.push('Режим: ' + mode);
-      var acc = txt('.summary-score-value'); if (acc) lines.push('Точность сессии: ' + acc);
-      var count = txt('.summary-hero-count'); if (count) lines.push(count);
-      document.querySelectorAll('.summary-metrics .metric').forEach(function (s) {
-        var label = txt('.metric-label', s), val = txt('.metric-value', s);
-        if (label && val) lines.push(label + ': ' + val);
-      });
-      // Этап 5: KPI-плитки (Опыт/Время/Ошибки/Серия) в шеринг-текст.
-      document.querySelectorAll('.summary-kpi').forEach(function (s) {
-        var label = txt('.summary-kpi-label', s), val = txt('.summary-kpi-value', s), sub = txt('.summary-kpi-sub', s);
-        if (label && val) lines.push(label + ': ' + val + (sub ? ' (' + sub + ')' : ''));
-      });
-      var rows = document.querySelectorAll('.summary-table tbody tr');
-      if (rows.length) {
-        lines.push('', 'По темам:');
-        rows.forEach(function (r) {
-          var c = r.querySelectorAll('td');
-          if (c.length >= 5) lines.push('- ' + clean(c[0].textContent) + ': ' + clean(c[2].textContent) + '/' + clean(c[1].textContent) + ' (' + clean(c[4].textContent) + ')');
-        });
-      }
-      var plan = document.querySelectorAll('.summary-next-label');
-      if (plan.length) {
-        lines.push('', 'Что дальше:');
-        plan.forEach(function (el) { lines.push('- ' + clean(el.textContent)); });
-      }
-      return lines.join('\n');
-    }
-    var tools = document.createElement('div');
-    tools.className = 'summary-tools';
-    var status = document.createElement('span');
-    status.className = 'summary-tools-status';
-    status.setAttribute('role', 'status');
-    status.setAttribute('aria-live', 'polite');
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      var copyBtn = document.createElement('button');
-      copyBtn.type = 'button';
-      copyBtn.className = 'btn secondary-btn';
-      copyBtn.innerHTML = '<svg class="ed-icon" aria-hidden="true"><use href="#i-copy"></use></svg> Скопировать итог';
-      var resetTimer = null;
-      copyBtn.addEventListener('click', function () {
-        navigator.clipboard.writeText(buildShareText()).then(function () {
-          status.textContent = 'Итог скопирован в буфер обмена.';
-        }).catch(function () {
-          status.textContent = 'Не удалось скопировать — выдели текст вручную.';
-        });
-        if (resetTimer) clearTimeout(resetTimer);
-        resetTimer = setTimeout(function () { status.textContent = ''; }, 4000);
-      });
-      tools.appendChild(copyBtn);
-    }
-    var printBtn = document.createElement('button');
-    printBtn.type = 'button';
-    printBtn.className = 'btn secondary-btn';
-    printBtn.innerHTML = '<svg class="ed-icon" aria-hidden="true"><use href="#i-printer"></use></svg> Печать / PDF';
-    printBtn.addEventListener('click', function () { window.print(); });
-    tools.appendChild(printBtn);
-    tools.appendChild(status);
-    scoreCard.insertAdjacentElement('afterend', tools);
-  })();
-</script>
+<th:block th:replace="~{fragments/scripts :: app-script}"></th:block>
 </body>
 </html>

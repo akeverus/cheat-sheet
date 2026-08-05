@@ -4,18 +4,52 @@ package com.cheatsheet.quiz.domain;
  * Тип следующего действия в итогах сессии (FLOW-SUMMARY): типизированный «короткий
  * план» вместо свободных строк-рекомендаций. Шаблон итогов рендерит по типу
  * (иконка/кнопка/ссылка), фронт больше не парсит текст.
+ *
+ * <p>Каждый тип обязан объявить {@link Destination} — куда ведёт кнопка. Раньше это
+ * решал тернарник в шаблоне, перечислявший типы по имени: два типа из четырёх в него
+ * не попадали и оба сваливались в «иначе». Ошибки не было (оба и правда ведут в
+ * тренажёр), но производное знание «сколько на экране разных мест назначения» стало
+ * недоступно — из-за чего рядом с кнопкой «Ждут повторения» рисовалась вторая,
+ * «Продолжить тренировку», ведущая туда же. Признак назначения обязан жить там, где
+ * компилятор требует его для каждой новой константы.
  */
 public enum NextActionType {
 
     /** Разобрать ошибки текущей сессии (есть неверные ответы). */
-    REVIEW_MISTAKES,
+    REVIEW_MISTAKES(Destination.MISTAKES),
 
     /** Повторить слабую тему (точность ниже порога). */
-    PRACTICE_WEAK_TOPIC,
+    PRACTICE_WEAK_TOPIC(Destination.TOPIC),
 
     /** Пройти вопросы, подошедшие к повторению по SM-2 (due). */
-    REVIEW_DUE,
+    REVIEW_DUE(Destination.TRAINING),
 
     /** Всё хорошо — поддержать темп (нет ошибок, все темы выше порога). */
-    KEEP_GOING
+    KEEP_GOING(Destination.TRAINING);
+
+    /**
+     * Куда ведёт действие. Именно назначение, а не тип, определяет, сколько на экране
+     * различимых выборов: две кнопки с разными подписями и одним {@code href} — не выбор.
+     */
+    public enum Destination {
+
+        /** Тренажёр {@code /} — отдаёт due-вопросы первыми (DefaultSelectionStrategy). */
+        TRAINING,
+
+        /** Разбор ошибок {@code /review}. */
+        MISTAKES,
+
+        /** Тренажёр, суженный до темы — {@code /?topic=…}; требует {@code target()}. */
+        TOPIC
+    }
+
+    private final Destination destination;
+
+    NextActionType(Destination destination) {
+        this.destination = destination;
+    }
+
+    public Destination getDestination() {
+        return destination;
+    }
 }

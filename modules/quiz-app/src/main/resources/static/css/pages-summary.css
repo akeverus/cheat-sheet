@@ -5,29 +5,26 @@
    ========================================================================== */
 html[data-design] .summary-page .ed-page { max-width: var(--max-width-reading); }
 
+/* Поверхность и поля — у общего `.card` (components-card.css); своё здесь
+   только вертикальный ритм между блоками итога. */
 html[data-design] .summary-page .card {
-  background: var(--color-bg-secondary);
-  border: var(--rule-weight) solid var(--color-border-primary);
-  border-radius: var(--border-radius-lg);
-  box-shadow: none; backdrop-filter: none;
-  padding: var(--space-6); margin: 0 0 var(--space-6);
+  margin: 0 0 var(--space-6);
 }
 
-/* Геро-итог */
-html[data-design] .summary-page .summary-score { text-align: center; padding: var(--space-8) var(--space-6); }
+/* Геро-итог. Контейнера `.summary-score` больше нет — карточка называется
+   `.summary-hero` (кольцо слева, тело справа); правила, обращённые к прежнему
+   имени, удалены вместе с его grid-раскладкой. */
 html[data-design] .summary-page .summary-mode-line {
   font-family: var(--font-family-mono); font-size: var(--font-size-xs);
   letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
   color: var(--color-text-secondary); margin-bottom: var(--space-3);
   overflow-wrap: break-word;
 }
-/* Чип режима во flex-геро — к ЛЕВОМУ краю body (над «N из M»). Базовое
-   pages-layout.css задаёт `.summary-page .summary-mode-line { align-self: end }`
-   для grid-варианта .summary-score, но селектор ловит и flex-.summary-hero → чип
-   прижимался к правому краю, где декор-искра .summary-hero::before (top/right:8px):
-   чип и звезда теснились в одном углу, glow наползал на чип. Селектор с .summary-hero
-   специфичнее (тот же @layer pages) → выигрывает; чип встаёт заголовком режима слева,
-   бренд-искра остаётся одна в углу (консистентно со всеми карточками). */
+/* Чип режима — к ЛЕВОМУ краю body (над «N из M») и по своей ширине. Без явного
+   align-self он тянется на всю колонку (stretch по умолчанию во flex-column), а
+   растянутый на ширину геро чип уводит взгляд от «N из M», ради которого блок и
+   существует. (Раньше он ещё и упирался в декор-звезду в правом верхнем углу —
+   её больше нет, но своей ширины чипу это не отменяет.) */
 html[data-design] .summary-page .summary-hero .summary-mode-line {
   align-self: flex-start;
 }
@@ -40,9 +37,10 @@ html[data-design] .summary-page .summary-hero[data-summary-tone="low"].is-celebr
 /* Гасим градиент-текст из старого CSS, цвет даём через .text-* */
 html[data-design] .summary-page .summary-score-value {
   font-family: var(--font-family-display);
-  /* 2xl, а не 4xl: число живёт ВНУТРИ 128px score-ring (shell.css .score-ring)
-     — 4xl давал ширину ~200px, число вываливалось за кольцо. 2xl помещается
-     с запасом (~113px) и остаётся акцентным hero-показателем. */
+  /* 2xl, а не 4xl: число живёт внутри просвета score-ring, а 4xl давал ~200px.
+     Внутри кольца размер всё равно задаёт shell.css (.score-ring .summary-score-value
+     — xl); здесь 2xl остаётся для случаев, когда .summary-score-value встречается
+     вне кольца. Бюджет ширины и его вывод — в комментарии к .score-ring. */
   font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold);
   line-height: var(--line-height-tight); margin: 0;
   background: none; -webkit-background-clip: border-box; background-clip: border-box;
@@ -52,43 +50,15 @@ html[data-design] .summary-page .summary-score-value.text-success { color: var(-
 html[data-design] .summary-page .summary-score-value.text-warning { color: var(--color-status-warning); }
 html[data-design] .summary-page .summary-score-value.text-danger { color: var(--color-status-error); }
 html[data-design] .summary-page .summary-score-value.text-muted { color: var(--color-text-tertiary); }
-html[data-design] .summary-page .summary-score-label {
-  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
-  color: var(--color-text-secondary); margin-top: var(--space-2);
-}
 /* FLOW-SUMMARY-b: краткий actionable-подзаголовок под числом точности */
 html[data-design] .summary-page .summary-headline {
   font-family: var(--font-family-display); font-size: var(--font-size-lg);
   color: var(--color-text-primary); margin-top: var(--space-3);
 }
-html[data-design] .summary-page .summary-score .stats-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3);
-  max-width: 460px; margin: var(--space-6) auto 0;
-}
-/* FLOW-03b: с 4-й плиткой «Не знаю» сетка идёт 2×2 на узком экране и 4-в-ряд от
-   560px — repeat(4,1fr) на ~320px распирал бы 4 значения (тот же res, что у
-   базовой repeat(3,1fr) с её min-width:0 на .stat-item). */
-html[data-design] .summary-page .summary-score .stats-grid.has-unknown {
-  grid-template-columns: repeat(2, 1fr);
-}
-@media (min-width: 560px) {
-  html[data-design] .summary-page .summary-score .stats-grid.has-unknown {
-    grid-template-columns: repeat(4, 1fr); max-width: 620px;
-  }
-}
-html[data-design] .summary-page .stat-item {
-  padding: var(--space-3) var(--space-4); border: var(--rule-weight) solid var(--color-border-primary);
-  border-radius: var(--border-radius-md); background: var(--color-bg-primary); text-align: center;
-  /* min-width:0 даёт 1fr-треку ужиматься ниже min-content — иначе на ~320-375px
-     трёхзначные «200»/«100%» (Fraunces xl) распирали карту/страницу вправо.
-     Этого достаточно: repeat(3,1fr) держит 3 ровные колонки до ~300px без
-     переполнения и без переноса лейблов (замерено). Тот же приём, что у
-     .result-page .stat-item. Отдельный узкий @media-override не нужен. */
-  min-width: 0;
-}
-html[data-design] .summary-page .stat-value { font-family: var(--font-family-display); font-size: var(--font-size-xl); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); display: block; }
-html[data-design] .summary-page .stat-label { font-family: var(--font-family-mono); font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary); }
+/* Плиточная сводка (.summary-score .stats-grid + .stat-item/.stat-value/.stat-label)
+   удалена: итоги показывают четыре KPI сессии (.summary-kpi — опыт, время, ошибки,
+   серия), а не generic-плитки. Правила пережили разметку и держали адаптивные
+   раскладки для классов, которых на странице нет. */
 html[data-design] .summary-page .summary-duration { font-family: var(--font-family-mono); font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-top: var(--space-5); }
 
 /* Действия */
@@ -175,23 +145,22 @@ html[data-design] .summary-page .summary-mistake-item:hover { background: var(--
 html[data-design] .summary-page .summary-mistake-question { display: block; color: var(--color-text-primary); margin-bottom: var(--space-2); overflow-wrap: break-word; word-break: break-word; }
 html[data-design] .summary-page .summary-mistake-meta { display: block; font-family: var(--font-family-mono); font-size: var(--font-size-xs); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary); }
 
-/* Рекомендации */
-html[data-design] .summary-page .summary-recommendations-list { margin: 0; padding-left: var(--space-5); display: flex; flex-direction: column; gap: var(--space-2); }
-html[data-design] .summary-page .summary-recommendation-item { color: var(--color-text-primary); }
+/* Свободный список рекомендаций (.summary-recommendations*) убран из разметки,
+   когда «что дальше» стало типизированным планом (summary.nextActions → кнопки
+   .summary-actions). Правила под него удалены следом. */
 
 @media (max-width: 600px) {
   html[data-design] .summary-page .summary-actions .btn { width: 100%; }
   html[data-design] .summary-page .summary-more { width: 100%; }
   html[data-design] .summary-page .summary-more-summary { width: 100%; }
-  /* score-value НЕ бампаем до 3xl на мобильном: score-ring фиксирован 128px и на
-     мобильном тоже (shell.css), а 3xl (48px) даёт «0,0%»≈122px и «100,0%»≈173px —
-     число вываливается за кольцо (см. инвариант в базовом правиле выше, ~стр.43).
-     Базовый 2xl держит «100,0%»≈129px в габарите кольца, как на десктопе. */
+  /* score-value НЕ бампаем на мобильном: кольцо одного размера везде, и бюджет числа
+     задаёт его внутренний просвет (--score-ring-clear в shell.css), а не габарит.
+     При 144 px это 115 px, «100%» занимает 97 px — запас есть, но не на целую ступень
+     шкалы: 48 px дали бы ~130 px и вернули наложение числа на дугу. */
 }
 
 /* Wave 4–7: один явный primary CTA в блоке «Что дальше» */
-html[data-design] .summary-page .summary-actions .btn.next-btn:first-of-type,
-html[data-design] .summary-page .summary-actions .btn.btn-primary {
+html[data-design] .summary-page .summary-actions .btn.next-btn:first-of-type {
   min-width: 12rem;
   font-weight: var(--font-weight-semibold);
   box-shadow: var(--shadow-sm);
@@ -214,12 +183,12 @@ html[data-design] .summary-page .summary-actions .btn.secondary-btn:hover {
    шаблона — отложены на шаг 2 Фазы E (см. port-drafts/README, PORT_MAPPING
    п.32/39). Специфичность равна общему §C6 — блок стоит ПОСЛЕ него. ========= */
 
-/* Карты: instrument держит секции на приподнятой tertiary с полноценной
-   line-границей (кольца/границы вместо теней и утопленных фонов). */
-html[data-design="instrument"] .summary-page .card {
-  background: var(--color-bg-tertiary);
-  border-color: var(--color-border-primary);
-}
+/* Собственной поверхности у карточек итога больше нет. Пока дизайнов было
+   несколько, `instrument` поднимал секции на tertiary; дизайн остался один, и
+   правило означало ровно одно: страница итогов — единственная из шести, где
+   карточка другого оттенка. Плюс `border-color` тут был мёртв (рамкой владеет
+   слой pixel, он ставит `border: 0`). Итог теперь на той же поверхности, что
+   аналитика, вердикт и закладки. */
 
 /* Мета-строка режима: строчный mono-шёпот (подпись instrument), не upper-акцент. */
 html[data-design="instrument"] .summary-page .summary-mode-line {
@@ -230,19 +199,6 @@ html[data-design="instrument"] .summary-page .summary-mode-line {
 /* Крупный счёт: Newsreader medium — instrument не кричит болдом. */
 html[data-design="instrument"] .summary-page .summary-score-value {
   font-weight: var(--font-weight-medium);
-}
-
-/* Плитки метрик: paper-фон под приподнятой картой (инверсия слоёв),
-   цифры — mono с табличными цифрами (плитки читаются как приборная панель). */
-html[data-design="instrument"] .summary-page .stat-item {
-  background: var(--color-bg-primary);
-  border-color: var(--color-border-primary);
-}
-html[data-design="instrument"] .summary-page .stat-value {
-  font-family: var(--font-family-mono);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: var(--letter-spacing-tight);
-  font-variant-numeric: tabular-nums;
 }
 
 /* Заголовки секций: тихий body-семиболд вместо display-xl — иерархию держит
@@ -322,42 +278,17 @@ html[data-design="instrument"] .summary-page .summary-mistake-item:hover {
 
 
 /* --- SUMMARY wide-layout (min-width 1200) — вынесено из pages-layout.css (Волна 5
-   под-шаг 3). Геро-итог grid-areas (режим/процент/подпись слева, время справа,
-   плитки полноширинной строкой) + таблица тем и ошибки в 2 колонки + рекомендации
-   полной шириной. @pages -> @pages (тот же слой), append в конец @layer pages ПОСЛЕ
-   базы: same-property конкуренты (L17 .summary-score text-align/padding, L92
-   .summary-duration margin-top) перебиваются порядком; база L6 .ed-page{max-width}
-   дизъюнктна; спец-отношения (L31 .summary-hero .summary-mode-line) сохранены. */
+   под-шаг 3): таблица тем и ошибки в две колонки. @pages -> @pages (тот же слой),
+   append в конец @layer pages ПОСЛЕ базы — единственный same-property конкурент
+   (`.summary-duration` margin-top выше) перебивается порядком; база `.ed-page
+   { max-width }` дизъюнктна. */
 @media (min-width: 1200px) {
-  /* --- SUMMARY: геро-итог — слева режим/процент/подпись, справа время; краткий
-     итог и плитки — полноширинными строками ниже. Раньше плитки жили в средней
-     колонке 3-колоночной ленты (auto|1fr|auto), но при капнутой ширине страницы
-     (~896px) «0,0%» (xl-serif ~274px) + время съедали ряд, и средняя колонка
-     схлопывалась до ~99px — плитки крошились (FLOW-03b обнажил это 4-й плиткой
-     «Не знаю», дефект был и на 3). На своей строке плитки получают всю ширину
-     карточки; ниже таблица тем и ошибки бок о бок. */
-  html[data-design] .summary-page .summary-score {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "mode     duration"
-      "value    duration"
-      "label    duration"
-      "headline headline"
-      "grid     grid";
-    align-items: center;
-    column-gap: var(--space-8);
-    text-align: left;
-    padding: var(--space-6) var(--space-7);
-  }
-  html[data-design] .summary-page .summary-mode-line { grid-area: mode; align-self: end; margin-bottom: var(--space-2); }
-  html[data-design] .summary-page .summary-score-value { grid-area: value; }
-  html[data-design] .summary-page .summary-score-label { grid-area: label; align-self: start; }
-  html[data-design] .summary-page .summary-headline { grid-area: headline; }
-  /* Плитки — своя полноширинная строка; ширину/центрирование и число колонок
-     (3 или 4 c .has-unknown) наследуем из базового правила, здесь только место. */
-  html[data-design] .summary-page .summary-score .stats-grid { grid-area: grid; }
-  html[data-design] .summary-page .summary-duration { grid-area: duration; margin-top: 0; align-self: center; }
+  /* Здесь лежала grid-раскладка геро по именованным областям (mode/value/label/
+     headline/grid). Она адресовала контейнер `.summary-score` и плитки
+     `.stats-grid`, которых на странице нет: карточка — `.summary-hero` (кольцо +
+     тело), метрики — `.summary-kpi`. Пять областей раскладывали разметку, ушедшую
+     раньше. Геро на широком экране держит собственный flex-строй карточки. */
+  html[data-design] .summary-page .summary-duration { margin-top: 0; align-self: center; }
   /* Таблица тем + ошибки в два столбца — только когда есть блок ошибок.
      .summary-tools (вставляет JS после геро) и actions остаются полноширинными. */
   html[data-design] .summary-page .ed-page:has(> section .summary-mistakes) {
@@ -369,9 +300,5 @@ html[data-design="instrument"] .summary-page .summary-mistake-item:hover {
   html[data-design] .summary-page .ed-page:has(> section .summary-mistakes) > * { grid-column: 1 / -1; min-width: 0; }
   html[data-design] .summary-page .ed-page > section:has(.summary-table) { grid-column: 1; }
   html[data-design] .summary-page .ed-page > section:has(.summary-mistakes) { grid-column: 2; }
-  /* Рекомендации — полноширинная лента-подвал. Раньше жались в колонку 1 под
-     таблицей → справа под «Ошибками» зиял мёртвый жёлоб. Спан на всю ширину
-     убирает дыру и читается как футер итогов. */
-  html[data-design] .summary-page .ed-page > section.summary-recommendations { grid-column: 1 / -1; }
 }
 }

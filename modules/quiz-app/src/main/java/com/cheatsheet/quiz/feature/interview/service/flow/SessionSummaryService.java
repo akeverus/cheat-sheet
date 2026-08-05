@@ -163,9 +163,14 @@ public class SessionSummaryService {
                     dueCount));
         }
 
+        // KEEP_GOING и REVIEW_DUE ведут в один и тот же тренажёр, поэтому в одном плане
+        // они не уживаются: «Ждут повторения: 42» — то же действие, но с числом и поводом,
+        // а «Отличный темп — продолжайте» рядом с ним превращается во второй пункт,
+        // который никуда больше не ведёт. Похвала при этом не теряется — её несёт строка
+        // рекомендаций «Отличный результат! Все темы выше порога».
         boolean allGood = topicResults.stream().allMatch(tr ->
                 tr.total() == 0 || tr.accuracy() >= QuizConstants.WEAK_TOPIC_THRESHOLD);
-        if (mistakes.isEmpty() && anyAnswered && allGood) {
+        if (mistakes.isEmpty() && anyAnswered && allGood && dueCount == 0) {
             builder.addNextAction(new SessionSummary.NextAction(
                     NextActionType.KEEP_GOING,
                     "Отличный темп — продолжайте",

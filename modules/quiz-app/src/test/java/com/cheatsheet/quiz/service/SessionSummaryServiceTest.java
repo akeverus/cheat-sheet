@@ -199,6 +199,34 @@ class SessionSummaryServiceTest {
     }
 
     @Test
+    void cleanSessionWithDueBacklogPlansOnlyTheDueAction() {
+        // Чистая сессия + непустая очередь повторений: раньше план получал и REVIEW_DUE,
+        // и KEEP_GOING. Оба ведут в тренажёр, поэтому итоги рисовали рядом «Ждут
+        // повторения: 7» и «Продолжить тренировку» — две подписи, один адрес. Числовое
+        // действие вытесняет похвалу; сама похвала остаётся строкой рекомендаций.
+        Question q1 = aQuestion().withId(1).withTopic("java").build();
+        when(questionRepository.findByIds(anyList())).thenReturn(List.of(q1));
+        when(questionStatsRepository.countDue(any(), any(), any(), anyLong())).thenReturn(7L);
+
+        InterviewSession session = new InterviewSession(
+                InterviewMode.TRAINING, List.of(1L), "java", false, false, false);
+        session.registerAnswer(true, "java");
+
+        SessionSummary summary = service.buildSummary(session);
+
+        assertThat(summary.getNextActions()).extracting(SessionSummary.NextAction::type)
+                .containsExactly(NextActionType.REVIEW_DUE);
+        assertThat(summary.getNextActions())
+                .as("два действия с одним назначением — это кнопки, предлагающие выбор, которого нет")
+                .extracting(a -> a.type().getDestination().name()
+                        + (a.target() != null ? ":" + a.target() : ""))
+                .doesNotHaveDuplicates();
+        assertThat(summary.getRecommendations())
+                .as("похвала не должна исчезнуть вместе с дублирующим действием")
+                .anyMatch(r -> r.startsWith("Отличный результат"));
+    }
+
+    @Test
     void buildSummaryAllCorrectProducesKeepGoingNextAction() {
         Question q1 = aQuestion().withId(1).withTopic("java").build();
         when(questionRepository.findByIds(anyList())).thenReturn(List.of(q1));

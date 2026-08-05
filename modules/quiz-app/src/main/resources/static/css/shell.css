@@ -13,19 +13,20 @@
    ========================================================================== */
 
 /* ---- Холст + типографика документа ------------------------------------- */
+/* Единственный владелец холста. Типографика документа — в reset.css; здесь её
+   нет намеренно, иначе два правила снова начнут перебивать друг друга. */
 html[data-design] body {
-  margin: 0;
-  min-height: 100vh;
+  min-height: 100dvh;
   /* «Терминальная» глубина макетов handoff-3: диагональный градиент холста
      (bg-0→bg-1, prototype .shell) + мягкое teal-свечение в правом верхнем углу.
-     Оба слоя theme-safe: тянут --color-bg-primary/-canvas-2 текущей темы. */
-  background:
+     Оба слоя theme-safe: тянут --color-bg-primary/-canvas-2 текущей темы.
+     background-color отдельным свойством, а не внутри shorthand: под
+     градиентами нужен непрозрачный холст, иначе на overscroll (bounce в macOS)
+     и в местах, куда градиент не дотянулся, просвечивает системный белый. */
+  background-color: var(--color-bg-primary);
+  background-image:
     radial-gradient(circle at 78% -18%, rgba(88, 212, 208, 0.06), transparent 34%),
     linear-gradient(135deg, var(--color-bg-primary), var(--color-bg-canvas-2));
-  background-attachment: fixed;
-  color: var(--color-text-primary);
-  font-family: var(--font-family-body);
-  -webkit-font-smoothing: antialiased;
 }
 
 html[data-design] .icon {
@@ -89,8 +90,10 @@ html[data-design] .nav {
   display: grid;
   gap: 5px;
 }
+/* Пункт навигации — это `.nav a` или `.side-action` (кнопка). Класса-дубля
+   `.nav-link` в разметке нет: он давал третье имя тому же пункту меню, из-за
+   чего hover/active-правила ниже пришлось бы держать в трёх экземплярах. */
 html[data-design] .nav a,
-html[data-design] .nav .nav-link,
 html[data-design] .side-action {
   color: var(--color-text-secondary);
   text-decoration: none;
@@ -118,41 +121,17 @@ html[data-design] .nav a.active {
   background: var(--color-accent-primary);
   font-weight: var(--font-weight-bold);
 }
-html[data-design] .nav .is-disabled {
-  color: var(--color-text-tertiary);
-  opacity: 0.55;
-  cursor: default;
-}
-/* Бейдж «скоро» на разделах-заглушках (Вопросы, Достижения): причина приглушения
-   раньше жила только в hover-`title` (мышь-only) → клавиатура/тач-юзеры видели просто
-   серый пункт без объяснения. Видимый компакт-бейдж, прижат к правому краю строки
-   (margin-left:auto). Наследует opacity 0.55 родителя `.is-disabled` — единый
-   disabled-вид (WCAG 1.4.3 не требует контраста от неактивных контролов); border +
-   uppercase держат пилюлю опознаваемой даже приглушённой. Бейдж aria-hidden — статус
-   для SR уже несут `aria-disabled="true"` + `title`; так accessible-name пункта
-   остаётся чистым («Вопросы»), без склейки «Вопросыскоро». */
-html[data-design] .nav .is-disabled .nav-soon {
-  margin-left: auto;
-  flex: 0 0 auto;
-  font-size: 0.625rem;
-  line-height: 1;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 2px 6px;
-  border: var(--rule-weight) solid var(--color-border-secondary);
-  border-radius: var(--border-radius-sm);
-  background: var(--color-surface-soft);
-  color: var(--color-text-secondary);
-}
+/* Правила .nav .is-disabled / .nav-soon удалены вместе с пунктами-заглушками
+   «Вопросы» и «Достижения» (см. fragments/sidebar.html). В навигации нет
+   неактивных пунктов, поэтому нет и disabled-вида. */
 html[data-design] .sidebar-spacer { flex: 1; }
 html[data-design] .sidebar-footer { display: grid; gap: 4px; }
-/* Футер сайдбара: тоггл темы и «Выйти» — полноширинные строки «иконка + подпись»,
-   как nav-ссылки выше (базовый .side-action в этом же файле, строки 92–110).
+/* Футер сайдбара: «Выйти» — полноширинная строка «иконка + подпись», как
+   nav-ссылки выше (базовый .side-action в этом же файле, строки 92–110).
    pixel-sweep («Icon buttons» в pixel-animations.css) ошибочно заклампил ЛЮБОЙ
    .side-action в 40×40 icon-box + px-edge + border-radius:0, из-за чего подпись
-   «Тёмная тема»/«Светлая тема»/«Выйти» вылезала за 40px-бокс и переносилась на
-   2 строки (scrollWidth ~111 > clientWidth 40). Топбар-версия
-   (.top-actions .side-action) icon-only и правомерно 40×40 — здесь скоупим
+   «Выйти» вылезала за 40px-бокс и переносилась на 2 строки (scrollWidth ~111 >
+   clientWidth 40). Icon-only кнопки топбара правомерно 40×40 — здесь скоупим
    только футер, восстанавливая nav-подобную строку. pixel-animations.css лежит
    в БОЛЕЕ ПОЗДНЕМ @layer, поэтому обычные декларации (width/height) там бьют
    специфичность; для !important порядок слоёв реверсируется и наш ранний слой
@@ -171,7 +150,11 @@ html[data-design] .topbar {
   border-bottom: 1px solid var(--color-border-secondary);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  /* В полосе остался один блок — .top-actions с тоглом темы (прогресс сессии
+     переехал в рельс, см. fragments/topbar.html). При space-between
+     единственный ребёнок прижимается ВЛЕВО, а тогл всю жизнь стоял справа и
+     справа же стоит в mobile-header. */
+  justify-content: flex-end;
   padding: 0 28px;
   position: sticky;
   top: 0;
@@ -182,13 +165,6 @@ html[data-design] .topbar {
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
 }
-html[data-design] .crumb {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 24px;
-  color: var(--color-text-secondary);
-}
 html[data-design] .eyebrow {
   font-family: var(--font-family-mono);
   font-size: 11px;
@@ -197,25 +173,6 @@ html[data-design] .eyebrow {
   letter-spacing: var(--letter-spacing-wide);
   text-transform: uppercase;
   color: var(--color-text-tertiary);
-}
-html[data-design] .progress-mini {
-  height: 5px;
-  width: 270px;
-  max-width: 40vw;
-  background: var(--color-surface-soft);
-  border-radius: var(--border-radius-full);
-  overflow: hidden;
-}
-html[data-design] .progress-mini > span {
-  display: block;
-  height: 100%;
-  /* Ширину ставит app.js (hydrateProgressBarsFromData из data-progress) — как у
-     .session-progress-fill. Дефолт 0, чтобы: (1) без JS полоса пустая, а не 100%
-     (block без width растянулся бы на весь трек); (2) в серверном HTML не было
-     инлайн-style= (контракт assertNoInlineUiAttributes). */
-  width: 0;
-  background: var(--color-accent-primary);
-  transition: width var(--duration-slow) var(--easing-out);
 }
 html[data-design] .top-actions { display: flex; gap: 8px; align-items: center; }
 html[data-design] .topbar-logout,
@@ -252,36 +209,13 @@ html[data-design] .content {
 }
 
 /* ---- Базовые компоненты ------------------------------------------------ */
-html[data-design] .button {
-  min-height: 44px;
-  border: 1px solid var(--color-border-primary);
-  background: var(--color-bg-tertiary);
-  color: var(--color-text-primary);
-  border-radius: 8px;
-  padding: 0 17px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font: inherit;
-  font-weight: var(--font-weight-bold);
-  text-decoration: none;
-  cursor: pointer;
-  transition: transform var(--duration-fast) var(--easing-default),
-              background var(--duration-fast) var(--easing-default),
-              border-color var(--duration-fast) var(--easing-default);
-}
-html[data-design] .button:hover { transform: translateY(-1px); border-color: var(--color-border-primary); }
-html[data-design] .button.primary {
-  background: var(--color-accent-primary);
-  border-color: var(--color-accent-primary);
-  color: var(--color-accent-on);
-}
-html[data-design] .button.primary:hover { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); }
-html[data-design] .button.ghost { background: transparent; }
-html[data-design] .button.danger { color: var(--color-status-error); }
-html[data-design] .button:disabled,
-html[data-design] .button[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; transform: none; }
+/* Кнопки в приложении ровно одни: `.btn` + `.primary-btn`/`.secondary-btn`/
+   `.danger-btn` (components-controls.css). Второй комплект — `.button` с
+   модификаторами `.primary`/`.ghost`/`.danger`, 44px и своим hover-подъёмом —
+   стоял здесь параллельно и не был надет ни на один узел: 44px против 48px у
+   живой primary-CTA, свой радиус и своя гамма. Два набора кнопок с почти
+   одинаковыми именами — гарантированное расхождение при первой же правке
+   размера; удалён тот, у которого нет разметки. */
 
 html[data-design] .badge {
   display: inline-flex;
@@ -302,11 +236,10 @@ html[data-design] .badge.accent {
   background: var(--color-accent-wash);
 }
 
-/* Ряд мета-бейджей шапки экрана вопроса (.focus-training .question-meta) ВЫНЕСЕН в
-   pages-focus.css (Волна 4, type-B focus): .focus-training-предок только на focus →
-   грузится th:if page==focus. Размещён ПЕРЕД @media(max-width:600)-конкурентом
-   .focus-page .question-meta (margin-bottom space-2): равная спец, @media LATER
-   выигрывает mobile-margin = как было @pages над @shell. */
+/* Мета-ряд шапки экрана вопроса живёт в pages-focus.css (Волна 4, type-B focus):
+   предок .focus-page/.focus-training существует только на focus → файл грузится
+   th:if page==focus. Отдельного .question-meta там больше нет — бейдж сложности
+   стоит в .question-zone-head рядом с чипом режима. */
 
 /* ===========================================================================
    Этап 3 редизайна — content-box (CodeBlock / DiagramBlock) по макету codeBox.
@@ -321,6 +254,9 @@ html[data-design] .content-box {
 }
 html[data-design] .content-toolbar {
   display: flex;
+  /* На узком экране заголовок + три кнопки не встают в строку — переносим,
+     иначе кнопки сжимаются до нечитаемых огрызков. */
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
@@ -328,15 +264,20 @@ html[data-design] .content-toolbar {
   border-bottom: 1px solid var(--color-border-primary);
   background: var(--color-bg-secondary);
 }
+/* Единственная подпись блока материалов. Может нести иконку типа (⟨⟩ у кода) —
+   отсюда inline-flex: иконка выравнивается по базовой линии текста, а не свисает. */
 html[data-design] .content-box-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   font-family: var(--font-family-mono);
   font-size: var(--font-size-xs);
   letter-spacing: var(--letter-spacing-wide);
   text-transform: uppercase;
   color: var(--color-text-secondary);
 }
-/* Код внутри content-box: details/pre без внешних отступов (рамку даёт box). */
-html[data-design] .question-code-wrap.content-box .question-code-details > pre,
+html[data-design] .content-box-title .ed-icon { width: 1em; height: 1em; color: var(--color-text-tertiary); }
+/* Код внутри content-box: pre без внешних отступов (рамку даёт box). */
 html[data-design] .question-code-wrap.content-box .question-code { margin: 0; }
 /* Диаграмма внутри content-box: отбивка вокруг SVG/исходной разметки mermaid. */
 html[data-design] .question-diagram.content-box .mermaid { margin: 0; padding: var(--space-4); }
@@ -368,7 +309,25 @@ html[data-design] .diagram-source {
   line-height: var(--line-height-relaxed);
   color: var(--color-text-secondary);
 }
-/* Диаграмма, не сумевшая отрендериться (mermaid error): mermaid-init/app.js
+/* Схема грузится лениво: пока едет mermaid.min.js, блок пуст (неотрисованный
+   .mermaid скрыт по visibility). Пустая рамка без объяснения читается как
+   поломка, поэтому на время загрузки показываем спокойную моно-строку —
+   тем же голосом, что и остальные служебные подписи. Атрибут ставит JS, так
+   что без JS ничего не меняется. */
+html[data-design] .mermaid[data-diagram-loading]::after {
+  /* Сам .mermaid скрыт по visibility (правило в слоях components/pages) — псевдо
+     возвращает себе видимость точечно, вместо гонки за специфичностью со слоями. */
+  visibility: visible;
+  content: 'Готовим схему…';
+  display: block;
+  padding: var(--space-4);
+  text-align: center;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--color-text-tertiary);
+}
+/* Диаграмма, не сумевшая отрендериться (mermaid error): mermaid-init/content/mermaid-renderer.js
    ставит data-render-failed → скрываем неотрисованный .mermaid, исходник
    остаётся видимым через раскрытый .diagram-source-details. */
 html[data-design] .question-diagram[data-render-failed] .mermaid { display: none; }
@@ -419,7 +378,7 @@ html[data-design] .explanation-eyebrow {
    («Правильный ответ», «Ключевое отличие»). Базовый .explanation-eyebrow делал его
    неотличимым от заголовка (block, tertiary, без курсора; disclosure-треугольник
    подавлен display:block) → скрытый разбор был недискаверабелен. Даём pointer +
-   trailing ▸/▾ (та же disclosure-конвенция, что .question-code-summary / .sm2-details),
+   trailing ▸/▾ (та же disclosure-конвенция, что .diagram-source-summary / .sm2-details),
    но шеврон accent-strong (teal) — привлекает взгляд к «есть ещё разбор». */
 html[data-design] summary.explanation-eyebrow {
   list-style: none;
@@ -437,12 +396,12 @@ html[data-design] summary.explanation-eyebrow:hover { color: var(--color-text-pr
 /* Лид объяснения в панели — без верхнего отступа (эйбрау уже отбил). */
 html[data-design] .explanation-panel .result-lead { margin-top: 0; }
 
-/* Хендофф-3, Этап 4 — XP-бейдж в баннере результата («+N XP»). Вердикт слева,
-   бейдж прижат вправо; на mobile переносится под вердикт (flex-wrap). */
-html[data-design] .result-banner { flex-wrap: wrap; justify-content: space-between; }
+/* XP-бейдж «+N XP» — капсула в мете разбора (`.feedback-meta`), рядом со строкой
+   следующего повтора. Раньше он висел в самом вердикт-баннере справа, отчего
+   баннер держал `flex-wrap`/`justify-content: space-between` ради одного гостя, а
+   награда читалась как часть оценки «верно/неверно». Оба свойства ушли вместе с
+   гостем: в баннере остался единственный ребёнок — сам вердикт. */
 html[data-design] .result-xp {
-  flex-shrink: 0;
-  align-self: center;
   font-family: var(--font-family-mono);
   font-weight: var(--font-weight-bold);
   font-size: var(--font-size-sm);
@@ -495,8 +454,11 @@ html[data-design] .additional-panel {
 }
 html[data-design] .additional-panel .answer > :last-child { margin-bottom: 0; }
 
-/* Типо-утилиты (общие для новых страниц). */
-html[data-design] .page-title { font-size: 32px; line-height: 1.15; margin: 0 0 8px; letter-spacing: var(--letter-spacing-tight); }
+/* Типо-утилиты (общие для новых страниц). Класса `.page-title` тут больше нет:
+   заголовок страницы — это её <h1>, и размер ему задаёт своя страница
+   (`.ed-page h1`, `.focus-question`, `.summary-hero h1`). Утилита ставила 32px
+   поверх любого из них и была бы вторым, спорящим источником правды о том, как
+   выглядит главный заголовок. */
 html[data-design] .muted { color: var(--color-text-secondary); }
 html[data-design] .tiny { font-size: 12px; }
 html[data-design] .mono { font-family: var(--font-family-mono); }
@@ -512,7 +474,6 @@ html[data-design] .mobile-nav { display: none; }
 html[data-design] .nav a:focus-visible,
 html[data-design] .side-action:focus-visible,
 html[data-design] .icon-button:focus-visible,
-html[data-design] .button:focus-visible,
 html[data-design] .mobile-nav a:focus-visible,
 html[data-design] .brand:focus-visible {
   outline: none;
@@ -609,7 +570,6 @@ html[data-design] .brand:focus-visible {
   html[data-design] .mobile-nav a:hover:not(.active) { background: var(--color-bg-tertiary); }
   html[data-design] .mobile-nav .icon { width: 16px; height: 16px; }
   /* P1.6: компактные заголовки stats/settings/summary на узких экранах. */
-  html[data-design] .page-title,
   html[data-design] .stats-title,
   html[data-design] .builder-title,
   html[data-design] .summary-page .summary-section-title {
@@ -620,10 +580,9 @@ html[data-design] .brand:focus-visible {
 
 /* ===========================================================================
    Этап 6 редизайна: hero-итог сессии (session-summary.html)
-   Ринг accuracy слева + режим/счёт/метрики справа. Грузится после base.css,
-   перекрывает старую центрированную .summary-score-раскладку (элементы .summary-score
-   /.stats-grid удалены из шаблона; их правила в base.css теперь мертвы — уберутся
-   в Этапе 10 при чистке legacy). Все селекторы под html[data-design].
+   Ринг accuracy слева + режим/счёт/метрики справа. Это единственная раскладка
+   геро: прежние `.summary-score` / `.stats-grid` ушли и из разметки, и из
+   pages-summary.css — перекрывать больше нечего. Все селекторы под html[data-design].
    =========================================================================== */
 html[data-design] .summary-hero {
   display: flex;
@@ -633,12 +592,23 @@ html[data-design] .summary-hero {
   text-align: left;
   padding: var(--space-6);
 }
-/* score-ring: SVG-дуга, заполнение задаётся stroke-dasharray (SSR-атрибут). */
+/* score-ring: SVG-дуга, заполнение задаётся stroke-dasharray (SSR-атрибут).
+
+   Габарит кольца и его ВНУТРЕННИЙ ПРОСВЕТ — разные величины, и число ограничено
+   вторым. Просвет выводится из геометрии SVG (viewBox 120, r=52, stroke-width 8):
+   чистый радиус 52 − 8/2 = 48, диаметр 96 из 120 → ровно 0.8 габарита. Раньше эта
+   доля нигде не была записана, и бюджет числа сверяли с шириной кольца: «100,0%»
+   мерили как 129 px «в габарите 128 px» и считали, что помещается. В просвет 102 px
+   оно не помещалось никогда — крайние знаки ложились на дугу того же цвета, и лучший
+   результат читался как «00,0%». Число теперь целое (SessionSummary#getAccuracyRounded),
+   и при 144 px просвет 115 px против 97 px у «100%» — запас, а не совпадение. */
 html[data-design] .score-ring {
+  --score-ring-size: 144px;
+  --score-ring-clear: calc(var(--score-ring-size) * 0.8);
   position: relative;
   flex: none;
-  width: 128px;
-  height: 128px;
+  width: var(--score-ring-size);
+  height: var(--score-ring-size);
   display: grid;
   place-items: center;
 }
@@ -714,6 +684,9 @@ html[data-design] .summary-metrics {
   flex-wrap: wrap;
   gap: var(--space-3);
   margin-top: var(--space-3);
+  /* Как и .summary-kpis — своя строка геро (flex-wrap), а не блок в текстовом
+     столбце: обе полосы метрик занимают ширину карточки целиком. */
+  flex: 1 1 100%;
 }
 html[data-design] .summary-metrics .metric {
   display: flex;
@@ -748,12 +721,20 @@ html[data-design] .summary-kpis {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-3);
   margin-top: var(--space-4);
+  /* Полоса занимает отдельную строку геро (`.summary-hero` — flex-wrap), а не
+     остаток текстового столбца рядом с кольцом. Раньше сетка была элементом
+     колоночного флекса с align-items:flex-start и потому сжималась по
+     содержимому: 463px из 542px, тайл ~107px, ширина колонки выводилась из
+     текста в ней же. Круговая зависимость и делала бюджет неизмеримым, а
+     сверху его резало кольцо — рост кольца на 16px крал их у тайлов.
+     Собственная строка развязывает эти два размера. */
+  flex: 1 1 100%;
 }
 html[data-design] .summary-kpi {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-3);
   border: var(--rule-weight, 1px) solid var(--color-border-primary);
   border-radius: var(--border-radius-md);
   background: var(--color-bg-primary);
@@ -766,12 +747,27 @@ html[data-design] .summary-kpi-label {
   text-transform: uppercase;
   color: var(--color-text-secondary);
 }
+/* Значение KPI — «число + единица» одной строкой: «+15 XP», «36 сек», «12 дней».
+   Единица здесь не украшение, а часть смысла, поэтому перенос между числом и
+   единицей ломает тайл сильнее, чем маленький шрифт: «+15» на одной строке и «XP»
+   на другой читается как два разных показателя и тянет тайл на вторую строку,
+   разъезжаясь с соседями по сетке.
+
+   Бюджет строки записан здесь, чтобы его снова не пришлось замерять вслепую.
+   Тайл — 1fr четырёхколоночной сетки во всю ширину карточки: на 1440 это 171px,
+   под текст при 12px padding остаётся ~145px. Мерить надо не то, что в тайле
+   сейчас, а самое широкое достижимое: «+4000 XP» (110px — марафон на 200 вопросов
+   по 20 XP за верный ответ на HARD), «1:05:05» (81px), «100 дней» (99px). Все на
+   lg; на xl тот же максимум занимает 140px и упирался бы в границу. nowrap
+   оставлен намеренно: если бюджет однажды снова нарушат, тайл поедет вширь
+   заметно, а не тихо расслоится на две строки. */
 html[data-design] .summary-kpi-value {
   font-family: var(--font-family-display);
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   line-height: 1.15;
+  white-space: nowrap;
 }
 html[data-design] .summary-kpi-sub {
   font-size: var(--font-size-xs);
@@ -797,7 +793,7 @@ html[data-design] .topic-bar {
 html[data-design] .topic-bar-fill {
   display: block;
   height: 100%;
-  width: 0;
+  width: calc(var(--progress, 0) * 1%);
   border-radius: inherit;
   background: var(--color-accent-primary);
   transition: width var(--duration-slow, 400ms) var(--easing-standard, ease);
@@ -852,9 +848,12 @@ html[data-design] .dashboard-grid .metric-value {
   color: var(--color-text-primary); line-height: 1.1;
   font-variant-numeric: tabular-nums; margin: var(--space-1) 0 0;
 }
+/* Тон крупного числа. `.bad` здесь не бывает: тревога плитки — это всегда
+   отдельное слагаемое («N просрочено»), а не итог, и красится оно на месте
+   (`.metric-alarm` в pages-stats.css). Правило `.metric.bad` удалено вместе с
+   единственным местом, которое его ставило. */
 html[data-design] .dashboard-grid .metric.accent .metric-value { color: var(--color-accent-strong); }
 html[data-design] .dashboard-grid .metric.good .metric-value { color: var(--color-status-success); }
-html[data-design] .dashboard-grid .metric.bad .metric-value { color: var(--color-status-error); }
 
 @media (max-width: 900px) {
   html[data-design] .dashboard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -902,7 +901,7 @@ html[data-design] .builder-section-title {
   border-bottom: var(--rule-weight) solid var(--color-border-secondary);
 }
 
-/* Предпросмотр набора: метрики в ряд, значения — mono. Значения ставит app.js. */
+/* Предпросмотр набора: метрики в ряд, значения — mono. Значения ставит settings/session-form.js. */
 html[data-design] .session-preview {
   display: flex;
   flex-wrap: wrap;
