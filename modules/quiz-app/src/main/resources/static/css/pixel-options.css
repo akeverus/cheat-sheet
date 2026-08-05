@@ -9,12 +9,20 @@
    @keyframes document-global, резолвится кросс-файл.
    ========================================================================== */
 @layer pixel {
-/* ---- Options as pixel cards ---- */
+/* ---- Options as pixel cards ----
+   Контур берётся у ПОВЕРХНОСТНОГО токена, а не у чернильного. Заливка опции
+   переворачивается вместе с темой (правило ниже: тёмная rgba(8,20,26,.85) →
+   светлая rgba(255,255,255,.92)), а `--px-edge-ink` — нет: он рассчитан на
+   насыщенную акцентную заливку кнопок, одинаковую в обеих темах. Замер на живой
+   странице: чернила давали 1.05:1 к тёмной опции (рамки не существовало вовсе)
+   и 17.62:1 к светлой (чёрная клетка вокруг каждого варианта). Один токен —
+   шестнадцатикратная разница веса у самого просматриваемого компонента
+   продукта. `--px-edge-surface` держит ~2.6:1 в обеих темах. */
 html[data-design] #interview-options label,
 html[data-design] .options label,
 html[data-design] .option {
   border-radius: 0 !important;
-  box-shadow: var(--px-edge);
+  box-shadow: var(--px-edge-surface);
   border: 0 !important;
   transition: none !important;
   background: rgba(8, 20, 26, 0.85);
@@ -29,33 +37,29 @@ html[data-design] #interview-options label:hover,
 html[data-design] .options label:hover,
 html[data-design] .option:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 4px 0 0 #1a4a48, -2px 0 0 #1a4a48, 0 4px 0 #1a4a48, 0 -2px 0 #1a4a48, 5px 5px 0 rgba(0,0,0,.3);
+  box-shadow:
+    4px 0 0 var(--pixel-teal-deep), -2px 0 0 var(--pixel-teal-deep),
+    0 4px 0 var(--pixel-teal-deep), 0 -2px 0 var(--pixel-teal-deep),
+    5px 5px 0 rgba(0,0,0,.3);
 }
-/* Unchecked radio/checkbox sprites (off-states) */
-html[data-design] #interview-options label:has(input[type="radio"]):not(:has(input:checked)):not(.option-correct):not(.option-wrong),
-html[data-design] .options label:has(input[type="radio"]):not(:has(input:checked)):not(.option-correct):not(.option-wrong) {
-  background:
-    url("/img/pixel/radio-off.png") right 10px top 10px / 16px 16px no-repeat;
-}
-html[data-design] #interview-options label:has(input[type="checkbox"]):not(:has(input:checked)):not(.option-correct):not(.option-wrong),
-html[data-design] .options label:has(input[type="checkbox"]):not(:has(input:checked)):not(.option-correct):not(.option-wrong) {
-  background:
-    url("/img/pixel/checkbox-off.png") right 10px top 10px / 16px 16px no-repeat;
-}
+/* Выбор называет буквенный чип: при :checked общий `::before` заливается teal
+   (pixel-animations.css), к нему добавляются teal-кромка и wash всей карточки.
+   Пиксельного радио-спрайта 16px в правом верхнем углу здесь больше нет — он
+   был вторым индикатором ровно того же состояния, причём вне зоны, куда смотрят
+   при выборе: глаз идёт по букве и тексту слева, а кружок висел у правого края
+   в 700px от них. Заодно ушли два бага, которые он тянул за собой. Спрайт
+   задавался shorthand'ом `background`, а тот сбрасывает background-color — и
+   невыбранная карточка оставалась вообще без pixel-заливки из правила выше.
+   А ветки для input[type="checkbox"] не срабатывали никогда: `#interview-options`
+   размечен как role="radiogroup" и другого типа поля там не бывает.
+   (checkbox-on/off.png живы и нужны — их использует filter-chip в настройках,
+   где у чипа своего индикатора нет.) */
 html[data-design] #interview-options label:has(input:checked):not(.option-correct):not(.option-wrong),
 html[data-design] .options label:has(input:checked):not(.option-correct):not(.option-wrong),
 html[data-design] .option:has(input:checked):not(.option-correct):not(.option-wrong) {
-  background:
-    url("/img/pixel/radio-on.png") right 10px top 10px / 16px 16px no-repeat,
-    rgba(57, 208, 199, 0.12) !important;
+  background-color: rgba(57, 208, 199, 0.12) !important;
   box-shadow: var(--px-edge-teal) !important;
   animation: optionSelectFlash 0.4s steps(4), optionSelectPop 0.35s steps(3);
-}
-html[data-design] #interview-options label:has(input[type="checkbox"]:checked):not(.option-correct):not(.option-wrong),
-html[data-design] .options label:has(input[type="checkbox"]:checked):not(.option-correct):not(.option-wrong) {
-  background:
-    url("/img/pixel/checkbox-on.png") right 10px top 10px / 16px 16px no-repeat,
-    rgba(57, 208, 199, 0.12) !important;
 }
 html[data-design] #interview-options label::before {
   border-radius: 0 !important;

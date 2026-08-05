@@ -14,20 +14,65 @@ html[data-design] {
   --px-green: #35c987;
   --px-amber: #f7b83f;
   --px-red: #ff715f;
-  --px-blue: #5db8ff;
-  --px-purple: #9e7bff;
-  --px-yellow: #ffe65a;
+  /* Роль уже названа в tokens.css как тело золота у спрайтов — здесь она обязана
+     ССЫЛАТЬСЯ, а не повторять значение. Написанный второй раз HEX и есть та самая
+     вторая палитра: спрайты нормализатор поправит, а копию в CSS — нет. */
+  --px-yellow: var(--pixel-gold);
   --px-ink: #03211f;
   /* Integer scale tokens (MDN: nearest-neighbor at whole multiples) */
   --px-s: 8px;
   --px-m: 16px;
   --px-l: 24px;
   --px-xl: 32px;
-  /* Chunky pixel shadow (4-side hard edge) */
-  --px-edge: 3px 0 0 #0a1a20, -3px 0 0 #0a1a20, 0 3px 0 #0a1a20, 0 -3px 0 #0a1a20,
-             3px 3px 0 #0a1a20, -3px 3px 0 #0a1a20, 3px -3px 0 #0a1a20, -3px -3px 0 #0a1a20;
-  --px-edge-teal: 3px 0 0 #1a4a48, -3px 0 0 #1a4a48, 0 3px 0 #1a4a48, 0 -3px 0 #1a4a48,
-                  3px 3px 0 #0d2e2c, -3px 3px 0 #0d2e2c, 4px 4px 0 rgba(0,0,0,.35);
+  /* Chunky pixel shadow (4-side hard edge).
+     Чернильный контур — ТОЛЬКО для НАСЫЩЕННОЙ АКЦЕНТНОЙ заливки: кнопки,
+     teal-плашки. Такая заливка остаётся тёмно-цветной в обеих темах, поэтому
+     одни чернила годятся на обе.
+     Признак, по которому выбирают между этим токеном и `--px-edge-surface`, —
+     не «элемент выглядит как карточка», а ЧТО ПОД КОНТУРОМ. Заливка от
+     акцента (`--color-accent-*`) → чернила. Заливка-поверхность, которая в
+     светлой теме уходит к белому (карточки, MCQ-опции, wash-баннеры) →
+     `--px-edge-surface`. Формулировка «у элемента своя заливка» этот вопрос не
+     решает: у опций она тоже своя, но переворачивается вместе с темой — и
+     чернила давали на них 1.05:1 в тёмной против 17.62:1 в светлой. */
+  --px-edge-ink: #0a1a20;
+  --px-edge: 3px 0 0 var(--px-edge-ink), -3px 0 0 var(--px-edge-ink),
+             0 3px 0 var(--px-edge-ink), 0 -3px 0 var(--px-edge-ink),
+             3px 3px 0 var(--px-edge-ink), -3px 3px 0 var(--px-edge-ink),
+             3px -3px 0 var(--px-edge-ink), -3px -3px 0 var(--px-edge-ink);
+  /* Тень бирюзы под контуром. Роли «глубокая бирюза» имя уже есть в tokens.css
+     (--pixel-teal-deep), у «тени под ней» — нет: в спрайтах этого оттенка нет,
+     значит и в декоративной рампе ему не место (гейт спрайтов требует, чтобы
+     каждая --pixel-* роль кем-то рисовалась). Имя заводится здесь — один раз,
+     рядом с единственным потребителем. */
+  --px-teal-shadow: #0d2e2c;
+  --px-edge-teal:
+    3px 0 0 var(--pixel-teal-deep), -3px 0 0 var(--pixel-teal-deep),
+    0 3px 0 var(--pixel-teal-deep), 0 -3px 0 var(--pixel-teal-deep),
+    3px 3px 0 var(--px-teal-shadow), -3px 3px 0 var(--px-teal-shadow),
+    4px 4px 0 rgba(0,0,0,.35);
+
+  /* Тот же чанки-контур, но для поверхностей, которые ЖИВУТ В ТЕМЕ — карточек и
+     панелей. Им чернильный `--px-edge-ink` не годится: замер на живой странице
+     показал 1.04:1 к тёмной карте (контур не существовал вовсе — «чанки-рамка»,
+     подпись всего дизайна, в теме по умолчанию не рисовалась) и 16.9:1 к белой
+     (чёрная рама вокруг каждой из 16 карточек /stats). Один токен давал
+     шестнадцатикратную разницу веса у одного и того же компонента.
+     Пара ниже подобрана по контрасту к своей поверхности: ~2.6:1 в обеих темах —
+     рамка твёрдая и читается, но не спорит с текстом. */
+  --px-edge-surface-ink: #3f5f6a;
+}
+/* Специфичность (0,2,1) — выше, чем у объявления выше и чем у `:root[data-theme]`
+   в tokens.css: --px-* принадлежат этому файлу, тема переопределяет их здесь же. */
+html[data-design][data-theme="light"] {
+  --px-edge-surface-ink: #8aa4a1;
+}
+html[data-design] {
+  --px-edge-surface:
+    3px 0 0 var(--px-edge-surface-ink), -3px 0 0 var(--px-edge-surface-ink),
+    0 3px 0 var(--px-edge-surface-ink), 0 -3px 0 var(--px-edge-surface-ink),
+    3px 3px 0 var(--px-edge-surface-ink), -3px 3px 0 var(--px-edge-surface-ink),
+    3px -3px 0 var(--px-edge-surface-ink), -3px -3px 0 var(--px-edge-surface-ink);
 }
 
 /* Crisp pixel art globally (MDN image-rendering + vendor fallbacks) */
@@ -37,7 +82,6 @@ html[data-design] .pixel-floater,
 html[data-design] .pixel-burst-bit,
 html[data-design] .pixel-trail-dot,
 html[data-design] .pixel-coin-pickup,
-html[data-design] .pixel-portal-wipe-img,
 html[data-design] .pixel-crumb,
 html[data-design] [class*="pixel-"] img {
   image-rendering: pixelated;
@@ -46,11 +90,9 @@ html[data-design] [class*="pixel-"] img {
 }
 
 /* Integer scale only — canonical 8/16/24/32 via tokens (no 18/20/28 bitmap upscale) */
-html[data-design] .pixel-sprite-frame,
 html[data-design] .pixel-portal-wipe-glyph,
 html[data-design] .pixel-coin-pickup,
 html[data-design] .session-progress-fill::after,
-html[data-design] .progress-mini span::after,
 html[data-design] .streak-progress-fill::after {
   box-sizing: content-box;
 }

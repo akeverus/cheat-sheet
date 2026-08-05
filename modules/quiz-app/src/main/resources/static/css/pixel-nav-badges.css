@@ -11,43 +11,76 @@
 @layer pixel {
 /* ---- Nav icons colorful + bounce ---- */
 html[data-design] .sidebar .nav a .icon,
-html[data-design] .sidebar .nav .nav-link .icon,
 html[data-design] .mobile-nav a .icon {
   transition: none;
   image-rendering: pixelated;
 }
+/* Базовый цвет иконки боковой навигации — не приглушённый текст. Раздел без
+   своего правила ниже («Закладки») наследовал --color-text-muted и давал 1.9:1
+   по светлому фону, то есть новый пункт навигации по умолчанию приезжал
+   сломанным. Явная база держит любой непокрытый пункт на 15:1+ в обеих темах.
+   Мобильная панель НЕ входит сюда намеренно: там иконка следует подписи слота
+   (см. .mobile-nav a.active ниже), и фиксированный цвет разорвал бы эту связь. */
+html[data-design] .sidebar .nav a .icon {
+  color: var(--color-text-primary);
+}
+html[data-design] .mobile-nav a .icon {
+  color: inherit;
+}
+/* Цвет иконок — семантические токены, а НЕ фиксированные --px-*.
+   Замер на живой странице: --px-* объявлены на `html[data-design]` одним набором
+   тёмных значений без светлой ветки, поэтому в светлой теме иконки навигации
+   красились тёмно-темовыми цветами по светлому фону: #f7b83f = 1.65:1,
+   #35c987 = 2.00:1, #5db8ff = 2.01:1 при полу WCAG 1.4.11 в 3:1 для значимых
+   элементов интерфейса. Цвет здесь — единственная кодировка разделов, то есть
+   он значим, а не декоративен.
+   Семантические токены несут обе ветки и дают 4.99–5.63:1 в светлой при
+   ПОБАЙТОВО тех же значениях в тёмной (#f7b83f, #35c987, #5db8ff — это и есть
+   их тёмные значения). Тёмная тема не меняется вовсе, светлая выходит на AA. */
 html[data-design] .sidebar .nav a:hover .icon,
 html[data-design] .mobile-nav a:hover .icon {
-  color: var(--px-teal);
-  filter: drop-shadow(0 0 6px rgba(57, 208, 199, 0.7));
+  color: var(--color-accent-primary);
+  /* currentColor вместо копии teal в rgba(): свечение обязано идти за цветом
+     иконки, иначе в светлой теме тёмно-бирюзовый глиф окружён ярко-бирюзовым
+     ореолом из другой темы. */
+  filter: drop-shadow(0 0 6px currentColor);
   animation: iconWiggle 0.35s steps(3);
 }
 html[data-design] .sidebar .nav a.active {
-  box-shadow: inset 4px 0 0 var(--px-teal);
+  box-shadow: inset 4px 0 0 var(--color-accent-primary);
 }
 html[data-design][data-pixel="high"] .sidebar .nav a.active {
   animation: activeGlow 1.6s ease-in-out infinite;
-}
-html[data-design] .sidebar .nav a.active .icon {
-  color: var(--px-teal);
 }
 html[data-design][data-pixel="high"] .sidebar .nav a.active .icon {
   animation: iconPulse 1.2s steps(2) infinite;
 }
 html[data-design] .sidebar .nav a[href="/"] .icon,
-html[data-design] .sidebar .nav a[href$="/"] .icon { color: var(--px-teal); }
-html[data-design] .sidebar .nav a[href*="stats"] .icon { color: var(--px-blue); }
-html[data-design] .sidebar .nav a[href*="review"] .icon { color: var(--px-amber); }
-html[data-design] .sidebar .nav a[href*="important"] .icon { color: var(--px-purple); }
-html[data-design] .sidebar .nav a[href*="settings"] .icon { color: var(--px-green); }
+html[data-design] .sidebar .nav a[href$="/"] .icon { color: var(--color-accent-primary); }
+html[data-design] .sidebar .nav a[href*="stats"] .icon { color: var(--color-status-info); }
+html[data-design] .sidebar .nav a[href*="review"] .icon { color: var(--color-status-warning); }
+html[data-design] .sidebar .nav a[href*="important"] .icon { color: var(--color-status-purple); }
+html[data-design] .sidebar .nav a[href*="settings"] .icon { color: var(--color-status-success); }
+/* СТРОГО ПОСЛЕ правил по href: активный пункт — это чаще всего «/», и правило
+   выше по файлу с той же специфичностью проигрывало ему. Первый заход поставил
+   здесь `inherit`, замер показал 1:1 в тёмной — иконка исчезла на заливке.
+   Активный пункт залит --color-accent-primary, значит на нём работает ровно
+   тот токен, который для этого и заведён: accent-on (тёмные чернила по яркой
+   бирюзе в тёмной теме, белый по глубокой бирюзе в светлой). */
+html[data-design] .sidebar .nav a.active .icon {
+  color: var(--color-accent-on);
+}
 
+/* Свечение и подсветка — от цвета самого элемента, а не от копии тёмного teal
+   в rgba(). Копия не знает про тему: в светлой она рисовала яркий бирюзовый
+   ореол вокруг тёмно-бирюзовой иконки. */
 @keyframes iconPulse {
-  0%, 100% { filter: drop-shadow(0 0 2px rgba(57, 208, 199, 0.3)); transform: scale(1); }
-  50% { filter: drop-shadow(0 0 10px rgba(57, 208, 199, 0.85)); transform: scale(1.12); }
+  0%, 100% { filter: drop-shadow(0 0 2px currentColor); transform: scale(1); }
+  50% { filter: drop-shadow(0 0 10px currentColor); transform: scale(1.12); }
 }
 @keyframes activeGlow {
-  0%, 100% { background: linear-gradient(90deg, rgba(57, 208, 199, 0.22), transparent); }
-  50% { background: linear-gradient(90deg, rgba(57, 208, 199, 0.38), transparent); }
+  0%, 100% { background: linear-gradient(90deg, color-mix(in srgb, var(--color-accent-primary) 22%, transparent), transparent); }
+  50% { background: linear-gradient(90deg, color-mix(in srgb, var(--color-accent-primary) 38%, transparent), transparent); }
 }
 
 /* Nav labels — keep system/UI font, only pixel icons animate.
@@ -68,15 +101,21 @@ html[data-design] .mobile-nav a.active::after {
   left: 0;
   right: 0;
   height: 3px;
-  background: var(--px-teal);              /* верхний lit-индикатор socket (pixel-crisp) */
+  /* Индикатор лежит на accent-wash (строка выше), поэтому берёт тот же
+     accent-strong, что и подпись слота: --px-teal на бледном wash в светлой
+     теме давал полосу, которой почти не видно. */
+  background: var(--color-accent-strong);  /* верхний lit-индикатор socket (pixel-crisp) */
 }
 /* high: активная иконка статично «подсвечена» в слоте — без infinite-пульса */
 html[data-design][data-pixel="high"] .mobile-nav a.active .icon {
-  filter: drop-shadow(0 0 5px rgba(57, 208, 199, 0.7));
+  filter: drop-shadow(0 0 5px currentColor);
 }
 html[data-design] .mobile-nav {
   border-radius: 0 !important;
-  box-shadow: 0 -3px 0 #0a1a20;
+  /* Верхняя грань панели — токен рамки, а не чернила #0a1a20. Тот же оттенок
+     нормализатор снял со спрайтов как дрейф; в CSS он остался и в светлой теме
+     клал почти чёрную линию поверх светлого фона. */
+  box-shadow: 0 -3px 0 var(--color-border-strong);
 }
 html[data-design] .mobile-nav a .icon {
   display: block;

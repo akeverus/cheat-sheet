@@ -56,7 +56,6 @@ html[data-design][data-pixel="high"] .pixel-floater {
 
 /* Progress bars — chunky + xp-bar-fill + fire/streak tip */
 html[data-design] .session-progress-fill,
-html[data-design] .progress-mini span,
 html[data-design] .streak-progress-fill,
 html[data-design] .accuracy-bar-fill {
   border-radius: 0 !important;
@@ -74,7 +73,6 @@ html[data-design] .accuracy-bar-fill {
   image-rendering: pixelated;
 }
 html[data-design][data-pixel="high"] .session-progress-fill,
-html[data-design][data-pixel="high"] .progress-mini span,
 html[data-design][data-pixel="high"] .streak-progress-fill,
 html[data-design][data-pixel="high"] .accuracy-bar-fill {
   animation: xpFillScroll 0.8s steps(4) infinite;
@@ -83,8 +81,7 @@ html[data-design][data-pixel="high"] .accuracy-bar-fill {
   0% { background-position: 0 center, 0 0; }
   100% { background-position: 8px center, 0 0; }
 }
-html[data-design] .session-progress-fill::after,
-html[data-design] .progress-mini span::after {
+html[data-design] .session-progress-fill::after {
   content: "";
   position: absolute;
   right: -10px;
@@ -95,8 +92,7 @@ html[data-design] .progress-mini span::after {
   background: url("/img/pixel/fire-sheet.png") 0 0 / 48px 20px no-repeat;
   image-rendering: pixelated;
 }
-html[data-design][data-pixel="high"] .session-progress-fill::after,
-html[data-design][data-pixel="high"] .progress-mini span::after {
+html[data-design][data-pixel="high"] .session-progress-fill::after {
   animation: fireSheet 0.45s steps(3) infinite, fireBob 0.6s steps(2) infinite;
 }
 html[data-design] .streak-progress-fill::after {
@@ -329,7 +325,10 @@ html[data-design] .pixel-click-spark {
   z-index: 115;
   pointer-events: none;
   border: 3px solid var(--px-yellow);
-  box-shadow: 0 0 0 2px #000;
+  /* Чернила контура — тот же токен, что у всех pixel-элементов с собственной
+     заливкой. Чистый #000 здесь был единственным на весь слой и темнее ink'а
+     набора: искра выглядела вырезанной из другой графики. */
+  box-shadow: 0 0 0 2px var(--px-edge-ink);
   animation: sparkPop 0.4s steps(4) forwards;
 }
 html[data-design] .pixel-click-bit {
@@ -376,7 +375,6 @@ html[data-design] #session-start-btn {
 /* Card pixel corners */
 html[data-design] .card::after,
 html[data-design] .explanation-panel::after,
-html[data-design] .question-stage::after,
 html[data-design] .metric::after,
 html[data-design] .summary-kpi::after {
   content: "";
@@ -392,7 +390,6 @@ html[data-design] .summary-kpi::after {
 }
 html[data-design] .card,
 html[data-design] .explanation-panel,
-html[data-design] .question-stage,
 html[data-design] .metric,
 html[data-design] .summary-kpi,
 html[data-design] #interview-options label {
@@ -413,13 +410,10 @@ html[data-design] .summary-kpi::before {
   pointer-events: none;
   z-index: 2;
 }
-/* Option labels: hard pixel frame (stamps use ::after — do not steal it) */
-html[data-design] #interview-options label,
-html[data-design] .options label,
-html[data-design] .option {
-  box-shadow: var(--px-edge);
-  border: 0 !important;
-}
+/* Рамка опций живёт в pixel-options.css — своём concern-файле. Здесь лежала её
+   дословная копия, и, поскольку этот файл грузится позже, побеждала именно она:
+   правка оригинала не давала никакого эффекта. Так распил Волны 7 оставил один
+   и тот же селектор в двух файлах — копия удалена, источник один. */
 /* Duplicate flash keyframes kept for earlier selectors */
 @keyframes optionSelectFlash {
   0% { filter: brightness(1); box-shadow: var(--px-edge); }
@@ -562,16 +556,13 @@ html[data-design][data-pixel="high"] .summary-page .score-ring.is-portal::before
 
 /* LOW intensity: strip decorative FX beyond buttons/icons */
 html[data-design][data-pixel="low"] .sidebar::before,
-html[data-design][data-pixel="low"] .card::before,
 html[data-design][data-pixel="low"] .card::after,
 html[data-design][data-pixel="low"] .metric::before,
 html[data-design][data-pixel="low"] .metric::after,
 html[data-design][data-pixel="low"] .summary-kpi::before,
 html[data-design][data-pixel="low"] .summary-kpi::after,
 html[data-design][data-pixel="low"] .explanation-panel::after,
-html[data-design][data-pixel="low"] .question-stage::after,
-html[data-design][data-pixel="low"] .session-progress-fill::after,
-html[data-design][data-pixel="low"] .progress-mini span::after {
+html[data-design][data-pixel="low"] .session-progress-fill::after {
   display: none !important;
 }
 html[data-design][data-pixel="low"] .brand .avatar {
@@ -596,16 +587,10 @@ html[data-design] .pixel-portal-wipe {
 html[data-design] .pixel-portal-wipe.is-done {
   animation: portalWipeOut 0.08s steps(2) both;
 }
-html[data-design] .pixel-portal-wipe-img {
-  width: var(--px-l);
-  height: var(--px-l);
-  object-fit: contain;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  filter: drop-shadow(0 0 18px rgba(158, 123, 255, 0.7));
-  animation: portalSpin 0.45s steps(6) infinite;
-}
-/* Frame cycle via background on wipe glyph (fixed 24px — no size jump 24↔16) */
+/* Кадры портала крутит ОДИН элемент — `.pixel-portal-wipe-glyph` (спрайт-лист
+   в background). Вариант на <img> (`.pixel-portal-wipe-img`) остался от первой
+   версии эффекта, до перехода на спрайт-лист, и в разметку его больше никто не
+   вставляет. Frame cycle via background on wipe glyph (fixed 24px — no size jump 24↔16) */
 html[data-design] .pixel-portal-wipe-glyph {
   width: var(--px-l);
   height: var(--px-l);
