@@ -25,15 +25,14 @@ public class StatsApiService {
     InterviewFacade facade;
     StatsApiMapper statsApiMapper;
 
+    /**
+     * Агрегат статистики по фильтру. Порядок выдачи вопросов на агрегат не влияет,
+     * поэтому {@code shuffle}/{@code ordered} здесь не участвуют: раньше
+     * {@code shuffle=true} через {@link InterviewFilter#effectiveTopic()} молча
+     * обнулял тему и статистика внезапно считалась по всему банку.
+     */
     public InterviewStatsResponse buildStatsResponse(StatsCommand command) {
-        InterviewFilter filter = new InterviewFilter(
-                FilterUtils.normalizeTopic(command.topic()),
-                FilterUtils.normalizeGroup(command.group()),
-                command.important(),
-                command.onlyWrong(),
-                command.shuffle(),
-                command.ordered()
-        );
+        InterviewFilter filter = new InterviewFilter(FilterUtils.normalizeTopic(command.topic()), FilterUtils.normalizeGroup(command.group()), command.important(), command.onlyWrong(), null, true);
         return statsApiMapper.toResponse(facade.getStats(filter));
     }
 
@@ -54,9 +53,7 @@ public class StatsApiService {
             String topic,
             String group,
             Boolean important,
-            Boolean onlyWrong,
-            Boolean shuffle,
-            Boolean ordered
+            Boolean onlyWrong
     ) {
     }
 }

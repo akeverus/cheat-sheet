@@ -31,6 +31,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -125,6 +126,9 @@ class InterviewFlowMvcServiceTest {
         String view = service.start(request, session);
 
         assertThat(view).isEqualTo("redirect:/focus");
+        // Итоги прошлой сессии обесценены стартом новой: без этого
+        // /session-summary однажды показал бы результат позапрошлого захода.
+        verify(httpSessionStateService).clearLastSessionSummary(session);
         verify(httpSessionStateService).setInterviewSession(session, interviewSession);
         verify(httpSessionStateService, never()).clearInterviewSession(session);
     }
@@ -187,8 +191,13 @@ class InterviewFlowMvcServiceTest {
         verify(httpSessionStateService, never()).setInterviewSession(any(), any());
     }
 
+    /**
+     * Итоги переживают повторный заход на страницу. Раньше рендер стирал summary,
+     * и перезагрузка или «назад» выбрасывали на фокус — результат завершённой
+     * сессии терялся от действия, которое пользователь считает безобидным.
+     */
     @Test
-    void sessionSummaryAppliesModelAndClearsSummaryWhenExists() {
+    void sessionSummaryKeepsSummaryAcrossRepeatedVisits() {
         SessionSummary summary = SessionSummary.builder()
                 .mode(InterviewMode.EXAM)
                 .duration(Duration.ofMinutes(10))
@@ -199,11 +208,11 @@ class InterviewFlowMvcServiceTest {
         when(httpSessionStateService.getLastSessionSummary(session)).thenReturn(Optional.of(summary));
         when(navigationService.sessionSummaryView()).thenReturn("session-summary");
 
-        String view = service.sessionSummary(session, model);
+        assertThat(service.sessionSummary(session, model)).isEqualTo("session-summary");
+        assertThat(service.sessionSummary(session, model)).isEqualTo("session-summary");
 
-        assertThat(view).isEqualTo("session-summary");
-        verify(modelAttributeMapper).applySessionSummary(model, summary);
-        verify(httpSessionStateService).clearLastSessionSummary(session);
+        verify(modelAttributeMapper, times(2)).applySessionSummary(model, summary);
+        verify(httpSessionStateService, never()).clearLastSessionSummary(session);
     }
 
     @Test
@@ -230,9 +239,17 @@ class InterviewFlowMvcServiceTest {
     @Test
     void answerBuildsPageStateAndAppliesModelAttributes() {
         SubmitAnswerRequest request = new SubmitAnswerRequest();
-        InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
-                10L, 2L, "java", "core", true, false, true, false, 4, null
-        );
+        InterviewSessionSupport.AnswerSubmission submission = InterviewSessionSupport.AnswerSubmission.builder()
+                .questionId(10L)
+                .optionId(2L)
+                .topic("java")
+                .group("core")
+                .important(true)
+                .onlyWrong(false)
+                .shuffle(true)
+                .ordered(false)
+                .confidence(4)
+                .build();
         AnswerResult answerResult = org.mockito.Mockito.mock(AnswerResult.class);
         InterviewFilter filter = new InterviewFilter("java", "core", true, false, true, false);
         InterviewSession interviewSession = org.mockito.Mockito.mock(InterviewSession.class);
@@ -287,6 +304,7 @@ class InterviewFlowMvcServiceTest {
         String view = service.resume(session);
 
         assertThat(view).isEqualTo("redirect:/");
+        verify(httpSessionStateService).clearLastSessionSummary(session);
         verify(httpSessionStateService).setInterviewSession(session, interviewSession);
     }
 
@@ -298,6 +316,8 @@ class InterviewFlowMvcServiceTest {
         service.resume(session);
 
         verify(httpSessionStateService, never()).setInterviewSession(any(), any());
+        // Паузы не было — восстанавливать нечего, и стирать чужие итоги не за что.
+        verify(httpSessionStateService, never()).clearLastSessionSummary(any());
     }
 
     @Test

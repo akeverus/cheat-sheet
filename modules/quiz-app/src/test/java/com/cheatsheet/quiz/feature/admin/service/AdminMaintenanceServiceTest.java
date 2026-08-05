@@ -48,21 +48,19 @@ class AdminMaintenanceServiceTest {
         when(answerOptions.deleteAll()).thenReturn(100);
         when(hints.deleteAll()).thenReturn(50);
         when(questions.clearAllDiagrams()).thenReturn(30);
-        when(questions.resetAllRegenCount()).thenReturn(150);
 
         AdminMaintenanceService.ResetAllResult result = service.resetAll();
 
         assertThat(result.deletedOptions()).isEqualTo(100);
         assertThat(result.deletedHints()).isEqualTo(50);
         assertThat(result.clearedDiagrams()).isEqualTo(30);
-        assertThat(result.resetRegenCount()).isEqualTo(150);
         verify(optionCache).invalidateAll();
     }
 
     @Test
     void resetAllResultRecordSupportsToBuilder() {
         AdminMaintenanceService.ResetAllResult original =
-                new AdminMaintenanceService.ResetAllResult(1, 2, 3, 4);
+                new AdminMaintenanceService.ResetAllResult(1, 2, 3);
         AdminMaintenanceService.ResetAllResult patched = original.toBuilder()
                 .deletedOptions(99)
                 .build();
@@ -70,6 +68,5 @@ class AdminMaintenanceServiceTest {
         assertThat(patched.deletedOptions()).isEqualTo(99);
         assertThat(patched.deletedHints()).isEqualTo(2);
         assertThat(patched.clearedDiagrams()).isEqualTo(3);
-        assertThat(patched.resetRegenCount()).isEqualTo(4);
     }
 }

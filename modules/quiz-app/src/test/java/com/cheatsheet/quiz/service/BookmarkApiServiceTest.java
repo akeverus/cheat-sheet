@@ -76,21 +76,20 @@ class BookmarkApiServiceTest {
     }
 
     private static Question question(long id, boolean important) {
-        return new Question(
-                id,
-                "t.md#Q" + id,
-                "t.md#Q" + id,
-                "t.md",
-                "t",
-                "Q" + id,
-                "A" + id,
-                important,
-                "h" + id,
-                QuestionType.TEXT,
-                null,
-                null,
-                0,
-                null
-        );
+        return Question.builder()
+                .id(id)
+                .slug("t.md#Q" + id)
+                .sourceSlug("t.md#Q" + id)
+                .filePath("t.md")
+                .topic("t")
+                .questionText("Q" + id)
+                .answerMarkdown("A" + id)
+                .important(important)
+                .sourceHash("h" + id)
+                .questionType(QuestionType.TEXT)
+                .codeSnippet(null)
+                .diagramMermaid(null)
+                .takeaway(null)
+                .build();
     }
 }

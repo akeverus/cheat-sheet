@@ -133,9 +133,14 @@ class InterviewPageMvcServiceTest {
         MvcRequestMapper.SettingsRequestContext context = new MvcRequestMapper.SettingsRequestContext(
                 InterviewMode.FLASHCARD, filter, true
         );
-        FocusTrainingPageService.SurfaceState surfaceState = new FocusTrainingPageService.SurfaceState(
-                null, List.of(), List.of(), null, filter, InterviewMode.FLASHCARD, interviewSession, true
-        );
+        FocusTrainingPageService.SurfaceState surfaceState = FocusTrainingPageService.SurfaceState.builder()
+                .topics(List.of())
+                .groups(List.of())
+                .filter(filter)
+                .mode(InterviewMode.FLASHCARD)
+                .interviewSession(interviewSession)
+                .weakTopics(true)
+                .build();
 
         when(sessionSupport.getSession(session)).thenReturn(interviewSession);
         when(requestMapper.resolveSettingsContext(interviewSession, "java", "backend", false, false, true, true, true, "FLASHCARD"))

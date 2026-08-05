@@ -4,6 +4,8 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import com.cheatsheet.quiz.domain.Question;
 import com.cheatsheet.quiz.common.util.InterviewPathResolver;
+import com.cheatsheet.quiz.common.util.TopicDisplayNames;
+import com.cheatsheet.quiz.common.util.TopicUtils;
 import org.apache.commons.lang3.StringUtils;
 import com.cheatsheet.quiz.persistence.AnswerOptionRepository;
 import com.cheatsheet.quiz.persistence.FullTextSearchRepository;
@@ -34,10 +36,15 @@ import java.util.Set;
  * <ul>
  *   <li>Парсит вопросы через {@link MarkdownQuestionParser};</li>
  *   <li>Вставляет новые вопросы ({@code INSERT});</li>
- *   <li>Обновляет изменённые вопросы ({@code UPDATE} + сброс прогресса).</li>
+ *   <li>Обновляет изменённые вопросы ({@code UPDATE} + сброс прогресса);</li>
+ *   <li>Переразбирает вопросы с прежним текстом, если парсер стал выводить из него
+ *       другие производные поля ({@code REDERIVED}, прогресс не трогает).</li>
  * </ul>
  *
- * <p>Обнаружение изменений — по SHA-256 хешу контента ({@link HashingService}).</p>
+ * <p>Обнаружение изменений контента — по SHA-256 хешу ({@link HashingService}).
+ * Хеш сторожит текст, но не код, который его разбирает, поэтому производные поля
+ * (тип, фрагмент кода, диаграмма) сверяются отдельно — иначе расширение парсера
+ * доезжает только до вопросов, которые кто-то потом отредактировал.</p>
  */
 @Service
 @Slf4j
@@ -57,6 +64,9 @@ public class QuestionImportService {
     private final HashingService hashingService;
     private final TransactionTemplate transactionTemplate;
     private final McqJsonLoader mcqJsonLoader;
+    private final TopicTitleReader topicTitleReader;
+    private final TopicDisplayNames topicDisplayNames;
+    private final TopicUtils topicUtils;
 
     /**
      * Импортирует все markdown-файлы из директории {@code app.interview-path}.
@@ -73,6 +83,7 @@ public class QuestionImportService {
 
         int inserted = 0;
         int updated = 0;
+        int rederived = 0;
         int unchanged = 0;
         Set<String> actualPaths = new HashSet<>();
         // Признак ПОЛНОСТЬЮ успешного скана: выставляется ТОЛЬКО после того, как
@@ -93,6 +104,7 @@ public class QuestionImportService {
                 ImportResult result = importFile(root, file);
                 inserted += result.inserted();
                 updated += result.updated();
+                rederived += result.rederived();
                 unchanged += result.unchanged();
             }
             scanCompleted = true;
@@ -123,8 +135,9 @@ public class QuestionImportService {
         }
 
         long total = questionRepository.countAll();
-        log.info("Импорт: +{} новых, ~{} обновлено, -{} удалено (orphan), ={} неизменённых. Итого: {} вопросов.",
-                inserted, updated, deletedOrphans, unchanged, total);
+        log.info("Импорт: +{} новых, ~{} обновлено, ↻{} переразобрано, -{} удалено (orphan), "
+                        + "={} неизменённых. Итого: {} вопросов, {} названий тем.",
+                inserted, updated, rederived, deletedOrphans, unchanged, total, topicDisplayNames.size());
     }
 
     /**
@@ -138,8 +151,13 @@ public class QuestionImportService {
         Path relPath = root.relativize(file);
         String relativePath = relPath.toString().replace("\\", "/");
         String topic = relativePath.replaceAll(MarkdownQuestionParser.REGEX_MARKDOWN_EXTENSION, StringUtils.EMPTY);
+        // Название темы для UI — из frontmatter самого файла, а не из slug-а: slug
+        // теряет регистр и пробелы, и обратная реконструкция даёт «Cockroachdb»,
+        // «Archunit», «Apache airflow» вместо настоящих имён продуктов.
+        topicDisplayNames.register(topicUtils.slug(relativePath), topicTitleReader.readTopicTitle(file));
         int inserted = 0;
         int updated = 0;
+        int rederived = 0;
         int unchanged = 0;
 
         try {
@@ -157,6 +175,7 @@ public class QuestionImportService {
                 switch (outcome) {
                     case INSERT -> inserted++;
                     case UPDATE -> updated++;
+                    case REDERIVED -> rederived++;
                     case UNCHANGED -> unchanged++;
                 }
             }
@@ -176,7 +195,7 @@ public class QuestionImportService {
         } catch (Exception e) {
             log.warn("Ошибка загрузки MCQ-сидов для {}/{}: {}", categoryPath, topicSlug, e.getMessage(), e);
         }
-        return new ImportResult(inserted, updated, unchanged);
+        return new ImportResult(inserted, updated, rederived, unchanged);
     }
 
     /**
@@ -209,7 +228,9 @@ public class QuestionImportService {
                     parsed.questionType(), parsed.codeSnippet())
                     .toBuilder().diagramMermaid(parsed.diagramMermaid()).build();
             long id = questionRepository.insert(question);
-            reviewStateRepository.insertIfAbsent(id, clock.instant().getEpochSecond());
+            // Строку review_state импорт не заводит: у только что импортированного вопроса
+            // прогресса нет, и пустая строка со сроком «сейчас» лишь маскировала бы это.
+            // Заводит её первый ответ (ReviewStateRepository.update — upsert).
             questionRevisionRepository.append(id, sourceHash, clock.instant().getEpochSecond());
             fullTextSearchRepository.upsert(id, question.questionText(), question.answerMarkdown());
             return UpsertOutcome.INSERT;
@@ -219,9 +240,21 @@ public class QuestionImportService {
         if (!current.sourceHash().equals(sourceHash)) {
             // diagramMermaid перечитываем из parsed (контент изменился → диаграмма
             // могла появиться/исчезнуть/поменяться), а не сохраняем старое current-значение.
-            Question updatedQuestion = new Question(current.id(), current.slug(), current.sourceSlug(), relativePath, topic,
-                    parsed.questionText(), parsed.answerMarkdown(), parsed.important(), sourceHash,
-                    parsed.questionType(), parsed.codeSnippet(), parsed.diagramMermaid(), current.regenCount(), current.takeaway());
+            Question updatedQuestion = Question.builder()
+                .id(current.id())
+                .slug(current.slug())
+                .sourceSlug(current.sourceSlug())
+                .filePath(relativePath)
+                .topic(topic)
+                .questionText(parsed.questionText())
+                .answerMarkdown(parsed.answerMarkdown())
+                .important(parsed.important())
+                .sourceHash(sourceHash)
+                .questionType(parsed.questionType())
+                .codeSnippet(parsed.codeSnippet())
+                .diagramMermaid(parsed.diagramMermaid())
+                .takeaway(current.takeaway())
+                .build();
             questionRepository.update(updatedQuestion);
             answerOptionRepository.deleteByQuestionId(current.id());
             optionCache.invalidate(current.id());
@@ -231,13 +264,46 @@ public class QuestionImportService {
             return UpsertOutcome.UPDATE;
         }
 
+        // Текст не менялся — но производные поля мог начать читать по-другому сам
+        // парсер. Хеш сторожит контент, а не код, который его разбирает: пока
+        // ветка UNCHANGED просто выходила, любое расширение парсера доезжало
+        // только до вопросов, которые кто-то потом отредактировал.
+        //
+        // Так и вышло, когда парсер научился отличать ```mermaid от обычного кода:
+        // диаграммы появились у 1 вопроса из 1231, где mermaid лежит прямо в
+        // answer_markdown, — у того единственного, чей текст после этого правили.
+        // Остальные 1230 показывали вопрос без схемы, хотя схема была в базе,
+        // и вкладки «Пример кода / Схема» не открывались ни разу за всё время.
+        //
+        // Поэтому сверяем производные поля с тем, что парсер выдаёт сейчас, и
+        // при расхождении переписываем ТОЛЬКО их. Это не правка контента:
+        // прогресс, варианты и ревизии остаются нетронутыми — пользователь
+        // ничего не терял, поменялось прочтение того же текста.
+        if (derivedFieldsDiffer(current, parsed)) {
+            questionRepository.updateDerivedContent(current.id(), parsed.questionType(),
+                    parsed.codeSnippet(), parsed.diagramMermaid());
+            return UpsertOutcome.REDERIVED;
+        }
+
         return UpsertOutcome.UNCHANGED;
+    }
+
+    /**
+     * Отличается ли то, что парсер выводит из ответа сейчас, от сохранённого.
+     * Пустая строка и {@code null} здесь — одно и то же: «блока нет».
+     */
+    private boolean derivedFieldsDiffer(Question current, MarkdownQuestionParser.ParsedQuestion parsed) {
+        return current.questionType() != parsed.questionType()
+                || !StringUtils.equals(StringUtils.trimToNull(current.codeSnippet()),
+                                       StringUtils.trimToNull(parsed.codeSnippet()))
+                || !StringUtils.equals(StringUtils.trimToNull(current.diagramMermaid()),
+                                       StringUtils.trimToNull(parsed.diagramMermaid()));
     }
 
     /** Результат импорта одного файла. */
     @Builder(toBuilder = true)
-    private record ImportResult(int inserted, int updated, int unchanged) {}
+    private record ImportResult(int inserted, int updated, int rederived, int unchanged) {}
 
     /** Результат вставки/обновления одного вопроса. */
-    private enum UpsertOutcome { INSERT, UPDATE, UNCHANGED }
+    private enum UpsertOutcome { INSERT, UPDATE, REDERIVED, UNCHANGED }
 }

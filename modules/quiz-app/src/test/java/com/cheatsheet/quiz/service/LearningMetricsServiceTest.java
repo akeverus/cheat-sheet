@@ -47,7 +47,7 @@ class LearningMetricsServiceTest {
                         /*rev30Total*/ 12, /*rev30Correct*/ 9,
                         /*averageResponseMs*/ 250.0));
         when(questionStatsRepository.getScheduleAggregate(NOW, NOW - DAY, 3)).thenReturn(
-                new QuestionStatsRepository.ScheduleAggregate(10, 4, 3, 1));
+                new QuestionStatsRepository.ScheduleAggregate(10, 4, 3, 1, 2));
 
         LearningMetrics m = service().compute();
 
@@ -63,6 +63,10 @@ class LearningMetricsServiceTest {
         assertThat(m.retention30d()).isEqualTo(75.0);          // 9/12
         assertThat(m.dueNow()).isEqualTo(3);
         assertThat(m.overdue()).isEqualTo(1);
+        // Очередь приходит из расписания, а не из журнала попыток: cardsSeen тут 7,
+        // и подставить его вместо dueFresh значит получить отрицательный остаток.
+        assertThat(m.dueFresh()).isEqualTo(2);
+        assertThat(m.dueRepeats()).isEqualTo(1);
         assertThat(m.averageResponseMs()).isEqualTo(250.0);
 
         verify(attemptRepository).aggregate(eq(NOW - 7 * DAY), eq(NOW - 30 * DAY));

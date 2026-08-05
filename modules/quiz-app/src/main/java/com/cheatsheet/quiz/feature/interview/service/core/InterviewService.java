@@ -213,18 +213,18 @@ public class InterviewService {
     }
 
     /**
-     * Обрабатывает ответ пользователя: проверяет правильность, обновляет интервальное повторение (SM-2), запускает предзагрузку.
+     * Обрабатывает ответ пользователя: проверяет правильность и обновляет
+     * интервальное повторение (SM-2).
      *
      * @param questionId       ID вопроса
      * @param selectedOptionId ID выбранного варианта ответа
-     * @param filter           текущий фильтр (для предзагрузки следующего вопроса)
      * @param confidence       оценка уверенности 3-5 (nullable — если null, используется бинарная оценка)
      * @return результат с вопросом, вариантами, выбранным/правильным ответом и обновлённым состоянием повторения
      * @throws QuestionNotFoundException если вопрос не найден
      * @throws OptionNotFoundException   если выбранный вариант не найден
      */
     @Transactional
-    public AnswerResult submitAnswer(long questionId, long selectedOptionId, InterviewFilter filter, Integer confidence) {
+    public AnswerResult submitAnswer(long questionId, long selectedOptionId, Integer confidence) {
         ResolvedQuestion resolved = resolveQuestionAndOptions(questionId, selectedOptionId);
         ReviewState updated = reviewService.applyAnswer(resolved.question(), resolved.isCorrect(), confidence);
 
@@ -379,7 +379,11 @@ public class InterviewService {
     }
 
     private Optional<InterviewQuestion> buildInterviewQuestion(Question question, long nowEpoch) {
-        reviewStateRepository.insertIfAbsent(question.id(), nowEpoch);
+        // Показ вопроса — не событие обучения и в БД ничего не пишет. Раньше здесь стоял
+        // insertIfAbsent, и просмотр заводил строку прогресса со сроком «сейчас»: вопрос,
+        // на который ни разу не отвечали, немедленно числился просроченным повторением, а
+        // в статистике раздела «нет ответов» соседствовало с «1 к повтору». Отсутствие
+        // строки — законное состояние «новый вопрос», см. InterviewFilterSql.
         ReviewState reviewState = reviewStateRepository.findByQuestionId(question.id())
                 .orElseGet(() -> ReviewDefaults.initialState(question.id(), nowEpoch));
         List<AnswerOption> options = optionLookupService.getOrCreateOptions(question);

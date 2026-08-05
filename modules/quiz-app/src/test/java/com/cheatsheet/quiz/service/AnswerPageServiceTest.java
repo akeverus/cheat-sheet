@@ -13,6 +13,7 @@ import com.cheatsheet.quiz.domain.ReviewResult;
 import com.cheatsheet.quiz.domain.ReviewState;
 import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
 import com.cheatsheet.quiz.feature.interview.service.page.AnswerPageService;
+import com.cheatsheet.quiz.feature.interview.service.progress.ExperienceService;
 import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
 import com.cheatsheet.quiz.persistence.ReviewStateRepository;
@@ -46,18 +47,32 @@ class AnswerPageServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new AnswerPageService(facade, questionRepository, topicCatalogService, reviewStateRepository, learningMetricsService);
+        // ExperienceService — настоящий, а не мок: xpFor чистая и не трогает поля,
+        // поэтому тест проверяет реальную формулу, а не заглушку.
+        service = new AnswerPageService(facade, questionRepository, topicCatalogService, reviewStateRepository,
+                learningMetricsService, new ExperienceService(null, null, null, null));
     }
 
     @Test
     void buildsAnswerStateWithTrainingModeWhenSessionMissing() {
-        Question question = new Question(
-                1L, "slug", "source", "file", "java", "q", "answer-md",
-                false, "hash", QuestionType.TEXT, null, "   ", 0, null,
-                Difficulty.MEDIUM, "short explanation long enough",
-                "detailed explanation long enough for state building",
-                "common mistake", List.of("java"), List.of()
-        );
+        Question question = Question.builder()
+                .id(1L)
+                .slug("slug")
+                .sourceSlug("source")
+                .filePath("file")
+                .topic("java")
+                .questionText("q")
+                .answerMarkdown("answer-md")
+                .sourceHash("hash")
+                .questionType(QuestionType.TEXT)
+                // Пробельная диаграмма: страница должна счесть её отсутствующей.
+                .diagramMermaid("   ")
+                .difficulty(Difficulty.MEDIUM)
+                .shortExplanation("short explanation long enough")
+                .detailedExplanation("detailed explanation long enough for state building")
+                .commonMistake("common mistake")
+                .tags(List.of("java"))
+                .build();
         AnswerOption option = new AnswerOption(10L, 1L, "opt", true, 0, "OPENAI", null);
         AnswerResult result = new AnswerResult(
                 question, List.of(option), option, option, true,
@@ -66,7 +81,7 @@ class AnswerPageServiceTest {
         );
         InterviewFilter filter = new InterviewFilter("java", "backend", false, false, false, true);
         when(learningMetricsService.compute()).thenReturn(new com.cheatsheet.quiz.domain.LearningMetrics(
-                10, 8, 2, 10, 7, 3, 70.0, 70.0, -1.0, -1.0, 5, 0, 1200.0));
+                10, 8, 2, 10, 7, 3, 70.0, 70.0, -1.0, -1.0, 5, 0, 2, 1200.0));
         when(questionRepository.findTopics()).thenReturn(List.of("java"));
         when(topicCatalogService.normalizeGroup("backend")).thenReturn("backend");
         when(topicCatalogService.filterAndSortTopics(List.of("java"), "backend", true)).thenReturn(List.of("java"));
@@ -80,5 +95,8 @@ class AnswerPageServiceTest {
         assertThat(state.diagram()).isNull();
         assertThat(state.answerHtml()).isEqualTo("<p>answer</p>");
         assertThat(state.stats().total()).isEqualTo(10);
+        // Верный ответ на MEDIUM: 10 × 1.5. Страница обязана показать ровно ту же
+        // величину, что листенер начислил на AnswerEvent.
+        assertThat(state.xpAwarded()).isEqualTo(15L);
     }
 }

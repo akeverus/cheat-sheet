@@ -18,6 +18,7 @@ import com.cheatsheet.quiz.domain.QuestionType;
 import com.cheatsheet.quiz.domain.exception.QuestionNotFoundException;
 import com.cheatsheet.quiz.feature.interview.usecase.AnswerApiService;
 import com.cheatsheet.quiz.feature.interview.usecase.IssueReportApiService;
+import com.cheatsheet.quiz.feature.interview.dto.response.progress.TopicStatsResponse;
 import com.cheatsheet.quiz.feature.interview.usecase.NextQuestionApiService;
 import com.cheatsheet.quiz.feature.interview.usecase.stats.StatsApiService;
 import java.util.List;
@@ -95,20 +96,23 @@ class InterviewApiControllerUnitTest {
         request.setConfidence(4);
         HttpSession httpSession = org.mockito.Mockito.mock(HttpSession.class);
         com.cheatsheet.quiz.feature.interview.dto.response.answer.AnswerResponse payload =
-                new com.cheatsheet.quiz.feature.interview.dto.response.answer.AnswerResponse(
-                        true,
-                        2L,
-                        2L,
-                        "Б",
-                        "<p>Ответ</p>",
-                        "<p>Ответ</p>",
-                        "",
-                        List.of(new com.cheatsheet.quiz.feature.interview.dto.response.answer.OptionExplanationDto(2L, "Верно", true)),
-                        "MINIMAL",
-                        3,
-                        List.of(new com.cheatsheet.quiz.feature.interview.dto.response.answer.RelatedQuestionDto(900L, "Похожий вопрос", "java")),
-                        new com.cheatsheet.quiz.feature.interview.dto.response.answer.SessionInfoDto(1, 2, 1, 0, false)
-                );
+                com.cheatsheet.quiz.feature.interview.dto.response.answer.AnswerResponse.builder()
+                        .correct(true)
+                        .correctOptionId(2L)
+                        .selectedOptionId(2L)
+                        .verdictText("Верно")
+                        .nextReviewText("завтра")
+                        .answerHtml("<p>Ответ</p>")
+                        .answerLeadHtml("<p>Ответ</p>")
+                        .answerRestHtml("")
+                        .optionExplanations(List.of(
+                                new com.cheatsheet.quiz.feature.interview.dto.response.answer.OptionExplanationDto(2L, "Верно", true)))
+                        .answerDisplayMode("MINIMAL")
+                        .repetitions(3)
+                        .relatedQuestions(List.of(
+                                new com.cheatsheet.quiz.feature.interview.dto.response.answer.RelatedQuestionDto(900L, "Похожий вопрос", "java")))
+                        .session(new com.cheatsheet.quiz.feature.interview.dto.response.answer.SessionInfoDto(1, 2, 1, 0, false))
+                        .build();
         when(answerApiService.toHttpResponse(any(), org.mockito.ArgumentMatchers.eq(httpSession)))
                 .thenReturn(ResponseEntity.ok(payload));
 
@@ -122,6 +126,10 @@ class InterviewApiControllerUnitTest {
         assertThat(body.correctOptionId()).isEqualTo(2L);
         assertThat(body.selectedOptionId()).isEqualTo(2L);
         assertThat(body.answerHtml()).isEqualTo("<p>Ответ</p>");
+        // Готовые строки разбора обязаны доезжать до клиента как есть: собирать
+        // их заново на фронте — ровно то, от чего избавились.
+        assertThat(body.verdictText()).isEqualTo("Верно");
+        assertThat(body.nextReviewText()).isEqualTo("завтра");
         assertThat(body.optionExplanations()).hasSize(1);
         assertThat(body.answerDisplayMode()).isEqualTo("MINIMAL");
         assertThat(body.repetitions()).isEqualTo(3);
@@ -217,14 +225,12 @@ class InterviewApiControllerUnitTest {
     @Test
     void statsDelegatesToServiceAndReturnsPayload() {
         com.cheatsheet.quiz.feature.interview.dto.response.progress.InterviewStatsResponse mapped =
-                new com.cheatsheet.quiz.feature.interview.dto.response.progress.InterviewStatsResponse(20, 5, 9, 33, 7);
+                new com.cheatsheet.quiz.feature.interview.dto.response.progress.InterviewStatsResponse(20, 5, 2, 9, 33, 7);
         when(statsApiService.toStatsHttpResponse(any())).thenReturn(ResponseEntity.ok(mapped));
 
         ResponseEntity<?> response = controller.getStats(
                 "  java  ",
                 "  core ",
-                true,
-                false,
                 true,
                 false
         );
@@ -236,9 +242,9 @@ class InterviewApiControllerUnitTest {
 
     @Test
     void topicStatsDelegatesToServiceAndReturnsPayload() {
-        List<com.cheatsheet.quiz.feature.interview.dto.response.progress.TopicStatsResponse> mapped = List.of(
-                new com.cheatsheet.quiz.feature.interview.dto.response.progress.TopicStatsResponse("java", 10, 3, 4, 20, 5, 1),
-                new com.cheatsheet.quiz.feature.interview.dto.response.progress.TopicStatsResponse("spring", 8, 2, 3, 15, 4, 0)
+        List<TopicStatsResponse> mapped = List.of(
+                new TopicStatsResponse("java", 10, 3, 1, 4, 20, 5),
+                new TopicStatsResponse("spring", 8, 2, 0, 3, 15, 4)
         );
         when(statsApiService.toTopicStatsHttpResponse()).thenReturn(ResponseEntity.ok(mapped));
 
@@ -294,21 +300,20 @@ class InterviewApiControllerUnitTest {
     }
 
     private Question existingQuestion(long id) {
-        return new Question(
-                id,
-                "q-" + id,
-                "q-" + id,
-                "test.md",
-                "java",
-                "В чем ошибка?",
-                "Ответ",
-                false,
-                "hash",
-                QuestionType.TEXT,
-                null,
-                null,
-                0,
-                null
-        );
+        return Question.builder()
+                .id(id)
+                .slug("q-" + id)
+                .sourceSlug("q-" + id)
+                .filePath("test.md")
+                .topic("java")
+                .questionText("В чем ошибка?")
+                .answerMarkdown("Ответ")
+                .important(false)
+                .sourceHash("hash")
+                .questionType(QuestionType.TEXT)
+                .codeSnippet(null)
+                .diagramMermaid(null)
+                .takeaway(null)
+                .build();
     }
 }

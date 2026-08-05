@@ -89,7 +89,13 @@ public class InterviewFlowMvcService {
      */
     public String resume(HttpSession session) {
         pauseService.resume()
-                .ifPresent(interviewSession -> httpSessionStateService.setInterviewSession(session, interviewSession));
+                .ifPresent(interviewSession -> {
+                    // Возобновление — тоже начало нового захода: итоги прошлой
+                    // сессии больше не актуальны. Чистим только при фактическом
+                    // восстановлении: если паузы не было, стирать нечего и незачем.
+                    httpSessionStateService.clearLastSessionSummary(session);
+                    httpSessionStateService.setInterviewSession(session, interviewSession);
+                });
         return navigationService.focusRedirect();
     }
 
@@ -102,13 +108,27 @@ public class InterviewFlowMvcService {
         return navigationService.focusRedirect();
     }
 
+    /**
+     * Итоги последней завершённой сессии.
+     *
+     * <p>Страница намеренно <b>не</b> одноразовая. Раньше summary стиралась
+     * сразу после первого рендера, и любая перезагрузка, «назад» из закладок
+     * или случайный повторный переход выбрасывали на экран фокуса — результат
+     * только что законченной сессии исчезал безвозвратно, хотя пользователь
+     * ничего не сделал. Это тупиковое состояние на основном сценарии: разбор
+     * итогов — как раз то, к чему возвращаются.</p>
+     *
+     * <p>Теперь summary живёт до следующего осмысленного события: старта новой
+     * сессии ({@link #applyStartSessionResult}) или возобновления
+     * приостановленной ({@link #resume}). Тогда прежние итоги действительно
+     * устарели, и показывать их было бы враньём.</p>
+     */
     public String sessionSummary(HttpSession session, Model model) {
         SessionSummary summary = httpSessionStateService.getLastSessionSummary(session).orElse(null);
         if (summary == null) {
             return navigationService.focusRedirect();
         }
         modelAttributeMapper.applySessionSummary(model, summary);
-        httpSessionStateService.clearLastSessionSummary(session);
         return navigationService.sessionSummaryView();
     }
 
@@ -121,6 +141,10 @@ public class InterviewFlowMvcService {
     }
 
     private void applyStartSessionResult(HttpSession session, SessionFlowService.StartFlowResult flowResult) {
+        // Новая сессия обесценивает итоги прежней: держать их дальше — значит
+        // однажды показать на /session-summary результат позапрошлого захода.
+        // Именно здесь, а не после первого рендера (см. javadoc sessionSummary).
+        httpSessionStateService.clearLastSessionSummary(session);
         if (flowResult.clearSession()) {
             httpSessionStateService.clearInterviewSession(session);
             return;

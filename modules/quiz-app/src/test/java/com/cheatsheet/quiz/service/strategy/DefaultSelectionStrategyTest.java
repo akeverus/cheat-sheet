@@ -31,14 +31,26 @@ class DefaultSelectionStrategyTest {
     private static final long NOW = 1_000_000L;
 
     private Question q(long id) {
-        return new Question(id, "slug-" + id, "slug-" + id, "file.md",
-                "java", "Question " + id, "Answer", false, "hash",
-                QuestionType.TEXT, null, null, 0, null);
+        return Question.builder()
+                .id(id)
+                .slug("slug-" + id)
+                .sourceSlug("slug-" + id)
+                .filePath("file.md")
+                .topic("java")
+                .questionText("Question " + id)
+                .answerMarkdown("Answer")
+                .important(false)
+                .sourceHash("hash")
+                .questionType(QuestionType.TEXT)
+                .codeSnippet(null)
+                .diagramMermaid(null)
+                .takeaway(null)
+                .build();
     }
 
     @Test
     void returnsDueQuestionWhenAvailable() {
-        InterviewFilter filter = new InterviewFilter("java", false, false);
+        InterviewFilter filter = new InterviewFilter("java", null, false, false, null, true);
         when(questionRepository.findDueQuestions("java", false, false, NOW, 1))
                 .thenReturn(List.of(q(42)));
 
@@ -50,7 +62,7 @@ class DefaultSelectionStrategyTest {
 
     @Test
     void fallsBackToNextQuestionsWhenNoDue() {
-        InterviewFilter filter = new InterviewFilter("spring", false, false);
+        InterviewFilter filter = new InterviewFilter("spring", null, false, false, null, true);
         when(questionRepository.findDueQuestions("spring", false, false, NOW, 1))
                 .thenReturn(List.of());
         when(questionRepository.findNextQuestions("spring", false, false, NOW, 1))
@@ -63,7 +75,7 @@ class DefaultSelectionStrategyTest {
 
     @Test
     void returnsEmptyWhenNoQuestionsAtAll() {
-        InterviewFilter filter = new InterviewFilter("unknown", false, false);
+        InterviewFilter filter = new InterviewFilter("unknown", null, false, false, null, true);
         when(questionRepository.findDueQuestions("unknown", false, false, NOW, 1))
                 .thenReturn(List.of());
         when(questionRepository.findNextQuestions("unknown", false, false, NOW, 1))
@@ -76,7 +88,7 @@ class DefaultSelectionStrategyTest {
 
     @Test
     void usesEffectiveTopicFromFilter() {
-        InterviewFilter filter = new InterviewFilter("kotlin", true, true, true);
+        InterviewFilter filter = new InterviewFilter("kotlin", null, true, true, true, true);
         // shuffle=true → effectiveTopic() returns null
         when(questionRepository.findTopics()).thenReturn(List.of("kotlin"));
         when(topicCatalogService.topicsForFilter(filter, List.of("kotlin"))).thenReturn(List.of("kotlin"));

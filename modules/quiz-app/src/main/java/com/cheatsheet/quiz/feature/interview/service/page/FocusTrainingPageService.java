@@ -139,16 +139,26 @@ public class FocusTrainingPageService {
             difficulty = questionStatsRepository.getDifficulty(questionId);
             // Explainable-причина повторения (FSRS/SM-2): почему вопрос перед
             // тобой сейчас. Считаем из уже накопленных сигналов состояния.
-            double topicAccuracy = questionStatsRepository.getTopicAccuracy(question.question().topic());
+            //
+            // На экзамене причину не показываем и не считаем. Тексты причин —
+            // тренерские подсказки («Недавно была ошибка», «Тема пока слабая
+            // (точность 40%)»): в тренировке это и есть смысл, но перед вопросом
+            // экзамена они подсказывают ответ и обесценивают итоговый балл.
+            // Раньше вместо них печаталось «Часть экзаменационной сессии» — факт
+            // о сессии, а не о вопросе, повторявший чип режима над ним и рельс
+            // прогресса рядом; один и тот же экран сообщал про экзамен трижды.
+            // Заодно экономим три запроса на каждом вопросе экзамена: их
+            // результат всё равно шёл в выброшенную причину.
             boolean examMode = interviewSession != null
                     && interviewSession.getMode() == InterviewMode.EXAM;
-            reviewReason = reviewReasonService.classify(
-                    reviewStateRepository.findByQuestionId(questionId),
-                    reviewStateRepository.findFsrsState(questionId),
-                    topicAccuracy,
-                    question.question().important(),
-                    examMode
-            ).orElse(null);
+            if (!examMode) {
+                reviewReason = reviewReasonService.classify(
+                        reviewStateRepository.findByQuestionId(questionId),
+                        reviewStateRepository.findFsrsState(questionId),
+                        questionStatsRepository.getTopicAccuracy(question.question().topic()),
+                        question.question().important()
+                ).orElse(null);
+            }
         }
 
         return new FocusPageState(
@@ -180,10 +190,13 @@ public class FocusTrainingPageService {
             boolean weakTopicsPriority
     ) {
         // KPI sidebar — только LearningMetrics (единые знаменатели).
-        // Filter-scoped due — отдельное поле dueFiltered для виджетов «сегодня».
+        // Виджеты «сегодня» живут в границах фильтра и получают целую статистику,
+        // а не одно число: числитель и знаменатель обязаны быть из одной выборки.
+        // Пока сюда уезжал голый due, виджет писал «4 из 9818» — четыре по фильтру,
+        // девять тысяч по всей базе.
         LearningMetrics metrics = learningMetricsService.compute();
         InterviewStats stats = InterviewStats.from(metrics);
-        long dueFiltered = facade.getStats(filter).due();
+        InterviewStats filteredStats = facade.getStats(filter);
         // Counts на filter-chips: размер пула под каждый быстрый фильтр (без пересечений).
         long filterFavoritesCount = questionStatsRepository.countAllFiltered(null, true, null);
         long filterWrongCount = questionStatsRepository.countAllFiltered(null, null, true);
@@ -199,7 +212,7 @@ public class FocusTrainingPageService {
         }
         return new SurfaceState(
                 stats,
-                dueFiltered,
+                filteredStats,
                 topics,
                 topicCatalogService.groupOptions(availableTopics),
                 selectedGroup,
@@ -272,12 +285,40 @@ public class FocusTrainingPageService {
                 contentBlocks = List.of();
             }
         }
+
+        /**
+         * Блок «Пример кода», если у вопроса есть настоящий код. Шаблон берёт вкладки
+         * отсюда, а не из полей вопроса: тип и заголовок назначает только
+         * {@link ContentBlockMapper} (там же отсеиваются нарисованные псевдографикой
+         * схемы, попавшие в {@code codeSnippet}).
+         */
+        public ContentBlock codeBlock() {
+            return blockById(ContentBlockMapper.CODE_BLOCK_ID);
+        }
+
+        /** Блок схемы — mermaid или текстовый рисунок; {@code null}, если схемы нет. */
+        public ContentBlock diagramBlock() {
+            return blockById(ContentBlockMapper.DIAGRAM_BLOCK_ID);
+        }
+
+        private ContentBlock blockById(String id) {
+            return contentBlocks.stream()
+                    .filter(b -> id.equals(b.id()))
+                    .findFirst()
+                    .orElse(null);
+        }
     }
 
+    /**
+     * Общая обвязка экранов. Две статистики намеренно разные:
+     * {@code stats} — глобальные метрики для KPI в сайдбаре (единые знаменатели
+     * на всех страницах), {@code filteredStats} — та же структура в границах
+     * текущего фильтра, для виджетов «сегодня».
+     */
     @Builder(toBuilder = true)
     public record SurfaceState(
             InterviewStats stats,
-            long dueFiltered,
+            InterviewStats filteredStats,
             List<String> topics,
             List<?> groups,
             String selectedGroup,
@@ -289,20 +330,5 @@ public class FocusTrainingPageService {
             long filterWrongCount,
             long filterWeakTopicsCount
     ) {
-        /** Обратная совместимость: без chip-counts → нули. */
-        public SurfaceState(InterviewStats stats, long dueFiltered, List<String> topics, List<?> groups,
-                            String selectedGroup, InterviewFilter filter, InterviewMode mode,
-                            InterviewSession interviewSession, boolean weakTopics) {
-            this(stats, dueFiltered, topics, groups, selectedGroup, filter, mode,
-                    interviewSession, weakTopics, 0L, 0L, 0L);
-        }
-
-        /** Обратная совместимость: без dueFiltered → due из stats. */
-        public SurfaceState(InterviewStats stats, List<String> topics, List<?> groups,
-                            String selectedGroup, InterviewFilter filter, InterviewMode mode,
-                            InterviewSession interviewSession, boolean weakTopics) {
-            this(stats, stats != null ? stats.due() : 0L, topics, groups, selectedGroup,
-                    filter, mode, interviewSession, weakTopics, 0L, 0L, 0L);
-        }
     }
 }

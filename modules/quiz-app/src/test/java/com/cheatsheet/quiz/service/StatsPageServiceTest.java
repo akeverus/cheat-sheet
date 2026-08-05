@@ -1,5 +1,6 @@
 package com.cheatsheet.quiz.service;
 
+import com.cheatsheet.quiz.common.constants.QuizConstants;
 import com.cheatsheet.quiz.common.util.TopicUtils;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewStats;
@@ -70,8 +71,8 @@ class StatsPageServiceTest {
     @Test
     void fallsBackToEmptyJsonWhenSerializationFails() throws Exception {
         InterviewFilter filter = new InterviewFilter("java", "backend", false, false, false, true);
-        List<TopicStats> topicStats = List.of(new TopicStats("java", 10, 4, 3, 6, 1, 2));
-        when(facade.getStats(filter)).thenReturn(new InterviewStats(10, 5, 2, 7, 3));
+        List<TopicStats> topicStats = List.of(new TopicStats("java", 10, 4, 1, 3, 6, 1, 0.0));
+        when(facade.getStats(filter)).thenReturn(new InterviewStats(10, 5, 2, 2, 7, 3));
         when(questionRepository.findTopics()).thenReturn(List.of("java"));
         when(topicCatalogService.normalizeGroup("backend")).thenReturn("backend");
         when(topicCatalogService.filterAndSortTopics(List.of("java"), "backend", true)).thenReturn(List.of("java"));
@@ -80,6 +81,11 @@ class StatsPageServiceTest {
         when(searchService.search(eq("hashmap"), anyInt())).thenReturn(List.of());
         when(topicUtils.displayName("java")).thenReturn("Java");
         when(objectMapper.writeValueAsString(org.mockito.ArgumentMatchers.any())).thenThrow(new JsonProcessingException("bad json") {});
+        // Слабую тему и их число страница НЕ считает сама — берёт у репозитория, тем же
+        // правилом, что и режим «Слабые темы» (см. QuestionStatsRepositoryTest).
+        when(questionStatsRepository.findWeakestTopic(QuizConstants.WEAK_TOPIC_THRESHOLD))
+                .thenReturn(new QuestionStatsRepository.WeakestTopic("java", 42));
+        when(questionStatsRepository.countWeakTopics(QuizConstants.WEAK_TOPIC_THRESHOLD)).thenReturn(3L);
 
         StatsPageService.StatsPageState state = service.build(filter, "hashmap", 20);
 
@@ -88,32 +94,15 @@ class StatsPageServiceTest {
         assertThat(state.stats().correct()).isEqualTo(7);
         // Метрики обучения (Фаза 4) прокидываются в state страницы.
         assertThat(state.metrics()).isEqualTo(LearningMetrics.EMPTY);
-        assertThat(state.weakestTopic()).isEqualTo("java");
-    }
-
-    @Test
-    void findWeakestTopicPrefersLowestAccuracyThenMoreAttempts() {
-        List<TopicStats> topicStats = List.of(
-                new TopicStats("strong", 10, 0, 8, 9, 1, 0),
-                new TopicStats("weak-a", 10, 2, 1, 1, 3, 0),
-                new TopicStats("weak-b", 10, 2, 1, 2, 6, 0),
-                new TopicStats("untouched", 10, 0, 0, 0, 0, 0)
-        );
-        // weak-a: 25%, weak-b: 25% but more attempts → weak-b
-        assertThat(StatsPageService.findWeakestTopic(topicStats)).isEqualTo("weak-b");
-    }
-
-    @Test
-    void findWeakestTopicReturnsNullWithoutAttempts() {
-        assertThat(StatsPageService.findWeakestTopic(List.of(
-                new TopicStats("untouched", 10, 0, 0, 0, 0, 0)
-        ))).isNull();
+        assertThat(state.weakestTopic())
+                .isEqualTo(new QuestionStatsRepository.WeakestTopic("java", 42));
+        assertThat(state.weakTopicCount()).isEqualTo(3L);
     }
 
     @Test
     void buildIncludesWrongDrilldownAndAccuracyTrend() throws Exception {
         InterviewFilter filter = new InterviewFilter(null, null, false, false, false, true);
-        when(facade.getStats(filter)).thenReturn(new InterviewStats(10, 5, 2, 7, 3));
+        when(facade.getStats(filter)).thenReturn(new InterviewStats(10, 5, 2, 2, 7, 3));
         when(questionRepository.findTopics()).thenReturn(List.of("java"));
         when(topicCatalogService.normalizeGroup(null)).thenReturn(null);
         when(topicCatalogService.filterAndSortTopics(List.of("java"), null, true)).thenReturn(List.of("java"));
@@ -145,8 +134,8 @@ class StatsPageServiceTest {
         // C35: topicStatsJson встраивается literal-ом в <script id="topic-stats-data">.
         // Имя темы с подстрокой "</script>" закрыло бы тег → пробой в HTML-контекст.
         InterviewFilter filter = new InterviewFilter("java", "backend", false, false, false, true);
-        List<TopicStats> topicStats = List.of(new TopicStats("java", 10, 4, 3, 6, 1, 2));
-        when(facade.getStats(filter)).thenReturn(new InterviewStats(10, 5, 2, 7, 3));
+        List<TopicStats> topicStats = List.of(new TopicStats("java", 10, 4, 1, 3, 6, 1, 0.0));
+        when(facade.getStats(filter)).thenReturn(new InterviewStats(10, 5, 2, 2, 7, 3));
         when(questionRepository.findTopics()).thenReturn(List.of("java"));
         when(topicCatalogService.normalizeGroup("backend")).thenReturn("backend");
         when(topicCatalogService.filterAndSortTopics(List.of("java"), "backend", true)).thenReturn(List.of("java"));

@@ -1,0 +1,36 @@
+# Точки входа ES-модулей — что браузер должен узнать сразу, а не через шесть волн.
+#
+# Читают этот файл двое: JsPreloadService (генерирует <link rel="modulepreload">)
+# и TemplateFragmentContractTest (сверяет манифест с реальными import() в JS).
+#
+# Формат строки: <гейт> <путь от корня сайта>
+#   *              — на всех страницах
+#   focus,settings — только на перечисленных значениях параметра page
+# Значения page: focus, result, settings, stats, bookmarks, summary, error, login.
+#
+# Здесь перечислены ТОЛЬКО точки входа. Остальное считается транзитивно по
+# статическим import'ам самих файлов — дублировать граф руками не нужно и вредно.
+#
+# Точка входа = либо тег в разметке, либо динамический import(). Второе — потому
+# что о таком модуле браузер узнаёт лишь исполнив импортёра, и без записи здесь
+# он снова уедет в отдельную волну. Гвард: набор import() во всём /js обязан
+# совпадать с гейтнутыми строками ниже, иначе тест падает.
+
+* /js/app-entry.js
+
+# Ответ на вопрос: флешкарты, отправка формы, вкладки материалов.
+focus /js/quiz/flashcard.js
+focus /js/quiz/interview.js
+focus /js/content/materials-tabs.js
+
+# Настройки: конструктор сессии, экспорт, персонализация, вкладки.
+settings /js/settings/session-form.js
+settings /js/ui/export.js
+settings /js/settings/personalization.js
+settings /js/settings/tabs.js
+
+# Аналитика: вкладки, графики, сортировка таблицы тем.
+stats /js/stats/index.js
+
+# Итоги сессии: копирование и печать результата.
+summary /js/summary/share-tools.js

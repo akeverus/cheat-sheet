@@ -59,6 +59,7 @@ public class LearningMetricsService {
                 retention30d,
                 schedule.dueNow(),
                 schedule.overdue(),
+                schedule.dueFresh(),
                 attempts.averageResponseMs());
     }
 

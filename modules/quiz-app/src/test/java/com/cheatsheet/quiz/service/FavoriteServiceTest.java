@@ -75,21 +75,20 @@ class FavoriteServiceTest {
     }
 
     private Question question(long id, boolean important) {
-        return new Question(
-                id,
-                "topic.md#Q" + id,
-                "topic.md#Q" + id,
-                "topic.md",
-                "topic",
-                "Question " + id + "?",
-                "Answer " + id,
-                important,
-                "hash-" + id,
-                QuestionType.TEXT,
-                null,
-                null,
-                0,
-                null
-        );
+        return Question.builder()
+                .id(id)
+                .slug("topic.md#Q" + id)
+                .sourceSlug("topic.md#Q" + id)
+                .filePath("topic.md")
+                .topic("topic")
+                .questionText("Question " + id + "?")
+                .answerMarkdown("Answer " + id)
+                .important(important)
+                .sourceHash("hash-" + id)
+                .questionType(QuestionType.TEXT)
+                .codeSnippet(null)
+                .diagramMermaid(null)
+                .takeaway(null)
+                .build();
     }
 }

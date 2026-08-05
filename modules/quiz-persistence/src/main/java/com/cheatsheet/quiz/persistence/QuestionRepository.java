@@ -18,7 +18,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -44,19 +46,30 @@ public class QuestionRepository {
     /** Стандартный набор столбцов для SELECT (с алиасом {@code q}). */
     static final String QUESTION_COLUMNS =
             "q.id, q.slug, q.source_slug, q.file_path, q.topic, q.question_text, q.answer_markdown, q.is_important, q.source_hash, " +
-                    "q.question_type, q.code_snippet, q.diagram_mermaid, q.regen_count, q.takeaway, q.difficulty, " +
+                    "q.question_type, q.code_snippet, q.diagram_mermaid, q.takeaway, q.difficulty, " +
                     "q.short_explanation, q.detailed_explanation, q.common_mistake, q.tags";
 
-    /**
-     * Хвост сортировки «приоритет повторения», общий для 6 запросов выборки вопросов:
-     * первыми — ближайшие к сроку повторения ({@code next_review_at}), при равенстве —
-     * с меньшим числом ответов (недоученные), затем по возрастанию id. Завершается
-     * {@code LIMIT ?} (значение лимита добавляется в params отдельно).
-     */
-    static final String ORDER_BY_REVIEW_PRIORITY =
-            "rs.next_review_at ASC, (rs.correct_count + rs.wrong_count) ASC, q.id ASC LIMIT ?";
-
     JdbcTemplate jdbcTemplate;
+
+    /**
+     * Дописывает хвост сортировки «приоритет повторения», общий для четырёх запросов
+     * выборки: первыми — ближайшие к сроку повторения, при равенстве — с меньшим числом
+     * ответов (недоученные), затем по возрастанию id. Завершается {@code LIMIT ?}.
+     *
+     * <p>Все три поля обёрнуты в {@code COALESCE}, потому что {@code review_state}
+     * подключена через LEFT JOIN и у нового вопроса строки нет. Срок подставляется
+     * текущим временем: непройденный вопрос «созрел» прямо сейчас, но встаёт позади
+     * реально просроченного повторения — у того {@code next_review_at} меньше.
+     * Раньше того же эффекта добивались побочной записью строки при показе вопроса;
+     * теперь это выражено в сортировке, а не в записи в БД.
+     */
+    private static void appendReviewPriorityOrder(StringBuilder sql, List<Object> params,
+                                                  long nowEpoch, int limit) {
+        sql.append(" COALESCE(rs.next_review_at, ?) ASC, "
+                + "(COALESCE(rs.correct_count, 0) + COALESCE(rs.wrong_count, 0)) ASC, q.id ASC LIMIT ?");
+        params.add(nowEpoch);
+        params.add(limit);
+    }
 
     /**
      * Находит вопрос по slug (уникальный ключ).
@@ -175,14 +188,26 @@ public class QuestionRepository {
     }
 
     /**
-     * Обновляет только поле code_snippet для вопроса (после очистки LLM от комментариев-подсказок).
+     * Переписывает поля, которые целиком выводятся из {@code answer_markdown}:
+     * тип вопроса, фрагмент кода и Mermaid-диаграмму.
      *
-     * @param questionId идентификатор вопроса
-     * @param cleanedSnippet очищенный фрагмент кода
+     * <p>Отдельный метод, а не {@link #update(Question)}, потому что это другое
+     * событие. {@code update} означает «текст вопроса изменился» и тянет за собой
+     * сброс прогресса, новую ревизию и удаление вариантов. Здесь текст тот же —
+     * изменился парсер, который его разбирает. Прогресс, варианты и ревизии
+     * трогать нельзя: пользователь ничего не терял.</p>
+     *
+     * @param questionId     идентификатор вопроса
+     * @param questionType   тип вопроса (TEXT/CODE), выведенный парсером
+     * @param codeSnippet    первый непустой блок кода или {@code null}
+     * @param diagramMermaid тело первого {@code mermaid}-блока или {@code null}
      */
     @Transactional
-    public void updateCodeSnippet(long questionId, String cleanedSnippet) {
-        jdbcTemplate.update("UPDATE questions SET code_snippet = ? WHERE id = ?", cleanedSnippet, questionId);
+    public void updateDerivedContent(long questionId, QuestionType questionType,
+                                     String codeSnippet, String diagramMermaid) {
+        jdbcTemplate.update(
+                "UPDATE questions SET question_type = ?, code_snippet = ?, diagram_mermaid = ? WHERE id = ?",
+                questionType.name(), stripNul(codeSnippet), stripNul(diagramMermaid), questionId);
     }
 
     /**
@@ -239,7 +264,11 @@ public class QuestionRepository {
     }
 
     /**
-     * Находит просроченные (due) вопросы, отсортированные по приоритету.
+     * Находит вопросы, готовые к показу: просроченные повторения и ещё не пройденные.
+     *
+     * <p>{@code next_review_at IS NULL} — это вопрос без прогресса, то есть новый.
+     * Он готов к показу всегда: срок повторения нельзя просрочить, если повторения
+     * ещё не было.
      *
      * @param topic     фильтр по теме (null — все)
      * @param important фильтр «только важные» (null/false — все)
@@ -249,35 +278,35 @@ public class QuestionRepository {
      * @return список вопросов
      */
     public List<Question> findDueQuestions(String topic, Boolean important, Boolean onlyWrong, long nowEpoch, int limit) {
-        StringBuilder sql = new StringBuilder(
-                "SELECT " + QUESTION_COLUMNS + " FROM questions q " +
-                        "JOIN review_state rs ON rs.question_id = q.id WHERE rs.next_review_at <= ? ");
+        StringBuilder sql = new StringBuilder("SELECT " + QUESTION_COLUMNS + " FROM questions q ");
         var params = new ArrayList<Object>();
+        InterviewFilterSql.appendReviewStateJoin(sql, params);
+        sql.append(" WHERE " + InterviewFilterSql.READY_FOR_REVIEW + " ");
         params.add(nowEpoch);
         InterviewFilterSql.appendFilters(sql, params, topic, important, onlyWrong);
-        sql.append(" ORDER BY " + ORDER_BY_REVIEW_PRIORITY);
-        params.add(limit);
+        sql.append(" ORDER BY ");
+        appendReviewPriorityOrder(sql, params, nowEpoch, limit);
         return jdbcTemplate.query(sql.toString(), questionRowMapper(), params.toArray());
     }
 
     /**
-     * Находит просроченные (due) вопросы по списку тем в заданном порядке.
+     * Находит готовые к показу вопросы по списку тем в заданном порядке.
      */
     public List<Question> findDueQuestionsByTopics(List<String> topics, Boolean important, Boolean onlyWrong, long nowEpoch, int limit) {
         if (topics == null || topics.isEmpty()) {
             return List.of();
         }
-        StringBuilder sql = new StringBuilder(
-                "SELECT " + QUESTION_COLUMNS + " FROM questions q " +
-                        "JOIN review_state rs ON rs.question_id = q.id WHERE rs.next_review_at <= ? ");
+        StringBuilder sql = new StringBuilder("SELECT " + QUESTION_COLUMNS + " FROM questions q ");
         var params = new ArrayList<Object>();
+        InterviewFilterSql.appendReviewStateJoin(sql, params);
+        sql.append(" WHERE " + InterviewFilterSql.READY_FOR_REVIEW + " ");
         params.add(nowEpoch);
         InterviewFilterSql.appendTopicsFilter(sql, params, topics);
         InterviewFilterSql.appendFilters(sql, params, null, important, onlyWrong);
         sql.append(" ORDER BY ");
         appendTopicOrderCase(sql, params, topics);
-        sql.append(", " + ORDER_BY_REVIEW_PRIORITY);
-        params.add(limit);
+        sql.append(", ");
+        appendReviewPriorityOrder(sql, params, nowEpoch, limit);
         return jdbcTemplate.query(sql.toString(), questionRowMapper(), params.toArray());
     }
 
@@ -285,13 +314,13 @@ public class QuestionRepository {
      * Находит следующие вопросы для повторения (ближайшие по дате).
      */
     public List<Question> findNextQuestions(String topic, Boolean important, Boolean onlyWrong, long nowEpoch, int limit) {
-        StringBuilder sql = new StringBuilder(
-                "SELECT " + QUESTION_COLUMNS + " FROM questions q " +
-                        "JOIN review_state rs ON rs.question_id = q.id WHERE 1=1 ");
+        StringBuilder sql = new StringBuilder("SELECT " + QUESTION_COLUMNS + " FROM questions q ");
         var params = new ArrayList<Object>();
+        InterviewFilterSql.appendReviewStateJoin(sql, params);
+        sql.append(" WHERE 1=1 ");
         InterviewFilterSql.appendFilters(sql, params, topic, important, onlyWrong);
-        sql.append(" ORDER BY " + ORDER_BY_REVIEW_PRIORITY);
-        params.add(limit);
+        sql.append(" ORDER BY ");
+        appendReviewPriorityOrder(sql, params, nowEpoch, limit);
         return jdbcTemplate.query(sql.toString(), questionRowMapper(), params.toArray());
     }
 
@@ -302,55 +331,17 @@ public class QuestionRepository {
         if (topics == null || topics.isEmpty()) {
             return List.of();
         }
-        StringBuilder sql = new StringBuilder(
-                "SELECT " + QUESTION_COLUMNS + " FROM questions q " +
-                        "JOIN review_state rs ON rs.question_id = q.id WHERE 1=1 ");
+        StringBuilder sql = new StringBuilder("SELECT " + QUESTION_COLUMNS + " FROM questions q ");
         var params = new ArrayList<Object>();
+        InterviewFilterSql.appendReviewStateJoin(sql, params);
+        sql.append(" WHERE 1=1 ");
         InterviewFilterSql.appendTopicsFilter(sql, params, topics);
         InterviewFilterSql.appendFilters(sql, params, null, important, onlyWrong);
         sql.append(" ORDER BY ");
         appendTopicOrderCase(sql, params, topics);
-        sql.append(", " + ORDER_BY_REVIEW_PRIORITY);
-        params.add(limit);
+        sql.append(", ");
+        appendReviewPriorityOrder(sql, params, nowEpoch, limit);
         return jdbcTemplate.query(sql.toString(), questionRowMapper(), params.toArray());
-    }
-
-    /**
-     * Находит ID вопросов для предзагрузки (только без вариантов ответов).
-     */
-    public List<Long> findQuestionIdsForPreload(String topic, Boolean important, Boolean onlyWrong, int limit) {
-        StringBuilder sql = new StringBuilder(
-                "SELECT q.id FROM questions q " +
-                        "JOIN review_state rs ON rs.question_id = q.id " +
-                        "LEFT JOIN (SELECT question_id, COUNT(*) AS cnt FROM answer_options GROUP BY question_id) ao " +
-                        "ON ao.question_id = q.id WHERE ao.cnt IS NULL ");
-        var params = new ArrayList<Object>();
-        InterviewFilterSql.appendFilters(sql, params, topic, important, onlyWrong);
-        sql.append(" ORDER BY " + ORDER_BY_REVIEW_PRIORITY);
-        params.add(limit);
-        return jdbcTemplate.query(sql.toString(), (rs, rowNum) -> rs.getLong("id"), params.toArray());
-    }
-
-    /**
-     * Находит ID вопросов для предзагрузки по списку тем в заданном порядке.
-     */
-    public List<Long> findQuestionIdsForPreloadByTopics(List<String> topics, Boolean important, Boolean onlyWrong, int limit) {
-        if (topics == null || topics.isEmpty()) {
-            return List.of();
-        }
-        StringBuilder sql = new StringBuilder(
-                "SELECT q.id FROM questions q " +
-                        "JOIN review_state rs ON rs.question_id = q.id " +
-                        "LEFT JOIN (SELECT question_id, COUNT(*) AS cnt FROM answer_options GROUP BY question_id) ao " +
-                        "ON ao.question_id = q.id WHERE ao.cnt IS NULL ");
-        var params = new ArrayList<Object>();
-        InterviewFilterSql.appendTopicsFilter(sql, params, topics);
-        InterviewFilterSql.appendFilters(sql, params, null, important, onlyWrong);
-        sql.append(" ORDER BY ");
-        appendTopicOrderCase(sql, params, topics);
-        sql.append(", " + ORDER_BY_REVIEW_PRIORITY);
-        params.add(limit);
-        return jdbcTemplate.query(sql.toString(), (rs, rowNum) -> rs.getLong("id"), params.toArray());
     }
 
     /**
@@ -375,10 +366,10 @@ public class QuestionRepository {
      */
     public List<Long> findQuestionIdsExcluding(List<Long> excludeIds, String topic, Boolean important,
                                                 Boolean onlyWrong, long nowEpoch, int limit) {
-        StringBuilder sql = new StringBuilder(
-                "SELECT q.id FROM questions q " +
-                        "JOIN review_state rs ON rs.question_id = q.id WHERE 1=1 ");
+        StringBuilder sql = new StringBuilder("SELECT q.id FROM questions q ");
         var params = new ArrayList<Object>();
+        InterviewFilterSql.appendReviewStateJoin(sql, params);
+        sql.append(" WHERE 1=1 ");
         if (excludeIds != null && !excludeIds.isEmpty()) {
             sql.append(" AND q.id NOT IN (");
             for (int i = 0; i < excludeIds.size(); i++) {
@@ -388,9 +379,8 @@ public class QuestionRepository {
             params.addAll(excludeIds);
         }
         InterviewFilterSql.appendFilters(sql, params, topic, important, onlyWrong);
-        sql.append(" ORDER BY CASE WHEN rs.next_review_at <= ? THEN 0 ELSE 1 END, rs.next_review_at ASC, RANDOM() LIMIT ?");
-        params.add(nowEpoch);
-        params.add(limit);
+        sql.append(" ORDER BY ");
+        appendSessionPickOrder(sql, params, nowEpoch, limit);
         return jdbcTemplate.query(sql.toString(), (rs, rowNum) -> rs.getLong("id"), params.toArray());
     }
 
@@ -402,10 +392,10 @@ public class QuestionRepository {
         if (topics == null || topics.isEmpty()) {
             return List.of();
         }
-        StringBuilder sql = new StringBuilder(
-                "SELECT q.id FROM questions q " +
-                        "JOIN review_state rs ON rs.question_id = q.id WHERE 1=1 ");
+        StringBuilder sql = new StringBuilder("SELECT q.id FROM questions q ");
         var params = new ArrayList<Object>();
+        InterviewFilterSql.appendReviewStateJoin(sql, params);
+        sql.append(" WHERE 1=1 ");
         if (excludeIds != null && !excludeIds.isEmpty()) {
             sql.append(" AND q.id NOT IN (");
             for (int i = 0; i < excludeIds.size(); i++) {
@@ -418,10 +408,29 @@ public class QuestionRepository {
         InterviewFilterSql.appendFilters(sql, params, null, important, onlyWrong);
         sql.append(" ORDER BY ");
         appendTopicOrderCase(sql, params, topics);
-        sql.append(", CASE WHEN rs.next_review_at <= ? THEN 0 ELSE 1 END, rs.next_review_at ASC, RANDOM() LIMIT ?");
+        sql.append(", ");
+        appendSessionPickOrder(sql, params, nowEpoch, limit);
+        return jdbcTemplate.query(sql.toString(), (rs, rowNum) -> rs.getLong("id"), params.toArray());
+    }
+
+    /**
+     * Дописывает хвост сортировки набора сессии: сначала всё, что готово к показу
+     * (просроченные повторения и непройденные вопросы), внутри группы — по срочности,
+     * дальше случайный порядок, чтобы две сессии подряд не совпадали.
+     *
+     * <p>{@code COALESCE} обязателен по той же причине, что и в
+     * {@link #appendReviewPriorityOrder}: у нового вопроса строки прогресса нет, а
+     * {@code NULL <= ?} даёт UNKNOWN — в {@code CASE} это ветка {@code ELSE},
+     * то есть новые вопросы уезжали бы в хвост набора вместо начала.
+     */
+    private static void appendSessionPickOrder(StringBuilder sql, List<Object> params,
+                                               long nowEpoch, int limit) {
+        sql.append(" CASE WHEN COALESCE(rs.next_review_at, ?) <= ? THEN 0 ELSE 1 END, "
+                + "COALESCE(rs.next_review_at, ?) ASC, RANDOM() LIMIT ?");
+        params.add(nowEpoch);
+        params.add(nowEpoch);
         params.add(nowEpoch);
         params.add(limit);
-        return jdbcTemplate.query(sql.toString(), (rs, rowNum) -> rs.getLong("id"), params.toArray());
     }
 
     /**
@@ -434,10 +443,10 @@ public class QuestionRepository {
      * @return список ID в случайном порядке
      */
     public List<Long> findShuffledQuestionIds(Boolean important, Boolean onlyWrong, int limit) {
-        StringBuilder sql = new StringBuilder(
-                "SELECT q.id FROM questions q " +
-                        "JOIN review_state rs ON rs.question_id = q.id WHERE 1=1 ");
+        StringBuilder sql = new StringBuilder("SELECT q.id FROM questions q ");
         var params = new ArrayList<Object>();
+        InterviewFilterSql.appendReviewStateJoin(sql, params);
+        sql.append(" WHERE 1=1 ");
         // topic = null — все темы
         InterviewFilterSql.appendFilters(sql, params, null, important, onlyWrong);
         sql.append(" ORDER BY RANDOM() LIMIT ?");
@@ -452,6 +461,27 @@ public class QuestionRepository {
         return jdbcTemplate.query(
                 "SELECT DISTINCT topic FROM questions WHERE topic IS NOT NULL ORDER BY topic",
                 (rs, rowNum) -> rs.getString("topic"));
+    }
+
+    /**
+     * Сколько вопросов в каждой теме — по всему банку, независимо от прогресса.
+     *
+     * <p>Отличается от {@code QuestionStatsRepository.findTopicStats} принципиально:
+     * та делает INNER JOIN с {@code review_state} и потому видит только темы, до
+     * которых пользователь уже добрался. Каталогу разделов нужен обратный охват —
+     * он существует, чтобы показать, куда пойти дальше, и раздел, к которому ещё
+     * не притрагивались, обязан быть в нём виден.
+     *
+     * @return тема → число вопросов, в алфавитном порядке тем
+     */
+    public Map<String, Long> countQuestionsByTopic() {
+        Map<String, Long> counts = new LinkedHashMap<>();
+        jdbcTemplate.query(
+                "SELECT topic, COUNT(*) AS total FROM questions GROUP BY topic ORDER BY topic",
+                rs -> {
+                    counts.put(rs.getString("topic"), rs.getLong("total"));
+                });
+        return counts;
     }
 
     /**
@@ -499,27 +529,6 @@ public class QuestionRepository {
     }
 
     /**
-     * Инкрементирует счётчик перезагрузок для вопроса.
-     *
-     * @param questionId идентификатор вопроса
-     */
-    @Transactional
-    public void incrementRegenCount(long questionId) {
-        jdbcTemplate.update("UPDATE questions SET regen_count = regen_count + 1 WHERE id = ?", questionId);
-    }
-
-    /**
-     * Обновляет Mermaid-диаграмму для вопроса.
-     *
-     * @param questionId  идентификатор вопроса
-     * @param mermaidCode код диаграммы (или null для очистки)
-     */
-    @Transactional
-    public void updateDiagram(long questionId, String mermaidCode) {
-        jdbcTemplate.update("UPDATE questions SET diagram_mermaid = ? WHERE id = ?", mermaidCode, questionId);
-    }
-
-    /**
      * Очищает Mermaid-диаграммы у всех вопросов (полный сброс).
      *
      * @return количество обновлённых записей
@@ -527,16 +536,6 @@ public class QuestionRepository {
     @Transactional
     public int clearAllDiagrams() {
         return jdbcTemplate.update("UPDATE questions SET diagram_mermaid = NULL WHERE diagram_mermaid IS NOT NULL");
-    }
-
-    /**
-     * Сбрасывает regen_count у всех вопросов.
-     *
-     * @return количество обновлённых записей
-     */
-    @Transactional
-    public int resetAllRegenCount() {
-        return jdbcTemplate.update("UPDATE questions SET regen_count = 0 WHERE regen_count > 0");
     }
 
     /**
@@ -605,15 +604,13 @@ public class QuestionRepository {
                 questionType,
                 rs.getString("code_snippet"),
                 rs.getString("diagram_mermaid"),
-                rs.getInt("regen_count"),
                 rs.getString("takeaway"),
                 Difficulty.fromString(rs.getString("difficulty")),
                 rs.getString("short_explanation"),
                 rs.getString("detailed_explanation"),
                 rs.getString("common_mistake"),
                 parseTags(rs.getString("tags")),
-                List.of()
-        );
+                List.of());
     }
 
     private static List<String> parseTags(String raw) {

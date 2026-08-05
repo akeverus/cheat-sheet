@@ -36,15 +36,32 @@ class WeakTopicsSelectionStrategyTest {
 
     private static final long NOW = 1_000_000L;
 
+    /** Слабейшая тема; точность стратегию не интересует — она выбирает по ключу темы. */
+    private QuestionStatsRepository.WeakestTopic weak(String topic) {
+        return new QuestionStatsRepository.WeakestTopic(topic, 42);
+    }
+
     private Question q(long id, String topic) {
-        return new Question(id, "slug-" + id, "slug-" + id, "file.md",
-                topic, "Question " + id, "Answer", false, "hash",
-                QuestionType.TEXT, null, null, 0, null);
+        return Question.builder()
+                .id(id)
+                .slug("slug-" + id)
+                .sourceSlug("slug-" + id)
+                .filePath("file.md")
+                .topic(topic)
+                .questionText("Question " + id)
+                .answerMarkdown("Answer")
+                .important(false)
+                .sourceHash("hash")
+                .questionType(QuestionType.TEXT)
+                .codeSnippet(null)
+                .diagramMermaid(null)
+                .takeaway(null)
+                .build();
     }
 
     @Test
     void delegatesToDefaultWhenNoWeakTopic() {
-        InterviewFilter filter = new InterviewFilter("java", false, false);
+        InterviewFilter filter = new InterviewFilter("java", null, false, false, null, true);
         when(questionStatsRepository.findWeakestTopic(QuizConstants.WEAK_TOPIC_THRESHOLD))
                 .thenReturn(null);
         when(defaultStrategy.selectNextQuestionId(filter, NOW))
@@ -62,9 +79,9 @@ class WeakTopicsSelectionStrategyTest {
         // система сама уводит в глобально слабейшую. Раньше тут стоял topic="java"
         // — несовпадающий со слабой "spring" — что незаметно покрывало баг (стратегия
         // выдавала чужую тему). Конфликт topic≠weak теперь проверяет отдельный тест.
-        InterviewFilter filter = new InterviewFilter(null, false, false);
+        InterviewFilter filter = new InterviewFilter(null, null, false, false, null, true);
         when(questionStatsRepository.findWeakestTopic(QuizConstants.WEAK_TOPIC_THRESHOLD))
-                .thenReturn("spring");
+                .thenReturn(weak("spring"));
         when(questionRepository.findDueQuestions("spring", false, false, NOW, 1))
                 .thenReturn(List.of(q(5, "spring")));
 
@@ -76,9 +93,9 @@ class WeakTopicsSelectionStrategyTest {
 
     @Test
     void returnsNextFromWeakTopicWhenNoDue() {
-        InterviewFilter filter = new InterviewFilter(null, true, false);
+        InterviewFilter filter = new InterviewFilter(null, null, true, false, null, true);
         when(questionStatsRepository.findWeakestTopic(QuizConstants.WEAK_TOPIC_THRESHOLD))
-                .thenReturn("sql");
+                .thenReturn(weak("sql"));
         when(questionRepository.findDueQuestions("sql", true, false, NOW, 1))
                 .thenReturn(List.of());
         when(questionRepository.findNextQuestions("sql", true, false, NOW, 1))
@@ -95,9 +112,9 @@ class WeakTopicsSelectionStrategyTest {
         // — "spring". Стратегия НЕ должна подсовывать вопросы из чужой темы; она
         // делегирует в default-стратегию, которая чтит выбранную тему. Симметрично
         // существующему групповому guard'у (слабая тема вне выбранной группы → default).
-        InterviewFilter filter = new InterviewFilter("java", false, false);
+        InterviewFilter filter = new InterviewFilter("java", null, false, false, null, true);
         when(questionStatsRepository.findWeakestTopic(QuizConstants.WEAK_TOPIC_THRESHOLD))
-                .thenReturn("spring");
+                .thenReturn(weak("spring"));
         when(defaultStrategy.selectNextQuestionId(filter, NOW))
                 .thenReturn(Optional.of(42L));
 
@@ -112,9 +129,9 @@ class WeakTopicsSelectionStrategyTest {
 
     @Test
     void returnsEmptyWhenWeakTopicHasNoQuestions() {
-        InterviewFilter filter = new InterviewFilter(null, false, false);
+        InterviewFilter filter = new InterviewFilter(null, null, false, false, null, true);
         when(questionStatsRepository.findWeakestTopic(QuizConstants.WEAK_TOPIC_THRESHOLD))
-                .thenReturn("empty-topic");
+                .thenReturn(weak("empty-topic"));
         when(questionRepository.findDueQuestions("empty-topic", false, false, NOW, 1))
                 .thenReturn(List.of());
         when(questionRepository.findNextQuestions("empty-topic", false, false, NOW, 1))
@@ -130,9 +147,9 @@ class WeakTopicsSelectionStrategyTest {
         // Пользователь сам зафиксировал тему, которая И ЕСТЬ глобально слабейшая:
         // topic-guard (effectiveTopic != null && != weak) НЕ срабатывает — совпадение,
         // поэтому приоритет слабых тем сохраняется, а не делегируется в default.
-        InterviewFilter filter = new InterviewFilter("spring", false, false, false);
+        InterviewFilter filter = new InterviewFilter("spring", null, false, false, false, true);
         when(questionStatsRepository.findWeakestTopic(QuizConstants.WEAK_TOPIC_THRESHOLD))
-                .thenReturn("spring");
+                .thenReturn(weak("spring"));
         when(questionRepository.findDueQuestions("spring", false, false, NOW, 1))
                 .thenReturn(List.of(q(3, "spring")));
 
@@ -147,9 +164,9 @@ class WeakTopicsSelectionStrategyTest {
         // Тема не зафиксирована, но выбрана группа; глобально слабейшая "spring"
         // ВХОДИТ в допустимые темы группы → групповой guard пропускает, приоритет
         // слабой темы сохраняется (default не привлекается).
-        InterviewFilter filter = new InterviewFilter(null, "backend", false, false, false);
+        InterviewFilter filter = new InterviewFilter(null, "backend", false, false, false, true);
         when(questionStatsRepository.findWeakestTopic(QuizConstants.WEAK_TOPIC_THRESHOLD))
-                .thenReturn("spring");
+                .thenReturn(weak("spring"));
         when(questionRepository.findTopics()).thenReturn(List.of("spring", "java"));
         when(topicCatalogService.topicsForFilter(any(), any()))
                 .thenReturn(List.of("spring", "java"));
@@ -166,9 +183,9 @@ class WeakTopicsSelectionStrategyTest {
     void delegatesToDefaultWhenWeakTopicOutsideSelectedGroup() {
         // Слабейшая "spring" ВНЕ допустимых тем выбранной группы → групповой guard
         // делегирует в default, чтобы не подсовывать вопрос из чужой группы.
-        InterviewFilter filter = new InterviewFilter(null, "databases", false, false, false);
+        InterviewFilter filter = new InterviewFilter(null, "databases", false, false, false, true);
         when(questionStatsRepository.findWeakestTopic(QuizConstants.WEAK_TOPIC_THRESHOLD))
-                .thenReturn("spring");
+                .thenReturn(weak("spring"));
         when(questionRepository.findTopics()).thenReturn(List.of("spring", "sql"));
         when(topicCatalogService.topicsForFilter(any(), any()))
                 .thenReturn(List.of("sql"));

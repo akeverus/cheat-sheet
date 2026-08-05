@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,9 +26,21 @@ class QuestionRepositoryTest extends AbstractPostgresRepositoryTest {
     }
 
     private Question sampleQuestion(String slug, String topic) {
-        return new Question(0L, slug, slug, "test/" + slug + ".md", topic,
-                "Что такое " + slug + "?", "Ответ на " + slug,
-                false, "hash-" + slug, QuestionType.TEXT, null, null, 0, null);
+        return Question.builder()
+                .id(0L)
+                .slug(slug)
+                .sourceSlug(slug)
+                .filePath("test/" + slug + ".md")
+                .topic(topic)
+                .questionText("Что такое " + slug + "?")
+                .answerMarkdown("Ответ на " + slug)
+                .important(false)
+                .sourceHash("hash-" + slug)
+                .questionType(QuestionType.TEXT)
+                .codeSnippet(null)
+                .diagramMermaid(null)
+                .takeaway(null)
+                .build();
     }
 
     private void insertReviewState(long questionId, long nextReviewAt) {
@@ -75,9 +88,21 @@ class QuestionRepositoryTest extends AbstractPostgresRepositoryTest {
         long id = repository.insert(sampleQuestion("q.md#Q1", "Java"));
         Question original = repository.findById(id).orElseThrow();
 
-        Question updated = new Question(id, original.slug(), original.sourceSlug(), original.filePath(),
-                "Spring", "Обновлённый вопрос", original.answerMarkdown(), true,
-                "new-hash", QuestionType.CODE, "int x = 1;", null, 0, null);
+        Question updated = Question.builder()
+                .id(id)
+                .slug(original.slug())
+                .sourceSlug(original.sourceSlug())
+                .filePath(original.filePath())
+                .topic("Spring")
+                .questionText("Обновлённый вопрос")
+                .answerMarkdown(original.answerMarkdown())
+                .important(true)
+                .sourceHash("new-hash")
+                .questionType(QuestionType.CODE)
+                .codeSnippet("int x = 1;")
+                .diagramMermaid(null)
+                .takeaway(null)
+                .build();
         repository.update(updated);
 
         Question reloaded = repository.findById(id).orElseThrow();
@@ -111,6 +136,66 @@ class QuestionRepositoryTest extends AbstractPostgresRepositoryTest {
 
         assertThatThrownBy(() -> repository.findBySlug("bad.md#Q1"))
                 .isInstanceOf(Exception.class);
+    }
+
+    /**
+     * Вопрос без строки в {@code review_state} — новый, а не несуществующий.
+     *
+     * <p>Регрессия: все запросы выборки соединялись с {@code review_state} через INNER
+     * JOIN, а строку заводил импорт — единожды за жизнь вопроса. Любая потеря таблицы
+     * прогресса (чистка, восстановление дампа без неё, прогон QA-фикстур) делала банк
+     * невидимым: вопросы в БД есть, выборка пуста, ошибки нет ни одной.
+     */
+    @Test
+    void selectionQueriesSeeQuestionsWithoutReviewState() {
+        String topic = "programming-languages/java/java-core-interview";
+        long id = repository.insert(sampleQuestion("fresh.md#Q1", topic));
+
+        assertThat(repository.findDueQuestions(topic, false, false, 100L, 10))
+                .extracting(Question::id).containsExactly(id);
+        assertThat(repository.findNextQuestions(topic, false, false, 100L, 10))
+                .extracting(Question::id).containsExactly(id);
+        assertThat(repository.findDueQuestionsByTopics(List.of(topic), false, false, 100L, 10))
+                .extracting(Question::id).containsExactly(id);
+        assertThat(repository.findNextQuestionsByTopics(List.of(topic), false, false, 100L, 10))
+                .extracting(Question::id).containsExactly(id);
+        assertThat(repository.findQuestionIdsForSession(topic, false, false, 100L, 10))
+                .containsExactly(id);
+        assertThat(repository.findQuestionIdsForSessionByTopics(List.of(topic), false, false, 100L, 10))
+                .containsExactly(id);
+        assertThat(repository.findShuffledQuestionIds(false, false, 10)).containsExactly(id);
+    }
+
+    /**
+     * Просроченное повторение идёт впереди непройденного вопроса.
+     *
+     * <p>Оба готовы к показу, но у просроченного {@code next_review_at} в прошлом, а
+     * непройденному сортировка подставляет текущее время. Без {@code COALESCE} NULL
+     * уехал бы в конец (Postgres: {@code NULLS LAST} при ASC) — новые вопросы стали бы
+     * недостижимы, пока не кончится очередь повторений.
+     */
+    @Test
+    void overdueRepetitionOutranksUntouchedQuestion() {
+        String topic = "programming-languages/java/java-core-interview";
+        long overdueId = repository.insert(sampleQuestion("overdue.md#Q1", topic));
+        long freshId = repository.insert(sampleQuestion("fresh.md#Q2", topic));
+        insertReviewState(overdueId, 10L);
+
+        assertThat(repository.findDueQuestions(topic, false, false, 100L, 10))
+                .extracting(Question::id).containsExactly(overdueId, freshId);
+    }
+
+    /** Фильтр «только с ошибками» отбрасывает вопрос без прогресса: ошибок у него нет. */
+    @Test
+    void onlyWrongExcludesQuestionsWithoutProgress() {
+        String topic = "programming-languages/java/java-core-interview";
+        long withErrors = repository.insert(sampleQuestion("wrong.md#Q1", topic));
+        repository.insert(sampleQuestion("fresh.md#Q3", topic));
+        insertReviewState(withErrors, 10L);
+        jdbcTemplate.update("UPDATE review_state SET wrong_count = 2 WHERE question_id = ?", withErrors);
+
+        assertThat(repository.findNextQuestions(topic, false, true, 100L, 10))
+                .extracting(Question::id).containsExactly(withErrors);
     }
 
     @Test
@@ -166,21 +251,6 @@ class QuestionRepositoryTest extends AbstractPostgresRepositoryTest {
     }
 
     @Test
-    void findQuestionIdsForPreloadByTopicsWithEmptyListReturnsEmpty() {
-        long questionId = repository.insert(sampleQuestion("java.md#Q4", "programming-languages/java/java-core-interview"));
-        insertReviewState(questionId, 10L);
-
-        List<Long> ids = repository.findQuestionIdsForPreloadByTopics(
-                List.of(),
-                false,
-                false,
-                10
-        );
-
-        assertThat(ids).isEmpty();
-    }
-
-    @Test
     void findQuestionIdsExcludingByTopicsWithEmptyListReturnsEmpty() {
         long questionId = repository.insert(sampleQuestion("java.md#Q5", "programming-languages/java/java-core-interview"));
         insertReviewState(questionId, 10L);
@@ -232,5 +302,31 @@ class QuestionRepositoryTest extends AbstractPostgresRepositoryTest {
                 "no-such/topic", 42);
 
         assertThat(found).isEmpty();
+    }
+
+    /**
+     * Смысл метода — именно в отличии от {@code QuestionStatsRepository.findTopicStats},
+     * который делает INNER JOIN с {@code review_state} и потому видит только
+     * начатые темы. Здесь review_state нет ни у одной строки, и все темы обязаны
+     * оказаться в выдаче: каталог разделов существует, чтобы показать, куда пойти
+     * дальше, и нетронутая тема — его главный случай.
+     */
+    @Test
+    void countQuestionsByTopicCoversTopicsWithoutAnyProgress() {
+        repository.insert(sampleQuestion("java1.md#Q1", "programming-languages/java/java-core-interview"));
+        repository.insert(sampleQuestion("java2.md#Q1", "programming-languages/java/java-core-interview"));
+        repository.insert(sampleQuestion("kotlin.md#Q1", "programming-languages/kotlin/kotlin-interview"));
+
+        Map<String, Long> counts = repository.countQuestionsByTopic();
+
+        assertThat(counts).containsExactlyInAnyOrderEntriesOf(Map.of(
+                "programming-languages/java/java-core-interview", 2L,
+                "programming-languages/kotlin/kotlin-interview", 1L
+        ));
+    }
+
+    @Test
+    void countQuestionsByTopicReturnsEmptyMapForEmptyBank() {
+        assertThat(repository.countQuestionsByTopic()).isEmpty();
     }
 }

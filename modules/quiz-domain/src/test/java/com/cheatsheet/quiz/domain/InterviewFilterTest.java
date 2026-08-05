@@ -68,30 +68,36 @@ class InterviewFilterTest {
     }
 
     @Test
-    void convenienceConstructorTopicImportantWrongDefaultsGroupNullOrderedTrue() {
-        InterviewFilter filter = new InterviewFilter("java", true, false);
+    void canonicalConstructorNormalizesAndKeepsExplicitValues() {
+        InterviewFilter filter = new InterviewFilter("  java  ", "Backend", true, false, null, null);
         assertThat(filter.topic()).isEqualTo("java");
-        assertThat(filter.group()).isNull();
+        assertThat(filter.group()).isEqualTo("Backend");
         assertThat(filter.importantOnly()).isTrue();
         assertThat(filter.onlyWrong()).isFalse();
         assertThat(filter.shuffle()).isNull();
+        assertThat(filter.isShuffled()).isFalse();
         assertThat(filter.isOrdered()).isTrue();
     }
 
+    /**
+     * {@code isNarrowed} отвечает за состав выборки, поэтому порядок в него не входит:
+     * подпись «фильтр» рядом с числом очереди обязана означать «показано не всё»,
+     * а перемешивание показывает ровно тот же банк.
+     */
     @Test
-    void convenienceConstructorWithShuffleKeepsOrderedTrue() {
-        InterviewFilter filter = new InterviewFilter("java", true, false, true);
-        assertThat(filter.shuffle()).isTrue();
-        assertThat(filter.isShuffled()).isTrue();
-        assertThat(filter.isOrdered()).isTrue();
-        assertThat(filter.effectiveTopic()).isNull(); // shuffle=true обнуляет тему
+    void isNarrowedIgnoresOrderingFlags() {
+        assertThat(InterviewFilter.builder().build().isNarrowed()).isFalse();
+        assertThat(InterviewFilter.builder().shuffle(true).ordered(false).build().isNarrowed()).isFalse();
+        assertThat(InterviewFilter.builder().importantOnly(false).onlyWrong(false).build().isNarrowed()).isFalse();
+        // Пустая тема нормализуется в null и сузить выборку не может.
+        assertThat(InterviewFilter.builder().topic("   ").build().isNarrowed()).isFalse();
     }
 
     @Test
-    void convenienceConstructorWithGroupAndShuffleKeepsOrderedTrue() {
-        InterviewFilter filter = new InterviewFilter("java", "Backend", true, false, false);
-        assertThat(filter.group()).isEqualTo("Backend");
-        assertThat(filter.isOrdered()).isTrue();
-        assertThat(filter.effectiveGroup()).isEqualTo("Backend");
+    void isNarrowedWhenAnyCompositionFilterIsSet() {
+        assertThat(InterviewFilter.builder().topic("java").build().isNarrowed()).isTrue();
+        assertThat(InterviewFilter.builder().group("Backend").build().isNarrowed()).isTrue();
+        assertThat(InterviewFilter.builder().importantOnly(true).build().isNarrowed()).isTrue();
+        assertThat(InterviewFilter.builder().onlyWrong(true).build().isNarrowed()).isTrue();
     }
 }

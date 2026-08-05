@@ -27,7 +27,7 @@ class ShuffleSelectionStrategyTest {
 
     @Test
     void returnsShuffledIdWhenAvailable() {
-        InterviewFilter filter = new InterviewFilter(null, false, false, true);
+        InterviewFilter filter = new InterviewFilter(null, null, false, false, true, true);
         when(questionRepository.findShuffledQuestionIds(false, false, 1))
                 .thenReturn(List.of(15L));
 
@@ -38,7 +38,7 @@ class ShuffleSelectionStrategyTest {
 
     @Test
     void returnsEmptyWhenNoShuffledIds() {
-        InterviewFilter filter = new InterviewFilter(null, true, false, true);
+        InterviewFilter filter = new InterviewFilter(null, null, true, false, true, true);
         when(questionRepository.findShuffledQuestionIds(true, false, 1))
                 .thenReturn(List.of());
 
@@ -49,7 +49,7 @@ class ShuffleSelectionStrategyTest {
 
     @Test
     void passesImportantAndOnlyWrongFilters() {
-        InterviewFilter filter = new InterviewFilter("java", true, true, true);
+        InterviewFilter filter = new InterviewFilter("java", null, true, true, true, true);
         when(questionRepository.findShuffledQuestionIds(true, true, 1))
                 .thenReturn(List.of(33L));
 

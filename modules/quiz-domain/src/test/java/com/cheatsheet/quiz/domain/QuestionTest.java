@@ -17,7 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  *   <li>{@code difficulty == null} → дефолт {@link Difficulty#MEDIUM};</li>
  *   <li>{@code tags}/{@code options == null} → пустые списки; переданные —
  *       <b>защитно копируются</b> и наружу отдаются иммутабельными;</li>
- *   <li>отрицательный {@code regenCount} → {@link IllegalArgumentException};</li>
  *   <li>{@link Question#type()} — синоним {@code questionType()};</li>
  *   <li>{@link Question#forImport} — id=0, {@code sourceSlug == slug}, дефолты nullable-полей.</li>
  * </ul>
@@ -49,13 +48,6 @@ class QuestionTest {
         Question q = Question.builder().slug("s").questionText("q").tags(null).options(null).build();
         assertThat(q.tags()).isEmpty();
         assertThat(q.options()).isEmpty();
-    }
-
-    @Test
-    void negativeRegenCountThrows() {
-        assertThatThrownBy(() -> Question.builder().slug("s").questionText("q").regenCount(-1).build())
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("-1");
     }
 
     @Test
@@ -100,7 +92,6 @@ class QuestionTest {
         assertThat(q.sourceSlug()).isEqualTo(q.slug()).isEqualTo("java.md#Q1");
         assertThat(q.important()).isTrue();
         assertThat(q.difficulty()).isEqualTo(Difficulty.MEDIUM);
-        assertThat(q.regenCount()).isZero();
         assertThat(q.diagramMermaid()).isNull();
         assertThat(q.takeaway()).isNull();
         assertThat(q.tags()).isEmpty();
@@ -109,9 +100,21 @@ class QuestionTest {
 
     @Test
     void legacyConstructorAppliesV2Defaults() {
-        Question q = new Question(
-                7L, "s", "src", "f.md", "topic", "текст", "ответ",
-                false, "hash", QuestionType.TEXT, null, null, 0, "вывод");
+        Question q = Question.builder()
+                .id(7L)
+                .slug("s")
+                .sourceSlug("src")
+                .filePath("f.md")
+                .topic("topic")
+                .questionText("текст")
+                .answerMarkdown("ответ")
+                .important(false)
+                .sourceHash("hash")
+                .questionType(QuestionType.TEXT)
+                .codeSnippet(null)
+                .diagramMermaid(null)
+                .takeaway("вывод")
+                .build();
 
         assertThat(q.difficulty()).isEqualTo(Difficulty.MEDIUM);
         assertThat(q.tags()).isEmpty();

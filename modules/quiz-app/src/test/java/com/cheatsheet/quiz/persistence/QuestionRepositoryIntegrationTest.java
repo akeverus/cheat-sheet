@@ -44,12 +44,16 @@ class QuestionRepositoryIntegrationTest {
     @Test
     void insertWithNullQuestionTypeStoresAsText() {
         String uniqueSlug = "zzz-null-questiontype-test#" + System.currentTimeMillis();
-        Question question = new Question(
-                0L, uniqueSlug, uniqueSlug, "test.md", "topic",
-                "Question?", "Answer", false, "hash",
-                null,  // questionType = null
-                null, null, 0, null
-        );
+        Question question = Question.builder()
+                .slug(uniqueSlug)
+                .sourceSlug(uniqueSlug)
+                .filePath("test.md")
+                .topic("topic")
+                .questionText("Question?")
+                .answerMarkdown("Answer")
+                .sourceHash("hash")
+                .questionType(null)
+                .build();
         long id = questionRepository.insert(question);
         insertedQuestionId = id;
         assertThat(id).isPositive();

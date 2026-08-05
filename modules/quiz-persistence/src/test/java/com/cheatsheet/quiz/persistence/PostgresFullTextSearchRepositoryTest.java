@@ -26,9 +26,21 @@ class PostgresFullTextSearchRepositoryTest extends AbstractPostgresRepositoryTes
     }
 
     private long insertQuestion(String slug, String text, String answer) {
-        Question q = new Question(0L, slug, slug, "test/" + slug + ".md", "test",
-                text, answer, false, "h-" + slug,
-                QuestionType.TEXT, null, null, 0, null);
+        Question q = Question.builder()
+                .id(0L)
+                .slug(slug)
+                .sourceSlug(slug)
+                .filePath("test/" + slug + ".md")
+                .topic("test")
+                .questionText(text)
+                .answerMarkdown(answer)
+                .important(false)
+                .sourceHash("h-" + slug)
+                .questionType(QuestionType.TEXT)
+                .codeSnippet(null)
+                .diagramMermaid(null)
+                .takeaway(null)
+                .build();
         return questions.insert(q);
     }
 

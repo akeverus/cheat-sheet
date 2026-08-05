@@ -4,7 +4,6 @@ import com.cheatsheet.quiz.domain.AnswerDisplayMode;
 import com.cheatsheet.quiz.domain.AnswerOption;
 import com.cheatsheet.quiz.domain.AnswerResult;
 import com.cheatsheet.quiz.domain.AttemptOutcome;
-import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewSession;
 import com.cheatsheet.quiz.domain.Question;
@@ -24,7 +23,6 @@ import java.time.ZoneOffset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -84,11 +82,14 @@ class InterviewSessionSupportTest {
         when(interviewSession.isFinished()).thenReturn(false);
         when(interviewSession.currentQuestionId()).thenReturn(10L);
         when(interviewSession.getMode()).thenReturn(InterviewMode.EXAM);
-        when(submitAnswerCommand.executeOrNullIfDuplicate(any(), any(), eq("sess-test"), isNull()))
+        when(submitAnswerCommand.executeOrNullIfDuplicate(any(), eq("sess-test"), isNull()))
                 .thenReturn(answerResult);
-        InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
-                10L, 3L, null, null, null, null, null, null, 4, "ca-1"
-        );
+        InterviewSessionSupport.AnswerSubmission submission = InterviewSessionSupport.AnswerSubmission.builder()
+                .questionId(10L)
+                .optionId(3L)
+                .confidence(4)
+                .clientAttemptId("ca-1")
+                .build();
 
         InterviewSessionSupport.AnswerContext context = support.processAnswer(submission, session);
 
@@ -97,7 +98,7 @@ class InterviewSessionSupportTest {
         verify(interviewSession).registerAnswer(false, "java");
         verify(interviewService).addExamPenaltyQuestions(interviewSession);
         verify(httpSessionStateService).setInterviewSession(session, interviewSession);
-        verify(submitAnswerCommand).executeOrNullIfDuplicate(any(), any(), eq("sess-test"), isNull());
+        verify(submitAnswerCommand).executeOrNullIfDuplicate(any(), eq("sess-test"), isNull());
     }
 
     @Test
@@ -114,15 +115,16 @@ class InterviewSessionSupportTest {
         when(interviewSession.currentQuestionId()).thenReturn(10L);
         when(interviewSession.getMode()).thenReturn(InterviewMode.MARATHON);
         when(interviewSession.takeResponseTimeMs(anyLong())).thenReturn(4200);
-        when(submitAnswerCommand.executeOrNullIfDuplicate(any(), any(), eq("sess-test"), eq(4200)))
+        when(submitAnswerCommand.executeOrNullIfDuplicate(any(), eq("sess-test"), eq(4200)))
                 .thenReturn(answerResult);
-        InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
-                10L, 3L, null, null, null, null, null, null, null, null
-        );
+        InterviewSessionSupport.AnswerSubmission submission = InterviewSessionSupport.AnswerSubmission.builder()
+                .questionId(10L)
+                .optionId(3L)
+                .build();
 
         support.processAnswer(submission, session);
 
-        verify(submitAnswerCommand).executeOrNullIfDuplicate(any(), any(), eq("sess-test"), eq(4200));
+        verify(submitAnswerCommand).executeOrNullIfDuplicate(any(), eq("sess-test"), eq(4200));
     }
 
     @Test
@@ -144,28 +146,24 @@ class InterviewSessionSupportTest {
     void processAnswerUsesRequestFilterWhenSessionMissing() {
         AnswerResult answerResult = sampleAnswerResult(true);
         when(httpSessionStateService.getInterviewSession(session)).thenReturn(null);
-        when(submitAnswerCommand.executeOrNullIfDuplicate(any(), any(), eq("sess-test"), isNull()))
+        when(submitAnswerCommand.executeOrNullIfDuplicate(any(), eq("sess-test"), isNull()))
                 .thenReturn(answerResult);
-        InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
-                20L,
-                5L,
-                "  java  ",
-                "  backend ",
-                true,
-                false,
-                true,
-                true,
-                null,
-                null
-        );
+        InterviewSessionSupport.AnswerSubmission submission = InterviewSessionSupport.AnswerSubmission.builder()
+                .questionId(20L)
+                .optionId(5L)
+                .topic("  java  ")
+                .group("  backend ")
+                .important(true)
+                .onlyWrong(false)
+                .shuffle(true)
+                .ordered(true)
+                .build();
 
-        support.processAnswer(submission, session);
+        InterviewSessionSupport.AnswerContext context = support.processAnswer(submission, session);
 
-        ArgumentCaptor<InterviewFilter> filterCaptor = ArgumentCaptor.forClass(InterviewFilter.class);
-        verify(submitAnswerCommand).executeOrNullIfDuplicate(any(), filterCaptor.capture(), eq("sess-test"), isNull());
-        InterviewFilter filter = filterCaptor.getValue();
-        assertThat(filter.topic()).isEqualTo("java");
-        assertThat(filter.group()).isEqualTo("backend");
+        assertThat(context.filter().topic()).isEqualTo("java");
+        assertThat(context.filter().group()).isEqualTo("backend");
+        verify(submitAnswerCommand).executeOrNullIfDuplicate(any(), eq("sess-test"), isNull());
         verify(httpSessionStateService, never()).setInterviewSession(any(), any());
     }
 
@@ -180,11 +178,13 @@ class InterviewSessionSupportTest {
         when(interviewSession.getShuffle()).thenReturn(true);
         when(interviewSession.getOrdered()).thenReturn(false);
         when(interviewSession.isFinished()).thenReturn(true);
-        when(submitAnswerCommand.executeOrNullIfDuplicate(any(), any(), eq("sess-test"), isNull()))
+        when(submitAnswerCommand.executeOrNullIfDuplicate(any(), eq("sess-test"), isNull()))
                 .thenReturn(answerResult);
-        InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
-                11L, 2L, null, null, null, null, null, null, 3, null
-        );
+        InterviewSessionSupport.AnswerSubmission submission = InterviewSessionSupport.AnswerSubmission.builder()
+                .questionId(11L)
+                .optionId(2L)
+                .confidence(3)
+                .build();
 
         support.processAnswer(submission, session);
 
@@ -206,11 +206,13 @@ class InterviewSessionSupportTest {
         when(interviewSession.isFinished()).thenReturn(false);
         when(interviewSession.currentQuestionId()).thenReturn(31L);
         when(interviewSession.getMode()).thenReturn(InterviewMode.STUDY);
-        when(submitAnswerCommand.executeOrNullIfDuplicate(any(), any(), eq("sess-test"), isNull()))
+        when(submitAnswerCommand.executeOrNullIfDuplicate(any(), eq("sess-test"), isNull()))
                 .thenReturn(answerResult);
-        InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
-                31L, 9L, null, null, null, null, null, null, 5, null
-        );
+        InterviewSessionSupport.AnswerSubmission submission = InterviewSessionSupport.AnswerSubmission.builder()
+                .questionId(31L)
+                .optionId(9L)
+                .confidence(5)
+                .build();
 
         support.processAnswer(submission, session);
 
@@ -226,12 +228,15 @@ class InterviewSessionSupportTest {
         when(httpSessionStateService.getInterviewSession(session)).thenReturn(interviewSession);
         when(interviewSession.isFinished()).thenReturn(false);
         when(interviewSession.currentQuestionId()).thenReturn(10L);
-        when(submitAnswerCommand.executeOrNullIfDuplicate(any(), any(), eq("sess-test"), isNull()))
+        when(submitAnswerCommand.executeOrNullIfDuplicate(any(), eq("sess-test"), isNull()))
                 .thenReturn(null);
         when(interviewService.evaluateAnswer(10L, 3L)).thenReturn(replay);
-        InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
-                10L, 3L, null, null, null, null, null, null, 4, "dup-key"
-        );
+        InterviewSessionSupport.AnswerSubmission submission = InterviewSessionSupport.AnswerSubmission.builder()
+                .questionId(10L)
+                .optionId(3L)
+                .confidence(4)
+                .clientAttemptId("dup-key")
+                .build();
 
         InterviewSessionSupport.AnswerContext context = support.processAnswer(submission, session);
 
@@ -247,16 +252,18 @@ class InterviewSessionSupportTest {
         when(interviewSession.isFinished()).thenReturn(false);
         when(interviewSession.currentQuestionId()).thenReturn(99L);
         when(interviewService.evaluateAnswer(10L, 3L)).thenReturn(replay);
-        InterviewSessionSupport.AnswerSubmission submission = new InterviewSessionSupport.AnswerSubmission(
-                10L, 3L, null, null, null, null, null, null, 4, null
-        );
+        InterviewSessionSupport.AnswerSubmission submission = InterviewSessionSupport.AnswerSubmission.builder()
+                .questionId(10L)
+                .optionId(3L)
+                .confidence(4)
+                .build();
 
         InterviewSessionSupport.AnswerContext context = support.processAnswer(submission, session);
 
         assertThat(context.result()).isSameAs(replay);
         assertThat(context.interviewSession()).isSameAs(interviewSession);
         verify(interviewService).evaluateAnswer(10L, 3L);
-        verify(submitAnswerCommand, never()).executeOrNullIfDuplicate(any(), any(), any(), any());
+        verify(submitAnswerCommand, never()).executeOrNullIfDuplicate(any(), any(), any());
         verify(interviewSession, never()).registerAnswer(anyBoolean(), anyString());
         verify(interviewService, never()).addExamPenaltyQuestions(any());
         verify(httpSessionStateService, never()).setInterviewSession(any(), any());
@@ -331,22 +338,21 @@ class InterviewSessionSupportTest {
     }
 
     private Question sampleQuestion(String topic) {
-        return new Question(
-                1L,
-                "slug",
-                "slug",
-                "file.md",
-                topic,
-                "Q?",
-                "A",
-                false,
-                "hash",
-                QuestionType.TEXT,
-                null,
-                null,
-                0,
-                null
-        );
+        return Question.builder()
+                .id(1L)
+                .slug("slug")
+                .sourceSlug("slug")
+                .filePath("file.md")
+                .topic(topic)
+                .questionText("Q?")
+                .answerMarkdown("A")
+                .important(false)
+                .sourceHash("hash")
+                .questionType(QuestionType.TEXT)
+                .codeSnippet(null)
+                .diagramMermaid(null)
+                .takeaway(null)
+                .build();
     }
 
     private AnswerResult sampleAnswerResult(boolean correct) {

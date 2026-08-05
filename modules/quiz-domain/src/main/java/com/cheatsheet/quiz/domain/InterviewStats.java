@@ -8,7 +8,8 @@ import lombok.Builder;
  * карточек и попыток совпадали с {@link LearningMetrics} на всех экранах.</p>
  *
  * @param total   общее количество вопросов (по фильтру) / {@code cardsTotal}
- * @param due     количество вопросов, готовых к повторению / {@code dueNow}
+ * @param due     количество вопросов, готовых к показу — повторения и новые вместе / {@code dueNow}
+ * @param fresh   количество вопросов без единого ответа, подмножество {@code due} / {@code dueFresh}
  * @param learned количество «выученных» вопросов (repetitions ≥ порога) / {@code cardsMastered}
  * @param correct суммарное количество правильных попыток / {@code attemptsCorrect}
  * @param wrong   суммарное количество ошибочных попыток / {@code attemptsIncorrect}
@@ -17,6 +18,7 @@ import lombok.Builder;
 public record InterviewStats(
         long total,
         long due,
+        long fresh,
         long learned,
         long correct,
         long wrong
@@ -25,9 +27,20 @@ public record InterviewStats(
     public InterviewStats {
         if (total < 0) throw new IllegalArgumentException("total must be >= 0");
         if (due < 0) throw new IllegalArgumentException("due must be >= 0");
+        if (fresh < 0) throw new IllegalArgumentException("fresh must be >= 0");
         if (learned < 0) throw new IllegalArgumentException("learned must be >= 0");
         if (correct < 0) throw new IllegalArgumentException("correct must be >= 0");
         if (wrong < 0) throw new IllegalArgumentException("wrong must be >= 0");
+    }
+
+    /**
+     * Вопросы, которые уже открывали и пора открыть снова. Отделены от
+     * {@link #fresh()}, потому что «повторить» и «пройти впервые» — разные
+     * обещания: на пустом прогрессе весь банк попадает в {@code due}, и
+     * счётчик повторений обещал бы повторить то, чего пользователь не видел.
+     */
+    public long dueRepeats() {
+        return Math.max(0L, due - fresh);
     }
 
     /**
@@ -36,11 +49,12 @@ public record InterviewStats(
      */
     public static InterviewStats from(LearningMetrics metrics) {
         if (metrics == null) {
-            return new InterviewStats(0, 0, 0, 0, 0);
+            return new InterviewStats(0, 0, 0, 0, 0, 0);
         }
         return new InterviewStats(
                 metrics.cardsTotal(),
                 metrics.dueNow(),
+                metrics.dueFresh(),
                 metrics.cardsMastered(),
                 metrics.attemptsCorrect(),
                 metrics.attemptsIncorrect()

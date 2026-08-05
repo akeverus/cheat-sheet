@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.Builder;
 
 /**
- * Сервис административных операций обслуживания данных AI-артефактов.
+ * Сервис административных операций обслуживания данных.
  */
 @Service
 @RequiredArgsConstructor
@@ -34,24 +34,22 @@ public class AdminMaintenanceService {
     }
 
     /**
-     * Полный сброс AI-артефактов (options/hints/diagram/regen_count).
+     * Полный сброс производных данных вопроса: варианты, подсказки, диаграммы.
      */
     @Transactional
     public ResetAllResult resetAll() {
         int deletedOptions = answerOptionRepository.deleteAll();
         int deletedHints = hintRepository.deleteAll();
         int clearedDiagrams = questionRepository.clearAllDiagrams();
-        int resetRegenCount = questionRepository.resetAllRegenCount();
         optionCache.invalidateAll();
-        return new ResetAllResult(deletedOptions, deletedHints, clearedDiagrams, resetRegenCount);
+        return new ResetAllResult(deletedOptions, deletedHints, clearedDiagrams);
     }
 
     @Builder(toBuilder = true)
     public record ResetAllResult(
             int deletedOptions,
             int deletedHints,
-            int clearedDiagrams,
-            int resetRegenCount
+            int clearedDiagrams
     ) {
     }
 }

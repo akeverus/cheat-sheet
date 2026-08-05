@@ -86,9 +86,17 @@ class AnswerApiServiceTest {
                 new InterviewFilter("java", "core", true, false, true, false),
                 interviewSession
         );
-        AnswerApiService.AnswerCommand command = new AnswerApiService.AnswerCommand(
-                questionId, selectedOptionId, "java", "core", true, false, true, false, 4, null
-        );
+        AnswerApiService.AnswerCommand command = AnswerApiService.AnswerCommand.builder()
+                .questionId(questionId)
+                .optionId(selectedOptionId)
+                .topic("java")
+                .group("core")
+                .important(true)
+                .onlyWrong(false)
+                .shuffle(true)
+                .ordered(false)
+                .confidence(4)
+                .build();
 
         when(sessionSupport.processAnswer(any(InterviewSessionSupport.AnswerSubmission.class), eq(session)))
                 .thenReturn(context);
@@ -114,9 +122,17 @@ class AnswerApiServiceTest {
         assertThat(body.session()).isNotNull();
         assertThat(body.session().total()).isEqualTo(2);
         verify(sessionSupport).processAnswer(
-                new InterviewSessionSupport.AnswerSubmission(
-                        questionId, selectedOptionId, "java", "core", true, false, true, false, 4, null
-                ),
+                InterviewSessionSupport.AnswerSubmission.builder()
+                        .questionId(questionId)
+                        .optionId(selectedOptionId)
+                        .topic("java")
+                        .group("core")
+                        .important(true)
+                        .onlyWrong(false)
+                        .shuffle(true)
+                        .ordered(false)
+                        .confidence(4)
+                        .build(),
                 session
         );
         verify(facade).findRelated(questionId, "java");
@@ -145,9 +161,17 @@ class AnswerApiServiceTest {
                 new InterviewFilter("java", "core", true, false, true, false),
                 null
         );
-        AnswerApiService.AnswerCommand command = new AnswerApiService.AnswerCommand(
-                questionId, selectedOptionId, "java", "core", true, false, true, false, 3, null
-        );
+        AnswerApiService.AnswerCommand command = AnswerApiService.AnswerCommand.builder()
+                .questionId(questionId)
+                .optionId(selectedOptionId)
+                .topic("java")
+                .group("core")
+                .important(true)
+                .onlyWrong(false)
+                .shuffle(true)
+                .ordered(false)
+                .confidence(3)
+                .build();
 
         when(sessionSupport.processAnswer(any(InterviewSessionSupport.AnswerSubmission.class), eq(session)))
                 .thenReturn(context);
@@ -187,9 +211,17 @@ class AnswerApiServiceTest {
                 new InterviewFilter("java", "core", true, false, true, false),
                 null
         );
-        AnswerApiService.AnswerCommand command = new AnswerApiService.AnswerCommand(
-                questionId, selectedOptionId, "java", "core", true, false, true, false, 4, null
-        );
+        AnswerApiService.AnswerCommand command = AnswerApiService.AnswerCommand.builder()
+                .questionId(questionId)
+                .optionId(selectedOptionId)
+                .topic("java")
+                .group("core")
+                .important(true)
+                .onlyWrong(false)
+                .shuffle(true)
+                .ordered(false)
+                .confidence(4)
+                .build();
         when(sessionSupport.processAnswer(any(InterviewSessionSupport.AnswerSubmission.class), eq(session)))
                 .thenReturn(context);
         when(facade.findRelated(questionId, "java")).thenReturn(List.of());
@@ -209,21 +241,20 @@ class AnswerApiServiceTest {
     }
 
     private Question existingQuestion(long id) {
-        return new Question(
-                id,
-                "q-" + id,
-                "q-" + id,
-                "test.md",
-                "java",
-                "В чем ошибка?",
-                "Ответ",
-                false,
-                "hash",
-                QuestionType.TEXT,
-                null,
-                null,
-                0,
-                null
-        );
+        return Question.builder()
+                .id(id)
+                .slug("q-" + id)
+                .sourceSlug("q-" + id)
+                .filePath("test.md")
+                .topic("java")
+                .questionText("В чем ошибка?")
+                .answerMarkdown("Ответ")
+                .important(false)
+                .sourceHash("hash")
+                .questionType(QuestionType.TEXT)
+                .codeSnippet(null)
+                .diagramMermaid(null)
+                .takeaway(null)
+                .build();
     }
 }

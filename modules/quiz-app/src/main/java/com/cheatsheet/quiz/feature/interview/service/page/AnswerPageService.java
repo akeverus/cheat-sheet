@@ -10,6 +10,7 @@ import com.cheatsheet.quiz.domain.InterviewStats;
 import com.cheatsheet.quiz.domain.LearningMetrics;
 import com.cheatsheet.quiz.domain.ReviewState;
 import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
+import com.cheatsheet.quiz.feature.interview.service.progress.ExperienceService;
 import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
 import com.cheatsheet.quiz.feature.interview.usecase.stats.LearningMetricsService;
 import com.cheatsheet.quiz.persistence.QuestionRepository;
@@ -34,6 +35,7 @@ public class AnswerPageService {
     TopicCatalogService topicCatalogService;
     ReviewStateRepository reviewStateRepository;
     LearningMetricsService learningMetricsService;
+    ExperienceService experienceService;
 
     /**
      * Строит state для отображения страницы результата ответа.
@@ -71,7 +73,12 @@ public class AnswerPageService {
                 interviewSession,
                 diagram,
                 facade.findRelated(result.question().id(), result.question().topic()),
-                reviewState
+                reviewState,
+                // Та же чистая формула, что и в API-пути: XP уже начислен листенером
+                // на AnswerEvent внутри processAnswer (один путь на MVC и REST), здесь
+                // лишь пересчитываем величину для показа «+N XP». Без этого no-JS
+                // молча забирал опыт: начисление шло, а экран о нём не говорил.
+                experienceService.xpFor(result.correctAnswer(), result.question().difficulty())
         );
     }
 
@@ -89,16 +96,8 @@ public class AnswerPageService {
             InterviewSession interviewSession,
             String diagram,
             List<com.cheatsheet.quiz.domain.RelatedQuestion> relatedQuestions,
-            ReviewState reviewState
+            ReviewState reviewState,
+            long xpAwarded
     ) {
-        public AnswerPageState(com.cheatsheet.quiz.domain.AnswerResult result,
-                               String answerHtml, String answerDisplayMode,
-                               InterviewStats stats, List<String> topics, List<?> groups,
-                               String selectedGroup, InterviewFilter filter, InterviewMode mode,
-                               InterviewSession interviewSession, String diagram,
-                               List<com.cheatsheet.quiz.domain.RelatedQuestion> relatedQuestions) {
-            this(result, answerHtml, answerDisplayMode, stats, topics, groups, selectedGroup,
-                    filter, mode, interviewSession, diagram, relatedQuestions, null);
-        }
     }
 }

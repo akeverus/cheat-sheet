@@ -66,21 +66,20 @@ class BookmarksPageServiceTest {
     }
 
     private static Question question(long id, String topic) {
-        return new Question(
-                id,
-                topic + ".md#Q" + id,
-                topic + ".md#Q" + id,
-                topic + ".md",
-                topic,
-                "Question " + id + " about maps?",
-                "Answer " + id,
-                true,
-                "hash-" + id,
-                QuestionType.TEXT,
-                null,
-                null,
-                0,
-                null
-        );
+        return Question.builder()
+                .id(id)
+                .slug(topic + ".md#Q" + id)
+                .sourceSlug(topic + ".md#Q" + id)
+                .filePath(topic + ".md")
+                .topic(topic)
+                .questionText("Question " + id + " about maps?")
+                .answerMarkdown("Answer " + id)
+                .important(true)
+                .sourceHash("hash-" + id)
+                .questionType(QuestionType.TEXT)
+                .codeSnippet(null)
+                .diagramMermaid(null)
+                .takeaway(null)
+                .build();
     }
 }

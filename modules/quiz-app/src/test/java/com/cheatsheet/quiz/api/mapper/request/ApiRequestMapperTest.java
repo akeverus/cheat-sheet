@@ -42,7 +42,7 @@ class ApiRequestMapperTest {
 
     @Test
     void toStatsAndNextQuestionCommandsPreserveRequestParameters() {
-        StatsApiService.StatsCommand stats = mapper.toStatsCommand("topic", "group", true, false, true, false);
+        StatsApiService.StatsCommand stats = mapper.toStatsCommand("topic", "group", true, false);
         NextQuestionApiService.NextQuestionCommand next = mapper.toNextQuestionCommand(
                 "topic", "group", true, false, true, true, false, 42L
         );
@@ -51,8 +51,6 @@ class ApiRequestMapperTest {
         assertThat(stats.group()).isEqualTo("group");
         assertThat(stats.important()).isTrue();
         assertThat(stats.onlyWrong()).isFalse();
-        assertThat(stats.shuffle()).isTrue();
-        assertThat(stats.ordered()).isFalse();
 
         assertThat(next.topic()).isEqualTo("topic");
         assertThat(next.group()).isEqualTo("group");

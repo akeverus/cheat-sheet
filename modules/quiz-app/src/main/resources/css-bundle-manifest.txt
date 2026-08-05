@@ -1,0 +1,104 @@
+# Порядок каскада CSS — единственный источник правды.
+#
+# Читают этот файл двое: CssBundleService (собирает /css/bundle/{page}.{hash}.css)
+# и TemplateFragmentContractTest (проверяет структурный CSS). Раньше порядок жил
+# в head.html списком из 33 <link>, и шапка была единственным местом, где он
+# записан; теперь шапка отдаёт один <link>, а порядок — здесь.
+#
+# Формат строки: <гейт> <путь от корня сайта>
+#   *              — на всех страницах
+#   focus,result   — только на перечисленных значениях параметра page
+# Значения page: focus, result, settings, stats, bookmarks, summary, error, login.
+#
+# Порядок строк = порядок исходника внутри слоя. Приоритет слоёв объявлен первой
+# строкой tokens.css: tokens, reset, shell, components, pages, utilities, pixel.
+# Многие файлы объявляют больше одного слоя (pages-focus.css — pages+components,
+# shell.css — shell+pages, pages-stats.css — pages+utilities), поэтому строки
+# нельзя переставлять «раз слои всё равно разведут»: внутри слоя выигрывает
+# последний, и перестановка меняет картинку.
+
+* /css/fonts-local.css
+* /css/tokens.css
+* /css/reset.css
+* /css/utilities-core.css
+* /css/reset-layout.css
+* /css/components-controls.css
+
+# components-card: базовая поверхность `.card` (фон + поля). Рано в слое
+# components — страничные файлы и слой pixel её дополняют, а не наоборот.
+* /css/components-card.css
+
+# components-icons: базовая геометрия .ed-icon (@layer components, глобально).
+# Идёт ДО content-tabs/widgets, но их descendant-оверрайды размера
+# (.content-tab .ed-icon и т.п.) бьют базу по специфичности независимо от порядка.
+* /css/components-icons.css
+* /css/components-content-tabs.css
+* /css/components-alert.css
+
+# components-answer: поверхность разбора ответа (вердикт, панели пояснения, разбор
+# дистракторов, раскрытие «Подробнее»). @layer components, но файл двухстраничный:
+# разбор рендерится только на .focus-page (JS #result-feedback) и .result-page
+# (no-JS). Гейт в @layer components законен только потому, что ни один из его 45
+# классов не встречается в остальных шаблонах (.search-answer-preview на /stats —
+# другой токен, .answer его не задевает); там обычно живут кросс-страничные вещи.
+# Это не комментарий-обещание: то же самое проверяет scripts/css-leak-audit.py —
+# он читает гейты отсюда и ищет классы файла в разметке за их пределами.
+focus,result /css/components-answer.css
+
+# components-prose: прозо-поверхность отрендеренного markdown (.markdown-content
+# table/task-list/del/mermaid). Глобально — рендерится и на focus, и на result.
+* /css/components-prose.css
+
+# Страничные файлы: каждый на 100% заскоуплен под .{page}-page (гейт
+# scripts/css-leak-audit.py, leak=0), поэтому едут только на своей странице.
+focus /css/pages-focus.css
+# Пост-ответный confidence-виджет вынесен из хвоста pages-focus.css — СРАЗУ после
+# него, чтобы порядок внутри @layer pages остался 1:1.
+focus /css/pages-focus-confidence.css
+settings /css/pages-settings.css
+stats /css/pages-stats.css
+bookmarks /css/pages-bookmarks.css
+summary /css/pages-summary.css
+error /css/pages-error.css
+login /css/pages-login.css
+result /css/pages-result.css
+
+* /css/components-widgets.css
+
+# print.css — единственный @media print во всём CSS (@layer pages, на экране не
+# применяется → позиция среди pages нерелевантна).
+* /css/print.css
+
+* /css/components-signatures.css
+# components-modals ОБЯЗАН быть ПОСЛЕ components-signatures: оба @layer components,
+# заголовок модалки (semibold) должен победить signatures-medium равной
+# специфичности по порядку исходника.
+* /css/components-modals.css
+
+* /css/utilities-overrides.css
+
+# shell.css — AppShell (sidebar/topbar/mobile-nav). @layer shell.
+* /css/shell.css
+
+# Слой pixel: декор, FX, спрайты. Ничего структурного (position/display/grid) —
+# слой идёт последним и перебил бы shell.
+* /css/pixel-fx.css
+* /css/pixel-ambient.css
+* /css/pixel-mascot.css
+* /css/pixel-buttons.css
+* /css/pixel-options.css
+* /css/pixel-nav-badges.css
+* /css/pixel-cards.css
+* /css/pixel-result-banner.css
+* /css/pixel-animations.css
+# pixel-motion-parity — гашение под reduced-motion / data-motion=off. После всех
+# pixel-*, иначе гасить будет нечего.
+* /css/pixel-motion-parity.css
+* /css/pixel/sprite-anim.css
+
+# Тема подсветки синтаксиса — своя, на токенах (--code-*), вместо вендорной
+# atom-one-dark: та зашивала восемь HEX намертво и не реагировала на тумблер
+# темы (на светлом фоне её жёлтый давал ~1.4:1). @layer components; позиция в
+# конце ничего не решает — слой уже выше reset, где `pre` задаёт цвет текста.
+# Гейт совпадает с includeHighlight в head.html.
+focus,result /css/components-code-highlight.css

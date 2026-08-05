@@ -5,10 +5,9 @@ import com.cheatsheet.quiz.feature.interview.dto.response.answer.AnswerResponse;
 import com.cheatsheet.quiz.feature.interview.dto.response.answer.OptionExplanationDto;
 import com.cheatsheet.quiz.feature.interview.dto.response.answer.RelatedQuestionDto;
 import com.cheatsheet.quiz.feature.interview.dto.response.answer.SessionInfoDto;
-import com.cheatsheet.quiz.domain.AnswerOption;
-import com.cheatsheet.quiz.domain.AnswerResult;
 import com.cheatsheet.quiz.domain.RelatedQuestion;
 import com.cheatsheet.quiz.domain.UserExperience;
+import com.cheatsheet.quiz.feature.interview.service.copy.AnswerCopy;
 import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
 import com.cheatsheet.quiz.feature.interview.service.progress.ExperienceService;
 import com.cheatsheet.quiz.infrastructure.render.AnswerHtmlSplitter;
@@ -52,12 +51,19 @@ public class AnswerApiService {
         long xpAwarded = experienceService.xpFor(correct, ctx.result().question().difficulty());
         UserExperience experience = experienceService.snapshot();
 
+        String correctLetter = AnswerCopy.optionLetter(ctx.result(), ctx.result().correct().id());
+        String selectedLetter = AnswerCopy.optionLetter(ctx.result(), ctx.result().selected().id());
+        int intervalDays = ctx.result().updatedState().intervalDays();
+
         return new AnswerResponse(
                 correct,
                 ctx.result().correct().id(),
                 ctx.result().selected().id(),
-                correctOptionLetter(ctx.result()),
-                selectedOptionLetter(ctx.result()),
+                // Готовые строки, а не сырьё для сборки на клиенте: вердикт и срок
+                // повторения — это текст продукта, и у него один автор (AnswerCopy),
+                // общий с no-JS-страницей.
+                AnswerCopy.verdict(correct, selectedLetter, correctLetter),
+                AnswerCopy.nextReview(intervalDays),
                 answerHtml,
                 split.leadHtml(),
                 split.restHtml(),
@@ -67,34 +73,11 @@ public class AnswerApiService {
                 relatedQuestions,
                 sessionInfo,
                 ctx.result().updatedState().nextReviewAt(),
-                ctx.result().updatedState().intervalDays(),
+                intervalDays,
                 xpAwarded,
                 experience.xp(),
                 experience.level()
         );
-    }
-
-    /**
-     * Буква правильного варианта (A/B/C/…) = 1-based позиция в списке вариантов,
-     * т.е. тот же порядок, в котором фронт нумерует опции CSS-счётчиком. Пустая
-     * строка — если правильный не найден в списке (не должно случаться).
-     */
-    private String correctOptionLetter(AnswerResult result) {
-        return optionLetter(result, result.correct().id());
-    }
-
-    private String selectedOptionLetter(AnswerResult result) {
-        return optionLetter(result, result.selected().id());
-    }
-
-    private String optionLetter(AnswerResult result, long optionId) {
-        List<AnswerOption> options = result.options();
-        for (int i = 0; i < options.size(); i++) {
-            if (options.get(i).id() == optionId) {
-                return String.valueOf((char) ('A' + i));
-            }
-        }
-        return "";
     }
 
     public ResponseEntity<AnswerResponse> toHttpResponse(AnswerCommand command, HttpSession session) {
@@ -163,29 +146,5 @@ public class AnswerApiService {
             Integer responseTimeMs,
             Long questionRevisionId
     ) {
-        /** Обратная совместимость: без {@code openedContentBlockIds}/responseTimeMs/revision. */
-        public AnswerCommand(long questionId, long optionId, String topic, String group,
-                             Boolean important, Boolean onlyWrong, Boolean shuffle, Boolean ordered,
-                             Integer confidence, String clientAttemptId) {
-            this(questionId, optionId, topic, group, important, onlyWrong, shuffle, ordered,
-                    confidence, clientAttemptId, null, null, null);
-        }
-
-        /** Обратная совместимость: без {@code responseTimeMs}/revision. */
-        public AnswerCommand(long questionId, long optionId, String topic, String group,
-                             Boolean important, Boolean onlyWrong, Boolean shuffle, Boolean ordered,
-                             Integer confidence, String clientAttemptId, String openedContentBlockIds) {
-            this(questionId, optionId, topic, group, important, onlyWrong, shuffle, ordered,
-                    confidence, clientAttemptId, openedContentBlockIds, null, null);
-        }
-
-        /** Обратная совместимость: без {@code questionRevisionId}. */
-        public AnswerCommand(long questionId, long optionId, String topic, String group,
-                             Boolean important, Boolean onlyWrong, Boolean shuffle, Boolean ordered,
-                             Integer confidence, String clientAttemptId, String openedContentBlockIds,
-                             Integer responseTimeMs) {
-            this(questionId, optionId, topic, group, important, onlyWrong, shuffle, ordered,
-                    confidence, clientAttemptId, openedContentBlockIds, responseTimeMs, null);
-        }
     }
 }

@@ -21,7 +21,6 @@ public class TestQuestionBuilder {
     private QuestionType questionType = QuestionType.TEXT;
     private String codeSnippet = null;
     private String diagramMermaid = null;
-    private int regenCount = 0;
     private String takeaway = null;
 
     public static TestQuestionBuilder aQuestion() {
@@ -37,14 +36,25 @@ public class TestQuestionBuilder {
     public TestQuestionBuilder withQuestionType(QuestionType type) { this.questionType = type; return this; }
     public TestQuestionBuilder withCodeSnippet(String code) { this.codeSnippet = code; return this; }
     public TestQuestionBuilder withDiagramMermaid(String diagram) { this.diagramMermaid = diagram; return this; }
-    public TestQuestionBuilder withRegenCount(int count) { this.regenCount = count; return this; }
     public TestQuestionBuilder withTakeaway(String takeaway) { this.takeaway = takeaway; return this; }
     public TestQuestionBuilder withSourceHash(String hash) { this.sourceHash = hash; return this; }
     public TestQuestionBuilder withFilePath(String path) { this.filePath = path; return this; }
 
     public Question build() {
-        return new Question(id, slug, sourceSlug, filePath, topic, questionText,
-                answerMarkdown, important, sourceHash, questionType, codeSnippet,
-                diagramMermaid, regenCount, takeaway);
+        return Question.builder()
+                .id(id)
+                .slug(slug)
+                .sourceSlug(sourceSlug)
+                .filePath(filePath)
+                .topic(topic)
+                .questionText(questionText)
+                .answerMarkdown(answerMarkdown)
+                .important(important)
+                .sourceHash(sourceHash)
+                .questionType(questionType)
+                .codeSnippet(codeSnippet)
+                .diagramMermaid(diagramMermaid)
+                .takeaway(takeaway)
+                .build();
     }
 }

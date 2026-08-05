@@ -6,24 +6,30 @@ import lombok.Builder;
 /**
  * Статистика по одной теме (для графиков и таблицы тем).
  *
+ * <p>{@code due} — вопросы, готовые к показу: и просроченные повторения, и те, на
+ * которые ещё не отвечали. {@code fresh} — только вторая часть, то есть {@code fresh}
+ * всегда не больше {@code due}. Разведены ради копирайта: «к повторению» на теме, где
+ * не было ни одного ответа, обещает повторить то, чего пользователь не видел.
+ * Собственно отбор вопросов работает по {@code due} и на разделение не опирается.
+ *
  * @param topic    название темы
  * @param total    общее количество вопросов в теме
- * @param due      количество вопросов, готовых к повторению
+ * @param due      количество вопросов, готовых к показу (повторения + новые)
+ * @param fresh    количество вопросов без единого ответа
  * @param learned  количество «выученных» вопросов
  * @param correct  суммарное количество правильных ответов
  * @param wrong    суммарное количество неправильных ответов
- * @param regenSum суммарное количество перезагрузок вариантов по теме
- * @param maturityScore оценка зрелости темы (от 0.0 до 1.0)
+ * @param maturityScore средняя зрелость темы: {@code ease_factor × interval_days}
  */
 @Builder(toBuilder = true)
 public record TopicStats(
         String topic,
         long total,
         long due,
+        long fresh,
         long learned,
         long correct,
         long wrong,
-        long regenSum,
         double maturityScore
 ) {
     /**
@@ -36,9 +42,8 @@ public record TopicStats(
         }
     }
 
-    /** Backwards-compatible constructor for existing callers without maturityScore. */
-    public TopicStats(String topic, long total, long due, long learned,
-                      long correct, long wrong, long regenSum) {
-        this(topic, total, due, learned, correct, wrong, regenSum, 0.0);
+    /** Вопросы, у которых уже есть история и наступил срок повторения. */
+    public long dueRepeats() {
+        return Math.max(0L, due - fresh);
     }
 }

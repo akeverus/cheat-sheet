@@ -101,10 +101,21 @@ class InterviewDtoMapperTest {
     }
 
     private Question stubQuestion(long id, QuestionType type, String code, String diagram) {
-        return new Question(
-                id, "slug-" + id, "source-" + id, "java/q-" + id + ".md", "java",
-                "Q text", "A markdown", false, "hash",
-                type, code, diagram, 0, null);
+        return Question.builder()
+                .id(id)
+                .slug("slug-" + id)
+                .sourceSlug("source-" + id)
+                .filePath("java/q-" + id + ".md")
+                .topic("java")
+                .questionText("Q text")
+                .answerMarkdown("A markdown")
+                .important(false)
+                .sourceHash("hash")
+                .questionType(type)
+                .codeSnippet(code)
+                .diagramMermaid(diagram)
+                .takeaway(null)
+                .build();
     }
 
     private ReviewState stubReview(long id) {

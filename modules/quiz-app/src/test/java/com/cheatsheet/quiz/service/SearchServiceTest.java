@@ -76,8 +76,36 @@ class SearchServiceTest {
         );
         when(fullTextSearchRepository.search("test", 10)).thenReturn(ftsResults);
         when(questionRepository.findByIds(List.of(1L, 2L))).thenReturn(List.of(
-                new Question(1L, "slug1", "slug1", "file1", "topic", "Q1?", "A1", false, "h1", QuestionType.TEXT, null, null, 0, null),
-                new Question(2L, "slug2", "slug2", "file2", "topic", "Q2?", "A2", false, "h2", QuestionType.TEXT, null, null, 0, null)
+                Question.builder()
+                .id(1L)
+                .slug("slug1")
+                .sourceSlug("slug1")
+                .filePath("file1")
+                .topic("topic")
+                .questionText("Q1?")
+                .answerMarkdown("A1")
+                .important(false)
+                .sourceHash("h1")
+                .questionType(QuestionType.TEXT)
+                .codeSnippet(null)
+                .diagramMermaid(null)
+                .takeaway(null)
+                .build(),
+                Question.builder()
+                .id(2L)
+                .slug("slug2")
+                .sourceSlug("slug2")
+                .filePath("file2")
+                .topic("topic")
+                .questionText("Q2?")
+                .answerMarkdown("A2")
+                .important(false)
+                .sourceHash("h2")
+                .questionType(QuestionType.TEXT)
+                .codeSnippet(null)
+                .diagramMermaid(null)
+                .takeaway(null)
+                .build()
         ));
 
         var results = searchService.search("test", 10);

@@ -12,11 +12,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.ui.Model;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,8 +30,6 @@ class InterviewMvcControllerTest {
     @Mock
     private AdminMaintenanceService adminMaintenanceService;
     @Mock
-    private com.cheatsheet.quiz.api.security.SensitiveEndpointAccessService sensitiveEndpointAccessService;
-    @Mock
     private HttpSession session;
     @Mock
     private Model model;
@@ -42,25 +41,38 @@ class InterviewMvcControllerTest {
         controller = new InterviewMvcController(
                 interviewPageMvcService,
                 interviewFlowMvcService,
-                adminMaintenanceService,
-                sensitiveEndpointAccessService);
+                adminMaintenanceService);
     }
 
     @Test
-    void indexAndTrainingDelegateToSamePageServiceMethod() {
+    void indexDelegatesToPageService() {
         when(interviewPageMvcService.index(
                 "java", "core", true, false, true, false, true, 77L, null, "EXAM", session, model))
                 .thenReturn("focus");
 
         String indexView = controller.index(
                 "java", "core", true, false, true, false, true, 77L, null, "EXAM", session, model);
-        String trainingView = controller.training(
-                "java", "core", true, false, true, false, true, 77L, null, "EXAM", session, model);
 
         assertThat(indexView).isEqualTo("focus");
-        assertThat(trainingView).isEqualTo("focus");
-        verify(interviewPageMvcService, times(2))
+        verify(interviewPageMvcService)
                 .index("java", "core", true, false, true, false, true, 77L, null, "EXAM", session, model);
+    }
+
+    @Test
+    void legacyTrainingRouteRedirectsToCanonicalRootWithWhitelistedParamsOnly() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setParameter("topic", "java");
+        request.setParameter("mode", "EXAM");
+        // Пустые значения не переносим — «?topic=» это мусор в адресе, а не фильтр.
+        request.setParameter("group", "  ");
+        // Не-whitelist параметры отбрасываем: слепой перенос чужого query с
+        // легаси-адреса на канонический — это open-redirect-подобный вектор.
+        request.setParameter("utm_source", "spam");
+
+        String view = controller.training(request);
+
+        assertThat(view).isEqualTo("redirect:/?topic=java&mode=EXAM");
+        verifyNoInteractions(interviewPageMvcService);
     }
 
     @Test

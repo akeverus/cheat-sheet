@@ -34,12 +34,13 @@ public class WeakTopicsSelectionStrategy implements QuestionSelectionStrategy {
 
     @Override
     public Optional<Long> selectNextQuestionId(InterviewFilter filter, long nowEpoch) {
-        String weakTopic = questionStatsRepository.findWeakestTopic(QuizConstants.WEAK_TOPIC_THRESHOLD);
+        var weakest = questionStatsRepository.findWeakestTopic(QuizConstants.WEAK_TOPIC_THRESHOLD);
 
-        if (weakTopic == null) {
+        if (weakest == null) {
             log.debug("Нет слабых тем (accuracy >= {}%), используем стратегию по умолчанию", QuizConstants.WEAK_TOPIC_THRESHOLD);
             return defaultStrategy.selectNextQuestionId(filter, nowEpoch);
         }
+        String weakTopic = weakest.topic();
 
         // Симметрично групповому guard'у ниже: если пользователь зафиксировал
         // конкретную тему, нельзя подсовывать вопросы из глобально слабейшей

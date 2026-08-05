@@ -89,7 +89,7 @@ class InterviewServiceTest {
 
     @Test
     void startSessionPreloadsSelectedQuestions() {
-        InterviewFilter filter = new InterviewFilter("java", true, false, false);
+        InterviewFilter filter = new InterviewFilter("java", null, true, false, false, true);
         InterviewSession created = new InterviewSession(InterviewMode.EXAM, List.of(10L, 20L, 30L), "java", null, true, false, false, true);
         when(trainingSessionService.startSession(InterviewMode.EXAM, 3, filter)).thenReturn(created);
 
@@ -114,7 +114,6 @@ class InterviewServiceTest {
 
     @Test
     void submitAnswerUpdatesReviewStateAndReturnsResult() {
-        InterviewFilter filter = new InterviewFilter(null, null, null, false);
         Question question = sampleQuestion(1L);
         List<AnswerOption> options = List.of(
                 new AnswerOption(100L, 1L, "Correct", true, 0, "OPENAI", null),
@@ -126,7 +125,7 @@ class InterviewServiceTest {
         when(answerOptionRepository.findByQuestionId(1L)).thenReturn(options);
         when(reviewService.applyAnswer(question, true, null)).thenReturn(updated);
 
-        AnswerResult result = interviewService.submitAnswer(1L, 100L, filter, null);
+        AnswerResult result = interviewService.submitAnswer(1L, 100L, null);
 
         assertThat(result.correctAnswer()).isTrue();
         assertThat(result.correct().id()).isEqualTo(100L);
@@ -136,7 +135,6 @@ class InterviewServiceTest {
 
     @Test
     void submitAnswerThrowsWhenSelectedOptionMissing() {
-        InterviewFilter filter = new InterviewFilter(null, null, null, false);
         Question question = sampleQuestion(1L);
         List<AnswerOption> options = List.of(
                 new AnswerOption(201L, 1L, "Correct", true, 0, "OPENAI", null),
@@ -146,14 +144,13 @@ class InterviewServiceTest {
         when(questionRepository.findById(1L)).thenReturn(Optional.of(question));
         when(answerOptionRepository.findByQuestionId(1L)).thenReturn(options);
 
-        assertThatThrownBy(() -> interviewService.submitAnswer(1L, 999L, filter, null))
+        assertThatThrownBy(() -> interviewService.submitAnswer(1L, 999L, null))
                 .isInstanceOf(OptionNotFoundException.class);
         verify(reviewService, never()).applyAnswer(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyBoolean(), org.mockito.ArgumentMatchers.any());
     }
 
     @Test
     void submitAnswerUsesSelectedAsFallbackWhenNoCorrectOptionExists() {
-        InterviewFilter filter = new InterviewFilter(null, null, null, false);
         Question question = sampleQuestion(1L);
         List<AnswerOption> options = List.of(
                 new AnswerOption(301L, 1L, "Wrong A", false, 0, "OPENAI", null),
@@ -165,7 +162,7 @@ class InterviewServiceTest {
         when(reviewService.applyAnswer(question, false, null))
                 .thenReturn(new ReviewState(1L, 0, 1, 2.4, 1_700_086_400L, ReviewResult.WRONG, 0, 1));
 
-        AnswerResult result = interviewService.submitAnswer(1L, 301L, filter, null);
+        AnswerResult result = interviewService.submitAnswer(1L, 301L, null);
 
         assertThat(result.correct().id()).isEqualTo(301L);
         assertThat(result.correctAnswer()).isFalse();
@@ -173,7 +170,6 @@ class InterviewServiceTest {
 
     @Test
     void submitAnswerUsesFirstCorrectWhenMultipleCorrectOptionsExist() {
-        InterviewFilter filter = new InterviewFilter(null, null, null, false);
         Question question = sampleQuestion(1L);
         List<AnswerOption> options = List.of(
                 new AnswerOption(401L, 1L, "Correct A", true, 0, "OPENAI", null),
@@ -185,7 +181,7 @@ class InterviewServiceTest {
         when(reviewService.applyAnswer(question, true, null))
                 .thenReturn(new ReviewState(1L, 1, 0, 2.7, 1_700_086_400L, ReviewResult.CORRECT, 1, 0));
 
-        AnswerResult result = interviewService.submitAnswer(1L, 401L, filter, null);
+        AnswerResult result = interviewService.submitAnswer(1L, 401L, null);
 
         assertThat(result.correct().id()).isEqualTo(401L);
         assertThat(result.correctAnswer()).isTrue();
@@ -193,7 +189,7 @@ class InterviewServiceTest {
 
     @Test
     void nextQuestionSkipsExcludedQuestionId() {
-        InterviewFilter filter = new InterviewFilter("topic", null, null, false);
+        InterviewFilter filter = new InterviewFilter("topic", null, null, null, false, true);
         Question excluded = sampleQuestion(10L);
         Question alternative = sampleQuestion(11L);
         List<AnswerOption> options = List.of(
@@ -250,7 +246,7 @@ class InterviewServiceTest {
 
     @Test
     void nextQuestionAcceptsModelPayloadWhenQuestionHasFewerOptions() {
-        InterviewFilter filter = new InterviewFilter("topic", null, null, false);
+        InterviewFilter filter = new InterviewFilter("topic", null, null, null, false, true);
         Question primary = sampleQuestion(31L);
         List<AnswerOption> reducedOptions = List.of(
                 new AnswerOption(3100L, 31L, "Correct", true, 0, "OPENAI", null),
@@ -321,21 +317,20 @@ class InterviewServiceTest {
     }
 
     private Question sampleQuestion(long id) {
-        return new Question(
-                id,
-                "slug-" + id,
-                "source-" + id,
-                "topic.md",
-                "topic",
-                "What is Java?",
-                "Java is a language",
-                false,
-                "hash",
-                QuestionType.TEXT,
-                null,
-                null,
-                0,
-                null
-        );
+        return Question.builder()
+                .id(id)
+                .slug("slug-" + id)
+                .sourceSlug("source-" + id)
+                .filePath("topic.md")
+                .topic("topic")
+                .questionText("What is Java?")
+                .answerMarkdown("Java is a language")
+                .important(false)
+                .sourceHash("hash")
+                .questionType(QuestionType.TEXT)
+                .codeSnippet(null)
+                .diagramMermaid(null)
+                .takeaway(null)
+                .build();
     }
 }

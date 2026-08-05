@@ -40,13 +40,11 @@ class StatsApiServiceTest {
 
     @Test
     void buildStatsResponseNormalizesFilterAndMapsResponse() {
-        InterviewStats domainStats = new InterviewStats(20, 5, 9, 33, 7);
-        InterviewStatsResponse mapped = new InterviewStatsResponse(20, 5, 9, 33, 7);
+        InterviewStats domainStats = new InterviewStats(20, 5, 2, 9, 33, 7);
+        InterviewStatsResponse mapped = new InterviewStatsResponse(20, 5, 2, 9, 33, 7);
         StatsApiService.StatsCommand command = new StatsApiService.StatsCommand(
                 "  java  ",
                 "  core ",
-                true,
-                false,
                 true,
                 false
         );
@@ -63,20 +61,21 @@ class StatsApiServiceTest {
         assertThat(filter.group()).isEqualTo("core");
         assertThat(filter.importantOnly()).isTrue();
         assertThat(filter.onlyWrong()).isFalse();
-        assertThat(filter.shuffle()).isTrue();
-        assertThat(filter.ordered()).isFalse();
+        // Порядок выдачи на агрегат не влияет: shuffle не должен обнулять тему.
+        assertThat(filter.shuffle()).isNull();
+        assertThat(filter.effectiveTopic()).isEqualTo("java");
         verify(statsApiMapper).toResponse(domainStats);
     }
 
     @Test
     void buildTopicStatsResponseMapsFacadeResult() {
         List<TopicStats> domain = List.of(
-                new TopicStats("java", 10, 3, 4, 20, 5, 1),
-                new TopicStats("spring", 8, 2, 3, 15, 4, 0)
+                new TopicStats("java", 10, 3, 1, 4, 20, 5, 0.0),
+                new TopicStats("spring", 8, 2, 0, 3, 15, 4, 0.0)
         );
         List<TopicStatsResponse> mapped = List.of(
-                new TopicStatsResponse("java", 10, 3, 4, 20, 5, 1),
-                new TopicStatsResponse("spring", 8, 2, 3, 15, 4, 0)
+                new TopicStatsResponse("java", 10, 3, 1, 4, 20, 5),
+                new TopicStatsResponse("spring", 8, 2, 0, 3, 15, 4)
         );
         when(facade.getTopicStats()).thenReturn(domain);
         when(statsApiMapper.toTopicResponses(domain)).thenReturn(mapped);
@@ -90,10 +89,10 @@ class StatsApiServiceTest {
 
     @Test
     void toStatsHttpResponseWrapsPayloadWithOkStatus() {
-        InterviewStats domainStats = new InterviewStats(10, 2, 4, 18, 5);
-        InterviewStatsResponse mapped = new InterviewStatsResponse(10, 2, 4, 18, 5);
+        InterviewStats domainStats = new InterviewStats(10, 2, 1, 4, 18, 5);
+        InterviewStatsResponse mapped = new InterviewStatsResponse(10, 2, 1, 4, 18, 5);
         StatsApiService.StatsCommand command = new StatsApiService.StatsCommand(
-                "java", "core", true, false, true, false
+                "java", "core", true, false
         );
         when(facade.getStats(any())).thenReturn(domainStats);
         when(statsApiMapper.toResponse(domainStats)).thenReturn(mapped);
@@ -106,8 +105,8 @@ class StatsApiServiceTest {
 
     @Test
     void toTopicStatsHttpResponseWrapsPayloadWithOkStatus() {
-        List<TopicStats> domain = List.of(new TopicStats("java", 10, 3, 4, 20, 5, 1));
-        List<TopicStatsResponse> mapped = List.of(new TopicStatsResponse("java", 10, 3, 4, 20, 5, 1));
+        List<TopicStats> domain = List.of(new TopicStats("java", 10, 3, 1, 4, 20, 5, 0.0));
+        List<TopicStatsResponse> mapped = List.of(new TopicStatsResponse("java", 10, 3, 1, 4, 20, 5));
         when(facade.getTopicStats()).thenReturn(domain);
         when(statsApiMapper.toTopicResponses(domain)).thenReturn(mapped);
 

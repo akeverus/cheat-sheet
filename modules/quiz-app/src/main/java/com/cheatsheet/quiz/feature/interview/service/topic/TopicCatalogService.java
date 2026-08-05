@@ -3,6 +3,7 @@ package com.cheatsheet.quiz.feature.interview.service.topic;
 import com.cheatsheet.quiz.config.app.AppProperties;
 import lombok.AccessLevel;
 import com.cheatsheet.quiz.domain.InterviewFilter;
+import com.cheatsheet.quiz.domain.TopicStats;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
@@ -129,10 +130,125 @@ public class TopicCatalogService {
         for (GroupDef group : groupsOrdered) {
             long count = counters.getOrDefault(group.id(), 0L);
             if (count > 0) {
-                options.add(new GroupOption(group.id(), group.title(), group.description(), count));
+                options.add(new GroupOption(group.id(), group.title(), group.description(), count, group.icon()));
             }
         }
         return options;
+    }
+
+    /**
+     * Собирает карточки разделов для каталога тем: охват — из банка вопросов,
+     * прогресс — из потемной статистики.
+     *
+     * <p>Каталог из ~320 тем нельзя обозреть: таблица «Детализация по темам»
+     * отвечает на вопрос «как дела с темой X», но не на вопрос «с чего начать».
+     * Раздел — единственный уровень, на котором список умещается в один экран,
+     * поэтому агрегация идёт именно до него: десять карточек вместо трёхсот
+     * строк.
+     *
+     * <p>Два источника, а не один: состав раздела задаёт банк вопросов
+     * ({@code questionCountsByTopic}), прогресс накладывается сверху и по
+     * умолчанию равен нулю. Тема, попавшая только в статистику, в каталог не
+     * добавляется — иначе раздел показал бы «изучено больше, чем есть».
+     *
+     * <p>Разделы без единого вопроса не рендерятся: карточка «0 из 0» сообщала
+     * бы о конфиге, а не о прогрессе.
+     *
+     * <p>Точность — {@code null}, когда по разделу не было ни одного ответа.
+     * Ноль процентов означал бы «отвечал и всё неверно»; нетронутый раздел
+     * обязан выглядеть иначе, чем полностью проваленный.
+     */
+    public List<GroupProgress> groupCatalog(Map<String, Long> questionCountsByTopic, List<TopicStats> topicStats) {
+        if (questionCountsByTopic == null || questionCountsByTopic.isEmpty()) {
+            return List.of();
+        }
+        // [темы, вопросы, изучено, готовы к показу, верно, неверно, новые]
+        Map<String, long[]> sums = new HashMap<>();
+        for (Map.Entry<String, Long> entry : questionCountsByTopic.entrySet()) {
+            String groupId = detectGroup(entry.getKey());
+            if (groupId == null) {
+                continue;
+            }
+            long[] acc = sums.computeIfAbsent(groupId, key -> new long[7]);
+            acc[0] += 1;
+            acc[1] += entry.getValue() == null ? 0L : entry.getValue();
+        }
+        if (topicStats != null) {
+            for (TopicStats stats : topicStats) {
+                if (stats == null) {
+                    continue;
+                }
+                String groupId = detectGroup(stats.topic());
+                // Тема с прогрессом, но без вопросов в банке — вопросы удалили,
+                // след в review_state остался. Её нет в каталоге, и прогресс по
+                // ней некуда класть: раздел мог бы показать «изучено больше, чем
+                // есть», и полоса ушла бы за 100%.
+                if (groupId == null || !sums.containsKey(groupId)) {
+                    continue;
+                }
+                long[] acc = sums.get(groupId);
+                acc[2] += stats.learned();
+                acc[3] += stats.due();
+                acc[4] += stats.correct();
+                acc[5] += stats.wrong();
+                acc[6] += stats.fresh();
+            }
+        }
+        List<GroupProgress> catalog = new ArrayList<>();
+        for (GroupDef group : groupsOrdered) {
+            long[] acc = sums.get(group.id());
+            if (acc == null || acc[1] == 0) {
+                continue;
+            }
+            long attempts = acc[4] + acc[5];
+            Double accuracy = attempts > 0 ? acc[4] * 100.0 / attempts : null;
+            catalog.add(new GroupProgress(group.id(), group.title(), group.description(), group.icon(),
+                    acc[0], acc[1], Math.min(acc[2], acc[1]), acc[3], Math.min(acc[6], acc[3]), accuracy));
+        }
+        return catalog;
+    }
+
+    /**
+     * Разбивает уже отсортированный список тем на секции групп — ровно тот
+     * порядок, в котором темы пришли, только с видимыми границами.
+     *
+     * <p>Селект тем несёт ~320 позиций. Каталог и так сортирует их по группам
+     * ({@link #compareTopicsByCatalogOrder}), но в плоском {@code <select>} эта
+     * структура невидима: «Группа» отдельным контролем сверху лишь фильтрует и
+     * перезагружает страницу. Секции делают существующую группировку читаемой,
+     * ничего не меняя в отборе.
+     *
+     * <p>Порядок внутри секции — входной, не пересортировывается: список уже
+     * отражает выбор пользователя «Учебный / Свободный» ({@code ordered}), и
+     * повторная сортировка молча отменяла бы его.
+     */
+    public List<TopicSection> groupTopics(List<String> topics) {
+        if (topics == null || topics.isEmpty()) {
+            return List.of();
+        }
+        Map<String, List<String>> byGroup = new LinkedHashMap<>();
+        for (String topic : topics) {
+            if (topic == null || topic.isBlank()) {
+                continue;
+            }
+            String normalized = topic.strip();
+            String groupId = detectGroup(normalized);
+            byGroup.computeIfAbsent(groupId == null ? "" : groupId, key -> new ArrayList<>()).add(normalized);
+        }
+        List<TopicSection> sections = new ArrayList<>();
+        for (GroupDef group : groupsOrdered) {
+            List<String> groupTopics = byGroup.remove(group.id());
+            if (groupTopics != null && !groupTopics.isEmpty()) {
+                sections.add(new TopicSection(group.id(), group.title(), List.copyOf(groupTopics)));
+            }
+        }
+        // Темы без группы (нет правила и нет misc в конфиге) не должны исчезать
+        // из селекта: секция без заголовка теряет смысл, поэтому им даётся явная.
+        List<String> ungrouped = byGroup.values().stream().flatMap(List::stream).toList();
+        if (!ungrouped.isEmpty()) {
+            sections.add(new TopicSection("", "Без группы", ungrouped));
+        }
+        return sections;
     }
 
     private int compareTopicsByCatalogOrder(String left, String right) {
@@ -234,7 +350,8 @@ public class TopicCatalogService {
             String title = asRequiredString(item, "title");
             String description = asOptionalString(item, "description");
             int order = asInt(item.get("order"), FALLBACK_GROUP_ORDER);
-            groups.add(new GroupDef(id, title, description, order));
+            String icon = asOptionalString(item, "icon");
+            groups.add(new GroupDef(id, title, description, order, icon));
         }
 
         List<GroupRule> rules = new ArrayList<>();
@@ -405,19 +522,78 @@ public class TopicCatalogService {
         visited.add(key);
     }
 
+    /**
+     * @param icon путь к иконке раздела относительно {@code /img/} (может быть
+     *             пустым) — см. {@code icon} в {@code topic-groups.yaml}
+     */
     @Builder(toBuilder = true)
-    public record GroupOption(String id, String title, String description, long topicCount) {}
+    public record GroupOption(String id, String title, String description, long topicCount, String icon) {}
+
+    /** Секция селекта тем: заголовок группы и её темы во входном порядке. */
+    @Builder(toBuilder = true)
+    public record TopicSection(String id, String title, List<String> topics) {}
+
+    /**
+     * Карточка раздела в каталоге тем: чем раздел является и как по нему дела.
+     *
+     * @param icon            путь относительно {@code /img/}, может быть пустым
+     * @param topicCount      сколько тем раздела есть в банке вопросов
+     * @param questionCount   сколько всего вопросов в этих темах
+     * @param learnedCount    сколько вопросов доведено до «изучено»
+     * @param dueCount        сколько вопросов готовы к показу: и повторения, и новые
+     * @param freshCount      сколько вопросов ещё ни разу не открывали
+     * @param accuracyPercent доля верных ответов или {@code null}, если ответов
+     *                        по разделу ещё не было
+     */
+    @Builder(toBuilder = true)
+    public record GroupProgress(
+            String id,
+            String title,
+            String description,
+            String icon,
+            long topicCount,
+            long questionCount,
+            long learnedCount,
+            long dueCount,
+            long freshCount,
+            Double accuracyPercent
+    ) {
+        /** Доля изученного в процентах — ширина полосы прогресса на карточке. */
+        public double learnedPercent() {
+            return questionCount > 0 ? learnedCount * 100.0 / questionCount : 0.0;
+        }
+
+        /**
+         * Вопросы, которые уже открывали и пора открыть снова. Отделены от
+         * {@link #freshCount()}, потому что «повторить» и «пройти впервые» — разные
+         * обещания, и раздел без единого ответа не может звать повторять.
+         */
+        public long repeatCount() {
+            return Math.max(0L, dueCount - freshCount);
+        }
+    }
 
     @Builder(toBuilder = true)
     private record TopicConfig(List<GroupDef> groups, List<GroupRule> groupRules, List<TopicDef> topics) {}
 
+    /**
+     * @param icon путь к пиксель-иконке раздела относительно {@code /img/} —
+     *             опознавательный знак группы в каталоге тем. Живёт в конфиге
+     *             рядом с заголовком, потому что это часть определения раздела:
+     *             при добавлении группы иконка задаётся там же, где всё
+     *             остальное, а не в отдельной таблице соответствий в шаблоне.
+     *             Пустой — карточка каталога рендерится без картинки.
+     */
     @Builder(toBuilder = true)
-    private record GroupDef(String id, String title, String description, int order) {
+    private record GroupDef(String id, String title, String description, int order, String icon) {
         private GroupDef {
             Objects.requireNonNull(id, "id");
             Objects.requireNonNull(title, "title");
             if (description == null) {
                 description = "";
+            }
+            if (icon == null) {
+                icon = "";
             }
         }
     }

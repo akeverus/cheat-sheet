@@ -34,11 +34,9 @@ public class ApiRequestMapper {
             String topic,
             String group,
             Boolean important,
-            Boolean onlyWrong,
-            Boolean shuffle,
-            Boolean ordered
+            Boolean onlyWrong
     ) {
-        return new StatsApiService.StatsCommand(topic, group, important, onlyWrong, shuffle, ordered);
+        return new StatsApiService.StatsCommand(topic, group, important, onlyWrong);
     }
 
     public NextQuestionApiService.NextQuestionCommand toNextQuestionCommand(

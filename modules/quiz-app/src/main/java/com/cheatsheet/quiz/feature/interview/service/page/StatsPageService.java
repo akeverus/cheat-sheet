@@ -2,6 +2,7 @@ package com.cheatsheet.quiz.feature.interview.service.page;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import com.cheatsheet.quiz.common.constants.QuizConstants;
 import com.cheatsheet.quiz.common.util.TopicUtils;
 import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewStats;
@@ -105,39 +106,21 @@ public class StatsPageService {
                 difficultyDistribution,
                 difficultyJson,
                 MetricDefinitions.catalog(),
-                findWeakestTopic(topicStats),
+                // Слабую тему и их число считает репозиторий — тем же правилом и тем же
+                // порогом, по которому режим «Слабые темы» выбирает вопрос. Иначе
+                // карточка обещала бы одну тему, а тренировка давала другую.
+                questionStatsRepository.findWeakestTopic(QuizConstants.WEAK_TOPIC_THRESHOLD),
+                questionStatsRepository.countWeakTopics(QuizConstants.WEAK_TOPIC_THRESHOLD),
                 recentWrongQuestions,
                 accuracyTrend,
-                accuracyTrendJson
+                accuracyTrendJson,
+                // Каталог считается по ПОЛНОМУ банку и полной статистике, а не по
+                // отфильтрованному списку тем: он и есть навигация по банку.
+                // Свернувшись до одного выбранного раздела, он перестал бы
+                // отвечать на вопрос «куда пойти дальше» — ровно тот, ради
+                // которого существует.
+                topicCatalogService.groupCatalog(questionRepository.countQuestionsByTopic(), topicStats)
         );
-    }
-
-    /**
-     * Topic with lowest accuracy among those that have at least one attempt.
-     * Tie-break: more attempts first (stronger signal).
-     */
-    public static String findWeakestTopic(List<TopicStats> topicStats) {
-        if (topicStats == null || topicStats.isEmpty()) {
-            return null;
-        }
-        TopicStats weakest = null;
-        double weakestAccuracy = Double.POSITIVE_INFINITY;
-        long weakestAttempts = 0;
-        for (TopicStats ts : topicStats) {
-            long attempts = ts.correct() + ts.wrong();
-            if (attempts <= 0) {
-                continue;
-            }
-            double accuracy = (double) ts.correct() / (double) attempts;
-            if (weakest == null
-                    || accuracy < weakestAccuracy
-                    || (Double.compare(accuracy, weakestAccuracy) == 0 && attempts > weakestAttempts)) {
-                weakest = ts;
-                weakestAccuracy = accuracy;
-                weakestAttempts = attempts;
-            }
-        }
-        return weakest == null ? null : weakest.topic();
     }
 
     /** Порядок и русские подписи уровней сложности для доната (Этап 6). */
@@ -269,12 +252,9 @@ public class StatsPageService {
                         ts.topic(),
                         topicUtils.displayName(ts.topic()),
                         ts.total(),
-                        ts.due(),
                         ts.learned(),
                         ts.correct(),
-                        ts.wrong(),
-                        ts.regenSum(),
-                        ts.maturityScore()))
+                        ts.wrong()))
                 .toList();
     }
 
@@ -330,10 +310,12 @@ public class StatsPageService {
             List<DifficultySlice> difficultyDistribution,
             String difficultyJson,
             Map<String, MetricDefinitions.Definition> metricDefinitions,
-            String weakestTopic,
+            QuestionStatsRepository.WeakestTopic weakestTopic,
+            long weakTopicCount,
             List<WrongQuestionItem> recentWrongQuestions,
             List<AccuracyTrendDay> accuracyTrend,
-            String accuracyTrendJson
+            String accuracyTrendJson,
+            List<TopicCatalogService.GroupProgress> groupCatalog
     ) {
         public StatsPageState(InterviewStats stats, List<String> topics, List<?> groups,
                               String selectedGroup, InterviewFilter filter, String searchQuery,
@@ -341,8 +323,8 @@ public class StatsPageService {
                               List<TopicStats> topicStats, String topicStatsJson) {
             this(stats, topics, groups, selectedGroup, filter, searchQuery, searchResults,
                     topicStats, topicStatsJson, List.of(), List.of(), LearningMetrics.EMPTY,
-                    List.of(), "[]", MetricDefinitions.catalog(), findWeakestTopic(topicStats),
-                    List.of(), List.of(), "[]");
+                    List.of(), "[]", MetricDefinitions.catalog(), null, 0L,
+                    List.of(), List.of(), "[]", List.of());
         }
     }
 
@@ -371,16 +353,19 @@ public class StatsPageService {
      */
     public record AccuracyTrendDay(String day, int answered, int correct, Double accuracyPercent) {}
 
-    /** JSON для Chart.js на /stats: slug + displayName из TopicUtils. */
+    /**
+     * JSON для графиков на /stats: slug + displayName из TopicUtils.
+     *
+     * <p>Полей ровно столько, сколько читает {@code static/js/stats/topic-data.js}. Payload
+     * повторяется по числу тем (сейчас ~320), поэтому каждое лишнее поле — это
+     * лишний килобайт в разметке страницы за одну строку в записи.
+     */
     private record TopicStatsChartPayload(
             String topic,
             String displayName,
             long total,
-            long due,
             long learned,
             long correct,
-            long wrong,
-            long regenSum,
-            double maturityScore
+            long wrong
     ) {}
 }

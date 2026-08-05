@@ -160,21 +160,20 @@ class NextQuestionApiServiceTest {
     }
 
     private Question existingQuestionWithType(long id, QuestionType questionType) {
-        return new Question(
-                id,
-                "q-" + id,
-                "q-" + id,
-                "test.md",
-                "java",
-                "В чем ошибка?",
-                "Ответ",
-                false,
-                "hash",
-                questionType,
-                null,
-                null,
-                0,
-                null
-        );
+        return Question.builder()
+                .id(id)
+                .slug("q-" + id)
+                .sourceSlug("q-" + id)
+                .filePath("test.md")
+                .topic("java")
+                .questionText("В чем ошибка?")
+                .answerMarkdown("Ответ")
+                .important(false)
+                .sourceHash("hash")
+                .questionType(questionType)
+                .codeSnippet(null)
+                .diagramMermaid(null)
+                .takeaway(null)
+                .build();
     }
 }

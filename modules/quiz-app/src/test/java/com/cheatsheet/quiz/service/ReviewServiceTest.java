@@ -198,21 +198,20 @@ class ReviewServiceTest {
     }
 
     private Question sampleQuestion(long id) {
-        return new Question(
-                id,
-                "slug-" + id,
-                "source-" + id,
-                "topic.md",
-                "topic",
-                "What is Java?",
-                "Java is a language",
-                false,
-                "hash",
-                QuestionType.TEXT,
-                null,
-                null,
-                0,
-                null
-        );
+        return Question.builder()
+                .id(id)
+                .slug("slug-" + id)
+                .sourceSlug("source-" + id)
+                .filePath("topic.md")
+                .topic("topic")
+                .questionText("What is Java?")
+                .answerMarkdown("Java is a language")
+                .important(false)
+                .sourceHash("hash")
+                .questionType(QuestionType.TEXT)
+                .codeSnippet(null)
+                .diagramMermaid(null)
+                .takeaway(null)
+                .build();
     }
 }

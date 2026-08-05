@@ -1,71 +1,17 @@
 package com.cheatsheet.quiz.common.util;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Преобразование slug-а темы в человекочитаемое название для UI.
  * Slug в обычном UI не показывается — только {@link #displayName(String)}.
  */
 @Component("topicUtils")
+@RequiredArgsConstructor
 public class TopicUtils {
 
-    /** Известные slug → красивые названия (поверх авто-нормализации). */
-    private static final Map<String, String> DISPLAY_NAMES = Map.ofEntries(
-            Map.entry("database-transactions", "Транзакции БД"),
-            Map.entry("database transactions", "Транзакции БД"),
-            Map.entry("acid", "ACID"),
-            Map.entry("jvm", "JVM"),
-            Map.entry("gc", "Garbage Collection"),
-            Map.entry("http", "HTTP"),
-            Map.entry("sql", "SQL"),
-            Map.entry("jpa", "JPA"),
-            Map.entry("spring-boot", "Spring Boot"),
-            Map.entry("spring boot", "Spring Boot"),
-            Map.entry("kafka", "Kafka"),
-            Map.entry("redis", "Redis"),
-            Map.entry("docker", "Docker"),
-            Map.entry("kubernetes", "Kubernetes"),
-            Map.entry("microservices", "Микросервисы"),
-            Map.entry("concurrency", "Многопоточность"),
-            Map.entry("collections", "Коллекции"),
-            Map.entry("streams", "Streams API"),
-            Map.entry("security", "Безопасность"),
-            Map.entry("networking", "Сети"),
-            Map.entry("algorithms", "Алгоритмы"),
-            Map.entry("data-structures", "Структуры данных"),
-            Map.entry("tls-ssl", "TLS/SSL"),
-            // Непереводная англо-проза категории верхнего уровня: без записи fallback
-            // давал англоязычное «Interview preparation» эйбрау над русским вопросом
-            // в TRAINING/марафоне — рассинхрон с языком UI. Совпадает с заголовком приложения.
-            Map.entry("interview-preparation", "Подготовка к собеседованию"),
-            Map.entry("interview preparation", "Подготовка к собеседованию")
-    );
-
-    /**
-     * Токены-аббревиатуры, которые в fallback-имени пишутся целиком заглавными
-     * ("jwt" → "JWT", "cqrs" → "CQRS"). Иначе наивная капитализация первой буквы
-     * даёт "Jwt", "Cqrs", "Api" — визуально неряшливо в селекте тем и на аналитике.
-     */
-    private static final Set<String> UPPER_TOKENS = Set.of(
-            "jwt", "api", "sql", "http", "https", "cdn", "dns", "ddd", "cqrs",
-            "tls", "ssl", "aws", "gcp", "mcp", "rag", "llm", "ai", "jvm", "jpa",
-            "orm", "jdbc", "rest", "bff", "owasp", "io", "nio", "jms", "dto",
-            "dao", "acid", "cap", "wal", "mvcc", "dsl", "sns", "sqs", "ml", "url",
-            "uri"
-    );
-
-    /** Аббревиатуры со смешанным регистром — задаются явным написанием. */
-    private static final Map<String, String> MIXED_TOKENS = Map.ofEntries(
-            Map.entry("grpc", "gRPC"),
-            Map.entry("oauth2", "OAuth2"),
-            Map.entry("oauth", "OAuth"),
-            Map.entry("mtls", "mTLS"),
-            Map.entry("top10", "Top 10")
-    );
+    private final TopicDisplayNames displayNames;
 
     /**
      * Сырой slug темы (для data-атрибутов / API), без UI-форматирования.
@@ -83,6 +29,19 @@ public class TopicUtils {
     }
 
     /**
+     * Название темы для UI.
+     *
+     * <p>Берётся из {@link TopicDisplayNames} — реестра, который импорт наполняет
+     * заголовками из самих файлов тем. Там правильные написания продуктов
+     * («CockroachDB», «ArchUnit», «jOOQ», «Apache Airflow») и русские названия
+     * общих тем («Транзакции и уровни изоляции»).</p>
+     *
+     * <p>Если тема в реестре не найдена (файл темы удалён, а вопросы ещё лежат в
+     * БД), показываем slug с заглавной буквы — понятно, что тема осиротела, и
+     * при этом UI не падает и не показывает пустоту. Восстанавливать название из
+     * slug-а мы не пытаемся: slug — результат необратимого упрощения, и любая
+     * такая реконструкция коверкает имена продуктов.</p>
+     *
      * @param topic slug темы, например {@code "java/collections-interview.md"}
      * @return отображаемое имя для UI (не slug)
      */
@@ -91,38 +50,14 @@ public class TopicUtils {
         if (key.isEmpty()) {
             return "";
         }
-        String lookup = key.toLowerCase(Locale.ROOT).replace('_', '-');
-        if (DISPLAY_NAMES.containsKey(lookup)) {
-            return DISPLAY_NAMES.get(lookup);
+        String registered = displayNames.lookup(key);
+        if (registered != null) {
+            return registered;
         }
-        // Пословный fallback: аббревиатуры → верхний/смешанный регистр,
-        // первое слово — с заглавной, остальные обычные слова остаются строчными.
-        // "api-gateway" → "API gateway", "cqrs-event-sourcing" → "CQRS event sourcing",
-        // "grpc" → "gRPC", "database-transactions" → "Database transactions".
         String spaced = key.replace('-', ' ').replace('_', ' ').trim();
         if (spaced.isEmpty()) {
             return "";
         }
-        String[] words = spaced.split("\\s+");
-        StringBuilder result = new StringBuilder(spaced.length());
-        for (int i = 0; i < words.length; i++) {
-            String word = words[i];
-            String lower = word.toLowerCase(Locale.ROOT);
-            String rendered;
-            if (MIXED_TOKENS.containsKey(lower)) {
-                rendered = MIXED_TOKENS.get(lower);
-            } else if (UPPER_TOKENS.contains(lower)) {
-                rendered = lower.toUpperCase(Locale.ROOT);
-            } else if (i == 0) {
-                rendered = Character.toUpperCase(word.charAt(0)) + word.substring(1);
-            } else {
-                rendered = word;
-            }
-            if (i > 0) {
-                result.append(' ');
-            }
-            result.append(rendered);
-        }
-        return result.toString();
+        return Character.toUpperCase(spaced.charAt(0)) + spaced.substring(1);
     }
 }

@@ -2,7 +2,6 @@ package com.cheatsheet.quiz.feature.interview.service.command;
 
 import com.cheatsheet.quiz.domain.AnswerResult;
 import com.cheatsheet.quiz.domain.AttemptOutcome;
-import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.feature.interview.controller.InterviewSessionSupport.AnswerSubmission;
 import com.cheatsheet.quiz.feature.interview.service.core.InterviewService;
 import com.cheatsheet.quiz.feature.interview.service.review.AttemptRecorder;
@@ -55,16 +54,14 @@ public class SubmitAnswerCommand {
     @Transactional
     public AnswerResult executeOrNullIfDuplicate(
             AnswerSubmission submission,
-            InterviewFilter filter,
             String sessionToken,
             Integer responseTimeMs
     ) {
-        return submitTimer.record(() -> doExecute(submission, filter, sessionToken, responseTimeMs));
+        return submitTimer.record(() -> doExecute(submission, sessionToken, responseTimeMs));
     }
 
     private AnswerResult doExecute(
             AnswerSubmission submission,
-            InterviewFilter filter,
             String sessionToken,
             Integer responseTimeMs
     ) {
@@ -82,7 +79,6 @@ public class SubmitAnswerCommand {
         AnswerResult result = interviewService.submitAnswer(
                 submission.questionId(),
                 submission.optionId(),
-                filter,
                 submission.confidence()
         );
 

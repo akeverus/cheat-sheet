@@ -21,27 +21,6 @@ public record InterviewFilter(
         Boolean ordered
 ) {
 
-    /**
-     * Конструктор без shuffle (по умолчанию null).
-     */
-    public InterviewFilter(String topic, Boolean importantOnly, Boolean onlyWrong) {
-        this(topic, null, importantOnly, onlyWrong, null, true);
-    }
-
-    /**
-     * Конструктор без ordered/group (обратная совместимость).
-     */
-    public InterviewFilter(String topic, Boolean importantOnly, Boolean onlyWrong, Boolean shuffle) {
-        this(topic, null, importantOnly, onlyWrong, shuffle, true);
-    }
-
-    /**
-     * Конструктор без ordered (по умолчанию true).
-     */
-    public InterviewFilter(String topic, String group, Boolean importantOnly, Boolean onlyWrong, Boolean shuffle) {
-        this(topic, group, importantOnly, onlyWrong, shuffle, true);
-    }
-
     public InterviewFilter {
         topic = normalize(topic);
         group = normalize(group);
@@ -80,6 +59,16 @@ public record InterviewFilter(
      */
     public boolean isOrdered() {
         return !Boolean.FALSE.equals(ordered);
+    }
+
+    /**
+     * Сужает ли фильтр банк вопросов. Порядок ({@code shuffle}, {@code ordered})
+     * сюда не входит: он меняет последовательность, а не состав выборки, и
+     * подпись «фильтр» рядом с числом обязана отвечать за состав.
+     */
+    public boolean isNarrowed() {
+        return topic != null || group != null
+                || Boolean.TRUE.equals(importantOnly) || Boolean.TRUE.equals(onlyWrong);
     }
 
     private static String normalize(String value) {

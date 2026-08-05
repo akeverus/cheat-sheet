@@ -1,0 +1,88 @@
+/* @layer components — тема подсветки синтаксиса (highlight.js).
+   ---------------------------------------------------------------------------
+   Заменяет вендорную `vendor/hljs/styles/atom-one-dark.min.css`. Причина замены
+   не в эстетике: та тема зашивала восемь HEX-констант и `background:#282c34`, то
+   есть НЕ реагировала на тумблер темы. Замер на светлой теме (фон панели
+   #f7fbfa): жёлтый `#e6c07b` давал ~1.4:1 — подсветка делала код ХУЖЕ, чем
+   отсутствие подсветки. Плюс чужая тёмная подложка внутри панели, у которой уже
+   есть свой `--color-bg-tertiary`, — тот же класс дефекта, что и «кто владеет
+   холстом» (см. design-system.md §3).
+
+   Здесь цвета берутся из палитры продукта: код подсвечивается теми же teal/
+   амбер/пурпур/blue, что и остальной интерфейс, и переключается вместе с ним.
+   Правило то же, что для диаграмм: «Диаграммы — часть системы, а не картинки».
+
+   Токены `--code-*` определены в tokens.css в обеих темах и откалиброваны на
+   AA (≥4.5:1) против трёх поверхностей, на которых реально лежит код:
+   --color-bg-tertiary (панель «Пример кода»), --color-surface-soft и
+   --color-bg-secondary. Худшие пары: dark keyword 5.06, light comment 5.51.
+
+   Классы hljs 11.x. Группировка — вендорная (её знает грамматика), значения —
+   наши. `.hljs` без фона: подложку задаёт панель, в которой лежит листинг. */
+@layer components {
+
+html[data-design] .hljs {
+  color: var(--code-plain);
+  /* Никакого background: фон принадлежит `pre`/`.question-code`. */
+}
+
+/* Ключевые слова языка и то, что грамматически ими является. */
+html[data-design] .hljs-keyword,
+html[data-design] .hljs-doctag,
+html[data-design] .hljs-formula,
+html[data-design] .hljs-selector-tag,
+html[data-design] .hljs-literal { color: var(--code-keyword); }
+
+/* Строки и всё строкоподобное (regexp, значение атрибута, добавленная строка). */
+html[data-design] .hljs-string,
+html[data-design] .hljs-regexp,
+html[data-design] .hljs-addition,
+html[data-design] .hljs-meta .hljs-string { color: var(--code-string); }
+
+/* Числа, атрибуты, символы — «данные» в листинге. */
+html[data-design] .hljs-number,
+html[data-design] .hljs-attr,
+html[data-design] .hljs-attribute,
+html[data-design] .hljs-symbol,
+html[data-design] .hljs-bullet,
+html[data-design] .hljs-selector-attr,
+html[data-design] .hljs-selector-pseudo,
+html[data-design] .hljs-template-variable { color: var(--code-number); }
+
+/* Типы и классы — teal, главный акцент продукта: в Java-листинге это то, за что
+   цепляется взгляд первым. */
+html[data-design] .hljs-type,
+html[data-design] .hljs-built_in,
+html[data-design] .hljs-class .hljs-title,
+html[data-design] .hljs-title.class_,
+html[data-design] .hljs-selector-class { color: var(--code-type); }
+
+/* Имена функций/методов и ссылки. */
+html[data-design] .hljs-title,
+html[data-design] .hljs-title.function_,
+html[data-design] .hljs-section,
+html[data-design] .hljs-link,
+html[data-design] .hljs-selector-id { color: var(--code-func); }
+
+/* Разметочные имена и аннотации: XML-тег, @Override, #include, удалённая строка.
+   Коралловый — тот же, что у ошибки; в листинге он читается как «тег», это
+   общепринятая конвенция, а семантика «неверный ответ» живёт вне код-панели. */
+html[data-design] .hljs-name,
+html[data-design] .hljs-meta,
+html[data-design] .hljs-deletion,
+html[data-design] .hljs-subst,
+html[data-design] .hljs-variable { color: var(--code-tag); }
+
+/* Комментарии — приглушены, но не ниже AA: в шпаргалках комментарий часто и есть
+   объяснение, ради которого листинг показан. */
+html[data-design] .hljs-comment,
+html[data-design] .hljs-quote {
+  color: var(--code-comment);
+  font-style: italic;
+}
+
+html[data-design] .hljs-emphasis { font-style: italic; }
+html[data-design] .hljs-strong   { font-weight: var(--font-weight-semibold); }
+html[data-design] .hljs-link     { text-decoration: underline; }
+
+}

@@ -10,7 +10,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TopicUtilsTest {
 
-    private final TopicUtils utils = new TopicUtils();
+    private final TopicDisplayNames displayNames = new TopicDisplayNames();
+    private final TopicUtils utils = new TopicUtils(displayNames);
 
     @ParameterizedTest
     @NullAndEmptySource
@@ -22,29 +23,58 @@ class TopicUtilsTest {
 
     @ParameterizedTest
     @CsvSource({
-            "java/collections-interview.md, Коллекции, collections",
-            "java/collections-interview, Коллекции, collections",
-            "java/collections.md, Коллекции, collections",
-            "collections-interview, Коллекции, collections",
-            "collections, Коллекции, collections",
-            "ai-ml/rag-interview.md, RAG, rag",
-            "deep/nested/path/topic-interview.md, Topic, topic",
-            "database-transactions, Транзакции БД, database-transactions",
-            "api-gateway, API gateway, api-gateway",
-            "cqrs-event-sourcing, CQRS event sourcing, cqrs-event-sourcing",
-            "jwt, JWT, jwt",
-            "grpc, gRPC, grpc",
-            "oauth2, OAuth2, oauth2",
-            "mtls, mTLS, mtls",
-            "tls-ssl, TLS/SSL, tls-ssl",
-            "owasp-top10, OWASP Top 10, owasp-top10",
-            "spring-data-jpa, Spring data JPA, spring-data-jpa",
-            "interview-preparation, Подготовка к собеседованию, interview-preparation",
-            "soft-skills/interview-preparation-interview.md, Подготовка к собеседованию, interview-preparation"
+            "java/collections-interview.md, collections",
+            "java/collections-interview, collections",
+            "java/collections.md, collections",
+            "collections-interview, collections",
+            "collections, collections",
+            "deep/nested/path/topic-interview.md, topic",
+            "databases/cockroachdb-interview.md, cockroachdb"
     })
-    void displayNameIsHumanReadableAndSlugIsRaw(String input, String display, String slug) {
-        assertThat(utils.displayName(input)).isEqualTo(display);
+    void slugStripsPathAndSuffixes(String input, String slug) {
         assertThat(utils.slug(input)).isEqualTo(slug);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            // Название из реестра приходит как есть — включая регистр внутри слова,
+            // который из slug-а восстановить невозможно.
+            "databases/cockroachdb-interview.md, cockroachdb, CockroachDB",
+            "testing/archunit-interview.md, archunit, ArchUnit",
+            "databases/jooq-interview.md, jooq, jOOQ",
+            "data-engineering/apache-airflow-interview.md, apache-airflow, Apache Airflow",
+            "databases/database-transactions-interview.md, database-transactions, Транзакции и уровни изоляции"
+    })
+    void displayNameComesFromRegistry(String topic, String registeredSlug, String expected) {
+        displayNames.register(registeredSlug, expected);
+
+        assertThat(utils.displayName(topic)).isEqualTo(expected);
+    }
+
+    @Test
+    void registryLookupIgnoresCaseAndUnderscores() {
+        displayNames.register("spring-data-jpa", "Spring Data JPA");
+
+        assertThat(utils.displayName("frameworks/spring/Spring_Data_JPA-interview.md"))
+                .isEqualTo("Spring Data JPA");
+    }
+
+    @Test
+    void unknownTopicFallsBackToReadableSlug() {
+        // Тема без файла (например, файл удалён, а вопросы ещё в БД): показываем slug
+        // с заглавной буквы. Реконструировать «настоящее» имя из slug-а не пытаемся —
+        // любая такая догадка коверкает названия продуктов.
+        assertThat(utils.displayName("legacy/some-removed-topic-interview.md"))
+                .isEqualTo("Some removed topic");
+    }
+
+    @Test
+    void blankRegistrationIsIgnored() {
+        displayNames.register("kafka", "  ");
+        displayNames.register("  ", "Kafka");
+
+        assertThat(displayNames.lookup("kafka")).isNull();
+        assertThat(utils.displayName("messaging/kafka-interview.md")).isEqualTo("Kafka");
     }
 
     @Test

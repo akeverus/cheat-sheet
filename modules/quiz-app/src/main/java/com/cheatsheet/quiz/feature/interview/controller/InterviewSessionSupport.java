@@ -104,7 +104,7 @@ public class InterviewSessionSupport {
         Integer responseTimeMs = resolveResponseTimeMs(submission.responseTimeMs(), interviewSession);
         // P0: claim + revision + SM-2 + journal в одной TX (SubmitAnswerCommand).
         AnswerResult result = submitAnswerCommand.executeOrNullIfDuplicate(
-                submission, filter, session.getId(), responseTimeMs);
+                submission, session.getId(), responseTimeMs);
         if (result == null) {
             duplicateSubmitCounter.increment();
             AnswerResult replay = interviewService.evaluateAnswer(
@@ -269,6 +269,15 @@ public class InterviewSessionSupport {
     public record AnswerContext(AnswerResult result, InterviewFilter filter, InterviewSession interviewSession) {
     }
 
+    /**
+     * Ответ пользователя вместе с контекстом выборки вопросов.
+     *
+     * <p>Собирается только билдером. Позиционные «обратно совместимые»
+     * конструкторы убраны: внешних клиентов у внутреннего record нет, а
+     * совместимость они обеспечивали лишь с собственными тестами — ценой
+     * вызовов вида {@code (10L, 3L, null, null, null, null, null, null, 4, null)},
+     * где перепутанный порядок восьми nullable-полей компилятор не поймает.</p>
+     */
     @Builder(toBuilder = true)
     public record AnswerSubmission(
             long questionId,
@@ -285,29 +294,5 @@ public class InterviewSessionSupport {
             Integer responseTimeMs,
             Long questionRevisionId
     ) {
-        /** Обратная совместимость: без {@code openedContentBlockIds}/responseTimeMs/revision. */
-        public AnswerSubmission(long questionId, long optionId, String topic, String group,
-                                Boolean important, Boolean onlyWrong, Boolean shuffle, Boolean ordered,
-                                Integer confidence, String clientAttemptId) {
-            this(questionId, optionId, topic, group, important, onlyWrong, shuffle, ordered,
-                    confidence, clientAttemptId, null, null, null);
-        }
-
-        /** Обратная совместимость: без {@code responseTimeMs}/revision. */
-        public AnswerSubmission(long questionId, long optionId, String topic, String group,
-                                Boolean important, Boolean onlyWrong, Boolean shuffle, Boolean ordered,
-                                Integer confidence, String clientAttemptId, String openedContentBlockIds) {
-            this(questionId, optionId, topic, group, important, onlyWrong, shuffle, ordered,
-                    confidence, clientAttemptId, openedContentBlockIds, null, null);
-        }
-
-        /** Обратная совместимость: без {@code questionRevisionId}. */
-        public AnswerSubmission(long questionId, long optionId, String topic, String group,
-                                Boolean important, Boolean onlyWrong, Boolean shuffle, Boolean ordered,
-                                Integer confidence, String clientAttemptId, String openedContentBlockIds,
-                                Integer responseTimeMs) {
-            this(questionId, optionId, topic, group, important, onlyWrong, shuffle, ordered,
-                    confidence, clientAttemptId, openedContentBlockIds, responseTimeMs, null);
-        }
     }
 }

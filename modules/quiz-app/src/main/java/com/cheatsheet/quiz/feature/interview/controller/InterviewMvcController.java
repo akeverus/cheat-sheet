@@ -2,20 +2,19 @@ package com.cheatsheet.quiz.feature.interview.controller;
 
 import com.cheatsheet.quiz.api.dto.request.interview.StartSessionRequest;
 import com.cheatsheet.quiz.api.dto.request.interview.SubmitAnswerRequest;
-import com.cheatsheet.quiz.api.security.SensitiveEndpointAccessService;
 import com.cheatsheet.quiz.feature.admin.service.AdminMaintenanceService;
 import com.cheatsheet.quiz.feature.interview.usecase.mvc.InterviewFlowMvcService;
 import com.cheatsheet.quiz.feature.interview.usecase.mvc.InterviewPageMvcService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,8 +22,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * MVC-контроллер test flow: старт/завершение сессии, ответы и статистика.
@@ -34,10 +33,14 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class InterviewMvcController {
+    /** Параметры выборки, которые переносим с легаси-адреса {@code /training} на канонический {@code /}. */
+    static final List<String> TRAINING_QUERY_PARAMS = List.of(
+            "topic", "group", "important", "onlyWrong", "shuffle",
+            "weakTopics", "ordered", "excludeQuestionId", "questionId", "mode");
+
     InterviewPageMvcService interviewPageMvcService;
     InterviewFlowMvcService interviewFlowMvcService;
     AdminMaintenanceService adminMaintenanceService;
-    SensitiveEndpointAccessService sensitiveEndpointAccessService;
 
     @GetMapping("/")
     public String index(
@@ -70,35 +73,22 @@ public class InterviewMvcController {
         );
     }
 
+    /**
+     * Легаси-адрес тренировки. Канонический URL один — {@code /}: иначе один и
+     * тот же экран живёт по двум адресам, что размывает историю браузера,
+     * закладки и аналитику. Старые ссылки не ломаем — редиректим, перенося
+     * известные параметры выборки (whitelist, чтобы не тащить чужой query).
+     */
     @GetMapping("/training")
-    public String training(
-            @RequestParam(value = "topic", required = false) String topic,
-            @RequestParam(value = "group", required = false) String group,
-            @RequestParam(value = "important", required = false) Boolean important,
-            @RequestParam(value = "onlyWrong", required = false) Boolean onlyWrong,
-            @RequestParam(value = "shuffle", required = false) Boolean shuffle,
-            @RequestParam(value = "weakTopics", required = false) Boolean weakTopics,
-            @RequestParam(value = "ordered", required = false) Boolean ordered,
-            @RequestParam(value = "excludeQuestionId", required = false) Long excludeQuestionId,
-            @RequestParam(value = "questionId", required = false) Long questionId,
-            @RequestParam(value = "mode", required = false) String mode,
-            HttpSession session,
-            Model model
-    ) {
-        return renderTrainingEntry(
-                topic,
-                group,
-                important,
-                onlyWrong,
-                shuffle,
-                weakTopics,
-                ordered,
-                excludeQuestionId,
-                questionId,
-                mode,
-                session,
-                model
-        );
+    public String training(HttpServletRequest request) {
+        UriComponentsBuilder canonical = UriComponentsBuilder.fromPath("/");
+        for (String param : TRAINING_QUERY_PARAMS) {
+            String value = request.getParameter(param);
+            if (value != null && !value.isBlank()) {
+                canonical.queryParam(param, value);
+            }
+        }
+        return "redirect:" + canonical.build().encode().toUriString();
     }
 
     @GetMapping("/review")
@@ -170,11 +160,14 @@ public class InterviewMvcController {
         return interviewFlowMvcService.studyConfirm(session);
     }
 
+    /**
+     * Раскрытие эталонного ответа во флешкарт-режиме. Введённый пользователем
+     * черновик ({@code typedAnswer} в форме) сервер намеренно не принимает и не
+     * персистит — эхо «Твой ответ» делает клиент через sessionStorage
+     * ({@code quiz/flashcard.js}, progressive enhancement).
+     */
     @PostMapping("/flashcard-reveal")
-    public String flashcardReveal(
-            @RequestParam(value = "typedAnswer", required = false) String typedAnswer,
-            HttpSession session
-    ) {
+    public String flashcardReveal(HttpSession session) {
         return interviewFlowMvcService.flashcardReveal(session);
     }
 
@@ -254,19 +247,13 @@ public class InterviewMvcController {
         );
     }
 
+    /**
+     * Очистка банка вариантов. Доступ гейтит security-цепочка
+     * ({@code SecurityConfig#hasSensitiveAccess}: валидный {@code X-Admin-Token}
+     * или {@code ROLE_ADMIN}) — контроллер повторную проверку не делает.
+     */
     @PostMapping("/settings/reset-options")
-    public String resetOptions(
-            HttpServletRequest request,
-            @RequestParam(value = "adminToken", required = false) String adminToken,
-            RedirectAttributes redirectAttributes
-    ) {
-        String token = request.getHeader(SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER);
-        if (token == null || token.isBlank()) {
-            token = adminToken;
-        }
-        if (!sensitiveEndpointAccessService.isAuthorizedForSensitive(token)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Недостаточно прав");
-        }
+    public String resetOptions(RedirectAttributes redirectAttributes) {
         int deleted = adminMaintenanceService.clearOptions();
         redirectAttributes.addFlashAttribute("resetDeleted", deleted);
         return "redirect:/settings";

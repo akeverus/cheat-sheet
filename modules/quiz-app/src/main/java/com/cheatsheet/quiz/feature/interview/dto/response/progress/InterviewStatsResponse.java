@@ -6,7 +6,8 @@ import lombok.Builder;
  * API DTO агрегированной статистики интервью.
  *
  * @param total общее число вопросов в выборке
- * @param due число вопросов, готовых к повторению
+ * @param due число вопросов, готовых к показу: повторения и новые вместе
+ * @param fresh число вопросов без единого ответа — подмножество {@code due}
  * @param learned число выученных вопросов
  * @param correct число правильных ответов
  * @param wrong число неправильных ответов
@@ -15,6 +16,7 @@ import lombok.Builder;
 public record InterviewStatsResponse(
         long total,
         long due,
+        long fresh,
         long learned,
         long correct,
         long wrong

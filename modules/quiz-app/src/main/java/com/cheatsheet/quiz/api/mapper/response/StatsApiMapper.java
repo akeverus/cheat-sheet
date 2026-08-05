@@ -24,6 +24,7 @@ public class StatsApiMapper {
         return new InterviewStatsResponse(
                 stats.total(),
                 stats.due(),
+                stats.fresh(),
                 stats.learned(),
                 stats.correct(),
                 stats.wrong()
@@ -53,10 +54,10 @@ public class StatsApiMapper {
                 topicStats.topic(),
                 topicStats.total(),
                 topicStats.due(),
+                topicStats.fresh(),
                 topicStats.learned(),
                 topicStats.correct(),
-                topicStats.wrong(),
-                topicStats.regenSum()
+                topicStats.wrong()
         );
     }
 }

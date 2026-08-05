@@ -7,17 +7,24 @@ import java.util.List;
 /**
  * Ответ API на отправку ответа (POST /api/answer).
  *
- * <p>Помимо вердикта и объяснений несёт (хендофф-3): следующий интервал повторения
- * ({@code nextReviewAt}/{@code intervalDays}, UI-013) и начисленный опыт
- * ({@code xpAwarded}/{@code xpTotal}/{@code level}) для «+N XP» в баннере.</p>
+ * <p>Помимо вердикта и объяснений несёт следующий интервал повторения
+ * ({@code nextReviewAt}/{@code intervalDays}) и начисленный опыт
+ * ({@code xpAwarded}/{@code xpTotal}/{@code level}) для «+N XP» в разборе.</p>
+ *
+ * <p>Букв вариантов (A/B/C) в ответе нет: они были сырьём ровно для одной
+ * строки — вердикта, — и клиент собирал её сам. Теперь строку собирает сервер.</p>
+ *
+ * <p>{@code verdictText} и {@code nextReviewText} — готовые к печати строки из
+ * {@code AnswerCopy}, а не сырьё для сборки на клиенте: ровно те же строки
+ * кладёт в модель no-JS-путь, и расходиться им нельзя.</p>
  */
 @Builder(toBuilder = true)
 public record AnswerResponse(
         boolean correct,
         long correctOptionId,
         long selectedOptionId,
-        String correctOptionLetter,
-        String selectedOptionLetter,
+        String verdictText,
+        String nextReviewText,
         String answerHtml,
         String answerLeadHtml,
         String answerRestHtml,
@@ -32,49 +39,4 @@ public record AnswerResponse(
         long xpTotal,
         int level
 ) {
-    /** Обратная совместимость: без selectedOptionLetter / интервала / XP. */
-    public AnswerResponse(
-            boolean correct,
-            long correctOptionId,
-            long selectedOptionId,
-            String correctOptionLetter,
-            String answerHtml,
-            String answerLeadHtml,
-            String answerRestHtml,
-            List<OptionExplanationDto> optionExplanations,
-            String answerDisplayMode,
-            int repetitions,
-            List<RelatedQuestionDto> relatedQuestions,
-            SessionInfoDto session
-    ) {
-        this(correct, correctOptionId, selectedOptionId, correctOptionLetter, "",
-                answerHtml, answerLeadHtml, answerRestHtml, optionExplanations, answerDisplayMode,
-                repetitions, relatedQuestions, session, 0L, 0, 0L, 0L, 0);
-    }
-
-    /** Обратная совместимость: без selectedOptionLetter. */
-    public AnswerResponse(
-            boolean correct,
-            long correctOptionId,
-            long selectedOptionId,
-            String correctOptionLetter,
-            String answerHtml,
-            String answerLeadHtml,
-            String answerRestHtml,
-            List<OptionExplanationDto> optionExplanations,
-            String answerDisplayMode,
-            int repetitions,
-            List<RelatedQuestionDto> relatedQuestions,
-            SessionInfoDto session,
-            long nextReviewAt,
-            int intervalDays,
-            long xpAwarded,
-            long xpTotal,
-            int level
-    ) {
-        this(correct, correctOptionId, selectedOptionId, correctOptionLetter, "",
-                answerHtml, answerLeadHtml, answerRestHtml, optionExplanations, answerDisplayMode,
-                repetitions, relatedQuestions, session, nextReviewAt, intervalDays,
-                xpAwarded, xpTotal, level);
-    }
 }

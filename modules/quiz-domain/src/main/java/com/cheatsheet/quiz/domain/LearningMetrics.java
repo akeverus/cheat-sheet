@@ -18,8 +18,15 @@ import lombok.Builder;
  *   <li><b>Удержание:</b> {@code retention7d}/{@code retention30d} — доля верных
  *       среди повторений (не-первых попыток) в окне.</li>
  *   <li><b>Расписание:</b> {@code dueNow} (готовы сейчас) vs {@code overdue}
- *       (просрочены ≥ суток), {@code averageResponseMs}.</li>
+ *       (просрочены ≥ суток) vs {@code dueFresh} (готовы, потому что ещё ни разу
+ *       не открывались), {@code averageResponseMs}.</li>
  * </ul>
+ *
+ * <p>{@code dueFresh} и {@code cardsSeen} — не одно и то же с точностью до знака.
+ * {@code cardsSeen} считается по журналу попыток, а он пишется отдельной
+ * транзакцией и умеет пропустить запись по idempotency-ключу; {@code dueFresh}
+ * читается из расписания. Разделять очередь можно только тем счётчиком, который
+ * взят из той же таблицы, что и сама очередь.</p>
  *
  * <p>Доли — в процентах 0..100; значение {@code < 0} (константа {@link #NO_DATA})
  * означает «нет данных для знаменателя» — UI показывает «—», а не «0%».</p>
@@ -38,6 +45,7 @@ public record LearningMetrics(
         double retention30d,
         long dueNow,
         long overdue,
+        long dueFresh,
         double averageResponseMs
 ) {
 
@@ -46,14 +54,19 @@ public record LearningMetrics(
 
     /** Пустые метрики (пустая БД) — все доли в состоянии «нет данных». */
     public static final LearningMetrics EMPTY = new LearningMetrics(
-            0, 0, 0, 0, 0, 0, NO_DATA, NO_DATA, NO_DATA, NO_DATA, 0, 0, NO_DATA);
+            0, 0, 0, 0, 0, 0, NO_DATA, NO_DATA, NO_DATA, NO_DATA, 0, 0, 0, NO_DATA);
 
     public LearningMetrics {
         if (cardsTotal < 0 || cardsSeen < 0 || cardsMastered < 0
                 || attemptsTotal < 0 || attemptsCorrect < 0 || attemptsIncorrect < 0
-                || dueNow < 0 || overdue < 0) {
+                || dueNow < 0 || overdue < 0 || dueFresh < 0) {
             throw new IllegalArgumentException("Счётчики метрик не могут быть отрицательными");
         }
+    }
+
+    /** Часть очереди, у которой есть история: срок повторения наступил. */
+    public long dueRepeats() {
+        return Math.max(0L, dueNow - dueFresh);
     }
 
     public boolean hasFirstAttemptAccuracy() {
