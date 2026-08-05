@@ -387,15 +387,15 @@ class TemplateFragmentContractTest {
         String js = readTemplate("static/js/stats/topic-charts.js");
 
         // Бюджет выводится из геометрии коробки: ширина → число баров,
-        // высота → длина подписи. Канвас до первой отрисовки отдаёт свой
-        // интринсик 300×150, поэтому мерить обязаны родителя.
-        assertThat(js).contains("canvas?.parentElement ?? canvas");
+        // высота → длина подписи. Саму коробку мерит chartBox (общий с осью дат,
+        // контракт замера — в canvasChartsDeriveTickBudgetFromTheBoxTheyAreBuiltWith).
+        assertThat(js).contains("const box = chartBox(canvas);");
         assertThat(js).contains("box.width - Y_AXIS_RESERVE_PX) / MIN_BAR_SLOT_PX");
         assertThat(js).contains("box.height * X_AXIS_MAX_SHARE");
 
         // Промах виден: обрезка многоточием, а не тихий клип канваса.
         assertThat(js).contains("const ELLIPSIS = '…';");
-        assertThat(js).contains("shortenToWidth(ctx, labels[index]");
+        assertThat(js).contains("shortenToWidth(width, labels[index]");
 
         // autoSkip «решал» проблему, выбрасывая каждую вторую подпись.
         assertThat(js).contains("autoSkip: false");
@@ -410,6 +410,83 @@ class TemplateFragmentContractTest {
         assertThat(js).contains("title: (items) => labels[items[0]?.dataIndex]");
         assertThat(js).contains("progressData.map((t) => [t.name,");
         assertThat(js).contains("accuracyData.map((t) => [t.name,");
+    }
+
+    /**
+     * Всё, что рисуется в канвасе, обязано считать бюджет подписей от коробки — и
+     * от ТОЙ коробки, с которой график построен.
+     *
+     * <p>Гейт выше держит ось тем. Этот — общее правило, потому что «молча удалить
+     * непомещающееся» у Chart.js не свойство одной оси: любой {@code ticks} без
+     * записанного бюджета отдан на откуп {@code autoSkip}. Ось дат «Динамики
+     * точности» это подтвердила константой {@code maxTicksLimit: 7}, не связанной
+     * ни с шириной графика, ни с шириной подписи: на 1440 она выбрасывала 7 дат из
+     * 14, имея 981px, а на 390 держала те же 7 с зазором 5.4px до столкновения.</p>
+     *
+     * <p>Три условия, каждое из которых по отдельности возвращает молчаливую
+     * потерю:</p>
+     * <ol>
+     *   <li>мерим ОБЁРТКУ, а не канвас: канвас без атрибутов {@code width}/
+     *       {@code height} отдаёт интринсик 300×150 — правдоподобное число, тихо
+     *       портящее любую формулу от размера;</li>
+     *   <li>коробки нет (панель вкладки скрыта, 0×0) → бюджет снимается, а не
+     *       считается нулевым: посчитанный по такой коробке предел застрял бы
+     *       навсегда;</li>
+     *   <li>перерисовка сверяет ДВА БЮДЖЕТА — {@code current()} против
+     *       {@code applied()}, — а не бюджет со снимком «как было при подписке».
+     *       Снимок врёт: Chart.js в конструкторе сам проставляет канвасу размеры,
+     *       и коробка от этого меняется. Замер поймал ровно это: ось дат строилась
+     *       по коробке 585px (11 подписей из 14), а «эталон» записывался с
+     *       устоявшихся 1027px (14) — расхождение с первой же секунды считалось
+     *       нормой, и ни поворот экрана, ни переключение вкладки его не чинили.</li>
+     * </ol>
+     */
+    @Test
+    void canvasChartsDeriveTickBudgetFromTheBoxTheyAreBuiltWith() throws IOException {
+        String theme = readTemplate("static/js/stats/chart-theme.js");
+        String trend = readTemplate("static/js/stats/accuracy-trend.js");
+        String topics = readTemplate("static/js/stats/topic-charts.js");
+
+        // (1) Замер — по обёртке, и нулевая коробка отдаётся как «размер неизвестен».
+        assertThat(theme).contains("(canvas?.parentElement ?? canvas)?.getBoundingClientRect()");
+        assertThat(theme).contains("box.width > 0 && box.height > 0 ? box : null");
+
+        // (2) Предел оси дат считается от коробки. Возврат к константе снова
+        // оторвал бы число подписей и от ширины графика, и от ширины подписи.
+        assertThat(trend).contains("maxTicksLimit: tickBudget(canvas, labels)");
+        // Без комментариев: докблок цитирует прежнюю константу, и цитата не должна
+        // ни ронять гейт, ни быть поводом выкинуть саму историю дефекта.
+        assertThat(CSS_COMMENT.matcher(trend).replaceAll("\n"))
+            .as("предел оси дат — из коробки, а не числовая константа")
+            .doesNotContainPattern("maxTicksLimit:\\s*\\d");
+        assertThat(trend).contains("const box = chartBox(canvas);");
+        assertThat(trend).contains("box.width - Y_AXIS_RESERVE_PX");
+        // Ширину подписи меряем фактическую (dayLabel при неожиданном формате даты
+        // отдаёт строку как есть), а не образец «31.07».
+        assertThat(trend).contains("labels.reduce((max, label) => Math.max(max, width(label)), 0)");
+        // Коробки нет → ограничение снимается целиком.
+        assertThat(trend).contains("if (!box) return undefined;");
+
+        // (3) Контракт пересчёта: сравниваются два бюджета, а не снимок.
+        assertThat(theme).contains("if (current() !== applied()) redraw();");
+        assertThat(theme).doesNotContain("let last = key()");
+        // applied снимается ДО постройки — иначе он опишет уже другую коробку.
+        assertThat(theme).contains("applied = resizeKey ? resizeKey() : null;");
+        assertThat(theme.indexOf("applied = resizeKey"))
+            .as("applied снимается до destroy+build, иначе описывает уже другую коробку")
+            .isLessThan(theme.indexOf("chart = build(chartPalette()"));
+        assertThat(topics).contains("appliedKey = `${progressBudget.bars}");
+        assertThat(topics.indexOf("appliedKey = `${progressBudget.bars}"))
+            .as("appliedKey снимается до new Chart, иначе описывает уже другую коробку")
+            .isLessThan(topics.indexOf("new Chart(progressCanvas"));
+        assertThat(topics).contains("applied: () => appliedKey");
+
+        // Слушаем КОРОБКУ: window.resize не покрывает ни раскрытие скрытой панели
+        // (0×0 → настоящий размер), ни догрузку шрифта, ни устаканивание layout.
+        assertThat(theme).contains("new ResizeObserver(schedule)");
+        assertThat(theme).contains("boxes.filter(Boolean).forEach((el) => observer.observe(el));");
+        assertThat(trend).contains("[canvas.parentElement]");
+        assertThat(topics).contains("boxes: [progressCanvas?.parentElement, accuracyCanvas?.parentElement]");
     }
 
     @Test

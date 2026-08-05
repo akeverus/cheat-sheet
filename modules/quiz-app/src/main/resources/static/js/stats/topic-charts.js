@@ -1,6 +1,6 @@
 import { escapeHtml, setProgressValue } from '../core/dom.js';
 import { getTopicStats, displayTopicName } from './topic-data.js';
-import { chartPalette, chartAnimation, chartsAvailable, onChartThemeChange } from './chart-theme.js';
+import { chartPalette, chartAnimation, chartsAvailable, onChartThemeChange, chartBox, labelMeasurer, onChartResize } from './chart-theme.js';
 
 /**
  * Два графика вкладки «Темы»: прогресс и точность.
@@ -46,15 +46,14 @@ const ELLIPSIS = '…';
 /**
  * Бюджет коробки: сколько баров и сколько пикселей подписи она держит.
  *
- * Мерим ОБЁРТКУ, а не канвас. У канваса без атрибутов свой интринсик 300×150, и
- * до первой отрисовки Chart.js его rect равен именно ему — бюджет, снятый с
- * канваса на холодной загрузке, выходил вдвое меньше настоящего (11 баров вместо
- * 18, подпись в 5 символов вместо 19). Размер задаёт `.chart-wrapper`, из него
- * же тянет размер и сам Chart.js.
+ * Коробку берём у {@link chartBox} — он мерит обёртку, а не канвас, и отдаёт
+ * `null` вместо интринсика 300×150 или нулей скрытой панели. Бюджет без коробки
+ * — это отсутствие бюджета: рисуем максимум и не обрезаем, пока настоящий размер
+ * не приедет с resize.
  */
 function labelBudget(canvas) {
-  const box = (canvas?.parentElement ?? canvas)?.getBoundingClientRect();
-  if (!box || !box.width || !box.height) return { bars: MAX_BARS, labelPx: Infinity };
+  const box = chartBox(canvas);
+  if (!box) return { bars: MAX_BARS, labelPx: Infinity };
   const slots = Math.floor(Math.max(0, box.width - Y_AXIS_RESERVE_PX) / MIN_BAR_SLOT_PX);
   return {
     bars: Math.max(MIN_BARS, Math.min(MAX_BARS, slots)),
@@ -65,21 +64,13 @@ function labelBudget(canvas) {
   };
 }
 
-/** Контекст для замера: тот же шрифт, которым Chart.js рисует подписи. */
-function measuringContext(canvas) {
-  const ctx = document.createElement('canvas').getContext('2d');
-  const family = window.Chart?.defaults?.font?.family || getComputedStyle(canvas).fontFamily;
-  ctx.font = `${LABEL_FONT_PX}px ${family}`;
-  return ctx;
-}
-
-function shortenToWidth(ctx, text, maxPx) {
-  if (!Number.isFinite(maxPx) || ctx.measureText(text).width <= maxPx) return text;
+function shortenToWidth(width, text, maxPx) {
+  if (!Number.isFinite(maxPx) || width(text) <= maxPx) return text;
   let fits = 0;
   let rest = text.length;
   while (fits < rest) {
     const mid = Math.ceil((fits + rest) / 2);
-    if (ctx.measureText(text.slice(0, mid) + ELLIPSIS).width <= maxPx) fits = mid;
+    if (width(text.slice(0, mid) + ELLIPSIS) <= maxPx) fits = mid;
     else rest = mid - 1;
   }
   return fits > 0 ? text.slice(0, fits).trimEnd() + ELLIPSIS : ELLIPSIS;
@@ -90,13 +81,13 @@ function shortenToWidth(ctx, text, maxPx) {
  * длинных подписей, выбрасывая каждую вторую, и бар оставался без имени молча.
  * Влезать теперь обязано всё, что нарисовано.
  */
-function budgetedAxis(baseX, labels, budget, ctx) {
+function budgetedAxis(baseX, labels, budget, width) {
   return {
     ...baseX,
     ticks: {
       ...baseX.ticks,
       autoSkip: false,
-      callback: (_value, index) => shortenToWidth(ctx, labels[index] ?? '', budget.labelPx)
+      callback: (_value, index) => shortenToWidth(width, labels[index] ?? '', budget.labelPx)
     }
   };
 }
@@ -247,7 +238,12 @@ export function initTopicCharts() {
     .sort((a, b) => a.accuracy - b.accuracy || b.attempts - a.attempts);
 
   let charts = [];
-  let budgetKey = '';
+  let appliedKey = '';
+  const budgetKey = () => {
+    const p = labelBudget(progressCanvas);
+    const a = labelBudget(accuracyCanvas);
+    return `${p.bars}:${p.labelPx}/${a.bars}:${a.labelPx}`;
+  };
 
   const render = () => {
     const palette = chartPalette();
@@ -255,7 +251,9 @@ export function initTopicCharts() {
     const common = baseOptions(palette);
     const progressBudget = labelBudget(progressCanvas);
     const accuracyBudget = labelBudget(accuracyCanvas);
-    budgetKey = `${progressBudget.bars}:${progressBudget.labelPx}/${accuracyBudget.bars}:${accuracyBudget.labelPx}`;
+    // Запоминаем бюджет ДО постройки: с ним график и будет нарисован, а после
+    // конструктора Chart.js коробка уже другая (см. onChartResize).
+    appliedKey = `${progressBudget.bars}:${progressBudget.labelPx}/${accuracyBudget.bars}:${accuracyBudget.labelPx}`;
     // Сколько баров рисуем — решает коробка, а не длина списка.
     const progressData = progressRanked.slice(0, progressBudget.bars);
     const accuracyData = accuracyRanked.slice(0, accuracyBudget.bars);
@@ -278,7 +276,7 @@ export function initTopicCharts() {
         progressData.map((t) => [t.name, t.learned, Math.max(0, t.total - t.learned)]));
       try {
         const names = progressData.map((t) => t.name);
-        const measure = measuringContext(progressCanvas);
+        const measure = labelMeasurer(progressCanvas, LABEL_FONT_PX);
         charts.push(new Chart(progressCanvas, {
           type: 'bar',
           data: {
@@ -317,7 +315,7 @@ export function initTopicCharts() {
       try {
         const values = accuracyData.map((t) => t.accuracy);
         const names = accuracyData.map((t) => t.name);
-        const measure = measuringContext(accuracyCanvas);
+        const measure = labelMeasurer(accuracyCanvas, LABEL_FONT_PX);
         charts.push(new Chart(accuracyCanvas, {
           type: 'bar',
           data: {
@@ -354,16 +352,13 @@ export function initTopicCharts() {
 
   // Бюджет выведен из коробки — значит, при смене коробки он протухает. Chart.js
   // сам подстроит масштаб, но число баров и длину обрезки решаем мы, и повороту
-  // экрана нечем нам об этом сообщить. Перерисовываем только когда бюджет
-  // ДЕЙСТВИТЕЛЬНО изменился: тот же resize шлёт переключатель вкладок при каждом
-  // клике, и безусловный re-render гонял бы анимацию входа на ровном месте.
-  let resizeTimer = 0;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
-      const p = labelBudget(progressCanvas);
-      const a = labelBudget(accuracyCanvas);
-      if (`${p.bars}:${p.labelPx}/${a.bars}:${a.labelPx}` !== budgetKey) render();
-    }, 150);
+  // экрана нечем нам об этом сообщить. Безусловная перерисовка тут не годится:
+  // переключатель вкладок шлёт resize на каждый клик, и анимация входа гонялась
+  // бы на ровном месте — поэтому сверяем бюджеты.
+  onChartResize({
+    current: budgetKey,
+    applied: () => appliedKey,
+    redraw: render,
+    boxes: [progressCanvas?.parentElement, accuracyCanvas?.parentElement]
   });
 }
