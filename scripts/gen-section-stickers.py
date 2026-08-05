@@ -9,31 +9,55 @@ PNG — производный артефакт, источник правды �
 теме и на тёмной поверхности в тёмной — свободный силуэт со светлыми заливками
 пропадал бы на белом. Тёмная плитка даёт постоянный контекст обеим темам.
 
-Палитра ровно шесть цветов (см. docs/visual-assets.md). Тест
-`SectionStickerPaletteTest` не даёт цветам расползтись обратно.
+Палитра не задаётся здесь, а **читается из `static/css/tokens.css` по имени
+токена** — шесть ролей, шесть токенов. Своя копия HEX уже подводила: семейство
+знаков жило на почти-совпадающей палитре (`#22d3c5` против токенного `#39d0c7`
+и так далее — разница ~10 единиц в канале). Такое расхождение видно только когда
+знак и интерфейс попадают в один экран, и читается не как решение дизайнера, а
+как баг рендера. Привязка по имени делает расхождение невозможным: сменится
+токен — сменится и знак. Тест `SectionStickerPaletteTest` читает те же токены.
 
 Запуск:  python3 scripts/gen-section-stickers.py
 """
 
+import re
 import struct
 import zlib
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parents[1] / (
-    "modules/quiz-app/src/main/resources/static/img/stickers"
-)
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / "modules/quiz-app/src/main/resources/static/img/stickers"
+TOKENS = ROOT / "modules/quiz-app/src/main/resources/static/css/tokens.css"
 
 # --- палитра -----------------------------------------------------------------
 # Роли, а не «цвета»: K — плитка, S — вторичная поверхность, T — рамка и акцент,
 # B — холодный вторичный акцент, G — «готово/запуск», W — свет.
-PALETTE = {
-    "K": (0x10, 0x24, 0x2D),
-    "S": (0x26, 0x4A, 0x57),
-    "T": (0x22, 0xD3, 0xC5),
-    "B": (0x38, 0xBD, 0xF8),
-    "G": (0x22, 0xC5, 0x5E),
-    "W": (0xF8, 0xFA, 0xFC),
+#
+# Знаки одинаковы в обеих темах (плитка непрозрачная), поэтому берётся тёмная
+# ветка токенов — она в файле первая, светлая переопределяет её ниже.
+ROLES = {
+    "K": "--color-bg-primary",
+    "S": "--color-border-primary",
+    "T": "--color-accent-primary",
+    "B": "--color-status-info",
+    "G": "--color-status-success",
+    "W": "--color-text-primary",
 }
+
+
+def read_palette():
+    css = TOKENS.read_text(encoding="utf-8")
+    palette = {}
+    for role, token in ROLES.items():
+        match = re.search(re.escape(token) + r":\s*(#[0-9a-fA-F]{6})\b", css)
+        if not match:
+            raise SystemExit(f"в tokens.css нет {token}")
+        value = match.group(1)
+        palette[role] = tuple(int(value[i:i + 2], 16) for i in (1, 3, 5))
+    return palette
+
+
+PALETTE = read_palette()
 
 TILE = 32  # логическая сетка; итоговый PNG — 64×64 (масштаб ×2)
 SCALE = 2

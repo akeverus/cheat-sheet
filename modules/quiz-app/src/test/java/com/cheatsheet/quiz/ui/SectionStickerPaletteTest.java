@@ -39,19 +39,34 @@ class SectionStickerPaletteTest {
 
     private static final Path RESOURCES = Path.of("src/main/resources");
     private static final Path STICKERS = RESOURCES.resolve("static/img/stickers");
+    private static final Path TOKENS = RESOURCES.resolve("static/css/tokens.css");
 
     /**
-     * Рампа из {@code gen-section-stickers.py}. Тёплого акцента в ней нет
-     * намеренно: продукт обходится холодной парой «бирюза + голубой» плюс
-     * зелёный статуса, поэтому пламя ракеты зелёное, а не оранжевое.
+     * Шесть ролей рампы, заданные <b>именами токенов</b>, а не своей копией HEX.
+     *
+     * <p>Копия уже подводила: семейство знаков жило на почти-совпадающей палитре
+     * (плитка {@code #10242d} против токенной {@code #071116}, бирюза
+     * {@code #22d3c5} против {@code #39d0c7} — по ~10 единиц в канале). Проверка
+     * «все знаки одинаковы между собой» такое расхождение пропускает: семейство
+     * согласовано внутри себя и разъехалось целиком. А видно его именно тогда,
+     * когда знак и интерфейс попадают в один экран, и читается оно не как выбор
+     * дизайнера, а как баг рендера.
+     *
+     * <p>Привязка по имени переносит проверку на границу «знаки против
+     * продукта»: сменится токен — тест покраснеет с требованием перегенерировать
+     * PNG, а не молча разрешит двум палитрам разойтись.
+     *
+     * <p>Тёплого акцента среди ролей нет намеренно: знаки обходятся холодной
+     * парой «бирюза + голубой» плюс зелёный статуса, поэтому пламя ракеты
+     * зелёное, а не оранжевое.
      */
-    private static final Set<Integer> RAMP = Set.of(
-            0x10242D, // плитка
-            0x264A57, // вторичная поверхность
-            0x22D3C5, // рамка и акцент
-            0x38BDF8, // холодный вторичный акцент
-            0x22C55E, // «готово/запуск»
-            0xF8FAFC  // свет
+    private static final List<String> RAMP_TOKENS = List.of(
+            "--color-bg-primary",     // плитка
+            "--color-border-primary", // вторичная поверхность
+            "--color-accent-primary", // рамка и акцент
+            "--color-status-info",    // холодный вторичный акцент
+            "--color-status-success", // «готово/запуск»
+            "--color-text-primary"    // свет
     );
 
     /** Иконка рисуется в сетке 32×32 с двукратным увеличением. */
@@ -65,6 +80,7 @@ class SectionStickerPaletteTest {
 
     @Test
     void everyStickerUsesOnlyTheProductRamp() throws IOException {
+        Set<Integer> ramp = ramp();
         List<String> offRamp = new ArrayList<>();
 
         for (Path sticker : stickers()) {
@@ -72,16 +88,34 @@ class SectionStickerPaletteTest {
             Set<Integer> colors = opaqueColors(image);
 
             Set<String> foreign = new LinkedHashSet<>();
-            colors.stream().filter(rgb -> !RAMP.contains(rgb)).forEach(rgb -> foreign.add(hex(rgb)));
+            colors.stream().filter(rgb -> !ramp.contains(rgb)).forEach(rgb -> foreign.add(hex(rgb)));
             if (!foreign.isEmpty()) {
                 offRamp.add(sticker.getFileName() + ": " + foreign);
             }
         }
 
         assertThat(offRamp)
-                .as("цвета вне рампы. Иконки семейства видны не рядом, поэтому расхождение "
-                        + "замечается только замером — править через scripts/gen-section-stickers.py")
+                .as("цвета вне токенов продукта. Иконки семейства видны не рядом, поэтому "
+                        + "расхождение замечается только замером — перегенерировать "
+                        + "scripts/gen-section-stickers.py")
                 .isEmpty();
+    }
+
+    /**
+     * Рампа читается из {@code tokens.css} — из тёмной ветки, она в файле первая
+     * (светлая переопределяет её ниже). Знаки одинаковы в обеих темах, потому что
+     * плитка непрозрачна, поэтому вариант ровно один.
+     */
+    private Set<Integer> ramp() throws IOException {
+        String css = Files.readString(TOKENS, StandardCharsets.UTF_8);
+        Set<Integer> ramp = new LinkedHashSet<>();
+        for (String token : RAMP_TOKENS) {
+            Matcher matcher = Pattern.compile(Pattern.quote(token) + ":\\s*#([0-9a-fA-F]{6})\\b").matcher(css);
+            assertThat(matcher.find()).as("токен %s в tokens.css", token).isTrue();
+            ramp.add(Integer.parseInt(matcher.group(1), 16));
+        }
+        assertThat(ramp).as("шесть различных ролей рампы").hasSize(RAMP_TOKENS.size());
+        return ramp;
     }
 
     /**
