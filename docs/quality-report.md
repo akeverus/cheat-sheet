@@ -53,13 +53,17 @@ pip install pre-commit && pre-commit install
 `failures=0 errors=0 skipped=2`. `BUILD SUCCESSFUL`.
 
 **Числа выше — рабочего дерева, и это не то же самое, что `master`.** На чистом checkout
-(`git worktree add --detach`) `:quiz-app:test` даёт **1141 теста, 31 падение**: остаток
-неприземлённой правки (67 файлов под `modules/`) держит контракты, которые в `HEAD` уже
+(`git worktree add --detach`) `:quiz-app:test` даёт **1142 теста, 27 падений**: остаток
+неприземлённой правки (~62 файла под `modules/`) держит контракты, которые в `HEAD` уже
 объявлены. Различие принципиально — в авторском дереве недостающие половины лежат рядом и
 молча закрывают дыру, поэтому **целостность `master` проверяется только на чистом
-worktree**. Крупнейшие группы: 19 `InterviewControllerTest` (302 вместо 200), 5
-`InterviewControllerApiTest`, по 2 `InterviewFilterSqlTest` и `StaticAssetInventoryTest`,
-по 1 `ReviewReasonPaletteTest` / `SectionStickerPaletteTest` / `VisualBaselineContractTest`.
+worktree**. Остаток: 19 `InterviewControllerTest` (302 вместо 200), 5
+`InterviewControllerApiTest`, 2 `InterviewFilterSqlTest`, 1 `VisualBaselineContractTest`.
+
+Счёт движется вниз кусками, и каждый кусок доказывается **baseline-diff'ом между двумя
+чистыми worktree**: разбор `build/test-results/test/*.xml` питоном в множество пар
+`(класс, метод)` и вычитание. Так «стало 27 вместо 31, новых нет» — измеренный факт, а не
+впечатление. 42 → 31 (`ea20382f`, фронтовая половина) → 27 (`79c4073c` + `b9778c23`).
 
 Персистентность и `quiz-app` идут на Testcontainers PostgreSQL 16-alpine — один
 контейнер на JVM, TRUNCATE между тестами. Ни H2, ни моков репозиториев: расхождение
