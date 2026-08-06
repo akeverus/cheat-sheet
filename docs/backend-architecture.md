@@ -272,6 +272,13 @@ FSRS-память, точность темы и признак избранно�
 шлёт `text/html,…,*/*`, и любой прокси, дописывающий JSON, показал бы пользователю
 голый JSON вместо страницы ошибки.
 
+Сама развилка живёт в `common/web/RequestFormat` — четыре статических предиката на двух
+ортогональных осях: **путь** (`isMachineFacingPath` / `isAdminSensitivePath`) и
+**заголовок `Accept`** (`acceptsHtml` / `prefersHtml` / `prefersJson`). До этого одна и
+та же логика существовала в четырёх копиях — в хендлере, в `AccessDeniedHandler`, в
+`AuthenticationEntryPoint` и в сервисе доступа, — и копии разошлись: один и тот же
+запрос мог получить HTML от одного места и JSON от другого.
+
 **Формат ошибки — RFC 7807 `ProblemDetail`** с `Content-Type: application/problem+json`
 и тремя расширениями: `errorCode` (машиночитаемый, из `ApiErrorTypes`), `correlationId`
 (проставляется `CorrelationIdFilter`, связывает ответ с логом) и `errors` (детали
@@ -306,7 +313,16 @@ FSRS-память, точность темы и признак избранно�
 
 Чувствительные эндпоинты (админ, экспорт) закрыты `SensitiveEndpointAccessService`
 с собственными `AccessDeniedHandler` / `AuthenticationEntryPoint` — чтобы отказ был
-ProblemDetail'ом, а не редиректом на форму логина в API-контексте.
+ProblemDetail'ом, а не редиректом на форму логина в API-контексте. Фильтры отрабатывают
+**до** MVC, поэтому `@ControllerAdvice` их не покрывает: контракт ответа воспроизводится
+ровно один раз, в `SensitiveEndpointAccessService.writeProblem` (тот же
+`application/problem+json`, тот же `errorCode`, тот же `correlationId`).
+
+Токен читается из заголовка `X-Admin-Token`. Из **query string** он не принимается
+вовсе: `HttpServletRequest.getParameter` не различает строку запроса и тело формы, то
+есть любая защита «по HTTP-методу» вокруг него — иллюзия, а секрет в URL оседает в
+access-логах, `Referer` и истории браузера (CWE-598). Проверяется разбором самой
+`getQueryString()`, а не методом запроса; из тела формы токен по-прежнему принимается.
 
 CSP с nonce: `CspNonceFilter` генерирует nonce на запрос, `CspNonceAdvice` кладёт его
 в модель. `unsafe-inline` не используется ни для скриптов, ни для стилей.

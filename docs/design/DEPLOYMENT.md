@@ -12,7 +12,8 @@
 ## Статика и кэш (OPS-004)
 
 - **Prod:** `spring.web.resources.chain.strategy.content.enabled=true` — Spring добавляет content-hash к self-hosted CSS/JS (`/css/app-<hash>.css`) через `ResourceUrlEncodingFilter` и Thymeleaf `@{...}`.
-- **Dev/default:** ручной cache 86400s без content-hash chain; удобно править статику локально.
+- **Dev/default:** content-hash chain выключен, версии в URL нет — поэтому `max-age=0, must-revalidate` (`STATIC_RESOURCES_CACHE_SECONDS`): браузер ревалидирует каждый запрос, `ETag` отдаёт `304` без тела. Прежние `86400s` означали ровно сутки — `must-revalidate` вступает в силу только **после** истечения срока, до тех пор запроса на сервер не происходит и правка статики локально не видна.
+- Сжатие (`server.compression.mime-types`) перечисляет **и** `text/javascript`, и `application/javascript`: с RFC 9239 канонический тип `.js` — первый, а Tomcat сверяет строку, поэтому одного из них недостаточно.
 - Entry-point'ы `head.html` / `fragments/scripts.html` используют `th:href` / `th:src` без `?v=N`.
 
 ## Self-hosted frontend deps (OPS-005)
@@ -21,7 +22,7 @@ highlight.js 11.9.0, Mermaid 11.12.0, Chart.js 4.5.0 и шрифты Inter / Jet
 
 | Ресурс | Путь | Обновление |
 |--------|------|------------|
-| highlight.js 11.9.0 (JS + atom-one-dark CSS) | `/vendor/hljs/` | `bash scripts/vendor-frontend.sh` |
+| highlight.js 11.9.0 (только движок; тема своя — `/css/components-code-highlight.css`) | `/vendor/hljs/highlight.min.js` | `bash scripts/vendor-frontend.sh` |
 | Mermaid 11.12.0 | `/vendor/mermaid/mermaid.min.js` | то же |
 | Chart.js 4.5.0 | `/vendor/chart/chart.umd.min.js` | то же |
 | Inter (wght 400..700) + JetBrains Mono (400..600) | `/fonts/*.woff2`, `/css/fonts-local.css` | то же |

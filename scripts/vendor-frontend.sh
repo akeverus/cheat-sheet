@@ -19,7 +19,7 @@ MERMAID_VER="11.12.0"
 CHART_VER="4.5.0"
 
 mkdir -p \
-  "${VENDOR}/hljs/styles" \
+  "${VENDOR}/hljs" \
   "${VENDOR}/mermaid" \
   "${VENDOR}/chart" \
   "${FONTS}"
@@ -31,13 +31,13 @@ curl_fetch() {
   curl -fsSL --retry 3 --retry-delay 2 "${url}" -o "${dest}"
 }
 
-echo "==> highlight.js ${HLJS_VER}"
+# Только грамматика, без вендорной темы: тема у нас своя —
+# static/css/components-code-highlight.css на токенах --code-*. Вендорные темы
+# зашивают HEX намертво и не переключаются вместе с интерфейсом.
+echo "==> highlight.js ${HLJS_VER} (движок; тема — своя)"
 curl_fetch \
   "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/${HLJS_VER}/highlight.min.js" \
   "${VENDOR}/hljs/highlight.min.js"
-curl_fetch \
-  "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/${HLJS_VER}/styles/atom-one-dark.min.css" \
-  "${VENDOR}/hljs/styles/atom-one-dark.min.css"
 
 echo "==> mermaid ${MERMAID_VER}"
 curl_fetch \
