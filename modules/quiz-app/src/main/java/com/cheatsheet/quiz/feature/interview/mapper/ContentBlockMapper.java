@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * Собирает типизированные {@link ContentBlock} из плоских полей {@link Question}
  * (хендофф-3, Этап 8). Тип блока определяется здесь, на backend, и отдаётся фронту
- * явно ({@code data-block-type}) — клиент больше не угадывает Mermaid/код по
+ * явно ({@code data-content-type}) — клиент больше не угадывает Mermaid/код по
  * содержимому (см. {@code docs/07}, {@code METRICS_GLOSSARY.md}).
  *
  * <p>Это единственное место, где вкладка получает свой тип и заголовок. Шаблон
