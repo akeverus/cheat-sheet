@@ -12,16 +12,23 @@ spring:
   web:
     resources:
       # Content-hash версионирование статики (OPS-004): Thymeleaf @{/css/app.css}
-      # → /css/app-<hash>.css через ResourceUrlEncodingFilter. Ручные ?v=N в head
-      # entry-point'ах убраны; vendor/fonts self-hosted (hljs/mermaid/chart) — см. DEPLOYMENT.md OPS-005.
+      # → /css/app-<hash>.css через ResourceUrlEncodingFilter.
       chain:
         strategy:
           content:
             enabled: true
+      # Сам по себе `@{...}` покрывает не всё: относительные `import '../core/dom.js'`
+      # внутри модулей и пути к спрайтам в pixel-fx.js — это строки в .js, шаблонизатор
+      # их не видит, а сборщика в проекте нет по решению (см. frontend-architecture.md).
+      # Пока эти адреса были безверсионными, годовой max-age означал бы, что правка
+      # такого файла не доедет до вернувшегося браузера никогда, и кэш держали часом.
+      # StaticVersionAdvice закрывает разрыв: import map для 39 модулей и JSON-карта
+      # для спрайтов лежат в HTML (no-store), поэтому версия есть у каждого адреса,
+      # который реально запрашивает браузер, и год здесь безопасен.
       cache:
         cachecontrol:
           max-age: ${STATIC_RESOURCES_CACHE_SECONDS:31536000}s
-          must-revalidate: true
+          cache-public: true
 
 # В prod-профиле метрики тегаются env=prod по умолчанию. Можно перекрыть
 # APP_ENV=staging если ставится staging-вариант на тот же образ.
