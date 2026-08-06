@@ -137,10 +137,11 @@ class VisualBaselineContractTest {
                 "navLabels=" + String.join("|", allGroups(body, "<nav[^>]*aria-label=\"([^\"]+)\"")),
                 "fragments=" + String.join("|", allGroups(body, "data-ui-fragment=\"([^\"]+)\"")),
                 "hasInterviewCard=" + body.contains("id=\"interview-card\""),
-                // Префикс class="status (без закрывающей кавычки): на p висит
-                // th:classappend status-correct/status-wrong → точного class="status"
-                // в рендере нет, но строка результата (вердикт) присутствует.
-                "hasStatusLine=" + body.contains("class=\"status"),
+                // Вердикт — тот же компонент, что и в JS-разборе на фокусе
+                // (.feedback-verdict.result-banner). Своего `.status` у страницы
+                // результата больше нет: два компонента под один вердикт как раз и
+                // были дефектом.
+                "hasVerdictBanner=" + body.contains("class=\"feedback-verdict result-banner"),
                 "hasResultActionsContainer=" + body.contains("class=\"result-actions\""),
                 // Вторичная кнопка «доп. анализ» (#extra-analysis-toggle-result) и её
                 // порядок относительно next-btn удалены из подписи вместе с
