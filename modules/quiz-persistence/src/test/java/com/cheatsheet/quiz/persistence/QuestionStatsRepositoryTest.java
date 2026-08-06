@@ -36,30 +36,68 @@ class QuestionStatsRepositoryTest extends AbstractPostgresRepositoryTest {
 
         assertThat(stats.total()).isZero();
         assertThat(stats.due()).isZero();
+        assertThat(stats.fresh()).isZero();
         assertThat(stats.learned()).isZero();
         assertThat(stats.correct()).isZero();
         assertThat(stats.wrong()).isZero();
     }
 
     /**
-     * Когда есть questions, но нет review_state (JOIN не даёт строк), тоже возвращаются нули.
+     * Вопрос без строки прогресса — не ноль, а единица в {@code total} и {@code due}.
+     *
+     * <p>Раньше здесь ожидались нули: соединение с {@code review_state} было
+     * внутренним, и вопрос, на который ещё не отвечали, не попадал ни в один
+     * счётчик. Сводка показывала не размер банка, а размер прогресса, — на главной
+     * это читалось как «3 из 6 к повтору» при девяти тысячах вопросов в базе.
+     * Ответов у нового вопроса нет, поэтому {@code learned} и суммы остаются нулями.
      */
     @Test
-    void getAggregatedStatsWithQuestionsButNoReviewStateReturnsZeroes() {
+    void getAggregatedStatsCountsQuestionsWithoutReviewState() {
         jdbcTemplate.update("""
                 INSERT INTO questions (slug, source_slug, file_path, topic, question_text, answer_markdown,
-                    is_important, source_hash, question_type, regen_count)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, "q1", "q1", "test/q1.md", "Java", "Q?", "A", 0, "hash", "TEXT", 0);
+                    is_important, source_hash, question_type)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, "q1", "q1", "test/q1.md", "Java", "Q?", "A", 0, "hash", "TEXT");
 
         long nowEpoch = System.currentTimeMillis() / 1000;
         InterviewStats stats = repository.getAggregatedStats(null, null, null, nowEpoch, 3);
 
-        assertThat(stats.total()).isZero();
-        assertThat(stats.due()).isZero();
+        assertThat(stats.total()).isEqualTo(1);
+        assertThat(stats.due()).isEqualTo(1);
+        // Готов к показу целиком за счёт новизны — повторять нечего.
+        assertThat(stats.fresh()).isEqualTo(1);
+        assertThat(stats.dueRepeats()).isZero();
         assertThat(stats.learned()).isZero();
         assertThat(stats.correct()).isZero();
         assertThat(stats.wrong()).isZero();
+    }
+
+    /**
+     * Каталог тем на {@code /stats} показывает тему, в которой ещё не отвечали.
+     *
+     * <p>Пустой {@code topicStats} рендерится как «Пока нет данных по темам» — то есть
+     * на полном банке вопросов страница статистики выглядела бы как у нового
+     * пользователя, и оба графика с таблицей просто не выводились.
+     */
+    @Test
+    void findTopicStatsIncludesTopicsWithoutAnyProgress() {
+        jdbcTemplate.update(
+                "INSERT INTO questions (slug, source_slug, file_path, topic, question_text, answer_markdown, source_hash) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "fresh", "fresh", "f.md", "kotlin", "Q?", "A.", "h-fresh");
+
+        List<TopicStats> stats = repository.findTopicStats(System.currentTimeMillis() / 1000, 3);
+
+        assertThat(stats).singleElement().satisfies(topic -> {
+            assertThat(topic.topic()).isEqualTo("kotlin");
+            assertThat(topic.total()).isEqualTo(1);
+            assertThat(topic.due()).isEqualTo(1);
+            // Вопрос готов к показу, но повторять его нечего — он новый.
+            assertThat(topic.fresh()).isEqualTo(1);
+            assertThat(topic.dueRepeats()).isZero();
+            assertThat(topic.learned()).isZero();
+            assertThat(topic.maturityScore()).isZero();
+        });
     }
 
     @Test
@@ -80,6 +118,9 @@ class QuestionStatsRepositoryTest extends AbstractPostgresRepositoryTest {
         assertThat(stats).hasSize(1);
         assertThat(stats.get(0).maturityScore()).isEqualTo(25.0, within(0.01));
         // 2.5 * 10 = 25.0
+        // Срок прошёл, история есть — это повторение, а не новый вопрос.
+        assertThat(stats.get(0).fresh()).isZero();
+        assertThat(stats.get(0).dueRepeats()).isEqualTo(1);
     }
 
     @Test
@@ -99,6 +140,32 @@ class QuestionStatsRepositoryTest extends AbstractPostgresRepositoryTest {
         assertThat(agg.cardsMastered()).isEqualTo(1);
         assertThat(agg.dueNow()).isEqualTo(2);
         assertThat(agg.overdue()).isEqualTo(1);
+        // У всех трёх карточек есть расписание — новых среди них нет.
+        assertThat(agg.dueFresh()).isZero();
+    }
+
+    /**
+     * Вопрос без расписания попадает и в {@code dueNow}, и в {@code dueFresh}:
+     * он готов к показу не потому, что подошёл срок, а потому что его не открывали.
+     */
+    @Test
+    void getScheduleAggregateCountsQuestionsWithoutScheduleAsFresh() {
+        long now = 1_800_000_000L;
+        long day = 86_400L;
+        insertCard("scheduled", 1, now - day / 2, 0);
+        jdbcTemplate.update(
+                "INSERT INTO questions (slug, source_slug, file_path, topic, question_text, answer_markdown, source_hash) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "new-one", "new-one", "n.md", "java", "Q?", "A.", "h-new");
+
+        QuestionStatsRepository.ScheduleAggregate agg =
+                repository.getScheduleAggregate(now, now - day, 3);
+
+        assertThat(agg.cardsTotal()).isEqualTo(2);
+        assertThat(agg.dueNow()).isEqualTo(2);
+        assertThat(agg.dueFresh()).isEqualTo(1);
+        // Новый вопрос нельзя просрочить: срока у него не было.
+        assertThat(agg.overdue()).isZero();
     }
 
     @Test
@@ -108,6 +175,7 @@ class QuestionStatsRepositoryTest extends AbstractPostgresRepositoryTest {
         assertThat(agg.cardsTotal()).isZero();
         assertThat(agg.dueNow()).isZero();
         assertThat(agg.overdue()).isZero();
+        assertThat(agg.dueFresh()).isZero();
     }
 
     @Test
@@ -143,6 +211,39 @@ class QuestionStatsRepositoryTest extends AbstractPostgresRepositoryTest {
         insertWrongCard("w3", "java", "Q3?", 1, 0);
 
         assertThat(repository.findRecentWrongQuestions(2)).hasSize(2);
+    }
+
+    /**
+     * Слабейшая тема — общее определение для карточки на /stats и для режима «Слабые
+     * темы». При равной точности выигрывает тема с бо́льшим числом попыток: там сигнал
+     * надёжнее. Тай-брейк обязан быть детерминированным — иначе подпись карточки
+     * менялась бы от перезагрузки, а тренировка уходила бы в другую тему.
+     */
+    @Test
+    void findWeakestTopicPrefersLowestAccuracyThenMoreAttempts() {
+        insertWrongCard("s1", "strong", "Q?", 1, 9);   // 90% — выше порога
+        insertWrongCard("wa", "weak-a", "Q?", 3, 1);   // 25%, 4 попытки
+        insertWrongCard("wb", "weak-b", "Q?", 6, 2);   // 25%, 8 попыток
+
+        assertThat(repository.findWeakestTopic(70.0))
+                .isEqualTo(new QuestionStatsRepository.WeakestTopic("weak-b", 25));
+    }
+
+    @Test
+    void findWeakestTopicIgnoresTopicsAboveThreshold() {
+        insertWrongCard("s1", "strong", "Q?", 1, 9);
+
+        assertThat(repository.findWeakestTopic(70.0)).isNull();
+        assertThat(repository.countWeakTopics(70.0)).isZero();
+    }
+
+    @Test
+    void countWeakTopicsCountsOnlyTopicsBelowThreshold() {
+        insertWrongCard("s1", "strong", "Q?", 1, 9);
+        insertWrongCard("wa", "weak-a", "Q?", 3, 1);
+        insertWrongCard("wb", "weak-b", "Q?", 6, 2);
+
+        assertThat(repository.countWeakTopics(70.0)).isEqualTo(2);
     }
 
     private long insertWrongCard(String slug, String topic, String text, int wrongCount, int correctCount) {

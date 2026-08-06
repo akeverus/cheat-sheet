@@ -29,32 +29,41 @@ class ReviewStateRepositoryTest extends AbstractPostgresRepositoryTest {
         repository = new ReviewStateRepository(jdbcTemplate);
     }
 
+    /**
+     * Первый ответ на вопрос, у которого строки прогресса ещё нет, обязан её создать.
+     *
+     * <p>Строку заводил показ вопроса, а {@code update} был голым UPDATE. Когда показ
+     * перестал писать в БД, такой UPDATE трогал бы ноль строк и первый ответ пропадал бы
+     * молча — без исключения и без следа в статистике.
+     */
     @Test
-    void insertIfAbsentCreatesNewState() {
-        repository.insertIfAbsent(1L, 1000L);
+    void updateCreatesRowWhenProgressAbsent() {
+        assertThat(repository.findByQuestionId(1L)).isEmpty();
+
+        repository.update(new ReviewState(1L, 1, 1, 2.5, 2000L, ReviewResult.CORRECT, 1, 0));
 
         Optional<ReviewState> state = repository.findByQuestionId(1L);
         assertThat(state).isPresent();
-        assertThat(state.get().questionId()).isEqualTo(1L);
-        assertThat(state.get().nextReviewAt()).isEqualTo(1000L);
-        assertThat(state.get().lastResult()).isEqualTo(ReviewResult.NEW);
-        assertThat(state.get().repetitions()).isZero();
+        assertThat(state.get().correctCount()).isEqualTo(1);
+        assertThat(state.get().nextReviewAt()).isEqualTo(2000L);
+        assertThat(state.get().lastResult()).isEqualTo(ReviewResult.CORRECT);
     }
 
+    /** То же для FSRS-ветки планировщика: она пишет своей командой, а не через {@code update}. */
     @Test
-    void insertIfAbsentDoesNotOverwriteExistingState() {
-        repository.insertIfAbsent(1L, 1000L);
+    void updateFsrsCreatesRowWhenProgressAbsent() {
+        assertThat(repository.findByQuestionId(1L)).isEmpty();
 
-        ReviewState existing = repository.findByQuestionId(1L).orElseThrow();
-        ReviewState updated = existing.withRepetitions(5).withNextReviewAt(2000L);
-        repository.update(updated);
+        repository.updateFsrs(
+                new FsrsState(1L, 3.0, 5.0, 0, "fsrs-4.5-default", 1_800_000_000L),
+                1_800_500_000L, ReviewResult.CORRECT, 1, 0);
 
-        // Повторный insertIfAbsent не должен перезаписать
-        repository.insertIfAbsent(1L, 3000L);
-
-        ReviewState reloaded = repository.findByQuestionId(1L).orElseThrow();
-        assertThat(reloaded.repetitions()).isEqualTo(5);
-        assertThat(reloaded.nextReviewAt()).isEqualTo(2000L);
+        ReviewState sm2 = repository.findByQuestionId(1L).orElseThrow();
+        assertThat(sm2.correctCount()).isEqualTo(1);
+        assertThat(sm2.nextReviewAt()).isEqualTo(1_800_500_000L);
+        // Поля SM-2 не заданы FSRS-командой — их проставила схема значениями по умолчанию.
+        assertThat(sm2.repetitions()).isZero();
+        assertThat(sm2.easeFactor()).isEqualTo(ReviewDefaults.DEFAULT_EASE_FACTOR);
     }
 
     @Test
@@ -64,7 +73,7 @@ class ReviewStateRepositoryTest extends AbstractPostgresRepositoryTest {
 
     @Test
     void findFsrsStateReturnsNullMemoryBeforeFirstFsrsUpdate() {
-        repository.insertIfAbsent(1L, 1000L);
+        repository.update(ReviewDefaults.initialState(1L, 1000L));
 
         FsrsState fsrs = repository.findFsrsState(1L).orElseThrow();
         assertThat(fsrs.questionId()).isEqualTo(1L);
@@ -78,7 +87,6 @@ class ReviewStateRepositoryTest extends AbstractPostgresRepositoryTest {
 
     @Test
     void updateFsrsPersistsMemoryAndSharedScheduleWithoutTouchingSm2() {
-        repository.insertIfAbsent(1L, 1000L);
         // Кладём SM-2-прогресс, который FSRS-апдейт трогать НЕ должен.
         repository.update(new ReviewState(1L, 4, 9, 2.4, 1000L, ReviewResult.CORRECT, 3, 1));
 
@@ -105,7 +113,6 @@ class ReviewStateRepositoryTest extends AbstractPostgresRepositoryTest {
 
     @Test
     void resetClearsBothSm2AndFsrsMemory() {
-        repository.insertIfAbsent(1L, 1000L);
         // Наполняем и SM-2, и FSRS-память «выученным» прогрессом.
         repository.update(new ReviewState(1L, 6, 30, 2.6, 1000L, ReviewResult.CORRECT, 8, 1));
         repository.updateFsrs(
@@ -134,8 +141,6 @@ class ReviewStateRepositoryTest extends AbstractPostgresRepositoryTest {
 
     @Test
     void updateModifiesAllFields() {
-        repository.insertIfAbsent(1L, 1000L);
-
         ReviewState state = new ReviewState(1L, 3, 7, 2.2, 5000L, ReviewResult.CORRECT, 10, 2);
         repository.update(state);
 

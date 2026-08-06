@@ -44,32 +44,36 @@ public class ReviewStateRepository {
         return items.stream().findFirst();
     }
 
-    @Transactional
-    public void insertIfAbsent(long questionId, long nowEpoch) {
-        jdbcTemplate.update(
-                "INSERT INTO review_state (owner_key, question_id, next_review_at) VALUES (?, ?, ?) " +
-                        "ON CONFLICT (owner_key, question_id) DO NOTHING",
-                OwnerContext.current(),
-                questionId,
-                nowEpoch
-        );
-    }
-
+    /**
+     * Сохраняет состояние SM-2 — <b>upsert</b>, а не UPDATE.
+     *
+     * <p>Строка прогресса создаётся первым ответом, и только им. Раньше её заводил
+     * показ вопроса (метод {@code insertIfAbsent}, удалён) — из-за этого «просмотрел»
+     * и «ответил» были для базы неотличимы, и ни разу не отвеченный вопрос числился
+     * просроченным повторением. Показ больше не пишет ничего, поэтому первый ответ
+     * обязан уметь вставлять: голый UPDATE молча обновил бы ноль строк и потерял
+     * бы результат.
+     */
     @Transactional
     public void update(ReviewState state) {
         jdbcTemplate.update(
-                "UPDATE review_state SET repetitions = ?, interval_days = ?, ease_factor = ?, " +
-                        "next_review_at = ?, last_result = ?, correct_count = ?, wrong_count = ? " +
-                        "WHERE question_id = ? AND owner_key = ?",
+                "INSERT INTO review_state (owner_key, question_id, repetitions, interval_days, ease_factor, " +
+                        "next_review_at, last_result, correct_count, wrong_count) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                        "ON CONFLICT (owner_key, question_id) DO UPDATE SET " +
+                        "repetitions = EXCLUDED.repetitions, interval_days = EXCLUDED.interval_days, " +
+                        "ease_factor = EXCLUDED.ease_factor, next_review_at = EXCLUDED.next_review_at, " +
+                        "last_result = EXCLUDED.last_result, correct_count = EXCLUDED.correct_count, " +
+                        "wrong_count = EXCLUDED.wrong_count",
+                OwnerContext.current(),
+                state.questionId(),
                 state.repetitions(),
                 state.intervalDays(),
                 state.easeFactor(),
                 state.nextReviewAt(),
                 state.lastResult().name(),
                 state.correctCount(),
-                state.wrongCount(),
-                state.questionId(),
-                OwnerContext.current()
+                state.wrongCount()
         );
     }
 
@@ -91,13 +95,31 @@ public class ReviewStateRepository {
         return items.stream().findFirst();
     }
 
+    /**
+     * Сохраняет состояние FSRS — upsert по той же причине, что и {@link #update}.
+     *
+     * <p>Поля SM-2 (repetitions / interval_days / ease_factor) в списке колонок
+     * отсутствуют намеренно: при вставке их проставляет схема значениями по
+     * умолчанию, при конфликте они остаются нетронутыми. FSRS ведёт собственную
+     * память (stability / difficulty / lapses) и не имеет права затирать
+     * прогресс, накопленный другим планировщиком, — переключение алгоритма
+     * туда-обратно не должно стоить пользователю выученного.
+     */
     @Transactional
     public void updateFsrs(FsrsState state, long nextReviewAt, ReviewResult lastResult,
                            int correctCount, int wrongCount) {
         jdbcTemplate.update(
-                "UPDATE review_state SET stability = ?, difficulty = ?, lapses = ?, algo_version = ?, " +
-                        "last_reviewed_at = ?, next_review_at = ?, last_result = ?, " +
-                        "correct_count = ?, wrong_count = ? WHERE question_id = ? AND owner_key = ?",
+                "INSERT INTO review_state (owner_key, question_id, stability, difficulty, lapses, algo_version, " +
+                        "last_reviewed_at, next_review_at, last_result, correct_count, wrong_count) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+                        "ON CONFLICT (owner_key, question_id) DO UPDATE SET " +
+                        "stability = EXCLUDED.stability, difficulty = EXCLUDED.difficulty, " +
+                        "lapses = EXCLUDED.lapses, algo_version = EXCLUDED.algo_version, " +
+                        "last_reviewed_at = EXCLUDED.last_reviewed_at, next_review_at = EXCLUDED.next_review_at, " +
+                        "last_result = EXCLUDED.last_result, correct_count = EXCLUDED.correct_count, " +
+                        "wrong_count = EXCLUDED.wrong_count",
+                OwnerContext.current(),
+                state.questionId(),
                 state.stability(),
                 state.difficulty(),
                 state.lapses(),
@@ -106,9 +128,7 @@ public class ReviewStateRepository {
                 nextReviewAt,
                 lastResult.name(),
                 correctCount,
-                wrongCount,
-                state.questionId(),
-                OwnerContext.current()
+                wrongCount
         );
     }
 

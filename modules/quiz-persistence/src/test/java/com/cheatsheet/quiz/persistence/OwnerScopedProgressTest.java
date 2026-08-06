@@ -33,13 +33,13 @@ class OwnerScopedProgressTest extends AbstractPostgresRepositoryTest {
     @Test
     void reviewStateIsIsolatedPerOwner() {
         OwnerContext.set("alice");
-        reviewStateRepository.insertIfAbsent(questionId, 1000L);
         reviewStateRepository.update(new ReviewState(
                 questionId, 2, 3, 2.5, 2000L, ReviewResult.CORRECT, 1, 0));
 
         OwnerContext.set("bob");
         assertThat(reviewStateRepository.findByQuestionId(questionId)).isEmpty();
-        reviewStateRepository.insertIfAbsent(questionId, 1000L);
+        reviewStateRepository.update(new ReviewState(
+                questionId, 1, 1, 2.5, 1000L, ReviewResult.WRONG, 0, 1));
         assertThat(reviewStateRepository.findByQuestionId(questionId)).isPresent();
 
         OwnerContext.set("alice");
