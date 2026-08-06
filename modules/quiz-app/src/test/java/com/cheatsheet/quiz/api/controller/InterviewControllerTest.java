@@ -31,6 +31,70 @@ class InterviewControllerTest {
     @Autowired
     MockMvc mockMvc;
 
+    @Autowired
+    com.cheatsheet.quiz.persistence.QuestionRepository questionRepository;
+
+    @Autowired
+    com.cheatsheet.quiz.persistence.AnswerOptionRepository answerOptionRepository;
+
+    /**
+     * Вопрос-якорь этого класса. Без него `GET /` отдавал случайный вопрос из общей
+     * тестовой базы: попадётся вопрос без seed-вариантов — MVC форсит флешкарту, и
+     * половина разметки (форма, submit, прогресс) законно исчезает. Из-за этого
+     * проверки писались условно и молча зеленели при сорванном рендере.
+     *
+     * <p>Фикстура создаётся один раз на JVM и адресуется через {@code ?questionId=},
+     * который рендерит именно её (см. {@code FocusTrainingPageService#pinnedQuestionId}).
+     * Общая база при этом не чистится — соседние классы своих данных не теряют.</p>
+     */
+    private static Long fixtureQuestionId;
+
+    private static final String MISSING_TOPIC = "no-such-topic-for-empty-state";
+
+    @org.junit.jupiter.api.BeforeEach
+    void ensureFixtureQuestion() {
+        if (fixtureQuestionId != null) {
+            return;
+        }
+        long id = questionRepository.insert(com.cheatsheet.quiz.TestQuestionBuilder.aQuestion()
+                .withSlug("interview-controller-fixture")
+                .withTopic("interview-controller-fixture")
+                .withFilePath("interview-controller-fixture.md")
+                .withQuestionText("Что делает фикстура этого теста?")
+                .withAnswerMarkdown("Даёт детерминированный вопрос с вариантами ответа.")
+                .withSourceHash("interview-controller-fixture")
+                .build());
+        answerOptionRepository.insertAll(id, java.util.List.of(
+                new com.cheatsheet.quiz.persistence.AnswerOptionRepository.AnswerOptionCreate(
+                        "Фиксирует вопрос, который отдаёт `GET /`", true, 0, "SEED", "Верно."),
+                new com.cheatsheet.quiz.persistence.AnswerOptionRepository.AnswerOptionCreate(
+                        "Очищает базу перед каждым тестом", false, 1, "SEED", "Нет, база общая."),
+                new com.cheatsheet.quiz.persistence.AnswerOptionRepository.AnswerOptionCreate(
+                        "Отключает импорт вопросов из шпаргалок", false, 2, "SEED", "Импорт не трогаем."),
+                new com.cheatsheet.quiz.persistence.AnswerOptionRepository.AnswerOptionCreate(
+                        "Повторяет запрос до зелёного результата", false, 3, "SEED", "Ретраев здесь нет.")
+        ));
+        fixtureQuestionId = id;
+    }
+
+    /** Экран тренировки с закреплённым вопросом-фикстурой: разметка вариантов гарантирована. */
+    private org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder focusRequest() {
+        return get("/").param("questionId", String.valueOf(fixtureQuestionId));
+    }
+
+    private String focusBody() throws Exception {
+        return mockMvc.perform(focusRequest())
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+    }
+
+    /** Экран тренировки, гарантированно упирающийся в пустое состояние: темы не существует. */
+    private String emptyFocusBody(String path) throws Exception {
+        return mockMvc.perform(get(path).param("topic", MISSING_TOPIC))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+    }
+
     private int countOccurrences(String text, String fragment) {
         int count = 0;
         int index = 0;
@@ -39,6 +103,12 @@ class InterviewControllerTest {
             index += fragment.length();
         }
         return count;
+    }
+
+    /** Экран фокуса обязан показать либо вопрос, либо явное пустое состояние. */
+    private void assertFocusPageRendered(String body) {
+        assertThat(body).contains("<body class=\"focus-page\">");
+        assertThat(body).containsAnyOf("class=\"focus-question\"", "class=\"empty-title\"");
     }
 
     private void assertNoInlineUiAttributes(String body) {
@@ -114,7 +184,7 @@ class InterviewControllerTest {
         org.junit.jupiter.api.Assumptions.assumeTrue(
                 interviewSession != null, "STUDY-сессия не создана — нет вопросов в тестовой БД");
 
-        String learn = mockMvc.perform(get("/training").session(session))
+        String learn = mockMvc.perform(get("/").session(session))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         // Вырожденный случай: вопрос без вариантов → флешкарта, отдельной карточки
@@ -133,7 +203,7 @@ class InterviewControllerTest {
         mockMvc.perform(post("/study-confirm").with(csrf()).session(session))
                 .andExpect(status().is3xxRedirection());
 
-        String quiz = mockMvc.perform(get("/training").session(session))
+        String quiz = mockMvc.perform(get("/").session(session))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         // QUIZ: форма вариантов появилась, карточки изучения больше нет.
@@ -159,51 +229,28 @@ class InterviewControllerTest {
 
     @Test
     void indexContainsClearStepByStepActions() throws Exception {
-        var result = mockMvc.perform(get("/"))
-                .andReturn()
-                .getResponse();
-        assertThat(result.getStatus()).isIn(200, 503);
-        String body = result.getContentAsString();
+        String body = focusBody();
+        assertFocusPageRendered(body);
 
         assertThat(body).contains("Подготовка к собеседованию");
-        if (result.getStatus() == 200) {
-            assertThat(body).doesNotContain("id=\"left-sidebar-card\"");
-            assertThat(body).contains("aria-label=\"Основная навигация\"");
-            assertThat(body).contains(">Фокус<");
-            assertThat(body).contains(">Аналитика<");
-            assertThat(body).contains(">Настройки<");
-            if (body.contains("id=\"interview-card\"")) {
-                assertThat(body).contains("class=\"question-layout");
-                assertThat(body).contains("class=\"question-main\"");
-            }
-            if (body.contains("id=\"next-question\"")) {
-                assertThat(body).doesNotContain("tabindex=\"-1\">Следующий вопрос");
-            }
-        } else {
-            assertThat(body).contains("Произошла ошибка");
-        }
+        assertThat(body).doesNotContain("id=\"left-sidebar-card\"");
+        assertThat(body).contains("aria-label=\"Основная навигация\"");
+        assertThat(body).contains(">Тренировка<");
+        assertThat(body).contains(">Аналитика<");
+        assertThat(body).contains(">Настройки<");
+        assertThat(body).doesNotContain("tabindex=\"-1\">Следующий вопрос");
     }
 
     @Test
     void indexFallbackStateKeepsDegradedUxContract() throws Exception {
-        var result = mockMvc.perform(get("/"))
-                .andReturn()
-                .getResponse();
-        assertThat(result.getStatus()).isIn(200, 503);
-        if (result.getStatus() == 200) {
-            String body = result.getContentAsString();
-            if (body.contains("AI временно недоступен") || body.contains("Нет доступных вопросов")) {
-                assertThat(body).containsAnyOf(
-                        "AI временно недоступен",
-                        "Нет доступных вопросов по выбранным фильтрам."
-                );
-                assertThat(body).contains("empty-action-settings");
-                assertThat(body).contains("empty-action-retry");
-                assertThat(body).doesNotContain("id=\"interview-form\"");
-                assertThat(body).doesNotContain("id=\"interview-options\"");
-                assertThat(body).doesNotContain("id=\"interview-submit\"");
-            }
-        }
+        String body = emptyFocusBody("/");
+        assertFocusPageRendered(body);
+        assertThat(body).contains("Нет доступных вопросов по выбранным фильтрам.");
+        assertThat(body).contains("empty-action-settings");
+        assertThat(body).contains("empty-action-retry");
+        assertThat(body).doesNotContain("id=\"interview-form\"");
+        assertThat(body).doesNotContain("id=\"interview-options\"");
+        assertThat(body).doesNotContain("id=\"interview-submit\"");
     }
 
     @Test
@@ -312,16 +359,8 @@ class InterviewControllerTest {
         assertThat(statsBody).doesNotContain("data-export-format=");
 
         var indexResult = mockMvc.perform(get("/")).andReturn().getResponse();
-        assertThat(indexResult.getStatus()).isIn(200, 503);
-        if (indexResult.getStatus() == 200) {
-            assertThat(indexResult.getContentAsString()).doesNotContain("data-export-format=");
-        }
-
-        var trainingResult = mockMvc.perform(get("/training")).andReturn().getResponse();
-        assertThat(trainingResult.getStatus()).isIn(200, 503);
-        if (trainingResult.getStatus() == 200) {
-            assertThat(trainingResult.getContentAsString()).doesNotContain("data-export-format=");
-        }
+        assertThat(indexResult.getStatus()).isEqualTo(200);
+        assertThat(indexResult.getContentAsString()).doesNotContain("data-export-format=");
     }
 
     @Test
@@ -361,57 +400,50 @@ class InterviewControllerTest {
     @Test
     void focusRoutesExposeFocusPageNamespaceWhenRendered() throws Exception {
         var indexResult = mockMvc.perform(get("/")).andReturn().getResponse();
-        assertThat(indexResult.getStatus()).isIn(200, 503);
-        if (indexResult.getStatus() == 200) {
-            assertThat(indexResult.getContentAsString()).contains("<body class=\"focus-page\">");
-        }
+        assertThat(indexResult.getStatus()).isEqualTo(200);
+        assertThat(indexResult.getContentAsString()).contains("<body class=\"focus-page\">");
+    }
 
-        var trainingResult = mockMvc.perform(get("/training")).andReturn().getResponse();
-        assertThat(trainingResult.getStatus()).isIn(200, 503);
-        if (trainingResult.getStatus() == 200) {
-            assertThat(trainingResult.getContentAsString()).contains("<body class=\"focus-page\">");
-        }
+    @Test
+    void legacyTrainingRouteRedirectsToCanonicalRootKeepingFilters() throws Exception {
+        // Один экран — один адрес. Старые ссылки не ломаем, но параметры выборки
+        // переносим, иначе редирект молча сбрасывал бы фильтр пользователя.
+        mockMvc.perform(get("/training"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/"));
+
+        mockMvc.perform(get("/training").param("topic", "java").param("mode", "STUDY"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/?topic=java&mode=STUDY"));
+
+        // Чужие параметры не тащим — редирект работает по whitelist.
+        mockMvc.perform(get("/training").param("utm_source", "spam"))
+                .andExpect(redirectedUrl("/"));
     }
 
     @Test
     void focusRoutesKeepKeyboardHintAndTimerLiveRegionContracts() throws Exception {
-        var indexResult = mockMvc.perform(get("/")).andReturn().getResponse();
-        assertThat(indexResult.getStatus()).isIn(200, 503);
-        if (indexResult.getStatus() == 200) {
-            String body = indexResult.getContentAsString();
-            if (body.contains("id=\"interview-form\"")) {
-                assertThat(body).contains("class=\"keyboard-hint\"");
-                assertThat(body).contains("id=\"question-timer\"");
-                assertThat(body).contains("aria-live=\"polite\"");
-            }
-        }
-
-        var trainingResult = mockMvc.perform(get("/training")).andReturn().getResponse();
-        assertThat(trainingResult.getStatus()).isIn(200, 503);
-        if (trainingResult.getStatus() == 200) {
-            String body = trainingResult.getContentAsString();
-            if (body.contains("id=\"interview-form\"")) {
-                assertThat(body).contains("class=\"keyboard-hint\"");
-                assertThat(body).contains("id=\"question-timer\"");
-                assertThat(body).contains("aria-live=\"polite\"");
-            }
-        }
+        String body = focusBody();
+        assertFocusPageRendered(body);
+        assertThat(body).contains("id=\"interview-form\"");
+        assertThat(body).contains("class=\"keyboard-hint\"");
+        assertThat(body).contains("id=\"question-timer\"");
+        assertThat(body).contains("aria-live=\"polite\"");
     }
 
     @Test
     void trainingProgressTrackKeepsBoundedAriaValuesContract() throws Exception {
-        var result = mockMvc.perform(get("/training"))
+        var result = mockMvc.perform(get("/"))
                 .andReturn()
                 .getResponse();
-        assertThat(result.getStatus()).isIn(200, 503);
-        if (result.getStatus() == 200) {
-            String body = result.getContentAsString();
-            if (body.contains("aria-label=\"Прогресс сессии\"")) {
-                assertThat(body).contains("aria-valuemin=\"0\"");
-                assertThat(body).containsPattern("aria-valuemax=\"\\d+\"");
-                assertThat(body).containsPattern("aria-valuenow=\"\\d+\"");
-                assertThat(body).doesNotContain("aria-valuemax=\"100\"");
-            }
+        assertThat(result.getStatus()).isEqualTo(200);
+        String body = result.getContentAsString();
+        assertFocusPageRendered(body);
+        if (body.contains("aria-label=\"Прогресс сессии\"")) {
+            assertThat(body).contains("aria-valuemin=\"0\"");
+            assertThat(body).containsPattern("aria-valuemax=\"\\d+\"");
+            assertThat(body).containsPattern("aria-valuenow=\"\\d+\"");
+            assertThat(body).doesNotContain("aria-valuemax=\"100\"");
         }
     }
 
@@ -422,18 +454,17 @@ class InterviewControllerTest {
                         .param("important", "true"))
                 .andReturn()
                 .getResponse();
-        assertThat(result.getStatus()).isIn(200, 503);
+        assertThat(result.getStatus()).isEqualTo(200);
         String body = result.getContentAsString();
+        assertFocusPageRendered(body);
 
-        if (result.getStatus() == 200) {
-            assertThat(body).containsAnyOf(
-                    "Повтор ошибок: отвечай на вопросы, где раньше были ошибки.",
-                    "Нет вопросов с ошибками для повтора."
-            );
-            if (body.contains("class=\"zone-chip\"")) {
-                assertThat(body).contains("Повтор ошибок");
-                assertThat(body).contains("Повтор ошибок: отвечай на вопросы, где раньше были ошибки.");
-            }
+        assertThat(body).containsAnyOf(
+                "Повтор ошибок: отвечай на вопросы, где раньше были ошибки.",
+                "Нет вопросов с ошибками для повтора."
+        );
+        if (body.contains("class=\"zone-chip\"")) {
+            assertThat(body).contains("Повтор ошибок");
+            assertThat(body).contains("Повтор ошибок: отвечай на вопросы, где раньше были ошибки.");
         }
     }
 
@@ -442,10 +473,8 @@ class InterviewControllerTest {
         var result = mockMvc.perform(get("/review"))
                 .andReturn()
                 .getResponse();
-        assertThat(result.getStatus()).isIn(200, 503);
-        if (result.getStatus() == 200) {
-            assertNoInlineUiAttributes(result.getContentAsString());
-        }
+        assertThat(result.getStatus()).isEqualTo(200);
+        assertNoInlineUiAttributes(result.getContentAsString());
     }
 
     @Test
@@ -473,17 +502,16 @@ class InterviewControllerTest {
         var result = mockMvc.perform(get("/"))
                 .andReturn()
                 .getResponse();
-        assertThat(result.getStatus()).isIn(200, 503);
-        if (result.getStatus() == 200) {
-            String body = result.getContentAsString();
-            if (body.contains("id=\"btn-favorite\"")) {
-                assertThat(body).contains("id=\"btn-favorite\"");
-                assertThat(body).contains("aria-pressed=");
-                assertThat(body).containsAnyOf(
-                        "aria-label=\"Добавить в избранное\"",
-                        "aria-label=\"Убрать из избранного\""
-                );
-            }
+        assertThat(result.getStatus()).isEqualTo(200);
+        String body = result.getContentAsString();
+        assertFocusPageRendered(body);
+        if (body.contains("id=\"btn-favorite\"")) {
+            assertThat(body).contains("id=\"btn-favorite\"");
+            assertThat(body).contains("aria-pressed=");
+            assertThat(body).containsAnyOf(
+                    "aria-label=\"Добавить в избранное\"",
+                    "aria-label=\"Убрать из избранного\""
+            );
         }
     }
 
@@ -513,7 +541,7 @@ class InterviewControllerTest {
         // Сервер рендерит «скелет» сортируемой таблицы: класс .sortable + data-метки
         // на каждой сортируемой колонке + скрытый live-region для анонса сортировки.
         // Клавиатурные ARIA-атрибуты (role=columnheader / tabindex / aria-sort /
-        // aria-keyshortcuts="Enter Space") навешивает stats.js при инициализации —
+        // aria-keyshortcuts="Enter Space") навешивает table-sort.js при инициализации —
         // это progressive enhancement, в серверном HTML их НЕТ (round-01 C28:
         // role=columnheader у нативного <th> избыточен, состояние держит aria-sort).
         // `<th>` теперь несёт scope="col" (a11y, WCAG 1.3.1/H63, commit b57cc089) →
@@ -532,101 +560,96 @@ class InterviewControllerTest {
         var result = mockMvc.perform(get("/"))
                 .andReturn()
                 .getResponse();
-        assertThat(result.getStatus()).isIn(200, 503);
-        if (result.getStatus() == 200) {
-            String body = result.getContentAsString();
-            if (body.contains("id=\"interview-submit\"")) {
-                assertThat(body).contains("id=\"interview-submit\"");
-                assertThat(body).contains("aria-keyshortcuts=\"Enter\"");
-            }
-            if (body.contains("id=\"next-question\"")) {
-                assertThat(body).contains("id=\"next-question\"");
-                // next-question — это <a href>: нативно активируется Enter, не Space
-                // (app.js на Space для тегов A обработчик не вешает). aria-keyshortcuts
-                // честно обещает только Enter — паритет с submit-кнопкой выше.
-                assertThat(body).contains("aria-keyshortcuts=\"Enter\"");
-            }
+        assertThat(result.getStatus()).isEqualTo(200);
+        String body = result.getContentAsString();
+        assertFocusPageRendered(body);
+        if (body.contains("id=\"interview-submit\"")) {
+            assertThat(body).contains("id=\"interview-submit\"");
+            assertThat(body).contains("aria-keyshortcuts=\"Enter\"");
+        }
+        if (body.contains("id=\"next-question\"")) {
+            assertThat(body).contains("id=\"next-question\"");
+            // next-question — это <a href>: нативно активируется Enter, не Space
+            // (quiz/interview.js на Space для тегов A обработчик не вешает). aria-keyshortcuts
+            // честно обещает только Enter — паритет с submit-кнопкой выше.
+            assertThat(body).contains("aria-keyshortcuts=\"Enter\"");
         }
     }
 
     @Test
     void trainingPageAvoidsInlineOnchangeHandlers() throws Exception {
-        var result = mockMvc.perform(get("/training"))
+        var result = mockMvc.perform(get("/"))
                 .andReturn()
                 .getResponse();
-        assertThat(result.getStatus()).isIn(200, 503);
-        if (result.getStatus() == 200) {
-            String body = result.getContentAsString();
-            assertThat(body).doesNotContain("onchange=\"enableSubmit()\"");
-        }
+        assertThat(result.getStatus()).isEqualTo(200);
+        String body = result.getContentAsString();
+        assertThat(body).doesNotContain("onchange=\"enableSubmit()\"");
     }
 
     @Test
     void trainingPageUsesUnifiedKeyboardHintClass() throws Exception {
-        var result = mockMvc.perform(get("/training"))
+        var result = mockMvc.perform(get("/"))
                 .andReturn()
                 .getResponse();
-        assertThat(result.getStatus()).isIn(200, 503);
-        if (result.getStatus() == 200) {
-            String body = result.getContentAsString();
-            if (body.contains("id=\"interview-form\"")) {
-                assertThat(body).contains("class=\"keyboard-hint\"");
-            }
-            assertThat(body).doesNotContain("class=\"kbd-hint\"");
+        assertThat(result.getStatus()).isEqualTo(200);
+        String body = result.getContentAsString();
+        assertFocusPageRendered(body);
+        if (body.contains("id=\"interview-form\"")) {
+            assertThat(body).contains("class=\"keyboard-hint\"");
         }
+        assertThat(body).doesNotContain("class=\"kbd-hint\"");
     }
 
     @Test
     void trainingPageUsesUnifiedSubmitIdAndHotkeyHintContract() throws Exception {
-        var result = mockMvc.perform(get("/training"))
+        var result = mockMvc.perform(get("/"))
                 .andReturn()
                 .getResponse();
-        assertThat(result.getStatus()).isIn(200, 503);
-        if (result.getStatus() == 200) {
-            String body = result.getContentAsString();
-            if (body.contains("id=\"interview-submit\"")) {
-                assertThat(body).contains("id=\"interview-submit\"");
-                assertThat(body).contains("aria-keyshortcuts=\"Enter\"");
-                assertThat(body).containsAnyOf("Клавиши 1-", "Клавиши 1–");
-            }
-            assertThat(body).doesNotContain("id=\"submitBtn\"");
+        assertThat(result.getStatus()).isEqualTo(200);
+        String body = result.getContentAsString();
+        assertFocusPageRendered(body);
+        if (body.contains("id=\"interview-submit\"")) {
+            assertThat(body).contains("id=\"interview-submit\"");
+            assertThat(body).contains("aria-keyshortcuts=\"Enter\"");
+            assertThat(body).containsAnyOf("Клавиши 1-", "Клавиши 1–");
         }
+        assertThat(body).doesNotContain("id=\"submitBtn\"");
     }
 
     @Test
     void trainingPageAvoidsRedundantLabelRadioRolesAndTabStops() throws Exception {
-        var result = mockMvc.perform(get("/training"))
+        var result = mockMvc.perform(get("/"))
                 .andReturn()
                 .getResponse();
-        assertThat(result.getStatus()).isIn(200, 503);
-        if (result.getStatus() == 200) {
-            String body = result.getContentAsString();
-            if (body.contains("id=\"interview-options\"")) {
-                assertThat(body).contains("aria-describedby=\"options-flow-hint\"");
-                assertThat(body).doesNotContain("role=\"radio\"");
-                assertThat(body).doesNotContain("tabindex=\"0\"");
-            }
+        assertThat(result.getStatus()).isEqualTo(200);
+        String body = result.getContentAsString();
+        assertFocusPageRendered(body);
+        if (body.contains("id=\"interview-options\"")) {
+            assertThat(body).contains("aria-describedby=\"options-flow-hint\"");
+            assertThat(body).doesNotContain("role=\"radio\"");
+            assertThat(body).doesNotContain("tabindex=\"0\"");
         }
     }
 
     @Test
     void trainingFallbackStateExposesRecoveryActionsWhenNoQuestion() throws Exception {
-        var result = mockMvc.perform(get("/training"))
+        var result = mockMvc.perform(get("/"))
                 .andReturn()
                 .getResponse();
-        assertThat(result.getStatus()).isIn(200, 503);
-        if (result.getStatus() == 200) {
-            String body = result.getContentAsString();
-            if (body.contains("Нет доступных вопросов") || body.contains("AI временно недоступен")) {
-                assertThat(body).contains("empty-action-settings");
-                assertThat(body).contains("empty-action-retry");
-                assertThat(body).contains("href=\"/training\"");
-                assertThat(body).contains("Обновить тренировку");
-            }
-            if (body.contains("Сессия запущена, но вопрос пока недоступен.")) {
-                assertThat(body).contains("Сессия запущена, но вопрос пока недоступен. Попробуй обновить тренировку.");
-                assertThat(body).contains("empty-action-retry");
-            }
+        assertThat(result.getStatus()).isEqualTo(200);
+        String body = result.getContentAsString();
+        assertFocusPageRendered(body);
+        if (body.contains("Нет доступных вопросов")) {
+            assertThat(body).contains("empty-action-settings");
+            assertThat(body).contains("empty-action-retry");
+            assertThat(body).contains("Обновить тренировку");
+            // Кнопка «повторить» ведёт на канонический адрес тренировки, а не
+            // на легаси-редирект /training (лишний хоп и потеря query).
+            assertThat(body).doesNotContain("empty-action-retry\" href=\"/training");
+        }
+        if (body.contains("Сессия запущена, но вопрос пока недоступен.")) {
+            assertThat(body).contains("Сессия запущена, но вопрос пока недоступен. Попробуй обновить тренировку.");
+            assertThat(body).contains("empty-action-retry");
         }
     }
 
@@ -635,167 +658,124 @@ class InterviewControllerTest {
         var result = mockMvc.perform(get("/review"))
                 .andReturn()
                 .getResponse();
-        assertThat(result.getStatus()).isIn(200, 503);
-        if (result.getStatus() == 200) {
-            String body = result.getContentAsString();
-            if (body.contains("Нет вопросов с ошибками для повтора.")) {
-                assertThat(body).contains("empty-action-retry");
-                assertThat(body).contains("href=\"/review\"");
-                assertThat(body).contains("Обновить повтор ошибок");
-            }
+        assertThat(result.getStatus()).isEqualTo(200);
+        String body = result.getContentAsString();
+        assertFocusPageRendered(body);
+        if (body.contains("Нет вопросов с ошибками для повтора.")) {
+            assertThat(body).contains("empty-action-retry");
+            assertThat(body).contains("href=\"/review\"");
+            assertThat(body).contains("Обновить повтор ошибок");
         }
     }
 
     @Test
     void flashcardModeKeepsContextualCopyAndRecoveryContract() throws Exception {
-        var result = mockMvc.perform(get("/training")
+        var result = mockMvc.perform(get("/")
                         .param("mode", "FLASHCARD"))
                 .andReturn()
                 .getResponse();
-        assertThat(result.getStatus()).isIn(200, 503);
-        if (result.getStatus() == 200) {
-            String body = result.getContentAsString();
-            if (body.contains("class=\"zone-chip\"")) {
-                assertThat(body).contains("Флешкарты");
-                assertThat(body).contains("Флешкарты: сначала вспомни ответ, затем раскрой и оцени себя.");
-                assertThat(body).doesNotContain("Выбери один вариант. Проверка и разбор идут по шагам.");
-            }
-            if (body.contains("Нет доступных вопросов") || body.contains("AI временно недоступен")) {
-                assertThat(body).contains("empty-action-retry");
-                assertThat(body).contains("href=\"/training?mode=FLASHCARD\"");
-                assertThat(body).contains("Обновить флешкарты");
-            }
+        assertThat(result.getStatus()).isEqualTo(200);
+        String body = result.getContentAsString();
+        assertFocusPageRendered(body);
+        if (body.contains("class=\"zone-chip\"")) {
+            assertThat(body).contains("Флешкарты");
+            assertThat(body).contains("Флешкарты: сначала вспомни ответ, затем раскрой и оцени себя.");
+            assertThat(body).doesNotContain("Выбери один вариант. Проверка и разбор идут по шагам.");
+        }
+        if (body.contains("Нет доступных вопросов")) {
+            assertThat(body).contains("empty-action-retry");
+            assertThat(body).contains("href=\"/?mode=FLASHCARD\"");
+            assertThat(body).contains("Обновить флешкарты");
         }
     }
 
     @Test
     void studyModeKeepsContextualCopyAndRecoveryContract() throws Exception {
-        var result = mockMvc.perform(get("/training")
+        var result = mockMvc.perform(get("/")
                         .param("mode", "STUDY"))
                 .andReturn()
                 .getResponse();
-        assertThat(result.getStatus()).isIn(200, 503);
-        if (result.getStatus() == 200) {
-            String body = result.getContentAsString();
-            if (body.contains("class=\"zone-chip\"")) {
-                assertThat(body).contains("Изучение");
-                assertThat(body).contains("Изучение: разберись с материалом, затем переходи к проверке.");
-                assertThat(body).doesNotContain("Выбери один вариант. Проверка и разбор идут по шагам.");
+        assertThat(result.getStatus()).isEqualTo(200);
+        String body = result.getContentAsString();
+        assertFocusPageRendered(body);
+        if (body.contains("class=\"zone-chip\"")) {
+            // У STUDY две под-фазы, и чип с подсказкой обязаны говорить об
+            // одной и той же: LEARN — «разберись с материалом», QUIZ —
+            // «выбери верный вариант». Рассинхрон здесь дезориентирует.
+            if (body.contains("Изучение: разберись с материалом, затем переходи к проверке.")) {
+                assertThat(body).contains(">Изучение<");
+            } else {
+                assertThat(body).contains("Проверь себя: выбери верный вариант — разбор появится после ответа.");
+                assertThat(body).contains(">Проверка<");
             }
-            if (body.contains("Нет доступных вопросов") || body.contains("AI временно недоступен")) {
-                assertThat(body).contains("empty-action-retry");
-                assertThat(body).contains("href=\"/training?mode=STUDY\"");
-                assertThat(body).contains("Обновить изучение");
-            }
+            // Общая подсказка тренировки не должна протекать в STUDY ни в одной фазе.
+            assertThat(body).doesNotContain("Выбери один вариант. Проверка и разбор идут по шагам.");
+        }
+        if (body.contains("Нет доступных вопросов")) {
+            assertThat(body).contains("empty-action-retry");
+            assertThat(body).contains("href=\"/?mode=STUDY\"");
+            assertThat(body).contains("Обновить изучение");
         }
     }
 
     @Test
-    void indexAndTrainingKeepSharedAnswerFlowHintContract() throws Exception {
+    void indexKeepsSharedAnswerFlowHintContract() throws Exception {
         var index = mockMvc.perform(get("/")).andReturn().getResponse();
-        assertThat(index.getStatus()).isIn(200, 503);
-        if (index.getStatus() == 200) {
-            String body = index.getContentAsString();
-            if (body.contains("id=\"interview-form\"")) {
-                assertThat(body).contains("id=\"answer-flow-hint\"");
-                assertThat(body).contains("result-zone-head hidden");
-            }
-        }
-
-        var training = mockMvc.perform(get("/training")).andReturn().getResponse();
-        assertThat(training.getStatus()).isIn(200, 503);
-        if (training.getStatus() == 200) {
-            String body = training.getContentAsString();
-            if (body.contains("id=\"interview-form\"")) {
-                assertThat(body).contains("id=\"answer-flow-hint\"");
-                assertThat(body).contains("result-zone-head hidden");
-            }
+        assertThat(index.getStatus()).isEqualTo(200);
+        String body = index.getContentAsString();
+        assertFocusPageRendered(body);
+        if (body.contains("id=\"interview-form\"")) {
+            assertThat(body).contains("id=\"answer-flow-hint\"");
+            assertThat(body).contains("result-zone-head hidden");
         }
     }
 
     @Test
-    void indexAndTrainingKeepSharedPostAnswerControlsContract() throws Exception {
+    void indexKeepsSharedPostAnswerControlsContract() throws Exception {
         var index = mockMvc.perform(get("/")).andReturn().getResponse();
-        assertThat(index.getStatus()).isIn(200, 503);
-        if (index.getStatus() == 200) {
-            String body = index.getContentAsString();
-            if (body.contains("id=\"interview-form\"")) {
-                assertThat(body).contains("id=\"interview-alert\"");
-                assertThat(body).contains("id=\"result-feedback\"");
-                assertThat(body).contains("id=\"extra-analysis-toggle\"");
-                assertThat(body).contains("aria-controls=\"extra-analysis-content\"");
-                assertThat(body).contains("aria-atomic=\"true\"");
-                assertThat(body).contains("id=\"extra-analysis-content\"");
-            }
-        }
-
-        var training = mockMvc.perform(get("/training")).andReturn().getResponse();
-        assertThat(training.getStatus()).isIn(200, 503);
-        if (training.getStatus() == 200) {
-            String body = training.getContentAsString();
-            if (body.contains("id=\"interview-form\"")) {
-                assertThat(body).contains("id=\"interview-alert\"");
-                assertThat(body).contains("id=\"result-feedback\"");
-                assertThat(body).contains("id=\"extra-analysis-toggle\"");
-                assertThat(body).contains("aria-controls=\"extra-analysis-content\"");
-                assertThat(body).contains("aria-atomic=\"true\"");
-                assertThat(body).contains("id=\"extra-analysis-content\"");
-            }
+        assertThat(index.getStatus()).isEqualTo(200);
+        String body = index.getContentAsString();
+        assertFocusPageRendered(body);
+        if (body.contains("id=\"interview-form\"")) {
+            assertThat(body).contains("id=\"interview-alert\"");
+            assertThat(body).contains("id=\"result-feedback\"");
+            assertThat(body).contains("id=\"extra-analysis-toggle\"");
+            assertThat(body).contains("aria-controls=\"extra-analysis-content\"");
+            assertThat(body).contains("aria-atomic=\"true\"");
+            assertThat(body).contains("id=\"extra-analysis-content\"");
         }
     }
 
     @Test
-    void indexAndTrainingUseUnifiedPostAnswerCopyContract() throws Exception {
+    void indexUsesUnifiedPostAnswerCopyContract() throws Exception {
         var index = mockMvc.perform(get("/")).andReturn().getResponse();
-        assertThat(index.getStatus()).isIn(200, 503);
-        if (index.getStatus() == 200) {
-            String body = index.getContentAsString();
-            if (body.contains("id=\"interview-form\"")) {
-                assertThat(body).contains("Пост-разбор");
-                assertThat(body).contains("Сначала разбор ответа, затем итог и дополнительные блоки");
-                // AIR-1: AI-разбор вырезан → единственный пост-ответный блок «Похожие
-                // вопросы» (кнопка extra-analysis раскрывает relatedQuestions).
-                assertThat(body).contains("Похожие вопросы");
-            }
-        }
-
-        var training = mockMvc.perform(get("/training")).andReturn().getResponse();
-        assertThat(training.getStatus()).isIn(200, 503);
-        if (training.getStatus() == 200) {
-            String body = training.getContentAsString();
-            if (body.contains("id=\"interview-form\"")) {
-                assertThat(body).contains("Пост-разбор");
-                assertThat(body).contains("Сначала разбор ответа, затем итог и дополнительные блоки");
-                assertThat(body).contains("Похожие вопросы");
-                assertThat(body).doesNotContain("Подробнее");
-            }
+        assertThat(index.getStatus()).isEqualTo(200);
+        String body = index.getContentAsString();
+        assertFocusPageRendered(body);
+        if (body.contains("id=\"interview-form\"")) {
+            assertThat(body).contains("Пост-разбор");
+            assertThat(body).contains("Сначала разбор ответа, затем итог и дополнительные блоки");
+            // AIR-1: AI-разбор вырезан → единственный пост-ответный блок «Похожие
+            // вопросы» (кнопка extra-analysis раскрывает relatedQuestions).
+            assertThat(body).contains("Похожие вопросы");
+            // Раскрывашка «Подробнее» — часть страницы результата, до ответа её
+            // быть не должно. Проверяем сам контрол, а не слово: «Подробнее»
+            // легально встречается в комментариях подключённых фрагментов.
+            assertThat(body).doesNotContain("<summary class=\"explanation-eyebrow\">Подробнее</summary>");
         }
     }
 
     @Test
-    void indexAndTrainingExposeSharedFragmentMarkers() throws Exception {
+    void indexExposesSharedFragmentMarkers() throws Exception {
         var index = mockMvc.perform(get("/")).andReturn().getResponse();
-        assertThat(index.getStatus()).isIn(200, 503);
-        if (index.getStatus() == 200) {
-            String body = index.getContentAsString();
-            if (body.contains("id=\"interview-form\"")) {
-                assertThat(body).contains("data-ui-fragment=\"training-actions\"");
-                assertThat(body).contains("data-ui-fragment=\"result-zone-head\"");
-                assertThat(body).contains("data-ui-fragment=\"post-answer-controls\"");
-                assertThat(body).contains("data-ui-fragment=\"inline-alert\"");
-            }
-        }
-
-        var training = mockMvc.perform(get("/training")).andReturn().getResponse();
-        assertThat(training.getStatus()).isIn(200, 503);
-        if (training.getStatus() == 200) {
-            String body = training.getContentAsString();
-            if (body.contains("id=\"interview-form\"")) {
-                assertThat(body).contains("data-ui-fragment=\"training-actions\"");
-                assertThat(body).contains("data-ui-fragment=\"result-zone-head\"");
-                assertThat(body).contains("data-ui-fragment=\"post-answer-controls\"");
-                assertThat(body).contains("data-ui-fragment=\"inline-alert\"");
-            }
+        assertThat(index.getStatus()).isEqualTo(200);
+        String body = index.getContentAsString();
+        assertFocusPageRendered(body);
+        if (body.contains("id=\"interview-form\"")) {
+            assertThat(body).contains("data-ui-fragment=\"training-actions\"");
+            assertThat(body).contains("data-ui-fragment=\"result-zone-head\"");
+            assertThat(body).contains("data-ui-fragment=\"post-answer-controls\"");
+            assertThat(body).contains("data-ui-fragment=\"inline-alert\"");
         }
     }
 
@@ -804,37 +784,18 @@ class InterviewControllerTest {
         // Editorial IA: дубль-навигация устранена — единая «Основная навигация» в
         // шапке на всех страницах; surface-tabs («Навигация по режимам фокуса») удалена.
         var index = mockMvc.perform(get("/")).andReturn().getResponse();
-        assertThat(index.getStatus()).isIn(200, 503);
-        if (index.getStatus() == 200) {
-            String body = index.getContentAsString();
-            assertThat(body).doesNotContain("data-ui-fragment=\"focus-surface-tabs\"");
-            assertThat(countOccurrences(body, "aria-label=\"Основная навигация\"")).isEqualTo(1);
-            assertThat(countOccurrences(body, "aria-label=\"Навигация по режимам фокуса\"")).isEqualTo(0);
-        }
-
-        var training = mockMvc.perform(get("/training")).andReturn().getResponse();
-        assertThat(training.getStatus()).isIn(200, 503);
-        if (training.getStatus() == 200) {
-            String body = training.getContentAsString();
-            assertThat(body).doesNotContain("data-ui-fragment=\"focus-surface-tabs\"");
-            assertThat(countOccurrences(body, "aria-label=\"Основная навигация\"")).isEqualTo(1);
-            assertThat(countOccurrences(body, "aria-label=\"Навигация по режимам фокуса\"")).isEqualTo(0);
-        }
+        assertThat(index.getStatus()).isEqualTo(200);
+        String body = index.getContentAsString();
+        assertThat(body).doesNotContain("data-ui-fragment=\"focus-surface-tabs\"");
+        assertThat(countOccurrences(body, "aria-label=\"Основная навигация\"")).isEqualTo(1);
+        assertThat(countOccurrences(body, "aria-label=\"Навигация по режимам фокуса\"")).isEqualTo(0);
     }
 
     @Test
     void keyPagesAvoidInlineStylesAndInlineEvents() throws Exception {
         var index = mockMvc.perform(get("/")).andReturn().getResponse();
-        assertThat(index.getStatus()).isIn(200, 503);
-        if (index.getStatus() == 200) {
-            assertNoInlineUiAttributes(index.getContentAsString());
-        }
-
-        var training = mockMvc.perform(get("/training")).andReturn().getResponse();
-        assertThat(training.getStatus()).isIn(200, 503);
-        if (training.getStatus() == 200) {
-            assertNoInlineUiAttributes(training.getContentAsString());
-        }
+        assertThat(index.getStatus()).isEqualTo(200);
+        assertNoInlineUiAttributes(index.getContentAsString());
 
         var stats = mockMvc.perform(get("/stats")).andReturn().getResponse();
         assertThat(stats.getStatus()).isEqualTo(200);

@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -44,8 +45,6 @@ class InterviewControllerApiTest {
     @DynamicPropertySource
     static void setInterviewPath(DynamicPropertyRegistry registry) {
         TestInterviewPath.register(registry);
-        registry.add("app.regenerate-rate-limit-per-minute", () -> 1);
-        registry.add("app.trust-forwarded-for-header", () -> true);
     }
 
     @Autowired MockMvc mockMvc;
@@ -67,6 +66,11 @@ class InterviewControllerApiTest {
         return questionRepository.findById(ids.get(0)).orElseThrow();
     }
 
+    /** Минимальное JSON-тело для POST /api/answer. */
+    private static String answerJson(long questionId, long optionId) {
+        return "{\"questionId\":" + questionId + ",\"optionId\":" + optionId + "}";
+    }
+
     @Test
     void apiAnswerReturnsCorrectStructure() throws Exception {
         Question q = firstQuestionOrSkip();
@@ -77,8 +81,8 @@ class InterviewControllerApiTest {
 
         MvcResult result = mockMvc.perform(post("/api/answer")
                         .with(csrf())
-                        .param("questionId", String.valueOf(q.id()))
-                        .param("optionId", String.valueOf(selected.id())))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(answerJson(q.id(), selected.id())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.correct").isBoolean())
                 .andExpect(jsonPath("$.correctOptionId").isNumber())
@@ -96,7 +100,8 @@ class InterviewControllerApiTest {
 
         MvcResult result = mockMvc.perform(post("/api/favorite")
                         .with(csrf())
-                        .param("questionId", String.valueOf(q.id())))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"questionId\":" + q.id() + "}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.favorite").isBoolean())
                 .andExpect(jsonPath("$.questionId").value(q.id()))
@@ -110,7 +115,8 @@ class InterviewControllerApiTest {
     void apiFavoriteWithNonExistentQuestionReturns404() throws Exception {
         mockMvc.perform(post("/api/favorite")
                         .with(csrf())
-                        .param("questionId", "999999"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"questionId\":999999}"))
                 .andExpect(status().isNotFound());
     }
 
@@ -158,7 +164,7 @@ class InterviewControllerApiTest {
             assertThat(body).contains("\"learned\"");
             assertThat(body).contains("\"correct\"");
             assertThat(body).contains("\"wrong\"");
-            assertThat(body).contains("\"regenSum\"");
+            assertThat(body).contains("\"fresh\"");
         }
     }
 
@@ -167,15 +173,12 @@ class InterviewControllerApiTest {
         MvcResult result = mockMvc.perform(get("/api/next"))
                 .andReturn();
         int status = result.getResponse().getStatus();
-        assertThat(status).isIn(200, 204, 503);
+        assertThat(status).isIn(200, 204);
         if (status == 200) {
             String body = result.getResponse().getContentAsString();
             assertThat(body).contains("questionId");
             assertThat(body).contains("questionText");
             assertThat(body).contains("options");
-        } else if (status == 503) {
-            String body = result.getResponse().getContentAsString();
-            assertThat(body).contains("AI_GENERATION_FAILED");
         }
     }
 
@@ -258,8 +261,8 @@ class InterviewControllerApiTest {
     void apiAnswerWithInvalidQuestionIdReturns404() throws Exception {
         mockMvc.perform(post("/api/answer")
                         .with(csrf())
-                        .param("questionId", "999999")
-                        .param("optionId", "1"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(answerJson(999999L, 1L)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errorCode").value("QUESTION_NOT_FOUND"));
     }
@@ -270,8 +273,8 @@ class InterviewControllerApiTest {
 
         mockMvc.perform(post("/api/answer")
                         .with(csrf())
-                        .param("questionId", String.valueOf(q.id()))
-                        .param("optionId", "0"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(answerJson(q.id(), 0L)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.detail").value("Некорректные параметры запроса"))
@@ -295,8 +298,8 @@ class InterviewControllerApiTest {
         mockMvc.perform(post("/api/answer")
                         .with(csrf())
                         .session(session)
-                        .param("questionId", String.valueOf(q.id()))
-                        .param("optionId", String.valueOf(options.get(0).id())))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(answerJson(q.id(), options.get(0).id())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.session").exists())
                 .andExpect(jsonPath("$.session.index").isNumber())
