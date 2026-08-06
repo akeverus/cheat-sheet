@@ -155,6 +155,49 @@ class MarkdownRenderServiceTest {
     }
 
     @Test
+    void givesTaskListCheckboxesAccessibleNameFromState() {
+        // Безымянный disabled-checkbox скринридер объявляет как «флажок» без
+        // состояния — то есть единственное, что этот элемент несёт (отмечен пункт
+        // или нет), до пользователя не доходит. Имя — только состояние: текст
+        // пункта лежит рядом в том же <li> и будет прочитан следом.
+        String html = service.toHtml("- [ ] Не сделано\n- [x] Сделано");
+
+        assertThat(html).contains("aria-label=\"не выполнено\"");
+        assertThat(html).contains("aria-label=\"выполнено\"");
+    }
+
+    @Test
+    void shiftsHeadingsSoFragmentStartsAtH2() {
+        // Фрагмент встраивается под h1 страницы (сам вопрос). Автор markdown про
+        // это не знает и начинает с ###, давая разрыв h1 → h3 (WCAG 1.3.1).
+        // Лестница сдвигается целиком, относительная вложенность сохраняется.
+        String html = service.toHtml("### Форматы\n\nтекст\n\n#### Детали\n\nтекст");
+
+        assertThat(html).contains("<h2>Форматы</h2>");
+        assertThat(html).contains("<h3>Детали</h3>");
+        assertThat(html).doesNotContain("<h4>");
+    }
+
+    @Test
+    void keepsHeadingsWhenFragmentAlreadyStartsAtH2() {
+        String html = service.toHtml("## Раздел\n\n### Подраздел");
+
+        assertThat(html).contains("<h2>Раздел</h2>");
+        assertThat(html).contains("<h3>Подраздел</h3>");
+    }
+
+    @Test
+    void clampsDeepHeadingsAtH6() {
+        // h7 не существует: при сдвиге вниз уровни глубже h6 схлопываются в h6,
+        // иначе получился бы несуществующий тег и потерянная семантика.
+        String html = service.toHtml("# Верх\n\n###### Глубоко");
+
+        assertThat(html).contains("<h2>Верх</h2>");
+        assertThat(html).contains("<h6>Глубоко</h6>");
+        assertThat(html).doesNotContain("<h7>");
+    }
+
+    @Test
     void stripsNonCheckboxInputInjectedInMarkdown() {
         // Safelist пропускает <input> ради task-list, но defense-in-depth срезает
         // любой input с type!=checkbox (text/hidden/…).

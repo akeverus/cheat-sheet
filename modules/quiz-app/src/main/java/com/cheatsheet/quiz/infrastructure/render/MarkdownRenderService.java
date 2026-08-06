@@ -168,18 +168,81 @@ public class MarkdownRenderService {
         Node document = PARSER.parse(processed);
         String html = HTML_RENDERER.render(document);
         String cleaned = Jsoup.clean(html, "", HTML_SAFELIST, NO_PRETTY_PRINT);
-        return sanitizeAnchorsAndSvg(cleaned);
+        return postProcess(cleaned);
     }
 
     /**
-     * Post-clean: href allow-list + SVG use/href only same-document fragments.
+     * Пост-обработка отрендеренного фрагмента: санитайзинг + доступность.
+     * Один разбор Jsoup на все шаги — фрагмент ответа бывает большим, а
+     * повторный parse/serialize на каждый шаг стоил бы столько же, сколько
+     * сам рендер.
      */
-    private String sanitizeAnchorsAndSvg(String html) {
+    private String postProcess(String html) {
         if (html == null || html.isBlank()) {
             return html == null ? "" : html;
         }
         Document doc = Jsoup.parseBodyFragment(html);
         doc.outputSettings(NO_PRETTY_PRINT);
+        sanitizeAnchorsAndSvg(doc);
+        normalizeHeadingLevels(doc);
+        labelTaskListCheckboxes(doc);
+        return doc.body().html();
+    }
+
+    /**
+     * Сдвигает заголовки фрагмента так, чтобы самый мелкий уровень стал {@code h2}.
+     *
+     * <p>Фрагмент встраивается в страницу, где {@code h1} — это сам вопрос. Автор
+     * markdown про это не знает и начинает разбор с {@code ###}, поэтому в дереве
+     * получался разрыв h1 → h3: скринридер, идущий по заголовкам, видит пропущенный
+     * уровень и не может понять вложенность (WCAG 1.3.1). Правим не в 300+ исходных
+     * файлах, а один раз на рендере.</p>
+     *
+     * <p>Сдвигается вся лестница целиком, поэтому относительная глубина разбора
+     * сохраняется; уровни глубже {@code h6} схлопываются в {@code h6} — тега h7 нет.</p>
+     */
+    private void normalizeHeadingLevels(Document doc) {
+        List<Element> headings = doc.select("h1, h2, h3, h4, h5, h6");
+        if (headings.isEmpty()) {
+            return;
+        }
+        int shallowest = headings.stream()
+                .mapToInt(h -> h.tagName().charAt(1) - '0')
+                .min()
+                .orElse(2);
+        int shift = 2 - shallowest;
+        if (shift == 0) {
+            return;
+        }
+        for (Element heading : headings) {
+            int level = heading.tagName().charAt(1) - '0';
+            heading.tagName("h" + Math.min(6, Math.max(2, level + shift)));
+        }
+    }
+
+    /**
+     * Даёт GFM-чекбоксам чек-листа доступное имя.
+     *
+     * <p>Flexmark рендерит {@code - [x] пункт} как безымянный
+     * {@code <input type=checkbox disabled>}. Скринридер объявлял его как
+     * «флажок» без состояния и без названия — то есть отмеченность пункта,
+     * единственное, что этот элемент несёт, до пользователя не доходила.</p>
+     *
+     * <p>Имя — только состояние («выполнено» / «не выполнено»), не текст пункта:
+     * текст лежит рядом в том же {@code <li>} и будет прочитан следом, дублировать
+     * его в метке значит читать каждый пункт дважды.</p>
+     */
+    private void labelTaskListCheckboxes(Document doc) {
+        for (Element input : doc.select("input[type=checkbox]")) {
+            input.attr("aria-label", input.hasAttr("checked") ? "выполнено" : "не выполнено");
+        }
+    }
+
+    /**
+     * Санитайзинг ссылок и SVG: href allow-list, {@code <use href>} только на
+     * фрагменты того же документа, из {@code <input>} допустим лишь disabled-checkbox.
+     */
+    private void sanitizeAnchorsAndSvg(Document doc) {
         for (Element anchor : doc.select("a[href]")) {
             if (!isSafeHref(anchor.attr("href"))) {
                 anchor.removeAttr("href");
@@ -209,7 +272,6 @@ public class MarkdownRenderService {
                     .toList()
                     .forEach(a -> el.removeAttr(a.getKey()));
         }
-        return doc.body().html();
     }
 
     private boolean isSafeHref(String href) {
