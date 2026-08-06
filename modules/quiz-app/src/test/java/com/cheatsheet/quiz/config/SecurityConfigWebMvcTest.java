@@ -41,31 +41,60 @@ class SecurityConfigWebMvcTest {
 
     @Test
     void sensitiveEndpointsAreBlockedWithoutAdminToken() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/admin/senior-rules"))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.type").value("FORBIDDEN"))
-                .andExpect(jsonPath("$.message").isString());
-
-        mockMvc.perform(MockMvcRequestBuilders.post("/api/regenerate"))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.type").value("FORBIDDEN"));
-
+        // Отказ из security-фильтра идёт в том же формате RFC-7807, что и ошибки
+        // из контроллеров: клиенту не нужно различать источник ошибки.
         mockMvc.perform(MockMvcRequestBuilders.get("/export"))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.type").value("FORBIDDEN"));
+                .andExpect(jsonPath("$.errorCode").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.detail").isString());
     }
 
     @Test
     void sensitiveEndpointsAllowValidAdminToken() throws Exception {
-        // /api/admin/senior-rules и /api/regenerate удалены вместе с AI-кодом
-        // (commit b4ee4ffc). Их матчеры намеренно оставлены в SecurityConfig
-        // как scaffolding, поэтому запрос БЕЗ токена всё ещё блокируется 403
-        // (см. sensitiveEndpointsAreBlockedWithoutAdminToken), но С валидным
-        // токеном роутинг доходит до отсутствующего контроллера → 404, а не 200.
-        // Единственный живой чувствительный эндпоинт — /export.
         mockMvc.perform(MockMvcRequestBuilders.get("/export")
                         .header("X-Admin-Token", "test-admin-token"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void destructiveResetIsBlockedWithoutAdminTokenInSingleMode() throws Exception {
+        // Собственная проверка токена из контроллера убрана — гейт остался один, в
+        // SecurityConfig. Отказ в дефолтном (single) режиме до этого утверждался только
+        // тестом multi-режима, который по документам живой проверкой не покрыт. Эндпоинт
+        // сносит весь банк MCQ-вариантов, поэтому отказ фиксируем явно и здесь.
+        mockMvc.perform(MockMvcRequestBuilders.post("/settings/reset-options")
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminTokenFromQueryStringIsRejected() throws Exception {
+        // CWE-598: в query string секрет оседает в access-логах, заголовке Referer и
+        // истории браузера. Гейт фильтрует по ИСТОЧНИКУ, а не по методу: getParameter
+        // сливает query и тело формы, поэтому проверка «метод не GET» пропускала
+        // POST с токеном в URL. queryParam (в отличие от param) кладёт значение
+        // именно в строку запроса — это и есть воспроизведение дефекта.
+        mockMvc.perform(MockMvcRequestBuilders.get("/export")
+                        .queryParam("adminToken", "test-admin-token"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/settings/reset-options")
+                        .queryParam("adminToken", "test-admin-token")
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminTokenFromFormBodyIsAccepted() throws Exception {
+        // Обратная сторона того же гейта: форма настроек шлёт токен скрытым полем,
+        // и этот путь ломать нельзя. Бьём по /export, а не по reset-options: сброс
+        // банка вариантов необратим и испортил бы общий тестовый контекст. POST на
+        // /export не замаплен — важно лишь, что ответ НЕ 403, то есть авторизация
+        // пропустила запрос дальше в диспетчер.
+        mockMvc.perform(MockMvcRequestBuilders.post("/export")
+                        .param("adminToken", "test-admin-token")
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(result -> assertThat(result.getResponse().getStatus()).isNotEqualTo(403));
     }
 
     @Test

@@ -3,12 +3,13 @@ package com.cheatsheet.quiz.api.security;
 import lombok.RequiredArgsConstructor;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
-import com.cheatsheet.quiz.common.model.ApiError;
+import com.cheatsheet.quiz.common.constants.ApiErrorTypes;
+import com.cheatsheet.quiz.common.web.RequestFormat;
 import com.cheatsheet.quiz.config.app.AppProperties;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
@@ -35,21 +36,19 @@ public class SensitiveEndpointAuthenticationEntryPoint implements Authentication
             HttpServletResponse response,
             AuthenticationException authException
     ) throws IOException, ServletException {
-        if (isAdminSensitive(request)) {
-            // Browser link/nav (Accept includes text/html) → error.html.
-            // XHR/API without HTML Accept (MockMvc, apiFetch) → JSON.
-            if (acceptsHtml(request) || !accessService.isApiLikeRequest(request)) {
+        if (RequestFormat.isAdminSensitivePath(request)) {
+            // Браузерная ссылка/навигация (явный text/html) → error.html.
+            // XHR/API без HTML в Accept (MockMvc, apiFetch) → JSON.
+            if (RequestFormat.acceptsHtml(request) || !accessService.isApiLikeRequest(request)) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
                 return;
             }
-            String token = request.getHeader(SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER);
-            ApiError error = accessService.buildForbiddenResponse(token).getBody();
-            accessService.writeJson(response, HttpServletResponse.SC_FORBIDDEN, error);
+            accessService.writeForbidden(request, response);
             return;
         }
 
         boolean multi = "multi".equalsIgnoreCase(appProperties.getSecurity().getMode());
-        if (multi && !accessService.isApiLikeRequest(request) && prefersHtml(request)) {
+        if (multi && !accessService.isApiLikeRequest(request) && RequestFormat.prefersHtml(request)) {
             formLoginEntryPoint.commence(request, response, authException);
             return;
         }
@@ -63,34 +62,7 @@ public class SensitiveEndpointAuthenticationEntryPoint implements Authentication
             return;
         }
 
-        accessService.writeJson(response, HttpServletResponse.SC_UNAUTHORIZED,
-                new ApiError(HttpServletResponse.SC_UNAUTHORIZED, "UNAUTHORIZED",
-                        "Authentication required", null));
-    }
-
-    private static boolean prefersHtml(HttpServletRequest request) {
-        String accept = request.getHeader("Accept");
-        if (accept == null || accept.isBlank()) {
-            return true;
-        }
-        return accept.contains(MediaType.TEXT_HTML_VALUE)
-                || (!accept.contains(MediaType.APPLICATION_JSON_VALUE) && accept.contains("*/*"));
-    }
-
-    /** Explicit HTML Accept only — used for admin-gated /export browser navigation. */
-    private static boolean acceptsHtml(HttpServletRequest request) {
-        String accept = request.getHeader("Accept");
-        return accept != null && accept.contains(MediaType.TEXT_HTML_VALUE);
-    }
-
-    private static boolean isAdminSensitive(HttpServletRequest request) {
-        String uri = request.getRequestURI();
-        if (uri == null) {
-            return false;
-        }
-        return uri.startsWith("/api/admin")
-                || uri.startsWith("/api/regenerate")
-                || uri.startsWith("/export")
-                || uri.startsWith("/settings/reset-options");
+        accessService.writeProblem(request, response, HttpStatus.UNAUTHORIZED,
+                ApiErrorTypes.UNAUTHORIZED, "Требуется аутентификация");
     }
 }

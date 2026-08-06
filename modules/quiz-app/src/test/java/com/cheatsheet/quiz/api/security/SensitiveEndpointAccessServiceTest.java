@@ -1,6 +1,7 @@
 package com.cheatsheet.quiz.api.security;
 
-import com.cheatsheet.quiz.common.model.ApiError;
+import com.cheatsheet.quiz.common.constants.ApiErrorTypes;
+import com.cheatsheet.quiz.common.web.CorrelationIdFilter;
 import com.cheatsheet.quiz.config.app.AppProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,8 +12,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.time.Duration;
@@ -43,30 +44,23 @@ class SensitiveEndpointAccessServiceTest {
     void setUp() {
         appProperties = new AppProperties();
         appProperties.setAdminToken("top-secret");
-        appProperties.setRegenerateRateLimitPerMinute(20);
+        appProperties.setSensitiveRateLimitPerMinute(20);
         lenient().when(environment.getActiveProfiles()).thenReturn(new String[]{"test"});
         service = new SensitiveEndpointAccessService(appProperties, environment, requestRateLimiter, new ObjectMapper());
     }
 
     @Test
-    void forbiddenIfUnauthorizedReturnsForbiddenResponse() {
-        ResponseEntity<ApiError> response = service.forbiddenIfUnauthorized("wrong-token", "test action");
-
-        assertThat(response).isNotNull();
-        assertThat(response.getStatusCode().value()).isEqualTo(403);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().status()).isEqualTo(403);
+    void isAuthorizedRejectsWrongToken() {
+        assertThat(service.isAuthorized("wrong-token")).isFalse();
     }
 
     @Test
-    void forbiddenIfUnauthorizedReturnsNullForValidToken() {
-        ResponseEntity<ApiError> response = service.forbiddenIfUnauthorized("top-secret", "test action");
-
-        assertThat(response).isNull();
+    void isAuthorizedAcceptsConfiguredToken() {
+        assertThat(service.isAuthorized("top-secret")).isTrue();
     }
 
     @Test
-    void forbiddenIfUnauthorizedReturnsNullForAdminRoleWithoutToken() {
+    void hasAdminRoleDetectsAdminAuthority() {
         org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
                 new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
                         "admin-user",
@@ -74,51 +68,51 @@ class SensitiveEndpointAccessServiceTest {
                         java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority(
                                 SensitiveEndpointAccessService.ROLE_ADMIN))));
         try {
-            ResponseEntity<ApiError> response = service.forbiddenIfUnauthorized(null, "test action");
-            assertThat(response).isNull();
+            assertThat(service.hasAdminRole()).isTrue();
         } finally {
             org.springframework.security.core.context.SecurityContextHolder.clearContext();
         }
     }
 
     @Test
-    void allowRegenerateUsesRemoteAddrWhenForwardedHeaderIsNotTrusted() {
+    void allowSensitiveRequestUsesRemoteAddrWhenForwardedHeaderIsNotTrusted() {
         appProperties.setTrustForwardedForHeader(false);
         when(request.getRemoteAddr()).thenReturn("10.1.2.3");
         when(requestRateLimiter.allow(anyString(), anyInt(), any(Duration.class))).thenReturn(true);
 
-        boolean allowed = service.allowRegenerate(request);
+        boolean allowed = service.allowSensitiveRequest(request);
 
         assertThat(allowed).isTrue();
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
         verify(requestRateLimiter).allow(keyCaptor.capture(), anyInt(), any(Duration.class));
-        assertThat(keyCaptor.getValue()).isEqualTo("regenerate:10.1.2.3");
+        assertThat(keyCaptor.getValue()).isEqualTo("sensitive:10.1.2.3");
     }
 
     @Test
-    void allowRegenerateUsesForwardedHeaderWhenTrusted() {
+    void allowSensitiveRequestUsesForwardedHeaderWhenTrusted() {
         appProperties.setTrustForwardedForHeader(true);
         when(request.getHeader("X-Forwarded-For")).thenReturn("198.51.100.9, 10.0.0.10");
         when(requestRateLimiter.allow(anyString(), anyInt(), any(Duration.class))).thenReturn(true);
 
-        boolean allowed = service.allowRegenerate(request);
+        boolean allowed = service.allowSensitiveRequest(request);
 
         assertThat(allowed).isTrue();
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
         verify(requestRateLimiter).allow(keyCaptor.capture(), anyInt(), any(Duration.class));
-        assertThat(keyCaptor.getValue()).isEqualTo("regenerate:198.51.100.9");
+        assertThat(keyCaptor.getValue()).isEqualTo("sensitive:198.51.100.9");
     }
 
     @Test
-    void buildForbiddenResponseDoesNotRevealAdminTokenConfiguration() {
+    void writeForbiddenDoesNotRevealAdminTokenConfiguration() throws Exception {
         appProperties.setAdminToken(" ");
+        MockHttpServletResponse response = new MockHttpServletResponse();
 
-        ResponseEntity<ApiError> response = service.buildForbiddenResponse("any");
+        service.writeForbidden(request, response);
 
-        assertThat(response.getStatusCode().value()).isEqualTo(403);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().message()).isEqualTo("Недостаточно прав");
-        assertThat(response.getBody().message()).doesNotContain("app.admin-token");
+        assertThat(response.getStatus()).isEqualTo(403);
+        assertThat(response.getContentAsString())
+                .contains("Недостаточно прав")
+                .doesNotContain("app.admin-token");
     }
 
     @Test
@@ -142,18 +136,22 @@ class SensitiveEndpointAccessServiceTest {
     }
 
     @Test
-    void writeJsonSerializesApiErrorWithStatusAndUtf8() throws Exception {
+    void writeProblemEmitsRfc7807BodyWithErrorCodeAndCorrelationId() throws Exception {
         MockHttpServletResponse response = new MockHttpServletResponse();
-        ApiError error = new ApiError(403, "FORBIDDEN", "Недостаточно прав", null);
+        when(request.getAttribute(CorrelationIdFilter.REQUEST_ATTRIBUTE)).thenReturn("cid-42");
 
-        service.writeJson(response, 403, error);
+        service.writeProblem(request, response, HttpStatus.UNAUTHORIZED,
+                ApiErrorTypes.UNAUTHORIZED, "Требуется аутентификация");
 
-        assertThat(response.getStatus()).isEqualTo(403);
+        assertThat(response.getStatus()).isEqualTo(401);
         // MockHttpServletResponse дописывает ;charset=UTF-8 к content-type.
-        assertThat(response.getContentType()).startsWith(MediaType.APPLICATION_JSON_VALUE);
+        assertThat(response.getContentType()).startsWith(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
         assertThat(response.getCharacterEncoding()).isEqualToIgnoringCase("UTF-8");
         // Кириллица не должна биться → UTF-8 round-trip.
-        assertThat(response.getContentAsString()).contains("Недостаточно прав").contains("FORBIDDEN");
+        assertThat(response.getContentAsString())
+                .contains("Требуется аутентификация")
+                .contains(ApiErrorTypes.UNAUTHORIZED)
+                .contains("cid-42");
     }
 
     @Test

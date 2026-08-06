@@ -1,9 +1,8 @@
 package com.cheatsheet.quiz.service;
 
-import com.cheatsheet.quiz.api.security.SensitiveEndpointAccessService;
-import com.cheatsheet.quiz.common.constants.ApiErrorTypes;
-import com.cheatsheet.quiz.common.model.ApiError;
 import com.cheatsheet.quiz.domain.ProgressExportRow;
+import com.cheatsheet.quiz.feature.export.exception.ExportSerializationException;
+import com.cheatsheet.quiz.feature.export.exception.UnsupportedExportFormatException;
 import com.cheatsheet.quiz.feature.export.service.ExportService;
 import com.cheatsheet.quiz.feature.export.usecase.ExportApiService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -12,15 +11,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -31,54 +28,43 @@ class ExportApiServiceTest {
 
     @Mock
     private ExportService exportService;
-    @Mock
-    private SensitiveEndpointAccessService accessService;
 
     private ExportApiService service;
 
     @BeforeEach
     void setUp() {
-        service = new ExportApiService(exportService, accessService);
+        service = new ExportApiService(exportService);
     }
 
     @Test
-    void exportReturnsForbiddenWhenUnauthorized() {
-        ApiError forbidden = new ApiError(403, ApiErrorTypes.FORBIDDEN, "Недостаточно прав", null);
-        when(accessService.forbiddenIfUnauthorized("bad-token", "export прогресса"))
-                .thenReturn(ResponseEntity.status(403).body(forbidden));
+    void exportRejectsUnsupportedFormatBeforeTouchingStorage() {
+        assertThatThrownBy(() -> service.export("xml"))
+                .isInstanceOf(UnsupportedExportFormatException.class)
+                .hasMessageContaining("json")
+                .hasMessageContaining("csv");
 
-        ExportApiService.ExportResult result = service.export("bad-token", "json");
-
-        assertThat(result.success()).isFalse();
-        assertThat(result.status()).isEqualTo(HttpStatus.FORBIDDEN);
-        assertThat(result.error()).isEqualTo(forbidden);
         verify(exportService, never()).loadProgressRows();
     }
 
     @Test
-    void exportReturnsBadRequestForUnsupportedFormat() {
-        when(accessService.forbiddenIfUnauthorized(any(), any())).thenReturn(null);
+    void exportNormalizesFormatCaseAndWhitespace() {
+        List<ProgressExportRow> rows = List.of(new ProgressExportRow("slug", "java", 1, 0, 1_700_000_000L, 2));
+        when(exportService.loadProgressRows()).thenReturn(rows);
+        when(exportService.exportAsCsv(rows)).thenReturn("slug,topic\na,b");
 
-        ExportApiService.ExportResult result = service.export("admin", "xml");
+        ExportApiService.ExportResult result = service.export("  CSV ");
 
-        assertThat(result.success()).isFalse();
-        assertThat(result.status()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(result.error()).isNotNull();
-        assertThat(result.error().type()).isEqualTo(ApiErrorTypes.UNSUPPORTED_FORMAT);
-        verify(exportService, never()).loadProgressRows();
+        assertThat(result.filename()).isEqualTo("quiz-progress.csv");
     }
 
     @Test
     void exportReturnsCsvPayloadWhenFormatIsCsv() {
         List<ProgressExportRow> rows = List.of(new ProgressExportRow("slug", "java", 1, 0, 1_700_000_000L, 2));
-        when(accessService.forbiddenIfUnauthorized(any(), any())).thenReturn(null);
         when(exportService.loadProgressRows()).thenReturn(rows);
         when(exportService.exportAsCsv(rows)).thenReturn("slug,topic\na,b");
 
-        ExportApiService.ExportResult result = service.export("admin", "csv");
+        ExportApiService.ExportResult result = service.export("csv");
 
-        assertThat(result.success()).isTrue();
-        assertThat(result.status()).isEqualTo(HttpStatus.OK);
         assertThat(result.filename()).isEqualTo("quiz-progress.csv");
         assertThat(result.contentType()).isEqualTo(new MediaType("text", "csv", StandardCharsets.UTF_8));
         assertThat(new String(result.body(), StandardCharsets.UTF_8)).contains("slug,topic");
@@ -86,17 +72,27 @@ class ExportApiServiceTest {
     }
 
     @Test
-    void exportReturnsInternalErrorWhenJsonSerializationFails() throws JsonProcessingException {
+    void exportReturnsJsonPayloadByDefaultFormat() throws JsonProcessingException {
         List<ProgressExportRow> rows = List.of(new ProgressExportRow("slug", "java", 1, 0, 1_700_000_000L, 2));
-        when(accessService.forbiddenIfUnauthorized(any(), any())).thenReturn(null);
         when(exportService.loadProgressRows()).thenReturn(rows);
-        when(exportService.exportAsJson(eq(rows))).thenThrow(new JsonProcessingException("boom") {});
+        when(exportService.exportAsJson(rows)).thenReturn("[]".getBytes(StandardCharsets.UTF_8));
 
-        ExportApiService.ExportResult result = service.export("admin", "json");
+        ExportApiService.ExportResult result = service.export("json");
 
-        assertThat(result.success()).isFalse();
-        assertThat(result.status()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(result.error()).isNotNull();
-        assertThat(result.error().type()).isEqualTo(ApiErrorTypes.EXPORT_SERIALIZATION_ERROR);
+        assertThat(result.filename()).isEqualTo("quiz-progress.json");
+        assertThat(result.contentType()).isEqualTo(MediaType.APPLICATION_JSON);
+        assertThat(new String(result.body(), StandardCharsets.UTF_8)).isEqualTo("[]");
+    }
+
+    @Test
+    void exportWrapsJsonSerializationFailure() throws JsonProcessingException {
+        List<ProgressExportRow> rows = List.of(new ProgressExportRow("slug", "java", 1, 0, 1_700_000_000L, 2));
+        when(exportService.loadProgressRows()).thenReturn(rows);
+        when(exportService.exportAsJson(eq(rows))).thenThrow(new JsonProcessingException("boom") {
+        });
+
+        assertThatThrownBy(() -> service.export("json"))
+                .isInstanceOf(ExportSerializationException.class)
+                .hasCauseInstanceOf(JsonProcessingException.class);
     }
 }

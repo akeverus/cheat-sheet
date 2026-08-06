@@ -44,6 +44,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -53,6 +55,9 @@ import java.util.function.Supplier;
 @Configuration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class SecurityConfig {
+
+    /** Имя параметра с admin-токеном; принимается только из тела формы (см. {@link #acceptsTokenAsParameter}). */
+    private static final String ADMIN_TOKEN_PARAM = "adminToken";
 
     @Bean
     SecurityFilterChain securityFilterChain(
@@ -91,8 +96,7 @@ public class SecurityConfig {
                 .addFilterAfter(ownerContextFilter, SecurityContextHolderFilter.class)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("/api/admin/**", "/api/regenerate", "/export",
-                                    "/settings/reset-options")
+                    auth.requestMatchers("/export", "/settings/reset-options")
                             .access((authentication, context) -> hasSensitiveAccess(
                                     authentication.get(), context, sensitiveEndpointAccessService));
                     auth.requestMatchers(HttpMethod.GET, "/css/**", "/js/**", "/vendor/**", "/fonts/**",
@@ -254,9 +258,10 @@ public class SecurityConfig {
             RequestAuthorizationContext context,
             SensitiveEndpointAccessService sensitiveEndpointAccessService
     ) {
-        String token = context.getRequest().getHeader(SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER);
-        if (token == null || token.isBlank()) {
-            token = context.getRequest().getParameter("adminToken");
+        HttpServletRequest request = context.getRequest();
+        String token = request.getHeader(SensitiveEndpointAccessService.ADMIN_TOKEN_HEADER);
+        if ((token == null || token.isBlank()) && acceptsTokenAsParameter(request)) {
+            token = request.getParameter(ADMIN_TOKEN_PARAM);
         }
         if (sensitiveEndpointAccessService.isAuthorized(token)) {
             return new AuthorizationDecision(true);
@@ -266,5 +271,45 @@ public class SecurityConfig {
             return new AuthorizationDecision(true);
         }
         return new AuthorizationDecision(false);
+    }
+
+    /**
+     * Токен разрешено передавать телом запроса (форма настроек шлёт скрытое поле
+     * {@code adminToken} через POST), но не строкой запроса: в URL секрет оседает
+     * в access-логах, заголовке Referer и истории браузера (CWE-598).
+     *
+     * <p>Фильтруем по ИСТОЧНИКУ, а не по методу. {@code getParameter} сливает
+     * query string и тело формы в один набор, поэтому прежняя проверка «метод не
+     * GET» пропускала {@code POST /settings/reset-options?adminToken=…} — секрет
+     * оказывался в URL ровно так же, как в GET. Если {@code adminToken} есть в
+     * query string, параметр не читаем вовсе, даже когда он продублирован телом:
+     * иначе достаточно дописать форму, чтобы вернуть себе старое поведение.
+     * Остаётся заголовок {@code X-Admin-Token}.
+     */
+    private static boolean acceptsTokenAsParameter(HttpServletRequest request) {
+        String query = request.getQueryString();
+        if (query == null || query.isEmpty()) {
+            return true;
+        }
+        for (String pair : query.split("&")) {
+            int eq = pair.indexOf('=');
+            String name = eq < 0 ? pair : pair.substring(0, eq);
+            if (ADMIN_TOKEN_PARAM.equals(decodeParamName(name))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** Имя параметра в query string может быть %-закодировано (`admin%54oken`). */
+    private static String decodeParamName(String name) {
+        if (name.indexOf('%') < 0 && name.indexOf('+') < 0) {
+            return name;
+        }
+        try {
+            return URLDecoder.decode(name, StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException ex) {
+            return name;
+        }
     }
 }

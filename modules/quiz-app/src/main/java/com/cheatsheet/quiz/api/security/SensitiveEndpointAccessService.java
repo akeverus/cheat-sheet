@@ -4,7 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
 import com.cheatsheet.quiz.common.constants.ApiErrorTypes;
-import com.cheatsheet.quiz.common.model.ApiError;
+import com.cheatsheet.quiz.common.web.CorrelationIdFilter;
+import com.cheatsheet.quiz.common.web.RequestFormat;
 import com.cheatsheet.quiz.config.app.AppProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
@@ -14,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.ProblemDetail;
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -28,7 +29,9 @@ import java.time.Duration;
 import java.util.Arrays;
 
 /**
- * Политики доступа для чувствительных endpoint (admin, export, regenerate).
+ * Политики доступа для чувствительных endpoint ({@code /export},
+ * {@code /settings/reset-options}): admin-token, роль администратора,
+ * ограничение частоты и единый формат отказа.
  */
 @Component
 @Slf4j
@@ -38,9 +41,9 @@ public class SensitiveEndpointAccessService {
 
     public static final String ADMIN_TOKEN_HEADER = "X-Admin-Token";
     public static final String ROLE_ADMIN = OrgIdpGroupAuthoritiesMapper.ROLE_ADMIN;
-    private static final Duration REGENERATE_WINDOW = Duration.ofMinutes(1);
-    private static final int REGENERATE_WINDOW_SECONDS = 60;
-    private static final String REGENERATE_RATE_LIMIT_KEY = "regenerate";
+    private static final Duration RATE_LIMIT_WINDOW = Duration.ofMinutes(1);
+    private static final int RATE_LIMIT_WINDOW_SECONDS = 60;
+    private static final String SENSITIVE_RATE_LIMIT_KEY = "sensitive";
     private static final String UNKNOWN_CLIENT = "unknown";
 
     private final AppProperties appProperties;
@@ -71,13 +74,6 @@ public class SensitiveEndpointAccessService {
         );
     }
 
-    /**
-     * Sensitive endpoints: valid {@code X-Admin-Token} or authenticated principal with {@code ROLE_ADMIN}.
-     */
-    public boolean isAuthorizedForSensitive(@Nullable String token) {
-        return isAuthorized(token) || hasAdminRole();
-    }
-
     public boolean hasAdminRole() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -97,65 +93,71 @@ public class SensitiveEndpointAccessService {
     }
 
     /**
-     * Строит единообразный 403 ответ для чувствительных endpoint (без раскрытия конфигурации).
-     */
-    public ResponseEntity<ApiError> buildForbiddenResponse(@Nullable String token) {
-        ApiError error = new ApiError(HttpStatus.FORBIDDEN.value(), ApiErrorTypes.FORBIDDEN,
-                "Недостаточно прав", null);
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(error);
-    }
-
-    /**
      * True, если запрос адресован API-подобному пути ({@code /api/**} или {@code /export}).
-     * Общий предикат для security-хендлеров: определяет JSON-ответ vs HTML/redirect.
+     * Тонкая обёртка над {@link RequestFormat#isMachineFacingPath}: security-хендлеры
+     * получают предикат через инжектированный сервис, а не статикой.
      */
     public boolean isApiLikeRequest(HttpServletRequest request) {
-        String uri = request.getRequestURI();
-        return uri != null && (uri.startsWith("/api/") || uri.startsWith("/export"));
+        return RequestFormat.isMachineFacingPath(request);
     }
 
     /**
-     * Единая точка сериализации {@link ApiError} в JSON-тело ответа (UTF-8) с заданным статусом.
-     * Централизует идентичную запись, ранее продублированную в обоих security-хендлерах.
+     * Отказ в доступе к чувствительному endpoint. Тело — то же RFC-7807
+     * {@link ProblemDetail}, что отдаёт {@code GlobalExceptionHandler}: клиенту
+     * не нужно различать «ошибку из security-фильтра» и «ошибку из контроллера».
+     * Сообщение намеренно не раскрывает, настроен ли admin-token.
      */
-    public void writeJson(HttpServletResponse response, int status, ApiError error) throws IOException {
-        response.setStatus(status);
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        objectMapper.writeValue(response.getOutputStream(), error);
+    public void writeForbidden(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        writeProblem(request, response, HttpStatus.FORBIDDEN, ApiErrorTypes.FORBIDDEN, "Недостаточно прав");
     }
 
     /**
-     * Возвращает {@code null}, если доступ разрешён; иначе возвращает стандартный 403 и пишет security-log.
+     * Единая точка сериализации {@link ProblemDetail} в тело ответа (UTF-8).
+     * Security-фильтры работают до MVC, поэтому {@code @ControllerAdvice} их не
+     * покрывает — контракт приходится воспроизводить здесь вручную.
      */
-    @Nullable
-    public ResponseEntity<ApiError> forbiddenIfUnauthorized(@Nullable String token, String action) {
-        if (isAuthorizedForSensitive(token)) {
-            return null;
+    public void writeProblem(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            HttpStatus status,
+            String errorCode,
+            String detail
+    ) throws IOException {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, detail);
+        problem.setTitle(status.getReasonPhrase());
+        problem.setProperty("errorCode", errorCode);
+        Object correlationId = request.getAttribute(CorrelationIdFilter.REQUEST_ATTRIBUTE);
+        if (correlationId != null) {
+            problem.setProperty("correlationId", correlationId.toString());
         }
-        log.warn("Неавторизованная попытка {}", action);
-        return buildForbiddenResponse(token);
+
+        response.setStatus(status.value());
+        response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        objectMapper.writeValue(response.getOutputStream(), problem);
     }
 
-    public boolean allowRegenerate(HttpServletRequest request) {
+    /**
+     * Лимит частоты обращений к чувствительным endpoint (сейчас — полный дамп
+     * прогресса в {@code /export}). Ключ — клиентский адрес, окно — минута.
+     */
+    public boolean allowSensitiveRequest(HttpServletRequest request) {
         String clientKey = clientKey(request, appProperties.isTrustForwardedForHeader());
-        int maxRequests = Math.max(1, appProperties.getRegenerateRateLimitPerMinute());
+        int maxRequests = Math.max(1, appProperties.getSensitiveRateLimitPerMinute());
         boolean allowed = requestRateLimiter.allow(
-                REGENERATE_RATE_LIMIT_KEY + ":" + clientKey,
+                SENSITIVE_RATE_LIMIT_KEY + ":" + clientKey,
                 maxRequests,
-                REGENERATE_WINDOW
+                RATE_LIMIT_WINDOW
         );
         if (!allowed) {
             log.warn("Rate limit exceeded для {} (client={}, max={}/{}s)",
-                    REGENERATE_RATE_LIMIT_KEY, clientKey, maxRequests, REGENERATE_WINDOW_SECONDS);
+                    SENSITIVE_RATE_LIMIT_KEY, clientKey, maxRequests, RATE_LIMIT_WINDOW_SECONDS);
         }
         return allowed;
     }
 
-    public int regenerateRetryAfterSeconds() {
-        return REGENERATE_WINDOW_SECONDS;
+    public int sensitiveRetryAfterSeconds() {
+        return RATE_LIMIT_WINDOW_SECONDS;
     }
 
     private static String clientKey(HttpServletRequest request, boolean trustForwardedForHeader) {

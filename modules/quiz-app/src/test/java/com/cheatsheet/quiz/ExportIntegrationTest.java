@@ -69,7 +69,21 @@ class ExportIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();
+        assertThat(response.getHeaders().getContentType())
+                .isNotNull()
+                .satisfies(type -> assertThat(type.isCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON)).isTrue());
         assertThat(response.getBody()).contains(ApiErrorTypes.UNSUPPORTED_FORMAT);
-        assertThat(response.getBody()).contains("details");
+        assertThat(response.getBody()).contains("errors");
+    }
+
+    @Test
+    void exportSendsFileAsAttachment() {
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/export?format=csv", HttpMethod.GET, authorizedRequest(), String.class);
+
+        assertThat(response.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION))
+                .isNotNull()
+                .contains("attachment")
+                .contains("quiz-progress.csv");
     }
 }

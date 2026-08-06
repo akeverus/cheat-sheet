@@ -77,13 +77,13 @@ public class AppProperties {
      */
     private boolean interviewResetOnStartup = false;
 
-    /** Токен для защиты чувствительных endpoint (`/api/admin/*`, `/api/regenerate`, `/export`). */
+    /** Токен для защиты чувствительных endpoint (`/export`, `/settings/reset-options`). */
     private String adminToken = "";
 
-    /** Лимит вызовов `/api/regenerate` на клиента в минуту. */
-    @Min(value = 1, message = "app.regenerate-rate-limit-per-minute должен быть не меньше 1")
-    @Max(value = 300, message = "app.regenerate-rate-limit-per-minute должен быть не больше 300")
-    private int regenerateRateLimitPerMinute = 20;
+    /** Лимит обращений к чувствительным endpoint (`/export`) на клиента в минуту. */
+    @Min(value = 1, message = "app.sensitive-rate-limit-per-minute должен быть не меньше 1")
+    @Max(value = 300, message = "app.sensitive-rate-limit-per-minute должен быть не больше 300")
+    private int sensitiveRateLimitPerMinute = 20;
 
     /**
      * Доверять ли заголовку X-Forwarded-For для rate-limit ключа.

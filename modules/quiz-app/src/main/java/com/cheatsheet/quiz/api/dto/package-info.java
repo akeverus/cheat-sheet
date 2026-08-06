@@ -1,8 +1,7 @@
 /**
  * Data transfer objects для REST API.
  *
- * <p>Используются в ответах контроллеров и в {@link com.cheatsheet.quiz.common.exception.GlobalExceptionHandler}.</p>
- *
- * @see com.cheatsheet.quiz.common.model.ApiError
+ * <p>Используются в ответах контроллеров. Ошибки сюда не входят: их формат —
+ * RFC-7807 {@code ProblemDetail}, см. {@link com.cheatsheet.quiz.common.exception.GlobalExceptionHandler}.</p>
  */
 package com.cheatsheet.quiz.api.dto;
