@@ -2,6 +2,7 @@ package com.cheatsheet.quiz.service.imports;
 
 import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.QuestionType;
+import com.cheatsheet.quiz.service.diagram.DiagramPaletteNormalizer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -22,7 +23,12 @@ class MarkdownQuestionParserTest {
         AppProperties.Import importSettings = new AppProperties.Import();
         importSettings.setMinCodeBlockLength(20);
         properties.setImportSettings(importSettings);
-        return new MarkdownQuestionParser(properties);
+        return new MarkdownQuestionParser(properties, new DiagramPaletteNormalizer());
+    }
+
+    /** Парсер с дефолтными настройками импорта — для проверок разбора заголовков. */
+    private MarkdownQuestionParser defaultParser() {
+        return new MarkdownQuestionParser(new AppProperties(), new DiagramPaletteNormalizer());
     }
 
     @Test
@@ -150,5 +156,137 @@ class MarkdownQuestionParserTest {
         assertThat(questions.get(0).important()).isTrue();
         assertThat(questions.get(0).answerMarkdown()).contains("X is a thing");
         assertThat(questions.get(1).important()).isFalse();
+    }
+
+    /**
+     * Захардкоженные в markdown цвета не доходят до базы: их место занимают
+     * семантические классы, которые фронтенд красит токенами текущей темы.
+     */
+    @Test
+    void normalizesHardcodedDiagramColorsToSemanticClasses() throws IOException {
+        Path file = tempDir.resolve("colored-diagram.md");
+        Files.writeString(file, """
+                ## Q1. Что происходит при ошибке?
+                Разбор ниже.
+
+                ```mermaid
+                graph TD
+                    OK[Успех] --> FAIL[Ошибка]
+                    style OK fill:#4caf50,color:#fff
+                    style FAIL fill:#ff6b6b,color:#fff
+                ```
+                """);
+
+        MarkdownQuestionParser.ParsedQuestion q = parser().parse(file).get(0);
+
+        assertThat(q.diagramMermaid())
+                .doesNotContain("#4caf50", "#ff6b6b")
+                .contains("class OK dgmSuccess")
+                .contains("class FAIL dgmDanger");
+    }
+
+    @Test
+    void parsesQuestionsWithNewImportantMarker() throws IOException {
+        Path file = tempDir.resolve("interview.md");
+        Files.writeString(file, """
+                # Заголовок
+
+                ## Полезные ссылки
+
+                ## Q1. (!) Что такое тест?
+
+                Это ответ на первый вопрос.
+
+                ## Q2. Второй вопрос?
+
+                Второй ответ.
+                """);
+
+        List<MarkdownQuestionParser.ParsedQuestion> questions = defaultParser().parse(file);
+
+        assertThat(questions).hasSize(2);
+        assertThat(questions.get(0).questionText()).isEqualTo("Что такое тест?");
+        assertThat(questions.get(0).important()).isTrue();
+        assertThat(questions.get(0).answerMarkdown()).contains("Это ответ");
+        assertThat(questions.get(1).questionText()).isEqualTo("Второй вопрос?");
+        assertThat(questions.get(1).important()).isFalse();
+    }
+
+    @Test
+    void parsesQuestionsWithLegacyImportantMarker() throws IOException {
+        Path file = tempDir.resolve("legacy.md");
+        Files.writeString(file, """
+                ## Q1. (ВАЖНО) Что такое legacy?
+
+                Ответ про legacy маркер.
+                """);
+
+        List<MarkdownQuestionParser.ParsedQuestion> questions = defaultParser().parse(file);
+
+        assertThat(questions).hasSize(1);
+        assertThat(questions.get(0).questionText()).isEqualTo("Что такое legacy?");
+        assertThat(questions.get(0).important()).isTrue();
+    }
+
+    @Test
+    void parsesQuestionsWithoutDotAfterNumber() throws IOException {
+        Path file = tempDir.resolve("no-dot.md");
+        Files.writeString(file, """
+                ## Q1 Первый вопрос без точки?
+
+                Ответ 1.
+
+                ## Q2 Второй вопрос без точки?
+
+                Ответ 2.
+                """);
+
+        List<MarkdownQuestionParser.ParsedQuestion> questions = defaultParser().parse(file);
+
+        assertThat(questions).hasSize(2);
+        assertThat(questions.get(0).questionText()).isEqualTo("Первый вопрос без точки?");
+        assertThat(questions.get(1).questionText()).isEqualTo("Второй вопрос без точки?");
+    }
+
+    /** Заголовок без «?» остаётся как есть — вопросы бывают в форме «Объясни…». */
+    @Test
+    void keepsQuestionTextWithoutQuestionMark() throws IOException {
+        Path file = tempDir.resolve("normalize-question.md");
+        Files.writeString(file, """
+                ## Q1. Объясни принцип Dependency Injection
+
+                Ответ.
+                """);
+
+        List<MarkdownQuestionParser.ParsedQuestion> questions = defaultParser().parse(file);
+
+        assertThat(questions).hasSize(1);
+        assertThat(questions.get(0).questionText()).isEqualTo("Объясни принцип Dependency Injection");
+    }
+
+    /**
+     * Соседние заголовки нормализуются независимо: у одного «?» нет и не появляется,
+     * у другого он есть и не пропадает. Проверять надо именно парой — на одиночном
+     * заголовке правило «не трогать пунктуацию» неотличимо от правила «срезать
+     * последний символ», а разъезжается оно только когда в файле оба случая сразу.
+     */
+    @Test
+    void normalizesAdjacentQuestionsIndependentlyOfQuestionMark() throws IOException {
+        Path file = tempDir.resolve("ambiguous-normalize.md");
+        Files.writeString(file, """
+                ## Q1. Какие есть типы изоляции транзакций
+
+                Ответ.
+
+                ## Q2. Что лучше использовать JOIN или подзапросы?
+
+                Ответ 2.
+                """);
+
+        List<MarkdownQuestionParser.ParsedQuestion> questions = defaultParser().parse(file);
+
+        assertThat(questions).hasSize(2);
+        assertThat(questions.get(0).questionText()).isEqualTo("Какие есть типы изоляции транзакций");
+        assertThat(questions.get(1).questionText()).isEqualTo("Что лучше использовать JOIN или подзапросы?");
     }
 }

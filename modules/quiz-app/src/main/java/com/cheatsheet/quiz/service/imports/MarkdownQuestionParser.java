@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.cheatsheet.quiz.config.app.AppProperties;
 import com.cheatsheet.quiz.domain.QuestionType;
+import com.cheatsheet.quiz.service.diagram.DiagramPaletteNormalizer;
 import org.apache.commons.lang3.StringUtils;
 import com.cheatsheet.quiz.common.util.TextUtils;
 import lombok.experimental.FieldDefaults;
@@ -75,6 +76,7 @@ public class MarkdownQuestionParser {
     private static final String LEGACY_IMPORTANT_MARKER = "(ВАЖНО)";
 
     private final AppProperties appProperties;
+    private final DiagramPaletteNormalizer diagramPaletteNormalizer;
 
     /**
      * Парсит markdown-файл и возвращает список вопросов.
@@ -195,6 +197,10 @@ public class MarkdownQuestionParser {
      * {@code QuestionType.CODE} → на экране вопроса рисовался экранированный текст графа
      * с литеральными {@code <br/>} вместо диаграммы. CODE — если есть НЕ-mermaid блок
      * длиной ≥ {@code minCodeBlockLength}. Mermaid берётся независимо от длины.</p>
+     *
+     * <p>Тело диаграммы проходит через {@link DiagramPaletteNormalizer}: захардкоженные
+     * в markdown цвета заменяются семантическими классами, чтобы диаграмму красила
+     * тема из design-токенов и она переключалась вместе со светлой/тёмной.</p>
      */
     private CodeExtractionResult extractCodeAndType(String answerMarkdown) {
         if (answerMarkdown == null || answerMarkdown.isBlank()) {
@@ -210,7 +216,7 @@ public class MarkdownQuestionParser {
             String body = m.group(2).trim();
             if (MERMAID_LANG.equals(lang)) {
                 if (diagramMermaid == null && !body.isBlank()) {
-                    diagramMermaid = body;
+                    diagramMermaid = diagramPaletteNormalizer.normalize(body);
                 }
             } else if (codeSnippet == null && body.length() >= minLen) {
                 codeSnippet = body;
