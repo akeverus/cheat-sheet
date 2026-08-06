@@ -113,10 +113,13 @@ class VisualBaselineContractTest {
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        if (!focusBody.contains("id=\"interview-form\"")) {
-            // No questions loaded in test DB — cannot render result page
-            return;
-        }
+        // Ровно та же фикстура, что гарантирует focusState=question выше: если формы нет,
+        // сломан импорт или сидер, и это надо увидеть падением. Ранний return на этом месте
+        // делал слепок результата выключателем — он молча пропускал себя именно тогда,
+        // когда проверять было что.
+        assertThat(focusBody)
+                .as("экран вопроса не отрендерил форму — POST /answer нечем накормить")
+                .contains("id=\"interview-form\"");
 
         long questionId = extractLong(focusBody, "name=\"questionId\" value=\"(\\d+)\"");
         long optionId = extractLong(focusBody, "name=\"optionId\"\\s+value=\"(\\d+)\"");

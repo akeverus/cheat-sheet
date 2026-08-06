@@ -88,11 +88,82 @@ class InterviewControllerTest {
                 .andReturn().getResponse().getContentAsString();
     }
 
-    /** Экран тренировки, гарантированно упирающийся в пустое состояние: темы не существует. */
-    private String emptyFocusBody(String path) throws Exception {
-        return mockMvc.perform(get(path).param("topic", MISSING_TOPIC))
+    /**
+     * Экран фокуса с закреплённой фикстурой на произвольном маршруте и в произвольном режиме.
+     *
+     * <p>Закрепление работает и на {@code /review}: пин разрешается раньше, чем применяется
+     * review-фильтр ({@code FocusTrainingPageService#buildFocusPageState} берёт
+     * {@code questionById} до {@code nextQuestion}), поэтому режимная обвязка — чип зоны и
+     * подсказка — рендерится независимо от того, накопились ли в общей базе ошибочные
+     * ответы. Без пина ветка «есть вопрос» была недостижима детерминированно, и проверка
+     * писалась условно.</p>
+     */
+    private String focusBody(String path, String mode) throws Exception {
+        var request = get(path).param("questionId", String.valueOf(fixtureQuestionId));
+        if (mode != null) {
+            request = request.param("mode", mode);
+        }
+        return mockMvc.perform(request)
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
+    }
+
+    /** Экран тренировки, гарантированно упирающийся в пустое состояние: темы не существует. */
+    private String emptyFocusBody(String path) throws Exception {
+        return emptyFocusBody(path, null);
+    }
+
+    private String emptyFocusBody(String path, String mode) throws Exception {
+        var request = get(path).param("topic", MISSING_TOPIC);
+        if (mode != null) {
+            request = request.param("mode", mode);
+        }
+        return mockMvc.perform(request)
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+    }
+
+    /**
+     * Экран тренировки с живой сессией: прогресс-рельс гейтится
+     * {@code th:if="${interviewSession != null}"}, поэтому на голом {@code GET /} его нет
+     * вовсе — проверка рельса без старта сессии не может сработать в принципе.
+     */
+    private String sessionFocusBody(MockHttpSession session, int count) throws Exception {
+        mockMvc.perform(post("/start")
+                        .with(csrf())
+                        .session(session)
+                        .param("mode", "EXAM")
+                        .param("count", String.valueOf(count)))
+                .andExpect(status().is3xxRedirection());
+        return mockMvc.perform(get("/").session(session))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+    }
+
+    /**
+     * Страница результата (no-JS путь {@code POST /answer}) по вопросу-фикстуре.
+     *
+     * <p>Нужна там, где проверяемая разметка живёт в {@code result.html}, а не на экране
+     * вопроса. Кнопка избранного — ровно такой случай: на фокусе её нет вовсе, и проверка
+     * через {@code GET /} зеленела бы всегда, ничего не проверив.</p>
+     */
+    private String resultBody() throws Exception {
+        long optionId = extractLong(focusBody(), "name=\"optionId\"\\s+value=\"(\\d+)\"");
+        return mockMvc.perform(post("/answer")
+                        .with(csrf())
+                        .param("questionId", String.valueOf(fixtureQuestionId))
+                        .param("optionId", String.valueOf(optionId))
+                        .param("ordered", "true"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+    }
+
+    private long extractLong(String body, String regex) {
+        var matcher = java.util.regex.Pattern.compile(regex).matcher(body);
+        assertThat(matcher.find())
+                .as("в разметке нет совпадения с %s — фикстура отрендерилась не так, как ожидалось", regex)
+                .isTrue();
+        return Long.parseLong(matcher.group(1));
     }
 
     private int countOccurrences(String text, String fragment) {
@@ -433,39 +504,26 @@ class InterviewControllerTest {
 
     @Test
     void trainingProgressTrackKeepsBoundedAriaValuesContract() throws Exception {
-        var result = mockMvc.perform(get("/"))
-                .andReturn()
-                .getResponse();
-        assertThat(result.getStatus()).isEqualTo(200);
-        String body = result.getContentAsString();
+        // Рельс существует только внутри сессии, поэтому её надо стартовать: без старта
+        // условие «есть progressbar» не выполнялось никогда, и проверка была выключателем.
+        String body = sessionFocusBody(new MockHttpSession(), 5);
         assertFocusPageRendered(body);
-        if (body.contains("aria-label=\"Прогресс сессии\"")) {
-            assertThat(body).contains("aria-valuemin=\"0\"");
-            assertThat(body).containsPattern("aria-valuemax=\"\\d+\"");
-            assertThat(body).containsPattern("aria-valuenow=\"\\d+\"");
-            assertThat(body).doesNotContain("aria-valuemax=\"100\"");
-        }
+        assertThat(body).contains("aria-label=\"Прогресс сессии\"");
+        assertThat(body).contains("aria-valuemin=\"0\"");
+        // Границы — реальный размер сессии, а не проценты: скринридер обязан сказать
+        // «1 из 5», а не «1 из 100».
+        assertThat(body).contains("aria-valuemax=\"5\"");
+        assertThat(body).contains("aria-valuenow=\"1\"");
+        assertThat(body).doesNotContain("aria-valuemax=\"100\"");
     }
 
     @Test
     void reviewModeRendersOnlyWrongContextAndHint() throws Exception {
-        var result = mockMvc.perform(get("/review")
-                        .param("topic", "sample")
-                        .param("important", "true"))
-                .andReturn()
-                .getResponse();
-        assertThat(result.getStatus()).isEqualTo(200);
-        String body = result.getContentAsString();
+        String body = focusBody("/review", null);
         assertFocusPageRendered(body);
-
-        assertThat(body).containsAnyOf(
-                "Повтор ошибок: отвечай на вопросы, где раньше были ошибки.",
-                "Нет вопросов с ошибками для повтора."
-        );
-        if (body.contains("class=\"zone-chip\"")) {
-            assertThat(body).contains("Повтор ошибок");
-            assertThat(body).contains("Повтор ошибок: отвечай на вопросы, где раньше были ошибки.");
-        }
+        assertThat(body).contains("class=\"zone-chip\"");
+        assertThat(body).contains("Повтор ошибок");
+        assertThat(body).contains("Повтор ошибок: отвечай на вопросы, где раньше были ошибки.");
     }
 
     @Test
@@ -497,22 +555,19 @@ class InterviewControllerTest {
         assertThat(body).contains("value=\"cache\"");
     }
 
+    /**
+     * Кнопка избранного живёт в {@code result.html}, а не на экране вопроса. Проверка
+     * стояла на {@code GET /}, где её нет ни в одном состоянии, — гейт a11y-контракта
+     * (aria-pressed + осмысленное имя) фактически отсутствовал.
+     */
     @Test
-    void indexFavoriteButtonExposesPressedStateForAssistiveTech() throws Exception {
-        var result = mockMvc.perform(get("/"))
-                .andReturn()
-                .getResponse();
-        assertThat(result.getStatus()).isEqualTo(200);
-        String body = result.getContentAsString();
-        assertFocusPageRendered(body);
-        if (body.contains("id=\"btn-favorite\"")) {
-            assertThat(body).contains("id=\"btn-favorite\"");
-            assertThat(body).contains("aria-pressed=");
-            assertThat(body).containsAnyOf(
-                    "aria-label=\"Добавить в избранное\"",
-                    "aria-label=\"Убрать из избранного\""
-            );
-        }
+    void resultFavoriteButtonExposesPressedStateForAssistiveTech() throws Exception {
+        String body = resultBody();
+        assertThat(body).contains("id=\"btn-favorite\"");
+        // Свежая фикстура не в избранном → состояние и имя должны говорить именно это,
+        // а не «одно из двух»: иначе тест переживёт залипание кнопки в обратном состоянии.
+        assertThat(body).contains("aria-pressed=\"false\"");
+        assertThat(body).contains("aria-label=\"Добавить в избранное\"");
     }
 
     @Test
@@ -557,226 +612,167 @@ class InterviewControllerTest {
 
     @Test
     void indexActionFooterExposesKeyboardShortcuts() throws Exception {
-        var result = mockMvc.perform(get("/"))
-                .andReturn()
-                .getResponse();
-        assertThat(result.getStatus()).isEqualTo(200);
-        String body = result.getContentAsString();
+        String body = focusBody();
         assertFocusPageRendered(body);
-        if (body.contains("id=\"interview-submit\"")) {
-            assertThat(body).contains("id=\"interview-submit\"");
-            assertThat(body).contains("aria-keyshortcuts=\"Enter\"");
-        }
-        if (body.contains("id=\"next-question\"")) {
-            assertThat(body).contains("id=\"next-question\"");
-            // next-question — это <a href>: нативно активируется Enter, не Space
-            // (quiz/interview.js на Space для тегов A обработчик не вешает). aria-keyshortcuts
-            // честно обещает только Enter — паритет с submit-кнопкой выше.
-            assertThat(body).contains("aria-keyshortcuts=\"Enter\"");
-        }
+        assertThat(body).contains("id=\"interview-submit\"");
+        assertThat(body).contains("id=\"next-question\"");
+        // next-question — это <a href>: нативно активируется Enter, не Space
+        // (quiz/interview.js на Space для тегов A обработчик не вешает). aria-keyshortcuts
+        // честно обещает только Enter — паритет с submit-кнопкой. Обещание должно стоять
+        // у обоих контролов, поэтому считаем вхождения, а не факт наличия.
+        assertThat(countOccurrences(body, "aria-keyshortcuts=\"Enter\"")).isGreaterThanOrEqualTo(2);
     }
 
     @Test
     void trainingPageAvoidsInlineOnchangeHandlers() throws Exception {
-        var result = mockMvc.perform(get("/"))
-                .andReturn()
-                .getResponse();
-        assertThat(result.getStatus()).isEqualTo(200);
-        String body = result.getContentAsString();
-        assertThat(body).doesNotContain("onchange=\"enableSubmit()\"");
+        assertThat(focusBody()).doesNotContain("onchange=\"enableSubmit()\"");
     }
 
     @Test
     void trainingPageUsesUnifiedKeyboardHintClass() throws Exception {
-        var result = mockMvc.perform(get("/"))
-                .andReturn()
-                .getResponse();
-        assertThat(result.getStatus()).isEqualTo(200);
-        String body = result.getContentAsString();
+        String body = focusBody();
         assertFocusPageRendered(body);
-        if (body.contains("id=\"interview-form\"")) {
-            assertThat(body).contains("class=\"keyboard-hint\"");
-        }
+        assertThat(body).contains("id=\"interview-form\"");
+        assertThat(body).contains("class=\"keyboard-hint\"");
         assertThat(body).doesNotContain("class=\"kbd-hint\"");
     }
 
     @Test
     void trainingPageUsesUnifiedSubmitIdAndHotkeyHintContract() throws Exception {
-        var result = mockMvc.perform(get("/"))
-                .andReturn()
-                .getResponse();
-        assertThat(result.getStatus()).isEqualTo(200);
-        String body = result.getContentAsString();
+        String body = focusBody();
         assertFocusPageRendered(body);
-        if (body.contains("id=\"interview-submit\"")) {
-            assertThat(body).contains("id=\"interview-submit\"");
-            assertThat(body).contains("aria-keyshortcuts=\"Enter\"");
-            assertThat(body).containsAnyOf("Клавиши 1-", "Клавиши 1–");
-        }
+        assertThat(body).contains("id=\"interview-submit\"");
+        assertThat(body).contains("aria-keyshortcuts=\"Enter\"");
+        assertThat(body).containsAnyOf("Клавиши 1-", "Клавиши 1–");
         assertThat(body).doesNotContain("id=\"submitBtn\"");
     }
 
     @Test
     void trainingPageAvoidsRedundantLabelRadioRolesAndTabStops() throws Exception {
-        var result = mockMvc.perform(get("/"))
-                .andReturn()
-                .getResponse();
-        assertThat(result.getStatus()).isEqualTo(200);
-        String body = result.getContentAsString();
+        String body = focusBody();
         assertFocusPageRendered(body);
-        if (body.contains("id=\"interview-options\"")) {
-            assertThat(body).contains("aria-describedby=\"options-flow-hint\"");
-            assertThat(body).doesNotContain("role=\"radio\"");
-            assertThat(body).doesNotContain("tabindex=\"0\"");
-        }
+        assertThat(body).contains("id=\"interview-options\"");
+        assertThat(body).contains("aria-describedby=\"options-flow-hint\"");
+        // Нативные radio уже дают роль и управление стрелками: явные role/tabindex
+        // ломают roving-tabindex группы.
+        assertThat(body).doesNotContain("role=\"radio\"");
+        assertThat(body).doesNotContain("tabindex=\"0\"");
     }
 
+    /**
+     * Третья ветка пустого состояния — «Сессия запущена, но вопрос пока недоступен» —
+     * снаружи недостижима: сессия без вопросов создаётся сразу завершённой, а живая
+     * сессия всегда отдаёт вопрос. Отдельного теста у неё нет намеренно; условный
+     * assert только маскировал бы это под покрытие.
+     */
     @Test
     void trainingFallbackStateExposesRecoveryActionsWhenNoQuestion() throws Exception {
-        var result = mockMvc.perform(get("/"))
-                .andReturn()
-                .getResponse();
-        assertThat(result.getStatus()).isEqualTo(200);
-        String body = result.getContentAsString();
+        String body = emptyFocusBody("/");
         assertFocusPageRendered(body);
-        if (body.contains("Нет доступных вопросов")) {
-            assertThat(body).contains("empty-action-settings");
-            assertThat(body).contains("empty-action-retry");
-            assertThat(body).contains("Обновить тренировку");
-            // Кнопка «повторить» ведёт на канонический адрес тренировки, а не
-            // на легаси-редирект /training (лишний хоп и потеря query).
-            assertThat(body).doesNotContain("empty-action-retry\" href=\"/training");
-        }
-        if (body.contains("Сессия запущена, но вопрос пока недоступен.")) {
-            assertThat(body).contains("Сессия запущена, но вопрос пока недоступен. Попробуй обновить тренировку.");
-            assertThat(body).contains("empty-action-retry");
-        }
+        assertThat(body).contains("Нет доступных вопросов");
+        assertThat(body).contains("empty-action-settings");
+        assertThat(body).contains("empty-action-retry");
+        assertThat(body).contains("Обновить тренировку");
+        // Кнопка «повторить» ведёт на канонический адрес тренировки, а не
+        // на легаси-редирект /training (лишний хоп и потеря query).
+        assertThat(body).doesNotContain("empty-action-retry\" href=\"/training");
     }
 
     @Test
     void reviewFallbackStateKeepsReviewRecoveryActionWhenNoWrongQuestions() throws Exception {
-        var result = mockMvc.perform(get("/review"))
-                .andReturn()
-                .getResponse();
-        assertThat(result.getStatus()).isEqualTo(200);
-        String body = result.getContentAsString();
+        String body = emptyFocusBody("/review");
         assertFocusPageRendered(body);
-        if (body.contains("Нет вопросов с ошибками для повтора.")) {
-            assertThat(body).contains("empty-action-retry");
-            assertThat(body).contains("href=\"/review\"");
-            assertThat(body).contains("Обновить повтор ошибок");
-        }
+        assertThat(body).contains("Нет вопросов с ошибками для повтора.");
+        assertThat(body).contains("empty-action-retry");
+        assertThat(body).contains("href=\"/review\"");
+        assertThat(body).contains("Обновить повтор ошибок");
     }
 
     @Test
     void flashcardModeKeepsContextualCopyAndRecoveryContract() throws Exception {
-        var result = mockMvc.perform(get("/")
-                        .param("mode", "FLASHCARD"))
-                .andReturn()
-                .getResponse();
-        assertThat(result.getStatus()).isEqualTo(200);
-        String body = result.getContentAsString();
+        String body = focusBody("/", "FLASHCARD");
         assertFocusPageRendered(body);
-        if (body.contains("class=\"zone-chip\"")) {
-            assertThat(body).contains("Флешкарты");
-            assertThat(body).contains("Флешкарты: сначала вспомни ответ, затем раскрой и оцени себя.");
-            assertThat(body).doesNotContain("Выбери один вариант. Проверка и разбор идут по шагам.");
-        }
-        if (body.contains("Нет доступных вопросов")) {
-            assertThat(body).contains("empty-action-retry");
-            assertThat(body).contains("href=\"/?mode=FLASHCARD\"");
-            assertThat(body).contains("Обновить флешкарты");
-        }
+        assertThat(body).contains("class=\"zone-chip\"");
+        assertThat(body).contains("Флешкарты");
+        assertThat(body).contains("Флешкарты: сначала вспомни ответ, затем раскрой и оцени себя.");
+        assertThat(body).doesNotContain("Выбери один вариант. Проверка и разбор идут по шагам.");
+
+        String empty = emptyFocusBody("/", "FLASHCARD");
+        assertThat(empty).contains("Нет доступных вопросов");
+        assertThat(empty).contains("empty-action-retry");
+        assertThat(empty).contains("href=\"/?mode=FLASHCARD\"");
+        assertThat(empty).contains("Обновить флешкарты");
     }
 
     @Test
     void studyModeKeepsContextualCopyAndRecoveryContract() throws Exception {
-        var result = mockMvc.perform(get("/")
-                        .param("mode", "STUDY"))
-                .andReturn()
-                .getResponse();
-        assertThat(result.getStatus()).isEqualTo(200);
-        String body = result.getContentAsString();
+        String body = focusBody("/", "STUDY");
         assertFocusPageRendered(body);
-        if (body.contains("class=\"zone-chip\"")) {
-            // У STUDY две под-фазы, и чип с подсказкой обязаны говорить об
-            // одной и той же: LEARN — «разберись с материалом», QUIZ —
-            // «выбери верный вариант». Рассинхрон здесь дезориентирует.
-            if (body.contains("Изучение: разберись с материалом, затем переходи к проверке.")) {
-                assertThat(body).contains(">Изучение<");
-            } else {
-                assertThat(body).contains("Проверь себя: выбери верный вариант — разбор появится после ответа.");
-                assertThat(body).contains(">Проверка<");
-            }
-            // Общая подсказка тренировки не должна протекать в STUDY ни в одной фазе.
-            assertThat(body).doesNotContain("Выбери один вариант. Проверка и разбор идут по шагам.");
-        }
-        if (body.contains("Нет доступных вопросов")) {
-            assertThat(body).contains("empty-action-retry");
-            assertThat(body).contains("href=\"/?mode=STUDY\"");
-            assertThat(body).contains("Обновить изучение");
-        }
+        assertThat(body).contains("class=\"zone-chip\"");
+        // У STUDY две под-фазы, и чип с подсказкой обязаны говорить об одной и той же.
+        // Фаза LEARN существует только внутри сессии (StudyPhase живёт в InterviewSession),
+        // поэтому вне сессии режим детерминированно показывает QUIZ — проверяем именно её,
+        // а не «одну из двух»: развилка скрывала бы рассинхрон чипа и подсказки.
+        assertThat(body).contains("Проверь себя: выбери верный вариант — разбор появится после ответа.");
+        assertThat(body).contains(">Проверка<");
+        assertThat(body).doesNotContain("Изучение: разберись с материалом, затем переходи к проверке.");
+        // Общая подсказка тренировки не должна протекать в STUDY.
+        assertThat(body).doesNotContain("Выбери один вариант. Проверка и разбор идут по шагам.");
+
+        String empty = emptyFocusBody("/", "STUDY");
+        assertThat(empty).contains("Нет доступных вопросов");
+        assertThat(empty).contains("empty-action-retry");
+        assertThat(empty).contains("href=\"/?mode=STUDY\"");
+        assertThat(empty).contains("Обновить изучение");
     }
 
     @Test
     void indexKeepsSharedAnswerFlowHintContract() throws Exception {
-        var index = mockMvc.perform(get("/")).andReturn().getResponse();
-        assertThat(index.getStatus()).isEqualTo(200);
-        String body = index.getContentAsString();
+        String body = focusBody();
         assertFocusPageRendered(body);
-        if (body.contains("id=\"interview-form\"")) {
-            assertThat(body).contains("id=\"answer-flow-hint\"");
-            assertThat(body).contains("result-zone-head hidden");
-        }
+        assertThat(body).contains("id=\"interview-form\"");
+        assertThat(body).contains("id=\"answer-flow-hint\"");
+        assertThat(body).contains("result-zone-head hidden");
     }
 
     @Test
     void indexKeepsSharedPostAnswerControlsContract() throws Exception {
-        var index = mockMvc.perform(get("/")).andReturn().getResponse();
-        assertThat(index.getStatus()).isEqualTo(200);
-        String body = index.getContentAsString();
+        String body = focusBody();
         assertFocusPageRendered(body);
-        if (body.contains("id=\"interview-form\"")) {
-            assertThat(body).contains("id=\"interview-alert\"");
-            assertThat(body).contains("id=\"result-feedback\"");
-            assertThat(body).contains("id=\"extra-analysis-toggle\"");
-            assertThat(body).contains("aria-controls=\"extra-analysis-content\"");
-            assertThat(body).contains("aria-atomic=\"true\"");
-            assertThat(body).contains("id=\"extra-analysis-content\"");
-        }
+        assertThat(body).contains("id=\"interview-form\"");
+        assertThat(body).contains("id=\"interview-alert\"");
+        assertThat(body).contains("id=\"result-feedback\"");
+        assertThat(body).contains("id=\"extra-analysis-toggle\"");
+        assertThat(body).contains("aria-controls=\"extra-analysis-content\"");
+        assertThat(body).contains("aria-atomic=\"true\"");
+        assertThat(body).contains("id=\"extra-analysis-content\"");
     }
 
     @Test
     void indexUsesUnifiedPostAnswerCopyContract() throws Exception {
-        var index = mockMvc.perform(get("/")).andReturn().getResponse();
-        assertThat(index.getStatus()).isEqualTo(200);
-        String body = index.getContentAsString();
+        String body = focusBody();
         assertFocusPageRendered(body);
-        if (body.contains("id=\"interview-form\"")) {
-            assertThat(body).contains("Пост-разбор");
-            assertThat(body).contains("Сначала разбор ответа, затем итог и дополнительные блоки");
-            // AIR-1: AI-разбор вырезан → единственный пост-ответный блок «Похожие
-            // вопросы» (кнопка extra-analysis раскрывает relatedQuestions).
-            assertThat(body).contains("Похожие вопросы");
-            // Раскрывашка «Подробнее» — часть страницы результата, до ответа её
-            // быть не должно. Проверяем сам контрол, а не слово: «Подробнее»
-            // легально встречается в комментариях подключённых фрагментов.
-            assertThat(body).doesNotContain("<summary class=\"explanation-eyebrow\">Подробнее</summary>");
-        }
+        assertThat(body).contains("id=\"interview-form\"");
+        assertThat(body).contains("Пост-разбор");
+        assertThat(body).contains("Сначала разбор ответа, затем итог и дополнительные блоки");
+        // AIR-1: AI-разбор вырезан → единственный пост-ответный блок «Похожие
+        // вопросы» (кнопка extra-analysis раскрывает relatedQuestions).
+        assertThat(body).contains("Похожие вопросы");
+        // Раскрывашка «Подробнее» — часть страницы результата, до ответа её
+        // быть не должно. Проверяем сам контрол, а не слово: «Подробнее»
+        // легально встречается в комментариях подключённых фрагментов.
+        assertThat(body).doesNotContain("<summary class=\"explanation-eyebrow\">Подробнее</summary>");
     }
 
     @Test
     void indexExposesSharedFragmentMarkers() throws Exception {
-        var index = mockMvc.perform(get("/")).andReturn().getResponse();
-        assertThat(index.getStatus()).isEqualTo(200);
-        String body = index.getContentAsString();
+        String body = focusBody();
         assertFocusPageRendered(body);
-        if (body.contains("id=\"interview-form\"")) {
-            assertThat(body).contains("data-ui-fragment=\"training-actions\"");
-            assertThat(body).contains("data-ui-fragment=\"result-zone-head\"");
-            assertThat(body).contains("data-ui-fragment=\"post-answer-controls\"");
-            assertThat(body).contains("data-ui-fragment=\"inline-alert\"");
-        }
+        assertThat(body).contains("id=\"interview-form\"");
+        assertThat(body).contains("data-ui-fragment=\"training-actions\"");
+        assertThat(body).contains("data-ui-fragment=\"result-zone-head\"");
+        assertThat(body).contains("data-ui-fragment=\"post-answer-controls\"");
+        assertThat(body).contains("data-ui-fragment=\"inline-alert\"");
     }
 
     @Test
