@@ -35,42 +35,23 @@ public class ReviewReasonService {
     /**
      * Определяет причину, по которой вопрос стоит повторить сейчас.
      *
+     * <p>Классификатор отвечает только на вопрос «какой повод у планировщика»,
+     * но не на «показывать ли повод вообще» — это решение режима, и живёт оно
+     * у вызывающего ({@code FocusTrainingPageService}). Раньше сюда был вкручен
+     * флаг {@code examMode}, который коротким замыканием возвращал причину
+     * «Часть экзаменационной сессии»: факт не про этот вопрос, а про сессию,
+     * одинаковый на всех её вопросах.</p>
+     *
      * @param reviewState  состояние SM-2 (общие поля last_result/next_review_at)
      * @param fsrsState    FSRS-память (нужна ради {@code last_reviewed_at})
      * @param topicAccuracy точность по теме в процентах (0..100), или &lt;0 если данных нет
+     * @param important    {@code true}, если вопрос отмечен звездой (избранное)
      * @return причина или {@link Optional#empty()}, если явного повода нет
      */
     public Optional<ReviewReason> classify(Optional<ReviewState> reviewState,
                                            Optional<FsrsState> fsrsState,
-                                           double topicAccuracy) {
-        return classify(reviewState, fsrsState, topicAccuracy, false);
-    }
-
-    /**
-     * @param bookmarked {@code true}, если вопрос в избранном пользователя
-     */
-    public Optional<ReviewReason> classify(Optional<ReviewState> reviewState,
-                                           Optional<FsrsState> fsrsState,
                                            double topicAccuracy,
-                                           boolean bookmarked) {
-        return classify(reviewState, fsrsState, topicAccuracy, bookmarked, false);
-    }
-
-    /**
-     * @param bookmarked {@code true}, если вопрос в избранном пользователя
-     * @param examMode   {@code true}, если текущая сессия в режиме {@code EXAM}
-     */
-    public Optional<ReviewReason> classify(Optional<ReviewState> reviewState,
-                                           Optional<FsrsState> fsrsState,
-                                           double topicAccuracy,
-                                           boolean bookmarked,
-                                           boolean examMode) {
-        // Экзамен: контекст сессии важнее FSRS-причины (вопрос в наборе экзамена).
-        if (examMode) {
-            return Optional.of(new ReviewReason(ReviewReason.Type.EXAM,
-                    "Часть экзаменационной сессии"));
-        }
-
+                                           boolean important) {
         long now = clock.instant().getEpochSecond();
         ReviewState state = reviewState.orElse(null);
         Long lastReviewedAt = fsrsState.map(FsrsState::lastReviewedAt).orElse(null);
@@ -94,7 +75,7 @@ public class ReviewReasonService {
         }
 
         // 3) Закладка пользователя.
-        if (bookmarked) {
+        if (important) {
             return Optional.of(new ReviewReason(ReviewReason.Type.BOOKMARK,
                     "В избранном — ты сам отметил этот вопрос для повтора"));
         }

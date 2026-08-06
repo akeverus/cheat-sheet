@@ -40,7 +40,8 @@ class ReviewReasonServiceTest {
         Optional<ReviewReason> reason = service.classify(
                 Optional.of(stateWith(ReviewResult.WRONG, NOW)),
                 fsrsWithLastReviewed(lastReviewed),
-                90.0);
+                90.0,
+                false);
 
         assertThat(reason).isPresent();
         assertThat(reason.get().type()).isEqualTo(ReviewReason.Type.RECENT_LAPSE);
@@ -53,7 +54,8 @@ class ReviewReasonServiceTest {
         Optional<ReviewReason> reason = service.classify(
                 Optional.of(stateWith(ReviewResult.UNKNOWN, NOW)),
                 Optional.empty(),
-                90.0);
+                90.0,
+                false);
 
         assertThat(reason).isPresent();
         assertThat(reason.get().type()).isEqualTo(ReviewReason.Type.RECENT_LAPSE);
@@ -74,7 +76,8 @@ class ReviewReasonServiceTest {
                 // last_result CORRECT — не лапс, поэтому побеждает просрочка.
                 Optional.of(stateWith(ReviewResult.CORRECT, NOW - days * DAY)),
                 Optional.empty(),
-                90.0);
+                90.0,
+                false);
         assertThat(reason).isPresent();
         assertThat(reason.get().type()).isEqualTo(ReviewReason.Type.OVERDUE);
         return reason.get().message();
@@ -86,7 +89,8 @@ class ReviewReasonServiceTest {
         Optional<ReviewReason> reason = service.classify(
                 Optional.of(stateWith(ReviewResult.CORRECT, NOW + DAY / 2)),
                 Optional.empty(),
-                90.0);
+                90.0,
+                false);
         assertThat(reason).isEmpty();
     }
 
@@ -95,7 +99,8 @@ class ReviewReasonServiceTest {
         Optional<ReviewReason> reason = service.classify(
                 Optional.of(stateWith(ReviewResult.CORRECT, NOW)),
                 Optional.empty(),
-                40.0);
+                40.0,
+                false);
 
         assertThat(reason).isPresent();
         assertThat(reason.get().type()).isEqualTo(ReviewReason.Type.WEAK_SKILL);
@@ -105,7 +110,7 @@ class ReviewReasonServiceTest {
 
     @Test
     void weakSkillWorksEvenWithoutReviewState() {
-        Optional<ReviewReason> reason = service.classify(Optional.empty(), Optional.empty(), 25.0);
+        Optional<ReviewReason> reason = service.classify(Optional.empty(), Optional.empty(), 25.0, false);
 
         assertThat(reason).isPresent();
         assertThat(reason.get().type()).isEqualTo(ReviewReason.Type.WEAK_SKILL);
@@ -116,7 +121,8 @@ class ReviewReasonServiceTest {
         Optional<ReviewReason> reason = service.classify(
                 Optional.of(stateWith(ReviewResult.CORRECT, NOW)),
                 Optional.empty(),
-                85.0);
+                85.0,
+                false);
         assertThat(reason).isEmpty();
     }
 
@@ -126,7 +132,8 @@ class ReviewReasonServiceTest {
         Optional<ReviewReason> reason = service.classify(
                 Optional.of(stateWith(ReviewResult.CORRECT, NOW)),
                 Optional.empty(),
-                -1.0);
+                -1.0,
+                false);
         assertThat(reason).isEmpty();
     }
 
@@ -135,7 +142,8 @@ class ReviewReasonServiceTest {
         Optional<ReviewReason> reason = service.classify(
                 Optional.of(stateWith(ReviewResult.WRONG, NOW - 10 * DAY)),
                 Optional.empty(),
-                10.0);
+                10.0,
+                false);
         assertThat(reason).isPresent();
         assertThat(reason.get().type()).isEqualTo(ReviewReason.Type.RECENT_LAPSE);
     }
@@ -156,7 +164,7 @@ class ReviewReasonServiceTest {
 
     @Test
     void newCardWhenNoReviewStateAndHealthyAccuracy() {
-        Optional<ReviewReason> reason = service.classify(Optional.empty(), Optional.empty(), 90.0);
+        Optional<ReviewReason> reason = service.classify(Optional.empty(), Optional.empty(), 90.0, false);
 
         assertThat(reason).isPresent();
         assertThat(reason.get().type()).isEqualTo(ReviewReason.Type.NEW);
@@ -166,36 +174,9 @@ class ReviewReasonServiceTest {
 
     @Test
     void weakSkillTakesPriorityOverNew() {
-        Optional<ReviewReason> reason = service.classify(Optional.empty(), Optional.empty(), 40.0);
+        Optional<ReviewReason> reason = service.classify(Optional.empty(), Optional.empty(), 40.0, false);
 
         assertThat(reason).isPresent();
         assertThat(reason.get().type()).isEqualTo(ReviewReason.Type.WEAK_SKILL);
-    }
-
-    @Test
-    void examModeReturnsExamReason() {
-        Optional<ReviewReason> reason = service.classify(
-                Optional.of(stateWith(ReviewResult.CORRECT, NOW)),
-                Optional.empty(),
-                90.0,
-                false,
-                true);
-
-        assertThat(reason).isPresent();
-        assertThat(reason.get().type()).isEqualTo(ReviewReason.Type.EXAM);
-        assertThat(reason.get().message()).isEqualTo("Часть экзаменационной сессии");
-    }
-
-    @Test
-    void examModeTakesPriorityOverLapse() {
-        Optional<ReviewReason> reason = service.classify(
-                Optional.of(stateWith(ReviewResult.WRONG, NOW)),
-                Optional.empty(),
-                10.0,
-                true,
-                true);
-
-        assertThat(reason).isPresent();
-        assertThat(reason.get().type()).isEqualTo(ReviewReason.Type.EXAM);
     }
 }

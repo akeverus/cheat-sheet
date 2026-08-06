@@ -38,8 +38,6 @@ public record ReviewReason(Type type, String message) {
         /** Карточка ещё не изучалась (нет попыток). */
         NEW,
         /** Пользовательская закладка / избранное. */
-        BOOKMARK,
-        /** Вопрос показан как часть экзаменационной сессии. */
-        EXAM
+        BOOKMARK
     }
 }
