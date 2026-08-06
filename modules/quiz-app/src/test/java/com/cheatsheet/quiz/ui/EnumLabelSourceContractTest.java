@@ -1,7 +1,9 @@
 package com.cheatsheet.quiz.ui;
 
 import com.cheatsheet.quiz.common.util.ModeUtils;
+import com.cheatsheet.quiz.domain.Difficulty;
 import com.cheatsheet.quiz.domain.InterviewMode;
+import com.cheatsheet.quiz.domain.QuestionIssueCategory;
 import com.cheatsheet.quiz.domain.ReviewResult;
 import org.junit.jupiter.api.Test;
 
@@ -173,6 +175,61 @@ class EnumLabelSourceContractTest {
                         подписей. Именно расхождение таких копий однажды показало пользователю \
                         «MARATHON» вместо «Интенсив» (round-01 C22): компилятор их не сверяет, \
                         а глаз сверяет не каждый раз. Читать подписи из модели (sessionModes).""")
+                .isEmpty();
+    }
+
+    /** Блочные и строчные комментарии; {@code //} после {@code :} не трогаем — это URL. */
+    private static final Pattern JS_COMMENT = Pattern.compile(
+            "/\\*[\\s\\S]*?\\*/|(?<!:)//[^\\n]*");
+
+    private static String stripComments(String js) {
+        return JS_COMMENT.matcher(js).replaceAll("");
+    }
+
+    /**
+     * Гейт того же класса, что {@link #templatesDoNotBranchOnEnumConstantNamesAsStringLiterals},
+     * но по другой стороне: шаблонный гейт по определению не видит копий, живущих в
+     * {@code static/js/}. Именно там пряталась карта {@code MODE_CTA} с именами режимов в
+     * ключах, а рядом — таблица категорий жалобы и таблица цветов сложности.
+     *
+     * <p>Проверяется КОД, а не текст: комментарии вырезаются, потому что объяснение
+     * «почему тут нет своей таблицы» обязано называть константы по именам — иначе гейт
+     * запрещал бы документировать сам себя.
+     *
+     * <p>Гейт широкий намеренно: адресный разбор одного случая уже есть
+     * ({@link ReportCategorySourceContractTest} — там же и объяснение, почему копия
+     * категорий жалобы самая тихая из всех: {@code fromString} молча кладёт незнакомое
+     * имя в {@code OTHER}). Здесь ловится следующая такая копия, которую ещё никто не
+     * разобрал поимённо.
+     */
+    @Test
+    void noJsFileHardcodesServerEnumConstantNames() {
+        Map<String, List<String>> offenders = new LinkedHashMap<>();
+        List<String> names = Stream.of(
+                        Arrays.stream(InterviewMode.values()).map(Enum::name),
+                        Arrays.stream(QuestionIssueCategory.values()).map(Enum::name),
+                        Arrays.stream(Difficulty.values()).map(Enum::name))
+                .flatMap(s -> s)
+                .toList();
+
+        for (Path file : filesUnder(JS, ".js")) {
+            String code = stripComments(read(file));
+            List<String> found = names.stream()
+                    .filter(n -> code.contains("'" + n + "'") || code.contains("\"" + n + "\"")
+                            || code.contains(n + ":"))
+                    .distinct()
+                    .toList();
+            if (!found.isEmpty()) {
+                offenders.put(file.toString(), found);
+            }
+        }
+
+        assertThat(offenders)
+                .describedAs("""
+                        JS называет серверную константу по имени — это копия перечисления, \
+                        невидимая компилятору. Данные должен отдавать сервер: список режимов \
+                        (${sessionModes}), категории жалобы (<template id="report-category-options">), \
+                        цвета сложности — с уже отрисованной легенды.""")
                 .isEmpty();
     }
 

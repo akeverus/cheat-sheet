@@ -111,17 +111,46 @@ tasks.jacocoTestCoverageVerification {
         testTask.state.executed && !testTask.state.skipped
     }
     violationRules {
+        // Модуль целиком. Ловит общую просадку — например, когда новый крупный
+        // класс приезжает без тестов, но размазывается по уже покрытым пакетам
+        // и по-пакетное правило его не замечает.
+        // Замер 2026-08-04: LINE 0.915 (3633/3970), BRANCH 0.764 (1366/1788).
+        rule {
+            element = "BUNDLE"
+            limit {
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                minimum = "0.85".toBigDecimal()
+            }
+            limit {
+                counter = "BRANCH"
+                value = "COVEREDRATIO"
+                minimum = "0.70".toBigDecimal()
+            }
+        }
+        // Пакеты с логикой. `feature.*` — продуктовое ядро, раньше вообще было
+        // вне гейта; `persistence.*` из includes убран: это отдельный
+        // gradle-модуль, здесь такой пакет не существует и правило было мёртвым.
+        // `*.dto.*` исключены намеренно: это record-носители, у которых
+        // JaCoCo видит одну-две строки от Lombok, и любой порог там —
+        // не проверка качества, а лотерея (0/1 строка = ratio 0.000).
+        // Замер 2026-08-04 по 33 пакетам: минимум 0.600
+        // (feature.interview.service.facade, 9/15).
         rule {
             element = "PACKAGE"
             includes = listOf(
                 "com.cheatsheet.quiz.api.*",
                 "com.cheatsheet.quiz.service.*",
-                "com.cheatsheet.quiz.persistence.*"
+                "com.cheatsheet.quiz.feature.*"
+            )
+            excludes = listOf(
+                "*.dto",
+                "*.dto.*"
             )
             limit {
                 counter = "LINE"
                 value = "COVEREDRATIO"
-                minimum = "0.20".toBigDecimal()
+                minimum = "0.55".toBigDecimal()
             }
         }
     }
