@@ -26,6 +26,12 @@ import java.util.List;
  * {@code app.qa.learned-fixtures} — как «выучено» (learned). Остальные остаются
  * «новыми» (без строки в {@code review_state}).</p>
  *
+ * <p>«Новый» здесь означает именно «виден и ждёт первого ответа». Пока выборка
+ * соединялась с {@code review_state} через INNER JOIN, это было неправдой: очистка
+ * таблицы прогресса в первой же строке {@code run} прятала весь банк, и QA работала
+ * на трёх засеянных вопросах вместо девяти тысяч. Инвариант держит
+ * {@code QuestionRepositoryTest.selectionQueriesSeeQuestionsWithoutReviewState}.</p>
+ *
  * <p>Все метки времени берутся из фиксированного {@link Clock} ({@code QaConfig}),
  * поэтому набор due/learned/new одинаков от прогона к прогону.</p>
  *
