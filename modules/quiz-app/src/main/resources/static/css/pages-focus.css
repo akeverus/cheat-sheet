@@ -1741,15 +1741,32 @@ html[data-design][data-js] .focus-page [role="tabpanel"] .content-toolbar { just
 html[data-design] .focus-page[data-session-mode="TYPED_RECALL"],
 html[data-design] .focus-page[data-session-mode="INTERVIEW"],
 html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"],
+/* ВОПРОС С ВАРИАНТАМИ — ТА ЖЕ КОМПОЗИЦИЯ, А НЕ ЧАСТНЫЙ СЛУЧАЙ (iter-18).
+   Гейт по содержимому (`#interview-options` рендерится только там, где есть что
+   выбирать), а не по именам режимов: MCQ живёт в TRAINING/EXAM/MARATHON и в
+   фазе проверки STUDY, и список имён разошёлся бы с продуктом при первом же
+   новом режиме. Флешкарты сюда НЕ попадают намеренно (§14: карточке нужна
+   собственная сфокусированная композиция), и попасть не могут — вариантов в
+   ней нет.
+
+   Замер до правки (Chromium, 2560×1440, тренировка): рабочая область 2309,
+   потолок полосы `.ed-page` — 1632 (кап 112rem минус жёлобы 2×80), полоса
+   стояла 1296. 336px потолка не использовались, а внутри полосы вариант
+   занимал 960px — строка варианта ~105 знаков против проектной меры 72ch
+   (§12). То есть ширина не просто пропадала: та её часть, что доставалась
+   работе, тратилась на строку, которую неудобно читать. */
+html[data-design] .focus-page:has(#interview-options),
 /* Разбор — то же рабочее место, только предмет работы другой: не «написать», а
    «понять, почему». Замер на 2560 до правки: страница росла в 2.25 раза
    (1440 → 3242), скрипт уводил прокрутку на 1280, и ВОПРОС УХОДИЛ С ЭКРАНА
    (его верх оказывался на -1174) — человек читал разбор, не видя, о чём он.
    Слева при этом пустовало больше половины ширины. */
 html[data-design] .focus-page:has(.result-feedback:not(.hidden)) {
-  /* Колонка задания — мера чтения, а не половина экрана: вопрос с кодом должен
-     остаться читаемым, сколько бы места ни было. */
-  --workspace-brief: 34rem;
+  /* Колонка задания. Мера здесь считается по САМОМУ ШИРОКОМУ жильцу колонки —
+     листингу (собственная ширина кода в банке доходит до ~750px), а не по прозе:
+     проза внутри и так капнута `--measure` (72ch) отдельным правилом ниже, а
+     код капать нечем — его либо видно целиком, либо прокручивают. */
+  --workspace-brief: 48rem;
   /* Рабочая поверхность — минимум, ниже которого писать неудобно; выше него она
      забирает весь остаток. */
   --workspace-desk-min: 32rem;
@@ -1757,8 +1774,38 @@ html[data-design] .focus-page:has(.result-feedback:not(.hidden)) {
      --focus-band-sum и в сторожевом `min(…, (100% - sum + 1px) * 9999)` базы.
      Процент внутри слагаемого ломал этот сторож — замер дал полосу 1296 вместо
      1680 на 2560, и рельс переносился там, где место под него было. Кап полосы
-     остаётся заботой базовой формулы, как и у остальных раскладок. */
-  --focus-main-measure: 84rem;
+     остаётся заботой базовой формулы, как и у остальных раскладок.
+
+     iter-18 — 84rem → 91rem, И ЧИСЛО ВЗЯТО ИЗ ПОТОЛКА ПОЛОСЫ, А НЕ ИЗ ВКУСА.
+     Замер потолка (Chromium, `.ed-page` clientWidth минус padding-inline):
+       вьюпорт  1512  1600  1728  1920  2560  3440
+       потолок  1160  1237  1350  1518  1632  1632
+     Мера раскладывается на две поверхности: задание 48rem + жёлоб 3rem + работа
+     (остаток, пол 32rem) = 91rem = 1456. На 2560 это 89% потолка, и остаток
+     уходит в симметричные жёлоба страницы — ту же шкалу, по которой стоят
+     /stats, /bookmarks и /settings (FRD-015), а не в разрыв внутри композиции.
+
+     ПОЧЕМУ ЗАДАНИЕ ШИРЕ РАБОТЫ, А НЕ НАОБОРОТ. Пробовалось 34rem/42rem (полоса
+     79rem = 1264, сумма с рельсом ровно 1600 — рельс тогда вставал третьей
+     колонкой и полоса брала 1600 из 1632, 98% потолка). Замер на живом вопросе
+     с листингом (WebKit, 2560, «Rat in a Maze»): собственная ширина кода —
+     750px. В колонке 544 листинг обрезался и требовал горизонтальной прокрутки
+     на КАЖДОЙ второй строке; в колонке 768 он помещается целиком. Три колонки
+     дороже стоили и по чтению: слева от вопроса вставал 288-й рельс — то есть
+     контент начинался с полосы служебных цифр, а не с задания.
+     Поэтому 89% потолка с целым листингом выбраны против 98% с обрезанным.
+
+     Следствие, названное явно: в диапазоне рабочего места сумма (91rem + жёлоб +
+     рельс = 1792) не влезает в потолок ни на одной ширине, поэтому рельс здесь
+     ВСЕГДА сворачивается полосой над работой. Это не новый механизм и не
+     медиазапрос — тот же сторож переноса из базы страницы; изменилось только
+     слагаемое, и он сам пришёл к одному ответу. Полоса контекста сессии над
+     двумя поверхностями — ровно та роль, которую §13.1 у рельса и просил
+     («почти пуст» в виде колонки).
+
+     Работа получает 1456 − 768 − 48 = 640: строка варианта ~66 знаков против
+     ~105 в прежней колонке 960 — внутри проектной меры 72ch (§12). */
+  --focus-main-measure: 91rem;
 }
 
 /* Порог — 1600px, а не общий 1200px. Замер на 1512: рабочая поверхность требует
@@ -1770,6 +1817,7 @@ html[data-design] .focus-page:has(.result-feedback:not(.hidden)) {
   html[data-design] .focus-page[data-session-mode="TYPED_RECALL"] .focus-main,
   html[data-design] .focus-page[data-session-mode="INTERVIEW"] .focus-main,
   html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"] .focus-main,
+  html[data-design] .focus-page .focus-main:has(#interview-options),
   html[data-design] .focus-page .focus-main:has(.result-feedback:not(.hidden)) {
     display: grid;
     grid-template-columns: minmax(0, var(--workspace-brief)) minmax(var(--workspace-desk-min), 1fr);
@@ -1781,6 +1829,7 @@ html[data-design] .focus-page:has(.result-feedback:not(.hidden)) {
   html[data-design] .focus-page[data-session-mode="TYPED_RECALL"] .focus-main > .focus-question-pane,
   html[data-design] .focus-page[data-session-mode="INTERVIEW"] .focus-main > .focus-question-pane,
   html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"] .focus-main > .focus-question-pane,
+  html[data-design] .focus-page .focus-main:has(#interview-options) > .focus-question-pane,
   html[data-design] .focus-page .focus-main:has(.result-feedback:not(.hidden)) > .focus-question-pane {
     display: flex;
     flex-direction: column;
@@ -1795,10 +1844,38 @@ html[data-design] .focus-page:has(.result-feedback:not(.hidden)) {
   html[data-design] .focus-page[data-session-mode="TYPED_RECALL"] .focus-main > *:not(.focus-question-pane),
   html[data-design] .focus-page[data-session-mode="INTERVIEW"] .focus-main > *:not(.focus-question-pane),
   html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"] .focus-main > *:not(.focus-question-pane),
+  html[data-design] .focus-page .focus-main:has(#interview-options) > *:not(.focus-question-pane),
   html[data-design] .focus-page .focus-main:has(.result-feedback:not(.hidden)) > *:not(.focus-question-pane) {
     grid-column: 2;
     min-width: 0;
   }
+
+  /* Варианты в рабочей поверхности — ОДИН столбец, даже когда скрипт признал их
+     сопоставимыми по длине. Раскладка 2×2 (`data-answer-layout="balanced"`)
+     считалась для колонки в 960px: там ячейка 468px и вариант из одной строки
+     читается как ярлык. В рабочей поверхности 640px ячейка выходит 296px — то
+     есть вдвое уже ОДНОГО варианта в старой композиции, и любой реальный
+     вариант (замер на живом банке: 180–260 знаков) распухает в шесть-семь
+     строк. Кап тоже снимаем: он равен 60rem и в поверхности 40rem всё равно
+     no-op, но оставленный рядом читался бы как действующее ограничение. */
+  html[data-design] .focus-page .focus-main:has(#interview-options) #interview-options,
+  html[data-design] .focus-page .focus-main:has(#interview-options) #interview-options[data-answer-layout="balanced"] {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: none;
+  }
+}
+
+/* ДВЕ ЛИНЕЙКИ ПОДРЯД ПОД ВОПРОСОМ. Замер (Chromium, 2560, вопрос с листингом):
+   `.focus-question` кончается рамкой-снизу на 472, её марджин 24 — и на 496
+   начинается собственная кромка карточки материалов. Две горизонтали в 24px
+   друг от друга читаются как сбой вёрстки, а не как ритм; в письменных режимах
+   тот же стык даёт линейка `.workspace-support` (border-top).
+   Разделителем в обоих случаях работает кромка следующего объекта — она есть
+   всегда, — поэтому снимаем линейку вопроса, а не кромку. Без соседа (вопрос
+   один в колонке) линейка остаётся: там ей нечего дублировать. */
+html[data-design] .focus-page .focus-question:has(+ .question-materials),
+html[data-design] .focus-page .focus-question:has(+ .workspace-support) {
+  border-bottom: 0;
 }
 
 /* Поверхность письма: поле растёт до дна вьюпорта, а не стоит в шесть строк.
@@ -1925,6 +2002,7 @@ html[data-design] .focus-page .workspace-support-list li::before {
 html[data-design] .focus-page[data-session-mode="TYPED_RECALL"] .focus-aside.focus-session-rail,
 html[data-design] .focus-page[data-session-mode="INTERVIEW"] .focus-aside.focus-session-rail,
 html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"] .focus-aside.focus-session-rail,
+html[data-design] .focus-page:has(#interview-options) .focus-aside.focus-session-rail,
 html[data-design] .focus-page:has(.result-feedback:not(.hidden)) .focus-aside.focus-session-rail {
   position: static;
 }
