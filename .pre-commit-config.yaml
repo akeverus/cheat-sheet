@@ -24,3 +24,26 @@ repos:
         pass_filenames: true
         files: ^cheatsheets/interview/.*\.md$
         stages: [pre-commit]
+
+      # Оба CSS-гейта раньше жили только в документации как «запусти руками».
+      # Гейт, который надо помнить, не гейт: обе поломки, которые он ловит
+      # (сломанный синтаксис и утечка постраничного файла), видны не сразу и не
+      # на той странице, где сделана правка. pass_filenames=false — обе проверки
+      # смотрят на CSS-каталог целиком, а не на переданный список.
+      # Триггеры: сам CSS, манифест ленты (оттуда берутся гейты) и ЛЮБОЙ шаблон —
+      # проверка по употреблению ищет классы гейтованных файлов в разметке.
+      - id: css-leak-audit
+        name: CSS — синтаксис + page-scope (утечки постраничных файлов)
+        entry: python3 scripts/css-leak-audit.py
+        language: system
+        pass_filenames: false
+        files: ^modules/quiz-app/src/main/resources/(static/css/.*\.css|css-bundle-manifest\.txt|templates/.*\.html)$
+        stages: [pre-commit]
+
+      - id: design-token-audit
+        name: Дизайн-токены — контраст, полнота light/dark, хардкоды в base.css
+        entry: python3 scripts/design-token-audit.py
+        language: system
+        pass_filenames: false
+        files: ^modules/quiz-app/src/main/resources/static/css/.*\.css$
+        stages: [pre-commit]

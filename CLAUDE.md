@@ -5,8 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build & Run
 
 ```bash
-# Run the application (requires API key env var)
-export DEEPSEEK_API_KEY=your_key   # or OPENAI_API_KEY / SPRING_AI_API_KEY
+# Run the application (no API keys needed — see "Источник вопросов" below)
+docker compose up -d postgres
 ./gradlew bootRun
 
 # Build without tests
@@ -32,7 +32,7 @@ App runs at http://localhost:8080. Swagger UI at http://localhost:8080/swagger-u
 Three Gradle modules:
 - **`quiz-domain`** — pure domain model (`InterviewQuestion`, `InterviewSession`, `QuestionOption`, etc.). No Spring, no infrastructure dependencies.
 - **`quiz-persistence`** — JDBC repositories + Flyway migrations (`src/main/resources/db/migration/`). **PostgreSQL only** (since 2026-05-25); локально стартуется через `docker compose up -d postgres`.
-- **`quiz-app`** — Spring Boot application: controllers, services, AI integration, config.
+- **`quiz-app`** — Spring Boot application: controllers, services, config.
 
 Тесты обоих модулей крутятся на **Testcontainers PostgreSQL 16-alpine** (нужен Docker daemon). `quiz-persistence` тесты наследуются от `AbstractPostgresRepositoryTest` — один контейнер на JVM, TRUNCATE между тестами. `quiz-app` тесты подхватывают `jdbc:tc:postgresql:16-alpine:///` из `application-test.yml`.
 
@@ -46,41 +46,40 @@ Enforced by ArchUnit (`LayeredArchitectureTest`):
 Package layout in `quiz-app`:
 ```
 com.cheatsheet.quiz
-  feature/           # vertical slices: interview/, question/, export/, admin/
+  feature/           # vertical slices: interview/, export/, admin/, auth/
     interview/       # controller/, dto/, mapper/, service/, usecase/
-    question/        # engine/ (prompt/, model/, service/, mapper/, metadata/)
-  service/           # cross-cutting services: ai/, cache/, diagram/, imports/, strategy/
-  api/               # REST API wiring
-  config/            # Spring configuration
-  infrastructure/    # low-level infra
-  llm/               # LLM abstractions
+  service/           # cross-cutting services: admin/, cache/, diagram/, event/, imports/, strategy/
+  api/               # REST API wiring: controller/, dto/, mapper/, security/, validation/, constants/
+  common/            # exceptions, shared constants
+  config/            # Spring configuration: app/, web/, runtime/
+  infrastructure/    # bootstrap/, health/, render/, search/
 ```
 
-## AI / LLM Pipeline
+## Источник вопросов (AI в проекте нет)
 
-- **Seed-first by default.** MCQ-варианты грузятся из `modules/quiz-app/src/main/resources/seed/mcq/<category>/<topic>.json` через `McqJsonLoader` на старте. AI в рантайме НЕ зовётся, даже если API-ключ задан.
-- AI вызывается только когда выставлен `app.ai.fallback-enabled=true` (env `AI_FALLBACK_ENABLED`) И есть ключ. Поведение нужно сохранять — пользователь явно сказал «AI в совсем крайнем случае».
-- Two supported providers: `openai`, `deepseek` (configured via `app.aiProvider`; the `AiProvider` enum has only these two — there is no `spring-ai` provider)
-- `AiQuestionClient` is the entry point; `AbstractAiClient` issues a **single attempt** (no auto-retry) and unwraps the provider's root error cause
-- Question generation uses a **prompt-first single-call** approach: `QuestionPromptBuilder` assembles the prompt → AI returns strict JSON → `QuestionGeneratedJsonMapper` parses it
-- `AIQuestionService` generates multiple-choice options ТОЛЬКО когда `AppProperties.isAiFallbackAllowed()` = true; иначе возвращает пустой список (флешкарт-режим)
-- Prompts live in `src/main/resources/prompts/` (consolidated into `general.txt`)
-- `AdaptiveDifficultyService` adjusts question difficulty based on session performance
+AI/LLM-код вырезан целиком: нет пакета `llm/`, нет `service/ai/`, нет `AIQuestionService`,
+`AiQuestionClient`, `QuestionPromptBuilder`, каталога `prompts/`. **Нет и флага, которым
+это можно было бы включить** — ни `app.ai.*`, ни `AI_FALLBACK_ENABLED`, ни `app.aiProvider`
+в конфигурации не существует. Отсутствие генерации — свойство кода, а не настройки.
+API-ключи не нужны ни для чего.
+
+- Текст вопросов импортируется из `cheatsheets/interview/**/*.md` (`service/imports/`).
+- MCQ-варианты грузятся из `seed/mcq/<category>/<topic>.json` через `McqJsonLoader` на старте.
+- `OptionLookupService` ходит только в БД/кэш. Нет сидера → пустой список → MVC форсит
+  `flashcardMode=true`, вопрос показывается флешкартой. Это штатное поведение, не деградация.
 
 ## Key Configuration (`app.*` prefix in `application.yml`)
 
 | Property | Default |
 |----------|---------|
-| `app.aiProvider` | `openai` |
-| `app.interview.optionsCount` | `4` |
-| `app.ai.timeoutSeconds` | `60` |
-| `app.preload.startupPreload` | `false` |
-| `app.preload.fullWarmup` | `false` |
-| `app.ai.fallback-enabled` | `false` (env `AI_FALLBACK_ENABLED`) |
-
-**Источники MCQ:** дефолт — JSON-сидеры из `seed/mcq/<category>/<topic>.json` (см. AI / LLM Pipeline выше).
-- Если `app.ai.fallback-enabled=false` (дефолт): `AIQuestionService.getOrCreateOptions` отдаёт пустой список когда seed-варианта нет → MVC форсит `flashcardMode=true`. То же поведение и при пустых ключах (`isAiEnabled()` → false).
-- AI-fallback включается только явно: `AI_FALLBACK_ENABLED=true` + любой из `OPENAI_API_KEY` / `DEEPSEEK_API_KEY`.
+| `app.security.mode` | `local` (одиночный режим; `multi` включает аутентификацию) |
+| `app.admin-token` | пусто → `/export` и `/settings/reset-options` закрыты |
+| `app.sensitive-rate-limit-per-minute` | `20` |
+| `app.scheduling.algorithm` | `sm2` (альтернатива — `fsrs`) |
+| `app.interview.default-exam-count` | `20` |
+| `app.interview.max-session-count` | `200` |
+| `app.cache.option-max-size` / `ttl-hours` | `500` / `1` |
+| `app.interview-reset-on-startup` | `false` (TRUNCATE + переимпорт из md/JSON) |
 
 Production profile (`prod`): disables Swagger UI. PostgreSQL is the **default** (base `application.yml`) datastore — there is no separate `postgres` profile. Tests run under the `test` profile (Testcontainers).
 

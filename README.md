@@ -1,6 +1,10 @@
 # Подготовка к собеседованию (Interview Prep)
 
-Локальное Spring Boot приложение для тренировки перед техническим интервью: вопросы из markdown-шпаргалок, AI-генерация вариантов ответа (OpenAI / DeepSeek), интервальное повторение по SM-2, прогрессивные подсказки и Mermaid-диаграммы.
+Локальное Spring Boot приложение для тренировки перед техническим интервью: вопросы из markdown-шпаргалок, варианты ответа из JSON-сидеров, интервальное повторение по SM-2 (опционально FSRS-4.5), статистика освоенности тем и Mermaid-диаграммы.
+
+> **AI в проекте нет.** Ни ключей, ни провайдеров, ни флага, которым генерацию можно
+> включить, — это свойство кода, а не конфигурации. Варианты ответа приходят только
+> из seed-JSON.
 
 > Если вам нужна только короткая инструкция: см. раздел **[TL;DR — самый быстрый запуск](#tl-dr--самый-быстрый-запуск)** ниже.
 
@@ -17,7 +21,7 @@
 - [Способ 3. Docker (одиночный контейнер)](#способ-3-docker-одиночный-контейнер)
 - [Способ 4. Docker Compose с PostgreSQL](#способ-4-docker-compose-с-postgresql)
 - [Способ 5. Запуск с PostgreSQL без Docker](#способ-5-запуск-с-postgresql-без-docker)
-- [Режимы работы (источники MCQ)](#режимы-работы-источники-mcq)
+- [Источник MCQ-вариантов](#источник-mcq-вариантов)
 - [Переменные окружения](#переменные-окружения)
 - [Профили Spring](#профили-spring)
 - [Доступ к приложению](#доступ-к-приложению)
@@ -45,24 +49,22 @@ echo "APP_ADMIN_TOKEN=$(openssl rand -hex 32)" >> .env
 docker compose up -d
 ```
 
-Откройте **http://localhost:8080**. По умолчанию MCQ берутся из `seed/mcq/**.json`,
-AI не вызывается. Чтобы перезалить вопросы — `INTERVIEW_RESET_ON_STARTUP=true docker compose up -d --force-recreate interview-prep`.
+Откройте **http://localhost:8080**. MCQ берутся из `seed/mcq/**.json`. Чтобы перезалить
+вопросы — `INTERVIEW_RESET_ON_STARTUP=true docker compose up -d --force-recreate interview-prep`.
 
 ---
 
 ## Возможности
 
 - **310+ тем** из 25 категорий (JVM, базы данных, system design, фреймворки, алгоритмы, security, messaging и т.д.) — вопросы импортируются из markdown-шпаргалок `cheatsheets/interview/`.
-- **5 режимов сессии:** Тренировка (бесконечно, по одному вопросу), Изучение (по порядку), Флешкарты (самооценка), Экзамен (20 вопросов + итог), Интенсив (50 вопросов + итог).
-- **Интервальное повторение:** алгоритм SM-2, расчёт даты следующего повторения и mastery-статистика, виджет «повторить сегодня».
+- **8 режимов сессии** (`InterviewMode`): Тренировка (бесконечно, по одному вопросу), Изучение (по порядку, LEARN → QUIZ), Флешкарты (самооценка), Экзамен (20 вопросов + итог), Интенсив (50 вопросов + итог), Активное припоминание, Интервью, Код-челлендж.
+- **Интервальное повторение:** SM-2 по умолчанию, переключаемый FSRS-4.5 (`SCHEDULING_ALGORITHM`), расчёт даты следующего повторения и mastery-статистика, виджет «повторить сегодня».
 - **MCQ-варианты:** 4 опции (1 правильный + 3 дистрактора) из seed-сидеров; без сида — режим флешкарт с эталонным ответом и самооценкой.
-- **AI-генерация (опционально):** варианты на лету, 3 уровня прогрессивных подсказок, Mermaid-диаграммы — только при `AI_FALLBACK_ENABLED=true`.
-- **Персонализация интерфейса (клиентская, без бэкенда):** 10 дизайн-тем, светлая/тёмная/авто, 3 раскладки страницы «Фокус», размер шрифта, ширина строки, плотность отступов, управление анимацией. Всё сохраняется в `localStorage`.
+- **Персонализация интерфейса (клиентская, без бэкенда):** 7 осей — тема (светлая/тёмная/авто), раскладка страницы «Фокус», размер шрифта, ширина строки, плотность отступов, управление анимацией, интенсивность пиксель-эффектов. Всё сохраняется в `localStorage`. Дизайн один (`instrument`) — переключателя дизайнов больше нет.
 - **Доступность и клавиатура:** полная клавиатурная навигация (`1–9`, `Enter`, стрелки), справка по `?`, ARIA-роли, режим без JavaScript (progressive enhancement).
 - **Полнотекстовый поиск:** PostgreSQL `tsvector`.
-- **Экспорт прогресса:** JSON и CSV (`/export?format=json|csv`).
-- **Без AI-ключей:** автоматический fallback в режим флешкарт (показ эталонного ответа + самооценка по SM-2).
-- **Сброс банка вариантов:** кнопка на `/settings` или `POST /api/admin/options/clear`.
+- **Экспорт прогресса:** JSON и CSV (`/export?format=json|csv`), закрыт admin-гейтом.
+- **Сброс банка вариантов:** кнопка на `/settings` (вкладка «Данные») → `POST /settings/reset-options`, тоже под admin-гейтом.
 
 ---
 
@@ -74,7 +76,6 @@ AI не вызывается. Чтобы перезалить вопросы —
 | **Gradle** | 8.x (или wrapper) | Сборка |
 | **PostgreSQL** | 14+ | Единственная поддерживаемая БД (локально через docker compose) |
 | **Docker / Docker Compose** | актуальная | Нужен для запуска БД и для прогонов тестов (Testcontainers) |
-| **API-ключ** OpenAI или DeepSeek | — | Опционально и только если включаешь `AI_FALLBACK_ENABLED=true` |
 
 Проверка версий:
 
@@ -111,11 +112,6 @@ gradle wrapper
 Самый удобный режим для локальной работы — hot reload шаблонов Thymeleaf, прозрачный пересбор при изменениях.
 
 ```bash
-# Опционально: задать AI-ключи (без них работает режим флешкарт)
-export OPENAI_API_KEY=sk-...               # либо
-export DEEPSEEK_API_KEY=sk-...
-
-# Запуск
 ./gradlew bootRun
 ```
 
@@ -140,9 +136,6 @@ docker compose up -d postgres
 ```bash
 # Сменить порт
 SERVER_PORT=9090 ./gradlew bootRun
-
-# Включить предзагрузку вариантов на старте (требует AI-ключ)
-PRELOAD_STARTUP_PRELOAD=true PRELOAD_FULL_WARMUP=true ./gradlew bootRun
 
 # Передать аргументы Spring Boot
 ./gradlew bootRun --args="--spring.profiles.active=prod --server.port=9090"
@@ -171,7 +164,6 @@ java -jar modules/quiz-app/build/libs/quiz-app-0.0.1-SNAPSHOT.jar
 
 ```bash
 SPRING_PROFILES_ACTIVE=prod \
-OPENAI_API_KEY=sk-... \
 APP_ADMIN_TOKEN=secret-token \
 java -jar modules/quiz-app/build/libs/quiz-app-0.0.1-SNAPSHOT.jar
 ```
@@ -205,7 +197,6 @@ docker build --build-arg VERSION=1.0.0 -t interview-prep .
 #    на Linux добавь --add-host=host.docker.internal:host-gateway)
 docker run --rm \
   -p 8080:8080 \
-  -e OPENAI_API_KEY="$OPENAI_API_KEY" \
   -e SPRING_DATASOURCE_URL="jdbc:postgresql://host.docker.internal:5432/interview" \
   -e SPRING_DATASOURCE_USERNAME=interview \
   -e SPRING_DATASOURCE_PASSWORD=interview \
@@ -228,8 +219,6 @@ docker run --rm \
 ```bash
 # 1. (опционально) сложить переменные в .env рядом с docker-compose.yml
 cat > .env <<'EOF'
-OPENAI_API_KEY=sk-...
-AI_PROVIDER=openai
 APP_ADMIN_TOKEN=local-secret
 POSTGRES_USER=interview
 POSTGRES_PASSWORD=interview
@@ -251,7 +240,7 @@ docker compose down -v
 **Что входит в стек (см. `docker-compose.yml`):**
 
 - `postgres` — PostgreSQL 16-alpine, порт `5432`, volume `postgres-data`.
-- `interview-prep` — приложение, порт `8080`, профиль `postgres`, healthcheck на `/actuator/health`.
+- `interview-prep` — приложение, порт `8080`, профиль `prod` (Swagger UI выключен, `APP_ADMIN_TOKEN` обязателен), healthcheck на `/actuator/health`.
 
 **Пересборка после изменений в коде:**
 
@@ -281,7 +270,6 @@ POSTGRES_PORT=5432 \
 POSTGRES_DB=interview \
 POSTGRES_USER=interview \
 POSTGRES_PASSWORD=interview \
-OPENAI_API_KEY="$OPENAI_API_KEY" \
 ./gradlew bootRun
 ```
 
@@ -289,35 +277,22 @@ Flyway автоматически применит миграции из `db/mig
 
 ---
 
-## Режимы работы (источники MCQ)
+## Источник MCQ-вариантов
 
-### По умолчанию — seed-first (JSON-сидеры)
+Единственный источник — JSON-сидеры
+`modules/quiz-app/src/main/resources/seed/mcq/<category>/<topic>.json`, загружаются на
+старте (`McqJsonLoader`). Runtime-генерации нет и включить её нечем: AI-код вырезан из
+проекта целиком, конфигурационного флага не существует (см.
+[`docs/backend-architecture.md`](docs/backend-architecture.md) §6).
 
-Варианты ответа берутся из `modules/quiz-app/src/main/resources/seed/mcq/<category>/<topic>.json`. AI **не вызывается в рантайме**, даже если задан API-ключ. Это поведение по умолчанию для всего проекта — реквесты к LLM делаются только когда вы сами это попросите.
+- Есть seed-варианты для вопроса → они отдаются как есть.
+- Нет → `OptionLookupService` возвращает пустой список, MVC форсит `flashcardMode=true`,
+  и вопрос показывается флешкартой: эталонный ответ из markdown + самооценка SM-2
+  (Снова / Сложно / Хорошо / Легко). Это штатное поведение, а не деградация из-за сбоя.
 
-- Если для вопроса есть seed-варианты → они отдаются как есть.
-- Если нет → UI деградирует в режим флешкарт (ответ + кнопки самооценки SM-2: Снова / Сложно / Хорошо / Легко).
-- Цена: 0 токенов, 0 латентности.
-
-```bash
-./gradlew bootRun         # без ключей и без AI — нормальный сценарий
-```
-
-### Опционально — on-demand AI fallback
-
-Когда seed-варианта нет и вы хотите, чтобы LLM сгенерировал опции на лету — включите fallback:
-
-```bash
-export OPENAI_API_KEY=sk-...
-export AI_FALLBACK_ENABLED=true        # без этого ключ не используется в рантайме
-./gradlew bootRun
-```
-
-Только при `AI_FALLBACK_ENABLED=true` **и** заданном `OPENAI_API_KEY` / `DEEPSEEK_API_KEY` сервис обратится в LLM. Запросы кэшируются в БД и in-memory (Caffeine) — повторное открытие вопроса в LLM не идёт.
-
-### Совсем без AI — режим флешкарт
-
-Если ключи не заданы (или fallback выключен), `AppProperties.isAiEnabled()` вернёт false. MVC форсит `flashcardMode=true`, и пользователь видит вопрос + эталонный ответ из markdown без выбора вариантов.
+Покрытие сидерами видно в `/actuator/health` (`SeedCoverageHealthIndicator`) и
+`/actuator/info` (`SeedInfoContributor`). Варианты кэшируются in-memory (Caffeine,
+`app.cache.option-max-size` / `ttl-hours`).
 
 ---
 
@@ -329,12 +304,8 @@ export AI_FALLBACK_ENABLED=true        # без этого ключ не исп�
 |-----------|------------|--------|
 | `SERVER_PORT` | Порт HTTP | `8080` |
 | `SPRING_PROFILES_ACTIVE` | Профиль (`default`, `prod`) | `prod` |
-| `AI_PROVIDER` | Основной AI: `openai` или `deepseek` | `openai` |
-| `OPENAI_API_KEY` | Ключ OpenAI | `sk-...` |
-| `OPENAI_MODEL` | Модель OpenAI | `gpt-4.1-mini` |
-| `DEEPSEEK_API_KEY` | Ключ DeepSeek | `sk-...` |
-| `APP_ADMIN_TOKEN` | Токен для admin-эндпоинтов; пусто = без проверки | `secret` |
-| `AI_FALLBACK_ENABLED` | Разрешить on-demand AI-генерацию опций (по умолчанию `false` — seed-first) | `true` |
+| `APP_ADMIN_TOKEN` | Токен для чувствительных эндпоинтов (`/export`, `/settings/reset-options`); пусто = гейт закрыт наглухо | `secret` |
+| `SCHEDULING_ALGORITHM` | Алгоритм повторений: `sm2` или `fsrs` | `sm2` |
 | `INTERVIEW_RESET_ON_STARTUP` | При `true` TRUNCATE-ит вопросы/опции на старте и переимпортирует из MD/JSON | `false` |
 
 ### PostgreSQL (единственная БД)
@@ -350,22 +321,12 @@ export AI_FALLBACK_ENABLED=true        # без этого ключ не исп�
 | `SPRING_DATASOURCE_USERNAME` | — |
 | `SPRING_DATASOURCE_PASSWORD` | — |
 
-### Предзагрузка вариантов
-
-| Переменная | По умолчанию | Описание |
-|-----------|--------------|----------|
-| `PRELOAD_STARTUP_PRELOAD` | `false` | Запускать предзагрузку при старте |
-| `PRELOAD_FULL_WARMUP` | `false` | Прогревать все вопросы |
-| `PRELOAD_WARMUP_LIMIT` | `0` | Ограничение N вопросов (0 = все) |
-| `PRELOAD_TEST_MODE` | `false` | Тестовый режим (10 вопросов) |
-| `PRELOAD_WARMUP_RANDOM_SEED` | `-1` | seed для случайной выборки |
-
 ### Прочее
 
 | Переменная | По умолчанию |
 |-----------|--------------|
-| `REGENERATE_RATE_LIMIT_PER_MINUTE` | `20` |
-| `INTERVIEW_RESET_ON_STARTUP` | `false` (полный сброс БД при старте) |
+| `SENSITIVE_RATE_LIMIT_PER_MINUTE` | `20` (обращений к `/export` и `/settings/reset-options` на клиента в минуту) |
+| `APP_SECURITY_MODE` | `local` (однопользовательский режим; `multi` включает OAuth2 + owner-скоупинг) |
 
 Полный список — в `modules/quiz-app/src/main/resources/application.yml` и Javadoc класса `AppProperties`.
 
@@ -397,21 +358,36 @@ export AI_FALLBACK_ENABLED=true        # без этого ключ не исп�
 
 ### Основные REST-эндпоинты
 
-- `POST /start` / `POST /finish` — старт / завершение сессии экзамена.
-- `POST /answer` — ответ (form-data).
-- `POST /api/answer` — ответ (JSON, для AJAX).
-- `POST /api/regenerate` — перегенерация вариантов.
-- `POST /api/hint` — подсказка по уровню (1–3).
-- `POST /api/favorite` — переключение «избранного».
-- `GET /export?format=json|csv` — экспорт прогресса.
-- `POST /api/admin/options/clear` — очистка банка вариантов (заголовок `X-Admin-Token`, если задан `app.adminToken`).
+MVC (отдают HTML, форма + CSRF-токен):
 
-Пример:
+- `POST /start` / `POST /finish` — старт / завершение сессии.
+- `POST /answer` — ответ (form-data), no-JS-фоллбэк AJAX-пути.
+- `POST /pause` / `POST /resume` / `POST /skip` — управление сессией.
+- `POST /flashcard-reveal` / `POST /flashcard-grade` — раскрытие ответа и самооценка (SM-2).
+- `POST /study-confirm` — переход LEARN → QUIZ в режиме «Изучение».
+- `POST /settings/reset-options` — сброс банка вариантов (закрыт admin-гейтом).
+
+REST (JSON):
+
+- `GET /api/next` — следующий вопрос.
+- `POST /api/answer` — ответ (JSON, для AJAX).
+- `POST /api/confidence` — оценка уверенности (1–5).
+- `POST /api/favorite` — переключение «избранного».
+- `POST /api/bookmark`, `/api/bookmark/note`, `/api/bookmark/remove` — закладки.
+- `POST /api/report` — жалоба на вопрос.
+- `GET /api/stats`, `/api/topic-stats`, `/api/streak` — статистика.
+- `GET /export?format=json|csv` — экспорт прогресса (закрыт admin-гейтом).
+
+Полный контракт — Swagger UI на `/swagger-ui.html`.
+
+Пример (тело — JSON; CSRF-токен обязателен, браузерный клиент подставляет его
+автоматически из cookie `XSRF-TOKEN`):
 
 ```bash
 curl -X POST http://localhost:8080/api/answer \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "questionId=1&optionId=2"
+  -H "Content-Type: application/json" \
+  -H "X-XSRF-TOKEN: $TOKEN" -b "XSRF-TOKEN=$TOKEN" \
+  -d '{"questionId":1,"optionId":2}'
 ```
 
 ---
@@ -423,7 +399,7 @@ curl -X POST http://localhost:8080/api/answer \
 ### 1. Первый заход
 
 1. Откройте `http://localhost:8080/`. Вы увидите либо текущий вопрос, либо приглашение начать сессию.
-2. Сразу можно настроить вид под себя: иконки в шапке переключают **тему** (светлая/тёмная), **дизайн** и **раскладку**. Полный набор настроек — на `/settings` (вкладка «Оформление»).
+2. Тумблер темы (светлая/тёмная) — в шапке. Полный набор настроек вида — на `/settings` (вкладка «Оформление»).
 3. Выберите режим занятия на `/settings` → вкладка «Сессия» и нажмите «Начать».
 
 ### 2. Режимы сессии
@@ -437,6 +413,9 @@ curl -X POST http://localhost:8080/api/answer \
 | **Флешкарты** | Вопрос → эталонный ответ → самооценка по SM-2 (без выбора вариантов). | настраивается | да |
 | **Экзамен** | Фиксированный подход с подсчётом результата. | по умолчанию 20 | да |
 | **Интенсив** | Длинный подход для марафонского прогона. | по умолчанию 50 | да |
+| **Активное припоминание** | Ответ формулируется своими словами, затем сверяется с эталоном. | настраивается | да |
+| **Интервью** | Прогон в формате собеседования. | настраивается | да |
+| **Код-челлендж** | Вопросы с кодом. | настраивается | да |
 
 Дополнительно во вкладке «Сессия» можно сузить выборку: **группа** (категория), **тема**, флаги «только важные», «только ошибочные», «перемешать», «слабые темы», и порядок **Учебный / Свободный**. Поле «Вопросов» (1–200) задаёт длину подхода для режимов с фиксированной длиной.
 
@@ -446,11 +425,11 @@ curl -X POST http://localhost:8080/api/answer \
 2. Выберите вариант: клик мышью или клавиши `1`–`9` (стрелками `↑`/`↓` можно перемещаться по списку).
 3. Отправьте ответ: кнопкой или `Enter`.
 4. Появится **вердикт** (верно/неверно) с подсветкой правильного варианта, **самооценка уверенности** и блок **пост-разбора** (вывод, разбор, связанные темы) под кнопкой.
-5. Перейдите к следующему вопросу. Нужна помощь — откройте **подсказку** (до 3 уровней) или добавьте вопрос в **избранное**.
+5. Перейдите к следующему вопросу. Вопрос можно отметить **избранным**, положить в **закладки** с заметкой или пожаловаться на него (`/api/report`).
 
 ### 4. Режим флешкарт и интервальное повторение
 
-Если для вопроса нет MCQ-вариантов (нет seed-сида и AI выключен) или выбран режим «Флешкарты», вместо вариантов показывается эталонный ответ и кнопки **самооценки**:
+Если для вопроса нет seed-сида с вариантами или выбран режим «Флешкарты», вместо вариантов показывается эталонный ответ и кнопки **самооценки**:
 
 | Кнопка | Клавиша | Смысл (SM-2) |
 |--------|---------|--------------|
@@ -467,15 +446,17 @@ curl -X POST http://localhost:8080/api/answer \
 
 | Ось | Значения | Что меняет |
 |-----|----------|------------|
-| **Дизайн** | editorial (по умолч.), linear, swiss, notion, mintlify, broadsheet, superhuman, stripe, claude, theverge | Визуальная тема целиком (типографика, цвета, ритм) |
-| **Тема** | авто / светлая / тёмная | Светлый или тёмный режим (авто = по системе) |
-| **Раскладка** | поток / сплит / сетка | Композиция страницы «Фокус» |
-| **Размер шрифта** | 0.85×–1.4× | Масштаб всего текста |
-| **Ширина чтения** | стандартная / широкая | Длина строки прозы (72ch / 100ch) |
+| **Тема оформления** | авто / светлая / тёмная | Светлый или тёмный режим (авто = по системе) |
+| **Размер шрифта** | 0.85×–1.4× | Масштаб всего интерфейса |
+| **Раскладка** | поток / два пейна / сетка | Композиция страницы «Тренировка» |
+| **Ширина чтения** | стандартная / широкая | Длина строки прозы |
 | **Плотность** | просторно / компактно | Величина отступов (текст не трогается) |
 | **Движение** | авто / включено / выключено | Анимации (авто = уважать `prefers-reduced-motion`) |
+| **Пиксель-эффекты** | низкая / средняя / высокая | Интенсивность arcade-декора (иконки, рамки, анимации) |
 
-Тема, дизайн и раскладка продублированы тумблерами в шапке — три самых частых переключения под рукой.
+Оси «Дизайн» больше нет: `instrument` — единственный дизайн, а выбор из одиннадцати
+значений, десять из которых коэрсились обратно в него, вводил в заблуждение.
+В шапке продублирован только тумблер темы — самое частое переключение.
 
 ### 6. Настройки: три вкладки
 
@@ -580,12 +561,11 @@ MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=always \
 | `mcq.seed.topic.requests{result=found\|notfound}`  | Сколько тем запрошено и сколько нашли JSON-сид.                                                       |
 | `mcq.seed.options.inserted`                        | Сумма опций, вставленных из сидеров за время жизни процесса.                                          |
 | `mcq.seed.questions.skipped`                       | Seed-вопросы, для которых в БД нет соответствующей записи (обычно — рассинхрон сидера и markdown).    |
-| `mcq.ai.fallback{outcome=suppressed\|called\|error}` | `suppressed` — seed-first сработал (норма). `called` — ушли в AI (только при `AI_FALLBACK_ENABLED=true`). `error` — AI-ответ упал. |
 | `cache.gets{cache=optionCache,result=hit\|miss}`     | Caffeine cache hit/miss для готовых option-листов. Низкий hit ratio = много обращений в БД, есть смысл поднять `app.cache.option-max-size`. |
 | `cache.puts{cache=optionCache}` / `cache.evictions{cache=optionCache}` | Сколько options попало в кэш / сколько вытеснилось (по max-size или TTL). |
 
-Если `mcq.ai.fallback{outcome=called}` растёт без флага `AI_FALLBACK_ENABLED`
-или `mcq.seed.questions.skipped` непустой — это сигнал расследовать.
+Ненулевой `mcq.seed.questions.skipped` — сигнал расследовать: сидер и markdown
+разъехались, и часть вопросов молча осталась без вариантов.
 
 ---
 
@@ -609,26 +589,29 @@ docker compose up -d postgres
 ./gradlew bootRun        # Flyway раскатает схему заново
 ```
 
-### Сброс банка AI-вариантов
+### Сброс банка MCQ-вариантов
 
-Через UI: `Settings → Управление данными → Сбросить банк вариантов`.
+Операция необратима: вычищает загруженные из сидеров варианты, после чего вопросы
+показываются флешкартами до следующего импорта.
 
-Через API:
+Через UI: `/settings` → вкладка **«Данные»** → «Сбросить банк вариантов». Вкладка
+появляется только при открытом admin-гейте — если `APP_ADMIN_TOKEN` не задан, её нет
+вовсе (кнопка, которая гарантированно вернёт 403, хуже отсутствующей).
+
+Через API — токен только заголовком или полем формы, в query string он отвергается:
 
 ```bash
-# Если APP_ADMIN_TOKEN не задан
-curl -X POST http://localhost:8080/api/admin/options/clear
-
-# Если задан
-curl -X POST http://localhost:8080/api/admin/options/clear \
+curl -X POST http://localhost:8080/settings/reset-options \
      -H "X-Admin-Token: $APP_ADMIN_TOKEN"
 ```
 
 ### Экспорт прогресса
 
 ```bash
-curl -o progress.json "http://localhost:8080/export?format=json"
-curl -o progress.csv  "http://localhost:8080/export?format=csv"
+curl -H "X-Admin-Token: $APP_ADMIN_TOKEN" \
+     -o progress.json "http://localhost:8080/export?format=json"
+curl -H "X-Admin-Token: $APP_ADMIN_TOKEN" \
+     -o progress.csv  "http://localhost:8080/export?format=csv"
 ```
 
 ---
@@ -663,6 +646,19 @@ curl -o progress.csv  "http://localhost:8080/export?format=csv"
 # результат: modules/quiz-app/build/docs/javadoc/
 ```
 
+**Тестам нужен запущенный Docker** — persistence и часть `quiz-app` крутятся на
+Testcontainers PostgreSQL 16-alpine. На **OrbStack** Testcontainers 1.19.8 договаривается
+на Docker API 1.32, а демон отдаёт ≥1.40, и без обхода падают все интеграционные тесты:
+
+```bash
+JAVA_TOOL_OPTIONS=-Dapi.version=1.41 \
+DOCKER_HOST=unix://$HOME/.orbstack/run/docker.sock \
+./gradlew check --no-daemon
+```
+
+**Не запускайте Gradle при живом `./gradlew bootRun`** — сборка встанет на блокировке.
+Сначала остановите приложение.
+
 ---
 
 ## Структура проекта
@@ -671,13 +667,12 @@ curl -o progress.csv  "http://localhost:8080/export?format=csv"
 cheat-sheet/
 ├── modules/
 │   ├── quiz-domain/              # чистая доменная модель (без Spring)
-│   ├── quiz-persistence/         # JDBC-репозитории, Flyway
-│   └── quiz-app/                 # Spring Boot: API, MVC, AI, конфигурация
+│   ├── quiz-persistence/         # JDBC-репозитории + Flyway (src/main/resources/db/migration/)
+│   └── quiz-app/                 # Spring Boot: API, MVC, конфигурация
 │       └── src/main/resources/
 │           ├── application.yml
 │           ├── application-prod.yml
-│           ├── db/migration/             # Flyway-миграции PostgreSQL (в module quiz-persistence)
-│           ├── prompts/                  # промпты для LLM
+│           ├── seed/mcq/                 # JSON-сидеры MCQ-вариантов
 │           ├── templates/                # Thymeleaf
 │           └── static/                   # CSS/JS
 ├── cheatsheets/                  # markdown-шпаргалки и вопросы
@@ -763,22 +758,26 @@ docker compose logs -f interview-prep
 
 Чаще всего — недоступная БД (PostgreSQL не поднялся / неверные креды) или Flyway-конфликт.
 
-### `429 Too Many Requests` от OpenAI/DeepSeek
+### `429 Too Many Requests` на `/export` или `/settings/reset-options`
 
-Сработал rate limit провайдера. Запрос к LLM выполняется **одной попыткой**, без авто-ретраев: при `429` генерация вариантов для этого вопроса не удаётся и приложение откатывается в режим флешкарт (вопрос показывается без вариантов). Напомним, что по умолчанию AI вообще не вызывается — варианты берутся из seed-сидеров, а LLM включается только при `AI_FALLBACK_ENABLED=true`. Если ошибки сыплются постоянно:
+Сработал собственный rate limit приложения (`SENSITIVE_RATE_LIMIT_PER_MINUTE`, по
+умолчанию 20 обращений в минуту на клиента). Ответ несёт заголовок `Retry-After` с
+числом секунд — UI показывает его текстом. Поднимите лимит переменной окружения, если
+экспорт нужен чаще.
 
-- проверьте баланс / квоты у провайдера;
-- увеличьте `app.ai.timeoutSeconds` (по умолчанию 60);
-- либо выключите AI-fallback (`AI_FALLBACK_ENABLED=false`) и работайте на seed-вариантах.
+### Вопрос показывается без вариантов ответа
 
-### Не работают AI-варианты, хотя ключ задан
+Это не сбой: для темы нет JSON-сидера, и вопрос штатно вырождается во флешкарту.
+Проверить покрытие — `curl localhost:8080/actuator/health` (секция `seedCoverage`).
+Если сидер есть, но варианты не появились, смотрите метрику
+`mcq.seed.questions.skipped`: скорее всего `q_number` в JSON разъехался с `## Q<N>`
+в markdown.
 
-1. Убедитесь, что переменная экспортирована в **той же** оболочке, откуда запускается `gradle`/`docker`:
-   ```bash
-   echo $OPENAI_API_KEY
-   ```
-2. Проверьте `app.ai-provider` (`AI_PROVIDER`): провайдер должен совпадать с тем, чей ключ задан.
-3. В логах ищите строку `ai client: provider=...` и сообщения от `AbstractAiClient`.
+### `403` на `/export`, хотя токен передан
+
+Токен принимается только заголовком `X-Admin-Token` или полем формы `adminToken`.
+В query string он отвергается намеренно (CWE-598) — см.
+[Безопасность](#безопасность-важно-при-публичном-развёртывании).
 
 ### `gradle wrapper` падает с «Could not find gradle»
 
@@ -796,21 +795,43 @@ docker run -v "$(pwd)/cheatsheets:/app/cheatsheets" ...
 
 ## Дополнительная документация
 
-- [`CLAUDE.md`](CLAUDE.md) — инструкции для Claude Code: build/run, правила слоёв (ArchUnit), AI/LLM-pipeline, ключевая конфигурация.
-- [`DESIGN.md`](DESIGN.md) — дизайн-система UI: токены, темы, раскладки, компоненты.
+- [`CLAUDE.md`](CLAUDE.md) — инструкции для Claude Code: build/run, правила слоёв (ArchUnit), источник вопросов, ключевая конфигурация.
+- [`docs/product-redesign-state.md`](docs/product-redesign-state.md) — что за продукт, экраны, режимы сессии, принятые решения.
+- [`docs/backend-architecture.md`](docs/backend-architecture.md) — модули, пакеты, обработка ошибок, безопасность, идемпотентность.
+- [`docs/frontend-architecture.md`](docs/frontend-architecture.md) — шаблоны, CSS-слои, ES-модули, прогрессивное улучшение.
+- [`docs/design-system.md`](docs/design-system.md) — токены, `@layer`-каскад, компоненты.
+- [`docs/visual-assets.md`](docs/visual-assets.md) — инвентарь графики, происхождение, что удалено и почему.
+- [`docs/accessibility.md`](docs/accessibility.md) — контракты доступности и чем они удерживаются.
+- [`docs/quality-report.md`](docs/quality-report.md) — что проверено и чем, известные ограничения.
+- [`DESIGN.md`](DESIGN.md) — историческая дизайн-документация UI.
 - [Структура проекта](#структура-проекта) — раскладка модулей и пакетов (раздел этого README).
 - **Swagger UI** — `/swagger-ui.html` при запущенном приложении: живые REST-контракты и примеры.
 
 ## Безопасность (важно при публичном развёртывании)
 
-Приложение по умолчанию рассчитано на **localhost**. Spring Security и CSRF-защита не подключены. POST-эндпоинты (`/answer`, `/api/answer`, `/api/regenerate`, `/api/hint`, `/api/favorite`, `/api/admin/*`) **не защищены CSRF-токенами**.
+Приложение по умолчанию рассчитано на **localhost** и однопользовательский режим
+(`app.security.mode=local`) — аутентификации нет, весь прогресс принадлежит одному
+владельцу. Что уже включено:
 
-Для production-публикации:
+- **Spring Security подключён**, CSRF-защита активна для всех мутирующих запросов
+  (cookie `XSRF-TOKEN` → заголовок `X-XSRF-TOKEN`); исключение — `/export`, закрытый
+  собственным admin-гейтом.
+- **Admin-гейт** на чувствительных эндпоинтах (`/export`, `/settings/reset-options`):
+  заголовок `X-Admin-Token` либо скрытое поле формы `adminToken`, значение — из
+  `APP_ADMIN_TOKEN`. Токен в query string **отвергается** (CWE-598: секрет осел бы
+  в access-логах, `Referer` и истории браузера).
+- **CSP с nonce**, без `unsafe-inline`; все vendor-библиотеки и шрифты self-hosted,
+  внешних CDN нет.
+- **Rate limit** на чувствительных эндпоинтах — `SENSITIVE_RATE_LIMIT_PER_MINUTE`.
 
-- подключите Spring Security и включите CSRF;
-- задайте `APP_ADMIN_TOKEN` для admin-эндпоинтов;
+Для публичного развёртывания дополнительно:
+
+- задайте `APP_ADMIN_TOKEN` — без него admin-гейт закрыт наглухо и вкладка «Данные»
+  в настройках не выводится вовсе;
 - разместите приложение за reverse proxy с TLS;
-- задайте профиль `prod` (Swagger UI выключен).
+- задайте профиль `prod` (Swagger UI выключен);
+- для многопользовательского сценария — `app.security.mode=multi` (OAuth2 +
+  owner-скоупинг). Режим реализован, но живой проверкой не покрыт.
 
 ---
 
