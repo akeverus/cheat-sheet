@@ -106,7 +106,7 @@ use(s);  // можно, компилятор знает, что s определ
 
 - **Сужение в `&&`:** в `obj instanceof String s && !s.isEmpty()` переменная `s` уже доступна во второй части условия — к моменту её проверки тип уже подтверждён.
 - **Расширение через early return/throw:** после `if (!(obj instanceof String s)) return ...;` компилятор понимает, что в остальном коде метода `obj` гарантированно `String`, поэтому `s` доступна и там.
-- **Привязка к ветке:** в `||` или внутри `if`-блока с негативным условием переменная не видна — компилятор пускает её только туда, где соответствие шаблону доказано.
+- **Полярность решает в `||`:** переменная видна там, где шаблон доказан. В `a || b` правая часть выполняется, когда левая ложна, поэтому после `obj instanceof String s || ...` переменная `s` во второй части недоступна (`cannot find symbol`), а после `!(obj instanceof String s) || s.isEmpty()` — доступна.
 
 **Подводный камень:** binding variable — это обычная локальная переменная, её можно переприсвоить. Это считается дурным тоном: меняет смысл «переменная = распакованное значение шаблона». Лучше относиться к ней как к финальной.
 
@@ -418,7 +418,7 @@ String colorName(Color c) {
 Как это проявляется:
 
 - **`Box<?>(Object value)`** — wildcard всегда допустим: проверяется только сырой тип `Box`, компонент получаем как `Object`.
-- **`Box<String>(String value)`** — допустим, когда компилятор может вывести параметр из контекста (например, переменная объявлена как `Box<String>`); тогда `value` сразу `String`.
+- **`Box<String>(String value)`** — допустим, только когда параметр виден в типе самого выражения (переменная объявлена как `Box<String>`); тогда `value` сразу `String`. Из `Object` такой шаблон не скомпилируется: приведение было бы unchecked.
 - **Деконструкция выводит тип компонента,** а не проверяет его в рантайме: эрейзеру нечего проверять на уровне `<T>`.
 
 ```java
@@ -432,17 +432,20 @@ if (obj instanceof Box<?>(Object value)) {
     System.out.println(value);  // Object
 }
 
-// Явный type parameter
-if (obj instanceof Box<String>(String value)) {
+// Явный type parameter — только когда компилятор видит параметр в типе выражения
+Box<String> box = new Box<>("hello");
+if (box instanceof Box<String>(String value)) {
     System.out.println(value.toUpperCase());  // String methods
 }
+// if (obj instanceof Box<String>(String value))  // ОШИБКА КОМПИЛЯЦИИ:
+// Object cannot be safely cast to Box<String> — это потребовало бы unchecked-приведения
 
 // В switch
-<T> String describe(Box<T> box) {
+String describe(Box<?> box) {
     return switch (box) {
-        case Box(Integer i) -> "Integer box: " + i;  // raw или inferred
+        case Box(Integer i) -> "Integer box: " + i;  // сырой шаблон, параметр выводится
         case Box(String s) -> "String box: " + s;
-        case Box<T>(T value) -> "Generic box: " + value;
+        case Box(Object value) -> "Generic box: " + value;
     };
 }
 ```
@@ -534,9 +537,11 @@ if (b instanceof Box(int v)) {  // v — int, не Integer
 
 // Но не работает на generic bounds
 record Wrapper<T>(T value) {}
-Object obj = new Wrapper<>(42);
-// if (obj instanceof Wrapper<Integer>(int v))  // ОШИБКА — Integer не int
-if (obj instanceof Wrapper<Integer>(Integer v)) { ... }
+Wrapper<Integer> w = new Wrapper<>(42);
+// if (w instanceof Wrapper<Integer>(int v))  // ОШИБКА — Integer не int
+if (w instanceof Wrapper<Integer>(Integer v)) { ... }
+// Из Object этот шаблон тоже не пройдёт: параметризованный record pattern
+// требует, чтобы параметр был виден в типе выражения
 ```
 
 ## Q15. Когда стоит / не стоит использовать pattern matching?
