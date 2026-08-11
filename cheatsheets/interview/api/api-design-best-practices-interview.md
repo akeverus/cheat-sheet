@@ -576,20 +576,20 @@ Retry-After: Wed, 12 Aug 2026 09:00:00 GMT
 | Discord | `x-ratelimit-reset` и отдельно `x-ratelimit-reset-after` | метка и дельта в разных полях |
 | X (Twitter) | `x-rate-limit-*` — с дефисом после `rate` | Unix-метка |
 
-Типичный ответ в стиле GitHub:
+Ответ в стиле GitHub (числа условные):
 
 ```http
 HTTP/1.1 200 OK
-x-ratelimit-limit: 100
-x-ratelimit-remaining: 47
-x-ratelimit-reset: 1786467600
+x-ratelimit-limit: 5000
+x-ratelimit-remaining: 4953
+x-ratelimit-reset: 1786469137
 ```
 
-Метка условная: у GitHub окно лимита — час, поэтому в реальном ответе `reset` указывает на конец текущего часа, а не на далёкую дату.
+Метка указывает на конец текущего окна, а окно отсчитывается от первого запроса в нём — не от круглого часа. Длина окна тоже не универсальна даже внутри одного API: у GitHub для REST это час, а для Search — минута.
 
 Смысл полей везде схожий: `limit` — потолок за окно, `remaining` — сколько запросов осталось, `reset` — когда счётчик обнулится. А вот **в каких единицах записан `reset`, из имени заголовка не следует** — это и показывает таблица выше.
 
-**Беспрефиксные `RateLimit-*`.** Пришли из ранних редакций черновика IETF `draft-ietf-httpapi-ratelimit-headers`, где `RateLimit-Reset` — секунды до сброса:
+**Беспрефиксные `RateLimit-*`.** Пришли из черновика `draft-polli-ratelimit-headers`, который затем приняла рабочая группа IETF httpapi под именем `draft-ietf-httpapi-ratelimit-headers`. В ранних редакциях `RateLimit-Reset` — секунды до сброса:
 
 ```http
 RateLimit-Limit: 100
