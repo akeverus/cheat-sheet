@@ -286,6 +286,12 @@ public class InterviewMvcController {
         );
     }
 
+    /** Каталог тем — полноценный адрес первого уровня, а не якорь внутри аналитики. */
+    @GetMapping("/topics")
+    public String topics(Model model) {
+        return interviewPageMvcService.topics(model);
+    }
+
     @GetMapping("/bookmarks")
     public String bookmarks(
             @RequestParam(value = "q", required = false) String query,

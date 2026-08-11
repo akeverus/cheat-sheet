@@ -53,6 +53,9 @@ class InterviewPageMvcServiceTest {
     @Mock
     private HttpSession session;
     @Mock
+    private com.cheatsheet.quiz.feature.interview.service.page.TopicsPageService topicsPageService;
+
+    @Mock
     private Model model;
 
     private InterviewPageMvcService service;
@@ -65,6 +68,7 @@ class InterviewPageMvcServiceTest {
                 sessionSupport,
                 focusTrainingPageService,
                 statsPageService,
+                topicsPageService,
                 bookmarksPageService,
                 bookmarkApiService,
                 pauseService,

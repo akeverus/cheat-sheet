@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru" data-design="instrument" xmlns:th="http://www.thymeleaf.org">
+<!--/* Каталог тем. Пункт «Темы» первого уровня вёл на /stats#topics — якорь ВНУТРИ
+     аналитики. Подделка была записана в самой разметке: у этого пункта,
+     единственного из шести, не было ни active-состояния, ни aria-current, а в
+     мобильной навигации его не было вовсе.
+
+     Каталог отвечает на другой вопрос, чем аналитика. Аналитика — «как я иду»,
+     каталог — «что вообще есть и куда пойти». Поэтому здесь нет ни графиков, ни
+     точности по попыткам: раздел, тема, объём, освоено, ждёт повторения.
+
+     Своего CSS страница не заводит: шапка, карточка, жёлоб таблицы и пустое
+     состояние — общие компоненты, все с гейтом `*` в css-bundle-manifest.txt.
+     Новая строка в манифесте поэтому не нужна.
+
+     ХВОСТ ДОКУМЕНТА СВЕРЕН С bookmarks.html ДОСЛОВНО. В первой попытке здесь
+     стояло `~{fragments/scripts :: scripts}` — фрагмента с таким именем нет
+     (в scripts.html он называется `app-script`). Ошибка вылетала на строке 83,
+     то есть ПОСЛЕ отправки заголовков: Spring уже не мог переключиться на
+     страницу ошибки, ответ обрывался посреди chunked-потока, и реальный браузер
+     висел до таймаута, хотя curl показывал 200. */-->
+<head th:replace="~{fragments/head :: head(title='Темы — Подготовка к собеседованию', includeMermaid=false, includeChart=false, includeHighlight=false, page='topics')}"></head>
+<body class="topics-page">
+<a class="skip-link" href="#main-content">Перейти к каталогу</a>
+<svg th:replace="~{fragments/pixel-sprite :: sprite}"></svg>
+<svg th:replace="~{fragments/icons :: sprite}"></svg>
+<div class="app">
+    <aside th:replace="~{fragments/sidebar :: sidebar(active='topics')}"></aside>
+    <div class="shell-main">
+        <th:block th:replace="~{fragments/shell-head :: shell-head}"></th:block>
+
+<main id="main-content" class="ed-page" tabindex="-1">
+
+<div class="page-head">
+    <div class="page-head-title">
+        <span class="eyebrow">Каталог банка</span>
+        <h1>Темы</h1>
+    </div>
+    <p class="muted page-head-lead">
+        Из чего состоит банк вопросов и что в нём уже освоено. Выбери тему — она подставится
+        в конструктор сессии.
+        <span class="kpi-role" th:if="${catalogTopicCount != null}"
+              th:text="${catalogTopicCount + ' ' + @plural.pick(catalogTopicCount, 'тема', 'темы', 'тем')
+                        + ' · ' + catalogQuestionCount + ' ' + @plural.pick(catalogQuestionCount, 'вопрос', 'вопроса', 'вопросов')}">0 тем</span>
+    </p>
+</div>
+
+<!--/* Пустое состояние — общий компонент (FRD-059…062), а не своя карточка.
+     Достижимо на чистой базе: до импорта банка показывать нечего. */-->
+<div th:if="${#lists.isEmpty(catalogSections)}" class="empty-state" data-empty-bg="card">
+    <svg class="empty-state-art" width="64" height="64" aria-hidden="true"><use href="#px-empty-chart"></use></svg>
+    <h2 class="empty-state-title">Каталог пуст</h2>
+    <p class="empty-state-text">Банк вопросов ещё не импортирован — как только он появится, разделы и темы будут здесь.</p>
+</div>
+
+<section class="card catalog-group" th:each="section : ${catalogSections}"
+         th:attr="aria-labelledby='group-' + ${section.group.id}">
+    <div class="catalog-group-head">
+        <h2 class="catalog-group-title" th:id="'group-' + ${section.group.id}" th:text="${section.group.title}">Раздел</h2>
+        <p class="muted catalog-group-lead" th:text="${section.group.description}">Описание раздела</p>
+        <p class="kpi-role catalog-group-kpi">
+            <span th:text="${section.group.learnedCount} + ' из ' + ${section.group.questionCount} + ' освоено'">0 из 0 освоено</span>
+            <span th:if="${section.group.repeatCount() > 0}"
+                  th:text="' · ' + ${section.group.repeatCount()} + ' к повторению'"> · 0 к повторению</span>
+        </p>
+    </div>
+
+    <!--/* Таблица, а не карточки: у строк одинаковый набор чисел, и глаз сравнивает
+         их по столбцу. Жёлоб прокрутки и узкий режим — общий компонент. */-->
+    <div class="table-scroll">
+        <table class="data-table catalog-table">
+            <caption class="visually-hidden" th:text="'Темы раздела «' + ${section.group.title} + '»'">Темы раздела</caption>
+            <thead>
+            <tr>
+                <th scope="col">Тема</th>
+                <th scope="col" class="num">Вопросов</th>
+                <th scope="col" class="num">Освоено</th>
+                <th scope="col" class="num">К повторению</th>
+                <th scope="col">Состояние</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="row : ${section.topics}">
+                <th scope="row">
+                    <a th:href="@{/settings(topic=${row.topic})}" th:title="${row.topic}"
+                       th:text="${@topicUtils.displayName(row.topic)}">тема</a>
+                </th>
+                <td class="num" th:text="${row.total}">0</td>
+                <td class="num" th:text="${row.learned}">0</td>
+                <td class="num" th:text="${row.repeats}">0</td>
+                <!--/* Состояние словом, а не только полосой: цвет и длина не должны
+                     быть единственным носителем смысла. */-->
+                <td>
+                    <span th:if="${row.untouched()}" class="muted">не начата</span>
+                    <span th:unless="${row.untouched()}"
+                          th:text="${#numbers.formatDecimal(row.learnedPercent(), 1, 0)} + '% освоено'">0% освоено</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+</main>
+<th:block th:replace="~{fragments/shell-scripts :: shell-scripts}"></th:block>
+<script th:replace="~{fragments/scripts :: app-script}"></script>
+</div>
+</div>
+<nav th:replace="~{fragments/mobile-nav :: mobile-nav(active='topics')}"></nav>
+</body>
+</html>

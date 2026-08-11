@@ -16,6 +16,7 @@ import com.cheatsheet.quiz.feature.interview.service.flow.PauseService;
 import com.cheatsheet.quiz.feature.interview.service.flow.ReviewModeService;
 import com.cheatsheet.quiz.feature.interview.service.page.BookmarksPageService;
 import com.cheatsheet.quiz.feature.interview.service.page.StatsPageService;
+import com.cheatsheet.quiz.feature.interview.service.page.TopicsPageService;
 import com.cheatsheet.quiz.feature.interview.usecase.BookmarkApiService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ public class InterviewPageMvcService {
     InterviewSessionSupport sessionSupport;
     FocusTrainingPageService focusTrainingPageService;
     StatsPageService statsPageService;
+    TopicsPageService topicsPageService;
     BookmarksPageService bookmarksPageService;
     BookmarkApiService bookmarkApiService;
     PauseService pauseService;
@@ -162,6 +164,15 @@ public class InterviewPageMvcService {
                 StatsPageService.TopicTableQuery.of(sort, dir, rows));
         modelAttributeMapper.applyStatsPageState(model, state);
         return navigationService.statsView();
+    }
+
+    /** Каталог тем: разделы банка и темы внутри них с состоянием освоения. */
+    public String topics(Model model) {
+        TopicsPageService.TopicsPageState state = topicsPageService.build();
+        model.addAttribute("catalogSections", state.sections());
+        model.addAttribute("catalogTopicCount", state.topicCount());
+        model.addAttribute("catalogQuestionCount", state.questionCount());
+        return navigationService.topicsView();
     }
 
     public String bookmarks(String query, String group, String note, String sort, Model model) {

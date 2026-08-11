@@ -54,6 +54,13 @@ public class MvcNavigationService {
     }
 
     /**
+     * View каталога тем — навигация по банку, а не срез аналитики.
+     */
+    public String topicsView() {
+        return "topics";
+    }
+
+    /**
      * View страницы закладок и заметок (UI-014).
      */
     public String bookmarksView() {
