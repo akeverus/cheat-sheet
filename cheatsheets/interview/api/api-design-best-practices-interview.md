@@ -425,7 +425,7 @@ GET /users?fields[user]=name,email
 
 **Content-Type:** `application/problem+json` — по нему клиент понимает, что тело в формате Problem Details.
 
-**Spring Framework 6 / Spring Boot 3** дают готовые типы `ProblemDetail` и `ErrorResponse`, но автоматическую отдачу `application/problem+json` для исключений Spring MVC нужно включить: `spring.mvc.problemdetails.enabled=true` (для WebFlux — `spring.webflux.problemdetails.enabled=true`). Без этого приложение отдаёт обычное boot-тело ошибки, а для собственных исключений `ProblemDetail` в любом случае собирают в `@ExceptionHandler` руками.
+**Spring Framework 6** даёт типы `ProblemDetail` и `ErrorResponse`, но сам по себе ничего не включает: там обработку подключают `@ControllerAdvice`, унаследованным от `ResponseEntityExceptionHandler`. **В Spring Boot 3** для этого есть свойство — `spring.mvc.problemdetails.enabled=true` (для WebFlux `spring.webflux.problemdetails.enabled=true`); без него приложение отдаёт обычное boot-тело ошибки. Собственные исключения удобно наследовать от `ErrorResponseException` — такие рендерятся в `application/problem+json` без ручного `@ExceptionHandler`.
 
 Преимущество стандарта — общий инструментарий (клиенты, прокси, логи) умеет разбирать ошибки без кастомного кода. Учтите: все пять полей необязательны, а спецификация разрешает добавлять свои, поэтому клиент обязан переживать и отсутствие `instance`, и незнакомое поле.
 
@@ -703,7 +703,9 @@ Access-Control-Max-Age: 3600
 
 **Preflight-запрос OPTIONS** браузер шлёт перед «непростым» запросом, чтобы заранее узнать, разрешён ли метод и заголовки.
 
-**Рекомендация:** для API с аутентификацией перечисляйте точные origin, а не `*`. Wildcard тут вообще не сработает: при запросе с учётными данными браузер требует, чтобы `Access-Control-Allow-Origin` точно совпадал с `Origin`, и ответ со звёздочкой отвергает. Настоящая дыра — безусловно отражать пришедший `Origin` обратно вместе с `Access-Control-Allow-Credentials: true`: формально это не wildcard, а фактически доступ открыт любому сайту.
+**Рекомендация:** для API, работающего с куками, перечисляйте точные origin. Со звёздочкой такой сценарий просто не заработает: при запросе с учётными данными (`credentials: include`) браузер требует, чтобы `Access-Control-Allow-Origin` точно совпадал с `Origin`, и ответ с `*` отвергает. Для API на `Authorization: Bearer` это ограничение не действует — там `*` допустим, и так живут многие публичные API.
+
+**Важно про сам заголовок:** `Access-Control-Allow-Origin` несёт ровно одно значение — конкретный origin или `*`. Список через запятую браузеры не принимают, поэтому белый список держат на сервере и в ответ отдают тот origin, который совпал, добавляя `Vary: Origin`. Настоящая дыра — отражать пришедший `Origin` без проверки по списку, да ещё с `Access-Control-Allow-Credentials: true`: формально это не wildcard, а фактически доступ открыт любому сайту.
 
 ## Q27. (!) Какие HTTP-заголовки управляют кэшированием?
 
