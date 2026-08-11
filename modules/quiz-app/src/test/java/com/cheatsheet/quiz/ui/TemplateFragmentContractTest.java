@@ -1119,7 +1119,10 @@ class TemplateFragmentContractTest {
             .as("объявленные th:fragment под templates/")
             .contains("head", "sprite", "sidebar", "shell-head", "mobile-nav", "shell-scripts",
                       "notice-slot", "recoverable-banners", "post-answer-controls",
-                      "result-zone-head", "stats-grid-content",
+                      // «stats-grid-content» снят вместе со своим единственным носителем:
+                      // сводку банка из конструктора сессии убрали как третью копию
+                      // тех же шести чисел (/stats и /topics), и фрагмент осиротел.
+                      "result-zone-head",
                       "today-chip", "training-actions", "mermaid-init");
 
         for (String name : fragmentNames) {
