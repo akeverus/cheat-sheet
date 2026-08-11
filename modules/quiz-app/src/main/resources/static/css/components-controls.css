@@ -1,36 +1,188 @@
 /* @layer components — shared control base + state matrix (P1-08).
-   Базовая геометрия .btn/.secondary-btn/.next-btn/#extra-analysis-toggle живёт
+   Базовая геометрия .btn/.secondary-btn/.next-btn/.primary-btn живёт
    ЗДЕСЬ (перенесена из pages-focus при page-scope focus, Волна 3 D3a); pixel-fx
    добавляет pixel-декор поверх. Этот файл держит base + hover/focus/active/
    disabled/loading/error по всему приложению. */
 @layer components {
 
-/* Базовая геометрия кнопок — editorial-чипы: inline-flex, min-height 44px
-   (touch-target), рамка-линейка, shrink-to-content. Перенесено из pages-focus.css
-   при page-scope focus (Волна 3, D3a): блок ГЛОБАЛЬНЫЙ — кнопки на всех страницах
-   (home/result/settings/stats/focus), жил в page-файле focus и пропал бы на
-   остальных при скоупе. Каскад-нейтрально: pixel-fx (@layer pixel) доминирует
-   border/background/press на своих pixel-уровнях (выигрывает и над @pages, и над
-   @components); голого equal-spec .btn/.secondary-btn/.next-btn в @pages/@utilities
-   нет; page-scoped конкуренты (.error/.result/.summary .btn{width:100%} @media,
-   .settings .data-export-actions .btn:hover) строго специфичнее + скоуплены →
-   выигрывают до и после переноса. */
+/* --------------------------------------------------------------------------
+   КОРОБКА КНОПКИ — объявлена ЗДЕСЬ и больше нигде (iter-78, FRD-037).
+
+   До iter-78 их было пятнадцать: пятнадцать правил в девяти файлах объявляли
+   полный скелет кнопки (высоту, поля, кегль, радиус, рамку), и радиусы у них
+   расходились — `md`, `sm`, `0` и захардкоженные `8px`. Поверх лежала
+   ШЕСТНАДЦАТАЯ система: одно правило в pixel-buttons.css перечисляло 25
+   селекторов и стирало у всех `border-radius: 0 !important; border: 0
+   !important; transition: none !important`, добавляя `box-shadow: var(--px-edge)`.
+
+   Замер в WebKit@2, 1440×900 (85 кнопок на четырёх страницах): НИ ОДИН из
+   объявленных радиусов не доезжал до экрана — все кнопки, до которых достаёт
+   pixel-правило, рисуются `border-radius: 0px` и `border-width: 0px`. То есть
+   бо́льшая часть того, что первый слой говорил о коробке, была мёртвым кодом, а
+   единственным настоящим ответом на вопрос «как выглядит кнопка» был слой-
+   стиратель. Так `pages-focus.css` объявлял главному CTA `border-radius: md` —
+   и это не рисовалось никогда.
+
+   Цена второй системы — не только мёртвый код. `!important` в позднем слое
+   разворачивает каскад: обратный откат возможен ТОЛЬКО встречным `!important`
+   из более раннего слоя. Проект уже жил с этим — `shell.css` держал правило,
+   единственный смысл которого «отменить то, что стёр pixel» (подпись «Выйти»
+   переносилась на две строки, потому что стиратель заклампил ЛЮБОЙ
+   `.side-action` в 40×40). Конфликт лечился по одному месту столкновения.
+
+   Теперь коробка одна и говорит правду: pixel-контур — это и есть рамка
+   кнопки, поэтому `border: 0` + `box-shadow: var(--px-edge)` стоят в базе, а не
+   поверх неё. Слою pixel остаётся ЗАЛИВКА рангов (teal-градиент primary,
+   красная кромка danger, спрайты вкладок) — краска, не скелет.
+
+   Ранги ниже: базовый (44px) → главное действие флоу (48px) → самооценка
+   (48px) → тихое действие (0/44px) → иконка (44×44) → компактное действие
+   тулбара (32/44px). Шесть, больше нет; страница выбирает ранг, а не сочиняет
+   свой скелет. Вне этого списка живут две плавающие утилиты — `.back-to-top` и
+   `.code-copy-btn` (components-widgets.css): у них своя намеренная форма
+   (круг, всплывающий чип), каждая объявлена ровно один раз.
+   -------------------------------------------------------------------------- */
+/* Ни одной ветки с идентификатором страницы: ветка вида
+   `html[data-design] #session-start-btn` весит (1,1,1) и внутри слоя components
+   побеждает ЛЮБОЕ состояние, ключуемое атрибутом, — в том числе «занято»
+   (`[data-pending="action"]`, 0,2,1). Замерено в обоих движках: кнопка «Начать
+   тренировку» в ожидании показывала `cursor: pointer` вместо обещанного
+   `progress`, потому что базовая геометрия выигрывала спор идентификатором.
+
+   Три ветки убраны: `#extra-analysis-toggle` и `#session-start-btn` были
+   ИЗБЫТОЧНЫ (обе кнопки и так несут `class="btn"`), а `.focus-page
+   #interview-submit` заменена классом в fragments/training-actions.html. */
 html[data-design] .btn,
 html[data-design] .secondary-btn,
 html[data-design] .next-btn,
-html[data-design] #extra-analysis-toggle {
+html[data-design] .primary-btn,
+html[data-design] .summary-more-summary,
+html[data-design] .flashcard-reveal-btn,
+html[data-design] .danger-btn,
+html[data-design] .btn-finish-small,
+html[data-design] .filters-apply-btn,
+html[data-design] .rail-finish-btn,
+html[data-design] .rail-pause-btn,
+html[data-design] .confidence-btn,
+html[data-design] .flashcard-grade-btn,
+html[data-design] .icon-button,
+html[data-design] .btn-favorite {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
-  /* width:auto гасит протёкший .secondary-btn{width:100%} из styles.css —
-     editorial-кнопки по умолчанию shrink-to-content чипы (full-width задаём
-     точечно: мобилки/самодостаточные сабмиты). */
+  /* Ширину диктует подпись, а не контейнер; full-width задаём точечно
+     (мобильный док, самодостаточные сабмиты). Прежний комментарий объяснял это
+     правило как «гасим протёкший .secondary-btn{width:100%} из styles.css» —
+     файла styles.css в проекте нет (iter-78), гасить нечего. */
   width: auto;
   min-height: 44px; padding: var(--space-2) var(--space-5);
   font-family: var(--font-family-body); font-size: var(--font-size-base); font-weight: var(--font-weight-medium);
   background: transparent; color: var(--color-text-primary);
-  border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-md);
+  /* Рамка кнопки — pixel-контур. Не «border плюс декор поверх»: два контура на
+     одной форме и давали ту самую вторую систему. */
+  border: 0; border-radius: 0; box-shadow: var(--px-edge);
   text-decoration: none; cursor: pointer; touch-action: manipulation;
-  transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
+  text-transform: none; image-rendering: pixelated; position: relative;
+  /* Переход гасится намеренно: pixel-нажатие — это ступенчатый сдвиг на 2px,
+     а не плавная заливка. Раньше `transition: none !important` приходил из
+     слоя-стирателя, и объявленный здесь плавный переход не работал. */
+  transition: none;
 }
+
+/* Ранг «главное действие флоу»: на 4px выше базового и с бо́льшими полями —
+   самая частая кнопка приложения не должна быть мельче соседних. Ранг задаётся
+   ЗДЕСЬ, а не в pages-focus.css: до iter-78 эти 48px жили в странице вместе с
+   полной копией скелета, и страница переобъявляла коробку ради одной высоты. */
+html[data-design] .focus-page #interview-submit,
+html[data-design] .flashcard-reveal-btn,
+html[data-design] .summary-actions .btn {
+  min-height: 48px; padding: var(--space-3) var(--space-6);
+}
+
+/* Ранг «самооценка» — три кнопки уверенности после MCQ и четыре оценки
+   флешкарты. Это ОДИН контрол: одна высота, одни поля, одни полюса (низкий —
+   ошибка, высокий — успех). До iter-78 он был объявлен дважды, в двух файлах, и
+   копии разошлись радиусом (`0` против `md`), а комментарий у первой
+   утверждал, что она «единообразна» со второй. */
+html[data-design] .confidence-btn,
+html[data-design] .flashcard-grade-btn {
+  min-height: 48px; padding: var(--space-2) var(--space-4);
+}
+/* Выбранный ответ не гасится и остаётся кликабельно-нейтральным: он единственный
+   несёт итог самооценки. Правило было только у .confidence-btn — у оценки
+   флешкарты выбранная кнопка тускнела вместе с остальными, хотя контрол тот же.
+   Заливку выбранного и приглушение прочих красит слой pixel. */
+html[data-design] .confidence-btn:disabled,
+html[data-design] .flashcard-grade-btn:disabled { cursor: default; pointer-events: none; }
+
+/* Ранг «тихое действие» — пропуск вопроса и жалоба на вопрос. Это кнопки, но
+   они обязаны НЕ спорить с главным действием: моноширинный мелкий кегль,
+   вторичный цвет, никакой кромки. До iter-78 каждая из двух описывала себя
+   отдельно и одинаково («appearance:none, mono sm, secondary, radius sm»), а
+   слой pixel красил пропуск красной кнопкой опасности поверх обоих описаний.
+
+   Высота 44px добирается только при грубом указателе: пальцем в строку 34px
+   попасть трудно (§31), а на десктопе тихое действие не должно набивать
+   вертикальный воздух рядом с главным. */
+html[data-design] .skip-btn,
+html[data-design] .report-trigger {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  width: auto; min-height: 0; padding: var(--space-2) var(--space-3);
+  font-family: var(--font-family-mono); font-size: var(--font-size-sm);
+  background: transparent; color: var(--color-text-secondary);
+  border: 0; border-radius: 0; box-shadow: none;
+  cursor: pointer; touch-action: manipulation; text-transform: none;
+  transition: none;
+}
+@media (pointer: coarse) {
+  html[data-design] .skip-btn,
+  html[data-design] .report-trigger { min-height: 44px; }
+}
+
+/* Ранг «иконка» — квадрат под одну иконку без подписи: шапка мобилки
+   (.icon-button) и звезда избранного на разборе (.btn-favorite).
+
+   Замер до iter-78: этот квадрат был объявлен ЧЕТЫРЕЖДЫ и все четыре объявления
+   расходились. shell.css: 38×38, radius 8px, border 1px solid border-secondary.
+   pages-result.css: 44×44, border 0, прозрачный. pixel-buttons.css: 40×40,
+   `border-radius: 0 !important`, `box-shadow: var(--px-edge) !important`.
+   pixel-animations.css: та же 40×40 копия дословно, но её список селекторов
+   заодно цеплял `.side-action` — строку рельса, а не иконку. На экране
+   выигрывал pixel: 40×40 — ниже собственной планки касания приложения в 44px
+   (§31, WCAG 2.5.5), то есть обе «правильные» цифры (38 и 44) до экрана не
+   доезжали, а доезжала третья, неверная.
+
+   Здесь ранг один: 44×44, поля нулевые (иконка центрируется базовым flex),
+   контур — тот же pixel-edge, что у всех остальных кнопок. */
+html[data-design] .icon-button,
+html[data-design] .btn-favorite {
+  width: 44px; height: 44px; min-height: 44px; min-width: 44px;
+  padding: 0;
+  color: var(--color-text-secondary);
+}
+html[data-design] .icon-button:hover:not(:disabled),
+html[data-design] .btn-favorite:hover:not(.active) { color: var(--color-text-primary); }
+
+/* Ранг «компактное действие тулбара» — управление самим материалом (перенос
+   строк, копирование и полный экран у кода; вписать/зум/полный экран у схемы).
+   Это не действия страницы: они обслуживают блок, внутри которого сидят, и по
+   весу не имеют права спорить с «Ответить», поэтому единственные из кнопок
+   сидят ниже базовых 44px.
+
+   Ранг переехал сюда из pages-focus.css: там страница уменьшала высоту чужой
+   коробки до 32px, то есть спорила с компонентом — та же вторая система, что и
+   у остальных рангов. Замер на матрице §10: 62×32, 80×32, 101×32 на ВСЕХ 15
+   вьюпортах, включая 360–430px, то есть 32px доезжали и до тача.
+
+   Поэтому 32px — только при точном указателе. При грубом (§31, WCAG 2.5.5)
+   ранг разжимается до 44px: полоса из трёх кнопок пальцем иначе непопадаема. */
+html[data-design] .code-action,
+html[data-design] .diagram-action {
+  min-height: 32px; padding: 0.35rem 0.6rem; font-size: var(--font-size-sm);
+}
+@media (pointer: coarse) {
+  html[data-design] .code-action,
+  html[data-design] .diagram-action { min-height: 44px; min-width: 44px; }
+}
+
 html[data-design] .btn:hover:not(:disabled),
 html[data-design] .secondary-btn:hover:not(:disabled),
 html[data-design] #extra-analysis-toggle:hover:not(:disabled) { background: var(--color-bg-tertiary); border-color: var(--color-text-secondary); }
@@ -41,11 +193,38 @@ html[data-design] .next-btn { background: var(--color-accent-primary); color: va
    0,4,1 (== .btn-правилу), и т.к. правило ниже по исходнику — выигрывает. */
 html[data-design] .next-btn:hover:not(:disabled) { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); color: var(--color-accent-on); }
 
+/* Фокус — одна идиома на ВСЕ ранги: обводка снаружи коробки. Список рангов тут
+   повторяет базовый: до iter-78 правило знало только `.btn/.secondary-btn/
+   .next-btn/.primary-btn/a.btn`, а иконка, самооценка и тихое действие в него
+   не входили и забирали фокус-кольцо из shell.css в виде `outline: none;
+   box-shadow: var(--shadow-focus)`.
+
+   Для иконки это ломалось дважды: мягкое свечение — вторая идиома фокуса в
+   одной системе, и оно занимает `box-shadow`, в котором теперь живёт
+   pixel-контур кнопки, то есть по Tab у иконки пропадала рамка.
+
+   Обводка не трогает `box-shadow` и потому совместима с контуром. Рельс
+   (`.nav a`, `.mobile-nav a`, `.brand`) остаётся со своим свечением: это не
+   кнопки, а строки навигации, и там идиома тоже одна. */
 html[data-design] .btn:focus-visible,
 html[data-design] .secondary-btn:focus-visible,
 html[data-design] .next-btn:focus-visible,
 html[data-design] .primary-btn:focus-visible,
-html[data-design] a.btn:focus-visible {
+html[data-design] a.btn:focus-visible,
+html[data-design] .icon-button:focus-visible,
+html[data-design] .btn-favorite:focus-visible,
+html[data-design] .confidence-btn:focus-visible,
+html[data-design] .flashcard-grade-btn:focus-visible,
+html[data-design] .skip-btn:focus-visible,
+html[data-design] .report-trigger:focus-visible,
+html[data-design] .flashcard-reveal-btn:focus-visible,
+html[data-design] #interview-submit:focus-visible,
+html[data-design] .danger-btn:focus-visible,
+html[data-design] .btn-finish-small:focus-visible,
+html[data-design] .filters-apply-btn:focus-visible,
+html[data-design] .rail-finish-btn:focus-visible,
+html[data-design] .rail-pause-btn:focus-visible,
+html[data-design] .summary-more-summary:focus-visible {
   outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
 }
@@ -63,24 +242,138 @@ html[data-design] .primary-btn:disabled {
   pointer-events: none;
 }
 
-/* Loading: block double-submit. Exclude focus submit — pages-focus owns
-   #interview-submit.is-submitting visuals. */
-html[data-design] .btn[aria-busy="true"]:not(#interview-submit),
-html[data-design] .secondary-btn[aria-busy="true"]:not(#interview-submit),
-html[data-design] .next-btn[aria-busy="true"]:not(#interview-submit),
-html[data-design] .primary-btn[aria-busy="true"]:not(#interview-submit),
-html[data-design] button[aria-busy="true"]:not(#interview-submit) {
-  cursor: progress;
-  opacity: 0.82;
-  pointer-events: none;
-}
+/* «Занято» здесь БОЛЬШЕ НЕТ. Пять правил с ключом [aria-busy] стояли рядом с
+   пятью копиями исключения `:not(#interview-submit)`: компонентный файл знал
+   идентификатор одной кнопки одной страницы, чтобы не спорить с ЧЕТВЁРТОЙ
+   системой ожидания. Ожидание вынесено целиком в components-pending.css —
+   один ключ `data-pending`, ни одного исключения (iter-84). */
 
-/* Form fields: shared states for .field controls. */
+/* --------------------------------------------------------------------------
+   Поле формы (.field / .field-label / контрол) — ОДНА система на всё приложение.
+
+   До iter-71 здесь лежала только матрица состояний (hover/focus/disabled/
+   aria-invalid), а сама коробка поля — подпись, рамка, поля, 44px, радиус —
+   жила в `pages-settings.css` под селектором `.settings-page`. Разметка `.field`
+   при этом стоит на ЧЕТЫРЁХ шаблонах: settings, login, focus-training
+   («Твой ответ» у флешкарты) и bookmarks (заметка). Оформлен был один.
+
+   Замер до правки, WebKit 1440×900: подпись `.field-label` на /settings —
+   JetBrains Mono 12px uppercase, letter-spacing 0.96px, цвет secondary; та же
+   подпись на /login — Inter 18px, без caps, цветом primary, то есть просто
+   ненастроенный текст. Инпут на /settings — min-height 44px, radius 8px,
+   font-size 16px; инпут на /login — min-height auto (по факту 49px от кегля),
+   radius 0, font-size 18px. Один класс, два разных ответа на вопрос «как
+   выглядит поле» — ровно то, что §24 называет двумя системами форм.
+
+   Коробка поднята сюда целиком и дословно (значения не подбирались заново —
+   это ровно те, что годами ехали на /settings). В pages-settings остались
+   только вещи, принадлежащие странице: вертикальный ритм между полями,
+   `.field-inline`, валидация счётчика и disabled-селект.
+   -------------------------------------------------------------------------- */
+html[data-design] .field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: left;
+  gap: var(--space-2);
+  /* min-width:0 — поле часто стоит во flex/grid-колонке; без него длинный
+     <option> (на /settings это «Секция - описание (N)») распирает колонку и
+     даёт горизонтальный скролл. */
+  min-width: 0;
+}
+html[data-design] .field-label {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
 html[data-design] .field input,
 html[data-design] .field select,
 html[data-design] .field textarea {
+  width: 100%;
+  max-width: 100%;
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-family-body);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  /* background-COLOR, не shorthand: shorthand сбрасывает background-image, а на
+     select'ах поверх лежит кастомная стрелка (правило ниже).
+
+     `--control-surface` — единственная ручка, которой поверхность-носитель может
+     подвинуть коробку, не переобъявляя её. Нужна там, где карточка САМА покрашена
+     в `--color-bg-secondary`: на /bookmarks поле заметки лежит внутри
+     `.bookmark-item` того же тона и без ручки сливалось бы с ним в одно пятно.
+     До iter-77 эта ситуация решалась переобъявлением всей коробки в page-файле —
+     то есть второй системой ради одного цвета. */
+  background-color: var(--control-surface, var(--color-bg-secondary));
+  /* `--color-control-border`, а не `--color-border-primary`: заливка поля отличается
+     от подложки на 1.00–1.09:1, то есть коробку рисует ровно граница и ничего
+     кроме неё. На `border-primary` эта граница шла 1.42:1 к карточке — WCAG 1.4.11
+     требует 3:1 для границ контролов. Токен, а не хардкод: тон обязан быть парным
+     к теме (в светлой подложка белая, и тот же цвет был бы наоборот слишком
+     тёмным). */
+  border: var(--rule-weight) solid var(--color-control-border);
+  border-radius: var(--border-radius-sm);
   transition: border-color var(--duration-fast) var(--easing-default),
               box-shadow var(--duration-fast) var(--easing-default);
+}
+
+/* Селект — та же коробка, но её надо СНАЧАЛА разрешить.
+   Замер iter-77, WebKit@2 1440×900: `select[name=group]` на /stats — 195×44,
+   radius 8px, padding 8/48/8/12; тот же `<select>` в том же `<label class="field">`
+   на /bookmarks — 192×25, radius 5px, padding 0. Правило `.field select` (@layer
+   components) матчится на обеих страницах — проверено `el.matches()` в живом
+   WebKit, — но на /bookmarks НЕ применяется: WebKit рисует `select` как нативный
+   menulist и при `appearance: auto` игнорирует авторские height/padding/radius.
+   Соседний `input[type=search]` в той же полосе слушается и стоит 44px, поэтому
+   полоса отбора шла ступенькой: поле 44px, три селекта 25px.
+
+   Разницу давал `appearance: none`, который жил в utilities-overrides.css под
+   списком из двух страниц — `.settings-page select, .stats-page select`. То есть
+   коробка поля работала не там, где стоит `.field`, а там, где страница попала в
+   список; /bookmarks в него не попал и получил контрол системы. Это ровно те две
+   системы форм, что запрещает §24, и прямое нарушение FRD-022 («коробка поля
+   принадлежит `.field`, а не странице-носителю»).
+
+   Освобождение и стрелка подняты сюда как одно целое: `appearance: none` без
+   своей стрелки оставил бы select немаркированным, а стрелка без `appearance`
+   легла бы поверх нативной. Значения не подбирались заново — это те же два
+   градиента и тот же `padding-right`, что годами ехали на /settings и /stats. */
+html[data-design] .field select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--color-text-secondary) 50%),
+    linear-gradient(135deg, var(--color-text-secondary) 50%, transparent 50%);
+  background-position: calc(100% - 18px) center, calc(100% - 12px) center;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: var(--space-7);
+}
+
+/* Многострочное поле. До iter-77 коробку textarea объявляли ТРИ места: этот
+   компонент, `.bookmarks-page .bookmark-note-form textarea` и
+   `.focus-page .typed-answer-input textarea` — и все три расходились. Замер
+   WebKit@2: заметка закладки шла 18px (`font: inherit` — то есть кегль прозы, а
+   не контрола) на рамке `--color-border-secondary`, поле ответа на /focus —
+   16px, радиус `md` вместо `sm`; компонентная коробка не доставала ни до одной.
+   Скелет остался один, здесь; страницам оставлены только их собственные величины
+   (высота, моно-шрифт кода, схлопывание пустой заметки, scroll-margin).
+
+   `resize: vertical` и padding `--space-3` — не выбор страницы: горизонтальный
+   ресайз растаскивал бы flex-колонку, а обе страницы независимо пришли к одному
+   и тому же вертикальному полю. Значит это свойство контрола. */
+html[data-design] .field textarea {
+  resize: vertical;
+  padding: var(--space-3);
+  /* Однострочному полю интерлиньяж не нужен, многострочному нужен — и он один и
+     тот же на обеих страницах: /focus объявлял `--line-height-relaxed` у себя,
+     заметка закладки получала 1.7 случайно, через `font: inherit` от прозы.
+     Убрав `font: inherit`, мы бы уронили её до normal (~1.2) — поэтому величина
+     названа явно и здесь. */
+  line-height: var(--line-height-relaxed);
 }
 
 html[data-design] .field input:hover:not(:disabled):not([aria-invalid="true"]),
@@ -89,11 +382,20 @@ html[data-design] .field textarea:hover:not(:disabled):not([aria-invalid="true"]
   border-color: var(--color-text-secondary);
 }
 
+/* Фокус поля — ОДИН рецепт. Раньше их было два: страничный
+   `.settings-page select:focus` (@layer pages, а значит сильнее) рисовал
+   `outline:none` + рамку focus + `--shadow-focus`, а это правило в @layer
+   components — 2px outline. То есть одно и то же поле на /settings и на /login
+   подсвечивалось по-разному. Оставлен рецепт с outline, потому что он
+   переживает forced-colors (там box-shadow отбрасывается, и поле осталось бы
+   вовсе без индикатора фокуса), а смена цвета рамки из второго рецепта
+   сохранена как второй канал — вместе они дают и кольцо, и подсветку коробки. */
 html[data-design] .field input:focus-visible,
 html[data-design] .field select:focus-visible,
 html[data-design] .field textarea:focus-visible {
   outline: 2px solid var(--color-focus-ring);
   outline-offset: 1px;
+  border-color: var(--color-border-focus);
 }
 
 html[data-design] .field input:disabled,
@@ -101,9 +403,15 @@ html[data-design] .field select:disabled,
 html[data-design] .field textarea:disabled,
 html[data-design] .field input[readonly],
 html[data-design] .field textarea[readonly] {
-  opacity: 0.65;
+  opacity: 0.5;
   cursor: not-allowed;
-  background: var(--color-bg-tertiary);
+  /* background-COLOR, не shorthand: с iter-77 стрелка селекта живёт в компоненте,
+     а shorthand сбросил бы background-image и выключенный select остался бы без
+     маркера. Заодно это делает правило совместимым по значению с
+     `.is-disabled-control` ниже — раньше выключенное поле гасло на 0.65, а
+     выключенное JS-ом — на 0.5, и `.settings-page select:disabled` держал третий
+     ответ (0.5) специально для настроек. Ответ теперь один. */
+  background-color: var(--color-bg-tertiary);
 }
 
 /* JS-класс «выключенного» контрола (settings/session-form.js вешает .is-disabled-control на select,
@@ -129,6 +437,47 @@ html[data-design] .field textarea[aria-invalid="true"] {
    выводит. Ошибки формы в приложении говорятся баннером над формой
    (login.html), а поле лишь помечается `aria-invalid` — правило выше. */
 
+/* --------------------------------------------------------------------------
+   Строка-переключатель (`.toggle-item`) — вторая половина той же системы форм.
+
+   `.field` описывает поле с подписью НАД контролом; флажок устроен наоборот —
+   контрол, за ним подпись в строку. Отдельного класса под это в приложении не
+   было: рецепт жил в `pages-settings.css` под `.settings-page .toggle-item`,
+   а `/stats` до iter-72 рисовал свои флажки безымянным `.filter-row > label`
+   с собственным `:has(input[type="checkbox"])`. Два рисунка одной строки — то
+   же самое, что §24 называет двумя системами форм, и лечится так же: база
+   поднята в компоненты дословно (44px, 18px квадрат, accent-color), страницам
+   остаётся раскладка группы.
+
+   Исключение `:not(.filter-chip)` из первой редакции снято: чипы конструктора
+   сессии носили `.toggle-item` рядом с `.filter-chip`, но базы не наследовали —
+   класс на них ничего не делал. Класс с чипов убран, селектор стал прямым. */
+html[data-design] .toggle-item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-2);
+  min-height: 44px;
+  cursor: pointer;
+  color: var(--color-text-primary);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font-size: var(--font-size-base);
+}
+html[data-design] .toggle-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  /* min-height нужен явный: глобальной коробки поля на флажок не распространяем,
+     но `input` мог бы поймать её от соседних рецептов — 44px квадрат вместо
+     18px. Кольцо фокуса даёт utilities-overrides.css, одно на всё приложение. */
+  min-height: 0;
+  flex: 0 0 auto;
+  padding: 0;
+  accent-color: var(--color-accent-primary);
+  cursor: pointer;
+}
+
 /* Press-feedback — лёгкий «нажим» на все реальные кнопки (перенесён с мёртвого
    .ed-btn). Disabled-кнопки :active не получают (браузер не шлёт событие).
    Перенесён из pages-focus.css при подготовке page-scope focus (Волна 3): блок
@@ -148,7 +497,6 @@ html[data-design] .focus-page #interview-submit:active,
 html[data-design] .flashcard-reveal-btn:active,
 html[data-design] .flashcard-grade-btn:active,
 html[data-design] .danger-btn:active,
-html[data-design] .stats-action-btn:active,
 html[data-design] .settings-page #session-form button[type="submit"]:active,
 html[data-design] .settings-page #filters-form button[type="submit"]:active,
 html[data-design] .settings-page .btn-finish-small:active,

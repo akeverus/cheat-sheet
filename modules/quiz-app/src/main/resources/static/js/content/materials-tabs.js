@@ -18,19 +18,15 @@ export function initContentTabs() {
   document.querySelectorAll('.question-materials').forEach((materials) => {
     if (materials.getAttribute('data-content-tabs-ready') === 'true') return;
     const tablist = materials.querySelector('.content-tablist');
-    const activated = initTablist(tablist, {
-      reveal() {
-        materials.classList.add('js-content-tabs');
-        tablist.hidden = false;
-      }
-    });
+    const activated = initTablist(tablist);
     if (!activated) return;
     materials.setAttribute('data-content-tabs-ready', 'true');
-    // Пока вкладки не разведены, обе панели видны — а ленивая отрисовка схемы
-    // смотрит именно на видимость. Модуль вкладок грузится динамически (роутовый
-    // чанк), поэтому окно «оба блока раскрыты» реально существует, и без сигнала
-    // схема успевала утянуть mermaid для закрытой вкладки. Событие вместо импорта:
-    // рендерер есть не на всех страницах с вкладками.
+    // Ленивая отрисовка схемы смотрит на видимость панели. С iter-80 лишние
+    // панели гасит CSS ещё до первого кадра, так что окна «оба блока раскрыты»
+    // больше нет, — но событие остаётся: рендерер ждёт именно момента, когда
+    // активная вкладка уже выбрана (она может быть и «Схемой»), а не момента
+    // загрузки модуля. Событие вместо импорта: рендерер есть не на всех
+    // страницах с вкладками.
     document.dispatchEvent(new CustomEvent('contenttabsready', { detail: { root: materials } }));
   });
 }

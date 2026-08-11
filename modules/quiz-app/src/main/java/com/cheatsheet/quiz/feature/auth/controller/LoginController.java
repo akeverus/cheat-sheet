@@ -1,6 +1,7 @@
 package com.cheatsheet.quiz.feature.auth.controller;
 
 import com.cheatsheet.quiz.config.app.AppProperties;
+import com.cheatsheet.quiz.feature.auth.service.LoginPageService;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
@@ -19,13 +20,16 @@ public class LoginController {
 
     private final AppProperties appProperties;
     private final ObjectProvider<ClientRegistrationRepository> clientRegistrations;
+    private final LoginPageService loginPageService;
 
     public LoginController(
             AppProperties appProperties,
-            ObjectProvider<ClientRegistrationRepository> clientRegistrations
+            ObjectProvider<ClientRegistrationRepository> clientRegistrations,
+            LoginPageService loginPageService
     ) {
         this.appProperties = appProperties;
         this.clientRegistrations = clientRegistrations;
+        this.loginPageService = loginPageService;
     }
 
     @GetMapping("/login")
@@ -36,6 +40,9 @@ public class LoginController {
     ) {
         model.addAttribute("loginError", error != null);
         model.addAttribute("loginLogout", logout != null);
+        // Обзор банка вопросов — вторая колонка страницы. До входа это
+        // единственное, что можно рассказать честно: прогресса ещё нет.
+        model.addAttribute("bankOverview", loginPageService.overview());
         AppProperties.Oauth oauth = appProperties.getSecurity().getOauth();
         if (oauth.isEnabled()) {
             ClientRegistrationRepository repo = clientRegistrations.getIfAvailable();

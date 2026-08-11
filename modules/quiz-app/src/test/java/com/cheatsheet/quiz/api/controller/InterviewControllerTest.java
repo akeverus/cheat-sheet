@@ -179,7 +179,7 @@ class InterviewControllerTest {
     /** Экран фокуса обязан показать либо вопрос, либо явное пустое состояние. */
     private void assertFocusPageRendered(String body) {
         assertThat(body).contains("<body class=\"focus-page\">");
-        assertThat(body).containsAnyOf("class=\"focus-question\"", "class=\"empty-title\"");
+        assertThat(body).containsAnyOf("class=\"focus-question\"", "class=\"empty-state-title\"");
     }
 
     private void assertNoInlineUiAttributes(String body) {
@@ -451,21 +451,67 @@ class InterviewControllerTest {
     }
 
     @Test
-    void statsFilterActionsExposeClearCtaContract() throws Exception {
+    void statsFilterBandIsSingleFormOverSingleEndpoint() throws Exception {
+        // iter-72. До этого над одним `GET /stats` стояли ДВЕ формы, и каждая
+        // тащила поля соседки скрытыми копиями со значениями с сервера —
+        // несохранённый ввод соседней формы при отправке молча пропадал.
+        // Гейт держит инвариант: одна форма, ни одного скрытого дубля видимого
+        // поля, каждый параметр отбора встречается в разметке ровно один раз.
         String body = mockMvc.perform(get("/stats"))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        assertThat(body).contains("stats-filters-form");
-        assertThat(body).contains("stats-search-form");
-        assertThat(countOccurrences(body, "stats-action-btn")).isGreaterThanOrEqualTo(2);
-        assertThat(body).contains("stats-apply-action");
-        assertThat(body).contains("aria-label=\"Применить фильтры статистики\"");
-        assertThat(body).contains("Применить фильтры");
-        assertThat(body).contains("stats-search-action");
-        assertThat(body).contains("aria-label=\"Искать по вопросам\"");
+        assertThat(countOccurrences(body, "class=\"filter-bar-form\"")).isEqualTo(1);
+        for (String param : new String[] {"q", "group", "topic", "important", "onlyWrong"}) {
+            assertThat(countOccurrences(body, "name=\"" + param + "\""))
+                    .as("параметр отбора %s не должен дублироваться скрытой копией", param)
+                    .isEqualTo(1);
+        }
+
+        // Одна система полей и одна система кнопок (§24, продолжение FRD-022):
+        // отбор рисуется общими `.field`/`.field-label`/`.toggle-item`/`.btn`.
+        assertThat(body).contains("class=\"field filter-bar-field");
+        assertThat(body).contains("class=\"field-label\"");
+        assertThat(body).contains("class=\"toggle-item\"");
+        assertThat(body).contains("class=\"btn next-btn\"");
+        for (String retired : new String[] {
+            "stats-filters-form", "stats-search-form", "stats-action-btn",
+            "stats-apply-action", "stats-search-action", "stats-filter-pane",
+            "stats-search-pane", "stats-pane-label", "stats-filter-row",
+            "stats-filter-separated", "filter-row", "search-form",
+            // iter-74: полоса отбора стала общим компонентом `.filter-bar-*`
+            // (/stats + /bookmarks). Страничные имена сняты целиком — вернуться
+            // они могут только вместе со второй копией правил, которую §24
+            // запрещает; отсюда гейт на само имя, а не на его CSS.
+            "stats-filter-card", "stats-filter-form", "stats-filter-field",
+            "stats-filter-state", "stats-filter-chip", "stats-filter-reset"
+        }) {
+            assertThat(body).as("снятое имя %s не должно возвращаться", retired).doesNotContain(retired);
+        }
+    }
+
+    @Test
+    void statsFilterBandStatesActiveSelectionInWords() throws Exception {
+        // Без отбора строки состояния и «Сбросить» нет — пустой чип не сообщение.
+        String plain = mockMvc.perform(get("/stats"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(plain).doesNotContain("filter-bar-state");
+
+        // С отбором — выборка сказана словами, а не только положением контролов.
+        String filtered = mockMvc.perform(get("/stats").param("q", "hikaricp").param("onlyWrong", "true"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(filtered).contains("filter-bar-state");
+        assertThat(filtered).contains("hikaricp");
+        assertThat(filtered).contains("только ошибки");
+        assertThat(filtered).contains("Сбросить");
     }
 
     @Test
@@ -585,29 +631,54 @@ class InterviewControllerTest {
         assertThat(body).doesNotContain("href=\"/stats?important=true\"");
     }
 
+    /**
+     * Сортировка таблицы тем приходит готовой в первом кадре (iter-81, FRD-048).
+     *
+     * <p>Раньше сервер отдавал «скелет» ({@code class="sortable"} +
+     * {@code data-sort-label}), а состояние навешивал {@code table-sort.js} —
+     * то есть в серверном HTML заголовок был БЕЗ {@code aria-sort}, и до
+     * инициализации скрипта скринридер читал отсортированную таблицу как
+     * несортированную. Сейчас порядок задаёт адрес страницы, поэтому
+     * {@code aria-sort} и целевые ссылки обязаны быть прямо в ответе.</p>
+     */
     @Test
-    void statsTableHeadersExposeKeyboardSortableContract() throws Exception {
+    void statsTableHeadersCarrySortStateInServerHtml() throws Exception {
         String body = mockMvc.perform(get("/stats"))
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        // Сервер рендерит «скелет» сортируемой таблицы: класс .sortable + data-метки
-        // на каждой сортируемой колонке + скрытый live-region для анонса сортировки.
-        // Клавиатурные ARIA-атрибуты (role=columnheader / tabindex / aria-sort /
-        // aria-keyshortcuts="Enter Space") навешивает table-sort.js при инициализации —
-        // это progressive enhancement, в серверном HTML их НЕТ (round-01 C28:
-        // role=columnheader у нативного <th> избыточен, состояние держит aria-sort).
-        // `<th>` теперь несёт scope="col" (a11y, WCAG 1.3.1/H63, commit b57cc089) →
-        // проверяем подстроку class="sortable" без жёсткой привязки к порядку атрибутов.
-        assertThat(body).contains("class=\"sortable\"");
-        assertThat(countOccurrences(body, "class=\"sortable")).isGreaterThanOrEqualTo(4);
-        assertThat(body).contains("data-sort-label=");
-        assertThat(body).contains("id=\"table-sort-status\"");
-        assertThat(body).contains("id=\"table-sort-status\" class=\"visually-hidden\"");
-        assertThat(body).contains("aria-live=\"polite\"");
-        assertThat(body).contains("aria-atomic=\"true\"");
+        assertThat(body).contains("aria-sort=");
+        assertThat(countOccurrences(body, "class=\"col-sort\"")).isGreaterThanOrEqualTo(4);
+        assertThat(body).contains("sort=accuracy");
+        assertThat(body).contains("#topic-table-section");
+        // Ровно один заголовок отсортирован — иначе порядок неоднозначен.
+        assertThat(countOccurrences(body, "aria-sort=\"ascending\"")
+                + countOccurrences(body, "aria-sort=\"descending\"")).isEqualTo(1);
+        assertThat(body).doesNotContain("data-sort-label=");
+        assertThat(body).doesNotContain("table-sort-status");
+    }
+
+    /**
+     * {@code ?sort=} и {@code ?rows=} меняют реальную выдачу, а неизвестное
+     * значение молча падает в дефолт (идиома FRD-024 с {@code /bookmarks}).
+     */
+    @Test
+    void statsTableOrderAndVolumeFollowUrlState() throws Exception {
+        String byAccuracy = mockMvc.perform(get("/stats").param("sort", "accuracy"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(byAccuracy).contains("aria-sort=\"ascending\"");
+
+        String garbage = mockMvc.perform(get("/stats").param("sort", "../etc").param("dir", "sideways"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(garbage).contains("sort=name");
+        assertThat(garbage).doesNotContain("sideways");
+
+        String all = mockMvc.perform(get("/stats").param("rows", "all"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertThat(all).contains("Свернуть таблицу");
+        assertThat(all).doesNotContain("Показать все темы");
     }
 
     @Test
@@ -772,7 +843,7 @@ class InterviewControllerTest {
         assertThat(body).contains("data-ui-fragment=\"training-actions\"");
         assertThat(body).contains("data-ui-fragment=\"result-zone-head\"");
         assertThat(body).contains("data-ui-fragment=\"post-answer-controls\"");
-        assertThat(body).contains("data-ui-fragment=\"inline-alert\"");
+        assertThat(body).contains("data-ui-fragment=\"notice-slot\"");
     }
 
     @Test

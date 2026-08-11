@@ -51,6 +51,7 @@ public class MvcModelAttributeMapper {
      */
     public void applySurfaceState(Model model, FocusTrainingPageService.SurfaceState surfaceState) {
         model.addAttribute("stats", surfaceState.stats());
+        model.addAttribute("metrics", surfaceState.metrics());
         model.addAttribute("filteredStats", surfaceState.filteredStats());
         applyTopics(model, surfaceState.topics());
         model.addAttribute("groups", surfaceState.groups());
@@ -367,6 +368,10 @@ public class MvcModelAttributeMapper {
         model.addAttribute("searchQuery", state.searchQuery());
         model.addAttribute("searchResults", state.searchResults());
         model.addAttribute("topicStats", state.topicStats());
+        // Таблица тем — отдельный атрибут, а не срез `topicStats`: по полному списку
+        // считаются графики и сводки над таблицей, и урезав его до 12 строк, страница
+        // объявила бы 12 тем вместо 319 всюду, где ссылается на размер выборки.
+        model.addAttribute("topicTable", state.topicTable());
         model.addAttribute("topicStatsJson", state.topicStatsJson());
         model.addAttribute("coverageGaps", state.coverageGaps());
         model.addAttribute("reviewForecast", state.reviewForecast());
@@ -400,6 +405,17 @@ public class MvcModelAttributeMapper {
     public void applyBookmarksPageState(Model model, BookmarksPageService.BookmarksPageState state) {
         model.addAttribute("bookmarks", state.items());
         model.addAttribute("bookmarksTotal", state.total());
+        // `bookmarksShown` отдельно от `bookmarksTotal`: без отбора числа равны, а
+        // при отборе шапка обязана называть оба — «14 из 28». Одно число здесь
+        // было бы неправдой в обе стороны: total выдал бы за показанное то, чего
+        // на экране нет, shown — скрыл бы, что коллекция больше выборки.
+        model.addAttribute("bookmarksShown", state.shown());
+        model.addAttribute("bookmarkGroups", state.groups());
+        model.addAttribute("bookmarksFilterActive", state.filtered());
+        model.addAttribute("bookmarksQuery", state.query().q());
+        model.addAttribute("bookmarksGroup", state.query().group());
+        model.addAttribute("bookmarksNote", state.query().note());
+        model.addAttribute("bookmarksSort", state.query().sort());
     }
 
     /**

@@ -8,19 +8,146 @@
 <div class="app">
     <aside th:replace="~{fragments/sidebar :: sidebar(active='analytics')}"></aside>
     <div class="shell-main">
-        <th:block th:replace="~{fragments/topbar :: topbar}"></th:block>
+        <th:block th:replace="~{fragments/shell-head :: shell-head}"></th:block>
 <main id="main-content" class="ed-page" tabindex="-1">
 <div class="app-layout">
-<div class="main-content">
+<!--/* `topicFilterActive` — ОДНО определение «отбор сужает срезы по темам» на всю
+     страницу. До iter-73 это же выражение стояло переписанным от руки в трёх местах
+     (строка «Отобрано», гейт пустого состояния, счётчик выборки): любое новое условие
+     отбора пришлось бы добавлять в каждую копию, и расхождение копий выглядело бы не
+     как опечатка, а как разные утверждения страницы о самой себе.
 
-<!--/* Интро аналитики (docs 2.4). */-->
-<div class="stats-intro">
-    <span class="eyebrow">Учебная аналитика</span>
-    <h1 class="stats-title">Твой прогресс</h1>
-    <p class="muted stats-intro-lead">Метрики с явными знаменателями — и одно рекомендованное действие.
+     Запрос (`searchQuery`) в предикат НЕ входит намеренно: он правит секцию
+     «Результаты поиска» и не сужает ни таблицу тем, ни графики. */-->
+<div class="main-content"
+     th:with="topicFilterActive=${selectedGroup != null or (filter != null and (filter.topic != null or filter.importantOnly == true or filter.onlyWrong == true))}">
+
+<!--/* Шапка страницы — общий компонент .page-head (shell.css), не собственный
+     блок аналитики. Ключевая строка с заголовком и поясняющий абзац стоят В ОДНОЙ
+     полосе, а не стопкой из трёх строк.
+
+     Замер iter-61 на 1440×900: стопка занимала 177px по вертикали, при том что
+     самая широкая её строка — 660px текста в полосе шириной 1105px. 445px
+     горизонтали не использовались ни одной строкой, а цена за это платилась
+     вертикалью первого экрана — там, где §8 требует показать рабочий контент. */-->
+<div class="page-head">
+    <div class="page-head-title">
+        <span class="eyebrow">Учебная аналитика</span>
+        <h1>Твой прогресс</h1>
+    </div>
+    <!--/* kpi-role здесь отвечает на «по чему это посчитано» (та же роль, что
+         «Только эта сессия» на /session-summary). До iter-73 надпись была
+         безусловной — и при активном отборе становилась неправдой: и сводка «Что
+         делать дальше», и все срезы по темам считаются по выборке, а не по банку. */-->
+    <p class="muted page-head-lead">Метрики с явными знаменателями — и одно рекомендованное действие.
        «—» значит «пока нет данных для этой доли», а не «ноль».
-       <span class="kpi-role">Источник: весь банк вопросов</span></p>
+       <span class="kpi-role"
+             th:text="${topicFilterActive} ? 'Источник: выбранная часть банка' : 'Источник: весь банк вопросов'">Источник: весь банк вопросов</span></p>
 </div>
+
+<!--/* Рекомендованное действие — ПЕРВЫЙ рабочий блок страницы, а не четвёртый.
+     Замер iter-61: карточка «Повторить сегодня» стояла на y=728 и не помещалась
+     в окно на 1280×720, 1280×800, 1366×768 и 1440×900 — то есть ровно на ходовых
+     MacBook. Обещание в шапке («и одно рекомендованное действие») выполнялось
+     только после прокрутки.
+
+     Блок вынесен из вкладки «Обзор» на уровень страницы: рекомендация не
+     принадлежит одному разделу аналитики, она про страницу целиком, и, стоя во
+     вкладке, пропадала при переходе на «Темы». Вкладка «Обзор» после выноса
+     осталась пустой и удалена — она называла обзором не метрики (те и так всегда
+     на экране), а именно эту карточку.
+
+     Блок использует уже существующие маршруты/флаги: / — повторение due,
+     onlyWrong — разбор ошибок, weakTopics — стратегия слабых тем. */-->
+<section class="card stats-next-actions" aria-labelledby="stats-next-actions-title">
+    <div class="stats-next-actions-head">
+        <h2 id="stats-next-actions-title">Что делать дальше</h2>
+        <p th:if="${stats == null or stats.total > 0}">Выбери короткую следующую сессию по текущему состоянию банка.</p>
+        <!--/* Отбор, под который не попал ни один вопрос. Три карточки ниже считаются по
+             выборке (iter-73), и на пустой выборке они честно печатают нули — но нуль
+             там читается как оценка прогресса: «Повторить сегодня 0 · всё повторено»
+             сообщает, что человек всё выучил, тогда как повторять просто нечего.
+             Показываем причину вместо трёх нулей. */-->
+        <p th:if="${stats != null and stats.total == 0}">Под текущий отбор не попал ни один вопрос — предлагать сессию не из чего.
+           <a th:href="@{/stats}">Сбросить отбор</a>.</p>
+    </div>
+    <div class="stats-next-actions-grid" th:if="${stats == null or stats.total > 0}">
+        <!--/* Очередь = долг по повторениям + вопросы без единого ответа. Карточка
+             называет то, что действительно предстоит: на пустом прогрессе весь банк
+             лежит в due, и «9815 вопросов к повтору» обещало повторить непройденное.
+             Рекомендуем по-прежнему по due — показать есть что в обеих ветках. */-->
+        <a class="stats-next-action stats-next-action-primary"
+           th:href="@{/}"
+           th:with="repeats=${stats.dueRepeats()}, fresh=${stats.fresh}"
+           th:classappend="${stats.due > 0} ? ' is-recommended'">
+            <span class="stats-next-action-label"
+                  th:text="${repeats == 0 and fresh > 0 ? 'Учить новое' : 'Повторить сегодня'}">Повторить сегодня</span>
+            <strong th:text="${repeats > 0 ? repeats : fresh}">0</strong>
+            <span class="stats-next-action-detail"
+                  th:text="${repeats > 0
+                      ? @plural.pick(repeats, 'вопрос к повтору', 'вопроса к повтору', 'вопросов к повтору')
+                      : (fresh > 0
+                          ? @plural.pick(fresh, 'вопрос ещё не открывали', 'вопроса ещё не открывали', 'вопросов ещё не открывали')
+                          : 'всё повторено')}">вопросов к повтору</span>
+        </a>
+        <a class="stats-next-action"
+           th:href="@{/(onlyWrong=true, ordered=true)}"
+           th:classappend="${stats.due == 0 and stats.wrong > 0} ? ' is-recommended'">
+            <span class="stats-next-action-label">Разобрать ошибки</span>
+            <strong th:text="${stats.wrong}">0</strong>
+            <span class="stats-next-action-detail"
+                  th:text="${stats.wrong > 0 ? @plural.pick(stats.wrong, 'ошибка в истории', 'ошибки в истории', 'ошибок в истории') : 'ошибок пока нет'}">ошибок в истории</span>
+        </a>
+        <!--/* Слабую тему и их число считает сервер (QuestionStatsRepository.findWeakestTopic
+             / countWeakTopics) — тем же правилом и тем же порогом, по которому режим
+             «Слабые темы» потом выбирает вопрос. Подпись и deep-link верны без JS, и
+             карточка не может пообещать одну тему, а тренировка дать другую.
+
+             Счётчик — число слабых тем, а не всех тем в аналитике: соседние карточки
+             показывают объём работы (долг по повторениям, ошибки), и «320 тем в
+             аналитике» рядом с ними читалось бы как такой же backlog, которым не
+             является. */-->
+        <a class="stats-next-action stats-next-action-weak"
+           th:href="@{/(weakTopics=true, ordered=true, topic=${weakestTopic?.topic()})}"
+           th:with="hasAttempts=${stats.correct + stats.wrong > 0}"
+           th:classappend="${stats.due == 0 and stats.wrong == 0 and weakTopicCount > 0} ? ' is-recommended'"
+           th:aria-label="${weakestTopic != null
+             ? ('Тренировать слабые темы. Слабее всего: ' + @topicUtils.displayName(weakestTopic.topic())
+                + ', точность ' + weakestTopic.accuracyPercent() + '%.')
+             : null}">
+            <!--/* Порядок строк — тот же, что у двух соседних карточек: подпись →
+                 большое число → расшифровка. Карточка внутри — грид с авто-строками,
+                 и когда строка с темой стояла между подписью и числом, число этой
+                 карточки уезжало в третью строку, а у соседних оставалось во второй:
+                 три главные цифры блока читались с трёх разных базовых линий.
+                 Уточнение про конкретную тему — четвёртой строкой, снизу: оно
+                 дополняет счётчик, а не заменяет его. */-->
+            <span class="stats-next-action-label">Тренировать слабые темы</span>
+            <strong th:text="${weakTopicCount}">0</strong>
+            <!--/* Плюрализация как в соседних карточках (@plural.pick): «1 тема» / «4 темы» /
+                 «5 тем». Раньше суффикс «тем» был захардкожен → «1 тем»/«4 тем» (неверно
+                 для 1 и 2–4). */-->
+            <span class="stats-next-action-detail"
+                  th:text="${weakTopicCount > 0
+                    ? @plural.pick(weakTopicCount, 'слабая тема', 'слабые темы', 'слабых тем')
+                    : (hasAttempts ? 'слабых тем нет' : 'слабых тем пока нет')}">слабых тем</span>
+            <span class="stats-next-action-topic"
+                  th:title="${weakestTopic?.topic()}"
+                  th:text="${weakestTopic != null
+                    ? ('Слабее всего: ' + @topicUtils.displayName(weakestTopic.topic()) + ' · ' + weakestTopic.accuracyPercent() + '%')
+                    : (hasAttempts ? 'Слабых тем нет — все выше порога' : 'Появятся после первых ответов')}">Самая слабая тема</span>
+        </a>
+    </div>
+</section>
+
+<!--/* Оговорка о границе отбора. Четыре плитки ниже считает LearningMetricsService
+     по всему счёту, и отбор их не сужает — в отличие от сводки выше и всех срезов
+     по темам. Пока /stats показывала весь банк везде, разницы не существовало; с
+     iter-73 она появилась, и молчать о ней значит выдавать общий счёт за результат
+     выбранной части банка. Строка показывается ТОЛЬКО при активном отборе: без
+     него оговаривать нечего, и постоянная надпись была бы шумом. */-->
+<p class="muted tiny kpi-role stats-scope-note" th:if="${metrics != null and topicFilterActive}">
+    Четыре метрики ниже — по всему счёту целиком: отбор их не сужает.</p>
 
 <!--/* Четыре ключевые метрики (docs 2.4/14: «четыре ключевые метрики вместо
      повторяющихся карточек»). Источник — LearningMetricsService (глобально по
@@ -109,17 +236,21 @@
     </article>
 </section>
 
-<!--/* Вкладки аналитики (docs 2.4 / UI-012): Обзор | Темы | Динамика | Ошибки.
-     PE: tablist скрыт без JS (.hidden); stats.js раскрывает его и ставит .js-tabs
-     на <body> → видна одна панель. Без JS все панели в стопке (весь контент
-     доступен). Полный ARIA tabs-паттерн (roving tabindex, ←→↑↓/Home/End) +
-     hash deep-link (#topics/#dynamics/#errors) — в stats.js. */-->
-<div class="section-tabs hidden" role="tablist" id="stats-tablist" aria-label="Разделы аналитики">
-    <button type="button" class="section-tab" role="tab" id="stats-tab-overview"
-            aria-controls="stats-panel-overview" aria-selected="true" tabindex="0"
-            data-tab-hash="overview">Обзор</button>
+<!--/* Вкладки аналитики (docs 2.4 / UI-012): Темы | Динамика | Ошибки.
+     PE: полосу вкладок и лишние панели гасит CSS по отсутствию `data-js` на
+     <html> (components-tabs.css) — без JS все панели в стопке (весь контент
+     доступен). Утилита `.hidden` и класс `.js-tabs`, которые вешал stats/index.js
+     ПОСЛЕ инициализации графиков, сняты в iter-80: страница держала 21734px
+     стопки 149 мс после отрисовки. Полный ARIA tabs-паттерн (roving tabindex, ←→↑↓/Home/End) +
+     hash deep-link (#dynamics/#errors) — в stats.js.
+
+     Вкладки «Обзор» здесь больше нет (iter-61): она содержала ровно карточку
+     «Что делать дальше», и та поднята на уровень страницы — см. комментарий у
+     блока выше. Пустую вкладку не оставляем: пустая панель в tablist ломает
+     клавиатурный обход и обещает раздел, которого нет. */-->
+<div class="section-tabs" role="tablist" id="stats-tablist" aria-label="Разделы аналитики">
     <button type="button" class="section-tab" role="tab" id="stats-tab-topics"
-            aria-controls="stats-panel-topics" aria-selected="false" tabindex="-1"
+            aria-controls="stats-panel-topics" aria-selected="true" tabindex="0"
             data-tab-hash="topics">Темы</button>
     <button type="button" class="section-tab" role="tab" id="stats-tab-dynamics"
             aria-controls="stats-panel-dynamics" aria-selected="false" tabindex="-1"
@@ -129,98 +260,152 @@
             data-tab-hash="errors">Ошибки</button>
 </div>
 
-<!--/* ================= Панель: Обзор ================= */-->
-<section class="stats-panel is-active" role="tabpanel" id="stats-panel-overview"
-         aria-labelledby="stats-tab-overview" tabindex="0">
-    <h2 class="stats-panel-title visually-hidden">Обзор</h2>
-
-    <!--/* Следующее действие: аналитика должна сразу подсказывать учебный шаг, а не
-         только показывать числа. Блок использует уже существующие маршруты/флаги:
-         / — повторение due, onlyWrong — разбор ошибок, weakTopics — стратегия слабых тем. */-->
-    <section class="card stats-next-actions" aria-labelledby="stats-next-actions-title">
-        <div class="stats-next-actions-head">
-            <h2 id="stats-next-actions-title">Что делать дальше</h2>
-            <p>Выбери короткую следующую сессию по текущему состоянию банка.</p>
-        </div>
-        <div class="stats-next-actions-grid">
-            <!--/* Очередь = долг по повторениям + вопросы без единого ответа. Карточка
-                 называет то, что действительно предстоит: на пустом прогрессе весь банк
-                 лежит в due, и «9815 вопросов к повтору» обещало повторить непройденное.
-                 Рекомендуем по-прежнему по due — показать есть что в обеих ветках. */-->
-            <a class="stats-next-action stats-next-action-primary"
-               th:href="@{/}"
-               th:with="repeats=${stats.dueRepeats()}, fresh=${stats.fresh}"
-               th:classappend="${stats.due > 0} ? ' is-recommended'">
-                <span class="stats-next-action-label"
-                      th:text="${repeats == 0 and fresh > 0 ? 'Учить новое' : 'Повторить сегодня'}">Повторить сегодня</span>
-                <strong th:text="${repeats > 0 ? repeats : fresh}">0</strong>
-                <span class="stats-next-action-detail"
-                      th:text="${repeats > 0
-                          ? @plural.pick(repeats, 'вопрос к повтору', 'вопроса к повтору', 'вопросов к повтору')
-                          : (fresh > 0
-                              ? @plural.pick(fresh, 'вопрос ещё не открывали', 'вопроса ещё не открывали', 'вопросов ещё не открывали')
-                              : 'всё повторено')}">вопросов к повтору</span>
-            </a>
-            <a class="stats-next-action"
-               th:href="@{/(onlyWrong=true, ordered=true)}"
-               th:classappend="${stats.due == 0 and stats.wrong > 0} ? ' is-recommended'">
-                <span class="stats-next-action-label">Разобрать ошибки</span>
-                <strong th:text="${stats.wrong}">0</strong>
-                <span class="stats-next-action-detail"
-                      th:text="${stats.wrong > 0 ? @plural.pick(stats.wrong, 'ошибка в истории', 'ошибки в истории', 'ошибок в истории') : 'ошибок пока нет'}">ошибок в истории</span>
-            </a>
-            <!--/* Слабую тему и их число считает сервер (QuestionStatsRepository.findWeakestTopic
-                 / countWeakTopics) — тем же правилом и тем же порогом, по которому режим
-                 «Слабые темы» потом выбирает вопрос. Подпись и deep-link верны без JS, и
-                 карточка не может пообещать одну тему, а тренировка дать другую.
-
-                 Счётчик — число слабых тем, а не всех тем в аналитике: соседние карточки
-                 показывают объём работы (долг по повторениям, ошибки), и «320 тем в
-                 аналитике» рядом с ними читалось бы как такой же backlog, которым не
-                 является. */-->
-            <a class="stats-next-action stats-next-action-weak"
-               th:href="@{/(weakTopics=true, ordered=true, topic=${weakestTopic?.topic()})}"
-               th:with="hasAttempts=${stats.correct + stats.wrong > 0}"
-               th:classappend="${stats.due == 0 and stats.wrong == 0 and weakTopicCount > 0} ? ' is-recommended'"
-               th:aria-label="${weakestTopic != null
-                 ? ('Тренировать слабые темы. Слабее всего: ' + @topicUtils.displayName(weakestTopic.topic())
-                    + ', точность ' + weakestTopic.accuracyPercent() + '%.')
-                 : null}">
-                <!--/* Порядок строк — тот же, что у двух соседних карточек: подпись →
-                     большое число → расшифровка. Карточка внутри — грид с авто-строками,
-                     и когда строка с темой стояла между подписью и числом, число этой
-                     карточки уезжало в третью строку, а у соседних оставалось во второй:
-                     три главные цифры блока читались с трёх разных базовых линий.
-                     Уточнение про конкретную тему — четвёртой строкой, снизу: оно
-                     дополняет счётчик, а не заменяет его. */-->
-                <span class="stats-next-action-label">Тренировать слабые темы</span>
-                <strong th:text="${weakTopicCount}">0</strong>
-                <!--/* Плюрализация как в соседних карточках (@plural.pick): «1 тема» / «4 темы» /
-                     «5 тем». Раньше суффикс «тем» был захардкожен → «1 тем»/«4 тем» (неверно
-                     для 1 и 2–4). */-->
-                <span class="stats-next-action-detail"
-                      th:text="${weakTopicCount > 0
-                        ? @plural.pick(weakTopicCount, 'слабая тема', 'слабые темы', 'слабых тем')
-                        : (hasAttempts ? 'слабых тем нет' : 'слабых тем пока нет')}">слабых тем</span>
-                <span class="stats-next-action-topic"
-                      th:title="${weakestTopic?.topic()}"
-                      th:text="${weakestTopic != null
-                        ? ('Слабее всего: ' + @topicUtils.displayName(weakestTopic.topic()) + ' · ' + weakestTopic.accuracyPercent() + '%')
-                        : (hasAttempts ? 'Слабых тем нет — все выше порога' : 'Появятся после первых ответов')}">Самая слабая тема</span>
-            </a>
-        </div>
-    </section>
-</section>
-
 <!--/* ================= Панель: По темам ================= */-->
-<section class="stats-panel" role="tabpanel" id="stats-panel-topics"
+<section class="stats-panel is-active" role="tabpanel" id="stats-panel-topics"
          aria-labelledby="stats-tab-topics" tabindex="0">
-    <h2 class="stats-panel-title visually-hidden">Темы</h2>
+    <h2 class="stats-panel-title tabpanel-title">Темы</h2>
+
+    <!--/* Отбор: ОДНА форма над одним GET /stats. Стоит ПЕРВЫМ в панели.
+
+         До iter-73 отбор лежал ПОД каталогом разделов, и порядок был оправдан:
+         отбор не сужал ничего, кроме списка тем в селекте, поэтому «сначала
+         выбери область, потом уточняй» читалось верно. С iter-73 (FRD-025) от
+         отбора зависит вся панель — таблица, оба графика, пробелы, разбор
+         ошибок и карточка слабой темы. Замерено (WebKit 1512×982,
+         `?group=foundation&onlyWrong=true`): строка «3 темы в выборке» лежала
+         на 1985px при сгибе 982, а выше неё стояло 876px каталога, считанного
+         по ПОЛНОМУ банку. То есть страница сначала показывала цифры по всему
+         банку и только потом сообщала, что показанное ниже — не весь банк.
+         Отбор поднят над каталогом: сперва «что показано», затем данные.
+         Порядок в DOM, не в CSS `order`, — иначе клавиатурный обход разошёлся
+         бы с видимым (WCAG 2.4.3).
+
+         До iter-72 здесь стояли ДВЕ формы — «Фильтры» и «Поиск» — бьющие в тот
+         же самый эндпоинт с тем же набором из шести параметров и тащившие поля
+         друг друга скрытыми копиями (семь `input[type=hidden]` суммарно).
+         Скрытая копия берёт значение с СЕРВЕРА, поэтому набранное или
+         переключённое в соседней форме, но ещё не отправленное, молча
+         терялось. Замерено нажатиями (iter-72): набрать «kafka» в поиске,
+         сменить раздел, нажать «Применить фильтры» → уходит `q=` (пусто);
+         обратно — выбрать раздел, набрать запрос, нажать «Искать» → уходит
+         `group=` (пусто). Одна форма снимает это структурно: каждый параметр
+         существует ровно в одном экземпляре и все уезжают вместе. */-->
+    <section class="card filter-bar" aria-labelledby="filter-bar-heading">
+        <h2 id="filter-bar-heading" class="mt-0">Отбор</h2>
+        <!--/* Что сейчас отобрано — прозой, а не только состоянием контролов.
+             Строка появляется, лишь когда отбор действительно сужен: иначе она
+             сообщала бы «показано всё», то есть ничего.
+
+             Стоит НАД формой (iter-73): это состояние страницы, а не поле ввода,
+             и читать его надо до контролов, которыми его меняют. Замер WebKit
+             1512×982 при `?group=foundation&onlyWrong=true`: под формой строка
+             «3 темы в выборке» лежала на 1077px при сгибе 982, над формой —
+             на 972px, то есть на первом экране. «Сбросить» уходит первым в
+             клавиатурный обход карточки, и это верный порядок: отменить весь
+             отбор — действие над тем, что уже применено, а не над набираемым. */-->
+        <p class="filter-bar-state"
+           th:if="${topicFilterActive or (searchQuery != null and !#strings.isEmpty(searchQuery))}">
+            <span class="filter-bar-state-label">Отобрано:</span>
+            <span class="filter-bar-chip" th:if="${searchQuery != null and !#strings.isEmpty(searchQuery)}">запрос «<span th:text="${searchQuery}">…</span>»</span>
+            <!--/* Раздел называем его заголовком, а не идентификатором: в URL
+                 лежит `foundation`, человеку нужно «Основы». th:each+th:if —
+                 способ сделать поиск по списку без нового model-атрибута. */-->
+            <span class="filter-bar-chip"
+                  th:each="g : ${groups != null ? groups : T(java.util.Collections).emptyList()}"
+                  th:if="${selectedGroup != null and selectedGroup == g.id()}"
+                  th:text="'раздел ' + ${g.title()}">раздел</span>
+            <span class="filter-bar-chip" th:if="${filter != null and filter.topic != null}" th:text="'тема ' + ${@topicUtils.displayName(filter.topic)}">тема</span>
+            <span class="filter-bar-chip" th:if="${filter != null and filter.importantOnly == true}">только избранные</span>
+            <span class="filter-bar-chip" th:if="${filter != null and filter.onlyWrong == true}">только ошибки</span>
+            <!--/* Размер выборки прозой. В iter-72 этого счётчика здесь не было
+                 намеренно: `topicStats` строился по полному банку, и любое число
+                 рядом с чипами было бы неправдой о том, что показано ниже. С
+                 iter-73 срезы по темам считаются по самой выборке (FRD-025), и
+                 число стало правдой — оно ровно равно числу строк «Детализации
+                 по темам» и числу столбиков в обоих графиках. */-->
+            <!--/* Только при отборе по темам. Запрос сам по себе срез по темам не
+                 сужает — он правит секцию «Результаты поиска», — и число рядом с
+                 чипом «запрос «…»» читалось бы как «запрос выбрал 319 тем». */-->
+            <span class="filter-bar-count"
+                  th:if="${topicFilterActive}"
+                  th:with="n=${topicStats != null ? topicStats.size() : 0}"
+                  th:text="${n} + ' ' + ${@plural.pick(n, 'тема', 'темы', 'тем')} + ' в выборке'">0 тем в выборке</span>
+            <a class="filter-bar-reset" th:href="@{/stats}">Сбросить</a>
+        </p>
+        <!--/* `role="search"` с именем: полоса и ищет, и фильтрует — это один
+             ориентир, а не два. Раньше именованных ориентира было два подряд. */-->
+        <form method="get" th:action="@{/stats}" class="filter-bar-form"
+              role="search" aria-label="Отбор вопросов и статистики">
+            <label class="field filter-bar-field filter-bar-query">
+                <span class="field-label">Поиск</span>
+                <!--/* type=search → нативный крестик-очистка + семантика поиска; enterkeyhint=search —
+                     клавиша Enter экранной клавы как «Поиск»; spellcheck/autocorrect/autocapitalize off —
+                     ищут по слагам/техтерминам (spring-boot, hikaricp), не словарным словам. */-->
+                <input type="search" name="q" placeholder="Например, hikaricp" th:value="${searchQuery}"
+                       class="search-input" enterkeyhint="search" spellcheck="false"
+                       autocomplete="off" autocorrect="off" autocapitalize="off">
+            </label>
+            <label class="field filter-bar-field">
+                <span class="field-label">Раздел</span>
+                <!--/* Подпись опции — имя раздела и счётчик, без описания. Замер
+                     (iter-72): с описанием подпись доходила до 79 символов, а
+                     закрытый селект шириной 199-254px показывал «Основы - Базовые
+                     темь» — контрол не сообщал собственное состояние. Описание
+                     раздела уже стоит выше, в каталоге тем, и второй раз не нужно. */-->
+                <select name="group">
+                    <option value="">Все</option>
+                    <option th:each="group : ${groups != null ? groups : T(java.util.Collections).emptyList()}"
+                            th:value="${group.id()}"
+                            th:text="${group.title() + ' (' + group.topicCount() + ')'}"
+                            th:title="${group.description()}"
+                            th:selected="${selectedGroup != null and selectedGroup == group.id()}"></option>
+                </select>
+            </label>
+            <label class="field filter-bar-field">
+                <span class="field-label">Тема</span>
+                <!--/* Секции групп вместо плоских ~320 опций — см. комментарий
+                     в settings.html у такого же селекта. */-->
+                <select name="topic">
+                    <option value="">Все</option>
+                    <optgroup th:each="section : ${topicSections != null ? topicSections : T(java.util.Collections).emptyList()}"
+                              th:label="${section.title()}">
+                        <option th:each="topic : ${section.topics()}" th:value="${topic}"
+                                th:text="${@topicUtils.displayName(topic)}" th:title="${topic}"
+                                th:selected="${filter != null and filter.topic != null and filter.topic == topic}"></option>
+                    </optgroup>
+                </select>
+            </label>
+            <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
+            <fieldset class="filter-bar-flags">
+                <legend class="field-label">Только</legend>
+                <label class="toggle-item"><input type="checkbox" name="important" value="true" th:checked="${filter?.importantOnly}"> <svg class="ed-icon" aria-hidden="true"><use href="#i-star"></use></svg> Избранные</label>
+                <label class="toggle-item"><input type="checkbox" name="onlyWrong" value="true" th:checked="${filter?.onlyWrong}"> Ошибки</label>
+            </fieldset>
+            <!--/* В полосе только отправка. «Сбросить» живёт ниже, в строке
+                 состояния: сброс относится к тому, что УЖЕ отобрано, а не к
+                 набираемому. Заодно полоса не меняет число строк при появлении
+                 отбора — раньше вторая кнопка переносила её на 1512 целиком.
+
+                 Кнопка ТИХАЯ, одинаково с /bookmarks: полоса одна на две страницы,
+                 и вес её кнопки не должен зависеть от того, куда её поставили.
+                 Акцентная заливка здесь и не заслужена — отбор меняет выборку, а не
+                 совершает действие над данными. */-->
+            <div class="filter-bar-actions">
+                <button type="submit" class="btn secondary-btn">Показать</button>
+            </div>
+        </form>
+    </section>
 
     <!--/* Каталог разделов. Банк — ~320 тем: таблица ниже отвечает «как дела с
          темой X», но не «с чего начать». Раздел — единственный уровень, на
-         котором каталог умещается в экран, поэтому карточки идут ПЕРЕД
-         фильтрами: сперва выбираешь область, потом уточняешь.
+         котором каталог умещается в экран.
+
+         Единственный блок панели, который НАМЕРЕННО считается по полному банку
+         (FRD-025): это навигация «куда пойти дальше», и если бы она схлопывалась
+         до выбранного раздела, то при `?group=foundation` показывала бы ровно
+         тот раздел, из которого пользователь и хочет уйти. Гейт на разделение
+         источников — `StatsPageServiceTest
+         .everyTopicSliceIsScopedToSelectionWhileCatalogStaysFullBank`.
 
          На карточке ДВА действия, и это не избыточность. Каталог отвечает на
          вопрос «куда пойти», и ответ бывает двух видов: «посмотреть, как дела»
@@ -235,7 +420,7 @@
     <section class="card topic-catalog" th:if="${groupCatalog != null and !#lists.isEmpty(groupCatalog)}"
              aria-labelledby="topic-catalog-title">
         <h2 class="mt-0" id="topic-catalog-title">Разделы</h2>
-        <p class="muted topic-catalog-hint">Выбери область — фильтры и таблица ниже сузятся до неё.</p>
+        <p class="muted topic-catalog-hint">Счётчики разделов — по всему банку, независимо от отбора выше: это выбор, куда пойти дальше.</p>
         <ul class="topic-catalog-grid">
             <li th:each="group : ${groupCatalog}">
                 <div class="topic-catalog-card"
@@ -293,70 +478,11 @@
         </ul>
     </section>
 
-    <!--/* Поиск + фильтр */-->
-    <section class="card stats-filter-card">
-        <div class="stats-filter-row stats-filter-separated">
-            <div class="stats-filter-pane">
-                <h3 class="stats-pane-label">Фильтры</h3>
-                <form method="get" th:action="@{/stats}" class="filter-row stats-filters-form flex-1"
-                      aria-label="Фильтры статистики">
-                    <input type="hidden" name="q" th:value="${searchQuery}">
-                    <label>
-                        Группа:
-                        <select name="group">
-                            <option value="">Все</option>
-                            <option th:each="group : ${groups != null ? groups : T(java.util.Collections).emptyList()}"
-                                    th:value="${group.id()}"
-                                    th:text="${group.title() + ' - ' + group.description() + ' (' + group.topicCount() + ')'}"
-                                    th:selected="${selectedGroup != null and selectedGroup == group.id()}"></option>
-                        </select>
-                    </label>
-                    <label>
-                        Тема:
-                        <!--/* Секции групп вместо плоских ~320 опций — см. комментарий
-                             в settings.html у такого же селекта. */-->
-                        <select name="topic">
-                            <option value="">Все</option>
-                            <optgroup th:each="section : ${topicSections != null ? topicSections : T(java.util.Collections).emptyList()}"
-                                      th:label="${section.title()}">
-                                <option th:each="topic : ${section.topics()}" th:value="${topic}"
-                                        th:text="${@topicUtils.displayName(topic)}" th:title="${topic}"
-                                        th:selected="${filter != null and filter.topic != null and filter.topic == topic}"></option>
-                            </optgroup>
-                        </select>
-                    </label>
-                    <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
-                    <label><input type="checkbox" name="important" value="true" th:checked="${filter?.importantOnly}"> <svg class="ed-icon" aria-hidden="true"><use href="#i-star"></use></svg> Избранные</label>
-                    <label><input type="checkbox" name="onlyWrong" value="true" th:checked="${filter?.onlyWrong}"> Ошибки</label>
-                    <button type="submit" class="stats-action-btn stats-apply-action" aria-label="Применить фильтры статистики">Применить фильтры</button>
-                </form>
-            </div>
-            <div class="stats-search-pane">
-                <h3 class="stats-pane-label">Поиск</h3>
-                <form method="get" th:action="@{/stats}" class="search-form stats-search-form"
-                      role="search" aria-label="Поиск по вопросам">
-                    <input type="hidden" name="topic" th:value="${filter?.topic}">
-                    <input type="hidden" name="group" th:value="${selectedGroup}">
-                    <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
-                    <input type="hidden" name="important" th:value="${filter?.importantOnly != null ? filter.importantOnly : false}">
-                    <input type="hidden" name="onlyWrong" th:value="${filter?.onlyWrong != null ? filter.onlyWrong : false}">
-                    <!--/* type=search → нативный крестик-очистка + семантика поиска; enterkeyhint=search —
-                         клавиша Enter экранной клавы как «Поиск»; spellcheck/autocorrect/autocapitalize off —
-                         ищут по слагам/техтерминам (spring-boot, hikaricp), не словарным словам.
-                         CSS уже целит .search-input (input[type=search] перечислен в base.css:1456/1654). */-->
-                    <input type="search" name="q" placeholder="Поиск по вопросам…" th:value="${searchQuery}" class="search-input" aria-label="Поиск по вопросам"
-                           enterkeyhint="search" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off">
-                    <button type="submit" class="stats-action-btn stats-search-action" aria-label="Искать по вопросам">Искать</button>
-                </form>
-            </div>
-        </div>
-    </section>
-
     <!--/* Поиск без результатов: раньше секция просто исчезала, и было непонятно,
          выполнился ли поиск. Показываем явное «ничего не найдено». */-->
     <section class="card" th:if="${searchQuery != null and !#strings.isEmpty(searchQuery) and (searchResults == null or #lists.isEmpty(searchResults))}">
         <h2 class="mt-0">Результаты поиска</h2>
-        <p class="muted">По запросу «<span th:text="${searchQuery}">…</span>» ничего не найдено. Измени запрос или <a th:href="@{/stats}">сбрось поиск и фильтры</a>.</p>
+        <p class="muted">По запросу «<span class="query-echo" th:text="${searchQuery}">…</span>» ничего не найдено. Измени запрос или <a th:href="@{/stats}">сбрось поиск и фильтры</a>.</p>
     </section>
 
     <!--/* Результаты поиска */-->
@@ -372,23 +498,33 @@
         </ul>
     </section>
 
-    <!--/* Нет данных по темам: все секции ниже (графики/таблица/пробелы) гейтятся на
-         непустой topicStats. При пустом (новый пользователь без ответов либо фильтр
-         без совпадений) даём явный empty-state. Условие — ТОЧНАЯ инверсия гейтов
-         секций ниже; показываем только когда НЕ активен поиск (у поиска свой empty
-         выше, иначе два «пусто» подряд). Чисто аддитивно. */-->
-    <section class="card stats-empty"
-             th:if="${(topicStats == null or topicStats.isEmpty()) and (searchQuery == null or #strings.isEmpty(searchQuery))}">
-        <svg class="px-illus px-illus-lg stats-empty-illus" aria-hidden="true"><use href="#px-empty-chart"></use></svg>
-        <h2 class="mt-0">Пока нет данных по темам</h2>
-        <p class="muted">Ответь на несколько вопросов — и здесь появятся прогресс по темам, точность ответов и прогноз повторений на неделю.</p>
-        <p>
-            <a class="btn next-btn" th:href="@{/}">Начать тренировку</a>
-            <a class="btn secondary-btn"
-               th:if="${selectedGroup != null or (filter != null and (filter.topic != null or filter.importantOnly == true or filter.onlyWrong == true))}"
-               th:href="@{/stats}">Сбросить фильтры</a>
+    <!--/* Пусто по темам — это ДВА разных состояния, и до iter-73 они говорили одно и
+         то же. «Пока нет данных» верно ровно для пустого банка; когда банк полон, а
+         отбор не выбрал ни одной темы (например «только избранные», пока ничего не
+         отмечено), та же фраза сообщала бы, что данных нет вообще, — то есть неправду
+         о банке. Разводим по признаку активного отбора: §27 требует отдельного
+         «отфильтровано в ноль». Условие — ТОЧНАЯ инверсия гейтов секций ниже. */-->
+    <th:block th:with="noTopics=${topicStats == null or topicStats.isEmpty()}">
+    <section class="card empty-state" th:if="${noTopics and topicFilterActive}">
+        <svg class="px-illus px-illus-lg empty-state-illus" aria-hidden="true"><use href="#px-spyglass"></use></svg>
+        <h2 class="empty-state-title">Под отбор не попала ни одна тема</h2>
+        <p class="empty-state-text">В банке есть вопросы, но ни один из них не подходит под текущие условия. Сними часть условий или сбрось отбор целиком.</p>
+        <p class="empty-state-actions">
+            <a class="btn next-btn" th:href="@{/stats}">Сбросить отбор</a>
         </p>
     </section>
+    <!--/* Пустой банк: показываем только когда НЕ активен поиск (у поиска свой empty
+         выше, иначе два «пусто» подряд). */-->
+    <section class="card empty-state"
+             th:if="${noTopics and !topicFilterActive and (searchQuery == null or #strings.isEmpty(searchQuery))}">
+        <svg class="px-illus px-illus-lg empty-state-illus" aria-hidden="true"><use href="#px-empty-chart"></use></svg>
+        <h2 class="empty-state-title">Пока нет данных по темам</h2>
+        <p class="empty-state-text">Ответь на несколько вопросов — и здесь появятся прогресс по темам, точность ответов и прогноз повторений на неделю.</p>
+        <p class="empty-state-actions">
+            <a class="btn next-btn" th:href="@{/}">Начать тренировку</a>
+        </p>
+    </section>
+    </th:block>
 
     <!--/* Графики */-->
     <div class="charts-row" th:if="${topicStats != null and !topicStats.isEmpty()}">
@@ -408,7 +544,12 @@
                  wrapper'а таблица переполняла фикс-высоту и налезала на секцию
                  «Детализация по темам» ниже (перекрытие ~88px). Здесь она в потоке
                  .chart-card → карточка растёт под таблицу, коллизии нет. */-->
-            <table id="topicProgressChartTable" class="chart-adjacent-table data-table hidden" aria-label="Данные графика прогресса"></table>
+            <!--/* Обёртка стоит в разметке, а не создаётся из JS: наполняет таблицу
+                 topic-charts.js, но скролл-контейнер обязан существовать и когда
+                 наполнения не было (график отрисовался — таблица осталась скрытой). */-->
+            <div class="table-scroll">
+                <table id="topicProgressChartTable" class="data-table is-dense chart-adjacent-table hidden" aria-label="Данные графика прогресса"></table>
+            </div>
         </section>
         <section class="card chart-card">
             <h2 class="mt-0">Точность по темам</h2>
@@ -423,35 +564,53 @@
             </div>
             <!--/* Табличное представление — ВНЕ .chart-wrapper (фикс. height:320px),
                  иначе переполняет и налезает на «Детализацию» (см. коммент выше). */-->
-            <table id="topicAccuracyChartTable" class="chart-adjacent-table data-table hidden" aria-label="Данные графика точности"></table>
+            <div class="table-scroll">
+                <table id="topicAccuracyChartTable" class="data-table is-dense chart-adjacent-table hidden" aria-label="Данные графика точности"></table>
+            </div>
         </section>
     </div>
 
-    <!--/* Таблица тем */-->
-    <section class="card overflow-x-auto" th:if="${topicStats != null and !topicStats.isEmpty()}">
+    <!--/* Таблица тем. Порядок строк и их количество приходят с сервера (iter-81,
+         FRD-048): до этого и то и другое решал инлайновый скрипт за таблицей, и в
+         WebKit он стабильно не успевал до первого кадра — страница рисовала все 319
+         строк (21957px) и схлопывалась до 3939px уже после отрисовки. Состояние живёт
+         в URL (`sort`/`dir`/`rows`), как отбор на /bookmarks (FRD-024). */-->
+    <section class="card" id="topic-table-section" th:if="${topicStats != null and !topicStats.isEmpty()}">
         <h2 class="mt-0">Детализация по темам</h2>
-        <!--/* C30: контейнер несёт overflow-x:auto для wide-table режима; на мобильной
-             ширине CSS переводит tbody rows в stacked-card режим по data-label. */-->
-        <div class="topic-table-wrap" id="topic-table-wrap" data-collapse-rows="12"
-             tabindex="0" role="region" aria-label="Детализация по темам">
-        <table class="topic-table" id="topic-table">
+        <!--/* Скролл-контейнер — общий .table-scroll (components-table.css). Собственный
+             overflow-x на секции снят: он делал ту же работу этажом выше, то есть был
+             вторым ответом на ту же задачу в той же цепочке (§24).
+             tabindex/role="region" тут больше НЕ статические: их ставит table-scroll.js
+             и только когда столбцы реально скрыты. Постоянный tabindex давал пустую
+             остановку табуляции и лишний landmark на широком экране, где таблица
+             укладывается целиком и скроллить нечего.
+             На мобильной ширине CSS переводит строки в stacked-card режим по data-label. */-->
+        <div class="table-scroll topic-table-wrap" id="topic-table-wrap"
+             data-scroll-label="Детализация по темам">
+        <table class="data-table topic-table" id="topic-table">
             <caption class="visually-hidden">Статистика по темам</caption>
             <thead>
             <tr>
-                <!--/* C28: имя колонки = чистый текст th, состояние сортировки несёт
-                     aria-sort (ставит stats.js), транзиентный анонс — #table-sort-status
-                     live-region. role="columnheader" у <th> в <thead> избыточен. Раньше
-                     aria-label «Сортировать по колонке: …» подменял имя в каждой ячейке. */-->
-                <th scope="col" class="sortable" data-col="0" data-sort-label="Тема">Тема</th>
-                <th scope="col" class="sortable w-60 text-center" data-col="1" data-sort-label="Всего">Всего</th>
-                <th scope="col" class="min-w-140">Прогресс</th>
-                <th scope="col" class="sortable w-80 text-center" data-col="3" data-sort-label="Точность" title="Доля верных ответов среди отвеченных (не из всех вопросов темы)">Точность</th>
-                <th scope="col" class="sortable w-80 text-center" data-col="4" data-sort-label="Зрелость" title="Среднее ease×interval — показатель глубины запоминания">Зрелость</th>
-                <th scope="col" class="topic-actions-col">Действие</th>
+                <!--/* C28: имя колонки = чистый текст ссылки, состояние сортировки несёт
+                     aria-sort. role="columnheader" у <th> в <thead> избыточен.
+                     С iter-81 aria-sort приходит от сервера, а не ставится скриптом:
+                     заголовок обязан быть верен в первом кадре — иначе таблица успевает
+                     объявить скринридеру «не отсортирована», будучи отсортированной.
+                     Сортировка — ССЫЛКА, а не кнопка: она меняет адрес страницы, работает
+                     без JS, копируется и переживает перезагрузку. Клавиатура и
+                     Enter достаются ссылке даром — table-sort.js с его roving tabindex
+                     и aria-keyshortcuts удалён целиком. */-->
+                <th th:each="col : ${topicTable.columns()}" scope="col"
+                    th:class="${col.cssClass}"
+                    th:attr="aria-sort=${col.ariaSort}, title=${col.title}">
+                    <a th:if="${col.key != null}" class="col-sort"
+                       th:href="${col.href}" th:text="${col.label}">Тема</a>
+                    <th:block th:if="${col.key == null}" th:text="${col.label}">Прогресс</th:block>
+                </th>
             </tr>
             </thead>
             <tbody>
-            <tr th:each="item : ${topicStats}">
+            <tr th:each="item : ${topicTable.rows()}">
                 <th scope="row" class="topic-name" data-label="Тема">
                     <a th:href="@{/(topic=${item.topic}, group=${selectedGroup != null ? selectedGroup : ''}, ordered=${filter == null or filter.ordered != false})}"
                        th:text="${@topicUtils.displayName(item.topic)}"
@@ -512,52 +671,26 @@
             </tbody>
         </table>
         </div>
-        <!--/* Без статичного aria-label (WCAG 2.5.3, R0.59): скрипт ниже живёт textContent-ом
-             («Показать все темы (N ниже)» / «Свернуть таблицу») — статичное имя перекрывало
-             видимый текст и голосовое управление не находило кнопку. Имя = видимый текст. */-->
-        <button type="button" class="btn secondary-btn table-expander hidden" id="topic-table-expander"
-                aria-expanded="false" aria-controls="topic-table-wrap">Показать все темы</button>
-        <p id="table-sort-status" class="visually-hidden" aria-live="polite" aria-atomic="true"></p>
+        <!--/* Имя = видимый текст (WCAG 2.5.3): счётчик в подписи, а не в aria-label.
+             Раньше здесь стояла кнопка, скрытая до загрузки JS, и текст ей писал скрипт.
+             Теперь это ССЫЛКА на тот же адрес с `rows=all`: она есть в первом кадре,
+             работает без JS, показывает состояние собой и никакой aria-expanded ей не
+             нужен — она не раскрывает контейнер, она ведёт на другую выдачу. */-->
+        <p class="topic-table-volume" th:if="${topicTable.truncated() or topicTable.query().all}">
+            <a class="btn secondary-btn table-expander"
+               th:if="${topicTable.truncated()}" th:href="${topicTable.expandHref()}"
+               th:text="'Показать все темы (' + ${topicTable.hiddenRows()} + ' ниже)'">Показать все темы</a>
+            <a class="btn secondary-btn table-expander"
+               th:if="${topicTable.query().all}" th:href="${topicTable.collapseHref()}">Свернуть таблицу</a>
+            <span class="topic-table-count muted"
+                  th:text="'Показано ' + ${topicTable.rows().size()} + ' из ' + ${topicTable.totalRows()} + ' тем'">Показано 12 из 319 тем</span>
+        </p>
     </section>
-    <!--/* B6: длинная таблица тем сворачивается по числу строк. Скоупится на /stats.
-         Строки за лимитом получают hidden: они недоступны и визуально, и для Tab/SR.
-         PE: таблица рендерится РАЗВЁРНУТОЙ (no-JS видит все строки). is-collapsed
-         навешивает этот скрипт — иначе без JS строки скрылись бы, а
-         кнопка-разворот остаётся hidden → данные были бы недоступны. Скрипт
-         инлайновый сразу после таблицы → сворачивает до первой отрисовки (без FOUC). */-->
-    <script th:attr="nonce=${cspNonce}">
-      (function () {
-        var wrap = document.getElementById('topic-table-wrap');
-        var btn = document.getElementById('topic-table-expander');
-        var table = document.getElementById('topic-table');
-        if (!wrap || !btn || !table || !table.tBodies[0]) return;
-        var tbody = table.tBodies[0];
-        var rowCount = tbody.rows.length;
-        var limit = parseInt(wrap.getAttribute('data-collapse-rows'), 10) || 12;
-        if (rowCount <= limit) return; // короткие таблицы не сворачиваем
-        var hidden = rowCount - limit;
-        wrap.classList.add('is-collapsed');
-        function sync() {
-          var collapsed = wrap.classList.contains('is-collapsed');
-          Array.prototype.forEach.call(tbody.rows, function (row, index) {
-            row.hidden = collapsed && index >= limit;
-          });
-          if (collapsed) wrap.scrollTop = 0;
-          btn.textContent = collapsed ? ('Показать все темы (' + hidden + ' ниже)') : 'Свернуть таблицу';
-          btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-        }
-        // Сортировка переставляет строки в tbody. После неё заново оставляем видимыми
-        // первые limit строк уже в новом порядке.
-        new MutationObserver(sync).observe(tbody, { childList: true });
-        btn.classList.remove('hidden');
-        sync();
-        btn.addEventListener('click', function () { wrap.classList.toggle('is-collapsed'); sync(); });
-      })();
-    </script>
 
     <section class="card coverage-gaps" th:if="${coverageGaps != null and !coverageGaps.isEmpty()}">
         <h2>Пробелы в банке вопросов</h2>
         <p class="coverage-gaps-hint">Темы, где меньше 5 вопросов — сгенерируй ещё, чтобы банк был равномерным.</p>
+        <div class="table-scroll" data-scroll-label="Темы с неполным банком вопросов">
         <table class="data-table">
             <caption class="visually-hidden">Темы с неполным банком вопросов</caption>
             <thead>
@@ -570,13 +703,24 @@
             </tr>
             </tbody>
         </table>
+        </div>
     </section>
 </section>
 
 <!--/* ================= Панель: Динамика ================= */-->
 <section class="stats-panel" role="tabpanel" id="stats-panel-dynamics"
          aria-labelledby="stats-tab-dynamics" tabindex="0">
-    <h2 class="stats-panel-title visually-hidden">Динамика</h2>
+    <h2 class="stats-panel-title tabpanel-title">Динамика</h2>
+
+    <!--/* Та же оговорка, что над плитками KPI, — потому что вкладка её не наследует:
+         блок наверху страницы виден и на «Темах», а сюда человек попадает уже после
+         переключения, и оговорка «отбор сюда не доходит» должна стоять там, где
+         показаны неотобранные числа. Все три карточки панели (точность/удержание,
+         прогноз повторений, динамика точности) считаются по счёту целиком: прогноз
+         и тренд разложены по дням, а не по вопросам, и вопросной выборкой не
+         сужаются. Строка — только при активном отборе. */-->
+    <p class="muted tiny kpi-role stats-scope-note" th:if="${topicFilterActive}">
+        Динамика считается по всему счёту целиком: отбор её не сужает.</p>
 
     <!--/* Подробная точность и удержание */-->
     <section class="card learning-metrics" th:if="${metrics != null}"
@@ -672,11 +816,11 @@
     </section>
 
     <!--/* Пусто в «Динамике»: если и метрик нет, и прогноз пуст. */-->
-    <section class="card stats-empty"
+    <section class="card empty-state"
              th:if="${(metrics == null) and (reviewForecast == null or reviewForecast.isEmpty())}">
-        <svg class="px-illus px-illus-lg stats-empty-illus" aria-hidden="true"><use href="#px-empty-chart"></use></svg>
-        <h2 class="mt-0">Пока нет динамики</h2>
-        <p class="muted">Ответь на вопросы и вернись к повторениям — здесь появятся точность, удержание и прогноз нагрузки.</p>
+        <svg class="px-illus px-illus-lg empty-state-illus" aria-hidden="true"><use href="#px-empty-chart"></use></svg>
+        <h2 class="empty-state-title">Пока нет динамики</h2>
+        <p class="empty-state-text">Ответь на вопросы и вернись к повторениям — здесь появятся точность, удержание и прогноз нагрузки.</p>
     </section>
 
     <!--/* Тренд точности 14 дней (Этап 6 / UI-012): SSR bars + JSON для Chart.js. */-->
@@ -700,7 +844,8 @@
                 </li>
             </ul>
         </div>
-        <table id="accuracyTrendTable" class="chart-adjacent-table data-table" aria-label="Точность по дням">
+        <div class="table-scroll" data-scroll-label="Точность по дням за 14 дней">
+        <table id="accuracyTrendTable" class="data-table is-dense chart-adjacent-table" aria-label="Точность по дням">
             <caption class="visually-hidden">Точность по дням за 14 дней</caption>
             <thead>
             <tr>
@@ -721,6 +866,7 @@
             </tr>
             </tbody>
         </table>
+        </div>
     </section>
 
 </section>
@@ -728,7 +874,7 @@
 <!--/* ================= Панель: Ошибки (UI-012 drill-down) ================= */-->
 <section class="stats-panel" role="tabpanel" id="stats-panel-errors"
          aria-labelledby="stats-tab-errors" tabindex="0">
-    <h2 class="stats-panel-title visually-hidden">Ошибки</h2>
+    <h2 class="stats-panel-title tabpanel-title">Ошибки</h2>
 
     <section class="card stats-errors-actions" aria-labelledby="stats-errors-cta-title">
         <div class="stats-next-actions-head">
@@ -777,13 +923,25 @@
         </ul>
     </section>
 
-    <section class="card stats-empty"
-             th:if="${(recentWrongQuestions == null or recentWrongQuestions.isEmpty()) and (stats == null or stats.wrong == 0)}">
-        <svg class="px-illus px-illus-lg stats-empty-illus" aria-hidden="true"><use href="#px-empty-chart"></use></svg>
-        <h2 class="mt-0">Пока нет ошибок</h2>
-        <p class="muted">После первых неверных ответов здесь появится список вопросов для разбора.</p>
-        <p><a class="btn next-btn" th:href="@{/}">Начать тренировку</a></p>
+    <!--/* Два состояния вместо одного — по той же причине, что и на панели «Темы»
+         (§27). С iter-73 и список ошибок, и `stats.wrong` считаются по выборке, и
+         фраза «После первых неверных ответов здесь появится список» под активным
+         отбором утверждала бы, что человек ещё ни разу не ошибался, — тогда как
+         ошибки могут лежать в темах, которые отбор просто отсёк. */-->
+    <th:block th:with="noWrong=${(recentWrongQuestions == null or recentWrongQuestions.isEmpty()) and (stats == null or stats.wrong == 0)}">
+    <section class="card empty-state" th:if="${noWrong and topicFilterActive}">
+        <svg class="px-illus px-illus-lg empty-state-illus" aria-hidden="true"><use href="#px-spyglass"></use></svg>
+        <h2 class="empty-state-title">В этой выборке ошибок нет</h2>
+        <p class="empty-state-text">Под текущий отбор не попал ни один вопрос с неверным ответом. В других темах ошибки могут быть — сбрось отбор, чтобы увидеть их все.</p>
+        <p class="empty-state-actions"><a class="btn next-btn" th:href="@{/stats}">Сбросить отбор</a></p>
     </section>
+    <section class="card empty-state" th:if="${noWrong and !topicFilterActive}">
+        <svg class="px-illus px-illus-lg empty-state-illus" aria-hidden="true"><use href="#px-empty-chart"></use></svg>
+        <h2 class="empty-state-title">Пока нет ошибок</h2>
+        <p class="empty-state-text">После первых неверных ответов здесь появится список вопросов для разбора.</p>
+        <p class="empty-state-actions"><a class="btn next-btn" th:href="@{/}">Начать тренировку</a></p>
+    </section>
+    </th:block>
 
     <section class="card">
         <div class="stats-next-actions-head">
@@ -791,10 +949,16 @@
             <p>Темы, где уже были неверные ответы. Собери короткую сессию по ним.</p>
         </div>
 
-        <p class="muted" th:if="${topicStats == null or topicStats.isEmpty()}">
+        <p class="muted" th:if="${(topicStats == null or topicStats.isEmpty()) and topicFilterActive}">
+            Под текущий отбор не попала ни одна тема — <a th:href="@{/stats}">сбрось отбор</a>, чтобы увидеть темы с ошибками.</p>
+        <p class="muted" th:if="${(topicStats == null or topicStats.isEmpty()) and !topicFilterActive}">
             Пока нет отвеченных вопросов — ответь на несколько, и здесь появятся темы с ошибками.</p>
 
-        <table class="data-table" th:if="${topicStats != null and !topicStats.isEmpty()}">
+        <!--/* th:if переехал с таблицы на обёртку: иначе при пустом отборе в разметке
+             осталась бы пустая скролл-обёртка. */-->
+        <div class="table-scroll" data-scroll-label="Темы с ошибками"
+             th:if="${topicStats != null and !topicStats.isEmpty()}">
+        <table class="data-table">
             <caption class="visually-hidden">Темы с ошибками: количество ошибок и точность</caption>
             <thead>
             <tr>
@@ -818,6 +982,7 @@
             </tr>
             </tbody>
         </table>
+        </div>
     </section>
 </section>
 

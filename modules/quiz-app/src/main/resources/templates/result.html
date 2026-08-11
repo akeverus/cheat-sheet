@@ -8,7 +8,7 @@
 <div class="app">
     <aside th:replace="~{fragments/sidebar :: sidebar(active=${filter != null and filter.onlyWrong == true} ? 'review' : 'focus')}"></aside>
     <div class="shell-main">
-        <th:block th:replace="~{fragments/topbar :: topbar}"></th:block>
+        <th:block th:replace="~{fragments/shell-head :: shell-head}"></th:block>
 <main id="main-content" class="ed-page" tabindex="-1">
 <!--/* Здесь стояла верхняя полоса: шесть глобальных KPI банка вопросов
      (карточек / к повтору / освоено / верных попыток / ошибочных / точность) и
@@ -19,6 +19,12 @@
      (progressbar + «N / M», один источник), счёт сессии — в итогах. Осталось
      только действие, и оно переехало вниз, к «Следующему вопросу», где решение
      принимается — с confirm, как на экране вопроса. */-->
+<!--/* Композиция страницы: рабочая колонка (разбор) + рельс похожих вопросов.
+     Отдельный бокс, а не сама .ed-page: полоса принадлежит шеллу и идёт по общей
+     шкале --max-width-page, а собственную меру страница считает из своих колонок
+     (pages-result.css). Порог, на котором рельс встаёт рядом, — сумма их
+     flex-базисов; медиазапроса у композиции нет. */-->
+<div class="result-layout">
 <!--/* Result card — fills remaining space */-->
 <section class="card" id="interview-card">
     <!--/* Одноколоночный layout. Раньше грид становился двухколонным через
@@ -157,7 +163,7 @@
                 hintText='Краткий вывод — сразу; полный разбор и пояснения вариантов — по клику «Подробнее»; похожие вопросы — ниже',
                 hidden=false
             )}"></div>
-            <div th:replace="~{fragments/inline-alert :: inline-alert(id='interview-alert', hidden=true)}"></div>
+            <div th:replace="~{fragments/notice :: notice-slot(id='interview-alert', scope='page')}"></div>
             <div class="result-actions">
                 <a class="btn next-btn"
                    th:with="nextBase=${filter != null and filter.onlyWrong == true}"
@@ -189,11 +195,14 @@
     </div>
 </section>
 
-<!--/* Связанные вопросы. Остаётся ПРЯМЫМ потомком .ed-page (id-якорь): на >=1200px
-     CSS уводит блок в правую sticky-рейку через `.ed-page > #result-related-questions`
-     и `:has(> #result-related-questions)` (base.css, WIDE LAYOUT) — обёртка в
-     .card сломала бы грид. Поэтому тег меняем div→section + aria-labelledby (region-
-     лендмарк с доступным именем), но БЕЗ card-класса. Критика round-01 C31. */-->
+<!--/* Связанные вопросы — второй ребёнок композиции (id-якорь). CSS ставит блок
+     рельсом справа от разбора через `:has(> #result-related-questions)` на
+     .result-layout (pages-result.css) и переносит вниз, когда сумма колонок не
+     умещается в полосу; ширины на порог не влияют — влияет только наличие самого
+     блока. Тег — section + aria-labelledby (region-лендмарк с доступным именем),
+     но БЕЗ card-класса: панель рисует композиция. Критика round-01 C31.
+     (До iter-69 здесь стоял грид на самой .ed-page под медиазапросом 1200px, и
+     блок обязан был быть прямым потомком полосы — отсюда прежний запрет обёртки.) */-->
 <section th:if="${relatedQuestions != null and !relatedQuestions.isEmpty()}" id="result-related-questions" class="related-questions related-questions-block" aria-labelledby="related-questions-heading">
     <h2 id="related-questions-heading" class="related-questions-title"><svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-link"></use></svg>Похожие вопросы для закрепления:</h2>
     <!--/* RES-16 (R0.145): role=listitem на ОБЁРТКЕ-div, не на <a>. Раньше <a role=listitem>
@@ -210,6 +219,7 @@
         </div>
     </div>
 </section>
+</div>
 </main>
     </div>
 </div>

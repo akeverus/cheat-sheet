@@ -1,4 +1,5 @@
 import { confirmModal } from './modals.js';
+import { setPending, clearPending } from './pending.js';
 
 let dangerousBound = false;
 let submitOnceBound = false;
@@ -37,19 +38,38 @@ export function initSubmitOnceGuard() {
     'form[action$="/finish"]',
     'form[action$="/empty"]',
     'form[action$="/settings/reset-options"]',
+    // Вход — такая же навигационная отправка: POST уводит со страницы, и до
+    // ответа сервера кнопка обязана показать «идёт», а второй клик не должен
+    // порождать вторую попытку аутентификации.
+    'form[action$="/login"]',
     '.danger-zone form'
   ].join(', ');
   document.addEventListener('submit', (e) => {
     const form = e.target;
     if (!(form instanceof HTMLFormElement) || !form.matches(NAV_FORM_SELECTOR)) return;
+    // Отправку уже отменили — значит её НЕ БЫЛО. Так ведёт себя опасное
+    // действие: `initDangerousFormGuard` гасит первый submit и ждёт ответа в
+    // модалке, а подтверждение шлёт форму заново через `requestSubmit()`.
+    // Без этой проверки первый — отменённый — submit помечал форму как
+    // отправленную и включал на кнопке ожидание, после чего повторную отправку
+    // глушили сразу двое: строка ниже и capture-гвард ожидания. Замерено:
+    // «Завершить сессию» и формы `.danger-zone` не уходили на сервер вовсе —
+    // POST /finish в сети отсутствовал, страница молча оставалась на месте.
+    if (e.defaultPrevented) return;
     if (form.dataset.submitted === '1') { e.preventDefault(); return; }
     form.dataset.submitted = '1';
-    const controls = form.querySelectorAll('button[type="submit"], input[type="submit"]');
-    setTimeout(() => controls.forEach((c) => { c.disabled = true; c.setAttribute('aria-busy', 'true'); }), 0);
+    // form.elements, а НЕ querySelectorAll: главная кнопка приложения
+    // («Начать тренировку», #session-start-btn) лежит ВНЕ формы и привязана
+    // атрибутом form=, поэтому поиск по потомкам её не находил — замерено,
+    // гвард видел 0 контролов при одном реально отправляющем. Коллекция
+    // form.elements собирается по владению, а не по вложенности.
+    const controls = Array.from(form.elements).filter((c) => c.type === 'submit');
+    setTimeout(() => controls.forEach(
+      (c) => setPending(c, c.dataset.pendingLabel || 'Отправляю…')), 0);
     setTimeout(() => {
       if (!form.isConnected) return;
       form.dataset.submitted = '';
-      controls.forEach((c) => { c.disabled = false; c.removeAttribute('aria-busy'); });
+      controls.forEach((c) => clearPending(c, ''));
     }, 5000);
   });
 }

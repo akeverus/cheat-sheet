@@ -18,7 +18,10 @@ function textOf(selector, root = document) {
 function buildShareText() {
   const lines = ['Итоги сессии — Подготовка к собеседованию'];
 
-  const mode = textOf('.summary-mode-line');
+  // Режим читаем из надзаголовка шапки: с iter-63 он живёт там, а не чипом в
+  // карточке счёта. Копия обязана следовать за разметкой — иначе строка «Режим»
+  // молча исчезает из буфера, и «скопировано» перестаёт совпадать с экраном.
+  const mode = textOf('.page-head .eyebrow');
   if (mode) lines.push(`Режим: ${mode}`);
   const accuracy = textOf('.summary-score-value');
   if (accuracy) lines.push(`Точность сессии: ${accuracy}`);

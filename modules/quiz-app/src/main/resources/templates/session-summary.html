@@ -8,23 +8,50 @@
 <div class="app">
     <aside th:replace="~{fragments/sidebar :: sidebar(active='focus')}"></aside>
     <div class="shell-main">
-        <th:block th:replace="~{fragments/topbar :: topbar}"></th:block>
+        <th:block th:replace="~{fragments/shell-head :: shell-head}"></th:block>
 <main id="main-content" class="ed-page" tabindex="-1">
+<!--/* Шапка страницы — общий компонент .page-head (shell.css), тот же, что на
+     /stats, /bookmarks, /settings. До iter-63 экран итогов был единственным из
+     шести без видимого заголовка: весь h1 сводился к visually-hidden строке
+     внутри карточки счёта, и страница, завершающая главный сценарий, не
+     называла себя ни глазом, ни в первом экране.
+
+     Режим сессии переехал сюда, в надзаголовок. Он метаданные СТРАНИЦЫ («что за
+     сессия»), а не элемент карточки счёта: в геро чип-режим стоял над «N из M»
+     и тянул на себя первый взгляд, ради которого блок и существует. Прежний
+     носитель `.summary-mode-line` снят вместе со своими правилами (§24). */-->
+<div class="page-head">
+    <div class="page-head-title">
+        <span class="eyebrow" th:text="${@modeUtils.displayName(summary.mode)}">Режим</span>
+        <h1>Итоги сессии</h1>
+    </div>
+    <!--/* Пояснение отвечает на «что тут», а kpi-role — на «за какой период».
+         Второе не украшение: те же слова (точность, темы, ошибки) есть в
+         аналитике за всё время, и без явной пометки экран читается как общая
+         статистика, которая внезапно просела. */-->
+    <p class="muted page-head-lead">Счёт, разбор по темам и вопросы, которые стоит повторить.
+        <span class="kpi-role">Только эта сессия</span></p>
+</div>
+
 <!--/* Этап 6: hero-карточка итогов. Слева — score-ring (SSR-дуга по accuracy,
      без инлайн-style: длина дуги задаётся presentation-атрибутом stroke-dasharray),
-     справа — режим-бейдж + «N из M верных» + actionable-итог + 3 метрики
-     (Время/Среднее/На повторение). XP и «новый рекорд» из прототипа НЕ рендерим:
-     таких данных в SessionSummary нет — не фабрикуем. Среднее время вычисляется
-     из duration/totalQuestions (готового поля нет, но арифметика честная). */-->
+     справа — «N из M верных» + actionable-итог, ниже полоса KPI. Название режима
+     живёт в шапке страницы, а не здесь (iter-63). Среднее время вычисляется из
+     duration/totalQuestions (готового поля нет, но арифметика честная).
+
+     Ветка noAnswers — не «пустая версия того же экрана», а другой экран: считать
+     нечего, и всё, что умеет считать, из него убрано. До iter-63 разница была
+     косметической (кольцо «—»), а KPI и счёт печатались как обычно: «0 из 0
+     верных», «Опыт +0 XP / Новый рекорд», «Ошибки 0 / Без ошибок». Экран хвалил
+     за безошибочность сессию, в которой не было ни одного ответа. */-->
 <section class="card summary-hero"
          th:with="noAnswers=${summary.totalQuestions == 0},
                   summaryTone=${noAnswers ? 'none' : (summary.accuracy >= 80 ? 'great' : (summary.accuracy >= 50 ? 'ok' : 'low'))}"
          th:attr="data-summary-tone=${summaryTone}">
-    <!--/* Заголовок карточки счёта: скрыт визуально (ring-число + метки несут смысл
-         на экране), но даёт SR-навигации по заголовкам якорь на главный результат.
-         Это h1 страницы итогов → секции «Результаты по темам»/«Ошибки» ниже (h2)
-         выстраиваются под ним в корректную иерархию (страница получает ровно один h1). */-->
-    <h1 class="summary-section-title visually-hidden">Результат сессии</h1>
+    <!--/* Скрытого h1 «Результат сессии» здесь больше нет: единственный h1 страницы
+         стоит в шапке выше и виден глазом. Скрытый заголовок был обходом того, что
+         у страницы не было видимого названия, — обход снят вместе с причиной, и
+         иерархия h1 → h2 («Результаты по темам»/«Ошибки») сохранена. */-->
     <div class="score-ring"
          th:classappend="${noAnswers} ? ' ring-neutral' : (${summary.accuracy >= 80} ? ' ring-success' : (${summary.accuracy >= 50} ? ' ring-warning' : ' ring-danger'))">
         <svg class="score-ring-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
@@ -41,8 +68,9 @@
                 th:text="${noAnswers} ? '—' : ${summary.accuracyRounded + '%'}">0%</strong>
     </div>
     <div class="summary-hero-body">
-        <span class="badge summary-mode-line" th:text="${@modeUtils.displayName(summary.mode)}">Режим</span>
-        <p class="summary-hero-count">
+        <!--/* «0 из 0 верных ответов» — не факт, а форма без содержания: дробь
+             сообщает долю, а доли нет. В пустой сессии строка снята целиком. */-->
+        <p class="summary-hero-count" th:unless="${noAnswers}">
             <strong th:text="${summary.correctCount}">0</strong> из
             <strong th:text="${summary.totalQuestions}">0</strong> верных ответов
         </p>
@@ -52,6 +80,9 @@
            th:with="needs=${summary.wrongCount + summary.unknownCount},
                     w=${needs % 10 == 1 and needs % 100 != 11 ? 'вопрос требует' : ((needs % 10 >= 2 and needs % 10 <= 4) and (needs % 100 &lt; 12 or needs % 100 &gt; 14) ? 'вопроса требуют' : 'вопросов требуют')}"
            th:text="${noAnswers ? 'Сессия завершена без ответов' : (needs > 0 ? needs + ' ' + w + ' разбора' : 'Без ошибок — отличный результат')}">Итог</p>
+        <p class="summary-empty-note" th:if="${noAnswers}">Засчитывать нечего: ни опыта, ни ошибок
+            для разбора, ни данных по темам. Серия за день от этого не пострадала — она считается
+            по дням с ответами.</p>
     </div>
     <!--/* Полоса KPI — отдельная строка геро во всю ширину карточки, а не блок
          внутри текстового столбца. В столбце её ширину задавал сосед-кольцо: на
@@ -63,7 +94,7 @@
          Опыт и Серия — из реальной геймификации (summary.gamification, XP
          суммирован из истории ответов). Когда геймификации нет (null) —
          откат на прежний набор Время/Среднее/На повторение, без фабрикации. */-->
-    <div class="summary-kpis" th:if="${summary.gamification != null}"
+    <div class="summary-kpis" th:if="${summary.gamification != null and !noAnswers}"
          th:with="g=${summary.gamification},
                   errs=${summary.wrongCount + summary.unknownCount},
                   avg=${summary.duration != null and summary.totalQuestions > 0 ? summary.duration.toSeconds() / summary.totalQuestions : 0},
@@ -93,7 +124,7 @@
             <span class="summary-kpi-sub" th:text="'Рекорд ' + ${g.bestStreak()}">Рекорд 0</span>
         </div>
     </div>
-    <div class="summary-metrics" th:if="${summary.gamification == null}">
+    <div class="summary-metrics" th:if="${summary.gamification == null and !noAnswers}">
         <div class="metric">
             <span class="metric-label">Время</span>
             <span class="metric-value summary-duration" th:text="${summary.formattedDuration}">—</span>
@@ -169,12 +200,18 @@
 <!--/* Результаты по темам */-->
 <section class="card" th:if="${!summary.topicResults.isEmpty()}">
     <h2 class="summary-section-title">Результаты по темам</h2>
-    <!--/* ARIA-роли + tabindex здесь НЕ избыточны: CSS даёт таблице display:block
-         (горизонтальный скролл на узких экранах), а это в Safari/VoiceOver сбрасывает
-         нативную семантику таблицы. Явные role=table/rowgroup/row/columnheader/cell
-         её восстанавливают; tabindex=0 делает скролл-контейнер доступным с клавиатуры
-         (WCAG 2.1.11 scrollable-region-focusable). Чисто аддитивно — отрисовку не меняет. */-->
-    <table class="summary-table" role="table" tabindex="0">
+    <!--/* ARIA-роли НЕ избыточны: ниже 760px CSS раскладывает таблицу карточками
+         (display:block на table/thead/tbody/tr/td), а это в Safari/VoiceOver сбрасывает
+         нативную семантику. Явные role=table/rowgroup/row/columnheader/cell её
+         восстанавливают. Отрисовку не меняют.
+         tabindex=0 на самой таблице убран и не возвращается: клавиатурный доступ к
+         скрытым столбцам — задача скролл-контейнера, а не таблицы. Контейнер
+         (.table-scroll) снова есть, но постоянной остановки табуляции не создаёт:
+         tabindex/role=region ставит table-scroll.js и только когда столбцы реально
+         не помещаются. table-layout:fixed от переполнения не защищает — при
+         увеличенном тексте фиксированные 27.5rem колонок шире полосы. */-->
+    <div class="table-scroll" data-scroll-label="Результаты по темам">
+    <table class="data-table summary-table" role="table">
         <caption class="visually-hidden">Результаты по темам</caption>
         <thead role="rowgroup">
         <tr role="row">
@@ -209,6 +246,7 @@
         </tr>
         </tbody>
     </table>
+    </div>
 </section>
 
 <!--/* Ошибки: кликабельны — ведут на тренировку по теме вопроса */-->

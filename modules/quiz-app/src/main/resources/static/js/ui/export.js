@@ -1,6 +1,7 @@
 import { apiFetch } from '../core/api-client.js';
 import { ADMIN_TOKEN_KEY } from '../core/constants.js';
 import { promptModal } from './modals.js';
+import { setPending, clearPending } from './pending.js';
 
 let exportBound = false;
 let exportInFlight = false;
@@ -67,7 +68,7 @@ function retryHint(retryAfter) {
   return 'Повтори экспорт через ' + seconds + ' с.';
 }
 
-async function runExport(format, buttons, notify, block) {
+async function runExport(format, btn, buttons, notify, block) {
   if (exportInFlight) return;
   const needToken = tokenRequired(block);
   let token = '';
@@ -77,7 +78,12 @@ async function runExport(format, buttons, notify, block) {
   }
   exportInFlight = true;
   notify('Готовлю экспорт…', false);
-  buttons.forEach((b) => { b.setAttribute('aria-disabled', 'true'); b.setAttribute('aria-busy', 'true'); });
+  // Занята ОДНА кнопка — та, которую нажали. Остальным форматам не «идёт
+  // работа», им просто нельзя сейчас (aria-disabled системы controls). До
+  // iter-84 «занято» ставилось на все три разом, и человек не понимал, какой
+  // именно файл готовится.
+  setPending(btn, 'Готовлю…', 'Готовлю экспорт…');
+  buttons.forEach((b) => { if (b !== btn) b.setAttribute('aria-disabled', 'true'); });
   try {
     const headers = {};
     if (token) headers['X-Admin-Token'] = token;
@@ -117,7 +123,10 @@ async function runExport(format, buttons, notify, block) {
     notify('Сеть недоступна — экспорт не выполнен.', true);
   } finally {
     exportInFlight = false;
-    buttons.forEach((b) => { b.removeAttribute('aria-disabled'); b.removeAttribute('aria-busy'); });
+    // Голос уже сказан через notify (#export-status — живой регион страницы),
+    // поэтому живой регион ожидания гасим пустой строкой, а не дублируем.
+    clearPending(btn, '');
+    buttons.forEach((b) => { if (b !== btn) b.removeAttribute('aria-disabled'); });
   }
 }
 
@@ -132,9 +141,9 @@ export function initExportButtons() {
   const statusEl = document.getElementById('export-status');
   buttons.forEach((btn) => {
     btn.addEventListener('click', () => {
-      if (btn.getAttribute('aria-busy') === 'true') return;
       runExport(
         btn.getAttribute('data-export-format'),
+        btn,
         buttons,
         (m, e) => setExportStatus(statusEl, m, e),
         block

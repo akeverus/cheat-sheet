@@ -181,10 +181,7 @@ public class GlobalExceptionHandler {
                     null
             );
         }
-        ModelAndView mav = new ModelAndView("error");
-        mav.addObject("status", 404);
-        mav.setStatus(HttpStatus.NOT_FOUND);
-        return mav;
+        return errorView(HttpStatus.NOT_FOUND, request);
     }
 
     /**
@@ -206,10 +203,7 @@ public class GlobalExceptionHandler {
                     : ApiErrorTypes.REQUEST_REJECTED;
             return apiErrorResponse(status, errorCode, ex.getReason(), null);
         }
-        ModelAndView mav = new ModelAndView("error");
-        mav.addObject("status", status.value());
-        mav.setStatus(status);
-        return mav;
+        return errorView(status, request);
     }
 
     @ExceptionHandler(Exception.class)
@@ -223,8 +217,33 @@ public class GlobalExceptionHandler {
                     null
             );
         }
+        return errorView(HttpStatus.INTERNAL_SERVER_ERROR, request);
+    }
+
+    /**
+     * Модель страницы ошибки для перехваченных здесь исключений. Обязана давать
+     * тот же набор ключей, что контейнерный error-dispatch через
+     * {@link ErrorViewAttributes} — иначе одна и та же {@code error.html}
+     * выглядит по-разному в зависимости от того, кто поймал сбой: у 403
+     * (контейнер) дозор с путём и временем есть, у 404 и 500 (этот класс) его
+     * не было. Хуже всего это било по 500: именно там пользователю нужен
+     * {@code correlationId}, чтобы жалоба соединилась с лог-строкой.
+     *
+     * <p>Ранее {@code handleGenericException} не клал даже {@code status} —
+     * страница 500 печатала заглушку «×» вместо номера.</p>
+     */
+    private ModelAndView errorView(HttpStatus status, HttpServletRequest request) {
         ModelAndView mav = new ModelAndView("error");
-        mav.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+        mav.addObject("status", status.value());
+        mav.addObject("error", status.getReasonPhrase());
+        mav.addObject("path", safeUri(request));
+        mav.addObject("errorTime", ErrorViewAttributes.TIME_FORMAT
+                .withZone(java.time.ZoneId.systemDefault()).format(java.time.Instant.now()));
+        String correlationId = currentCorrelationId();
+        if (correlationId != null) {
+            mav.addObject("correlationId", correlationId);
+        }
+        mav.setStatus(status);
         return mav;
     }
 

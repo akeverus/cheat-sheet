@@ -7,18 +7,119 @@
    ========================================================================== */
 html[data-design] .focus-page main { /* контейнер задаём через .ed-page в шаблоне */ }
 
+/* Мера полосы. Слагаемые — токены (tokens.css), сумма объявлена ЗДЕСЬ и только
+   здесь: на том же элементе, где раскладка «Разделение» переопределяет
+   --focus-main-measure. var() внутри кастомного свойства подставляется на
+   элементе объявления, поэтому сумма, стоявшая на :root, запекала базовое
+   слагаемое и переопределение раскладки в неё не попадало (разбор и замер — в
+   tokens.css рядом с --focus-main-measure).
+   По этой мере стоят все трое прямых детей полосы `main.ed-page`: resume-баннер,
+   композиция и пустое состояние (FRD-018), — поэтому она одна на страницу, а не
+   внутри композиции.
+
+   МЕРА СХЛОПЫВАЕТСЯ ВМЕСТЕ С РЕЛЬСОМ, И ЭТО НЕ УКРАШЕНИЕ ФОРМУЛЫ. Пока мера была
+   просто суммой, коробка композиции держала сумму даже тогда, когда рельс уже
+   ушёл своей строкой: замер WebKit@2 до починки — 1440×900 коробка 278..1382
+   (1104) против видимой колонки 350..1310 (960), по 72px мёртвого поля на борт;
+   1512×982 — 106px; 1600×900 — 146px. Мёртвое поле само по себе невидимо, но
+   меру читают ещё двое: `.resume-banner` и `.empty-state` встают по 1104 и
+   1152 там, где вопрос стоит по 960, — борта расходятся, инвариант FRD-018
+   («трое детей полосы по одному борту») ломается ровно в том диапазоне ширин,
+   где рельс перенесён. Это §6 «пустые панели» в чистом виде.
+
+   `(100% - сумма + 1px) * 9999` — переключатель без медиазапроса: пока полоса
+   шире суммы, скобка положительна и множитель уводит её далеко за сумму, min()
+   возвращает сумму; как только полоса уже суммы — скобка отрицательна, min()
+   отдаёт отрицательное, max() поднимает результат до меры рабочей колонки.
+   Порог тот же, по которому flex переносит рельс (сумма баз против ширины
+   контейнера), поэтому коробка и перенос переключаются одним и тем же событием,
+   а не двумя независимыми условиями. Литерала ширины тут нет: число колонок
+   по-прежнему выбирает содержимое.
+
+   Проценты считаются от СОДЕРЖИМОГО `main.ed-page` — общего содержащего блока
+   всех троих читателей меры, поэтому порог у них общий, но он не равен ширине
+   полосы по рамке: у полосы свои поля. Замер WebKit@2, 1920×1080 — clientWidth
+   1700 при padding-inline 76.8, содержимое 1546.4. Отсюда фактические пороги:
+   «Поток» ставит рельс рядом с ~1650 (сумма 1296), а «Разделение» на этой
+   матрице не ставит нигде — его рабочая колонка сама двухпейновая и на 2560
+   стоит 1312, сумма выходит 1648 против доступных 1638.4. Это следствие, а не
+   недосмотр: в «Разделении» вторую колонку уже занял сам вопрос, и рельс там
+   честнее горизонтальной полосой над ним. Мёртвого поля ни в одном из случаев
+   не остаётся — коробка схлопывается ровно к своей колонке. */
+html[data-design] .focus-page {
+  --focus-band-sum: calc(var(--focus-main-measure) + var(--focus-rail-gap) + var(--focus-rail-width));
+  --focus-measure: max(
+    var(--focus-main-measure),
+    min(var(--focus-band-sum), (100% - var(--focus-band-sum) + 1px) * 9999)
+  );
+}
+
+/* База композиции читает ТУ ЖЕ меру, что и остальные дети полосы. Здесь стоял
+   собственный кап `var(--max-width-focus)` — токен, который совпадал с мерой
+   рабочей колонки (обе 60rem) по совпадению, а не по контракту: связи между ними
+   не было, и правка одной не двигала другую. При выключенном `:has()` (старый
+   движок — прогрессивное улучшение) полоса получала две меры сразу: композиция
+   стояла по 60rem, а resume-баннер и пустое состояние — по --focus-measure. В
+   «Потоке» борта случайно сходились, в «Разделении» — нет: там --focus-main-measure
+   переопределён (на 2560 — 1312), и композиция осталась бы на 960 при соседях по
+   1312. Одна мера на полосу закрывает обе ветви, и переопределение раскладки
+   доходит до фолбэка тоже. Токен --max-width-focus после этого не читал никто —
+   удалён из tokens.css, чтобы вторая мера не завелась заново. */
 html[data-design] .focus-training {
-  max-width: var(--max-width-focus);
+  max-width: var(--focus-measure);
   margin: 0 auto;
   min-width: 0;
   width: 100%;
 }
 
-/* Не даём pre/длинным строкам раздувать колонку шире viewport (mobile overflow). */
+/* iter-68: рабочая колонка — обычный блок, пока композиция не включена. Это
+   ровно один случай — движок без `:has()`; «рельс пуст» сюда НЕ входит, и это
+   проверено по коду, а не предположено: `metrics` в модели приходит из
+   LearningMetricsService.compute(), который всегда возвращает запись, а
+   MvcModelAttributeMapper.applySurfaceState кладёт её на каждый рендер
+   focus-training.html. Значит гейт шаблона `interviewSession == null and
+   metrics != null` вырождается в `interviewSession == null`, и рельс несёт либо
+   прогресс сессии, либо прогресс банка — пустым он не бывает.
+   База даёт колонке только защиту от min-content-пола: в flex- и grid-контекстах
+   ниже колонка обязана уметь сжиматься, иначе длинный <pre> внутри вопроса
+   растягивает всю полосу и на мобиле появляется горизонтальный скролл. */
+html[data-design] .focus-main { min-width: 0; }
+
+/* Не даём pre/длинным строкам раздувать колонку шире viewport (mobile overflow).
+   Работают тут ровно две строки ниже: `min-width: 0` снимает min-content-пол
+   грид-элемента, `overflow-x: clip` обрезает то, что всё же вылезло.
+
+   iter-67 — ТРЕТЬЕЙ СТРОКИ `max-width: 100%` ЗДЕСЬ БЫТЬ НЕ ДОЛЖНО. Она стояла
+   рядом как часть той же защиты от переполнения, но защитой не была: база
+   `.ed-page` уже несёт `max-width: var(--max-width-page)` = `min(100%, 112rem)`,
+   и ниже 1792px это выражение тождественно равно 100% — на мобиле строка была
+   no-op. Зато выше 1792 она перебивала кап и отвязывала главный экран продукта
+   от общей шкалы полосы (FRD-015): замер WebKit@2 на 2560 дал полосу 2340px
+   против 1792 на `/stats`, `/bookmarks`, `/settings` и странице ошибки — все они
+   `AUDITED` по этой шкале. Строка снята; переполнение держат оставшиеся две. */
 html[data-design] .focus-page .ed-page {
-  max-width: 100%;
   min-width: 0;
   overflow-x: clip;
+}
+
+/* Пустое состояние — вертикаль. Экран вопроса длинный и центрировать его нельзя,
+   но состояние «вопросов нет» занимает ~330px и висело в верхней трети окна:
+   замер 2560×1440 — 1110px фона под карточкой, читается как недогруженная
+   страница. Гейт `:has(.empty-state)` включает центрирование ровно в этом
+   состоянии; браузер без `:has()` остаётся на прежней раскладке (PE). Значение
+   то же, что на странице ошибки (iter-66), — состояния родственные, и разные
+   константы тут развели бы одинаковые экраны. */
+html[data-design] .focus-page .ed-page:has(.empty-state) {
+  min-height: calc(100dvh - 9rem);
+  display: flex; flex-direction: column; justify-content: center;
+}
+@media (max-width: 600px) {
+  /* На телефоне центрировать нечего: карточка почти во весь экран, а фиксированный
+     таббар снизу съел бы нижнюю кромку. */
+  html[data-design] .focus-page .ed-page:has(.empty-state) {
+    justify-content: flex-start;
+    min-height: 0;
+  }
 }
 
 /* UX-002: вопрос и варианты — визуальный primary; chrome/HUD — вторичный. */
@@ -151,22 +252,31 @@ html[data-design] .focus-page .session-progress-track {
 /* Досрочное завершение сессии из рейки (round-01 B3). На узких экранах —
    обычный блок в потоке перед вопросом, на >=1200px — элемент sticky-рейки. */
 html[data-design] .focus-page .rail-finish { margin-bottom: var(--space-6); }
-/* FLOW-01b: пауза сессии из рейки — ниже-эмфазная, чем «Завершить» (обратимое
-   действие). Text-only без рамки; на wide-рельсе тянется в full-width как rail-finish. */
+/* Пауза сессии — соседний пункт того же меню, что и «Завершить сессию». */
 html[data-design] .focus-page .rail-pause { margin-bottom: var(--space-3); }
-html[data-design] .focus-page .rail-pause-btn {
-  border-color: transparent; color: var(--color-text-secondary);
-  padding-left: 0; padding-right: 0;
-}
-html[data-design] .focus-page .rail-pause-btn:hover:not(:disabled) {
-  background: transparent; border-color: transparent;
-  color: var(--color-text-primary); text-decoration: underline;
-}
+/* Здесь пауза перекрашивалась в текстовую ссылку без рамки и без боковых полей,
+   чтобы стоять «ниже по эмфазе», чем «Завершить». Блок снят в iter-78 целиком.
+   Во-первых, он не работал: слой pixel идёт ПОЗЖЕ страницы и красит
+   `.rail-pause-btn` заливкой вторичной кнопки, а `border-color` у кнопки нечему
+   применяться (`border: 0`) — из всего блока до экрана доезжало единственное
+   `padding-left/right: 0`, то есть залитая кнопка с контуром, прижатым вплотную
+   к своему тексту. Во-вторых, оба пункта — соседние строки одного меню
+   (`.focus-session-more-item`, role="menuitem"); разный вид у двух пунктов одной
+   роли — это ровно та вторая система, которую запрещает §24. Эмфазу здесь несёт
+   порядок и текст пункта, а не своя краска. */
 /* FLOW-01b: resume-баннер приостановленной сессии — callout вверху фокус-страницы
-   (accent-wash фон + accent-бордер). На узких стекается: действие уходит под текст. */
+   (accent-wash фон + accent-бордер). На узких стекается: действие уходит под текст.
+
+   Ширина — общая мера страницы (--focus-measure), а не ширина полосы. Баннер
+   говорит о той самой сессии, чьи вопросы стоят ниже, и обязан стоять с ними на
+   одной кромке. По ширине полосы он расходился с композицией на 15px (1680),
+   37 (1728), 125 (1920) и 442px (2560) с каждой стороны — «Продолжить» уезжала
+   к правому краю окна, за пределы колонки, к которой относится. */
 html[data-design] .focus-page .resume-banner {
   display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
   flex-wrap: wrap;
+  width: min(100%, var(--focus-measure));
+  margin-inline: auto;
   margin-bottom: var(--space-6); padding: var(--space-4) var(--space-5);
   background: var(--color-accent-wash);
   border: var(--rule-weight) solid var(--color-accent-primary);
@@ -177,39 +287,40 @@ html[data-design] .focus-page .resume-banner-text { display: flex; flex-directio
 html[data-design] .focus-page .resume-banner-text strong { font-weight: var(--font-weight-semibold); color: var(--color-text-primary); }
 html[data-design] .focus-page .resume-banner-meta { font-family: var(--font-family-mono); font-size: var(--font-size-sm); color: var(--color-text-secondary); }
 
-/* FLOW-04: recoverable offline / expired banners */
-html[data-design] .focus-page .recoverable-banner {
-  display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2);
-  margin: 0 0 var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border: var(--rule-weight) solid var(--color-border-primary);
-  background: var(--color-bg-secondary);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
-}
-html[data-design] .focus-page .recoverable-banner.hidden,
-html[data-design] .focus-page .recoverable-banner[hidden] { display: none !important; }
-html[data-design] .focus-page .recoverable-banner-offline {
-  border-color: var(--color-status-warning);
-  background: var(--color-status-warning-wash, var(--color-bg-tertiary));
-  align-items: center;   /* GFX-008: pixel-offline глиф выравнивается по центру текста */
-}
-/* Текст-обёртка offline-баннера: сохраняет прежний baseline-flow strong+span,
-   а pixel-глиф остаётся отдельным нешринкующимся flex-элементом слева. */
-html[data-design] .focus-page .recoverable-banner-text {
-  display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2);
-  flex: 1 1 0; min-width: 0;
-}
-html[data-design] .focus-page .recoverable-banner-expired {
-  border-color: var(--color-status-error);
-  background: var(--color-status-error-wash);
-}
+/* Баннеры восстановления (offline / «Сессия истекла») ОТСЮДА УДАЛЕНЫ в iter-82.
+   Их печатает shell-head.html — то есть все семь страниц, — а коробка стояла под
+   `.focus-page`: на /stats, /bookmarks, /settings и /error замер давал
+   `display:block; padding:0; border:0 none; background:transparent`. Теперь это
+   `.notice` из components-notice.css (гейт `*`): offline — `.notice-warning`,
+   «Сессия истекла» — без модификатора (тон ошибки у компонента дефолтный).
+   Здесь ничего не осталось намеренно: страница не имеет своего мнения о том,
+   как выглядит сообщение. */
 html[data-design] .focus-page .resume-banner-action { flex-shrink: 0; }
 html[data-design] .focus-page .session-progress-fill {
   height: 100%;
   width: calc(var(--progress, 0) * 1%);
   background: var(--color-accent-primary);
   transition: width var(--duration-slow) var(--easing-out);
+}
+
+/* Прогресс по банку — то, что рельс показывает ВНЕ сессии (iter-57). Отбивка от
+   строки охвата своя, а не сессионные --space-6: там зазор отделял трек от вопроса,
+   здесь под строкой сразу идут две цифры того же блока. */
+html[data-design] .focus-page .focus-bank-progress .focus-progress-line { margin-bottom: var(--space-3); }
+html[data-design] .focus-page .focus-bank-facts {
+  display: flex;
+  gap: var(--space-5);
+  margin: 0;
+}
+html[data-design] .focus-page .focus-bank-fact { display: flex; flex-direction: column; gap: 2px; }
+html[data-design] .focus-page .focus-bank-fact dt { margin: 0; }
+html[data-design] .focus-page .focus-bank-fact dd {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Зона-голова вопроса — строка идентичности: тема + сложность + режим. Три
@@ -327,7 +438,10 @@ html[data-design] .focus-question {
   font-weight: var(--font-weight-semibold);
   font-size: clamp(1.75rem, 1.2rem + 2.4vw, var(--font-size-3xl));
   line-height: var(--line-height-tight);
-  letter-spacing: var(--letter-spacing-tight);
+  /* Трекинг НЕ переопределяется страницей: он принадлежит заголовку как
+     компоненту (reset.css). Здесь стояла копия `--letter-spacing-tight` — она
+     пережила смену шрифта заголовков на антикву и молча возвращала минус-трекинг
+     гротеска ровно на главном тексте продукта. */
   color: var(--color-text-primary);
   margin: 0 0 var(--space-5);
   padding-bottom: var(--space-5);
@@ -563,89 +677,41 @@ html[data-design="instrument"] #interview-options label::before {
    неверных вариантов живёт в `.distractor-panel`, а раскрытие «Подробнее» — в
    `<details class="explanation-panel additional-panel">`, одинаково на SSR и AJAX. */
 
-/* Кнопки в фокусе. Старый styles.css бьёт по ID/фикс-позиционированию
-   (#interview-submit (1,0,0); .focus-page .focus-training #interview-submit (1,2,0);
-   .focus-page .focus-training .action-footer fixed). Перебиваем, добавляя .focus-page
-   в селектор → (1,2,1)/(0,3,1). Сбрасываем старый float-footer в статичный поток. */
+/* Полоса действий экрана вопроса — это РАЗМЕЩЕНИЕ (поток, зазор, поля), и потому
+   принадлежит странице. Коробка самих кнопок здесь не объявляется: она в
+   components-controls.css (FRD-037).
+
+   Прежний комментарий объяснял `.focus-page` в селекторе набором специфичности
+   против «старого styles.css». Файла styles.css в проекте нет (замер iter-78),
+   и `.action-footer` объявлена только здесь — перебивать нечего. Префикс
+   оставлен как область действия правила, а не как перевес. */
 html[data-design] .focus-page .action-footer {
   position: static;
   display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
   margin: var(--space-2) 0 0; padding: 0; bottom: auto; width: auto;
   background: transparent; border: 0; box-shadow: none;
 }
-html[data-design] .focus-page #interview-submit,
-html[data-design] .focus-page .flashcard-reveal-btn {
-  /* C8: главное действие флоу — в один размер с прочими primary-CTA (48px,
-     #session-form submit / .summary-actions .btn / grade / confidence). Раньше 44px
-     делал самую частую кнопку мельче второстепенных на той же странице. */
-  display: inline-flex; align-items: center; justify-content: center;
-  width: auto; min-height: 48px; margin: 0; padding: var(--space-3) var(--space-6);
-  font-family: var(--font-family-body); font-size: var(--font-size-base); font-weight: var(--font-weight-medium);
-  letter-spacing: 0;
-  background: var(--color-accent-primary); color: var(--color-accent-on);
-  border: var(--rule-weight) solid var(--color-accent-primary); border-radius: var(--border-radius-md);
-  box-shadow: none; /* гасим старый indigo-glow из styles.css */
-  cursor: pointer; touch-action: manipulation; text-transform: none;
-  transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default), opacity var(--duration-fast) var(--easing-default);
-}
-html[data-design] .focus-page #interview-submit:hover:not(:disabled),
-html[data-design] .focus-page .flashcard-reveal-btn:hover:not(:disabled) { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); color: var(--color-accent-on); }
-html[data-design] .focus-page #interview-submit:disabled,
-html[data-design] .focus-page #interview-submit.is-disabled {
-  background: var(--color-bg-tertiary); color: var(--color-text-secondary);
-  border-color: var(--color-border-primary); opacity: 1; cursor: not-allowed;
-}
-/* P0.3: submitting — третье явное состояние (disabled → enabled → submitting).
-   Кнопка ОСТАЁТСЯ акцентной (не бледный disabled), приглушена и с крутящимся
-   индикатором; текст quiz/interview.js меняет на «Проверяю…». Идёт ПОСЛЕ :disabled/.is-disabled:
-   специфичность равная (#id+class == #id+:pseudo), решает порядок — иначе бледное
-   disabled-правило перекрасило бы submitting-кнопку (она тоже disabled=true). */
-html[data-design] .focus-page #interview-submit.is-submitting {
-  background: var(--color-accent-primary); color: var(--color-accent-on);
-  border-color: var(--color-accent-primary); opacity: 0.82; cursor: progress;
-}
-html[data-design] .focus-page #interview-submit.is-submitting::after {
-  content: ""; display: inline-block; width: 0.95em; height: 0.95em;
-  margin-left: var(--space-2); vertical-align: -0.15em;
-  border: 2px solid currentColor; border-right-color: transparent;
-  border-radius: 50%; animation: btn-spin 0.6s linear infinite;
-}
-@keyframes btn-spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) {
-  html[data-design] .focus-page #interview-submit.is-submitting::after { animation: none; }
-}
+/* Главное действие флоу («Проверить ответ» / «Показать ответ») страницей больше
+   не оформляется — ни коробка, ни заливка.
 
-/* Реставр handoff-3 (макет): primary-CTA «Проверить ответ» — teal-градиент
-   (.btn.primary прототипа: linear-gradient(90deg, accent-2, accent)) + мягкое
-   teal-свечение. Специфичность равна базовому правилу (1,2,1) — выигрыш по
-   порядку (это правило ниже). Тот же язык применяем к .flashcard-reveal-btn
-   (reveal/study-confirm) и #next-question, чтобы главные действия флоу были
-   визуально едины. Ховер — сдвиг градиента ярче; глушим у is-disabled ниже. */
-html[data-design="instrument"] .focus-page #interview-submit,
-html[data-design="instrument"] .focus-page .flashcard-reveal-btn,
-html[data-design="instrument"] .focus-page .next-btn {
-  background: linear-gradient(90deg, var(--color-accent-2), var(--color-accent-primary));
-  border-color: transparent;
-  box-shadow: 0 10px 24px rgba(57, 208, 199, 0.15);
-  font-weight: var(--font-weight-bold);
-}
-html[data-design="instrument"] .focus-page #interview-submit:hover:not(:disabled),
-html[data-design="instrument"] .focus-page .flashcard-reveal-btn:hover:not(:disabled),
-html[data-design="instrument"] .focus-page .next-btn:hover:not(:disabled) {
-  background: linear-gradient(90deg, var(--color-accent-primary), var(--color-accent-primary-hover));
-  border-color: transparent;
-}
-/* disabled/submitting теряют градиент-glow — не обещаем «готово к клику»,
-   когда кнопка недоступна (правило ниже базового submitting, побеждает порядком). */
-html[data-design="instrument"] .focus-page #interview-submit:disabled,
-html[data-design="instrument"] .focus-page #interview-submit.is-disabled {
-  background: var(--color-bg-tertiary);
-  box-shadow: none;
-}
-html[data-design="instrument"] .focus-page #interview-submit.is-submitting {
-  background: linear-gradient(90deg, var(--color-accent-2), var(--color-accent-primary));
-  box-shadow: none;
-}
+   Замер iter-78, WebKit 1440×900: страница объявляла для этой кнопки ПОЛНЫЙ
+   скелет (48px, поля, кегль, `border: 1px solid accent`, `border-radius: md`,
+   переход) и ДВЕ заливки — сплошную акцентную и поверх неё teal-градиент
+   `90deg` со свечением. На экран не доезжало почти ничего: слой pixel рисовал
+   свой градиент `180deg` и свой контур через `!important`, а рамка и радиус
+   стирались там же. То есть страница описывала кнопку, которой не существует.
+
+   Разделение зафиксировано: КОРОБКА — components-controls.css (ранг «главное
+   действие флоу», 48px), КРАСКА — pixel-buttons.css (teal-градиент, контур,
+   состояния armed/disabled/submitting). Страница отвечает только за то, как
+   кнопка стоит в футере действия. */
+html[data-design] .focus-page #interview-submit,
+html[data-design] .focus-page .flashcard-reveal-btn { margin: 0; letter-spacing: 0; }
+html[data-design] .focus-page #interview-submit:disabled,
+html[data-design] .focus-page #interview-submit.is-disabled { cursor: not-allowed; }
+/* Вид отправки («идёт проверка») страница больше НЕ описывает: это состояние
+   всего приложения, а не особенность одной кнопки. Ключ, руна, курсор и
+   спокойный режим — components-pending.css (iter-84). */
 
 /* Зона действия как СОБРАННЫЙ футер сцены, а не сиротливая кнопка в нижнем левом
    углу широкого поля. На ≥768px обёртка training-actions — ряд во всю ширину
@@ -662,6 +728,69 @@ html[data-design="instrument"] .focus-page #interview-submit.is-submitting {
   }
   html[data-design] .focus-page [data-ui-fragment="training-actions"] .action-footer { margin: 0; }
   html[data-design] .focus-page [data-ui-fragment="training-actions"] .keyboard-hint { margin: 0; text-align: right; }
+}
+
+/* FRD-008. Главное действие не тонет под списком вариантов НИ НА ОДНОМ вьюпорте.
+
+   Проект уже признал этот дефект дефектом — но только на мобиле. Ниже по файлу
+   (@media max-width:600px) та же `.action-footer` закреплена `position: fixed` с
+   мотивировкой «главное действие MCQ-ответа — закреплённая нижняя панель, а не
+   кнопка, тонущая под длинным списком вариантов». Причина в этой формулировке не
+   мобильная: тонет она от ДЛИНЫ списка, а список на десктопе не короче. Замер
+   WebKit 18.2 (DPR 2, четырёхвариантный MCQ, скролл в нуле) показывает, что
+   десктоп терял ту же гарантию ровно там, где она нужнее всего:
+
+     вьюпорт      низ кнопки   видно вариантов   действие видно
+     1280×800        1190px          59%              нет
+     1440×900        1098px          82%              нет
+     1512×982        1098px          95%              нет
+     1920×1200       1098px         100%              да
+     2560×1440       1098px         100%              да
+
+   1440×900 и 1512×982 — два самых частых MacBook-вьюпорта (Air 13" и Pro 14"),
+   и ровно на них §8 нарушался: «пользователь должен видеть… главное действие».
+   Композиция при этом не адаптируется по высоте вообще — docH 1252px одинаков
+   на 1440 и на 1512, то есть кнопка уезжала за сгиб не из-за нехватки места, а
+   потому что её положение вообще не связано с высотой окна.
+
+   Сжать отступы до влезания нельзя честно: на 1440 не хватает 198px, а весь
+   пре-опционный стек (чипы+причина+вопрос) весит 232px — «уместилось» получилось
+   бы только ценой самого вопроса. Поэтому меняется не спейсинг, а поведение:
+   зона действия становится sticky-подвалом СВОЕЙ колонки. Она всплывает над
+   списком, пока список прокручивается, и садится на своё место в потоке, когда
+   форма домотана, — то есть ни один вариант не перекрыт навсегда.
+
+   Почему sticky, а не fixed как на мобиле: fixed отвязывает панель от колонки и
+   растянул бы её на всю ширину окна поверх правого рельса. Sticky держит меру и
+   ширину колонки — на десктопе действие принадлежит сцене вопроса, а не экрану.
+
+   Гейт `> …:not(.is-answered)` повторяет мобильный: после ответа quiz/interview.js
+   метит блок `.is-answered`, и правило строкой ниже прячет его целиком — панель
+   живёт только в pre-answer-состоянии и не мешает зоне разбора. Прямой потомок:
+   sticky считает свои границы по родителю, и родителем обязана быть форма
+   (770px хода), а не собственная обёртка высотой в саму панель — в ней ходу нет
+   и sticky молча выродился бы в static.
+
+   601px — стык с мобильным `fixed` (max-width:600px): ни разрыва, ни наложения.
+   Фон = --color-bg-primary, он побайтно равен фону body в обеих темах (замер:
+   dark #071116 = rgb(7,17,22), light #f5f8f8 = rgb(245,248,248)), поэтому панель
+   непрозрачна и не «просвечивает» вариантами. */
+@media (min-width: 601px) {
+  html[data-design] .focus-page #interview-form > [data-ui-fragment="training-actions"]:not(.is-answered) {
+    position: sticky;
+    bottom: 0;
+    z-index: var(--z-sticky);
+    background: var(--color-bg-primary);
+    border-top: var(--rule-weight) solid var(--color-border-primary);
+    padding: var(--space-3) 0;
+  }
+  /* Клавиатурная навигация по вариантам (↑/↓, 1–9) скроллит вариант в вид —
+     без запаса последний вариант приезжает ПОД всплывшую панель. Тот же приём,
+     что уже применён к мобильной fixed-панели ниже по файлу. */
+  html[data-design] .focus-page:has(#interview-form
+      [data-ui-fragment="training-actions"]:not(.is-answered)) #interview-options > label {
+    scroll-margin-bottom: 6rem;
+  }
 }
 /* После ответа quiz/interview.js (showResult) переносит #next-question вниз зоны разбора и
    помечает опустевший training-actions классом is-answered. Прячем его целиком:
@@ -702,17 +831,17 @@ html[data-design] .focus-page .keyboard-hint { font-family: var(--font-family-mo
    primary «Проверить ответ» остаётся доминирующим, а честный пропуск доступен
    без визуальной конкуренции. */
 html[data-design] .focus-training .skip-action { margin-top: var(--space-3); text-align: center; }
+/* Коробка и цвет пропуска — ранг «тихое действие» (components-controls.css +
+   краска в pixel-buttons.css). Здесь страница объявляла свой рецепт, и он
+   проигрывал: слой pixel красил `.skip-btn` красной danger-кнопкой, хотя этот
+   комментарий обещает «текстовая, вторичный цвет». Осталось подчёркивание —
+   единственное, что отличает escape-hatch от прочих тихих действий. */
 html[data-design] .focus-training .skip-btn {
-  appearance: none; background: none; border: none; cursor: pointer;
-  font-family: var(--font-family-mono); font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  padding: var(--space-2) var(--space-3); border-radius: var(--border-radius-sm);
   text-decoration: underline; text-underline-offset: 3px;
   text-decoration-color: var(--color-border-primary);
 }
 html[data-design] .focus-training .skip-btn:hover,
 html[data-design] .focus-training .skip-btn:focus-visible {
-  color: var(--color-text-primary);
   text-decoration-color: var(--color-accent-primary);
 }
 
@@ -790,32 +919,22 @@ html[data-design] .focus-page .flashcard-grade-label {
   letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary);
 }
 html[data-design] .focus-page .d-contents { display: contents; }
-html[data-design] .focus-page .flashcard-grade-btn {
-  min-height: 48px; padding: var(--space-2) var(--space-4);
-  font-family: var(--font-family-body); font-size: var(--font-size-base);
-  background: var(--color-bg-secondary); color: var(--color-text-primary);
-  border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-md);
-  cursor: pointer; touch-action: manipulation;
-  transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
-}
-html[data-design] .focus-page .flashcard-grade-btn:hover:not(:disabled) { border-color: var(--color-text-secondary); background: var(--color-bg-tertiary); }
-html[data-design] .focus-page .flashcard-grade-btn.grade-1:hover:not(:disabled) { border-color: var(--color-status-error); background: var(--color-status-error-wash); }
-html[data-design] .focus-page .flashcard-grade-btn.grade-4:hover:not(:disabled) { border-color: var(--color-status-success); background: var(--color-status-success-wash); }
+/* Оценка флешкарты и кнопка уверенности после MCQ — один контрол «самооценка»,
+   и оформляется он один раз, в components-controls.css. Здесь была вторая копия
+   его коробки, разошедшаяся с первой радиусом (`md` против `0`); заодно у
+   оценки не было правил `.selected` и `:disabled`, которые есть у уверенности,
+   хотя выбранная оценка так же не должна гаснуть. Странице остаётся сетка. */
 
 /* Stage-6 typed recall / interview / code challenge */
 html[data-design] .focus-page .typed-answer-input { width: 100%; margin-bottom: var(--space-4); }
+/* Коробка (ширина, паддинг, рамка, радиус, фон, цвет, шрифт, resize) удалена в
+   iter-77 — она была третьим объявлением одного и того же поля и расходилась с
+   компонентом радиусом (`md` против `sm`). Осталось то, что принадлежит именно
+   этому экрану: высота под развёрнутый ответ и запас прокрутки под мобильной
+   навигацией. Интерлиньяж поднят в компонент — он одинаков у обоих
+   многострочных полей приложения. */
 html[data-design] .focus-page .typed-answer-input textarea {
-  width: 100%;
   min-height: 8rem;
-  padding: var(--space-3);
-  border: var(--rule-weight) solid var(--color-border-primary);
-  border-radius: var(--border-radius-md);
-  background: var(--color-bg-secondary);
-  color: var(--color-text-primary);
-  font-family: var(--font-family-body);
-  font-size: var(--font-size-base);
-  line-height: var(--line-height-relaxed);
-  resize: vertical;
   /* Mobile: нижний край textarea не должен садиться под fixed mobile-nav. */
   scroll-margin-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-6));
 }
@@ -828,8 +947,10 @@ html[data-design] .focus-page .typed-answer-input.is-code textarea {
    Кнопки доп. анализа используют [aria-disabled] вместо native disabled
    (сохраняет фокус клавиатуры), поэтому матчим оба состояния; pointer-events
    гасит клик мышью, повтор с клавиатуры отсекает JS-гард. */
+/* .flashcard-grade-btn из этого списка убрана в iter-78: у контрола самооценки
+   свой disabled (выбранная кнопка не гаснет — она несёт итог), и общее правило
+   гасило её вместе с остальными. */
 html[data-design] .focus-page .flashcard-reveal-btn:disabled,
-html[data-design] .focus-page .flashcard-grade-btn:disabled,
 html[data-design] .focus-page #extra-analysis-toggle:disabled,
 html[data-design] .focus-page #extra-analysis-toggle[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
 
@@ -868,14 +989,10 @@ html[data-design] .focus-page .question-code-wrap:fullscreen {
   padding: var(--space-4); background: var(--color-bg-primary); overflow: auto;
 }
 html[data-design] .focus-page .diagram-toolbar-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); }
-/* Кнопки обоих тулбаров — компактные: это вспомогательное управление материалом,
-   а не действия страницы, и по весу они не имеют права спорить с «Ответить».
-   Компактный размер был прописан только диаграмме, из-за чего две одинаковые по
-   роли полосы в одном экране несли кнопки разной высоты. */
-html[data-design] .focus-page .diagram-toolbar-actions .diagram-action,
-html[data-design] .focus-page .code-toolbar-actions .code-action {
-  min-height: 32px; padding: 0.35rem 0.6rem; font-size: var(--font-size-sm);
-}
+/* Коробка кнопок обоих тулбаров — ранг «компактное действие тулбара» в
+   components-controls.css. Здесь она стояла до iter-78: страница уменьшала
+   высоту кнопки до 32px, из-за чего компакт доезжал и до тача. Страница держит
+   только раскладку полос (см. .diagram-toolbar-actions выше). */
 html[data-design] .focus-page .diagram-viewport {
   overflow: auto; max-height: min(70vh, 640px); padding: var(--space-2);
   background: var(--color-bg-tertiary);
@@ -949,22 +1066,10 @@ html[data-design] .focus-page [data-ui-fragment="post-answer-controls"] > #next-
    .report-zone в split-layout получает grid-column 1/-1 в pages-layout (другое
    свойство, тот же @layer pages — сосуществуют). */
 html[data-design] .focus-training .report-zone { margin-top: var(--space-5); }
-html[data-design] .focus-training .report-trigger {
-  appearance: none; background: none; border: none; cursor: pointer;
-  display: inline-flex; align-items: center; gap: var(--space-2);
-  font-family: var(--font-family-mono); font-size: var(--font-size-sm);
-  color: var(--color-text-secondary); padding: var(--space-2) 0;
-  border-radius: var(--border-radius-sm);
-}
-html[data-design] .focus-training .report-trigger:hover,
-html[data-design] .focus-training .report-trigger:focus-visible { color: var(--color-text-primary); }
-/* На сенсорных экранах цель 189×35 попадает пальцем плохо (24×24 WCAG 2.5.8 формально
-   пройдены, но 35px — ниже комфортных 44). Добираем высоту только при coarse-указателе:
-   на десктопе кнопка должна оставаться тихой строкой, а не набивать вертикальный воздух
-   рядом с основным действием. */
-@media (pointer: coarse) {
-  html[data-design] .focus-training .report-trigger { min-height: 44px; }
-}
+/* Коробка и цвет — ранг «тихое действие», общий с `.skip-btn`. Оба контрола
+   описывали себя одинаково («appearance:none, mono sm, secondary, radius sm»),
+   но по отдельности, в двух правилах — и оба на экране выглядели иначе, чем
+   написано. Странице остаётся только отступ зоны (выше). */
 
 /* Вердикт ответа (.result-correct/.result-wrong, verdictReveal @keyframes), ResultBanner,
    ExplanationCard (.explanation-panel/.explanation-eyebrow) и плоский вложенный .answer
@@ -973,21 +1078,41 @@ html[data-design] .focus-training .report-trigger:focus-visible { color: var(--c
    на .focus-page + no-JS result.html (D2c). Партнёры в своих слоях остаются: shell.css
    .result-banner-flex/.explanation-panel-base (@shell ниже), pixel-fx декор (@pixel выше),
    utilities-mobile padding (@utilities выше). */
-/* Глобальный `.inline-alert` (error/success) вынесен в components-alert.css
-   (@layer components, грузится всегда): рендерится на topbar/result/post-answer —
-   вне экрана вопроса, нельзя терять при page-scope focus (Волна 3). */
+/* Сообщение (`.notice` + тоны) живёт в components-notice.css (@layer components,
+   гейт `*`): слот печатают shell-head, post-answer-controls и result — вне экрана
+   вопроса, нельзя терять при page-scope focus (Волна 3). До iter-82 файл звался
+   components-alert.css, а компонент — `.inline-alert`. */
 
 /* Empty-state */
-html[data-design] .focus-page .empty-card-inner { max-width: 560px; margin: var(--space-8) auto; text-align: center; padding: var(--space-7) var(--space-5); border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-lg); background: var(--color-bg-secondary); }
-/* Pixel-маскот empty (mascot.png 24×24 → 3× = 72px, height:auto = квадрат без искажения §2.1);
-   image-rendering:pixelated держит грань чёткой при апскейле (как bookmarks-empty-visual). */
-html[data-design] .focus-page .empty-pixel-art { display: block; width: 72px; height: auto; margin: 0 auto var(--space-4); image-rendering: pixelated; }
-html[data-design] .focus-page .empty-title { font-family: var(--font-family-display); font-size: var(--font-size-2xl); margin-bottom: var(--space-3); }
-html[data-design] .focus-page .empty-description { color: var(--color-text-secondary); margin-inline: auto; }
-html[data-design] .focus-page .empty-actions { display: flex; gap: var(--space-3); justify-content: center; flex-wrap: wrap; margin-top: var(--space-5); }
+/* Ширина — общая мера страницы, ОДНИМ правилом на все ширины. iter-67:
+
+   1. `width: min(100%, …)`, а не `max-width`: полоса в состоянии «вопросов нет» —
+      flex-колонка (вертикальное центрирование, начало файла), а в ней cross-axis
+      stretch НЕ применяется к элементу с auto-полями по той же оси. С одним лишь
+      `max-width` карточка схлопывалась до fit-content — замер WebKit@2 дал 854px
+      вместо меры полосы на всех вьюпортах. Тем же приёмом держится `.error-card`
+      в pages-error.css (iter-66).
+   2. `--focus-measure`, а не 560px: до iter-67 базовым потолком было 560px, а
+      парное правило в блоке >=1200px его снимало. Между 610 и 1199 работала база —
+      и карточка расходилась с resume-баннером над ней на 46px (700), 80 (768),
+      98 (1024), 113 (834) и до 161px (1150) с каждой стороны. В этот диапазон
+      попадают планшеты, половина широкого экрана и зум 150-200%. Пока полоса уже
+      меры, `min(100%, …)` честно даёт её ширину; шире — тот же кап, что у
+      композиции (1296px в базовой раскладке), потому что мера одна на обоих.
+      Парное правило в >=1200 снято: одно правило вместо двух и один потолок.
+      (iter-68: раньше здесь стоял «гейт рельса 1080px» — литерала больше нет,
+      композиция переносит рельс без медиазапроса.)
+
+   iter-83: правило похудело до ширины и внешних полей. Коробку (кромка, фон,
+   радиус, поля) даёт `.card`, композицию — `.empty-state` из
+   components-empty-state.css. Страница отвечает ровно за то, за что и
+   отвечала, — за ПОЛОСУ. Классов `.empty-pixel-art/.empty-title/
+   .empty-description/.empty-actions` тут больше нет: три страничных копии
+   одного понятия сведены в один компонент, а PNG-маскот заменён глифом
+   спрайта состояний (`#px-portcullis`). */
+html[data-design] .focus-page .empty-state { width: min(100%, var(--focus-measure)); margin: var(--space-8) auto; }
 
 @media (max-width: 600px) {
-  html[data-design] .focus-page .empty-pixel-art { width: 48px; }
   html[data-design] .focus-page .flashcard-grade-buttons { grid-template-columns: 1fr 1fr; }
   /* На мобиле главное действие — full-width (крупная цель тапа, явный primary).
      Спецификой добиваем #interview-submit (1,2,0) и .flashcard-reveal-btn (0,2,0):
@@ -1024,9 +1149,18 @@ html[data-design] .focus-page .empty-actions { display: flex; gap: var(--space-3
     z-index: var(--z-sticky);
     width: auto;
     margin: 0;
-    padding: var(--space-3) var(--page-gutter);
-    border-radius: 0;
-    box-shadow: var(--shadow-md);
+    /* Док тянется во всю ширину экрана, поэтому подпись выравниваем по колонке
+       контента — это выравнивание по сетке страницы, то есть место, а не вид.
+       Поэтому здесь ровно боковые поля и ничего больше: высоту дока задаёт ранг
+       (iter-78). Раньше стояла сокращённая запись `padding: var(--space-3)
+       var(--page-gutter)`, которая заодно переписывала и вертикальные поля.
+       Замер: доехавшая коробка и до, и после — 12px/24px, 48px высоты, то есть
+       видимой разницы нет; страница просто повторяла вертикальное поле ранга
+       своим числом и молча зафиксировала бы старое значение, измени мы ранг.
+       Радиус и тень сняты там же: радиус у кнопки и так 0, а мягкая
+       `--shadow-md` спорила с pixel-контуром и проигрывала ему (слой pixel
+       позже). Отделяет док от контента тот же контур, что и у всех кнопок. */
+    padding-inline: var(--page-gutter);
   }
   /* Резерв в потоке: fixed вынимает кнопку — без паддинга textarea/контент
      садятся под док. */
@@ -1123,11 +1257,11 @@ html[data-design] .focus-page .empty-actions { display: flex; gap: var(--space-3
    FOCUS WIDE-LAYOUT + data-layout flow/split — вынесено из pages-layout.css
    (Волна 5 финал: pages-layout.css растворён, focus-раскладка переезжает в свой
    страничный дом). @pages -> @pages (тот же слой). Все правила .focus-page /
-   .focus-rail / [data-layout]-scoped: строго специфичнее базы выше (выигрывают
-   спецификацией независимо от порядка). ЕДИНСТВЕННЫЙ order-зависимый тай —
-   .empty-card-inner{max-width:none}@1200 vs база L~910 {max-width:560}: этот блок
-   идёт ПОСЛЕ базы (EOF) -> выигрывает >=1200, как в монолите (pages-layout грузился
-   после pages-focus). Перф-бонус: >=1200-правила больше НЕ грузятся на чужих
+   .focus-question-pane / [data-layout]-scoped: строго специфичнее базы выше (выигрывают
+   спецификацией независимо от порядка). Order-зависимых таев тут БОЛЬШЕ НЕТ:
+   единственный (пустое состояние {max-width:none}@1200 против базовых 560px)
+   снят в iter-67 — ширину пустого состояния на всех ширинах задаёт одна база.
+   Перф-бонус: >=1200-правила больше НЕ грузятся на чужих
    страницах (pages-focus = th:if page==focus).
    =========================================================================== */
 /* ===========================================================================
@@ -1146,22 +1280,86 @@ html[data-design] .focus-page .empty-actions { display: flex; gap: var(--space-3
    =========================================================================== */
 
 /* ===========================================================================
-   PROC-07 (DEC-003=B) — FOCUS full-width + правый рельс .focus-aside (брейк 1080px).
+   PROC-07 (DEC-003=B) — FOCUS full-width + правый рельс .focus-aside (порога-литерала
+   больше нет, см. iter-68 ниже).
    Мандат mockup DESIGN.md: хром/структура тянутся край-в-край (только --page-gutter,
    без центрирующих max-width-пустот); ширину крупных экранов наполняет РЕАЛЬНЫЙ
    контент рельса (сессия/прогресс/стрик/завершить), а НЕ растянутая проза. Проза
-   держит меру по ch внутри главной зоны. Узкий экран (<1080) не трогаем — там рельс
-   обычный блок в потоке (head → рельс → вопрос), стек как раньше.
+   держит меру по ch внутри главной зоны. Узкая полоса не трогает рабочую колонку —
+   рельс уходит своей строкой и становится горизонтальной полосой (над колонкой,
+   см. разбор порядка в iter-68 ниже).
    Переподтверждено пользователем 2026-07-16 с полным контекстом истории.
    =========================================================================== */
-@media (min-width: 1080px) {
-  /* ГЕЙТ :has(.session-progress-track) — правая колонка включается ТОЛЬКО в
-     активной сессии (progressbar рендерится th:if interviewSession!=null). Вне
-     сессии (TRAINING browse) рельс содержит лишь today-chip → правая колонка
-     выродилась бы в «одинокую фишку в мёртвом жёлобе» (ровно прежняя претензия
-     пользователя). Там страница остаётся как была (focus-training центрирован
-     на --max-width-focus, рельс — тонкий блок в потоке сверху). Браузер без
-     :has() тоже остаётся на прежнем стеке (PE).
+/* iter-68 — ЗДЕСЬ СТОЯЛ `@media (min-width: 1080px)`, И ЛИТЕРАЛ БЫЛ НЕВЕРЕН.
+   Композиция включалась на 1080px, а платить за неё могла только полоса шириной
+   не меньше собственной суммы колонок: 960 (мера вариантов) + 48 (жёлоб) + 288
+   (рельс) = 1296px, что на этой странице наступает около вьюпорта 1610 (полоса =
+   вьюпорт минус 220px шелла и жёлобы). В зазоре между 1080 и 1610 рельс забирал
+   свои 288px из главной колонки, потому что grid не умеет ПЕРЕНОСИТЬ трек: если
+   колонки две, они обе есть на любой ширине, и не хватает ровно первой.
+
+   Замер WebKit@2 (проба шагом 20px, 560…1500) — ширина главной колонки против её
+   же меры --max-width-options = 960px:
+
+     вьюпорт   1080   1280   1366   1440   1512   1680   1728   1920   2560
+     колонка    492    631    ~700   774    ~830   ~960   960    960    960
+     доля меры  51%    66%     73%    81%    86%   100%   100%   100%   100%
+
+   Семь из десяти вьюпортов матрицы §10 — то есть весь диапазон MacBook — держали
+   главную колонку продукта НИЖЕ её проектной меры, и тем сильнее, чем уже экран.
+   Платой был рельс высотой 157px, стоявший в колонке высотой 1234px: 1077px этой
+   колонки — пустой фон справа от вариантов (§6, «пустые панели»).
+
+   Починка — не сдвиг литерала, а смена механики: рельс стоит рядом, ПОКА полоса
+   может оплатить обе колонки их собственными мерами, и уходит своей строкой, когда
+   не может (§12: «на узком окне сворачивай вспомогательные панели»). Это ровно то,
+   что делает flex-wrap с basis из токенов, и ровно то, чего не может grid. Порог не
+   назван нигде: он и есть сумма basis'ов, поэтому правка любой меры двигает его
+   сама. Медиазапроса у композиции больше НЕТ — ни здесь, ни ниже.
+
+   ПОРЯДОК ПЕРЕНОСА — НАД КОЛОНКОЙ, И ЭТО ЗАМЕРЕНО, А НЕ ПО УМОЛЧАНИЮ. `<aside>`
+   стоит в разметке ПЕРЕД .focus-main, поэтому в перенесённой строке рельс —
+   первый. Проверялось, не лучше ли увести его вниз (`order`/перестановка). Замер
+   WebKit@2, 1440×900, тренировка с примером кода (позиции от верха документа):
+
+     рельс  над колонкой (как есть)   рельс  под колонкой (гипотеза)
+     рельс      215 (h=77)            вопрос     288
+     вопрос     397                   код    447…870
+     код    556…979                   рельс     ~1460 (h=77)
+     1-й вариант 1031                 1-й вариант  922
+
+   Оба варианта уводят первый вариант ответа за сгиб на высотах ≤982 — 634px между
+   заголовком и вариантами занимают сам вопрос (h1 135px) и блок примера кода
+   (423px), а не рельс; его вклад 109px. Зато «под колонкой» отправляет прогресс
+   сессии на ~1460px, то есть в самый низ страницы: рельс отвечает на вопрос «где
+   я в сессии», и внизу он на него не отвечает. §8 требует видеть на первом экране
+   КОНТЕКСТ страницы, заголовок и значимую часть рабочего контента — «над» даёт
+   все три (контекст-полоса 77px, h1, 344px примера кода), «под» разменивает
+   контекст на 109px. Поэтому рельс переносится НАД колонкой и читается как
+   горизонтальная полоса контекста сессии. Порядок закреплён контрактом
+   (FocusWideCompositionContractTest#railStaysFirstInWrappedRow): `order` в
+   композиции запрещён, иначе перенос молча уронит прогресс в подвал. */
+
+  /* ГЕЙТ :has(.session-progress-track, .focus-bank-progress) — правая колонка
+     включается там, где рельсу есть что в неё положить. Гейт остаётся
+     содержательным, а не безусловным: оба трека рендерятся th:if, и если рельс
+     пуст, колонки не будет. Браузер без :has() остаётся на прежнем стеке (PE).
+
+     iter-57 — ГЕЙТ БЫЛ ПРАВ ПРО СОДЕРЖИМОЕ, А НЕ ПРО СЕССИЮ. До этой итерации
+     он звучал как «только в активной сессии», и обоснование стояло верное: вне
+     сессии рельс содержал лишь today-chip, так что правая колонка выродилась бы
+     в одинокую фишку в мёртвом жёлобе. Но цена была снаружи: вне сессии вопрос
+     стоял колонкой 960px по центру рабочей области — 363px пустоты с каждой
+     стороны на 1920 и 683px (59% области) на 2560, где это уже не читается как
+     осмысленный жёлоб (§6).
+
+     Починка — содержимым, не гейтом: §7 запрещает вторую колонку ради заполнения
+     места, поэтому «просто убрать :has()» было бы ровно тем, что он запрещает.
+     Вне сессии рельс теперь несёт прогресс по банку (пройдено/выучено/точность
+     первых попыток) — тот же вопрос, что и сессионный рельс, но в масштабе банка.
+     Данные брались уже посчитанные: LearningMetrics считались на каждом рендере
+     и терялись в InterviewStats.from() (6 полей из 14). Как только содержимое
+     появилось, прежнее обоснование гейта отпало, а не было нарушено.
 
      Ширина: НЕ уходим в edge-to-edge (иначе опции капятся на --max-width-options,
      а между ними и рельсом зияет мёртвый центр на >1900px). Вместо этого наполняем
@@ -1169,60 +1367,88 @@ html[data-design] .focus-page .empty-actions { display: flex; gap: var(--space-3
      его ширину и делится на главную зону (~800) + рельс (~288). Это шире прежних
      960 (одобренное превью B: «шире + рельс»), но без симметричных воидов сверх
      общей app-ширины 1280 и без сплошной растяжки прозы. Проза держит меру внутри
-     зоны; структура (опции-ряды) наполняет главную колонку до рельса. */
-  html[data-design] .focus-page .focus-training:has(.session-progress-track) {
-    max-width: none;
-    margin: 0;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(16rem, 18rem);
-    column-gap: clamp(1.5rem, 3vw, 3rem);
-    align-items: start;
-  }
-  html[data-design] .focus-page .focus-training:has(.session-progress-track) > :not(.focus-aside) {
-    grid-column: 1;
-    min-width: 0;
-  }
+     зоны; структура (опции-ряды) наполняет главную колонку до рельса.
 
-  /* Правый рельс: вертикальная карта (прогресс + стрик + завершить), hairline
-     слева, sticky при прокрутке — наполняет правый жёлоб реальным контентом. */
-  html[data-design] .focus-page .focus-training:has(.session-progress-track) .focus-aside {
-    grid-column: 2;
-    /* Спаним ВСЕ неявные ряды (не только row 1): иначе рельс раздувает ряд 1 до
-       своей высоты (~135px), а мета-бейджи с align-items:start виснут вверху с
-       мёртвым провалом под ними, топбар вопроса уезжает вниз. Спан 99 также
-       занимает col-2 целиком, поэтому display:contents-дети .focus-rail
-       (тема/политика повторений) не авто-раскладываются в правый жёлоб под
-       сессионную карту, а падают в левую читательскую колонку к вопросу.
-       (-1 тут не работает: ряды неявные, grid-template-rows: none.) */
-    grid-row: 1 / span 99;
-    align-self: start;
-    position: sticky;
-    top: var(--space-6);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-    margin: 0;
-    padding-left: clamp(1.5rem, 2vw, 2.5rem);
-    border-left: var(--rule-weight, 1px) solid var(--color-border-primary);
-  }
-  html[data-design] .focus-page .focus-training:has(.session-progress-track) .focus-aside > * { margin: 0; }
-  html[data-design] .focus-page .focus-training:has(.session-progress-track) .focus-aside .session-progress-track { width: 100%; }
-  html[data-design] .focus-page .focus-training:has(.session-progress-track) .focus-aside .focus-session-more-summary { width: 100%; }
+     iter-56 — ШИРИНА КОМПОЗИЦИИ СЧИТАЕТСЯ, А НЕ ОТПУСКАЕТСЯ. Комментарий выше
+     обещал «не уходим в edge-to-edge, иначе между капнутыми вариантами и рельсом
+     зияет мёртвый центр на >1900px», но правило делало ровно обратное:
+     `max-width: none; margin: 0` растягивало грид на всю рабочую область, а
+     `.ed-page` капа на 1280 не имеет. Замер на 2560×1440 (сессия EXAM, раскладка
+     flow): грид 2165px, главная колонка 1829px, `#interview-options` 960px
+     (свой --max-width-options) → 869px дыры между вариантами и рельсом — то самое,
+     что комментарий считал уже предотвращённым.
 
-  /* Проза (hero-вопрос) держит меру ВНУТРИ главной зоны — крупный сериф не должен
-     тянуться на все ~800px. Опции/структура наполняют главную колонку до рельса
-     (их --max-width-options > ширины колонки → cap не срабатывает, мёртвого поля
-     справа нет). */
-  html[data-design] .focus-page .focus-training:has(.session-progress-track) .focus-question { max-width: var(--measure); }
+     Ширину теперь задаёт содержимое: главная колонка ровно --focus-main-measure,
+     рельс ровно --focus-rail-width, между ними --focus-rail-gap. Сумма и есть
+     max-width полосы (tokens.css), поэтому колонка никогда не перерастает свою
+     меру и дыре взяться неоткуда ни на одной ширине. Остаток уходит в
+     симметричные внешние поля страницы (осмысленный жёлоб), а не в разрыв
+     ВНУТРИ композиции. */
+html[data-design] .focus-page .focus-training:has(.session-progress-track, .focus-bank-progress) {
+  max-width: var(--focus-measure);
+  margin-inline: auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  column-gap: var(--focus-rail-gap);
+  row-gap: var(--space-6);
 }
+
+/* Рабочая колонка. `flex-basis` = её собственная мера, `max-width` = она же:
+   первое решает, поместится ли рельс рядом, второе — что колонка не растянется
+   за меру, когда рельс перенесён и вся строка её. Обе величины из одного токена,
+   поэтому разойтись не могут. */
+html[data-design] .focus-page .focus-training:has(.session-progress-track, .focus-bank-progress) > .focus-main {
+  flex: 1 1 var(--focus-main-measure);
+  max-width: var(--focus-main-measure);
+  min-width: 0;
+}
+
+/* Вспомогательный рельс. Пока строка вмещает обе меры — узкая колонка справа,
+   sticky при прокрутке. Не вмещает — своя строка под рабочей колонкой, кромка
+   в кромку с ней (тот же `max-width`, что у колонки: FRD-018, одна мера у полосы).
+   `border-left` тут больше нет: он был верен ровно для одной ориентации, а в
+   перенесённом рельсе читался бы как случайный отступ слева у полноширинной
+   полосы. Разделяет их --focus-rail-gap / row-gap, а не рисованная линия. */
+html[data-design] .focus-page .focus-training:has(.session-progress-track, .focus-bank-progress) > .focus-aside {
+  flex: 1 1 var(--focus-rail-width);
+  max-width: var(--focus-main-measure);
+  min-width: 0;
+  align-self: flex-start;
+  position: sticky;
+  top: var(--space-6);
+  margin: 0;
+  /* Внутренности рельса тоже переносятся сами: пока он узкий, каждый блок берёт
+     свою строку (две меры по 14rem в 18rem не встают рядом), а в перенесённом
+     рельсе те же блоки выстраиваются полосой. Ни одного медиазапроса и здесь. */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-6);
+}
+html[data-design] .focus-page .focus-training .focus-aside > * { margin: 0; }
+html[data-design] .focus-page .focus-training .focus-aside .focus-progress-line { flex: 0 0 auto; }
+html[data-design] .focus-page .focus-training .focus-aside .session-progress-track { flex: 1 1 8rem; }
+html[data-design] .focus-page .focus-training .focus-aside .focus-bank-progress,
+html[data-design] .focus-page .focus-training .focus-aside .today-chip { flex: 1 1 14rem; }
+html[data-design] .focus-page .focus-training .focus-aside .focus-session-more { flex: 1 1 10rem; }
+html[data-design] .focus-page .focus-training .focus-aside .focus-session-more-summary { width: 100%; }
+
+/* Проза (hero-вопрос) держит меру ВНУТРИ рабочей колонки — крупный сериф не должен
+   тянуться на всю её ширину. Опции/структура наполняют колонку целиком (их
+   --max-width-options равен мере колонки → cap не срабатывает, мёртвого поля
+   справа нет). Медиазапроса у правила нет: на узком экране колонка сама уже меры,
+   и кап становится no-op, а не «другим поведением». */
+html[data-design] .focus-page .focus-training .focus-question { max-width: var(--measure); }
 
 @media (min-width: 1200px) {
   /* --page-gutter (жёлоб ≥1200) вынесен в tokens.css (Волна 5 под-шаг 2) — токен
      живёт в @layer tokens; поведение сохранено спецификацией html[data-design]. */
 
   /* FOCUS wide-layout — правый рельс .focus-aside (PROC-07, DEC-003=B, переподтверждено
-     пользователем 2026-07-16 с полным контекстом истории) — реализован в отдельном
-     @media (min-width: 1080px) ВЫШЕ (grid на --max-width-page, БЕЗ edge-to-edge). Здесь
+     пользователем 2026-07-16 с полным контекстом истории) — реализован ВЫШЕ, вне
+     медиазапросов: flex-перенос с basis'ами из токенов (iter-68). Здесь
      .focus-topbar остаётся лишь строкой идентичности вопроса (тема + сложность +
      режим) в главной колонке.
 
@@ -1254,9 +1480,16 @@ html[data-design] .focus-page .empty-actions { display: flex; gap: var(--space-3
      состояния. Схлопывать стало не из-за чего — остался бы лишь скачок раскладки
      ровно в тот момент, когда взгляд ищет свой вариант среди четырёх. */
 
-  /* Пустое состояние фокуса: «окно» тянется на всю ширину (карточка-сообщение
-     остаётся центрированной композицией внутри). */
-  html[data-design] .focus-page .empty-card-inner { max-width: none; }
+  /* iter-67 — здесь стоял `max-width: none` для пустого состояния (тогда
+     `.empty-card-inner`, с iter-83 — `.empty-state`). Намерение
+     было верным («окно» не должно быть узкой карточкой-островом в широкой
+     полосе), но без потолка оно превращалось в рамку вокруг пустоты: замер
+     WebKit@2 на 2560 — рамка 2180px при содержимом (маскот 72px, заголовок, одна
+     строка, две кнопки) около 450px. Это буквально «пустые панели» и «одна
+     маленькая карточка на огромном canvas» из §6, причём с бордером и фоном,
+     которые эту пустоту подчёркивают. Правило снято целиком, а не заменено:
+     ширину пустого состояния на ВСЕХ ширинах задаёт одна база выше через
+     `--focus-measure`. Второго потолка и order-зависимого тая тут больше нет. */
 
 }
 
@@ -1276,13 +1509,12 @@ html[data-design] .focus-page .empty-actions { display: flex; gap: var(--space-3
    длинные варианты) и «настройки — накидали блоков».
    =========================================================================== */
 
-/* P0.1: обёртка левой колонки split. По умолчанию (flow/grid/PROC-07 и любая
+/* P0.1: обёртка колонки вопроса (col1 в split). По умолчанию (flow/grid и любая
    ширина <1200px) — display:contents: бокс исчезает, дети хойстятся и участвуют в
-   раскладке .focus-training как прямые grid/flow-элементы. Существующие descendant-
-   селекторы (.focus-page .focus-aside, .focus-training .focus-question и т.п.)
-   продолжают матчить. Реальным flex-боксом рейка становится ТОЛЬКО в split ≥1200px
-   (правило внутри медиазапроса ниже). */
-html[data-design] .focus-rail { display: contents; }
+   раскладке .focus-main как прямые flow-элементы. Существующие descendant-селекторы
+   (.focus-training .focus-question и т.п.) продолжают матчить. Реальным flex-боксом
+   пейн становится ТОЛЬКО в split ≥1200px (правило внутри медиазапроса ниже). */
+html[data-design] .focus-question-pane { display: contents; }
 
 @media (min-width: 1200px) {
   /* ---- FOCUS / flow: ответы единым полноширинным столбцом (не 2×2). Длинные
@@ -1304,29 +1536,72 @@ html[data-design] .focus-rail { display: contents; }
   /* ---- FOCUS / split: два пейна. Слева — мета-рейка + вопрос-герой + код/диаграмма;
      справа — ответы единым столбцом и кнопка действия. Пост-ответный вердикт/анализ —
      полноширинной лентой внизу. */
-  /* Два пейна: левая колонка (.focus-rail: мета+рельс+вопрос+код+диаграмма)
+  /* Два пейна: левая колонка (.focus-question-pane: мета+вопрос+код+диаграмма)
      фиксированной ширины, правая (форма/флешкарта) — гибкая. P0.1 (финал): раньше
      все элементы левой колонки были ПЛОСКИМИ прямыми детьми .focus-training и
      размещались grid-ами. Любой подход через grid-ряды связывал высоты колонок:
      grid-row:1 → высокая форма раздувала первый ряд и отрывала топбар (~500px
      зазор); grid-row:1/span-N → на КОРОТКОМ вопросе форма выше стека, не могла
      растянуть min-content ряды, оверфлоу вниз, и пост-ответная лента наезжала.
-     Решение — обернуть левую колонку в ОДИН grid-элемент .focus-rail (в шаблоне).
-     Теперь col1 (рейка) и col2 (форма) — независимые grid-элементы одного ряда,
-     каждый своей натуральной высоты, оба у верха; лента идёт полной шириной под
-     обеими. Ни одна высота не связана. */
-  html[data-design][data-layout="split"] .focus-page .focus-training {
+     Решение — обернуть левую колонку в ОДИН grid-элемент .focus-question-pane
+     (в шаблоне; до iter-68 назывался .focus-rail — имя сталкивалось с настоящим
+     рельсом .focus-aside и читалось как «это и есть рельс»).
+     Теперь col1 (пейн вопроса) и col2 (форма) — независимые grid-элементы одного
+     ряда, каждый своей натуральной высоты, оба у верха; лента идёт полной шириной
+     под обеими. Ни одна высота не связана.
+
+     Ширины колонок — МЕРЫ, а не литералы (FRD-007, iter-58). Прежде было
+     `minmax(0, 20rem) minmax(0, 1fr)` под капом `--max-width-result`, и обе половины
+     врали в разные стороны (замер WebKit, 1280→2560, DPR 2):
+       • колонка вопроса стояла 320px на ВСЕХ вьюпортах, а кегль героя растёт с vw
+         (31.5→34.4px) — мера вопроса ПАДАЛА при расширении экрана: 16ch → 15 → 14.
+         Кривая инвертирована: чем шире монитор, тем хуже читается главный текст
+         страницы. Проба 108-символьным вопросом — 7 строк на любой ширине;
+       • колонка ответов, наоборот, росла свободно и с 1512 давала 73ch внутри
+         варианта, пробивая проектную --measure: 72ch (§12);
+       • кап 72rem численно совпадал с суммой 20+4+48rem, но это было СОВПАДЕНИЕ:
+         ни одна строка не связывала кап с треками, правка любого литерала молча
+         открывала мёртвый центр (тот же класс дефекта, что PROC-07 лечил в WIDE).
+     Теперь кап СЧИТАЕТСЯ из треков, как в WIDE-композиции. justify-content:center —
+     потому что оба трека капнуты своей мерой: остаток свободного места уходит в
+     симметричные поля, а не в растягивание текста за меру чтения. */
+  /* iter-67: у раскладки split СВОЯ сумма колонок, и она и есть мера страницы,
+     пока выбрана эта раскладка. Переопределяем сам токен, а не кап композиции:
+     мерой пользуются трое — resume-баннер, композиция и пустое состояние, — и
+     если бы её знала только композиция, кромки разошлись бы ровно так же, как
+     разошлись до iter-67 в основной раскладке. Замер WebKit@2 на 1920 до правки:
+     композиция split 1229[456..1684] против баннера 1296[422..1718] — 34px с
+     каждой стороны. Токен переопределён на предке (.focus-page), поэтому его
+     видят все трое сразу. */
+  /* iter-68: переопределяется мера РАБОЧЕЙ КОЛОНКИ, а не всей полосы. Полоса
+     считается по одной формуле для всех раскладок (tokens.css: колонка + жёлоб +
+     рельс), поэтому «Разделение» перестало быть единственной композицией, из чьей
+     суммы рельс выпадал: до iter-68 она переопределяла --focus-measure целиком и
+     тем самым отрицала существование рельса, хотя он и в ней на месте. */
+  html[data-design][data-layout="split"] .focus-page {
+    --focus-main-measure: calc(
+      var(--focus-split-question) + var(--focus-split-gap) + var(--focus-split-answers)
+    );
+  }
+  /* Двухпейновый грид живёт ВНУТРИ рабочей колонки. Раньше он стоял на самой
+     композиции, и рельс приходилось втискивать в ту же сетку — а перенести трек
+     grid не умеет. Теперь у композиции ровно два flex-ребёнка (колонка и рельс),
+     а split делит на пейны только колонку. */
+  html[data-design][data-layout="split"] .focus-page .focus-main {
     display: grid;
-    grid-template-columns: minmax(0, 20rem) minmax(0, 1fr);
+    grid-template-columns:
+      minmax(0, var(--focus-split-question))
+      minmax(0, var(--focus-split-answers));
     grid-auto-rows: min-content;
     align-content: start;
-    column-gap: var(--space-8);
+    justify-content: center;
+    column-gap: var(--focus-split-gap);
     align-items: start;
-    max-width: var(--max-width-result);
+    max-width: var(--focus-main-measure);
   }
-  /* Левая колонка: реальный flex-бокс (перебивает базовый display:contents),
+  /* Колонка вопроса: реальный flex-бокс (перебивает базовый display:contents),
      стек в DOM-порядке. Первый ряд, первая колонка, у верха. */
-  html[data-design][data-layout="split"] .focus-page .focus-rail {
+  html[data-design][data-layout="split"] .focus-page .focus-question-pane {
     display: flex; flex-direction: column;
     grid-column: 1; grid-row: 1; align-self: start; min-width: 0;
   }
@@ -1344,7 +1619,8 @@ html[data-design] .focus-rail { display: contents; }
   /* Вопрос-герой: рамку-снизу убираем (в узкой рейке висела бы поперёк колонки),
      компактный отступ к мете. sticky не нужен — колонки развязаны обёрткой.
 
-     Кегль: базовый герой clamp(...,3xl) (~48–56px на 1440) в 20rem-рейке (~300px)
+     Кегль: базовый герой clamp(...,3xl) (~48–56px на 1440) в узкой рейке (пол
+     --focus-split-question = 20rem, ~300px)
      не помещал длинные технические термины («консистентность» = 15 симв.,
      «сериализация», «идемпотентность») → hyphens:auto рвал их по слогам на КАЖДОМ
      нормальном вопросе («консистент-ность», «кон-тексте») — читается как сломанная
@@ -1361,7 +1637,7 @@ html[data-design] .focus-rail { display: contents; }
     margin-top: var(--space-4);
   }
   /* Правый пейн: форма/флешкарта/изучение — col2, первый ряд, у верха.
-     Никакого span — высота колонок больше не связана (см. .focus-rail). */
+     Никакого span — высота колонок больше не связана (см. .focus-question-pane). */
   html[data-design][data-layout="split"] .focus-page #interview-form,
   html[data-design][data-layout="split"] .focus-page .flashcard-phase,
   html[data-design][data-layout="split"] .focus-page .study-learn-phase {
@@ -1378,10 +1654,16 @@ html[data-design] .focus-rail { display: contents; }
      Скрытые (.hidden=display:none) до ответа не резервируют ячейку. Обёртка
      result-zone-head несёт маркер на ВНУТРЕННЕМ div — таргетим через
      :has(> [marker]); у post-answer-controls маркер на самой обёртке; .report-zone
-     — прямой класс. */
-  html[data-design][data-layout="split"] .focus-page .focus-training > :has(> [data-ui-fragment="result-zone-head"]),
-  html[data-design][data-layout="split"] .focus-page .focus-training > [data-ui-fragment="post-answer-controls"],
-  html[data-design][data-layout="split"] .focus-page .focus-training > .report-zone {
+     — прямой класс.
+
+     iter-68: родитель ленты теперь .focus-main, а не .focus-training. Грид
+     переехал внутрь рабочей колонки, и эти три блока стали её детьми — по
+     старому селектору `.focus-training > …` они бы не совпали ни с чем, молча
+     потеряли бы `grid-column: 1 / -1` и встали бы в колонку 1 узкой полосой
+     под вопросом. */
+  html[data-design][data-layout="split"] .focus-page .focus-main > :has(> [data-ui-fragment="result-zone-head"]),
+  html[data-design][data-layout="split"] .focus-page .focus-main > [data-ui-fragment="post-answer-controls"],
+  html[data-design][data-layout="split"] .focus-page .focus-main > .report-zone {
     grid-column: 1 / -1;
   }
 
@@ -1390,5 +1672,47 @@ html[data-design] .focus-rail { display: contents; }
      sidebar-каркас (#left-sidebar-*, .app-layout) и стали мёртвыми — убраны.
      Ось «Раскладка» по-прежнему меняет композицию страницы «Фокус» (правила выше). */
 }
+
+}
+
+/* ---- МАТЕРИАЛЫ ВОПРОСА: панели «Пример кода / Схема» -----------------------
+   Приехали сюда из components-content-tabs.css (iter-79). Тот файл существовал
+   ради ОДНОЙ полосы вкладок и вместе с ней тащил панели материалов через
+   глобальный гейт `*` на все восемь страниц, хотя `.question-materials`
+   рендерится только на экране вопроса. Коробка вкладки уехала в
+   components-tabs.css (одна на все три полосы), а панели — сюда, в свою
+   страницу: файла-посредника больше нет.
+
+   Слой сохранён дословно (@layer components, не pages): конкуренты этих правил
+   живут в shell.css (@layer shell) — то есть слоем РАНЬШЕ, — поэтому перенос
+   между файлами внутри одного слоя каскад-нейтрален.
+
+   Селекторы дополнены якорем `.focus-page` (это <body> шаблона, L8), которого в
+   исходном файле не было и не могло быть: при гейте `*` якорить было не на что.
+   Гейт css-leak-audit.py поймал это сразу после переноса — 5 незаякоренных
+   селекторов в page-scoped файле, — и он прав по существу: незаякоренное
+   правило в файле, который грузится на одной странице, ждёт вторую страницу с
+   тем же классом и там молча не сработает. Специфичность выросла на один класс,
+   но спор с shell.css решает СЛОЙ, а не она, так что картинка не двигается. */
+@layer components {
+
+html[data-design] .focus-page .question-materials { margin: 0; }
+/* Видимость панелей отсюда ушла в components-tabs.css (iter-80): гасит их роль
+   `[role="tabpanel"]` под гейтом `[data-js]`, одинаково на всех трёх полосах
+   приложения. Класс-маркер `.js-content-tabs`, который вешал сюда роутовый
+   модуль, удалён вместе с двумя его правилами — он описывал ровно «вкладки уже
+   включены», а это теперь известно ДО первого кадра.
+
+   Подпись блока («Пример кода» / «Схема») дублирует активную вкладку и прячется
+   там же — общим правилом по `.tabpanel-title`. Раньше так же прятали ВЕСЬ
+   .content-toolbar — вместе с кнопками Перенос / Копировать / Экран (и Вписать /
+   +/− у диаграммы). Кнопки при этом оставались в tab-порядке: клавиатура уходила
+   на невидимые органы управления перед вариантами ответа (WCAG 2.4.7 — фокус
+   обязан быть виден), а мышью управление кодом в режиме вкладок пропадало
+   целиком. Прячется ровно дубль — заголовок.
+
+   Здесь остаётся КОМПОЗИЦИЯ: заголовок ушёл, в полосе остались только действия,
+   прижимаем их вправо (при space-between единственный ребёнок уехал бы влево). */
+html[data-design][data-js] .focus-page [role="tabpanel"] .content-toolbar { justify-content: flex-end; }
 
 }

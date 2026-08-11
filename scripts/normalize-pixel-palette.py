@@ -36,6 +36,7 @@ from __future__ import annotations
 import argparse
 import collections
 import pathlib
+import re
 import struct
 import sys
 import zlib
@@ -44,19 +45,40 @@ PIXEL = pathlib.Path(__file__).resolve().parents[1] / (
     "modules/quiz-app/src/main/resources/static/img/pixel"
 )
 
+TOKENS = pathlib.Path(__file__).resolve().parents[1] / (
+    "modules/quiz-app/src/main/resources/static/css/tokens.css"
+)
+
+
+def token(name: str) -> str:
+    """Значение токена из ТЁМНОЙ ветки tokens.css (она в файле первая).
+
+    Раньше правая колонка REMAP была написана шестнадцатеричными литералами, и
+    при смене арт-направления таблица молча начинала возвращать спрайты к снятой
+    палитре — то есть инструмент нормализации сам становился источником дрейфа.
+    Теперь цель замены называется ролью и читается из единственного места, где
+    палитра вообще записана.
+    """
+    css = TOKENS.read_text(encoding="utf-8")
+    hit = re.search(rf"^\s*{re.escape(name)}:\s*#([0-9a-fA-F]{{6}})", css, re.M)
+    if not hit:
+        raise SystemExit(f"нет токена {name} в tokens.css")
+    return hit.group(1).lower()
+
+
 # было -> стало. Комментарий фиксирует ПРИЧИНУ, иначе таблица через полгода
 # неотличима от произвольного набора замен.
 REMAP: dict[str, tuple[str, str]] = {
-    # --- снятие на продуктовый токен ---
-    "ffffff": ("eef6f5", "--color-text-primary: два белых в наборе (26 файлов чистый белый против 3 файлов продуктового)"),
-    "0a1a20": ("071116", "--color-bg-primary: тёмная плитка мимо токена в 17 файлах, сам токен жил в одном"),
-    "283c46": ("233a44", "--color-border-primary: d=9, рамка чекбокса"),
-    "14232a": ("102029", "--color-surface-soft: d=8, заливка чекбокса"),
-    "2db4aa": ("2bb8af", "--color-accent-primary-active: d=11, тень акцента на маскоте"),
-    # --- схлопывание дубля внутри набора ---
-    "ffd250": ("ffe65a", "d=30 к телу золота, встречается только вместе с ним"),
-    "ff8cb4": ("ffa0b4", "d=20, та же роль «блик розового», файлы не пересекаются"),
-    "ffdce6": ("ffa0b4", "третий тон розового ради трёх пикселей на весь набор"),
+    # --- снятие на продуктовый токен (цель читается из tokens.css по имени) ---
+    "ffffff": (token("--color-text-primary"), "--color-text-primary: два белых в наборе (26 файлов чистый белый против 3 файлов продуктового)"),
+    "0a1a20": (token("--color-bg-primary"), "--color-bg-primary: тёмная плитка мимо токена в 17 файлах, сам токен жил в одном"),
+    "283c46": (token("--color-border-primary"), "--color-border-primary: d=9, рамка чекбокса"),
+    "14232a": (token("--color-surface-soft"), "--color-surface-soft: d=8, заливка чекбокса"),
+    "2db4aa": (token("--color-accent-primary-active"), "--color-accent-primary-active: d=11, тень акцента на маскоте"),
+    # --- схлопывание дубля внутри набора (декоративная рампа, роли не менялись) ---
+    "ffd250": (token("--pixel-gold"), "d=30 к телу золота, встречается только вместе с ним"),
+    "ff8cb4": (token("--pixel-rose-hi"), "d=20, та же роль «блик розового», файлы не пересекаются"),
+    "ffdce6": (token("--pixel-rose-hi"), "третий тон розового ради трёх пикселей на весь набор"),
 }
 
 

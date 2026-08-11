@@ -8,6 +8,8 @@
  * window.initMermaid / window.renderAllMermaid).
  */
 
+import { setBlockPending, clearBlockPending } from '../ui/pending.js';
+
 let mermaidReady = false;
 let themeRerenderTimer = null;
 let toolbarDelegated = false;
@@ -24,29 +26,29 @@ function readThemeVars() {
   const mmTok = (name, fb) => (mmStyle.getPropertyValue(name) || '').trim() || fb;
   return {
     darkMode: document.documentElement.getAttribute('data-theme') !== 'light',
-    background: mmTok('--color-bg-secondary', '#0d1b22'),
+    background: mmTok('--color-bg-secondary', '#1e1b16'),
     fontFamily: mmTok('--font-family-body', 'Inter, system-ui, sans-serif'),
-    primaryColor: mmTok('--color-surface-soft', '#102029'),
-    primaryTextColor: mmTok('--color-text-primary', '#eef6f5'),
-    primaryBorderColor: mmTok('--color-border-strong', '#335463'),
+    primaryColor: mmTok('--color-surface-soft', '#221e18'),
+    primaryTextColor: mmTok('--color-text-primary', '#f2ece0'),
+    primaryBorderColor: mmTok('--color-border-strong', '#574e3f'),
     secondaryColor: mmTok('--color-bg-tertiary', '#12252e'),
-    secondaryTextColor: mmTok('--color-text-primary', '#eef6f5'),
-    secondaryBorderColor: mmTok('--color-border-strong', '#335463'),
+    secondaryTextColor: mmTok('--color-text-primary', '#f2ece0'),
+    secondaryBorderColor: mmTok('--color-border-strong', '#574e3f'),
     tertiaryColor: mmTok('--color-bg-tertiary', '#12252e'),
-    tertiaryTextColor: mmTok('--color-text-primary', '#eef6f5'),
-    tertiaryBorderColor: mmTok('--color-border-strong', '#335463'),
-    mainBkg: mmTok('--color-surface-soft', '#102029'),
-    nodeBorder: mmTok('--color-border-strong', '#335463'),
-    nodeTextColor: mmTok('--color-text-primary', '#eef6f5'),
-    lineColor: mmTok('--color-text-tertiary', '#8397a0'),
-    edgeLabelBackground: mmTok('--color-bg-secondary', '#0d1b22'),
-    clusterBkg: mmTok('--color-bg-secondary', '#0d1b22'),
-    clusterBorder: mmTok('--color-border-strong', '#335463'),
-    titleColor: mmTok('--color-text-primary', '#eef6f5'),
-    labelColor: mmTok('--color-text-primary', '#eef6f5'),
-    labelTextColor: mmTok('--color-text-primary', '#eef6f5'),
-    textColor: mmTok('--color-text-secondary', '#a8b9bd'),
-    accent: mmTok('--color-accent-primary', '#39d0c7')
+    tertiaryTextColor: mmTok('--color-text-primary', '#f2ece0'),
+    tertiaryBorderColor: mmTok('--color-border-strong', '#574e3f'),
+    mainBkg: mmTok('--color-surface-soft', '#221e18'),
+    nodeBorder: mmTok('--color-border-strong', '#574e3f'),
+    nodeTextColor: mmTok('--color-text-primary', '#f2ece0'),
+    lineColor: mmTok('--color-text-tertiary', '#9d927e'),
+    edgeLabelBackground: mmTok('--color-bg-secondary', '#1e1b16'),
+    clusterBkg: mmTok('--color-bg-secondary', '#1e1b16'),
+    clusterBorder: mmTok('--color-border-strong', '#574e3f'),
+    titleColor: mmTok('--color-text-primary', '#f2ece0'),
+    labelColor: mmTok('--color-text-primary', '#f2ece0'),
+    labelTextColor: mmTok('--color-text-primary', '#f2ece0'),
+    textColor: mmTok('--color-text-secondary', '#bcb19c'),
+    accent: mmTok('--color-accent-primary', '#d0a33c')
   };
 }
 
@@ -79,7 +81,7 @@ function withSemanticClassDefs(source) {
   if (!DIAGRAM_CLASS_REFERENCE.test(source)) return source;
   const style = getComputedStyle(document.documentElement);
   const token = (name) => (style.getPropertyValue(name) || '').trim();
-  const ink = token('--color-text-primary') || '#eef6f5';
+  const ink = token('--color-text-primary') || '#f2ece0';
 
   const defs = Object.entries(DIAGRAM_CLASS_TOKENS)
     .filter(([name]) => new RegExp('\\b' + name + '\\b').test(source))
@@ -178,16 +180,16 @@ function loadMermaid() {
 function markDiagramLoading(scope, loading) {
   scope.querySelectorAll('.mermaid:not([data-rendered="true"])').forEach((el) => {
     if (!loading) {
-      el.removeAttribute('data-diagram-loading');
-      el.removeAttribute('aria-busy');
+      clearBlockPending(el);
       return;
     }
     if (!el.getAttribute('data-mermaid-source') && el.textContent) {
       el.setAttribute('data-mermaid-source', el.textContent);
     }
     el.textContent = '';
-    el.setAttribute('data-diagram-loading', 'true');
-    el.setAttribute('aria-busy', 'true');
+    // Роль «занята область»: у схемы ждёт не контрол, а место под неё, и
+    // показывать это обязан скелетон, а не одна моно-строка (iter-84).
+    setBlockPending(el, 'Готовим схему…');
   });
 }
 

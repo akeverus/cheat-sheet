@@ -1,71 +1,108 @@
-/* Login page (mode=multi form login). */
+/* Страница входа (app.security.mode=multi). @layer pages.
+
+   Переписана в iter-71. Что было и почему снято — по пунктам, все с замера
+   WebKit:
+
+   1. Композиция. `.login-main { display:grid; place-items:center; min-height:70vh }`
+      + `.login-card { width:min(420px,100%) }` давали КАРТОЧКУ ПОСТОЯННОГО
+      РАЗМЕРА 287×572 на любом экране: на 2560×1440 78-89% ширины оставалось
+      пустым, и это ещё не считая того, что вся страница ехала внутри 236px
+      колонки-рельса (см. комментарий в login.html). §6 запрещает и «одну
+      маленькую карточку на огромном canvas», и «пустую правую половину».
+      Теперь — двухколоночная полоса `.ed-page` по общей шкале ширины: форма и
+      обзор банка вопросов рядом, обе колонки с настоящим содержимым.
+   2. `min-height: 70vh`. Оболочка приложения давно переведена на `dvh`
+      (`.app { min-height: 100dvh }`), а `vh` в мобильном Safari считается по
+      РАЗВЁРНУТОМУ окну — при видимой панели браузера блок оказывается выше
+      вьюпорта. Единица здесь больше не нужна вовсе: высоту задаёт содержимое.
+   3. Своя коробка полей (`.login-form .field`, `.login-form input`). Это была
+      вторая система форм в приложении (§24): та же разметка `.field` на
+      /settings рисовалась mono-подписью 12px uppercase и инпутом 44px с
+      радиусом, а здесь — Inter 18px без caps и инпутом без min-height и без
+      радиуса. Систему подняли в components-controls.css одну на всё
+      приложение; странице не осталось ни одного правила про поля.
+   4. Своя система алертов (`.login-alert`, `.login-alert-error` с зашитым
+      `#c45`). Заменена глобальным сообщением — тем же, что говорит об ошибках
+      на остальных семи страницах. Хардкод цвета ушёл вместе с правилом (§32).
+      (Компонент тогда звался `.inline-alert`; в iter-82 три конкурирующие
+      системы сообщений сведены в `.notice` из components-notice.css.)
+   5. Своя шапка (`.login-eyebrow`, `.login-title`, `.login-lead`). Заменена
+      общей `.page-head` — тем же компонентом, что на /stats и /bookmarks.
+   6. Дублирующий рецепт фокуса на `.login-oauth-btn`. Глобальный
+      `.btn:focus-visible` (components-controls.css) даёт ровно то же кольцо;
+      правило было копией и держалось только на том, что его никто не сверял.
+*/
 @layer pages {
 
-html[data-design] .login-page .login-main {
-  display: grid;
-  place-items: center;
-  min-height: 70vh;
-  padding: var(--space-6);
+/* --------------------------------------------------------------------------
+   Полоса из двух колонок. Перенос ведёт не брейкпойнт, а мера: `flex-basis`
+   задан в rem и растёт вместе с масштабом шрифта (personalization-bootstrap
+   ставит font-size на <html>), поэтому при крупном кегле полоса расстраивается
+   в стопку сама — ровно тогда, когда колонки перестают быть читаемыми. Тот же
+   приём, что у `.page-head` (shell.css) и сеток /stats и /bookmarks.
+
+   Форма не растягивается на всю освободившуюся ширину: `max-width` держит поля
+   в размере, при котором строка ввода остаётся строкой ввода, а не полосой во
+   весь экран. Остаток ширины забирает колонка обзора (`flex: 1 1 22rem`).
+   -------------------------------------------------------------------------- */
+html[data-design] .login-page .login-split {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-6);
 }
-html[data-design] .login-page .login-card {
-  width: min(420px, 100%);
+html[data-design] .login-page .login-panel {
+  /* min-width:0 обязателен обоим: иначе длинное имя раздела («Программирование
+     и языки») распирает флекс-элемент и полоса перестаёт переноситься. */
+  min-width: 0;
+  padding: var(--space-5) var(--space-6);
+  background: var(--color-bg-secondary);
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-md);
+}
+html[data-design] .login-page .login-form-panel {
+  flex: 1 1 24rem;
+  max-width: 34rem;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
-html[data-design] .login-page .login-eyebrow {
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-xs);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--color-text-tertiary);
-  margin: 0;
-}
-html[data-design] .login-page .login-title {
-  margin: 0;
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-semibold);
-}
-html[data-design] .login-page .login-lead {
-  margin: 0;
-}
-html[data-design] .login-page .login-form {
+html[data-design] .login-page .login-context {
+  flex: 1 1 22rem;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
-html[data-design] .login-page .login-form .field {
+html[data-design] .login-page .login-panel-title {
+  margin: 0;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+/* --------------------------------------------------------------------------
+   Форма. Правил про сами поля здесь НЕТ и быть не должно: `.field`,
+   `.field-label` и коробка контрола живут в components-controls.css одни на всё
+   приложение (см. п.3 шапки файла). Страница задаёт только ритм между полями и
+   поведение кнопки.
+   -------------------------------------------------------------------------- */
+html[data-design] .login-page .login-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-4);
 }
-html[data-design] .login-page .login-form input {
-  font: inherit;
-  padding: var(--space-2) var(--space-3);
-  border: var(--rule-weight) solid var(--color-border-primary);
-  background: var(--color-bg-secondary);
-  color: var(--color-text-primary);
-}
+/* Сабмит самодостаточен и единственный в панели — растягиваем на её ширину:
+   это устраняет вопрос «куда нажимать» на телефоне и не оставляет обрезка
+   пустоты справа от узкой кнопки на десктопе. Ширину гасит глобальный
+   `.btn { width: auto }` (@layer components), поэтому правило нужно здесь. */
 html[data-design] .login-page .login-submit {
-  align-self: flex-start;
-  margin-top: var(--space-2);
+  width: 100%;
+  margin-top: var(--space-1);
 }
-html[data-design] .login-page .login-submit:disabled,
-html[data-design] .login-page .login-submit[aria-busy="true"] {
-  cursor: progress;
-}
-html[data-design] .login-page .login-alert {
-  padding: var(--space-2) var(--space-3);
-  border: var(--rule-weight) solid var(--color-border-secondary);
-  background: var(--color-bg-tertiary);
-}
-html[data-design] .login-page .login-alert-error {
-  border-color: var(--color-status-error, #c45);
-  color: var(--color-text-primary);
-}
-html[data-design] .login-page .login-hint {
-  margin: 0;
-}
+
 html[data-design] .login-page .login-oauth {
   display: flex;
   flex-direction: column;
@@ -76,13 +113,70 @@ html[data-design] .login-page .login-divider {
   text-align: center;
 }
 html[data-design] .login-page .login-oauth-btn {
-  align-self: stretch;
+  width: 100%;
   text-align: center;
   text-decoration: none;
 }
-html[data-design] .login-page .login-oauth-btn:focus-visible {
-  outline: 2px solid var(--color-focus-ring);
-  outline-offset: 2px;
+html[data-design] .login-page .login-hint {
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Обзор банка. Список разделов — двухколоночные строки «название / число»
+   с точечной линейкой между ними: то же, что делает таблица тем на /stats,
+   но без табличной разметки — здесь у строки нет второго измерения.
+   -------------------------------------------------------------------------- */
+html[data-design] .login-page .login-context-total {
+  margin: 0;
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+}
+html[data-design] .login-page .login-context-total strong {
+  font-family: var(--font-family-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-accent-primary);
+}
+html[data-design] .login-page .login-section-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+html[data-design] .login-page .login-section {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: var(--rule-weight) solid var(--color-border-secondary);
+}
+html[data-design] .login-page .login-section:last-child {
+  border-bottom: 0;
+}
+html[data-design] .login-page .login-section-title {
+  min-width: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  overflow-wrap: break-word;
+}
+html[data-design] .login-page .login-section-count {
+  flex: 0 0 auto;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+html[data-design] .login-page .login-context-note {
+  margin: 0;
+}
+
+/* Возврат на главную — под полосой, отдельной строкой: это выход со сценария,
+   а не альтернатива входу, и внутри панели формы он спорил бы с сабмитом. */
+html[data-design] .login-page .login-back {
+  margin: var(--space-6) 0 0;
 }
 
 }

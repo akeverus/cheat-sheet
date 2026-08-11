@@ -6,7 +6,48 @@
    привязаны к #interview-options/.focus-page). Старый styles.css тянет холодный
    navy/лаванду — приводим к editorial тёплой палитре. Состояния вариантов
    (.option-correct/.option-wrong/.explanation-*) уже глобальные — не дублируем. */
-html[data-design] .result-page .ed-page { max-width: var(--max-width-result); }
+/* Персонального капа у полосы больше нет. Он стоял здесь (--max-width-result,
+   72rem) и был четвёртым замороженным капом страницы подряд — обоснование и
+   замеры в tokens.css. Ширину задаёт .ed-page по единой шкале --max-width-page,
+   а страница ограничивает себя СВОЕЙ композицией (FRD-003) — сумма её колонок
+   объявлена ниже. */
+
+/* Сумма колонок страницы результата. Объявлена на .result-page, а не на :root:
+   var() внутри значения кастомного свойства подставляется там, где свойство
+   ОБЪЯВЛЕНО, поэтому сумма обязана видеть слагаемые как computed-значения того же
+   поддерева (то же обоснование, что у --focus-measure).
+
+   Формула та же, что у экрана вопроса (FRD-019): пока полоса шире суммы, скобка
+   уходит в огромное положительное число и min возвращает сумму; как только полоса
+   уже — скобка отрицательна, min берёт её, и max поднимает результат до меры
+   рабочей колонки. Мера схлопывается ровно в тот момент, когда рельс переносится
+   вниз, потому что порог переноса — и есть сумма flex-базисов. Медиазапроса у
+   композиции нет: число колонок выбирает содержимое, а не литерал ширины.
+   Проценты считаются от content-box полосы (у .ed-page есть padding-inline). */
+html[data-design] .result-page {
+  /* Порог переноса — сумма МИНИМАЛЬНЫХ колонок (базисы flex). */
+  --result-band-min: calc(
+    var(--result-main-measure) + var(--result-rail-gap) + var(--result-rail-min)
+  );
+  /* Потолок композиции — сумма с рельсом во всю его ширину. Между порогом и
+     потолком лишнюю ширину забирает рельс: рабочая колонка капнута своей мерой и
+     во flex замерзает первой, остаток достаётся единственному растущему соседу. */
+  --result-band-max: calc(
+    var(--result-main-measure) + var(--result-rail-gap) + var(--result-rail-max)
+  );
+  --result-measure: max(
+    var(--result-main-measure),
+    min(var(--result-band-max), (100% - var(--result-band-min) + 1px) * 9999)
+  );
+}
+
+/* База композиции: без «Похожих вопросов» рельса нет, и мера страницы — это мера
+   одной рабочей колонки. Ту же ширину получает браузер без :has() (PE-ветка):
+   полноширинный стек под общим капом, а не двухколонка с мёртвым жёлобом. */
+html[data-design] .result-page .result-layout {
+  max-width: var(--result-main-measure);
+  margin-inline: auto;
+}
 
 /* Своего `.card` у страницы вердикта нет — правило здесь дословно повторяло
    общее (components-card.css) и ничем от него не отличалось. */
@@ -43,22 +84,12 @@ html[data-design] .result-page .topic-badge {
      родителя уводят весь бейдж на свою строку; ellipsis — страховка на самом узком. */
   white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
 }
-html[data-design] .result-page .btn-favorite {
-  background: transparent; border: 0; color: var(--color-text-tertiary); cursor: pointer;
-  font-size: var(--font-size-md); line-height: 1; padding: var(--space-1);
-  min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center;
-  /* Тот же fade, что у всех hover-меняющих-цвет контролов (a:145, back-to-top,
-     code-copy) — иначе она была единственной, кто РЕЗКО переключал цвет
-     на hover/.active среди визуально идентичных соседей. --duration-fast→0ms под
-     reduced-motion/data-motion=off, так что fade гаснет автоматически. */
-  transition: color var(--duration-fast) var(--easing-default);
-}
+/* Коробка `.btn-favorite` (44×44, border 0, поля, flex-центровка, fade) снята в
+   iter-78: страница переобъявляла скелет иконочной кнопки целиком, чтобы
+   получить размер, который и так есть в ранге «иконка». От страницы осталась
+   только краска активного состояния — то, что действительно принадлежит
+   разбору: закладка поставлена. */
 html[data-design] .result-page .btn-favorite.active { color: var(--color-accent-primary); }
-/* Hover-аффорданс: иконка-кнопка избранного сидела статичным
-   tertiary-серым без :hover — единственный интерактивный контрол без pre-click
-   сигнала (tap-highlight убран глобально, :active добавлен выше). Темним до
-   primary-чернил на hover; :not(.active) не трогает акцент активной звезды. */
-html[data-design] .result-page .btn-favorite:hover:not(.active) { color: var(--color-text-primary); }
 
 /* Вердикта у страницы результата больше нет своего. Здесь стоял `.status` со
    своей типографикой и своими модификаторами `.status-correct/.status-wrong` —
@@ -136,8 +167,11 @@ html[data-design] .result-page .question-code {
 }
 html[data-design] .result-page .question-code code { font-family: var(--font-family-mono); font-size: var(--font-size-sm); background: transparent; }
 
-/* Действия результата. Старый styles.css даёт flex-direction:column → кнопки
-   во всю ширину; форсим row (на мобиле media ниже возвращает column). */
+/* Действия результата — размещение кнопок, не их коробка (FRD-037): ряд с
+   переносом на широком, колонка на мобиле (media ниже).
+   Прежний комментарий объяснял `flex-direction: row` как «форсим против
+   flex-direction:column из старого styles.css». Файла styles.css в проекте нет
+   (замер iter-78) — ряд здесь не перебивание, а собственный выбор страницы. */
 html[data-design] .result-page .result-actions { display: flex; flex-direction: row; align-items: center; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-6); }
 
 /* Похожие вопросы (#result-related-questions / .related-questions / -title /
@@ -203,44 +237,61 @@ html[data-design="instrument"] .result-page .sm2-grid {
 }
 
 
-/* --- RESULT wide-layout (min-width 1200) — вынесено из pages-layout.css (Волна 5
-   под-шаг 3). Сетка на .ed-page: карточка разбора 1fr + related-рейка sticky справа.
-   @pages -> @pages (тот же слой), append в конец: same-property конкурентов нет —
-   база L9 .ed-page{max-width} дизъюнктна; related-контент в components-answer ниже
-   слоем и менее специфичен, наши layout-правила выигрывают как и в монолите. */
-@media (min-width: 1200px) {
-  /* --- RESULT (no-JS разбор /answer): сетка на main — карточка разбора в 1fr,
-     «Похожие вопросы» уезжают в правую sticky-рейку. Грид включён ВСЕГДА
-     (ширина карточки не прыгает между вопросами с related и без): без related
-     карточка просто спанит обе колонки. */
-  /* Грид включаем ТОЛЬКО когда есть related-рейка (:has-гейт на самом гриде) —
-     браузер без :has() остаётся на полноширинном блочном стеке (PE, как обещает
-     шапка секции), а не получает 2-колонку с мёртвым жёлобом справа. Round-01 C2.
-     Прежний :not(:has(...)) -> full-width больше не нужен: без related грид просто
-     не применяется. */
-  html[data-design] .result-page .ed-page:has(> #result-related-questions) {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
-    column-gap: var(--space-7);
-    align-items: start;
-  }
-  html[data-design] .result-page .ed-page > * { grid-column: 1 / -1; min-width: 0; }
-  html[data-design] .result-page .ed-page > #interview-card { grid-column: 1; }
-  /* Рейка related: из «блока после карточки» (border-top + отступ) превращается
-     в editorial-панель; при длинном списке скроллится внутри вьюпорта. */
-  html[data-design] .result-page .ed-page > #result-related-questions {
-    grid-column: 2;
-    align-self: start;
-    position: sticky;
-    top: var(--space-5);
-    margin-top: 0;
-    border-top: 0;
-    border: var(--rule-weight) solid var(--color-border-primary);
-    border-radius: var(--border-radius-lg);
-    background: var(--color-bg-secondary);
-    padding: var(--space-5);
-    max-height: calc(100dvh - var(--space-7));
-    overflow-y: auto;
-  }
+/* --- RESULT: композиция «разбор + рельс похожих вопросов».
+   Здесь стоял грид на самой .ed-page под `@media (min-width: 1200px)` — то есть
+   число колонок выбирал литерал ширины, и выбирал его неверно: кап полосы был
+   1152px, а порог 1200px, так что на 1280 грид уже делил полосу в 1060px на
+   558 + 352 — рабочая колонка 558px при мере вариантов 960px. Это была вторая,
+   конкурирующая responsive-стратегия рядом с flex-переносом экрана вопроса (§24).
+
+   Механизм теперь один на оба экрана (FRD-003/007/018/019): flex-wrap + базисы
+   из токенов. Порог переноса нигде не назван — он и есть сумма базисов, поэтому
+   правка меры колонки двигает порог сама. :has() — гейт по содержимому: рельс
+   существует только когда сервер отдал «Похожие вопросы».
+
+   Гридом это больше не может быть в принципе: grid не умеет переносить трек, а
+   ровно перенос и делает порог считаемым. Обёртка .result-layout появилась по той
+   же причине — композиция должна быть отдельным боксом, а не самой полосой. */
+html[data-design] .result-page .result-layout:has(> #result-related-questions) {
+  max-width: var(--result-measure);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  column-gap: var(--result-rail-gap);
+  row-gap: var(--space-6);
+}
+/* Рабочая колонка: ровно своя мера. Внутри неё .card съедает 2×--space-6 полей,
+   и варианты достают до --max-width-options без остатка. */
+html[data-design] .result-page .result-layout:has(> #result-related-questions) > #interview-card {
+  flex: 1 1 var(--result-main-measure);
+  max-width: var(--result-main-measure);
+  min-width: 0;
+}
+/* Рельс: из «блока после карточки» (border-top + отступ) — в панель. Стилизуется
+   БЕЗ медиазапроса: перенесённый вниз рельс остаётся той же панелью во всю меру
+   рабочей колонки, а не превращается в третий вид блока.
+   Собственный max-width — мера рабочей колонки, и он работает только в
+   ПЕРЕНЕСЁННОМ состоянии. В ряду рельс ограничен не им, а потолком композиции
+   (--result-band-max): рабочая колонка замерзает на своей мере, и весь остаток
+   ширины ряда достаётся рельсу, пока композиция не упрётся в потолок.
+   `order` не задаётся: рельс идёт вторым и в ряду, и в переносе — порядок чтения
+   совпадает с DOM.
+   max-height + overflow-y сняты вместе с гридом: вложенный скролл-контейнер внутри
+   страницы — отдельный источник дефектов в Safari (§11), а список похожих вопросов
+   короткий. Ограничение высоты решало проблему, которой у него нет. */
+html[data-design] .result-page .result-layout:has(> #result-related-questions) > #result-related-questions {
+  flex: 1 1 var(--result-rail-min);
+  max-width: var(--result-main-measure);
+  min-width: 0;
+  align-self: flex-start;
+  position: sticky;
+  top: var(--space-5);
+  margin-top: 0;
+  border-top: 0;
+  border: var(--rule-weight) solid var(--color-border-primary);
+  border-radius: var(--border-radius-lg);
+  background: var(--color-bg-secondary);
+  padding: var(--space-5);
 }
 }

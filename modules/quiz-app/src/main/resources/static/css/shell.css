@@ -2,9 +2,11 @@
 /* =============================================================================
    shell.css — КАРКАС РЕДИЗАЙНА (ui-redesign-handoff).
    --------------------------------------------------------------------------
-   AppShell: постоянный левый sidebar (232px) + topbar (desktop) и mobile-header
-   + bottom-nav (mobile), плюс базовые компоненты (кнопки, бейджи, эйбрау,
-   icon-button, типо-утилиты). Грузится ПОСЛЕ base.css: все селекторы скоуплены
+   AppShell: постоянный левый рельс (--sidebar-width) на десктопе, mobile-header
+   + bottom-nav на мобильном, плюс базовые компоненты (кнопки, бейджи, эйбрау,
+   icon-button, типо-утилиты). Десктопной верхней полосы (.topbar) НЕТ — весь
+   хром десктопа собран в одном рельсе, см. fragments/shell-head.html.
+   Грузится ПОСЛЕ base.css: все селекторы скоуплены
    под html[data-design] — та же конвенция, что в base.css, поэтому при равной
    специфичности выигрывает порядок (shell перекрывает element-level правила
    base.css вроде `html[data-design] a`). Потребляет ТОЛЬКО var(--token) из
@@ -25,7 +27,7 @@ html[data-design] body {
      и в местах, куда градиент не дотянулся, просвечивает системный белый. */
   background-color: var(--color-bg-primary);
   background-image:
-    radial-gradient(circle at 78% -18%, rgba(88, 212, 208, 0.06), transparent 34%),
+    radial-gradient(circle at 78% -18%, color-mix(in srgb, var(--color-accent-primary) 6%, transparent), transparent 34%),
     linear-gradient(135deg, var(--color-bg-primary), var(--color-bg-canvas-2));
 }
 
@@ -41,8 +43,12 @@ html[data-design] .icon {
    Здесь НЕ дублируем left:-9999 — иначе конфликтуют два паттерна скрытия. */
 
 /* ---- App grid ---------------------------------------------------------- */
+/* Единица высоты у оболочки одна — dvh. Раньше в трёх соседних правилах стояли
+   три разные: body 100dvh, .app 100vh, .sidebar 100vh. На десктопе разницы нет,
+   на мобильном Safari 100vh больше видимой области на высоту убирающейся
+   панели — рельс и холст обещали высоту, которой на экране не было. */
 html[data-design] .app {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
 }
@@ -56,7 +62,7 @@ html[data-design] .shell-main {
 html[data-design] .sidebar {
   position: sticky;
   top: 0;
-  height: 100vh;
+  height: 100dvh;
   border-right: 1px solid var(--color-border-secondary);
   padding: 18px 14px;
   display: flex;
@@ -124,47 +130,34 @@ html[data-design] .nav a.active {
 /* Правила .nav .is-disabled / .nav-soon удалены вместе с пунктами-заглушками
    «Вопросы» и «Достижения» (см. fragments/sidebar.html). В навигации нет
    неактивных пунктов, поэтому нет и disabled-вида. */
-html[data-design] .sidebar-spacer { flex: 1; }
-html[data-design] .sidebar-footer { display: grid; gap: 4px; }
-/* Футер сайдбара: «Выйти» — полноширинная строка «иконка + подпись», как
-   nav-ссылки выше (базовый .side-action в этом же файле, строки 92–110).
-   pixel-sweep («Icon buttons» в pixel-animations.css) ошибочно заклампил ЛЮБОЙ
-   .side-action в 40×40 icon-box + px-edge + border-radius:0, из-за чего подпись
-   «Выйти» вылезала за 40px-бокс и переносилась на 2 строки (scrollWidth ~111 >
-   clientWidth 40). Icon-only кнопки топбара правомерно 40×40 — здесь скоупим
-   только футер, восстанавливая nav-подобную строку. pixel-animations.css лежит
-   в БОЛЕЕ ПОЗДНЕМ @layer, поэтому обычные декларации (width/height) там бьют
-   специфичность; для !important порядок слоёв реверсируется и наш ранний слой
-   выигрывает — значит все переопределения ставим !important. */
-html[data-design] .sidebar-footer .side-action {
-  width: 100% !important;
-  height: auto !important;
-  min-height: 40px;
-  border-radius: 8px !important;
-  box-shadow: none !important;
+/* Футер отжимает вниз сам margin-top:auto, а не пустой `.sidebar-spacer` с
+   flex:1: распорка была узлом разметки, чья единственная работа делается одним
+   свойством на том элементе, который она толкала. Линия сверху отделяет
+   глобальные действия от списка разделов — без неё «Тема»/«Выйти» в конце
+   колонки читались как продолжение навигации. */
+html[data-design] .sidebar-footer {
+  display: grid;
+  gap: 4px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border-secondary);
 }
+/* Правило-отмена `.sidebar-footer .side-action` снято в iter-78 вместе с
+   причиной. Оно существовало только чтобы вернуть строке рельса её вид после
+   pixel-правила «Icon buttons», которое заклампливало ЛЮБОЙ `.side-action` в
+   40×40 icon-box (подпись «Выйти» переносилась на две строки: scrollWidth ~111
+   при clientWidth 40). Отмена шла встречным `!important` — для важных
+   объявлений порядок слоёв реверсируется, и ранний слой shell выигрывал у
+   позднего pixel. Такой приём и есть признак двух систем: спор решался не
+   принадлежностью правила, а гонкой восклицательных знаков. Захват
+   `.side-action` из pixel-правила удалён, поэтому отменять больше нечего —
+   строка рельса берёт свой вид из базового `.side-action` выше. */
 
-/* ---- Topbar + mobile-header ------------------------------------------- */
-html[data-design] .topbar {
-  height: var(--header-height);
-  border-bottom: 1px solid var(--color-border-secondary);
-  display: flex;
-  align-items: center;
-  /* В полосе остался один блок — .top-actions с тоглом темы (прогресс сессии
-     переехал в рельс, см. fragments/topbar.html). При space-between
-     единственный ребёнок прижимается ВЛЕВО, а тогл всю жизнь стоял справа и
-     справа же стоит в mobile-header. */
-  justify-content: flex-end;
-  padding: 0 28px;
-  position: sticky;
-  top: 0;
-  z-index: var(--z-sticky);
-  /* Стеклянная полоса (макеты): полупрозрачный холст + blur — контент проступает
-     под ней при скролле. theme-safe через color-mix холста текущей темы. */
-  background: color-mix(in srgb, var(--color-bg-primary) 84%, transparent);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-}
+/* ---- Строка действий оболочки ------------------------------------------ */
+/* Правила `.topbar` удалены вместе с самой полосой (fragments/shell-head.html):
+   64px sticky-высоты на каждой из семи страниц ради одной кнопки 38×38.
+   Не возвращать: место глобальных действий десктопа — футер рельса, узких
+   ширин — mobile-header. */
 html[data-design] .eyebrow {
   font-family: var(--font-family-mono);
   font-size: 11px;
@@ -174,39 +167,31 @@ html[data-design] .eyebrow {
   text-transform: uppercase;
   color: var(--color-text-tertiary);
 }
-html[data-design] .top-actions { display: flex; gap: 8px; align-items: center; }
-html[data-design] .topbar-logout,
-html[data-design] .sidebar-logout {
+html[data-design] .shell-actions { display: flex; gap: 8px; align-items: center; }
+/* Одно имя на обе формы кнопки «Выйти» (подписанная строка в футере рельса и
+   icon-only в mobile-header). Были два класса — .sidebar-logout и
+   .topbar-logout — с одинаковым телом правила: форма-обёртка не должна попадать
+   в поток и рвать grid футера или flex шапки, поэтому display:contents. */
+html[data-design] .shell-logout {
   margin: 0;
   display: contents;
 }
-html[data-design] .icon-button {
-  width: 38px;
-  height: 38px;
-  border-radius: 8px;
-  border: 1px solid var(--color-border-secondary);
-  background: var(--color-bg-secondary);
-  color: var(--color-text-secondary);
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  text-decoration: none;
-  transition: color var(--duration-fast) var(--easing-default),
-              border-color var(--duration-fast) var(--easing-default);
-}
-html[data-design] .icon-button:hover {
-  color: var(--color-text-primary);
-  border-color: var(--color-border-primary);
-}
+/* Коробка `.icon-button` (38×38, radius 8px, border 1px) снята в iter-78: это
+   было одно из четырёх расходящихся объявлений одного и того же квадрата, и на
+   экран оно не попадало ни разу — его перекрывал `!important` из слоя pixel.
+   Ранг «иконка» теперь ровно один, в components-controls.css: 44×44 с общим
+   pixel-контуром. Оболочка кнопку не оформляет — она её только размещает. */
 html[data-design] .mobile-header { display: none; }
 
-/* ---- Content column ---------------------------------------------------- */
-html[data-design] .content {
-  width: 100%;
-  max-width: var(--content-max);
-  margin: 0 auto;
-  padding: 28px;
-}
+/* Колонка контента `.content` удалена в iter-64 — ОБА её правила: десктопное
+   (own max-width --content-max: 1220px) отсюда и мобильное (`padding: 14px` в
+   блоке ≤768px ниже). Класса нет ни в одном шаблоне и ни в одном JS-построителе
+   разметки: в разметке живут только составные имена `content-box`,
+   `content-tab`, `content-toolbar`, `markdown-content` — голого `content` нет.
+   Ни одно из двух правил не применялось ни разу, и второе пряталось в
+   медиазапросе, где ручное чтение его и пропустило (нашёл гейт
+   PageWidthScaleContractTest). Колонку контента ведёт `.ed-page`
+   (reset-layout.css) по единой шкале --max-width-page (FRD-015). */
 
 /* ---- Базовые компоненты ------------------------------------------------ */
 /* Кнопки в приложении ровно одни: `.btn` + `.primary-btn`/`.secondary-btn`/
@@ -309,24 +294,11 @@ html[data-design] .diagram-source {
   line-height: var(--line-height-relaxed);
   color: var(--color-text-secondary);
 }
-/* Схема грузится лениво: пока едет mermaid.min.js, блок пуст (неотрисованный
-   .mermaid скрыт по visibility). Пустая рамка без объяснения читается как
-   поломка, поэтому на время загрузки показываем спокойную моно-строку —
-   тем же голосом, что и остальные служебные подписи. Атрибут ставит JS, так
-   что без JS ничего не меняется. */
-html[data-design] .mermaid[data-diagram-loading]::after {
-  /* Сам .mermaid скрыт по visibility (правило в слоях components/pages) — псевдо
-     возвращает себе видимость точечно, вместо гонки за специфичностью со слоями. */
-  visibility: visible;
-  content: 'Готовим схему…';
-  display: block;
-  padding: var(--space-4);
-  text-align: center;
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide);
-  color: var(--color-text-tertiary);
-}
+/* Ожидание схемы описывалось ЗДЕСЬ четвёртым ключом (`data-diagram-loading`) и
+   четвёртым видом — моно-строкой без всякого знака работы. В iter-84 оболочка
+   перестала знать про ожидание вовсе: mermaid-renderer.js ставит общий
+   `data-pending="block"`, и область получает скелетон системы ожидания вместе
+   со своей подписью (`data-pending-label`). */
 /* Диаграмма, не сумевшая отрендериться (mermaid error): mermaid-init/content/mermaid-renderer.js
    ставит data-render-failed → скрываем неотрисованный .mermaid, исходник
    остаётся видимым через раскрытый .diagram-source-details. */
@@ -470,10 +442,14 @@ html[data-design] .back-to-top .icon { width: 1.25rem; height: 1.25rem; }
 /* ---- Bottom-nav (mobile) — на десктопе скрыт ------------------------- */
 html[data-design] .mobile-nav { display: none; }
 
-/* ---- Клавиатурный фокус для новых интерактивных элементов ------------ */
+/* ---- Клавиатурный фокус строк рельса --------------------------------- */
+/* Свечение вместо обводки — идиома НАВИГАЦИИ: строка рельса подсвечивается
+   целиком, как выделенный пункт списка. `.icon-button` из списка снят в
+   iter-78: это кнопка, её фокус-обводку задаёт ранг в components-controls.css.
+   Свечение занимало `box-shadow`, где у кнопки лежит pixel-контур, — по Tab у
+   иконки пропадала рамка. */
 html[data-design] .nav a:focus-visible,
 html[data-design] .side-action:focus-visible,
-html[data-design] .icon-button:focus-visible,
 html[data-design] .mobile-nav a:focus-visible,
 html[data-design] .brand:focus-visible {
   outline: none;
@@ -481,7 +457,7 @@ html[data-design] .brand:focus-visible {
 }
 
 /* ===========================================================================
-   Mobile (<=900px): sidebar/topbar скрыты, наверху mobile-header, внизу
+   Mobile (<=900px): рельс скрыт, наверху mobile-header, внизу
    bottom-nav (safe-area). Контент — узкий паддинг.
    ========================================================================== */
 @media (max-width: 900px) {
@@ -492,8 +468,7 @@ html[data-design] .brand:focus-visible {
     padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-4));
   }
   html[data-design] .app { display: block; }
-  html[data-design] .sidebar,
-  html[data-design] .topbar { display: none; }
+  html[data-design] .sidebar { display: none; }
   /* P1.5: компактный mobile-header — меньше высота/бренд/иконки. */
   html[data-design] .mobile-header {
     height: 44px;
@@ -527,15 +502,16 @@ html[data-design] .brand:focus-visible {
     height: 22px;
     display: block;
   }
-  html[data-design] .mobile-header .icon-button {
-    width: 32px;
-    height: 32px;
-  }
+  /* Здесь шапка ужимала `.icon-button` до 32×32. Правило снято в iter-78 по двум
+     причинам сразу: 32px ниже порога касания 44px (WCAG 2.5.5) — и именно на том
+     единственном вьюпорте, где касание и происходит; а кроме того слой `shell`
+     идёт РАНЬШЕ слоя `components`, поэтому размер компонента оно и не
+     переопределяло — код был мёртвым (замер: кнопка шапки 44×44 на 360…430px).
+     Габарит иконочной кнопки задаёт её ранг в components-controls.css. */
   html[data-design] .mobile-header .icon {
     width: 16px;
     height: 16px;
   }
-  html[data-design] .content { padding: 14px; }
   html[data-design] .mobile-nav {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -569,9 +545,11 @@ html[data-design] .brand:focus-visible {
   /* hover-well для неактивных (desktop-narrow с hover); active несёт teal-socket из pixel-fx */
   html[data-design] .mobile-nav a:hover:not(.active) { background: var(--color-bg-tertiary); }
   html[data-design] .mobile-nav .icon { width: 16px; height: 16px; }
-  /* P1.6: компактные заголовки stats/settings/summary на узких экранах. */
-  html[data-design] .stats-title,
-  html[data-design] .builder-title,
+  /* P1.6: компактный заголовок итогов сессии на узких экранах. Парный клампинг
+     заголовка ШАПКИ переехал вниз, к объявлению `.page-head-title h1` — здесь он
+     был мёртвым кодом: базовые `.stats-title` (стр. 828) и `.builder-title`
+     стояли НИЖЕ этого медиазапроса при равной специфичности, то есть выигрывали
+     по порядку, и на 360px заголовок как был 36px, так и оставался. */
   html[data-design] .summary-page .summary-section-title {
     font-size: clamp(1.1rem, 4.2vw, 1.4rem);
     line-height: 1.2;
@@ -658,14 +636,8 @@ html[data-design] .summary-hero-body {
   align-items: flex-start;
   gap: var(--space-2);
 }
-/* Режим-бейдж: гасим base .summary-mode-line (mono-caps без фона), оставляем pill.
-   NB: выравнивание чипа (align-self) задаётся в pages-summary.css (@layer pages) —
-   там оно перебивает pages-layout.css; из @layer shell его не переопределить. */
-html[data-design] .summary-hero .summary-mode-line {
-  margin-bottom: 0;
-  text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-wide);
-}
+/* Правил под чип режима здесь больше нет: название режима стало надзаголовком
+   шапки страницы (`.page-head .eyebrow`), а не бейджем внутри карточки счёта. */
 html[data-design] .summary-hero-count {
   font-family: var(--font-family-display);
   font-size: var(--font-size-xl);
@@ -677,6 +649,16 @@ html[data-design] .summary-hero .summary-headline {
   margin-top: 0;
   font-size: var(--font-size-md);
   color: var(--color-text-secondary);
+}
+/* Пояснение пустой сессии. Занимает место снятой полосы KPI, поэтому мера задана
+   явно: без неё строка растянулась бы на всю ширину карточки (до ~1100px на
+   2560) и перестала бы читаться как абзац. */
+html[data-design] .summary-hero .summary-empty-note {
+  margin: var(--space-1) 0 0;
+  max-width: 52ch;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-relaxed, 1.6);
+  color: var(--color-text-tertiary);
 }
 /* 3 метрики: Время / Среднее / На повторение */
 html[data-design] .summary-metrics {
@@ -720,15 +702,22 @@ html[data-design] .summary-kpis {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-3);
-  margin-top: var(--space-4);
-  /* Полоса занимает отдельную строку геро (`.summary-hero` — flex-wrap), а не
-     остаток текстового столбца рядом с кольцом. Раньше сетка была элементом
-     колоночного флекса с align-items:flex-start и потому сжималась по
-     содержимому: 463px из 542px, тайл ~107px, ширина колонки выводилась из
-     текста в ней же. Круговая зависимость и делала бюджет неизмеримым, а
-     сверху его резало кольцо — рост кольца на 16px крал их у тайлов.
-     Собственная строка развязывает эти два размера. */
-  flex: 1 1 100%;
+  /* margin-top снят: вертикальный зазор между строками геро задаёт его
+     собственный `gap` (`.summary-hero` — flex-wrap), и margin просто складывался
+     с ним в 40px там, где заявлено 24px. */
+  margin-top: 0;
+  /* Полоса — самостоятельный элемент флекса геро, а не остаток текстового
+     столбца рядом с кольцом. Раньше сетка сжималась по содержимому (463px из
+     542px, тайл ~107px), и её бюджет зависел от размера кольца.
+
+     Базис 560px, а не 100%: это МИНИМУМ, при котором четыре тайла ещё держат
+     свой бюджет (самое широкое достижимое значение «+4000 XP» — 110px, плюс
+     2×12px padding и три зазора по 12px = 572px). При 100% полоса всегда
+     съезжала на свою строку, и на широком экране рядом с кольцом оставалось
+     пустое поле: на 1440 строка «N из M верных» шириной ~300px делила с
+     кольцом полосу в 1010px. С басисом 560 раскладку выбирает сам флекс —
+     влезло 144+260+560 → одна строка, не влезло → перенос, как было. */
+  flex: 1 1 560px;
 }
 html[data-design] .summary-kpi {
   display: flex;
@@ -777,10 +766,13 @@ html[data-design] .summary-kpi-sub {
   html[data-design] .summary-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
-/* Topic progress-bar в ячейке точности summary-table. min-width ужат со 120px:
-   избыточный резерв выталкивал 5-колоночную таблицу за узкую 7fr-колонку
-   summary-грида (overflow-x:auto обрезал «Точность»). 92px = шапка «ТОЧНОСТЬ»
-   + бар без обрезки; на мобиле card-view бар всё равно тянется на всю строку. */
+/* Topic progress-bar в ячейке точности summary-table.
+   min-width работает только в мобильном card-view (там td — блок). В таблице
+   ширину колонки задаёт table-layout: fixed (11rem, pages-summary.css), поэтому
+   min-width на td браузером не учитывается. Оставлен ради card-view.
+   Историческая справка к значению: 92px — остаток от времён, когда таблица жила
+   в 7fr-колонке двухстолбцовой раскладки и резерв в 120px выталкивал пятую
+   колонку под обрезку overflow-x. Ни колонки, ни скролла больше нет. */
 html[data-design] .summary-td-accuracy { min-width: 92px; }
 html[data-design] .topic-bar {
   display: block;
@@ -823,14 +815,103 @@ html[data-design] .summary-accuracy-num {
    переиспользуют .learning-metrics/.topic-table из base.css (не дублируем).
    ========================================================================== */
 
-/* Интро страницы аналитики. */
-html[data-design] .stats-intro { margin: 0 0 var(--space-6); }
-html[data-design] .stats-title {
-  font-family: var(--font-family-display); font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-semibold); color: var(--color-text-primary);
-  margin: var(--space-2) 0 var(--space-2); overflow-wrap: break-word;
+/* --------------------------------------------------------------------------
+   Шапка страницы (.page-head) — общая для /stats и /bookmarks.
+
+   Полоса кладёт заголовочную колонку и пояснение РЯДОМ, а не стопкой. Причина —
+   замер, а не вкус: на 1440×900 стопка занимала 177px по вертикали, при том что
+   самая широкая её строка была 660px в полосе шириной 1105px. Ни одна строка не
+   использовала 445px горизонтали, и первый экран платил за это вертикалью.
+
+   Перенос управляется не брейкпойнтом, а размером: `flex-basis` пояснения задан
+   в `rem`, а rem растёт вместе с масштабом шрифта (personalization-bootstrap
+   ставит font-size на <html>). Поэтому на крупном шрифте полоса САМА
+   расстраивается в стопку — узкая колонка при 25px даёт больше строк, чем
+   экономит рядность. Ширина окна тут вторична: решает, помещается ли пояснение
+   в читаемую меру.
+   -------------------------------------------------------------------------- */
+html[data-design] .page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  column-gap: var(--space-6);
+  /* Разделяет строки row-gap полосы, а не отступ внутри колонки. До iter-75 было
+     наоборот: row-gap стоял нулевым, а разделение нёс нижний margin заголовка
+     внутри `.page-head-title`. Разница не косметическая. row-gap действует ТОЛЬКО
+     когда полоса расстроена в стопку, то есть ровно тогда, когда разделять есть
+     что; margin виден всегда, в том числе в рядной раскладке, где под заголовком
+     в его колонке ничего нет и разделять нечего.
+     Замер на десктопе (1024…2560, три страницы): шапка 93 → 81px, все 12px — тот
+     самый отступ, который никого ни от чего не отделял. Прежде он был незаметен,
+     потому что высоту диктовало трёхстрочное пояснение; после подъёма кегля
+     заголовка колонка заголовка стала выше, и мёртвый отступ вышел наружу.
+     Заводить обе величины разом нельзя: на переносе они сложатся. Это держит
+     тест `строкиШапкиРазделяетРовноОднаВеличина`. */
+  row-gap: var(--space-3);
+  margin: 0 0 var(--space-6);
 }
-html[data-design] .stats-intro-lead { max-width: 62ch; margin: 0; }
+html[data-design] .page-head-title {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+/* Пояснение шапки. До iter-75 у него не было узкой ветки вообще: на 390px оно
+   держало те же 18px/1.7, что и на 1512px, и занимало 120px на /bookmarks,
+   150px на /stats и 180px на /settings — то есть 63…72% всей высоты шапки при
+   полезном сгибе 780px (844 минус фиксированная нижняя навигация 64px).
+   Заголовок к тому моменту уже клампился (iter-62, 36 → 17.6px), пояснение —
+   нет, и иерархия переворачивалась: на телефоне вторичный текст (18px) был
+   КРУПНЕЕ заголовка страницы (17.6px), который он поясняет.
+
+   Кегль задан одним текучим clamp, а не медиазапросом: медиазапрос для этой же
+   пары уже один раз оказался мёртвым кодом из-за порядка правил (см. разбор у
+   `.page-head-title h1` ниже), и вторую такую ловушку заводить незачем.
+   Пол выражен в `rem`, поэтому увеличение шрифта системы/персонализации
+   поднимает и его: при root 25px пол становится 21.9px, и текст не ужимается. */
+html[data-design] .page-head-lead {
+  flex: 1 1 26rem;
+  max-width: 62ch;
+  margin: 0;
+  font-size: clamp(var(--font-size-sm), 2.4vw, var(--font-size-md));
+  line-height: 1.55;
+}
+/* Заголовок шапки — по ПОЗИЦИИ в компоненте, а не по странице. До iter-62 у трёх
+   страниц было три класса с одним и тем же смыслом (`.stats-title`,
+   `.bookmarks-title`, `.builder-title`), и они уже разошлись: кегль совпадал, а
+   нижний отступ был 8px у аналитики, 12px у закладок, и ни один из трёх не
+   действовал на /settings — там заголовка на экране не было вовсе. Классу здесь
+   взяться неоткуда: внутри `.page-head-title` может стоять только h1 страницы.
+
+   Кегль — одним текучим clamp вместо пары «базовое правило + медиазапрос».
+   Причин две, и обе замеренные.
+
+   Первая: прежний пол `1.1rem` = 17.6px оказывался НИЖЕ основного текста
+   страницы (18px, `--font-size-md`). На 360…420px заголовок страницы был мельче
+   абзаца под ним — иерархия не «слабая», а перевёрнутая. Новый пол
+   `--font-size-lg` (22px) стоит ровно на ступень выше пояснения и на две выше
+   его узкого пола, поэтому порядок держится на любой ширине.
+
+   Вторая: медиазапрос здесь уже однажды был мёртвым кодом. До iter-62 парный
+   клампинг лежал ВЫШЕ базового правила при равной специфичности, базовое
+   перебивало его порядком, и на 360px заголовок оставался 36px — при том, что
+   «правило есть» читалось как «правило работает». Текучий clamp внутри одного
+   объявления такой ловушки не оставляет: перебивать нечему.
+
+   Скорость набора (3.6vw) выбрана так, чтобы потолок `--font-size-2xl` (36px)
+   достигался около 1000px — то есть весь десктоп получает ровно тот же кегль,
+   что и до правки, а телефон и планшет едут по ступеням шкалы.
+   `overflow-wrap` обязателен — длинное слово в заголовке иначе распирает флекс-
+   элемент и ломает перенос полосы в стопку. */
+html[data-design] .page-head-title h1 {
+  font-family: var(--font-family-display);
+  font-size: clamp(var(--font-size-lg), 3.6vw, var(--font-size-2xl));
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  /* Нижнего отступа здесь нет намеренно: разделение строк шапки ушло в row-gap
+     самой полосы (см. разбор выше). Верхний отделяет заголовок от надзаголовка. */
+  margin: var(--space-2) 0 0;
+  line-height: 1.2;
+  overflow-wrap: break-word;
+}
 
 /* Четыре ключевые метрики. Карточка = .card (base) + вертикальный стек;
    значение крупное mono, знаменатель — .muted.tiny под ним. Тир-цвет значения
@@ -870,27 +951,63 @@ html[data-design] .dashboard-grid .metric.good .metric-value { color: var(--colo
    @components/@pages-конкурентов на section-tab/section-tabs/stats-panel нет (grep). */
 
 /* ===================== Конструктор сессии (Этап 8, panel-session) ===================== */
-/* Две колонки: слева параметры + запуск, справа сводка. На узких — стопкой
-   (сводка уходит вниз). Всё под html[data-design], токены — семантические. */
+/* FRD-016. Пять блоков в именованных областях, а не две обёртки-колонки.
+   Раскладку решает каждый блок по своей мере, а не по тому, в какой div он попал.
+
+   Что было и почему снято (замер WebKit@2, живое приложение, 1512×982):
+   `.builder-main` (Охват+Режим) 640×628 и `.builder-aside` (две карточки) 320×896
+   росли независимо → 268px пустого прямоугольника под левой колонкой, и так на
+   КАЖДОЙ десктопной ширине: полоса страницы стояла на 1024px от 1440 до 2560
+   (собственный кап --max-width-settings), поэтому пропорция не менялась вообще.
+   Правую колонку делала высокой не информация, а её ширина: 6 плиток KPI в
+   сетке 256px вставали по две (122px), подписи переносились, плитки росли до
+   103–133px, сетка — до 393px. Ровно тот класс дефекта, что iter-63 назвал
+   «двухстолбцовая раскладка из разнородных сущностей с независимым ростом».
+
+   Новая раскладка: «Охват» держит первую колонку и обе её строки, справа от него
+   встают два коротких блока (Режим и карточка «Повторение»), а «Статистика»
+   уходит под них во всю полосу — там её 6 плиток разворачиваются в один ряд
+   вместо трёх. Панель запуска остаётся последней строкой во всю ширину.
+
+   grid-template-areas, а не порядок в разметке: DOM-порядок остаётся порядком
+   чтения и табуляции (Охват → Режим → Повторение → Статистика → Запуск), а
+   мобильная стопка получается снятием areas, без второго набора правил. */
 html[data-design] .session-builder {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: var(--space-8);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 24rem);
+  grid-template-areas:
+    "scope  mode"
+    "scope  review"
+    "stats  stats"
+    "launch launch";
+  gap: var(--space-6) var(--space-7);
   align-items: start;
 }
-html[data-design] .builder-main { min-width: 0; }
-html[data-design] .builder-intro { margin: 0 0 var(--space-6); }
-html[data-design] .builder-title {
-  font-size: var(--font-size-2xl);
-  margin: var(--space-2) 0 var(--space-2);
-}
-html[data-design] .builder-lead {
-  color: var(--color-text-secondary);
-  max-width: 60ch;
-  margin: 0;
-}
-html[data-design] .builder-section { margin: 0 0 var(--space-7); }
-html[data-design] .builder-section:last-of-type { margin-bottom: var(--space-5); }
+html[data-design] .session-builder > * { min-width: 0; }
+/* Привязка к областям — ТОЛЬКО по классам. Раскладка по id (#builder-review-card,
+   #builder-stats-card) уже подвела: одноколоночный сброс `grid-area: auto` шёл по
+   классам и селектор с id его перебивал по специфичности. Замер 360×800: две
+   карточки оставались в несуществующих областях `review`/`stats`, WebKit заводил
+   под них неявные колонки — сетка конструктора становилась `0px 100px 148px` при
+   полосе 312, «Охват» схлопывался в 0px, а панель запуска вылезала за правый край
+   (горизонтальный скролл). Одинаковая специфичность у всех раскладочных правил —
+   не стиль, а условие того, что перекрытие в медиазапросе вообще работает. */
+html[data-design] .builder-scope { grid-area: scope; }
+html[data-design] .builder-mode { grid-area: mode; }
+html[data-design] .builder-review { grid-area: review; }
+html[data-design] .builder-stats { grid-area: stats; }
+/* Собственная шапка конструктора (`.builder-intro` + `.builder-title` +
+   `.builder-lead`) снята в iter-62. Она лежала ВНУТРИ левой колонки сетки, то
+   есть на два уровня глубже шапок всех прочих страниц, и была третьей системой
+   для той же роли — при том, что под вкладками её заголовок визуально скрыт (его
+   играет вкладка «Сессия»), а надзаголовок «Конструктор» надписывал невидимое.
+   Заголовок панели теперь `.settings-panel-title` (как у «Оформления» и
+   «Данных»), пояснение поднято в `.page-head-lead` шапки страницы. */
+/* Ритм между блоками конструктора держит gap сетки. Пока секции стояли в обёртке
+   .builder-main, он лежал на их собственных margin-bottom (space-7 и space-5 у
+   последней) — две системы отступов на одну композицию: gap сетки складывался с
+   margin блока и ряды разъезжались на разную величину. */
+html[data-design] .builder-section { margin: 0; }
 html[data-design] .builder-section-title {
   font-family: var(--font-family-body);
   font-size: var(--font-size-md);
@@ -941,6 +1058,107 @@ html[data-design] .builder-start-cta {
   font-weight: var(--font-weight-bold);
 }
 
+/* ---------------------------------------------------------------------------
+   FRD-009. Панель запуска конструктора: предпросмотр + старт закреплены внизу
+   колонки, а не лежат в конце длинной формы.
+
+   Замер до правки (WebKit 18.2, DPR 2, живое приложение): чип фильтра «Ошибки»
+   стоит на y≈758, а предпросмотр, который этот чип меняет, — на y≈1106. Клик по
+   чипу честно переписывал строку «ФИЛЬТРЫ: все темы» → «ошибки · 19», и эта
+   строка была за кадром на ВСЕХ вьюпортах §10 — включая 1920×1200. Человек менял
+   набор и не видел ответа системы; screen reader слышал его (role=status), глаз —
+   нет. Кнопка «Начать тренировку» при этом стояла на 1382–1430px и не помещалась
+   в окно на девяти вьюпортах из десяти (единственное исключение — 2560×1440).
+
+   Почему не перекомпоновка в колонки: проверено замером до правки. Разбивка
+   «Охват | Режим | сводка» уводит кнопку с 1430 на 1056 и всё равно оставляет её
+   ниже сгиба на 1280×800, 1366×768, 1440×900 и 1512×982 — то есть ровно на
+   ходовых MacBook. Побочно она сжимает контролы форм до 255–356px и растит
+   высоту документа (1573 → 2164). Композиция вертикальный бюджет не спасает:
+   над конструктором лежит 390px постоянной обвязки, а сам он весит 1087px.
+
+   Носитель закрепления — `.session-builder`, и это не косметика. `sticky`
+   упирается в рамку РОДИТЕЛЯ: внутри `#session-form` (412px высотой, весь ниже
+   сгиба) пробега нет и правило выродилось бы в `static`.
+
+   Панель — ребёнок сетки во всю её ширину, а не последняя строка формы.
+   Тоже по замеру: в колонке 640px три метрики предпросмотра (274 + 342 + 139px)
+   не встают в ряд и разъезжаются на три, панель вырастает до 128–151px и в этой
+   полосе прячет чипы фильтров и селекты — `elementFromPoint` над контролом
+   возвращал саму панель. Во всю ширину те же метрики укладываются в одну строку.
+   Запуск и не принадлежит колонке параметров: это действие страницы.
+
+   iter-65: ширину во всю сетку теперь даёт область `launch` (обе колонки строки
+   в grid-template-areas), а не `grid-column: 1 / -1` при авторазмещении. Смысл
+   тот же, но строка панели названа явно и не зависит от того, сколько блоков
+   встало выше.
+   -------------------------------------------------------------------------- */
+html[data-design] .builder-launch-bar {
+  grid-area: launch;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-4) var(--space-5);
+  align-items: center;
+}
+/* Панель закреплена, поэтому её высота — это прямой вычет из видимой части
+   конструктора. Первая реализация оставила предпросмотр в его обычном виде
+   (метрика = столбик «подпись над значением», перенос по строкам) и панель
+   выросла до 277px: на 1440×900 она заняла полосу y=623..900 и накрыла собой
+   чипы фильтров на y=758 — `elementFromPoint` над чипом возвращал уже панель.
+   Панель, поставленная ради обратной связи от фильтров, сделала эти фильтры
+   некликабельными. Поэтому внутри панели предпросмотр перекладывается в одну
+   строку: метрика «подпись — значение» в ряд, переносов нет. */
+html[data-design] .builder-launch-bar .session-preview {
+  margin: 0;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-5);
+  padding: var(--space-2) var(--space-3);
+}
+html[data-design] .builder-launch-bar .session-preview .preview-metric {
+  flex: 0 1 auto;
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+}
+html[data-design] .builder-launch-bar .session-preview .preview-value {
+  font-size: var(--font-size-sm);
+}
+/* Строка фильтров больше не забирает себе отдельный ряд целиком: в закреплённой
+   панели каждый лишний ряд — это высота, отнятая у видимой части конструктора.
+   Усечения нет сознательно: значения здесь — прозаические («Без ограничения по
+   числу», «сессия идёт, пока не остановишь»), и обрезанное многоточием значение
+   сообщает меньше, чем перенос на вторую строку. Перенос стоит ~20px, обрезка
+   стоит смысла. */
+html[data-design] .builder-launch-bar .session-preview .preview-filters-metric {
+  flex: 0 1 auto;
+}
+html[data-design] .builder-launch-bar .builder-start-cta {
+  width: auto;
+  min-width: 11rem;
+}
+
+/* Закрепление — с той ширины, на которой конструктор ещё двухколоночный.
+   Ниже 901px `.session-builder` схлопывается в стопку, а у нижнего края экрана
+   уже стоит фиксированная мобильная навигация — вторая закреплённая полоса там
+   отняла бы у контента ещё ~100px и встала бы к ней вплотную. */
+@media (min-width: 901px) {
+  html[data-design] .builder-launch-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: var(--z-sticky);
+    background: var(--color-bg-primary);
+    border-top: var(--rule-weight) solid var(--color-border-primary);
+    padding: var(--space-3) 0;
+  }
+  /* Клавиатурный обход конструктора (Tab по чипам, селектам, счётчику) скроллит
+     контрол в вид — без запаса последние контролы приезжают ПОД панель и
+     настраиваются вслепую. Тот же приём, что у закреплённой панели ответа. */
+  html[data-design] .session-builder :is(.filter-chip, select, input[type="number"], .filters-apply-btn) {
+    scroll-margin-bottom: 8rem;
+  }
+}
+
 /* Filter chips (.settings-page .filter-chips/.filter-chip/.filter-chip-count)
    ВЫНЕСЕНЫ в pages-settings.css (Волна 4, type-B: страничное правило вернулось в
    свой page-файл, грузится только на settings). Каскад-нейтрально: pixel-fx @pixel
@@ -948,12 +1166,9 @@ html[data-design] .builder-start-cta {
    before (дизъюнктные свойства); @components/@pages-конкурентов нет; pages-settings
    трогает только toggle-item:not(.filter-chip) (исключает). */
 
-/* Правая колонка: карточки-сводки. Значение крупное mono. */
-html[data-design] .builder-aside {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-}
+/* Карточки-сводки. Значение крупное mono. Обёртка `.builder-aside` (flex-стопка
+   на 320px) снята вместе с колонками: карточки стоят в разных областях сетки и
+   общей стопкой быть перестали. */
 html[data-design] .builder-card .builder-card-value {
   font-family: var(--font-family-mono);
   font-size: var(--font-size-2xl);
@@ -963,8 +1178,25 @@ html[data-design] .builder-card .builder-card-value {
   margin: var(--space-1) 0 var(--space-2);
 }
 
+/* Ниже 901px — одна колонка. Areas снимаем целиком (`none`), и блоки встают в
+   DOM-порядке: Охват → Режим → Повторение → Статистика → Запуск. Второго набора
+   правил под мобильную стопку не нужно — именно ради этого раскладка описана
+   областями, а не порядком в разметке.
+
+   Сброс `grid-area: auto` идёт по ВСЕМ детям, а не по перечню. Перечень уже
+   подвёл: в нём не было `.builder-launch-bar`, и оставшийся `grid-area: launch`
+   при `grid-template-areas: none` ссылался на несуществующую область — WebKit
+   заводил под неё неявные колонки. Замер 360×800: панель запуска 148px шириной
+   при полосе 312, кнопка вылезала за правый край (горизонтальный скролл), сетка
+   статистики схлопывалась в 0px, плитки — в 34px. Перечень детей сетки в
+   раскладочном правиле обязан совпадать с разметкой; `*` это гарантирует. */
 @media (max-width: 900px) {
-  html[data-design] .session-builder { grid-template-columns: 1fr; gap: var(--space-6); }
+  html[data-design] .session-builder {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: none;
+    gap: var(--space-6);
+  }
+  html[data-design] .session-builder > * { grid-area: auto; }
 }
 
 }

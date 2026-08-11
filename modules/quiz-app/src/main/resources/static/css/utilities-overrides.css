@@ -9,18 +9,16 @@ html[data-design] input[type="radio"]:focus-visible {
   outline: 2px solid var(--color-focus-ring);
   outline-offset: 2px;
 }
-/* Кастомная select-стрелка (appearance + два gradient) для settings/stats —
-   глобальный control-override. В @layer utilities (≥ pages), т.к. base-правило
-   `.settings-page select` (@layer pages) задаёт `padding` shorthand — арроу нужен
-   padding-right(48px) поверх него, иначе текст налезает на стрелку. background-image
-   переживает благодаря background-COLOR в base. Перенесён из pages-stats (Волна 1). */
-html[data-design] .settings-page select,
-html[data-design] .stats-page select {
-  appearance: none; -webkit-appearance: none;
-  background-image: linear-gradient(45deg, transparent 50%, var(--color-text-secondary) 50%), linear-gradient(135deg, var(--color-text-secondary) 50%, transparent 50%);
-  background-position: calc(100% - 18px) center, calc(100% - 12px) center;
-  background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; padding-right: var(--space-7);
-}
+/* Кастомная select-стрелка отсюда УДАЛЕНА в iter-77. Она стояла под списком
+   `.settings-page select, .stats-page select` и вместе с `appearance: none`
+   решала, где коробка поля вообще сможет примениться: WebKit игнорирует
+   авторские height/padding/radius на нативном menulist, поэтому селекты
+   /bookmarks стояли 25px рядом с 44px-полем поиска. Скелет селекта поднят в
+   `.field select` (components-controls.css) — одна система на все страницы,
+   FRD-022. Причина, по которой стрелка жила в @layer utilities, тоже снята:
+   она обгоняла `padding` shorthand из @layer pages, а такого правила больше
+   нет (`.settings-page select` в pages-settings.css задаёт только
+   scroll-margin под mobile-nav). */
 /* Цифры stat-плиток — табличные фигуры: значения обновляются на лету
    (data-stat-field, refreshStatsFromServer), а display-шрифт пропорциональный →
    без tnum цифры «прыгают» по ширине при апдейте. Глобальный (settings/stats/
@@ -34,10 +32,13 @@ html[data-design] .stat-value { font-variant-numeric: tabular-nums; }
    Точечные исправления после просмотра реальных desktop/mobile скриншотов:
    приоритет данных над фильтрами, компактнее mobile chrome, меньше шума в MCQ.
    ========================================================================== */
-html[data-design] .stats-page .stats-filter-card {
-  padding: var(--space-5);
-}
-
+/* Правило `.stats-filter-card { padding: var(--space-5) }` (пасс 2026-07-01)
+   удалено в iter-74. Оно пережило переписывание полосы отбора и всё это время
+   молча его отменяло: iter-72 снял с полосы коробку карточки (`padding: 0` в
+   pages-stats.css), но `utilities` в порядке слоёв стоит ПОСЛЕ `pages`, поэтому
+   на экран шли те самые 24px — поля отбора стояли с отступом от левой линии
+   заголовка и таблицы, ради совпадения с которой коробка и снималась. Две
+   конкурирующие правды об одном блоке (§24); осталась одна — в компоненте. */
 html[data-design] #interview-options label {
   text-align: left;
 }
@@ -87,23 +88,9 @@ html[data-design] #interview-options label.option-wrong:has(input:checked) {
     grid-template-columns: 1fr;
   }
 
-  html[data-design] .stats-page .stats-filter-card {
-    padding: var(--space-4);
-  }
-
-  html[data-design] .stats-page .stats-filter-pane,
-  html[data-design] .stats-page .stats-search-pane {
-    flex: 0 1 auto;
-  }
-
-  html[data-design] .stats-page .search-input {
-    flex: 0 1 auto;
-  }
-
-  html[data-design] .stats-page .search-form {
-    gap: var(--space-3);
-  }
-
+  /* Таблица тем на телефоне — не таблица, а стопка карточек (блок ниже), поэтому
+     общий скролл-контейнер компонента ей здесь не нужен: скроллить нечего, а
+     overflow создавал бы лишний BFC вокруг карточек. */
   html[data-design] .stats-page .topic-table-wrap {
     overflow-x: visible;
   }
@@ -117,30 +104,51 @@ html[data-design] #interview-options label.option-wrong:has(input:checked) {
     display: block;
   }
 
+  /* Шапка на телефоне — полоса сортировки над карточками, а НЕ спрятанный thead.
+     Раньше её клипали как visually-hidden (подписи колонок несут data-label ячеек),
+     и это было верно, пока заголовок был просто подписью. С iter-81 в заголовке
+     живёт единственный на странице орган управления порядком строк — и замер
+     (WebKit@3, 390×844) показал, во что превратился клип: ссылка «Тема» — 1×24px,
+     то есть указателем в неё не попасть в принципе. Сортировка существовала только
+     для клавиатуры, через `thead:focus-within`, который её на время раскрывал.
+     Телефон терял половину контроля над таблицей: объём («Показать все темы») ему
+     доступен, порядок — нет.
+     Вторую копию полосы рядом не заводим (§24): те же <th>, другая раскладка. */
   html[data-design] .stats-page .topic-table thead {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    clip-path: inset(50%);
-    white-space: nowrap;
+    margin-bottom: var(--space-3);
   }
 
-  /* Сортируемые th (tabindex=0) остаются в tab-порядке и внутри клипнутого
-     thead: клавиатурный фокус попадал на невидимый элемент — 5 фокус-стопов
-     без видимого кольца (2.4.7). Паттерн skip-link: пока внутри thead фокус,
-     возвращаем ему видимость — заголовки встают стопкой блоков, текущий
-     носит своё фокус-кольцо; при уходе фокуса thead снова скрыт. Сама
-     сортировка и так работала (live-анонс #table-sort-status). */
-  html[data-design] .stats-page .topic-table thead:focus-within {
-    position: static;
+  html[data-design] .stats-page .topic-table thead tr {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    align-items: stretch;
+  }
+
+  /* Несортируемые колонки («Прогресс», «Действие») в полосе не участвуют: нажимать
+     там нечего, а подпись у соответствующей строки карточки уже стоит из data-label. */
+  html[data-design] .stats-page .topic-table thead th:not([aria-sort]) {
+    display: none;
+  }
+
+  html[data-design] .stats-page .topic-table thead th[aria-sort] {
     width: auto;
-    height: auto;
-    overflow: visible;
-    clip: auto;
-    clip-path: none;
-    white-space: normal;
+    text-align: left;
+  }
+
+  /* Цель нажатия: 24px по WCAG 2.5.8 — это минимум, здесь берём 32px, потому что
+     полоса стоит на телефоне и соседи в ней рядом. Рамка нужна, чтобы полоса
+     читалась как набор кнопок, а не как строка текста над карточками. */
+  html[data-design] .stats-page .topic-table thead th .col-sort {
+    min-height: 32px;
+    padding: 0 var(--space-3);
+    border: var(--rule-weight) solid var(--color-border-secondary);
+    border-radius: var(--border-radius-sm);
+    justify-content: flex-start;
+  }
+
+  html[data-design] .stats-page .topic-table thead th.is-sorted .col-sort {
+    border-color: var(--color-border-primary);
   }
 
   html[data-design] .stats-page .topic-table tbody {
@@ -175,11 +183,22 @@ html[data-design] #interview-options label.option-wrong:has(input:checked) {
     overflow-wrap: anywhere;
   }
 
+  /* Строка «ПОДПИСЬ — значение» внутри карточки.
+     Была сеткой `minmax(90px, 0.42fr) minmax(0, 1fr)` + `justify-self: end` у
+     значения. Замер (WebKit@2, 360×780, root=25px — телефон при 200% текста):
+     ячейка 158px, подпись держит свой пол 90px, значению остаётся 43px, а ссылка
+     «Тренировать» — цельное слово шириной 139px. Перенос ей запрещён, ужаться она
+     не может, а `justify-self: end` прибивает её ПРАВЫЙ край к правому краю колонки
+     — поэтому лишнее уезжает ВЛЕВО и ложится поверх подписи «ДЕЙСТВИЕ». Текст
+     поверх текста, читать нельзя (WCAG 1.4.4 Resize text).
+     Флексом та же пара переносится: не хватило места рядом — значение уходит на
+     свою строку, а `margin-left: auto` держит его у правого края и там. Подпись при
+     этом остаётся на своём месте в любом случае. */
   html[data-design] .stats-page .topic-table td[data-label] {
-    display: grid;
-    grid-template-columns: minmax(90px, 0.42fr) minmax(0, 1fr);
-    gap: var(--space-3);
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
+    gap: var(--space-2) var(--space-3);
     color: var(--color-text-primary);
   }
 
@@ -192,21 +211,27 @@ html[data-design] #interview-options label.option-wrong:has(input:checked) {
     color: var(--color-text-secondary);
   }
 
-  html[data-design] .stats-page .topic-table td[data-label] > * {
-    justify-self: end;
+  /* Правый край держит последний элемент строки — и когда он рядом с подписью, и
+     когда перенёсся на свою строку: auto-margin во флексе считается по строке. */
+  html[data-design] .stats-page .topic-table td[data-label] > *:last-child {
+    margin-left: auto;
   }
 
-  html[data-design] .stats-page .topic-table td[data-label="Прогресс"] {
-    grid-template-columns: minmax(90px, 0.42fr) minmax(0, 1fr) auto;
+  /* У «Прогресса» значение — не полоса, а колонка `.topic-progress` (полоса + строка
+     «N из M»). Тянуть надо именно её: это прямой ребёнок ячейки, а полоса лежит на
+     уровень глубже. Первая попытка целилась в полосу — и промахнулась дважды: во-первых
+     мимо флекс-контейнера ячейки, во-вторых `.topic-progress` сама выложена колонкой,
+     где `flex-basis` задаёт ВЫСОТУ. Замер показал ровно это: полоса 120×60 вместо
+     120×6 — вместо полоски получилась «таблетка».
+     Колонке отдаём остаток строки, полосе внутри — всю ширину колонки; базу 120px
+     держим прежней, чтобы на узком экране полоса переносилась целой, а не огрызком. */
+  html[data-design] .stats-page .topic-table td[data-label="Прогресс"] .topic-progress {
+    flex: 1 1 120px;
+    min-width: 0;
   }
 
   html[data-design] .stats-page .topic-table td[data-label="Прогресс"] .topic-progress-bar {
     width: 100%;
-    min-width: 0;
-  }
-
-  html[data-design] .stats-page .topic-table td[data-label="Прогресс"] .topic-progress-label {
-    justify-self: end;
   }
 
   /* Здесь пряталось на мобиле «лишнее» у невыбранных вариантов: их пояснение,
@@ -272,23 +297,6 @@ html[data-design] #interview-options label.option-wrong:has(input:checked) {
 
   html[data-design] .keyboard-hint {
     display: none;
-  }
-
-  html[data-design] .today-hero-head {
-    margin-bottom: var(--space-3);
-  }
-
-  html[data-design] .today-hero-body {
-    gap: var(--space-4);
-  }
-
-  html[data-design] .today-hero-figure {
-    display: block;
-  }
-
-  html[data-design] .today-hero-due-label {
-    display: block;
-    margin-top: var(--space-2);
   }
 }
 

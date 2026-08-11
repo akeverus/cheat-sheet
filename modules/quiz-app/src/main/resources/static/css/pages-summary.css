@@ -3,7 +3,18 @@
 /* ==========================================================================
    C6 — SESSION SUMMARY / Итоги сессии (editorial). Scoped .summary-page
    ========================================================================== */
-html[data-design] .summary-page .ed-page { max-width: var(--max-width-reading); }
+/* Своей ширины у страницы итогов больше нет — она берёт общую `.ed-page`
+   (--max-width-page, reset-layout.css), как /stats и /bookmarks.
+
+   Здесь стояло `max-width: var(--max-width-reading)` (896px). Мера чтения — для
+   сплошного текста, а итог сессии текстом не является: это счёт, полоса KPI,
+   пятиколоночная таблица тем и список ошибок. Замер (iter-63, WebKit@2): полоса
+   контента росла 1060 → 2340px от 1280 до 2560, а `.ed-page` оставалась 896 —
+   мимо уходило 384px на 1280 и 1444px на 2560. Хуже того, таблица тем при этом
+   СУЖАЛАСЬ с ростом окна (380 → 347px): её колонка — 7fr фиксированной полосы,
+   из которой растущий --page-gutter вычитает всё больше. Две ширины для двух
+   страниц с одинаковым содержимым — ровно тот дубль, который запрещено
+   оставлять; ширина теперь одна на все экраны данных. */
 
 /* Поверхность и поля — у общего `.card` (components-card.css); своё здесь
    только вертикальный ритм между блоками итога. */
@@ -13,21 +24,13 @@ html[data-design] .summary-page .card {
 
 /* Геро-итог. Контейнера `.summary-score` больше нет — карточка называется
    `.summary-hero` (кольцо слева, тело справа); правила, обращённые к прежнему
-   имени, удалены вместе с его grid-раскладкой. */
-html[data-design] .summary-page .summary-mode-line {
-  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
-  color: var(--color-text-secondary); margin-bottom: var(--space-3);
-  overflow-wrap: break-word;
-}
-/* Чип режима — к ЛЕВОМУ краю body (над «N из M») и по своей ширине. Без явного
-   align-self он тянется на всю колонку (stretch по умолчанию во flex-column), а
-   растянутый на ширину геро чип уводит взгляд от «N из M», ради которого блок и
-   существует. (Раньше он ещё и упирался в декор-звезду в правом верхнем углу —
-   её больше нет, но своей ширины чипу это не отменяет.) */
-html[data-design] .summary-page .summary-hero .summary-mode-line {
-  align-self: flex-start;
-}
+   имени, удалены вместе с его grid-раскладкой.
+
+   Чипа режима (`.summary-mode-line`) в карточке тоже больше нет: название режима
+   переехало в надзаголовок шапки страницы (`.page-head .eyebrow`, iter-63) — это
+   метаданные страницы, а не показатель счёта. Три блока правил под чип (базовый
+   mono-caps, align-self и instrument-lowercase) сняты следом, чтобы у одной роли
+   не осталось двух носителей. */
 html[data-design] .summary-page .summary-hero[data-summary-tone="low"] .score-ring.is-muted {
   opacity: 0.92;
 }
@@ -63,40 +66,30 @@ html[data-design] .summary-page .summary-duration { font-family: var(--font-fami
 
 /* Действия */
 html[data-design] .summary-page .summary-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin: 0 0 var(--space-7); align-items: center; }
-html[data-design] .summary-page .summary-actions .btn {
-  /* C3: дельты к .btn (class="btn next-btn|secondary-btn") — крупнее прочих primary (48px,
-     C8) и не тянуться в ряду; радиус md сохранён как было (specificity бьёт editorial-
-     сигнатуру — отдельный known-smell, фиксить осознанно). Заливка/цвет/рамка/ховер
-     next- и secondary-вариантов — из глобальных .next-btn/.secondary-btn (раньше
-     дословно дублировались здесь). */
-  min-height: 48px; padding: var(--space-3) var(--space-6);
-  flex: 0 0 auto;
-  border-radius: var(--border-radius-md);
-  /* inline-flex+center: типизированные nextActions несут иконку слева от подписи
-     (ed-icon-lead), выравниваем по центру; текстовые кнопки не задеты. */
-  display: inline-flex; align-items: center; justify-content: center;
-}
-/* «Ещё» — низкоэмфазный disclosure, не конкурирует с primary/secondary. */
+/* Высота (48px), поля и центровка кнопок «что дальше» перенесены в ранг
+   «главное действие флоу» (components-controls.css) — это те же главные кнопки
+   флоу, что и «Проверить ответ», и мерить их отдельно незачем. Радиус `md`
+   удалён вместе с признанием, стоявшим здесь же: «specificity бьёт
+   editorial-сигнатуру — отдельный known-smell, фиксить осознанно». Замером
+   iter-78 этот радиус до экрана не доезжал ни разу.
+   Странице остаётся поведение кнопки в ряду. */
+html[data-design] .summary-page .summary-actions .btn { flex: 0 0 auto; }
+/* «Ещё» — раскрывающий контрол. Его коробка (44px, поля, семейство, кегль, вес,
+   цвет, фон, курсор) снята отсюда в iter-78: она дословно повторяла базовый ранг
+   из components-controls.css и при этом РАСХОДИЛАСЬ с ним — поля `0 space-4`
+   против `space-2 space-5`, цвет `text-secondary` против `text-primary`, фон
+   `transparent` поверх контура. Приложение уже показывает второй такой же
+   disclosure — «Подробный разбор» (#extra-analysis-toggle) — обычной кнопкой
+   базового ранга (замер: 193×44, заливка поверхности, px-контур); два контрола
+   одной роли обязаны выглядеть одинаково (§24).
+   Странице остаётся только то, что относится к самому <summary> как к тегу:
+   маркер-треугольник и запрет выделения при клике. */
 html[data-design] .summary-page .summary-more-summary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  padding: 0 var(--space-4);
-  font-family: var(--font-family-body);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-secondary);
-  background: transparent;
-  cursor: pointer;
   list-style: none;
   user-select: none;
 }
-html[data-design] .summary-page .summary-more-summary:hover {
-  color: var(--color-text-primary);
-}
-html[data-design] .summary-page .summary-more[open] > .summary-more-summary {
-  color: var(--color-text-primary);
+html[data-design] .summary-page .summary-more-summary::-webkit-details-marker {
+  display: none;
 }
 
 /* Заголовки секций */
@@ -106,24 +99,36 @@ html[data-design] .summary-page .summary-section-title {
   color: var(--color-text-primary); margin: 0 0 var(--space-4);
 }
 
-/* Таблица результатов по темам. display:block + overflow-x:auto — широкая
-   5-колоночная таблица скроллится ВНУТРИ карточки, а не растягивает страницу
-   на мобиле (тот же приём, что и для markdown-таблиц и stats .topic-table). */
-html[data-design] .summary-page .summary-table { display: block; overflow-x: auto; width: 100%; border-collapse: collapse; font-size: var(--font-size-sm); }
-html[data-design] .summary-page .summary-table th,
-html[data-design] .summary-page .summary-table td { padding: var(--space-2); border-bottom: var(--rule-weight) solid var(--color-border-secondary); text-align: left; vertical-align: middle; }
-html[data-design] .summary-page .summary-table thead th {
-  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
-  /* letter-spacing ужат с --letter-spacing-wide: 5 колонок (ТЕМА/ВСЕГО/ВЕРНО/
-     ОШИБКИ/ТОЧНОСТЬ) в узкой 7fr-колонке summary-грида не влезали — широкий
-     трекинг выталкивал «ТОЧНОСТЬ» за край overflow-x:auto (обрезалась «Ь»). */
-  letter-spacing: 0.02em; text-transform: uppercase;
-  color: var(--color-text-secondary); font-weight: var(--font-weight-medium);
-  border-bottom: var(--rule-weight-strong) solid var(--color-border-primary);
-}
+/* Таблица тем — настоящая таблица во всю ширину секции.
+   ИСТОРИЯ РЕШЕНИЯ. Сначала здесь было `display:block; overflow-x:auto` — приём
+   «обёртка со скроллом», применённый к самой таблице. display:block делает из неё
+   блок с анонимным табличным боксом внутри, а тот shrink-to-fit: замер давал бокс
+   1041px при сумме колонок 406px, то есть 635px пустоты справа внутри рамки (§7).
+   Приём сняли — вместе с ним пропала и защита от переполнения, потому что
+   `table-layout:fixed` её НЕ даёт: фиксированные колонки 5.5rem×3 + 11rem = 27.5rem
+   при увеличенном тексте (root=25px это 687px) шире полосы, и таблица снова поехала
+   бы вбок. iter-76 вернул защиту правильным приёмом — внешней обёрткой .table-scroll
+   в разметке: она ограничивает ширину, не превращая таблицу в блок, поэтому мёртвой
+   пустоты справа не даёт (замер: недобор 1px против 377px у display:block).
+   table-layout:fixed остаётся — но уже как решение про РАСПРЕДЕЛЕНИЕ ширины
+   (остаток забирает «Тема», а не все колонки пропорционально), а не про переполнение.
+   Скелет (ширина/линейки/шапка/паддинги) — из компонента .data-table. */
+html[data-design] .summary-page .summary-table { table-layout: fixed; }
+html[data-design] .summary-page .summary-table thead th:nth-child(2),
+html[data-design] .summary-page .summary-table thead th:nth-child(3),
+html[data-design] .summary-page .summary-table thead th:nth-child(4) { width: 5.5rem; }
+/* «Точность» шире прочих: в ячейке полоса прогресса + число. */
+html[data-design] .summary-page .summary-table thead th:nth-child(5) { width: 11rem; }
+/* Длинное имя темы переносим, а не растягиваем колонку: при fixed-раскладке
+   неразрывное слово иначе вылезет за рамку карточки. */
+html[data-design] .summary-page .summary-table td[role="rowheader"] { overflow-wrap: anywhere; }
+/* letter-spacing ужат против компонентного --letter-spacing-wide: пять колонок
+   (ТЕМА/ВСЕГО/ВЕРНО/ОШИБКИ/ТОЧНОСТЬ) при fixed-раскладке живут в жёстко заданных
+   5.5rem, и широкий трекинг обрезал «ТОЧНОСТЬ». Это дельта к компоненту, а не своя
+   шапка: mono/uppercase/цвет/вес/линейка приходят из .data-table. */
+html[data-design] .summary-page .summary-table thead th { letter-spacing: 0.02em; }
 html[data-design] .summary-page .summary-th-center,
 html[data-design] .summary-page .summary-td-center { text-align: center; }
-html[data-design] .summary-page .summary-table td:not(:first-child) { font-variant-numeric: tabular-nums; }
 html[data-design] .summary-page .summary-topic-link { color: var(--color-text-link); text-decoration: none; }
 html[data-design] .summary-page .summary-topic-link:hover { text-decoration: underline; }
 html[data-design] .summary-page .summary-td-correct { color: var(--color-status-success); }
@@ -134,7 +139,30 @@ html[data-design] .summary-page .text-danger { color: var(--color-status-error);
 
 /* Ошибки */
 html[data-design] .summary-page .summary-mistakes-hint { color: var(--color-text-secondary); font-size: var(--font-size-sm); margin: 0 0 var(--space-4); }
-html[data-design] .summary-page .summary-mistakes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+/* Ошибки — сетка карточек по доступной ширине, а не одна колонка.
+   Колонка была следствием двухстолбцовой раскладки страницы (таблица слева,
+   ошибки справа), которая разъезжалась на замере: высота левого столбца задаётся
+   числом ТЕМ (обычно 1–3 строки), правого — числом ОШИБОК (до сотен). На 1280…2560
+   левый столбец кончался на 1037–1067px выше правого — постоянная дыра, не
+   зависящая от ширины экрана. Столбцы убраны, обе секции полноширинные (§6, §7).
+   auto-fill без медиазапросов: число колонок выбирает контент. Замер (WebKit@2):
+   3 колонки на 1440…2560, 2 на 768…1280, 1 на ≤430 — ни одного breakpoint.
+   min(100%, 300px) держит карточку уже 300px, когда контейнер меньше, иначе на
+   360px (полоса 264px) появился бы горизонтальный скролл. */
+html[data-design] .summary-page .summary-mistakes {
+  list-style: none; margin: 0; padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: var(--space-3);
+  align-items: start;
+  /* `max-width: none` здесь стоял до iter-64: reset вешал прозаическую меру на
+     сам тег `ul`, и каждая структурная сетка снимала её у себя. Мера переехала
+     на .markdown-content (reset.css / components-prose.css) — снимать больше
+     нечего, исключение удалено вместе с причиной. */
+}
+/* Тот же reset вешает на li нижний отступ — в сетке он превращается в разную
+   высоту рядов поверх gap. */
+html[data-design] .summary-page .summary-mistakes > li { margin-bottom: 0; }
 html[data-design] .summary-page .summary-mistake-item {
   display: block; padding: var(--space-4);
   border: var(--rule-weight) solid var(--color-border-secondary); border-radius: var(--border-radius-md);
@@ -159,19 +187,16 @@ html[data-design] .summary-page .summary-mistake-meta { display: block; font-fam
      шкалы: 48 px дали бы ~130 px и вернули наложение числа на дугу. */
 }
 
-/* Wave 4–7: один явный primary CTA в блоке «Что дальше» */
+/* Один явный primary CTA в блоке «Что дальше». Странице остаётся ТОЛЬКО ширина —
+   это раскладка ряда. Вес и тень отсюда сняты в iter-78: вес главного действия
+   задаёт ранг (bold), а `--shadow-sm` спорила с pixel-контуром в том же
+   `box-shadow` и проигрывала ему — до экрана эта тень не доезжала ни разу. */
 html[data-design] .summary-page .summary-actions .btn.next-btn:first-of-type {
   min-width: 12rem;
-  font-weight: var(--font-weight-semibold);
-  box-shadow: var(--shadow-sm);
 }
-html[data-design] .summary-page .summary-actions .btn.secondary-btn {
-  font-weight: var(--font-weight-medium);
-  opacity: 0.92;
-}
-html[data-design] .summary-page .summary-actions .btn.secondary-btn:hover {
-  opacity: 1;
-}
+/* Отличие вторичной кнопки от главной — краска ранга, а не полупрозрачность.
+   `opacity: 0.92` гасила и текст, и контур разом (контраст падал у обоих), а вес
+   `medium` дублировал базовый ранг. Оба сняты в iter-78 (§24, §31). */
 
 /* =============================================================================
    C6-i — Instrument: итоги сессии. CSS-only рестайл СУЩЕСТВУЮЩИХ прод-хуков
@@ -190,12 +215,6 @@ html[data-design] .summary-page .summary-actions .btn.secondary-btn:hover {
    слой pixel, он ставит `border: 0`). Итог теперь на той же поверхности, что
    аналитика, вердикт и закладки. */
 
-/* Мета-строка режима: строчный mono-шёпот (подпись instrument), не upper-акцент. */
-html[data-design="instrument"] .summary-page .summary-mode-line {
-  text-transform: lowercase;
-  color: var(--color-text-tertiary);
-}
-
 /* Крупный счёт: Newsreader medium — instrument не кричит болдом. */
 html[data-design="instrument"] .summary-page .summary-score-value {
   font-weight: var(--font-weight-medium);
@@ -206,7 +225,6 @@ html[data-design="instrument"] .summary-page .summary-score-value {
 html[data-design="instrument"] .summary-page .summary-section-title {
   font-family: var(--font-family-body);
   font-size: var(--font-size-md);
-  letter-spacing: var(--letter-spacing-tight);
 }
 
 /* Шапка таблицы тем: приглушить до tertiary (5.4:1 AA на light). */
@@ -289,16 +307,14 @@ html[data-design="instrument"] .summary-page .summary-mistake-item:hover {
      тело), метрики — `.summary-kpi`. Пять областей раскладывали разметку, ушедшую
      раньше. Геро на широком экране держит собственный flex-строй карточки. */
   html[data-design] .summary-page .summary-duration { margin-top: 0; align-self: center; }
-  /* Таблица тем + ошибки в два столбца — только когда есть блок ошибок.
-     .summary-tools (вставляет JS после геро) и actions остаются полноширинными. */
-  html[data-design] .summary-page .ed-page:has(> section .summary-mistakes) {
-    display: grid;
-    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-    column-gap: var(--space-6);
-    align-items: start;
-  }
-  html[data-design] .summary-page .ed-page:has(> section .summary-mistakes) > * { grid-column: 1 / -1; min-width: 0; }
-  html[data-design] .summary-page .ed-page > section:has(.summary-table) { grid-column: 1; }
-  html[data-design] .summary-page .ed-page > section:has(.summary-mistakes) { grid-column: 2; }
+  /* Двухстолбцовая раскладка страницы (`.ed-page:has(> section .summary-mistakes)`
+     → 7fr/5fr, таблица слева, ошибки справа) удалена. Причина замером: столбцы
+     наполняются разными сущностями — левый растёт по числу тем, правый по числу
+     ошибок, и на 1280/1440/1920/2560 левый заканчивался на 1067/1067/1037/1067px
+     выше правого. Дыра была постоянной, а не краевым случаем редких данных.
+     Вдобавок таблица получала лишь 7fr от полосы: 476…593px из 1280 (§7 — таблица
+     не должна занимать малую часть доступной ширины).
+     Теперь обе секции полноширинные, а ширину использует сетка карточек ошибок
+     (`.summary-mistakes`, auto-fill) — см. базовое правило выше. */
 }
 }

@@ -14,7 +14,7 @@
               data-session-wrong=${interviewSession != null ? interviewSession.getWrong() : 0}">
     <aside th:replace="~{fragments/sidebar :: sidebar(active=${reviewMode != null and reviewMode} ? 'review' : 'focus')}"></aside>
     <div class="shell-main">
-        <th:block th:replace="~{fragments/topbar :: topbar}"></th:block>
+        <th:block th:replace="~{fragments/shell-head :: shell-head}"></th:block>
 
 <main id="main-content" class="ed-page" tabindex="-1">
     <!--/* FLOW-01b: resume-баннер приостановленной сессии. Показывается только когда
@@ -43,29 +43,17 @@
              DEC-003=B (переподтв. 2026-07-16) статус сессии вынесен в отдельный
              .focus-aside — на >=1080px он становится правым рельсом grid'а, на узких
              стекается в потоке (см. base.css, PROC-07). */-->
-        <!--/* P0.1: левая колонка split-раскладки как ОДИН grid-элемент (.focus-rail).
-             Раньше topbar/рельс/тема/причина/вопрос/код/диаграмма были плоскими прямыми
-             детьми .focus-training; в split высокая форма (col2) через grid-ряды
-             раздувала первый ряд и отрывала топбар от остального стека (~500px зазор),
-             а span-подход ломался на коротких вопросах (форма выше стека → лента
-             наезжала). Обёртка делает col1 и col2 полностью независимыми колонками:
-             рейка сама стекается flex-column, форма — своя колонка, лента — под обеими.
-             ВНЕ split (flow/grid/PROC-07) .focus-rail = display:contents → прозрачна,
-             дети хойстятся как прямые grid-элементы .focus-training (существующие
-             descendant-селекторы продолжают матчить). */-->
-        <div class="focus-rail"
-             th:with="hasCode=${codeBlock != null},
-                      hasDiagram=${diagramBlock != null}">
-        <!--/* hasCode/hasDiagram подняты сюда: th:with (precedence 500) выполняется
-             ПОЗЖЕ th:if (300), поэтому на одном элементе с th:if переменные ещё null.
-             Тут они в scope для th:if потомка .question-materials ниже.
-
-             Сами блоки приходят с backend (ContentBlockMapper) — шаблон больше не
-             читает codeSnippet/diagramMermaid напрямую. В codeSnippet импортёр
-             складывает любой не-mermaid блок ```…```, включая схемы, нарисованные
-             псевдографикой: на 70 вопросах такой «код» дословно повторял соседнюю
-             mermaid-схему, ещё на ~90 был единственной схемой вопроса под ярлыком
-             «Пример кода». Разделение живёт в одном месте, на backend. */-->
+        <!--/* iter-68: у композиции РОВНО ДВА ребёнка — вспомогательный рельс
+             (.focus-aside) и рабочая колонка (.focus-main). Раньше детей было восемь:
+             рельс, топбар, причина, вопрос, материалы, форма, пост-ответная лента и
+             зона репорта — семь из них раскладывались как grid-элементы с явным
+             `grid-column: 1`, а рельс занимал колонку 2 спаном на 99 рядов. Пока
+             колонок ровно две и обе заданы треками, композиция не может ПЕРЕНЕСТИ
+             рельс под колонку — grid не переносит. Именно поэтому ширину рельса
+             приходилось платить из главной колонки на любом экране шире литерала
+             1080px, и на 1280 главная колонка стоила 631px при собственной мере 960.
+             Два ребёнка вместо восьми — это то, что делает перенос выразимым (см.
+             pages-focus.css, «КОМПОЗИЦИЯ ЭКРАНА ВОПРОСА»). */-->
         <!--/* PROC-07 (DEC-003=B, переподтверждено пользователем 2026-07-16 с полным
              контекстом истории): вспомогательный правый рельс. Прямой ребёнок
              .focus-training → на >=1080px становится правой колонкой grid'а (сессия/
@@ -78,7 +66,7 @@
              значение здесь не безобидно — оно повторяет ровно ту неверную метку,
              которую условие выше и исправляет, и всплыло бы при сбое выражения. */-->
         <aside class="focus-aside focus-session-rail"
-               th:aria-label="${interviewSession != null ? 'Сессия' : 'Очередь повторений'}">
+               th:aria-label="${interviewSession != null ? 'Сессия' : 'Мой прогресс'}">
                 <!--/* Прогресс-строка и трек гейтятся th:if: вне сессии раньше в DOM
                      висела видимая пустая полоска 254×2px с aria-valuemax="0"
                      (progressbar «0 из 0» для скринридера). round-01 C-live-1. */-->
@@ -99,6 +87,62 @@
                      th:attr="aria-valuemin=0,aria-valuemax=${interviewSession.getTotal()},aria-valuenow=${interviewSession.getIndex() + 1}">
                     <div class="session-progress-fill"
                          th:attr="data-progress=${#numbers.formatDecimal(progressPercent, 1, 'NONE', 1, 'POINT')}"></div>
+                </div>
+
+                <!--/* Вне сессии рельс отвечает на тот же вопрос, но в другом масштабе:
+                     в сессии — «где я внутри этой сессии», вне её — «где я по банку».
+                     Раньше здесь не было ничего, кроме чипа очереди, и правая колонка
+                     на >=1080px гейтилась по .session-progress-track — иначе выродилась
+                     бы в одинокую фишку в пустом жёлобе. Итог: вне сессии вопрос стоял
+                     колонкой 960px по центру, оставляя 683px пустоты с каждой стороны
+                     на 2560 (59% рабочей области). Это чинится содержимым, а не CSS:
+                     §7 прямо запрещает вторую колонку ради заполнения места.
+
+                     Данные не пришлось добывать — они уже считались. Экран вопроса на
+                     каждом рендере строит LearningMetrics и складывал их в InterviewStats
+                     через from(), который берёт 6 полей из 14; cardsSeen и точность в
+                     это горлышко не проходили. Теперь metrics доезжает до модели целиком
+                     (FocusTrainingPageService.SurfaceState), лишнего запроса нет.
+
+                     Пустого состояния у блока нет by design (§27): у нового пользователя
+                     это честные «0 из 9818» и «—» вместо точности, а не исчезающий блок,
+                     иначе композиция схлопывалась бы обратно в жёлоб. */-->
+                <div class="focus-bank-progress" th:if="${interviewSession == null and metrics != null}">
+                    <div class="focus-progress-line">
+                        <span class="muted tiny kpi-role">Пройдено по банку</span>
+                        <span>
+                            <span class="bank-progress-seen" th:text="${metrics.cardsSeen()}">0</span>/<span th:text="${metrics.cardsTotal()}">0</span>
+                        </span>
+                    </div>
+                    <!--/* Полосы прогресса здесь НЕТ, хотя сессионный рельс её показывает.
+                         Она тут была и снята по замеру на живых данных: доля пройденного
+                         от банка в 9818 карточек — 0.2% у нового пользователя, то есть
+                         заливка 0.5px на треке 263px. Сам пустой трек — bg-tertiary
+                         (247,251,250) на фоне focus-page (245,248,248), контраст 1.02:1,
+                         тоже невидим. Получалась пустая полоска между текстом, которая
+                         не говорит ничего сверх соседнего «23/9818» и читается как сбой
+                         рендера, а не как «ты в начале».
+
+                         Дело не в цвете трека: доля по банку такого размера мала у всех,
+                         кроме давних пользователей, поэтому инструмент выбран неверно, а
+                         не плохо покрашен. Одна цифра, работающая на любом значении,
+                         лучше двух, из которых одна работает иногда. */-->
+                    <!--/* Две цифры отвечают на «а что с качеством»: строка выше говорит
+                         только про охват. Точность — первых попыток (честная память), а
+                         не общая: общая растёт от повторов одного вопроса.
+                         NO_DATA = -1 показывается как «—», не как 0%. */-->
+                    <dl class="focus-bank-facts">
+                        <div class="focus-bank-fact">
+                            <dt class="muted tiny kpi-role">Выучено</dt>
+                            <dd th:text="${metrics.cardsMastered()}">0</dd>
+                        </div>
+                        <div class="focus-bank-fact">
+                            <dt class="muted tiny kpi-role">Точность</dt>
+                            <dd th:text="${metrics.hasFirstAttemptAccuracy()}
+                                         ? ${#numbers.formatDecimal(metrics.firstAttemptAccuracy(), 1, 'NONE', 0, 'POINT') + '%'}
+                                         : '—'">—</dd>
+                        </div>
+                    </dl>
                 </div>
 
                 <!--/* Компактный «сегодня»-чип: стрик (🔥) + due. Информативный, без CTA. */-->
@@ -124,6 +168,40 @@
                     </div>
                 </details>
             </aside>
+
+        <!--/* Рабочая колонка: всё, что не рельс. Один элемент композиции, поэтому
+             перенос рельса под неё выражается переносом flex-строки, а её собственная
+             мера (--focus-main-measure) не зависит от того, поместился рельс рядом
+             или нет. */-->
+        <div class="focus-main">
+        <!--/* P0.1: левая колонка split-раскладки как ОДИН элемент (.focus-question-pane).
+             Раньше topbar/тема/причина/вопрос/код/диаграмма были плоскими прямыми
+             детьми .focus-training; в split высокая форма (col2) через grid-ряды
+             раздувала первый ряд и отрывала топбар от остального стека (~500px зазор),
+             а span-подход ломался на коротких вопросах (форма выше стека → лента
+             наезжала). Обёртка делает col1 и col2 полностью независимыми колонками:
+             пейн сам стекается flex-column, форма — своя колонка, лента — под обеими.
+             ВНЕ split пейн = display:contents → прозрачен, дети хойстятся как прямые
+             дети .focus-main (существующие descendant-селекторы продолжают матчить).
+
+             iter-68 — переименован из .focus-rail: рельсом («rail») в этой композиции
+             называется .focus-aside, и одно слово на два разных элемента читалось как
+             ошибка ровно там, где надо было различать колонку вопроса и вспомогательную
+             панель. Рельс переехал из этой обёртки на уровень выше — он сосед рабочей
+             колонки, а не её содержимое. */-->
+        <div class="focus-question-pane"
+             th:with="hasCode=${codeBlock != null},
+                      hasDiagram=${diagramBlock != null}">
+        <!--/* hasCode/hasDiagram подняты сюда: th:with (precedence 500) выполняется
+             ПОЗЖЕ th:if (300), поэтому на одном элементе с th:if переменные ещё null.
+             Тут они в scope для th:if потомка .question-materials ниже.
+
+             Сами блоки приходят с backend (ContentBlockMapper) — шаблон больше не
+             читает codeSnippet/diagramMermaid напрямую. В codeSnippet импортёр
+             складывает любой не-mermaid блок ```…```, включая схемы, нарисованные
+             псевдографикой: на 70 вопросах такой «код» дословно повторял соседнюю
+             mermaid-схему, ещё на ~90 был единственной схемой вопроса под ярлыком
+             «Пример кода». Разделение живёт в одном месте, на backend. */-->
         <!--/* Строка идентичности вопроса: «из какой области» + «насколько трудный» +
              «в каком режиме отвечаю». Все три отвечают на один вопрос — «что передо
              мной» — поэтому стоят одной строкой, а не тремя.
@@ -191,15 +269,17 @@
 
         <!--/* Этап 3 редизайна: материалы к вопросу (код + схема). Когда есть ОБА,
              макет хендоффа-3 показывает их вкладками «Пример кода / Схема» вместо
-             двух стопкой. PE: список вкладок отрендерен с [hidden] и включается
-             settings/tabs.js (initContentTabs) — без JS обе панели видны стопкой, контент
-             не теряется. tabpanel-семантика (role/id/aria-labelledby) навешивается
-             ТОЛЬКО когда есть оба материала (иначе tabpanel без tab — невалидный ARIA). */-->
+             двух стопкой. PE: полосу вкладок и лишние панели гасит CSS по отсутствию
+             `data-js` на <html> (components-tabs.css) — без JS обе панели видны
+             стопкой, контент не теряется. Атрибут [hidden] на полосе, который снимал
+             роутовый модуль, снят в iter-80: гейт один на все три полосы приложения.
+             tabpanel-семантика (role/id/aria-labelledby) навешивается ТОЛЬКО когда
+             есть оба материала (иначе tabpanel без tab — невалидный ARIA). */-->
         <div class="question-materials"
              th:if="${hasCode or hasDiagram}">
 
             <div class="content-tablist" role="tablist" aria-label="Материалы к вопросу"
-                 th:if="${hasCode and hasDiagram}" hidden>
+                 th:if="${hasCode and hasDiagram}">
                 <!--/* Подпись у вкладки и у заголовка её панели — одна и та же строка
                      из блока. Пока их писали руками, у двух объектов было четыре
                      имени: вкладка «Пример кода» вела к заголовку «Код к вопросу»,
@@ -233,10 +313,11 @@
                  th:if="${hasCode}"
                  data-content-type="CODE"
                  data-block-id="code"
+                 th:classappend="${hasDiagram} ? 'is-active' : ''"
                  th:attr="role=${hasDiagram} ? 'tabpanel' : null,
                           aria-labelledby=${hasDiagram} ? 'qmtab-code' : null">
                 <div class="content-toolbar code-toolbar">
-                    <span class="content-box-title">
+                    <span class="content-box-title tabpanel-title">
                         <svg class="ed-icon" aria-hidden="true"><use href="#i-code"></use></svg><span th:text="${codeBlock.title()}">Пример кода</span>
                     </span>
                     <div class="code-toolbar-actions" role="group" aria-label="Управление кодом">
@@ -261,7 +342,7 @@
                           role=${hasCode} ? 'tabpanel' : null,
                           aria-labelledby=${hasCode} ? 'qmtab-diagram' : null">
                 <div class="content-toolbar diagram-toolbar">
-                    <span class="content-box-title">
+                    <span class="content-box-title tabpanel-title">
                         <svg class="ed-icon" aria-hidden="true"><use href="#i-diagram"></use></svg><span th:text="${diagramBlock.title()}">Схема</span>
                     </span>
                     <!--/* Зум/вписать/экран управляют SVG, который рисует mermaid.js.
@@ -310,7 +391,7 @@
                 </th:block>
             </div>
         </div><!--/* /.question-materials */-->
-        </div><!--/* /.focus-rail : конец левой колонки split */-->
+        </div><!--/* /.focus-question-pane : конец колонки вопроса (col1 в split) */-->
 
         <div th:if="${flashcardMode}" class="flashcard-phase">
             <!--/* Одна подпись вместо четырёх взаимоисключающих th:if: выбор режима —
@@ -530,31 +611,38 @@
                 </label>
             </template>
         </div>
+        </div><!--/* /.focus-main : конец рабочей колонки */-->
     </section>
 
-    <section class="empty empty-card-inner" th:if="${current == null}">
-        <!--/* Pixel-маскот как в error.html/bookmarks-empty: empty-состояние —
-             частая точка входа (узкий фильтр / нет ошибок для повтора /
-             завершённая сессия), достойно той же тёплой pixel-идентичности,
-             а не голого текста. Декоративный (alt="") — заголовок ниже. */-->
-        <img class="empty-pixel-art" th:src="@{/img/pixel/mascot.png}" width="72" height="72" alt="" decoding="async">
-        <h1 class="empty-title">Сейчас нет вопросов</h1>
+    <!--/* Пустое состояние — `.empty-state` из components-empty-state.css (гейт `*`,
+         iter-83). Коробку даёт `.card`, композицию — компонент; собственных
+         классов `.empty`/`.empty-card-inner` у страницы больше нет. Ширину полосы
+         (третье состояние ОДНОЙ колонки, кромка общая с resume-баннером и
+         композицией вопроса) держит pages-focus.css — это раскладка страницы,
+         а не часть компонента. */-->
+    <section class="card empty-state" th:if="${current == null}">
+        <!--/* Глиф спрайта состояний вместо PNG-маскота: «путь закрыт, идти пока
+             некуда». Монохром через currentColor — один тон в обеих темах, и это
+             тот же язык, которым говорят пустые состояния закладок и аналитики.
+             Декоративный (aria-hidden) — смысл несёт заголовок ниже. */-->
+        <svg class="px-illus px-illus-lg empty-state-illus" aria-hidden="true"><use href="#px-portcullis"></use></svg>
+        <h1 class="empty-state-title">Сейчас нет вопросов</h1>
         <!--/* AIR-6 (R0.129): AI вырезан → generationUnavailable был зашит в false
              (всегда). Плечо `!generationUnavailable and` снято из guard'ов как
              всегда-истинное вместе с model-атрибутом и plumbing (FocusPageState +
              MvcModelAttributeMapper). Ветки взаимоисключающие по reviewMode / сессии. */-->
 
-        <p class="empty-description" th:if="${reviewMode}">Нет вопросов с ошибками для повтора.</p>
-        <p class="empty-description" th:if="${!reviewMode and interviewSession == null}">Нет доступных вопросов по выбранным фильтрам. Открой настройки и расширь выборку.</p>
-        <p class="empty-description" th:if="${!reviewMode and interviewSession != null and !interviewSession.finished}">Сессия запущена, но вопрос пока недоступен. Попробуй обновить тренировку.</p>
-        <p class="empty-description" th:if="${!reviewMode and interviewSession != null and interviewSession.finished}"><svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-flag"></use></svg>Сессия завершена.</p>
-        <div class="empty-actions" th:with="finished=${interviewSession != null and interviewSession.finished},
+        <p class="empty-state-text" th:if="${reviewMode}">Нет вопросов с ошибками для повтора.</p>
+        <p class="empty-state-text" th:if="${!reviewMode and interviewSession == null}">Нет доступных вопросов по выбранным фильтрам. Открой настройки и расширь выборку.</p>
+        <p class="empty-state-text" th:if="${!reviewMode and interviewSession != null and !interviewSession.finished}">Сессия запущена, но вопрос пока недоступен. Попробуй обновить тренировку.</p>
+        <p class="empty-state-text" th:if="${!reviewMode and interviewSession != null and interviewSession.finished}"><svg class="ed-icon ed-icon-lead" aria-hidden="true"><use href="#i-flag"></use></svg>Сессия завершена.</p>
+        <div class="empty-state-actions" th:with="finished=${interviewSession != null and interviewSession.finished},
                                             settingsPrimary=${!reviewMode and interviewSession == null}">
             <!--/* Завершённая сессия: главный CTA — итоги, а не «обновить тренировку».
                  POST /finish сохраняет summary из ещё живой finished-сессии и
                  редиректит на /session-summary (InterviewFlowMvcService.finish);
                  без этого пользователь, доехавший до пустого «Сессия завершена»,
-                 упирался в тупик. d-contents — форма не ломает flex .empty-actions. */-->
+                 упирался в тупик. d-contents — форма не ломает flex .empty-state-actions. */-->
             <form th:if="${finished}" method="post" th:action="@{/finish}" class="d-contents">
                 <button type="submit" class="btn next-btn empty-action-summary">Посмотреть итоги</button>
             </form>

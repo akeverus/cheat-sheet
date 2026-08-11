@@ -61,8 +61,6 @@ html[data-design] .px-illus {
 }
 html[data-design] .px-illus-lg { width: 64px; height: 64px; }
 html[data-design] .px-illus-sm { width: 32px; height: 32px; }
-/* Отступ под hero-глифом в stats empty-state (соседний h2.mt-0 зануляет свой top). */
-html[data-design] .stats-empty-illus { margin-bottom: var(--space-3); }
 
 html[data-design] hr {
   border: 0;
@@ -93,7 +91,7 @@ html[data-design] .skip-link {
   position: absolute;
   left: var(--space-3);
   top: var(--space-3);
-  z-index: var(--z-toast);
+  z-index: var(--z-skip-link);
   transform: translateY(-150%);
   background: var(--color-accent-primary);
   color: var(--color-accent-on);
@@ -193,15 +191,19 @@ html[data-design][data-motion="off"] *::after {
 /* Windows High Contrast / forced-colors: active (CSS MQ5) — браузер заменяет
    авторские цвета системными и УБИРАЕТ box-shadow. Парный к prefers-contrast выше:
    ещё один OS-pref, который теперь уважаем. Без блока: (1) фокус-кольца
-   .settings-tab/.seg-btn/селектов — box-shadow-only (outline:none) → в High Contrast
+   .seg-btn/селектов — box-shadow-only (outline:none) → в High Contrast
    невидимы; возвращаем системный outline (Highlight — системный цвет, не стрипается).
+   Вкладок в этом списке БОЛЬШЕ НЕТ и быть не должно: с iter-79 они дают настоящий
+   `outline` из components-tabs.css, а forced-colors outline не убирает — только
+   перекрашивает в системный цвет. Строка `.settings-tab:focus-visible` была пятым
+   и последним местом, где вкладка одевалась отдельно от остальных двух полос:
+   починка прилетала одной из трёх, а не вкладке как классу элементов.
    (2) активный сегмент .seg-btn.is-active помечен ТОЛЬКО фоном accent → перетирается
    системным цветом, выбранный дизайн/тема/раскладка неразличимы; кодируем системной
    парой Highlight/HighlightText (гарантированный контраст). !important — как в
    prefers-contrast: бьём более поздние по источнику не-!important правила
    (outline:none на 1167/1249/1484/2577, background accent на 2574). */
 @media (forced-colors: active) {
-  html[data-design] .settings-page .settings-tab:focus-visible,
   html[data-design] .settings-page select:focus,
   html[data-design] .settings-page input[type="number"]:focus,
   html[data-design] .stats-page select:focus,
@@ -267,9 +269,13 @@ html[data-design][data-motion="off"] *::after {
 /* Шапка (chrome) — ОДНА ширина на всех страницах (--max-width-page, дефолт 75rem):
    при навигации хедер не прыгает по ширине, бренд-тайтл (≈665px) всегда умещается
    с навигацией в один ряд (на узкой 60rem-мере он переносил nav на 2-ю строку —
-   выглядело незавершённо). Ширину КОНТЕНТА держим уже и per-page — через
-   --max-width-focus/-reading/-result/-settings/-data на самих слоях страниц
-   (см. tokens.css + .focus-training/.app-layout/.main-content). Контент центрирован
+   выглядело незавершённо). Ширину КОНТЕНТА держим уже и per-page — на самих
+   слоях страниц: экран вопроса СЧИТАЕТ свою меру из колонок композиции
+   (--focus-measure, pages-focus.css), страница результата — из своих
+   (--result-measure, pages-result.css); до iter-69 она вместо этого держала
+   персональный замороженный кап --max-width-result прямо на .ed-page.
+   Персональные замороженные капы страниц сюда не возвращаются — их держит гейт
+   PageWidthScaleContractTest. Контент центрирован
    под шапкой: фокус-квиз узкий и собранный, дашборд — во всю меру страницы. */
 
 /* Eyebrow — mono caps подпись (FOCUS, Q14/50, лейблы) */

@@ -10,15 +10,15 @@
    ========================================================================== */
 
 html[data-design] {
-  --px-teal: #39d0c7;
-  --px-green: #35c987;
-  --px-amber: #f7b83f;
-  --px-red: #ff715f;
+  --px-brass: #d0a33c;
+  --px-green: #8fbf6a;
+  --px-amber: #e08a41;
+  --px-red: #e8705c;
   /* Роль уже названа в tokens.css как тело золота у спрайтов — здесь она обязана
      ССЫЛАТЬСЯ, а не повторять значение. Написанный второй раз HEX и есть та самая
      вторая палитра: спрайты нормализатор поправит, а копию в CSS — нет. */
   --px-yellow: var(--pixel-gold);
-  --px-ink: #03211f;
+  --px-ink: #1a1305;
   /* Integer scale tokens (MDN: nearest-neighbor at whole multiples) */
   --px-s: 8px;
   --px-m: 16px;
@@ -26,7 +26,7 @@ html[data-design] {
   --px-xl: 32px;
   /* Chunky pixel shadow (4-side hard edge).
      Чернильный контур — ТОЛЬКО для НАСЫЩЕННОЙ АКЦЕНТНОЙ заливки: кнопки,
-     teal-плашки. Такая заливка остаётся тёмно-цветной в обеих темах, поэтому
+     латунные плашки. Такая заливка остаётся тёмно-цветной в обеих темах, поэтому
      одни чернила годятся на обе.
      Признак, по которому выбирают между этим токеном и `--px-edge-surface`, —
      не «элемент выглядит как карточка», а ЧТО ПОД КОНТУРОМ. Заливка от
@@ -35,21 +35,27 @@ html[data-design] {
      `--px-edge-surface`. Формулировка «у элемента своя заливка» этот вопрос не
      решает: у опций она тоже своя, но переворачивается вместе с темой — и
      чернила давали на них 1.05:1 в тёмной против 17.62:1 в светлой. */
-  --px-edge-ink: #0a1a20;
+  --px-edge-ink: #12100b;
   --px-edge: 3px 0 0 var(--px-edge-ink), -3px 0 0 var(--px-edge-ink),
              0 3px 0 var(--px-edge-ink), 0 -3px 0 var(--px-edge-ink),
              3px 3px 0 var(--px-edge-ink), -3px 3px 0 var(--px-edge-ink),
              3px -3px 0 var(--px-edge-ink), -3px -3px 0 var(--px-edge-ink);
-  /* Тень бирюзы под контуром. Роли «глубокая бирюза» имя уже есть в tokens.css
-     (--pixel-teal-deep), у «тени под ней» — нет: в спрайтах этого оттенка нет,
-     значит и в декоративной рампе ему не место (гейт спрайтов требует, чтобы
-     каждая --pixel-* роль кем-то рисовалась). Имя заводится здесь — один раз,
-     рядом с единственным потребителем. */
-  --px-teal-shadow: #0d2e2c;
-  --px-edge-teal:
-    3px 0 0 var(--pixel-teal-deep), -3px 0 0 var(--pixel-teal-deep),
-    0 3px 0 var(--pixel-teal-deep), 0 -3px 0 var(--pixel-teal-deep),
-    3px 3px 0 var(--px-teal-shadow), -3px 3px 0 var(--px-teal-shadow),
+  /* Глубокая латунь контура и тень под ним. Обе живут ЗДЕСЬ, а не в декоративной
+     рампе tokens.css, по одному правилу: `--pixel-*` — роли, которые кто-то
+     РИСУЕТ в спрайте, и гейт спрайтов это требует. У «тени под контуром» такого
+     ассета не было никогда. У самой «глубокой латуни» он был ровно один — 3-slice
+     растр выбранной вкладки; с его снятием (iter-79) #1a4a48 исчез из всех PNG,
+     и гейт немедленно назвал `--pixel-teal-deep` мёртвой ролью. Формально он прав
+     по факту (ни один спрайт не рисует), но не по выводу: цвет жив и берётся через
+     var() в трёх файлах — предпосылка гейта «--pixel-* никто не потребляет через
+     var(), их потребитель растровый» для него просто перестала быть верной.
+     Поэтому не удаляем, а переселяем в --px-*: имя рядом с потребителями. */
+  --px-brass-shadow: #3d2f10;
+  --px-brass-deep: #6b5218;
+  --px-edge-brass:
+    3px 0 0 var(--px-brass-deep), -3px 0 0 var(--px-brass-deep),
+    0 3px 0 var(--px-brass-deep), 0 -3px 0 var(--px-brass-deep),
+    3px 3px 0 var(--px-brass-shadow), -3px 3px 0 var(--px-brass-shadow),
     4px 4px 0 rgba(0,0,0,.35);
 
   /* Тот же чанки-контур, но для поверхностей, которые ЖИВУТ В ТЕМЕ — карточек и
@@ -60,12 +66,12 @@ html[data-design] {
      шестнадцатикратную разницу веса у одного и того же компонента.
      Пара ниже подобрана по контрасту к своей поверхности: ~2.6:1 в обеих темах —
      рамка твёрдая и читается, но не спорит с текстом. */
-  --px-edge-surface-ink: #3f5f6a;
+  --px-edge-surface-ink: #675c4a;
 }
 /* Специфичность (0,2,1) — выше, чем у объявления выше и чем у `:root[data-theme]`
    в tokens.css: --px-* принадлежат этому файлу, тема переопределяет их здесь же. */
 html[data-design][data-theme="light"] {
-  --px-edge-surface-ink: #8aa4a1;
+  --px-edge-surface-ink: #a8977a;
 }
 html[data-design] {
   --px-edge-surface:
@@ -75,7 +81,16 @@ html[data-design] {
     3px -3px 0 var(--px-edge-surface-ink), -3px -3px 0 var(--px-edge-surface-ink);
 }
 
-/* Crisp pixel art globally (MDN image-rendering + vendor fallbacks) */
+/* Crisp pixel art globally.
+   ПОРЯДОК ЗДЕСЬ — И ЕСТЬ ПРАВИЛО. Стояло `pixelated` → `-webkit-optimize-contrast`
+   → `crisp-edges`, то есть ровно наоборот. `-webkit-optimize-contrast` в Chromium
+   ЗНАЧЕНИЕ ВАЛИДНОЕ (это старый хинт «повысить контраст»), поэтому побеждала
+   последняя понятая браузером строка, и ближайший сосед не включался вовсе:
+   замер на `/error` дал `image-rendering: -webkit-optimize-contrast`, портал 24px
+   растягивался до 120px со сглаживанием — пиксельный ассет выходил размытым.
+   Каскад «падающих» вендорных значений читается снизу вверх: самое желаемое
+   объявляется ПОСЛЕДНИМ, а предыдущие остаются подстраховкой для движков,
+   которые его не знают. */
 html[data-design] img[src*="/img/pixel/"],
 html[data-design] .pixel-ambient img,
 html[data-design] .pixel-floater,
@@ -84,9 +99,9 @@ html[data-design] .pixel-trail-dot,
 html[data-design] .pixel-coin-pickup,
 html[data-design] .pixel-crumb,
 html[data-design] [class*="pixel-"] img {
-  image-rendering: pixelated;
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
+  image-rendering: pixelated;
 }
 
 /* Integer scale only — canonical 8/16/24/32 via tokens (no 18/20/28 bitmap upscale) */
@@ -97,10 +112,16 @@ html[data-design] .streak-progress-fill::after {
   box-sizing: content-box;
 }
 
-/* Functional nav/UI icons — SVG sprite (pixel-sprite.html), currentColor */
+/* Functional nav/UI icons — SVG sprite (pixel-sprite.html), currentColor.
+   Строки рельса — это `.nav a` И `.side-action` (см. shell.css): одна пара
+   селекторов на обе. Раньше здесь стоял только `.nav a`, и иконки футера
+   («Тема», «Выйти») брали базовые 18px против 16px у пунктов меню — в одной
+   колонке две метрики, подписи футера сдвинуты на 2px вправо от подписей
+   навигации (замер WebKit: navIcon 16×16 vs footIcon 18×18). */
 html[data-design] .sidebar .nav a .icon,
+html[data-design] .sidebar .side-action .icon,
 html[data-design] .mobile-nav a .icon,
-html[data-design] .top-actions .icon-button .icon {
+html[data-design] .shell-actions .icon-button .icon {
   width: var(--px-m);
   height: var(--px-m);
   flex-shrink: 0;

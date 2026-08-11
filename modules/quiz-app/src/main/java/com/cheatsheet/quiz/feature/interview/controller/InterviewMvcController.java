@@ -267,6 +267,9 @@ public class InterviewMvcController {
             @RequestParam(value = "onlyWrong", required = false) Boolean onlyWrong,
             @RequestParam(value = "ordered", required = false) Boolean ordered,
             @RequestParam(value = "q", required = false) String query,
+            @RequestParam(value = "sort", required = false) String sort,
+            @RequestParam(value = "dir", required = false) String dir,
+            @RequestParam(value = "rows", required = false) String rows,
             Model model
     ) {
         return interviewPageMvcService.stats(
@@ -276,13 +279,22 @@ public class InterviewMvcController {
                 onlyWrong,
                 ordered,
                 query,
+                sort,
+                dir,
+                rows,
                 model
         );
     }
 
     @GetMapping("/bookmarks")
-    public String bookmarks(Model model) {
-        return interviewPageMvcService.bookmarks(model);
+    public String bookmarks(
+            @RequestParam(value = "q", required = false) String query,
+            @RequestParam(value = "group", required = false) String group,
+            @RequestParam(value = "note", required = false) String note,
+            @RequestParam(value = "sort", required = false) String sort,
+            Model model
+    ) {
+        return interviewPageMvcService.bookmarks(query, group, note, sort, model);
     }
 
     @PostMapping("/bookmarks/note")

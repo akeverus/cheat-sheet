@@ -1,21 +1,28 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-<!--/* FLOW-04: recoverable banners — offline / network / session expired.
-     Offline/network обновляет ui/alerts.js; expired — flash с сервера. */-->
+<!--/* FLOW-04: баннеры восстановления — нет сети / сессия истекла.
+     Offline переключает ui/alerts.js по событиям online/offline; «истекла» —
+     flash с сервера.
+
+     Оба — `.notice` из components-notice.css (@layer components, гейт `*`).
+     До iter-82 они назывались `.recoverable-banner*`, а коробку им рисовал
+     pages-focus.css под `.focus-page` — при том, что печатает их shell-head.html
+     на всех семи страницах. На /stats, /bookmarks, /settings и /error замер
+     давал голый блок без рамки и фона; «Сессия истекла» с role="alert" —
+     самое важное сообщение приложения — выглядело абзацем прозы. */-->
 <div th:fragment="recoverable-banners">
-    <div id="network-offline-banner" class="recoverable-banner recoverable-banner-offline hidden"
+    <div id="network-offline-banner" class="notice notice-warning hidden"
          role="status" aria-live="polite" hidden>
-        <svg class="px-illus px-illus-sm recoverable-banner-illus" aria-hidden="true"><use href="#px-offline"></use></svg>
-        <span class="recoverable-banner-text">
+        <svg class="px-illus px-illus-sm notice-illus" aria-hidden="true"><use href="#px-offline"></use></svg>
+        <span class="notice-text">
             <strong>Нет сети.</strong>
             <span>Ответ можно отправить, когда соединение вернётся — черновик выбора сохранится на странице.</span>
         </span>
     </div>
-    <div id="session-expired-banner" class="recoverable-banner recoverable-banner-expired"
+    <div id="session-expired-banner" class="notice"
          role="alert"
-         th:if="${sessionExpired == true}"
-         th:classappend="${sessionExpired == true} ? '' : ' hidden'">
+         th:if="${sessionExpired == true}">
         <strong>Сессия истекла.</strong>
         <span>Прогресс мог сохраниться на паузе.
             <a th:href="@{/}">Вернуться к тренировке</a>

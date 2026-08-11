@@ -212,6 +212,7 @@ public class FocusTrainingPageService {
         }
         return new SurfaceState(
                 stats,
+                metrics,
                 filteredStats,
                 topics,
                 topicCatalogService.groupOptions(availableTopics),
@@ -314,10 +315,20 @@ public class FocusTrainingPageService {
      * {@code stats} — глобальные метрики для KPI в сайдбаре (единые знаменатели
      * на всех страницах), {@code filteredStats} — та же структура в границах
      * текущего фильтра, для виджетов «сегодня».
+     *
+     * <p>{@code metrics} — тот же объект, из которого построен {@code stats}, но
+     * без потерь. {@link InterviewStats#from(LearningMetrics)} — view-adapter: он
+     * берёт шесть полей из четырнадцати, и «сколько карточек я вообще открывал»
+     * ({@code cardsSeen}) вместе с точностью в него не попадают. Метрики уже
+     * считались на каждом рендере экрана вопроса и выбрасывались — рельсу вне
+     * сессии нечего было показать не из-за отсутствия данных, а из-за того, что
+     * данные не доезжали до модели. Отдельного запроса это не стоит:
+     * {@code compute()} вызван там же, где и раньше.
      */
     @Builder(toBuilder = true)
     public record SurfaceState(
             InterviewStats stats,
+            LearningMetrics metrics,
             InterviewStats filteredStats,
             List<String> topics,
             List<?> groups,

@@ -3,10 +3,13 @@
 /* ==========================================================================
    C5 — STATS / Аналитика (editorial). Scoped html[data-design=editorial] .stats-page
    ========================================================================== */
-/* Одна колонка, широкий контейнер под графики/таблицы */
+/* Одна колонка на всю полосу страницы: ширину ведёт `.ed-page` по единой шкале
+   --max-width-page (FRD-015), обёртки её не пересужают. До iter-64 здесь стояло
+   `max-width: var(--max-width-data)`, а сам токен был литеральным `none` —
+   индирекция, не задававшая ничего; удалена вместе с токеном. */
 html[data-design] .stats-page .app-layout {
   display: block; grid-template-columns: none;
-  max-width: var(--max-width-data); margin: 0 auto; padding: 0; gap: 0;
+  max-width: none; margin: 0 auto; padding: 0; gap: 0;
 }
 html[data-design] .stats-page .main-content { width: auto; max-width: none; margin: 0; padding: 0; }
 
@@ -26,118 +29,23 @@ html[data-design] .stats-page .card h2 {
 html[data-design] .stats-page .card h2.mt-0 { margin-top: 0; }
 html[data-design] .stats-page .muted { color: var(--color-text-secondary); }
 
-/* Фильтр + поиск */
-/* Гасим старый lavender-wash панелей из styles.css */
-html[data-design] .stats-page .stats-filter-card,
-html[data-design] .stats-page .stats-filter-row,
-html[data-design] .stats-page .stats-filter-separated,
-html[data-design] .stats-page .stats-filter-pane,
-html[data-design] .stats-page .stats-search-pane {
-  background: transparent; box-shadow: none; border-radius: 0;
+/* Полоса отбора страницы переехала в components-filter-bar.css (iter-74): те же
+   правила понадобились на /bookmarks, и вместо второй копии под именем
+   `bookmarks-filter-*` они подняты в общий компонент `.filter-bar-*` (§24).
+   Здесь остаётся ТОЛЬКО то, что относится к аналитике и на закладках смысла не
+   имеет. История переписывания полосы (iter-72: две формы над одним GET, 190px
+   пустоты, третий рисунок поля, второй рецепт фокуса, вторая система кнопок,
+   мёртвое правило `h2.stats-pane-label`) — в шапке компонента.
+   -------------------------------------------------------------------------- */
+/* Оговорка о границе отбора («эти числа отбор не сужает»). Стоит НАД блоком, к
+   которому относится, и прижата к нему: сверху зазор секции, снизу — почти вплотную,
+   иначе строка читается как хвост предыдущего блока, а не как подпись к следующему.
+   Приподнятая базовая линия у `.kpi-role` уже задаёт роль «служебная пометка»;
+   собственного цвета и кегля правило не назначает — их несут `.muted` и `.tiny`,
+   и дублировать их здесь значило бы завести второй источник правды для одного вида. */
+html[data-design] .stats-page .stats-scope-note {
+  margin: 0 0 var(--space-2);
 }
-html[data-design] .stats-page .stats-filter-row { display: flex; flex-wrap: wrap; gap: var(--space-6); border: 0; }
-html[data-design] .stats-page .stats-filter-pane { flex: 2 1 360px; min-width: 0; border: 0; padding: 0; }
-html[data-design] .stats-page .stats-search-pane { flex: 1 1 240px; min-width: 0; border: 0; padding: 0; }
-@media (min-width: 761px) {
-  /* «Поиск» — одно поле, а «Фильтры» высокие. При stretch правая колонка
-     top-align'илась, под полем зияла пустота (~250px) — «накидали и забыли
-     заполнить». Центрируем содержимое поиска по вертикали: панель и hairline-
-     разделитель остаются на всю высоту, но поле «плавает» в середине — пустота
-     читается как намеренный воздух, а не дыра. */
-  html[data-design] .stats-page .stats-search-pane {
-    border-left: var(--rule-weight) solid var(--color-border-primary); padding-left: var(--space-6);
-    display: flex; flex-direction: column; justify-content: center;
-  }
-  /* Форма поиска центрируется ГРУППОЙ (лейбл «Поиск» + поле) в колоночном пане.
-     Явно фиксируем flex:0 0 auto, чтобы форма не тянулась по высоте пана и поле
-     не отрывалось от лейбла (класс flex-1 убран из разметки — он растягивал форму
-     до высоты соседней колонки «Фильтры» и прижимал поле вниз на ~192px). */
-  html[data-design] .stats-page .stats-search-pane > .stats-search-form { flex: 0 0 auto; }
-}
-/* .stats-pane-label теперь <h2> (семантический outline /stats — критика C30):
-   перебиваем рецепт секционных заголовков `.stats-page .card h2` (L1294, 0,3,2),
-   который иначе сделал бы лейбл крупным serif-заголовком. Селектор `.card h2.stats-
-   pane-label` (0,4,2) выигрывает по специфичности, а не по порядку в файле (см. C10).
-   Возвращаем прежний mono-капс. */
-html[data-design] .stats-page .card h2.stats-pane-label {
-  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-normal); line-height: var(--line-height-normal);
-  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
-  color: var(--color-text-secondary); margin: 0 0 var(--space-3);
-}
-html[data-design] .stats-page .filter-row,
-html[data-design] .stats-page .search-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-3); background: transparent; border: 0; padding: 0; box-shadow: none; }
-html[data-design] .stats-page .filter-row > label { display: flex; flex-direction: column; gap: var(--space-2); font-size: var(--font-size-sm); color: var(--color-text-secondary); }
-html[data-design] .stats-page .filter-row > label:has(input[type="checkbox"]) { flex-direction: row; align-items: center; gap: var(--space-2); min-height: 44px; color: var(--color-text-primary); }
-html[data-design] .stats-page .filter-row input[type="checkbox"],
-html[data-design] .stats-page .search-form input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; padding: 0; background: transparent; box-shadow: none; accent-color: var(--color-accent-primary); }
-
-/* Контролы (select/text) — editorial */
-html[data-design] .stats-page select,
-html[data-design] .stats-page input[type="text"],
-html[data-design] .stats-page input[type="search"] {
-  min-height: 44px; padding: var(--space-2) var(--space-3);
-  font-family: var(--font-family-body); font-size: var(--font-size-base);
-  color: var(--color-text-primary); background: var(--color-bg-primary);
-  border: var(--rule-weight) solid var(--color-border-primary); border-radius: var(--border-radius-sm);
-  transition: border-color var(--duration-fast) var(--easing-default), box-shadow var(--duration-fast) var(--easing-default);
-  /* select сайзится по самой широкой <option> (у группы это длинная строка
-     «Title - Description (N)») — без max-width он распирает колонку фильтров
-     и даёт горизонтальный скролл на мобиле. Кап + min-width:0 у label/pane
-     позволяют полю ужаться до ширины контейнера. */
-  max-width: 100%;
-}
-html[data-design] .stats-page .filter-row > label,
-html[data-design] .stats-page .search-form > label { min-width: 0; }
-/* Рецепт select-стрелки для обеих страниц вынесен в utilities-overrides.css
-   (@layer utilities ≥ pages, глобальный control-override, Волна 1) — чтобы
-   stats-файл стал page-pure. */
-html[data-design] .stats-page select:focus,
-html[data-design] .stats-page input:focus {
-  outline: none; border-color: var(--color-border-focus); box-shadow: var(--shadow-focus);
-}
-/* Disabled-состояние stats-селектов. Перенесено из pages-settings при page-scope
-   settings (Волна 2) — правило принадлежит stats, а settings стал page-scoped.
-   background-color, не background — сохраняет custom dropdown-arrow. */
-html[data-design] .stats-page select:disabled {
-  opacity: 0.5; cursor: not-allowed; background-color: var(--color-bg-tertiary);
-}
-/* Глобальный focus-ring нативных checkbox/radio вынесен в utilities-overrides.css
-   (@layer utilities ≥ pages, бьёт `.stats-page input:focus{outline:none}` ниже) —
-   Волна 1, чтобы stats-файл стал page-pure без потери WCAG 2.4.7 индикатора. */
-html[data-design] .stats-page .search-input { flex: 1 1 160px; min-width: 0; }
-/* Автозаполнение (менеджер паролей) перекрашивает поле поиска своим UA-фоном →
-   гасим inset-тенью на bg-primary (свой фон поиска, у prompt-модалки — bg-secondary,
-   её правило в components-modals). Приехало из pages-result при выносе модалок
-   (Волна 3): search-input живёт только на stats — тут его законный дом. */
-html[data-design] .stats-page .search-input:-webkit-autofill,
-html[data-design] .stats-page .search-input:-webkit-autofill:hover,
-html[data-design] .stats-page .search-input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 1000px var(--color-bg-primary) inset;
-  box-shadow: 0 0 0 1000px var(--color-bg-primary) inset;
-  -webkit-text-fill-color: var(--color-text-primary);
-  caret-color: var(--color-text-primary);
-  transition: background-color 600000s 0s, color 600000s 0s;
-}
-
-/* Кнопки фильтра/поиска */
-html[data-design] .stats-page .stats-action-btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-height: 44px; padding: var(--space-2) var(--space-5);
-  font-family: var(--font-family-body); font-size: var(--font-size-base); font-weight: var(--font-weight-medium);
-  border-radius: 0; cursor: pointer; /* B5: утилитарная stats-кнопка → плоская (search-вариант ниже получает асимметрию) */
-  text-transform: none; letter-spacing: 0; box-shadow: none; touch-action: manipulation;
-  background: transparent; color: var(--color-text-primary);
-  border: var(--rule-weight) solid var(--color-border-primary);
-  transition: background var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
-}
-html[data-design] .stats-page .stats-action-btn:hover { background: var(--color-bg-tertiary); border-color: var(--color-text-secondary); }
-html[data-design] .stats-page .stats-search-action {
-  background: var(--color-accent-primary); color: var(--color-accent-on); border-color: var(--color-accent-primary);
-  /* Симметричный токен-радиус; асимметрию даёт editorial-сигнатурный блок. */
-  border-radius: var(--border-radius-md);
-}
-html[data-design] .stats-page .stats-search-action:hover { background: var(--color-accent-primary-hover); border-color: var(--color-accent-primary-hover); }
 
 /* Правила `.stats-page .stats-grid / .stat-item / .stat-value / .stat-label /
    .accuracy-bar` удалены: сводка из шести плиток на аналитике не рендерится —
@@ -187,7 +95,7 @@ html[data-design] .stats-page .metric-group {
   gap: var(--space-2);
   padding: var(--space-4);
   border: var(--rule-weight) solid var(--color-border-primary);
-  border-radius: var(--radius-md);
+  border-radius: var(--border-radius-md);
   background: var(--color-surface-raised);
 }
 html[data-design] .stats-page .metric-group-title {
@@ -336,26 +244,10 @@ html[data-design] .stats-page .chart-wrapper { position: relative; height: 320px
 html[data-design] .stats-page .chart-wrapper canvas { max-width: 100%; }
 html[data-design] .stats-page .chart-fallback { color: var(--color-text-secondary); font-size: var(--font-size-sm); padding: var(--space-4) 0; }
 
-/* Visible tabular fallback beside charts (a11y + no-Chart.js). */
-html[data-design] .stats-page .chart-adjacent-table {
-  width: 100%;
-  margin-top: var(--space-3);
-  border-collapse: collapse;
-  font-size: var(--font-size-xs);
-}
-html[data-design] .stats-page .chart-adjacent-table caption {
-  caption-side: top;
-  text-align: left;
-  font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-2);
-}
-html[data-design] .stats-page .chart-adjacent-table th,
-html[data-design] .stats-page .chart-adjacent-table td {
-  padding: var(--space-2) var(--space-3);
-  border-bottom: var(--rule-weight) solid var(--color-border-secondary);
-  text-align: left;
-}
+/* Табличный дубль графика (a11y + отсутствие Chart.js). Скелет и плотность — из
+   компонента (.data-table.is-dense в components-table.css); здесь остаётся только
+   отбивка от графика, которая к таблице как таковой отношения не имеет. */
+html[data-design] .stats-page .chart-adjacent-table { margin-top: var(--space-3); }
 /* BASE-02 (редиз-программа iter-6): в 14-дневной таблице «Динамика точности» дни без
    ответов (0/0/—) часто составляют большинство строк (напр. 11 из 14) и визуально
    забивают немногие дни с реальными данными. Данные НЕ удаляем и НЕ прячем — таблица
@@ -446,29 +338,33 @@ html[data-design] .stats-page .difficulty-legend-pct { font-size: var(--font-siz
   html[data-design] .stats-page .difficulty-donut-wrap { width: 150px; height: 150px; }
 }
 
-/* Таблица тем */
-html[data-design] .stats-page .topic-table { width: 100%; border-collapse: collapse; font-size: var(--font-size-sm); }
-html[data-design] .stats-page .topic-table th,
-html[data-design] .stats-page .topic-table td { padding: var(--space-3); text-align: left; border-bottom: var(--rule-weight) solid var(--color-border-secondary); vertical-align: middle; }
-html[data-design] .stats-page .topic-table thead th {
-  font-family: var(--font-family-mono); font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide); text-transform: uppercase;
-  color: var(--color-text-secondary); font-weight: var(--font-weight-medium);
-  border-bottom: var(--rule-weight-strong) solid var(--color-border-primary);
-  position: sticky; top: 0; background: var(--color-bg-secondary); z-index: 1;
-}
-html[data-design] .stats-page .topic-table th.sortable { cursor: pointer; white-space: nowrap; }
-html[data-design] .stats-page .topic-table th.sortable:hover { color: var(--color-text-primary); }
-/* Нейтральный glyph: сортируемость видна В ПОКОЕ, а не только на hover. JS ставит
-   aria-sort="none" на все sortable-th (stats.js:222) → ⇅ показывается; без JS
-   aria-sort нет → glyph не появляется (нет ложной аффордансы на неинтерактивных). */
-html[data-design] .stats-page .topic-table th.sortable[aria-sort="none"]::after { content: " ⇅"; color: var(--color-text-tertiary); font-size: 0.85em; }
-html[data-design] .stats-page .topic-table th.sortable[aria-sort="none"]:hover::after { color: var(--color-text-secondary); }
-html[data-design] .stats-page .topic-table th[aria-sort="ascending"]::after { content: " ▲"; }
-html[data-design] .stats-page .topic-table th[aria-sort="descending"]::after { content: " ▼"; }
-html[data-design] .stats-page .topic-table th.sortable:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: -2px; }
-html[data-design] .stats-page .topic-table .text-center { text-align: center; }
-html[data-design] .stats-page .topic-table td:not(.topic-name) { font-variant-numeric: tabular-nums; }
+/* Таблица тем. Скелет — из компонента (.data-table); здесь только то, чего нет ни
+   у одной другой таблицы: аффордансы сортировки.
+
+   ЛИПКАЯ ШАПКА СНЯТА (iter-76), и это не потеря — она никогда не работала.
+   `position: sticky` привязывается к БЛИЖАЙШЕМУ скролл-порту, а не к странице.
+   У таблицы тем обёртка с `overflow-x: auto` была и до iter-76 (.topic-table-wrap),
+   а по спецификации `overflow-x: auto` заставляет `overflow-y` вычислиться в `auto`
+   — обёртка становится скролл-портом в ОБЕИХ осях. Вертикально она при этом не
+   прокручивается никогда (scrollHeight === clientHeight === 759px), поэтому шапке
+   не от чего отлипать.
+   Замер (WebKit@2, 1440×900, прокрутка на середину таблицы): шапка едет вместе с
+   таблицей — theadTop = tableTop = -78px. Контрольный опыт в том же прогоне: снимаем
+   у обёртки overflow → theadTop = 0 при tableTop = -78, шапка оживает. Значит
+   причина именно скролл-контейнер, и выбрать можно только одно из двух.
+   Выбрана гарантия от переполнения: без неё страница едет вбок на реальном железе
+   (см. шапку components-table.css), а без липкой шапки теряется лишь удобство — и то
+   не сегодня, потому что по умолчанию сервер отдаёт 12 строк, а не 319 (iter-81).
+   Сделать шапку живой можно было бы, ограничив высоту обёртки, но это второй
+   вертикальный скролл-порт внутри страницы: ловушка для трекпада и отдельный риск в
+   Safari (§11). Вместе со sticky ушли `background` и `z-index` — они существовали
+   только чтобы строки не просвечивали сквозь липкую шапку.
+
+   Аффордансы сортировки живут ниже, на `.col-sort` — самой ссылке. Здесь стоял их
+   второй комплект по `th.sortable` и по `th[aria-sort]`: класс `.sortable` ставил
+   сервер, а `aria-sort` — снятый `table-sort.js`. Первая половина умерла вместе с
+   классом, вторая — нет: селектор `th[aria-sort="ascending"]::after` продолжал
+   матчить серверный атрибут и подрисовывал ▲ рядом с ↑ самой ссылки. */
 html[data-design] .stats-page .topic-actions {
   display: flex;
   flex-wrap: wrap;
@@ -572,11 +468,21 @@ html[data-design] .stats-page .topic-fresh-chip {
 html[data-design] .stats-page .topic-catalog-hint { margin: calc(-1 * var(--space-2)) 0 var(--space-4); }
 html[data-design] .stats-page .topic-catalog-grid {
   display: grid; gap: var(--space-3);
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  /* `minmax(260px, …)` — жёсткий пол: если полосы меньше 260px, колонка всё равно
+     занимает 260px и распирает страницу. На телефоне при увеличенном тексте полоса
+     как раз уже (замер: 360px ширины, root=25px → контейнер 210px, сетка 316px,
+     страница ехала вбок). `min(260px, 100%)` снимает пол ровно там, где он не
+     помещается, не трогая широкие экраны. */
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
   margin: 0; padding: 0; list-style: none;
 }
 html[data-design] .stats-page .topic-catalog-card {
   position: relative;
+  /* Названия и описания разделов приходят из каталога и бывают одним длинным
+     словом. min-width:0 у потомков разрешает СЖАТЬСЯ, но не РАЗОРВАТЬ слово —
+     без переноса внутри слова карточка распирается изнутри. Свойство
+     наследуемое, поэтому объявлено один раз на карточке. */
+  overflow-wrap: anywhere;
   display: flex; gap: var(--space-3); height: 100%;
   padding: var(--space-3);
   border: var(--rule-weight) solid var(--color-border-primary);
@@ -675,20 +581,66 @@ html[data-design] .stats-page .maturity-mid { color: var(--color-status-warning)
 /* text-secondary держит AA на bg-tertiary (tertiary давал 3.18 — провал). */
 html[data-design] .stats-page .maturity-low { color: var(--color-text-secondary); }
 
-/* сворачивание таблицы */
-html[data-design] .stats-page .topic-table-wrap { position: relative; overflow-x: auto; }
-/* JS скрывает строки за data-collapse-rows через hidden, а не визуальный clip:
-   скрытые topic-link не остаются в Tab-порядке и не прокручивают контейнер.
-   !important сохраняет hidden и в мобильном stacked-table режиме, где tr
-   получает author-level display:block. */
-html[data-design] .stats-page .topic-table tr[hidden] { display: none !important; }
+/* Объём таблицы тем.
+   Скролл-контейнера тут больше нет: .topic-table-wrap был локальным ответом на
+   переполнение, теперь его роль исполняет общий .table-scroll (components-table.css),
+   а обёртка осталась только якорем для абсолютного позиционирования. */
+html[data-design] .stats-page .topic-table-wrap { position: relative; }
+
+/* Правило `tr[hidden] { display: none !important }` снято вместе со скриптом,
+   который вешал hidden (iter-81). Строк за окном в разметке больше НЕТ: сервер
+   отдаёт ровно ту выдачу, которую видно, поэтому прятать нечего, а !important
+   ради мобильного stacked-режима не нужен. */
+
+/* Ссылка «показать все» и счётчик показанного — одна строка под таблицей. */
+html[data-design] .stats-page .topic-table-volume {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4);
+  margin: var(--space-4) 0 0;
+}
+html[data-design] .stats-page .topic-table-count { font-size: var(--font-size-sm); }
 html[data-design] .stats-page .table-expander {
-  /* C3: дельты к .btn (class="btn secondary-btn table-expander") — отступ сверху + плоский
-     радиус (B5; во всех дизайнах, как было). Размер/цвет/рамка/ховер — из .btn/.secondary-btn;
-     .hidden — глобальное правило с !important (раньше всё это дублировалось здесь). */
-  margin-top: var(--space-4);
+  /* C3: дельты к .btn (class="btn secondary-btn table-expander") — плоский радиус
+     (B5; во всех дизайнах, как было). Размер/цвет/рамка/ховер — из .btn/.secondary-btn.
+     Отступ сверху переехал на .topic-table-volume: теперь кнопка стоит в строке
+     со счётчиком, и вертикальный ритм задаёт строка, а не элемент в ней. */
   border-radius: 0;
 }
+
+/* Заголовок-сортировка — ссылка, а не кнопка (iter-81): состояние приходит с
+   сервера в aria-sort, стрелка рисуется по нему же. Ссылка растянута на всю
+   ячейку, чтобы цель нажатия совпадала с колонкой (§31, 44px по высоте th). */
+html[data-design] .stats-page .topic-table th .col-sort {
+  display: flex; align-items: center; gap: var(--space-1);
+  width: 100%; min-height: 24px;
+  color: inherit; font: inherit; text-decoration: none;
+}
+html[data-design] .stats-page .topic-table th.text-center .col-sort { justify-content: center; }
+html[data-design] .stats-page .topic-table th .col-sort:hover { color: var(--color-text-primary); text-decoration: underline; }
+html[data-design] .stats-page .topic-table th .col-sort:focus-visible {
+  outline: 2px solid var(--color-focus-ring); outline-offset: 2px;
+}
+/* Три состояния заголовка, и все три видны В ПОКОЕ:
+   `none` — нейтральный ⇅ приглушённым цветом («колонку можно упорядочить»),
+   `ascending`/`descending` — направление ↑/↓ полным цветом.
+   Замер на 1440×900 (iter-81): без ⇅ сортируемые ВСЕГО/ТОЧНОСТЬ/ЗРЕЛОСТЬ ничем
+   не отличались от статичных ПРОГРЕСС/ДЕЙСТВИЕ — сортировка обнаруживалась только
+   наведением мыши, то есть с клавиатуры и с тача не обнаруживалась вовсе. */
+html[data-design] .stats-page .topic-table th[aria-sort="none"] .col-sort::after {
+  content: "\21C5"; color: var(--color-text-tertiary);
+}
+html[data-design] .stats-page .topic-table th[aria-sort="ascending"] .col-sort::after { content: "\2191"; }
+html[data-design] .stats-page .topic-table th[aria-sort="descending"] .col-sort::after { content: "\2193"; }
+html[data-design] .stats-page .topic-table th.is-sorted { color: var(--color-text-primary); }
+
+/* Геометрия колонок таблицы тем (iter-81). Раньше жила в `utilities-core.css`
+   как `.w-60`/`.w-80`/`.min-w-140` — числа в общем словаре, описывавшие одну эту
+   таблицу. Колонка теперь названа по смыслу, а размер принадлежит странице.
+   Ширина — предпочтительная: `table-layout` здесь `auto`, поэтому длинное
+   значение колонку раздвинет, а не обрежет. */
+html[data-design] .stats-page .topic-table .topic-col-total { width: 60px; }
+html[data-design] .stats-page .topic-table .topic-col-progress { min-width: 140px; }
+html[data-design] .stats-page .topic-table .topic-col-accuracy,
+html[data-design] .stats-page .topic-table .topic-col-maturity { width: 80px; }
 
 /* Прогноз 7 дней + пробелы */
 html[data-design] .stats-page .review-forecast-hint,
@@ -700,12 +652,9 @@ html[data-design] .stats-page .forecast-bar { height: 10px; background: var(--co
 html[data-design] .stats-page .forecast-bar-fill { display: block; height: 100%; width: calc(var(--progress, 0) * 1%); background: var(--color-accent-primary); }
 html[data-design] .stats-page .forecast-count { font-family: var(--font-family-mono); font-size: var(--font-size-sm); color: var(--color-text-primary); text-align: right; }
 
-/* data-table (пробелы банка) */
-html[data-design] .stats-page .data-table { width: 100%; border-collapse: collapse; font-size: var(--font-size-sm); }
-html[data-design] .stats-page .data-table th,
-html[data-design] .stats-page .data-table td { padding: var(--space-3); border-bottom: var(--rule-weight) solid var(--color-border-secondary); text-align: left; }
-html[data-design] .stats-page .data-table thead th { font-family: var(--font-family-mono); font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); letter-spacing: var(--letter-spacing-wide); text-transform: uppercase; color: var(--color-text-secondary); background: transparent; border-bottom: var(--rule-weight-strong) solid var(--color-border-primary); }
-html[data-design] .stats-page .data-table .text-center { text-align: center; }
+/* .data-table здесь больше нет: страничная копия скелета удалена, компонент живёт
+   в components-table.css. Оставлять её означало держать вторую точку правды на тот
+   же класс (§24). */
 
 /* Результаты поиска */
 html[data-design] .stats-page .search-results { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-4); }
@@ -818,18 +767,9 @@ html[data-design] .stats-page .stats-errors-actions .btn + .btn { margin-left: v
 /* Адаптив */
 @media (max-width: 760px) {
   html[data-design] .stats-page .charts-row { grid-template-columns: 1fr; }
-  html[data-design] .stats-page .stats-filter-row { flex-direction: column; gap: var(--space-5); }
   html[data-design] .stats-page .forecast-row { grid-template-columns: 84px 1fr 36px; }
-  /* На мобиле фильтр/поиск складываются в одну колонку: поля и кнопки на всю
-     ширину — ровно, крупные таргеты, без горизонтального скролла. */
-  html[data-design] .stats-page .filter-row,
-  html[data-design] .stats-page .search-form { flex-direction: column; align-items: stretch; }
-  html[data-design] .stats-page .filter-row > label:not(:has(input[type="checkbox"])),
-  html[data-design] .stats-page .search-form > label { width: 100%; }
-  html[data-design] .stats-page select,
-  html[data-design] .stats-page input[type="text"],
-  html[data-design] .stats-page input[type="search"] { width: 100%; }
-  html[data-design] .stats-page .stats-action-btn { width: 100%; }
+  /* Поворот полосы отбора в колонку — в components-filter-bar.css, тот же
+     брейкпойнт 760px. Здесь его копии нет намеренно (§24). */
   /* Нижние CTA («Что делать дальше») не оставлять под mobile-nav. */
   html[data-design] .stats-page .ed-page {
     padding-bottom: calc(var(--space-8) + env(safe-area-inset-bottom, 0px));
@@ -896,35 +836,35 @@ html[data-design="instrument"] .stats-page .topic-table thead th {
    каскад-нейтрален (pixel-fx @pixel доминирует .section-tab визуал независимо от
    слоя; @components/@pages-конкурентов на section-tab/section-tabs/stats-panel нет).
    Декларации дословны из shell.css:831-860. */
-/* Вкладки — нижняя линейка с акцент-подчёркиванием активной. */
-html[data-design] .stats-page .section-tabs {
-  display: flex; flex-wrap: wrap; gap: var(--space-1);
-  margin: 0 0 var(--space-6);
-  border-bottom: var(--rule-weight) solid var(--color-border-primary);
-}
-html[data-design] .stats-page .section-tab {
-  appearance: none; -webkit-appearance: none;
-  min-height: 44px; padding: var(--space-3) var(--space-5);
-  font-family: var(--font-family-body); font-size: var(--font-size-md); font-weight: var(--font-weight-medium);
-  color: var(--color-text-secondary); background: transparent;
-  border: 0; border-bottom: var(--rule-weight-strong) solid transparent;
-  margin-bottom: calc(-1 * var(--rule-weight));
-  cursor: pointer; touch-action: manipulation;
-  transition: color var(--duration-fast) var(--easing-default), border-color var(--duration-fast) var(--easing-default);
-}
-html[data-design] .stats-page .section-tab:hover { color: var(--color-text-primary); }
-html[data-design] .stats-page .section-tab[aria-selected="true"] {
-  color: var(--color-text-primary); border-bottom-color: var(--color-accent-primary);
-}
-html[data-design] .stats-page .section-tab:focus-visible {
-  outline: none; box-shadow: var(--shadow-focus); border-radius: var(--border-radius-sm);
-}
+/* Вкладки — страница задаёт полосе только МЕСТО в раскладке. Коробка, состояния
+   и фокус объявлены один раз в components-tabs.css по селектору [role="tab"] —
+   тому же, которым вкладку находит поведение (js/ui/tablist.js).
 
-/* Панели. Без JS все стопкой (display:block); под .js-tabs видна только .is-active. */
+   Здесь стояла третья копия рецепта. Её фокус был ближе всех к истине —
+   обводка, а не свечение, — но со сдвигом ВНУТРЬ (`outline-offset: -2px`):
+   снаружи кольцо наезжало на соседнюю вкладку, потому что зазор полосы был
+   4px, а кольцо занимает 4px с каждой стороны. Компонент даёт полосе зазор 8px
+   и рисует кольцо наружу, как во всём приложении (FRD-039). */
+html[data-design] .stats-page .section-tabs { margin: 0 0 var(--space-6); }
+
+/* Панели — страница задаёт им только МЕСТО: вертикальный ритм стопки без JS.
+   Видимость ушла в components-tabs.css к роли `[role="tabpanel"]` (iter-80).
+   Именно ЭТА полоса платила за старую схему больше всех: класс `.js-tabs`
+   вешал stats/index.js — и вешал ПОСЛЕДНИМ, после инициализации всех графиков
+   Chart.js, — поэтому 149 мс после отрисовки страница стояла высотой 21734px с
+   тремя развёрнутыми панелями и только потом схлопывалась до 3939px. */
 html[data-design] .stats-page .stats-panel { margin: 0 0 var(--space-8); }
 html[data-design] .stats-page .stats-panel:last-child { margin-bottom: 0; }
-html[data-design] .stats-page.js-tabs .stats-panel { display: none; margin: 0; }
-html[data-design] .stats-page.js-tabs .stats-panel.is-active { display: block; }
+/* Заголовок панели. До iter-80 он был `visually-hidden` ВСЕГДА — включая режим
+   без JS, где панели идут стопкой: три раздела аналитики шли подряд одной
+   стеной без единого видимого заголовка, тогда как настройки в том же режиме
+   свои показывали. Теперь заголовок обычный, а прячет его под вкладками общее
+   правило по `.tabpanel-title` — там, где он и правда дубль активной вкладки. */
+html[data-design] .stats-page .stats-panel-title {
+  font-family: var(--font-family-display); font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold); color: var(--color-text-primary);
+  margin: 0 0 var(--space-6); overflow-wrap: break-word; word-break: break-word;
+}
 
 
 /* --- STATS: дашборд-сетка (вынесено из pages-layout.css, Волна 5 под-шаг 3).

@@ -7,33 +7,70 @@
    /bookmarks ничего не поехало — то есть выигрыш был не нужен, только опасен. */
 @layer pages {
 
-html[data-design] .bookmarks-page .bookmarks-intro {
-  margin-bottom: var(--space-6);
+/* Шапка целиком принадлежит общему .page-head (shell.css): собственные
+   .bookmarks-intro/.bookmarks-intro-lead сняты в iter-61 (дублировали шапку
+   аналитики и разошлись с ней мерой строки — 42rem против 62ch), а
+   .bookmarks-title — в iter-62 вместе с парными .stats-title/.builder-title:
+   три класса задавали один и тот же заголовок и уже разъехались отступом (8px
+   против 12px), а на телефоне сжимался только один из трёх. Кегль, ритм и
+   мобильный clamp теперь у `.page-head-title h1`. Своих правил шапки у страницы
+   не остаётся. */
+/* Правила `.bookmarks-toolbar` сняты в iter-74 вместе с самой карточкой. Она
+   держала две ссылки и стоила 124px на 1280, 160px на планшете и 186px на 360 —
+   полоса хрома между шапкой и первой закладкой, ровно в том месте, где §8 требует
+   показывать рабочее содержимое. Вторая её ссылка, «К тренировке», повторяла
+   пункт бокового рельса, с которого на /bookmarks и приходят, а в пустой
+   коллекции спорила с «Начать тренировку» соседней карточки: два призыва к
+   одному действию в полутора экранах. Главное действие переехало в заголовок
+   списка — туда, к чему оно относится.
+
+   Заголовок списка и это действие стоят одной строкой. Слева теперь ровно один
+   заголовок (подпись «Новые сверху.» снята — селект «Порядок» стоит на шесть
+   десятков пикселей ниже и говорит то же самое), поэтому `align-items: center`:
+   кнопка и заголовок — две однострочные величины, и центр держит их ровно.
+   Перенос ведёт `flex-wrap` — при крупном кегле и на узком экране кнопка уходит
+   под заголовок, а не режет его. */
+html[data-design] .bookmarks-page .bookmarks-list-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-5);
+  margin-bottom: var(--space-4);
 }
-html[data-design] .bookmarks-page .bookmarks-title {
-  margin: var(--space-2) 0 var(--space-3);
-  font-size: var(--font-size-2xl);
-  line-height: 1.2;
-}
-html[data-design] .bookmarks-page .bookmarks-intro-lead {
-  max-width: 42rem;
-  margin: 0;
-}
-html[data-design] .bookmarks-page .bookmarks-toolbar {
+/* Полоса отбора внутри карточки списка — не самостоятельный блок, а средняя
+   ступень между заголовком и списком. Своего нижнего отступа у формы нет
+   (карточка `.filter-bar` его раздавала, когда была отдельной секцией), и без
+   этого правила первая закладка прилипала к кнопке «Показать». */
+html[data-design] .bookmarks-page .filter-bar {
   margin-bottom: var(--space-5);
 }
-html[data-design] .bookmarks-page .bookmarks-toolbar .btn + .btn {
-  margin-left: var(--space-3);
-}
 
+/* Сетка карточек по доступной ширине, а не одна колонка (§6/§7). Колонкой список
+   был не по замыслу, а потому что прозаическая мера из reset держала его на
+   818px: сколько бы ни было экрана, закладки шли лентой в одну полосу. Меру
+   сняли (iter-64, FRD-015) — и колонка сразу стала хуже ленты: на 2560 полоса
+   1568px превращала превью вопроса и поле заметки в строки под 1400px, вдвое
+   длиннее проектной --measure, а четыре закладки растягивались на 1496px высоты.
+
+   auto-fill без медиазапросов — тот же приём, что у сетки ошибок итога
+   (pages-summary.css, iter-63): число колонок выбирает контент. Замер WebKit@2:
+   3 колонки на 1728…2560, 2 на 1280…1680, 1 на ≤1024. Минимум 420px — ниже
+   карточка перестаёт держать свою внутреннюю раскладку (колонка действий
+   min-width 7.5rem + превью + поле заметки). min(100%, …) не даёт
+   горизонтального скролла там, где контейнер уже минимума. */
 html[data-design] .bookmarks-page .bookmark-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
+  align-items: start;
   gap: var(--space-3);
 }
+/* Тот же reset вешает на li нижний отступ — в сетке он ложится поверх gap и
+   разъезжает ряды по высоте. */
+html[data-design] .bookmarks-page .bookmark-list > li { margin-bottom: 0; }
 html[data-design] .bookmarks-page .bookmark-item {
   display: flex;
   gap: var(--space-4);
@@ -44,6 +81,11 @@ html[data-design] .bookmarks-page .bookmark-item {
   border-radius: var(--border-radius-md);
   background: var(--color-bg-secondary);
   scroll-margin-top: var(--space-6);
+  /* Карточка покрашена ровно в тот тон, которым коробка поля красит себя по
+     умолчанию, — поле заметки на ней сливалось бы в одно пятно. Ручка компонента
+     (components-controls.css) двигает подложку контрола на тон ниже, не трогая
+     остальную коробку. */
+  --control-surface: var(--color-bg-primary);
 }
 html[data-design] .bookmarks-page .bookmark-main {
   min-width: 0;
@@ -63,16 +105,15 @@ html[data-design] .bookmarks-page .bookmark-meta {
   gap: var(--space-2);
   font-size: var(--font-size-xs);
 }
+/* Коробка поля заметки (шрифт, цвет, рамка, радиус, паддинг, resize) удалена в
+   iter-77: она дублировала `.field textarea` из components-controls.css и при
+   этом расходилась с ним — `font: inherit` давал 18px прозы вместо 16px контрола,
+   рамка шла на тон тише. Странице осталась только её собственная величина —
+   стартовая высота поля. Тон подложки задан ручкой компонента: карточка закладки
+   покрашена в `--color-bg-secondary`, и поле на ней должно быть темнее, иначе
+   сливается — `--control-surface` объявлена выше, на самой карточке. */
 html[data-design] .bookmarks-page .bookmark-note-form textarea {
-  width: 100%;
   min-height: 4.5rem;
-  resize: vertical;
-  font: inherit;
-  color: var(--color-text-primary);
-  background: var(--color-bg-primary);
-  border: var(--rule-weight) solid var(--color-border-secondary);
-  border-radius: var(--border-radius-sm);
-  padding: var(--space-3);
 }
 html[data-design] .bookmarks-page .bookmark-note-actions {
   display: flex;
@@ -134,50 +175,48 @@ html[data-design] .bookmarks-page .bookmark-remove-form {
 html[data-design] .bookmarks-page .bookmark-remove-btn {
   width: 100%;
 }
-/* Разрушающее действие не кричит в покое (в списке из 20 закладок это был бы
-   красный частокол), но и не притворяется равным «Открыть»: намерение
-   проявляется на наведении и с клавиатуры. */
-html[data-design] .bookmarks-page .bookmark-remove-btn:hover,
-html[data-design] .bookmarks-page .bookmark-remove-btn:focus-visible {
-  color: var(--color-status-error);
-  border-color: var(--color-status-error);
-}
+/* Краска «Убрать» — тихо в покое, красное на наведении и с клавиатуры — переехала
+   в pixel-buttons.css (iter-78). Здесь, в слое `pages`, она проигрывала общему
+   secondary-ховеру из более позднего слоя: «Убрать» подсвечивалась teal'ом
+   наравне с «Открыть», а обещанного отличия разрушительного действия на экране
+   не было. Странице остаётся ширина кнопки в карточке — это раскладка. */
 
-html[data-design] .bookmarks-page .bookmarks-empty {
-  text-align: center;
-  padding: var(--space-8) var(--space-5);
-}
-html[data-design] .bookmarks-page .bookmarks-empty-visual {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  margin-bottom: var(--space-4);
-  color: var(--color-accent-strong);
-  image-rendering: pixelated;
-}
-html[data-design] .bookmarks-page .bookmarks-empty-icon {
-  width: 28px;
-  height: 28px;
-}
+/* iter-83: три правила пустого состояния (`.bookmarks-empty`,
+   `.bookmarks-empty-visual`, `.bookmarks-empty-icon`) сняты целиком. Композицию
+   держит `.empty-state` (components-empty-state.css, гейт `*`), коробку —
+   хозяин: карточка отбора у «под отбор ничего не подошло» и `.card` у «пока нет
+   закладок». Страничных правил у состояния не осталось вовсе — ей тут нечего
+   сказать: раскладка обоих состояний ничем не отличается от общей.
+   Заодно ушёл единственный на весь продукт глиф Lucide 28px в акцентном тоне
+   внутри 48px-плашки: пустые состояния говорят px-спрайтом и currentColor. */
 
 @media (max-width: 768px) {
   html[data-design] .bookmarks-page .bookmark-item {
     flex-direction: column;
     align-items: stretch;
   }
+  /* Действия строки — РЯДОМ, а не столбиком. Столбиком две кнопки стоили
+     каждой карточке 52 лишних пикселя, а карточек на телефоне 28: замер на
+     390×844 давал документ 11046px. Ширины хватает с запасом — на 360 это две
+     кнопки по 132px. Столбик тут был не решением, а наследством десктопной
+     колонки действий, которая на узком экране всё равно разворачивается. */
+  html[data-design] .bookmarks-page .bookmark-actions {
+    flex-direction: row;
+    gap: var(--space-3);
+  }
+  html[data-design] .bookmarks-page .bookmark-actions > * {
+    flex: 1 1 0;
+  }
   html[data-design] .bookmarks-page .bookmark-actions .btn,
   html[data-design] .bookmarks-page .bookmark-actions button {
     width: 100%;
   }
-  html[data-design] .bookmarks-page .bookmarks-toolbar .btn + .btn {
-    margin-left: 0;
-    margin-top: var(--space-2);
-  }
-  html[data-design] .bookmarks-page .bookmarks-toolbar .btn {
-    display: block;
+  /* Главное действие на всю строку: в заголовке списка оно единственное, и
+     обрезанная по содержимому кнопка оставляла бы справа от себя полосу
+     пустоты — то же, что §6 запрещает у полосы отбора. */
+  html[data-design] .bookmarks-page .bookmarks-list-head .btn {
     width: 100%;
+    justify-content: center;
   }
   html[data-design] .bookmarks-page .ed-page {
     padding-bottom: calc(var(--space-8) + env(safe-area-inset-bottom, 0px));

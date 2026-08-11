@@ -11,6 +11,7 @@ import { initStreakBar } from './quiz/streak.js';
 import { initFavorites } from './quiz/favorites.js';
 import { initBookmarksPage } from './quiz/bookmarks.js';
 import { initDangerousFormGuard, initSubmitOnceGuard } from './ui/form-guards.js';
+import { initPendingGuard } from './ui/pending.js';
 import { initKeyboardHelp } from './ui/keyboard-help.js';
 import { initCopyCode, initCodeToolbar } from './ui/code-toolbar.js';
 import { initReportTriggers } from './ui/modals.js';
@@ -88,6 +89,9 @@ function boot() {
       initBookmarksPage();
       initStreakBar();
       initDangerousFormGuard();
+      // Раньше initSubmitOnceGuard: перехват повторного действия обязан стоять
+      // на фазе capture до того, как хоть один контрол успеет стать занятым.
+      initPendingGuard();
       initSubmitOnceGuard();
       initKeyboardHelp();
       initCopyCode();

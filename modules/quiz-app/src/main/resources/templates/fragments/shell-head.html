@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--/* Шапка оболочки: общий для всех 7 страниц пролог колонки контента —
+     спрайт продуктовых состояний, полоса «JavaScript отключён», баннеры
+     восстановления и mobile-header (бренд + действия) на узких ширинах.
+
+     Десктопной полосы здесь БОЛЬШЕ НЕТ. Раньше файл назывался topbar.html и
+     печатал <header class="topbar">: 64px во всю ширину колонки контента, в
+     которых стояла ровно одна кнопка 38×38 (тогл темы), прижатая к правому
+     краю. Полоса была sticky, то есть эти 64px вычитались из первого экрана на
+     всех семи страницах и на всех десктопных ширинах — 8% окна MacBook
+     1280×800 ради 2.2% собственной ширины. Всё, что в ней оставалось, переехало
+     в футер рельса (fragments/sidebar.html), где уже стоит «Выйти»: рельс идёт
+     во всю высоту окна и своей высоты у контента не отнимает.
+
+     До тогла отсюда по тем же причинам убрали прогресс сессии (дубль рельса
+     сессии, второй role="progressbar" об одном и том же) и шесть icon-only
+     ссылок-дублей сайдбара. Полоса пережила обе чистки, ничем не наполнившись, —
+     теперь удалён и сам контейнер.
+
+     Навигации здесь НЕТ намеренно: разделы живут в рельсе (десктоп) и в
+     mobile-nav (мобильный). Не добавлять сюда ссылки на разделы — это ровно
+     тот дубль, который отсюда убран. */-->
+<th:block th:fragment="shell-head">
+    <!--/* Pixel-art спрайт продуктовых состояний (GFX-008). Шапка есть на всех
+         7 страницах — один include делает px-* глифы (offline/empty-chart/
+         diagram-error) доступными глобально для <use>. Спрайт = display:none-
+         определения (.icon-sprite), позиция в DOM не важна. */-->
+    <svg th:replace="~{fragments/state-illustrations :: sprite}"></svg>
+    <!--/* Единственный голос ожидания (iter-84). До него «занято» не сообщалось
+         скринридеру НИГДЕ: пять модулей ставили кнопке `aria-busy`, но этот
+         атрибут не объявляется — он лишь просит не зачитывать область, пока она
+         меняется. Человек, работающий голосом, жал «Начать тренировку» и не
+         слышал ничего до самой смены страницы.
+         Регион печатается здесь, а не создаётся скриптом, чтобы существовать на
+         всех семи страницах ещё до первого события; наполняет его ровно один
+         модуль — static/js/ui/pending.js. polite, а не assertive: ожидание не
+         перебивает того, что человек читает сейчас. */-->
+    <p id="pending-status" class="visually-hidden" role="status"
+       aria-live="polite" aria-atomic="true"></p>
+    <!--/* Тон — предупреждение, а не ошибка: без JS приложение работает, просто
+         беднее (базовый flow вопрос → ответ → результат идёт формами). До iter-82
+         полоса красилась error-омывкой и говорила «сломано». `.notice-strip` —
+         вариант того же компонента для сообщения уровня документа: без рамки по
+         периметру и радиуса, шириной в колонку контента. */-->
+    <noscript>
+        <div class="notice notice-warning notice-strip" role="alert">
+            <strong>JavaScript отключён.</strong> Без него часть интерактивных элементов
+            (раскрытие подсказок, hotkey-навигация, графики на Аналитике) работать не будут.
+            Базовый flow (вопрос → ответ → результат) останется доступен через формы.
+        </div>
+    </noscript>
+    <div th:replace="~{fragments/recoverable-banners :: recoverable-banners}"></div>
+    <!--/* Общий слот сообщения — на всех семи страницах. Страницы, где сообщению
+         есть законное место рядом с действием (экран вопроса, разбор ответа),
+         печатают ещё и свой `scope='page'`, и скрипт предпочитает его; этот
+         остаётся резервом для всех остальных. Заведён в iter-82: до него скрипту
+         на /bookmarks говорить было НЕКУДА, и четыре сообщения об ошибке из
+         quiz/bookmarks.js уходили в никуда. */-->
+    <div th:replace="~{fragments/notice :: notice-slot(id='shell-notice', scope='shell')}"></div>
+    <header class="mobile-header">
+        <a class="brand" th:href="@{/}">
+            <span class="avatar" aria-hidden="true">
+                <img th:src="@{/img/pixel/mascot.png}" width="24" height="24" alt="" decoding="async">
+            </span>
+            <span class="brand-label">Cheat&nbsp;Sheet</span>
+        </a>
+        <!--/* Icon-only форма тех же действий, что подписаны в футере рельса:
+             в 44px-шапке места на подписи нет. Развёрнутое имя («Включить
+             тёмную тему») ставит ui/shell.js — видимой подписи здесь нет,
+             и конфликта Label in Name не возникает. */-->
+        <div class="shell-actions">
+            <button type="button" class="icon-button hidden" data-theme-toggle
+                    aria-label="Переключить тему" title="Переключить тему">
+                <svg class="icon" aria-hidden="true"><use href="#theme"></use></svg>
+            </button>
+            <form th:if="${multiSecurityMode}" class="shell-logout" th:action="@{/logout}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <button type="submit" class="icon-button" aria-label="Выйти"
+                        th:title="${currentUsername != null ? ('Выйти (' + currentUsername + ')') : 'Выйти'}">
+                    <svg class="icon" aria-hidden="true"><use href="#logout"></use></svg>
+                </button>
+            </form>
+        </div>
+    </header>
+</th:block>
+</body>
+</html>

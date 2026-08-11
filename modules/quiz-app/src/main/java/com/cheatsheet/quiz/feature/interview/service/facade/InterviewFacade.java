@@ -73,4 +73,12 @@ public class InterviewFacade {
     public List<TopicStats> getTopicStats() {
         return interviewService.getTopicStats();
     }
+
+    public List<TopicStats> getTopicStats(InterviewFilter filter) {
+        return interviewService.getTopicStats(filter);
+    }
+
+    public List<String> topicsForFilter(InterviewFilter filter) {
+        return interviewService.topicsForFilter(filter);
+    }
 }

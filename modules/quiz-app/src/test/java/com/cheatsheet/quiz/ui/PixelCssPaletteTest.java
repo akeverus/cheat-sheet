@@ -61,7 +61,7 @@ class PixelCssPaletteTest {
      * из файлов.
      */
     private static final Map<String, String> PINNED_TO_DARK_TOKEN = Map.of(
-            "--px-teal", "--color-accent-primary",
+            "--px-brass", "--color-accent-primary",
             "--px-green", "--color-status-success",
             "--px-amber", "--color-accent-secondary",
             "--px-red", "--color-status-error",
@@ -191,6 +191,90 @@ class PixelCssPaletteTest {
                         + "победит тот, что грузится последним, и правка остальных будет "
                         + "молча уходить в никуда. Оставить объявление в concern-файле "
                         + "компонента, остальные удалить")
+                .isEmpty();
+    }
+
+    /**
+     * Вторая половина того же контракта: цвет, записанный в {@code rgb()/rgba()}.
+     *
+     * <p>Гейт выше стерёг только HEX — и пропустил целый теневой набор. Замер
+     * при смене арт-направления нашёл в этом семействе 26 записей вида
+     * {@code rgba(57, 208, 199, 0.3)}: это снятый бирюзовый акцент, записанный
+     * десятичными каналами. Он пережил замену палитры молча, потому что HEX-а
+     * в строке нет, и рисовал бирюзовые свечения и «хроматическую аберрацию»
+     * поверх уже перекрашенного интерфейса.
+     *
+     * <p>Разрешены только БЕСЦВЕТНЫЕ литералы — чёрный, белый и серый: тень и
+     * блик роли в палитре не имеют и от направления не зависят. Цветной литерал
+     * обязан браться от токена, а прозрачность к нему добавляет
+     * {@code color-mix(in srgb, var(--token) N%, transparent)}.
+     */
+    @Test
+    void colourWithAlphaComesFromATokenNotFromDecimalChannels() throws IOException {
+        Pattern literal = Pattern.compile("rgba?\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)");
+        List<String> coloured = new ArrayList<>();
+
+        for (Path file : pixelStylesheets()) {
+            String[] lines = rules(file).split("\n", -1);
+            for (int i = 0; i < lines.length; i++) {
+                Matcher matcher = literal.matcher(lines[i]);
+                while (matcher.find()) {
+                    int r = Integer.parseInt(matcher.group(1));
+                    int g = Integer.parseInt(matcher.group(2));
+                    int b = Integer.parseInt(matcher.group(3));
+                    int spread = Math.max(r, Math.max(g, b)) - Math.min(r, Math.min(g, b));
+                    if (spread > 12) {
+                        coloured.add(file.getFileName() + ":" + (i + 1) + ": " + lines[i].trim());
+                    }
+                }
+            }
+        }
+
+        assertThat(coloured)
+                .as("цветной rgb()/rgba()-литерал в пиксельном слое. Прозрачный оттенок "
+                        + "продуктового цвета берётся как color-mix(in srgb, var(--token) N%, "
+                        + "transparent); бесцветные тени и блики (чёрный/белый/серый) разрешены")
+                .isEmpty();
+    }
+
+    /**
+     * Ближайший сосед объявляется ПОСЛЕДНИМ в падающем каскаде.
+     *
+     * <p>Пойман замером, а не чтением. Правило стояло в порядке
+     * {@code pixelated} → {@code -webkit-optimize-contrast} → {@code crisp-edges},
+     * то есть от желаемого к запасному. Но {@code -webkit-optimize-contrast} для
+     * Chromium — ВАЛИДНОЕ значение (старый хинт «повысить контраст»), поэтому
+     * побеждала последняя понятая браузером строка: computed-стиль портала на
+     * {@code /error} равнялся {@code -webkit-optimize-contrast}, и спрайт 24px
+     * растягивался до 120px со сглаживанием. Пиксельный ассет выходил размытым
+     * ровно там, где резкость — часть художественной системы.
+     *
+     * <p>Проверяется порядок, а не наличие: запасные значения нужны, но стоять
+     * они обязаны ДО {@code pixelated}.
+     */
+    @Test
+    void nearestNeighbourIsTheLastImageRenderingDeclaration() throws IOException {
+        Pattern block = Pattern.compile("\\{([^{}]*image-rendering[^{}]*)\\}");
+        List<String> wrongOrder = new ArrayList<>();
+
+        for (Path file : pixelStylesheets()) {
+            Matcher matcher = block.matcher(rules(file));
+            while (matcher.find()) {
+                List<String> declared = new ArrayList<>();
+                Matcher decl = Pattern.compile("image-rendering:\\s*([a-z-]+)").matcher(matcher.group(1));
+                while (decl.find()) {
+                    declared.add(decl.group(1));
+                }
+                if (declared.size() > 1 && !"pixelated".equals(declared.get(declared.size() - 1))) {
+                    wrongOrder.add(file.getFileName() + ": " + declared);
+                }
+            }
+        }
+
+        assertThat(wrongOrder)
+                .as("в падающем каскаде image-rendering побеждает ПОСЛЕДНЕЕ понятое "
+                        + "браузером значение, поэтому pixelated обязан стоять последним; "
+                        + "иначе спрайт увеличивается со сглаживанием")
                 .isEmpty();
     }
 

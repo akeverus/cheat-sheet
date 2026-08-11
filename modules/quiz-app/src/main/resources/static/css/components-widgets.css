@@ -71,7 +71,7 @@ html[data-design] .code-copy-btn .ed-icon { width: 0.875rem; height: 0.875rem; }
 }
 
 /* ===========================================================================
-   Виджет «Сегодня к повтору» (Bundle: today-hero на /settings, today-chip на /focus)
+   Виджет «Сегодня к повтору»: today-chip на /focus (парный hero снят в iter-62)
    =========================================================================== */
 
 /* Инлайн-стрик: 🔥 + «N дней». Скрыт без JS (.hidden), quiz/streak.js снимает после /api/streak. */
@@ -83,54 +83,12 @@ html[data-design] .streak-inline {
 html[data-design] .streak-inline .ed-icon { width: 0.875rem; height: 0.875rem; color: var(--color-accent-strong); }
 html[data-design] .streak-inline.streak-goal-reached { color: var(--color-accent-strong); }
 
-/* Hero на /settings: крупный due + CTA. .card даёт рамку/паддинг/фон. */
-html[data-design] .today-hero { margin-bottom: var(--space-5); }
-/* Выравниваем hero с колонкой настроек: .app-layout центрируется на
-   max-width-settings, а hero лежит ВНЕ него и без ограничения тянулся на всю
-   ширину main → левый/правый край не совпадал с контентом под ним (jut наружу). */
-html[data-design] .settings-page .today-hero {
-  max-width: var(--max-width-settings); margin-left: auto; margin-right: auto;
-  /* Поверхность и поля пришли с общего `.card` (components-card.css) — блок и в
-     разметке `class="card today-hero"`. Раньше их приходилось выписывать здесь
-     пятой копией, потому что общего `.card` в проекте не существовало. */
-}
-html[data-design] .today-hero-head {
-  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
-  margin-bottom: var(--space-4);
-}
-/* Тело hero — КОНТЕЙНИРОВАННЫЙ левый кластер (число+подпись ↔ CTA), НЕ space-between
-   край-в-край: на широкой карточке (=ширине настроек) space-between разрывал hero
-   на два осиротевших края с ~700px мёртвой зоны между ними (адверсари-ревью p1:
-   settings-flow/split/grid). Кластеризуем слева у читательской кромки, воздух
-   справа — спокойно и намеренно, без «дыры». */
-html[data-design] .today-hero-body {
-  display: flex; align-items: center; justify-content: flex-start;
-  gap: var(--space-6) var(--space-8); flex-wrap: wrap;
-}
-html[data-design] .today-hero-figure { display: flex; align-items: baseline; gap: var(--space-3); }
-/* Число due понижено с hero-кегля (4xl) до стат-кегля (2xl): на странице НАСТРОЕК
-   гигантское «9676» перебивало и H1 «Настройки сессии», и сами контролы —
-   инверсия иерархии (адверсари-ревью p0 ×2). Теперь информативная стат-цифра,
-   подчинённая заголовку страницы, не «дашборд-герой». accent-strong (не primary):
-   Clay на ivory — 2.96:1 < 3.0 (AA large). */
-html[data-design] .today-hero-due {
-  font-family: var(--font-family-display); font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold); line-height: 1; color: var(--color-accent-strong);
-  font-variant-numeric: tabular-nums;
-}
-html[data-design] .today-hero-due-label {
-  font-family: var(--font-family-body); font-size: var(--font-size-md); color: var(--color-text-secondary);
-}
-html[data-design] .today-hero-cta { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2); }
-html[data-design] .today-hero-hint { margin: 0; font-size: var(--font-size-sm); color: var(--color-text-secondary); }
-
-@media (max-width: 600px) {
-  html[data-design] .today-hero-body { flex-direction: column; align-items: flex-start; gap: var(--space-4); }
-  /* Число НЕ переопределяем — наследует стат-кегль 2xl (раньше тут стоял 3xl/48px,
-     что после понижения десктопа до 2xl/36px давало мобайл КРУПНЕЕ десктопа). */
-  html[data-design] .today-hero-cta { align-self: stretch; }
-  html[data-design] .today-hero-cta .btn { width: 100%; text-align: center; }
-}
+/* Hero-карточка «Сегодня» на /settings снята в iter-62 вместе с фрагментом
+   today-hero: контекст страницы несёт общий .page-head (shell.css), а её три
+   факта — стрик, счётчик к повтору и запуск — уже стояли на той же странице в
+   #streak-bar, #builder-review-card и закреплённой панели запуска. Правила
+   .today-hero* удалены здесь, в utilities-overrides.css (мобильный блок) и
+   ссылки на них вычищены из комментариев components-card.css/pages-settings.css. */
 
 /* Компактный чип на /focus: тонкая строка стрик + очередь, не спорит с вопросом.
    Переносится: в рельсе шириной 288px стрик и группа очереди в строку не встают,
@@ -166,20 +124,14 @@ html[data-design] .today-chip-due .ed-icon { width: 0.875rem; height: 0.875rem; 
 
 /* --- Instrument: /settings (C4-i, порт Фазы E — только дельты голоса) ---------
    Специфичность равна общим правилам (атрибут с/без значения — одинаковый вес),
-   блок обязан стоять ПОСЛЕ всех перебиваемых правил (панель-тайтл ~1311,
-   launcher-subtitle ~1327, today-hero ~2959, today-hero-due ~2993) — выигрывает
-   по порядку. Вкладки/seg-controls/danger-zone/toggles несут instrument-токены
-   без правок (baseline R0.36). Карточная сетка осей и switch-вид тогглов —
-   структурный рестайл ВСЕХ дизайнов, не instrument-scoped → отложено (README). */
-/* Отдельной поверхности у hero нет — она общая карточная (components-card.css).
-   Свой оттенок tertiary имел смысл, пока дизайнов было несколько; сейчас он
-   означал бы «один блок на /settings другого цвета, чем все карточки продукта».
-   `border-color` вдобавок был мёртв: рамкой владеет слой pixel (`border: 0`). */
-/* Цифра due — приборная: mono вместо display, semibold вместо bold (как .stat-value C6-i). */
-html[data-design="instrument"] .settings-page .today-hero-due {
-  font-family: var(--font-family-mono);
-  font-weight: var(--font-weight-semibold);
-}
+   блок обязан стоять ПОСЛЕ перебиваемого правила (панель-тайтл в
+   pages-settings.css) — выигрывает по порядку. Вкладки/seg-controls/danger-zone/
+   toggles несут instrument-токены без правок (baseline R0.36). Карточная сетка
+   осей и switch-вид тогглов — структурный рестайл ВСЕХ дизайнов, не
+   instrument-scoped → отложено (README).
+
+   Дельты hero (`.today-hero-due` — mono вместо display, поверхность) ушли вместе
+   с самим hero в iter-62. */
 /* Заголовок панели (виден только без JS): medium вместо semibold. */
 html[data-design="instrument"] .settings-page .settings-panel-title {
   font-weight: var(--font-weight-medium);
@@ -204,7 +156,12 @@ html[data-design] .seg-control {
   display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
   width: 100%; max-width: 100%;
   border: var(--rule-weight) solid var(--color-border-primary);
-  border-radius: var(--border-radius-md); overflow: hidden; background: var(--color-bg-secondary);
+  /* Радиус и `overflow: hidden` сняты в iter-78. Скругление держалось только на
+     клипе: сегменты — прямоугольники, и обрезка контейнера подрезала им углы.
+     Клип заодно резал ВСЁ, что потомок рисует за своей границей, — в том числе
+     индикатор фокуса. Прямые углы здесь не потеря: сегмент — это кнопка, а все
+     кнопки приложения прямоугольные (радиус 0, контур — pixel-кромка). */
+  background: var(--color-bg-secondary);
 }
 html[data-design] .seg-btn {
   appearance: none; -webkit-appearance: none;
@@ -220,7 +177,30 @@ html[data-design] .seg-btn:hover { background: var(--color-bg-tertiary); color: 
 html[data-design] .seg-btn.is-active {
   background: var(--color-accent-primary); color: var(--color-accent-on); font-weight: var(--font-weight-medium);
 }
-html[data-design] .seg-btn:focus-visible { outline: none; box-shadow: var(--shadow-focus); position: relative; z-index: 1; }
+/* Фокус — ровно та же идиома и те же цифры, что у любой кнопки приложения
+   (iter-78): контур через outline со сдвигом наружу, без исключений.
+
+   Было `outline: none; box-shadow: var(--shadow-focus)` — вторая идиома фокуса.
+   Пиксельный трейс в WebKit@2 (roving-tabindex приводит фокус на ВЫБРАННЫЙ
+   сегмент) вскрыл у свечения два дефекта. Первый: контейнер нёс
+   `overflow: hidden`, и клип съедал наружную часть кольца — оставалось 4px
+   внутри группы, а собственная рамка группы под кольцом пропадала; индикатор
+   выходил несимметричным и подменял собой границу. Второй: цвет свечения
+   совпадал с акцентной заливкой ровно (dark: и кольцо, и фон выбранного
+   сегмента — rgb(57,208,199)), контраст держался лишь на случайном 4px зазоре
+   между ними: 9.21 (dark) и 3.47 (light) к соседу — второе уже почти на
+   границе 3:1. Внутренний контур (первая попытка починки) клип переживает, но
+   проваливает контраст совсем: кольцо ложится прямо на заливку — CR 1.46
+   (dark) и 1.47 (light) при требуемых 3:1 (WCAG 1.4.11). Поэтому клип снят
+   выше, а кольцо вынесено наружу штатной идиомой: 2px зазора всегда показывают
+   фон группы, а не заливку выбранного. Замер после — 13.45 (dark) и 7.08
+   (light), рамка группы на месте, кольцо симметрично с обеих сторон. */
+html[data-design] .seg-btn:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+  position: relative;
+  z-index: 1;
+}
 
 /* #design-pref-control удалён (FE-CMP-1): ось «Дизайн» упразднена (DEC-002),
    переносящегося 10-опционного пикера больше нет. Прочие 5 seg-control несут

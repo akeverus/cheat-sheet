@@ -74,11 +74,11 @@ class VisualBaselineContractTest {
                 "title=" + firstGroup(body, "<title>([^<]+)</title>"),
                 "bodyClass=" + firstGroup(body, "<body class=\"([^\"]+)\""),
                 "navLabels=" + String.join("|", allGroups(body, "<nav[^>]*aria-label=\"([^\"]+)\"")),
-                "hasStatsFilterCard=" + body.contains("stats-filter-card"),
+                "hasStatsFilterCard=" + body.contains("filter-bar-form"),
                 "hasTopicTable=" + body.contains("id=\"topic-table\""),
                 "hasTopicProgressChart=" + body.contains("id=\"topicProgressChart\""),
                 "hasTopicAccuracyChart=" + body.contains("id=\"topicAccuracyChart\""),
-                "hasSortLiveRegion=" + body.contains("id=\"table-sort-status\"")
+                "hasServerSortState=" + body.contains("aria-sort=")
         );
 
         assertThat(signature).isEqualTo(readBaseline("visual-baseline/stats-shell.txt"));

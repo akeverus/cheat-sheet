@@ -1,4 +1,5 @@
 import { escapeHtml, setProgressValue } from '../core/dom.js';
+import { enhanceScrollableTables } from '../content/table-scroll.js';
 import { getTopicStats, displayTopicName } from './topic-data.js';
 import { chartPalette, chartAnimation, chartsAvailable, onChartThemeChange, chartBox, labelMeasurer, onChartResize } from './chart-theme.js';
 
@@ -118,6 +119,11 @@ function renderChartTable(tableId, caption, headers, rows) {
     + '</tbody>';
   table.innerHTML = `<caption>${escapeHtml(caption)}</caption>${thead}${tbody}`;
   table.classList.remove('hidden', 'visually-hidden');
+  // Дубль наполняется ПОСЛЕ initScrollableTables (данные приходят из /api),
+  // и до этого момента таблица была `hidden` → замер обёртки дал бы 0.
+  // Переоцениваем её здесь, иначе скролл-подсказка появилась бы только
+  // после первого ресайза окна.
+  enhanceScrollableTables(table.parentElement);
 }
 
 function showFallback(canvas, fallback, message, tableId) {
@@ -126,7 +132,11 @@ function showFallback(canvas, fallback, message, tableId) {
     fallback.classList.remove('hidden');
     fallback.textContent = message || fallback.textContent;
   }
-  if (tableId) document.getElementById(tableId)?.classList.remove('hidden', 'visually-hidden');
+  if (tableId) {
+    const table = document.getElementById(tableId);
+    table?.classList.remove('hidden', 'visually-hidden');
+    if (table) enhanceScrollableTables(table.parentElement);
+  }
 }
 
 /**

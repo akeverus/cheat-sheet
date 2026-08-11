@@ -8,39 +8,149 @@
 <div class="app">
     <aside th:replace="~{fragments/sidebar :: sidebar(active='bookmarks')}"></aside>
     <div class="shell-main">
-        <th:block th:replace="~{fragments/topbar :: topbar}"></th:block>
+        <th:block th:replace="~{fragments/shell-head :: shell-head}"></th:block>
+<!--/* Обёрток `.app-layout` > `.main-content` здесь БОЛЬШЕ НЕТ (iter-82). Они
+     приехали копипастой из stats.html, где обе описаны в pages-stats.css и на
+     ≥1200px с данными разворачивают дашборд в две колонки. Лента /bookmarks
+     файла аналитики не везёт, поэтому здесь это были два <div> без единого
+     правила: замер WebKit 1440×900 против пустышки того же тега дал
+     `diffFromBare: {}` — ноль отличий от голого блока. Убраны как мёртвая
+     разметка (§24), а не спрятаны. Дефект нашёл новый обратный чек
+     css-leak-audit.py (`unstyled_carriers`), написанный в этой же итерации. */-->
 <main id="main-content" class="ed-page" tabindex="-1">
-<div class="app-layout">
-<div class="main-content">
 
-<div class="bookmarks-intro">
-    <span class="eyebrow">Личная коллекция</span>
-    <h1 class="bookmarks-title">Закладки</h1>
-    <p class="muted bookmarks-intro-lead">
+<!--/* Шапка страницы — общий компонент .page-head (shell.css). До iter-61 здесь
+     стоял собственный .bookmarks-intro со своими правилами в pages-bookmarks.css,
+     повторявший разметку и стили шапки аналитики: одна и та же шапка была
+     реализована дважды и уже разошлась (42rem против 62ch на измеряемую строку). */-->
+<div class="page-head">
+    <div class="page-head-title">
+        <span class="eyebrow">Личная коллекция</span>
+        <h1>Закладки</h1>
+    </div>
+    <p class="muted page-head-lead">
         Вопросы со звездой и твои заметки. Открой вопрос в тренировке или сохрани подсказку на потом.
         <span class="kpi-role" th:if="${bookmarksTotal != null}"
               th:text="${bookmarksTotal + ' ' + @plural.pick(bookmarksTotal, 'закладка', 'закладки', 'закладок')}">0 закладок</span>
     </p>
 </div>
 
-<p th:if="${bookmarkSaved}" class="toast toast-success" role="status">Заметка сохранена.</p>
-<p th:if="${bookmarkRemoved}" class="toast toast-success" role="status">Закладка удалена.</p>
+<p th:if="${bookmarkSaved}" class="notice notice-success" role="status">Заметка сохранена.</p>
+<p th:if="${bookmarkRemoved}" class="notice notice-success" role="status">Закладка удалена.</p>
 
-<section class="card bookmarks-toolbar" aria-label="Действия">
-    <p>
-        <a class="btn next-btn primary-btn" th:href="@{/(important=true, ordered=true)}"
-           th:if="${bookmarksTotal != null and bookmarksTotal > 0}">
-            Тренировать избранные
-        </a>
-        <a class="btn secondary-btn" th:href="@{/}">К тренировке</a>
-    </p>
-</section>
+<!--/* Коллекция целиком: заголовок, главное действие, отбор и сам список — ОДНА
+     карточка. Сначала (iter-74) их было две плюс отдельная карточка «Отбор» со
+     своим h2, и замер показал, чем это кончается: на 1280×720 первая закладка
+     стояла на 481-м пикселе из 720 и в первый экран попадала ровно одна, на
+     390×844 — на 870-м, то есть НИ ОДНОЙ. Три заголовка («Закладки», «Отбор»,
+     «Список») и два зазора между карточками съедали экран, на котором §8
+     требует показывать работу. Заголовок «Отбор» снят целиком: форма — это
+     ориентир `role="search"` с собственным именем, и подпись над ним ничего не
+     добавляла, кроме 57px.
 
-<section class="card" th:if="${bookmarks != null and !bookmarks.isEmpty()}"
+     Отбора тут не было вовсе до iter-74: коллекция разворачивалась одним
+     списком, и единственным способом найти закладку была прокрутка. Замер
+     WebKit на 28 закладках — 4774px (6.6 экрана) на 1280×720, 6016px (7.8) на
+     1024×768, 11324px (14.5) на 360×780; удвоение ширины с 1280 до 2560 срезало
+     только 31 % высоты, потому что ограничение здесь не ширина, а объём.
+
+     Компонент общий с /stats (components-filter-bar.css). Форма одна на весь
+     отбор — FRD-024: один эндпоинт, одна форма, скрытых копий чужих полей ноль.
+     Строка состояния стоит НАД формой по правилу iter-73: это состояние
+     страницы, а не поле ввода, и читать его надо до контролов, которыми его
+     меняют. Карточка показывается, только когда коллекция не пуста: в пустой
+     коллекции нечего отбирать, и полоса была бы формой над ничем. */-->
+<section class="card" th:if="${bookmarksTotal != null and bookmarksTotal > 0}"
          aria-labelledby="bookmarks-list-title">
-    <h2 id="bookmarks-list-title" class="mt-0">Список</h2>
-    <p class="muted chart-subtitle">Новые сверху.</p>
-    <ul class="bookmark-list">
+    <!--/* Заголовок списка несёт и главное действие страницы. Отдельной карточки
+         «Действия» над списком больше нет (iter-74): она тратила 124px на 1280 и
+         186px на 360 ради двух ссылок, а вторая из них — «К тренировке» —
+         дублировала пункт бокового рельса, на котором /bookmarks и стоит.
+         Подписи о действующем порядке («Новые сверху.») здесь тоже нет: селект
+         «Порядок» стоит в шестидесяти пикселях ниже и говорит ровно то же. */-->
+    <div class="bookmarks-list-head">
+        <h2 id="bookmarks-list-title" class="mt-0">Список</h2>
+        <a class="btn next-btn primary-btn" th:href="@{/(important=true, ordered=true)}">Тренировать избранные</a>
+    </div>
+    <div class="filter-bar">
+    <p class="filter-bar-state" th:if="${bookmarksFilterActive}">
+        <span class="filter-bar-state-label">Отобрано:</span>
+        <span class="filter-bar-chip" th:if="${bookmarksQuery != null and !#strings.isEmpty(bookmarksQuery)}">запрос «<span th:text="${bookmarksQuery}">…</span>»</span>
+        <!--/* Раздел называем заголовком, а не идентификатором: в URL лежит
+             `foundation`, человеку нужно «Основы». */-->
+        <span class="filter-bar-chip"
+              th:each="g : ${bookmarkGroups != null ? bookmarkGroups : T(java.util.Collections).emptyList()}"
+              th:if="${bookmarksGroup != null and bookmarksGroup == g.id()}"
+              th:text="'раздел ' + ${g.title()}">раздел</span>
+        <span class="filter-bar-chip" th:if="${bookmarksNote == 'yes'}">только с заметкой</span>
+        <span class="filter-bar-chip" th:if="${bookmarksNote == 'no'}">только без заметки</span>
+        <!--/* Размер выборки прозой: число ровно равно длине списка ниже. */-->
+        <span class="filter-bar-count"
+              th:text="${bookmarksShown} + ' из ' + ${bookmarksTotal}">0 из 0</span>
+        <a class="filter-bar-reset" th:href="@{/bookmarks}">Сбросить</a>
+    </p>
+    <!--/* `role="search"` с именем: полоса и ищет, и фильтрует — это один
+         ориентир, а не два. */-->
+    <form method="get" th:action="@{/bookmarks}" class="filter-bar-form"
+          role="search" aria-label="Отбор закладок">
+        <label class="field filter-bar-field filter-bar-query">
+            <span class="field-label">Поиск</span>
+            <!--/* Ищем по тексту вопроса, заметке и названию темы — то есть по
+                 всему, что видно в строке списка. type=search даёт нативную
+                 очистку; spellcheck/autocorrect off — ищут по техтерминам. */-->
+            <input type="search" name="q" placeholder="По вопросу, заметке или теме"
+                   th:value="${bookmarksQuery}"
+                   class="search-input" enterkeyhint="search" spellcheck="false"
+                   autocomplete="off" autocorrect="off" autocapitalize="off">
+        </label>
+        <label class="field filter-bar-field">
+            <span class="field-label">Раздел</span>
+            <!--/* В списке ТОЛЬКО разделы, где закладки есть, и счётчик — число
+                 закладок раздела, а не тем: селект отвечает «что у меня
+                 отложено», и пункт с нулём был бы тупиком. Счётчики считаются по
+                 всей коллекции, а не по выборке, иначе после выбора раздела в
+                 селекте остался бы один пункт и уйти было бы некуда. */-->
+            <select name="group">
+                <option value="">Все</option>
+                <option th:each="group : ${bookmarkGroups != null ? bookmarkGroups : T(java.util.Collections).emptyList()}"
+                        th:value="${group.id()}"
+                        th:text="${group.title() + ' (' + group.topicCount() + ')'}"
+                        th:title="${group.description()}"
+                        th:selected="${bookmarksGroup != null and bookmarksGroup == group.id()}"></option>
+            </select>
+        </label>
+        <label class="field filter-bar-field">
+            <span class="field-label">Заметка</span>
+            <!--/* Селект, а не пара флажков: состояния взаимоисключающие («с
+                 заметкой» и «без заметки» вместе дают пустоту), и два флажка
+                 позволяли бы набрать заведомо пустой отбор. */-->
+            <select name="note">
+                <option value="" th:selected="${bookmarksNote == null or bookmarksNote == ''}">Любая</option>
+                <option value="yes" th:selected="${bookmarksNote == 'yes'}">Есть заметка</option>
+                <option value="no" th:selected="${bookmarksNote == 'no'}">Без заметки</option>
+            </select>
+        </label>
+        <label class="field filter-bar-field">
+            <span class="field-label">Порядок</span>
+            <select name="sort">
+                <option value="new" th:selected="${bookmarksSort == null or bookmarksSort == 'new'}">Сначала новые</option>
+                <option value="old" th:selected="${bookmarksSort == 'old'}">Сначала старые</option>
+                <option value="topic" th:selected="${bookmarksSort == 'topic'}">По теме</option>
+            </select>
+        </label>
+        <!--/* Отправка отбора — ТИХАЯ кнопка, а не акцентная. `.next-btn` даёт
+             ту же заливку акцентом, что и `.primary-btn`, и после слияния карточек
+             (iter-74) «Показать» встало в сорока пикселях под «Тренировать
+             избранные»: два одинаково залитых прямоугольника в одной карточке, по
+             которым нельзя понять, где главное действие страницы. Отбор — не цель,
+             а средство: он перерисовывает тот же список. Акцент остаётся ровно
+             один на экран. */-->
+        <div class="filter-bar-actions">
+            <button type="submit" class="btn secondary-btn">Показать</button>
+        </div>
+    </form>
+    </div>
+    <ul class="bookmark-list" th:if="${bookmarks != null and !bookmarks.isEmpty()}">
         <li th:each="item : ${bookmarks}" class="bookmark-item"
             th:classappend="${item.note != null and !item.note.isBlank()} ? ' has-note' : ' no-note'"
             th:id="${'q-' + item.questionId}">
@@ -86,20 +196,62 @@
             </div>
         </li>
     </ul>
-</section>
-
-<section class="card bookmarks-empty"
-         th:if="${bookmarks == null or bookmarks.isEmpty()}">
-    <div class="bookmarks-empty-visual" aria-hidden="true">
-        <svg class="icon bookmarks-empty-icon"><use href="#bookmark"></use></svg>
+    <!--/* Пустая выборка живёт ВНУТРИ той же карточки, сразу под формой, которая
+         её и дала. Отдельной карточкой (как было в начале iter-74) она уезжала
+         под полосу отбора вторым блоком, и на узком экране «ничего не нашлось»
+         оказывалось за пределами первого экрана — то есть человек видел форму и
+         пустоту, не понимая, что случилось. */-->
+    <div class="empty-state" th:if="${bookmarks == null or bookmarks.isEmpty()}"
+         aria-labelledby="bookmarks-nothing-title">
+        <!--/* Подзорная труба — «искали и не нашли». Иное изображение, чем у «Пока
+             нет закладок» (сундук — «класть было нечего»): два пустых состояния
+             должны отличаться с одного взгляда, иначе они читаются как одно.
+             Глиф выбран по ПОЛОЖЕНИЮ, а не по странице — тот же px-spyglass
+             стоит в пустом отборе аналитики. Коробку даёт вмещающая карточка
+             отбора; компонент рисует только композицию (iter-83). */-->
+        <svg class="px-illus px-illus-lg empty-state-illus" aria-hidden="true"><use href="#px-spyglass"></use></svg>
+        <h2 class="empty-state-title" id="bookmarks-nothing-title">Под отбор ничего не подошло</h2>
+        <!--/* Запрос повторяем дословно: человек видит, ЧТО именно не нашлось, и
+             сразу замечает опечатку. `.query-echo` ломает длинное слово по месту —
+             без него 160 символов без пробела давали странице горизонтальный
+             скролл (замер iter-72 на той же строке /stats). */-->
+        <p class="empty-state-text" th:if="${bookmarksQuery != null and !#strings.isEmpty(bookmarksQuery)}">
+            По запросу «<span class="query-echo" th:text="${bookmarksQuery}">…</span>» среди
+            <span th:text="${bookmarksTotal}">0</span> закладок совпадений нет.
+        </p>
+        <p class="empty-state-text" th:unless="${bookmarksQuery != null and !#strings.isEmpty(bookmarksQuery)}">
+            Ни одна из <span th:text="${bookmarksTotal}">0</span> закладок не попадает под этот отбор.
+        </p>
+        <!--/* ТИХАЯ кнопка. Замер iter-74 в этом самом состоянии: акцентных
+             заливок на экране оказывалось ДВЕ — «Тренировать избранные» в шапке
+             списка и эта. Заголовок списка со своим действием тут остаётся на
+             месте (секция рендерится, пока коллекция не пуста), поэтому акцент
+             у выхода из отбора отнимал бы его у главного действия страницы.
+             К тому же адрес у кнопки тот же, что у ссылки «Сбросить» в строке
+             состояния тремястами пикселями выше: это второй, более крупный
+             вход в то же самое, а не отдельное действие. */-->
+        <p class="empty-state-actions"><a class="btn secondary-btn" th:href="@{/bookmarks}">Показать все закладки</a></p>
     </div>
-    <h2 class="mt-0">Пока нет закладок</h2>
-    <p class="muted">Отметь вопрос звездой на экране ответа — он появится здесь, и к нему можно добавить заметку.</p>
-    <p><a class="btn next-btn" th:href="@{/}">Начать тренировку</a></p>
 </section>
 
-</div>
-</div>
+<!--/* ДВА разных пустых состояния, а не одно (§27). «Пока нет закладок» и
+     «под отбор ничего не подошло» — разные положения, и совет в них
+     противоположный: в первом надо идти тренироваться, во втором — ослабить
+     отбор, потому что закладки есть, просто не эти. Одна карточка на оба
+     случая предлагала бы «Начать тренировку» человеку, у которого 28
+     закладок, и молчала бы о том, что их скрыл его же запрос. Пустая коллекция
+     — единственное состояние, где карточка отбора не рендерится вовсе, поэтому
+     она и осталась отдельной секцией. */-->
+<section class="card empty-state" th:if="${bookmarksTotal == null or bookmarksTotal == 0}">
+    <!--/* Сундук — «хранилище пустое, класть было нечего». Не подзорная труба:
+         там ищут среди имеющегося, здесь имеющегося нет вовсе. Собственной
+         коробки у состояния нет — её даёт `.card` (iter-83). */-->
+    <svg class="px-illus px-illus-lg empty-state-illus" aria-hidden="true"><use href="#px-chest"></use></svg>
+    <h2 class="empty-state-title">Пока нет закладок</h2>
+    <p class="empty-state-text">Отметь вопрос звездой на экране ответа — он появится здесь, и к нему можно добавить заметку.</p>
+    <p class="empty-state-actions"><a class="btn next-btn" th:href="@{/}">Начать тренировку</a></p>
+</section>
+
 </main>
 <th:block th:replace="~{fragments/shell-scripts :: shell-scripts}"></th:block>
 <script th:replace="~{fragments/scripts :: app-script}"></script>

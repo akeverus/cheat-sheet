@@ -6,12 +6,6 @@ let tabsBound = false;
 export function initSettingsTabs() {
   if (tabsBound) return;
   const tablist = document.getElementById('settings-tablist');
-  const activated = initTablist(tablist, {
-    storageKey: 'settingsTab',
-    reveal() {
-      document.body.classList.add('js-tabs');
-      tablist.classList.remove('hidden');
-    }
-  });
+  const activated = initTablist(tablist, { storageKey: 'settingsTab' });
   if (activated) tabsBound = true;
 }

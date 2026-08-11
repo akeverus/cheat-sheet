@@ -37,6 +37,9 @@ public class MarkdownRenderService {
     /** Regex: один и более пробельных символов. */
     private static final String REGEX_WHITESPACE = "\\s+";
 
+    /** Класс скролл-обёртки таблиц (components-table.css, table-scroll.js). */
+    private static final String TABLE_SCROLL_CLASS = "table-scroll";
+
     // GFM-расширения для тела ответа:
     //  • TablesExtension — GFM-таблицы (| col | col |); без него flexmark схлопывал
     //    строки в один <p> и показывал сырой pipe-текст.
@@ -186,7 +189,41 @@ public class MarkdownRenderService {
         sanitizeAnchorsAndSvg(doc);
         normalizeHeadingLevels(doc);
         labelTaskListCheckboxes(doc);
+        wrapDataTables(doc);
         return doc.body().html();
+    }
+
+    /**
+     * Оборачивает таблицы прозы в скролл-контейнер компонента и вешает на них
+     * его классы.
+     *
+     * <p>Таблица — единственный блок markdown, ширина которого задаётся не нами,
+     * а автором: пять колонок с кодом не сожмутся до ширины колонки чтения ни при
+     * каком переносе. Раньше это лечилось прямо на самой таблице
+     * ({@code display:block; overflow-x:auto} в CSS прозы), но {@code display:block}
+     * создаёт внутри анонимный табличный бокс по содержимому — на широком экране
+     * короткая таблица переставала растягиваться и оставляла справа мёртвую
+     * полосу (замерено 377px в контейнере 600px).</p>
+     *
+     * <p>Поэтому скроллится обёртка, а таблица остаётся таблицей. Ставим её здесь,
+     * а не в CSS, потому что обёртка — элемент разметки: сгенерировать её может
+     * только тот, кто строит HTML. Классы {@code data-table is-ruled} подключают
+     * общий скелет компонента и прозаический скин (рамки по ячейкам), чтобы
+     * markdown-таблица и разметочная таблица {@code /stats} были одним компонентом,
+     * а не двумя похожими.</p>
+     *
+     * <p>Идемпотентно: если таблица уже внутри {@code .table-scroll} (повторный
+     * прогон, вложенная обёртка из исходника), второй раз не оборачиваем.</p>
+     */
+    private void wrapDataTables(Document doc) {
+        for (Element table : doc.select("table")) {
+            table.addClass("data-table").addClass("is-ruled");
+            Element parent = table.parent();
+            if (parent != null && parent.hasClass(TABLE_SCROLL_CLASS)) {
+                continue;
+            }
+            table.wrap("<div class=\"" + TABLE_SCROLL_CLASS + "\"></div>");
+        }
     }
 
     /**

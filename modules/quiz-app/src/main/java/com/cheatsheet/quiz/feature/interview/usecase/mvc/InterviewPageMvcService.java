@@ -147,19 +147,26 @@ public class InterviewPageMvcService {
             Boolean onlyWrong,
             Boolean ordered,
             String query,
+            String sort,
+            String dir,
+            String rows,
             Model model
     ) {
         MvcRequestMapper.StatsRequestContext context = requestMapper.resolveStatsContext(
                 topic, group, important, onlyWrong, ordered, query
         );
-        StatsPageService.StatsPageState state =
-                statsPageService.build(context.filter(), context.query(), appProperties.getSearch().getStatsResultsLimit());
+        StatsPageService.StatsPageState state = statsPageService.build(
+                context.filter(),
+                context.query(),
+                appProperties.getSearch().getStatsResultsLimit(),
+                StatsPageService.TopicTableQuery.of(sort, dir, rows));
         modelAttributeMapper.applyStatsPageState(model, state);
         return navigationService.statsView();
     }
 
-    public String bookmarks(Model model) {
-        BookmarksPageService.BookmarksPageState state = bookmarksPageService.build();
+    public String bookmarks(String query, String group, String note, String sort, Model model) {
+        BookmarksPageService.BookmarksPageState state = bookmarksPageService.build(
+                new BookmarksPageService.BookmarksQuery(query, group, note, sort));
         modelAttributeMapper.applyBookmarksPageState(model, state);
         return navigationService.bookmarksView();
     }

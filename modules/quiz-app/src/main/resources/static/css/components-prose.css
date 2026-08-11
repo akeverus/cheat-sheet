@@ -22,31 +22,19 @@ html[data-design] .markdown-content > *:first-child { margin-top: 0; }
    покрывает вложенные p/li/td/span. (Focus-only .focus-question/#interview-options
    label с тем же правилом — в pages-focus.) */
 html[data-design] .markdown-content { overflow-wrap: break-word; }
-/* Таблицы: блочные, со скроллом по X на узких экранах. */
-html[data-design] .markdown-content table { width: 100%; border-collapse: collapse; margin: var(--space-4) 0; font-size: var(--font-size-sm); display: block; overflow-x: auto; }
-/* Скролл-подсказка для РЕАЛЬНО переполненных таблиц (JS `enhanceScrollableTables`
-   вешает `.is-scrollable`, когда scrollWidth > clientWidth). Нативные overlay-
-   скроллбары macOS скрыты до скролла → без индикатора неочевидно, что справа есть
-   ещё столбцы. Рисуем стойкий тонкий teal-скроллбар (Firefox: scrollbar-*;
-   Chromium/Safari: ::-webkit-scrollbar) + фокус-кольцо: таблица получает
-   tabindex=0 (keyboard-скролл к скрытым столбцам, WCAG 2.1.1), семантика <table>
-   не меняется. outline-offset:-2px — как у сортируемой th в pages-stats (кольцо
-   не обрежется overflow-контейнером). */
-html[data-design] .markdown-content table.is-scrollable {
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-accent-primary) transparent;
-}
-html[data-design] .markdown-content table.is-scrollable::-webkit-scrollbar { height: 6px; }
-html[data-design] .markdown-content table.is-scrollable::-webkit-scrollbar-thumb {
-  background: var(--color-accent-primary);
-  border-radius: 3px;
-}
-html[data-design] .markdown-content table.is-scrollable:focus-visible {
-  outline: 2px solid var(--color-focus-ring);
-  outline-offset: -2px;
-}
-html[data-design] .markdown-content th, html[data-design] .markdown-content td { border: var(--rule-weight) solid var(--color-border-primary); padding: var(--space-2) var(--space-3); text-align: left; }
-html[data-design] .markdown-content th { background: var(--color-bg-tertiary); font-family: var(--font-family-mono); font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: var(--letter-spacing-wide); }
+/* Мера чтения для прозаических списков. Раньше её ставил reset прямо на теге
+   `ul`/`ol` — и промахивался: в разметке приложения списки почти всегда
+   структура (сетки, карточки), а проза приходит только сюда, из markdown.
+   Мера переехала к прозе, чтобы длинный пункт списка держал ту же строку, что
+   и соседний абзац (`p` меру сохранил — этот тег прозой быть не перестаёт). */
+html[data-design] .markdown-content ul,
+html[data-design] .markdown-content ol { max-width: var(--measure); }
+/* Таблицы прозы — в components-table.css (iter-76). Здесь их не осталось: сервер
+   отдаёт markdown-таблицу как `<div class="table-scroll"><table class="data-table
+   is-ruled">`, то есть тем же компонентом, что и таблицы разметки, только в другом
+   скине. Раньше тут лежал ПЯТЫЙ, отдельный ответ на переполнение (display:block +
+   overflow-x на самой таблице) — он давал таблице shrink-to-fit и до 377px мёртвой
+   пустоты справа при коротком содержимом. */
 
 /* GFM task-list (- [ ] / - [x]): чекбоксы вместо литеральных «[ ]». Убираем маркер
    только у пунктов-задач, выравниваем disabled-чекбокс с текстом, красим акцентом.

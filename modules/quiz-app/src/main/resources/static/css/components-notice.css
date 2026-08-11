@@ -1,0 +1,105 @@
+/* Сообщение — ОДНА система на всё приложение (@layer components, гейт `*`).
+
+   До iter-82 систем было три, и две из них лежали в страничных файлах:
+     • `.inline-alert` — здесь же (файл назывался components-alert.css), глобально;
+     • `.recoverable-banner*` — в pages-focus.css под `.focus-page`, хотя разметку
+       печатает shell-head.html, то есть ВСЕ семь страниц;
+     • `.toast` / `.toast-success` — в pages-settings.css под `.settings-page`,
+       хотя носителей двое: settings.html и bookmarks.html.
+   Замер (WebKit+Chrome, 1440×900): на /stats, /bookmarks, /settings и /error
+   баннер «Сессия истекла» (role="alert") приезжал `display:block; padding:0;
+   border:0 none; background:transparent` — самое важное сообщение приложения
+   рисовалось голым абзацем. Подтверждение «Заметка сохранена» на /bookmarks —
+   тем же голым абзацем. Гейт css-leak-audit.py это пропускал: он проверяет, что
+   СЕЛЕКТОР привязан к странице, и `.focus-page .recoverable-banner` привязан
+   честно; чего он не проверял — что НОСИТЕЛЬ класса живёт вне гейта.
+   Обратная проверка добавлена там же (`unstyled_carriers`).
+
+   Здесь один компонент `.notice` и один способ сказать тон. Коробку описывает
+   ОДНО правило, тон — пара локальных кастом-свойств (`--notice-edge`,
+   `--notice-wash`), которые модификатор переопределяет. Поэтому «добавить тон»
+   = две строки, а не копия коробки, и коробка не может разъехаться между
+   тонами (до iter-82 разъехалась: `.recoverable-banner` шёл без радиуса,
+   `.inline-alert` и `.toast` — с `--border-radius-md`). */
+@layer components {
+
+html[data-design] .notice {
+  /* Дефолтный тон — ошибка: молчаливое сообщение без модификатора почти всегда
+     сообщает о неудаче (`setInlineAlert(msg)` без второго аргумента). */
+  --notice-edge: var(--color-status-error);
+  --notice-wash: var(--color-status-error-wash);
+
+  /* display:block, а не flex: содержимое — проза («**Нет сети.** Ответ можно
+     отправить, когда…»), и во flex-контейнере каждый инлайн-ребёнок стал бы
+     отдельным элементом со своим gap — строка перестала бы переноситься как
+     абзац. Flex включается ниже, и только там, где рядом с текстом стоит глиф. */
+  display: block;
+  margin: var(--space-3) 0;
+  padding: var(--space-3) var(--space-4);
+  border: var(--rule-weight) solid var(--notice-edge);
+  border-radius: var(--border-radius-md);
+  background: var(--notice-wash);
+  color: var(--color-text-primary);
+}
+
+/* Тон. Модификатор трогает ТОЛЬКО две переменные — ни одного свойства коробки,
+   иначе тон снова начал бы означать «другая коробка». */
+html[data-design] .notice-success { --notice-edge: var(--color-status-success); --notice-wash: var(--color-status-success-wash); }
+html[data-design] .notice-warning { --notice-edge: var(--color-status-warning); --notice-wash: var(--color-status-warning-wash); }
+html[data-design] .notice-info    { --notice-edge: var(--color-status-info);    --notice-wash: var(--color-status-info-wash); }
+
+/* Скрытие. `!important` нужен обоим: `.hidden` из utilities-core тоже с
+   `!important`, но её слой (utilities) выше components — а вот `[hidden]`
+   ниоткуда не приходит, и без правила блок с атрибутом остался бы виден
+   (display у `.notice` объявлен явно и перебивает браузерный `[hidden]`). */
+html[data-design] .notice.hidden,
+html[data-design] .notice[hidden] { display: none !important; }
+
+/* Иллюстрированный вариант: pixel-глиф слева, текст справа. Условие на разметке
+   (`:has`), а не отдельный класс-модификатор — шаблон не обязан помнить, что
+   вместе с глифом надо дописать ещё и класс раскладки. `:has()` в проекте уже
+   несущий (композиция экрана вопроса в pages-focus.css), Safari 15.4+. */
+html[data-design] .notice:has(> .notice-illus) {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+html[data-design] .notice-illus { flex: 0 0 auto; }
+/* min-width:0 обязателен: без него flex-элемент не сжимается ниже min-content
+   своей самой длинной строки, и на узком окне текст выдавливал бы глиф. */
+html[data-design] .notice-text { flex: 1 1 0; min-width: 0; }
+
+/* Полосовой вариант — сообщение уровня документа, а не блок в потоке страницы:
+   единственный носитель сегодня — «JavaScript отключён» в shell-head.html,
+   который стоит выше всей колонки контента. У полосы нет рамки по периметру и
+   радиуса: она не карточка, она граница между «служебным» и «рабочим». */
+html[data-design] .notice-strip {
+  max-width: var(--max-width-page);
+  margin: 0 auto;
+  padding: var(--space-3) var(--page-gutter);
+  border: 0;
+  border-bottom: var(--rule-weight) solid var(--notice-edge);
+  border-radius: 0;
+}
+
+/* Слот оболочки стоит ВНЕ `.ed-page` — выше всей колонки контента, — и потому
+   не наследует ни её меру, ни её поля. Полосе выше это безразлично: она и
+   должна тянуться во всю ширину, а внутрь её текст заводит padding. Карточке —
+   нет. Замер до правки, WebKit `/bookmarks`: на 2560×1440 сообщение шло от 236
+   до 2560, то есть правым краем В КРАЙ окна, тогда как карточки стояли от 582
+   до 2214. Сообщение оказывалось на 692px шире того, о чём говорит, и
+   разъезжалось с ним на 346px с каждой стороны — скруглённый бордюрный
+   прямоугольник, не совпадающий ни с одной границей на экране.
+
+   Ставим его в ту же колонку теми же переменными, что ведут `.ed-page`:
+   совпадение здесь не подобрано числом, а следует из общего источника. Инсет
+   даём мерой и margin'ом, а не padding'ом: у карточки padding — это её
+   внутреннее поле вокруг текста, и раздувать его до поля страницы значило бы
+   получить коробку в 160px пустоты вокруг одной строки. */
+html[data-design] .notice[data-notice-host="shell"] {
+  width: 100%;
+  max-width: calc(var(--max-width-page) - var(--page-gutter) * 2);
+  margin-inline: auto;
+}
+
+}

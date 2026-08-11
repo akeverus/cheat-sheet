@@ -110,8 +110,13 @@ export function initSessionModeForm() {
     if (!preview) return;
     if (previewFilters) previewFilters.textContent = describeFilters();
     if (selectedMode()?.dataset.unlimited === 'true') {
-      if (previewCount) previewCount.textContent = 'Без ограничения по числу';
-      if (previewTime) previewTime.textContent = 'сессия идёт, пока не остановишь';
+      // Формулировки короткие сознательно: предпросмотр переехал в закреплённую
+      // строку запуска, и его высота теперь вычитается из видимой части
+      // конструктора. Прежние «Без ограничения по числу» и «сессия идёт, пока не
+      // остановишь» не вставали в один ряд с двумя другими метриками и кнопкой —
+      // строка ломалась на два ряда и накрывала собой чипы фильтров.
+      if (previewCount) previewCount.textContent = 'без ограничения';
+      if (previewTime) previewTime.textContent = 'пока не остановишь';
       return;
     }
     const n = countInput ? (Number.parseInt(countInput.value || '', 10) || 0) : 0;

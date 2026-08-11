@@ -15,64 +15,16 @@
   общий счётчик обещал бы «9818 к повтору» человеку, который не видел ни одного
   вопроса. Повторять предлагаем только dueRepeats, остальное честно называем новым.
 
-  today-hero(stats)  — крупная карточка для /settings (лэндинг сессии).
   today-chip(stats)  — компактная строка для /focus (информативная, без CTA —
                        на самой тренировке кнопка «повторить» избыточна).
-*/-->
 
-<section th:fragment="today-hero(stats)" class="card today-hero" th:if="${stats != null}" aria-labelledby="today-hero-title"
-         th:with="scope=${filteredStats != null ? filteredStats : stats},
-                  repeats=${scope.dueRepeats()}, fresh=${scope.fresh}">
-    <div class="today-hero-head">
-        <span class="ed-eyebrow">Сегодня</span>
-        <!--/* Стрик: скрыт без JS (data приходит из /api/streak). C29: без aria-live —
-             initStreakBar наполняет чип при КАЖДОЙ загрузке (на /focus — каждый
-             вопрос), это обычная загрузка контента, а не смена состояния; live-region
-             заставлял SR озвучивать «N дней» после каждого перехода. */-->
-        <span class="streak-inline hidden" data-streak-bar>
-            <svg class="ed-icon" aria-hidden="true"><use href="#i-flame"></use></svg>
-            <span class="streak-inline-days" data-streak-days>0 дней</span>
-        </span>
-    </div>
-    <div class="today-hero-body">
-        <!--/* Крупная цифра отвечает на «что делать сейчас», а не «сколько всего лежит».
-             Есть долг по повторениям — показываем его: это то, что теряется без
-             внимания. Долга нет — показываем запас новых, потому что предлагать
-             «повторить 0» бессмысленно. Знаменатель берём из той же выборки, что
-             и числитель, и только когда он осмыслен (total > числителя): иначе
-             «9818 из 9818» — это стена, а не пропорция. */-->
-        <div class="today-hero-figure" th:if="${repeats > 0}">
-            <span class="today-hero-due" data-stat-field="repeats" th:text="${repeats}">0</span>
-            <span class="today-hero-due-label"
-                  th:text="${scope.total > repeats
-                      ? 'из ' + scope.total + ' ' + @plural.pick(scope.total, 'вопрос', 'вопроса', 'вопросов') + ' к повтору'
-                      : @plural.pick(repeats, 'вопрос', 'вопроса', 'вопросов') + ' к повтору'}">вопросов к повтору</span>
-        </div>
-        <div class="today-hero-figure" th:if="${repeats == 0 and fresh > 0}">
-            <span class="today-hero-due" data-stat-field="fresh" th:text="${fresh}">0</span>
-            <span class="today-hero-due-label"
-                  th:text="${scope.total > fresh
-                      ? 'из ' + scope.total + ' ' + @plural.pick(scope.total, 'вопрос', 'вопроса', 'вопросов') + ' ещё не открывали'
-                      : @plural.pick(fresh, 'новый вопрос', 'новых вопроса', 'новых вопросов')}">новых вопросов</span>
-        </div>
-        <!--/* Ни долга, ни новых: банк пройден и ближайший срок ещё не наступил.
-             Цифра здесь была бы нулём ради нуля — говорим словами. */-->
-        <div class="today-hero-figure" th:if="${repeats == 0 and fresh == 0}">
-            <span class="today-hero-due-label">Ничего не ждёт повторения</span>
-        </div>
-        <h2 id="today-hero-title" class="visually-hidden">Сегодня</h2>
-        <div class="today-hero-cta">
-            <a class="btn next-btn"
-               th:href="@{/(topic=${filter?.topic}, group=${selectedGroup}, important=${filter?.importantOnly}, onlyWrong=${filter?.onlyWrong}, shuffle=${filter?.shuffle}, weakTopics=${weakTopics}, ordered=${filter == null or filter.ordered != false})}"
-               th:text="${repeats > 0 ? 'Начать повторение' : (fresh > 0 ? 'Учить новое' : 'Открыть тренажёр')}">Начать повторение</a>
-            <p class="today-hero-hint" th:if="${repeats > 0 and fresh > 0}"
-               th:text="'Сначала просроченное, дальше ' + ${fresh} + ' ' + ${@plural.pick(fresh, 'новый', 'новых', 'новых')}">Сначала просроченное.</p>
-            <p class="today-hero-hint" th:if="${repeats > 0 and fresh == 0}">Трейнер начнёт с просроченных карточек.</p>
-            <p class="today-hero-hint" th:if="${repeats == 0 and fresh > 0}">Повторять пока нечего — берите новую тему.</p>
-            <p class="today-hero-hint" th:if="${repeats == 0 and fresh == 0}">Срок ближайших карточек ещё не наступил.</p>
-        </div>
-    </div>
-</section>
+  Парный фрагмент today-hero(stats) — крупная карточка на /settings — снят в
+  iter-62. Он не был «ещё одним видом» тех же данных: все три его факта уже
+  стояли на той же странице (стрик в #streak-bar, счётчик к повтору в
+  #builder-review-card — там честно по фильтру, запуск в закреплённой панели),
+  а его кнопка «Начать повторение» была вторым главным действием страницы и
+  уводила мимо конструктора. Контекст страницы теперь несёт общий .page-head.
+*/-->
 
 <!--/* Компактный чип для /focus: стрик + очередь, без CTA. */-->
 <div th:fragment="today-chip(stats)" class="today-chip" th:if="${stats != null}"

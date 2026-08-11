@@ -411,13 +411,47 @@ public class InterviewService {
     }
 
     /**
-     * Возвращает статистику по темам (всего, выучено, к повторению и т.д. по каждой теме).
+     * Возвращает статистику по темам полного банка (REST API `/api/stats/topics`).
      *
      * @return список статистики по темам
      */
     public List<TopicStats> getTopicStats() {
         long now = clock.instant().getEpochSecond();
         return questionStatsRepository.findTopicStats(now, learnedRepetitions);
+    }
+
+    /**
+     * Та же статистика по темам, но по выборке отбора. Выборка разрешается ровно так же,
+     * как в {@link #getStats(InterviewFilter)}: тема сильнее раздела, раздел разворачивается
+     * в список тем. Иначе сводка страницы и таблица под ней считались бы по разным
+     * множествам вопросов и расходились бы числами.
+     *
+     * @param filter фильтр страницы
+     * @return статистика по темам выборки
+     */
+    public List<TopicStats> getTopicStats(InterviewFilter filter) {
+        long now = clock.instant().getEpochSecond();
+        return questionStatsRepository.findTopicStatsByTopics(
+                topicsForFilter(filter), filter.importantOnly(), filter.onlyWrong(), now, learnedRepetitions);
+    }
+
+    /**
+     * Темы выборки: одна тема, если она выбрана; иначе темы раздела; иначе весь банк.
+     * Один источник для всех срезов страницы `/stats` — таблицы тем, пробелов покрытия
+     * и разбора ошибок, — чтобы отбор означал на них одно и то же множество.
+     *
+     * @param filter фильтр страницы
+     * @return список тем выборки
+     */
+    public List<String> topicsForFilter(InterviewFilter filter) {
+        String topic = filter.effectiveTopic();
+        if (topic != null) {
+            return List.of(topic);
+        }
+        List<String> allTopics = questionRepository.findTopics();
+        return filter.effectiveGroup() != null
+                ? topicCatalogService.topicsForFilter(filter, allTopics)
+                : allTopics;
     }
 
 }

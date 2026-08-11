@@ -5,24 +5,21 @@
    ПОТРЕБЛЯЮТ (var(--token)) и никогда не определяют. Cascade: @layer tokens (см. head.html). Грузится ПЕРЕД structural CSS
    (токены до структуры) — порядок задаётся в fragments/head.html.
 
-   Палитра (РЕДИЗАЙН 2026-07-18, ui-redesign-handoff.zip): «терминальная»
-   тёмная эстетика — dark PRIMARY (макеты все тёмные, canvas #071016), teal
-   #58d4d0 как единственный коммитнутый интерактив, амбер/success/danger
-   разведены. Семантические имена токенов (--color-*) СОХРАНЕНЫ (мост к
-   существующему base.css на время поэтапной замены), но ЗНАЧЕНИЯ переведены на
-   палитру макетов handoff-3 (ДЕФОЛТ = DARK, реставр 2026-07-18):
-     • :root                      — dark (ТОЧНО из assets/tokens/tokens.css
-                                     макетов; безусловный дефолт — макеты все
-                                     тёмные, решение пользователя);
-     • :root[data-theme="light"]  — light (вторичная тема, явный тумблер;
-                                     значения макетов, акценты приглушены до AA
-                                     на белом фоне).
+   Палитра (АРТ-НАПРАВЛЕНИЕ 2026-08-11): «Мастерская гильдии» — тёплый камень
+   и латунь в тёмной теме, пергамент и чернила в светлой. Пришла на смену
+   «терминальной» бирюзе (canvas #071016, акцент teal #58d4d0), которая читалась
+   как SaaS-дэшборд и не имела отношения к продуктовой метафоре. Семантические
+   имена токенов (--color-*) СОХРАНЕНЫ — менялись значения, не роли:
+     • :root                      — dark (безусловный дефолт, решение
+                                     пользователя);
+     • :root[data-theme="light"]  — light (явный тумблер; НЕ инверсия тёмной:
+                                     свой материал — пергамент, свои washes).
    No-JS OS-light больше НЕ форсит светлую (нет prefers-color-scheme зеркала) —
    тёмная тема по умолчанию для всех; переключение только через тумблер (JS).
-   Шрифты: Inter (UI/display/body) + JetBrains Mono (код/эйбрау). Newsreader/
-   Space Grotesk убраны (см. head.html). Структурные shell-токены
-   (--sidebar-width / --content-max / --header-height / --mobile-nav-height) —
-   из архива. Источник: assets/tokens/design-tokens.css + docs/04_DESIGN_SYSTEM.md.
+   Шрифты: Literata (display) + Inter (UI/body) + JetBrains Mono (код/эйбрау),
+   все три самохостятся. Структурные shell-токены —
+   --sidebar-width (считан из содержимого рельса, FRD-021) и --mobile-nav-height.
+   Источник: assets/tokens/design-tokens.css + docs/04_DESIGN_SYSTEM.md.
 
    Ортогональные оси (data-reading-width / data-density) — legacy Instrument,
    удаляются на Этапе 10 финализации редизайна; пока оставлены рабочими.
@@ -37,53 +34,79 @@
      пользователя). light переопределяется явным [data-theme="light"]. */
   color-scheme: dark;
 
-  /* ---- Цвет — DARK (ТОЧНАЯ палитра макетов handoff-3, assets/tokens/tokens.css) ---- */
-  --color-bg-primary:   #071116; /* bg-0 / canvas */
-  --color-bg-secondary: #0d1b22; /* surface */
-  --color-bg-tertiary:  #12252e; /* surface-raised */
-  --color-surface-soft: #102029; /* surface-soft */
-  --color-bg-inverse:   #eef6f5;
-  /* Соседние ступени фона для градиента-шелла (bg-0→bg-1). */
-  --color-bg-canvas-2:  #0b171d; /* bg-1 */
+  /* ---- Цвет — DARK: «камень при свече» ------------------------------------
+     Художественное направление продукта — мастерская гильдии, а не терминал.
+     Прежняя палитра (canvas #071116, акцент teal #39d0c7) была холодной
+     сине-зелёной: канва уходила в синий (b > g > r), а единственным
+     интерактивным цветом был неоновый циан. Это читалось как SaaS-дэшборд и
+     противоречило продуктовой метафоре «хроника / гильдия / кузница навыков».
 
-  --color-text-primary:   #eef6f5; /* text ~16:1 */
-  --color-text-secondary: #a8b9bd; /* text-2 ~9:1 */
-  --color-text-tertiary:  #8397a0; /* text-3 (нюанс ярче #6f858c ради AA small) */
-  --color-text-inverse:   #071116;
-  --color-text-link:      #39d0c7;
+     Новая основа — ТЁПЛЫЙ нейтральный камень: во всех фонах r > g > b, но
+     насыщенность мала (разброс каналов ≤ 17), поэтому подложка не «коричневая»,
+     а именно тёплый графит. Единственный интерактив — латунь: она называет
+     клеймо, печать и оковку, а не золото фэнтези (S≈55%, не #FFD700).
 
-  --color-border-primary:   #233a44; /* border */
-  --color-border-secondary: #16262e; /* мягче border (внутр. разделители) */
-  --color-border-strong:    #335463; /* border-strong (чипы/letter-боксы) */
-  --color-border-focus:     #39d0c7;
+     Семантика цвета от темы НЕ зависит: успех остаётся зелёным, ошибка —
+     красной, сведения — синими. Предупреждение уведено в ОРАНЖЕВЫЙ (уголь,
+     hue≈25°), чтобы отделиться от латунного акцента (hue≈42°) — раньше
+     `--color-accent-secondary` и `--color-status-warning` были одним и тем же
+     HEX, и «внимание» невозможно было отличить от «действия». */
+  --color-bg-primary:   #14120f; /* bg-0 / канва — тёплый графит */
+  --color-bg-secondary: #1e1b16; /* surface — плита карточки */
+  --color-bg-tertiary:  #272219; /* surface-raised — колодец поля, панель кода */
+  --color-surface-soft: #221e18; /* surface-soft */
+  --color-bg-inverse:   #f2ece0;
+  /* Соседняя ступень фона для градиента оболочки (bg-0 → bg-1). */
+  --color-bg-canvas-2:  #191612;
+
+  --color-text-primary:   #f2ece0; /* тёплая слоновая кость, 15.7:1 к канве */
+  --color-text-secondary: #bcb19c; /* 8.4:1 к канве */
+  --color-text-tertiary:  #9d927e; /* 5.9:1 к канве, 5.0:1 к карточке */
+  --color-text-inverse:   #14120f;
+  --color-text-link:      #e3c07a;
+
+  --color-border-primary:   #3a342a; /* грань плиты */
+  --color-border-secondary: #2a251e; /* мягче border (внутр. разделители) */
+  --color-border-strong:    #574e3f; /* border-strong (чипы/letter-боксы) */
+  /* Рамка поля ввода — отдельный тон, а не `border-primary`. У поля граница это
+     единственный признак, по которому его вообще видно (у кнопки есть ещё текст
+     и заливка), поэтому WCAG 1.4.11 требует для неё 3:1 к подложке. Замер
+     iter-77 на прежней палитре показал, что `border-primary` давал 1.42:1 и поле
+     опознавалось только по догадке. Здесь #8a7d66 даёт 4.25:1 к `bg-secondary`
+     и 4.64:1 к `bg-primary` — обе подложки, на которых поле реально стоит.
+     Разделители и рамки кнопок остаются на `border-primary`: там граница не
+     единственный носитель смысла. */
+  --color-control-border:   #8a7d66;
+  --color-border-focus:     #d9ae4d;
   /* Кольцо клавиатурного фокуса — ярче рамки выбора (focus). */
-  --color-focus-ring:       #8af3eb;
+  --color-focus-ring:       #f0cd7f;
 
-  --color-accent-primary:        #39d0c7; /* accent (teal-fill, тёмный ink AA) */
-  --color-accent-2:              #1fad91; /* accent-2 (второй стоп градиента) */
-  --color-accent-strong:         #7ce6df; /* teal-as-text (крупный контраст) */
-  --color-accent-primary-hover:  #5fe0d8;
-  --color-accent-primary-active: #2bb8af;
-  --color-accent-on:             #03211f; /* тёмный текст на teal-fill */
-  --color-accent-secondary:      #f7b83f; /* амбер (warning-семья, XP-бейдж) */
-  --color-accent-wash:           #12302f; /* teal-wash (выбранный, поверх surface) */
+  --color-accent-primary:        #d0a33c; /* латунь-заливка (тёмная надпись AA) */
+  --color-accent-2:              #a97c2a; /* второй стоп градиента — потемневшая латунь */
+  --color-accent-strong:         #e3c07a; /* латунь-как-текст (крупный контраст) */
+  --color-accent-primary-hover:  #e0b455;
+  --color-accent-primary-active: #b98c2f;
+  --color-accent-on:             #1a1305; /* тёмная надпись на латуни */
+  --color-accent-secondary:      #e08a41; /* уголь (XP-бейдж, семья предупреждения) */
+  --color-accent-wash:           #2e2717; /* латунная подложка (выбранный, поверх surface) */
 
-  --color-status-success:      #35c987;
-  --color-status-success-on:   #052118;
-  --color-status-success-wash: #0f2f22;
-  --color-status-warning:      #f7b83f;
+  --color-status-success:      #8fbf6a; /* травяная зелень, не неон */
+  --color-status-success-on:   #0f1a07;
+  --color-status-success-wash: #1f2a16;
+  --color-status-warning:      #e08a41;
   /* Единственный статус, у которого -wash не было: success/error/info свои
      подложки имели, warning — нет, и семантика «предупреждение» не могла быть
      фоном. Понадобилось для узлов диаграмм (см. mermaid-renderer.js). */
-  --color-status-warning-wash: #332810;
-  --color-status-error:        #ff715f;
-  --color-status-error-on:     #2a0d09;
-  --color-status-error-wash:   #331917;
-  --color-status-info:         #5db8ff;
-  --color-status-info-wash:    #0e2636;
-  --color-status-purple:       #9e7bff;
+  --color-status-warning-wash: #33230f;
+  --color-status-error:        #e8705c; /* сурик */
+  --color-status-error-on:     #2a0c07;
+  --color-status-error-wash:   #331815;
+  --color-status-info:         #7fa8d8; /* ультрамарин манускрипта, приглушённый */
+  --color-status-info-wash:    #1a2333;
+  --color-status-purple:       #a98fd8;
 
   --color-surface-overlay: rgba(0, 0, 0, 0.55);
+
 
   /* ---- Подсветка синтаксиса (highlight.js) ----
      Код подсвечивается палитрой продукта, а не палитрой чужой IDE-темы. Раньше
@@ -91,16 +114,16 @@
      на тумблер темы, и на светлом фоне её жёлтый #e6c07b давал ~1.4:1 — подсветка
      делала листинг ХУЖЕ, чем её отсутствие. Значения ниже откалиброваны на AA
      (≥4.5) против трёх поверхностей, где реально лежит код: bg-tertiary (панель
-     «Пример кода»), surface-soft, bg-secondary; худшая пара в тёмной теме — 5.06.
+     «Пример кода»), surface-soft, bg-secondary; худшая пара в тёмной теме — 5.15.
      Потребитель — components-code-highlight.css. */
-  --code-plain:   #eef6f5; /* базовый текст листинга */
-  --code-keyword: #9e7bff; /* ключевые слова, литералы */
-  --code-string:  #35c987; /* строки, regexp, значения атрибутов */
-  --code-number:  #f7b83f; /* числа, атрибуты, символы */
-  --code-type:    #7ce6df; /* типы и классы */
-  --code-func:    #5db8ff; /* имена функций и методов */
-  --code-tag:     #ff715f; /* XML-теги, аннотации */
-  --code-comment: #8397a0; /* комментарии */
+  --code-plain:   #f2ece0; /* базовый текст листинга */
+  --code-keyword: #c9a3e8; /* ключевые слова, литералы */
+  --code-string:  #8fbf6a; /* строки, regexp, значения атрибутов */
+  --code-number:  #e0a94f; /* числа, атрибуты, символы */
+  --code-type:    #e3c07a; /* типы и классы */
+  --code-func:    #8fb8e8; /* имена функций и методов */
+  --code-tag:     #e8705c; /* XML-теги, аннотации */
+  --code-comment: #9d927e; /* комментарии */
 
   /* ---- Декоративная пиксельная рампа (static/img/pixel/) ----
      Роли, которых нет в интерфейсной палитре и не должно быть: золото монеты —
@@ -125,15 +148,38 @@
   --pixel-flame:     #ff8c3c; /* пламя, серия дней */
   --pixel-rose:      #ff78a0; /* сердца, жизни */
   --pixel-rose-hi:   #ffa0b4; /* блик розового, румянец маскота */
-  --pixel-teal-hi:   #b4fff0; /* блик бирюзы на активной вкладке */
-  --pixel-teal-deep: #1a4a48; /* тень бирюзы на активной вкладке */
+  /* Здесь стояли --pixel-teal-hi (#b4fff0) и --pixel-teal-deep (#1a4a48) с
+     подписями «блик/тень бирюзы на активной вкладке». Подпись называла их
+     единственного заказчика — 3-slice растр выбранной вкладки, снятый в iter-79
+     (растр не знал темы: отрисовка совпадала побайтно в тёмной и светлой).
+     С его уходом #b4fff0 не остался нигде — ни в PNG, ни в var() — и удалён.
+     #1a4a48 из спрайтов тоже исчез, но живёт в контурах кнопок и MCQ-опций,
+     поэтому переехал в pixel-fx.css (ныне --px-brass-deep), к своим потребителям.
+     Рампа --pixel-* — это роли, которые кто-то РИСУЕТ; обе перестали ими быть
+     в ту же минуту, что был снят растр, и гейт назвал их мёртвыми сам. */
   --pixel-cloud:     #c8dcff; /* облако */
   --pixel-wood:      #785028; /* дерево, рукоять */
   --pixel-leaf:      #28a050; /* листва */
 
-  /* Типографика — Inter (UI/display/body) + JetBrains Mono (код/эйбрау).
-     Семейства совпадают с загружаемыми из Google Fonts (см. head.html). */
-  --font-family-display: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Типографика — ТРИ роли, а не одна.
+     До этой итерации display и body были одним и тем же Inter: заголовок
+     отличался от абзаца только кеглем, и у продукта не было голоса.
+
+     display — Literata (SIL OFL 1.1, TypeTogether). Книжная антиква с осью
+     оптического кегля и кириллицей, нарисованной вместе с латиницей, а не
+     добавленной позже. Она и есть «хроника»: тематический голос живёт в
+     ЗАГОЛОВКАХ и нигде больше. Декоративной готики в продукте нет вовсе —
+     §30 брифа: тема читается материалом и подачей, не шрифтом-костюмом.
+
+     body — Inter (SIL OFL 1.1). Остаётся: на 14–18px и в таблицах читаемость
+     важнее характера, а кириллица Inter одна из лучших в открытом доступе.
+     Антиква сюда НЕ пускается — ни в варианты MCQ, ни в разборы, ни в контролы.
+
+     mono — JetBrains Mono (SIL OFL 1.1): код и технические подписи.
+
+     Все три самохостятся (static/fonts + css/fonts-local.css, генератор —
+     scripts/vendor-frontend.sh). Лицензии — docs/visual-assets.md. */
+  --font-family-display: 'Literata', 'Iowan Old Style', Georgia, serif;
   --font-family-body:    'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-family-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
@@ -156,7 +202,11 @@
   --line-height-normal:  1.6;
   --line-height-relaxed: 1.7;
 
-  --letter-spacing-tight: -0.02em;
+  /* Здесь стоял --letter-spacing-tight: -0.02em. Он был настроен на гротеск и
+     после перевода заголовков на антикву (FRD-064) остался без единого
+     потребителя: три страничные копии, которые его брали, сняты вместе с ним —
+     трекинг заголовка принадлежит компоненту в reset.css. Токен без потребителя
+     это не запас, а приглашение снова завести под него правило. */
   --letter-spacing-wide:   0.08em; /* эйбрау (mono, uppercase) */
 
   --rule-weight: 1px;
@@ -179,24 +229,150 @@
   --space-11: 12rem;
   --space-12: 16rem;
 
-  /* Layout (legacy per-page меры Instrument — потребляются старым base.css до
-     поэтапной замены страниц; новый шелл использует --content-max ниже). */
-  --max-width-content: 68ch;
-  --max-width-wide:    1080px;
-  --max-width-page:    80rem;
-  --max-width-focus:    60rem;
-  --max-width-reading:  56rem;
-  --max-width-result:   72rem;
-  --max-width-settings: 64rem;
-  --max-width-data:     none;
+  /* Ширина рабочей полосы — ОДНА шкала (FRD-015). До iter-64 здесь стояло
+     девять токенов; пять из них не задавали ничего: --max-width-content,
+     --max-width-wide и --content-max не использовал никто (последний кормил
+     мёртвое правило `.content` в shell.css — класса нет ни в одном шаблоне),
+     --max-width-reading остался только в комментарии после iter-63,
+     а --max-width-data был литеральным `none`. Комментарий над блоком при этом
+     утверждал, что «новый шелл использует --content-max» — неверно.
+
+     Кап страницы БЫЛ заморожен на 80rem (1280px), а --page-gutter ниже растёт
+     с vw. Из-за этого полоса контента не расширялась вместе с экраном, а
+     СУЖАЛАСЬ: замер WebKit@2 на /stats — 1159px при вьюпорте 1512, 1146 при
+     1680, 1142 при 1728, 1126 при 1920, 1120 при 2560. Мёртвая ширина по
+     каждому борту при этом росла 6 → 90 → 114 → 210 → 530px (§6).
+
+     min(100%, 112rem): до ~1990px рабочей области полоса идёт вровень с
+     оболочкой (мёртвой ширины нет вовсе), выше — потолок 1792px, дальше растить
+     нечего: карточки /stats и /bookmarks к этой ширине уже набирают предельное
+     число колонок. Экраны ограничивают себя СВОЕЙ композицией (FRD-003), а не
+     персональным капом страницы.
+
+     --max-width-settings (64rem) снят в iter-65 по той же причине, что и старый
+     кап страницы: он был не мерой композиции, а вторым замороженным капом.
+     Замер WebKit@2 на /settings: полоса .settings-shell стояла ровно 1024px на
+     1440, 1512, 1920 и 2560 — то есть мёртвая ширина по борту росла 98 → 134 →
+     338 → 384px, а высота документа НЕ падала (docH 1441 на всех четырёх). Ширину
+     страница не использовала, а платила за неё скроллом. Композиция конструктора
+     теперь ограничивает себя сама (FRD-003), полосу задаёт .ed-page.
+
+     --max-width-focus (60rem) снят в iter-68: его читало ровно одно правило —
+     база .focus-training. Мера экрана вопроса считается из --max-width-options
+     (см. --focus-main-measure ниже), и совпадение двух токенов в 60rem было
+     совпадением, а не связью: правка одного не двигала другой, а полоса при
+     выключенном :has() получала две меры сразу. База композиции читает теперь
+     общую --focus-measure, отдельному капу нечего держать.
+
+     --max-width-result (72rem) снят в iter-69 — четвёртый замороженный кап
+     страницы подряд и ровно та же механика, что у трёх предыдущих. Он стоял на
+     `.result-page .ed-page`, то есть на ПОЛОСЕ, а не на композиции. Замер
+     WebKit@2 на /answer: полоса 1152px на 1440, 1512, 1680, 1728, 1920 и 2560 —
+     мёртвая ширина по борту 34 → 70 → 154 → 178 → 274 → 594px. Хуже того, при
+     замороженной полосе жёлоб композиции рос с vw, а рельс упирался в свой
+     потолок, поэтому каждый лишний пиксель жёлоба вычитался из РАБОЧЕЙ колонки:
+     карточка разбора 637px@1366 → 631 → 618 → 614 → 598 → 592px@2560. Главный
+     контент страницы сужался по мере расширения экрана. Мера страницы теперь
+     считается из её колонок (ниже), полосу задаёт .ed-page. */
+  --max-width-page: min(100%, 112rem);
   --max-width-options:  60rem;
   --page-gutter: var(--space-5);
 
-  /* ---- Структурные shell-токены (ТОЧНО из prototype/styles.css handoff-3) ---- */
-  --sidebar-width:     220px;  /* .shell grid-template-columns: 220px 1fr */
-  --content-max:       1220px; /* .content max-width */
-  --header-height:     64px;   /* .topbar height (mobile-header 44px) */
+  /* Композиция страницы результата (FRD-020) — те же слагаемые, что у экрана
+     вопроса, и та же роль: ЗДЕСЬ ЖИВУТ ТОЛЬКО СЛАГАЕМЫЕ, сумма объявлена на
+     .result-page (pages-result.css) по причине из блока --focus-main-measure.
+
+     Рабочая колонка = мера вариантов ПЛЮС внутренние поля карточки: на этой
+     странице разбор лежит внутри `.card` с padding: --space-6, поэтому колонка
+     в 60rem оставляла бы вариантам 896px и их собственный кап --max-width-options
+     не срабатывал бы НИКОГДА (мёртвое объявление). С добавкой полей варианты
+     ровно достают до своей меры — тот же инвариант «кап равен мере колонки»,
+     что на экране вопроса.
+
+     У рельса ДВА слагаемых, а не одно: прежний грид объявлял его как
+     minmax(16rem, 22rem) — минимум решал, помещается ли колонка, максимум решал,
+     насколько она вырастет. Во flex это те же две роли: минимум — flex-базис (и
+     тем самым порог переноса), максимум — потолок композиции. Одним числом их не
+     заменить, не потеряв одно из двух поведений: с 22rem рельс переставал вставать
+     рядом на 1728×1117 (штатная ширина 16" MacBook), с 16rem — не забирал остаток
+     ширины на 1920 и 2560, и он уходил в мёртвое поле по бортам.
+
+     Жёлоб — --space-6, то есть ровно внутреннее поле карточки. При --space-7
+     расстояние от текста разбора до рельса было больше, чем от текста до края
+     собственной карточки, и рельс читался оторванным блоком, а не соседней
+     колонкой. Побочно это выравнивает порог с экраном вопроса: обе страницы
+     переносят рельс на одних и тех же ширинах матрицы §10, и переход
+     вопрос → разбор не меняет число колонок под руками. */
+  --result-rail-min:     16rem;
+  --result-rail-max:     22rem;
+  --result-rail-gap:     var(--space-6);
+  --result-main-measure: calc(var(--max-width-options) + 2 * var(--space-6));
+
+  /* Ширина правого рельса экрана вопроса (PROC-07). Вынесена в токен, потому что
+     из неё СЧИТАЕТСЯ общая ширина двухпейновой композиции: главная колонка ровно
+     --max-width-options, иначе между капнутыми вариантами и рельсом открывается
+     мёртвый центр (замер iter-56: 869px на 2560). См. pages-focus.css. */
+  --focus-rail-width:   18rem;
+  --focus-rail-gap:     clamp(1.5rem, 3vw, 3rem);
+
+  /* Мера экрана вопроса — сумма его собственных колонок (FRD-003), но принадлежит
+     она НЕ одной композиции, а всей странице: по ней стоят resume-баннер, сама
+     композиция и пустое состояние. До iter-67 сумму знала только .focus-training,
+     а остальные прямые дети полосы шли по её ширине — и кромки расходились ровно
+     там, где композиция упиралась в свой кап: замер WebKit@2 на `/` дал 0px до
+     1512, 15 на 1680, 37 на 1728, 125 на 1920 и 442px на 2560 с каждой стороны.
+     Кнопка «Продолжить» баннера стояла на 442px правее правого края колонки
+     ответов, к которой она относится. Токен делает меру одной для всех троих.
+
+     iter-68 — мера полосы = мера РАБОЧЕЙ КОЛОНКИ плюс рельс. Раскладки различаются
+     только первым слагаемым (у «Разделения» рабочая колонка сама двухпейновая),
+     поэтому переопределяется --focus-main-measure, а формула полосы остаётся одна
+     на все раскладки. До iter-68 каждая раскладка переопределяла --focus-measure
+     целиком и рельс в её сумму просто не входил.
+
+     ЗДЕСЬ ЖИВЁТ ТОЛЬКО СЛАГАЕМОЕ. Сама сумма --focus-measure объявлена НЕ тут, а
+     на .focus-page (pages-focus.css), и это не вкусовщина: var() внутри значения
+     кастомного свойства подставляется на том элементе, где свойство ОБЪЯВЛЕНО, а
+     дальше вниз идёт уже подставленная строка. Пока сумма стояла на :root, она
+     навсегда запекала базовые 60rem, и переопределение --focus-main-measure у
+     «Разделения» (оно на .focus-page) в неё не попадало. Замер WebKit@2, 2560×1440,
+     раскладка «Разделение»: computed --focus-measure = calc(60rem + …) вместо
+     calc(clamp(20rem,24vw,34rem) + 4rem + 44rem + …), кап полосы 1296px против
+     собственной меры рабочей колонки 1312px — колонку поджимало на 16px, а рельс
+     не вставал рядом НИ НА ОДНОЙ ширине. Объявление рядом с переопределением
+     чинит это без второй формулы. */
+  --focus-main-measure: var(--max-width-options);
+
+  /* Раскладка «Разделение» экрана вопроса (FRD-007). Обе колонки ограничены СВОЕЙ
+     мерой чтения, а ширина композиции СЧИТАЕТСЯ из них (см. pages-focus.css).
+     До iter-58 колонка вопроса была литералом 20rem на всех вьюпортах, кегль героя
+     при этом рос с vw — мера вопроса ПАДАЛА по мере расширения экрана (замер WebKit:
+     16ch на 1280 → 14ch на 1728+). Колонка ответов, наоборот, росла свободно и с
+     1512 пробивала проектную --measure: 72ch (замер: 73ch). Оба литерала заменены
+     на меры: вопрос растёт с экраном до потолка, ответы капнуты ниже 72ch.
+     У вопроса потолок 34rem даёт ~25ch при кегле героя 34.4px; у ответов 44rem даёт
+     ~67ch внутри варианта — запас к --measure. */
+  --focus-split-question: clamp(20rem, 24vw, 34rem);
+  --focus-split-answers:  44rem;
+  --focus-split-gap:      var(--space-8);
+
+  /* ---- Структурные shell-токены ------------------------------------------ */
+  /* Ширина рельса (FRD-021). Пол СЧИТАН из содержимого рельса, а не назначен:
+     самая широкая подпись — «Светлая тема» в футере, 123.8px тем же шрифтом,
+     что и пункты меню (замер WebKit); плюс паддинг рельса 28 + паддинг строки
+     24 + иконка 16 + gap 11 = 202.8. Округлено вверх до 208 на расхождение
+     метрик шрифта между Safari и Chrome — при меньшей ширине подпись переносится
+     на вторую строку. Потолок 236 держит рельс в пропорции на широких экранах
+     (на 2560 он и так всего 9%), но не даёт ему расти бесконечно (§12: отступы
+     не растут вместе с экраном).
+     Раньше здесь стоял литерал 220px, одинаковый на 1024 (21% окна) и на 2560
+     (8.6%), а комментарии в shell.css и sidebar.html при этом обещали 232px. */
+  --sidebar-width:     clamp(208px, 4vw + 156px, 236px);
   --mobile-nav-height: 64px;   /* .mobile-nav height */
+  /* --header-height удалён (FRD-021) вместе с .topbar: 64px sticky-полосы,
+     в которой оставалась одна кнопка. Единственным потребителем токена была
+     высота этой полосы. Высота mobile-header (44px) живёт в своём @media-блоке
+     shell.css: у неё нет второго потребителя, ради которого нужен токен. */
 
   /* Радиусы (макеты handoff-3: sm8 / md12 / lg18; xl24 — для крупных карт). */
   --border-radius-sm:   8px;
@@ -228,37 +404,19 @@
   --z-dropdown: 20;
   --z-overlay: 40;
   --z-modal: 100;
-  --z-toast: 1000;
+  /* Верхняя ступень лестницы. Носитель один — `.skip-link` (reset-layout.css):
+     первая ссылка страницы обязана всплывать над всем, включая модалку. До
+     iter-82 ступень звалась `--z-toast` по компоненту, которого в проекте нет:
+     сообщения стоят в потоке (`.notice`), ничего не всплывает и z-index им не
+     нужен. Имя обещало плавающий слой и приглашало его завести. */
+  --z-skip-link: 1000;
 
-  /* ---- Kit aliases (Wave 4–7, cheat-sheet-complete-redesign-kit) ----
-     Короткие имена из kit tokens.css / tokens.json → существующие семантические
-     --color-* и layout-токены Instrument (teal-направление сохранено). */
-  --color-bg900: var(--color-bg-primary);
-  --color-bg800: var(--color-bg-secondary);
-  --color-bg700: var(--color-bg-tertiary);
-  --color-surface: var(--color-bg-secondary);
-  --color-border: var(--color-border-primary);
-  --color-text: var(--color-text-primary);
-  --color-muted: var(--color-text-secondary);
-  --color-teal: var(--color-accent-primary);
-  --color-cyan: var(--color-status-info);
-  --color-green: var(--color-status-success);
-  --color-amber: var(--color-accent-secondary);
-  --color-orange: var(--color-status-warning);
-  --color-red: var(--color-status-error);
-  --color-purple: var(--color-status-purple);
-  --color-blue: var(--color-status-info);
-  --color-white: var(--color-bg-secondary);
-  --color-ink: var(--color-accent-on);
-  --radius-sm: var(--border-radius-sm);
-  --radius-md: var(--border-radius-md);
-  --radius-lg: var(--border-radius-lg);
-  --radius-xl: var(--border-radius-xl);
-  --font-body: var(--font-family-body);
-  --font-mono: var(--font-family-mono);
-  --motion-fast: var(--duration-fast);
-  --motion-normal: var(--duration-normal);
-  --motion-slow: var(--duration-slow);
+  /* Здесь стоял мост коротких имён из redesign-kit (--color-teal/--color-bg900/
+     --radius-*/--font-body/--motion-* — 28 псевдонимов). Он умер дважды: сначала
+     по потреблению (замер: 26 имён из 28 не читались нигде, у --radius-md было
+     два потребителя, переведённых на --border-radius-md), затем по смыслу — имя
+     --color-teal называет цвет, которого в продукте больше нет. Псевдоним без
+     потребителя это не «запас», а приглашение завести под него значение. */
 }
 
 /* ===========================================================================
@@ -271,71 +429,80 @@
 :root[data-theme="light"] {
   color-scheme: light;
 
-  --color-bg-primary:   #f5f8f8; /* bg-0 */
-  --color-bg-secondary: #ffffff; /* surface */
-  --color-bg-tertiary:  #f7fbfa; /* surface-raised */
-  --color-surface-soft: #eef6f4; /* surface-soft */
-  --color-bg-inverse:   #0d1b22;
-  --color-bg-canvas-2:  #ffffff;
+  /* ---- Цвет — LIGHT: «пергамент и чернила» --------------------------------
+     Светлая тема спроектирована ВМЕСТЕ с тёмной, а не получена инверсией.
+     Прежняя светлая была холодным офисным белым (#f5f8f8 / #ffffff) с тем же
+     teal — то есть вторичной темой, у которой не было своего материала.
 
-  --color-text-primary:   #152327; /* ~14:1 */
-  --color-text-secondary: #52666b; /* ~7:1 */
-  --color-text-tertiary:  #647377; /* ~5:1 (AA small) */
-  --color-text-inverse:   #f5f8f8;
-  --color-text-link:      #0c6b64; /* тёмный teal ~5.2:1 */
+     Здесь материал свой: канва — пергамент (#ece4d3), карточка — лист
+     веленевой бумаги светлее канвы (#f9f4e9), поэтому плита ЛЕЖИТ на столе,
+     а не растворяется в нём. Текст — тёплые чернила, а не чистый чёрный.
+     Латунь темнеет до охры (#8a6414), сохраняя роль: тот же акцент, другая
+     светлота. Никакой имитации текстуры — материал делают тон и температура. */
+  --color-bg-primary:   #ece4d3; /* bg-0 — пергамент */
+  --color-bg-secondary: #f9f4e9; /* surface — лист, светлее канвы */
+  --color-bg-tertiary:  #fdfbf5; /* surface-raised — колодец поля, панель кода */
+  --color-surface-soft: #e6dcc7; /* surface-soft */
+  --color-bg-inverse:   #1e1b16;
+  --color-bg-canvas-2:  #f5efe2;
 
-  --color-border-primary:   #d8e5e3; /* border */
-  --color-border-secondary: #e6efed;
-  --color-border-strong:    #b8cfcc; /* border-strong */
-  --color-border-focus:     #0f9a90;
-  --color-focus-ring:       #0a6360;
+  --color-text-primary:   #241e14; /* тёплые чернила, 14.6:1 к канве */
+  --color-text-secondary: #514736; /* 8.5:1 */
+  --color-text-tertiary:  #6d6250; /* 4.7:1 (AA-large; 5.5:1 к карточке) */
+  --color-text-inverse:   #f9f4e9;
+  --color-text-link:      #7a5312; /* охра, 5.4:1 к канве */
 
-  --color-accent-primary:        #0d8074; /* teal-fill (белый текст AA 4.8:1) */
-  --color-accent-2:              #0e8a75;
-  --color-accent-strong:         #0c6b64; /* teal-as-text */
-  --color-accent-primary-hover:  #0c7a6f; /* светлая тема: hover темнее */
-  --color-accent-primary-active: #0a7267;
-  --color-accent-on:             #ffffff;
-  --color-accent-secondary:      #8a5a00; /* амбер-ink */
-  --color-accent-wash:           #d9f0ef;
+  --color-border-primary:   #d8cbb0; /* грань листа */
+  --color-border-secondary: #e6dcc7;
+  --color-border-strong:    #b5a487;
+  /* Светлая пара к `--color-control-border` (WCAG 1.4.11, 3:1 к подложке поля):
+     #857753 даёт 4.02:1 к карточке и 3.49:1 к канве. */
+  --color-control-border:   #857753;
+  --color-border-focus:     #8a6414;
+  --color-focus-ring:       #6b4f10;
+
+  --color-accent-primary:        #8a6414; /* охра-заливка (светлая надпись AA 5.19:1) */
+  --color-accent-2:              #7a5512;
+  --color-accent-strong:         #6f4f0f; /* охра-как-текст */
+  --color-accent-primary-hover:  #7d5a11; /* светлая тема: hover темнее */
+  --color-accent-primary-active: #6d4e0e;
+  --color-accent-on:             #fdfbf5;
+  --color-accent-secondary:      #9c4f14; /* уголь-чернила */
+  --color-accent-wash:           #f0e4c8;
 
   /* success/error как ТЕКСТ ложатся на свои -wash-фоны (напр. вердикт MCQ, ярлыки
-     «Правильный ответ»/«Твой выбор (ошибка)»). Прежние #157f52/#c0392b на #dcf1e7/
-     #f7e0dc давали 4.24/4.31 — ниже WCAG 1.4.3 AA (4.5). Затемнены на ~10% с
-     сохранением тона → 5.0+ на wash (замер live). На белом фоне и как заливка с
-     белым текстом (-on) контраст только растёт. Тёмная тема AA проходила (6+) —
-     её значения переопределены в [data-theme=dark], здесь не затрагиваются. */
-  --color-status-success:      #13724a; /* было #157f52 — AA на -wash */
+     «Правильный ответ»/«Твой выбор (ошибка)»). Пороги те же, что и в тёмной
+     ветке; здесь оба тона затемнены до AA против пергаментной канвы И против
+     своей подложки — худшая пара 5.06 (успех на своём wash). Washes тоже тёплые:
+     холодный мятный фон на пергаменте читался бы заплаткой из другой системы. */
+  --color-status-success:      #3a6b2c;
   --color-status-success-on:   #ffffff;
-  --color-status-success-wash: #dcf1e7;
-  --color-status-warning:      #8a6500;
-  --color-status-warning-wash: #f9ecca;
-  --color-status-error:        #ad3327; /* было #c0392b — AA на -wash */
+  --color-status-success-wash: #dfeacd;
+  --color-status-warning:      #8a5312;
+  --color-status-warning-wash: #f3e3c5;
+  --color-status-error:        #a5342a;
   --color-status-error-on:     #ffffff;
-  --color-status-error-wash:   #f7e0dc;
-  --color-status-info:         #1466a8;
-  --color-status-info-wash:    #dbeafe;
-  --color-status-purple:       #6d4bd8;
+  --color-status-error-wash:   #f5ddd7;
+  --color-status-info:         #1f5b91;
+  --color-status-info-wash:    #dde7f2;
+  --color-status-purple:       #5b3fa8;
 
-  --color-surface-overlay: rgba(11, 21, 28, 0.42);
+  --color-surface-overlay: rgba(20, 18, 15, 0.42);
 
-  /* Подсветка синтаксиса — светлые аналоги. Тона те же (пурпур/зелёный/амбер/
-     teal/синий/коралл), затемнены до AA на светлых поверхностях; худшая пара —
-     комментарий 5.51 на surface-soft. Комментарий взят на ступень темнее, чем
-     text-tertiary (#647377 давал 4.49): в шпаргалках комментарий часто и есть
-     объяснение, ради которого показан листинг. */
-  --code-plain:   #152327;
-  --code-keyword: #6d4bd8;
-  --code-string:  #13724a;
-  --code-number:  #8a5a00;
-  --code-type:    #0c6b64;
-  --code-func:    #1466a8;
-  --code-tag:     #ad3327;
-  --code-comment: #52666b;
+  /* Подсветка синтаксиса — светлые аналоги. Тона те же (пурпур/зелёный/охра/
+     латунь/ультрамарин/сурик), затемнены до AA на светлых поверхностях. */
+  --code-plain:   #241e14;
+  --code-keyword: #5b3fa8;
+  --code-string:  #2f5f24;
+  --code-number:  #7a4f0d;
+  --code-type:    #6f4f0f;
+  --code-func:    #1f5b91;
+  --code-tag:     #a5342a;
+  --code-comment: #514736;
 
-  --shadow-sm: 0 1px 2px rgba(4, 10, 14, 0.06), 0 2px 8px rgba(4, 10, 14, 0.05);
-  --shadow-md: 0 4px 14px rgba(4, 10, 14, 0.10);
-  --shadow-lg: 0 16px 42px rgba(28, 55, 61, 0.12);
+  --shadow-sm: 0 1px 2px rgba(36, 30, 20, 0.07), 0 2px 8px rgba(36, 30, 20, 0.05);
+  --shadow-md: 0 4px 14px rgba(36, 30, 20, 0.11);
+  --shadow-lg: 0 16px 42px rgba(36, 30, 20, 0.13);
   --shadow-focus: 0 0 0 2px var(--color-bg-primary), 0 0 0 4px var(--color-border-focus);
 }
 

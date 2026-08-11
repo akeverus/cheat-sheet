@@ -1,58 +1,114 @@
 <!DOCTYPE html>
 <html lang="ru" data-design="instrument" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/head :: head(title='Вход — Подготовка к собеседованию', includeMermaid=false, includeChart=false, includeHighlight=false, page='login')}"></head>
+<!--/* Страница входа НЕ носит оболочку `.app` (рельс + mobile-nav): у анонимного
+     посетителя нет ни одного адреса, куда навигация могла бы вести, а
+     shell-head рисует кнопку «Выйти» тому, кто ещё не вошёл. До iter-71 здесь
+     стоял `<div class="app app-login">` — грид оболочки БЕЗ рельса: первая
+     колонка грида остаётся шириной --sidebar-width, и вся страница уезжала в
+     236px, оставляя вторую колонку (2324px на 2560) пустой. Класс `.app-login`
+     при этом не имел ни одного правила ни в одном CSS — мёртвая зацепка. */-->
 <body class="login-page">
 <a class="skip-link" href="#main-content">Перейти к форме входа</a>
 <svg th:replace="~{fragments/pixel-sprite :: sprite}"></svg>
 <svg th:replace="~{fragments/icons :: sprite}"></svg>
-<div class="app app-login">
 <main id="main-content" class="ed-page login-main" tabindex="-1">
-    <section class="login-card" aria-labelledby="login-heading">
-        <p class="login-eyebrow">Multi-режим</p>
-        <h1 id="login-heading" class="login-title">Вход</h1>
-        <p class="login-lead muted">Войдите, чтобы сохранять прогресс отдельно от других пользователей.</p>
-
-        <div class="login-alert login-alert-error" role="alert" id="login-error"
-             th:if="${loginError}">
-            Неверный логин или пароль.
+    <div class="page-head">
+        <div class="page-head-title">
+            <span class="eyebrow">Подготовка к собеседованию</span>
+            <h1 id="login-heading">Вход</h1>
         </div>
-        <div class="login-alert" role="status"
-             th:if="${loginLogout}">
-            Сеанс завершён.
-        </div>
+        <!--/* Раньше здесь стоял eyebrow «Multi-режим» — имя внутреннего значения
+             `app.security.mode`, ничего не говорящее человеку у формы. Пояснение
+             отвечает на настоящий вопрос: зачем вообще входить. */-->
+        <p class="muted page-head-lead">Прогресс, расписание повторений и закладки хранятся
+            за вашей учётной записью — отдельно от других, кто работает с этим же банком вопросов.</p>
+    </div>
 
-        <form class="login-form" th:action="@{/login}" method="post">
-            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-            <label class="field">
-                <span class="field-label">Логин</span>
-                <input type="text" name="username" autocomplete="username" required autofocus
-                       th:aria-invalid="${loginError}"
-                       th:attr="aria-describedby=${loginError} ? 'login-error' : null">
-            </label>
-            <label class="field">
-                <span class="field-label">Пароль</span>
-                <input type="password" name="password" autocomplete="current-password" required
-                       th:aria-invalid="${loginError}"
-                       th:attr="aria-describedby=${loginError} ? 'login-error' : null">
-            </label>
-            <button type="submit" class="btn next-btn primary-btn login-submit">Войти</button>
-        </form>
+    <div class="login-split">
+        <section class="login-panel login-form-panel" aria-labelledby="login-form-heading">
+            <h2 id="login-form-heading" class="login-panel-title">Учётные данные</h2>
 
-        <div class="login-oauth" th:if="${oauthLoginUrl != null}">
-            <p class="login-divider muted tiny" aria-hidden="true">или</p>
-            <a class="btn next-btn login-oauth-btn" th:href="${oauthLoginUrl}"
-               th:text="|Войти через ${oauthDisplayName}|">Войти через OIDC</a>
-        </div>
+            <div class="notice" role="alert" id="login-error" th:if="${loginError}">
+                Неверный логин или пароль. Проверьте раскладку и регистр.
+            </div>
+            <div class="notice notice-success" role="status" th:if="${loginLogout}">
+                Сеанс завершён. Прогресс сохранён.
+            </div>
 
-        <p class="login-hint muted tiny">
-            API-клиенты могут использовать HTTP Basic с теми же учётными данными.
-        </p>
-        <p class="login-back">
-            <a th:href="@{/}" class="btn secondary-btn">На главную</a>
-        </p>
-    </section>
+            <!--/* Состояния §27 у формы не свои: `form[action$="/login"]` внесена в
+                 allowlist общего guard'а повторной отправки (ui/form-guards.js,
+                 initSubmitOnceGuard) — после первого клика кнопка переходит в
+                 общее состояние ожидания (ui/pending.js: подпись «Вхожу…», руна,
+                 курсор progress, голос в #pending-status), а второй POST /login
+                 глотается перехватом на фазе capture. Вид рисует система ожидания
+                 (components-pending.css); отдельного рецепта страница не заводит. */-->
+            <!--/* Скрытого `_csrf` в разметке НЕТ намеренно: `th:action` проходит через
+                 CsrfRequestDataValueProcessor Spring Security, и токен уже вставлен в
+                 форму фреймворком. Ручная копия (она стояла здесь до iter-71) давала
+                 ДВА одинаковых `_csrf` в теле POST — замерено на отрендеренной
+                 странице. Эта же копия лежит ещё в шести формах приложения
+                 (settings ×2, bookmarks ×2, shell-head, sidebar) и там тоже
+                 удваивается; чистка тех форм — не область этой итерации. */-->
+            <form class="login-form" th:action="@{/login}" method="post">
+                <label class="field">
+                    <span class="field-label">Логин</span>
+                    <input type="text" name="username" autocomplete="username" required autofocus
+                           th:aria-invalid="${loginError}"
+                           th:attr="aria-describedby=${loginError} ? 'login-error' : null">
+                </label>
+                <label class="field">
+                    <span class="field-label">Пароль</span>
+                    <input type="password" name="password" autocomplete="current-password" required
+                           th:aria-invalid="${loginError}"
+                           th:attr="aria-describedby=${loginError} ? 'login-error' : null">
+                </label>
+                <button type="submit" class="btn next-btn primary-btn login-submit"
+                        data-pending-label="Вхожу…">Войти</button>
+            </form>
+
+            <div class="login-oauth" th:if="${oauthLoginUrl != null}">
+                <p class="login-divider muted tiny" aria-hidden="true">или</p>
+                <a class="btn next-btn login-oauth-btn" th:href="${oauthLoginUrl}"
+                   th:text="|Войти через ${oauthDisplayName}|">Войти через OIDC</a>
+            </div>
+
+            <p class="login-hint muted tiny">
+                API-клиенты могут использовать HTTP Basic с теми же учётными данными.
+            </p>
+        </section>
+
+        <!--/* Вторая колонка: обзор банка вопросов из LoginPageService — те же
+             разделы и те же цифры, что в каталоге на /stats. Это не заполнитель
+             ширины: до входа состав банка — единственный факт, который можно
+             сообщить честно (прогресса у анонимного посетителя нет, и нули
+             «изучено 0» рассказывали бы про отсутствие аккаунта, а не про банк).
+             Пустой банк → колонки нет вовсе, форма занимает полосу целиком. */-->
+        <aside class="login-panel login-context" aria-labelledby="login-context-heading"
+               th:if="${bankOverview != null and !bankOverview.empty}">
+            <h2 id="login-context-heading" class="login-panel-title">Что в банке вопросов</h2>
+            <p class="login-context-total">
+                <strong th:text="${bankOverview.questionCount}">0</strong> вопросов
+                в <strong th:text="${bankOverview.topicCount}">0</strong> темах
+            </p>
+            <ul class="login-section-list">
+                <li class="login-section" th:each="section : ${bankOverview.sections}">
+                    <span class="login-section-title" th:text="${section.title}">Раздел</span>
+                    <span class="login-section-count">
+                        <span th:text="${section.questionCount}">0</span><span class="muted"> вопр.</span>
+                    </span>
+                </li>
+            </ul>
+            <p class="login-context-note muted tiny">
+                Банк общий для всех учётных записей — личным остаётся только прогресс по нему.
+            </p>
+        </aside>
+    </div>
+
+    <p class="login-back">
+        <a th:href="@{/}" class="btn secondary-btn">На главную</a>
+    </p>
 </main>
-</div>
 <th:block th:replace="~{fragments/shell-scripts :: shell-scripts}"></th:block>
 <th:block th:replace="~{fragments/scripts :: app-script}"></th:block>
 </body>

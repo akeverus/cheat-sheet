@@ -163,14 +163,18 @@ class InterviewPageMvcServiceTest {
                 null, List.of(), List.of(), null, filter, "hashmap", List.of(), List.of(), "[]"
         );
 
+        StatsPageService.TopicTableQuery tableQuery =
+                StatsPageService.TopicTableQuery.of("accuracy", "desc", "all");
+
         when(requestMapper.resolveStatsContext("java", "backend", true, false, true, "hashmap")).thenReturn(context);
-        when(statsPageService.build(filter, "hashmap", 33)).thenReturn(state);
+        when(statsPageService.build(filter, "hashmap", 33, tableQuery)).thenReturn(state);
         when(navigationService.statsView()).thenReturn("stats");
 
-        String view = service.stats("java", "backend", true, false, true, "hashmap", model);
+        String view = service.stats("java", "backend", true, false, true, "hashmap",
+                "accuracy", "desc", "all", model);
 
         assertThat(view).isEqualTo("stats");
-        verify(statsPageService).build(eq(filter), eq("hashmap"), eq(33));
+        verify(statsPageService).build(eq(filter), eq("hashmap"), eq(33), eq(tableQuery));
         verify(modelAttributeMapper).applyStatsPageState(model, state);
     }
 }

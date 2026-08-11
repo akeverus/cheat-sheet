@@ -1,5 +1,6 @@
 import { apiPostJson } from '../core/api-client.js';
 import { API } from '../core/constants.js';
+import { setPending, clearPending } from './pending.js';
 
 /**
  * Радиокнопки категорий жалобы, отрисованные сервером в инертный <template>
@@ -168,16 +169,16 @@ export function reportModal(questionId) {
   function showError(msg) {
     errEl.textContent = msg;
     errEl.classList.remove('hidden');
-    okBtn.removeAttribute('aria-busy');
-    okBtn.removeAttribute('aria-disabled');
+    // Голос отдаём ошибке, а не ожиданию: живой регион ожидания гасим пустой
+    // строкой, иначе скринридер услышал бы «Отправляю…» поверх текста отказа.
+    clearPending(okBtn, '');
     inFlight = false;
   }
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (inFlight) return;
     inFlight = true;
-    okBtn.setAttribute('aria-busy', 'true');
-    okBtn.setAttribute('aria-disabled', 'true');
+    setPending(okBtn, 'Отправляю…');
     errEl.classList.add('hidden');
     // Категория не выбрана → уходит пустой, а не своё 'OTHER': правило
     // «неизвестное/пустое → OTHER» принадлежит серверу (QuestionIssueCategory)

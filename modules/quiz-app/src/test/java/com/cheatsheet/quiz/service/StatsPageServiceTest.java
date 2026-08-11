@@ -25,9 +25,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -61,9 +64,11 @@ class StatsPageServiceTest {
                 topicUtils, dailyActivityRepository);
         lenient().when(learningMetricsService.compute()).thenReturn(LearningMetrics.EMPTY);
         lenient().when(dailyActivityRepository.findRecentDays(anyInt())).thenReturn(List.of());
-        lenient().when(questionStatsRepository.findRecentWrongQuestions(anyInt())).thenReturn(List.of());
+        lenient().when(questionStatsRepository.findRecentWrongQuestions(anyList(), any(), anyInt()))
+                .thenReturn(List.of());
         lenient().when(questionStatsRepository.findDifficultyDistribution()).thenReturn(List.of());
-        lenient().when(questionStatsRepository.findTopicCoverageGaps(anyInt(), anyInt())).thenReturn(List.of());
+        lenient().when(questionStatsRepository.findTopicCoverageGaps(anyList(), anyInt(), anyInt()))
+                .thenReturn(List.of());
         lenient().when(questionStatsRepository.findReviewForecast(org.mockito.ArgumentMatchers.anyLong(), anyInt()))
                 .thenReturn(List.of());
     }
@@ -77,15 +82,20 @@ class StatsPageServiceTest {
         when(topicCatalogService.normalizeGroup("backend")).thenReturn("backend");
         when(topicCatalogService.filterAndSortTopics(List.of("java"), "backend", true)).thenReturn(List.of("java"));
         when(topicCatalogService.groupOptions(List.of("java"))).thenReturn(List.of());
-        when(facade.getTopicStats()).thenReturn(topicStats);
+        when(facade.topicsForFilter(filter)).thenReturn(List.of("java"));
+        when(facade.getTopicStats(filter)).thenReturn(topicStats);
+        lenient().when(facade.getTopicStats()).thenReturn(topicStats);
         when(searchService.search(eq("hashmap"), anyInt())).thenReturn(List.of());
         when(topicUtils.displayName("java")).thenReturn("Java");
         when(objectMapper.writeValueAsString(org.mockito.ArgumentMatchers.any())).thenThrow(new JsonProcessingException("bad json") {});
         // Слабую тему и их число страница НЕ считает сама — берёт у репозитория, тем же
-        // правилом, что и режим «Слабые темы» (см. QuestionStatsRepositoryTest).
-        when(questionStatsRepository.findWeakestTopic(QuizConstants.WEAK_TOPIC_THRESHOLD))
+        // правилом, что и режим «Слабые темы» (см. QuestionStatsRepositoryTest), но по
+        // выборке страницы (FRD-025), а не по всему банку.
+        when(questionStatsRepository.findWeakestTopic(
+                List.of("java"), false, false, QuizConstants.WEAK_TOPIC_THRESHOLD))
                 .thenReturn(new QuestionStatsRepository.WeakestTopic("java", 42));
-        when(questionStatsRepository.countWeakTopics(QuizConstants.WEAK_TOPIC_THRESHOLD)).thenReturn(3L);
+        when(questionStatsRepository.countWeakTopics(
+                List.of("java"), false, false, QuizConstants.WEAK_TOPIC_THRESHOLD)).thenReturn(3L);
 
         StatsPageService.StatsPageState state = service.build(filter, "hashmap", 20);
 
@@ -107,11 +117,13 @@ class StatsPageServiceTest {
         when(topicCatalogService.normalizeGroup(null)).thenReturn(null);
         when(topicCatalogService.filterAndSortTopics(List.of("java"), null, true)).thenReturn(List.of("java"));
         when(topicCatalogService.groupOptions(List.of("java"))).thenReturn(List.of());
-        when(facade.getTopicStats()).thenReturn(List.of());
+        when(facade.topicsForFilter(filter)).thenReturn(List.of("java"));
+        when(facade.getTopicStats(filter)).thenReturn(List.of());
+        lenient().when(facade.getTopicStats()).thenReturn(List.of());
         when(searchService.search(eq(""), anyInt())).thenReturn(List.of());
         when(objectMapper.writeValueAsString(org.mockito.ArgumentMatchers.any())).thenReturn("[]");
         when(topicUtils.displayName("java")).thenReturn("Java");
-        when(questionStatsRepository.findRecentWrongQuestions(anyInt())).thenReturn(List.of(
+        when(questionStatsRepository.findRecentWrongQuestions(anyList(), any(), anyInt())).thenReturn(List.of(
                 new QuestionStatsRepository.WrongQuestionRow(42L, "java", "What is Spring?", 2, 1, 1_800_000_000L, 1_700_000_000L)
         ));
         when(dailyActivityRepository.findRecentDays(anyInt())).thenReturn(List.of(
@@ -129,6 +141,55 @@ class StatsPageServiceTest {
         assertThat(state.accuracyTrendJson()).isEqualTo("[]");
     }
 
+    /**
+     * FRD-025. Страница `/stats` объявляет источник словами («Отобрано: …»), поэтому
+     * каждый срез ПО ТЕМАМ обязан считаться по одной и той же выборке — той, что названа
+     * в полосе отбора. До iter-73 таблица «Детализация по темам», пробелы покрытия, разбор
+     * ошибок и карточка слабых тем брали полный банк: страница показывала отбор в шапке и
+     * весь банк под ней (замер: 319 строк при любом `?group=`/`?topic=`).
+     *
+     * <p>Гейт проверяет именно РАЗДЕЛЕНИЕ источников, а не факт вызова: срезы получают
+     * список тем выборки, а каталог разделов — полный банк (он и есть навигация «куда
+     * пойти дальше» и, сузившись, перестал бы отвечать на свой вопрос).
+     */
+    @Test
+    void everyTopicSliceIsScopedToSelectionWhileCatalogStaysFullBank() throws Exception {
+        InterviewFilter filter = new InterviewFilter(null, "foundation", true, true, false, true);
+        List<String> selected = List.of("java/java-stream-interview", "java/java-optional-interview");
+        List<TopicStats> selectionStats = List.of(new TopicStats("java/java-stream-interview", 10, 4, 1, 3, 6, 1, 0.0));
+        List<TopicStats> fullBankStats = List.of(
+                new TopicStats("java/java-stream-interview", 10, 4, 1, 3, 6, 1, 0.0),
+                new TopicStats("go/go-testing-interview", 7, 2, 5, 0, 0, 0, 0.0));
+        when(facade.getStats(filter)).thenReturn(new InterviewStats(10, 5, 2, 2, 7, 3));
+        when(questionRepository.findTopics()).thenReturn(List.of("java/java-stream-interview"));
+        when(topicCatalogService.normalizeGroup("foundation")).thenReturn("foundation");
+        when(topicCatalogService.filterAndSortTopics(any(), eq("foundation"), eq(true))).thenReturn(selected);
+        when(topicCatalogService.groupOptions(any())).thenReturn(List.of());
+        when(facade.topicsForFilter(filter)).thenReturn(selected);
+        when(facade.getTopicStats(filter)).thenReturn(selectionStats);
+        when(facade.getTopicStats()).thenReturn(fullBankStats);
+        when(searchService.search(any(), anyInt())).thenReturn(List.of());
+        when(objectMapper.writeValueAsString(org.mockito.ArgumentMatchers.any())).thenReturn("[]");
+        when(topicUtils.displayName("java/java-stream-interview")).thenReturn("Stream API");
+
+        StatsPageService.StatsPageState state = service.build(filter, "", 20);
+
+        // Таблица тем — по выборке, а не по банку.
+        assertThat(state.topicStats()).isEqualTo(selectionStats);
+
+        // Пробелы покрытия, разбор ошибок и карточка слабых тем — по ТОМУ ЖЕ списку тем
+        // и с теми же флажками отбора, что и сводка наверху.
+        verify(questionStatsRepository).findTopicCoverageGaps(eq(selected), anyInt(), anyInt());
+        verify(questionStatsRepository).findRecentWrongQuestions(eq(selected), eq(true), anyInt());
+        verify(questionStatsRepository).findWeakestTopic(
+                selected, true, true, QuizConstants.WEAK_TOPIC_THRESHOLD);
+        verify(questionStatsRepository).countWeakTopics(
+                selected, true, true, QuizConstants.WEAK_TOPIC_THRESHOLD);
+
+        // Каталог разделов — по полному банку: он навигация, а не срез.
+        verify(topicCatalogService).groupCatalog(any(), eq(fullBankStats));
+    }
+
     @Test
     void escapesScriptBreakingCharsForHtmlEmbedding() throws Exception {
         // C35: topicStatsJson встраивается literal-ом в <script id="topic-stats-data">.
@@ -140,7 +201,9 @@ class StatsPageServiceTest {
         when(topicCatalogService.normalizeGroup("backend")).thenReturn("backend");
         when(topicCatalogService.filterAndSortTopics(List.of("java"), "backend", true)).thenReturn(List.of("java"));
         when(topicCatalogService.groupOptions(List.of("java"))).thenReturn(List.of());
-        when(facade.getTopicStats()).thenReturn(topicStats);
+        when(facade.topicsForFilter(filter)).thenReturn(List.of("java"));
+        when(facade.getTopicStats(filter)).thenReturn(topicStats);
+        lenient().when(facade.getTopicStats()).thenReturn(topicStats);
         when(searchService.search(eq("hashmap"), anyInt())).thenReturn(List.of());
         when(topicUtils.displayName("java")).thenReturn("Java");
         when(objectMapper.writeValueAsString(org.mockito.ArgumentMatchers.any()))

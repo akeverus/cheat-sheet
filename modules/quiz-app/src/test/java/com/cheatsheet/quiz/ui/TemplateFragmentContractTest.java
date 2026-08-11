@@ -1,6 +1,7 @@
 package com.cheatsheet.quiz.ui;
 
 import com.cheatsheet.quiz.config.web.JsPreloadService;
+import com.cheatsheet.quiz.feature.interview.service.page.StatsPageService;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 
@@ -17,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,6 +39,14 @@ class TemplateFragmentContractTest {
      * проверку правила.
      */
     private static final Pattern CSS_COMMENT = Pattern.compile("/\\*.*?\\*/", Pattern.DOTALL);
+
+    /**
+     * Комментарии разметки, включая парсерную форму thymeleaf. Та же
+     * ловушка, что у {@link #CSS_COMMENT}, и она сработала на iter-74: гейт
+     * «в строках списка нет акцентной кнопки» падал на комментарии, который
+     * объяснял, почему её там нет.
+     */
+    private static final Pattern TEMPLATE_COMMENT = Pattern.compile("<!--.*?-->", Pattern.DOTALL);
 
     /**
      * Якорь прогрессивного улучшения → модуль, который его оживляет.
@@ -109,7 +119,7 @@ class TemplateFragmentContractTest {
         String trainingActions = readTemplate("templates/fragments/training-actions.html");
         String resultZoneHead = readTemplate("templates/fragments/result-zone-head.html");
         String postAnswerControls = readTemplate("templates/fragments/post-answer-controls.html");
-        String inlineAlert = readTemplate("templates/fragments/inline-alert.html");
+        String noticeSlot = readTemplate("templates/fragments/notice.html");
 
         assertThat(trainingActions).contains("data-ui-fragment=\"training-actions\"");
         assertThat(trainingActions).contains("id=\"action-footer\"");
@@ -140,9 +150,19 @@ class TemplateFragmentContractTest {
         assertThat(postAnswerControls).contains("aria-controls=\"extra-analysis-content\"");
         assertThat(postAnswerControls).contains("id=\"extra-analysis-content\"");
 
-        assertThat(inlineAlert).contains("data-ui-fragment=\"inline-alert\"");
-        assertThat(inlineAlert).contains("role=\"alert\"");
-        assertThat(inlineAlert).contains("aria-live=\"assertive\"");
+        // Слот сообщения. `data-notice-host` — контракт поиска хоста из ui/alerts.js:
+        // страничный слот (`scope='page'`) выигрывает у общего (`scope='shell'`).
+        // До iter-82 скрипт искал `#interview-alert`, который печатали ровно две
+        // страницы, и сообщения об ошибке с /bookmarks не доезжали никуда.
+        assertThat(noticeSlot).contains("data-ui-fragment=\"notice-slot\"");
+        assertThat(noticeSlot).contains("data-notice-host=${scope}");
+        // Дефолт разметки — ошибка (assertive); успех переключает role/aria-live
+        // в скрипте, тон известен только в момент вызова.
+        assertThat(noticeSlot).contains("role=\"alert\"");
+        assertThat(noticeSlot).contains("aria-live=\"assertive\"");
+        // Слот приезжает скрытым и классом, и атрибутом: без JS он не должен
+        // занимать место даже до загрузки скинов.
+        assertThat(noticeSlot).contains("class=\"notice hidden\"");
     }
 
     @Test
@@ -174,17 +194,13 @@ class TemplateFragmentContractTest {
         assertThat(stats).contains("<body class=\"stats-page\">");
         assertThat(settings).contains("<body class=\"settings-page\">");
         assertThat(result).contains("<body class=\"result-page\">");
-        assertThat(stats).contains("stats-filters-form");
-        assertThat(stats).contains("stats-search-form");
-        assertThat(stats).contains("stats-action-btn");
-        assertThat(stats).contains("stats-apply-action");
-        assertThat(stats).contains("stats-search-action");
+        assertThat(stats).contains("filter-bar-form");
 
         assertThat(focusTraining).contains("fragments/training-actions :: training-actions");
         // Редизайн (ui-redesign-handoff): masthead заменён каркасом shell —
-        // sidebar (левая нав) + topbar + bottom-nav. Все страницы подключают их.
+        // sidebar (рельс) + shell-head + bottom-nav. Все страницы подключают их.
         assertThat(focusTraining).contains("fragments/sidebar :: sidebar");
-        assertThat(focusTraining).contains("fragments/topbar :: topbar");
+        assertThat(focusTraining).contains("fragments/shell-head :: shell-head");
         assertThat(focusTraining).contains("fragments/mobile-nav :: mobile-nav");
         assertThat(focusTraining).contains("href=\"#main-content\"");
         assertThat(focusTraining).contains("fragments/result-zone-head :: result-zone-head");
@@ -251,19 +267,20 @@ class TemplateFragmentContractTest {
                 .as("link-роль сохранена — нет ARIA role= на <a>").doesNotContain("role=");
         assertThat(stats).contains("fragments/sidebar :: sidebar");
         assertThat(settings).contains("fragments/sidebar :: sidebar");
-        assertThat(result).contains("fragments/inline-alert :: inline-alert");
+        assertThat(result).contains("fragments/notice :: notice-slot");
     }
 
     @Test
     void settingsTemplateUsesTabStructure() throws IOException {
         String settings = readTemplate("templates/settings.html");
         // Редизайн: 4-карточная стопка заменена вкладками (Сессия | Оформление |
-        // Данные). Один раздел за раз вместо ~3.6 экрана скролла. PE: tablist скрыт
-        // без JS, settings/tabs.js (initSettingsTabs) раскрывает + ставит .js-tabs.
+        // Данные). Один раздел за раз вместо ~3.6 экрана скролла. PE-гейт полосы
+        // с iter-80 живёт в CSS (`:not([data-js]) [role="tablist"]`), а не в
+        // разметке: утилита `.hidden` с полосы снята — см. TabPanelContractTest.
         assertThat(settings).contains("id=\"main-content\"");
         assertThat(settings).contains("id=\"settings-tablist\"");
         assertThat(settings).contains("role=\"tablist\"");
-        assertThat(settings).contains("class=\"settings-tablist hidden\"");
+        assertThat(settings).contains("class=\"settings-tablist\"");
         assertThat(settings).contains("type=\"button\"");
         // Три панели-tabpanel.
         assertThat(settings).contains("id=\"panel-session\"");
@@ -337,30 +354,301 @@ class TemplateFragmentContractTest {
         assertThat(css).doesNotContain(".ed-theme-toggle");
     }
 
+    /**
+     * FRD-025 / iter-73: на панели «Темы» карточка «Отбор» обязана стоять ПЕРЕД
+     * каталогом разделов.
+     *
+     * <p>С iter-73 отбор правит всю панель: таблицу, оба графика, пробелы, разбор
+     * ошибок и карточку слабой темы. Каталог — единственный блок, который
+     * намеренно остался по полному банку. Пока каталог стоял первым, страница
+     * при активном отборе сначала показывала 876px цифр по всему банку и лишь
+     * потом сообщала, что показанное ниже — не весь банк (замер WebKit 1512×982:
+     * строка «N тем в выборке» на 1985px при сгибе 982).</p>
+     *
+     * <p>Гейт держит именно порядок в РАЗМЕТКЕ, а не в CSS: перестановка через
+     * {@code order} развела бы видимый порядок с клавиатурным обходом
+     * (WCAG 2.4.3). Плюс проверяем, что подпись каталога не обещает сужения,
+     * которого он не делает.</p>
+     */
     @Test
-    void statsTemplateKeepsSortableLiveRegionAccessibilityContract() throws IOException {
+    void statsSelectionCardPrecedesFullBankCatalog() throws IOException {
         String stats = readTemplate("templates/stats.html");
-        String tableSortJs = readTemplate("static/js/stats/table-sort.js");
+
+        int panel = stats.indexOf("id=\"stats-panel-topics\"");
+        int selection = stats.indexOf("class=\"card filter-bar\"");
+        int catalog = stats.indexOf("class=\"card topic-catalog\"");
+
+        assertThat(panel).isNotNegative();
+        assertThat(selection).isGreaterThan(panel);
+        assertThat(catalog).isGreaterThan(selection);
+
+        // Ни один из двух блоков не переставлен обратно средствами CSS.
+        assertThat(readStructuralCss()).doesNotContain(".topic-catalog { order");
+        assertThat(readStructuralCss()).doesNotContain(".filter-bar { order");
+
+        // Подпись каталога больше не обещает, что он сузится вместе с отбором.
+        assertThat(stats).doesNotContain("фильтры и таблица ниже сузятся до неё");
+        assertThat(stats).contains("Счётчики разделов — по всему банку");
+    }
+
+    /**
+     * iter-74: у /bookmarks есть отбор, и он подчиняется тем же правилам, что
+     * полоса /stats.
+     *
+     * <p>До iter-74 коллекция разворачивалась одним списком: замер WebKit на 28
+     * закладках дал 4774px (6.6 экрана) на 1280×720 и 11324px (14.5) на 360×780,
+     * а найти нужную можно было только прокруткой. Ширина тут не помогает —
+     * удвоение с 1280 до 2560 срезало лишь 31 % высоты, ограничение в объёме.</p>
+     *
+     * <p>Гейт держит пять вещей, каждая из которых уже ломалась. Заголовок,
+     * отбор и список стоят ОДНОЙ карточкой: двумя (заголовок отдельно, «Отбор»
+     * отдельно) первая закладка на 1280×720 оказывалась на 481-м пикселе из
+     * 720, а на 390×844 — на 870-м, то есть в первый экран не попадало ни
+     * одной (§8). Строка состояния СТОИТ НАД формой (iter-73: состояние читают
+     * до контролов, которыми его меняют). Полоса — общий компонент, а не вторая
+     * копия правил под своим именем (§24). Отбор — одна форма на один эндпоинт
+     * (FRD-024). Счётчик выборки назван вместе со знаменателем, иначе «1» не
+     * отличает «нашлась одна» от «всего одна».</p>
+     */
+    @Test
+    void bookmarksSelectionBandStatesSelectionAboveItsControls() throws IOException {
+        String bookmarks = readTemplate("templates/bookmarks.html");
+
+        int head = bookmarks.indexOf("class=\"bookmarks-list-head\"");
+        int band = bookmarks.indexOf("class=\"filter-bar\"");
+        int state = bookmarks.indexOf("class=\"filter-bar-state\"");
+        int form = bookmarks.indexOf("class=\"filter-bar-form\"");
+        int list = bookmarks.indexOf("class=\"bookmark-list\"");
+
+        assertThat(head).isNotNegative();
+        assertThat(band).isGreaterThan(head);
+        assertThat(state).isGreaterThan(band);
+        assertThat(form).isGreaterThan(state);
+        assertThat(list).isGreaterThan(form);
+        // Одна карточка на всё: между заголовком и списком карточка не
+        // закрывается. Именно этот шов и стоил экрана — заголовок, «Отбор» и
+        // список тремя секциями подряд.
+        assertThat(bookmarks.substring(head, list)).doesNotContain("</section>");
+        assertThat(bookmarks).doesNotContain("class=\"card filter-bar\"");
+
+        // Полоса — общий компонент с /stats, а не вторая копия правил под своим
+        // именем (§24). Гейт на КЛАСС, а не на подстроку: собственных имён вида
+        // `bookmarks-filter-*` у страницы быть не должно, а id-шники в неё не
+        // засчитываются — они копий правил не создают.
+        assertThat(bookmarks).doesNotContain("class=\"bookmarks-filter");
+        assertThat(readStructuralCss()).doesNotContain(".bookmarks-filter");
+        // Одна форма на один GET: скрытых копий чужих полей нет — все четыре
+        // условия отбора живут в ней самой.
+        assertThat(bookmarks).containsOnlyOnce("<form method=\"get\"");
+        assertThat(bookmarks).contains("name=\"q\"")
+                .contains("name=\"group\"")
+                .contains("name=\"note\"")
+                .contains("name=\"sort\"");
+        assertThat(bookmarks).contains("${bookmarksShown} + ' из ' + ${bookmarksTotal}");
+        // Полоса не рендерится над пустой коллекцией: отбирать там нечего.
+        assertThat(bookmarks).contains("th:if=\"${bookmarksTotal != null and bookmarksTotal > 0}\"");
+    }
+
+    /**
+     * §27: «закладок ещё нет» и «под отбор ничего не подошло» — РАЗНЫЕ состояния
+     * с противоположным советом.
+     *
+     * <p>Одна карточка на оба случая предлагала бы «Начать тренировку» человеку,
+     * у которого 28 закладок, и молчала бы о том, что их скрыл его же запрос.
+     * Гейт держит и взаимоисключающие условия (два пустых экрана разом — это
+     * противоречие на странице), и разные изображения: одинаковая картинка
+     * читается как одно состояние независимо от текста.</p>
+     *
+     * <p>Пустая выборка живёт ВНУТРИ карточки отбора, сразу под формой, которая
+     * её и дала. Отдельной секцией она уезжала под полосу вторым блоком, и на
+     * узком экране «ничего не нашлось» оказывалось за пределами первого экрана:
+     * человек видел форму и пустоту, не понимая, что случилось.</p>
+     */
+    @Test
+    void bookmarksSeparatesEmptyCollectionFromEmptySelection() throws IOException {
+        String bookmarks = readTemplate("templates/bookmarks.html");
+
+        assertThat(bookmarks).contains("th:if=\"${bookmarksTotal == null or bookmarksTotal == 0}\"");
+        int form = bookmarks.indexOf("class=\"filter-bar-form\"");
+        int nothing = bookmarks.indexOf("th:if=\"${bookmarks == null or bookmarks.isEmpty()}\"");
+        assertThat(nothing).isGreaterThan(form);
+        assertThat(bookmarks.substring(form, nothing)).doesNotContain("</section>");
+        assertThat(bookmarks).contains("Пока нет закладок").contains("Под отбор ничего не подошло");
+        // Глифы разные и оба — из спрайта состояний (iter-83). До него здесь
+        // стояли предметные иконки Lucide `#bookmark` и `#search`: они называли
+        // СТРАНИЦУ, а не положение человека, и жили в другом языке, чем глифы
+        // тех же состояний на /stats и на экране вопроса.
+        assertThat(bookmarks).contains("<use href=\"#px-chest\">").contains("<use href=\"#px-spyglass\">");
+        // Из отобранной пустоты есть выход, и он не «иди тренируйся».
+        assertThat(bookmarks).contains("Показать все закладки");
+        // Запрос повторяется дословно и ломается по месту: 160 символов без
+        // пробела иначе дают странице горизонтальный скролл (замер iter-72).
+        assertThat(bookmarks).contains("class=\"query-echo\"");
+    }
+
+    /**
+     * iter-74: на /bookmarks ровно одна акцентная заливка в рабочей части —
+     * у главного действия, а не на каждой строке списка.
+     *
+     * <p>Раньше «Открыть» в каждой карточке было {@code next-btn}: при 28
+     * закладках страница показывала 28 одинаковых бирюзовых плашек, и
+     * собственный акцент страницы тонул среди них. Отдельной карточки действий
+     * над списком тоже больше нет — она тратила 124px на 1280 и 186px на 360
+     * ради двух ссылок, вторая из которых дублировала пункт бокового рельса.</p>
+     *
+     * <p>Подписи о действующем порядке в заголовке тоже нет: селект «Порядок»
+     * стоит в той же карточке шестью десятками пикселей ниже и говорит ровно
+     * то же. Две формулировки одного факта расходятся при первой же правке, а
+     * на телефоне подпись стоила пятидесяти пикселей первого экрана.</p>
+     */
+    @Test
+    void bookmarksKeepsSinglePrimaryActionWithoutRestatingTheOrder() throws IOException {
+        String bookmarks = readTemplate("templates/bookmarks.html");
+
+        assertThat(bookmarks).doesNotContain("bookmarks-toolbar");
+        assertThat(bookmarks).contains("class=\"bookmarks-list-head\"");
+        assertThat(bookmarks).contains("class=\"btn next-btn primary-btn\"");
+
+        // Строки списка — вторичные кнопки; акцент в них не возвращается.
+        // Комментарии вырезаем: объяснение «secondary, а не next-btn» само
+        // содержит запрещённое имя и воскрешало бы правило для теста — ровно
+        // та ловушка, что описана у CSS_COMMENT.
+        int listStart = bookmarks.indexOf("class=\"bookmark-list\"");
+        int listEnd = bookmarks.indexOf("</ul>", listStart);
+        assertThat(listStart).isNotNegative();
+        String rows = TEMPLATE_COMMENT.matcher(bookmarks.substring(listStart, listEnd)).replaceAll("\n");
+        assertThat(rows).doesNotContain("next-btn");
+
+        // Порядок назван ровно один раз — селектом. Подпись в заголовке была бы
+        // вторым источником правды о том же. Комментарии снова вырезаем:
+        // объяснение, почему подписи нет, само её цитирует.
+        assertThat(TEMPLATE_COMMENT.matcher(bookmarks).replaceAll("\n")).doesNotContain("Новые сверху.");
+        assertThat(readStructuralCss()).doesNotContain(".bookmarks-toolbar");
+    }
+
+    /**
+     * iter-74: кнопка полосы отбора — тихая на ОБЕИХ страницах, где эта полоса
+     * едет.
+     *
+     * <p>{@code .next-btn} заливает кнопку акцентом ровно так же, как
+     * {@code .primary-btn} (components-controls.css: {@code background:
+     * var(--color-accent-primary)}). После слияния карточек на /bookmarks
+     * «Показать» встало в сорока пикселях под «Тренировать избранные», и в одной
+     * карточке оказались два одинаково залитых прямоугольника — замер WebKit@2
+     * на 1512×982 давал две кнопки с фоном {@code rgb(57,208,199)}. По такой паре
+     * нельзя прочитать, где главное действие страницы.</p>
+     *
+     * <p>Отбор — средство, а не цель: он перерисовывает тот же список, ничего не
+     * меняя в данных. Поэтому кнопка понижена и на /stats тоже: полоса одна на
+     * две страницы, и вес её кнопки не должен зависеть от того, куда её
+     * поставили. Тест целится в блок действий полосы, а не в глобальный
+     * {@code .btn}, — как и правила самого компонента.</p>
+     */
+    @Test
+    void filterBarSubmitStaysQuietOnBothPagesThatCarryTheBar() throws IOException {
+        for (String page : new String[] {"templates/bookmarks.html", "templates/stats.html"}) {
+            String html = TEMPLATE_COMMENT.matcher(readTemplate(page)).replaceAll("\n");
+            int actions = html.indexOf("class=\"filter-bar-actions\"");
+            int formEnd = html.indexOf("</form>", actions);
+            assertThat(actions).as("%s: блок действий полосы отбора", page).isNotNegative();
+
+            String block = html.substring(actions, formEnd);
+            assertThat(block).as("%s: отправка отбора не носит акцентную заливку", page)
+                    .doesNotContain("next-btn")
+                    .doesNotContain("primary-btn");
+            assertThat(block).as("%s: отправка отбора остаётся кнопкой", page)
+                    .contains("type=\"submit\"")
+                    .contains("secondary-btn");
+        }
+    }
+
+    /**
+     * Правило «одна акцентная заливка на экран» обязано держаться во ВСЕХ состояниях,
+     * иначе это не правило, а описание одного скриншота.
+     *
+     * <p>В состоянии «под отбор ничего не подошло» секция списка продолжает
+     * рендериться (коллекция не пуста — её скрыл отбор), а вместе с ней остаётся
+     * «Тренировать избранные». Замер WebKit@2 на 1512×982 в этом состоянии давал
+     * ДВЕ залитых кнопки из трёх, что на экране есть. Выход из отбора ведёт по тому
+     * же адресу, что и ссылка «Сбросить» в строке состояния выше, поэтому акцент ему
+     * не принадлежит — кнопка тихая.</p>
+     */
+    @Test
+    void filteredEmptyStateDoesNotAddSecondAccentBesideTheListAction() throws IOException {
+        String html = TEMPLATE_COMMENT.matcher(readTemplate("templates/bookmarks.html")).replaceAll("\n");
+        int title = html.indexOf("bookmarks-nothing-title");
+        assertThat(title).as("состояние «под отбор ничего не подошло»").isNotNegative();
+
+        String block = html.substring(title, html.indexOf("</section>", title));
+        assertThat(block).as("выход из отбора не носит акцентную заливку")
+                .doesNotContain("next-btn")
+                .doesNotContain("primary-btn");
+        assertThat(block).as("выход из отбора остаётся видимой кнопкой")
+                .contains("secondary-btn");
+    }
+
+    /**
+     * Объём и порядок таблицы тем решает СЕРВЕР, а не скрипт за таблицей (iter-81,
+     * FRD-048).
+     *
+     * <p>До правки и то и другое считал инлайновый {@code <script>} после
+     * {@code </table>}. В WebKit он стабильно не успевал до первого кадра: замер
+     * дал FCP 238–255 мс с отрисованными всеми 319 строками (документ 21957px) и
+     * схлопывание до 3939px уже ПОСЛЕ отрисовки — тот же класс дефекта, что
+     * iter-80 закрыл для вкладок. Chrome гонку выигрывал (12 строк на FCP,
+     * CLS 0), то есть механизм работал только в одном движке — прямой случай
+     * §11.</p>
+     *
+     * <p>Гейт держит три условия, каждое из которых по отдельности возвращает
+     * дефект: строки приходят из {@code topicTable.rows()} (а не из полного
+     * {@code topicStats}), {@code aria-sort} рендерит сервер (иначе первый кадр
+     * объявляет скринридеру «не отсортирована», будучи отсортированной), а сама
+     * сортировка — ССЫЛКА с адресом, а не кнопка со скриптом. Отдельно
+     * фиксируется отсутствие обоих снятых механизмов: {@code table-sort.js} и
+     * инлайнового свёртывания по {@code tr[hidden]} — по §24 две конкурирующие
+     * системы не оставляем.</p>
+     */
+    @Test
+    void statsTopicTableTakesVolumeAndOrderFromServer() throws IOException {
+        String stats = readTemplate("templates/stats.html");
         String topicChartsJs = readTemplate("static/js/stats/topic-charts.js");
-        assertThat(stats).contains("id=\"table-sort-status\"");
-        assertThat(stats).contains("aria-live=\"polite\"");
-        assertThat(stats).contains("aria-atomic=\"true\"");
-        // aria-keyshortcuts сортируемым th проставляет table-sort.js (прогрессивное
-        // улучшение: без JS сортировки нет — атрибут в шаблоне был бы враньём).
-        assertThat(tableSortJs).contains("aria-keyshortcuts', 'Enter Space'");
-        assertThat(stats).contains("role=\"columnheader\"");
+
+        assertThat(stats).as("строки таблицы — серверное окно, а не весь topicStats")
+                .contains("th:each=\"item : ${topicTable.rows()}\"");
+        assertThat(stats).as("состояние сортировки в первом кадре")
+                .contains("aria-sort=${col.ariaSort}");
+        assertThat(stats).as("сортировка — адрес страницы, работает без JS")
+                .contains("class=\"col-sort\"")
+                .contains("th:href=\"${col.href}\"");
+        assertThat(stats).as("объём выборки назван явно")
+                .contains("topicTable.totalRows()")
+                .contains("topicTable.expandHref()")
+                .contains("topicTable.collapseHref()");
+
+        // Адрес заголовка собирает Java, а не выражение ссылки в шаблоне: @{/stats(...)}
+        // печатает и ПУСТЫЕ параметры, и ссылка каждой колонки тянула их шесть штук
+        // (?topic=&group=&important=&onlyWrong=&ordered=true&q=…), пока соседние чипы
+        // групп на той же странице показывали чистое ?group=foundation. Одно место
+        // сборки — TopicTableView.href + keepFilterQuery.
+        assertThat(stats).as("ссылки колонок не собираются выражениями в разметке")
+                .doesNotContain("@{/stats(sort=");
+
+        assertThat(stats).as("инлайновое свёртывание снято целиком")
+                .doesNotContain("data-collapse-rows")
+                .doesNotContain("table-sort-status")
+                .doesNotContain("row.hidden = collapsed");
+        assertThat(new ClassPathResource("static/js/stats/table-sort.js").exists())
+                .as("клиентская сортировка удалена, а не оставлена рядом").isFalse();
+        assertThat(readTemplate("static/js/stats/index.js")).doesNotContain("table-sort");
+        assertThat(readStructuralCss()).as("правила для скрытых строк больше некому применять")
+                .doesNotContain(".stats-page .topic-table tr[hidden]");
+
         assertThat(stats).contains("id=\"topicProgressChartFallback\"");
         assertThat(stats).contains("id=\"topicAccuracyChartFallback\"");
         assertThat(stats).contains("class=\"chart-fallback hidden\"");
         assertThat(stats).contains("role=\"status\"");
+        assertThat(stats).contains("aria-live=\"polite\"");
         assertThat(stats).contains("class=\"forecast-count\" aria-hidden=\"true\"");
-        // Свёрнутые строки исключаются из layout/accessibility tree, а после
-        // сортировки лимит применяется заново к новому DOM-порядку.
-        assertThat(stats).contains("row.hidden = collapsed && index >= limit");
-        assertThat(stats).contains("new MutationObserver(sync).observe(tbody, { childList: true })");
-        assertThat(readStructuralCss())
-            .contains(".stats-page .topic-table tr[hidden] { display: none !important; }")
-            .contains(".stats-page .topic-table tr[hidden] { display: table-row !important; }");
         // STA-5/STJ-1: читаемые labels + без декоративной x-сетки.
         assertThat(topicChartsJs).contains("font: { size: 12 }");
         assertThat(topicChartsJs).contains("grid: { display: false }");
@@ -557,34 +845,37 @@ class TemplateFragmentContractTest {
 
     @Test
     void tokensCssDefinesSingleInstrumentDesign() throws IOException {
-        // tokens.css — токен-слой. SINGLE-SOURCE + DARK-DEFAULT (реставр handoff-3,
-        // 2026-07-18): Instrument-значения живут ПРЯМО в :root/:root[data-theme="light"],
-        // без html[data-design] override-слоя. Дефолт ИНВЕРТИРОВАН — макеты handoff-3
-        // все тёмные, поэтому dark в :root (безусловная база), а light — явный тумблер.
+        // tokens.css — токен-слой. SINGLE-SOURCE + DARK-DEFAULT: значения живут ПРЯМО
+        // в :root / :root[data-theme="light"], без html[data-design] override-слоя.
+        // Дефолт — тёмная тема (решение пользователя), светлая — явный тумблер.
         // Контракт:
-        // (1) :root несёт Instrument DARK-значения макетов (canvas #071116),
-        // (2) :root[data-theme="light"] несёт light-палитру (вторичный тумблер),
-        // (3) НИ ОДНОГО html[data-design="X"] scoped-цветоблока (промоут удалил и
-        //     instrument-override, и реестр удалённых дизайнов),
-        // (4) warm ivory/clay editorial-наследие (#FAF9F5 / #D97757) не рендерится.
+        // (1) :root несёт тёмную ветку арт-направления «мастерская гильдии»
+        //     (тёплый камень #14120f + латунь #d0a33c),
+        // (2) :root[data-theme="light"] несёт пергаментную светлую (#ece4d3),
+        // (3) НИ ОДНОГО html[data-design="X"] scoped-цветоблока,
+        // (4) снятые палитры не возвращаются ЗНАЧЕНИЯМИ токенов: ни warm ivory/clay
+        //     editorial (#FAF9F5 / #D97757), ни терминальная бирюза (#071116 / #39d0c7).
+        //     Последняя добавлена в список именно потому, что действовала до этой
+        //     итерации: гейт, который сторожит только позапрошлое направление,
+        //     молча пропускает откат к прошлому.
         String css = readTemplate("static/css/tokens.css");
 
-        // База: :root с Instrument DARK-значениями (canvas #071116 + teal-signal).
+        // База: :root с тёмной веткой направления (тёплый камень + латунь).
         assertThat(css).contains(":root");
         assertThat(css).contains("--color-bg-primary");
         assertThat(css).contains("--color-accent-primary");
         assertThat(css)
-            .as(":root несёт тёмный canvas макетов handoff-3 (dark-default #071116)")
-            .contains("--color-bg-primary:   #071116");
+            .as(":root несёт тёмный canvas направления (тёплый камень #14120f)")
+            .contains("--color-bg-primary:   #14120f");
         assertThat(css)
             .as(":root[data-theme=\"light\"] несёт вторичную светлую тему")
             .contains(":root[data-theme=\"light\"]");
         assertThat(css)
-            .as("light canvas — из assets/tokens/tokens.css макетов (#f5f8f8)")
-            .contains("--color-bg-primary:   #f5f8f8");
+            .as("светлая канва — пергамент, а не офисный белый")
+            .contains("--color-bg-primary:   #ece4d3");
         assertThat(css)
-            .as("teal-accent макетов handoff-3 присутствует")
-            .contains("#39d0c7");
+            .as("латунь — единственный интерактивный акцент")
+            .contains("--color-accent-primary:        #d0a33c");
 
         // SINGLE-SOURCE: НИ ОДНОГО html[data-design="X"] цвето-override-блока —
         // включая instrument (промоут DEADCODE-1 перенёс его в :root).
@@ -603,6 +894,15 @@ class TemplateFragmentContractTest {
         assertThat(css)
             .as("warm Clay #D97757 не должен быть значением токена")
             .doesNotContain(": #D97757");
+        // Снятая терминальная палитра: сторожим ЗНАЧЕНИЯ, а не упоминания —
+        // шапка файла объясняет, что и почему заменено, и обязана иметь право
+        // назвать старые цвета прозой.
+        assertThat(css)
+            .as("бирюзовый акцент снятого направления не должен быть значением токена")
+            .doesNotContain(": #39d0c7").doesNotContain(": #58d4d0").doesNotContain(": #7ce6df");
+        assertThat(css)
+            .as("сине-зелёная канва снятого направления не должна быть значением токена")
+            .doesNotContain(":   #071116").doesNotContain(":   #f5f8f8");
     }
 
     @Test
@@ -632,21 +932,40 @@ class TemplateFragmentContractTest {
         assertThat(summary).contains("<body class=\"summary-page\">");
         assertThat(summary).contains("href=\"#main-content\"");
         assertThat(summary).contains("id=\"main-content\"");
-        // SUM-9: визуально скрытый h1 счёта — единственный h1 страницы итогов и якорь
-        // H-навигации на главный результат; секции «по темам»/«ошибки»/«рекомендации» (h2)
-        // выстраиваются под ним в корректную иерархию (одна страница — один h1).
-        assertThat(summary).contains("<h1 class=\"summary-section-title visually-hidden\">Результат сессии</h1>");
+        // SUM-9 (пересмотрен iter-63): h1 остаётся единственным якорем H-навигации, но
+        // больше не visually-hidden. Скрытый заголовок делал итоги единственным из шести
+        // экранов без видимого названия — зрячий пользователь не получал того контекста,
+        // который получал SR. Заголовок переехал в канонический .page-head (FRD-011),
+        // режим сессии стал надзаголовком .eyebrow вместо чипа внутри карточки счёта.
+        assertThat(summary).contains("<div class=\"page-head\">");
+        assertThat(summary).contains("<h1>Итоги сессии</h1>");
+        assertThat(summary)
+            .as("скрытый h1 счёта заменён видимым заголовком страницы")
+            .doesNotContain("<h1 class=\"summary-section-title visually-hidden\">");
         assertThat(summary).contains("class=\"summary-score-value\"");
+        // Пустая сессия (0 ответов) не имитирует результат: счёт, KPI и метрики гейтятся
+        // noAnswers, вместо них — честное объяснение. «0 из 0 верных», «Новый рекорд» и
+        // «Без ошибок» на нулевых данных читались как достижение.
+        assertThat(summary).contains("th:unless=\"${noAnswers}\"");
+        assertThat(summary).contains("class=\"summary-empty-note\"");
         // SUM-3: dual-path действия (повтор ошибок / продолжить) в nav с меткой.
         assertThat(summary).contains("class=\"summary-actions\"");
         assertThat(summary).contains("aria-label=\"Что дальше\"");
         assertThat(summary).contains("class=\"summary-more\"");
         assertThat(summary).contains("Ещё");
         assertThat(summary).contains("Продолжить тренировку");
-        // Таблица по темам: CSS display:block сбрасывает нативную семантику в
-        // Safari/VoiceOver → явные ARIA-роли её восстанавливают; tabindex=0 делает
-        // скролл-контейнер доступным с клавиатуры (WCAG 2.1.11). Аддитивно.
-        assertThat(summary).contains("<table class=\"summary-table\" role=\"table\" tabindex=\"0\">");
+        // Таблица по темам: ниже 760px CSS раскладывает её карточками (display:block на
+        // table/thead/tbody/tr/td), а это в Safari/VoiceOver сбрасывает нативную семантику
+        // → явные ARIA-роли её восстанавливают. Роли нужны и после iter-63.
+        // iter-76: таблица носит классы общего компонента и лежит в .table-scroll —
+        // единственном ответе продукта на «таблица шире полосы». tabindex НЕ в шаблоне:
+        // его ставит table-scroll.js и только при реальном переполнении, иначе на
+        // широком экране была бы вечная пустая остановка табуляции.
+        assertThat(summary).contains("<div class=\"table-scroll\"");
+        assertThat(summary).contains("<table class=\"data-table summary-table\" role=\"table\">");
+        assertThat(summary)
+            .as("остановку табуляции ставит JS по факту переполнения, не шаблон")
+            .doesNotContain("summary-table\" role=\"table\" tabindex=\"0\"");
         assertThat(summary).contains("<caption class=\"visually-hidden\">");
         assertThat(summary).contains("scope=\"col\" role=\"columnheader\"");
         assertThat(summary).contains("role=\"rowheader\"");
@@ -707,12 +1026,19 @@ class TemplateFragmentContractTest {
     @Test
     void shellFragmentsExposeNavLandmarksAndActiveContract() throws IOException {
         // Редизайн (ui-redesign-handoff): masthead → каркас shell. Контракт:
-        // sidebar — nav-landmark с меткой + aria-current на активном пункте;
-        // topbar — прогресс-progressbar сессии + тоггл темы;
+        // sidebar — nav-landmark с меткой + aria-current на активном пункте
+        //           плюс футер глобальных действий (тоггл темы, «Выйти»);
+        // shell-head — mobile-header с icon-only формой тех же действий;
         // mobile-nav — nav-landmark нижней навигации.
-        String sidebar = readTemplate("templates/fragments/sidebar.html");
-        String topbar = readTemplate("templates/fragments/topbar.html");
-        String mobileNav = readTemplate("templates/fragments/mobile-nav.html");
+        //
+        // Разметку сверяем БЕЗ комментариев. Пояснения в этих фрагментах длинные
+        // и цитируют удалённые атрибуты — до FRD-021 здесь стояла проверка
+        // `topbar.contains("role=\"progressbar\"")`, которая была зелёной ровно
+        // потому, что строка встречалась в комментарии «прогресс отсюда убран»:
+        // гвард сторожил собственный некролог.
+        String sidebar = stripHtmlComments(readTemplate("templates/fragments/sidebar.html"));
+        String shellHead = stripHtmlComments(readTemplate("templates/fragments/shell-head.html"));
+        String mobileNav = stripHtmlComments(readTemplate("templates/fragments/mobile-nav.html"));
 
         assertThat(sidebar).contains("th:fragment=\"sidebar(active)\"");
         // Сам <aside> тоже обязан быть подписан, не только вложенный <nav>. На
@@ -721,23 +1047,37 @@ class TemplateFragmentContractTest {
         assertThat(sidebar).contains("class=\"sidebar\" aria-label=\"Боковая панель\"");
         assertThat(sidebar).contains("<nav class=\"nav\" aria-label=\"Основная навигация\">");
         assertThat(sidebar).contains("aria-current=${active == 'focus'} ? 'page' : null");
-        // Тоггл темы живёт ТОЛЬКО в topbar (desktop-панель + mobile-header). Раньше
-        // он дублировался ещё и в футере сайдбара: два одинаковых переключателя на
-        // одном экране → SR объявлял состояние темы дважды, и было непонятно, какой
-        // «настоящий». Регресс-гвард: в сайдбаре его быть не должно.
-        assertThat(sidebar).doesNotContain("data-theme-toggle");
-
-        assertThat(topbar).contains("th:fragment=\"topbar\"");
-        assertThat(topbar).contains("role=\"progressbar\"");
+        // Глобальные действия рельса лежат ЗА пределами <nav>: иначе «Тема» и
+        // «Выйти» попадают в список пунктов навигации, хотя никуда не ведут.
+        assertThat(sidebar).containsSubsequence("</nav>", "class=\"sidebar-footer\"");
+        // Ровно ОДИН тоггл темы на фрагмент. Гвард «в сайдбаре тоггла быть не
+        // должно» (FRD-021 отменил) ставился против ДУБЛЯ: контрол одновременно
+        // жил в футере рельса и в topbar, SR объявлял тему дважды. Полосы topbar
+        // больше нет, дублировать стало нечем — но само требование единственности
+        // осталось, теперь в виде счётчика на каждой из двух шапок.
+        assertThat(countOccurrences(sidebar, "data-theme-toggle")).isEqualTo(1);
+        assertThat(countOccurrences(shellHead, "data-theme-toggle")).isEqualTo(1);
         // PE: тоггл раскрывается только при JS (класс hidden снимает ui/shell.js).
-        assertThat(topbar).contains("data-theme-toggle");
-        assertThat(topbar).contains("class=\"icon-button hidden\" data-theme-toggle");
+        assertThat(sidebar).contains("class=\"side-action hidden\" data-theme-toggle");
+        assertThat(shellHead).contains("class=\"icon-button hidden\" data-theme-toggle");
+        // В рельсе у тоггла есть ВИДИМАЯ подпись, и её текст держит тот же
+        // shell.js, что и aria-label (WCAG 2.5.3 Label in Name). Без якоря
+        // [data-theme-label] подпись осталась бы серверной «Переключить тему»,
+        // разойдясь с именем «Включить тёмную тему».
+        assertThat(sidebar).contains("data-theme-label");
+
+        assertThat(shellHead).contains("th:fragment=\"shell-head\"");
+        // Десктопной полосы .topbar в шапке больше нет (FRD-021): 64px sticky на
+        // все семь страниц ради одной кнопки 38×38.
+        assertThat(shellHead).doesNotContain("class=\"topbar\"");
+        assertThat(shellHead).contains("class=\"mobile-header\"");
         // aria-pressed на тоггле темы быть НЕ должно: светлая и тёмная — два
         // равноправных режима, а не вкл/выкл одного состояния. «Не нажата» на
         // кнопке в светлой теме SR читает как «тема выключена», что бессмысленно.
         // Актуальный режим объявляет aria-label, который shell.js держит в
         // согласии с темой.
-        assertThat(topbar).doesNotContain("aria-pressed=");
+        assertThat(shellHead).doesNotContain("aria-pressed=");
+        assertThat(sidebar).doesNotContain("aria-pressed=");
 
         assertThat(mobileNav).contains("th:fragment=\"mobile-nav(active)\"");
         assertThat(mobileNav).contains("class=\"mobile-nav\" aria-label=\"Мобильная навигация\"");
@@ -772,10 +1112,10 @@ class TemplateFragmentContractTest {
         // изменились и тест молча пустой — false-negative на orphan).
         assertThat(fragmentNames)
             .as("объявленные th:fragment под templates/")
-            .contains("head", "sprite", "sidebar", "topbar", "mobile-nav", "shell-scripts",
-                      "inline-alert", "post-answer-controls",
+            .contains("head", "sprite", "sidebar", "shell-head", "mobile-nav", "shell-scripts",
+                      "notice-slot", "recoverable-banners", "post-answer-controls",
                       "result-zone-head", "stats-grid-content",
-                      "today-hero", "today-chip", "training-actions", "mermaid-init");
+                      "today-chip", "training-actions", "mermaid-init");
 
         for (String name : fragmentNames) {
             // Ссылка — либо параметризованная `:: name(`, либо bare `:: name}`.
@@ -844,35 +1184,40 @@ class TemplateFragmentContractTest {
     }
 
     @Test
-    void statsTopicTableSortableColumnsHaveMatchingMobileLabels() throws IOException {
+    void statsTopicTableColumnsHaveMatchingMobileLabels() throws IOException {
         // .topic-table — ЕДИНСТВЕННАЯ таблица с card-view на мобиле (base.css
-        // td[data-label]::before { content: attr(data-label) } — заголовки схлопнуты,
-        // подпись столбца берётся из data-label на td). Инвариант: каждый сортируемый
-        // столбец (th data-sort-label="X") обязан иметь парный td data-label="X",
-        // иначе на узком экране ячейка теряет подпись столбца. Гвард против
-        // STA-20-класса рассинхрона (R0.128 снял колонку «Сброшено», сдвинул data-col
-        // 5→4 — правка структуры таблицы легко рвёт пары label↔header). App не нужен.
-        // summary-table (итоги) теперь ТОЖЕ card-view на мобиле (#6, data-label на
-        // td), но без сортируемых столбцов — этот инвариант про пары th↔td у
-        // сортировки topic-table, поэтому summary-table в него не входит. .data-table
-        // (coverage-gaps) — обычная узкая, data-label не нужен. Тест читает stats.html.
-        String stats = readTemplate("templates/stats.html");
+        // td[data-label]::before { content: attr(data-label) } — строка становится
+        // карточкой, подпись столбца берётся из data-label на td). Инвариант: подпись
+        // каждой колонки обязана иметь парный td data-label, иначе на узком экране
+        // ячейка теряет имя своего столбца. Гвард против STA-20-класса рассинхрона
+        // (R0.128 снял колонку «Сброшено» и сдвинул нумерацию — правка структуры
+        // таблицы легко рвёт пары label↔header). App не нужен.
+        //
+        // iter-81: источник подписей переехал из разметки (data-sort-label на th, он
+        // существовал ради снятого table-sort.js) в StatsPageService.columns() —
+        // вместе с порядком колонок и состоянием сортировки. Поэтому подписи
+        // спрашиваются у самой модели, а не выскабливаются регуляркой из шаблона:
+        // сверяются две стороны контракта, а не шаблон сам с собой.
+        //
+        // summary-table (итоги) тоже card-view на мобиле, но её колонки моделью не
+        // описаны — она в инвариант не входит. .data-table (coverage-gaps) обычная
+        // узкая, data-label ей не нужен.
+        Set<String> columnLabels = StatsPageService.TopicTableView.of(List.of()).columns().stream()
+            .map(StatsPageService.TopicTableView.Column::label)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        Matcher sortLabelMatcher = Pattern.compile("data-sort-label=\"([^\"]+)\"").matcher(stats);
-        Set<String> sortLabels = new LinkedHashSet<>();
-        while (sortLabelMatcher.find()) {
-            sortLabels.add(sortLabelMatcher.group(1));
-        }
+        String stats = readTemplate("templates/stats.html");
         Matcher dataLabelMatcher = Pattern.compile("data-label=\"([^\"]+)\"").matcher(stats);
         Set<String> dataLabels = new LinkedHashSet<>();
         while (dataLabelMatcher.find()) {
             dataLabels.add(dataLabelMatcher.group(1));
         }
 
-        // Санити: сортируемые столбцы topic-table реально извлеклись.
-        assertThat(sortLabels).contains("Тема", "Всего", "Точность", "Зрелость");
-        // Каждый сортируемый заголовок имеет парную мобильную подпись (card-view).
-        assertThat(dataLabels).containsAll(sortLabels);
+        // Санити: модель действительно описывает те колонки, о которых идёт речь.
+        assertThat(columnLabels).contains("Тема", "Всего", "Прогресс", "Точность", "Зрелость", "Действие");
+        assertThat(dataLabels)
+            .as("колонка таблицы тем без парного data-label теряет подпись в card-view на узком экране")
+            .containsAll(columnLabels);
     }
 
     @Test
@@ -1264,5 +1609,18 @@ class TemplateFragmentContractTest {
                 + "(#numbers.formatDecimal(x, 1, 'NONE', N, 'POINT')), иначе русская локаль "
                 + "подставит запятую и значение прочитается неверно. Нарушения: %s", localeDependent)
             .isEmpty();
+    }
+
+    /** Убирает HTML- и Thymeleaf-комментарии: сверять контракт нужно с разметкой, а не с пояснениями к ней. */
+    private static String stripHtmlComments(String html) {
+        return html.replaceAll("(?s)<!--.*?-->", "");
+    }
+
+    private static int countOccurrences(String haystack, String needle) {
+        int count = 0;
+        for (int i = haystack.indexOf(needle); i >= 0; i = haystack.indexOf(needle, i + needle.length())) {
+            count++;
+        }
+        return count;
     }
 }

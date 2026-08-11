@@ -414,11 +414,17 @@
       var ang = (Math.PI * 2 * i) / 6;
       bit.style.setProperty('--bx', Math.cos(ang) * 18 + 'px');
       bit.style.setProperty('--by', Math.sin(ang) * 18 + 'px');
-      bit.style.background = ['#39d0c7', '#f7b83f', '#9e7bff', '#ff715f', '#35c987', '#5db8ff'][i];
+      // Искры берут продуктовую палитру по ИМЕНИ: копия HEX в JS — вторая палитра,
+      // которая не переключается вместе с темой и отстаёт при смене направления.
+      bit.style.background = 'var(' + SPARK_TOKENS[i] + ')';
       el.appendChild(bit);
     }
     later(function () { el.remove(); }, 450);
   }
+
+  var SPARK_TOKENS = ['--color-accent-primary', '--color-accent-secondary',
+    '--color-status-purple', '--color-status-error', '--color-status-success',
+    '--color-status-info'];
 
   function onPointerMove(e) {
     if (!allowAmbient()) return;
@@ -440,12 +446,20 @@
     if (!allowFx()) return;
     var t = e.target;
     if (!t || !t.closest) return;
-    // Press sparks on all interactive chrome: .btn and friends
+    // Искры нажатия на интерактивной хроме. Список начинается с голого `button`,
+    // поэтому перечислять после него кнопочные классы было избыточно: замер по
+    // шаблонам показал, что .next-btn/.primary-btn/.secondary-btn/.icon-button/
+    // .side-action/.btn-favorite/.btn-finish-small/.content-tab/.section-tab/
+    // .confidence-btn/.flashcard-grade-btn/.skip-btn/.danger-btn — все <button>.
+    // Побочный эффект дубля: .settings-tab в списке НЕ было, а искры у него всё
+    // равно были (тот же <button>) — список выглядел избирательным, не будучи им.
+    // Голый .chip не встречается в разметке ни разу (есть filter-bar-chip,
+    // topic-due-chip, today-chip — другие токены) и удалён как мёртвый.
+    // Осталось то, что кнопкой НЕ является: ссылка-кнопка (<a class="btn">),
+    // подпись фильтра (<label class="filter-chip">) и подписи вариантов MCQ.
     if (t.closest(
-      'button, .btn, .next-btn, .primary-btn, .secondary-btn, a.btn, .icon-button, ' +
-      '.side-action, .btn-favorite, .chip, .filter-chip, .content-tab, .section-tab, ' +
-      '.confidence-btn, .flashcard-grade-btn, .skip-btn, .danger-btn, ' +
-      '.btn-finish-small, label[data-option-id], #interview-options label, .option, .options label'
+      'button, a.btn, .filter-chip, ' +
+      'label[data-option-id], #interview-options label, .option, .options label'
     )) {
       clickSpark(e.clientX, e.clientY);
     }
@@ -516,7 +530,8 @@
       }
     }
     // Здесь была четвёртая попытка — вычитать «N / M» из счётчика в топбаре.
-    // Топбар больше не печатает прогресс сессии (fragments/topbar.html), так что
+    // Топбара больше нет вовсе (FRD-021: полоса удалена, fragments/topbar.html
+    // переименован в shell-head.html и печатает только мобильную шапку), так что
     // ветка не могла совпасть ни разу; первая же попытка выше читает тот самый
     // рельс, который её вытеснил.
     if (!count) {

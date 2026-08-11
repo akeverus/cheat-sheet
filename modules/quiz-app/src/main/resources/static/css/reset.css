@@ -61,7 +61,11 @@ html[data-design] h6 {
   font-family: var(--font-family-display);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
-  letter-spacing: var(--letter-spacing-tight);
+  /* Минус-трекинг (-0.02em) был настроен на гротеск: у Inter при крупном кегле
+     межбуквенное поле избыточно. У антиквы его выбирают засечки, и тот же минус
+     склеивает «ль»/«ый» на h4–h6. Оптический кегль Literata сам поджимает
+     крупные ступени — трекинг остаётся нормальным. */
+  letter-spacing: normal;
   color: var(--color-text-primary);
   font-optical-sizing: auto;
   text-wrap: balance;
@@ -97,8 +101,18 @@ html[data-design] a {
 }
 html[data-design] a:hover { color: var(--color-accent-primary-hover); }
 
+/* Меры чтения здесь НЕТ — сознательно. `p` всегда несёт прозу, поэтому мера на
+   теге верна. `ul`/`ol` в этом приложении прозой почти не бывают: разметочный
+   аудит дал 8 рукописных <ul> в шаблонах, и все 8 — структура (сетка тем,
+   список закладок, карточки ошибок, навигация). Прозаические списки приходят
+   только из markdown и живут внутри .markdown-content — там мера и стоит.
+   Пока мера была на теге, она резала ровно те случаи, для которых не
+   предназначалась: замер @2560 давал .topic-catalog-grid 818px при родителе
+   1120px (4 ряда вместо 2) и .bookmark-list 818px одной колонкой. Каждая
+   страница чинила это своим `max-width: none` — к iter-63 таких исключений
+   накопилось три. Правило снято, исключения удалены. */
 html[data-design] ul,
-html[data-design] ol { margin: 0 0 var(--space-4); padding-left: var(--space-5); max-width: var(--measure); }
+html[data-design] ol { margin: 0 0 var(--space-4); padding-left: var(--space-5); }
 html[data-design] li { margin-bottom: var(--space-2); }
 
 }

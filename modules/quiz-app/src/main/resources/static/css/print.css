@@ -10,15 +10,16 @@
 @media print {
   html[data-design],
   html[data-design] body { background: #fff !important; color: #141413 !important; }
-  /* Каркас приложения на бумаге не нужен: сайдбар (232px), топбар и мобильная
+  /* Каркас приложения на бумаге не нужен: рельс, мобильная шапка и мобильная
      нижняя навигация — экранные органы управления, на листе они съедали бы
-     колонку и печатали список ссылок. До этого здесь стояли .ed-masthead-*:
+     колонку и печатали список ссылок. Селектор `.topbar` отсюда убран вместе с
+     самой полосой (десктопного верхнего хрома больше нет).
+     До этого здесь стояли .ed-masthead-*:
      селекторы editorial-шапки, удалённой ещё при редизайне, — печать тихо
      выводила ВЕСЬ текущий каркас, включая сайдбар. Заметно на «Печать / PDF»
      в итогах сессии. */
   html[data-design] .skip-link,
   html[data-design] .sidebar,
-  html[data-design] .topbar,
   html[data-design] .mobile-header,
   html[data-design] .mobile-nav,
   html[data-design] .back-to-top,
@@ -52,7 +53,7 @@
   html[data-design] .flashcard-reveal-summary,
   html[data-design] .confidence-buttons,
   html[data-design] #extra-analysis-toggle,
-  html[data-design] .empty-actions { display: none !important; }
+  html[data-design] .empty-state-actions { display: none !important; }
   /* Сайдбар скрыт — оболочка обязана перестать резервировать под него колонку,
      иначе grid оставляет пустые 232px слева на каждой странице печати. */
   html[data-design] .app { display: block !important; }
@@ -67,10 +68,11 @@
   html[data-design] .summary-td-correct,
   html[data-design] .summary-td-wrong { color: #141413 !important; }
   html[data-design] a { color: #141413 !important; text-decoration: none; }
-  /* /stats: JS скрывает строки после лимита атрибутом hidden. На печать
-     разворачиваем их обратно; thead длинной таблицы повторяется на каждой
-     странице нативно при разрыве по страницам. */
-  html[data-design] .stats-page .topic-table tr[hidden] { display: table-row !important; }
+  /* /stats: объём таблицы тем решает сервер (iter-81), скрытых строк в разметке
+     нет — разворачивать на печать нечего. Ссылка «Показать все темы» ведёт на
+     другой адрес: на бумаге это мёртвый текст, поэтому её по-прежнему убираем,
+     а счётчик «Показано N из M» остаётся — он объясняет объём распечатки.
+     thead длинной таблицы повторяется на каждой странице нативно. */
   html[data-design] .table-expander { display: none !important; }
   /* Код-блоки печатаются на белом листе (браузер не печатает фоны). В тёмной теме
      --color-text-primary = светлый крем (#F0EEE6) → светлый-по-белому, контраст
@@ -109,10 +111,13 @@
      белом (невидим). Таблица «Детализация по темам» ниже несёт те же данные и
      при печати разворачивается полностью, поэтому графики на печать прячем. */
   html[data-design] .stats-page .chart-card { display: none !important; }
-  /* Карточка фильтров/поиска — чистый интерактив (селекты, чекбоксы, кнопки,
-     поле поиска): на бумаге это пустые рамки без функции, а сама таблица
-     печатается полностью (tr[hidden] разворачиваются выше). */
-  html[data-design] .stats-page .stats-filter-card { display: none !important; }
+  /* Полоса отбора — чистый интерактив (селекты, чекбоксы, кнопки, поле поиска):
+     на бумаге это пустые рамки без функции, а сама таблица печатается полностью
+     (tr[hidden] разворачиваются выше). Правило общее для /stats и /bookmarks:
+     с iter-74 полоса — один компонент, и прятать её на печати надо один раз.
+     Строку состояния оставляем: «Отобрано: раздел Основы» объясняет, ПОЧЕМУ на
+     листе именно эти строки, и на бумаге это единственный способ это узнать. */
+  html[data-design] .filter-bar-form { display: none !important; }
   /* Разрыв по страницам: блоки разбора ответа (варианты, SM-2 сетка, эталон-
      ответ) и строки таблиц не должны рваться пополам между листами. Браузеры
      соблюдают break-inside на flow-блоках и table-row при печати. orphans/

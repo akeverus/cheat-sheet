@@ -190,7 +190,14 @@ for d in DESIGNS:
 # ---- completeness (dark-default): light-блок должен переопределить каждый цвет-
 # токен базового :root(dark), иначе тёмный цвет протёк бы в светлую тему.
 # Источник light = :root[data-theme="light"].
-COLOR_TOKENS = [k for k in root if k.startswith("--color-")]
+# Исключение — токены-алиасы вида `--color-teal: var(--color-accent-primary)`.
+# Такой токен не хранит цвет, а разыменовывается в момент использования, поэтому
+# автоматически следует за темой: переопределять его в light-блоке не нужно и
+# вредно (пришлось бы дублировать сопоставление в двух местах). Без этого
+# исключения гейт выдавал 17 ложных MISS на kit-алиасы — а гейт, который врёт
+# семнадцать раз подряд, перестают читать.
+ALIAS = re.compile(r"^var\(\s*--[\w-]+\s*\)$")
+COLOR_TOKENS = [k for k in root if k.startswith("--color-") and not ALIAS.match(root[k].strip())]
 comp_issues = []
 missing = [k for k in COLOR_TOKENS if k not in ed_light]
 for k in missing:

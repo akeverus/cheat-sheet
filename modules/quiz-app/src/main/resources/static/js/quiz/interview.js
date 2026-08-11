@@ -5,6 +5,7 @@ import { sanitizeHtml } from '../content/sanitize.js';
 import { renderDynamicContent } from '../content/dynamic-content.js';
 import { clearInlineAlert, setInlineAlert } from '../ui/alerts.js';
 import { confirmModal } from '../ui/modals.js';
+import { setPending, clearPending } from '../ui/pending.js';
 import { refreshStatsFromServer, updateSessionProgress } from './session-stats.js';
 
 let interviewBound = false;
@@ -139,8 +140,11 @@ export function initInterviewForm() {
   // Краткий вердикт анонсируется через #result-announce; сюда переносится focus (см. ниже).
   const announceEl = document.getElementById('result-announce');
 
+  // Варианты на время проверки — именно НЕДОСТУПНЫ, а не «заняты»: работа идёт
+  // на кнопке, и она же её показывает (setPending). До iter-84 сюда вешался ещё
+  // и `aria-busy` на форму — второй ключ того же состояния, ничего не менявший
+  // ни на экране, ни в озвучке.
   function setInteractionBusy(busy) {
-    form.setAttribute('aria-busy', busy ? 'true' : 'false');
     optionsContainer.setAttribute('aria-disabled', busy ? 'true' : 'false');
   }
 
@@ -639,11 +643,7 @@ export function initInterviewForm() {
     }
 
     answered = true;
-    const originalSubmitText = (submitBtn.textContent || '').trim() || 'Проверить ответ';
-    submitBtn.disabled = true;
-    submitBtn.classList.add('is-submitting');
-    submitBtn.textContent = 'Проверяю…';
-    submitBtn.setAttribute('aria-busy', 'true');
+    setPending(submitBtn, 'Проверяю…');
     setInteractionBusy(true);
     clearInlineAlert();
 
@@ -656,10 +656,9 @@ export function initInterviewForm() {
 
       if (!response.ok) {
         answered = false;
-        submitBtn.disabled = false;
-        submitBtn.classList.remove('is-submitting');
-        submitBtn.textContent = originalSubmitText;
-        submitBtn.removeAttribute('aria-busy');
+        // Голос отдаём тексту отказа ниже (setInlineAlert), поэтому регион
+        // ожидания гасим пустой строкой, а не объявляем «готово».
+        clearPending(submitBtn, '');
         setInteractionBusy(false);
         updateSubmitAvailability();
         thinkTime.markQuestionShown();
@@ -669,15 +668,13 @@ export function initInterviewForm() {
       }
 
       const data = await response.json();
-      submitBtn.removeAttribute('aria-busy');
+      // Вердикт объявляет #result-announce — регион ожидания замолкает.
+      clearPending(submitBtn, '');
       showResult(data);
     } catch (err) {
       console.error('AJAX answer failed:', err);
       answered = false;
-      submitBtn.disabled = false;
-      submitBtn.classList.remove('is-submitting');
-      submitBtn.textContent = originalSubmitText;
-      submitBtn.removeAttribute('aria-busy');
+      clearPending(submitBtn, '');
       setInteractionBusy(false);
       updateSubmitAvailability();
       thinkTime.markQuestionShown();

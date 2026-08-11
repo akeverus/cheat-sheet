@@ -22,7 +22,7 @@
 
 Опорные фрагменты: `head.html` (шрифты, vendor и один `<link>` на CSS-ленту;
 состав и порядок CSS — в `css-bundle-manifest.txt`),
-`sidebar.html` + `topbar.html` + `mobile-nav.html` (shell), `shell-scripts.html`
+`sidebar.html` + `shell-head.html` + `mobile-nav.html` (shell), `shell-scripts.html`
 (тоггл темы + «наверх»), `icons.html` + `pixel-sprite.html` (SVG-спрайты),
 `state-illustrations.html` (пустые состояния), `scripts.html` (единственная точка
 подключения `app-entry.js`).
@@ -38,10 +38,15 @@
 два неразличимых «дополнения» подряд. Гвард — `TemplateFragmentContractTest.
 shellFragmentsExposeNavLandmarksAndActiveContract`.
 
-Два `<header>` в разметке (`.topbar` и `.mobile-header`) — не дубль banner:
-они взаимоисключаются по `display` на границе 900px, в дереве доступности
-всегда ровно один. `header.builder-intro` на `/settings` вложен в `<main>` и
-потому вообще не ориентир, а обычный блок.
+`<header>` в разметке оболочки ровно один — `.mobile-header` в `shell-head.html`,
+и он живёт только ниже 900px. Раньше их было два: десктопная полоса `.topbar`
+взаимоисключалась с мобильной по `display`, так что в дереве доступности всегда
+оказывался один. Полоса удалена целиком (FRD-021) — на десктопе роль оболочки
+несёт один рельс, глобальные действия стоят в его футере (`.sidebar-footer`,
+вне `<nav>`). Третий `<header>` на `/settings` (`header.builder-intro`,
+вложенный в колонку сетки) снят в iter-62 вместе со своей подменой шапки —
+контекст страницы теперь несёт общий `.page-head`, как на `/stats` и
+`/bookmarks`.
 
 ### Шапка вопроса — вложенность, а не список
 

@@ -22,7 +22,7 @@ html[data-design] .pixel-burst-bit {
   height: 16px;
   image-rendering: pixelated;
   animation: burstFly var(--burst-dur, 0.9s) steps(8) forwards;
-  filter: drop-shadow(0 0 4px rgba(255, 230, 90, 0.5));
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--pixel-gold) 50%, transparent));
 }
 @keyframes burstFly {
   0% { opacity: 1; transform: translate(0, 0) scale(1) rotate(0deg); }
@@ -47,7 +47,7 @@ html[data-design][data-pixel="high"] .pixel-floater {
   opacity: 0.42;
   animation: floaterBob var(--bob, 3s) ease-in-out infinite;
   animation-delay: var(--delay, 0s);
-  filter: drop-shadow(0 0 5px rgba(57, 208, 199, 0.3));
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--color-accent-primary) 30%, transparent));
 }
 @keyframes floaterBob {
   0%, 100% { transform: translateY(0) rotate(0deg); }
@@ -69,7 +69,7 @@ html[data-design] .accuracy-bar-fill {
       var(--color-accent-2) 0 4px,
       var(--color-accent-primary) 4px 8px
     ) !important;
-  box-shadow: 0 0 12px rgba(57, 208, 199, 0.45);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--color-accent-primary) 45%, transparent);
   image-rendering: pixelated;
 }
 html[data-design][data-pixel="high"] .session-progress-fill,
@@ -105,7 +105,7 @@ html[data-design] .streak-progress-fill::after {
   transform: translateY(-50%);
   background: url("/img/pixel/streak-fire.png") center / contain no-repeat;
   image-rendering: pixelated;
-  filter: drop-shadow(0 0 6px rgba(255, 140, 60, 0.7));
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--pixel-flame) 70%, transparent));
 }
 html[data-design][data-pixel="high"] .streak-progress-fill::after {
   animation: fireBob 0.6s steps(2) infinite;
@@ -115,7 +115,7 @@ html[data-design][data-pixel="high"] .streak-progress-fill::after {
 html[data-design] .score-ring-value {
   transform-origin: 60px 60px;
   animation: ringDraw 1s steps(12) both;
-  filter: drop-shadow(0 0 8px rgba(57, 208, 199, 0.6));
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--color-accent-primary) 60%, transparent));
 }
 @keyframes ringDraw { from { stroke-dasharray: 0 400; } }
 html[data-design] .summary-score-value {
@@ -132,7 +132,7 @@ html[data-design] .summary-kpi:hover,
 html[data-design] .dashboard-grid .metric:hover,
 html[data-design] .stat-item:hover {
   transform: translate(-2px, -2px);
-  box-shadow: var(--px-edge-teal);
+  box-shadow: var(--px-edge-brass);
   filter: brightness(1.08);
 }
 
@@ -158,7 +158,7 @@ html[data-design] .error-pixel-art {
   image-rendering: pixelated;
   margin: 0 auto var(--space-4);
   display: block;
-  filter: drop-shadow(0 0 16px rgba(255, 113, 95, 0.45));
+  filter: drop-shadow(0 0 16px color-mix(in srgb, var(--color-status-error) 45%, transparent));
 }
 /* @layer pixel > pages: размеры mascot задаём здесь, иначе 120px побеждает
    pages-error mobile (live SE: artH=120 при нужных 40–64). */
@@ -181,17 +181,14 @@ html[data-design] .error-pixel-art {
 html[data-design][data-pixel="high"] .error-pixel-art {
   animation: mascotBounce 0.9s steps(3) infinite;
 }
+/* Крупный номер статуса был набран «хроматической аберрацией» — бирюзовая и
+   коралловая тени вразбег плюс анимация glitchText, дёргающая цифру раз в две
+   секунды. Это цитата из сломанного ЭЛТ-экрана: сигнатура ровно того
+   терминального направления, которое снято. Ошибка в этом продукте — не помеха
+   на кинескопе, а отметка на полях: цифра тиснёная, неподвижная, в тоне грани
+   листа. Анимация снята целиком, а не «выключена под reduce» — гасить нечего. */
 html[data-design] .error-code {
-  text-shadow: 4px 4px 0 rgba(57, 208, 199, 0.25), -2px -2px 0 rgba(255, 113, 95, 0.2);
-}
-html[data-design][data-pixel="high"] .error-code {
-  animation: glitchText 2s steps(2) infinite;
-}
-@keyframes glitchText {
-  0%, 90%, 100% { transform: translate(0); }
-  92% { transform: translate(-3px, 1px); color: var(--px-red); }
-  94% { transform: translate(3px, -1px); color: var(--px-teal); }
-  96% { transform: translate(0); }
+  text-shadow: 3px 3px 0 color-mix(in srgb, var(--color-border-primary) 55%, transparent);
 }
 
 /* Summary overflow menu */
@@ -209,7 +206,7 @@ html[data-design] .summary-more-menu {
   min-width: 220px;
   padding: 8px;
   background: var(--color-bg-tertiary);
-  box-shadow: var(--px-edge-teal);
+  box-shadow: var(--px-edge-brass);
   display: grid;
   gap: 4px;
   border-radius: 0;
@@ -223,11 +220,11 @@ html[data-design] .summary-more-link {
 }
 html[data-design] .summary-more-link:hover {
   background: var(--color-accent-wash);
-  /* Тема-корректный teal-текст (см. .secondary-btn:hover): --px-teal на pale light-wash
+  /* Тема-корректный акцентный текст (см. .secondary-btn:hover): --px-brass на бледном wash
      давал ~1.6 (провал WCAG). --color-accent-strong корректен в обеих темах.
-     Инсет-полоска остаётся --px-teal (декоративный accent-бордер, не текст). */
+     Инсет-полоска остаётся --px-brass (декоративный accent-бордер, не текст). */
   color: var(--color-accent-strong);
-  box-shadow: inset 3px 0 0 var(--px-teal);
+  box-shadow: inset 3px 0 0 var(--px-brass);
 }
 
 /* XP / potion near result */
@@ -246,8 +243,8 @@ html[data-design] .result-xp::before {
   margin-right: 6px;
   vertical-align: -2px;
   background: url("/img/pixel/potion.png") center / contain no-repeat;
-  image-rendering: pixelated;
   image-rendering: crisp-edges;
+  image-rendering: pixelated;
 }
 
 /* Focus question title — slight pixel shadow */
@@ -288,10 +285,10 @@ html[data-design] .pixel-screen-flash {
   animation: screenFlash 0.4s steps(4) forwards;
 }
 html[data-design] .pixel-screen-flash.is-ok {
-  background: radial-gradient(circle at center, rgba(53,201,135,0.35), transparent 60%);
+  background: radial-gradient(circle at center, color-mix(in srgb, var(--color-status-success) 35%, transparent), transparent 60%);
 }
 html[data-design] .pixel-screen-flash.is-bad {
-  background: radial-gradient(circle at center, rgba(255,113,95,0.4), transparent 55%);
+  background: radial-gradient(circle at center, color-mix(in srgb, var(--color-status-error) 40%, transparent), transparent 55%);
 }
 @keyframes screenFlash {
   0% { opacity: 1; }
@@ -311,7 +308,7 @@ html[data-design] .pixel-coin-rain img {
   top: -40px;
   image-rendering: pixelated;
   animation: coinFall var(--fall, 1.2s) var(--delay, 0s) steps(8) forwards;
-  filter: drop-shadow(0 0 4px rgba(247,184,63,0.6));
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--color-accent-secondary) 60%, transparent));
 }
 @keyframes coinFall {
   to { transform: translateY(110vh) rotate(720deg); opacity: 0.85; }
@@ -349,7 +346,12 @@ html[data-design] .pixel-click-bit {
   100% { opacity: 0; transform: translate(var(--bx), var(--by)); }
 }
 
-/* Primary button inset bevel + shine */
+/* Верхняя кромка главной кнопки — засветка ШТАМПОВАННОЙ ПЛАСТИНЫ, не глянец.
+   Было: полоса 4px чистого белого в 35% поверх заливки. На бирюзе это читалось
+   как слабый блик, на латуни — как глянцевая игровая кнопка: §58 прямо
+   запрещает bevel ради bevel. Металл ловит свет узкой кромкой и СВОИМ светлым
+   тоном, а не белилами, поэтому полоса стала вдвое тоньше и берётся от
+   `--color-accent-strong` — светлой ступени той же латуни. */
 html[data-design] .next-btn::before,
 html[data-design] .primary-btn::before,
 html[data-design] .focus-page #interview-submit::before,
@@ -360,8 +362,8 @@ html[data-design] .flashcard-reveal-btn::before {
   left: 3px;
   right: 3px;
   top: 2px;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.35);
+  height: 2px;
+  background: color-mix(in srgb, var(--color-accent-strong) 45%, transparent);
   pointer-events: none;
   image-rendering: pixelated;
 }
@@ -417,21 +419,20 @@ html[data-design] .summary-kpi::before {
 /* Duplicate flash keyframes kept for earlier selectors */
 @keyframes optionSelectFlash {
   0% { filter: brightness(1); box-shadow: var(--px-edge); }
-  25% { filter: brightness(1.45) saturate(1.3); box-shadow: var(--px-edge-teal), 0 0 0 2px var(--px-yellow); }
+  25% { filter: brightness(1.45) saturate(1.3); box-shadow: var(--px-edge-brass), 0 0 0 2px var(--px-yellow); }
   50% { filter: brightness(1.2); }
-  100% { filter: brightness(1); box-shadow: var(--px-edge-teal); }
+  100% { filter: brightness(1); box-shadow: var(--px-edge-brass); }
 }
 
-/* Icon buttons — pixel chrome + play/pause glyphs where marked */
-html[data-design] .icon-button,
-html[data-design] .btn-favorite,
-html[data-design] .side-action {
-  border-radius: 0 !important;
-  width: 40px;
-  height: 40px;
-  box-shadow: var(--px-edge) !important;
-  image-rendering: pixelated;
-}
+/* Icon buttons — play/pause глифы там, где помечено.
+
+   Коробка (40×40 + контур + radius) отсюда снята в iter-78: она дословно
+   повторяла такое же правило в pixel-buttons.css и вдобавок захватывала
+   `.side-action` — строку рельса, а не иконочную кнопку. Из-за этого подпись
+   «Выйти» заклампливалась в 40px-бокс и переносилась на две строки, а
+   shell.css держал встречное правило с `!important`, единственный смысл
+   которого — отменить эту. Обе копии и встречное правило удалены; квадрат
+   иконочной кнопки живёт в components-controls.css (ранг «иконка», 44×44). */
 html[data-design] .icon-button[aria-label*="lay"]::before,
 html[data-design] .icon-button[data-pixel-icon="play"]::before {
   content: "";
@@ -451,8 +452,8 @@ html[data-design] .rail-pause-btn::before {
   margin-right: 6px;
   vertical-align: -2px;
   background: url("/img/pixel/btn-pause.png") center / contain no-repeat;
-  image-rendering: pixelated;
   image-rendering: crisp-edges;
+  image-rendering: pixelated;
 }
 
 /* Stage intro overlay */
@@ -463,14 +464,14 @@ html[data-design] .pixel-stage-intro {
   display: grid;
   place-items: center;
   pointer-events: none;
-  background: rgba(3, 12, 16, 0.72);
+  background: color-mix(in srgb, var(--color-bg-primary) 72%, transparent);
   animation: stageIntroIn 0.2s steps(3) both;
 }
 html[data-design] .pixel-stage-intro-inner {
   text-align: center;
   padding: 24px 32px;
   background: var(--color-bg-tertiary);
-  box-shadow: var(--px-edge-teal);
+  box-shadow: var(--px-edge-brass);
   max-width: min(90vw, 360px);
   animation: stageIntroPop 0.35s steps(4) both;
 }
@@ -481,7 +482,7 @@ html[data-design] .pixel-stage-intro-mascot {
   display: block;
   margin: 0 auto 12px;
   animation: mascotBounce 0.5s steps(3) infinite;
-  filter: drop-shadow(0 0 10px rgba(57, 208, 199, 0.55));
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--color-accent-primary) 55%, transparent));
 }
 html[data-design] .pixel-stage-intro-title {
   font-family: inherit;
@@ -525,7 +526,7 @@ html[data-design] .summary-page .summary-hero.is-celebrating::after {
   background: url("/img/pixel/trophy-pixel.png") center / contain no-repeat;
   image-rendering: pixelated;
   animation: trophyPop 0.7s steps(5) both;
-  filter: drop-shadow(0 0 12px rgba(247, 184, 63, 0.7));
+  filter: drop-shadow(0 0 12px color-mix(in srgb, var(--color-accent-secondary) 70%, transparent));
   z-index: 3;
 }
 html[data-design][data-pixel="high"] .summary-page .summary-hero.is-celebrating::after {
@@ -569,7 +570,7 @@ html[data-design][data-pixel="low"] .brand .avatar {
   animation: none !important;
 }
 
-html[data-design] .top-actions .icon-button .icon {
+html[data-design] .shell-actions .icon-button .icon {
   display: block;
 }
 
@@ -580,7 +581,7 @@ html[data-design] .pixel-portal-wipe {
   z-index: 9998;
   display: grid;
   place-items: center;
-  background: rgba(8, 12, 20, 0.55);
+  background: color-mix(in srgb, var(--color-bg-primary) 55%, transparent);
   pointer-events: none;
   animation: portalWipeIn 0.12s steps(2) both;
 }
@@ -594,11 +595,11 @@ html[data-design] .pixel-portal-wipe.is-done {
 html[data-design] .pixel-portal-wipe-glyph {
   width: var(--px-l);
   height: var(--px-l);
-  image-rendering: pixelated;
   image-rendering: crisp-edges;
+  image-rendering: pixelated;
   background: url("/img/pixel/portal-sheet.png") 0 0 / 72px 24px no-repeat;
   animation: portalSheet 0.36s steps(3) infinite, portalSpin 0.45s steps(6) infinite;
-  filter: drop-shadow(0 0 18px rgba(158, 123, 255, 0.7));
+  filter: drop-shadow(0 0 18px color-mix(in srgb, var(--color-status-purple) 70%, transparent));
 }
 @keyframes portalWipeIn {
   from { opacity: 0; }
@@ -617,11 +618,11 @@ html[data-design] .pixel-coin-pickup {
   height: var(--px-l);
   margin-left: -12px;
   margin-top: -12px;
-  image-rendering: pixelated;
   image-rendering: crisp-edges;
+  image-rendering: pixelated;
   pointer-events: none;
   transition: transform 0.5s steps(8), opacity 0.5s steps(4);
-  filter: drop-shadow(0 0 8px rgba(247, 184, 63, 0.85));
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--color-accent-secondary) 85%, transparent));
 }
 html[data-design] .pixel-coin-pickup.pixel-coin-spin-css {
   display: block;
@@ -652,8 +653,8 @@ html[data-design] .settings-page .filter-chip input[type="checkbox"]:not(:checke
   height: var(--px-s);
   margin-right: 4px;
   vertical-align: -1px;
-  image-rendering: pixelated;
   image-rendering: crisp-edges;
+  image-rendering: pixelated;
   background: url("/img/pixel/checkbox-off.png") center / contain no-repeat;
 }
 html[data-design] .settings-page .filter-chip input[type="checkbox"]:checked + .filter-chip-label::before {
@@ -663,14 +664,14 @@ html[data-design] .settings-page .filter-chip input[type="checkbox"]:checked + .
   height: var(--px-s);
   margin-right: 4px;
   vertical-align: -1px;
-  image-rendering: pixelated;
   image-rendering: crisp-edges;
+  image-rendering: pixelated;
   background: url("/img/pixel/checkbox-on.png") center / contain no-repeat;
 }
 
 /* Option letter as pixel stamp (separate from resultStampIn) */
 html[data-design] #interview-options label:has(input:checked)::before {
-  background: var(--px-teal) !important;
+  background: var(--px-brass) !important;
   color: var(--px-ink) !important;
   animation: optionStampIn 0.28s steps(3);
 }

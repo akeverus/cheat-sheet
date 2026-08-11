@@ -69,10 +69,30 @@
         var THEME_COLORS = { light: '#f5f8f8', dark: '#071116' };
         root.setAttribute('data-design', 'instrument');
         root.setAttribute('data-js', '');
+        // Запомненная вкладка — ДО первого кадра (iter-80). Раньше здесь читался
+        // один ключ 'settingsTab', и его значение разбирали четыре CSS-правила по
+        // ID панелей настроек: механизм работал ровно на одной странице.
+        // Теперь tablist.js кладёт под ключом 'tabPanel:<область>' ID ПАНЕЛИ, а
+        // мы пишем по правилу на каждую запомненную панель. `:has()` делает
+        // правило самоприцельным: на странице, где такой панели нет, оно не
+        // матчит ничего. Если браузер `:has()` не знает — селектор невалиден,
+        // правило отбрасывается, и остаётся базовое поведение (открыта панель,
+        // помеченная сервером), то есть максимум одна подмена панели после
+        // загрузки модуля вместо стопки.
         try {
-          var st = localStorage.getItem('settingsTab');
-          if (st === 'tab-session' || st === 'tab-appearance' || st === 'tab-data') {
-            root.setAttribute('data-settings-tab', st);
+          var rules = '';
+          for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            if (!key || key.indexOf('tabPanel:') !== 0) continue;
+            var id = localStorage.getItem(key);
+            if (!/^[A-Za-z][A-Za-z0-9_-]*$/.test(id || '')) continue;
+            rules += 'html[data-design][data-js]:has(#' + id + ') [role="tabpanel"]:not(#' + id + '){display:none}'
+                   + 'html[data-design][data-js]:has(#' + id + ') #' + id + '{display:block}';
+          }
+          if (rules) {
+            var tabStyle = document.createElement('style');
+            tabStyle.textContent = rules;
+            document.head.appendChild(tabStyle);
           }
         } catch (e) { /* приватный режим */ }
         function metaColor(resolved) { return THEME_COLORS[resolved] || THEME_COLORS.dark; }
@@ -187,9 +207,9 @@
          data: URL — для совместимости с CSP default-src 'self'. */-->
     <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}" href="/favicon.svg">
     <title th:text="${title}">Подготовка к собеседованию</title>
-    <!--/* OPS-005: Inter + JetBrains Mono self-hosted (static/fonts + css/fonts-local.css).
+    <!--/* OPS-005: Literata + Inter + JetBrains Mono self-hosted (static/fonts + css/fonts-local.css).
          Семейства совпадают с --font-family-* в tokens.css; pixel-слой body не подменяет. */-->
-    <!--/* PERF: preload двух критичных Inter-сабсетов (above-the-fold на КАЖДОЙ странице):
+    <!--/* PERF: preload трёх критичных сабсетов (above-the-fold на КАЖДОЙ странице):
          Cyrillic (U+0400-045F — русские А-я, весь UI) + basic Latin (U+0000-00FF — цифры/пунктуация).
          ВАЖНО: русский блок = U+0400-045F (файл ...SjIa0ZL7W0Q5n-wU), НЕ cyrillic-ext U+0460-052F
          (...SjIa2JL7W0Q5n-wU) — последний почти не используется, дал бы "unused preload".
@@ -201,6 +221,12 @@
           th:href="@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa0ZL7W0Q5n-wU.woff2}">
     <link rel="preload" as="font" type="font/woff2" crossorigin
           th:href="@{/fonts/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7W0Q5nw.woff2}">
+    <!--/* Literata, кириллический сабсет: заголовок страницы (h1) стоит выше сгиба на
+         КАЖДОМ адресе, поэтому антиква — часть критической волны, а не хвоста. Латинский
+         сабсет Literata не преднагружаем: в заголовках латиница встречается вкраплениями
+         (термины вроде «pruning»), swap на них не двигает композицию. */-->
+    <link rel="preload" as="font" type="font/woff2" crossorigin
+          th:href="@{/fonts/or3PQ6P12-iJxAIgLa78DkTtAoDhk0oVpaK3YLanFLHpPf2TbLi4J_XWTEKVt8m1ow.woff2}">
     <!--/* PERF: один блокирующий CSS-запрос на страницу вместо 33 <link>.
          Порядок каскада и постраничные гейты — в css-bundle-manifest.txt; лента
          склеивается CssBundleService, имя несёт хеш содержимого. Замер на Slow 4G

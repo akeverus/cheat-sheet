@@ -9,9 +9,9 @@ import { motionReduced } from '../core/dom.js';
 /**
  * Тоггл темы: раскрывает скрытые кнопки и держит имя в согласии с текущей темой.
  *
- * Кнопок несколько (десктопный topbar и мобильная шапка), состояние у них общее —
- * поэтому синхронизируем разом и по клику, и по событию `themechange`, которое
- * шлёт inline-бутстрап темы (он же владеет `window.__theme`).
+ * Кнопок несколько (строка действий рельса и мобильная шапка), состояние у них
+ * общее — поэтому синхронизируем разом и по клику, и по событию `themechange`,
+ * которое шлёт inline-бутстрап темы (он же владеет `window.__theme`).
  *
  * Это кнопка-действие, а не кнопка-состояние, поэтому `aria-pressed` тут нет.
  * Светлая и тёмная — равноправные режимы, а не «включено/выключено»: у «нажата»
@@ -20,22 +20,33 @@ import { motionReduced } from '../core/dom.js';
  * имя обещало включить тёмную, состояние утверждало, что она уже включена.
  * Осталось одно: имя описывает, что произойдёт по нажатию.
  *
- * `title` синхронизируем тем же текстом — иначе всплывающая подсказка мыши и
- * имя для скринридера рассказывали бы про кнопку разное.
+ * Две формы одной кнопки. В рельсе она подписана (`[data-theme-label]`) и стоит
+ * строкой рядом с «Выйти»; в мобильной шапке места на подпись нет и она
+ * icon-only. У подписанной формы видимая подпись ОБЯЗАНА совпадать с доступным
+ * именем (WCAG 2.5.3 Label in Name), иначе голосовое управление «нажми Тёмная
+ * тема» не находит кнопку с именем «Включить тёмную тему». Поэтому подписанной
+ * ставим короткое имя целевой темы и им же — `aria-label`, а icon-only остаётся
+ * с развёрнутым «Включить …»: у неё видимой подписи нет и конфликтовать не с чем.
+ *
+ * `title` синхронизируем тем же текстом, что и имя, — иначе всплывающая подсказка
+ * мыши и имя для скринридера рассказывали бы про кнопку разное.
  */
 function initThemeToggles() {
   const toggles = document.querySelectorAll('[data-theme-toggle]');
   if (!toggles.length || !window.__theme) return;
 
   const sync = () => {
-    const action = window.__theme.resolved() === 'light'
-      ? 'Включить тёмную тему'
-      : 'Включить светлую тему';
+    const light = window.__theme.resolved() === 'light';
+    const action = light ? 'Включить тёмную тему' : 'Включить светлую тему';
+    const short = light ? 'Тёмная тема' : 'Светлая тема';
     toggles.forEach((btn) => {
       btn.classList.remove('hidden');
       btn.removeAttribute('aria-pressed');
-      btn.setAttribute('aria-label', action);
-      btn.setAttribute('title', action);
+      const label = btn.querySelector('[data-theme-label]');
+      const name = label ? short : action;
+      if (label) label.textContent = short;
+      btn.setAttribute('aria-label', name);
+      btn.setAttribute('title', name);
     });
   };
 
