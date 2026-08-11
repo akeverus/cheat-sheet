@@ -1,6 +1,6 @@
 ---
 title: "Вопросы на собеседовании: REST-клиенты Spring"
-description: "HTTP-клиенты Spring: RestTemplate (deprecated), RestClient (Spring 6.1), WebClient, @HttpExchange декларативный интерфейс"
+description: "HTTP-клиенты Spring: RestTemplate (deprecated с 7.0), RestClient (Spring 6.1), WebClient, @HttpExchange декларативный интерфейс"
 tags:
   - interview
   - frameworks
@@ -18,7 +18,7 @@ updated: "2026-05-14"
 ---
 # Вопросы на собеседовании: REST-клиенты Spring
 
-В Spring существует три основных HTTP-клиента: `RestTemplate` (классический, в maintenance mode с Spring 6), `WebClient` (реактивный, Spring 5+), и `RestClient` (новый синхронный, Spring 6.1). На собеседованиях проверяют понимание различий, миграцию с RestTemplate и декларативный подход через `@HttpExchange`.
+В Spring существует три основных HTTP-клиента: `RestTemplate` (классический; maintenance mode в Spring 6, формально deprecated с 7.0), `WebClient` (реактивный, Spring 5+), и `RestClient` (новый синхронный, Spring 6.1). На собеседованиях проверяют понимание различий, миграцию с RestTemplate и декларативный подход через `@HttpExchange`.
 
 Дата последнего обновления: 2026-04-20
 
@@ -68,7 +68,7 @@ updated: "2026-05-14"
 |---|---|---|---|
 | Версия | Spring 3+ | Spring 6.1+ | Spring 5+ (WebFlux) |
 | Стиль | Синхронный | Синхронный fluent | Реактивный |
-| Статус | Maintenance mode | Актуальный | Актуальный |
+| Статус | Maintenance mode в 6.x, deprecated с 7.0 | Актуальный | Актуальный |
 | Стиль API | Методы перегрузки | Fluent builder chain | Reactive (Mono/Flux) |
 | Зависимость | spring-web | spring-web | spring-webflux |
 | Применение | Legacy код | Новые Spring 6 проекты | Реактивный стек |
@@ -77,15 +77,14 @@ updated: "2026-05-14"
 
 ```mermaid
 graph LR
-    RT[RestTemplate<br/>deprecated] -->|заменяется| RC[RestClient<br/>Spring 6.1]
-    WC[WebClient<br/>reactive] -->|поддерживает| RC
-    RC -->|builder из| RT
+    RT["RestTemplate<br/>deprecated с 7.0"] -->|"заменяется; отдаёт конвертеры,<br/>фабрику запросов, интерсепторы"| RC["RestClient<br/>Spring 6.1"]
+    WC["WebClient<br/>reactive"] -.->|"заимствован только стиль fluent-API"| RC
 ```
 
 **Как выбрать:**
 - Новый проект на Spring 6.1+, классический блокирующий стек (Spring MVC) → **RestClient**.
 - Spring WebFlux, высокая конкурентность, нужны `Mono`/`Flux` → **WebClient**.
-- Legacy-код, который ещё не мигрировали → **RestTemplate** (работает, но новых фич не получит).
+- Legacy-код, который ещё не мигрировали → **RestTemplate** (продолжает работать, но новых фич не получает и с 7.0 помечен `@Deprecated`).
 
 ---
 
@@ -99,7 +98,7 @@ graph LR
 
 `RestClient` решает всё это единым fluent builder и при этом совместим с той же инфраструктурой — `HttpMessageConverter`, `ClientHttpRequestFactory`. Поэтому миграция дёшева: ту же фабрику запросов и конвертеры можно передать в новый клиент.
 
-**Важно:** строго говоря, `RestTemplate` НЕ помечен аннотацией `@Deprecated` — он в режиме поддержки (maintenance mode): в Spring 6.x продолжает работать, но новых фич не получает (Javadoc лишь предупреждает, что класс «will be deprecated in a future version»). Срочно переписывать рабочий код не нужно, но новый код стоит писать на `RestClient`.
+**Важно про статус — он зависит от версии.** В Spring 6.x `RestTemplate` не был помечен `@Deprecated`: он находился в режиме поддержки (maintenance mode) — работал, но новых фич не получал. **Начиная со Spring Framework 7.0 он формально объявлен deprecated** в пользу `RestClient` и будет удалён в одной из будущих версий; для асинхронных и потоковых сценариев там же рекомендуется `WebClient`. Практический вывод: рабочий код не ломается и переписывать его в авральном режиме не нужно, но новый код пишут на `RestClient`, а миграцию существующего стоит планировать, а не откладывать бессрочно.
 
 ---
 
@@ -275,7 +274,7 @@ Flux<User> allUsers = webClient.get()
 
 ## Q8. Как сделать синхронный вызов через WebClient?
 
-Синхронный результат из реактивного `WebClient` получают вызовом `.block()` на `Mono`/`Flux` — он ждёт завершения и возвращает развёрнутое значение. Но это сознательный мост из реактивного мира в блокирующий, и применять его можно далеко не везде (см. ниже).
+Синхронный результат из реактивного `WebClient` получают блокирующим ожиданием: у `Mono` это `.block()`, у `Flux` — `blockFirst()` и `blockLast()`. Вызов ждёт завершения и возвращает развёрнутое значение. Но это сознательный мост из реактивного мира в блокирующий, и применять его можно далеко не везде (см. ниже).
 
 ```java
 // .block() превращает реактивный вызов в блокирующий
@@ -418,21 +417,29 @@ UserClient client = factory.createClient(UserClient.class);
 
 ```java
 // Таймауты через ClientHttpRequestFactory
-ClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-((SimpleClientHttpRequestFactory) factory).setConnectTimeout(5000);
-((SimpleClientHttpRequestFactory) factory).setReadTimeout(10000);
+SimpleClientHttpRequestFactory simpleFactory = new SimpleClientHttpRequestFactory();
+simpleFactory.setConnectTimeout(Duration.ofSeconds(5));
+simpleFactory.setReadTimeout(Duration.ofSeconds(10));
 
-// Или через Apache HttpClient (более гибко):
+// Или через Apache HttpClient 5 (более гибко: пул, TTL соединений):
+PoolingHttpClientConnectionManager connManager =
+    PoolingHttpClientConnectionManagerBuilder.create().build();
+connManager.setDefaultConnectionConfig(ConnectionConfig.custom()
+    .setConnectTimeout(Timeout.ofSeconds(5))
+    .setSocketTimeout(Timeout.ofSeconds(10))
+    .setTimeToLive(TimeValue.ofSeconds(10))
+    .build());
 CloseableHttpClient httpClient = HttpClients.custom()
-    .setConnectionTimeToLive(10, TimeUnit.SECONDS)
+    .setConnectionManager(connManager)
     .evictExpiredConnections()
     .build();
-ClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient);
+HttpComponentsClientHttpRequestFactory apacheFactory =
+    new HttpComponentsClientHttpRequestFactory(httpClient);
 
 // RestClient с настройками:
 RestClient client = RestClient.builder()
     .baseUrl("https://api.example.com/v2")
-    .requestFactory(factory)
+    .requestFactory(apacheFactory)
     .defaultHeader("Authorization", "Bearer " + apiKey)
     .defaultHeader("Accept", "application/json")
     .defaultUriVariables(Map.of("version", "2"))
