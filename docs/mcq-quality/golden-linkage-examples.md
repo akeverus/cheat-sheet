@@ -40,7 +40,7 @@ mental models, Single-Delta и читаемости и **не являются �
 
 Это не adjacent knowledge и не полезное расширение. Это другой вопрос под тем же номером.
 
-**Как дефект ловится машинно** (`audit/mcq/linkage_scan.py`):
+**Как дефект ловится машинно** (`scripts/mcq-linkage-scan.py`):
 
 ```
 STEM-DRIFT   q4b0: overlap=0.00 — question_text не пересекается с видимым заголовком

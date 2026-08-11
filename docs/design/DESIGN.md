@@ -222,7 +222,7 @@ static/css/
   reset-layout.css            @layer reset — a11y, skip-link, motion, .ed-page
   utilities-core.css          @layer utilities — .hidden, layout utils
   components-masthead.css       @layer components — legacy ed-masthead (header fragment)
-  components-widgets.css        @layer components — back-to-top, today-hero, personalization
+  components-widgets.css        @layer components — back-to-top, today-chip, personalization
   components-signatures.css     @layer components — instrument h1..h6 voice
   pages-focus.css               @layer pages — тренировка, MCQ, flashcard
   pages-settings.css            @layer pages
