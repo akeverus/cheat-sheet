@@ -1518,8 +1518,8 @@ public class UserService {
 **RestTemplate (legacy):**
 ```java
 RestTemplate restTemplate = new RestTemplate();
-User user = restTemplate.getForObject("/users/{id}", User.class, 1L);
-// В maintenance mode (НЕ @Deprecated); для новых проектов предпочитают RestClient
+User user = restTemplate.getForObject("https://api.example.com/users/{id}", User.class, 1L);
+// Maintenance mode в Spring 6.x, @Deprecated с 7.0; для новых проектов — RestClient
 ```
 
 **WebClient (реактивный стек):**
