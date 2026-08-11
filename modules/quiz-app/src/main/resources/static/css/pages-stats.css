@@ -240,7 +240,20 @@ html[data-design] .stats-page .charts-row { display: grid; grid-template-columns
    ужаться ниже min-content контента. Внутри лежит canvas Chart.js с фиксированной
    width=300 → трек распирало до 366px и страница уезжала вправо на мобиле. */
 html[data-design] .stats-page .chart-card { margin: 0; min-width: 0; }
-html[data-design] .stats-page .chart-wrapper { position: relative; height: 320px; min-width: 0; }
+/* Высота графика — доля его ширины, а не константа. 320px были выведены для
+   десктопной колонки ~500px: там это пропорция 1:1.6. На телефоне холст 279px,
+   и та же константа давала почти квадрат, съедая по 320px на каждый из двух
+   графиков при странице 9552px. Мобильная композиция — не уменьшенный десктоп
+   (§21), и высота обязана считаться от реальной ширины.
+
+   `clamp` держит нижнюю границу: ниже 180px столбчатая диаграмма перестаёт
+   читаться, а подписи оси налезают друг на друга. Верхняя — прежние 320px,
+   поэтому на десктопе не меняется НИЧЕГО: замер 1512 даёт те же 320. */
+html[data-design] .stats-page .chart-wrapper {
+  position: relative;
+  height: clamp(11.25rem, 62vw, 20rem);
+  min-width: 0;
+}
 html[data-design] .stats-page .chart-wrapper canvas { max-width: 100%; }
 html[data-design] .stats-page .chart-fallback { color: var(--color-text-secondary); font-size: var(--font-size-sm); padding: var(--space-4) 0; }
 
