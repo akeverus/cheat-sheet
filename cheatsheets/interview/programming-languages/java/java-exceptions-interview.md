@@ -1572,7 +1572,7 @@ public class GlobalExceptionHandler {
 
 **ProblemDetail (RFC 9457, бывший RFC 7807; Spring 6+):**
 ```java
-// Spring Boot 3+ включает ProblemDetail из коробки
+// Тип ProblemDetail есть в Spring 6, но автоотдачу problem+json включают явно:
 // application.yml:
 // spring.mvc.problemdetails.enabled: true
 

@@ -440,7 +440,7 @@ public class ValidationExceptionHandler {
 }
 ```
 
-В Spring Boot 3.2+ по умолчанию включён `ProblemDetail` (RFC 9457, бывший RFC 7807) — встроенные обработчики возвращают структурированный JSON без ручного кода.
+В Spring Boot доступен `ProblemDetail` (RFC 9457, бывший RFC 7807), но автоотдачу `application/problem+json` для исключений Spring MVC включают явно — `spring.mvc.problemdetails.enabled=true`. После этого встроенные обработчики возвращают структурированный JSON без ручного кода.
 
 ## Сообщения об ошибках и i18n
 
@@ -587,7 +587,7 @@ public class RegisterDto {
 - **Используй `@Validated` на классе для method-level валидации.** Без неё аннотации на параметрах сервиса игнорируются.
 - **Группы только когда реально разный сценарий.** Часто проще два DTO — `CreateUserDto` и `UpdateUserDto`.
 - **Параметры в сообщениях через `{name}`, значение — через `${validatedValue}`.** Простой `${}` без валидной EL выражения упадёт.
-- **ProblemDetail (RFC 9457, бывший 7807) для новых API.** Spring Boot 3.2+ делает это автоматически.
+- **ProblemDetail (RFC 9457, бывший 7807) для новых API.** В Spring Boot автоотдачу `application/problem+json` включают свойством `spring.mvc.problemdetails.enabled=true`.
 
 ## Решение проблем
 

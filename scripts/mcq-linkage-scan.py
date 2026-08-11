@@ -227,6 +227,17 @@ def scan_file(seed_path: Path) -> dict:
                 "manual_review": False,
             }
 
+            # Точная сверка. ROUND-10 требует, чтобы question_text был нормализованной копией
+            # видимого заголовка. Порога по пересечению слов для этого мало: правка заголовка
+            # источника вида «RFC 7807» → «RFC 9457» меняет один токен, overlap остаётся высоким,
+            # и рассинхрон проходит незамеченным — а блок при этом начинает спорить с прочитанным.
+            if qt.strip() != title.strip():
+                entry["manual_review"] = True
+                res["warnings"].append(
+                    f"STEM-MISMATCH {tag}: question_text не совпадает с видимым заголовком дословно.\n"
+                    f"    заголовок:     {title}\n"
+                    f"    question_text: {qt}")
+
             if overlap < LOW_TITLE_OVERLAP:
                 entry["manual_review"] = True
                 res["errors"].append(
