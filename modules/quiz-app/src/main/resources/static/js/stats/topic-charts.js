@@ -119,11 +119,23 @@ function renderChartTable(tableId, caption, headers, rows) {
     + '</tbody>';
   table.innerHTML = `<caption>${escapeHtml(caption)}</caption>${thead}${tbody}`;
   table.classList.remove('hidden', 'visually-hidden');
+  // Таблица живёт под раскрытием (details) и по умолчанию свёрнута: три
+  // представления одних чисел разом — конкуренция за внимание, а не доступность.
+  // НО если график не отрисовался, таблица остаётся единственным носителем
+  // данных, и прятать её за нажатием нельзя — раскрываем.
+  const disclosure = table.closest('.chart-table-disclosure');
+  if (disclosure && chartFailed(table.id)) disclosure.open = true;
   // Дубль наполняется ПОСЛЕ initScrollableTables (данные приходят из /api),
   // и до этого момента таблица была `hidden` → замер обёртки дал бы 0.
   // Переоцениваем её здесь, иначе скролл-подсказка появилась бы только
   // после первого ресайза окна.
   enhanceScrollableTables(table.parentElement);
+}
+
+/** Не отрисовался ли график, к которому относится эта таблица. */
+const failedCharts = new Set();
+function chartFailed(tableId) {
+  return failedCharts.has(tableId);
 }
 
 function showFallback(canvas, fallback, message, tableId) {
@@ -133,6 +145,7 @@ function showFallback(canvas, fallback, message, tableId) {
     fallback.textContent = message || fallback.textContent;
   }
   if (tableId) {
+    failedCharts.add(tableId);
     const table = document.getElementById(tableId);
     table?.classList.remove('hidden', 'visually-hidden');
     if (table) enhanceScrollableTables(table.parentElement);
