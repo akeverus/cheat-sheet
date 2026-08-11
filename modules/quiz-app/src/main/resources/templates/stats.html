@@ -168,10 +168,6 @@
         <span class="muted tiny"
               th:with="nonSkip=${metrics.attemptsCorrect + metrics.attemptsIncorrect}"
               th:text="${metrics.attemptsCorrect} + ' верных попыток из ' + ${nonSkip} + ' (без пропусков)'">0 верных попыток из 0</span>
-        <span class="muted tiny metric-formula"
-              th:if="${metricDefinitions != null and metricDefinitions['overallAccuracy'] != null}"
-              th:with="def=${metricDefinitions['overallAccuracy']}"
-              th:text="${def.formula} + ' · период: ' + ${periodLabels.get(def.period) ?: def.period}">formula</span>
     </article>
     <!--/* Тон плитки считается по ТОМУ ЖЕ округлённому числу, которое она печатает.
          Раньше класс `good` стоял безусловно, и на пустом прогрессе «0%» светилось
@@ -204,10 +200,6 @@
               th:text="${masteredShown == 0 and metrics.cardsMastered > 0
                           ? 'доля пока меньше одного процента — счёт честнее'
                           : metrics.cardsMastered + ' из ' + metrics.cardsTotal + ' карточек'}">0 из 0 карточек</span>
-        <span class="muted tiny metric-formula"
-              th:if="${metricDefinitions != null and metricDefinitions['cardsMastered'] != null}"
-              th:with="def=${metricDefinitions['cardsMastered']}"
-              th:text="${def.formula} + ' · период: ' + ${periodLabels.get(def.period) ?: def.period}">formula</span>
     </article>
     <article class="card metric">
         <span class="eyebrow">Среднее время</span>
@@ -221,10 +213,6 @@
         <div class="metric-value"
              th:text="${metrics.hasAverageResponse()} ? ${#numbers.formatDecimal(metrics.averageResponseMs / 1000.0, 1, 1)} + ' с' : '—'">—</div>
         <span class="muted tiny">на один ответ</span>
-        <span class="muted tiny metric-formula"
-              th:if="${metricDefinitions != null and metricDefinitions['averageResponseMs'] != null}"
-              th:with="def=${metricDefinitions['averageResponseMs']}"
-              th:text="${def.formula} + ' · период: ' + ${periodLabels.get(def.period) ?: def.period}">formula</span>
     </article>
     <!--/* Заголовок «К повторению» над dueNow был неверен: очередь включает вопросы
          без единого ответа, и на пустом прогрессе карточка объявляла весь банк
@@ -244,11 +232,64 @@
             --><th:block th:if="${metrics.overdue > 0}"> · <strong class="metric-alarm"
                     th:text="${metrics.overdue} + ' просрочено'">0 просрочено</strong></th:block>
         </span>
-        <span class="muted tiny metric-formula"
-              th:if="${metricDefinitions != null and metricDefinitions['dueNow'] != null}"
-              th:with="def=${metricDefinitions['dueNow']}"
-              th:text="${def.formula} + ' · период: ' + ${periodLabels.get(def.period) ?: def.period}">formula</span>
     </article>
+
+    <!--/* Формулы уехали из КАЖДОЙ карточки в одно раскрытие. Причина —
+         ИЕРАРХИЯ, и это надо сказать прямо: первая версия этого комментария
+         обещала выигрыш по высоте, которого замер не подтвердил.
+
+         Внутри карточки строка формулы занимала 61px из 237px — четверть высоты
+         на самый мелкий и самый справочный текст — и конкурировала со значением
+         за внимание. Это «слишком много конкурирующих уровней важности» из §19:
+         у значения и у пояснения к нему разный вес, и разный вес должен
+         выражаться разным МЕСТОМ, а не разным кеглем.
+
+         Что дал замер по высоте (1512×982 и 390×844): карточка 237 → 167px;
+         страница на десктопе 2677 → 2671 — шесть пикселей, потому что раскрытие
+         занимает почти столько же, сколько освободили четыре карточки в ОДНОМ
+         ряду; на мобильном 3538 → 3427, там карточки стоят стопкой и −70px
+         берутся четырежды. Вкладки на десктопе сдвинулись с 778 на 773px.
+
+         Первый экран этим НЕ починен: его занимают шапка (164), «Что делать
+         дальше» (282) и ряд метрик (263). Это следующая задача, и она про
+         композицию, а не про хвосты карточек.
+
+         Информация не потеряна и не спрятана «под ковёр»: метрики здесь
+         нетривиальные (знаменатели у всех разные), пояснение нужно — но по
+         требованию. `<details>` работает без JS и с клавиатуры, заголовки берутся
+         из того же каталога MetricDefinitions, что и сами метрики, поэтому второй
+         копии подписей не заводится. */-->
+    <details class="metrics-legend" th:if="${metricDefinitions != null}">
+        <summary class="chart-table-summary">Как считаются метрики</summary>
+        <dl class="metrics-legend-list">
+            <!--/* Ключи литеральные, а не обход списка: `th:each` по инлайн-литералу
+                 SpEL отработал четыре раза, но `metricDefinitions[key]` с
+                 ПЕРЕМЕННЫМ ключом вернул null, и список отрендерился пустым —
+                 замер поймал `dt=0 dd=0` при живой разметке. Литеральный доступ
+                 такой же, каким метрики читались в карточках до этой правки,
+                 и он проверен. */-->
+            <th:block th:if="${metricDefinitions['overallAccuracy'] != null}"
+                      th:with="def=${metricDefinitions['overallAccuracy']}">
+                <dt th:text="${def.title}">Метрика</dt>
+                <dd th:text="${def.formula} + ' · период: ' + ${periodLabels.get(def.period) ?: def.period}">формула</dd>
+            </th:block>
+            <th:block th:if="${metricDefinitions['cardsMastered'] != null}"
+                      th:with="def=${metricDefinitions['cardsMastered']}">
+                <dt th:text="${def.title}">Метрика</dt>
+                <dd th:text="${def.formula} + ' · период: ' + ${periodLabels.get(def.period) ?: def.period}">формула</dd>
+            </th:block>
+            <th:block th:if="${metricDefinitions['averageResponseMs'] != null}"
+                      th:with="def=${metricDefinitions['averageResponseMs']}">
+                <dt th:text="${def.title}">Метрика</dt>
+                <dd th:text="${def.formula} + ' · период: ' + ${periodLabels.get(def.period) ?: def.period}">формула</dd>
+            </th:block>
+            <th:block th:if="${metricDefinitions['dueNow'] != null}"
+                      th:with="def=${metricDefinitions['dueNow']}">
+                <dt th:text="${def.title}">Метрика</dt>
+                <dd th:text="${def.formula} + ' · период: ' + ${periodLabels.get(def.period) ?: def.period}">формула</dd>
+            </th:block>
+        </dl>
+    </details>
 </section>
 
 <!--/* Вкладки аналитики (docs 2.4 / UI-012): Темы | Динамика | Ошибки.
