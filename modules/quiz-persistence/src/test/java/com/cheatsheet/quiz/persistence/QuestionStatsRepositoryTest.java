@@ -193,7 +193,7 @@ class QuestionStatsRepositoryTest extends AbstractPostgresRepositoryTest {
                 "INSERT INTO attempt (question_id, outcome, is_first_attempt, created_at) VALUES (?, 'WRONG', true, ?)",
                 qFresh, t2);
 
-        var rows = repository.findRecentWrongQuestions(10);
+        var rows = repository.findRecentWrongQuestions(List.of("spring", "java"), null, 10);
 
         assertThat(rows).hasSize(2);
         assertThat(rows.get(0).questionId()).isEqualTo(qFresh);
@@ -210,7 +210,68 @@ class QuestionStatsRepositoryTest extends AbstractPostgresRepositoryTest {
         insertWrongCard("w2", "java", "Q2?", 1, 0);
         insertWrongCard("w3", "java", "Q3?", 1, 0);
 
-        assertThat(repository.findRecentWrongQuestions(2)).hasSize(2);
+        assertThat(repository.findRecentWrongQuestions(List.of("java"), null, 2)).hasSize(2);
+    }
+
+    /**
+     * FRD-025: срез по темам обязан подчиняться отбору страницы. Гейт держит именно это —
+     * тема вне выборки не попадает в результат ни одним из четырёх запросов страницы
+     * `/stats`, а пустая выборка даёт пустой результат, а не «весь банк».
+     */
+    @Test
+    void topicScopedQueriesReturnOnlySelectedTopics() {
+        insertWrongCard("in-1", "java", "Q?", 3, 1);      // java в сумме: 1 верных из 5 → 20%
+        insertWrongCard("in-2", "java", "Q2?", 1, 0);
+        insertWrongCard("out-1", "go", "Q?", 9, 1);       // 10% — слабее, но вне выборки
+
+        List<String> selection = List.of("java");
+
+        assertThat(repository.findTopicStatsByTopics(selection, null, null, 1_800_000_000L, 3))
+                .extracting(TopicStats::topic).containsExactly("java");
+        assertThat(repository.findRecentWrongQuestions(selection, null, 10))
+                .extracting(QuestionStatsRepository.WrongQuestionRow::topic)
+                .containsOnly("java");
+        assertThat(repository.findTopicCoverageGaps(selection, 5, 10))
+                .extracting(QuestionStatsRepository.TopicCoverage::topic).containsExactly("java");
+        // Слабейшая в выборке — java (20%), а не глобально слабейшая go (10%).
+        assertThat(repository.findWeakestTopic(selection, null, null, 70.0))
+                .isEqualTo(new QuestionStatsRepository.WeakestTopic("java", 20));
+        assertThat(repository.countWeakTopics(selection, null, null, 70.0)).isEqualTo(1);
+
+        // Без ограничения по темам правило то же, но банк весь: побеждает go.
+        assertThat(repository.findWeakestTopic(70.0))
+                .isEqualTo(new QuestionStatsRepository.WeakestTopic("go", 10));
+        assertThat(repository.countWeakTopics(70.0)).isEqualTo(2);
+
+        // Пустая выборка — пустой срез, а не молчаливый возврат к полному банку.
+        assertThat(repository.findTopicStatsByTopics(List.of(), null, null, 1_800_000_000L, 3)).isEmpty();
+        assertThat(repository.findRecentWrongQuestions(List.of(), null, 10)).isEmpty();
+        assertThat(repository.findTopicCoverageGaps(List.of(), 5, 10)).isEmpty();
+        assertThat(repository.countWeakTopics(List.of(), null, null, 70.0)).isZero();
+        assertThat(repository.findWeakestTopic(List.of(), null, null, 70.0)).isNull();
+    }
+
+    /**
+     * Флажки отбора («только избранные», «только ошибки») обязаны действовать на срез по
+     * темам так же, как на сводку наверху: иначе таблица считала бы по другому множеству
+     * вопросов, чем число над ней.
+     */
+    @Test
+    void topicStatsBySelectionHonourImportantAndOnlyWrongFlags() {
+        long plain = insertWrongCard("plain", "java", "Q?", 0, 2);   // без ошибок, не избранный
+        insertWrongCard("wrongOne", "java", "Q2?", 2, 0);            // с ошибками, не избранный
+        jdbcTemplate.update("UPDATE questions SET is_important = 1 WHERE id = ?", plain);
+
+        List<String> selection = List.of("java");
+
+        assertThat(repository.findTopicStatsByTopics(selection, null, null, 1_800_000_000L, 3))
+                .singleElement().extracting(TopicStats::total).isEqualTo(2L);
+        assertThat(repository.findTopicStatsByTopics(selection, true, null, 1_800_000_000L, 3))
+                .singleElement().extracting(TopicStats::total).isEqualTo(1L);
+        assertThat(repository.findTopicStatsByTopics(selection, null, true, 1_800_000_000L, 3))
+                .singleElement().extracting(TopicStats::total).isEqualTo(1L);
+        // Оба флажка вместе не пересекаются ни на одном вопросе → честный пустой срез.
+        assertThat(repository.findTopicStatsByTopics(selection, true, true, 1_800_000_000L, 3)).isEmpty();
     }
 
     /**

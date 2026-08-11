@@ -24,16 +24,47 @@
 * /css/reset-layout.css
 * /css/components-controls.css
 
+# components-pending: ожидание как система (`data-pending` + `.pending-rune`).
+# Гейт `*`: ждать умеет любая страница — отправка формы, экспорт, модалка,
+# ответ на вопрос, отрисовка схемы. До iter-84 «занято» было четырьмя
+# независимыми системами с четырьмя видами, и одна из них жила прямо в
+# components-controls.css, неся ПЯТЬ копий исключения `:not(#interview-submit)`
+# ради кнопки одной страницы.
+# Позиция СРАЗУ ПОСЛЕ components-controls.css обязательна: селектор
+# `[data-pending="action"][aria-disabled="true"]` равен по специфичности (0,3,1)
+# правилу `.btn[aria-disabled="true"]` из controls, и спор равных внутри
+# @layer components решает порядок исходника. Переставить строку выше — значит
+# показать занятой кнопке вид «сломана» (opacity 0.55, cursor not-allowed)
+# вместо «идёт работа», хотя `aria-disabled` она ставит именно для скринридера.
+* /css/components-pending.css
+
 # components-card: базовая поверхность `.card` (фон + поля). Рано в слое
 # components — страничные файлы и слой pixel её дополняют, а не наоборот.
 * /css/components-card.css
 
 # components-icons: базовая геометрия .ed-icon (@layer components, глобально).
-# Идёт ДО content-tabs/widgets, но их descendant-оверрайды размера
-# (.content-tab .ed-icon и т.п.) бьют базу по специфичности независимо от порядка.
+# Идёт ДО tabs/widgets, но их descendant-оверрайды размера
+# ([role="tab"] .ed-icon и т.п.) бьют базу по специфичности независимо от порядка.
 * /css/components-icons.css
-* /css/components-content-tabs.css
-* /css/components-alert.css
+# components-tabs: вкладка как система (iter-79). Гейт `*`, а не постраничный:
+# полосы вкладок есть на трёх разных экранах (материалы вопроса, настройки,
+# аналитика), и вид обязан находить их тем же селектором [role="tab"], которым
+# их находит поведение (js/ui/tablist.js). Постраничный гейт означал бы, что
+# четвёртая полоса заработает с клавиатуры, но приедет голой.
+* /css/components-tabs.css
+# components-notice: сообщение как система (`.notice` + тоны). Гейт `*` — и он
+# здесь не роскошь: до iter-82 две трети системы жили в страничных файлах, и
+# баннер «Сессия истекла» приезжал голым на четырёх страницах из шести.
+* /css/components-notice.css
+
+# components-empty-state: пустое состояние как система (`.empty-state` + части).
+# Гейт `*` по той же причине, что у notice: до iter-83 система была разбита на
+# три страничных копии, и одна из них (`.stats-empty`) вообще не имела правил —
+# пять состояний /stats держались на соседнем `.card` и одном отступе из
+# reset-layout.css. Позиция ПОСЛЕ components-card.css обязательна: компонент
+# добавляет к коробке карточки свой вертикальный запас (`padding-block`), и при
+# равной специфичности внутри @layer components спор решает порядок исходника.
+* /css/components-empty-state.css
 
 # components-answer: поверхность разбора ответа (вердикт, панели пояснения, разбор
 # дистракторов, раскрытие «Подробнее»). @layer components, но файл двухстраничный:
@@ -45,8 +76,29 @@
 # он читает гейты отсюда и ищет классы файла в разметке за их пределами.
 focus,result /css/components-answer.css
 
+# components-filter-bar: полоса отбора (/stats и /bookmarks). Тот же двухстраничный
+# приём, что у components-answer, и та же цена: гейт законен, пока классы файла не
+# встречаются в разметке за его пределами — это проверяет css-leak-audit.py.
+# Позиция ОБЯЗАНА быть после components-card.css: `.filter-bar` снимает с полосы
+# коробку карточки, а `html[data-design] .card` и `html[data-design] .filter-bar`
+# равны по специфичности — спорят они порядком исходника внутри @layer components.
+# До iter-74 правила жили в @layer pages (pages-stats.css) и выигрывали слоем;
+# теперь выигрывают порядком, и переставить строку выше — значит вернуть полосе
+# фон, тень и 24px полей.
+stats,bookmarks /css/components-filter-bar.css
+
+# components-table: таблица данных и ЕДИНСТВЕННЫЙ ответ на нехватку ширины —
+# обёртка .table-scroll. Гейт `*`, а не список страниц: таблицы этого компонента
+# есть и в разметке (/stats, /session-summary), и в отрендеренном markdown
+# (/focus, /result — класс ставит MarkdownRenderService). Перечислять четыре
+# страницы = обещать, что пятая не появится; `*` такого обещания не даёт.
+# Позиция ДО components-prose: прозаический скин (.is-ruled) живёт здесь же, а
+# .markdown-content-правила прозы его не касаются — конфликта порядка нет.
+* /css/components-table.css
+
 # components-prose: прозо-поверхность отрендеренного markdown (.markdown-content
-# table/task-list/del/mermaid). Глобально — рендерится и на focus, и на result.
+# task-list/del/mermaid). Глобально — рендерится и на focus, и на result.
+# Таблицы отсюда ВЫНЕСЕНЫ в components-table.css (iter-76).
 * /css/components-prose.css
 
 # Страничные файлы: каждый на 100% заскоуплен под .{page}-page (гейт

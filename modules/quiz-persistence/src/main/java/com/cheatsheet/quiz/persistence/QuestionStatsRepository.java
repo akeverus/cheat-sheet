@@ -8,6 +8,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -274,34 +275,73 @@ public class QuestionStatsRepository {
         return result.isEmpty() ? new InterviewStats(0, 0, 0, 0, 0, 0) : result.get(0);
     }
 
+    private static final String TOPIC_STATS_COLUMNS =
+            "SELECT q.topic AS topic, COUNT(*) AS total, "
+                    + "SUM(CASE WHEN COALESCE(rs.next_review_at, ?) <= ? THEN 1 ELSE 0 END) AS due, "
+                    + "SUM(CASE WHEN rs.question_id IS NULL THEN 1 ELSE 0 END) AS fresh, "
+                    + "SUM(CASE WHEN COALESCE(rs.repetitions, 0) >= ? THEN 1 ELSE 0 END) AS learned, "
+                    + "COALESCE(SUM(rs.correct_count), 0) AS correct, "
+                    + "COALESCE(SUM(rs.wrong_count), 0) AS wrong, "
+                    // COALESCE внутри AVG, а не снаружи: снаружи среднее считалось бы
+                    // только по отвеченным вопросам, и тема, где выучен один вопрос из ста,
+                    // выглядела бы зрелой. Непройденный вопрос — это зрелость 0, а не
+                    // «строка не участвует».
+                    + "AVG(COALESCE(rs.ease_factor, 0) * COALESCE(rs.interval_days, 0)) AS maturity_score "
+                    + "FROM questions q ";
+
+    private static final String TOPIC_STATS_TAIL = " GROUP BY q.topic ORDER BY q.topic";
+
+    private static final RowMapper<TopicStats> TOPIC_STATS_MAPPER = (rs, rowNum) -> new TopicStats(
+            rs.getString("topic"), rs.getLong("total"),
+            rs.getLong("due"), rs.getLong("fresh"), rs.getLong("learned"),
+            rs.getLong("correct"), rs.getLong("wrong"),
+            rs.getDouble("maturity_score"));
+
     /**
-     * Возвращает статистику по каждой теме (для графиков в UI).
+     * Возвращает статистику по каждой теме полного банка (REST API `/api/stats/topics`).
      *
      * @param nowEpoch         текущее время (для подсчёта due)
      * @param learnedThreshold порог повторений для «выучено»
      */
     public List<TopicStats> findTopicStats(long nowEpoch, int learnedThreshold) {
         return jdbcTemplate.query(
-                "SELECT q.topic AS topic, COUNT(*) AS total, "
-                        + "SUM(CASE WHEN COALESCE(rs.next_review_at, ?) <= ? THEN 1 ELSE 0 END) AS due, "
-                        + "SUM(CASE WHEN rs.question_id IS NULL THEN 1 ELSE 0 END) AS fresh, "
-                        + "SUM(CASE WHEN COALESCE(rs.repetitions, 0) >= ? THEN 1 ELSE 0 END) AS learned, "
-                        + "COALESCE(SUM(rs.correct_count), 0) AS correct, "
-                        + "COALESCE(SUM(rs.wrong_count), 0) AS wrong, "
-                        // COALESCE внутри AVG, а не снаружи: снаружи среднее считалось бы
-                        // только по отвеченным вопросам, и тема, где выучен один вопрос из ста,
-                        // выглядела бы зрелой. Непройденный вопрос — это зрелость 0, а не
-                        // «строка не участвует».
-                        + "AVG(COALESCE(rs.ease_factor, 0) * COALESCE(rs.interval_days, 0)) AS maturity_score "
-                        + "FROM questions q "
+                TOPIC_STATS_COLUMNS
                         + "LEFT JOIN review_state rs ON rs.question_id = q.id AND rs.owner_key = ? "
-                        + "GROUP BY q.topic ORDER BY q.topic",
-                (rs, rowNum) -> new TopicStats(
-                        rs.getString("topic"), rs.getLong("total"),
-                        rs.getLong("due"), rs.getLong("fresh"), rs.getLong("learned"),
-                        rs.getLong("correct"), rs.getLong("wrong"),
-                        rs.getDouble("maturity_score")),
+                        + TOPIC_STATS_TAIL,
+                TOPIC_STATS_MAPPER,
                 nowEpoch, nowEpoch, learnedThreshold, OwnerContext.current());
+    }
+
+    /**
+     * Та же статистика по темам, но по <b>выборке</b>, а не по всему банку: те же
+     * предикаты, которыми {@link #getAggregatedStatsByTopics} считает сводку страницы
+     * `/stats`. Одна выборка — один набор условий: иначе сводка наверху говорила бы про
+     * отобранное, а таблица под ней — про весь банк (замер iter-73: 319 строк при любом
+     * отборе, включая `?topic=…`).
+     *
+     * <p>Строки с нулём вопросов не возникают: {@code GROUP BY} строит их из самих
+     * вопросов, а не из списка тем, поэтому тема, у которой под отбор не подошёл ни один
+     * вопрос, просто не попадает в результат — это и есть честный пустой срез.
+     *
+     * @param topics           темы выборки (пустой список → пустой результат)
+     * @param important        только избранные (null/false — не фильтровать)
+     * @param onlyWrong        только с ошибками (null/false — не фильтровать)
+     * @param nowEpoch         текущее время (для подсчёта due)
+     * @param learnedThreshold порог повторений для «выучено»
+     */
+    public List<TopicStats> findTopicStatsByTopics(List<String> topics, Boolean important, Boolean onlyWrong,
+                                                   long nowEpoch, int learnedThreshold) {
+        StringBuilder sql = new StringBuilder(TOPIC_STATS_COLUMNS);
+        var params = new ArrayList<Object>();
+        params.add(nowEpoch);
+        params.add(nowEpoch);
+        params.add(learnedThreshold);
+        InterviewFilterSql.appendReviewStateJoin(sql, params);
+        sql.append(" WHERE 1=1 ");
+        InterviewFilterSql.appendTopicsFilter(sql, params, topics);
+        InterviewFilterSql.appendFilters(sql, params, null, important, onlyWrong);
+        sql.append(TOPIC_STATS_TAIL);
+        return jdbcTemplate.query(sql.toString(), TOPIC_STATS_MAPPER, params.toArray());
     }
 
     /**
@@ -319,24 +359,75 @@ public class QuestionStatsRepository {
      * @return тема с её точностью или null, если слабых тем нет
      */
     public WeakestTopic findWeakestTopic(double accuracyThreshold) {
-        String accuracyExpr = "CASE WHEN (SUM(rs.correct_count) + SUM(rs.wrong_count)) > 0 " +
-                "THEN CAST(SUM(rs.correct_count) AS REAL) * 100.0 / (SUM(rs.correct_count) + SUM(rs.wrong_count)) " +
-                "ELSE 100 END";
+        return findWeakestTopic(null, null, null, accuracyThreshold);
+    }
+
+    /**
+     * То же правило «самой слабой темы», но применённое к выборке, а не ко всему банку.
+     *
+     * <p>Нужно /stats: страница объявляет «Источник: выбранная часть банка», и карточка
+     * «Тренировать слабые темы» обязана называть тему ИЗ этой выборки. До iter-73 она
+     * звала глобально слабейшую — при отборе по одной теме подпись рекомендовала чужую
+     * тему, а ссылка вела прочь из выборки, которую человек только что набрал.
+     *
+     * <p>Правило и тай-брейк те же, что в {@link #findWeakestTopic(double)}: оба метода
+     * строят один и тот же SQL, отличаясь только предикатами выборки. Второй формулировки
+     * «слабой темы» в продукте нет и заводить нельзя — режим «Слабые темы» сверяется с
+     * этим же определением.
+     *
+     * @param topics список тем выборки; {@code null} — не ограничивать (весь банк)
+     */
+    public WeakestTopic findWeakestTopic(List<String> topics, Boolean important, Boolean onlyWrong,
+                                         double accuracyThreshold) {
+        var params = new ArrayList<Object>();
+        StringBuilder sql = new StringBuilder("SELECT q.topic, ")
+                .append(WEAK_ATTEMPTS_EXPR).append(" AS attempts, ")
+                .append(WEAK_ACCURACY_EXPR).append(" AS accuracy FROM questions q ");
+        appendWeakTopicScope(sql, params, topics, important, onlyWrong);
+        appendWeakTopicHaving(sql, params, accuracyThreshold);
+        sql.append(" ORDER BY accuracy ASC, attempts DESC, q.topic ASC LIMIT 1");
         List<WeakestTopic> result = jdbcTemplate.query(
-                "SELECT q.topic, (SUM(rs.correct_count) + SUM(rs.wrong_count)) AS attempts, " +
-                        accuracyExpr + " AS accuracy " +
-                        "FROM questions q JOIN review_state rs ON rs.question_id = q.id " +
-                        "WHERE rs.owner_key = ? " +
-                        "GROUP BY q.topic " +
-                        "HAVING (SUM(rs.correct_count) + SUM(rs.wrong_count)) > 0 AND (" + accuracyExpr + ") < ? " +
-                        "ORDER BY accuracy ASC, attempts DESC, q.topic ASC LIMIT 1",
+                sql.toString(),
                 (rs, rowNum) -> new WeakestTopic(
                         rs.getString("topic"),
                         (int) Math.round(rs.getDouble("accuracy"))),
-                OwnerContext.current(),
-                accuracyThreshold
-        );
+                params.toArray());
         return result.isEmpty() ? null : result.get(0);
+    }
+
+    private static final String WEAK_ATTEMPTS_EXPR =
+            "(SUM(rs.correct_count) + SUM(rs.wrong_count))";
+
+    private static final String WEAK_ACCURACY_EXPR =
+            "CASE WHEN " + WEAK_ATTEMPTS_EXPR + " > 0 "
+                    + "THEN CAST(SUM(rs.correct_count) AS REAL) * 100.0 / " + WEAK_ATTEMPTS_EXPR + " "
+                    + "ELSE 100 END";
+
+    /**
+     * Общая часть обоих запросов о слабых темах: JOIN прогресса и предикаты выборки.
+     *
+     * <p>JOIN здесь LEFT (через {@link InterviewFilterSql#appendReviewStateJoin}), а не
+     * INNER, как было до iter-73. Результат тот же: тему без единого ответа отсекает
+     * {@code HAVING attempts &gt; 0} — сумма по отсутствующим строкам даёт NULL, а не 0.
+     * Но фильтры выборки (в частности «только ошибки») читают {@code rs} и обязаны
+     * получать его по тем же правилам, что и остальная страница; INNER JOIN тихо менял
+     * бы смысл фильтра «только ошибки» на «есть прогресс И есть ошибки».
+     */
+    private static void appendWeakTopicScope(StringBuilder sql, List<Object> params, List<String> topics,
+                                             Boolean important, Boolean onlyWrong) {
+        InterviewFilterSql.appendReviewStateJoin(sql, params);
+        sql.append(" WHERE 1=1 ");
+        if (topics != null) {
+            InterviewFilterSql.appendTopicsFilter(sql, params, topics);
+        }
+        InterviewFilterSql.appendFilters(sql, params, null, important, onlyWrong);
+        sql.append(" GROUP BY q.topic ");
+    }
+
+    private static void appendWeakTopicHaving(StringBuilder sql, List<Object> params, double accuracyThreshold) {
+        sql.append("HAVING ").append(WEAK_ATTEMPTS_EXPR).append(" > 0 AND (")
+                .append(WEAK_ACCURACY_EXPR).append(") < ? ");
+        params.add(accuracyThreshold);
     }
 
     /**
@@ -352,21 +443,23 @@ public class QuestionStatsRepository {
      * @return число слабых тем
      */
     public long countWeakTopics(double accuracyThreshold) {
-        String accuracyExpr = "CASE WHEN (SUM(rs.correct_count) + SUM(rs.wrong_count)) > 0 " +
-                "THEN CAST(SUM(rs.correct_count) AS REAL) * 100.0 / (SUM(rs.correct_count) + SUM(rs.wrong_count)) " +
-                "ELSE 100 END";
-        Long count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM (" +
-                        "SELECT q.topic " +
-                        "FROM questions q JOIN review_state rs ON rs.question_id = q.id " +
-                        "WHERE rs.owner_key = ? " +
-                        "GROUP BY q.topic " +
-                        "HAVING (SUM(rs.correct_count) + SUM(rs.wrong_count)) > 0 AND (" + accuracyExpr + ") < ?" +
-                        ") weak",
-                Long.class,
-                OwnerContext.current(),
-                accuracyThreshold
-        );
+        return countWeakTopics(null, null, null, accuracyThreshold);
+    }
+
+    /**
+     * Число слабых тем в выборке — счётчик той же карточки, что и
+     * {@link #findWeakestTopic(List, Boolean, Boolean, double)}, и по тому же правилу.
+     *
+     * @param topics список тем выборки; {@code null} — не ограничивать (весь банк)
+     */
+    public long countWeakTopics(List<String> topics, Boolean important, Boolean onlyWrong,
+                                double accuracyThreshold) {
+        var params = new ArrayList<Object>();
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM (SELECT q.topic FROM questions q ");
+        appendWeakTopicScope(sql, params, topics, important, onlyWrong);
+        appendWeakTopicHaving(sql, params, accuracyThreshold);
+        sql.append(") weak");
+        Long count = jdbcTemplate.queryForObject(sql.toString(), Long.class, params.toArray());
         return count != null ? count : 0L;
     }
 
@@ -403,19 +496,25 @@ public class QuestionStatsRepository {
     }
 
     /**
-     * Возвращает темы с числом вопросов ниже порога (для подсказки «банк вопросов бедный»).
+     * Возвращает темы с числом вопросов ниже порога (для подсказки «банк вопросов бедный»)
+     * — по выборке страницы, а не по всему банку. Строка этой таблицы — тема, поэтому она
+     * обязана подчиняться тому же отбору, что и «Детализация по темам» рядом: отобрав
+     * раздел, пользователь спрашивает про пробелы этого раздела.
      *
+     * @param topics    темы выборки (пустой список → пустой результат)
      * @param threshold порог (обычно 5)
      * @param limit     максимальное число тем
      */
-    public List<TopicCoverage> findTopicCoverageGaps(int threshold, int limit) {
-        return jdbcTemplate.query(
-                "SELECT q.topic AS topic, COUNT(*) AS total " +
-                        "FROM questions q " +
-                        "GROUP BY q.topic HAVING COUNT(*) < ? " +
-                        "ORDER BY total ASC, topic ASC LIMIT ?",
+    public List<TopicCoverage> findTopicCoverageGaps(List<String> topics, int threshold, int limit) {
+        StringBuilder sql = new StringBuilder("SELECT q.topic AS topic, COUNT(*) AS total FROM questions q WHERE 1=1 ");
+        var params = new ArrayList<Object>();
+        InterviewFilterSql.appendTopicsFilter(sql, params, topics);
+        sql.append("GROUP BY q.topic HAVING COUNT(*) < ? ORDER BY total ASC, topic ASC LIMIT ?");
+        params.add(threshold);
+        params.add(limit);
+        return jdbcTemplate.query(sql.toString(),
                 (rs, rowNum) -> new TopicCoverage(rs.getString("topic"), rs.getLong("total")),
-                threshold, limit);
+                params.toArray());
     }
 
     public record TopicCoverage(String topic, long total) {}
@@ -445,13 +544,19 @@ public class QuestionStatsRepository {
      * Вопросы с ошибками для drill-down вкладки «Ошибки» на /stats (UI-012).
      * Сортировка: последняя WRONG/UNKNOWN попытка (если есть), иначе по числу ошибок.
      *
-     * @param limit максимум строк (обычно 30)
+     * <p>Отбор страницы сюда доходит списком тем: карточка ошибки подписана темой и ведёт
+     * в тему, поэтому при отобранном разделе список обязан говорить про этот раздел.
+     * Фильтр «только избранные» приходит отдельным флагом; «только ошибки» здесь не нужен —
+     * условие {@code rs.wrong_count > 0} и есть этот фильтр, всегда включённый.
+     *
+     * @param topics    темы выборки (пустой список → пустой результат)
+     * @param important только избранные (null/false — не фильтровать)
+     * @param limit     максимум строк (обычно 30)
      */
-    public List<WrongQuestionRow> findRecentWrongQuestions(int limit) {
+    public List<WrongQuestionRow> findRecentWrongQuestions(List<String> topics, Boolean important, int limit) {
         int safeLimit = Math.max(1, Math.min(limit, 100));
         String owner = OwnerContext.current();
-        return jdbcTemplate.query(
-                """
+        StringBuilder sql = new StringBuilder("""
                         SELECT q.id AS question_id, q.topic, q.question_text,
                                rs.wrong_count, rs.correct_count, rs.next_review_at,
                                latest.created_at AS last_wrong_at
@@ -467,9 +572,15 @@ public class QuestionStatsRepository {
                             LIMIT 1
                         ) latest ON true
                         WHERE rs.wrong_count > 0
-                        ORDER BY COALESCE(latest.created_at, 0) DESC, rs.wrong_count DESC, q.id ASC
-                        LIMIT ?
-                        """,
+                """);
+        var params = new ArrayList<Object>();
+        params.add(owner);
+        params.add(owner);
+        InterviewFilterSql.appendTopicsFilter(sql, params, topics);
+        InterviewFilterSql.appendFilters(sql, params, null, important, null);
+        sql.append(" ORDER BY COALESCE(latest.created_at, 0) DESC, rs.wrong_count DESC, q.id ASC LIMIT ?");
+        params.add(safeLimit);
+        return jdbcTemplate.query(sql.toString(),
                 (rs, rowNum) -> new WrongQuestionRow(
                         rs.getLong("question_id"),
                         rs.getString("topic"),
@@ -478,7 +589,7 @@ public class QuestionStatsRepository {
                         rs.getInt("correct_count"),
                         rs.getLong("next_review_at"),
                         rs.getObject("last_wrong_at") == null ? null : rs.getLong("last_wrong_at")),
-                owner, owner, safeLimit);
+                params.toArray());
     }
 
     /**

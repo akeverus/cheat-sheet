@@ -215,10 +215,36 @@ class MarkdownRenderServiceTest {
         String md = "| Вопрос | Зачем |\n|--------|-------|\n| Размер входа? | Сложность |\n";
         String html = service.toHtml(md);
 
-        assertThat(html).contains("<table>");
+        assertThat(html).contains("<table");
         assertThat(html).contains("<th>Вопрос</th>");
         assertThat(html).contains("<td>Размер входа?</td>");
         assertThat(html).doesNotContain("| Вопрос | Зачем |");
+    }
+
+    @Test
+    void wrapsProseTableIntoScrollContainerAndGivesItComponentClasses() {
+        // Ширину таблицы задаёт автор шпаргалки, а не мы: пять колонок с кодом не
+        // сожмутся до полосы чтения ни при каком переносе. Раньше это лечилось
+        // `display:block` на самой таблице — приём создаёт внутри анонимный табличный
+        // бокс по содержимому, и на коротком контенте справа оставалась мёртвая полоса
+        // (замер: 377px из 600px). Скроллит обёртка, таблица остаётся таблицей.
+        String html = service.toHtml("| A | B |\n|---|---|\n| 1 | 2 |\n");
+
+        assertThat(html).contains("<div class=\"table-scroll\">");
+        assertThat(html).contains("class=\"data-table is-ruled\"");
+        assertThat(html)
+                .as("скролл принадлежит обёртке — таблица не должна становиться блоком")
+                .doesNotContain("display:block");
+    }
+
+    @Test
+    void doesNotDoubleWrapTableAlreadyInsideScrollContainer() {
+        // Обёртка в исходнике шпаргалки (или повторный прогон постобработки) не должна
+        // давать вложенные скролл-контейнеры: два вложенных overflow — два тап-стопа и
+        // непредсказуемый замер переполнения.
+        String html = service.toHtml("<div class=\"table-scroll\"><table><tr><td>1</td></tr></table></div>");
+
+        assertThat(html.split("table-scroll", -1)).hasSize(2);
     }
 
     @Test
