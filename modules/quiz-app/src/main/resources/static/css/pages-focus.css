@@ -1740,7 +1740,13 @@ html[data-design][data-js] .focus-page [role="tabpanel"] .content-toolbar { just
 
 html[data-design] .focus-page[data-session-mode="TYPED_RECALL"],
 html[data-design] .focus-page[data-session-mode="INTERVIEW"],
-html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"] {
+html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"],
+/* Разбор — то же рабочее место, только предмет работы другой: не «написать», а
+   «понять, почему». Замер на 2560 до правки: страница росла в 2.25 раза
+   (1440 → 3242), скрипт уводил прокрутку на 1280, и ВОПРОС УХОДИЛ С ЭКРАНА
+   (его верх оказывался на -1174) — человек читал разбор, не видя, о чём он.
+   Слева при этом пустовало больше половины ширины. */
+html[data-design] .focus-page:has(.result-feedback:not(.hidden)) {
   /* Колонка задания — мера чтения, а не половина экрана: вопрос с кодом должен
      остаться читаемым, сколько бы места ни было. */
   --workspace-brief: 34rem;
@@ -1763,7 +1769,8 @@ html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"] {
 @media (min-width: 1600px) {
   html[data-design] .focus-page[data-session-mode="TYPED_RECALL"] .focus-main,
   html[data-design] .focus-page[data-session-mode="INTERVIEW"] .focus-main,
-  html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"] .focus-main {
+  html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"] .focus-main,
+  html[data-design] .focus-page .focus-main:has(.result-feedback:not(.hidden)) {
     display: grid;
     grid-template-columns: minmax(0, var(--workspace-brief)) minmax(var(--workspace-desk-min), 1fr);
     column-gap: var(--focus-rail-gap);
@@ -1773,7 +1780,8 @@ html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"] {
      колонкой — ровно так же, как он делает это в раскладке «Разделение». */
   html[data-design] .focus-page[data-session-mode="TYPED_RECALL"] .focus-main > .focus-question-pane,
   html[data-design] .focus-page[data-session-mode="INTERVIEW"] .focus-main > .focus-question-pane,
-  html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"] .focus-main > .focus-question-pane {
+  html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"] .focus-main > .focus-question-pane,
+  html[data-design] .focus-page .focus-main:has(.result-feedback:not(.hidden)) > .focus-question-pane {
     display: flex;
     flex-direction: column;
     grid-column: 1;
@@ -1786,7 +1794,8 @@ html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"] {
      фазе, и забытый ребёнок молча уехал бы в первую колонку. */
   html[data-design] .focus-page[data-session-mode="TYPED_RECALL"] .focus-main > *:not(.focus-question-pane),
   html[data-design] .focus-page[data-session-mode="INTERVIEW"] .focus-main > *:not(.focus-question-pane),
-  html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"] .focus-main > *:not(.focus-question-pane) {
+  html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"] .focus-main > *:not(.focus-question-pane),
+  html[data-design] .focus-page .focus-main:has(.result-feedback:not(.hidden)) > *:not(.focus-question-pane) {
     grid-column: 2;
     min-width: 0;
   }
@@ -1850,4 +1859,72 @@ html[data-design] .focus-page .workspace-support-list li::before {
   width: 0.75em;
   height: 0.75em;
   border: var(--rule-weight-strong) solid var(--color-border-strong);
+}
+
+/* Колонка задания после ответа — липкая полоса, а не первый экран, который
+   уезжает вверх. Липкость объявлена выше вместе с рабочим местом письма; здесь
+   только её граница по высоте: колонка не должна перерастать вьюпорт, иначе
+   `sticky` не за что цеплять и вопрос всё равно уедет. Своя прокрутка внутри
+   колонки включается лишь тогда, когда содержимое выше экрана. */
+@media (min-width: 1600px) {
+  html[data-design] .focus-page .focus-main:has(.result-feedback:not(.hidden)) > .focus-question-pane {
+    max-height: calc(100svh - 2 * var(--space-5));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+/* Здесь стояла попытка увести список вариантов в колонку задания под тем
+   доводом, что отметки «твой выбор»/«верный» отвечают на вопрос «что я сделал».
+   Довод верный, реализация — нет: пейн вопроса растянут на все строки
+   (`grid-row: 1 / -1`), и форма в той же колонке легла ПОВЕРХ вопроса и
+   листинга. Замер на 2560 показал наложение сразу. Варианты остались во второй
+   колонке, где и читаются сверху вниз: твой выбор → вердикт → разбор. */
+
+/* Ниже порога двух колонок вопрос удержать шириной нельзя — держим его
+   ЗАКРЕПЛЁННОЙ СВОДКОЙ. Замер на 1512 и 390 после ответа: страница вырастала в
+   2.2 раза, скрипт уводил прокрутку на 1700, и верх вопроса оказывался на
+   -1483 — разбор читался без предмета разбора.
+
+   Сводка — это тот же самый заголовок, а не вторая копия вопроса в разметке:
+   копия разошлась бы с оригиналом при первой же правке и вдвое озвучивалась бы
+   скринридером. В ответившем состоянии он сжимается до двух строк и липнет к
+   верхней кромке; кегль падает со ступени заголовка страницы до `lg`, иначе
+   сводка съедала бы треть экрана телефона. */
+@media (max-width: 1599px) {
+  html[data-design] .focus-page .focus-main:has(.result-feedback:not(.hidden)) .focus-question {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin-bottom: var(--space-4);
+    padding: var(--space-3) 0;
+    /* Непрозрачная подложка обязательна: под липкой строкой едет текст разбора. */
+    background: var(--color-bg-primary);
+    border-bottom: var(--rule-weight) solid var(--color-border-primary);
+    font-size: var(--font-size-lg);
+    line-height: var(--line-height-tight);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+  /* Разделительная линия под вопросом принадлежала спокойному состоянию: в
+     сжатой сводке она удваивала бы кромку, которую уже рисует сама сводка. */
+  html[data-design] .focus-page .focus-main:has(.result-feedback:not(.hidden)) .focus-question::after {
+    content: none;
+  }
+}
+
+/* Липких полос на одной кромке может быть только одна. Замер на 2560 в
+   ответившем состоянии: рельс сессии (`sticky`, top 32, во всю ширину полосы
+   после переноса) ложился ПОВЕРХ колонки задания (`sticky`, top 24) — шапка
+   банка, чипы темы и заголовок вопроса печатались друг по другу.
+   Кромку получает вопрос: он и есть предмет, который нельзя терять. Рельс
+   держит прогресс и меню сессии — их отсутствие в поле зрения ничего не ломает,
+   и он уезжает вместе с потоком. */
+html[data-design] .focus-page[data-session-mode="TYPED_RECALL"] .focus-aside.focus-session-rail,
+html[data-design] .focus-page[data-session-mode="INTERVIEW"] .focus-aside.focus-session-rail,
+html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"] .focus-aside.focus-session-rail,
+html[data-design] .focus-page:has(.result-feedback:not(.hidden)) .focus-aside.focus-session-rail {
+  position: static;
 }
