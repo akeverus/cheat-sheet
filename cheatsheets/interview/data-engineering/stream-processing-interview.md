@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Stream Processing"
+title: "Вопросы на собеседовании: Потоковая обработка"
 description: "Концепции stream processing: event time vs processing time, watermarks, windows, exactly-once, stateful processing, CEP, backpressure, lambda vs kappa архитектура"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Stream Processing`
+# Вопросы на собеседовании: Потоковая обработка
 
 Stream processing — обработка данных **в реальном времени** (или near-real-time), в виде **непрерывного потока** событий, а не отдельными пакетными задачами (batch jobs). Концепции одинаковы для Flink, Kafka Streams, Spark Structured Streaming. На собеседовании спрашивают: event time vs processing time, watermarks, exactly-once, stateful-обработку, архитектуры lambda vs kappa.
 

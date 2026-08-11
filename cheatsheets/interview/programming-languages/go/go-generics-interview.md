@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Go Generics"
+title: "Вопросы на собеседовании: Дженерики Go"
 description: "Generics в Go 1.18+: type parameters, constraints, comparable, type sets, реализация (monomorphization vs dictionary), ограничения, common patterns"
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Go Generics`
+# Вопросы на собеседовании: Дженерики Go
 
 Generics появились в Go только с **версии 1.18 (март 2022)** — на 13 лет позже релиза языка. Реализация — гибрид monomorphization и dictionary passing. Constraints через interfaces, type sets, comparable. Существенно ограничены по сравнению с Java/C#/Rust.
 

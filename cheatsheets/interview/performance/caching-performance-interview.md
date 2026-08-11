@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Caching Performance"
+title: "Вопросы на собеседовании: Производительность кэширования"
 description: "Cache performance tuning: hit ratio, eviction, TTL, stampede, warming, Redis/Memcached tuning, CDN, multi-level, Caffeine, metrics, troubleshooting"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Caching Performance`
+# Вопросы на собеседовании: Производительность кэширования
 
 `Caching Performance` — метрики и tuning cache: **hit ratio**, eviction, TTL, thundering herd. Отличие от [стратегий кэширования](../architecture/caching-strategies-interview.md) — здесь фокус на **measurement и troubleshooting** производительности. Ошибки: low hit ratio, stampede, cache bloat, stale serving.
 

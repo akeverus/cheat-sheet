@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Supply Chain Security"
+title: "Вопросы на собеседовании: Безопасность цепочки поставок"
 description: "Software supply chain security: SBOM, SLSA, Sigstore, Cosign, Dependabot, Trivy, SolarWinds, log4shell, xz backdoor, CycloneDX, SPDX, signed artifacts"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Supply Chain Security`
+# Вопросы на собеседовании: Безопасность цепочки поставок
 
 `Software Supply Chain Security` — защита кода, зависимостей, процесса сборки и артефактов от **подмены (tampering) и компрометации**. После инцидентов — **SolarWinds (2020)**, **log4shell (2021)**, **xz utils backdoor (2024)** — тема стала **высшим приоритетом**. Инструменты: **SBOM** (опись компонентов), **SLSA** (фреймворк), **Sigstore/Cosign** (подпись), **Dependabot/Trivy** (сканирование).
 

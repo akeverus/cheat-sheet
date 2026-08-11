@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Design Netflix"
+title: "Вопросы на собеседовании: Дизайн Netflix"
 description: "System design Netflix: video streaming (ABR/HLS/DASH/CMAF), Open Connect CDN, encoding pipeline (per-title/per-chunk), recommendation system (CF+DL), microservices stack (Eureka/Zuul/Hystrix), chaos engineering, multi-region, DRM."
 tags:
   - interview

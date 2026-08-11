@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Property-based Testing"
+title: "Вопросы на собеседовании: Property-based тестирование"
 description: "Property-based testing: generate test cases automatically, properties vs examples, QuickCheck, Hypothesis (Python), jqwik (Java), shrinking, vs example-based, integration"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Property-based Testing`
+# Вопросы на собеседовании: Property-based тестирование
 
 `Property-based testing (PBT)` — подход к тестированию, где тесты описывают **свойства** (properties), которым код должен удовлетворять, а фреймворк **генерирует входные данные автоматически**. Зародился в **QuickCheck** (Haskell, 2000). Современные инструменты: **Hypothesis** (Python), **jqwik** (Java), **fast-check** (JS), **PropEr** (Erlang). Дополняет example-based-тестирование.
 

@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Hexagonal Architecture (Ports & Adapters)"
+title: "Вопросы на собеседовании: Гексагональная архитектура (порты и адаптеры)"
 description: "Полное покрытие гексагональной архитектуры: порты (driving/driven), адаптеры (primary/secondary), структура проекта в Spring Boot, интеграция с DDD, стратегия тестирования, сравнение с Clean и Onion, миграция со слоистой архитектуры, антипаттерны."
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: "2026-05-08"
 ---
-# Вопросы на собеседовании: `Hexagonal Architecture (Ports & Adapters)`
+# Вопросы на собеседовании: Гексагональная архитектура (порты и адаптеры)
 
 Полное покрытие `Hexagonal Architecture` (`Ports & Adapters`, Алистер Кокбёрн, 2005): порты (`driving`/`driven`), адаптеры (`primary`/`secondary`), структура Spring Boot проекта, интеграция с `DDD`, стратегия тестирования, сравнение с `Clean` и `Onion Architecture`, миграция со слоистой архитектуры, антипаттерны.
 

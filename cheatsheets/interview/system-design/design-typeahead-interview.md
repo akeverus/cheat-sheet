@@ -1,5 +1,5 @@
 ---
-title: "System Design: Typeahead / Autocomplete"
+title: "System Design: Дизайн автодополнения"
 description: "Дизайн typeahead suggestion: trie с top-K, prefix matching, popularity ranking, real-time updates, personalization, capacity planning."
 tags:
   - interview

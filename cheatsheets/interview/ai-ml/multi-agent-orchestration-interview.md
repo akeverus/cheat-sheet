@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Multi-Agent Orchestration"
+title: "Вопросы на собеседовании: Оркестрация мультиагентных систем"
 description: "Multi-agent системы LLM: CrewAI, AutoGen, LangGraph, OpenAI Swarm, Anthropic подход; hierarchical/sequential/mesh, state, observability, anti-patterns."
 tags:
   - interview
@@ -15,7 +15,7 @@ aliases:
 updated: "2026-05-23"
 ---
 
-# Вопросы на собеседовании: `Multi-Agent Orchestration`
+# Вопросы на собеседовании: Оркестрация мультиагентных систем
 
 > Дата: 2026-05-23. Multi-agent системы координируют несколько LLM-агентов с разными ролями — фреймворки, шаблоны коммуникации, state management, anti-patterns и производственная эксплуатация.
 

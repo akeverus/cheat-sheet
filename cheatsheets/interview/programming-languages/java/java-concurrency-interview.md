@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Java Concurrency"
+title: "Вопросы на собеседовании: Многопоточность в Java"
 description: "Комплексное руководство по вопросам собеседования на тему Java Concurrency: потоки, синхронизация, locks, atomic, ExecutorService, CompletableFuture, virtual threads, structured concurrency."
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Java Concurrency`
+# Вопросы на собеседовании: Многопоточность в Java
 
 Комплексное руководство по вопросам собеседования на тему `Java Concurrency` для `Senior Java Developer`. Включает потоки, синхронизацию, `java.util.concurrent`, `CompletableFuture`, `Virtual Threads` и `Structured Concurrency`.
 

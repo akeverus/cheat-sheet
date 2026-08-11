@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: сериализация в Kotlin"
+title: "Вопросы на собеседовании: Сериализация в Kotlin"
 description: "Подробный разбор kotlinx.serialization — @Serializable, Json, кастомные сериализаторы, полиморфизм, sealed class, контекстная сериализация, Protobuf/CBOR, интеграция с Ktor, мультиплатформа, сравнение с Gson/Jackson/Moshi"
 tags:
   - interview

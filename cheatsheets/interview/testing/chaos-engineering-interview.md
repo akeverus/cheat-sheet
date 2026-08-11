@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Chaos Engineering"
+title: "Вопросы на собеседовании: Хаос-инжиниринг"
 description: "Полное покрытие Chaos Engineering: принципы (steady state, hypothesis, blast radius), эксперименты, Netflix Simian Army, Chaos Monkey Spring Boot, Gremlin, Litmus, Chaos Mesh, Pumba, Toxiproxy, GameDay, maturity model, интеграция с SRE и CI/CD."
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Chaos Engineering`
+# Вопросы на собеседовании: Хаос-инжиниринг
 
 Краткие ответы по дисциплине хаос-инжиниринга: как превратить непредсказуемые сбои в управляемые эксперименты, какие инструменты выбрать (`Chaos Monkey`, `Gremlin`, `Litmus`, `Chaos Mesh`), как организовать `GameDay` и встроить эксперименты в CI/CD без ущерба для пользователей.
 

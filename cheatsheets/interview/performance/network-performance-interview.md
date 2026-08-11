@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Network Performance"
+title: "Вопросы на собеседовании: Сетевая производительность"
 description: "Network performance: latency, bandwidth, TCP tuning, HTTP/2, HTTP/3 QUIC, CDN, compression, connection reuse, keepalive, gRPC, WebSockets, tail latency"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Network Performance`
+# Вопросы на собеседовании: Сетевая производительность
 
 `Network Performance` — сетевой слой часто скрытый bottleneck: **RTT**, TCP slow start, TLS handshake, DNS lookup, HTTP версия (1.1 vs 2 vs 3), compression, keep-alive. Особенно на distributed/cross-region/mobile.
 

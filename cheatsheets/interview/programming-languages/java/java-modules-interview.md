@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Java Modules (JPMS)"
+title: "Вопросы на собеседовании: Модули Java (JPMS)"
 description: "Полное руководство по вопросам собеседования на тему модульной системы Java (JPMS, Java 9+): module-info.java, exports/requires/opens/uses/provides, automatic и unnamed модули, split packages, multi-release JAR, jlink, ServiceLoader, рефлексия, module layers, стратегии миграции."
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-05-14"
 ---
-# Вопросы на собеседовании: `Java Modules` (JPMS)
+# Вопросы на собеседовании: Модули Java (JPMS)
 
 Полное руководство по вопросам собеседования на тему модульной системы `Java` (`JPMS`, `Java 9+`): `module-info.java`, директивы `exports`/`requires`/`opens`/`uses`/`provides`, `automatic` и `unnamed` модули, `split packages`, `multi-release JAR`, `jlink`, `ServiceLoader`, рефлексия в модульном мире, `module layers`, стратегии миграции.
 

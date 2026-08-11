@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Performance Testing"
+title: "Вопросы на собеседовании: Тестирование производительности"
 description: "Практичные вопросы и ответы по performance testing: типы (load, stress, soak, spike, volume), ключевые метрики (throughput, latency p50/p95/p99, Apdex), инструменты (JMeter, Gatling, k6, Locust), distributed load, CI/CD-интеграция и анализ результатов."
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Performance Testing`
+# Вопросы на собеседовании: Тестирование производительности
 
 Практичные вопросы и ответы по нагрузочному тестированию: как планировать, запускать и анализировать `load`, `stress`, `soak`, `spike` и `volume`-тесты. Покрыты инструменты `JMeter`, `Gatling`, `k6`, `Locust`, ключевые метрики (`throughput`, `p50/p95/p99`, `Apdex`), дизайн реалистичной нагрузки и интеграция с `CI/CD`.
 

@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Spring Events"
+title: "Вопросы на собеседовании: События Spring"
 description: "Spring Events: ApplicationEvent, @EventListener, ApplicationEventPublisher, @TransactionalEventListener, async events, @DomainEvents, Spring Modulith"
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: "2026-05-15"
 ---
-# Вопросы на собеседовании: `Spring Events`
+# Вопросы на собеседовании: События Spring
 
 `Spring Events` — механизм слабого связывания компонентов через события: публикатор не знает о подписчиках. По умолчанию синхронны и транзакционны. `@TransactionalEventListener` — ключевой инструмент для domain events в DDD-архитектуре.
 

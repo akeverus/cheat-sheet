@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Design Pastebin"
+title: "Вопросы на собеседовании: Дизайн Pastebin"
 description: "System design Pastebin / GitHub Gist: document storage, short URL Base62, syntax highlighting Pygments vs Prism, expiration, privacy modes (public/unlisted/private/burn-after-read), CDN, anti-abuse, search."
 tags:
   - interview

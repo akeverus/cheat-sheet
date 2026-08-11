@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Java Annotations"
+title: "Вопросы на собеседовании: Аннотации Java"
 description: "Комплексное руководство по вопросам собеседования на тему Java Annotations: создание, мета-аннотации, Retention, Annotation Processing, рефлексия, Spring, Bean Validation"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-05-08"
 ---
-# Вопросы на собеседовании: `Java Annotations`
+# Вопросы на собеседовании: Аннотации Java
 
 Комплексное руководство по вопросам собеседования на тему `Java Annotations` для `Senior Java Developer`. Включает
 детальные объяснения концепций, практические примеры на `Java` + `Spring`, best practices и troubleshooting.

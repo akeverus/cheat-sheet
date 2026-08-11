@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: API Versioning"
+title: "Вопросы на собеседовании: Версионирование API"
 description: "API versioning стратегии: URI versioning, header versioning, query parameter, content negotiation, semantic versioning, backwards compatibility, deprecation, sunset"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `API Versioning`
+# Вопросы на собеседовании: Версионирование API
 
 API versioning — стратегия развития API без поломки существующих клиентов. Главные подходы: **URI versioning** (`/v1/`), **header versioning**, **query parameter**, **content negotiation**. Также сюда входят: обратная совместимость, политики устаревания (deprecation), sunset, semantic versioning. Критично для публичных API и систем с несколькими командами.
 

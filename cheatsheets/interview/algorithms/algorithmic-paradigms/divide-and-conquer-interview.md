@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Divide and Conquer"
+title: "Вопросы на собеседовании: Разделяй и властвуй"
 description: "Парадигма разделяй-и-властвуй, master theorem, Merge Sort, Quick Sort, Binary Search, fast power, Strassen, closest pair, поиск максимума, FFT, Karatsuba"
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: "2026-05-19"
 ---
-# Вопросы на собеседовании: `Divide and Conquer`
+# Вопросы на собеседовании: Разделяй и властвуй
 
 D&C — фундаментальная парадигма: **разделить → решить рекурсивно → объединить**. На ней построены Merge Sort, Quick Sort, Binary Search, FFT и многие задачи на массивах. На собеседовании ждут, что вы знаете master theorem и умеете оценивать сложность через дерево рекурсии.
 

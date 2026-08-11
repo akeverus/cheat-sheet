@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Observability"
+title: "Вопросы на собеседовании: Наблюдаемость"
 description: "Практичные вопросы и ответы по observability для Senior Java Developer: три столпа, OpenTelemetry, Prometheus, Grafana, distributed tracing, structured logging, SLI/SLO/SLA, алертинг, cardinality, ELK/EFK, RED/USE методы."
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-05-15"
 ---
-# Вопросы на собеседовании: `Observability`
+# Вопросы на собеседовании: Наблюдаемость
 
 Практичные вопросы и ответы по observability для `Senior Java Developer`: три столпа (логи, метрики, трейсы), `OpenTelemetry`, `Prometheus`, `Grafana`, distributed tracing, structured logging, `SLI`/`SLO`/`SLA`, алертинг и работа в production.
 

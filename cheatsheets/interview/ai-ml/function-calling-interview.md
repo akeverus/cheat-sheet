@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Function Calling / Tool Use"
+title: "Вопросы на собеседовании: Вызов функций и инструментов"
 description: "Function calling в LLM: OpenAI Tools, Anthropic Tool Use, Gemini, parallel tools, structured output, JSON schema, prompt caching, MCP."
 tags:
   - interview
@@ -14,7 +14,7 @@ aliases:
   - "Structured Output JSON Schema"
 updated: "2026-05-23"
 ---
-# Вопросы на собеседовании: `Function Calling / Tool Use`
+# Вопросы на собеседовании: Вызов функций и инструментов
 
 **Function calling** (она же **tool use**) — способность LLM вместо обычного текстового ответа вернуть **structured JSON** с указанием «вызови такую-то функцию с такими-то аргументами». Появилось у OpenAI в июне 2023 (`functions`), переехало в `tools` в ноябре 2023 (multi-tool + parallel), Anthropic подключилась в 2024 (`tool_use`), Gemini — параллельно. С конца 2024 — стандартизация поверх через **MCP**. Это фундамент почти всех современных LLM-агентов, RAG-роутеров и structured-output пайплайнов.
 

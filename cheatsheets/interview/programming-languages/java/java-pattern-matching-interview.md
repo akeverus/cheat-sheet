@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Java Pattern Matching"
+title: "Вопросы на собеседовании: Паттерн-матчинг в Java"
 description: "Pattern Matching в Java (JEP 441, 440): instanceof patterns, switch expressions, record patterns, guarded patterns, sealed types, exhaustiveness checking"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-05-15"
 ---
-# Вопросы на собеседовании: `Java Pattern Matching`
+# Вопросы на собеседовании: Паттерн-матчинг в Java
 
 `Pattern Matching` — серия JEP в Java 16-21, заметно расширяющая `instanceof` и `switch`: проверка типа теперь сразу даёт типизированную переменную, а `switch` умеет матчить типы и деконструировать records. Сюда входят type patterns, record patterns, guarded patterns и exhaustiveness checking по sealed-типам. Частая тема современных Java-собеседований.
 

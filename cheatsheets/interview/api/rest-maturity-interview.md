@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Richardson Maturity Model (REST)"
+title: "Вопросы на собеседовании: Модель зрелости Ричардсона (REST)"
 description: "Richardson Maturity Model: 4 уровня REST API (0-3), HATEOAS, hypermedia, использование HTTP verbs и status codes, что значит truly RESTful, критика модели"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-05-29"
 ---
-# Вопросы на собеседовании: `Richardson Maturity Model (REST)`
+# Вопросы на собеседовании: Модель зрелости Ричардсона (REST)
 
 `Richardson Maturity Model` (Leonard Richardson, 2008) — модель оценки **степени соответствия REST** для API, 4 уровня (0-3). Уровень 3 (HATEOAS) — «truly RESTful» по Roy Fielding. На практике большинство «REST API» застревают на Level 2.
 

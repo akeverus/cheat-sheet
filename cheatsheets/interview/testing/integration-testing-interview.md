@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Integration Testing"
+title: "Вопросы на собеседовании: Интеграционное тестирование"
 description: "Интеграционное тестирование в Spring Boot: @SpringBootTest, Testcontainers, MockMvc, WebTestClient, WireMock, contract testing, test slices и best practices."
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-05-08"
 ---
-# Вопросы на собеседовании: `Integration Testing`
+# Вопросы на собеседовании: Интеграционное тестирование
 
 Интеграционное тестирование проверяет взаимодействие компонентов приложения с реальной инфраструктурой (`DB`, очереди, внешние `API`). Этот файл покрывает `Spring Boot Testing`, `Testcontainers`, `MockMvc`, `WebTestClient`, `WireMock`, контрактное тестирование и организацию тестов в `CI/CD`.
 

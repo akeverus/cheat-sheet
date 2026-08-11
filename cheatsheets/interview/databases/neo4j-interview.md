@@ -51,7 +51,7 @@ updated: "2026-04-25"
 **Cypher**
 - [Q8. (!) Что такое Cypher?](#q8--что-такое-cypher)
 - [Q9. (!) Что делают MATCH, WHERE, RETURN?](#q9--что-делают-match-where-return)
-- [Q10. (!) Pattern matching syntax (`(a)-[r]->(b)`)?](#q10--pattern-matching-syntax-a-rb)
+- [Q10. (!) Как устроен синтаксис pattern matching (`(a)-[r]->(b)`)?](#q10--как-устроен-синтаксис-pattern-matching-a-r-b)
 - [Q11. Чем отличаются CREATE, MERGE, SET, DELETE?](#q11-чем-отличаются-create-merge-set-delete)
 - [Q12. Что такое variable-length paths?](#q12-что-такое-variable-length-paths)
 - [Q13. Зачем нужен WITH (chaining queries)?](#q13-зачем-нужен-with-chaining-queries)

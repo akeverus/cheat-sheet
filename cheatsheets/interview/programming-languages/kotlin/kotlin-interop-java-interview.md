@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: интероп Kotlin и Java"
+title: "Вопросы на собеседовании: Интероп Kotlin и Java"
 description: "Вопросы и ответы по взаимодействию Kotlin и Java: platform types, nullability, аннотации @JvmStatic/@JvmField/@JvmOverloads/@JvmName, SAM-конверсии, коллекции, generics variance, inline-классы, suspend-функции из Java."
 tags:
   - interview

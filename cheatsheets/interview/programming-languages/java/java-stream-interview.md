@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Java Stream API"
+title: "Вопросы на собеседовании: Stream API в Java"
 description: "Комплексное руководство по Java Stream API: pipeline, lazy evaluation, collectors, parallel streams, reduce, flatMap, Optional, Gatherers и best practices"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-05-20"
 ---
-# Вопросы на собеседовании: `Java Stream API`
+# Вопросы на собеседовании: Stream API в Java
 
 Комплексное руководство по вопросам собеседования на тему `Java Stream API` — от базовых концепций pipeline и lazy evaluation до продвинутых `Collectors`, `parallel streams`, `Gatherers` (Java 22+) и типичных ловушек.
 

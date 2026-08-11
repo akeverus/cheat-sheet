@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Spring Boot 3 Migration"
+title: "Вопросы на собеседовании: Миграция на Spring Boot 3"
 description: "Миграция на Spring Boot 3: Java 17 baseline, javax→jakarta, GraalVM Native, AOT, HTTP Interface Clients, Problem Details RFC 7807, Virtual Threads, breaking changes"
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: 2026-05-31
 ---
-# Вопросы на собеседовании: `Spring Boot 3 Migration`
+# Вопросы на собеседовании: Миграция на Spring Boot 3
 
 `Spring Boot 3.0` (ноябрь 2022) — крупнейший релиз Spring Boot: Java 17 baseline, переход с `javax.*` на `jakarta.*`, поддержка GraalVM Native Image из коробки, новая Observability API. Часто спрашивается в интервью по актуальным Spring проектам.
 

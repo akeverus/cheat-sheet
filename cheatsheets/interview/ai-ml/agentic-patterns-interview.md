@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Agentic Design Patterns"
+title: "Вопросы на собеседовании: Паттерны агентных систем"
 description: "Agentic patterns: ReAct, Reflexion, Plan-Execute, Tree-of-Thoughts, Self-Critique, CoVe, ReWOO, Self-Consistency; когда что выбирать и комбинировать."
 tags:
   - interview
@@ -14,7 +14,7 @@ aliases:
   - "LLM agentic workflows"
 updated: "2026-05-23"
 ---
-# Вопросы на собеседовании: `Agentic Design Patterns`
+# Вопросы на собеседовании: Паттерны агентных систем
 
 **Agentic pattern** — структурированный способ организации LLM-driven workflow с чередованием **reasoning** и **acting**. Это не одна модель и не один промпт, а **протокол управления** ходом выполнения: как агент думает, когда дергает tool, как обрабатывает ошибку, когда останавливается.
 

@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Application Security"
+title: "Вопросы на собеседовании: Безопасность приложений"
 description: "Комплексное руководство по безопасности приложений: OWASP, Spring Security, шифрование, CORS, валидация, защита от атак"
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: "2026-05-08"
 ---
-# Вопросы на собеседовании: `Application Security`
+# Вопросы на собеседовании: Безопасность приложений
 
 Комплексное руководство по вопросам собеседования на тему `Application Security` для `Senior Java Developer`. Включает
 детальные объяснения концепций, практические примеры на `Java` + `Spring`, best practices и troubleshooting.

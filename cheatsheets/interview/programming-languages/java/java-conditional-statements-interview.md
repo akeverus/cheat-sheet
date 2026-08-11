@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Java Conditional Statements"
+title: "Вопросы на собеседовании: Условные конструкции Java"
 description: "Условные конструкции Java: if/else, switch, switch expression, pattern matching, sealed classes, циклы, try-catch-finally и best practices"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Java Conditional Statements`
+# Вопросы на собеседовании: Условные конструкции Java
 
 Условные конструкции и управление потоком выполнения -- одна из базовых тем на собеседовании по `Java`. Вопросы охватывают классические `if/else` и `switch`, современные `switch expression` (`Java 14+`), `pattern matching` (`Java 16-21`), `sealed classes`, циклы, обработку исключений и best practices. Тема тесно связана с [Java Core](java-core-interview.md), [ООП в Java](java-oop-interview.md) и [системой типов Java](java-types-interview.md).
 

@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Backtracking"
+title: "Вопросы на собеседовании: Перебор с возвратом"
 description: "Backtracking как DFS с возвратом, классические задачи (N-Queens, Sudoku, permutations, combinations, subsets, word search), pruning, разница с brute force и DP"
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: "2026-05-19"
 ---
-# Вопросы на собеседовании: `Backtracking`
+# Вопросы на собеседовании: Перебор с возвратом
 
 Backtracking — DFS по дереву решений с **отказом** (откатом), когда текущий путь не ведёт к решению. Классические задачи: N-Queens, Sudoku, permutations/combinations/subsets, Word Search. Главное — научиться **prune** (отсекать) бесперспективные ветви.
 

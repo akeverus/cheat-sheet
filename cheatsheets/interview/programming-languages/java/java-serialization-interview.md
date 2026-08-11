@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Java Serialization"
+title: "Вопросы на собеседовании: Сериализация в Java"
 description: "Полное руководство по вопросам собеседования на тему сериализации в Java: Serializable, Externalizable, serialVersionUID, transient, custom serialization, serialization proxy pattern, безопасность десериализации, ObjectInputFilter, Jackson, Gson, Protobuf, Avro, Kryo, records, sealed classes."
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-05-14"
 ---
-# Вопросы на собеседовании: `Java Serialization`
+# Вопросы на собеседовании: Сериализация в Java
 
 Полное руководство по вопросам собеседования на тему сериализации в `Java`. Охватывает стандартный механизм (`Serializable`, `Externalizable`), управление совместимостью (`serialVersionUID`), кастомную сериализацию, паттерн `Serialization Proxy`, безопасность десериализации, `ObjectInputFilter`, JSON-сериализацию (`Jackson`, `Gson`), сериализацию `record` и `sealed` классов, а также альтернативные форматы (`Protobuf`, `Avro`, `Kryo`).
 

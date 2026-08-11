@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Design Search System"
+title: "Вопросы на собеседовании: Дизайн поисковой системы"
 description: "System design search: inverted index, BM25/TF-IDF, BM25+vector hybrid (RRF), faceted, geo, real-time NRT, query understanding, multi-tenancy, monitoring."
 tags:
   - interview

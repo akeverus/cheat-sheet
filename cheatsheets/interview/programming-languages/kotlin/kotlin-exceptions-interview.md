@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: исключения в Kotlin"
+title: "Вопросы на собеседовании: Исключения в Kotlin"
 description: "Обработка исключений в Kotlin: отсутствие checked exceptions, try как выражение, Nothing, runCatching/Result, @Throws, use(), require/check/error, обработка в корутинах, sealed-иерархии ошибок, Arrow Either."
 tags:
   - interview

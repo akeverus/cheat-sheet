@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Java Reflection"
+title: "Вопросы на собеседовании: Рефлексия Java"
 description: "Java Reflection API: Class, Method, Field, Constructor, InvocationHandler, динамические прокси, производительность, применение в фреймворках"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Java Reflection`
+# Вопросы на собеседовании: Рефлексия Java
 
 `Java Reflection API` позволяет исследовать и изменять структуру классов, методов, полей и конструкторов во время выполнения. Основа Spring, Hibernate, Jackson, JUnit — всё это использует рефлексию. Часто задаётся в контексте "как фреймворки работают под капотом".
 

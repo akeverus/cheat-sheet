@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: LLM Evaluation"
+title: "Вопросы на собеседовании: Оценка качества LLM"
 description: "Оценка LLM: benchmarks (MMLU/HumanEval/MT-Bench), LLM-as-Judge, RAGAS, DeepEval, golden datasets, regression testing, RAG/agent eval, continuous monitoring."
 tags:
   - interview
@@ -14,7 +14,7 @@ aliases:
   - "Evaluation harness LLM"
 updated: "2026-05-23"
 ---
-# Вопросы на собеседовании: `LLM Evaluation`
+# Вопросы на собеседовании: Оценка качества LLM
 
 **LLM Evaluation** — это про измеримость качества LLM-системы: benchmarks, LLM-as-Judge, RAG-метрики (RAGAS), agent-эваль, golden datasets, регрессионное тестирование и continuous monitoring в проде. Главный принцип: **«если не измеряешь — не управляешь»**. Прод-LLM без эвалов = езда с закрытыми глазами.
 

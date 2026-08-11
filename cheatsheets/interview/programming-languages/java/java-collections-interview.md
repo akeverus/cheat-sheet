@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Java Collections"
+title: "Вопросы на собеседовании: Коллекции Java"
 description: "Комплексное руководство по вопросам собеседования на тему Java Collections Framework для Senior Java Developer. Включает детальные объяснения концепций, практические примеры на Java, схемы, best practices и troubleshooting."
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-05-20"
 ---
-# Вопросы на собеседовании: `Java Collections`
+# Вопросы на собеседовании: Коллекции Java
 
 Комплексное руководство по вопросам собеседования на тему `Java Collections Framework` для `Senior Java Developer`. Включает детальные объяснения концепций, практические примеры на `Java`, схемы, best practices и troubleshooting.
 

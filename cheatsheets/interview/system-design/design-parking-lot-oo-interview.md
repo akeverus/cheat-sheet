@@ -1,5 +1,5 @@
 ---
-title: "OO Design: Parking Lot"
+title: "OO Design: Дизайн парковки"
 description: "Низкоуровневый дизайн Parking Lot — классическая задача OO design на интервью. Классы, паттерны (Singleton, Strategy, Factory, Observer), thread safety, SOLID."
 tags:
   - interview

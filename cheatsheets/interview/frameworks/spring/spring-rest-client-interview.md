@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Spring REST Clients"
+title: "Вопросы на собеседовании: REST-клиенты Spring"
 description: "HTTP-клиенты Spring: RestTemplate (deprecated), RestClient (Spring 6.1), WebClient, @HttpExchange декларативный интерфейс"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites:
 next: []
 updated: "2026-05-14"
 ---
-# Вопросы на собеседовании: `Spring REST Clients`
+# Вопросы на собеседовании: REST-клиенты Spring
 
 В Spring существует три основных HTTP-клиента: `RestTemplate` (классический, в maintenance mode с Spring 6), `WebClient` (реактивный, Spring 5+), и `RestClient` (новый синхронный, Spring 6.1). На собеседованиях проверяют понимание различий, миграцию с RestTemplate и декларативный подход через `@HttpExchange`.
 

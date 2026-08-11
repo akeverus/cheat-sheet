@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Cloud-native Patterns"
+title: "Вопросы на собеседовании: Cloud-native паттерны"
 description: "Cloud-native: 12-factor apps, immutability, declarative, statelessness, sidecar, ambassador, circuit breaker, retry, bulkhead, leader election, autoscaling, CNCF projects"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Cloud-native Patterns`
+# Вопросы на собеседовании: Cloud-native паттерны
 
 **Cloud-native** — приложения, спроектированные под облако (а не перенесённые методом lift-and-shift): контейнеризованные, динамически оркестрируемые, построенные на микросервисах. Паттерны: **12-factor**, **sidecar**, **circuit breaker**, **retry**, **bulkhead**, **leader election**, **autoscaling**, **service mesh**. Стандарты: проекты **CNCF** (K8s, Prometheus, Envoy, ...).
 

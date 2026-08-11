@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Kotlin Value Classes"
+title: "Вопросы на собеседовании: Value-классы Kotlin"
 description: "Kotlin Value Classes (inline classes): type-safe wrappers без runtime overhead, JVM-представление, ограничения, сравнение с data classes"
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: "2026-05-15"
 ---
-# Вопросы на собеседовании: `Kotlin Value Classes`
+# Вопросы на собеседовании: Value-классы Kotlin
 
 `Value Classes` (бывшие `inline classes`) — типобезопасные обёртки вокруг примитивов или объектов без runtime overhead. Компилятор инлайнит значение в месте использования. Используются для `UserId`, `Email`, `Money` и других domain-типов.
 

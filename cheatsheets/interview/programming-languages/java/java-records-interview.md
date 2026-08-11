@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Java Records"
+title: "Вопросы на собеседовании: Рекорды Java"
 description: "Java Records (JEP 395, Java 16+): canonical/compact constructor, валидация, сериализация, pattern matching, интеграция со Spring, algebraic data types"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Java Records`
+# Вопросы на собеседовании: Рекорды Java
 
 `Java Records` (JEP 395, stable в Java 16) — компактный синтаксис для неизменяемых носителей данных (immutable data carriers). Компилятор автоматически генерирует конструктор, `equals`/`hashCode`/`toString` и accessor-методы. Это де-факто стандарт для DTO в современной Java и частая тема собеседований.
 

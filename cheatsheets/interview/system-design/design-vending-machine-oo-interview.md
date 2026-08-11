@@ -1,5 +1,5 @@
 ---
-title: "OO Design: Vending Machine"
+title: "OO Design: Дизайн торгового автомата"
 description: "Низкоуровневый дизайн автомата продаж: State pattern, payment processing, change-making, inventory, thread safety, edge cases."
 tags:
   - interview

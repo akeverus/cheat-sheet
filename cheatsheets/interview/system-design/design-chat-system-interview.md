@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Design Chat System"
+title: "Вопросы на собеседовании: Дизайн чат-системы"
 description: "System design chat (WhatsApp, Slack): WebSockets, message delivery, presence, group chats, encryption, storage, push notifications, read receipts, typing indicators"
 tags:
   - interview

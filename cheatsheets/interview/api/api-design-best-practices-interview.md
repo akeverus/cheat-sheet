@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: API Design Best Practices"
+title: "Вопросы на собеседовании: Практики проектирования API"
 description: "API design: naming conventions, resource modeling, pagination, filtering, sorting, error responses, idempotency, rate limiting, authentication, JSON conventions, OpenAPI"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `API Design Best Practices`
+# Вопросы на собеседовании: Практики проектирования API
 
 Проектирование API — критический навык. Хороший API: **интуитивный, консистентный, расширяемый, безопасный**. Плохой API — вечная боль. На интервью спрашивают: соглашения об именовании, пагинацию, фильтрацию, формат ошибок, идемпотентность, rate limiting, аутентификацию. Коллекция лучших практик от Google, Microsoft, Stripe, GitHub.
 

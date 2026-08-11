@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Spring Transactions"
+title: "Вопросы на собеседовании: Транзакции в Spring"
 description: "Spring @Transactional: propagation, isolation levels, rollback rules, self-invocation, readOnly, TransactionManager"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-05-08"
 ---
-# Вопросы на собеседовании: `Spring Transactions`
+# Вопросы на собеседовании: Транзакции в Spring
 
 `@Transactional` — самая часто задаваемая тема на Spring-собеседованиях. Проверяют понимание propagation, isolation levels, правил rollback и типичных ловушек (self-invocation, checked exceptions, видимость метода).
 

@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: System Design"
+title: "Вопросы на собеседовании: Системный дизайн"
 description: "Комплексное руководство по System Design: фреймворк проектирования, классические задачи (URL shortener, rate limiter, chat, notification, news feed, autocomplete), распределённые паттерны (consistent hashing, sharding, leader election, CDN, distributed cache)."
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `System Design`
+# Вопросы на собеседовании: Системный дизайн
 
 Комплексное руководство по вопросам собеседования на тему `System Design` для `Senior Java Developer`. Включает фреймворк проектирования, классические задачи, распределённые паттерны, `mermaid`-диаграммы архитектур, примеры кода и `trade-offs`.
 

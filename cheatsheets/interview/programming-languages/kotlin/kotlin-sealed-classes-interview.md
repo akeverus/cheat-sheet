@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Kotlin Sealed Classes"
+title: "Вопросы на собеседовании: Sealed-классы Kotlin"
 description: "Kotlin Sealed Classes и Sealed Interfaces: ограниченные иерархии типов, exhaustive when, Algebraic Data Types, сравнение с enum и Java sealed classes"
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: "2026-05-15"
 ---
-# Вопросы на собеседовании: `Kotlin Sealed Classes`
+# Вопросы на собеседовании: Sealed-классы Kotlin
 
 `Sealed classes` в Kotlin — ограниченные иерархии типов, известные компилятору полностью на этапе сборки. Позволяют реализовать Algebraic Data Types (ADT) с exhaustive pattern matching через `when`. Важная тема для функционального Kotlin.
 

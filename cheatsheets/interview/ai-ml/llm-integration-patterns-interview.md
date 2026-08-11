@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: LLM Integration Patterns"
+title: "Вопросы на собеседовании: Паттерны интеграции LLM"
 description: "Production patterns: streaming responses, retry/fallback, model routing, caching, batching, rate limiting, observability, cost tracking, multi-provider abstractions, semantic cache"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-05-19"
 ---
-# Вопросы на собеседовании: `LLM Integration Patterns`
+# Вопросы на собеседовании: Паттерны интеграции LLM
 
 Интеграция LLM в production — это больше, чем просто `client.chat.completions.create()`. На собеседовании спрашивают про streaming, retry/fallback, маршрутизацию моделей, кэширование, rate limiting, наблюдаемость, учёт затрат, абстракции над несколькими провайдерами, семантическое кэширование и асинхронные паттерны.
 

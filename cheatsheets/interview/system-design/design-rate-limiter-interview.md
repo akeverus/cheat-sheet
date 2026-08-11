@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Design Rate Limiter"
+title: "Вопросы на собеседовании: Дизайн Rate Limiter"
 description: "System design rate limiter: token bucket / leaky bucket / fixed window / sliding window log / sliding window counter, Redis Lua atomic INCR, distributed coordination, 429 + Retry-After, fail-open vs fail-closed."
 tags:
   - interview

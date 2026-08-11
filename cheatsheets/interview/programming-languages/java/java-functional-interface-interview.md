@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Java Functional Interfaces"
+title: "Вопросы на собеседовании: Функциональные интерфейсы Java"
 description: "Функциональные интерфейсы Java 8+: @FunctionalInterface, Function, Predicate, Consumer, Supplier, method references, compose/andThen"
 tags:
   - interview
@@ -14,7 +14,7 @@ prerequisites: []
 next: []
 updated: 2026-05-31
 ---
-# Вопросы на собеседовании: `Java Functional Interfaces`
+# Вопросы на собеседовании: Функциональные интерфейсы Java
 
 Функциональные интерфейсы — основа лямбда-выражений и Stream API в Java 8+. Каждый функциональный интерфейс имеет ровно один абстрактный метод (SAM). На собеседованиях проверяют знание встроенных интерфейсов, method references, compose/andThen и разницы между похожими типами.
 

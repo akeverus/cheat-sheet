@@ -1,5 +1,5 @@
 ---
-title: "OO Design: Elevator System"
+title: "OO Design: Дизайн лифта"
 description: "Низкоуровневый дизайн системы лифтов: классы, state machine, scheduling (SCAN/LOOK/Nearest), thread safety, паттерны (State, Strategy, Observer, Command)."
 tags:
   - interview

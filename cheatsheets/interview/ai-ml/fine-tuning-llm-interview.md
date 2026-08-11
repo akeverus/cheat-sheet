@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Fine-tuning LLM (LoRA/QLoRA/RLHF/DPO/GRPO)"
+title: "Вопросы на собеседовании: Дообучение LLM (LoRA/QLoRA/RLHF/DPO/GRPO)"
 description: "Fine-tuning LLM: full FT vs PEFT (LoRA/QLoRA/DoRA), SFT, RLHF, DPO, GRPO (DeepSeek), datasets, chat templates, hyperparameters, hardware, deployment."
 tags:
   - interview
@@ -14,7 +14,7 @@ aliases:
   - "GRPO DeepSeek fine-tune"
 updated: "2026-05-23"
 ---
-# Вопросы на собеседовании: `Fine-tuning LLM (LoRA/QLoRA/RLHF/DPO/GRPO)`
+# Вопросы на собеседовании: Дообучение LLM (LoRA/QLoRA/RLHF/DPO/GRPO)
 
 Fine-tuning LLM из «дорогой R&D-операции» к 2024-2026 превратился в **повседневный инструмент инженера**: появились PEFT-методы (LoRA, QLoRA, DoRA), которые позволяют дообучить 70B-модель на одной 80GB GPU; preference-алгоритмы упростились с PPO до `DPO` и `GRPO`; библиотеки (TRL, Unsloth, Axolotl) свели pipeline к десяткам строк кода.
 

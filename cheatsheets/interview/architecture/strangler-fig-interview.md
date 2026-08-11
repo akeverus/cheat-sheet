@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Strangler Fig Pattern"
+title: "Вопросы на собеседовании: Паттерн Strangler Fig"
 description: "Strangler Fig pattern для gradual monolith→microservices migration: proxy, routing, Martin Fowler, incremental, rollback, feature flags, real examples"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Strangler Fig Pattern`
+# Вопросы на собеседовании: Паттерн Strangler Fig
 
 `Strangler Fig` — паттерн **постепенной миграции** монолита → microservices (или legacy → modern). Вместо "big bang rewrite" новая функциональность оборачивает старую и постепенно её замещает. Название придумал Martin Fowler (2004), вдохновившись деревьями-душителями (strangler fig). Индустриальный стандарт для модернизации с управляемым риском.
 

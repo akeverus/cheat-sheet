@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Application Profiling"
+title: "Вопросы на собеседовании: Профилирование приложений"
 description: "Практичные вопросы и ответы по profiling Java-приложений: CPU, memory, allocation, lock contention, flame graphs, JFR, async-profiler, heap/thread dumps, GC-анализ, APM, continuous profiling в production."
 tags:
   - interview
@@ -21,7 +21,7 @@ prerequisites: []
 next: []
 updated: "2026-05-14"
 ---
-# Вопросы на собеседовании: `Application Profiling`
+# Вопросы на собеседовании: Профилирование приложений
 
 Практичные вопросы и ответы по profiling для `Senior Java Developer`: как находить узкие места по `CPU`, памяти, блокировкам и сетевым операциям в production. Покрывает `JFR`, `async-profiler`, `flame graphs`, `heap/thread dumps`, `GC`-анализ, `APM`-инструменты и `continuous profiling`.
 

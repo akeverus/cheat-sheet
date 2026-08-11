@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: AI Agents"
+title: "Вопросы на собеседовании: ИИ-агенты"
 description: "AI agents: ReAct, planning, tool use, MCP (Model Context Protocol), multi-agent systems, frameworks (LangGraph, AutoGen, CrewAI), production challenges, evaluation, human-in-the-loop"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-05-19"
 ---
-# Вопросы на собеседовании: `AI Agents`
+# Вопросы на собеседовании: ИИ-агенты
 
 **AI Agent** — LLM, которая умеет **планировать** + **использовать tools** + **наблюдать результаты** + **итерировать** для решения задач. От простого ReAct-цикла до сложных multi-agent-систем. В 2024–2025 — горячая тема. Стандарты: **MCP** (Model Context Protocol). Фреймворки: LangGraph, AutoGen, CrewAI, Anthropic SDK.
 

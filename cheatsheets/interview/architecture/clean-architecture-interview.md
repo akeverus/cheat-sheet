@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Clean Architecture"
+title: "Вопросы на собеседовании: Чистая архитектура"
 description: "Полное покрытие Clean Architecture и Hexagonal Architecture: правило зависимостей, слои, порты и адаптеры, Use Case Interactors, Onion Architecture, реализация в Spring Boot, тестирование, антипаттерны."
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Clean Architecture`
+# Вопросы на собеседовании: Чистая архитектура
 
 Полное покрытие `Clean Architecture` и `Hexagonal Architecture`: правило зависимостей, слои (`Entities`, `Use Cases`, `Interface Adapters`, `Frameworks`), порты и адаптеры, `Onion Architecture`, `Dependency Inversion`, реализация в `Spring Boot`, тестирование и антипаттерны.
 

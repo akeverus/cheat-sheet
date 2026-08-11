@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Go Modules"
+title: "Вопросы на собеседовании: Модули Go"
 description: "go.mod, go.sum, semantic versioning, vendoring, replace, workspace mode (go 1.18+), private modules, GOPROXY, dependency management в Go"
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Go Modules`
+# Вопросы на собеседовании: Модули Go
 
 **Modules** — система управления зависимостями в Go, появилась в Go 1.11 (2018) и заменила подход на основе `GOPATH`. Она даёт воспроизводимые сборки, точные версии зависимостей через semantic versioning и поддержку приватных и проксируемых модулей. С Go 1.18 добавился workspace mode для одновременной работы с несколькими модулями.
 

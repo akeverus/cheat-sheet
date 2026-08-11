@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Secrets Management"
+title: "Вопросы на собеседовании: Управление секретами"
 description: "Secrets management: tools (Vault, AWS Secrets Manager, GCP Secret Manager, Azure Key Vault, Doppler), rotation, dynamic secrets, K8s integration (External Secrets Operator), GitOps secrets"
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Secrets Management`
+# Вопросы на собеседовании: Управление секретами
 
 Secrets management — безопасная работа с чувствительными учётными данными (пароли, API-ключи, сертификаты). Ключевые понятия: **централизованное хранилище, ротация, динамические секреты, шифрование at rest, аудит, least privilege**. Инструменты: **Vault, AWS Secrets Manager, GCP Secret Manager, Azure Key Vault, Doppler**. Критично для безопасности и compliance.
 

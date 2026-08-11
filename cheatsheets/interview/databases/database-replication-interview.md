@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Database Replication"
+title: "Вопросы на собеседовании: Репликация баз данных"
 description: "Репликация БД: single-leader, multi-leader, leaderless; sync/async, logical/physical; MySQL/PostgreSQL/Cassandra/MongoDB; failover, split-brain, conflict resolution."
 tags:
   - interview
@@ -14,7 +14,7 @@ aliases:
   - "MySQL PostgreSQL replication"
 updated: "2026-05-21"
 ---
-# Вопросы на собеседовании: `Database Replication`
+# Вопросы на собеседовании: Репликация баз данных
 
 Репликация БД: `single-leader` (`primary-replica`), `multi-leader`, `leaderless`; `sync` vs `async`; `logical` vs `physical`; конкретика по `MySQL`, `PostgreSQL`, `Cassandra`, `MongoDB`; failover, split-brain, conflict resolution, CDC.
 

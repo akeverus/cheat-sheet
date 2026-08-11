@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Reactive Patterns"
+title: "Вопросы на собеседовании: Реактивные паттерны"
 description: "Реактивные паттерны: circuit breaker, retry, timeout, bulkhead, scatter-gather, reactive saga, backpressure стратегии"
 tags:
   - interview
@@ -18,7 +18,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: Reactive Patterns
+# Вопросы на собеседовании: Реактивные паттерны
 
 Гид по паттернам устойчивости и архитектурным паттернам в реактивных системах для `Senior Java Developer`. Охватывает `Circuit Breaker`, `Retry`, `Timeout`, `Bulkhead`, `Scatter-Gather`, `Reactive Saga`, а также стратегии backpressure и паттерны composability реактивных потоков.
 

@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Java Virtual Threads"
+title: "Вопросы на собеседовании: Виртуальные потоки Java"
 description: "Java Virtual Threads (Project Loom): carrier threads, pinning, Structured Concurrency, ScopedValue, интеграция с Spring Boot и JDBC"
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: "2026-05-15"
 ---
-# Вопросы на собеседовании: `Java Virtual Threads`
+# Вопросы на собеседовании: Виртуальные потоки Java
 
 `Virtual Threads` (Project Loom) — лёгкие потоки JVM, ставшие стандартом в Java 21. Позволяют писать blocking-стиль код с non-blocking производительностью — миллионы потоков вместо тысяч, без перехода на reactive.
 

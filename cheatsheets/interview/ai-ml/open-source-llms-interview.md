@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Open-Source LLM Ecosystem 2025-2026"
+title: "Вопросы на собеседовании: Экосистема открытых LLM 2025–2026"
 description: "Open-source LLMs: Llama 3.x/4, Mistral/Mixtral, Qwen 2.5/3, DeepSeek-V3/R1, Gemma 3, Phi-4; licensing, MoE economics, fine-tune-ability, benchmarks."
 tags:
   - interview
@@ -14,7 +14,7 @@ aliases:
   - "Open-weight LLM ecosystem"
 updated: "2026-05-25"
 ---
-# Вопросы на собеседовании: `Open-Source LLM Ecosystem 2025-2026`
+# Вопросы на собеседовании: Экосистема открытых LLM 2025–2026
 
 С 2023 года индустрия LLM раскололась на два лагеря: **закрытые frontier-модели** (GPT-4o, Claude, Gemini) и **open-weight ecosystem** — Llama, Mistral, Qwen, DeepSeek, Gemma, Phi. К 2026 разрыв в качестве на популярных бенчмарках почти стёрся: `DeepSeek-V3` соревнуется с `GPT-4o`, `Llama 3.3 70B` догоняет `405B`, а `Qwen 2.5` стал стандартом для self-host в Азии.
 

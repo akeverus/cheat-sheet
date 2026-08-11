@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Static Analysis"
+title: "Вопросы на собеседовании: Статический анализ"
 description: "Статический анализ кода: SonarQube, SpotBugs, PMD, Checkstyle, метрики качества, quality gates, интеграция в CI/CD pipelines"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: Static Analysis
+# Вопросы на собеседовании: Статический анализ
 
 Краткие ответы про инструменты статического анализа: принципы работы, популярные инструменты для Java, метрики, quality gates и интеграция в CI/CD.
 

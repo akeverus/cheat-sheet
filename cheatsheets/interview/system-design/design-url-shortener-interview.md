@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Design URL Shortener"
+title: "Вопросы на собеседовании: Дизайн сокращателя ссылок"
 description: "System design URL shortener (TinyURL, bit.ly): Base62, hash vs counter vs random, collision handling, 301 vs 302, sharding, multi-tier cache, click analytics, custom domains, anti-abuse, high-availability."
 tags:
   - interview

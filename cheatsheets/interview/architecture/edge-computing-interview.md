@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Edge Computing"
+title: "Вопросы на собеседовании: Edge-вычисления"
 description: "Edge computing: Cloudflare Workers, Lambda@Edge, CDN edge functions, global latency, use cases, architecture, cold starts, state management"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Edge Computing`
+# Вопросы на собеседовании: Edge-вычисления
 
 `Edge Computing` — выполнение логики **близко к пользователям** (edge-локации CDN, IoT-шлюзы). Cloudflare Workers, AWS Lambda@Edge, Fastly Compute@Edge: latency 10-50 мс (против 100-300 мс у origin), глобальный масштаб, serverless. Роль растёт: API gateway, персонализация, A/B-тестирование, оптимизация изображений, авторизация на edge.
 

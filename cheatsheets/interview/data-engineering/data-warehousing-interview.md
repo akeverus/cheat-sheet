@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Data Warehousing"
+title: "Вопросы на собеседовании: Хранилища данных"
 description: "Data warehouse: dimensional modeling (star/snowflake schema), Kimball vs Inmon vs Data Vault, OLAP vs OLTP, MPP, columnar storage, Snowflake/BigQuery/Redshift, slowly changing dimensions"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Data Warehousing`
+# Вопросы на собеседовании: Хранилища данных
 
 Data warehouse — централизованное хранилище для **аналитики и BI**. Оптимизировано под **OLAP** (агрегации, joins, отчёты), не для transactional нагрузки. Современные DWH: **Snowflake**, **BigQuery**, **Redshift**, **Databricks**. На интервью спрашивают: dimensional modeling (Kimball), columnar storage, MPP, slowly changing dimensions.
 

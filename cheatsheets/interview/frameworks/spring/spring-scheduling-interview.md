@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Spring Scheduling"
+title: "Вопросы на собеседовании: Планировщик Spring"
 description: "Spring Scheduling: @Scheduled, @EnableScheduling, fixedDelay/fixedRate/cron, TaskScheduler, динамическое планирование, ShedLock для кластеров, тестирование"
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Spring Scheduling`
+# Вопросы на собеседовании: Планировщик Spring
 
 `Spring Scheduling` — механизм для выполнения задач по расписанию. `@Scheduled` — декларативный способ через аннотации. `TaskScheduler` — программный API для динамического планирования. Для кластерных сред нужна блокировка (ShedLock / Quartz).
 

@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Go Standard Library"
+title: "Вопросы на собеседовании: Стандартная библиотека Go"
 description: "Стандартная библиотека Go: net/http, encoding/json, io/ioutil, strings, time, context, log/slog, database/sql, embed, sort, errors"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Go Standard Library`
+# Вопросы на собеседовании: Стандартная библиотека Go
 
 Стандартная библиотека Go покрывает 80% потребностей backend-разработки **без third-party**. На интервью спрашивают: устройство `net/http`, нюансы `encoding/json`, новый `log/slog`, `database/sql`, `time` пакет, `embed` (с Go 1.16), `errors` wrapping.
 

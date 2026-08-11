@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Design Payment System"
+title: "Вопросы на собеседовании: Дизайн платёжной системы"
 description: "System design платёжной системы (Stripe-like): idempotency, double-entry ledger, saga, 3DS, PSP-роутинг, settlement, reconciliation, chargebacks, PCI-DSS."
 tags:
   - interview

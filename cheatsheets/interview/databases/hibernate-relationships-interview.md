@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Hibernate Relationships"
+title: "Вопросы на собеседовании: Связи в Hibernate"
 description: "Hibernate/JPA relationships: @OneToOne, @OneToMany, @ManyToOne, @ManyToMany, mappedBy, FetchType LAZY/EAGER, CascadeType, N+1 проблема и её решения"
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: 2026-05-31
 ---
-# Вопросы на собеседовании: `Hibernate Relationships`
+# Вопросы на собеседовании: Связи в Hibernate
 
 `Hibernate/JPA relationships` — настройка связей между entity: `@OneToOne`, `@OneToMany`, `@ManyToOne`, `@ManyToMany`. Критически важная тема: неправильная настройка приводит к N+1, пустым коллекциям, невозможности сохранения. Почти всегда спрашивается на middle/senior Java интервью.
 

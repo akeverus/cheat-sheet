@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Spring Boot Testing"
+title: "Вопросы на собеседовании: Тестирование в Spring Boot"
 description: "Spring Boot тестирование: @SpringBootTest, @WebMvcTest, @DataJpaTest, MockMvc, @MockBean, test slices, ApplicationContext caching, @TestConfiguration"
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: "2026-05-15"
 ---
-# Вопросы на собеседовании: `Spring Boot Testing`
+# Вопросы на собеседовании: Тестирование в Spring Boot
 
 Spring Boot предоставляет мощную тестовую инфраструктуру: от лёгких unit-тестов до полных интеграционных тестов с реальным HTTP-сервером. Ключевая тема — **test slices**: загрузка только нужной части контекста для скорости.
 

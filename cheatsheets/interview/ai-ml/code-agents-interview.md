@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Code Agents"
+title: "Вопросы на собеседовании: Кодовые агенты"
 description: "Code agents (Cursor, Aider, Devin, Claude Code, Cline, OpenHands): архитектура, SWE-Bench, tool use, edit strategies, sandboxing, production patterns."
 tags:
   - interview
@@ -15,7 +15,7 @@ aliases:
 updated: "2026-05-23"
 ---
 
-# Вопросы на собеседовании: `Code Agents`
+# Вопросы на собеседовании: Кодовые агенты
 
 **Code agent** — это LLM-приложение, которое читает, навигирует и **редактирует кодовую базу** через набор tools (file ops, shell, git, search) и **итерирует** до прохождения тестов. Спектр огромен — от inline-автокомплита (Copilot) до полностью автономных SWE-агентов в VM (Devin, OpenHands). В 2025-2026 они стали мейнстримом: SWE-Bench Verified превратился из академического бенчмарка в маркетинговое поле, а связка Claude Code + Cursor + Aider — стандартом ежедневного workflow многих команд.
 

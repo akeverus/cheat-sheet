@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Memory Management"
+title: "Вопросы на собеседовании: Управление памятью"
 description: "Практичные вопросы и ответы по memory management в Java: модель памяти JVM, GC roots, утечки, Reference API, off-heap, memory-mapped files, object sizing, memory barriers, false sharing, NUMA."
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Memory Management`
+# Вопросы на собеседовании: Управление памятью
 
 Практичные вопросы и ответы по memory management для `Senior Java Developer`: модель памяти `JVM`, области heap/metaspace/stack/direct, `GC` roots и алгоритмы сборки, типы ссылок (`WeakReference`/`SoftReference`/`PhantomReference`), утечки памяти и их диагностика, off-heap и memory-mapped files, размер объектов, memory barriers, false sharing, `NUMA`, тюнинг и эксплуатация в production.
 

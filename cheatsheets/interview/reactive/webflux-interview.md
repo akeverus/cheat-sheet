@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Spring WebFlux"
+title: "Вопросы на собеседовании: Реактивный веб (WebFlux)"
 description: "Spring WebFlux: реактивный веб, RouterFunction, WebClient, Server-Sent Events, реактивная безопасность, обработка ошибок"
 tags:
   - interview
@@ -18,7 +18,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Spring WebFlux`
+# Вопросы на собеседовании: Реактивный веб (WebFlux)
 
 Гид по вопросам собеседования на тему `Spring WebFlux` для `Senior Java Developer`. Охватывает реактивный веб-слой, функциональный роутинг (`RouterFunction`/`HandlerFunction`), `WebClient`, `Server-Sent Events`, реактивную безопасность (`Spring Security` + `WebFlux`), обработку ошибок и конфигурацию.
 

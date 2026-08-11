@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Reasoning Models (o1/o3/R1)"
+title: "Вопросы на собеседовании: Модели рассуждений (o1/o3/R1)"
 description: "Reasoning LLMs (OpenAI o1/o3, DeepSeek-R1, Claude extended thinking, Gemini Deep Think): архитектура, test-time compute scaling, GRPO, cost/latency."
 tags:
   - interview
@@ -14,7 +14,7 @@ aliases:
   - "Extended thinking LLM"
 updated: "2026-05-23"
 ---
-# Вопросы на собеседовании: `Reasoning Models (o1/o3/R1)`
+# Вопросы на собеседовании: Модели рассуждений (o1/o3/R1)
 
 С сентября 2024 индустрия LLM получила новую парадигму — **reasoning models**. Они тратят значительную часть compute не на вывод финального ответа, а на длинный internal `chain-of-thought` (CoT). CoT перестал быть prompt-техникой и стал архитектурным свойством, обученным через RL.
 

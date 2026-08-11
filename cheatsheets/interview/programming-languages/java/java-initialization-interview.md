@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Java Class Structure and Initialization"
+title: "Вопросы на собеседовании: Структура и инициализация классов Java"
 description: "Конструкторы, static и instance init blocks, порядок инициализации, nested / inner / local / anonymous классы, final, static, наследование и вызов super()."
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Java Class Structure and Initialization`
+# Вопросы на собеседовании: Структура и инициализация классов Java
 
 Подробный разбор устройства классов и порядка инициализации в `Java`: конструкторы, `static` и instance-блоки, nested / inner / local / anonymous классы, `final`, `static`, правила наследования и вызов `super()`. Темы критичны для middle/senior собеседования: кандидата почти всегда спрашивают «что напечатается?» с вложенными классами и блоками.
 

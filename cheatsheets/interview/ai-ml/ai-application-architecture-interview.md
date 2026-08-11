@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: AI Application Architecture Patterns"
+title: "Вопросы на собеседовании: Архитектура ИИ-приложений"
 description: "Decision framework: RAG vs Fine-tune vs Prompt vs Agents; hybrid patterns; end-to-end architecture template; latency/cost/quality trade-offs; production stages."
 tags:
   - interview
@@ -14,7 +14,7 @@ aliases:
   - "End-to-end LLM architecture"
 updated: "2026-05-25"
 ---
-# Вопросы на собеседовании: `AI Application Architecture Patterns`
+# Вопросы на собеседовании: Архитектура ИИ-приложений
 
 Архитектура AI-приложений — это не выбор «модной» технологии, а **инженерная задача**: подобрать комбинацию `prompt + RAG + fine-tune + agents` под конкретные требования (свежесть знаний, latency, cost, compliance). На senior-интервью спрашивают про фреймворк выбора, гибридные паттерны, сквозную референсную архитектуру, бюджеты latency/cost, антипаттерны и производственные стадии.
 

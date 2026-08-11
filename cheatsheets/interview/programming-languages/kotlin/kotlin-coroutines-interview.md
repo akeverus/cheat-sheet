@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Kotlin Coroutines"
+title: "Вопросы на собеседовании: Корутины Kotlin"
 description: "Полное руководство по Kotlin Coroutines: structured concurrency, Flow, Channel, диспетчеры, обработка ошибок, тестирование и интеграция со Spring"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Kotlin Coroutines`
+# Вопросы на собеседовании: Корутины Kotlin
 
 Полное руководство по `Kotlin Coroutines` для подготовки к собеседованию на позицию `Senior Kotlin/Java Developer`. Охватывает `structured concurrency`, `Flow`, `Channel`, диспетчеры, обработку ошибок, тестирование и интеграцию с `Spring`.
 

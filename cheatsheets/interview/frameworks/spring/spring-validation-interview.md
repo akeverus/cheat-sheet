@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Spring Validation"
+title: "Вопросы на собеседовании: Валидация в Spring"
 description: "Bean Validation (JSR 380), @Valid vs @Validated, кастомные ConstraintValidator, группы валидации, кросс-field валидация, обработка ошибок"
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Spring Validation`
+# Вопросы на собеседовании: Валидация в Spring
 
 `Spring Validation` сочетает два подхода: **Bean Validation** (JSR 380 / Jakarta Validation) — декларативная валидация через аннотации, и **Spring Validator interface** — программная валидация. Большинство вопросов на собеседованиях касаются Bean Validation в контексте Spring Boot.
 

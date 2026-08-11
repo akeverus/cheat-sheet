@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Unit Testing"
+title: "Вопросы на собеседовании: Модульное тестирование"
 description: "Полное покрытие unit-тестирования в Java: JUnit 5, Mockito, AssertJ, TDD, параметризованные тесты, test doubles, покрытие кода и best practices."
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-05-08"
 ---
-# Вопросы на собеседовании: `Unit Testing`
+# Вопросы на собеседовании: Модульное тестирование
 
 Краткие ответы по `Unit Testing`: изолированные проверки бизнес-логики, работа с `JUnit 5`, `Mockito`, `AssertJ`, `TDD` и поддерживаемая структура unit-тестов.
 

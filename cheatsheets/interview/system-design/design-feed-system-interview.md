@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Design Feed System"
+title: "Вопросы на собеседовании: Дизайн ленты"
 description: "System design news feed (Twitter/Facebook/Instagram): fan-out on write vs read, celebrity problem, ranking, caching, Redis sorted sets, viral posts."
 tags:
   - interview

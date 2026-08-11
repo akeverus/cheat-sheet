@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Hibernate JPQL & Criteria API"
+title: "Вопросы на собеседовании: JPQL и Criteria API в Hibernate"
 description: "JPQL и Criteria API в Hibernate/JPA: синтаксис, subqueries, Criteria Query, JPA Metamodel, Spring Data Specifications, type-safety, native queries"
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: 2026-05-31
 ---
-# Вопросы на собеседовании: `Hibernate JPQL & Criteria API`
+# Вопросы на собеседовании: JPQL и Criteria API в Hibernate
 
 `JPQL` и `Criteria API` — два основных способа запросов в JPA/Hibernate. JPQL — текстовый DSL подобный SQL, Criteria API — type-safe программный API. Важная тема для middle/senior Java-разработчиков.
 

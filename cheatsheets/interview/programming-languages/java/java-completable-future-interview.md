@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Java CompletableFuture"
+title: "Вопросы на собеседовании: CompletableFuture в Java"
 description: "CompletableFuture: thenApply/thenCompose/thenCombine, allOf/anyOf, обработка ошибок, timeout, ForkJoinPool, join() vs get()"
 tags:
   - interview
@@ -15,7 +15,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Java CompletableFuture`
+# Вопросы на собеседовании: CompletableFuture в Java
 
 `CompletableFuture<T>` — реализация `Future` с поддержкой неблокирующих цепочек, комбинирования нескольких асинхронных операций и обработки ошибок. Введён в Java 8. На собеседованиях проверяют разницу между `thenApply`/`thenCompose`/`thenCombine`, обработку исключений и работу с пулом потоков.
 

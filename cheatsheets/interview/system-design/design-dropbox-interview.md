@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Design Dropbox"
+title: "Вопросы на собеседовании: Дизайн Dropbox"
 description: "System design Dropbox: chunking (fixed vs CDC), Content-Addressable Storage (CAS), delta sync (rsync algorithm), Magic Pocket exabyte storage, conflict resolution, Smart Sync, multi-region, encryption."
 tags:
   - interview

@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Java Exceptions"
+title: "Вопросы на собеседовании: Исключения в Java"
 description: "Комплексное руководство по вопросам собеседования на тему Java Exceptions: иерархия исключений, checked vs unchecked, try-with-resources, кастомные исключения, обработка в многопоточном коде и best practices."
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: "2026-05-27"
 ---
-# Вопросы на собеседовании: `Java Exceptions`
+# Вопросы на собеседовании: Исключения в Java
 
 Комплексное руководство по вопросам собеседования на тему `Java Exceptions` для `Senior Java Developer`. Включает иерархию исключений, механизмы обработки, `try-with-resources`, кастомные исключения, обработку в многопоточном коде, лямбдах и best practices.
 

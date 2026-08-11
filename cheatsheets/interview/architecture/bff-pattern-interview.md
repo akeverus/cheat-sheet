@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: BFF Pattern"
+title: "Вопросы на собеседовании: Паттерн BFF"
 description: "Backend for Frontend (BFF) pattern: per-client API, aggregation, Netflix/SoundCloud examples, GraphQL as BFF, trade-offs, vs API Gateway, edge BFF"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `BFF Pattern`
+# Вопросы на собеседовании: Паттерн BFF
 
 `BFF (Backend for Frontend)` — паттерн: **отдельный бэкенд под каждый тип клиента** (web, mobile, TV), заточенный под конкретные UX-требования. Агрегирует микросервисы, формирует ответы, прячет сложность. Популяризован SoundCloud/Netflix. Противопоставляется обобщённому API Gateway.
 

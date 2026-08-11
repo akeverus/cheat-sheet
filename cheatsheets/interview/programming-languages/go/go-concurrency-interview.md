@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Go Concurrency"
+title: "Вопросы на собеседовании: Конкурентность в Go"
 description: "Goroutines, channels (buffered/unbuffered), select, sync пакет (Mutex, RWMutex, WaitGroup, Once), atomic, context, race detector, common patterns"
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Go Concurrency`
+# Вопросы на собеседовании: Конкурентность в Go
 
 Goroutines и channels — главная фича Go: они делают конкурентное программирование дешёвым и читаемым. Goroutine стоит ~2 KB памяти против ~1 MB у OS thread, поэтому их можно запускать сотнями тысяч. На собеседовании по этой теме чаще всего спрашивают: как устроен scheduler (модель M:N), чем отличаются buffered и unbuffered channels, как работает `select`, когда брать mutex, а когда atomic, и типовые паттерны — worker pool, fan-out/fan-in, pipeline.
 

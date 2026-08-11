@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Model Serving"
+title: "Вопросы на собеседовании: Сервинг моделей"
 description: "Model serving для self-hosted: TorchServe, TensorFlow Serving, Triton, BentoML, vLLM, TGI, Ollama. Optimizations: batching, quantization, KV cache, GPU vs CPU, scaling"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-05-19"
 ---
-# Вопросы на собеседовании: `Model Serving`
+# Вопросы на собеседовании: Сервинг моделей
 
 **Model serving** — развёртывание ML/LLM-моделей в production. Когда **API не подходит** (приватность, масштаб, стоимость) — нужно **разворачивать у себя** (self-host). Стек: **vLLM**, **TGI**, **Triton**, **TorchServe**, **BentoML**, **Ollama**. Главные оптимизации: **continuous batching**, **quantization**, **KV cache**, **GPU sharing**.
 

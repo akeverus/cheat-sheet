@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Code Coverage"
+title: "Вопросы на собеседовании: Покрытие кода"
 description: "Покрытие кода: line/branch/mutation coverage, JaCoCo, meaningful coverage vs coverage theater, quality gates, CI/CD integration"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: Code Coverage
+# Вопросы на собеседовании: Покрытие кода
 
 Краткие ответы про метрики покрытия кода: виды coverage, инструменты, подводные камни «coverage theater» и практические подходы к осмысленному покрытию.
 

@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Embeddings"
+title: "Вопросы на собеседовании: Эмбеддинги"
 description: "Embeddings: text/image/audio embedding models, dimensions, normalization, semantic similarity, choice of model (OpenAI, Cohere, sentence-transformers), fine-tuning, multilingual"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-05-19"
 ---
-# Вопросы на собеседовании: `Embeddings`
+# Вопросы на собеседовании: Эмбеддинги
 
 **Embedding** — преобразование текста (или изображения, аудио) в вектор чисел, где **семантически похожие** объекты имеют **близкие** векторы. Основа vector search, RAG, рекомендаций, кластеризации. На интервью спрашивают: как выбрать модель, dimensions, нормализацию, multilingual, fine-tuning, оптимизацию стоимости.
 

@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Java String"
+title: "Вопросы на собеседовании: Строки в Java"
 description: "Комплексное руководство по вопросам собеседования на тему Java String: иммутабельность, String Pool, intern(), StringBuilder, регулярные выражения, text blocks и новые API."
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-05-08"
 ---
-# Вопросы на собеседовании: `Java String`
+# Вопросы на собеседовании: Строки в Java
 
 Комплексное руководство по вопросам собеседования на тему `Java String` для `Senior Java Developer`. Включает детальные объяснения иммутабельности, `String Pool`, методов `intern()`, сравнение `StringBuilder`/`StringBuffer`, регулярные выражения, text blocks и современные `String API`.
 

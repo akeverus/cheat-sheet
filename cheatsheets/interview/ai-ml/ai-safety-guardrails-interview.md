@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: AI Safety / Guardrails"
+title: "Вопросы на собеседовании: Безопасность ИИ и guardrails"
 description: "Безопасность LLM в production: prompt injection, jailbreaks, hallucinations, Llama Guard, NeMo Guardrails, OWASP Top 10 for LLM, PII redaction."
 tags:
   - interview
@@ -14,7 +14,7 @@ aliases:
   - "Llama Guard NeMo"
 updated: "2026-05-23"
 ---
-# Вопросы на собеседовании: `AI Safety / Guardrails`
+# Вопросы на собеседовании: Безопасность ИИ и guardrails
 
 **AI Safety / Guardrails** — слой защиты вокруг LLM в production: фильтрация input, проверка output, mitigation hallucinations, защита от prompt injection / jailbreaks, PII redaction. Без guardrails LLM в проде — это **прямой канал** к репутационным и юридическим инцидентам (Air Canada, Chevrolet, Bing Sydney).
 

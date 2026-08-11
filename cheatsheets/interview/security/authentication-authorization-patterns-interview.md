@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Authentication and Authorization Patterns"
+title: "Вопросы на собеседовании: Аутентификация и авторизация"
 description: "Комплексное руководство по паттернам аутентификации и авторизации: OAuth 2.0, JWT, RBAC, ABAC, OIDC, PKCE, mTLS, Zero Trust"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-05-08"
 ---
-# Вопросы на собеседовании: `Authentication` and `Authorization Patterns`
+# Вопросы на собеседовании: Аутентификация и авторизация
 
 Комплексное руководство по вопросам собеседования на тему паттернов аутентификации и авторизации
 для `Senior Java Developer`. Включает детальные объяснения концепций, практические примеры на `Java` + `Spring Security`,

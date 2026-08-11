@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Mutation Testing"
+title: "Вопросы на собеседовании: Мутационное тестирование"
 description: "Mutation testing: проверка качества тестов через mutations кода, mutation operators, kill rate, surviving mutants, PIT, Stryker, тулинг для Java/JS/Python, vs code coverage"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Mutation Testing`
+# Вопросы на собеседовании: Мутационное тестирование
 
 `Mutation testing` — техника оценки **качества тестов** (а не качества кода). Идея: модифицировать ("**mutate**") код, прогнать тесты и проверить, **сколько мутаций поймано** (killed). Выжившие мутанты (surviving mutants) = слабые тесты. Главные инструменты: **PIT** (Java), **Stryker** (JS/TS/.NET/Scala), **mutmut** (Python). Дополняет (но не заменяет) coverage.
 

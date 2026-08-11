@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Load Testing"
+title: "Вопросы на собеседовании: Нагрузочное тестирование"
 description: "Load testing: tools (JMeter, k6, Gatling, Locust), типы (load, stress, spike, soak), метрики (RPS, latency, error rate), capacity planning, distributed load testing"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Load Testing`
+# Вопросы на собеседовании: Нагрузочное тестирование
 
 `Load testing` — проверка системы под ожидаемой/пиковой нагрузкой. Отличается от **stress testing** (поиск точки отказа), **spike testing** (резкие скачки), **soak testing** (длительная нагрузка часами/днями). Главные инструменты: **JMeter** (legacy, GUI), **k6** (современный, на JS), **Gatling** (Scala/Java), **Locust** (Python). Критично для capacity planning.
 

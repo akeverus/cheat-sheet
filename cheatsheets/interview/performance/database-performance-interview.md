@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Database Performance"
+title: "Вопросы на собеседовании: Производительность баз данных"
 description: "Database performance tuning: indexes, query plans, N+1, connection pooling, EXPLAIN ANALYZE, partitioning, stats, slow query log, pgbench, Aurora"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Database Performance`
+# Вопросы на собеседовании: Производительность баз данных
 
 `Database Performance` — **топ-1 причина медленных приложений**. В 90% случаев медленные ответы = плохой запрос, отсутствующий индекс, N+1, исчерпанный connection pool. Знание EXPLAIN, pg_stat_statements, execution plan — обязательный навык senior-backend.
 

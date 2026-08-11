@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Multimodal AI"
+title: "Вопросы на собеседовании: Мультимодальный ИИ"
 description: "Multimodal AI: Vision-Language Models (GPT-4o, Claude vision, Gemini), audio (Whisper, TTS), voice agents (Realtime API, LiveKit), video, image generation."
 tags:
   - interview
@@ -14,7 +14,7 @@ aliases:
   - "GPT-4o Gemini multimodal"
 updated: "2026-05-25"
 ---
-# Вопросы на собеседовании: `Multimodal AI`
+# Вопросы на собеседовании: Мультимодальный ИИ
 
 **Multimodal AI** — модели, понимающие и/или генерирующие более одной модальности: текст, изображения, аудио, видео. В 2024-2026 фокус сместился с unimodal LLM на универсальные модели (`GPT-4o`, `Gemini 2.5 Pro`, `Claude 4`), которые в едином трансформере принимают text+image+audio и отвечают tokens, голосом или картинкой. Параллельно выросли voice-агенты с sub-second latency (`OpenAI Realtime API`, `LiveKit Agents`) и multimodal RAG поверх PDF и сканов.
 

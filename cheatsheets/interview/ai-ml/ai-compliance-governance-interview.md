@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: AI Compliance & Governance"
+title: "Вопросы на собеседовании: Регулирование и контроль ИИ"
 description: "AI regulation 2026: EU AI Act risk tiers, NIST AI RMF, ISO 42001, GDPR для AI, model cards, datasheets, bias mitigation, audit trails."
 tags:
   - interview
@@ -15,7 +15,7 @@ aliases:
 updated: "2026-05-25"
 ---
 
-# Вопросы на собеседовании: `AI Compliance & Governance`
+# Вопросы на собеседовании: Регулирование и контроль ИИ
 
 **AI Compliance & Governance** — это не «бюрократия про AI», а **операционная дисциплина**: классификация AI-систем по риску, документация (model cards, datasheets), технические меры (bias detection, explainability, audit trails) и процессы (DPIA, conformity assessment, incident reporting). В 2026 году это требование закона (EU AI Act, Colorado AI Act), а не «nice to have».
 

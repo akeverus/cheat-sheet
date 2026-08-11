@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Prompt Engineering"
+title: "Вопросы на собеседовании: Промпт-инжиниринг"
 description: "Prompt engineering: structured prompts, few-shot, chain-of-thought, role prompting, system prompts, function calling, structured outputs (JSON), prompt chains, evaluation"
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-05-19"
 ---
-# Вопросы на собеседовании: `Prompt Engineering`
+# Вопросы на собеседовании: Промпт-инжиниринг
 
 **Prompt engineering** — искусство составления prompts для LLM, чтобы получить желаемый результат. Самый дешёвый способ улучшить LLM (по сравнению с RAG и fine-tuning). Главные техники: **system prompts**, **few-shot**, **chain-of-thought**, **structured outputs**, **prompt chains**.
 

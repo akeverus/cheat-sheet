@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: JVM Performance Tuning"
+title: "Вопросы на собеседовании: Тюнинг производительности JVM"
 description: "Практичные вопросы и ответы по JVM performance tuning: GC-алгоритмы (G1, ZGC, Shenandoah), JIT-компиляция, escape analysis, memory tuning, контейнеры, native memory, class loading и продвинутые JVM-флаги."
 tags:
   - interview
@@ -15,7 +15,7 @@ prerequisites: []
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `JVM Performance Tuning`
+# Вопросы на собеседовании: Тюнинг производительности JVM
 
 Практичные вопросы и ответы по тюнингу `JVM`: как измерять, диагностировать и улучшать производительность без регрессий в production. Покрыты `GC`-алгоритмы, `JIT`-компиляция, native memory, контейнерные среды и продвинутые техники оптимизации.
 

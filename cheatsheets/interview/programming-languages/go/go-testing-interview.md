@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Go Testing"
+title: "Вопросы на собеседовании: Тестирование в Go"
 description: "Стандартный testing пакет, table-driven tests, subtests, t.Helper, benchmarks, fuzzing (Go 1.18+), httptest, testify, моки, интеграционные тесты, coverage"
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: "2026-04-25"
 ---
-# Вопросы на собеседовании: `Go Testing`
+# Вопросы на собеседовании: Тестирование в Go
 
 Стандартный пакет `testing` — простой, но мощный: table-driven tests, subtests, benchmarks, fuzzing (с Go 1.18). На интервью спрашивают разницу с JUnit/RSpec, моки в Go (interfaces), `httptest` для HTTP, coverage, integration tests.
 

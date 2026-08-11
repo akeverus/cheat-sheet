@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Java Generics"
+title: "Вопросы на собеседовании: Дженерики Java"
 description: "Комплексное руководство по вопросам собеседования на тему Java Generics: type erasure, wildcards, PECS, bounded types, bridge methods, generic methods и best practices."
 tags:
   - interview
@@ -16,7 +16,7 @@ prerequisites: []
 next: []
 updated: "2026-05-20"
 ---
-# Вопросы на собеседовании: `Java Generics`
+# Вопросы на собеседовании: Дженерики Java
 
 Комплексное руководство по вопросам собеседования на тему `Java Generics` для `Senior Java Developer`. Охватывает `Type Erasure`, `Wildcards`, `PECS`, `Bounded Types`, `Bridge Methods`, generic-методы, ограничения дженериков и best practices.
 

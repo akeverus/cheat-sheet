@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Reverse Proxy"
+title: "Вопросы на собеседовании: Обратный прокси"
 description: "Nginx, HAProxy, Envoy, Traefik как обратный прокси; SSL termination, кеширование, rate limiting, sticky session; разница с load balancer."
 tags:
   - interview
@@ -15,7 +15,7 @@ aliases:
 updated: "2026-05-21"
 ---
 
-# Вопросы на собеседовании: `Reverse Proxy`
+# Вопросы на собеседовании: Обратный прокси
 
 `Reverse proxy` — серверный посредник, принимающий запросы от клиентов и проксирующий их к одному или нескольким upstream-backendам, скрывая их топологию. На L7 он становится точкой, где живут `TLS termination`, `caching`, `rate limiting`, `header rewriting`, `routing` по URL/host и `sticky session`. В современных архитектурах reverse proxy — это `Nginx`, `HAProxy`, `Envoy`, `Traefik`, а также `sidecar`-прокси в service mesh.
 

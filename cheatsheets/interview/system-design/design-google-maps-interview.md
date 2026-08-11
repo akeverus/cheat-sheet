@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Design Google Maps"
+title: "Вопросы на собеседовании: Дизайн Google Maps"
 description: "System design Google Maps / Yandex Maps / Apple Maps: geo indexing (quadtree/S2/H3/R-tree), tile pyramid, vector vs raster tiles, routing (Dijkstra/A*/CH/CRP), ETA, traffic, offline maps."
 tags:
   - interview

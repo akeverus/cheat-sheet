@@ -1,5 +1,5 @@
 ---
-title: "Вопросы на собеседовании: Hibernate Caching"
+title: "Вопросы на собеседовании: Кэширование в Hibernate"
 description: "Hibernate L1/L2 cache, query cache, concurrency strategies (READ_ONLY, NONSTRICT_READ_WRITE, READ_WRITE, TRANSACTIONAL), провайдеры Ehcache, Infinispan, Redis"
 tags:
   - interview
@@ -17,7 +17,7 @@ prerequisites:
 next: []
 updated: "2026-05-07"
 ---
-# Вопросы на собеседовании: `Hibernate Caching`
+# Вопросы на собеседовании: Кэширование в Hibernate
 
 `Hibernate Caching` — одна из ключевых тем по производительности JPA-приложений. Три уровня кэша — `L1 cache` (в рамках Session), `L2 cache` (общий на SessionFactory) и Query Cache — способны кратно снизить число обращений к БД. На собеседованиях её разбирают в связке с производительностью БД: важно не только перечислить уровни, но и объяснить, когда кэш помогает, а когда вредит.
 
