@@ -185,10 +185,25 @@
                       masteredShown=${masteredPct < 0 ? -1 : T(java.lang.Math).round(masteredPct)}"
              th:classappend="${masteredShown > 0} ? ' good'">
         <span class="eyebrow">Освоено</span>
+        <!--/* Ноль процентов при НЕнулевом освоении — не ответ, а артефакт округления
+             на банке в девять тысяч карточек: одна освоенная даёт 0,01%, и заголовок
+             метрики печатал «0%» там, где честный ответ — «одна из 9818». Доля
+             становится осмысленной только когда её есть чем измерить, и до этого
+             момента метрика обязана показывать СЧЁТ, а не долю (§26 брифа:
+             отдельное состояние для начала пути, а не обвиняющий ноль).
+
+             Три состояния, и каждое отвечает на свой вопрос:
+             банк пуст → «—»; освоено больше нуля, но доля округляется в ноль →
+             дробь «1 / 9818»; доля видна → проценты, как и было. */-->
         <div class="metric-value"
-             th:text="${masteredShown < 0 ? '—' : masteredShown + '%'}">—</div>
+             th:text="${masteredShown < 0 ? '—'
+                        : (masteredShown == 0 and metrics.cardsMastered > 0
+                            ? metrics.cardsMastered + ' / ' + metrics.cardsTotal
+                            : masteredShown + '%')}">—</div>
         <span class="muted tiny"
-              th:text="${metrics.cardsMastered} + ' из ' + ${metrics.cardsTotal} + ' карточек'">0 из 0 карточек</span>
+              th:text="${masteredShown == 0 and metrics.cardsMastered > 0
+                          ? 'доля пока меньше одного процента — счёт честнее'
+                          : metrics.cardsMastered + ' из ' + metrics.cardsTotal + ' карточек'}">0 из 0 карточек</span>
         <span class="muted tiny metric-formula"
               th:if="${metricDefinitions != null and metricDefinitions['cardsMastered'] != null}"
               th:with="def=${metricDefinitions['cardsMastered']}"
