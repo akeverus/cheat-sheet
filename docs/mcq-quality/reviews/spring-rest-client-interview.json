@@ -1,1014 +1,907 @@
 {
   "topic_slug": "spring-rest-client-interview",
-  "round": 9,
-  "reviewed_commit": "54bce33c",
-  "status": "FINAL",
-  "source_file": "modules/quiz-app/src/main/resources/seed/mcq/frameworks/spring/spring-rest-client-interview.json",
-  "theory_file": "cheatsheets/interview/frameworks/spring/spring-rest-client-interview.md",
-  "summary": {
-    "questions": 13,
-    "blocks": 13,
-    "blocks_done": 13,
-    "critical": 0,
-    "high": 0,
-    "medium": 0,
-    "low": 0
-  },
-  "reset_baseline": {
-    "reset_date": "2026-07-17",
-    "old_pass_carried_forward": false,
-    "schema_precheck": "PASS",
-    "structural_invariants_precheck": "PASS",
-    "theory_file_present": true,
-    "json_q_numbers": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13
-    ],
-    "theory_q_numbers": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13
-    ],
-    "missing_theory_q_numbers": [],
-    "extra_theory_q_numbers": [],
-    "current_correct_positions": [
-      "D",
-      "A",
-      "B",
-      "C",
-      "A",
-      "A",
-      "B",
-      "C",
-      "A",
-      "D",
-      "C",
-      "D",
-      "B"
-    ],
-    "acceptance_note": "Baseline diagnostics are not ROUND 9 acceptance evidence."
-  },
+  "round": "ROUND-10-LINKAGE-FIRST",
+  "source_file": "cheatsheets/interview/frameworks/spring/spring-rest-client-interview.md",
+  "mcq_file": "modules/quiz-app/src/main/resources/seed/mcq/frameworks/spring/spring-rest-client-interview.json",
+  "audited": "2026-08-11",
   "blocks": [
     {
       "q_number": 1,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+      "visible_question": "Какие HTTP-клиенты есть в Spring и чем они отличаются?",
+      "linkage": {
+        "visible_question_match": true,
+        "source_claim_map": [
+          "C1: В Spring три HTTP-клиента: `RestTemplate`, `RestClient`, `WebClient`.",
+          "C2: Различает их в первую очередь модель выполнения (синхронная vs реактивная) и поколение API.",
+          "C3: `RestTemplate` — Spring 3+, синхронный, статус maintenance mode, зависимость spring-web, применение — legacy-код.",
+          "C4: `RestClient` — Spring 6.1+, синхронный fluent builder chain, статус актуальный, зависимость spring-web, применение — новые Spring 6 проекты.",
+          "C5: `WebClient` — Spring 5+ (WebFlux), реактивный (Mono/Flux), статус актуальный, зависимость spring-webflux, применение — реактивный стек.",
+          "C6: `RestClient` создан как современная синхронная замена `RestTemplate`: берёт fluent-API от `WebClient`, но работает блокирующе, без реактивных типов.",
+          "C7: Поэтому `RestClient` может переиспользовать настройки старого `RestTemplate` — конвертеры, фабрику запросов, интерсепторы.",
+          "C8: Правило выбора: новый проект на Spring 6.1+ с блокирующим стеком (Spring MVC) → `RestClient`; WebFlux и высокая конкурентность с `Mono`/`Flux` → `WebClient`; ещё не мигрированный legacy → `RestTemplate`, который работает, но новых фич не получит."
+        ],
+        "tested_claim": "Блок проверяет связку C2 + C6 (с опорой на C3-C5): клиентов три, и главная ось различия — модель выполнения, при которой `RestTemplate` и `RestClient` синхронные, а реактивный только `WebClient`; `RestClient` унаследовал от `WebClient` fluent-API, но не реактивную модель.",
+        "source_evidence": [
+          "В Spring три HTTP-клиента, и различает их в первую очередь **модель выполнения** (синхронная vs реактивная) и **поколение API**.",
+          "`RestTemplate` — классика на доживании, `RestClient` — современный синхронный клиент, `WebClient` — реактивный.",
+          "он берёт fluent-API от `WebClient`, но работает блокирующе, без реактивных типов",
+          "| Статус | Maintenance mode | Актуальный | Актуальный |"
+        ],
+        "answerable_from_source": true,
+        "correct_label": "C",
+        "distractors_refutable_from_source": {
+          "A": {
+            "delta": "Инверсия классификации по модели выполнения: синхронный `RestClient` объявлен реактивным, а синхронным оставлен только `RestTemplate`.",
+            "refuting_quote": "он берёт fluent-API от `WebClient`, но работает блокирующе, без реактивных типов"
+          },
+          "B": {
+            "delta": "Отрицание главной оси различия: модель выполнения объявлена одинаковой у всех трёх, а различия сведены только к стилю API.",
+            "refuting_quote": "различает их в первую очередь **модель выполнения** (синхронная vs реактивная)"
+          },
+          "D": {
+            "delta": "Перепутанная принадлежность к модулю: `RestClient` отнесён к spring-webflux вместе с `WebClient` вместо spring-web.",
+            "refuting_quote": "| Зависимость | spring-web | spring-web | spring-webflux |"
+          }
         },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+        "novel_required_facts": [],
+        "same_semantic_axis": true,
+        "level": "L4",
+        "reviewer_pass": true,
+        "reviewer_blind_choice": "C",
+        "reviewer_confidence": "high",
+        "reviewer_per_option": {
+          "A": {
+            "verdict": "refuted_by_source",
+            "source_basis": "Прямо опровергается двумя местами. Проза: «`RestTemplate` — классика на доживании, `RestClient` — современный синхронный клиент, `WebClient` — реактивный» и «Ключевая мысль: `RestClient` создан как современная синхронная замена `RestTemplate` — он берёт fluent-API от `WebClient`, но работает блокирующе, без реактивных типов». Таблица: «| Стиль | Синхронный | Синхронный fluent | Реактивный |» и «| Стиль API | Методы перегрузки | Fluent builder chain | Reactive (Mono/Flux) |» — Mono/Flux стоят только в колонке `WebClient`. Значит утверждения «синхронный только RestTemplate» и «RestClient тоже возвращает Mono/Flux» ложны."
+          },
+          "B": {
+            "verdict": "refuted_by_source",
+            "source_basis": "Опровергается первой же фразой: «В Spring три HTTP-клиента, и различает их в первую очередь **модель выполнения** (синхронная vs реактивная) и **поколение API»** — то есть различает НЕ только стиль API. И строка таблицы «| Стиль | Синхронный | Синхронный fluent | Реактивный |» показывает, что `WebClient` не блокирующий, значит «все три клиента блокирующие» ложно. Тезис «реактивность даёт стек WebFlux, а не клиент» противоречит «`WebClient` — реактивный»."
+          },
+          "C": {
+            "verdict": "supported_by_source",
+            "source_basis": "Каждая часть подтверждена дословно. «В Spring три HTTP-клиента, и различает их в первую очередь **модель выполнения** (синхронная vs реактивная)»; «`RestTemplate` — классика на доживании, `RestClient` — современный синхронный клиент, `WebClient` — реактивный»; таблица: «| Статус | Maintenance mode | Актуальный | Актуальный |», «| Стиль | Синхронный | Синхронный fluent | Реактивный |», «| Стиль API | Методы перегрузки | Fluent builder chain | Reactive (Mono/Flux) |» — Mono/Flux действительно только у последнего, `WebClient`."
+          },
+          "D": {
+            "verdict": "refuted_by_source",
+            "source_basis": "Опровергается строкой таблицы «| Зависимость | spring-web | spring-web | spring-webflux |» — у `RestClient` зависимость spring-web, а не spring-webflux. Дополнительно опровергается разделом «Как выбрать»: «Новый проект на Spring 6.1+, классический блокирующий стек (Spring MVC) → **RestClient**» — реактивный стек для него не требуется."
+          }
         },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+        "reviewer_notes": [
+          "Не блокирующее: в варианте A есть под-утверждение «`RestClient` — тонкая обёртка над `WebClient`», которое материал напрямую не оценивает (в Q1 есть только «он берёт fluent-API от `WebClient`» и mermaid-ребро «WC -->|поддерживает| RC»). Однако решающая часть варианта («тоже возвращает Mono/Flux и требует реактивного выполнения») опровергнута дословно фразой «работает блокирующе, без реактивных типов», поэтому вердикт refuted устойчив и дополнительный факт извне не нужен.",
+          "Не блокирующее: вариант C очень близок к прямому пересказу строк таблицы (Статус/Стиль/Стиль API). Пользователь, помнящий таблицу, может выбрать его по узнаванию формулировок, а не по пониманию. При этом остальные три варианта опровергаются такими же явными строками, так что разделение всё равно проходит по смыслу (модель выполнения, реактивные типы, зависимость), а не по стилистическому tell."
+        ]
+      }
     },
     {
       "q_number": 2,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+      "visible_question": "Почему RestTemplate перевели в maintenance mode?",
+      "linkage": {
+        "visible_question_match": true,
+        "source_claim_map": [
+          "C1: Причина перевода в maintenance mode — не то, что RestTemplate плохо работает, а то, что его API родом из эпохи Java 5 и плохо стареет.",
+          "C2: Накопившиеся дизайн-проблемы невозможно исправить, не сломав обратную совместимость.",
+          "C3: Перегрузка методов вместо fluent-API: одна и та же операция доступна через getForObject(), getForEntity(), exchange(), а сигнатуры с varargs и Object... легко перепутать.",
+          "C4: Сложная расширяемость: свою логику (например, единую обработку статусов) приходится добавлять оборачиванием или подменой компонентов.",
+          "C5: Нет удобной поддержки современных форматов и паттернов работы с ответом.",
+          "C6: RestClient решает всё это единым fluent builder.",
+          "C7: RestClient совместим с той же инфраструктурой (HttpMessageConverter, ClientHttpRequestFactory), поэтому миграция дёшева — ту же фабрику запросов и конвертеры можно передать в новый клиент.",
+          "C8: RestTemplate НЕ помечен аннотацией @Deprecated — он в режиме поддержки: в Spring 6.x работает, но новых фич не получает; Javadoc лишь предупреждает, что класс «will be deprecated in a future version».",
+          "C9: Срочно переписывать рабочий код не нужно, но новый код стоит писать на RestClient."
+        ],
+        "tested_claim": "Anchor — C1 + C2: причина maintenance mode лежит в устаревшем API (перегрузка методов, трудная расширяемость), а не в качестве работы, и эти дефекты неисправимы без слома обратной совместимости. Дистракторы мутируют по одной оси: B инвертирует C1 (причина в исполнении, а не в API), C инвертирует C8/C9 (класс якобы уже @Deprecated и требует срочной миграции), D инвертирует C7 (инфраструктура якобы несовместима).",
+        "source_evidence": [
+          "Причина не в том, что он плохо работает, а в том, что его API родом из эпохи Java 5 и плохо стареет.",
+          "Накопились дизайн-проблемы, которые невозможно исправить, не сломав обратную совместимость",
+          "**Перегрузка методов вместо fluent-API.** Для одной и той же операции есть несколько методов: `getForObject()`, `getForEntity()`, `exchange()`.",
+          "**Сложная расширяемость.** Добавить свою логику (например, единую обработку статусов) неудобно — приходится оборачивать или подменять компоненты."
+        ],
+        "answerable_from_source": true,
+        "correct_label": "A",
+        "distractors_refutable_from_source": {
+          "B": {
+            "delta": "Инверсия природы причины: качество исполнения (скорость, поведение под нагрузкой) вместо дизайна API — при том, что API объявлен удобным.",
+            "refuting_quote": "Причина не в том, что он плохо работает, а в том, что его API родом из эпохи Java 5 и плохо стареет."
+          },
+          "C": {
+            "delta": "Инверсия статуса: maintenance mode подменён состоявшейся депрекацией с требованием срочной миграции.",
+            "refuting_quote": "строго говоря, `RestTemplate` НЕ помечен аннотацией `@Deprecated` — он в режиме поддержки (maintenance mode)"
+          },
+          "D": {
+            "delta": "Инверсия совместимости инфраструктуры: общие `HttpMessageConverter` и `ClientHttpRequestFactory` объявлены несовместимыми, а миграция — дорогой.",
+            "refuting_quote": "`RestClient` решает всё это единым fluent builder и при этом совместим с той же инфраструктурой — `HttpMessageConverter`, `ClientHttpRequestFactory`. Поэтому миграция дёшева: ту же фабрику запросов и конвертеры можно передать в новый клиент."
+          }
         },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+        "novel_required_facts": [],
+        "same_semantic_axis": true,
+        "level": "L4",
+        "reviewer_pass": true,
+        "reviewer_blind_choice": "A",
+        "reviewer_confidence": "high",
+        "reviewer_per_option": {
+          "A": {
+            "verdict": "supported_by_source",
+            "source_basis": "«Причина не в том, что он плохо работает, а в том, что его API родом из эпохи Java 5 и плохо стареет. Накопились дизайн-проблемы, которые невозможно исправить, не сломав обратную совместимость:» + «**Перегрузка методов вместо fluent-API.** Для одной и той же операции есть несколько методов: `getForObject()`, `getForEntity()`, `exchange()`.» + «**Сложная расширяемость.** Добавить свою логику ... неудобно». Вариант A — покомпонентная перефразировка этих трёх утверждений, без единого добавления."
+          },
+          "B": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«Причина не в том, что он плохо работает, а в том, что его API родом из эпохи Java 5 и плохо стареет» — прямо отрицает объяснение через качество исполнения/скорость. Вторую половину варианта («API по-прежнему считают удобным и расширяемым») опровергает «**Сложная расширяемость.** Добавить свою логику (например, единую обработку статусов) неудобно» и «Запомнить, какой когда нужен, тяжело»."
+          },
+          "C": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«**Важно:** строго говоря, `RestTemplate` НЕ помечен аннотацией `@Deprecated` — он в режиме поддержки (maintenance mode): в Spring 6.x продолжает работать, но новых фич не получает (Javadoc лишь предупреждает, что класс «will be deprecated in a future version»). Срочно переписывать рабочий код не нужно». Опровергнуты обе части варианта: и статус @Deprecated в 6.x, и требование срочного переписывания. Утверждение про предупреждение компилятора отдельной цитаты не имеет, но оно производно от снятого @Deprecated."
+          },
+          "D": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«`RestClient` решает всё это единым fluent builder и при этом совместим с той же инфраструктурой — `HttpMessageConverter`, `ClientHttpRequestFactory`. Поэтому миграция дёшева: ту же фабрику запросов и конвертеры можно передать в новый клиент.» Вариант D утверждает ровно обратное («передать … нельзя»), то есть опровергается дословно."
+          }
         },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+        "reviewer_notes": [
+          "Не блокирующее: в C помимо опровергнутого ядра («помечен @Deprecated в 6.x», «требуется срочно переписать») есть довесок «компилятор предупреждает на каждом вызове», которого в материале дословно нет; он логически следует из снятого @Deprecated, поэтому вариант всё равно падает по прямой цитате, но чище было бы не тянуть в дистрактор второй непроверяемый напрямую факт.",
+          "Не блокирующее: B — единственная опция с одним backtick-спаном (A=2, C=2, D=4), лёгкая асимметрия визуального формата; тем не менее correct (A) не выделяется ни по числу спанов, ни по длине (слов A30/B26/C27/D25, символов A234/B207/C210/D240), так что format-tell в пользу правильного ответа отсутствует.",
+          "Не блокирующее: A чуть длиннее остальных по словам (30 против 25-27) — это в пределах паритета, но при следующей правке короткий дистрактор стоит подтянуть на 1-2 слова, чтобы буфер по word_parity не оказался на границе."
+        ]
+      }
     },
     {
       "q_number": 3,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+      "visible_question": "Как работает RestClient?",
+      "linkage": {
+        "visible_question_match": true,
+        "source_claim_map": [
+          "C1: `RestClient` — синхронный fluent-клиент: запрос собирается цепочкой методов, а терминальная операция блокирующе выполняет HTTP-вызов и возвращает результат.",
+          "C2: Схема любого вызова одна: выбрать метод (`get()`/`post()`/…) → задать URI и тело → `retrieve()` → извлечь ответ (`body()`, `toEntity()`, `toBodilessEntity()`).",
+          "C3: `RestClient.builder()` создаёт переиспользуемый клиент с общими настройками — базовым URL и заголовками по умолчанию (`baseUrl()`, `defaultHeader()`).",
+          "C4: Один собранный клиент потокобезопасен: его создают один раз и держат как бин.",
+          "C5: В примере GET результат присваивается напрямую: `User user = client.get().uri(\"/users/{id}\", 42).retrieve().body(User.class)`.",
+          "C6: В POST `body(...)` до `retrieve()` задаёт тело запроса, а `body(User.class)` после `retrieve()` — тип, в который читают ответ; при отправке тела указывают `contentType(MediaType.APPLICATION_JSON)`.",
+          "C7: Примеры `PUT` и `DELETE` завершают цепочку `toBodilessEntity()` — терминальное звено нужно и тогда, когда тело ответа не читают."
+        ],
+        "tested_claim": "C1 в связке с C2: механика работы `RestClient` — цепочка лишь описывает запрос, а сетевой обмен происходит в терминальной операции извлечения ответа, которая блокирует поток и возвращает готовый результат.",
+        "source_evidence": [
+          "`RestClient` — это синхронный fluent-клиент: вы собираете запрос цепочкой методов и в конце вызываете терминальную операцию, которая блокирующе выполняет HTTP-вызов и возвращает результат.",
+          "Каждый вызов строится по одной схеме: выбрать метод (`get()`/`post()`/…) → задать URI и тело → `retrieve()` → извлечь ответ (`body()`, `toEntity()`, `toBodilessEntity()`).",
+          "Один такой клиент потокобезопасен — его создают один раз и держат как бин."
+        ],
+        "answerable_from_source": true,
+        "correct_label": "D",
+        "distractors_refutable_from_source": {
+          "A": {
+            "delta": "Инверсия модели выполнения: блокирующий вызов в терминальной операции подменён неблокирующим фоновым выполнением с обработчиком.",
+            "refuting_quote": "терминальную операцию, которая блокирующе выполняет HTTP-вызов и возвращает результат"
+          },
+          "B": {
+            "delta": "Инверсия жизненного цикла клиента: переиспользуемый потокобезопасный бин подменён одноразовым объектом на каждый запрос.",
+            "refuting_quote": "Один такой клиент потокобезопасен — его создают один раз и держат как бин."
+          },
+          "C": {
+            "delta": "Ошибка scope терминальных операций: из трёх способов извлечения ответа признан один, а цепочка для запросов без тела ответа объявлена обрывающейся на `retrieve()`.",
+            "refuting_quote": "извлечь ответ (`body()`, `toEntity()`, `toBodilessEntity()`)"
+          }
         },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+        "novel_required_facts": [],
+        "same_semantic_axis": true,
+        "level": "L4",
+        "reviewer_pass": true,
+        "reviewer_blind_choice": "D",
+        "reviewer_confidence": "high",
+        "reviewer_per_option": {
+          "A": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«`RestClient` — это синхронный fluent-клиент: вы собираете запрос цепочкой методов и в конце вызываете терминальную операцию, которая блокирующе выполняет HTTP-вызов и возвращает результат.» — клиент назван синхронным, терминальная операция — блокирующей и возвращающей результат. Ни «фонового выполнения», ни «неблокирующего потока», ни «регистрации обработчика» в материале нет."
+          },
+          "B": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«`RestClient.builder()` создаёт переиспользуемый клиент с общими настройками (базовый URL, заголовки по умолчанию). Один такой клиент потокобезопасен — его создают один раз и держат как бин.» — дословно опровергает и «не потокобезопасен», и «собирают заново на каждый запрос». Код подтверждает: `.baseUrl(\"https://api.example.com\")` и `.defaultHeader(...)` заданы один раз в `RestClient.builder()`, а не повторены в цепочках `client.get()`/`client.post()`."
+          },
+          "C": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«… → `retrieve()` → извлечь ответ (`body()`, `toEntity()`, `toBodilessEntity()`)» — после `retrieve()` доступен не только `body()`. Примеры кода добивают вторую часть: «client.put() … .retrieve() .toBodilessEntity();» и «client.delete() … .retrieve() .toBodilessEntity();» — PUT и DELETE НЕ завершаются самим `retrieve()`."
+          },
+          "D": {
+            "verdict": "supported_by_source",
+            "source_basis": "«вы собираете запрос цепочкой методов и в конце вызываете терминальную операцию, которая блокирующе выполняет HTTP-вызов и возвращает результат» и «Каждый вызов строится по одной схеме: выбрать метод (`get()`/`post()`/…) → задать URI и тело → `retrieve()` → извлечь ответ (`body()`, `toEntity()`, `toBodilessEntity()`)» — порядок шагов, блокировка потока в терминальной операции и возврат готового результата есть в тексте буквально."
+          }
         },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+        "reviewer_notes": [
+          "Неблокирующее: D утверждает «по сети вызов уходит только в терминальной операции», а источник говорит лишь, что терминальная операция «блокирующе выполняет HTTP-вызов». Квантор «только» чуть сильнее буквы текста, но не конфликтует с ним: другого места отправки материал не называет, а `retrieve()` в схеме стоит отдельным шагом перед извлечением ответа.",
+          "Неблокирующее: D называет терминальными «`body()` или `toEntity()`», тогда как источник даёт тройку с `toBodilessEntity()`. Это подмножество, не противоречие.",
+          "Неблокирующее: B бьёт по под-оси «жизненный цикл и потокобезопасность клиента», а A/C/D — по механике выполнения запроса. Но абзац про `builder()` входит в тот же ответ Q3, так что это всё ещё валидный ответ на видимый вопрос — same_axis сохранён.",
+          "Неблокирующее: C составной (два утверждения), что чуть размывает «одна дельта на дистрактор», но обе части опровергаются прямым текстом и примерами кода.",
+          "Неблокирующее: A самый слабый дистрактор — слово «синхронный» в первой же строке ответа сносит его целиком без чтения остального."
+        ]
+      }
     },
     {
       "q_number": 4,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+      "visible_question": "Чем retrieve() отличается от exchange()?",
+      "linkage": {
+        "visible_question_match": true,
+        "source_claim_map": [
+          "C1: Разница между `retrieve()` и `exchange()` — в том, кто решает, что считать ошибкой: `retrieve()` — простой путь «дай мне тело», `exchange()` — полный контроль над сырым ответом.",
+          "C2: `retrieve()` сам трактует статус: 4xx/5xx по умолчанию превращаются в исключение (`RestClientException` и его наследники).",
+          "C3: У `retrieve()` нет промежуточного состояния — вызывающий код получает либо готовое тело, либо исключение.",
+          "C4: `exchange()` отдаёт вызывающему коду объекты запроса и ответа, и разработчик сам проверяет статус, читает заголовки и по-разному разбирает тело; автоматической обработки ошибок нет.",
+          "C5: Типичный сценарий для `exchange()` — код 404 трактуется как «ресурса нет» и превращается в `Optional.empty()`, а не в исключение.",
+          "C6: Помимо статусов, `exchange()` даёт доступ к заголовкам ответа, чтению тела как `InputStream` и прочим низкоуровневым деталям, до которых `retrieve()` не пускает.",
+          "C7: Эмпирическое правило — начинать с `retrieve()` (покрывает 90% случаев) и переходить на `exchange()` только при нестандартной логике по статусу или нужде в сыром ответе."
+        ],
+        "tested_claim": "Ядро C2 + C4: `retrieve()` по умолчанию сам превращает 4xx/5xx в исключение, а `exchange()` отдаёт запрос и ответ вызывающему коду без всякой автоматической обработки ошибок — то есть проверяется именно распределение ответственности за трактовку статуса, прямо отвечающее на видимый заголовок Q4.",
+        "source_evidence": [
+          "**`retrieve()`** сам трактует статус: 4xx/5xx по умолчанию превращаются в исключение (`RestClientException` и его наследники).",
+          "Вы получаете готовое тело или исключение — промежуточного состояния нет.",
+          "**`exchange()`** отдаёт вам объекты запроса и ответа, и вы сами решаете, что с ними делать: проверить статус, прочитать заголовки, разобрать тело по-разному в зависимости от кода. Никакой автоматической обработки ошибок — всё на вас.",
+          "Разница в том, кто решает, что считать ошибкой."
+        ],
+        "answerable_from_source": true,
+        "correct_label": "B",
+        "distractors_refutable_from_source": {
+          "A": {
+            "delta": "Инверсия ответственности: автоматическая трактовка статуса приписана `exchange()`, а ручная проверка — `retrieve()`.",
+            "refuting_quote": "**`retrieve()`** сам трактует статус: 4xx/5xx по умолчанию превращаются в исключение (`RestClientException` и его наследники)."
+          },
+          "C": {
+            "delta": "Инверсия наличия автоматики у `exchange()`: ему приписана та же трактовка статусов, что и у `retrieve()`, а разница сведена только к низкоуровневому доступу.",
+            "refuting_quote": "Никакой автоматической обработки ошибок — всё на вас."
+          },
+          "D": {
+            "delta": "Ошибка scope: автоматическое превращение в исключение у `retrieve()` сужено с «4xx и 5xx» до «только 5xx».",
+            "refuting_quote": "4xx/5xx по умолчанию превращаются в исключение (`RestClientException` и его наследники)"
+          }
         },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+        "novel_required_facts": [],
+        "same_semantic_axis": true,
+        "level": "L4",
+        "reviewer_pass": true,
+        "reviewer_blind_choice": "B",
+        "reviewer_confidence": "high",
+        "reviewer_per_option": {
+          "A": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«**`retrieve()`** сам трактует статус: 4xx/5xx по умолчанию превращаются в исключение (`RestClientException` и его наследники)» и «**`exchange()`** отдаёт вам объекты запроса и ответа, и вы сами решаете, что с ними делать... Никакой автоматической обработки ошибок — всё на вас.» Вариант A меняет роли методов местами, то есть прямо противоречит обеим цитатам."
+          },
+          "B": {
+            "verdict": "supported_by_source",
+            "source_basis": "«**`retrieve()`** сам трактует статус: 4xx/5xx по умолчанию превращаются в исключение (`RestClientException` и его наследники). Вы получаете готовое тело или исключение — промежуточного состояния нет.» + «**`exchange()`** отдаёт вам объекты запроса и ответа, и вы сами решаете, что с ними делать: проверить статус, прочитать заголовки, разобрать тело по-разному в зависимости от кода. Никакой автоматической обработки ошибок — всё на вас.»"
+          },
+          "C": {
+            "verdict": "refuted_by_source",
+            "source_basis": "Первая половина («оба метода по умолчанию превращают 4xx/5xx в исключение») опровергнута прямо: «Никакой автоматической обработки ошибок — всё на вас» (про `exchange()`). Вторая половина варианта, наоборот, истинна по тексту: «Помимо обработки статусов, `exchange()` даёт доступ к заголовкам ответа, чтению тела как `InputStream`» — но ложного первого утверждения достаточно для опровержения всего варианта."
+          },
+          "D": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«4xx/5xx по умолчанию превращаются в исключение» — источник ставит 4xx и 5xx в один ряд, поэтому «только 5xx... а 4xx отдаёт как пустое тело» опровергнуто дословно. Про «перехват 4xx возможен лишь через `exchange()`» отдельной цитаты нет (есть лишь «Типичный сценарий для `exchange()`: код 404 — это не ошибка... его нужно превратить в `Optional.empty()`»), но первого пункта хватает."
+          }
         },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+        "reviewer_notes": [
+          "Не блокер, но заметно: вариант C — гибрид, его вторая половина дословно верна по источнику («`exchange()` даёт доступ к заголовкам ответа, чтению тела как `InputStream`»). Невнимательный читатель, зацепившийся за знакомую фразу, может выбрать C; отсекается только первым клаузом. Это делает C сильнейшим дистрактором и это скорее плюс для сложности, чем дефект.",
+          "Вторая половина D («перехват 4xx возможен лишь через `exchange()`») сама по себе undecidable_from_source — материал не обсуждает `onStatus()` у `retrieve()`. Вариант всё равно падает на первом клаузе («только 5xx»), так что оценимость сохраняется, но чистота дистрактора чуть ниже идеальной.",
+          "Формат-подсказки нет: backtick-спаны есть во всех четырёх вариантах, длины сопоставимы, correct (B) не самый длинный и не самый короткий."
+        ]
+      }
     },
     {
       "q_number": 5,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+      "visible_question": "Как обрабатывать ошибки в RestClient?",
+      "linkage": {
+        "visible_question_match": true,
+        "source_claim_map": [
+          "C1. Главный инструмент обработки ошибок в RestClient — `onStatus()`: он перехватывает ответы по предикату статуса и позволяет бросить своё доменное исключение вместо стандартного.",
+          "C2. `onStatus()` работает поверх `retrieve()` и срабатывает до того, как тело ответа будет извлечено.",
+          "C3. Уровень отдельного запроса: `onStatus(...)` в цепочке одного вызова задаёт обработку для конкретного запроса (404 → `UserNotFoundException`).",
+          "C4. Уровень клиента: `defaultStatusHandler(...)` на builder'е задаёт глобальное правило для всех запросов этого клиента (429 → `RateLimitException`).",
+          "C5. Если свой обработчик не задан, `retrieve()` сам бросает `HttpClientErrorException` для 4xx и `HttpServerErrorException` для 5xx.",
+          "C6. Оба стандартных исключения — наследники `RestClientException`.",
+          "C7. «Ничего не делать» — тоже рабочая стратегия: ошибки не проглатываются молча, а превращаются в исключения."
+        ],
+        "tested_claim": "Проверяется связка C3+C4 (два уровня одного механизма: `onStatus()` — на отдельном запросе, `defaultStatusHandler()` — на builder'е клиента) вместе с C5 (что происходит, если свой обработчик не задан). Это ровно то, что видимый заголовок «Как обрабатывать ошибки в RestClient?» и спрашивает.",
+        "source_evidence": [
+          "он перехватывает ответы по предикату статуса и позволяет бросить своё доменное исключение вместо стандартного",
+          "обработка для конкретного вызова (например, 404 → `UserNotFoundException`)",
+          "глобальное правило для всех запросов этого клиента (например, 429 → `RateLimitException`)",
+          "Если свой обработчик не задан, `retrieve()` сам бросает стандартные исключения"
+        ],
+        "answerable_from_source": true,
+        "correct_label": "A",
+        "distractors_refutable_from_source": {
+          "B": {
+            "delta": "Инверсия поведения по умолчанию: якобы без своего обработчика ошибочный ответ не превращается в исключение, а тихо отдаётся как тело.",
+            "refuting_quote": "Если свой обработчик не задан, `retrieve()` сам бросает стандартные исключения"
+          },
+          "C": {
+            "delta": "Перепутана принадлежность уровней: области действия `onStatus()` и `defaultStatusHandler()` поменяны местами.",
+            "refuting_quote": "глобальное правило для всех запросов этого клиента (например, 429 → `RateLimitException`)"
+          },
+          "D": {
+            "delta": "Инверсия порядка в жизненном цикле: обработчик статуса помещён после извлечения тела вместо «до».",
+            "refuting_quote": "Это работает поверх `retrieve()`, до того как тело будет извлечено"
+          }
         },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+        "novel_required_facts": [],
+        "same_semantic_axis": true,
+        "level": "L4",
+        "reviewer_pass": true,
+        "reviewer_blind_choice": "A",
+        "reviewer_confidence": "high",
+        "reviewer_per_option": {
+          "A": {
+            "verdict": "supported_by_source",
+            "source_basis": "«**`onStatus(...)` на отдельном запросе** — обработка для конкретного вызова (например, 404 → `UserNotFoundException`).» и «**`defaultStatusHandler(...)` на builder'е клиента** — глобальное правило для всех запросов этого клиента (например, 429 → `RateLimitException`).», плюс «Если свой обработчик не задан, `retrieve()` сам бросает стандартные исключения: `HttpClientErrorException` для 4xx и `HttpServerErrorException` для 5xx». Все три утверждения варианта A покрыты дословно."
+          },
+          "B": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«Если свой обработчик не задан, `retrieve()` сам бросает стандартные исключения: `HttpClientErrorException` для 4xx и `HttpServerErrorException` для 5xx (оба — наследники `RestClientException`). То есть «ничего не делать» — это тоже стратегия: ошибки не проглатываются молча, а превращаются в исключения.» — прямо отрицает и «молча отдаёт тело», и «лишь там, где вы бросили его вручную»."
+          },
+          "C": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«**`onStatus(...)` на отдельном запросе** — обработка для конкретного вызова» / «**`defaultStatusHandler(...)` на builder'е клиента** — глобальное правило для всех запросов этого клиента» — роли ровно обратны тем, что заявлены в C."
+          },
+          "D": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«Это работает поверх `retrieve()`, до того как тело будет извлечено.» (плюс код: `.retrieve().onStatus(...).onStatus(...).body(User.class)` — `onStatus` идёт ДО `body()`), и «позволяет бросить своё доменное исключение вместо стандартного»."
+          }
         },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+        "reviewer_notes": [
+          "Не блокирующее: вариант A — почти дословная склейка двух буллетов и финального абзаца источника («на отдельном запросе… для конкретного вызова», «на builder'е клиента… для всех запросов этого клиента», «retrieve() сам бросает стандартные исключения»). Блок проверяет узнавание формулировки, а не рассуждение; при чистом L4 это допустимо, но обучающая ценность ниже, чем могла бы быть.",
+          "Не блокирующее (возможная подсказка формата): A — единственная опция с тремя фактическими клаузами (onStatus + defaultStatusHandler + поведение по умолчанию), тогда как B и D содержат по одной теме, а C — по две. Догадливый пользователь может выбрать A по признаку «самый полный ответ», не сверяясь с материалом. Стоит уравнять число утверждений (например, добавить дистракторам вторую клаузу или срезать у A хвост про retrieve()).",
+          "Не блокирующее: C — точная зеркальная инверсия A по паре onStatus/defaultStatusHandler, поэтому пара A/C образует очевидный «правильный/перевёрнутый» дуплет; читатель, помнящий только, что defaultStatusHandler живёт на builder'е, отсекает C мгновенно и оказывается перед выбором из трёх."
+        ]
+      }
     },
     {
       "q_number": 6,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+      "visible_question": "Как десериализовать коллекцию через RestClient?",
+      "linkage": {
+        "visible_question_match": true,
+        "source_claim_map": [
+          "C1. Для одиночного объекта достаточно `body(User.class)` — обычный `Class` полностью описывает целевой тип.",
+          "C2. Для `List<User>` приём с `Class` не работает: из-за стирания типов в рантайме `List<User>` неотличим от `List<Object>`.",
+          "C3. Следствие стирания: Jackson не узнает, во что разворачивать элементы коллекции.",
+          "C4. Решение — `ParameterizedTypeReference`: анонимный подкласс сохраняет полный generic-тип через рефлексию.",
+          "C5. Благодаря этому десериализатор получает точную информацию о `List<User>`.",
+          "C6. Синтаксис: `.body(new ParameterizedTypeReference<List<User>>() {})`; в Java 11+ допустим ромб `new ParameterizedTypeReference<>() {}`.",
+          "C7. Тот же приём применяется к `Map<String, Object>`, а не только к спискам."
+        ],
+        "tested_claim": "Anchor — связка C2+C4+C5: обычный `body(Class)` не годится для коллекции из-за стирания типов, поэтому целевой generic-тип передают анонимным подклассом `ParameterizedTypeReference`, и десериализатор узнаёт тип элементов. Дистракторы мутируют этот же тезис по одной оси: A отрицает саму проблему стирания (против C2/C3), B сужает область применения приёма (против C1/C2), D подменяет механизм сохранения типа (против C4).",
+        "source_evidence": [
+          "Для одиночного объекта хватает `body(User.class)`, но для `List<User>` так не получится",
+          "Решение — `ParameterizedTypeReference`: анонимный подкласс сохраняет полный generic-тип через рефлексию, и десериализатор получает точную информацию о `List<User>`",
+          ".body(new ParameterizedTypeReference<List<User>>() {});"
+        ],
+        "answerable_from_source": true,
+        "correct_label": "C",
+        "distractors_refutable_from_source": {
+          "A": {
+            "delta": "Отрицание самой проблемы стирания типов: утверждается, что Jackson восстановит тип элементов по содержимому JSON, поэтому дескриптор типа не нужен.",
+            "refuting_quote": "из-за **стирания типов** (type erasure) в рантайме `List<User>` неотличим от `List<Object>`, и Jackson не узнает, во что разворачивать элементы"
+          },
+          "B": {
+            "delta": "Ошибка scope: приём сужен до вложенных дженериков (`Map`), а список объявлен разбирающимся обычным `body(User.class)`.",
+            "refuting_quote": "Для одиночного объекта хватает `body(User.class)`, но для `List<User>` так не получится"
+          },
+          "D": {
+            "delta": "Подмена механизма: generic-тип якобы передаётся аргументом конструктора, а не сохраняется анонимным подклассом.",
+            "refuting_quote": "анонимный подкласс сохраняет полный generic-тип через рефлексию"
+          }
         },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+        "novel_required_facts": [],
+        "same_semantic_axis": true,
+        "level": "L4",
+        "reviewer_pass": true,
+        "reviewer_blind_choice": "C",
+        "reviewer_confidence": "high",
+        "reviewer_per_option": {
+          "A": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«из-за **стирания типов** (type erasure) в рантайме `List<User>` неотличим от `List<Object>`, и Jackson не узнает, во что разворачивать элементы» — прямо опровергает утверждение, что Jackson сам определит тип элементов по набору их полей. Оговорка: буквально строки `body(List.class)` в материале нет, но её сырой-`List` смысл покрыт фразой про `List<Object>` и «Jackson не узнает»."
+          },
+          "B": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«Для одиночного объекта хватает `body(User.class)`, но для `List<User>` так не получится» и код «// Список — нужен ParameterizedTypeReference: … .body(new ParameterizedTypeReference<List<User>>() {})». Материал показывает `ParameterizedTypeReference` именно для `List<User>`, а `Map<String, Object>` идёт лишь как дополнительный пример, не как единственный случай."
+          },
+          "C": {
+            "verdict": "supported_by_source",
+            "source_basis": "«Решение — `ParameterizedTypeReference`: анонимный подкласс сохраняет полный generic-тип через рефлексию, и десериализатор получает точную информацию о `List<User>`» + код «.body(new ParameterizedTypeReference<List<User>>() {});»"
+          },
+          "D": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«анонимный подкласс сохраняет полный generic-тип через рефлексию» и код с фигурными скобками анонимного подкласса «new ParameterizedTypeReference<List<User>>() {}» (и «или в Java 11+: .body(new ParameterizedTypeReference<>() {})») — механизм в материале именно анонимный подкласс, а не аргумент конструктора; форма `new ParameterizedTypeReference(User.class)` в материале не встречается ни разу."
+          }
         },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+        "reviewer_notes": [
+          "Мелочь (не блокер): в A фигурирует `body(List.class)`, которого в материале дословно нет; опровержение идёт через механизм («в рантайме `List<User>` неотличим от `List<Object>`, и Jackson не узнает, во что разворачивать элементы»), а не через прямой запрет именно `List.class`. Вывод всё равно однозначный.",
+          "Мелочь (не блокер): в D форма `new ParameterizedTypeReference(User.class)` в материале не названа ошибочной явно — она там просто отсутствует; опровержение опирается на то, что материал описывает механизм как «анонимный подкласс сохраняет полный generic-тип», а D это отрицает («без анонимного подкласса»).",
+          "Correct-вариант C почти дословно повторяет кодовую строку источника — риск узнавания по совпадению формулировки, а не по пониманию (это качество дистракторов, не корректность блока)."
+        ]
+      }
     },
     {
       "q_number": 7,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+      "visible_question": "Когда использовать WebClient вместо RestClient?",
+      "linkage": {
+        "visible_question_match": true,
+        "source_claim_map": [
+          "C1: Выбор между клиентами определяется моделью выполнения приложения, а не «новизной» клиента.",
+          "C2: Блокирующий стек (Spring MVC, thread-per-request) — `RestClient`; реактивный (WebFlux) — `WebClient`.",
+          "C3: Брать реактивный клиент в блокирующее приложение «на будущее» смысла нет: платишь сложностью, не получая выигрыша.",
+          "C4: `RestClient` уместен для традиционного MVC, простых REST-вызовов и максимальной простоты кода.",
+          "C5: `WebClient` нужен, когда требуются `Mono<T>`/`Flux<T>` как возвращаемые типы, чтобы не блокировать поток.",
+          "C6: `WebClient` выигрывает при высокой конкурентности с малым числом потоков — реактивная модель экономит ресурсы.",
+          "C7: `WebClient` нужен, когда требуется стриминг ответа (`Flux<ServerSentEvent>`), а не один цельный результат.",
+          "C8: `WebClient` можно превратить в синхронный через `.block()`, но в блокирующем приложении это лишняя реактивная обёртка; правильный синхронный клиент — `RestClient`."
+        ],
+        "tested_claim": "Anchor — C1 в связке с C2: критерий выбора это модель выполнения приложения (MVC → `RestClient`, WebFlux → `WebClient`), а не возраст клиента; правильный вариант дополнительно опирается на C5/C7 как на содержательные причины реактивного клиента.",
+        "source_evidence": [
+          "Выбор определяется моделью выполнения вашего приложения, а не «новизной» клиента.",
+          "Если стек блокирующий (Spring MVC, thread-per-request) — берите `RestClient`; если реактивный (WebFlux) — `WebClient`.",
+          "Нужны `Mono<T>`/`Flux<T>` как возвращаемые типы (чтобы не блокировать поток)."
+        ],
+        "answerable_from_source": true,
+        "correct_label": "B",
+        "distractors_refutable_from_source": {
+          "A": {
+            "delta": "Подменён критерий выбора: вместо модели выполнения приложения — «новизна» клиента (реактивный как более современный, синхронный как переходный).",
+            "refuting_quote": "Брать реактивный клиент в блокирующее приложение «на будущее» смысла нет: вы заплатите сложностью, не получив выигрыша."
+          },
+          "C": {
+            "delta": "Инвертировано, какой клиент считается правильным синхронным: синхронность добывается из `WebClient` через `.block()` вместо того, чтобы взять `RestClient`.",
+            "refuting_quote": "но в блокирующем приложении это лишняя реактивная обёртка ради того же результата. Правильный синхронный клиент — `RestClient`."
+          },
+          "D": {
+            "delta": "Ошибка области применения: блокирующий клиент допущен в реактивный стек, а роль `WebClient` сужена до одного лишь стриминга.",
+            "refuting_quote": "Если стек блокирующий (Spring MVC, thread-per-request) — берите `RestClient`; если реактивный (WebFlux) — `WebClient`."
+          }
         },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+        "novel_required_facts": [],
+        "same_semantic_axis": true,
+        "level": "L4",
+        "reviewer_pass": true,
+        "reviewer_blind_choice": "B",
+        "reviewer_confidence": "high",
+        "reviewer_per_option": {
+          "A": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«Выбор определяется моделью выполнения вашего приложения, а не «новизной» клиента.» и «Брать реактивный клиент в блокирующее приложение «на будущее» смысла нет: вы заплатите сложностью, не получив выигрыша.» — источник прямо отвергает и аргумент «более современный», и аргумент «на вырост». Тезис «RestClient здесь переходный вариант» опровергается фразой «Правильный синхронный клиент — `RestClient`»."
+          },
+          "B": {
+            "verdict": "supported_by_source",
+            "source_basis": "«Выбор определяется моделью выполнения вашего приложения, а не «новизной» клиента. Если стек блокирующий (Spring MVC, thread-per-request) — берите `RestClient`; если реактивный (WebFlux) — `WebClient`.» Часть про реактивные типы подтверждается пунктом WebClient: «Нужны `Mono<T>`/`Flux<T>` как возвращаемые типы (чтобы не блокировать поток).»"
+          },
+          "C": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«**Подводный камень:** да, `WebClient` можно превратить в синхронный через `.block()` и использовать в обычном коде — но в блокирующем приложении это лишняя реактивная обёртка ради того же результата. Правильный синхронный клиент — `RestClient`.» — источник называет ровно этот приём лишней сложностью, а не способом «покрыть оба стека без лишней сложности»."
+          },
+          "D": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«если реактивный (WebFlux) — `WebClient`» и первый пункт списка «**WebClient** (реактивный) — когда: - Приложение на Spring WebFlux.» Стриминг — лишь один из четырёх пунктов («Нужен стриминг ответа (`Flux<ServerSentEvent>`), а не один цельный результат»), а не единственное условие; версия «в WebFlux хватает и RestClient» источнику прямо противоречит."
+          }
         },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+        "reviewer_notes": [
+          "Не блокирующее: опровержение D требует от читателя заметить, что стриминг — лишь один из четырёх пунктов списка WebClient, а не единственный; сам список в источнике есть дословно, так что вывод остаётся внутри материала.",
+          "Не блокирующее: B заметно длиннее остальных по смысловой нагрузке (две связки: «модель выполнения, а не новизна» + «реактивные типы») — потенциальный длиннотный tell, стоит держать в поле зрения при паритет-проверках."
+        ]
+      }
     },
     {
       "q_number": 8,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+      "visible_question": "Как сделать синхронный вызов через WebClient?",
+      "linkage": {
+        "visible_question_match": true,
+        "source_claim_map": [
+          "C1: Синхронный результат из реактивного `WebClient` получают вызовом `.block()` — он ждёт завершения и возвращает развёрнутое значение.",
+          "C2: `.block()` вызывается на `Mono`/`Flux` (обе реактивные обёртки, а не одна из них).",
+          "C3: Это сознательный мост из реактивного мира в блокирующий, применять его можно далеко не везде.",
+          "C4: Вызов `.block()` прямо на потоке event loop (внутри реактивной цепочки WebFlux) блокирует поток, который должен обслуживать множество запросов.",
+          "C5: Reactor распознаёт такую блокировку и бросает `IllegalStateException`, в худшем случае — deadlock и просадка всего сервиса.",
+          "C6: В коде-примере `.block()` помечен как антипаттерн в WebFlux-окружении.",
+          "C7: Допустим `.block()` в тестах и в чисто блокирующем коде, где нет реактивного контекста.",
+          "C8: Если код и так блокирующий, правильнее сразу взять `RestClient` и не тащить реактивный стек ради одного вызова."
+        ],
+        "tested_claim": "Anchor — C1+C2 (синхронный результат берётся вызовом `.block()` на `Mono`/`Flux`) в связке с границей применимости C7+C5 (можно в тестах и блокирующем коде; на потоке event loop Reactor бросает `IllegalStateException`). Это прямой ответ на видимый заголовок «Как сделать синхронный вызов через WebClient?».",
+        "source_evidence": [
+          "Синхронный результат из реактивного `WebClient` получают вызовом `.block()` на `Mono`/`Flux` — он ждёт завершения и возвращает развёрнутое значение.",
+          "Где допустимо:** в тестах и в чисто блокирующем коде, где нет реактивного контекста.",
+          "Reactor это распознаёт и бросает `IllegalStateException`, а в худшем случае вы получаете deadlock и просадку всего сервиса.",
+          "если вызвать `.block()` прямо на потоке event loop (внутри реактивной цепочки WebFlux), вы заблокируете поток, который должен обслуживать множество запросов"
+        ],
+        "answerable_from_source": true,
+        "correct_label": "D",
+        "distractors_refutable_from_source": {
+          "A": {
+            "delta": "Инверсия последствия блокировки на event loop: якобы Reactor сам уводит ожидание на другой поток и исключения не будет.",
+            "refuting_quote": "Reactor это распознаёт и бросает `IllegalStateException`, а в худшем случае вы получаете deadlock и просадку всего сервиса."
+          },
+          "B": {
+            "delta": "Ошибка scope: возможность синхронного разворачивания сужена с `Mono`/`Flux` до одного лишь `Mono`.",
+            "refuting_quote": "Синхронный результат из реактивного `WebClient` получают вызовом `.block()` на `Mono`/`Flux` — он ждёт завершения и возвращает развёрнутое значение."
+          },
+          "C": {
+            "delta": "Инверсия зон применимости: разрешённое (тесты и блокирующий код) и запрещённое (реактивная цепочка WebFlux) поменяны местами.",
+            "refuting_quote": "Где допустимо:** в тестах и в чисто блокирующем коде, где нет реактивного контекста."
+          }
         },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+        "novel_required_facts": [],
+        "same_semantic_axis": true,
+        "level": "L4",
+        "reviewer_pass": true,
+        "reviewer_blind_choice": "D",
+        "reviewer_confidence": "high",
+        "reviewer_per_option": {
+          "A": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«**Почему это опасно:** если вызвать `.block()` прямо на потоке event loop (внутри реактивной цепочки WebFlux), вы заблокируете поток, который должен обслуживать множество запросов. Reactor это распознаёт и бросает `IllegalStateException`, а в худшем случае вы получаете deadlock и просадку всего сервиса.» — источник прямо утверждает обратное тезису «в любом месте» и «`IllegalStateException` не грозит»: поток именно блокируется (никакого увода ожидания на отдельный поток), и исключение как раз бросается."
+          },
+          "B": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«Синхронный результат из реактивного `WebClient` получают вызовом `.block()` на `Mono`/`Flux` — он ждёт завершения и возвращает развёрнутое значение.» — `Flux` перечислен наравне с `Mono`, то есть «у `Flux` такого моста нет» ложно. Дополнительно опровергается: «**Где допустимо:** в тестах и в чисто блокирующем коде, где нет реактивного контекста.» — против «даже в тестах и блокирующем коде» обрабатывать только реактивно."
+          },
+          "C": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«.block();  // АНТИПАТТЕРН в WebFlux-окружении!» и «**Где допустимо:** в тестах и в чисто блокирующем коде, где нет реактивного контекста.» — вариант переставляет местами обе половины источника: внутри реактивной цепочки это антипаттерн, а тесты и блокирующий код — как раз разрешённая зона."
+          },
+          "D": {
+            "verdict": "supported_by_source",
+            "source_basis": "«Синхронный результат из реактивного `WebClient` получают вызовом `.block()` на `Mono`/`Flux` — он ждёт завершения и возвращает развёрнутое значение.» + «**Где допустимо:** в тестах и в чисто блокирующем коде, где нет реактивного контекста.» + «если вызвать `.block()` прямо на потоке event loop … Reactor это распознаёт и бросает `IllegalStateException`». Все три утверждения варианта покрыты дословно."
+          }
         },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+        "reviewer_notes": [
+          "Не блокирующее: дистрактор C — чистая зеркальная инверсия двух подряд идущих абзацев источника («антипаттерн в WebFlux» ↔ «допустимо в тестах»), поэтому читавшему Q8 он опознаётся мгновенно; при желании поднять сложность стоит инвертировать только одну половину, а вторую оставить верной.",
+          "Не блокирующее: у A подставлен механизм, которого в Q8 нет дословно («Reactor уводит ожидание на отдельный поток»). Опровергается он не механизмом, а следствием — «бросает `IllegalStateException`». Формально достаточно, но фраза добавляет в опцию сущность вне текста источника.",
+          "Не блокирующее: B опирается на то, что источник перечисляет `Mono`/`Flux` через слэш. Читатель, знающий реальный Reactor (у `Flux` — `blockFirst()`/`blockLast()`, а не `block()`), может счесть B частично верным; source-blind вердикт остаётся refuted, так как решается строго по тексту Q8.",
+          "Метрики паритета в норме, format-tell отсутствует: word-ratio 0.89, char-ratio 0.93, backtick-спаны 4/3/3/4 — `IllegalStateException` есть и у correct (D), и у дистрактора A, поэтому correct не выделяется форматом."
+        ]
+      }
     },
     {
       "q_number": 9,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+      "visible_question": "Что такое @HttpExchange и как им пользоваться?",
+      "linkage": {
+        "visible_question_match": true,
+        "source_claim_map": [
+          "C1: `@HttpExchange` (Spring 6) — декларативный способ описать HTTP-клиент: разработчик пишет только Java-интерфейс с аннотированными методами.",
+          "C2: Реализацию-прокси, которая под капотом делает реальные вызовы, генерирует сам Spring.",
+          "C3: Это встроенный в Spring Framework аналог `@FeignClient` из Spring Cloud — без отдельной зависимости.",
+          "C4: Сигнатура метода интерфейса (`User getUser(long id)`) уже описывает контракт; ручная «сборка» запросов убирается, код становится типобезопасным и читаемым.",
+          "C5: Подключение в три шага: объявить интерфейс → зарегистрировать бин (обернуть клиент в `RestClientAdapter`, отдать его `HttpServiceProxyFactory`, вызвать `factory.createClient(UserClient.class)`) → использовать как обычный бин.",
+          "C6: Аннотации на методах (`@GetExchange`, `@PostExchange`, `@PutExchange`, `@DeleteExchange`) — клиентские аналоги серверных `@GetMapping`/`@PostMapping`.",
+          "C7: Пути из `@HttpExchange(\"/users\")` и из аннотации метода складываются.",
+          "C8: Сам интерфейс не зависит от того, какой клиент его исполняет: `RestClient` или `WebClient` подключается на шаге конфигурации.",
+          "C9: Параметры метода размечаются знакомыми аннотациями `@PathVariable`, `@RequestParam`, `@RequestBody`."
+        ],
+        "tested_claim": "Anchor — C1+C2 с опорой на C5 и C8: `@HttpExchange` описывает клиента декларативно (пишется только интерфейс), реализацию-прокси генерирует Spring, а конкретный исполнитель подключается адаптером на шаге конфигурации. Дистракторы мутируют этот же тезис по одной оси: происхождение/зависимость (против C3), ответственность за реализацию (против C2), scope исполнителя (против C8).",
+        "source_evidence": [
+          "вы пишете только Java-интерфейс с аннотированными методами, а Spring сам генерирует реализацию-прокси",
+          "Это встроенный в Spring Framework аналог `@FeignClient` из Spring Cloud — без отдельной зависимости.",
+          "RestClientAdapter adapter = RestClientAdapter.create(restClient);",
+          "Сам же интерфейс не зависит от того, какой клиент его исполняет"
+        ],
+        "answerable_from_source": true,
+        "correct_label": "C",
+        "distractors_refutable_from_source": {
+          "A": {
+            "delta": "Происхождение и зависимость: аннотация приписана Spring Cloud и объявлена требующей отдельного подключения, тогда как в Q9 это встроенный механизм Spring Framework.",
+            "refuting_quote": "Это встроенный в Spring Framework аналог `@FeignClient` из Spring Cloud — без отдельной зависимости."
+          },
+          "B": {
+            "delta": "Ответственность за реализацию: класс с вызовами якобы пишет разработчик, тогда как в Q9 реализацию-прокси генерирует Spring.",
+            "refuting_quote": "а Spring сам генерирует реализацию-прокси, которая под капотом делает реальные вызовы"
+          },
+          "D": {
+            "delta": "Scope исполнителя: механизм ограничен реактивным `WebClient`, тогда как в Q9 интерфейс не привязан к клиенту, а пример собран на `RestClient`.",
+            "refuting_quote": "Сам же интерфейс не зависит от того, какой клиент его исполняет"
+          }
         },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+        "novel_required_facts": [],
+        "same_semantic_axis": true,
+        "level": "L4",
+        "reviewer_pass": true,
+        "reviewer_blind_choice": "C",
+        "reviewer_confidence": "high",
+        "reviewer_per_option": {
+          "A": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«Это встроенный в Spring Framework аналог `@FeignClient` из Spring Cloud — без отдельной зависимости.» — прямо сказано, что аннотация встроена в Spring Framework (Spring 6), а не пришла из Spring Cloud, и отдельная зависимость не нужна."
+          },
+          "B": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«вы пишете только Java-интерфейс с аннотированными методами, а Spring сам генерирует реализацию-прокси, которая под капотом делает реальные вызовы» — реализацию руками не пишут; в шаге 2 бин получают через `factory.createClient(UserClient.class)`, а не из ручного класса."
+          },
+          "C": {
+            "verdict": "supported_by_source",
+            "source_basis": "«вы пишете только Java-интерфейс с аннотированными методами, а Spring сам генерирует реализацию-прокси» + «Сам же интерфейс не зависит от того, какой клиент его исполняет — `RestClient` или `WebClient` подключается на шаге конфигурации», подкреплено кодом шага 2: «RestClientAdapter adapter = RestClientAdapter.create(restClient); HttpServiceProxyFactory factory = HttpServiceProxyFactory.builderFor(adapter).build();»"
+          },
+          "D": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«где именно крутится `RestClient` или `WebClient` — деталь конфигурации» и «`RestClient` или `WebClient` подключается на шаге конфигурации (см. Q11)»; пример шага 2 построен именно на блокирующем `RestClient.Builder` и `RestClientAdapter`."
+          }
         },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+        "reviewer_notes": [
+          "Мелкая неточность формулировки C: «Достаточно интерфейса с @HttpExchange и методов @GetExchange» при буквальном чтении конфликтует с материалом, где подключение описано как три шага и бин регистрируется вручную в @Configuration. Спасает вторая половина опции («нужный клиент подключают адаптером в конфигурации»), которая как раз и признаёт шаг конфигурации, — поэтому опция остаётся supported, но слово «Достаточно» стоит смягчить, чтобы не давать придирчивому читателю повод отбросить единственный верный вариант.",
+          "Слово «всегда» в C («реализацию-прокси всегда создаёт Spring») источником прямо не квантифицируется: там сказано «Spring сам генерирует реализацию-прокси» без обсуждения исключений. Для L4 хватает, но это чуть более сильное утверждение, чем текст.",
+          "D и A содержат стилистический маркер абсолютности («только на реактивный WebClient», «только после подключения отдельной зависимости»), из-за чего дистракторы выглядят слабее correct ещё до обращения к материалу — статистическая подсказка формы, хотя фактически обе опции честно опровергаются текстом."
+        ]
+      }
     },
     {
       "q_number": 10,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+      "visible_question": "Какие аннотации параметров поддерживает @HttpExchange?",
+      "linkage": {
+        "visible_question_match": true,
+        "source_claim_map": [
+          "C1. Параметры метода в `@HttpExchange`-интерфейсе описываются теми же аннотациями, что и в серверных контроллерах Spring MVC — новый набор учить не нужно.",
+          "C2. Каждая аннотация указывает, в какую часть HTTP-запроса попадёт аргумент.",
+          "C3. Поддерживаются `@PathVariable` (переменная в пути URL), `@RequestParam` (query-параметр), `@RequestHeader` (HTTP-заголовок), `@RequestBody` (тело запроса), `@CookieValue` (cookie).",
+          "C4. Параметры типов `URI` и `HttpMethod` стоят отдельно и передаются без аннотаций.",
+          "C5. `URI` задаёт динамический URL и переопределяет baseUrl, `HttpMethod` — динамический метод HTTP; оба переопределяют в рантайме то, что прописано в аннотациях интерфейса.",
+          "C6. В примере `@RequestParam` принимает `defaultValue`, `@RequestHeader` принимает имя заголовка строкой (`Accept-Language`, `X-Upload-Token`), телом может быть `byte[]`, а `URI` объявляется обычным параметром метода."
+        ],
+        "tested_claim": "C1+C3 (состав поддерживаемых аннотаций совпадает с серверным набором Spring MVC) в связке с C4 (`URI` и `HttpMethod` передаются без аннотаций). Дистракторы мутируют ровно по одной оси каждый: B — C4, C — C3, D — C5.",
+        "source_evidence": [
+          "Параметры метода описываются теми же аннотациями, что и в серверных контроллерах Spring MVC, — это сделано намеренно, чтобы не учить новый набор.",
+          "Отдельно стоят `URI` и `HttpMethod` без аннотаций: они задают цель и метод динамически в рантайме, переопределяя то, что прописано в аннотациях интерфейса.",
+          "| `@CookieValue` | Cookie |"
+        ],
+        "answerable_from_source": true,
+        "correct_label": "A",
+        "distractors_refutable_from_source": {
+          "B": {
+            "delta": "Инверсия способа передачи: `URI` и `HttpMethod` объявлены требующими аннотации, тогда как в Q10 они идут без аннотаций.",
+            "refuting_quote": "Отдельно стоят `URI` и `HttpMethod` без аннотаций: они задают цель и метод динамически в рантайме"
+          },
+          "C": {
+            "delta": "Ошибка scope: набор урезан до пути и тела, query-параметр и заголовок вынесены из сигнатуры метода на конфигурацию клиента.",
+            "refuting_quote": "| `@RequestParam` | Query-параметр |"
+          },
+          "D": {
+            "delta": "Инверсия приоритета: динамические `URI` и `HttpMethod` названы дополняющими конфигурацию вместо переопределяющих её.",
+            "refuting_quote": "| `URI` | Динамический URL (переопределяет baseUrl) |"
+          }
         },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+        "novel_required_facts": [],
+        "same_semantic_axis": true,
+        "level": "L4",
+        "reviewer_pass": true,
+        "reviewer_blind_choice": "A",
+        "reviewer_confidence": "high",
+        "reviewer_per_option": {
+          "A": {
+            "verdict": "supported_by_source",
+            "source_basis": "«Параметры метода описываются теми же аннотациями, что и в серверных контроллерах Spring MVC, — это сделано намеренно, чтобы не учить новый набор.» + таблица «`@PathVariable` | Переменная в пути URL / `@RequestParam` | Query-параметр / `@RequestHeader` | HTTP-заголовок / `@RequestBody` | Тело запроса / `@CookieValue` | Cookie» + «Отдельно стоят `URI` и `HttpMethod` без аннотаций: они задают цель и метод динамически в рантайме, переопределяя то, что прописано в аннотациях интерфейса.» Плюс строка таблицы «`URI` | Динамический URL (переопределяет baseUrl)». Все три утверждения варианта A (тот же набор, что в MVC; URI/HttpMethod без аннотаций; они переопределяют адрес и метод) покрыты дословно."
+          },
+          "B": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«Отдельно стоят `URI` и `HttpMethod` **без аннотаций**: они задают цель и метод динамически в рантайме, переопределяя то, что прописано в аннотациях интерфейса.» Прямо противоречит «`URI` и `HttpMethod` требуют собственных аннотаций» и «непомеченный аргумент в запрос не попадёт» — в примере кода `URI targetUri` идёт без аннотации и работает: «@PostExchange ResponseEntity<Void> uploadFile(@RequestHeader(\"X-Upload-Token\") String token, @RequestBody byte[] content, URI targetUri);»"
+          },
+          "C": {
+            "verdict": "refuted_by_source",
+            "source_basis": "Таблица содержит «`@RequestParam` | Query-параметр» и «`@RequestHeader` | HTTP-заголовок», а пример кода задаёт их именно в сигнатуре метода: «SearchResult search(@RequestParam String query, @RequestParam(defaultValue = \"1\") int page, @RequestHeader(\"Accept-Language\") String lang);». Утверждение «только `@PathVariable` и `@RequestBody`», «`@RequestParam` и `@RequestHeader` … не работают» и «задают рядом с baseUrl при сборке клиента» опровергнуто (про baseUrl материал говорит обратное: URI его *переопределяет*)."
+          },
+          "D": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«`URI` | Динамический URL (**переопределяет baseUrl**)» и «Отдельно стоят `URI` и `HttpMethod` без аннотаций: они задают цель и метод динамически в рантайме, **переопределяя то, что прописано в аннотациях интерфейса**.» Это отменяет формулировку D «лишь дополняют настройку: адрес по-прежнему собирается из baseUrl, а метод берётся из `@GetExchange`»."
+          }
         },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+        "reviewer_notes": [
+          "Не блокер, но шероховатость источника: `URI` и `HttpMethod` перечислены строками таблицы с шапкой «Аннотация», хотя следующий абзац говорит, что они идут «без аннотаций». Внимательный читатель может на секунду счесть их аннотациями; на различение вариантов это не влияет, т.к. текстовый абзац снимает двусмысленность явно.",
+          "Не блокер: вариант A — единственный, где формулировка почти дословно повторяет источник («те же аннотации, что и в контроллерах Spring MVC» + «без аннотаций … переопределяют»). Это делает его слегка «узнаваемым» для того, кто только что прочитал материал, но это ожидаемое свойство L4-связки, а не статистическая подсказка: B и D открываются той же конструкцией «Набор тот же, что и в контроллерах Spring MVC, но…», длины сопоставимы, backtick-спаны есть во всех четырёх опциях."
+        ]
+      }
     },
     {
       "q_number": 11,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+      "visible_question": "Как подключить @HttpExchange к RestClient vs WebClient?",
+      "linkage": {
+        "visible_question_match": true,
+        "source_claim_map": [
+          "C1. Механизм подключения `@HttpExchange` одинаков для обоих клиентов: клиент оборачивают в адаптер, адаптер отдают `HttpServiceProxyFactory`, и фабрика создаёт прокси по интерфейсу.",
+          "C2. Меняется только тип клиента и его адаптера: `RestClientAdapter` для синхронного, `WebClientAdapter` для реактивного.",
+          "C3. Синхронная сборка: `RestClient.builder().baseUrl(url).build()` → `RestClientAdapter.create(restClient)` → `HttpServiceProxyFactory.builderFor(adapter).build()` → `factory.createClient(UserClient.class)`.",
+          "C4. Реактивная сборка отличается только заменой `RestClient` на `WebClient` и `RestClientAdapter` на `WebClientAdapter`; остальные два шага дословно те же.",
+          "C5. Интерфейс `UserClient` одинаков для обоих вариантов — отличается только конфигурация.",
+          "C6. Смысл декларативного подхода: смену синхронного клиента на реактивный (или наоборот) делают в одном бине, не трогая код вызывающих сервисов.",
+          "C7. Базовый URL задаётся на самом клиенте перед оборачиванием в адаптер, через `RestClient.builder().baseUrl(...)` или `WebClient.builder().baseUrl(...)`.",
+          "C8. Отдельного property-шортката вроде `spring.http.interface.default-base-url` в Spring Boot нет.",
+          "C9. Декларативная авто-регистрация HTTP-интерфейсов из конфигурации появилась только в Spring Boot 3.4.",
+          "C10. `RestClient` в этом сценарии — синхронный клиент, доступный начиная со Spring 6.1."
+        ],
+        "tested_claim": "Anchor — C1 в связке с C2 и C5: сборка прокси одна и та же для обоих клиентов (адаптер → `HttpServiceProxyFactory` → прокси по интерфейсу), а различие сводится к типу адаптера, при неизменном интерфейсе.",
+        "source_evidence": [
+          "Механизм один и тот же: вы оборачиваете нужный клиент в адаптер, отдаёте его `HttpServiceProxyFactory`, и фабрика создаёт прокси по интерфейсу.",
+          "Меняется только тип клиента и его адаптера — `RestClientAdapter` для синхронного, `WebClientAdapter` для реактивного.",
+          "Интерфейс `UserClient` одинаков для обоих — отличается только конфигурация."
+        ],
+        "answerable_from_source": true,
+        "correct_label": "D",
+        "distractors_refutable_from_source": {
+          "A": {
+            "delta": "Инверсия переиспользуемости интерфейса: утверждается, что контракт раздваивается по типу клиента, тогда как в Q11 он общий.",
+            "refuting_quote": "Интерфейс `UserClient` одинаков для обоих — отличается только конфигурация."
+          },
+          "B": {
+            "delta": "Ошибка scope: адаптер объявлен нужным только реактивному клиенту, хотя в Q11 через адаптер проходят оба.",
+            "refuting_quote": "Меняется только тип клиента и его адаптера — `RestClientAdapter` для синхронного, `WebClientAdapter` для реактивного."
+          },
+          "C": {
+            "delta": "Перепутанный источник базового URL: конфигурационное свойство вместо билдера клиента.",
+            "refuting_quote": "Отдельного property-шортката вроде `spring.http.interface.default-base-url` в Spring Boot нет"
+          }
         },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+        "novel_required_facts": [],
+        "same_semantic_axis": true,
+        "level": "L4",
+        "reviewer_pass": true,
+        "reviewer_blind_choice": "D",
+        "reviewer_confidence": "high",
+        "reviewer_per_option": {
+          "A": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«Интерфейс `UserClient` одинаков для обоих — отличается только конфигурация.» и «Механизм один и тот же: вы оборачиваете нужный клиент в адаптер, отдаёте его `HttpServiceProxyFactory`, и фабрика создаёт прокси по интерфейсу.» — оба примера кода вызывают `factory.createClient(UserClient.class)` с одним и тем же интерфейсом, значит «свой отдельный интерфейс под каждый клиент» и «общий прокси собрать нельзя» прямо опровергнуты."
+          },
+          "B": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«Меняется только тип клиента и его адаптера — `RestClientAdapter` для синхронного, `WebClientAdapter` для реактивного.» + код синхронной ветки: «RestClientAdapter adapter = RestClientAdapter.create(restClient); HttpServiceProxyFactory factory = HttpServiceProxyFactory.builderFor(adapter).build();» — RestClient тоже проходит через адаптер, напрямую в фабрику не передаётся, шагов столько же."
+          },
+          "C": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«Отдельного property-шортката вроде `spring.http.interface.default-base-url` в Spring Boot нет» и «**Базовый URL** задаётся на самом клиенте перед оборачиванием в адаптер — `RestClient.builder().baseUrl(\"https://users.service\")`» — опровергнуты обе половины варианта: и property, и «ненастроенный экземпляр клиента» в адаптере."
+          },
+          "D": {
+            "verdict": "supported_by_source",
+            "source_basis": "«Механизм один и тот же: вы оборачиваете нужный клиент в адаптер, отдаёте его `HttpServiceProxyFactory`, и фабрика создаёт прокси по интерфейсу. Меняется только тип клиента и его адаптера — `RestClientAdapter` для синхронного, `WebClientAdapter` для реактивного.» + «Интерфейс `UserClient` одинаков для обоих»."
+          }
         },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+        "reviewer_notes": [
+          "Мягкий стат-tell: D — единственный «объединяющий/симметричный» вариант, тогда как A, B и C все заявляют асимметрию или шорткат. Мета-игрок без чтения источника может выбрать D по паттерну «оба одинаково», а не по знанию. Смягчить можно, сделав один из дистракторов тоже симметричным (например, «сборка одинаковая, но адаптер один общий HttpClientAdapter»).",
+          "C содержит дословную строку `spring.http.interface.default-base-url`, которая в источнике фигурирует ровно в форме отрицания («такого property нет»). Для внимательного читателя это делает C самым лёгким на отброс — дистрактор почти самоопровергающийся, вклад в различающую силу минимальный.",
+          "Формат-паритет в целом соблюдён (backtick-спаны есть во всех четырёх опциях, длины 26-28 слов), но у D спанов больше всего (3 идентификатора подряд: RestClientAdapter / WebClientAdapter / HttpServiceProxyFactory) — лёгкий визуальный перекос в сторону correct. Стоит либо срезать один спан у D, либо добавить третий спан дистрактору A."
+        ]
+      }
     },
     {
       "q_number": 12,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+      "visible_question": "Как настроить таймауты, базовый URL и заголовки?",
+      "linkage": {
+        "visible_question_match": true,
+        "source_claim_map": [
+          "C1. Ответственность разделена: таймауты и работа с сокетами живут в `ClientHttpRequestFactory` (транспортный слой), а базовый URL, заголовки по умолчанию и интерсепторы задаются на `RestClient.builder()`.",
+          "C2. Порядок сборки: сначала собирают фабрику с нужными таймаутами и передают её в builder через `requestFactory()`.",
+          "C3. Для базовых нужд хватает `SimpleClientHttpRequestFactory`; таймауты на ней задают через `setConnectTimeout(5000)` и `setReadTimeout(10000)`.",
+          "C4. Если нужен пул соединений, вытеснение по TTL и тонкая настройка — берут `HttpComponentsClientHttpRequestFactory` поверх Apache HttpClient (`setConnectionTimeToLive`, `evictExpiredConnections`).",
+          "C5. На builder задают `baseUrl()`, `defaultHeader()` (например, `Authorization` и `Accept`) и `defaultUriVariables()`.",
+          "C6. `requestInterceptor` оборачивает каждый вызов: видно исходящий запрос, управление передаётся дальше через `execution.execute(...)`, затем читается ответ; годится для логирования, добавления заголовков на лету и сбора метрик."
+        ],
+        "tested_claim": "Связка C1+C2: где именно живёт каждая группа настроек (таймауты — на `ClientHttpRequestFactory`, базовый URL и заголовки — на `RestClient.builder()`) и как эти два уровня соединяются вызовом `requestFactory()`.",
+        "source_evidence": [
+          "таймауты и работа с сокетами живут в `ClientHttpRequestFactory` (это транспортный слой)",
+          "базовый URL, заголовки по умолчанию и интерсепторы задаются на `RestClient.builder()`",
+          "Поэтому сначала собирают фабрику с нужными таймаутами и передают её в builder через `requestFactory()`."
+        ],
+        "answerable_from_source": true,
+        "correct_label": "B",
+        "distractors_refutable_from_source": {
+          "A": {
+            "delta": "Инверсия ответственности: таймауты приписаны builder'у, а фабрике — заголовки и интерсепторы.",
+            "refuting_quote": "таймауты и работа с сокетами живут в `ClientHttpRequestFactory` (это транспортный слой), а базовый URL, заголовки по умолчанию и интерсепторы задаются на `RestClient.builder()`"
+          },
+          "C": {
+            "delta": "Инверсия порядка сборки: фабрика подключается не до `build()`, а к уже готовому клиенту.",
+            "refuting_quote": "Поэтому сначала собирают фабрику с нужными таймаутами и передают её в builder через `requestFactory()`."
+          },
+          "D": {
+            "delta": "Ошибка scope: возможность задать таймауты сужена до Apache-фабрики.",
+            "refuting_quote": "Для базовых нужд хватает `SimpleClientHttpRequestFactory`."
+          }
         },
-        {
-          "label": "B",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+        "novel_required_facts": [],
+        "same_semantic_axis": true,
+        "level": "L4",
+        "reviewer_pass": true,
+        "reviewer_blind_choice": "B",
+        "reviewer_confidence": "high",
+        "reviewer_per_option": {
+          "A": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«Разделение ответственности простое: **таймауты и работа с сокетами** живут в `ClientHttpRequestFactory` (это транспортный слой), а **базовый URL, заголовки по умолчанию и интерсепторы** задаются на `RestClient.builder()`.» — источник распределяет роли ровно наоборот тому, что утверждает A: таймауты не на builder, а заголовки/интерсепторы не на фабрике."
+          },
+          "B": {
+            "verdict": "supported_by_source",
+            "source_basis": "«таймауты и работа с сокетами живут в `ClientHttpRequestFactory` … а **базовый URL, заголовки по умолчанию и интерсепторы** задаются на `RestClient.builder()`. Поэтому сначала собирают фабрику с нужными таймаутами и передают её в builder через `requestFactory()`.» — дословно совпадает с формулировкой варианта, включая механизм передачи."
+          },
+          "C": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«Поэтому сначала собирают фабрику с нужными таймаутами и передают её в builder через `requestFactory()`.» + код: `RestClient client = RestClient.builder().baseUrl(...).requestFactory(factory).defaultHeader(...).build();` — фабрика с таймаутами входит в builder ДО `build()`, а не подменяется у уже собранного клиента; порядок в C перевёрнут."
+          },
+          "D": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«ClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory(); ((SimpleClientHttpRequestFactory) factory).setConnectTimeout(5000); ((SimpleClientHttpRequestFactory) factory).setReadTimeout(10000);» и «Для базовых нужд хватает `SimpleClientHttpRequestFactory`» — Simple-фабрика задаёт и connect, и read timeout; Apache-вариант в тексте нужен «если нужен пул соединений, их вытеснение по TTL и тонкая настройка», а не потому, что Simple не умеет таймауты."
+          }
         },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+        "reviewer_notes": [
+          "Мелкая неточность формулировки B (не блокирующая): слово «остаются только baseUrl(), defaultHeader() и интерсепторы» слегка сужает картину — в кодовом примере на builder'е вызывается ещё и `defaultUriVariables(...)`, да и сам `requestFactory(...)` формально метод builder'а. Читается как перечисление зон ответственности из фразы источника, поэтому выбор не ломает, но при желании ужесточить — заменить «только» на «остаётся конфигурация уровня запроса».",
+          "Дистрактор D частично истинен в своей второй половине (HttpComponentsClientHttpRequestFactory поверх Apache HttpClient действительно передают в requestFactory()) — его ложность держится исключительно на первом утверждении «SimpleClientHttpRequestFactory таймаутов не задаёт». Это ок (инверсия факта, прямо опровергаемая кодом), но опция проверяется одной точкой, а не целиком."
+        ]
+      }
     },
     {
       "q_number": 13,
       "block_idx": 0,
-      "status": "TODO",
-      "stem": {
-        "clear": null,
-        "single_concept": null,
-        "no_answer_hint": null,
-        "version_scope_explicit": null
-      },
-      "correct": {
-        "factually_true": null,
-        "complete_for_stem": null,
-        "scope_correct": null,
-        "unique_defensible": null,
-        "not_visually_distinct": null,
-        "sections_consistent": null,
-        "russian_readability": null
-      },
-      "distractors": [
-        {
-          "label": "A",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+      "visible_question": "Как мигрировать с RestTemplate на RestClient?",
+      "linkage": {
+        "visible_question_match": true,
+        "source_claim_map": [
+          "C1: Миграция с RestTemplate на RestClient дешёвая, потому что у обоих клиентов общая инфраструктура.",
+          "C2: Путей миграции два, и обычно их сочетают, а не выбирают один.",
+          "C3: Шаг 1 — `RestClient.create(oldTemplate)` создаёт клиент, наследующий от старого RestTemplate конвертеры сообщений, фабрику запросов (а значит, таймауты) и интерсепторы.",
+          "C4: После create(oldTemplate) перенастраивать инфраструктуру заново не нужно.",
+          "C5: Шаг 2 — переписать вызовы: каждый перегруженный метод RestTemplate имеет прямой fluent-аналог.",
+          "C6: При переписывании логика вызова та же, меняется только форма записи.",
+          "C7: getForObject(url, String.class) переписывается как get().uri(url).retrieve().body(String.class).",
+          "C8: postForEntity(url, body, User.class) переписывается как post().uri(url).body(body).retrieve().toEntity(User.class).",
+          "C9: exchange(url, HttpMethod.GET, null, ParameterizedTypeReference) переписывается как get().uri(url).retrieve().toEntity(new ParameterizedTypeReference<>() {})."
+        ],
+        "tested_claim": "Anchor: C3+C4+C6 — миграция состоит из двух сочетаемых шагов: `RestClient.create(oldTemplate)` наследует конвертеры, фабрику запросов (таймауты) и интерсепторы без перенастройки, после чего вызовы переписываются в прямые fluent-аналоги с той же логикой. Опорно также C2 (пути сочетают) и C5 (аналог есть у каждого перегруженного метода).",
+        "source_evidence": [
+          "Миграция дешёвая, потому что у клиентов общая инфраструктура. Есть два пути, и обычно их сочетают.",
+          "`RestClient.create(oldTemplate)` создаёт клиент, который наследует от старого `RestTemplate` всё ценное: конвертеры сообщений, фабрику запросов (а значит, таймауты) и интерсепторы. Перенастраивать заново ничего не нужно.",
+          "Каждый перегруженный метод `RestTemplate` имеет прямой fluent-аналог. Логика та же — меняется только форма записи."
+        ],
+        "answerable_from_source": true,
+        "correct_label": "C",
+        "distractors_refutable_from_source": {
+          "A": {
+            "delta": "Ошибка scope наследования: сужает перенос до одних конвертеров сообщений, исключая фабрику запросов (таймауты) и интерсепторы.",
+            "refuting_quote": "`RestClient.create(oldTemplate)` создаёт клиент, который наследует от старого `RestTemplate` всё ценное: конвертеры сообщений, фабрику запросов (а значит, таймауты) и интерсепторы. Перенастраивать заново ничего не нужно."
+          },
+          "B": {
+            "delta": "Инверсия «форма против логики»: отрицает наличие прямых аналогов и переносит изменение с формы записи на логику вызова.",
+            "refuting_quote": "Каждый перегруженный метод `RestTemplate` имеет прямой fluent-аналог. Логика та же — меняется только форма записи."
+          },
+          "D": {
+            "delta": "Инверсия сочетаемости путей: объявляет два шага миграции взаимоисключающими вместо совместно применяемых.",
+            "refuting_quote": "Миграция дешёвая, потому что у клиентов общая инфраструктура. Есть два пути, и обычно их сочетают."
+          }
         },
-        {
-          "label": "C",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
+        "novel_required_facts": [],
+        "same_semantic_axis": true,
+        "level": "L4",
+        "reviewer_pass": true,
+        "reviewer_blind_choice": "C",
+        "reviewer_confidence": "high",
+        "reviewer_per_option": {
+          "A": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«`RestClient.create(oldTemplate)` создаёт клиент, который наследует от старого `RestTemplate` всё ценное: конвертеры сообщений, фабрику запросов (а значит, таймауты) и интерсепторы. Перенастраивать заново ничего не нужно.» — прямо опровергает «переносит только конвертеры» и «приходится задавать заново». Комментарий в коде дублирует: «// Сохраняет MessageConverters, RequestFactory, Interceptors»."
+          },
+          "B": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«Каждый перегруженный метод `RestTemplate` имеет прямой fluent-аналог. Логика та же — меняется только форма записи» — прямое опровержение обоих утверждений варианта B; пример с `getForObject` показан явно: «String result = restTemplate.getForObject(url, String.class);» → «String result = restClient.get().uri(url).retrieve().body(String.class);»."
+          },
+          "C": {
+            "verdict": "supported_by_source",
+            "source_basis": "Шаг 1: «`RestClient.create(oldTemplate)` … наследует от старого `RestTemplate` всё ценное: конвертеры сообщений, фабрику запросов (а значит, таймауты) и интерсепторы. Перенастраивать заново ничего не нужно.» + Шаг 2: «Каждый перегруженный метод `RestTemplate` имеет прямой fluent-аналог. Логика та же — меняется только форма записи»."
+          },
+          "D": {
+            "verdict": "refuted_by_source",
+            "source_basis": "«Миграция дешёвая, потому что у клиентов общая инфраструктура. Есть два пути, и обычно их сочетают.» — «обычно их сочетают» прямо опровергает «взаимоисключающие… сочетать нельзя»."
+          }
         },
-        {
-          "label": "D",
-          "plausible": null,
-          "one_primary_error": null,
-          "real_api_or_concept": null,
-          "false_under_stem": null,
-          "distinct_misconception": null,
-          "not_caricature": null,
-          "sections_consistent": null
-        }
-      ],
-      "parity": {
-        "option_parity": null,
-        "visual_format_parity": null,
-        "surface_parity": null,
-        "answer_completeness": null,
-        "russian_readability": null,
-        "no_stamped_clone": null,
-        "blind_style_pass": null,
-        "blind_semantic_pass": null
-      },
-      "llm_review": {
-        "four_option_pass": null,
-        "skel": null,
-        "cross_option_issues": [],
-        "bst": null,
-        "bsm": null,
-        "reviewed_by": null,
-        "notes": []
-      },
-      "notes": []
+        "reviewer_notes": [
+          "Не блокирует, но стоит учесть: C — единственный полностью утвердительный вариант, покрывающий оба шага миграции сразу, тогда как A/B/D каждый отрицает часть материала. Эвристика «самый полный и не отрицающий = верный» здесь срабатывает без чтения источника (мягкий test-wiseness tell).",
+          "Не блокирует: во всех четырёх вариантах присутствуют backtick-спаны и длины сопоставимы (≈21-27 слов), format-parity нарушений не видно; тем не менее у C спаны короче (`RestTemplate`, `RestClient.create(...)`), а у A/D — самые длинные, что даёт лёгкий визуальный перекос не в пользу correct (безвредно)."
+        ]
+      }
     }
-  ],
-  "acceptance": {
-    "basis": "golden-reference-batch-01",
-    "note": "golden-reference-batch-01: поставлен пользователем как эталон качества ROUND-9. schema+ролевая sections-схема валидны; форма спот-проверена (естественная, не угадываемая по длине/стилю/пунктуации). Старые численные gate'ы (answer-parity/skel) — вытесненная диагностика: golden осознанно favors живой текст над механической parity (skill §13)."
-  }
+  ]
 }
