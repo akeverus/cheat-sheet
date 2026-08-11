@@ -224,7 +224,27 @@ function baseOptions(palette) {
   };
 }
 
+/**
+ * Свод вместо стопки: на узкой ширине таблица детализации стартует свёрнутой.
+ *
+ * <p>Разметка отдаёт `<details open>` — без JS и на десктопе таблица развёрнута,
+ * как и была. Скрипт только СВОРАЧИВАЕТ и только когда экран узкий: обратный
+ * порядок («закрыто в разметке, открывает JS») оставил бы пользователя без
+ * таблицы при выключенном JS.
+ *
+ * <p>Один раз при загрузке, без подписки на resize: состояние раскрытия — выбор
+ * пользователя, и вырывать его из-под руки при повороте экрана нельзя.
+ */
+function collapseDetailOnNarrow() {
+  const disclosure = document.getElementById('topic-detail-disclosure');
+  if (!disclosure) return;
+  if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) {
+    disclosure.open = false;
+  }
+}
+
 export function initTopicCharts() {
+  collapseDetailOnNarrow();
   const progressCanvas = document.getElementById('topicProgressChart');
   const accuracyCanvas = document.getElementById('topicAccuracyChart');
   const progressFallback = document.getElementById('topicProgressChartFallback');
