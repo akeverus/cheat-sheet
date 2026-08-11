@@ -191,7 +191,14 @@ def scan_file(seed_path: Path) -> dict:
             opts = block.get("options", [])
             covs = [coverage(o.get("text", ""), own) for o in opts]
             all_text = " ".join(o.get("text", "") for o in opts)
+            correct_text = " ".join(o.get("text", "") for o in opts if o.get("correct"))
             novel = sorted(t for t in tech_tokens(all_text) if not present_in_source(t, own_raw))
+            # Новый идентификатор в ПРАВИЛЬНОМ варианте заставляет пользователя принять факт,
+            # которого он не читал, — это ошибка. В дистракторе выдуманное имя обычно и есть
+            # иллюстрация ошибки (`/userOrders/456`, `1745073000`), а опровержение приходит из
+            # тезиса источника, а не из узнавания этого имени, — поэтому только предупреждение.
+            novel_in_correct = sorted(t for t in novel if present_in_source(t, correct_text))
+            novel_in_wrong_only = [t for t in novel if t not in novel_in_correct]
 
             # neighbor leakage: покрывает ли какой-то другой Q опции заметно лучше своего
             leak = None
@@ -215,6 +222,7 @@ def scan_file(seed_path: Path) -> dict:
                 "opt_coverage_min": round(min(covs), 3) if covs else 0.0,
                 "opt_coverage_avg": round(sum(covs) / len(covs), 3) if covs else 0.0,
                 "novel_tech_terms": novel,
+                "novel_in_correct": novel_in_correct,
                 "neighbor_leak": leak,
                 "manual_review": False,
             }
@@ -225,11 +233,18 @@ def scan_file(seed_path: Path) -> dict:
                     f"STEM-DRIFT {tag}: question_text ушёл от visible-заголовка "
                     f"(overlap={overlap:.2f} < {LOW_TITLE_OVERLAP}). "
                     f"visible={title!r} vs question_text={qt[:80]!r}")
-            if novel:
+            if novel_in_correct:
                 entry["manual_review"] = True
                 res["errors"].append(
-                    f"NOVEL-TERM {tag}: в вариантах есть идентификаторы, которых нет в материале Q{n}: "
-                    + ", ".join(novel[:8]) + ("…" if len(novel) > 8 else ""))
+                    f"NOVEL-TERM {tag}: в ПРАВИЛЬНОМ варианте есть идентификаторы, которых нет "
+                    f"в материале Q{n}: " + ", ".join(novel_in_correct[:8])
+                    + ("…" if len(novel_in_correct) > 8 else ""))
+            if novel_in_wrong_only:
+                entry["manual_review"] = True
+                res["warnings"].append(
+                    f"NOVEL-TERM-WRONG {tag}: в дистракторах есть идентификаторы вне материала Q{n}: "
+                    + ", ".join(novel_in_wrong_only[:8]) + ("…" if len(novel_in_wrong_only) > 8 else "")
+                    + " — проверить, что дистрактор опровергается тезисом источника, а не узнаванием имени")
             if leak:
                 entry["manual_review"] = True
                 res["errors"].append(
