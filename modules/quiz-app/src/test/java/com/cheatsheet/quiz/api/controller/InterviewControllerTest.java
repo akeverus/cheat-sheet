@@ -178,7 +178,7 @@ class InterviewControllerTest {
 
     /** Экран фокуса обязан показать либо вопрос, либо явное пустое состояние. */
     private void assertFocusPageRendered(String body) {
-        assertThat(body).contains("<body class=\"focus-page\">");
+        assertThat(body).contains("<body class=\"focus-page\"");
         assertThat(body).containsAnyOf("class=\"focus-question\"", "class=\"empty-state-title\"");
     }
 
@@ -518,7 +518,7 @@ class InterviewControllerTest {
     void focusRoutesExposeFocusPageNamespaceWhenRendered() throws Exception {
         var indexResult = mockMvc.perform(get("/")).andReturn().getResponse();
         assertThat(indexResult.getStatus()).isEqualTo(200);
-        assertThat(indexResult.getContentAsString()).contains("<body class=\"focus-page\">");
+        assertThat(indexResult.getContentAsString()).contains("<body class=\"focus-page\"");
     }
 
     @Test

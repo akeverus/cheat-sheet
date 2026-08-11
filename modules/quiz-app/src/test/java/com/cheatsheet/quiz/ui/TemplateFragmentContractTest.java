@@ -190,7 +190,7 @@ class TemplateFragmentContractTest {
         String result = readTemplate("templates/result.html");
         String settings = readTemplate("templates/settings.html");
 
-        assertThat(focusTraining).contains("<body class=\"focus-page\">");
+        assertThat(focusTraining).contains("<body class=\"focus-page\"");
         assertThat(stats).contains("<body class=\"stats-page\">");
         assertThat(settings).contains("<body class=\"settings-page\">");
         assertThat(result).contains("<body class=\"result-page\">");

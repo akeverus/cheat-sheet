@@ -1716,3 +1716,138 @@ html[data-design] .focus-page .question-materials { margin: 0; }
 html[data-design][data-js] .focus-page [role="tabpanel"] .content-toolbar { justify-content: flex-end; }
 
 }
+
+/* ===========================================================================
+   РАБОЧЕЕ МЕСТО ПЕЧАТНЫХ РЕЖИМОВ (TYPED_RECALL / INTERVIEW / CODE_CHALLENGE)
+
+   ДО. Композиция экрана вопроса была выведена из MCQ: рабочая колонка равна
+   мере чтения (--focus-main-measure, 60rem), потому что её содержимое — проза
+   вопроса и четыре варианта. Три режима, где человек ПИШЕТ, наследовали ту же
+   меру и фиксированное поле в шесть строк. Замер на 2560×1440: поле ввода
+   750×145, полоса композиции 1296 при рабочей области 2309 — 1013px пустоты
+   справа, и ещё ~660px под кнопкой. Это §37 брифа целиком: «гигантская пустота
+   под формой», «пустой рельс», «одна маленькая карточка в центре».
+
+   ПОСЛЕ. У письма своя композиция: слева ЗАДАНИЕ (мера чтения — вопрос и код
+   остаются читаемыми), справа РАБОЧАЯ ПОВЕРХНОСТЬ, которая забирает остаток
+   ширины и растёт в высоту до дна вьюпорта.
+
+   Арифметика та же, что у FRD-019/020, и второй системы здесь нет: меняется
+   ОДНО слагаемое --focus-main-measure, а сумма полосы (--focus-measure) и порог
+   переноса рельса считаются прежней формулой из базы страницы. Поэтому рельс
+   переносится по тому же правилу, а не по новому медиазапросу.
+   =========================================================================== */
+
+html[data-design] .focus-page[data-session-mode="TYPED_RECALL"],
+html[data-design] .focus-page[data-session-mode="INTERVIEW"],
+html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"] {
+  /* Колонка задания — мера чтения, а не половина экрана: вопрос с кодом должен
+     остаться читаемым, сколько бы места ни было. */
+  --workspace-brief: 34rem;
+  /* Рабочая поверхность — минимум, ниже которого писать неудобно; выше него она
+     забирает весь остаток. */
+  --workspace-desk-min: 32rem;
+  /* Плоское значение, а не `min(100%, …)`: слагаемое участвует в сумме
+     --focus-band-sum и в сторожевом `min(…, (100% - sum + 1px) * 9999)` базы.
+     Процент внутри слагаемого ломал этот сторож — замер дал полосу 1296 вместо
+     1680 на 2560, и рельс переносился там, где место под него было. Кап полосы
+     остаётся заботой базовой формулы, как и у остальных раскладок. */
+  --focus-main-measure: 84rem;
+}
+
+/* Порог — 1600px, а не общий 1200px. Замер на 1512: рабочая поверхность требует
+   своих 32rem, и колонке задания оставалось 403px — вопрос с листингом в такой
+   колонке читается ХУЖЕ, чем в одну колонку. Две колонки включаются там, где
+   обеим хватает их собственной меры; ниже порога рабочее место остаётся стопкой,
+   но поле ввода уже во всю высоту. */
+@media (min-width: 1600px) {
+  html[data-design] .focus-page[data-session-mode="TYPED_RECALL"] .focus-main,
+  html[data-design] .focus-page[data-session-mode="INTERVIEW"] .focus-main,
+  html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"] .focus-main {
+    display: grid;
+    grid-template-columns: minmax(0, var(--workspace-brief)) minmax(var(--workspace-desk-min), 1fr);
+    column-gap: var(--focus-rail-gap);
+    align-items: start;
+  }
+  /* Пейн вопроса перестаёт быть `display: contents` и становится настоящей
+     колонкой — ровно так же, как он делает это в раскладке «Разделение». */
+  html[data-design] .focus-page[data-session-mode="TYPED_RECALL"] .focus-main > .focus-question-pane,
+  html[data-design] .focus-page[data-session-mode="INTERVIEW"] .focus-main > .focus-question-pane,
+  html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"] .focus-main > .focus-question-pane {
+    display: flex;
+    flex-direction: column;
+    grid-column: 1;
+    grid-row: 1 / -1;
+    position: sticky;
+    top: var(--space-5);
+  }
+  /* Все прочие дети рабочей колонки (форма, разбор, вердикт, сообщения) идут во
+     вторую колонку стопкой. Перечислять их поимённо нельзя: состав меняется по
+     фазе, и забытый ребёнок молча уехал бы в первую колонку. */
+  html[data-design] .focus-page[data-session-mode="TYPED_RECALL"] .focus-main > *:not(.focus-question-pane),
+  html[data-design] .focus-page[data-session-mode="INTERVIEW"] .focus-main > *:not(.focus-question-pane),
+  html[data-design] .focus-page[data-session-mode="CODE_CHALLENGE"] .focus-main > *:not(.focus-question-pane) {
+    grid-column: 2;
+    min-width: 0;
+  }
+}
+
+/* Поверхность письма: поле растёт до дна вьюпорта, а не стоит в шесть строк.
+   `svh` вместо `vh` — на мобильных Safari панель браузера иначе съедает низ поля
+   вместе с кнопкой (динамическая высота вьюпорта, WebKit). */
+html[data-design] .focus-page .typed-answer-input textarea {
+  min-height: max(14rem, calc(100svh - 26rem));
+  resize: vertical;
+}
+html[data-design] .focus-page .typed-answer-input.is-code textarea {
+  /* Код пишут длинными строками — перенос по словам ломает чтение отступов. */
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  tab-size: 4;
+}
+
+/* Опора рабочего места. Это НЕ подсказка к вопросу и не разбор: список говорит,
+   из чего складывается полный ответ в этом режиме, и одинаков для любого
+   вопроса. Поэтому он тихий — вторичный тон, без рамки-карточки, чтобы не
+   спорить с самим вопросом за внимание. */
+html[data-design] .focus-page .workspace-support {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: var(--rule-weight) solid var(--color-border-secondary);
+}
+html[data-design] .focus-page .workspace-support-title {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+}
+html[data-design] .focus-page .workspace-support-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-2);
+}
+html[data-design] .focus-page .workspace-support-list li {
+  position: relative;
+  padding-left: var(--space-5);
+  max-width: 52ch;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+/* Маркер — пустая клетка списка дел, а не буллет: пункт можно мысленно
+   отметить, и это ровно то действие, которого список просит. Клетка
+   декоративна (`aria-hidden` не нужен — это ::before), смысл несёт текст. */
+html[data-design] .focus-page .workspace-support-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.35em;
+  width: 0.75em;
+  height: 0.75em;
+  border: var(--rule-weight-strong) solid var(--color-border-strong);
+}

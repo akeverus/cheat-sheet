@@ -5,13 +5,17 @@
      вкладках браузера и SR не сообщал уникальное назначение (WCAG 2.4.2 Page Titled). Как в
      sidebar/mobile-nav (active=reviewMode?…), title теперь ветвится по reviewMode. */-->
 <head th:replace="~{fragments/head :: head(title=${reviewMode != null and reviewMode} ? 'Разбор ошибок — Подготовка к собеседованию' : 'Подготовка к собеседованию', includeMermaid=${needsMermaid == true}, includeChart=false, includeHighlight=true, page='focus')}"></head>
-<body class="focus-page">
+<!--/* data-session-mode стоит на <body>, а не на .app: у режима есть КОМПОЗИЦИЯ,
+     а токены композиции (--focus-main-measure и сумма полосы --focus-measure)
+     объявлены на .focus-page. Пока атрибут висел на потомке, переопределить
+     слагаемое было нельзя — сумма считалась выше по дереву, до него. */-->
+<body class="focus-page"
+      th:attr="data-session-mode=${interviewSession != null ? interviewSession.getMode().name() : null}">
 <a class="skip-link" href="#main-content">Перейти к вопросу</a>
 <svg th:replace="~{fragments/pixel-sprite :: sprite}"></svg>
 <svg th:replace="~{fragments/icons :: sprite}"></svg>
 <div class="app"
-     th:attr="data-session-mode=${interviewSession != null ? interviewSession.getMode().name() : null},
-              data-session-wrong=${interviewSession != null ? interviewSession.getWrong() : 0}">
+     th:attr="data-session-wrong=${interviewSession != null ? interviewSession.getWrong() : 0}">
     <aside th:replace="~{fragments/sidebar :: sidebar(active=${reviewMode != null and reviewMode} ? 'review' : 'focus')}"></aside>
     <div class="shell-main">
         <th:block th:replace="~{fragments/shell-head :: shell-head}"></th:block>
@@ -391,7 +395,21 @@
                 </th:block>
             </div>
         </div><!--/* /.question-materials */-->
-        </div><!--/* /.focus-question-pane : конец колонки вопроса (col1 в split) */-->
+            <!--/* Опора рабочего места стоит в колонке ЗАДАНИЯ, а не под полем ввода.
+         Замер на 2560 после первого захода: колонка задания заканчивалась на 290px
+         и оставляла ~1150px пустоты, а опора уезжала под сгиб — то есть метод
+         работы был не виден ровно тогда, когда по нему пишут. Здесь она попадает
+         в поле зрения рядом с редактором, а в одноколоночной раскладке читается
+         в естественном порядке: вопрос → что покрыть → писать.
+         Список приходит из ModeUtils#workspaceChecklist; пустой = блока нет. */-->
+    <section class="workspace-support" th:if="${typedInputMode and not #lists.isEmpty(workspaceChecklist)}"
+             aria-labelledby="workspace-support-title">
+        <h2 class="workspace-support-title" id="workspace-support-title">Что стоит покрыть</h2>
+        <ul class="workspace-support-list">
+            <li th:each="item : ${workspaceChecklist}" th:text="${item}">Пункт</li>
+        </ul>
+    </section>
+</div><!--/* /.focus-question-pane : конец колонки вопроса (col1 в split) */-->
 
         <div th:if="${flashcardMode}" class="flashcard-phase">
             <!--/* Одна подпись вместо четырёх взаимоисключающих th:if: выбор режима —
@@ -424,7 +442,16 @@
             </div>
 
             <!--/* Активная recall-сессия (FLASHCARD / typed-family): серверный reveal двигает SM-2 фазу. */-->
-            <div th:if="${sessionRecallMode and !flashcardRevealed and typedInputMode}">
+            <!--/* Рабочее место печатных режимов. До этой итерации здесь стояла та же
+                 форма, что и у флешкарты, только с ярлыком: экран интервью был экраном
+                 печатного ответа с другим словом над полем. Замер на 2560×1440 давал
+                 поле 750×145 при ~60% пустого вьюпорта.
+
+                 Опора (workspaceChecklist) — свойство РЕЖИМА из ModeUtils, а не текст
+                 отсюда: у интервью это структура устного ответа, у код-челленджа —
+                 что проверяют в решении. Пустой список = блока нет вовсе, поэтому
+                 разметка не знает, у каких режимов опора есть. */-->
+            <div th:if="${sessionRecallMode and !flashcardRevealed and typedInputMode}" class="typed-workspace">
                 <form method="post" th:action="@{/flashcard-reveal}" class="typed-answer-input"
                       th:data-question-id="${current.question.id}"
                       th:classappend="${codeChallengeMode} ? ' is-code' : ''">
