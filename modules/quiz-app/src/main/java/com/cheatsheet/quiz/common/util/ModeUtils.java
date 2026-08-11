@@ -58,6 +58,7 @@ public class ModeUtils {
     public record ModeOption(
             String name,
             String label,
+            String description,
             String startAction,
             int defaultCount,
             boolean unlimited,
@@ -158,6 +159,36 @@ public class ModeUtils {
     }
 
     /**
+     * Одна строка о том, ЧТО режим делает с вопросом.
+     *
+     * <p>Пока режим выбирался списком, восемь режимов различались только именем:
+     * «Печатный ответ», «Интервью» и «Код-челлендж» звучат похоже, а чем они
+     * отличаются, можно было узнать только запустив сессию. Список не даёт места
+     * объяснить — карточка даёт.
+     *
+     * <p>Формулировка описывает ДЕЙСТВИЕ, а не жанр: человек выбирает не «зал
+     * совета», а способ работы с вопросом.
+     *
+     * @param mode режим тестирования (может быть {@code null})
+     * @return короткое описание; для {@code null} — пустая строка
+     */
+    public String description(InterviewMode mode) {
+        if (mode == null) {
+            return "";
+        }
+        return switch (mode) {
+            case TRAINING -> "Вопросы по одному без счётчика — идёт, пока не остановишь";
+            case STUDY -> "Сначала читаешь эталон, потом проверяешь себя вариантами";
+            case FLASHCARD -> "Вспоминаешь ответ молча, раскрываешь и оцениваешь себя";
+            case TYPED_RECALL -> "Пишешь ответ словами, затем сверяешь с эталоном";
+            case INTERVIEW -> "Формулируешь развёрнутый ответ вслух, заметки — на память";
+            case CODE_CHALLENGE -> "Пишешь решение кодом в моноширинном редакторе";
+            case EXAM -> "Фиксированный набор, ошибки идут в счёт";
+            case MARATHON -> "Длинная серия вопросов подряд";
+        };
+    }
+
+    /**
      * Список пунктов для селекта «Режим» на {@code /settings}.
      *
      * <p>{@code defaultCount} берётся из той же конфигурации, по которой сервер потом
@@ -177,6 +208,7 @@ public class ModeUtils {
                 .map(mode -> new ModeOption(
                         mode.name(),
                         displayName(mode),
+                        description(mode),
                         startAction(mode),
                         mode == InterviewMode.EXAM || mode.usesTypedInput() ? examCount : marathonCount,
                         mode.isUnlimited(),

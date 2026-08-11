@@ -47,18 +47,21 @@ export function initShuffleTopic() {
 
 export function initSessionModeForm() {
   if (sessionModeBound) return;
-  const modeSelect = document.getElementById('session-mode-select');
+  // Группа радиокнопок, а не <select>: режим выбирается карточками. Слушатель
+  // висит на самой группе — событие change с радиокнопки всплывает, и восемь
+  // отдельных подписок не нужны.
+  const modeChoice = document.getElementById('session-mode-choice');
   const countField = document.getElementById('session-count-field');
   const startBtn = document.getElementById('session-start-btn');
-  if (!modeSelect || !countField || !startBtn) return;
+  if (!modeChoice || !countField || !startBtn) return;
   sessionModeBound = true;
 
-  // Подпись кнопки и признак «без счётчика» читаются с выбранного <option>
+  // Подпись кнопки и признак «без счётчика» читаются с ВЫБРАННОЙ радиокнопки
   // (data-cta / data-unlimited из ModeUtils.options). Раньше здесь лежала своя
   // копия всех восьми подписей, ключами — имена enum-констант: переименование
   // константы молча роняло CTA в нейтральное «Начать сессию», а подпись могла
   // разойтись с той же подписью в Java, ничего не сломав.
-  const selectedMode = () => modeSelect.selectedOptions[0];
+  const selectedMode = () => modeChoice.querySelector('input[name="mode"]:checked');
   const countInput = countField.querySelector('input[name="count"]');
   const preview = document.getElementById('session-preview');
   const previewCount = preview?.querySelector('[data-preview-count]');
@@ -137,16 +140,16 @@ export function initSessionModeForm() {
     countField.classList.toggle('hidden', opt?.dataset.unlimited === 'true');
     startBtn.textContent = opt?.dataset.cta || 'Начать сессию';
     const modeMirror = document.getElementById('filters-mode-mirror');
-    if (modeMirror) modeMirror.value = modeSelect.value;
+    if (modeMirror) modeMirror.value = selectedMode()?.value || '';
     updatePreview();
   };
 
   if (countInput) countInput.addEventListener('input', updatePreview);
-  modeSelect.addEventListener('change', () => {
+  modeChoice.addEventListener('change', () => {
     const def = selectedMode()?.dataset.defaultCount;
     if (countInput && def) countInput.value = def;
   });
-  modeSelect.addEventListener('change', sync);
+  modeChoice.addEventListener('change', sync);
   if (filtersForm) {
     filtersForm.addEventListener('change', updatePreview);
     filtersForm.addEventListener('input', updatePreview);
@@ -197,9 +200,9 @@ export function initLiveFilters() {
   const FILTER_DEBOUNCE_MS = 400;
   const scheduleApply = () => {
     syncSessionFromFilters();
-    const modeSelect = document.getElementById('session-mode-select');
+    const checkedMode = document.querySelector('#session-mode-choice input[name="mode"]:checked');
     const modeMirror = document.getElementById('filters-mode-mirror');
-    if (modeSelect && modeMirror) modeMirror.value = modeSelect.value;
+    if (checkedMode && modeMirror) modeMirror.value = checkedMode.value;
     clearTimeout(timer);
     timer = setTimeout(() => {
       if (typeof filtersForm.requestSubmit === 'function') filtersForm.requestSubmit();

@@ -290,7 +290,12 @@ class TemplateFragmentContractTest {
         // Функциональные ID форм/контролов сохранены (relayout, не смена поведения).
         assertThat(settings).contains("id=\"filters-form\"");
         assertThat(settings).contains("id=\"session-form\"");
-        assertThat(settings).contains("id=\"session-mode-select\"");
+        // Режим — группа радиокнопок (карточки), а не <select>: сторожим носитель
+        // выбора, а не тег. Контракт прежний — поле формы называется mode и уходит
+        // на сервер без JS.
+        assertThat(settings).contains("id=\"session-mode-choice\"");
+        assertThat(settings).contains("type=\"radio\" name=\"mode\"");
+        assertThat(settings).doesNotContain("id=\"session-mode-select\"");
         assertThat(settings).contains("id=\"personalization-card\"");
         assertThat(settings).contains("id=\"data-export-block\"");
         // Старый sidebar-каркас и его мёртвый тоггл сворачивания убраны редизайном.

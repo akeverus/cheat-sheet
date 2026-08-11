@@ -372,8 +372,10 @@ class InterviewControllerTest {
         String body = result.getContentAsString();
 
         assertThat(body).contains("name=\"weakTopics\"");
-        assertThat(body).contains("value=\"FLASHCARD\"");
-        assertThat(body).contains("selected=\"selected\">Флешкарты</option>");
+        // Порядок, а не соседство: Thymeleaf печатает th:checked ПОСЛЕ th:attr, поэтому
+        // между value и checked стоят data-*. Требовать их склейки значило бы закреплять
+        // порядок вывода движка, а контракт — «запрошенный режим и есть отмеченный».
+        assertThat(body).containsSubsequence("value=\"FLASHCARD\"", "checked=\"checked\"");
     }
 
     @Test

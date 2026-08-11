@@ -188,27 +188,44 @@
                             <input type="hidden" name="shuffle" th:if="${filter?.shuffle}" value="true">
                             <input type="hidden" name="weakTopics" th:if="${weakTopics}" value="true">
                             <input type="hidden" name="ordered" th:value="${filter == null or filter.ordered != false}">
-                            <label class="field">
-                                <span class="field-label">Режим:</span>
-                                <!--/* Пункты приходят из ModeUtils.options() (модель: sessionModes) — там же
-                                     живут порядок, русские подписи и подпись кнопки старта. Раньше все три
-                                     были вписаны сюда руками и сверялись с Java только на глаз: именно так
-                                     «Интенсив» однажды доехал до итогов как «MARATHON» (round-01 C22).
-                                     data-default-count — серверный per-mode дефолт из application.yml
-                                     (default-exam-count / default-marathon-count) по правилу
-                                     SessionFlowService.resolveSessionTotal; settings/session-form.js
-                                     подставляет его в счётчик при СМЕНЕ режима (SET-15).
-                                     data-unlimited — режим без счётчика (InterviewMode.isUnlimited). */-->
-                                <select name="mode" id="session-mode-select">
-                                    <option th:each="m : ${sessionModes}"
-                                            th:value="${m.name}"
-                                            th:text="${m.label}"
-                                            th:selected="${m.selected}"
-                                            th:attr="data-default-count=${m.defaultCount},
-                                                     data-cta=${m.startAction},
-                                                     data-unlimited=${m.unlimited}">Тренировка</option>
-                                </select>
-                            </label>
+                            <!--/* Режим — НЕ выпадающий список. Восемь режимов различались в нём
+                                 только именем, а несколько имён звучат похоже: чем они
+                                 отличаются, можно было узнать лишь запустив сессию. Список не
+                                 даёт места объяснить — набор радиокнопок даёт, и при этом
+                                 остаётся тем же полем формы:
+                                 name="mode" уходит на сервер без единой строки JS, клавиатура
+                                 работает нативно (стрелки внутри группы), а состояние выбора
+                                 несёт :checked, а не класс.
+
+                                 Пункты по-прежнему приходят из ModeUtils.options() (модель:
+                                 sessionModes) — там же живут порядок, русские подписи, описания
+                                 и подпись кнопки старта. Раньше всё это было вписано сюда руками
+                                 и сверялось с Java на глаз — расхождение таких копий однажды
+                                 показало пользователю имя enum-константы вместо подписи
+                                 (round-01 C22). Гейт EnumLabelSourceContractTest читает файл
+                                 целиком, включая комментарии, и это верно: копия таблицы
+                                 подписей опасна и прозой, потому что её никто не сверяет.
+                                 data-default-count — серверный per-mode дефолт из application.yml
+                                 по правилу SessionFlowService.resolveSessionTotal;
+                                 settings/session-form.js подставляет его в счётчик при СМЕНЕ
+                                 режима (SET-15). data-unlimited — режим без счётчика. */-->
+                            <fieldset class="field mode-choice" id="session-mode-choice">
+                                <legend class="field-label">Режим:</legend>
+                                <div class="mode-choice-grid">
+                                    <label class="mode-card" th:each="m : ${sessionModes}">
+                                        <input type="radio" name="mode" class="mode-card-input"
+                                               th:value="${m.name}"
+                                               th:checked="${m.selected}"
+                                               th:attr="data-default-count=${m.defaultCount},
+                                                        data-cta=${m.startAction},
+                                                        data-unlimited=${m.unlimited}">
+                                        <span class="mode-card-body">
+                                            <span class="mode-card-title" th:text="${m.label}">Тренировка</span>
+                                            <span class="mode-card-desc" th:text="${m.description}">описание</span>
+                                        </span>
+                                    </label>
+                                </div>
+                            </fieldset>
                             <!--/* ТРЕНИРОВКА — бесконечный режим без сессии (SessionFlowService.startSession:
                                  TRAINING → clearSession). settings/session-form.js (initSessionModeForm) скрывает счётчик
                                  и переименовывает CTA в «Начать тренировку» при TRAINING. */-->
