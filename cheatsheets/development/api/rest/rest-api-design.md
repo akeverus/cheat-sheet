@@ -81,7 +81,7 @@ updated: "2026-04-20"
   - [Spring HATEOAS](#spring-hateoas)
 - [Обработка ошибок](#обработка-ошибок)
   - [Структурированные ошибки](#структурированные-ошибки)
-  - [RFC 7807 Problem Details](#rfc-7807-problem-details)
+  - [RFC 9457 Problem Details](#rfc-9457-problem-details)
   - [Spring Boot Error Handling](#spring-boot-error-handling)
 - [Документация](#документация)
   - [OpenAPI/Swagger](#openapiswagger)
@@ -576,7 +576,7 @@ public class UserController {
 }
 ```
 
-### RFC `7807` Problem Details
+### RFC `9457` Problem Details
 
 ```json
 {
@@ -1082,7 +1082,7 @@ public class UserApiTest {
 
 **Причины:** Обработка `MethodArgumentNotValidException` без маппинга `FieldError`; централизованный handler возвращает обобщённый текст.
 
-**Решение:** Возвращать структурированные ошибки (RFC 7807 или формат с `field`, `message`); использовать `@Valid` и `BindingResult`; в `@ControllerAdvice` собирать `fieldErrors` из `ex.getBindingResult().getFieldErrors()`.
+**Решение:** Возвращать структурированные ошибки (RFC 9457, бывший RFC 7807, или формат с `field`, `message`); использовать `@Valid` и `BindingResult`; в `@ControllerAdvice` собирать `fieldErrors` из `ex.getBindingResult().getFieldErrors()`.
 
 ### Просадки при offset-based пагинации
 

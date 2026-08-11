@@ -53,7 +53,7 @@ API-документация — это контракт между команд
 
 - Базовый URL, схема аутентификации, rate-limits.
 - Для каждого endpoint: метод, путь, параметры, request-body, все коды ответа (включая ошибки) с примерами.
-- Форматы ошибок (RFC 7807 Problem Details — хороший дефолт).
+- Форматы ошибок (Problem Details — RFC 9457, бывший RFC 7807; хороший дефолт).
 - Pagination, sorting, filtering — их конвенции и лимиты.
 - Idempotency, версионирование, deprecation-политика.
 - Changelog и migration guides между версиями.

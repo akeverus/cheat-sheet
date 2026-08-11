@@ -40,7 +40,7 @@ updated: "2026-04-20"
 - [RFC 9110 — HTTP Semantics (обновление)](https://www.rfc-editor.org/rfc/rfc9110.html)
 - [REST API Tutorial](https://restfulapi.net/)
 - [JSON:API Specification](https://jsonapi.org/)
-- [RFC 7807 — Problem Details for HTTP APIs](https://www.rfc-editor.org/rfc/rfc7807)
+- [RFC 9457 — Problem Details for HTTP APIs (заменил RFC 7807)](https://www.rfc-editor.org/rfc/rfc9457)
 - [Google API Design Guide](https://cloud.google.com/apis/design)
 - [Microsoft REST API Guidelines](https://github.com/microsoft/api-guidelines)
 
@@ -71,7 +71,7 @@ updated: "2026-04-20"
 - **Ресурс** — существительное, множественное число: `/orders`, `/orders/{id}/items`. Глаголы только в исключениях (`/orders/{id}:cancel`).
 - **HTTP-методы.** GET — безопасный идемпотентный; POST — создание (не идемпотентен); PUT — полная замена, идемпотентен; PATCH — частичное обновление; DELETE — удаление, идемпотентен.
 - **Статус-коды.** 200 OK, 201 Created + Location, 204 No Content, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 409 Conflict, 422 Unprocessable Entity, 429 Too Many Requests, 5xx только для серверных ошибок.
-- **Ошибки.** RFC 7807 Problem Details: `type`, `title`, `status`, `detail`, `instance`.
+- **Ошибки.** Problem Details (RFC 9457, ранее 7807): `type`, `title`, `status`, `detail`, `instance`, media type `application/problem+json`. В Spring 6+ / Boot 3+ это `ProblemDetail`.
 - **Идемпотентность.** `Idempotency-Key` для POST платежей/заказов.
 - **Версионирование.** `/v1/...` (URL) — простое и очевидное; `Accept: application/vnd.api+json;version=1` — «чистый» REST, но сложнее в инструментах.
 
@@ -90,7 +90,7 @@ updated: "2026-04-20"
 ## Чек-лист production REST API
 
 - [ ] OpenAPI-спецификация в репо, линт Spectral в CI
-- [ ] Единый формат ошибок (RFC 7807)
+- [ ] Единый формат ошибок (Problem Details, RFC 9457)
 - [ ] Пагинация задана (cursor или offset + лимит)
 - [ ] Rate-limit заголовки (`X-RateLimit-*`, `Retry-After`)
 - [ ] Idempotency для критичных POST (payments, orders)

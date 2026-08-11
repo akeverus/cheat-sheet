@@ -2025,7 +2025,7 @@ function parseSize(sizeString) {
 
 **Причины:** Отсутствие централизованной обработки; разные middleware или handler для разных маршрутов.
 
-**Решение:** Ввести единый формат (например, RFC 7807 или внутренний стандарт); использовать `@ControllerAdvice` / глобальный error handler; документировать формат в **OpenAPI** (`components.responses`).
+**Решение:** Ввести единый формат — Problem Details (RFC 9457, ранее RFC 7807) или внутренний стандарт; использовать `@ControllerAdvice` / глобальный error handler; документировать формат в **OpenAPI** (`components.responses`).
 
 ### Токен аутентификации не работает после деплоя
 

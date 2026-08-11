@@ -1,6 +1,6 @@
 ---
 title: "Вопросы на собеседовании: Миграция на Spring Boot 3"
-description: "Миграция на Spring Boot 3: Java 17 baseline, javax→jakarta, GraalVM Native, AOT, HTTP Interface Clients, Problem Details RFC 7807, Virtual Threads, breaking changes"
+description: "Миграция на Spring Boot 3: Java 17 baseline, javax→jakarta, GraalVM Native, AOT, HTTP Interface Clients, Problem Details RFC 9457, Virtual Threads, breaking changes"
 tags:
   - interview
   - spring
@@ -46,7 +46,7 @@ Spring Boot 3.0 (ноябрь 2022) — крупнейший релиз за в�
 4. **GraalVM Native Image** — встроенная поддержка компиляции в нативный образ без сторонних плагинов.
 5. **Observability** — единый API для метрик и трассировки на Micrometer + OpenTelemetry вместо Spring Cloud Sleuth.
 6. **HTTP Interface Clients** — декларативный HTTP-клиент через `@HttpExchange` (альтернатива Feign).
-7. **Problem Details (RFC 7807)** — стандартный формат JSON-ответа для ошибок REST.
+7. **Problem Details (RFC 9457, бывший 7807)** — стандартный формат JSON-ответа для ошибок REST.
 
 Последующие версии добавляли возможности постепенно: 3.1 (май 2023), 3.2 (ноябрь 2023, поддержка Virtual Threads и `RestClient`), 3.3, 3.4.
 
@@ -175,7 +175,7 @@ WeatherClient weatherClient = HttpServiceProxyFactory
 
 ## Q6. Что такое Problem Details (RFC 7807) в Spring Boot 3?
 
-Это стандартизированный формат тела ответа об ошибке для REST API (RFC 7807). Вместо самописной структуры JSON у каждого сервиса — единый набор полей, понятный клиентам и инструментам. Spring Boot 3 поддерживает его из коробки через тип `ProblemDetail`.
+Это стандартизированный формат тела ответа об ошибке для REST API: изначально RFC 7807, с 2023 года — заменивший его RFC 9457 с тем же набором полей. Вместо самописной структуры JSON у каждого сервиса — единый набор полей, понятный клиентам и инструментам. Spring Boot 3 поддерживает его из коробки через тип `ProblemDetail`.
 
 **Поля стандарта:** `type` (URI-идентификатор типа ошибки), `title` (краткое человекочитаемое название), `status` (HTTP-код), `detail` (подробности конкретного случая), `instance` (URI этого экземпляра ошибки).
 

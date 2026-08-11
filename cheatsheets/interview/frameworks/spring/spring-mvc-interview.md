@@ -718,7 +718,7 @@ public class ResourceNotFoundException extends RuntimeException { }
 
 3. **`@ControllerAdvice` + `@ExceptionHandler`** — глобальный обработчик для всех контроллеров. Самый распространённый подход: вся обработка ошибок в одном месте.
 
-**Рекомендация:** в REST API берут `@RestControllerAdvice` (= `@ControllerAdvice` + `@ResponseBody`) и отдают единый формат ответа об ошибке — стандарт RFC 7807 Problem Details, чтобы клиенты парсили ошибки одинаково.
+**Рекомендация:** в REST API берут `@RestControllerAdvice` (= `@ControllerAdvice` + `@ResponseBody`) и отдают единый формат ответа об ошибке — стандарт Problem Details (RFC 9457, ранее RFC 7807), чтобы клиенты парсили ошибки одинаково.
 
 ## Q24. (!) Что такое `@ExceptionHandler`?
 
@@ -751,7 +751,7 @@ public class GlobalExceptionHandler {
 }
 ```
 
-`ProblemDetail` (Spring 6+) — встроенная реализация RFC 7807, стандартного формата ответов об ошибках в REST API (поля `type`, `title`, `status`, `detail` + произвольные свойства).
+`ProblemDetail` (Spring 6+ / Spring Boot 3+) — встроенная реализация этого формата: media type `application/problem+json`, поля `type`, `title`, `status`, `detail`, `instance` + произвольные свойства. Актуальный номер стандарта — RFC 9457: в июле 2023 года он заменил RFC 7807, добавив уточнения и реестр типов ошибок, но набор полей остался тем же. В обиходе и в имени класса стандарт до сих пор часто называют «7807».
 
 **Подводный камень:** в одном `@ControllerAdvice` нельзя объявить два обработчика для одного и того же типа исключения — `Spring` не поймёт, какой выбрать.
 

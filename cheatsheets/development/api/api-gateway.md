@@ -625,7 +625,7 @@ Stateful-конфигурация (rate limit counters, sessions) — во вн�
 - Дашборды per route: rate, latency, errors. Алерты по SLO.
 - Версионирование API в URL, sunset-headers при deprecation.
 - Документация — OpenAPI 3, размещена на developer portal с песочницей.
-- Стандартные коды ошибок (RFC 7807 problem+json), не custom JSON.
+- Стандартные коды ошибок (RFC 9457, бывший 7807 — problem+json), не custom JSON.
 - Стандартные headers: `X-Request-ID`, `X-Correlation-ID`, `Retry-After`.
 - Не вкладывай бизнес-логику. Gateway — тонкий слой маршрутизации
   и cross-cutting функций.

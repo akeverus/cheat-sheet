@@ -1156,7 +1156,7 @@ public RequestResponsePact createPact(PactDslWithProvider builder) {
 
 ## Q31. (!) Документирование ошибок: ProblemDetail (RFC 7807)
 
-**RFC 7807 (Problem Details for HTTP APIs)** — стандартный машиночитаемый формат тела ошибки для REST API. Проблема, которую он решает: без стандарта каждый сервис придумывает свою форму ошибки (`{"error": ...}`, `{"message": ...}`, `{"code": ...}`), и клиентам приходится разбирать их по-разному. RFC 7807 задаёт единый набор полей (`type`, `title`, `status`, `detail`, `instance`) с фиксированным media type `application/problem+json`. Spring Boot 3 поддерживает его нативно через класс `ProblemDetail`.
+**Problem Details for HTTP APIs** — стандартный машиночитаемый формат тела ошибки для REST API. Формат описан в RFC 7807, а с 2023 года действует заменивший его RFC 9457 с тем же набором полей, поэтому в названиях классов и в обиходе часто остаётся старый номер. Проблема, которую он решает: без стандарта каждый сервис придумывает свою форму ошибки (`{"error": ...}`, `{"message": ...}`, `{"code": ...}`), и клиентам приходится разбирать их по-разному. RFC 7807 задаёт единый набор полей (`type`, `title`, `status`, `detail`, `instance`) с фиксированным media type `application/problem+json`. Spring Boot 3 поддерживает его нативно через класс `ProblemDetail`.
 
 Структура:
 ```json
