@@ -54,10 +54,6 @@ export function initPersonalization() {
 
   wireSegControl('theme-pref-control', 'data-theme-pref', 'Тема оформления',
     () => window.__theme.pref(), (v) => window.__theme.set(v), 'themechange');
-  if (window.__layout) {
-    wireSegControl('layout-pref-control', 'data-layout-pref', 'Раскладка',
-      () => window.__layout.current(), (v) => window.__layout.set(v), 'layoutchange');
-  }
   if (window.__motion) {
     wireSegControl('motion-pref-control', 'data-motion-pref', 'Движение',
       () => window.__motion.current(), (v) => window.__motion.set(v), 'motionchange');

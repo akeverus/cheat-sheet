@@ -9,30 +9,6 @@ function dispatch(name, detail) {
   try { document.dispatchEvent(new CustomEvent(name, { detail })); } catch (_) { /* ignore */ }
 }
 
-// --- Layout ---
-const LAYOUTS = ['flow', 'split', 'grid'];
-function readLayout() {
-  try {
-    const l = localStorage.getItem('layout');
-    return LAYOUTS.indexOf(l) >= 0 ? l : 'flow';
-  } catch (_) { return 'flow'; }
-}
-let layout = readLayout();
-root.setAttribute('data-layout', layout);
-window.__layout = {
-  current() { return layout; },
-  list: LAYOUTS.slice(),
-  set(next) {
-    layout = LAYOUTS.indexOf(next) >= 0 ? next : 'flow';
-    try {
-      if (layout === 'flow') localStorage.removeItem('layout');
-      else localStorage.setItem('layout', layout);
-    } catch (_) { /* private mode */ }
-    root.setAttribute('data-layout', layout);
-    dispatch('layoutchange', { layout });
-  }
-};
-
 // --- Reading width ---
 const READING_WIDTHS = ['standard', 'wide'];
 function readReadingWidth() {

@@ -131,7 +131,6 @@ export function initInterviewForm() {
   thinkTime.markQuestionShown();
 
   const optionInputs = Array.from(form.querySelectorAll('input[name="optionId"]'));
-  const ANSWER_LAYOUT_SKEW_THRESHOLD = 1.4;
   let answered = false;
   let clientAttemptId = null;
   let clientAttemptQuestionId = null;
@@ -159,28 +158,6 @@ export function initInterviewForm() {
     return clientAttemptId;
   }
 
-  function updateAnswerLayoutMode() {
-    const labels = Array.from(optionsContainer.querySelectorAll('label[data-option-id]'));
-    if (labels.length < 2) return;
-    const lengths = labels.map((label) => {
-      const text = label.querySelector('span')?.textContent || '';
-      return Math.max(1, text.replace(/\s+/g, ' ').trim().length);
-    });
-    const minLength = Math.min(...lengths);
-    const maxLength = Math.max(...lengths);
-    const lengthRatio = maxLength / minLength;
-    const inlineCodeCounts = labels.map((label) => label.querySelectorAll('span:not([class]) code').length);
-    const hasInlineCodeSkew = Math.max(...inlineCodeCounts) > Math.min(...inlineCodeCounts);
-    const forceSingleColumn = lengthRatio > ANSWER_LAYOUT_SKEW_THRESHOLD || hasInlineCodeSkew;
-    optionsContainer.dataset.answerLayout = forceSingleColumn ? 'single' : 'balanced';
-    optionsContainer.dataset.answerSkew = lengthRatio.toFixed(2);
-    if (forceSingleColumn) {
-      optionsContainer.dataset.answerLayoutReason = hasInlineCodeSkew ? 'inline-code-skew' : 'length-skew';
-    } else {
-      delete optionsContainer.dataset.answerLayoutReason;
-    }
-  }
-
   function updateSubmitAvailability() {
     if (answered) return;
     const selected = form.querySelector('input[name="optionId"]:checked');
@@ -203,7 +180,6 @@ export function initInterviewForm() {
     return true;
   }
 
-  updateAnswerLayoutMode();
   updateSubmitAvailability();
 
   optionInputs.forEach((input) => {

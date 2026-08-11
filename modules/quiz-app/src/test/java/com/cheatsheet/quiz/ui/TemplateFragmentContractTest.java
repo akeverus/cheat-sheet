@@ -1006,7 +1006,6 @@ class TemplateFragmentContractTest {
         assertThat(head).contains("setAttribute('data-motion'");
         assertThat(head).contains("setAttribute('data-pixel'");
         // Остальные оси — personalization-bootstrap.js (module load).
-        assertThat(bootstrapJs).contains("setAttribute('data-layout'");
         assertThat(bootstrapJs).contains("setAttribute('data-reading-width'");
         assertThat(bootstrapJs).contains("setAttribute('data-density'");
         // OPS-005: vendor-ассеты self-hosted, без CDN SRI. @font-face едет первой строкой ленты.
