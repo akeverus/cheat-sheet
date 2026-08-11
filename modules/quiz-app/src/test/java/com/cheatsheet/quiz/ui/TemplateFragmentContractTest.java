@@ -372,8 +372,8 @@ class TemplateFragmentContractTest {
      *
      * <p>Гейт держит именно порядок в РАЗМЕТКЕ, а не в CSS: перестановка через
      * {@code order} развела бы видимый порядок с клавиатурным обходом
-     * (WCAG 2.4.3). Плюс проверяем, что подпись каталога не обещает сужения,
-     * которого он не делает.</p>
+     * (WCAG 2.4.3). С iter-95 гейт вдобавок стережёт, чтобы каталог разделов не
+     * вернулся на /stats: он отвечал на вопрос /topics, а не аналитики.</p>
      */
     @Test
     void statsSelectionCardPrecedesFullBankCatalog() throws IOException {
@@ -381,19 +381,20 @@ class TemplateFragmentContractTest {
 
         int panel = stats.indexOf("id=\"stats-panel-topics\"");
         int selection = stats.indexOf("class=\"card filter-bar\"");
-        int catalog = stats.indexOf("class=\"card topic-catalog\"");
 
         assertThat(panel).isNotNegative();
         assertThat(selection).isGreaterThan(panel);
-        assertThat(catalog).isGreaterThan(selection);
 
-        // Ни один из двух блоков не переставлен обратно средствами CSS.
-        assertThat(readStructuralCss()).doesNotContain(".topic-catalog { order");
+        // Полоса отбора не переставлена обратно средствами CSS.
         assertThat(readStructuralCss()).doesNotContain(".filter-bar { order");
 
-        // Подпись каталога больше не обещает, что он сузится вместе с отбором.
-        assertThat(stats).doesNotContain("фильтры и таблица ниже сузятся до неё");
-        assertThat(stats).contains("Счётчики разделов — по всему банку");
+        // Каталог разделов со /stats СНЯТ: он отвечал на вопрос страницы /topics
+        // («что есть и куда пойти»), а не аналитики («как я иду»), и занимал
+        // 2349px из 9377px мобильной страницы. Гейт стережёт, чтобы он не вернулся
+        // — ни разметкой, ни правилом порядка в CSS.
+        assertThat(stats).doesNotContain("class=\"card topic-catalog\"");
+        assertThat(stats).doesNotContain("Счётчики разделов — по всему банку");
+        assertThat(readStructuralCss()).doesNotContain(".topic-catalog-grid {");
     }
 
     /**

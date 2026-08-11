@@ -396,87 +396,20 @@
         </form>
     </section>
 
-    <!--/* Каталог разделов. Банк — ~320 тем: таблица ниже отвечает «как дела с
-         темой X», но не «с чего начать». Раздел — единственный уровень, на
-         котором каталог умещается в экран.
+    <!--/* Здесь стоял каталог «Разделы» — десять карточек разделов со своим
+         прогрессом. Он подписывал себя сам: «это выбор, куда пойти дальше», то
+         есть отвечал ровно на тот вопрос, ради которого существует /topics.
+         Аналитика отвечает на «как я иду», и третья копия каталога (после
+         /topics и полосы «Отбор») конкурировала с этим ответом за внимание.
 
-         Единственный блок панели, который НАМЕРЕННО считается по полному банку
-         (FRD-025): это навигация «куда пойти дальше», и если бы она схлопывалась
-         до выбранного раздела, то при `?group=foundation` показывала бы ровно
-         тот раздел, из которого пользователь и хочет уйти. Гейт на разделение
-         источников — `StatsPageServiceTest
-         .everyTopicSliceIsScopedToSelectionWhileCatalogStaysFullBank`.
+         Замер 390×844 до снятия: каталог занимал 2349px из 9377px страницы —
+         четверть мобильной аналитики уходила на навигацию, которая уже есть
+         отдельной страницей первого уровня.
 
-         На карточке ДВА действия, и это не избыточность. Каталог отвечает на
-         вопрос «куда пойти», и ответ бывает двух видов: «посмотреть, как дела»
-         и «пойти заниматься». Заголовок ведёт к разбору и растянут на всю
-         карточку (::after) — это ожидаемое поведение на странице аналитики,
-         страница не меняется. «Тренировать» уводит на /?group=… и потому
-         обязана быть отдельной явной ссылкой: незаявленный уход с аналитики в
-         сессию — не то, чего ждут от клика по карточке.
-
-         Картинка декоративная (aria-hidden) — смысл несёт заголовок; если
-         файла нет, карточка теряет опознавательный знак, но не содержание. */-->
-    <section class="card topic-catalog" th:if="${groupCatalog != null and !#lists.isEmpty(groupCatalog)}"
-             aria-labelledby="topic-catalog-title">
-        <h2 class="mt-0" id="topic-catalog-title">Разделы</h2>
-        <p class="muted topic-catalog-hint">Счётчики разделов — по всему банку, независимо от отбора выше: это выбор, куда пойти дальше.</p>
-        <ul class="topic-catalog-grid">
-            <li th:each="group : ${groupCatalog}">
-                <div class="topic-catalog-card"
-                     th:classappend="${selectedGroup != null and selectedGroup == group.id()} ? 'is-current' : ''">
-                    <img class="topic-catalog-icon" alt="" aria-hidden="true" width="48" height="48"
-                         loading="lazy" decoding="async"
-                         th:if="${!#strings.isEmpty(group.icon())}"
-                         th:src="@{'/img/' + ${group.icon()}}">
-                    <div class="topic-catalog-body">
-                        <h3 class="topic-catalog-name">
-                            <a class="topic-catalog-detail" th:href="@{/stats(group=${group.id()})} + '#topics'"
-                               th:attr="aria-current=${selectedGroup != null and selectedGroup == group.id()} ? 'true' : null"
-                               th:text="${group.title()}">Раздел</a>
-                        </h3>
-                        <p class="topic-catalog-desc" th:text="${group.description()}">Описание</p>
-                        <!--/* Плюрализация через @plural.pick, как в соседних карточках:
-                             «1 тема · 1 вопрос», а не «1 тем · 1 вопросов». */-->
-                        <p class="topic-catalog-counts"
-                           th:text="${group.topicCount() + ' ' + @plural.pick(group.topicCount(), 'тема', 'темы', 'тем')
-                               + ' · ' + group.questionCount() + ' ' + @plural.pick(group.questionCount(), 'вопрос', 'вопроса', 'вопросов')}">0 тем · 0 вопросов</p>
-                        <span class="topic-progress-bar" role="img"
-                              th:attr="aria-label='Освоено ' + ${group.learnedCount()} + ' из ' + ${group.questionCount()} + ' вопросов раздела'">
-                            <span class="topic-progress-learned"
-                                  th:attr="data-progress=${group.learnedPercent()}"></span>
-                        </span>
-                        <div class="topic-catalog-meta">
-                            <span class="topic-progress-label" aria-hidden="true"
-                                  th:text="${group.learnedCount()} + '/' + ${group.questionCount()}">0/0</span>
-                            <!--/* «К повтору» и «новых» — разные обещания. Раздел, где не
-                                 было ни одного ответа, не может звать повторять: повторять
-                                 там нечего. Пока чип считал вместе то и другое, карточка
-                                 писала «626 к повтору» ровно там же, где «нет ответов». */-->
-                            <span class="topic-due-chip" th:if="${group.repeatCount() > 0}"
-                                  th:text="${group.repeatCount()} + ' к повтору'">0 к повтору</span>
-                            <span class="topic-fresh-chip" th:if="${group.freshCount() > 0}"
-                                  th:text="${group.freshCount()} + ' новых'">0 новых</span>
-                            <!--/* Точность null → «нет ответов», а не 0%: неотвеченный
-                                 раздел не равен полностью проваленному. Но если раздел
-                                 целиком новый, это уже сказано чипом «N новых». */-->
-                            <span class="topic-catalog-accuracy" th:if="${group.accuracyPercent() != null}"
-                                  th:classappend="${group.accuracyPercent() >= 80 ? 'accuracy-high' :
-                                      (group.accuracyPercent() >= 50 ? 'accuracy-mid' : 'accuracy-low')}"
-                                  th:text="${#numbers.formatDecimal(group.accuracyPercent(), 1, 0)} + '% точность'">0% точность</span>
-                            <span class="topic-catalog-accuracy is-untouched"
-                                  th:if="${group.accuracyPercent() == null and group.freshCount() < group.questionCount()}">нет ответов</span>
-                        </div>
-                        <!--/* Название раздела в скрытом хвосте: при переборе ссылок
-                             скринридером десять одинаковых «Тренировать» неразличимы. */-->
-                        <a class="topic-catalog-start" th:href="@{/(group=${group.id()})}">Тренировать<span
-                                class="visually-hidden" th:text="' раздел ' + ${group.title()}"></span><span
-                                aria-hidden="true"> →</span></a>
-                    </div>
-                </div>
-            </li>
-        </ul>
-    </section>
+         Отбор по разделу НЕ потерян: он живёт в полосе «Отбор» выше
+         (селект «Раздел»), и именно он, а не каталог, менял выборку страницы.
+         Ссылка «Тренировать раздел» тоже не потеряна — она есть на /topics
+         у каждой темы. */-->
 
     <!--/* Поиск без результатов: раньше секция просто исчезала, и было непонятно,
          выполнился ли поиск. Показываем явное «ничего не найдено». */-->
