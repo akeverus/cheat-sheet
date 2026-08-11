@@ -18,9 +18,9 @@ updated: "2026-05-15"
 ---
 # Вопросы на собеседовании: Паттерн-матчинг в Java
 
-`Pattern Matching` — серия JEP в Java 16-21, заметно расширяющая `instanceof` и `switch`: проверка типа теперь сразу даёт типизированную переменную, а `switch` умеет матчить типы и деконструировать records. Сюда входят type patterns, record patterns, guarded patterns и exhaustiveness checking по sealed-типам. Частая тема современных Java-собеседований.
+`Pattern Matching` — серия JEP начиная с Java 16, заметно расширяющая `instanceof` и `switch`: проверка типа теперь сразу даёт типизированную переменную, а `switch` умеет матчить типы и деконструировать records. Сюда входят type patterns, record patterns, guarded patterns и exhaustiveness checking по sealed-типам. Частая тема современных Java-собеседований.
 
-Дата последнего обновления: 2026-04-20
+Дата последнего обновления: 2026-05-15
 
 ## Полезные ссылки
 
@@ -49,7 +49,7 @@ updated: "2026-05-15"
 
 ```java
 // До pattern matching — verbose и небезопасно
-Object obj = ...;
+Object obj = getValue();
 if (obj instanceof String) {
     String s = (String) obj;      // ручной cast
     System.out.println(s.length());
@@ -83,12 +83,12 @@ if (obj instanceof Integer i) {
     System.out.println(i + 1);   // i уже Integer, auto-unboxing
 }
 
-// Scope binding — i доступен только если условие true
+// Сужение в && — s доступен уже во второй части условия
 if (obj instanceof String s && !s.isEmpty()) {
     System.out.println(s.length());
 }
 
-// Работает с && и ||
+// Расширение области через ранний return
 if (!(obj instanceof String s)) {
     return -1;  // s не доступен здесь
 }
@@ -114,7 +114,9 @@ use(s);  // можно, компилятор знает, что s определ
 
 **Switch expression** (Java 14, JEP 361) — это `switch`, который возвращает значение, использует стрелочный синтаксис `case L -> ...` без проваливания (fall-through) и не требует `break`. Это фундамент, на котором в Java 21 построили pattern matching для `switch`: тот же стрелочный синтаксис, но в `case` теперь можно писать не только константы, а шаблоны (`case Integer i ->`).
 
-**Почему это связанные вещи.** Старый statement-`switch` сравнивал только с константами и проваливался между ветками без `break`. Чтобы добавить матчинг по типам, нужен был синтаксис без fall-through (иначе binding variable «протекала» бы в следующий case) и с явным возвратом значения — именно это и дал switch expression.
+**Почему это связанные вещи.** Старый statement-`switch` сравнивал только с константами, проваливался между ветками без `break` и ничего не возвращал. Switch expression снял оба ограничения, и на эту форму естественно легли шаблоны: ветка сразу отдаёт значение, а связанная переменная не может утечь в соседний case.
+
+Двоеточная форма шаблоны тоже принимает (`case Integer i: ... break;` компилируется на Java 21), но проваливание в ветку с шаблоном запрещено жёстко: `illegal fall-through to a pattern` — ошибка компиляции, а не тихая утечка переменной. Стрелочный синтаксис просто убирает этот класс ошибок из кода.
 
 ```java
 // Старый switch statement — requires break, падения вниз
@@ -260,9 +262,11 @@ case Integer i when i == 0 -> ...;  // недостижим!
 - **`case null, default`** — объединяет: `null` и всё непокрытое идут в одну ветку. Удобно, когда `null` и «неизвестный тип» обрабатываются одинаково.
 
 ```java
-// ДО Java 21 — switch бросал NPE на null
-switch (obj) {
-    case String s -> ...;  // если obj == null → NullPointerException
+// ДО Java 21 — switch по строке или enum падал на null
+String key = null;
+switch (key) {          // NullPointerException на входе в switch
+    case "a" -> handleA();
+    default -> handleOther();
 }
 
 // Java 21+ — явная обработка null
@@ -332,7 +336,7 @@ double perimeter(Shape shape) {
 
 `yield` возвращает значение из **блочной** ветки `case { ... }` switch expression. Стрелка `case L -> выражение` сама подставляет результат выражения, но если в ветке нужно несколько операторов (логи, промежуточные вычисления), её оборачивают в `{ }` — и тогда значение из блока возвращается через `yield`.
 
-**Зачем отдельное ключевое слово.** `return` внутри блока `case` вышел бы из всего метода, а не из switch. `yield` означает «это результат данной ветки switch expression» — switch вычисляется в значение, и выполнение продолжается дальше.
+**Зачем отдельное ключевое слово.** В switch expression `return` запрещён вовсе: `attempt to return out of a switch expression` — ошибка компиляции. Отдавать значение ветки нечем, кроме `yield`; он означает «это результат данной ветки», после чего switch вычисляется в значение и выполнение продолжается дальше. Блочная ветка обязана дать значение или бросить исключение — иначе `switch rule completes without providing a value`. (В switch-**операторе** `return` легален и выходит из метода — там `yield` не нужен, потому что значения нет.)
 
 ```java
 int process(int x) {
@@ -513,13 +517,14 @@ Pattern matching пришёл в Java позже, чем в Scala и Kotlin, и 
 
 ## Q14. Как pattern matching взаимодействует с unboxing и преобразованием типов?
 
-Pattern matching умеет **авто-unboxing**: если тип шаблона — примитив, а значение хранится как обёртка, оно распаковывается. Но это работает только когда тип задан напрямую (как тип компонента record). Через границу дженерика (где из-за erasure стоит обёртка `T`) распаковки до примитива нет.
+Сам шаблон в Java 21 ничего не распаковывает. Тип, написанный в шаблоне, обязан быть **применим к объявленному типу компонента**: примитив совпадает с примитивом, ссылочный — со ссылочным. Распаковка, которую видно в коде, — обычный auto-unboxing в месте использования переменной, а не работа матчинга.
 
 Ключевые случаи:
 
-- **`instanceof Integer i`** → `i` имеет тип `Integer`; при использовании в арифметике срабатывает обычный auto-unboxing.
-- **Деконструкция `Box(int v)`**, где компонент объявлен как `int`, — `v` сразу примитив `int`, без обёртки.
-- **Через дженерик нельзя сразу в примитив:** `Wrapper<Integer>(int v)` не скомпилируется — параметр типа всегда ссылочный (`Integer`), к примитиву его не привести в шаблоне; пишут `Wrapper<Integer>(Integer v)`.
+- **`instanceof Integer i`** → `i` имеет тип `Integer`; распаковка происходит уже в арифметике (`i + 1`) — это обычный auto-unboxing.
+- **Деконструкция `Box(int v)`**, где компонент объявлен как `int`, — `v` сразу примитив, потому что компонент и есть примитив; распаковывать нечего.
+- **Примитивный шаблон к обёртке не применить:** у `record BoxI(Integer value)` шаблон `BoxI(int v)` даёт `pattern of type int is not applicable at Integer`. Дженерики тут ни при чём — ошибка та же и без параметров типа, а примитивный компонент внутри параметризованной записи (`Pair<Integer>(Integer v, int n)`) связывается нормально.
+- **Примитивных type-шаблонов в 21 нет:** `o instanceof int i` — `unexpected type; required: class or array`.
 
 ```java
 // Unboxing через pattern
@@ -535,13 +540,17 @@ if (b instanceof Box(int v)) {  // v — int, не Integer
     int doubled = v * 2;
 }
 
-// Но не работает на generic bounds
-record Wrapper<T>(T value) {}
-Wrapper<Integer> w = new Wrapper<>(42);
-// if (w instanceof Wrapper<Integer>(int v))  // ОШИБКА — Integer не int
-if (w instanceof Wrapper<Integer>(Integer v)) { ... }
-// Из Object этот шаблон тоже не пройдёт: параметризованный record pattern
-// требует, чтобы параметр был виден в типе выражения
+// Граница — объявленный тип компонента, а не дженерик
+record BoxI(Integer value) {}
+BoxI bi = new BoxI(42);
+// if (bi instanceof BoxI(int v))          // ОШИБКА: pattern of type int is not applicable at Integer
+if (bi instanceof BoxI(Integer v)) { int j = v + 1; }   // распаковка происходит в v + 1
+
+record Pair<T>(T value, int n) {}
+Pair<Integer> p = new Pair<>(5, 10);
+if (p instanceof Pair<Integer>(Integer v, int n)) { ... }  // примитивный компонент n связывается
+// Из Object параметризованный record pattern не пройдёт: параметр должен быть виден
+// в типе выражения
 ```
 
 ## Q15. Когда стоит / не стоит использовать pattern matching?
