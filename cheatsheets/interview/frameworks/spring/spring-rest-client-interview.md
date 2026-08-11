@@ -230,7 +230,7 @@ User user = client.get().uri("/users/1")
 List<User> users = client.get().uri("/users")
     .retrieve()
     .body(new ParameterizedTypeReference<List<User>>() {});
-    // или в Java 11+: .body(new ParameterizedTypeReference<>() {})
+    // или короче, начиная с Java 9: .body(new ParameterizedTypeReference<>() {})
 
 // Map:
 Map<String, Object> data = client.get().uri("/info")
@@ -356,10 +356,12 @@ public class OrderService {
 | `@RequestHeader` | HTTP-заголовок |
 | `@RequestBody` | Тело запроса |
 | `@CookieValue` | Cookie |
+| `@RequestPart` | Часть multipart-запроса |
 | `URI` | Динамический URL (переопределяет baseUrl) |
+| `UriBuilderFactory` | Своя фабрика URI для этого вызова |
 | `HttpMethod` | Динамический метод HTTP |
 
-Отдельно стоят `URI` и `HttpMethod` без аннотаций: они задают цель и метод динамически в рантайме, переопределяя то, что прописано в аннотациях интерфейса.
+Отдельно стоят параметры без аннотаций — `URI`, `UriBuilderFactory` и `HttpMethod`: они распознаются по типу аргумента и задают цель и метод динамически в рантайме, переопределяя то, что прописано в аннотациях интерфейса.
 
 ```java
 @HttpExchange
@@ -368,7 +370,7 @@ public interface SearchClient {
     @GetExchange("/search")
     SearchResult search(
         @RequestParam String query,
-        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "1") Integer page,  // не int: defaultValue сработает только при null
         @RequestHeader("Accept-Language") String lang
     );
 
@@ -405,7 +407,7 @@ UserClient client = factory.createClient(UserClient.class);
 
 Интерфейс `UserClient` одинаков для обоих — отличается только конфигурация. Это и есть смысл декларативного подхода: смену синхронного клиента на реактивный (или наоборот) делают в одном бине, не трогая код вызывающих сервисов.
 
-**Базовый URL** задаётся на самом клиенте перед оборачиванием в адаптер — `RestClient.builder().baseUrl("https://users.service")` (или `WebClient.builder().baseUrl(...)`). Отдельного property-шортката вроде `spring.http.interface.default-base-url` в Spring Boot нет; декларативная авто-регистрация HTTP-интерфейсов из конфигурации появилась только в Spring Boot 3.4.
+**Базовый URL** задаётся на самом клиенте перед оборачиванием в адаптер — `RestClient.builder().baseUrl("https://users.service")` (или `WebClient.builder().baseUrl(...)`). Отдельного property-шортката вроде `spring.http.interface.default-base-url` в Spring Boot нет. Свойства `spring.http.client.*` (таймауты, редиректы, выбор фабрики) настраивают транспорт для всех блокирующих клиентов, но базовый адрес ими не задаётся — его по-прежнему ставят на builder'е клиента.
 
 ---
 
@@ -472,7 +474,7 @@ RestClient client = RestClient.create(oldTemplate);
 // Сохраняет MessageConverters, RequestFactory, Interceptors
 ```
 
-**Шаг 2 — переписать вызовы.** Каждый перегруженный метод `RestTemplate` имеет прямой fluent-аналог. Логика та же — меняется только форма записи:
+**Шаг 2 — переписать вызовы.** Основные перегруженные методы `RestTemplate` имеют прямой fluent-аналог (у редких вроде `postForLocation()` или `optionsForAllow()` его придётся собрать вручную). Логика та же — меняется только форма записи:
 ```java
 // RestTemplate
 String result = restTemplate.getForObject(url, String.class);
