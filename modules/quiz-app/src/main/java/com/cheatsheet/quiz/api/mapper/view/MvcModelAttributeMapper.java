@@ -388,6 +388,7 @@ public class MvcModelAttributeMapper {
         model.addAttribute("accuracyTrend", state.accuracyTrend());
         model.addAttribute("accuracyTrendJson", state.accuracyTrendJson());
         model.addAttribute("groupCatalog", state.groupCatalog());
+        model.addAttribute("progression", state.progression());
         // Передаём max(count) уже вычисленный — Thymeleaf 3.1 запрещает
         // T(java.util.Collections) в SpEL, считать в шаблоне нельзя.
         long maxForecast = state.reviewForecast() == null ? 1L
@@ -423,8 +424,24 @@ public class MvcModelAttributeMapper {
 
     /**
      * Маппит summary завершенной сессии.
+     *
+     * <p>Рядом кладётся {@code progression} — то же «место в пути», что показывает
+     * аналитика. Собирается из уже посчитанной геймификации сессии, а не запросом:
+     * уровень, опыт внутри уровня и цена уровня в {@code Gamification} уже есть, и
+     * второй источник тех же чисел развёл бы два экрана по разным значениям.</p>
      */
     public void applySessionSummary(Model model, SessionSummary summary) {
         model.addAttribute("summary", summary);
+        model.addAttribute("progression", progressionOf(summary));
+    }
+
+    private static com.cheatsheet.quiz.domain.Progression progressionOf(SessionSummary summary) {
+        SessionSummary.Gamification g = summary == null ? null : summary.getGamification();
+        if (g == null || g.xpToNextLevel() <= 0) {
+            return null;
+        }
+        return new com.cheatsheet.quiz.domain.Progression(
+                g.rank(), g.level(), g.xpIntoLevel(), g.xpToNextLevel(),
+                g.totalXp(), g.currentStreak(), g.bestStreak());
     }
 }

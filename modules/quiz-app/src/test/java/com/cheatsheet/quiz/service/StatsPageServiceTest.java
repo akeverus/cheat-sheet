@@ -54,6 +54,8 @@ class StatsPageServiceTest {
     TopicUtils topicUtils;
     @Mock
     DailyActivityRepository dailyActivityRepository;
+    @Mock
+    com.cheatsheet.quiz.feature.interview.service.progress.ExperienceService experienceService;
 
     StatsPageService service;
 
@@ -61,8 +63,13 @@ class StatsPageServiceTest {
     void setUp() {
         service = new StatsPageService(facade, questionRepository, topicCatalogService,
                 searchService, objectMapper, questionStatsRepository, learningMetricsService,
-                topicUtils, dailyActivityRepository);
+                topicUtils, dailyActivityRepository, experienceService);
         lenient().when(learningMetricsService.compute()).thenReturn(LearningMetrics.EMPTY);
+        // Прогрессия собирается на каждом построении страницы: ступень не зависит от отбора,
+        // но и не бывает пустой — «Ученик, уровень 1» это тоже ответ на «где я».
+        lenient().when(experienceService.snapshot())
+                .thenReturn(com.cheatsheet.quiz.domain.UserExperience.EMPTY);
+        lenient().when(experienceService.currentStreak()).thenReturn(0);
         lenient().when(dailyActivityRepository.findRecentDays(anyInt())).thenReturn(List.of());
         lenient().when(questionStatsRepository.findRecentWrongQuestions(anyList(), any(), anyInt()))
                 .thenReturn(List.of());

@@ -1,0 +1,129 @@
+/* =============================================================================
+   components-progression.css — МЕСТО В ПУТИ (ступень гильдии + шкала уровня)
+   Компонент, а не страничный блок: одна и та же секция стоит на итогах сессии и
+   в аналитике. Второй набор правил под тем же смыслом — это разъезд, который в
+   проекте уже чинили дважды (пустые состояния, иконки).
+
+   Коробку даёт хозяин (`.card`), компонент описывает КОМПОЗИЦИЮ: эмблема слева,
+   текстовый столбец справа, полоса во всю его ширину.
+   ========================================================================== */
+@layer components {
+
+html[data-design] .rank {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+/* Эмблема — тот же щит, что у раздела «Тренировка» в навигации: ступень зарабатывается
+   тренировкой, и знак у них общий. Размер 48px — целочисленный масштаб сетки 16×16
+   (×3), иначе пиксельный глиф размывается (FRD-117). */
+html[data-design] .rank-emblem {
+  display: block;
+  width: 48px;
+  height: 48px;
+  flex: none;
+  fill: currentColor;
+  shape-rendering: crispEdges;
+  color: var(--color-accent-primary);
+}
+
+html[data-design] .rank-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* Ступень и уровень — одна строка, но разного веса: имя ступени отвечает на «кто я»,
+   уровень уточняет «насколько далеко». Кегль заголовка держит компонент, а не уровень
+   тега: на итогах это h2 внутри карточки, в аналитике — h2 под шапкой страницы. */
+html[data-design] .rank-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.2;
+}
+html[data-design] .rank-level {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-tertiary);
+}
+
+/* Полоса — нативный <progress>. Он приносит роль progressbar со значениями и работает
+   без JS; собственный div потребовал бы инлайнового style, который запрещён CSP
+   (style-src-attr 'none'), либо скрипта — то есть пустой полосы в no-JS.
+   Оформление нативного элемента идёт через псевдоэлементы движков: appearance:none
+   снимает системный вид, дальше -webkit- (Chromium/WebKit) и -moz- ветки.
+   Высота 8px = --px-s: тот же целочисленный шаг, что у пиксельной графики. */
+html[data-design] .rank-bar {
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  width: 100%;
+  /* Мера, а не вся ширина карточки. Замер WebKit 1512×982: без капа полоса
+     растягивалась на 1047px при высоте 8px — соотношение 131:1, на котором глаз
+     перестаёт читать заполненную долю и видит декоративную линейку. Кап той же
+     природы, что мера у прозы: длина обязана быть соразмерна тому, что измеряет. */
+  max-width: 32rem;
+  height: 8px;
+  border: 0;
+  /* Текст внутри <progress> — фолбэк для древних движков; в современных он не
+     рендерится, но остаётся в разметке и потому не является единственным носителем
+     смысла: то же число повторено прозой в .rank-scale ниже. */
+  color: var(--color-accent-primary);
+  background: var(--color-bg-tertiary);
+  box-shadow: var(--px-edge-surface);
+}
+html[data-design] .rank-bar::-webkit-progress-bar {
+  background: var(--color-bg-tertiary);
+}
+html[data-design] .rank-bar::-webkit-progress-value {
+  background: var(--color-accent-primary);
+}
+html[data-design] .rank-bar::-moz-progress-bar {
+  background: var(--color-accent-primary);
+}
+
+/* Числа под полосой. Доля не может быть единственным носителем смысла (WCAG 1.4.1),
+   поэтому та же величина стоит прозой: «398 из 1300 XP · до уровня 8 — 902 XP». */
+html[data-design] .rank-scale {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+}
+html[data-design] .rank-scale-sep { color: var(--color-text-tertiary); }
+
+html[data-design] .rank-next,
+html[data-design] .rank-session {
+  margin: 0;
+  font-size: var(--font-size-sm);
+}
+html[data-design] .rank-session { color: var(--color-status-success); }
+
+/* На телефоне эмблема уходит в строку заголовка, а не держит собственную колонку:
+   48px слева забирали треть ширины текстового столбца на 360px. */
+@media (max-width: 600px) {
+  html[data-design] .rank {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  html[data-design] .rank-emblem {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+}

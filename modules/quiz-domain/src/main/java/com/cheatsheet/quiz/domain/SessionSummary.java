@@ -198,6 +198,22 @@ public class SessionSummary implements Serializable {
         public long xpLeftToNextLevel() {
             return Math.max(0, xpToNextLevel - xpIntoLevel);
         }
+
+        /** Ступень гильдии, на которой человек стоит сейчас. */
+        public GuildRank rank() {
+            return GuildRank.forLevel(level);
+        }
+
+        /**
+         * Сколько уровней осталось до следующей ступени; 0 — если ступень последняя.
+         *
+         * <p>Расстояние измеряется в уровнях, а не в XP: XP до следующей СТУПЕНИ — число
+         * в тысячах, которое ничего не проясняет, а «ещё три уровня» человек соотносит с
+         * тем, что видит на полосе рядом.</p>
+         */
+        public int levelsToNextRank() {
+            return rank().next().map(next -> Math.max(0, next.minLevel() - level)).orElse(0);
+        }
     }
 
     public static Builder builder() {

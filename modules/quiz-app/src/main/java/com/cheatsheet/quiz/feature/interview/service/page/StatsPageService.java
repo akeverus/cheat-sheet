@@ -8,7 +8,9 @@ import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewStats;
 import com.cheatsheet.quiz.domain.LearningMetrics;
 import com.cheatsheet.quiz.domain.TopicStats;
+import com.cheatsheet.quiz.domain.Progression;
 import com.cheatsheet.quiz.feature.interview.service.facade.InterviewFacade;
+import com.cheatsheet.quiz.feature.interview.service.progress.ExperienceService;
 import com.cheatsheet.quiz.feature.interview.usecase.stats.LearningMetricsService;
 import com.cheatsheet.quiz.feature.interview.usecase.stats.MetricDefinitions;
 import com.cheatsheet.quiz.feature.interview.service.topic.TopicCatalogService;
@@ -69,6 +71,7 @@ public class StatsPageService {
     LearningMetricsService learningMetricsService;
     TopicUtils topicUtils;
     DailyActivityRepository dailyActivityRepository;
+    ExperienceService experienceService;
 
     /**
      * Строит state страницы статистики по фильтру и поисковому запросу.
@@ -158,7 +161,11 @@ public class StatsPageService {
                 // iter-73 тот считается по выборке, и, попав сюда, обнулил бы прогресс
                 // всех невыбранных разделов — каталог показывал бы «0 из N» ровно там,
                 // куда и предлагает пойти.
-                topicCatalogService.groupCatalog(questionRepository.countQuestionsByTopic(), facade.getTopicStats())
+                topicCatalogService.groupCatalog(questionRepository.countQuestionsByTopic(), facade.getTopicStats()),
+                // Прогрессия НЕ зависит от отбора: ступень — про человека, а не про срез
+                // банка, который он сейчас смотрит. Считать её по выборке значило бы, что
+                // фильтр «только важные» понижает человека в ранге.
+                Progression.of(experienceService.snapshot(), experienceService.currentStreak())
         );
     }
 
@@ -472,7 +479,14 @@ public class StatsPageService {
             List<WrongQuestionItem> recentWrongQuestions,
             List<AccuracyTrendDay> accuracyTrend,
             String accuracyTrendJson,
-            List<TopicCatalogService.GroupProgress> groupCatalog
+            List<TopicCatalogService.GroupProgress> groupCatalog,
+            /**
+             * Место в пути: ступень, уровень и заполненность уровня. Прогрессия жила ровно
+             * на одном экране — в подписи под числом опыта на итогах сессии, — а до него
+             * доезжают не все режимы: TRAINING работает вовсе без сессии. Аналитика
+             * отвечает на вопрос «где я», и ступень — часть этого ответа.
+             */
+            Progression progression
     ) {
         public StatsPageState(InterviewStats stats, List<String> topics, List<?> groups,
                               String selectedGroup, InterviewFilter filter, String searchQuery,
@@ -482,7 +496,8 @@ public class StatsPageService {
                     topicStats, TopicTableView.of(topicStats), topicStatsJson,
                     List.of(), List.of(), LearningMetrics.EMPTY,
                     List.of(), "[]", MetricDefinitions.catalog(), null, 0L,
-                    List.of(), List.of(), "[]", List.of());
+                    List.of(), List.of(), "[]", List.of(),
+                    Progression.of(com.cheatsheet.quiz.domain.UserExperience.EMPTY, 0));
         }
     }
 
