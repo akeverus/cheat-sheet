@@ -470,7 +470,7 @@ Fetcher — это HTTP-клиент, который выполняет само
 - `User-Agent: MyCrawler/1.0 (+https://example.com/bot)` — обязательно.
 - `Accept: text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.8`.
 - `Accept-Encoding: gzip, deflate, br` — обязательно, экономит 3-5× трафика.
-- `If-Modified-Since: <Last-Modified из прошлого ответа>` — условный запрос, экономит bandwidth при re-crawl. Подставлять сюда время своего обхода неверно: сервер сравнивает с датой изменения ресурса.
+- `If-Modified-Since: <Last-Modified из прошлого ответа>` — условный запрос, экономит bandwidth при re-crawl. Сервер сравнивает присланную дату с датой изменения ресурса, поэтому подставить можно и время своего прошлого обхода — так и делают, когда сервер не отдал `Last-Modified`. Значение из ответа точнее: оно не зависит от расхождения часов.
 - `If-None-Match: <etag>` — то же самое, но по ETag.
 
 Как работает Conditional GET (`If-Modified-Since` / `If-None-Match`) — ключевая экономия при повторных обходах:
