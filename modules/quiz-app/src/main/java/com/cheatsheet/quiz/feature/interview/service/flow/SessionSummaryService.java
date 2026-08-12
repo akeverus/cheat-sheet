@@ -101,6 +101,7 @@ public class SessionSummaryService {
             boolean newRecord = currentStreak > 0 && currentStreak >= snapshot.bestStreak();
             return new SessionSummary.Gamification(
                     sessionXp, snapshot.xp(), snapshot.level(),
+                    snapshot.xpIntoLevel(), snapshot.xpToNextLevel(),
                     currentStreak, snapshot.bestStreak(), newRecord);
         } catch (RuntimeException e) {
             log.warn("Не удалось собрать геймификацию итогов сессии: {}", e.getMessage());

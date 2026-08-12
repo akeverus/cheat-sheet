@@ -90,8 +90,14 @@ function copyButton(status) {
  * которое прячет навигацию и оставляет чистый лист.
  */
 export function initSummaryTools() {
-  const hero = document.querySelector('.summary-hero');
-  if (!hero || document.querySelector('.summary-tools')) return;
+  // Якорь — план «Что дальше», а не карточка счёта. Инструменты вставлялись
+  // СРАЗУ ПОСЛЕ счёта, то есть между результатом и главным действием: на экране
+  // итогов первым в порядке чтения и обхода табом оказывалось «Скопировать итог»,
+  // а «Разобрать ошибки: 6» — третьим. Это ровно перевёрнутая иерархия: копия и
+  // печать нужны единицам и потом, разбор ошибок — то, ради чего экран открыт.
+  // Фолбэк на карточку счёта оставлен: без плана (пустой nextActions) якоря нет.
+  const anchor = document.querySelector('.summary-actions') || document.querySelector('.summary-hero');
+  if (!anchor || document.querySelector('.summary-tools')) return;
 
   const tools = document.createElement('div');
   tools.className = 'summary-tools';
@@ -112,5 +118,5 @@ export function initSummaryTools() {
   tools.appendChild(print);
 
   tools.appendChild(status);
-  hero.insertAdjacentElement('afterend', tools);
+  anchor.insertAdjacentElement('afterend', tools);
 }

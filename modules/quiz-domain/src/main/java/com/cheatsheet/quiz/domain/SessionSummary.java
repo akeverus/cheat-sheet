@@ -175,14 +175,29 @@ public class SessionSummary implements Serializable {
      * @param sessionXp      опыт, заработанный в ЭТОЙ сессии
      * @param totalXp        общий накопленный опыт
      * @param level          текущий уровень
+     * @param xpIntoLevel    сколько опыта набрано ВНУТРИ текущего уровня
+     * @param xpToNextLevel  сколько опыта отделяет текущий уровень от следующего
      * @param currentStreak  текущая серия активных дней
      * @param bestStreak     рекорд серии
      * @param newStreakRecord серия достигла/обновила рекорд в этой сессии
      */
     @lombok.Builder(toBuilder = true)
     public record Gamification(long sessionXp, long totalXp, int level,
+                               long xpIntoLevel, long xpToNextLevel,
                                int currentStreak, int bestStreak,
                                boolean newStreakRecord) implements Serializable {
+
+        /**
+         * Сколько опыта осталось до следующего уровня.
+         *
+         * <p>Шкала нужна затем же, зачем она нужна любому числу на экране итогов:
+         * «+42 XP» без неё не отвечает ни на один вопрос — много это или мало,
+         * приблизило к чему-нибудь или нет. Уровень и остаток до следующего у нас
+         * уже посчитаны ({@code UserExperience}), их просто не показывали.
+         */
+        public long xpLeftToNextLevel() {
+            return Math.max(0, xpToNextLevel - xpIntoLevel);
+        }
     }
 
     public static Builder builder() {

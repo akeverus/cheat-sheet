@@ -100,10 +100,23 @@
                   avg=${summary.duration != null and summary.totalQuestions > 0 ? summary.duration.toSeconds() / summary.totalQuestions : 0},
                   st=${g.currentStreak()},
                   dw=${st % 10 == 1 and st % 100 != 11 ? 'день' : ((st % 10 >= 2 and st % 10 <= 4) and (st % 100 &lt; 12 or st % 100 &gt; 14) ? 'дня' : 'дней')}">
+        <!--/* ШКАЛА У ОПЫТА ОБЯЗАТЕЛЬНА, А РЕКОРД СЕРИИ ЖИВЁТ В ТАЙЛЕ СЕРИИ.
+             Здесь стояло `newStreakRecord ? 'Новый рекорд' : 'Уровень N'`, и это
+             ломалось дважды. Во-первых, «рекорд» — факт про СЕРИЮ ДНЕЙ, а
+             напечатан был под опытом, при том что соседний тайл серии в ту же
+             секунду показывал «Рекорд N»: одно и то же сказано дважды и одно из
+             двух — не на своём месте. Во-вторых, рекорд ВЫТЕСНЯЛ уровень, а
+             уровень — единственная шкала у «+42 XP». Условие срабатывает при
+             `currentStreak >= bestStreak`, то есть у любого, кто просто держит
+             свою серию, — почти каждый день. Замер на живой сессии: подпись
+             тайла опыта — «Новый рекорд», уровень не показан нигде.
+             Теперь опыт всегда несёт свою шкалу: уровень и остаток до следующего
+             (оба уже считались в UserExperience). */-->
         <div class="summary-kpi">
             <span class="summary-kpi-label">Опыт</span>
             <b class="summary-kpi-value text-success" th:text="'+' + ${g.sessionXp()} + ' XP'">+0 XP</b>
-            <span class="summary-kpi-sub" th:text="${g.newStreakRecord()} ? 'Новый рекорд' : ('Уровень ' + ${g.level()})">Уровень 1</span>
+            <span class="summary-kpi-sub"
+                  th:text="${'Уровень ' + g.level() + ' · до следующего ' + g.xpLeftToNextLevel() + ' XP'}">Уровень 1</span>
         </div>
         <div class="summary-kpi">
             <span class="summary-kpi-label">Время</span>
@@ -121,7 +134,11 @@
         <div class="summary-kpi">
             <span class="summary-kpi-label">Серия</span>
             <b class="summary-kpi-value" th:text="${st} + ' ' + ${dw}">0 дней</b>
-            <span class="summary-kpi-sub" th:text="'Рекорд ' + ${g.bestStreak()}">Рекорд 0</span>
+            <!--/* Рекорд серии — здесь, и только здесь. Когда серия дошла до своего
+                 рекорда, подпись говорит об этом вместо повтора числа: «Рекорд 9»
+                 при серии в 9 дней — это то же самое число, сказанное второй раз. */-->
+            <span class="summary-kpi-sub"
+                  th:text="${g.newStreakRecord()} ? 'Новый рекорд' : ('Рекорд ' + ${g.bestStreak()})">Рекорд 0</span>
         </div>
     </div>
     <div class="summary-metrics" th:if="${summary.gamification == null and !noAnswers}">

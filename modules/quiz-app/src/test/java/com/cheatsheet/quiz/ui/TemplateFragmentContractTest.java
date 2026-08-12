@@ -1028,6 +1028,34 @@ class TemplateFragmentContractTest {
         assertThat(head).doesNotContain("integrity=\"sha512-");
     }
 
+    /**
+     * На экране итогов вспомогательные инструменты не встают выше главного действия.
+     *
+     * <h2>Найденный дефект, а не гипотеза</h2>
+     * {@code share-tools.js} вставлял блок «Скопировать итог / Печать» сразу после карточки
+     * счёта — то есть МЕЖДУ результатом и планом «Что дальше». Замер порядка прямых детей
+     * {@code <main>} на живой сессии: {@code page-head, summary-hero, summary-tools,
+     * summary-actions, …}. И в порядке чтения, и в обходе табом первым после счёта оказывалось
+     * «Скопировать итог», а «Разобрать ошибки: 6» — только третьим. Копия и печать нужны
+     * единицам и потом; разбор ошибок — то, ради чего экран открывается.
+     *
+     * <p>Гейт структурный: проверяем ЯКОРЬ вставки в скрипте, потому что сам блок появляется
+     * только в браузере (без JS обеих кнопок нет — они без него бесполезны).
+     */
+    @Test
+    void summaryToolsAreInjectedAfterThePlanNotBeforeIt() throws IOException {
+        String script = readTemplate("static/js/summary/share-tools.js");
+
+        assertThat(script)
+                .as("инструменты итогов снова цепляются к карточке счёта: они встанут выше "
+                        + "плана «Что дальше», и первым действием экрана окажется «Скопировать итог»")
+                .contains("document.querySelector('.summary-actions')");
+        assertThat(script)
+                .as("вставка идёт не от вычисленного якоря — порядок снова определяется тем, "
+                        + "какой элемент нашёлся первым")
+                .contains("anchor.insertAdjacentElement('afterend', tools)");
+    }
+
     @Test
     void shellFragmentsExposeNavLandmarksAndActiveContract() throws IOException {
         // Редизайн (ui-redesign-handoff): masthead → каркас shell. Контракт:
