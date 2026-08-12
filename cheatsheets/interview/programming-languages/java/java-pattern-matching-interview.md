@@ -330,7 +330,7 @@ double perimeter(Shape shape) {
 
 **Плюсы pattern matching:** новую операцию добавляешь одним методом, не трогая иерархию и не плодя visitor-классы; код компактнее и читаемее.
 
-**Компромисс с Visitor.** Когда иерархия `sealed`, выгоднее pattern matching: легко добавлять операции, exhaustiveness ловит забытые подтипы. Когда иерархия открыта для расширения сторонними реализациями (как в библиотечном API), Visitor по-прежнему уместен: он навязывает каждому новому подтипу реализацию операций через интерфейс.
+**Компромисс с Visitor.** Когда иерархия `sealed`, выгоднее pattern matching: легко добавлять операции, exhaustiveness ловит забытые подтипы. Когда иерархия открыта для расширения сторонними реализациями (как в библиотечном API), опереться на exhaustiveness нечем — список наследников не закрыт, и switch теряет свою главную страховку. Тогда уместен Visitor: принуждение у него тоже есть, но ложится оно на операции — добавили подтип, и компилятор требует `visit(...)` во всех visitor-интерфейсах и их реализациях (`no suitable method found for visit(Rhombus)`), забыть операцию не выйдет.
 
 ## Q9. Что такое `yield` в switch expression и когда он нужен?
 
@@ -511,7 +511,7 @@ Pattern matching пришёл в Java позже, чем в Scala и Kotlin, и 
 | Exhaustiveness (sealed) | ✓ | ✓ | `sealed` + exhaustive `when` |
 | Type inference | Частично | Полно | Частично |
 | List patterns | ✗ | `List(a, b, _*)` | Только через destructuring |
-| Variable binding | `Point(int x, int y)` | `case Point(x, y)` | `is Point -> { val x = it.x }` |
+| Variable binding | `Point(int x, int y)` | `case Point(x, y)` | `when (p) { is Point -> p.x }` (smart cast) |
 
 **Итог:** Java закрыла основную потребность — деконструкцию records и exhaustive switch по sealed-типам, — но Scala остаётся богаче по набору шаблонов (например, list patterns с `_*`), а в Kotlin деконструкция структур идёт отдельным механизмом destructuring, а не внутри матчинга.
 
