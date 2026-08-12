@@ -317,15 +317,14 @@ double area(Shape shape) {
     };
 }
 
-double perimeter(Shape shape) {
+// вторая операция над той же иерархией — ещё один метод, типы не трогаем
+Shape scaled(Shape shape, double k) {
     return switch (shape) {
-        case Circle(double r) -> 2 * Math.PI * r;
-        case Square(double s) -> 4 * s;
-        // считаем треугольник прямоугольным: b и h — катеты,
-        // тогда и площадь 0.5*b*h, и гипотенуза берутся из этой же пары
+        case Circle(double r) -> new Circle(r * k);
+        case Square(double s) -> new Square(s * k);
         case Triangle(double b, double h) -> {
-            double c = Math.sqrt(b * b + h * h);
-            yield b + h + c;
+            double factor = Math.abs(k);
+            yield new Triangle(b * factor, h * factor);
         }
     };
 }
@@ -333,9 +332,9 @@ double perimeter(Shape shape) {
 
 **Плюсы pattern matching:** новую операцию добавляешь одним методом, не трогая иерархию и не плодя visitor-классы; код компактнее и читаемее.
 
-**Компромисс с Visitor.** Обе техники живут на стабильном наборе подтипов, но по-разному распределяют цену. Pattern matching по `sealed`-иерархии дешевле в добавлении операций: новая операция — новый метод со switch, а забытый подтип ловит exhaustiveness. Visitor окупается там, где операций много и они прибавляются, а подтипы почти не меняются: double dispatch стоит бойлерплейта, зато каждая операция собрана в одном классе.
+**Компромисс с Visitor.** На `sealed`-иерархии pattern matching дешевле по обеим осям: новая операция — обычный метод со switch, а забытый подтип ловит exhaustiveness. Остаточная ценность Visitor не в дешевизне, а в другом: операция там — объект, её можно передать, подменить и собрать целиком в одном классе; и он применим там, где иерархию нельзя объявить `sealed` (чужая библиотека, разные модули).
 
-Новый подтип дорог обоим. У Visitor он не просто дорог, а требует правки чужого кода: `Rhombus.accept` не скомпилируется, пока в `ShapeVisitor` не добавят `visit(Rhombus)` — `no suitable method found for visit(Rhombus)`. Поэтому для иерархии, открытой сторонним реализациям, не годится ни то ни другое: у switch нет опоры на полноту (нужен `default`), а visitor-интерфейс третья сторона дополнить не может. Там работает обычный полиморфный метод в самом интерфейсе.
+Новый подтип дорог обоим и обоим требует правки исходного кода: у sealed — списка `permits` и всех exhaustive switch, у Visitor — интерфейса `ShapeVisitor` и всех его реализаций (`Rhombus.accept` не скомпилируется: `no suitable method found for visit(Rhombus)`). Для иерархии, открытой сторонним реализациям, не годится ни то ни другое: `permits` третья сторона не расширит, visitor-интерфейс тоже. Там работает обычный полиморфный метод в самом интерфейсе.
 
 ## Q9. Что такое `yield` в switch expression и когда он нужен?
 
