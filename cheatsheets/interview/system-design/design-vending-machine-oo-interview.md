@@ -106,7 +106,7 @@ updated: "2026-05-22"
 
 ## Q2. Действующие лица и сценарии использования
 
-С системой работают три разных типа пользователей, и у каждого свой набор операций. Развести их важно: наборы действий пересекаются только в сервисных сценариях (test vend, проверка монетоприёмника), а разводятся не сами операции, а канал вызова и права на них — это и задаёт границу между публичным и admin-API.
+С системой работают три разных типа пользователей, и наборы операций у них почти не пересекаются. Развести их важно: наборы действий пересекаются только в сервисных сценариях (test vend, проверка монетоприёмника), а разводятся не сами операции, а канал вызова и права на них — это и задаёт границу между публичным и admin-API.
 
 ```mermaid
 flowchart LR
@@ -120,7 +120,7 @@ flowchart LR
     Admin --> SetPrice[Update Prices]
 ```
 
-- **Customer** — основной актёр; у лицевой панели он один за раз, поэтому покупательская сессия строго последовательна. Параллельно с ней идут удалённые операции Admin и Restocker, и вот они уже конкурируют с покупкой за общее состояние (см. Q19).
+- **Customer** — основной актёр; у лицевой панели он один за раз, поэтому покупательская сессия строго последовательна. Параллельно с ней идут операции Admin (удалённый защищённый канал) и Restocker (сервисный доступ у самого автомата) — и вот они уже конкурируют с покупкой за общее состояние (см. Q19).
 - **Restocker** — пополняет товар, забирает наличность из кассы.
 - **Admin** — конфигурация, отчёты, управление ценами; работает через защищённый канал, а не через лицевую панель.
 
@@ -268,7 +268,7 @@ double a = 0.1 + 0.2;          // 0.30000000000000004 ❗
 BigDecimal b = new BigDecimal("0.1").add(new BigDecimal("0.2"));  // 0.3 ✓
 ```
 
-В автомате ломается не бухгалтерия по копейке, а логика: сравнение `balance >= price` возвращает false при визуально равных суммах, а сдача, посчитанная вычитанием, выходит вида `0.30000000000000004` или `0.09999999999999998` — и уже её округление расходится с кассой.
+В автомате ломается не бухгалтерия по копейке, а логика. Покупатель внёс 0.7 и 0.1 при цене 0.8 — в `double` баланс равен `0.7999999999999999`, и проверка `balance >= price` даёт false: машина не отдаёт товар, хотя внесено ровно. А сдача, посчитанная вычитанием, выходит вида `0.09999999999999998` (это `0.3 - 0.2`), и уже её округление расходится с кассой.
 
 **Чем считать деньги — варианты:**
 
@@ -279,7 +279,7 @@ BigDecimal b = new BigDecimal("0.1").add(new BigDecimal("0.2"));  // 0.3 ✓
 | `Money` value-object (Joda Money / Moneta) | Типобезопасно, валюта внутри типа | Внешняя зависимость |
 | `double` / `float` | — | **Для сумм к оплате, сдачи и остатков — никогда.** Допустимы разве что аналитические агрегаты, где цент не единица учёта |
 
-**Эмпирическое правило:** на собеседовании сразу объявите `BigDecimal` со scale=2 и явным `RoundingMode` под правило домена — `HALF_UP` для розничной цены, `HALF_EVEN` для бухгалтерских агрегатов (он же дефолт `MathContext`). Это маркер senior-уровня — интервьюер видит, что вы знаете о проблеме до того, как она выстрелит.
+**Эмпирическое правило:** на собеседовании сразу объявите `BigDecimal` со scale=2 и явным `RoundingMode` под правило домена — `HALF_UP` для розничной цены, `HALF_EVEN` для бухгалтерских агрегатов — он зашит в готовые `MathContext.DECIMAL32/64/128`, тогда как `new MathContext(precision)` берёт `HALF_UP`. Это маркер senior-уровня — интервьюер видит, что вы знаете о проблеме до того, как она выстрелит.
 
 ---
 
@@ -693,10 +693,14 @@ public void onCancel() {
     BigDecimal toRefund = vm.getCurrentBalance();
     if (toRefund.compareTo(BigDecimal.ZERO) > 0) {
         if (vm.getPaymentStrategy().isCashless()) {
-            vm.getPaymentStrategy().voidAuthorization();   // снять холд, наличных тут нет
+            vm.getPaymentStrategy().voidAuthorization();      // снять холд, наличных тут нет
         } else {
-            var coins = vm.getChangeDispenser().computeChange(toRefund);
-            vm.getChangeDispenser().dispense(coins);
+            var returned = vm.getCoinAcceptor().returnEscrow();   // те же монеты — обратно
+            var rest = toRefund.subtract(returned);
+            if (rest.compareTo(BigDecimal.ZERO) > 0) {            // за ушедшую в стекер банкноту
+                vm.getChangeDispenser().dispense(
+                    vm.getChangeDispenser().computeChange(rest));
+            }
         }
     }
     vm.getAuditLog().record(TransactionRecord.cancelled(toRefund));
@@ -938,6 +942,7 @@ public List<Coin> computeChangeDP(BigDecimal amount) {
 public class ChangeDispenser {
     public List<Coin> computeChange(BigDecimal amount) {
         var result = tryGreedy(amount);
+        if (result == null) result = boundedDp(amount);   // точный перебор по остаткам кассет
         if (result == null) throw new InsufficientCoinsException(amount);
         return result;
     }
