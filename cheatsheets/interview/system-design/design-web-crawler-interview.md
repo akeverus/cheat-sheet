@@ -85,7 +85,7 @@ Crawler **обходит веб** начиная с seed URLs и извлека�
 
 Базовый функционал, который надо подтвердить с интервьюером:
 
-- **Seed URLs** — на вход подаётся список starting points (например, топ-1000 сайтов мира + DMOZ-like директории).
+- **Seed URLs** — на вход подаётся список starting points (например, топ-1000 сайтов мира и открытые каталоги ссылок; DMOZ, который для этого использовали исторически, закрыт в 2017 году, живой форк — Curlie).
 - **Fetch HTML** — скачиваем страницу по HTTP/HTTPS, сохраняем raw response.
 - **Extract content** — извлекаем текст для индексации, метаданные (`<title>`, meta description), structured data.
 - **Extract outlinks** — парсим `<a href>`, нормализуем, кладём обратно в frontier.
@@ -125,7 +125,7 @@ Crawler **обходит веб** начиная с seed URLs и извлека�
 Дополнительные ограничения:
 
 - **Соблюдение robots.txt** — обязательно, иначе IP забанят и заработаешь репутацию источника DDoS.
-- **Bandwidth** — порядка 100 Gbps egress на регион; держим под мониторингом.
+- **Bandwidth** — считаем от потока: 400 fetches/sec × 100 KB ≈ 0.3 Gbps ingress в норме, ~0.8 Gbps на пике; с запасом на тяжёлые страницы из верхней границы 500 KB закладываем 2 Gbps на регион. Egress у краулера пренебрежимо мал — это сами запросы и DNS.
 - **Отказоустойчивость** — потеря 10% воркеров не должна останавливать crawl.
 - **Идемпотентность** — повторный обход того же URL даёт тот же state (если контент не менялся).
 
@@ -143,7 +143,7 @@ Crawler **обходит веб** начиная с seed URLs и извлека�
 **URL index** (frontier + visited set):
 
 - 50B known URLs × 200B = **10 TB** URL DB (sharded по hash).
-- Bloom filter для quick "seen" check: 50B URLs × 10 bits ≈ **60 GB RAM** (sharded across cluster).
+- Bloom filter для quick "seen" check: 50B URLs × 10 bits = 5·10^11 бит ≈ **62 GB RAM** (sharded across cluster).
 
 **Bandwidth**:
 
@@ -153,7 +153,7 @@ Crawler **обходит веб** начиная с seed URLs и извлека�
 **CPU/workers**:
 
 - Один fetcher worker = ~50 concurrent requests (async I/O), один процесс ~10-20 RPS.
-- 400 RPS → ~25-40 worker processes. Distribute across 5-10 хостов для fault tolerance.
+- 400 RPS → ~20-40 worker processes (400/20 и 400/10). Distribute across 5-10 хостов для fault tolerance.
 
 **DNS**:
 
@@ -209,7 +209,7 @@ Lifecycle одного URL:
 12. **Outlinks** — каждый назад в шаг 1.
 13. **Re-crawl scheduled** — по freshness policy.
 
-States в URL DB: `discovered → queued → in_flight → fetched | error | filtered | duplicate`.
+States в URL DB: `discovered → filtered` (отсев на шаге 4, до очереди) либо `discovered → queued → in_flight → fetched | error`, а уже после разбора `fetched → duplicate` при совпадении контента (шаг 11). URL-дедуп шага 3 до состояния не доходит вовсе: повторная ссылка просто не создаёт новую запись.
 
 ## Q6. (!) Что такое URL Frontier и почему он критичен?
 
@@ -329,7 +329,7 @@ while True:
 ```python
 def url_priority(url, meta):
     score = 0
-    score += 100 * domain_authority(url.host)        # 0..100
+    score += domain_authority(url.host)              # 0..100, основной вес
     score += 50 if is_news_domain(url.host) else 0
     score -= 5 * meta.depth                          # глубокие хуже
     score += freshness_bonus(meta.last_crawled)      # давно не были — поднять
@@ -424,7 +424,7 @@ def can_fetch(url, user_agent):
 
 Дополнительные директивы:
 
-- `Crawl-delay: N` — минимум N секунд между запросами. В RFC 9309 этой директивы нет: Google её игнорирует, Bing и Яндекс учитывают. Свой краулер её соблюдать может, но считать её стандартом нельзя.
+- `Crawl-delay: N` — минимум N секунд между запросами. В RFC 9309 этой директивы нет: Google её игнорирует, Bing учитывает, а Яндекс перестал 22 февраля 2018 года — там скорость обхода задаётся в Вебмастере. Свой краулер её соблюдать может, но считать её стандартом нельзя.
 - `Sitemap:` — URL карты сайта; используем для discovery (см. Q21).
 
 ## Q12. DNS resolution — почему это узкое место?
@@ -436,7 +436,7 @@ def can_fetch(url, user_agent):
 
 Откуда узкое место:
 
-- **Дефолтный OS-резолвер** — обычно один-два сервера, легко перегрузить.
+- **Дефолтный OS-резолвер** — обычно один-два сервера из `/etc/resolv.conf`, общие на весь хост: краулер делит их с остальными процессами, а при их недоступности резолвинг встаёт целиком.
 - **Дефолтный cache TTL** — приложение может его игнорировать, и кэш не работает.
 - **Асинхронный резолвинг не из коробки** — нужны c-ares, aiodns или getaddrinfo_a.
 
@@ -462,7 +462,7 @@ Fetcher — это HTTP-клиент, который выполняет само
 | Max redirects | 5 |
 | Max response size | 5 MB (cut-off для огромных файлов) |
 | Concurrent connections (per worker) | 50-200 (async) |
-| Retry attempts | 3 (на 5xx, network errors) |
+| Retry attempts | 3 (на 5xx, network errors); на 429 — по `Retry-After` |
 | Backoff | exponential: 1s, 4s, 16s |
 
 Важные HTTP-заголовки:
@@ -470,7 +470,7 @@ Fetcher — это HTTP-клиент, который выполняет само
 - `User-Agent: MyCrawler/1.0 (+https://example.com/bot)` — обязательно.
 - `Accept: text/html, application/xhtml+xml, application/xml;q=0.9, */*;q=0.8`.
 - `Accept-Encoding: gzip, deflate, br` — обязательно, экономит 3-5× трафика.
-- `If-Modified-Since: <last_crawl_time>` — условный запрос, экономит bandwidth при re-crawl.
+- `If-Modified-Since: <Last-Modified из прошлого ответа>` — условный запрос, экономит bandwidth при re-crawl. Подставлять сюда время своего обхода неверно: сервер сравнивает с датой изменения ресурса.
 - `If-None-Match: <etag>` — то же самое, но по ETag.
 
 Как работает Conditional GET (`If-Modified-Since` / `If-None-Match`) — ключевая экономия при повторных обходах:
@@ -621,7 +621,7 @@ def register_url(url):
 
 - **Только hash-set** (без Bloom) — нужно 50B × 16B = 800 GB RAM, дорого.
 - **Распределённый кэш (Redis)** — 50B ключей × ~50B = 2.5 TB Redis, тоже дорого.
-- **Bloom + DB** — оптимальный компромисс: дешёвый RAM под Bloom, а точная проверка в БД только при попадании (1% случаев).
+- **Bloom + DB** — оптимальный компромисс: дешёвый RAM под Bloom, а точная проверка в БД только на ответ «возможно видел». Таких ответов два вида: все повторные ссылки (их большинство в реальном обходе) плюс ~1% ложноположительных среди новых.
 
 ## Q17. (!) Content dedup — SimHash или MinHash?
 
@@ -633,7 +633,7 @@ def register_url(url):
 
 ### SimHash (Charikar 2002, используется в Google)
 
-- 64-битный отпечаток (fingerprint): каждый бит — знак взвешенной суммы хэшей фич документа.
+- 64-битный отпечаток (fingerprint): каждый бит — знак суммы по фичам документа, где фича голосует ±1 своим битом. В общей формулировке голос умножается на вес фичи (tf-idf); в коде ниже веса равны единице.
 - Два документа считаются похожими, если их SimHash отличается ≤ k бит (обычно k=3, Hamming distance).
 - Сравнение мгновенное: bitwise XOR + popcount.
 
@@ -721,7 +721,15 @@ CREATE TABLE crawl.url_state (
     PRIMARY KEY ((host_shard), host, url_hash)
 );
 
-CREATE INDEX ON crawl.url_state (next_crawl_at);  -- для re-crawl scheduler
+-- Вторичный индекс по постоянно меняющемуся timestamp в Cassandra не годится:
+-- запрос уходит на все ноды. Планировщик ведёт отдельную таблицу-очередь,
+-- партиционированную по временному окну:
+CREATE TABLE crawl.recrawl_queue (
+    due_bucket timestamp,     -- partition key: час/сутки
+    next_crawl_at timestamp,  -- clustering
+    url_hash blob,
+    PRIMARY KEY ((due_bucket), next_crawl_at, url_hash)
+);
 ```
 
 Что даёт партиционирование по `(host_shard)`:
@@ -764,9 +772,10 @@ def next_crawl_time(url_meta):
         'evergreen': timedelta(days=30),
     }[classify(url_meta)]
 
-    # adaptive: если контент не менялся последние N crawls, удваиваем interval
-    if url_meta.consecutive_unchanged >= 3:
-        base_interval *= 2
+    # adaptive: интервал растёт с каждой серией «не менялось», иначе удвоение
+    # терялось бы при следующем вызове — base_interval берётся из словаря заново
+    factor = 2 ** (url_meta.consecutive_unchanged // 3)
+    base_interval *= factor
 
     return url_meta.last_crawled + base_interval
 ```
@@ -796,7 +805,7 @@ def next_crawl_time(url_meta):
 Как используем:
 
 - **Discovery** — берём URLs прямо во frontier, минуя обход и парсинг ради поиска ссылок.
-- **Lastmod** — если `lastmod` ≤ нашего last_crawled, страницу можно пропустить (не менялась).
+- **Lastmod** — если `lastmod` ≤ нашего last_crawled, страницу можно пропустить (не менялась). Поле заполняет сам владелец сайта, и массово встречается «сегодня» на всех URL сразу — поэтому это подсказка, а не доказательство.
 - **Changefreq / Priority** — входные сигналы для re-crawl policy.
 - **Sitemap index** — для огромных сайтов sitemap может ссылаться на другие sitemaps.
 
@@ -814,7 +823,7 @@ def next_crawl_time(url_meta):
 
 - **Бесконечный календарь**: `/calendar?date=2050-01-01`, `?date=2050-01-02`, ... — каждая страница ссылается на следующий день.
 - **Session ID в URL**: `/page?sid=xyz123` — каждый визит даёт новый sid, то есть каждый раз «новый» URL.
-- **Глубокая рекурсия**: `/dir/dir/dir/.../page` — относительные ссылки `../foo`, к которым забыли применить нормализацию.
+- **Глубокая рекурсия**: `/dir/dir/dir/.../page` — относительная ссылка вида `dir/page` (без ведущего слеша) на каждой такой странице снова дописывает сегмент, и путь растёт без предела.
 - **Фасетная навигация**: `/search?color=red&size=M&brand=...` — N×M×K комбинаций фильтров.
 - **Пагинация**: `/?page=1`, `?page=2`, ... вплоть до `?page=99999` на пустых страницах пагинации.
 
@@ -825,9 +834,9 @@ def next_crawl_time(url_meta):
 | Infinite depth | depth > 10-15 | hard depth limit per domain |
 | Session IDs | URL normalize удаляет (Q15) | normalize обязательно |
 | Faceted nav | content SimHash повторяется | content dedup отбрасывает |
-| Per-domain explosion | quota на домен — порядок сотен тысяч URL | hard cap, конкретное число см. ниже |
+| Per-domain explosion | quota на домен — см. `MAX_URLS_PER_DOMAIN` ниже | hard cap |
 | Same-pattern URLs | regex pattern frequency | URL pattern blacklist (auto-detect: 1000+ URLs с одинаковым path шаблоном) |
-| Calendar traps | path matches `/\d{4}/\d{2}/\d{2}` + date > today+30d | date-based heuristic |
+| Calendar traps | дата в пути `/\d{4}/\d{2}/\d{2}` или в query (`?date=`) и она больше today+30d | date-based heuristic |
 
 Самый универсальный сигнал — **одинаковость контента**: если 100 разных URLs дают почти идентичный SimHash, это либо ловушка, либо технический шум — в обоих случаях снижаем приоритет.
 
@@ -835,7 +844,7 @@ def next_crawl_time(url_meta):
 
 ```python
 MAX_DEPTH = 15
-MAX_URLS_PER_DOMAIN = 1_000_000  # реально >1M на крупных сайтах
+MAX_URLS_PER_DOMAIN = 1_000_000  # у крупных сайтов бывает и больше — тогда лимит поднимают адресно
 MAX_PATH_LENGTH = 256
 MAX_QUERY_PARAMS = 20
 ```
@@ -890,14 +899,15 @@ flowchart LR
 
 ```sql
 UPDATE url_state SET state = 'queued'
-WHERE state = 'in_flight' AND in_flight_since < now() - 5min;
+WHERE state = 'in_flight' AND in_flight_since < now() - INTERVAL '5 minutes';
 ```
 
 **HTTP-ошибки — реакция зависит от того, временная ошибка или постоянная:**
 
 | HTTP Status | Action |
 |-------------|--------|
-| 200, 201, 203, 206 | success, store, parse |
+| 200, 203 | success, store, parse |
+| 206 Partial Content | тело неполное — не парсим, перезапрашиваем целиком |
 | 301, 302, 307, 308 | follow redirect (limit 5), update canonical URL |
 | 304 Not Modified | skip body, update last_crawled |
 | 400, 404 | permanent fail, mark `dead`, don't retry |
@@ -925,7 +935,7 @@ WHERE state = 'in_flight' AND in_flight_since < now() - 5min;
 
 ### Централизованный frontier
 
-Один кластер (оригинальный Mercator, Heritrix). Все воркеры конкурируют за задачи из общего frontier.
+Один общий frontier на весь обход (оригинальный Mercator, Heritrix — каждый из них одиночный многопоточный процесс). Все воркеры конкурируют за задачи из этого frontier.
 
 | Плюсы | Минусы |
 |-------|--------|
