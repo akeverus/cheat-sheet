@@ -49,6 +49,17 @@ html[data-design] .mobile-nav a:hover .icon {
 html[data-design] .sidebar .nav a.active {
   box-shadow: inset 4px 0 0 var(--color-accent-primary);
 }
+/* АКТИВНЫЙ ПУНКТ ТОЖЕ ОБЯЗАН ПОКАЗЫВАТЬ ФОКУС. Маркер выше и кольцо фокуса
+   (shell.css) рисуются ОДНИМ свойством box-shadow, а box-shadow не складывается
+   каскадом: правило-победитель заменяет список целиком. Слой pixel идёт последним,
+   поэтому маркер перебивал кольцо, и ровно у того пункта, на котором человек стоит
+   сейчас, фокус переставал быть видимым (WCAG 2.4.7). Замер до правки (Chromium,
+   Tab по рельсу на /topics): у «Тренировки» box-shadow — двухслойное кольцо,
+   у активных «Тем» — только `inset 4px` маркера.
+   Чинится составлением списка, а не отменой одного из двух: видны и маркер, и кольцо. */
+html[data-design] .sidebar .nav a.active:focus-visible {
+  box-shadow: inset 4px 0 0 var(--color-accent-primary), var(--shadow-focus);
+}
 html[data-design][data-pixel="high"] .sidebar .nav a.active {
   animation: activeGlow 1.6s ease-in-out infinite;
 }

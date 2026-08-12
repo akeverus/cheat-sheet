@@ -1051,7 +1051,11 @@ class TemplateFragmentContractTest {
         // безымянный сайдбар давал бы SR два неразличимых «дополнения» подряд.
         assertThat(sidebar).contains("class=\"sidebar\" aria-label=\"Боковая панель\"");
         assertThat(sidebar).contains("<nav class=\"nav\" aria-label=\"Основная навигация\">");
-        assertThat(sidebar).contains("aria-current=${active == 'focus'} ? 'page' : null");
+        // Активный пункт помечается aria-current. Проверка идёт по МЕХАНИЗМУ, а не по
+        // литералу 'focus': пункты больше не написаны руками — оба фрагмента печатают их
+        // циклом по единственному источнику первого уровня (NavSection), потому что два
+        // рукописных списка уже дважды разошлись (см. NavigationSourceContractTest).
+        assertThat(sidebar).contains("aria-current=${active == section.id()} ? 'page' : null");
         // Глобальные действия рельса лежат ЗА пределами <nav>: иначе «Тема» и
         // «Выйти» попадают в список пунктов навигации, хотя никуда не ведут.
         assertThat(sidebar).containsSubsequence("</nav>", "class=\"sidebar-footer\"");
@@ -1086,7 +1090,7 @@ class TemplateFragmentContractTest {
 
         assertThat(mobileNav).contains("th:fragment=\"mobile-nav(active)\"");
         assertThat(mobileNav).contains("class=\"mobile-nav\" aria-label=\"Мобильная навигация\"");
-        assertThat(mobileNav).contains("aria-current=${active == 'focus'} ? 'page' : null");
+        assertThat(mobileNav).contains("aria-current=${active == section.id()} ? 'page' : null");
     }
 
     @Test

@@ -1,0 +1,176 @@
+package com.cheatsheet.quiz.ui;
+
+import com.cheatsheet.quiz.config.web.NavSection;
+import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/**
+ * Первый уровень навигации объявлен ровно один раз.
+ *
+ * <h2>Найденный дефект, а не гипотеза</h2>
+ * Разделы были записаны дважды вручную — в рельсе и в нижней полосе, — и списки разошлись.
+ * Замер до починки: рельс шесть пунктов, полоса пять; не хватало каталога банка, то есть на
+ * телефоне в раздел «Темы» нельзя было попасть НИ ОДНОЙ ссылкой. При этом {@code topics.html}
+ * передавал в полосу {@code active='topics'} — значение, которого тот фрагмент не знал, и
+ * подсветка молча не срабатывала. Расходились и глифы одного раздела: {@code #training} в
+ * рельсе против {@code #home} в полосе.
+ *
+ * <p>Это уже второе расхождение той же пары списков (первое чинили в iter-88, когда каталог
+ * добавляли в рельс). Причина не в невнимательности, а в том, что источников два.
+ *
+ * <h2>Что закреплено</h2>
+ * <ol>
+ *   <li>оба фрагмента читают {@code ${@nav.sections()}} и не содержат рукописных ссылок на
+ *       адреса первого уровня;</li>
+ *   <li>число пунктов не записано третьим местом — в CSS полосы нет литерала колонок;</li>
+ *   <li>каждое значение {@code active}, которое страницы передают фрагментам, существует
+ *       в {@link NavSection}.</li>
+ * </ol>
+ */
+class NavigationSourceContractTest {
+
+    private static final Path TEMPLATES = Path.of("src/main/resources/templates");
+    private static final Path SIDEBAR = TEMPLATES.resolve("fragments/sidebar.html");
+    private static final Path MOBILE_NAV = TEMPLATES.resolve("fragments/mobile-nav.html");
+    private static final Path SHELL_CSS = Path.of("src/main/resources/static/css/shell.css");
+
+    private static final Pattern ACTIVE_ARGUMENT =
+            Pattern.compile("(?:sidebar|mobile-nav)\\s*::\\s*(?:sidebar|mobile-nav)\\(active=([^)]*)\\)");
+    private static final Pattern QUOTED = Pattern.compile("'([a-z-]+)'");
+
+    @Test
+    void bothNavigationsReadTheSameSource() {
+        for (Path fragment : List.of(SIDEBAR, MOBILE_NAV)) {
+            String source = read(fragment);
+            assertThat(source)
+                    .as("%s перестал читать единый источник первого уровня. Рукописный список "
+                            + "разойдётся со вторым — так уже было: шесть пунктов против пяти, "
+                            + "и каталог банка стал недостижим на телефоне", fragment.getFileName())
+                    .contains("${@nav.sections()}");
+        }
+    }
+
+    /**
+     * Проверка идёт по СОДЕРЖИМОМУ {@code <nav>}, а не по всему файлу, и это не послабление.
+     * Первая версия смотрела файл целиком и покраснела на ссылке бренда
+     * ({@code <a class="brand" th:href="@{/}">}) в шапке рельса — та ведёт на тот же адрес,
+     * что и первый пункт, но пунктом навигации не является и в общий список не входит.
+     * Инвариант формулируется про список пунктов, значит и проверяться должен на нём.
+     */
+    @Test
+    void navigationFragmentsDoNotHandWriteFirstLevelLinks() {
+        List<String> offenders = new ArrayList<>();
+        for (Path fragment : List.of(SIDEBAR, MOBILE_NAV)) {
+            String source = navBlock(fragment);
+            for (NavSection section : NavSection.all()) {
+                String literal = "@{" + section.path() + "}";
+                if (source.contains(literal)) {
+                    offenders.add(fragment.getFileName() + " → " + literal);
+                }
+            }
+        }
+        assertThat(offenders)
+                .as("в навигации снова появилась ссылка, написанная руками: она не участвует "
+                        + "в общем списке и потому не попадёт во вторую навигацию — ровно так "
+                        + "каталог банка и выпал из нижней полосы")
+                .isEmpty();
+    }
+
+    /**
+     * Проверяются ВСЕ правила {@code .mobile-nav}, а не первое найденное. Первая версия
+     * брала первое совпадение и молча смотрела не туда: в shell.css раньше раскладки стоит
+     * {@code .mobile-nav { display: none }} десктопной ветки. Гейт был зелёным с возвращённым
+     * литералом {@code repeat(5, …)} — то есть не ловил ровно тот дефект, ради которого
+     * написан. Поймано на проверке гейта укусом.
+     */
+    @Test
+    void bottomBarColumnCountFollowsItemsNotALiteral() {
+        String css = read(SHELL_CSS);
+        Matcher rule = Pattern.compile("\\.mobile-nav\\s*\\{([^}]*)}").matcher(css);
+
+        List<String> offenders = new ArrayList<>();
+        int rules = 0;
+        while (rule.find()) {
+            rules++;
+            String body = rule.group(1);
+            if (Pattern.compile("repeat\\(\\s*\\d").matcher(body).find()) {
+                offenders.add(body.replaceAll("\\s+", " ").trim());
+            }
+        }
+
+        assertThat(rules).as("правило .mobile-nav не найдено в shell.css").isPositive();
+        assertThat(offenders)
+                .as("в полосе снова записано ЧИСЛО колонок. Это третье место, где живёт состав "
+                        + "первого уровня: добавленный в NavSection раздел молча уедет во второй "
+                        + "ряд полосы высотой 64px, то есть за нижнюю кромку экрана")
+                .isEmpty();
+    }
+
+    @Test
+    void everyActiveValuePagesPassExistsInTheSource() {
+        Set<String> known = new LinkedHashSet<>();
+        NavSection.all().forEach(section -> known.add(section.id()));
+
+        List<String> unknown = new ArrayList<>();
+        for (Path template : templates()) {
+            String source = read(template);
+            Matcher call = ACTIVE_ARGUMENT.matcher(source);
+            while (call.find()) {
+                Matcher literal = QUOTED.matcher(call.group(1));
+                while (literal.find()) {
+                    String id = literal.group(1);
+                    if (!known.contains(id)) {
+                        unknown.add(TEMPLATES.relativize(template) + " → active='" + id + "'");
+                    }
+                }
+            }
+        }
+
+        assertThat(unknown)
+                .as("страница передаёт навигации значение active, которого в первом уровне нет. "
+                        + "Подсветка текущего раздела молча не сработает — именно так вела себя "
+                        + "страница каталога на телефоне. Известные значения: %s", known)
+                .isEmpty();
+    }
+
+    /** Содержимое элемента {@code <nav>} фрагмента — только список пунктов. */
+    private static String navBlock(Path fragment) {
+        String source = read(fragment);
+        Matcher nav = Pattern.compile("<nav[^>]*>(.*?)</nav>", Pattern.DOTALL).matcher(source);
+        assertThat(nav.find())
+                .as("во фрагменте %s нет элемента <nav> — навигация перестала быть навигацией",
+                        fragment.getFileName())
+                .isTrue();
+        return nav.group(1);
+    }
+
+    private static List<Path> templates() {
+        try (Stream<Path> paths = Files.walk(TEMPLATES)) {
+            return paths.filter(p -> p.toString().endsWith(".html")).sorted().toList();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private static String read(Path path) {
+        try {
+            return Files.readString(path, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+}
