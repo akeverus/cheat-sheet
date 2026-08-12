@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
  *
  * <p>Годовой {@code max-age} в prod держится ровно на одном допущении: у каждого
  * адреса, который реально запрашивает браузер, есть content-hash. Для относительных
- * {@code import '../core/dom.js'} и для путей к спрайтам внутри {@code pixel-fx.js}
+ * {@code import '../core/dom.js'}
  * это обеспечивает не Thymeleaf, а карты из {@code StaticVersionAdvice}. Допущение
  * тихо ломается от обычной работы: новый модуль в {@code /js} или новый спрайт
  * появляются без единой правки шаблона — и, не будь этой проверки, уехали бы в прод
@@ -105,24 +105,14 @@ class StaticVersionAdviceTest {
         }
 
         @Test
-        void pixelAssetMapCoversEverySprite() throws Exception {
-            String html = mockMvc.perform(get("/")).andReturn().getResponse().getContentAsString();
-
-            String map = extractScript(html, "<script type=\"application/json\" id=\"pixel-asset-map\"");
-            assertThat(map).as("карта спрайтов должна быть в разметке").isNotNull();
-
-            assertThat(readMap(JSON.readTree(map)).keySet())
-                    .containsExactlyInAnyOrderElementsOf(filesUnder("/img/pixel", ".png"));
-        }
-
-        @Test
         void noStaticUrlEscapesVersioning() throws Exception {
             String html = mockMvc.perform(get("/")).andReturn().getResponse().getContentAsString();
 
-            // Канонические пути живут внутри самих карт — это ключи, а не запросы.
+            // Канонические пути живут внутри самой карты — это ключи, а не запросы.
+            // Второй карты (плоской, для спрайтов) больше нет: её единственным
+            // потребителем был декоративный слой pixel-fx.js, снятый вместе с ним.
             String withoutMaps = html
-                    .replaceAll("(?s)<script type=\"importmap\".*?</script>", "")
-                    .replaceAll("(?s)<script type=\"application/json\" id=\"pixel-asset-map\".*?</script>", "");
+                    .replaceAll("(?s)<script type=\"importmap\".*?</script>", "");
 
             Matcher m = Pattern.compile("[\"'](/(?:css|js|img|vendor|fonts)/[^\"']+)[\"']")
                     .matcher(withoutMaps);
@@ -151,7 +141,6 @@ class StaticVersionAdviceTest {
             // Без версионирования карта была бы тождественной — а пустой или, хуже,
             // «null» внутри <script type="importmap"> сломал бы загрузку модулей.
             assertThat(html).doesNotContain("type=\"importmap\"");
-            assertThat(html).doesNotContain("id=\"pixel-asset-map\"");
         }
     }
 }

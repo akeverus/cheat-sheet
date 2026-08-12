@@ -22,7 +22,7 @@
 
 Опорные фрагменты: `head.html` (шрифты, vendor и один `<link>` на CSS-ленту;
 состав и порядок CSS — в `css-bundle-manifest.txt`),
-`sidebar.html` + `shell-head.html` + `mobile-nav.html` (shell), `shell-scripts.html`
+`sidebar.html` + `shell-head.html` + `mobile-nav.html` (shell)
 (тоггл темы + «наверх»), `icons.html` + `pixel-sprite.html` (SVG-спрайты),
 `state-illustrations.html` (пустые состояния), `scripts.html` (единственная точка
 подключения `app-entry.js`).
@@ -281,19 +281,19 @@ Tomcat отдаёт `.js` с типом `text/javascript` (RFC 9239 сделал
 
 Content-hash (`spring.web.resources.chain.strategy.content`, только профиль `prod`)
 переписывает URL там, где путь прошёл через Thymeleaf `@{...}`: все CSS-файлы, шрифты,
-картинки, вендорные скрипты и три точки входа JS — `app-entry.js`, `pixel-fx.js`,
+картинки, вендорные скрипты и точки входа JS — `app-entry.js`,
 `content/mermaid-renderer.js`. Ссылки `url(...)` внутри CSS переписывает
 `CssLinkResourceTransformer` из той же цепочки.
 
 Мимо этого механизма проходят два класса адресов, и оба живут строками внутри `.js`,
 где шаблонизатору их не достать, а сборщика в проекте нет по решению: относительные
-`import '../core/dom.js'` (36 модулей из 39) и пути к спрайтам в `pixel-fx.js`.
+`import '../core/dom.js'` (36 модулей из 39).
 Их закрывает `StaticVersionAdvice` двумя картами «канонический путь → версионированный»:
 
 - **import map** в `<head>` — браузер сверяет с ней уже *разрешённый* URL специфаера,
   поэтому версию получают и статические, и динамические импорты, а сами модули не
   правятся ни на строчку;
-- **JSON-карта спрайтов** (`#pixel-asset-map`) — `pixel-fx.js` прогоняет через неё путь
+- ~~JSON-карта спрайтов~~ снята вместе с декоративным слоем `pixel-fx.js`; раньше он прогонял через неё путь
   перед присваиванием в `img.src`; инвентарь в шапке файла остаётся читаемым, версия
   подставляется на границе.
 
@@ -320,7 +320,7 @@ Content-hash (`spring.web.resources.chain.strategy.content`, только про
 
 39 модулей, ES modules, точка входа одна: `app-entry.js` (`<script type="module">` из
 `fragments/scripts.html`), и её подключают **все восемь** страничных шаблонов.
-Единственное исключение — `pixel-fx.js` (декор, из `shell-scripts.html`).
+Исключений больше нет: декоративный слой `pixel-fx.js` и фрагмент `shell-scripts.html` сняты.
 
 ```
 core/      lifecycle, dom, api-client, csrf, constants

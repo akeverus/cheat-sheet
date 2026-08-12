@@ -1121,8 +1121,7 @@ class TemplateFragmentContractTest {
         // изменились и тест молча пустой — false-negative на orphan).
         assertThat(fragmentNames)
             .as("объявленные th:fragment под templates/")
-            .contains("head", "sprite", "sidebar", "shell-head", "mobile-nav", "shell-scripts",
-                      "notice-slot", "recoverable-banners", "post-answer-controls",
+            .contains("head", "sprite", "sidebar", "shell-head", "mobile-nav",                       "notice-slot", "recoverable-banners", "post-answer-controls",
                       // «stats-grid-content» снят вместе со своим единственным носителем:
                       // сводку банка из конструктора сессии убрали как третью копию
                       // тех же шести чисел (/stats и /topics), и фрагмент осиротел.
@@ -1440,9 +1439,6 @@ class TemplateFragmentContractTest {
 
         // Подписка бесполезна без адресата: сигнал для оси «движение» единый — motionchange.
         assertThat(head).contains("new CustomEvent('motionchange'");
-        assertThat(readTemplate("static/js/pixel-fx.js"))
-                .as("pixel-fx решает про декор и подписку на pointermove — он обязан слышать motionchange")
-                .contains("addEventListener('motionchange'");
         assertThat(readTemplate("static/js/stats/chart-theme.js"))
                 .as("анимация графиков включается флагом на постройке — без motionchange она не пересоберётся")
                 .contains("addEventListener('motionchange'");

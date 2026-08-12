@@ -336,13 +336,6 @@ export function initInterviewForm() {
     if (announceEl) {
       announceEl.textContent = feedbackDiv.querySelector('.result-verdict')?.textContent?.trim() || '';
     }
-    const hasExplanation = hasLead || fullHtml.trim().length > 0;
-    const celebrateDelay = hasExplanation ? 360 : 80;
-    window.setTimeout(() => {
-      if (window.__pixelFx?.celebrate) {
-        window.__pixelFx.celebrate(!!isCorrect, { xp: Number(data.xpAwarded || 0) });
-      }
-    }, celebrateDelay);
   }
 
   function applyOptionStyles(data) {
@@ -576,11 +569,7 @@ export function initInterviewForm() {
         });
         return;
       }
-      if (window.__pixelFx?.portalWipe) {
-        window.__pixelFx.portalWipe(() => { window.location.href = nextLink.href; });
-      } else {
-        window.location.href = nextLink.href;
-      }
+      window.location.href = nextLink.href;
     };
     nextLink.onkeydown = (e) => {
       if (e.key === ' ') {

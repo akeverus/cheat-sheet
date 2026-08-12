@@ -1,8 +1,8 @@
 /* =============================================================================
    pixel-result-banner.css — PIXEL RESULT-BANNER STAMPS
    Вынесено из pixel-fx.css (Волна 7 concern-split, cut 3): .result-banner
-   штампы/печати + связанные @keyframes (resultStampIn, boomPulse, portalSheet,
-   coinSpinSheet, fireSheet, fireBob). Загружается МЕЖДУ pixel-fx.css и
+   штампы/печати + связанные @keyframes (resultStampIn, portalSheet, coinSpinSheet,
+   fireSheet, fireBob). Загружается МЕЖДУ pixel-fx.css и
    pixel-animations.css → относит. порядок @layer pixel идентичен монолиту.
    Примечание: portalSheet/coinSpinSheet/fireSheet/fireBob ПОТРЕБЛЯЮТСЯ в
    pixel-animations.css — @keyframes document-global, резолвятся кросс-файл.
@@ -41,20 +41,13 @@ html[data-design] .result-correct.result-banner::after {
   background-image: url("/img/pixel/spark.png");
   animation: resultStampIn 0.4s steps(3) both;
 }
-html[data-design][data-pixel="high"] .result-correct.result-banner::after {
-  animation: resultStampIn 0.4s steps(3) both, boomPulse 0.8s steps(2) 0.4s infinite;
-}
-/* Инвариант «спокойный неверный ответ»: на med/low (дефолты) вердикт-баннер
-   БЕЗ штрафной иконки — череп убираем совсем (иначе пустой 40×40 бокс с glow).
-   Череп-штамп только в arcade-режиме data-pixel=high, как skull-rain в
-   pixel-fx.js (line 103 «med wrong: no skull», §10/§12 убрали skull burst).
-   Correct-spark остаётся на всех плотностях — позитив без штрафа. */
+/* Штрафной иконки у неверного ответа нет ни на одной плотности. Череп-штамп
+   стоял под `[data-pixel="high"]` и был последним следом аркадного словаря на
+   вердикте: слой, который его туда приводил (skull-rain, boom-пульс, монеты),
+   снят целиком — см. заголовок файла. Вердикт говорит словом и цветом статуса,
+   а не наказывает картинкой. */
 html[data-design] .result-wrong.result-banner::after {
   display: none;
-}
-html[data-design][data-pixel="high"] .result-wrong.result-banner::after {
-  display: block;
-  background-image: url("/img/pixel/skull.png");
 }
 html[data-design] .result-verdict {
   text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.25);
@@ -62,10 +55,6 @@ html[data-design] .result-verdict {
 @keyframes resultStampIn {
   from { opacity: 0; transform: translateY(-50%) scale(0.2) rotate(-20deg); }
   to   { opacity: 1; transform: translateY(-50%) scale(1) rotate(0); }
-}
-@keyframes boomPulse {
-  0%, 100% { background-image: url("/img/pixel/spark.png"); }
-  50% { background-image: url("/img/pixel/boom-2.png"); }
 }
 
 /* Shared horizontal sprite cycles (integer frame boxes) */

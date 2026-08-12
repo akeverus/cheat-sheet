@@ -32,7 +32,7 @@ Pixel-слой **не** подменяет body/display шрифты — тол�
   дефолт `med`). CRT/scanlines/crumbs/trail — только на `high`.
 - **Motion** — уважает `prefers-reduced-motion` и `data-motion=off`.
 - Переключатель — Настройки → Персонализация; API `window.__pixelIntensity` /
-  `window.__pixelFx`.
+  `window.__pixelFx` (слой снят — API больше нет).
 
 #### Intensity matrix
 

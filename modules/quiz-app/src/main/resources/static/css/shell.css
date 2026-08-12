@@ -52,6 +52,20 @@ html[data-design] .app {
   display: grid;
   grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
 }
+
+/* ЗЕРНО ХОЛСТА. Правило приехало сюда из снятого pixel-ambient.css по
+   документированному правилу дизайн-системы: «фон холста принадлежит одному
+   файлу — shell.css». В декоративном слое вместе с ним лежала аркадная обвязка
+   (диагональные полосы, CRT-развёртка и виньетка на `high`) — она снята, зерно
+   осталось: тёплый камень и пергамент читаются текстурой, а не заливкой.
+   Шаг сетки и прозрачность те же, что были: 30px, 5% акцента.
+   На `low` зерна нет — это и есть «самый спокойный» уровень оси. */
+html[data-design][data-pixel="med"] .app,
+html[data-design][data-pixel="high"] .app {
+  background-image: radial-gradient(circle,
+    color-mix(in srgb, var(--color-accent-primary) 5%, transparent) 1px, transparent 1.6px);
+  background-size: 30px 30px;
+}
 html[data-design] .shell-main {
   min-width: 0;
   display: flex;
@@ -59,7 +73,11 @@ html[data-design] .shell-main {
 }
 
 /* ---- Sidebar ----------------------------------------------------------- */
+/* z-index приехал из снятого pixel-ambient.css: декоративный слой не имел права
+   держать структурное свойство (правило дизайн-системы), но само свойство нужно —
+   рельс обязан лежать над содержимым колонки. */
 html[data-design] .sidebar {
+  z-index: 1;
   position: sticky;
   top: 0;
   height: 100dvh;

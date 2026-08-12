@@ -138,67 +138,8 @@ class StaticAssetInventoryTest {
         assertThat(missing).as("иконки разделов без файла").isEmpty();
     }
 
-    /**
-     * Кадровка спрайтов задана дважды: в метаданных ассета и в CSS-переменных
-     * {@code sprite-anim.css}, откуда её берёт {@code steps()}. Расхождение не
-     * ломает сборку — анимация просто начинает дёргаться или обрезать последний
-     * кадр. Поэтому равенство проверяется, а не подразумевается.
-     */
-    @Test
-    void spriteAnimationCssMatchesSheetMetadata() throws IOException {
-        Map<String, String> cssBlocks = readSpriteCssBlocks();
-        ObjectMapper objectMapper = new ObjectMapper();
 
-        Set<String> metadataNames = new LinkedHashSet<>();
-        List<String> mismatches = new ArrayList<>();
-        for (Path file : listFiles(IMAGES.resolve("animations/metadata"))) {
-            JsonNode meta = objectMapper.readTree(Files.readString(file, StandardCharsets.UTF_8));
-            String name = meta.get("name").asText();
-            metadataNames.add(name);
 
-            assertThat(IMAGES.resolve("animations/sheets/" + name + "-sheet.png"))
-                    .as("лист кадров для %s", name)
-                    .exists();
-
-            String block = cssBlocks.get(name);
-            if (block == null) {
-                mismatches.add(name + ": нет правила [data-sprite-anim=\"" + name + "\"]");
-                continue;
-            }
-            checkVariable(mismatches, name, block, "--sprite-steps", meta.get("frames").asInt());
-            checkVariable(mismatches, name, block, "--sprite-frame-w", meta.get("frameWidth").asInt());
-            checkVariable(mismatches, name, block, "--sprite-frame-h", meta.get("frameHeight").asInt());
-            checkVariable(mismatches, name, block, "--sprite-duration", meta.get("durationMs").asInt());
-        }
-
-        assertThat(mismatches).as("CSS-кадровка расходится с метаданными").isEmpty();
-        assertThat(cssBlocks.keySet())
-                .as("правила без метаданных — спрайт без описания кадровки")
-                .isSubsetOf(metadataNames);
-    }
-
-    private void checkVariable(List<String> mismatches, String name, String block, String variable, int expected) {
-        Matcher matcher = Pattern.compile(Pattern.quote(variable) + ":\\s*(?:calc\\()?(\\d+)").matcher(block);
-        if (!matcher.find()) {
-            mismatches.add(name + ": в CSS нет " + variable);
-            return;
-        }
-        int actual = Integer.parseInt(matcher.group(1));
-        if (actual != expected) {
-            mismatches.add(name + ": " + variable + " = " + actual + ", в метаданных " + expected);
-        }
-    }
-
-    private Map<String, String> readSpriteCssBlocks() throws IOException {
-        String css = Files.readString(RESOURCES.resolve("static/css/pixel/sprite-anim.css"), StandardCharsets.UTF_8);
-        Matcher matcher = Pattern.compile("\\[data-sprite-anim=\"([a-z0-9-]+)\"]\\s*\\{([^}]*)}").matcher(css);
-        Map<String, String> blocks = new LinkedHashMap<>();
-        while (matcher.find()) {
-            blocks.put(matcher.group(1), matcher.group(2));
-        }
-        assertThat(blocks).as("правила спрайт-анимаций").isNotEmpty();
-        return blocks;
-    }
 
     private boolean isSpriteMetadata(String relative) {
         return relative.startsWith("animations/metadata" + java.io.File.separator)
