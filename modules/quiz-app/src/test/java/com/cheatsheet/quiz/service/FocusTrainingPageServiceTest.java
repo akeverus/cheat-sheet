@@ -74,8 +74,8 @@ class FocusTrainingPageServiceTest {
                 reviewStateRepository,
                 reviewReasonService,
                 learningMetricsService,
-                contentBlockMapper
-        );
+                contentBlockMapper,
+                java.time.Clock.systemUTC());
     }
 
     @Test

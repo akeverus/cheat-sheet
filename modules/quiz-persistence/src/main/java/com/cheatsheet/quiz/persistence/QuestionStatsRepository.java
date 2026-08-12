@@ -3,6 +3,7 @@ package com.cheatsheet.quiz.persistence;
 import com.cheatsheet.quiz.domain.InterviewStats;
 import com.cheatsheet.quiz.domain.ProgressExportRow;
 import com.cheatsheet.quiz.domain.QuestionDifficulty;
+import com.cheatsheet.quiz.domain.TopicMap;
 import com.cheatsheet.quiz.domain.TopicStats;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -343,6 +344,46 @@ public class QuestionStatsRepository {
         sql.append(TOPIC_STATS_TAIL);
         return jdbcTemplate.query(sql.toString(), TOPIC_STATS_MAPPER, params.toArray());
     }
+
+    /**
+     * Состояния вопросов ОДНОЙ темы — по одному значению на вопрос, в порядке банка.
+     *
+     * <p>Нужно карте темы на экране вопроса: она отвечает на «где я внутри этой темы»
+     * не числом, а формой — сколько клеток уже закрыто, сколько ждёт повторения,
+     * сколько не тронуто. Числа рядом говорят то же прозой (WCAG 1.4.1).</p>
+     *
+     * <p>Один запрос на рендер и только по текущей теме: полный
+     * {@code findTopicStats} читает все 321 тему, и звать его ради одной строки на
+     * каждом вопросе значило бы платить за банк целиком.</p>
+     *
+     * @param topic            тема как она хранится в {@code questions.topic}
+     * @param nowEpoch         момент отсчёта срока повторения
+     * @param learnedThreshold число повторений, с которого вопрос считается освоенным
+     * @param limit            потолок числа клеток; тема крупнее просто обрезается
+     */
+    public List<TopicMap.QuestionProgress> findTopicQuestionStates(String topic, long nowEpoch,
+                                                                   int learnedThreshold, int limit) {
+        if (topic == null || topic.isBlank() || limit <= 0) {
+            return List.of();
+        }
+        StringBuilder sql = new StringBuilder(
+                "SELECT CASE "
+                        + "WHEN rs.question_id IS NULL THEN 'FRESH' "
+                        + "WHEN COALESCE(rs.repetitions, 0) >= ? THEN 'LEARNED' "
+                        + "WHEN COALESCE(rs.next_review_at, ?) <= ? THEN 'DUE' "
+                        + "ELSE 'IN_PROGRESS' END AS state FROM questions q ");
+        var params = new ArrayList<Object>();
+        params.add(learnedThreshold);
+        params.add(nowEpoch);
+        params.add(nowEpoch);
+        InterviewFilterSql.appendReviewStateJoin(sql, params);
+        sql.append(" WHERE q.topic = ? ORDER BY q.id LIMIT ?");
+        params.add(topic);
+        params.add(limit);
+        return jdbcTemplate.query(sql.toString(),
+                (rs, rowNum) -> TopicMap.QuestionProgress.valueOf(rs.getString("state")), params.toArray());
+    }
+
 
     /**
      * Находит тему с наименьшей точностью (accuracy &lt; threshold) среди тем с ответами.

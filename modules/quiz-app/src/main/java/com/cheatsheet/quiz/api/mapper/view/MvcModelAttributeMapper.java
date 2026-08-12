@@ -95,6 +95,9 @@ public class MvcModelAttributeMapper {
         }
         model.addAttribute("contentBlocks", pageState.contentBlocks() != null
                 ? pageState.contentBlocks() : java.util.List.of());
+        // Карта темы — по клетке на вопрос темы текущего вопроса. Пустой список значит
+        // «карты нет» (вопроса нет или тема пуста), и шаблон блок не рендерит.
+        model.addAttribute("topicMap", pageState.topicMap());
         // Вкладки «Пример кода / Схема» рендерятся из этих двух блоков. Шаблон
         // раньше вычислял их сам из codeSnippet/diagramMermaid — и не знал, что в
         // codeSnippet может лежать нарисованная схема, а не код.

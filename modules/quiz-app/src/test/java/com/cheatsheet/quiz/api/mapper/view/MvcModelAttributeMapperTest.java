@@ -225,7 +225,8 @@ class MvcModelAttributeMapperTest {
                 null,
                 List.of(),
                 null
-        );
+        ,
+                com.cheatsheet.quiz.domain.TopicMap.EMPTY);
 
         ExtendedModelMap model = new ExtendedModelMap();
         mapper.applyFocusPageState(model, typedRecallState, false);

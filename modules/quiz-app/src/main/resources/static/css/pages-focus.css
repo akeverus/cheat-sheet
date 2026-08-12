@@ -102,6 +102,42 @@ html[data-design] .focus-page .ed-page {
   overflow-x: clip;
 }
 
+/* РАБОЧАЯ ОБЛАСТЬ НА ВЫСОКОМ ЭКРАНЕ — В ОПТИЧЕСКОМ ЦЕНТРЕ, А НЕ ПРИЖАТА К ВЕРХУ.
+
+   Замер нижней пустоты первого экрана (Chromium и WebKit, короткий вопрос без кода):
+     1440×900   —  68px (8%)
+     1512×982   — 150px (15%)
+     1920×1200  — 434px (36%)
+     2560×1440  — 674px (47%)
+   На больших экранах почти половина окна — фон под композицией, и читается это так же,
+   как читалось пустое состояние до iter-66: «страница не догрузилась».
+
+   ОТОЗВАННАЯ ГИПОТЕЗА (iter-116). Сначала предполагалось закрыть пустоту содержимым —
+   картой темы. Карта сделана и полезна сама по себе, но замер после неё дал ТЕ ЖЕ
+   674px и 434px: сетка из 27 клеток занимает 18px высоты. Гипотеза «пустоту закроет
+   материал» не подтвердилась — на коротком вопросе контента объективно мало, и
+   добивать площадь блоками значило бы делать «функции ради заполнения» (§39).
+
+   Поэтому пустота не заполняется, а РАСПРЕДЕЛЯЕТСЯ: полоса контекста остаётся сверху,
+   рабочая область встаёт в центр остатка. `margin-block: auto`, а не
+   `justify-content: center`: при длинном вопросе margin схлопывается в ноль и верх
+   композиции не уезжает за кромку — центрирование через justify-content именно так и
+   режет контент, когда он перерастает контейнер.
+
+   Порог по ВЫСОТЕ окна, а не по ширине: делить нечего там, где пустоты нет (на
+   1440×900 её 68px). 900px — первая ступень, где остаток перестаёт быть полем и
+   становится провалом. */
+@media (min-height: 1000px) {
+  html[data-design] .focus-page .ed-page {
+    min-height: calc(100dvh - 9rem);
+    display: flex;
+    flex-direction: column;
+  }
+  html[data-design] .focus-page .ed-page > .focus-training {
+    margin-block: auto;
+  }
+}
+
 /* Пустое состояние — вертикаль. Экран вопроса длинный и центрировать его нельзя,
    но состояние «вопросов нет» занимает ~330px и висело в верхней трети окна:
    замер 2560×1440 — 1110px фона под карточкой, читается как недогруженная
@@ -352,6 +388,56 @@ html[data-design] .focus-page .focus-topbar { margin-bottom: 0; }
 html[data-design] .focus-page .question-zone-head,
 html[data-design] .focus-page .focus-aside.focus-session-rail { margin-bottom: var(--space-2); }
 html[data-design] .focus-page .focus-aside .today-chip { margin-bottom: 0; }
+
+/* Карта темы: сетка клеток по вопросам темы. Клетка 10px + зазор 3px — размер выбран
+   по замеру: тема банка доходит до 60 вопросов, и при 10px ряд из 48 клеток укладывается
+   в колонку задания 768px (2560), а на 390px сетка сама переносится на нужное число
+   строк. auto-fill, а не фиксированное число колонок: число вопросов темы известно
+   только в рантайме, и вписывать его в CSS значило бы держать третье место, где живёт
+   состав данных.
+
+   Цвет — не единственный носитель состояния: подпись под сеткой называет все четыре
+   числа словами, а сама сетка помечена aria-hidden (сто одинаковых «элементов списка»
+   не сообщают скринридеру ничего, чего нет в подписи).
+
+   Освоенное — латунь (заливка), к повторению — контур того же тона (форма отличается,
+   а не только цвет), начатое — приглушённая заливка, нетронутое — фон поверхности. */
+html[data-design] .focus-page .topic-map {
+  margin-top: var(--space-4);
+}
+html[data-design] .focus-page .topic-map-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 10px);
+  gap: 3px;
+  margin: 0 0 var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+html[data-design] .focus-page .topic-map-cell {
+  width: 10px;
+  height: 10px;
+  background: var(--color-bg-tertiary);
+  box-shadow: var(--px-edge-surface);
+}
+html[data-design] .focus-page .topic-map-cell--learned {
+  background: var(--color-accent-primary);
+}
+html[data-design] .focus-page .topic-map-cell--due {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--color-accent-primary);
+}
+html[data-design] .focus-page .topic-map-cell--in_progress {
+  background: color-mix(in srgb, var(--color-accent-primary) 35%, var(--color-bg-tertiary));
+}
+html[data-design] .focus-page .topic-map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
 
 /* О чём тема — блок под вопросом в колонке задания. Мера у прозы своя (--measure),
    как у всей прозы продукта: описание читается, а не тянется на всю колонку.

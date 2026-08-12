@@ -8,6 +8,7 @@ import com.cheatsheet.quiz.domain.InterviewFilter;
 import com.cheatsheet.quiz.domain.InterviewMode;
 import com.cheatsheet.quiz.domain.InterviewQuestion;
 import com.cheatsheet.quiz.domain.InterviewSession;
+import com.cheatsheet.quiz.domain.TopicMap;
 import com.cheatsheet.quiz.domain.InterviewStats;
 import com.cheatsheet.quiz.domain.LearningMetrics;
 import com.cheatsheet.quiz.domain.ReviewReason;
@@ -44,6 +45,13 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class FocusTrainingPageService {
+
+    /**
+     * Потолок клеток карты темы. Самая крупная тема банка — 60 вопросов, но потолок
+     * нужен не ради неё, а ради будущего: карта это ориентир, а не список, и сетка
+     * из сотен клеток перестаёт читаться раньше, чем становится полезной.
+     */
+    private static final int TOPIC_MAP_LIMIT = 120;
     InterviewFacade facade;
     QuestionRepository questionRepository;
     QuestionRevisionRepository questionRevisionRepository;
@@ -54,6 +62,8 @@ public class FocusTrainingPageService {
     ReviewReasonService reviewReasonService;
     LearningMetricsService learningMetricsService;
     ContentBlockMapper contentBlockMapper;
+    /** Часы — для отсечки «срок повторения наступил» на карте темы. */
+    java.time.Clock clock;
 
     /**
      * Строит view-model для главной страницы тренировки.
@@ -161,6 +171,16 @@ public class FocusTrainingPageService {
             }
         }
 
+        // Карта темы — один запрос и только когда вопрос есть. На экране без вопроса
+        // (пустая выборка, конец сессии) карта не нужна: ей нечего описывать.
+        TopicMap topicMap = current
+                .map(q -> new TopicMap(questionStatsRepository.findTopicQuestionStates(
+                        q.question().topic(),
+                        clock.instant().getEpochSecond(),
+                        appProperties.getInterview().getLearnedRepetitions(),
+                        TOPIC_MAP_LIMIT)))
+                .orElse(TopicMap.EMPTY);
+
         return new FocusPageState(
                 current,
                 studyLearnPhase,
@@ -176,7 +196,8 @@ public class FocusTrainingPageService {
                 surface,
                 reviewReason,
                 contentBlocks,
-                questionRevisionId
+                questionRevisionId,
+                topicMap
         );
     }
 
@@ -250,7 +271,12 @@ public class FocusTrainingPageService {
             SurfaceState surface,
             ReviewReason reviewReason,
             List<ContentBlock> contentBlocks,
-            Long questionRevisionId
+            Long questionRevisionId,
+            /**
+             * Карта темы текущего вопроса: по клетке на вопрос темы. Пустая карта —
+             * вопроса нет или тема пуста; блок тогда не рендерится.
+             */
+            TopicMap topicMap
     ) {
         public FocusPageState(Optional<InterviewQuestion> current,
                               boolean studyLearnPhase,
@@ -263,7 +289,8 @@ public class FocusTrainingPageService {
                               SurfaceState surface,
                               ReviewReason reviewReason) {
             this(current, studyLearnPhase, flashcardMode, flashcardRevealed, false, false, false,
-                    diagram, studyAnswerHtml, difficulty, progressPercent, surface, reviewReason, List.of(), null);
+                    diagram, studyAnswerHtml, difficulty, progressPercent, surface, reviewReason,
+                    List.of(), null, TopicMap.EMPTY);
         }
 
         public FocusPageState(Optional<InterviewQuestion> current,
@@ -278,10 +305,14 @@ public class FocusTrainingPageService {
                               ReviewReason reviewReason,
                               List<ContentBlock> contentBlocks) {
             this(current, studyLearnPhase, flashcardMode, flashcardRevealed, false, false, false,
-                    diagram, studyAnswerHtml, difficulty, progressPercent, surface, reviewReason, contentBlocks, null);
+                    diagram, studyAnswerHtml, difficulty, progressPercent, surface, reviewReason,
+                    contentBlocks, null, TopicMap.EMPTY);
         }
 
         public FocusPageState {
+            if (topicMap == null) {
+                topicMap = TopicMap.EMPTY;
+            }
             if (contentBlocks == null) {
                 contentBlocks = List.of();
             }

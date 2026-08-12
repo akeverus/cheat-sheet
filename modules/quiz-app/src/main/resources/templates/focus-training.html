@@ -482,7 +482,39 @@
              дважды на одном экране, в 350 пикселях друг от друга. */-->
         <h2 class="topic-brief-title" id="topic-brief-title">О теме</h2>
         <p class="topic-brief-text" th:text="${@topicUtils.description(current.question.topic)}">Описание темы</p>
-        <a class="topic-brief-link" th:href="@{/settings(topic=${current.question.topic})}">Тренировать всю тему</a>
+        <!--/* КАРТА ТЕМЫ. Замер нижней пустоты первого экрана (Chromium и WebKit):
+             1440×900 — 68px (8%), 1512×982 — 150px (15%), 1920×1200 — 434px (36%),
+             2560×1440 — 674px (47%). На больших экранах почти половина окна не занята
+             ничем — §37 брифа.
+
+             Карта отвечает на «где я внутри этой темы» формой: клетка на каждый вопрос
+             темы, закрытые видно сразу. Подпись рядом говорит то же прозой — цвет не
+             может быть единственным носителем смысла (WCAG 1.4.1), поэтому состояния
+             названы словами и числами, а сама сетка помечена aria-hidden: скринридеру
+             сто одинаковых «элементов списка» не сообщают ничего, что не сказано в
+             подписи.
+
+             Данные — ОДИН запрос по текущей теме (findTopicQuestionStates), а не полный
+             обход банка: findTopicStats читает 321 тему, и звать его на каждом вопросе
+             значило бы платить за весь банк ради одной строки.
+
+             Клетки не кликабельны и не подписаны: это ориентир, а не оглавление —
+             подписи вопросов рядом с вопросом подсказывали бы ответ. */-->
+        <div class="topic-map" th:if="${topicMap != null and topicMap.total() > 0}">
+            <ul class="topic-map-grid" aria-hidden="true">
+                <li th:each="state : ${topicMap.cells()}"
+                    th:class="'topic-map-cell topic-map-cell--' + ${#strings.toLowerCase(state.name())}"></li>
+            </ul>
+            <p class="topic-map-legend">
+                <span th:text="${topicMap.learned()} + ' освоено'">0 освоено</span>
+                <span class="topic-map-sep" aria-hidden="true">·</span>
+                <span th:text="${topicMap.due()} + ' к повторению'">0 к повторению</span>
+                <span class="topic-map-sep" aria-hidden="true">·</span>
+                <span th:text="${topicMap.fresh()} + ' не начато'">0 не начато</span>
+                <span class="topic-map-sep" aria-hidden="true">·</span>
+                <span th:text="${'всего ' + topicMap.total()}">всего 0</span>
+            </p>
+        </div>
     </section>
 
     <section class="workspace-support" th:if="${typedInputMode and not #lists.isEmpty(workspaceChecklist)}"
