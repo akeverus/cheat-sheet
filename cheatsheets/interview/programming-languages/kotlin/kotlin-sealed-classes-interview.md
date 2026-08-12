@@ -54,7 +54,7 @@ sealed class Result<out T> {
 - **Exhaustive `when`** — в `when` по sealed-типу можно перечислить все варианты без ветки `else`, а при добавлении нового подкласса сборка упадёт там, где его забыли обработать (для `when`-выражения так было всегда; для `when`-инструкции — молча до Kotlin 1.6, предупреждение в 1.6, ошибка с 1.7, см. Q3).
 - **Контроль над иерархией** — извне не добавят новый *прямой* вариант. Косвенные наследники возможны, если прямой наследник сам расширяем: `open` или `abstract` наследуют откуда угодно, `sealed` — по-прежнему только внутри своего модуля и пакета. В любом случае они попадают в уже существующую ветку `when`.
 
-**Где живут наследники.** `Sealed` гарантирует, что все прямые наследники объявлены в том же модуле и в том же пакете (до Kotlin 1.5 ограничение было жёстче — в том же файле).
+**Где живут наследники.** `Sealed` гарантирует, что все прямые наследники объявлены в том же модуле и в том же пакете (до Kotlin 1.5 ограничение было жёстче — в том же файле). Сам sealed-класс неявно `abstract`: создать его экземпляр напрямую нельзя, а конструктор по умолчанию виден только наследникам — на этом механизме и держится закрытость, подсунуть свою форму типа мимо разрешённых наследников не выйдет.
 
 ## Q2. Чем sealed class отличается от enum?
 
@@ -63,9 +63,9 @@ sealed class Result<out T> {
 | Критерий | enum class | sealed class |
 |----------|------------|--------------|
 | Количество экземпляров | Фиксированное (один на constant) | Зависит от подтипа: у подтипа-класса сколько угодно (`Confirmed`, `Cancelled`), у подтипа-`object` ровно один (`Pending`) |
-| Данные | Одинаковые поля для всех констант | Разные поля для каждого подкласса |
-| Иерархия | Плоская | Произвольная (sealed может содержать вложенный sealed) |
-| Наследование | Снаружи не наследуется, класс не наследует, интерфейсы реализовать может | Подтипы наследуют сам sealed-тип, база может наследовать класс |
+| Данные | Общий для всех констант набор полей, видимый через тип enum (тело отдельной константы может добавить члены, но снаружи они не видны) | Разные поля для каждого подкласса |
+| Иерархия | Плоская на уровне типа: константа с телом — анонимный подкласс, наружу не видимый | Произвольная (sealed может содержать вложенный sealed) |
+| Наследование | Снаружи не наследуется, класс не наследует, интерфейсы реализовать может | Подтипы наследуют сам sealed-тип и лежат в том же пакете и модуле; база может наследовать класс. Закрыт набор прямых наследников — не-final (`open`) подтип расширяем дальше |
 | Применение | Простые перечисления (статусы, типы) | Алгебраические типы данных (ADT) |
 
 **Практический критерий выбора.** Если всем вариантам нужны одни и те же поля (или полей нет вовсе) — берите `enum`: он легче и нагляднее. Как только разным вариантам нужны *разные* данные (у `Confirmed` — время, у `Cancelled` — причина и сумма возврата) — `enum` уже не подходит, нужен `sealed class`.
@@ -76,7 +76,7 @@ enum class OrderStatus { PENDING, CONFIRMED, CANCELLED }
 
 // sealed — разная структура
 sealed class OrderState {
-    object Pending : OrderState()                          // без данных
+    data object Pending : OrderState()                     // без данных; data object даёт осмысленный toString (Kotlin 1.9+)
     data class Confirmed(val confirmedAt: Instant) : OrderState()
     data class Cancelled(val reason: String, val refund: BigDecimal) : OrderState()
 }
@@ -102,27 +102,27 @@ fun area(shape: Shape): Double = when (shape) {  // все подтипы пер
     // else НЕ нужен — компилятор знает, что всё покрыто
 }
 
-// Если добавить новый подкласс → ошибка компиляции
-// data class Rectangle(...) : Shape()
+// Если добавить в тело Shape новый подкласс → ошибка компиляции
+// data class Rectangle(val width: Double, val height: Double) : Shape()
 // area больше не компилируется: 'when' expression must be exhaustive,
-// add necessary 'is Rectangle' branch or 'else' branch instead
+// add necessary 'is Shape.Rectangle' branch or 'else' branch instead
 ```
 
-**Нужно ли что-то делать, чтобы проверка сработала.** С Kotlin 1.7 — нет: компилятор требует полноты от любого `when` по sealed-типу, и неважно, используется он как *выражение* или как *statement* (значение отбрасывается). Непокрытый вариант без `else` — ошибка компиляции. История вопроса: до Kotlin 1.6 неполный `when`-statement компилировался молча — отсюда старые приёмы вроде «допишите `.also { }`», превращавшие statement в выражение, чтобы включить проверку вручную. В 1.6 к такому statement добавилось предупреждение, а с 1.7 это ошибка компиляции, и приём стал не нужен.
+**Нужно ли что-то делать, чтобы проверка сработала.** С Kotlin 1.7 — нет: компилятор требует полноты от `when` по sealed-типу (а также по enum и `Boolean`), и неважно, используется он как *выражение* или как *statement* (значение отбрасывается). На произвольных типах вроде `String` или `Int` такого требования нет. Непокрытый вариант без `else` — ошибка компиляции. История вопроса: до Kotlin 1.6 неполный `when`-statement компилировался молча — отсюда старые приёмы вроде `.also { }`, `.let { }` или extension-property `.exhaustive`, превращавшие statement в выражение, чтобы включить проверку вручную. В 1.6 к такому statement добавилось предупреждение, а с 1.7 это ошибка компиляции, и приём стал не нужен.
 
 ## Q4. Чем sealed interface отличается от sealed class?
 
-**Sealed interface** (Kotlin 1.5+) — интерфейс с закрытым набором реализаций: даёт ту же exhaustive-проверку в `when`, что и sealed class, но снимает ограничение одиночного наследования. Отличия от sealed class:
+**Sealed interface** (Kotlin 1.5+) — интерфейс с закрытым набором прямых реализаций (компилятор знает непосредственных наследников; если сам наследник объявлен open, его ветка снаружи уже не закрыта): даёт ту же exhaustive-проверку в `when`, что и sealed class, но снимает ограничение одиночного наследования. Отличия от sealed class:
 
 - **Множественная реализация.** Класс может реализовать несколько sealed-интерфейсов сразу — то есть один тип способен принадлежать нескольким закрытым иерархиям одновременно. С sealed class так нельзя: наследоваться можно только от одного класса.
-- **Нет состояния.** Как у любого интерфейса, у sealed interface не может быть полей-конструктора: реализацию методов он нести умеет, а хранить общие данные — нет. Нужны общие поля в базе — берите sealed class.
+- **Нет состояния.** Как у любого интерфейса, у sealed interface не может быть полей-конструктора и backing field: объявить общее свойство (`val code: Int`) он умеет, а хранить его — нет, хранение ложится на каждую реализацию. Нужны общие поля в базе — берите sealed class.
 
 Пример ниже показывает первый пункт: `TimeoutError` входит и в `NetworkError`, и в `IOError`.
 
 ```kotlin
-sealed interface Error
-sealed interface IOError : Error
-sealed interface NetworkError : Error
+sealed interface AppError
+sealed interface IOError : AppError
+sealed interface NetworkError : AppError
 
 data class FileNotFound(val path: String) : IOError
 data class TimeoutError(val seconds: Int) : NetworkError, IOError  // оба
@@ -131,11 +131,13 @@ data class ConnectionRefused(val host: String) : NetworkError
 
 ```kotlin
 // Применение
-fun handle(error: Error): String = when (error) {
+fun handle(error: AppError): String = when (error) {
     is IOError -> "IO problem"
     is NetworkError -> "Network problem"
-    // exhaustive: у Error ровно два прямых наследника — IOError и NetworkError, оба покрыты
-    // (TimeoutError реализует оба интерфейса и попадёт в первую подходящую ветку — is IOError)
+    // exhaustive: у AppError ровно два прямых наследника — IOError и NetworkError, оба покрыты
+    // (TimeoutError реализует оба интерфейса и попадёт в первую подходящую ветку — is IOError:
+    //  сетевой таймаут отчитается как "IO problem", и это уже баг разбора — при пересечении
+    //  иерархий ветку is TimeoutError ставят выше, до is IOError)
 }
 
 fun handleIO(error: IOError): String = when (error) {
@@ -148,14 +150,14 @@ fun handleIO(error: IOError): String = when (error) {
 
 ## Q5. Как реализовать паттерн Result с sealed class?
 
-`Result` — это sum type из двух вариантов: `Success` с полезным значением и `Failure` с ошибкой. Идея паттерна — сделать ошибку *значением*, а не исключением: вызывающий обязан явно разобрать оба случая в `when`, и ни один путь нельзя забыть. Это убирает невидимые `throw` из сигнатур и делает обработку ошибок частью типа.
+`Result` — это sum type из двух вариантов: `Success` с полезным значением и `Failure` с ошибкой. Идея паттерна — сделать ошибку *значением*, а не исключением: когда результат разбирают `when`'ом, компилятор требует покрыть обе ветки (exhaustive when по sealed-типу), а при работе через `map`/`onSuccess`/`onFailure` ошибка никуда не девается — едет в обёртке до места разбора. Это убирает невидимые `throw` из сигнатур и делает обработку ошибок частью типа.
 
-Ключевые методы — `map`/`flatMap` (преобразовать успех, пробросив ошибку как есть) и `onSuccess`/`onFailure` (побочные действия без распаковки). Все они помечены `inline`, чтобы лямбды не создавали лишних объектов.
+Ключевые методы — `map`/`flatMap` (преобразовать успех, пробросив ошибку как есть) и `onSuccess`/`onFailure` (побочные действия без распаковки). Все они помечены `inline`, чтобы лямбды не создавали лишних объектов. Имя `Result` перекрывает `kotlin.Result` из автоимпортируемого пакета `kotlin` (там своя обёртка над значением или `Throwable`): компиляции это не ломает, но при чтении и импортах из других пакетов появляется двусмысленность — в проекте удобнее назвать тип `Either`/`Outcome` либо импортировать свой явно.
 
 ```kotlin
 sealed class Result<out T, out E> {
-    data class Success<T>(val value: T) : Result<T, Nothing>()
-    data class Failure<E>(val error: E) : Result<Nothing, E>()
+    data class Success<out T>(val value: T) : Result<T, Nothing>()
+    data class Failure<out E>(val error: E) : Result<Nothing, E>()
 
     inline fun <R> map(transform: (T) -> R): Result<R, E> = when (this) {
         is Success -> Success(transform(value))
@@ -186,10 +188,16 @@ fun fetchUser(id: String): Result<User, UserError> = try {
     Result.Failure(UserError.NotFound(id))
 }
 
-fetchUser("123")
+val result = fetchUser("123")
     .map { it.name.uppercase() }
     .onSuccess { println("Got: $it") }
     .onFailure { println("Error: $it") }
+
+// Финальный разбор: полноту веток Success/Failure проверяет компилятор
+val message = when (result) {
+    is Result.Success -> "Пользователь: ${result.value}"
+    is Result.Failure -> "Ошибка: ${result.error}"
+}
 ```
 
 ## Q6. Что такое ADT (Algebraic Data Types) и как sealed class их реализует?
@@ -197,12 +205,12 @@ fetchUser("123")
 **ADT (алгебраические типы данных)** — типы, которые конструируются из двух базовых операций. Их называют «алгебраическими», потому что число возможных значений типа считается арифметически: для product — *умножением*, для sum — *сложением* числа значений составных частей.
 
 - **Sum type («или»)**: значение принадлежит ровно одному из нескольких вариантов. В Kotlin sum type — это `sealed class` / `sealed interface`: `JsonValue` — это `Null` *или* `Bool` *или* `Num` и т.д.
-- **Product type («и»)**: значение объединяет несколько полей сразу. В Kotlin product type — это `data class`: `Obj` хранит `Map` *и* ничего больше.
+- **Product type («и»)**: значение объединяет несколько полей сразу. В Kotlin product type — это `data class`: `data class Point(val x: Int, val y: Int)` хранит `x` *и* `y` сразу. В примере ниже ветвь `Obj` вырождена до одного поля `fields` — произведение там не видно, оно проявляется, когда полей несколько.
 
-Вместе они дают выразительность: sealed-иерархия из data-классов описывает любую древовидную структуру (как JSON ниже), а exhaustive `when` гарантирует, что обработаны все её формы.
+К этим двум операциям добавляется третий приём — рекурсивная ссылка типа на самого себя (`List<JsonValue>` внутри `Arr`, `Map<String, JsonValue>` внутри `Obj`). Вместе они дают выразительность: sealed-иерархия из data-классов описывает древовидную структуру (как JSON ниже), а exhaustive `when` гарантирует, что обработаны все её формы.
 
 ```kotlin
-// Sum type: JsonValue - ЛИБО Null, Bool, Number, String, Array, Object
+// Sum type: JsonValue - ЛИБО Null, Bool, Num, Str, Arr, Obj
 sealed class JsonValue {
     object Null : JsonValue()
     data class Bool(val value: Boolean) : JsonValue()
@@ -229,13 +237,13 @@ fun render(json: JsonValue): String = when (json) {
 
 ## Q7. Когда использовать sealed class vs interface?
 
-Решает один вопрос: нужна ли вариантам **общая база** (поля в конструкторе или готовая реализация методов)?
+Решает один вопрос: нужны ли вариантам **общие хранимые данные** — параметры конструктора и backing fields? Метод с готовым телом умеет объявить и интерфейс, поэтому разделителем служит состояние, а не наличие реализации.
 
-- **Sealed class** — да, нужна. У всех `Animal` есть `name`, `age` и общий `description()` — их естественно вынести в базовый класс.
-- **Sealed interface** — нет, общего состояния не требуется, зато хочется множественной реализации. Тип может одновременно быть `Serializable` и `Comparable`, что с одиночным наследованием класса невозможно.
+- **Sealed class** — да, нужны. У всех `Animal` есть `name` и `age`, которые кто-то должен хранить; `description()` уехал в базовый класс за компанию с полями, а не потому, что интерфейс не умеет тел методов.
+- **Sealed interface** — нет, хранимого состояния не требуется, зато один тип должен выступать сразу в нескольких ролях: собственные `Jsonable` и `Ranked` реализуются вместе, что при одиночном наследовании класса недоступно. Сам модификатор `sealed` тут отвечает не за множественную реализацию, а за закрытый набор наследников: они обязаны лежать в том же модуле и пакете, зато `when` по ним получается исчерпывающим.
 
 ```kotlin
-// Sealed class — когда нужны общие поля/методы
+// Sealed class — когда вариантам нужны общие хранимые поля
 sealed class Animal(val name: String, val age: Int) {
     abstract fun makeSound(): String
     fun description() = "$name is $age years old"
@@ -245,19 +253,31 @@ class Dog(name: String, age: Int) : Animal(name, age) {
     override fun makeSound() = "Woof"
 }
 
-// Sealed interface — когда нет общего состояния, нужна гибкость
-sealed interface Serializable {
+// Sealed interface — когда общего состояния нет, а тип нужен сразу в нескольких ролях.
+// Имена свои, доменные: стандартные java.io.Serializable и kotlin.Comparable здесь ни при чём
+sealed interface Jsonable {
     fun toJson(): String
 }
 
-sealed interface Comparable {
-    fun compareTo(other: Any): Int
+sealed interface Ranked {
+    fun rank(): Int
 }
 
-// Класс может реализовать несколько sealed interfaces
-data class User(val name: String) : Serializable, Comparable {
+// Класс может реализовать несколько sealed-интерфейсов
+data class User(val name: String) : Jsonable, Ranked {
     override fun toJson() = "{\"name\":\"$name\"}"
-    override fun compareTo(other: Any) = ...
+    override fun rank() = name.length
+}
+
+data class Team(val title: String) : Jsonable, Ranked {
+    override fun toJson() = "{\"title\":\"$title\"}"
+    override fun rank() = title.length
+}
+
+// Ради чего sealed: набор реализаций закрыт (тот же модуль и пакет), when без else
+fun label(item: Ranked): String = when (item) {
+    is User -> "пользователь, ранг ${item.rank()}"
+    is Team -> "команда, ранг ${item.rank()}"
 }
 ```
 
@@ -265,29 +285,37 @@ data class User(val name: String) : Serializable, Comparable {
 
 Все ограничения вытекают из одного требования: компилятор должен видеть *все* наследники, чтобы гарантировать exhaustive `when`.
 
-1. **Наследники — в том же модуле и пакете.** До Kotlin 1.5 они были обязаны лежать в одном файле; с 1.5 их можно разложить по разным файлам, но пакет и модуль остаются общими. Код из другого модуля или другого пакета расширить sealed-тип не сможет — иначе компилятор потерял бы контроль над списком вариантов.
+1. **Прямые наследники — в том же модуле и пакете.** До Kotlin 1.5 они были обязаны лежать в одном файле; с 1.5 их можно разложить по разным файлам, но пакет и модуль остаются общими. Код из другого модуля или пакета не может наследовать sealed-тип напрямую — иначе компилятор потерял бы контроль над списком вариантов. Косвенно — может: если в том же пакете объявлен `open class Child : Base()`, то `class GrandChild : Child()` компилируется откуда угодно, включая другой модуль. Exhaustive `when` от этого не страдает: он проверяется по прямым наследникам, а `GrandChild` попадает в ветку `Child`.
 
 2. **Наследник не может быть локальным или анонимным объектом** — только top-level или nested в другом именованном классе, интерфейсе или объекте, и у него должно быть полное имя. У локальных и анонимных типов нет стабильного имени, поэтому в закрытый список вариантов их не внести. Отдельная деталь: enum-класс не может наследоваться от sealed class, но реализовать sealed interface ему разрешено.
 
-3. **Конструкторы — только `protected` (по умолчанию) или `private`.** Сам sealed class абстрактен, экземпляр базового типа создать нельзя — только экземпляры наследников. А вот наследовать один sealed class от другого — можно: `sealed class B : A()` легален, и многоуровневые sealed-иерархии (под-семейства вариантов внутри общего типа) — нормальная практика.
+3. **Конструкторы — только `protected` (по умолчанию) или `private`.** До 1.5 дефолтом был `private` — с раскладкой наследников по файлам пакета такой дефолт перестал работать, поэтому с 1.5 он `protected`. Сам sealed class абстрактен, экземпляр базового типа создать нельзя — только экземпляры наследников. А вот наследовать один sealed class от другого — можно: `sealed class B : A()` легален, и многоуровневые sealed-иерархии (под-семейства вариантов внутри общего типа) — нормальная практика.
 
 ```kotlin
 // В Kotlin 1.5+
-// Файл a.kt, пакет com.example.domain
+// Файл a.kt
+package com.example.domain
+
 sealed class Base
 
-// Файл b.kt, тот же пакет и модуль
-data class Child1(...) : Base()  // ОК
+// Файл b.kt — тот же пакет и модуль
+package com.example.domain
 
-// Другой пакет или другой модуль
-data class Forbidden(...) : Base()  // ОШИБКА
+data class Child1(val id: Long) : Base()  // ОК
+
+// Файл c.kt — другой пакет (то же самое и для другого модуля)
+package com.example.api
+
+import com.example.domain.Base
+
+data class Forbidden(val id: Long) : Base()  // ОШИБКА
 ```
 
 ## Q9. Как использовать sealed class в Kotlin DSL?
 
 Sealed class здесь — это **типобезопасный результат** работы DSL. Билдер собирает ошибки, а на выходе отдаёт `Validation`, который однозначно говорит «успех» (`Valid` со значением) или «провал» (`Invalid` со списком ошибок) — без `null` и без флагов.
 
-В примере связка из трёх частей: sealed-тип `Validation` как результат, класс-билдер `ValidationBuilder` с lambda-with-receiver методами (`require`, `validate`) и входная функция `validate(target) { ... }`, которая запускает блок и вызывает `build()`. Вложенный `validate` показывает, как DSL рекурсивно проверяет под-объекты, собирая их ошибки в общий список.
+В примере связка из трёх частей: sealed-тип `Validation` как результат, класс-билдер `ValidationBuilder` с методами `require` (условие плюс ленивое сообщение `() -> String`) и `validate` (вложенный блок с receiver'ом-билдером) и входная функция `validate(target) { ... }`, которая запускает блок и вызывает `build()`. Вложенный `validate` показывает, как DSL рекурсивно проверяет под-объекты, собирая их ошибки в общий список.
 
 ```kotlin
 sealed class Validation<out T> {
@@ -296,16 +324,16 @@ sealed class Validation<out T> {
 }
 
 // DSL для валидации
-class ValidationBuilder<T>(private val target: T) {
+class ValidationBuilder<T>(val target: T) {
     private val errors = mutableListOf<String>()
 
     fun require(condition: Boolean, message: () -> String) {
         if (!condition) errors += message()
     }
 
-    fun <V> validate(value: V, block: V.(ValidationBuilder<V>) -> Unit) {
+    fun <V> validate(value: V, block: ValidationBuilder<V>.() -> Unit) {
         val nested = ValidationBuilder(value)
-        value.block(nested)
+        nested.block()
         errors.addAll(nested.errors)
     }
 
@@ -320,6 +348,9 @@ fun <T> validate(target: T, block: ValidationBuilder<T>.() -> Unit): Validation<
 val result = validate(user) {
     require(target.age >= 18) { "Must be adult" }
     require(target.email.contains("@")) { "Invalid email" }
+    validate(target.address) {
+        require(target.city.isNotBlank()) { "City required" }
+    }
 }
 ```
 
@@ -327,7 +358,7 @@ val result = validate(user) {
 
 Пометьте `@Serializable` и сам sealed class, и каждый его подкласс. `kotlinx.serialization` поддерживает полиморфизм «из коробки»: для закрытой иерархии вариант определяется автоматически, отдельная регистрация (как для open-полиморфизма) не нужна.
 
-**Как работает дискриминатор.** При сериализации в JSON добавляется служебное поле `type` со строкой-меткой подтипа; при десериализации по нему восстанавливается нужный класс. `@SerialName` задаёт значение этой метки (по умолчанию взялось бы полное имя класса) — поэтому в JSON стоит читаемое `"user_created"`, а не путь к классу.
+**Как работает дискриминатор.** Дискриминатор появляется тогда, когда работает сериализатор базового типа: статический тип значения — `Event` (как в примере ниже) или сериализатор передан явно, `Json.encodeToString(Event.serializer(), value)`. В этом случае в JSON добавляется служебное поле `type` со строкой-меткой подтипа, а при десериализации по нему восстанавливается нужный класс. Если же статический тип значения — подкласс (`Json.encodeToString(Event.UserCreated("u-1", "Alice"))`), возьмётся его собственный сериализатор, и поля `type` в JSON не будет. `@SerialName` задаёт значение этой метки: по умолчанию ею стало бы полное имя класса с пакетом и вложенностью — например, `com.example.Event.UserCreated`. При таком контракте переименование или переезд класса ломает совместимость формата, а явный `@SerialName` его фиксирует — поэтому в JSON стоит читаемое `"user_created"`, а не путь к классу.
 
 ```kotlin
 @Serializable
@@ -359,7 +390,7 @@ val restored = Json.decodeFromString<Event>(json)
 
 Экран в каждый момент находится ровно в одном состоянии: грузится, показывает данные, пуст или в ошибке. Sealed-тип `UiState` делает эти состояния **взаимоисключающими по типу** — нельзя случайно держать одновременно `isLoading = true` и непустой список, как было бы с набором булевых флагов. Это устраняет целый класс рассинхронов в UI.
 
-Связка стандартная для Android/Compose: ViewModel хранит текущее состояние в `StateFlow<UiState<...>>`, а экран реагирует через exhaustive `when` — на каждое состояние своя ветка, и компилятор не даст забыть ни одну. Обратите внимание: `Loading`/`Empty` — варианты без данных, поэтому они синглтоны, а `Success`/`Error` — `data class`, потому что несут полезную нагрузку. С Kotlin 1.9 такие синглтоны идиоматично объявлять `data object`: тот же единственный экземпляр, но с человекочитаемым `toString()` («Loading» вместо имени класса с хэшем) и корректными `equals`/`hashCode` — симметрично соседним data class-вариантам.
+Связка стандартная для Android/Compose: ViewModel хранит текущее состояние в `StateFlow<UiState<...>>`, а экран реагирует через exhaustive `when` — на каждое состояние своя ветка, и компилятор не даст забыть ни одну. Обратите внимание: `Loading`/`Empty` — варианты без данных, поэтому они синглтоны, а `Success`/`Error` — `data class`, потому что несут полезную нагрузку. С Kotlin 1.9 такие синглтоны идиоматично объявлять `data object`: тот же единственный экземпляр, но с человекочитаемым `toString()` («Loading» вместо имени класса с хэшем) — это и есть главное отличие от обычного `object`. Сгенерированные `equals`/`hashCode` добавляют предсказуемость в пограничных сценариях, где единственность экземпляра нарушается (десериализация, рефлексия), и дают симметрию с соседними data class-вариантами. Ещё одна деталь для листинга ниже: внутри `viewModelScope.launch` отмену не стоит превращать в `UiState.Error` — `CancellationException` пробрасывают дальше, иначе уход с экрана или повторный запрос покажет ошибку вместо тихого сворачивания работы.
 
 ```kotlin
 // Классический паттерн для Android/Compose
@@ -370,7 +401,7 @@ sealed class UiState<out T> {
     data object Empty : UiState<Nothing>()
 }
 
-class OrdersViewModel : ViewModel() {
+class OrdersViewModel(private val repo: OrderRepository) : ViewModel() {
     private val _state = MutableStateFlow<UiState<List<Order>>>(UiState.Loading)
     val state: StateFlow<UiState<List<Order>>> = _state.asStateFlow()
 
@@ -380,6 +411,8 @@ class OrdersViewModel : ViewModel() {
             val orders = repo.getOrders()
             if (orders.isEmpty()) UiState.Empty
             else UiState.Success(orders)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             UiState.Error(e.message ?: "Unknown", retryable = true)
         }
@@ -397,13 +430,20 @@ when (val state = viewModel.state.collectAsState().value) {
 
 ## Q12. Как sealed class помогает избежать null и "Stringly typed" код?
 
-«Stringly typed» — это когда вариант кодируется строкой (`"card"`, `"paypal"`), а связанные с ним данные передаются отдельными параметрами. Проблемы: опечатка в строке всплывёт только в рантайме, нерелевантные поля приходится тащить для всех типов, а ветка `else` маскирует забытый случай вместо ошибки сборки.
+«Stringly typed» — это когда вариант кодируется строкой (`"card"`, `"paypal"`), а связанные с ним данные передаются отдельными параметрами. Проблемы: опечатка в строке обнаруживается только в рантайме, а нерелевантные поля приходится тащить для всех типов — обычно как nullable-параметры, которые в каждой ветке разворачивают проверками или `!!`.
 
-Sealed class превращает варианты в типы: у каждого свои поля (`Card` хранит `number`/`cvv`, `Crypto` — `walletAddress`/`currency`), а `when` без `else` становится exhaustive. Невалидная строка просто не выразима — компилятор ловит ошибку до запуска.
+Sealed class превращает варианты в типы: у каждого свои поля (`Card` хранит `number`/`cvv`, `Crypto` — `walletAddress`/`currency`), причём поля обязательные и non-null — nullable-заглушки под чужие варианты уходят из модели. `when` без `else` становится exhaustive: для when-выражения полнота требовалась всегда, для when-оператора над sealed это warning в Kotlin 1.6 и ошибка компиляции начиная с Kotlin 1.7. Ветка `else`, наоборот, гасит проверку полноты: новый наследник молча уходит в неё вместо ошибки сборки. Компилятор закрывает набор прямых наследников в пределах модуля; `open`-наследник расширяем снаружи, но ветка `is Card` покрывает и его потомков. Невалидная строка просто не выразима — компилятор ловит ошибку до запуска.
 
 ```kotlin
 // ПЛОХО: stringly typed
-fun processPayment(paymentType: String, amount: Double) {
+fun processPayment(
+    paymentType: String,
+    amount: Double,
+    cardNumber: String? = null,
+    cvv: String? = null,
+    email: String? = null,
+    walletAddress: String? = null
+) {
     when (paymentType) {
         "card" -> ...
         "paypal" -> ...
@@ -414,6 +454,7 @@ fun processPayment(paymentType: String, amount: Double) {
 
 // ЛУЧШЕ: sealed class как type-safe замена
 sealed class PaymentMethod {
+    // CVV после авторизации не хранят — здесь он лишь показывает набор полей варианта
     data class Card(val number: String, val cvv: String) : PaymentMethod()
     data class PayPal(val email: String) : PaymentMethod()
     data class Crypto(val walletAddress: String, val currency: String) : PaymentMethod()
@@ -424,7 +465,7 @@ fun processPayment(method: PaymentMethod, amount: Double) {
         is PaymentMethod.Card -> chargeCard(method.number, method.cvv, amount)
         is PaymentMethod.PayPal -> chargePayPal(method.email, amount)
         is PaymentMethod.Crypto -> chargeCrypto(method.walletAddress, method.currency, amount)
-        // exhaustive — никакой строковой магии и ошибок runtime
+        // exhaustive — забытый вариант не соберётся; неизвестной строки внутри домена уже нет
     }
 }
 ```
@@ -433,9 +474,11 @@ fun processPayment(method: PaymentMethod, amount: Double) {
 
 State machine — это набор состояний и разрешённых переходов между ними по событиям. Sealed class моделирует обе оси: `OrderState` — закрытый набор состояний, `OrderEvent` — закрытый набор событий.
 
-**Приём в примере.** Каждое состояние само знает свои переходы: метод `next(event)` через `when` по событию возвращает следующее состояние, а на недопустимое событие бросает `IllegalStateException`. Так логика переходов живёт рядом с состоянием, а не в одном гигантском `when`. Терминальные состояния (`Delivered`, `Cancelled`) не имеют валидных переходов и сразу бросают исключение. Минус подхода — некорректный переход ловится в рантайме (через `throw`), а не компилятором.
+**Приём в примере.** Каждое состояние само знает свои переходы: у нетерминальных состояний `next(event)` — это `when` по событию, который возвращает следующее состояние, а на недопустимое бросает `IllegalStateException`. Так логика переходов живёт рядом с состоянием, а не в одном гигантском `when`. Терминальные состояния (`Delivered`, `Cancelled`) не имеют валидных переходов: их `next` — сразу `throw`, без `when`. Минус подхода — некорректный переход ловится в рантайме (через `throw`), а не компилятором.
 
 ```kotlin
+import java.time.Instant
+
 sealed class OrderEvent {
     object Confirm : OrderEvent()
     object Ship : OrderEvent()
@@ -501,21 +544,24 @@ val anyResult: Result<Any> = intResult  // ОК благодаря out
 // Contravariant (in) — T используется только как параметр
 sealed class Consumer<in T> {
     abstract fun consume(value: T)
+
+    // наследник sealed-типа обязан быть именованным: анонимный object так не унаследуешь
+    object Printing : Consumer<Any>() {
+        override fun consume(value: Any) { println(value) }
+    }
 }
 
-val anyConsumer: Consumer<Any> = object : Consumer<Any>() {
-    override fun consume(value: Any) { println(value) }
-}
+val anyConsumer: Consumer<Any> = Consumer.Printing
 val intConsumer: Consumer<Int> = anyConsumer  // ОК благодаря in
 ```
 
-**Эмпирическое правило.** `out` — для «производящих» типов, которые отдают значения наружу (`Result` с `Success`); `in` — для «потребляющих», которые принимают значения внутрь (`Comparator`).
+**Эмпирическое правило.** `out` — для «производящих» типов, которые отдают значения наружу (`Result` с `Success`); `in` — для «потребляющих», которые принимают значения внутрь. Привычный пример потребителя — `Comparator`, но объявлен он инвариантно: `kotlin.Comparator` — это typealias для `java.util.Comparator`, а declaration-site variance в Java нет. Контравариантность там добавляется на месте использования: `fun <T> Iterable<T>.sortedWith(comparator: Comparator<in T>)`. Из объявленных контравариантными в stdlib — например, `kotlin.Function1<in P1, out R>`.
 
 ## Q15. Какие типичные ошибки при работе с sealed class?
 
 Большинство ошибок сводятся к одному: теряется главное преимущество sealed — проверка полноты компилятором.
 
-1. **Ветка `else` в `when` по sealed-типу** — теряете exhaustive-проверку. С Kotlin 1.7 компилятор требует полноты от любого `when` по sealed-типу — и как выражения, и как statement (до 1.6 неполный statement давал лишь warning). Но стоит написать `else`, и проверка отключается: новый подкласс молча проваливается в эту ветку:
+1. **Ветка `else` в `when` по sealed-типу** — теряете exhaustive-проверку. С Kotlin 1.7 компилятор требует полноты от любого `when` по sealed-типу — и как выражения, и как statement (в 1.6 неполный statement давал warning, до 1.6 диагностики не было). Но стоит написать `else`, и проверка отключается: новый подкласс молча проваливается в эту ветку:
 
 ```kotlin
 // ПЛОХО: else отключает exhaustive-проверку
@@ -537,7 +583,7 @@ val message = when (result) {
 ```kotlin
 // ПЛОХО
 sealed class Status {
-    class Loading : Status()  // каждый вызов создаёт новый
+    class Loading : Status()  // каждый вызов Loading() создаёт новый экземпляр: == и === для двух таких объектов дают false
 }
 
 // ХОРОШО
@@ -548,7 +594,7 @@ sealed class Status {
 
 3. **Sealed class там, где хватило бы enum.** Для простого перечисления без данных (статусы, типы) sealed — это over-engineering: enum легче и читается понятнее.
 
-4. **Попытка «открыть» sealed через `open`.** Sealed-класс закрыт по своей природе, и в Kotlin 1.5+ правила sealed/open/final стали строже. Не пытайтесь обойти закрытость — если набор вариантов должен быть открытым, sealed вам просто не подходит.
+4. **Попытка «открыть» sealed через `open`.** Sealed-класс закрыт по своей природе: пометить его `open` компилятор не даёт ни в одной версии. В Kotlin 1.5 правила sealed, наоборот, ослабили — sealed interface стал стабильным, а наследников разрешили размещать в любом файле того же пакета и модуля. Не пытайтесь обойти закрытость — если набор вариантов должен быть открытым, sealed вам просто не подходит.
 
 ## See also
 
