@@ -400,12 +400,12 @@ Sitemap: https://example.com/sitemap.xml
 1. Перед первым fetch домена скачать `/robots.txt`.
 2. Распарсить группы по `User-agent`: ищем точное совпадение с нашим UA, иначе fallback на `*`.
 3. Внутри группы — упорядоченные правила `Allow`/`Disallow`.
-4. Для проверки URL применить **longest-prefix match** (спецификация Google): побеждает правило с самым длинным совпавшим префиксом.
+4. Для проверки URL применить **longest-prefix match**: побеждает правило с самым длинным совпавшим префиксом. Это не соглашение одного вендора: с 2022 года robots.txt стандартизован IETF как RFC 9309, и правило самого длинного совпадения закреплено там.
 5. Если URL запрещён — отбросить.
 
 **Кэширование** (robots.txt качать на каждый запрос нельзя — это лишний трафик и нагрузка на сайт):
 
-- TTL: 24 часа (рекомендация Google).
+- TTL: 24 часа — RFC 9309 разрешает кэшировать не дольше суток.
 - Ключ кэша: hostname.
 - Хранилище: Redis cluster (sharded по host), backup в Cassandra.
 - При 4xx (robots.txt нет) — считаем «всё разрешено», TTL = 24h.
@@ -424,7 +424,7 @@ def can_fetch(url, user_agent):
 
 Дополнительные директивы:
 
-- `Crawl-delay: N` — минимум N секунд между запросами (переопределяет наш дефолт 1s).
+- `Crawl-delay: N` — минимум N секунд между запросами. В RFC 9309 этой директивы нет: Google её игнорирует, Bing и Яндекс учитывают. Свой краулер её соблюдать может, но считать её стандартом нельзя.
 - `Sitemap:` — URL карты сайта; используем для discovery (см. Q21).
 
 ## Q12. DNS resolution — почему это узкое место?
@@ -825,7 +825,7 @@ def next_crawl_time(url_meta):
 | Infinite depth | depth > 10-15 | hard depth limit per domain |
 | Session IDs | URL normalize удаляет (Q15) | normalize обязательно |
 | Faceted nav | content SimHash повторяется | content dedup отбрасывает |
-| Per-domain explosion | quota: max 100K URLs/domain | hard cap |
+| Per-domain explosion | quota на домен — порядок сотен тысяч URL | hard cap, конкретное число см. ниже |
 | Same-pattern URLs | regex pattern frequency | URL pattern blacklist (auto-detect: 1000+ URLs с одинаковым path шаблоном) |
 | Calendar traps | path matches `/\d{4}/\d{2}/\d{2}` + date > today+30d | date-based heuristic |
 
