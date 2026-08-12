@@ -72,6 +72,7 @@ public class StatsPageService {
     TopicUtils topicUtils;
     DailyActivityRepository dailyActivityRepository;
     ExperienceService experienceService;
+    com.cheatsheet.quiz.feature.interview.service.flow.SessionHistoryService sessionHistoryService;
 
     /**
      * Строит state страницы статистики по фильтру и поисковому запросу.
@@ -165,7 +166,10 @@ public class StatsPageService {
                 // Прогрессия НЕ зависит от отбора: ступень — про человека, а не про срез
                 // банка, который он сейчас смотрит. Считать её по выборке значило бы, что
                 // фильтр «только важные» понижает человека в ранге.
-                Progression.of(experienceService.snapshot(), experienceService.currentStreak())
+                Progression.of(experienceService.snapshot(), experienceService.currentStreak()),
+                // История не зависит от отбора по темам: сессия — это событие, а не срез
+                // банка. Фильтровать её значило бы прятать занятия, которые были.
+                sessionHistoryService.recent()
         );
     }
 
@@ -486,7 +490,13 @@ public class StatsPageService {
              * доезжают не все режимы: TRAINING работает вовсе без сессии. Аналитика
              * отвечает на вопрос «где я», и ступень — часть этого ответа.
              */
-            Progression progression
+            Progression progression,
+            /**
+             * Последние завершённые сессии. До V29 сводка сессии жила только в
+             * HttpSession и терялась при следующем старте — «сколько я занимался и как
+             * шёл» продукт не отвечал нигде.
+             */
+            List<com.cheatsheet.quiz.domain.SessionRecord> sessionHistory
     ) {
         public StatsPageState(InterviewStats stats, List<String> topics, List<?> groups,
                               String selectedGroup, InterviewFilter filter, String searchQuery,
@@ -497,7 +507,7 @@ public class StatsPageService {
                     List.of(), List.of(), LearningMetrics.EMPTY,
                     List.of(), "[]", MetricDefinitions.catalog(), null, 0L,
                     List.of(), List.of(), "[]", List.of(),
-                    Progression.of(com.cheatsheet.quiz.domain.UserExperience.EMPTY, 0));
+                    Progression.of(com.cheatsheet.quiz.domain.UserExperience.EMPTY, 0), List.of());
         }
     }
 

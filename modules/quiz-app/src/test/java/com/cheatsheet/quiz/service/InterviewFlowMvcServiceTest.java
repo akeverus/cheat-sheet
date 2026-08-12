@@ -61,6 +61,9 @@ class InterviewFlowMvcServiceTest {
     @Mock
     private Model model;
 
+    @Mock
+    com.cheatsheet.quiz.feature.interview.service.flow.SessionHistoryService sessionHistoryService;
+
     private InterviewFlowMvcService service;
 
     @BeforeEach
@@ -74,7 +77,8 @@ class InterviewFlowMvcServiceTest {
                 modelAttributeMapper,
                 requestMapper,
                 answerPageService,
-                pauseService
+                pauseService,
+                sessionHistoryService
         );
     }
 

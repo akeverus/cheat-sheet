@@ -927,6 +927,62 @@
         </div>
     </section>
 
+    <!--/* ЖУРНАЛ ЗАНЯТИЙ. До V29 сводка сессии жила только в HttpSession: экран итогов
+         читал её один раз и терял при следующем старте, перезагрузке или закрытии
+         вкладки — проверено на живом приложении. То есть «когда я занимался и как шло»
+         продукт не отвечал нигде: график выше показывает ответы по дням, но не сессии,
+         их режимы и длительность.
+
+         Стоит в «Динамике», а не отдельной вкладкой: вопрос тот же — как шло во
+         времени, — а четвёртая вкладка ради одной таблицы дробит навигацию.
+
+         Таблица, а не карточки: у строк одинаковый набор чисел, и глаз сравнивает их
+         по столбцу. Отбор темами сюда НЕ применяется: сессия — событие, а не срез
+         банка, и прятать состоявшееся занятие из-за фильтра было бы ложью. */-->
+    <section class="stats-section" aria-labelledby="session-history-title">
+        <h3 class="section-title" id="session-history-title">Журнал занятий</h3>
+
+        <div th:if="${#lists.isEmpty(sessionHistory)}" class="empty-state" data-empty-bg="card">
+            <svg class="px-illus px-illus-lg empty-state-illus" aria-hidden="true"><use href="#px-chronicle"></use></svg>
+            <h4 class="empty-state-title">Журнал пуст</h4>
+            <p class="empty-state-text">Здесь появятся завершённые сессии: когда, в каком режиме,
+                с каким счётом. Тренировка без сессии (обычный режим) в журнал не попадает — она
+                не имеет начала и конца.</p>
+            <p class="empty-state-actions"><a class="btn secondary-btn" th:href="@{/settings}">Собрать сессию</a></p>
+        </div>
+
+        <div class="table-scroll" th:unless="${#lists.isEmpty(sessionHistory)}">
+            <table class="data-table">
+                <caption class="visually-hidden">Последние завершённые сессии</caption>
+                <thead>
+                <tr>
+                    <th scope="col">Когда</th>
+                    <th scope="col">Режим</th>
+                    <th scope="col" class="num">Счёт</th>
+                    <th scope="col" class="num">Точность</th>
+                    <th scope="col" class="num">Время</th>
+                    <th scope="col" class="num">Опыт</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="s : ${sessionHistory}">
+                    <th scope="row">
+                        <time th:datetime="${s.finishedAt()}"
+                              th:text="${#temporals.format(s.finishedAt().atZone(T(java.time.ZoneId).systemDefault()), 'd MMMM, HH:mm')}">1 января</time>
+                    </th>
+                    <td th:text="${@modeUtils.displayName(s.mode())}">Экзамен</td>
+                    <td class="num" th:text="${s.correctCount()} + ' из ' + ${s.answeredCount()}">0 из 0</td>
+                    <!--/* «—», а не «0%», когда отвечать было не на что: ноль процентов —
+                         это результат, а его не было. */-->
+                    <td class="num" th:text="${s.hasAccuracy()} ? ${#numbers.formatDecimal(s.accuracy(), 1, 0)} + '%' : '—'">—</td>
+                    <td class="num" th:text="${s.compactDuration()}">0:00</td>
+                    <td class="num" th:text="'+' + ${s.sessionXp()}">+0</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
 </section>
 
 <!--/* ================= Панель: Ошибки (UI-012 drill-down) ================= */-->

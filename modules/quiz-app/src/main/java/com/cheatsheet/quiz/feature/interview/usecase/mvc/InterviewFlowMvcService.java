@@ -13,6 +13,7 @@ import com.cheatsheet.quiz.domain.SessionSummary;
 import com.cheatsheet.quiz.feature.interview.service.page.AnswerPageService;
 import com.cheatsheet.quiz.feature.interview.service.flow.PauseService;
 import com.cheatsheet.quiz.feature.interview.service.flow.SessionFlowService;
+import com.cheatsheet.quiz.feature.interview.service.flow.SessionHistoryService;
 import jakarta.servlet.http.HttpSession;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,7 @@ public class InterviewFlowMvcService {
     MvcRequestMapper requestMapper;
     AnswerPageService answerPageService;
     PauseService pauseService;
+    SessionHistoryService sessionHistoryService;
 
     public String start(StartSessionRequest request, HttpSession session) {
         var selected = requestMapper.resolveStartMode(request);
@@ -167,7 +169,13 @@ public class InterviewFlowMvcService {
 
     private void persistSessionSummary(HttpSession session, InterviewSession interviewSession) {
         sessionFlowService.buildSummary(interviewSession)
-                .ifPresent(summary -> httpSessionStateService.setLastSessionSummary(session, summary));
+                .ifPresent(summary -> {
+                    httpSessionStateService.setLastSessionSummary(session, summary);
+                    // История переживает HttpSession: до неё сводка существовала ровно до
+                    // следующего старта, перезагрузки или закрытия вкладки, и «сколько я
+                    // занимался на прошлой неделе» продукт не отвечал нигде.
+                    sessionHistoryService.record(summary);
+                });
     }
 
     private InterviewSessionSupport.AnswerContext processAnswer(SubmitAnswerRequest request, HttpSession session) {
