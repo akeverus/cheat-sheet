@@ -44,7 +44,7 @@ updated: "2026-05-22"
 
 **State machine**
 - [Q7. Состояния и переходы (Idle → ProductSelected → ...) (!)](#q7-состояния-и-переходы-idle--productselected---)
-- [Q8. State pattern: интерфейс + 5 конкретных классов (!)](#q8-state-pattern-интерфейс--5-конкретных-классов-)
+- [Q8. State pattern: интерфейс + 6 конкретных классов (!)](#q8-state-pattern-интерфейс--6-конкретных-классов-)
 - [Q9. Защита от недопустимых действий: что блокировать в каждом состоянии](#q9-защита-от-недопустимых-действий-что-блокировать-в-каждом-состоянии)
 
 **Sequence flows**
@@ -89,14 +89,14 @@ updated: "2026-05-22"
 | Insert card (NFC) | Безналичная оплата через payment gateway |
 | Dispense product | Выдать товар после успешной оплаты |
 | Return change | Точно посчитать и выдать сдачу |
-| Cancel | Вернуть вставленные деньги в любой момент до выдачи товара |
+| Cancel | Вернуть деньги, пока машина принимает оплату и выдача ещё не началась |
 | Restock (admin) | Авторизованный персонал пополняет товар |
 | Maintenance mode | Перевод в `OutOfService` (для ремонта) |
 
 **Нефункциональные требования** — здесь и проявляется специфика именно автомата:
 
-- **Отклик в реальном времени** (< 1 сек на каждый шаг). Это hardware-устройство, а не облачный сервис: пользователь стоит у машины и ждёт реакции мгновенно.
-- **Никогда не отдать товар без оплаты** — главный инвариант. Его нарушение = прямой убыток, поэтому проверяется на доменном уровне, а не только в UI.
+- **Отклик в реальном времени.** Локальные шаги (выбор слота, приём монеты, выдача, отмена) — меньше секунды: это hardware-устройство, пользователь стоит у машины и ждёт реакции мгновенно. Онлайн-авторизация карты в этот бюджет не укладывается — на неё закладывают несколько секунд, индикатор прогресса и таймаут, по которому сессия откатывается.
+- **Не отдавать товар без оплаты в покупательском режиме** — главный инвариант. Его нарушение = прямой убыток, поэтому проверяется на доменном уровне, а не только в UI. Выдача без платежа существует только в явно выделенных режимах (free-vend, сервисная тестовая выдача, компенсация сбоя) — под аутентификацией и с отдельной записью в журнале.
 - **Точная сдача** — арифметика с float запрещена: ошибка округления на копейку при тысячах транзакций превращается в недостачу кассы.
 - **Журнал транзакций** — нужен для сверки кассы (reconciliation) и выявления мошенничества (fraud detection).
 - **Честная недоступность** — состояние `OutOfService` явное и видимое, а не молчаливый отказ: пользователь сразу понимает, что машина не работает.
@@ -106,7 +106,7 @@ updated: "2026-05-22"
 
 ## Q2. Действующие лица и сценарии использования
 
-С системой работают три разных типа пользователей, и у каждого свой набор операций. Развести их важно: права и доступные действия у покупателя и обслуживающего персонала не пересекаются, и это сразу задаёт границу между публичным и admin-API.
+С системой работают три разных типа пользователей, и у каждого свой набор операций. Развести их важно: наборы действий пересекаются только в сервисных сценариях (test vend, проверка монетоприёмника), а разводятся не сами операции, а канал вызова и права на них — это и задаёт границу между публичным и admin-API.
 
 ```mermaid
 flowchart LR
@@ -120,7 +120,7 @@ flowchart LR
     Admin --> SetPrice[Update Prices]
 ```
 
-- **Customer** — основной актёр; физически у машины он один за раз, и это упрощает модель concurrency (см. Q19).
+- **Customer** — основной актёр; у лицевой панели он один за раз, поэтому покупательская сессия строго последовательна. Параллельно с ней идут удалённые операции Admin и Restocker, и вот они уже конкурируют с покупкой за общее состояние (см. Q19).
 - **Restocker** — пополняет товар, забирает наличность из кассы.
 - **Admin** — конфигурация, отчёты, управление ценами; работает через защищённый канал, а не через лицевую панель.
 
@@ -141,9 +141,17 @@ public class VendingMachine {                    // Context (State pattern)
     private final List<InventoryObserver> observers = new ArrayList<>();
 
     // Транзакционный контекст текущей покупки
+    private String selectedSlotId;               // из какого слота выдаём
     private Product selectedProduct;
     private BigDecimal currentBalance = BigDecimal.ZERO;
     private PaymentStrategy paymentStrategy;
+
+    public VendingMachine(Inventory inventory, ChangeDispenser cd, AuditLog log) {
+        this.inventory = inventory;
+        this.changeDispenser = cd;
+        this.auditLog = log;
+        this.currentState = new IdleState(this);  // Context всегда стартует в Idle
+    }
 
     // Делегирование событий текущему состоянию
     public void selectProduct(String slotId) { currentState.onSelectProduct(slotId); }
@@ -155,20 +163,27 @@ public class VendingMachine {                    // Context (State pattern)
     // ... getters для состояний
 }
 
-public final class Product {
-    private final String id;        // SKU
-    private final String name;
-    private final BigDecimal price;  // в той же валюте, что Money
-}
+public record Product(
+    String id,                      // SKU
+    String name,
+    BigDecimal price                // в той же валюте, что Money
+) {}
 
 public final class Slot {           // физический слот в автомате
     private final String slotId;    // "A3"
     private final Product product;
     private int quantity;           // текущее количество в слоте
+
+    public Slot(String slotId, Product product, int quantity) {
+        this.slotId = slotId; this.product = product; this.quantity = quantity;
+    }
+    // ... геттеры, setQuantity
 }
 
 public class Inventory {
     private final Map<String, Slot> slots;  // slotId → Slot
+
+    public Inventory(Map<String, Slot> slots) { this.slots = slots; }
 
     public Optional<Slot> getSlot(String id)   { ... }
     public boolean isAvailable(String id)      { ... }
@@ -181,7 +196,7 @@ public class Inventory {
 
 ## Q4. Деньги: Coin, Note, способ оплаты (!)
 
-Деньги моделируются типобезопасно, а не «числом и строкой». Номиналы — это `enum`: множество монет и банкнот фиксировано и известно на этапе компиляции, поэтому невозможно вставить «монету в 7 центов». Само платёжное средство — `sealed interface Money` с тремя реализациями (монета, банкнота, списание с карты): sealed-иерархия гарантирует, что компилятор знает полный список вариантов и `switch` по ним проверяется на полноту.
+Деньги моделируются типобезопасно, а не «числом и строкой». Номиналы — это `enum`: множество монет и банкнот фиксировано и известно на этапе компиляции, поэтому «монету в 7 центов» невозможно *смоделировать* — физически вставить можно что угодно, но неопознанный жетон отсекает валидатор на границе, и в домен он не попадает. Само платёжное средство — `sealed interface Money` с тремя реализациями (монета, банкнота, списание с карты): sealed-иерархия гарантирует, что компилятор знает полный список вариантов и `switch` по ним проверяется на полноту.
 
 Способ оплаты вынесен в отдельную ось — паттерн **Strategy**. Это разводит два независимых вопроса: *чем* платят (кэш / карта / NFC) и *что* при этом происходит с балансом. Добавить новый способ оплаты можно, не трогая `VendingMachine` (см. Q13, Q18).
 
@@ -225,8 +240,18 @@ public interface PaymentStrategy {
 public class CashPaymentStrategy implements PaymentStrategy { ... }
 public class CardPaymentStrategy implements PaymentStrategy {
     private final PaymentGateway gateway;        // Stripe/Adyen
-    public PaymentResult charge(BigDecimal amount) {
+    private final String tokenizedCard;          // токен, а не PAN (см. Q20)
+
+    public CardPaymentStrategy(PaymentGateway gateway, String tokenizedCard) {
+        this.gateway = gateway; this.tokenizedCard = tokenizedCard;
+    }
+
+    @Override public PaymentResult charge(BigDecimal amount) {
         return gateway.charge(amount, tokenizedCard);
+    }
+
+    @Override public void refund(BigDecimal amount) {
+        gateway.refund(amount, tokenizedCard);
     }
 }
 public class NfcPaymentStrategy implements PaymentStrategy { ... }
@@ -236,14 +261,14 @@ public class NfcPaymentStrategy implements PaymentStrategy { ... }
 
 ## Q5. Почему деньги — это BigDecimal/центы, а не float (!)
 
-Коротко: `float` и `double` физически не могут хранить десятичные дроби точно, поэтому для денег они запрещены. Причина — представление **IEEE 754 binary**: дробь `0.1` в двоичной системе бесконечна и периодична, и при сложении накапливается ошибка.
+Коротко: `float` и `double` точно хранят только дроби со знаменателем — степенью двойки (0.5, 0.25, 0.125), а цены состоят ровно из других (0.1, 0.2, 0.01). Причина — представление **IEEE 754 binary**: дробь `0.1` в двоичной системе бесконечна и периодична, поэтому уже её запись даёт погрешность.
 
 ```java
 double a = 0.1 + 0.2;          // 0.30000000000000004 ❗
 BigDecimal b = new BigDecimal("0.1").add(new BigDecimal("0.2"));  // 0.3 ✓
 ```
 
-В автомате это критично вдвойне: цена, баланс и сдача складываются и вычитаются сотни раз в день, и накопленная ошибка округления превращается в реальную недостачу в кассе при вечерней сверке.
+В автомате ломается не бухгалтерия по копейке, а логика: сравнение `balance >= price` возвращает false при визуально равных суммах, а сдача, посчитанная вычитанием, выходит вида `0.30000000000000004` или `0.09999999999999998` — и уже её округление расходится с кассой.
 
 **Чем считать деньги — варианты:**
 
@@ -252,9 +277,9 @@ BigDecimal b = new BigDecimal("0.1").add(new BigDecimal("0.2"));  // 0.3 ✓
 | `BigDecimal` со scale=2 | Точно, читабельно, есть MathContext | Чуть медленнее, нужен явный `.setScale(2, RoundingMode.HALF_UP)` |
 | `long cents` (целые центы) | Быстро, ложится в БД нативно | Нет защиты от смешения валют, ручное форматирование |
 | `Money` value-object (Joda Money / Moneta) | Типобезопасно, валюта внутри типа | Внешняя зависимость |
-| `double` / `float` | — | **Никогда. Для денег запрещено.** |
+| `double` / `float` | — | **Для сумм к оплате, сдачи и остатков — никогда.** Допустимы разве что аналитические агрегаты, где цент не единица учёта |
 
-**Эмпирическое правило:** на собеседовании сразу объявите `BigDecimal` + `RoundingMode.HALF_UP` для всех операций с ценами. Это маркер senior-уровня — интервьюер видит, что вы знаете о проблеме до того, как она выстрелит.
+**Эмпирическое правило:** на собеседовании сразу объявите `BigDecimal` со scale=2 и явным `RoundingMode` под правило домена — `HALF_UP` для розничной цены, `HALF_EVEN` для бухгалтерских агрегатов (он же дефолт `MathContext`). Это маркер senior-уровня — интервьюер видит, что вы знаете о проблеме до того, как она выстрелит.
 
 ---
 
@@ -262,9 +287,9 @@ BigDecimal b = new BigDecimal("0.1").add(new BigDecimal("0.2"));  // 0.3 ✓
 
 Диаграмма собирает воедино всё, что обсуждалось выше. Главное, на что смотреть при чтении, — тип связей:
 
-- **Композиция** (закрашенный ромб, `*--`): `VendingMachine` владеет `State`, `Inventory`, `ChangeDispenser`, `AuditLog` — эти части не живут без машины.
-- **Агрегация** (пустой ромб, `o--`): `PaymentStrategy` и набор `InventoryObserver` подключаются извне и заменяемы.
-- **Реализация** (`<|..`): пять конкретных состояний реализуют `State`, три стратегии — `PaymentStrategy`.
+- **Композиция** (закрашенный ромб, `*--`): `VendingMachine` владеет `Inventory`, `ChangeDispenser` и `AuditLog` — эти части не живут без машины.
+- **Агрегация** (пустой ромб, `o--`): `State`, `PaymentStrategy` и набор `InventoryObserver` подключаются извне и заменяемы — объект состояния подставляется через `setState`, стратегия оплаты выбирается на транзакцию. Сюда же `Inventory o-- Product`: карточка товара принадлежит каталогу и переиспользуется несколькими слотами.
+- **Реализация** (`<|..`): шесть конкретных состояний реализуют `State`, три стратегии — `PaymentStrategy`.
 
 Именно эти связи позволяют расширять систему через новые классы, а не правки существующих (см. OCP в Q18).
 
@@ -295,6 +320,7 @@ classDiagram
     class ProductSelectedState
     class AcceptingPaymentState
     class DispensingState
+    class ReturningChangeState
     class OutOfServiceState
 
     class Product {
@@ -335,11 +361,12 @@ classDiagram
         +record(TransactionRecord)
     }
 
-    VendingMachine *-- State : currentState
+    VendingMachine o-- State : currentState
     State <|.. IdleState
     State <|.. ProductSelectedState
     State <|.. AcceptingPaymentState
     State <|.. DispensingState
+    State <|.. ReturningChangeState
     State <|.. OutOfServiceState
     VendingMachine *-- Inventory
     VendingMachine *-- ChangeDispenser
@@ -358,7 +385,7 @@ classDiagram
 
 Это ядро задачи. Автомат — конечный автомат (FSM): в каждый момент он ровно в одном состоянии, и набор допустимых действий полностью определяется этим состоянием. Сначала рисуют диаграмму переходов — она становится спецификацией, по которой потом пишется код состояний (Q8) и тесты переходов (Q23).
 
-Читайте диаграмму как контракт: стрелка — это разрешённый переход с указанием триггера. Всё, чего на диаграмме нет, — запрещено и должно падать с `IllegalStateException` (Q9). Обратите внимание на «петли»: `AcceptingPayment → AcceptingPayment` при `balance < price` означает, что машина копит баланс, пока его не хватит на товар.
+Читайте диаграмму как контракт: стрелка — это разрешённый переход с указанием события и, при необходимости, сторожевого условия. Переходов, которых на диаграмме нет, быть не должно: часть таких вызовов — идемпотентный no-op (повторный `cancel()` в `Idle`), остальные падают с `IllegalStateException` (Q9), а неверный аргумент — это отдельный случай `IllegalArgumentException`. Обратите внимание на «петли»: `AcceptingPayment → AcceptingPayment` при `balance < price` означает, что машина копит баланс, пока его не хватит на товар.
 
 ```mermaid
 stateDiagram-v2
@@ -386,22 +413,24 @@ stateDiagram-v2
     OutOfService --> Idle : admin resolves
 ```
 
-**Ключевые переходы** (триггер → побочный эффект):
+**Ключевые переходы** (событие и условие → побочный эффект):
 
-| Переход | Триггер | Побочный эффект |
+| Переход | Событие / условие | Побочный эффект |
 |---|---|---|
 | `Idle → ProductSelected` | `selectProduct(slotId)` валиден | сохранить `selectedProduct` |
 | `ProductSelected → AcceptingPayment` | `insertMoney(m)` | `balance += m.amount()` |
-| `AcceptingPayment → Dispensing` | `balance >= price` | списать оплату, уменьшить остаток |
-| `* → Idle (cancel)` | `cancel()` | вернуть `currentBalance` |
+| `AcceptingPayment → Dispensing` | `insertMoney(m)` при `balance >= price` | списать оплату, уменьшить остаток слота |
+| `ProductSelected → Idle` | `cancel()` | возвращать нечего, баланс ещё нулевой |
+| `AcceptingPayment → Idle` | `cancel()` | вернуть `currentBalance` |
+| `Dispensing → *` | товар выдан | записать транзакцию в журнал (обе ветки — со сдачей и под расчёт) |
 | `Dispensing → ReturningChange` | товар выдан, `change > 0` | посчитать монеты сдачи |
-| `ReturningChange → Idle` | сдача выдана | записать транзакцию в журнал |
+| `ReturningChange → Idle` | сдача выдана | завершить транзакцию |
 
 ---
 
-## Q8. State pattern: интерфейс + 5 конкретных классов (!)
+## Q8. State pattern: интерфейс + 6 конкретных классов (!)
 
-Теперь переводим диаграмму из Q7 в код. Каждое состояние — отдельный класс, реализующий общий интерфейс `State`. Ключевой приём — **default-методы в интерфейсе бросают `IllegalStateException`**: состоянию достаточно переопределить только те операции, которые в нём разрешены, а все остальные автоматически становятся запрещёнными. Это убирает горы шаблонного кода и делает «запрещено по умолчанию» поведением, а не тем, о чём надо помнить.
+Теперь переводим диаграмму из Q7 в код. Каждое состояние — отдельный класс, реализующий общий интерфейс `State`. Классов шесть: пять «долгих» режимов из диаграммы Q7 плюс кратковременный `ReturningChangeState`, в котором машина находится между выдачей товара и выдачей сдачи. Ключевой приём — **default-методы в интерфейсе бросают `IllegalStateException`**: состоянию достаточно переопределить только те операции, которые в нём разрешены, а все остальные автоматически становятся запрещёнными. Это убирает горы шаблонного кода и делает «запрещено по умолчанию» поведением, а не тем, о чём надо помнить.
 
 **Интерфейс State (default-методы бросают `IllegalStateException`):**
 
@@ -433,6 +462,7 @@ public class IdleState implements State {
             vm.showMessage("Sold out: " + slotId);
             return;     // остаёмся в Idle
         }
+        vm.setSelectedSlot(slotId);              // списывать будем именно этот слот
         vm.setSelectedProduct(slot.getProduct());
         vm.setState(new ProductSelectedState(vm));
         vm.showMessage("Selected: " + slot.getProduct().getName()
@@ -447,6 +477,7 @@ public class IdleState implements State {
 ```java
 public class ProductSelectedState implements State {
     private final VendingMachine vm;
+    public ProductSelectedState(VendingMachine vm) { this.vm = vm; }
 
     @Override
     public void onInsertMoney(Money m) {
@@ -482,6 +513,7 @@ public class ProductSelectedState implements State {
 ```java
 public class AcceptingPaymentState implements State {
     private final VendingMachine vm;
+    public AcceptingPaymentState(VendingMachine vm) { this.vm = vm; }
 
     @Override
     public void onInsertMoney(Money m) {
@@ -506,6 +538,7 @@ public class AcceptingPaymentState implements State {
 ```java
 public class DispensingState implements State {
     private final VendingMachine vm;
+    public DispensingState(VendingMachine vm) { this.vm = vm; }
 
     @Override
     public void onDispense() {
@@ -518,8 +551,8 @@ public class DispensingState implements State {
         vm.getPaymentStrategy().charge(price);
         // 2) физически выдать
         vm.releaseProduct(product);
-        // 3) decrement inventory
-        vm.getInventory().decrement(product.getId());
+        // 3) списать остаток того слота, из которого выдали
+        vm.getInventory().decrement(vm.getSelectedSlotId());
 
         vm.getAuditLog().record(new TransactionRecord(
             Instant.now(), product, price, vm.getPaymentStrategy().method(), change));
@@ -541,6 +574,9 @@ public class DispensingState implements State {
 public class ReturningChangeState implements State {
     private final VendingMachine vm;
     private final BigDecimal amount;
+    public ReturningChangeState(VendingMachine vm, BigDecimal amount) {
+        this.vm = vm; this.amount = amount;
+    }
 
     @Override
     public void onDispense() {
@@ -550,7 +586,10 @@ public class ReturningChangeState implements State {
             vm.clearTransaction();
             vm.setState(new IdleState(vm));
         } catch (InsufficientCoinsException e) {
+            // сдачу вернуть нечем — довести транзакцию до конца, а не бросить баланс висеть
+            vm.getPaymentStrategy().refund(amount);
             vm.notifyAdmin("Cannot make change: " + amount);
+            vm.clearTransaction();
             vm.setState(new OutOfServiceState(vm));
         }
     }
@@ -562,6 +601,7 @@ public class ReturningChangeState implements State {
 ```java
 public class OutOfServiceState implements State {
     private final VendingMachine vm;
+    public OutOfServiceState(VendingMachine vm) { this.vm = vm; }
 
     @Override
     public void onSelectProduct(String slotId) {
@@ -589,13 +629,13 @@ public class OutOfServiceState implements State {
 
 **Принцип:** недопустимые операции → `IllegalStateException` (через default-метод интерфейса). Это подход **fail-fast**: баг в логике вскрывается сразу и громко, а не приводит к загадочному поведению где-то дальше по коду.
 
-Важный момент про слои: UI должен блокировать кнопки в зависимости от состояния (нельзя нажать «выдать», пока не оплачено), но домен всё равно проверяет сам. Это **эшелонированная защита** (defence in depth) — нельзя полагаться на то, что «снаружи» всё проверили правильно, потому что к домену можно обратиться и в обход UI (например, через сервисный порт).
+Важный момент про слои: UI должен гасить кнопки по состоянию — выбор товара недоступен во время оплаты и в `OutOfService`, отмена не предлагается в `Idle`, — но домен всё равно проверяет сам. Самой кнопки «выдать» в этой модели нет: выдачу запускает внутренний триггер домена, когда баланс покрыл цену. Это **эшелонированная защита** (defence in depth) — нельзя полагаться на то, что «снаружи» всё проверили правильно, потому что к домену можно обратиться и в обход UI (например, через сервисный порт).
 
 ---
 
 ## Q10. Основной сценарий: выбор → оплата → выдача → сдача
 
-Диаграмма последовательности показывает, как объекты обмениваются сообщениями в успешном сценарии. Главное наблюдение — `VendingMachine` (Context) сам ничего не решает: он принимает команду от покупателя и тут же делегирует её текущему состоянию (`S`). Логика перехода живёт в состоянии, а уже оно дёргает `Inventory`, `ChangeDispenser` и `AuditLog`.
+Диаграмма последовательности показывает, как объекты обмениваются сообщениями в успешном сценарии. Главное наблюдение — в `VendingMachine` (Context) нет ни одного условия вида «если состояние такое-то»: он принимает команду от покупателя и делегирует её текущему состоянию (`S`). Решение о переходе принимает состояние, а физические операции — списание в `Inventory`, выдачу, сдачу через `ChangeDispenser` и запись в `AuditLog` — по его команде выполняет сам контекст.
 
 ```mermaid
 sequenceDiagram
@@ -628,26 +668,36 @@ sequenceDiagram
     VM->>Inv: decrement("A3")
     VM->>VM: releaseProduct(Coke)
     VM->>Log: record(TransactionRecord)
-    Note over VM: change = 1.25 - 1.25 = 0
+    alt change > 0
+        VM->>CD: computeChange(0.75)
+        CD-->>VM: [Quarter, Quarter, Quarter]
+        VM->>CD: dispense(coins)
+    else exact amount
+        Note over VM: change = 1.25 - 1.25 = 0
+    end
     VM->>VM: setState(IdleState)
     VM-->>C: Product dispensed
 ```
 
-**Вариант со сдачей:** если бы покупатель вставил $2, то на шаге `setState(DispensingState)` сдача составила бы $0.75. Тогда вместо возврата в `Idle` машина перешла бы в `ReturningChangeState`, который посчитал бы монеты (3×Quarter) и выдал их.
+**Вариант со сдачей** показан веткой `alt`: вставь покупатель $2, сдача составила бы $0.75, машина ушла бы в `ReturningChangeState`, а тот попросил бы `ChangeDispenser` посчитать монеты (3×Quarter) и выдать их. В сценарии выше сумма ровная, поэтому отрабатывает ветка `else`.
 
 ---
 
 ## Q11. Отмена в середине оплаты — возврат денег
 
-Покупатель вправе передумать в любой момент до выдачи товара. Обработчик `onCancel` живёт в `AcceptingPaymentState`: он возвращает накопленный баланс и сбрасывает транзакцию обратно в `Idle`. Принципиально, что *перед* возвратом в `Idle` фиксируется запись в журнал — отмена тоже событие, которое должно сойтись при сверке кассы.
+Покупатель вправе передумать, пока машина принимает оплату: после старта авторизации карты и начала выдачи отмена уже не принимается. Обработчик `onCancel` живёт в `AcceptingPaymentState`: он возвращает накопленный баланс и сбрасывает транзакцию обратно в `Idle`. Принципиально, что *перед* возвратом в `Idle` фиксируется запись в журнал — отмена тоже событие, которое должно сойтись при сверке кассы.
 
 ```java
 // В AcceptingPaymentState
 public void onCancel() {
     BigDecimal toRefund = vm.getCurrentBalance();
     if (toRefund.compareTo(BigDecimal.ZERO) > 0) {
-        var coins = vm.getChangeDispenser().computeChange(toRefund);
-        vm.getChangeDispenser().dispense(coins);
+        if (vm.getPaymentStrategy().isCashless()) {
+            vm.getPaymentStrategy().voidAuthorization();   // снять холд, наличных тут нет
+        } else {
+            var coins = vm.getChangeDispenser().computeChange(toRefund);
+            vm.getChangeDispenser().dispense(coins);
+        }
     }
     vm.getAuditLog().record(TransactionRecord.cancelled(toRefund));
     vm.clearTransaction();
@@ -657,8 +707,8 @@ public void onCancel() {
 
 **Граничный случай — способ возврата зависит от способа оплаты:**
 
-- **Карта / NFC:** деньги возвращаются через payment gateway вызовом `paymentStrategy.refund(amount)` — физических наличных тут нет.
-- **Наличные:** те самые монеты, что вставил покупатель, уже упали в общий приёмник (hopper) и физически недостижимы. Поэтому возвращается *эквивалентная* сумма монетами из разменного фонда (change pool) — отсюда зависимость от того, есть ли в фонде подходящие номиналы (см. Q17).
+- **Карта / NFC:** до подтверждения продажи денег ещё не списали — автомат держит холд (pre-auth), поэтому отмена сводится к снятию холда, а не к возврату. Полноценный `refund` нужен, только если платёж уже захвачен (capture) — например, машина подтвердила продажу, а выдача сорвалась.
+- **Наличные:** монеты покупателя лежат в escrow монетоприёмника и при отмене штатно возвращаются через coin return — в кассу и трубки размена они уходят только после завершения продажи. Банкнота, успевшая уйти в стекер, обратно не выдаётся: за неё возвращают эквивалент монетами из разменного фонда, и вот здесь уже важно, есть ли в фонде подходящие номиналы (см. Q17).
 
 ---
 
@@ -676,7 +726,7 @@ if (slot.getQuantity() == 0) {
 }
 ```
 
-**Денег недостаточно** — главная опасность в том, что покупатель ушёл, оставив в машине баланс меньше цены. Деньги нельзя «зависнуть» в автомате навсегда. Решение — таймаут бездействия (30 сек) в `AcceptingPaymentState`: по нему машина сама выполняет cancel и возвращает баланс.
+**Денег недостаточно** — главная опасность в том, что покупатель ушёл, оставив в машине баланс меньше цены. Деньги нельзя «зависнуть» в автомате навсегда. Решение — таймаут бездействия (30 сек), который живёт в `VendingMachine` и покрывает оба состояния незавершённой сессии: по нему машина сама выполняет cancel — с возвратом баланса, если он ненулевой, и просто откатом в `Idle`, если денег ещё не было.
 
 ```java
 // Scheduler в VendingMachine
@@ -688,7 +738,7 @@ public void onUserInactive() {
 }
 ```
 
-**Гонка за последним товаром:** если покупка и пополнение (restocking админом) идут одновременно, `synchronized` на `Inventory.decrement` гарантирует, что счётчик не «потеряет» обновление и только один получит последний товар (подробнее в Q19).
+**Гонка за последним товаром** возникает между двумя одновременными покупками (пополнение счётчик только увеличивает). Одного синхронизированного `decrement` для неё мало: проверка остатка и списание должны быть одной атомарной операцией — `boolean tryReserve(slotId)` целиком под тем же монитором, что и `refill` (подробнее в Q19).
 
 ---
 
@@ -701,9 +751,9 @@ public void onUserInactive() {
 | **State** (главный) | `VendingMachine` + `State` интерфейс + 5 концретов | Убрать `switch/if` по состоянию, добавлять состояния без правки Context |
 | **Strategy** | `PaymentStrategy` (Cash/Card/NFC) | Подменять способ оплаты, добавлять новые без правки VM |
 | **Observer** | `InventoryObserver` слушает `Inventory.decrement` | Low-stock алерт админу, dashboard updates |
-| **Command** | `Action` интерфейс: `SelectAction`, `InsertMoneyAction`, `CancelAction` | Undo/redo (отмена), очередь действий, audit log |
+| **Command** | `AdminCommand`: `RefillCommand`, `SetPriceCommand`, `EnterMaintenanceCommand` | Очередь admin-действий и их запись в audit log; для undo интерфейсу нужен ещё `undo()` и снимок состояния |
 | **Singleton** | `VendingMachine` (один на физический автомат) | Hardware bound — один контроллер на машину |
-| **Factory** | `StateFactory.create(StateType, vm)` | Если состояний много и они с зависимостями |
+| **Factory Method** | `StateFactory.create(StateType, vm)` | Если состояний много и они с зависимостями. Статический `create` со switch — это Simple Factory, идиома, а не паттерн из каталога GoF |
 | **Template Method** | `AbstractPaymentStrategy.process()` = validate → charge → log | Общий каркас для всех payment-стратегий |
 
 **Observer — пример:**
@@ -711,7 +761,7 @@ public void onUserInactive() {
 ```java
 public interface InventoryObserver {
     void onLowStock(String slotId, int remaining);
-    void onOutOfStock(String slotId);
+    default void onOutOfStock(String slotId) { }
 }
 
 public class AdminDashboard implements InventoryObserver {
@@ -723,6 +773,7 @@ public class AdminDashboard implements InventoryObserver {
 // в Inventory
 public synchronized void decrement(String slotId) {
     var slot = slots.get(slotId);
+    if (slot.getQuantity() <= 0) throw new OutOfStockException(slotId);
     slot.setQuantity(slot.getQuantity() - 1);
     if (slot.getQuantity() == 0) {
         observers.forEach(o -> o.onOutOfStock(slotId));
@@ -735,7 +786,8 @@ public synchronized void decrement(String slotId) {
 **Command — для admin restocking:**
 
 ```java
-public sealed interface AdminCommand {
+public sealed interface AdminCommand
+        permits RefillCommand, SetPriceCommand, EnterMaintenanceCommand {
     void execute(VendingMachine vm);
 }
 public record RefillCommand(String slotId, int qty) implements AdminCommand {
@@ -764,10 +816,10 @@ public void insertMoney(Money m) {
         case ACCEPTING_PAYMENT:
             balance = balance.add(m.amount());
             if (balance.compareTo(price) >= 0) {
-                state = DISPENSING;
+                state = StateType.DISPENSING;
                 dispense();
             } else {
-                state = ACCEPTING_PAYMENT;
+                state = StateType.ACCEPTING_PAYMENT;
             }
             break;
         case DISPENSING:
@@ -782,20 +834,20 @@ public void insertMoney(Money m) {
 
 - **Дублирование** — один и тот же `switch` по состоянию в каждом из ~5 методов.
 - **Нарушение OCP** — новое состояние требует правок во *всех* методах сразу, легко что-то забыть.
-- **Состояние нельзя протестировать изолированно** — вся логика свалена в один класс.
+- **Состояние трудно протестировать изолированно** — сначала надо привести весь объект в нужное состояние, и тест тянет за собой всю логику класса, а не одну ветку.
 - **Высокая когнитивная нагрузка** — поведение размазано по 5×5 = 25 веткам `switch`, целостную картину одного состояния в голове не собрать.
 
 **Как State это лечит:**
 
 - Каждое состояние — отдельный класс, всё его поведение собрано в одном месте.
-- Добавление состояния = новый класс, без правок существующего кода (OCP).
+- Добавление состояния = новый класс; править приходится только те состояния, из которых в новое есть переход (или фабрику состояний), а не все методы сразу (OCP).
 - Юнит-тест на каждое состояние пишется независимо от остальных.
 
 ---
 
 ## Q15. Жадный алгоритм для канонических систем монет (US/EUR) (!)
 
-Сдача — это задача «набрать сумму минимальным числом монет». Жадный (greedy) алгоритм — берём самый крупный номинал, который ещё помещается, и повторяем. Он простой и быстрый, но даёт оптимум *не всегда* — только для так называемых канонических систем монет. К счастью, реальные валюты (доллар, евро) каноничны, поэтому в автомате жадный подход корректен.
+Сдача — это задача «набрать сумму минимальным числом монет». Жадный (greedy) алгоритм — берём самый крупный номинал, который ещё помещается, и повторяем. Он простой и быстрый, но даёт оптимум *не всегда* — только для так называемых канонических систем монет и только при неограниченном запасе каждого номинала. Реальные валюты (доллар, евро) каноничны, а вот кассеты автомата конечны, поэтому жадность со `hasInStock` — уже эвристика: она может выдать неминимальный набор или сообщить о невозможности размена там, где он существует (см. Q17).
 
 ```java
 public List<Coin> computeChangeGreedy(BigDecimal amount) {
@@ -804,15 +856,17 @@ public List<Coin> computeChangeGreedy(BigDecimal amount) {
     // По убыванию номинала
     var coins = List.of(Coin.QUARTER, Coin.DIME, Coin.NICKEL, Coin.PENNY);
     for (var c : coins) {
-        while (remaining.compareTo(c.getValue()) >= 0 && hasInStock(c)) {
+        // считаем по копии остатков: реальный склад трогаем только при успехе
+        while (remaining.compareTo(c.getValue()) >= 0 && availableInDraft(c)) {
             result.add(c);
             remaining = remaining.subtract(c.getValue());
-            consumeFromStock(c);
+            reserveInDraft(c);
         }
     }
     if (remaining.compareTo(BigDecimal.ZERO) > 0) {
-        throw new InsufficientCoinsException(amount, remaining);
+        throw new InsufficientCoinsException(amount, remaining);   // склад не тронут
     }
+    commitDraft(result);   // списываем монеты, только когда сумма набрана целиком
     return result;
 }
 ```
@@ -824,7 +878,7 @@ public List<Coin> computeChangeGreedy(BigDecimal amount) {
 - EUR (1, 2, 5, 10, 20, 50 центов) — каноническая.
 - **Контрпример** (неканоническая система): номиналы {1, 3, 4} и сдача 6 — жадный возьмёт `4+1+1 = 3 монеты`, а оптимум `3+3 = 2 монеты`. Именно из-за таких систем жадность нельзя применять вслепую.
 
-**Сложность:** `O(n × k)`, где `n` — число номиналов, `k` — максимальное количество монет в сдаче. На практике выполняется мгновенно.
+**Сложность:** `O(n + k)`, где `n` — число номиналов (внешний цикл), `k` — число выданных монет: внутренние `while` суммарно дают ровно `k` итераций. На практике выполняется мгновенно.
 
 ---
 
@@ -852,7 +906,8 @@ public List<Coin> computeChangeDP(BigDecimal amount) {
             }
         }
     }
-    if (dp[target] == Integer.MAX_VALUE) throw new InsufficientCoinsException();
+    // недостижимо только для наборов без монеты минимального шага (например {25,10,5} и target = 3)
+    if (dp[target] == Integer.MAX_VALUE) throw new ChangeNotRepresentableException(target);
 
     // Восстановление
     var result = new ArrayList<Coin>();
@@ -865,17 +920,17 @@ public List<Coin> computeChangeDP(BigDecimal amount) {
 
 | Алгоритм | Сложность | Когда |
 |---|---|---|
-| **Greedy** | `O(n)` | Canonical coin system (US, EUR) — почти всегда |
+| **Greedy** | `O(n + k)` | Canonical coin system (US, EUR) при достаточном запасе монет |
 | **DP unbounded knapsack** | `O(target × n)` | Arbitrary denominations, либо unbounded coins |
 | **DP bounded (limited stock)** | `O(target × n × max_stock)` | Учёт реального запаса монет каждого номинала |
 
-**Эмпирическое правило для реального автомата:** жадный алгоритм с проверкой остатка монет, а DP — как запасной вариант, если жадность упёрлась в нехватку нужных номиналов. Это практичный компромисс между скоростью и корректностью.
+**Эмпирическое правило для реального автомата:** жадный алгоритм с проверкой остатка монет, а запасной вариант — **bounded**-DP из третьей строки таблицы, который учитывает реальный запас каждого номинала. Листинг выше решает соседнюю задачу — произвольные номиналы при неограниченном запасе, — поэтому подставлять его как фолбэк при нехватке монет нельзя: он вернёт набор, которого в кассетах физически нет.
 
 ---
 
 ## Q17. Режим «только без сдачи» и граничные случаи
 
-Тонкий момент, который отличает продуманное решение: в фонде может физически не хватить монет нужных номиналов, чтобы выдать сдачу. Это надо обнаружить *заранее*, а не после того, как товар уже выдан. Отсюда две вещи: метод `canMakeChange` для предварительной проверки и режим «exact change only» (ровная сумма), который машина включает, когда разменный фонд опустел.
+Тонкий момент, который отличает продуманное решение: в фонде может физически не хватить монет нужных номиналов, чтобы выдать сдачу. Это надо обнаружить *заранее*, а не после того, как товар уже выдан. Отсюда две вещи: метод `canMakeChange` для предварительной проверки — точный, по реальным остаткам кассет, а не жадный, — и режим «exact change only» (ровная сумма), который машина включает, когда разменный фонд опустел.
 
 **Нехватка монет для сдачи:**
 
@@ -887,9 +942,11 @@ public class ChangeDispenser {
         return result;
     }
 
-    // Если pre-check показал, что сдачу не выдать — включить exact-change mode
+    // Точная проверка выполнимости: bounded coin change по реальным остаткам кассет.
+    // Жадности тут недостаточно — она даёт ложное «нельзя»: для 30 при пустых пятёрках
+    // greedy возьмёт 25 и упрётся в остаток 5, хотя 10+10+10 разменивает сумму.
     public boolean canMakeChange(BigDecimal amount) {
-        return tryGreedy(amount) != null;
+        return boundedDp(amount) != null;
     }
 }
 ```
@@ -897,8 +954,8 @@ public class ChangeDispenser {
 **В IdleState — pre-check:**
 
 ```java
-// если для любой возможной разницы (price - max_note) сдача невозможна → ECO-mode
-if (changeDispenser.lowOnCoins()) {
+// худшая возможная сдача = самый крупный принимаемый номинал минус самый дешёвый товар
+if (!changeDispenser.canMakeChange(maxNote.subtract(minPrice))) {
     vm.showMessage("EXACT CHANGE ONLY");
 }
 ```
@@ -921,17 +978,17 @@ if (changeDispenser.lowOnCoins()) {
 State и Strategy в этом дизайне — не самоцель, а способ выполнить SOLID. Полезно уметь явно показать, какой принцип закрывает каждое решение: интервьюер часто спрашивает «а где здесь SOLID?», и ответ «вот эти классы дают вот эти свойства» звучит куда сильнее общих слов.
 
 **SRP (единственная ответственность)** — каждый класс делает одну вещь:
-- `VendingMachine` — координация (Context).
+- `VendingMachine` — координация (Context) и тонкая точка входа для admin-команд.
 - Каждый `State` — поведение в одном режиме.
 - `Inventory` — управление товаром.
 - `ChangeDispenser` — выдача сдачи.
 - `AuditLog` — логирование.
 
-**OCP (открытость/закрытость)** — добавить новое состояние (например, `MaintenanceCalibrationState`) = написать новый класс, не трогая `VendingMachine` и существующие состояния. Система открыта для расширения, но закрыта для изменения.
+**OCP (открытость/закрытость)** — добавить новое состояние (например, `MaintenanceCalibrationState`) = написать новый класс, не трогая обработку событий ни в `VendingMachine`, ни в остальных состояниях. Править придётся ровно одну точку — ту, откуда в новое состояние переходят. Система открыта для расширения, но закрыта для изменения.
 
-**LSP (подстановка Лисков)** — все реализации `State` взаимозаменяемы; default-методы интерфейса гарантируют, что нереализованная операция бросает `IllegalStateException`, а не молча проходит, нарушая контракт.
+**LSP (подстановка Лисков)** — все реализации `State` взаимозаменяемы, потому что контракт объявлен явно: операция, недопустимая в текущем режиме, завершается `IllegalStateException`. Раз это часть контракта супертипа, а не сюрприз конкретной реализации, вызывающий код одинаково работает с любым состоянием. Default-метод при этом лишь задаёт поведение по умолчанию — переопределить его реализация вправе.
 
-**ISP (разделение интерфейсов)** — интерфейс `State` узкий (4 метода), а не «толстый» с примесью admin-методов. Admin-операции вынесены в отдельный API `VendingMachine.adminCommand(...)`, чтобы состояния не тащили лишних зависимостей.
+**ISP (разделение интерфейсов)** — интерфейс `State` узкий (4 метода), а не «толстый» с примесью admin-методов. Admin-операции идут отдельным входом `VendingMachine.adminCommand(...)`, который лишь делегирует их в `AdminController`, — состояния лишних зависимостей не тащат.
 
 **DIP (инверсия зависимостей)** — `VendingMachine` зависит от абстракции `PaymentStrategy`, а не от конкретного `StripeClient`. Благодаря этому тесты подставляют `FakePaymentStrategy` без сети и реального платёжного шлюза.
 
@@ -939,7 +996,7 @@ State и Strategy в этом дизайне — не самоцель, а сп�
 
 ## Q19. Параллельное пополнение и покупка: synchronized / ReentrantLock (!)
 
-Опасность в том, что чтение и запись счётчика остатка — не атомарная операция. Если покупка (`decrement`) и пополнение (`refill`) выполнятся вперемешку, одно из обновлений потеряется (lost update), и физический остаток разойдётся с учётным. Лечится сериализацией доступа к слоту. Ниже три уровня решения — от простого к тонкому.
+Опасность в том, что чтение и запись счётчика остатка — не атомарная операция. Если покупка (`decrement`) и пополнение (`refill`) выполнятся вперемешку, одно из обновлений потеряется (lost update), и физический остаток разойдётся с учётным. Лечится сериализацией доступа к слоту: под одним монитором должны быть все мутирующие операции — и `decrement`, и `refill`, — иначе взаимного исключения между ними не возникает. Ниже три уровня решения — от простого к тонкому.
 
 **Сценарий:** покупатель берёт Coke (`A3`, qty=1), и в тот же момент админ вызывает `refill("A3", 10)`.
 
@@ -970,11 +1027,12 @@ public class Inventory {
 ```java
 private final ReentrantLock lock = new ReentrantLock();
 
-public boolean decrement(String slotId) {
+public boolean decrement(String slotId) throws InterruptedException {
+    if (!lock.tryLock(100, TimeUnit.MILLISECONDS)) return false;  // захват ДО try
     try {
-        if (!lock.tryLock(100, TimeUnit.MILLISECONDS)) return false;
         // ... critical section
-    } finally { lock.unlock(); }
+        return true;
+    } finally { lock.unlock(); }   // unlock только там, где лок реально взят
 }
 ```
 
@@ -982,7 +1040,7 @@ public boolean decrement(String slotId) {
 
 ```java
 public class Slot {
-    private final AtomicInteger quantity;
+    private final AtomicInteger quantity = new AtomicInteger(0);
 
     public boolean tryDecrement() {
         while (true) {
@@ -996,7 +1054,7 @@ public class Slot {
 
 **Что выбрать на практике:** реальный автомат однопользовательский — у машины физически один человек, поэтому конкурируют не два покупателя, а покупка и admin-операция (через сервисный порт / удалённо). Для такой нагрузки `synchronized` полностью достаточно; lock-free здесь — преждевременная оптимизация (overengineering), и это стоит честно сказать на собеседовании.
 
-**Самый чистый вариант на время пополнения:** перевести машину в `OutOfService` на время `refill`, чтобы гонки с покупателем не было вообще — пополнение и покупка просто не пересекаются во времени.
+**Самый чистый вариант на время пополнения:** перевести машину в `OutOfService` на время `refill`. Окно гонки это резко сужает, но не закрывает само по себе: сам переход в `OutOfService` — тоже изменение общего состояния, поэтому он должен быть атомарным и дожидаться завершения уже начатой покупки.
 
 ---
 
@@ -1007,13 +1065,13 @@ public class Slot {
 **Сбой питания во время выдачи** — самый коварный случай: товар мог выйти, а мог застрять.
 
 - **Сохранение состояния:** текущая транзакция пишется в энергонезависимую память (EEPROM/flash) *до* физической выдачи. Тогда после перезагрузки факт незавершённой покупки не теряется.
-- При перезагрузке `VendingMachine.recover()` читает последнюю транзакцию, опрашивает датчик (вышел ли товар) и в зависимости от ответа либо помечает покупку завершённой, либо инициирует возврат денег.
+- Датчик выдачи моментальный (оптический барьер в зоне падения товара или датчик home-position мотора), состояния он не хранит — поэтому его срабатывание пишут в ту же энергонезависимую память сразу по факту. При перезагрузке `VendingMachine.recover()` читает последнюю транзакцию вместе с этой отметкой и либо помечает покупку завершённой, либо инициирует возврат денег.
 
 ```java
 public void recover() {
     var pending = auditLog.findLastPendingTransaction();
     if (pending == null) return;
-    if (sensors.productDelivered(pending.slotId())) {
+    if (pending.deliveryConfirmed()) {          // отметка датчика, записанная в момент выдачи
         auditLog.markComplete(pending);
     } else {
         auditLog.markFailed(pending);
@@ -1029,21 +1087,21 @@ public void recover() {
 
 **Распознавание подделок (counterfeit detection):**
 
-- Валидатор купюр и монет проверяет их физически (IR / магнитная проверка); отклонённые монеты и банкноты в баланс не идут.
+- Проверка физическая и разная для купюр и монет: купюроприёмник смотрит IR/UV, магнитные метки краски и оптический образ, монетоприёмник — индуктивные катушки (сплав), диаметр, толщину и вес. Отклонённое в баланс не идёт.
 - Атака «монета на нитке» (string pull — монету втягивают обратно после засчёта) парируется на уровне железа (anti-pullback).
-- На уровне софта: ограничение частоты (rate limiting — десяток медленных «вбросов» за 10 сек подозрителен) и журнал всех событий для разбора.
+- На уровне софта: ограничение частоты (rate limiting — десяток вбросов за 10 секунд для живого покупателя аномально быстро) и журнал всех событий для разбора.
 
 **Мошенничество с картой:**
 
-- Токенизация (PCI-DSS): сам номер карты не хранится, только токен — компрометировать нечего.
-- 3DS для операций без присутствия держателя карты (cardholder-not-present).
+- Токенизация (PCI DSS): PAN на стороне автомата не хранится, наружу уходит токен — это резко сокращает область действия стандарта. Остаточный риск остаётся: токен без ограничения по мерчанту всё ещё чего-то стоит.
+- Операция у автомата — card-present (EMV/NFC на терминале), поэтому 3DS здесь не применяется: он для card-not-present, то есть для e-commerce. На терминале работают contactless-лимиты и офлайн-риск-менеджмент EMV.
 - Контроль частоты (velocity check): одна и та же карта 10 раз за минуту → блокировка.
 
 ---
 
 ## Q21. Журнал транзакций (audit log)
 
-Журнал — это не «логирование для дебага», а финансовая необходимость. Каждая транзакция (успех, отмена, отказ, возврат) фиксируется записью с суммами и статусом, и в конце дня всё это должно сойтись с наличными в кассе. Без журнала невозможны ни сверка (reconciliation), ни расследование пропаж, ни восстановление после сбоя из Q20.
+Журнал — это не «логирование для дебага», а финансовая необходимость. Каждая транзакция (успех, отмена, отказ, возврат) фиксируется записью с суммами и статусом, и в конце дня всё это должно сойтись с наличными в кассе. Без журнала сверка, расследование пропаж и восстановление после сбоя из Q20 держатся на косвенных источниках — необнуляемых счётчиках монетоприёмника (MDB/DEX) и выписке эквайера, — а связать их с конкретной продажей уже нечем.
 
 ```java
 public record TransactionRecord(
@@ -1055,7 +1113,7 @@ public record TransactionRecord(
     BigDecimal paid,
     BigDecimal change,
     PaymentMethod method,
-    TransactionStatus status     // SUCCESS, CANCELLED, FAILED, REFUNDED
+    TransactionStatus status     // PENDING, SUCCESS, CANCELLED, FAILED, REFUNDED
 ) {}
 
 public interface AuditLog {
@@ -1068,9 +1126,9 @@ public interface AuditLog {
 
 **Где хранить:**
 
-- **Локально:** SQLite на контроллере автомата с журналированием (WAL) — записи переживают перезагрузку (durable), это и нужно для `recover()` из Q20.
+- **Локально:** SQLite на контроллере автомата. WAL даёт быстрые записи и целостность базы, но переживание внезапного обесточивания обеспечивает не он, а fsync-политика: для `recover()` из Q20 нужен `PRAGMA synchronous=FULL`, иначе при `NORMAL` последние коммиты теряются.
 - **Синхронизация:** периодическая выгрузка в центральную систему для бухгалтерии и сверки.
-- **Сверка (reconciliation):** наличные в кассе на конец дня должны равняться `sum(paid) − sum(change) − sum(refunds)`. Если не сходится — журнал покажет, где разошлось.
+- **Сверка (reconciliation):** наличные в кассе на конец дня = начальный размен + `sum(paid по method=CASH)` − `sum(change)` − `sum(наличных возвратов)`. Безналичные оплаты в кассу не попадают и сверяются с выпиской эквайера отдельно. Если не сходится — журнал покажет, где разошлось.
 
 ---
 
@@ -1083,18 +1141,32 @@ public interface AuditLog {
 ```java
 public class StripeCardPaymentStrategy implements PaymentStrategy {
     private final StripeClient stripe;
+    private final String paymentMethodId;
+
+    public StripeCardPaymentStrategy(StripeClient stripe, String paymentMethodId) {
+        this.stripe = stripe; this.paymentMethodId = paymentMethodId;
+    }
 
     @Override
     public PaymentResult charge(BigDecimal amount) {
-        var intent = stripe.paymentIntents().create(PaymentIntentCreate.builder()
-            .amount(amount.movePointRight(2).longValueExact())
-            .currency("usd")
-            .confirm(true)
-            .paymentMethod(currentPaymentMethod)
-            .build());
-        return intent.status().equals("succeeded")
-            ? PaymentResult.success(intent.id())
-            : PaymentResult.failure(intent.lastError());
+        try {
+            var params = PaymentIntentCreateParams.builder()
+                .setAmount(amount.setScale(2, RoundingMode.HALF_UP)
+                                 .movePointRight(2).longValueExact())   // минорные единицы
+                .setCurrency("usd")
+                .setConfirm(true)
+                .setPaymentMethod(paymentMethodId)
+                .build();
+            var intent = stripe.paymentIntents().create(params);
+            return switch (intent.getStatus()) {
+                case "succeeded" -> PaymentResult.success(intent.getId());
+                // 3-D Secure и асинхронная обработка — это не отказ, а «ждём»
+                case "requires_action", "processing" -> PaymentResult.pending(intent.getId());
+                default -> PaymentResult.failure(intent.getLastPaymentError());
+            };
+        } catch (StripeException e) {          // checked-исключение SDK
+            return PaymentResult.failure(e.getMessage());
+        }
     }
 }
 ```
@@ -1110,7 +1182,11 @@ public class StripeCardPaymentStrategy implements PaymentStrategy {
 // Расширение: вместо selectedProduct — корзина
 public class VendingMachine {
     private final List<Product> cart = new ArrayList<>();
-    private final BigDecimal cartTotal();
+
+    public BigDecimal cartTotal() {
+        return cart.stream().map(Product::price)
+                   .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
 }
 // State machine та же, но Dispensing → multiple dispenses
 ```
@@ -1161,23 +1237,34 @@ void insertMoney_inIdle_throwsIllegalState() {
 }
 ```
 
-**3. Property-based (jqwik):** вместо ручных примеров формулируем инвариант, а фреймворк сам прогоняет сотни случайных последовательностей событий, пытаясь его сломать. Здесь проверяется главное финансовое свойство — деньги не возникают и не пропадают.
+**3. Property-based (jqwik):** вместо ручных примеров формулируем инвариант, а фреймворк сам прогоняет сотни случайных последовательностей событий, пытаясь его сломать. Здесь проверяется главное финансовое свойство — деньги не возникают и не пропадают: внесённое равно стоимости выданного плюс выданная сдача плюс то, что осталось внутри машины.
 
 ```java
-// Invariant: cash_in - cash_out = 0 после любой последовательности cancel-операций
+// Invariant: внесено = стоимость выданного + выдано наружу + осталось внутри машины
 @Property
-void noMoneyLoss(@ForAll List<Event> events) {
+void noMoneyLoss(@ForAll("eventSequences") List<Event> events) {
     var vm = new VendingMachine();
     BigDecimal cashIn = BigDecimal.ZERO;
     BigDecimal cashOut = BigDecimal.ZERO;
     for (var e : events) {
-        if (e instanceof InsertMoney im) cashIn = cashIn.add(im.amount());
-        try { e.applyTo(vm); } catch (IllegalStateException ignored) {}
+        try {
+            e.applyTo(vm);
+            // деньги засчитываем только если событие реально прошло:
+            // InsertMoney в Idle отвергается, монета в машину не попадает
+            if (e instanceof InsertMoney im) cashIn = cashIn.add(im.amount());
+        } catch (IllegalStateException ignored) {}
         cashOut = cashOut.add(vm.flushDispensedChange());
     }
-    // Все продукты выданы + изменение должны сходиться
     var productsCost = vm.totalProductsDispensedValue();
-    assertThat(cashIn).isEqualTo(productsCost.add(cashOut));
+    // isEqualByComparingTo, а не isEqualTo: у BigDecimal equals учитывает scale
+    assertThat(cashIn).isEqualByComparingTo(
+        productsCost.add(cashOut).add(vm.currentEscrow()).add(vm.collectedRevenue()));
+}
+
+@Provide
+Arbitrary<List<Event>> eventSequences() {   // jqwik не сгенерирует свой тип сам
+    return Arbitraries.of(selectProduct("A3"), insertMoney(0.25), cancel())
+                      .list().ofMaxSize(20);
 }
 ```
 
@@ -1187,8 +1274,8 @@ void noMoneyLoss(@ForAll List<Event> events) {
 @Test
 void concurrentDecrementAndRefill_noLostUpdate() throws Exception {
     var inventory = new Inventory();
-    inventory.refill("A3", 100);
     var threads = 10;
+    inventory.refill("A3", threads * 100);   // ровно столько, сколько будет декрементов
     var executor = Executors.newFixedThreadPool(threads);
     var latch = new CountDownLatch(threads * 100);
     for (int i = 0; i < threads * 100; i++) {
@@ -1211,9 +1298,9 @@ void concurrentDecrementAndRefill_noLostUpdate() throws Exception {
 | `double price` | Ошибки floating-point | `BigDecimal` + scale=2 |
 | `String state` («idle», «paid») | Тип-как-строка: опечатки молча проходят компиляцию | Enum или классы State |
 | Публичный `vm.setState(SomeState)` | Любой код может сломать автомат | `setState()` package-private, вызывают только классы State |
-| Бизнес-логика в UI | Невозможно тестировать без UI | Домен отделён, UI лишь делегирует |
+| Бизнес-логика в UI | Тесты тянут за собой UI-обвязку: медленно и хрупко, headless спасает лишь частично | Домен отделён, UI лишь делегирует |
 | `Map<String, Integer>` вместо inventory | Нет инкапсуляции, гонки | Класс `Inventory` с synchronized-методами |
-| Хранение номера карты целиком | Нарушение PCI-DSS | Токенизация (хранится только токен) |
+| Хранение PAN в открытом виде (а CVV, дорожку и PIN — вообще) | Открытый PAN нарушает PCI DSS, а CVV/track/PIN хранить запрещено в любом виде | Токенизация: наружу и в журнал уходит токен |
 | `Thread.sleep` для таймаута | Блокирует поток | `ScheduledExecutorService` + отмена задачи |
 | Один гигантский метод `process()` | God-метод | Каждая операция = отдельный метод State |
 | `vm.getInventory().getSlots()` отдаёт изменяемую `Map` | Вызывающий код может сломать инварианты | `Collections.unmodifiableMap` или DTO |
