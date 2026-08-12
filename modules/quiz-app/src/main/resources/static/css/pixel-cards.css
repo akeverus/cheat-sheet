@@ -18,6 +18,21 @@
    ========================================================================== */
 @layer pixel {
 /* ---- Cards / panels chunky ---- */
+/* ГРАНИЦА ПЛИТЫ — МАТЕРИАЛ, А НЕ РАМКА (iter-117).
+
+   Здесь стоял `box-shadow: var(--px-edge-surface)` — тот же контур 3px, что носят
+   кнопки. Замер на /stats в обеих темах: карточка и кнопка отдавали одинаковый
+   `rgb(122,110,87)` 3px, то есть пассивная плита выглядела ровно как то, на что можно
+   нажать. Контур перестал что-либо означать, а иерархия «поверхность → контрол»
+   держалась только размером.
+
+   Теперь плита читается тоном и зерном: перепад к канве усилен (см. tokens.css,
+   --color-bg-secondary), поверх лежит --px-grain-surface. Контур остаётся у того, что
+   интерактивно: кнопки, поля, варианты ответа. Тогда рамка снова значит «нажми».
+
+   Зерно кладётся ФОНОМ ПОВЕРХ собственной заливки компонента (background-image, а не
+   background), поэтому цвет плиты остаётся за темой и за компонентом — фактура его не
+   переопределяет. */
 html[data-design] .card,
 html[data-design] .panel,
 html[data-design] .explanation-panel,
@@ -27,9 +42,10 @@ html[data-design] .error-card,
 html[data-design] .summary-hero,
 html[data-design] .builder-card,
 html[data-design] .metric {
-  border-radius: 0 !important;
-  box-shadow: var(--px-edge-surface);
+  box-shadow: none;
   border: 0 !important;
   position: relative;
+  background-image: var(--px-grain-surface);
+  background-size: var(--px-grain-size);
 }
 }
