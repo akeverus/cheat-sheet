@@ -60,4 +60,19 @@ public class TopicUtils {
         }
         return Character.toUpperCase(spaced.charAt(0)) + spaced.substring(1);
     }
+
+    /**
+     * Описание темы — одна строка о том, что в неё входит.
+     *
+     * <p>Возвращает {@code null}, если описания нет: у темы без frontmatter-описания
+     * блок «о теме» просто не рендерится. Выдумывать текст из slug-а нельзя — это
+     * ровно тот случай, когда пустота честнее подделки.</p>
+     *
+     * @param topic slug темы, например {@code "java/collections-interview.md"}
+     * @return описание или {@code null}
+     */
+    public String description(String topic) {
+        String key = slug(topic);
+        return key.isEmpty() ? null : displayNames.description(key);
+    }
 }

@@ -154,7 +154,12 @@ public class QuestionImportService {
         // Название темы для UI — из frontmatter самого файла, а не из slug-а: slug
         // теряет регистр и пробелы, и обратная реконструкция даёт «Cockroachdb»,
         // «Archunit», «Apache airflow» вместо настоящих имён продуктов.
-        topicDisplayNames.register(topicUtils.slug(relativePath), topicTitleReader.readTopicTitle(file));
+        String registrySlug = topicUtils.slug(relativePath);
+        topicDisplayNames.register(registrySlug, topicTitleReader.readTopicTitle(file));
+        // Описание темы — оттуда же, откуда название: экран вопроса показывает под
+        // вопросом, о чём вообще тема, и брать это из второго источника значило бы
+        // завести копию, которая разойдётся с .md при первой же правке.
+        topicDisplayNames.registerDescription(registrySlug, topicTitleReader.readTopicDescription(file));
         int inserted = 0;
         int updated = 0;
         int rederived = 0;

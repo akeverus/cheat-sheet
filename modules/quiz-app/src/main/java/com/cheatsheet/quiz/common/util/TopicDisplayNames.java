@@ -23,6 +23,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TopicDisplayNames {
 
     private final Map<String, String> names = new ConcurrentHashMap<>();
+    /**
+     * Описания тем — из того же frontmatter и по той же причине in-memory: описание
+     * такая же часть исходника темы, как её название и её вопросы.
+     */
+    private final Map<String, String> descriptions = new ConcurrentHashMap<>();
 
     /**
      * Регистрирует название темы.
@@ -46,6 +51,30 @@ public class TopicDisplayNames {
             return null;
         }
         return names.get(key(slug));
+    }
+
+    /**
+     * Регистрирует описание темы — одну строку о том, что в тему входит.
+     *
+     * @param slug        slug темы в форме {@link TopicUtils#slug(String)}
+     * @param description описание из frontmatter; пустое/{@code null} игнорируется
+     */
+    public void registerDescription(String slug, String description) {
+        if (slug == null || slug.isBlank() || description == null || description.isBlank()) {
+            return;
+        }
+        descriptions.put(key(slug), description.trim());
+    }
+
+    /**
+     * @param slug slug темы в форме {@link TopicUtils#slug(String)}
+     * @return описание темы или {@code null}, если его нет во frontmatter
+     */
+    public String description(String slug) {
+        if (slug == null || slug.isBlank()) {
+            return null;
+        }
+        return descriptions.get(key(slug));
     }
 
     /** Количество известных тем — для лога импорта. */
