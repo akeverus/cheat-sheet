@@ -40,12 +40,13 @@ updated: "2026-05-15"
 
 ```kotlin
 // build.gradle.kts
+// версии здесь — пример; блок plugins принимает только литералы,
+// общую версию выносят в version catalog или settings.gradle.kts
 plugins {
-    val kotlinVersion = "2.2.0"                          // версии здесь — пример,
-    kotlin("jvm") version kotlinVersion                  // ветку сверяйте с актуальной
-    kotlin("plugin.spring") version kotlinVersion        // open Spring-бинов
-    kotlin("plugin.jpa") version kotlinVersion           // no-arg конструктор для @Entity
-    kotlin("plugin.allopen") version kotlinVersion       // кастомные открытия
+    kotlin("jvm") version "2.2.0"
+    kotlin("plugin.spring") version "2.2.0"       // open Spring-бинов
+    kotlin("plugin.jpa") version "2.2.0"          // no-arg конструктор для @Entity
+    kotlin("plugin.allopen") version "2.2.0"      // опционально: открытие по СВОИМ аннотациям
     id("org.springframework.boot") version "3.5.0"
     id("io.spring.dependency-management") version "1.1.7"
 }
@@ -102,9 +103,9 @@ class BadService {
 // ПРОБЛЕМА: data class нельзя для JPA
 @Entity
 data class Order(
-    @Id @GeneratedValue val id: Long = 0,
-    val customerId: String,
-    val total: BigDecimal
+    @Id @GeneratedValue var id: Long = 0,
+    var customerId: String,
+    var total: BigDecimal
 )
 ```
 
@@ -113,7 +114,7 @@ data class Order(
 2. **`copy()` создаёт оторванный от БД объект.** Копия выглядит как сущность, но Hibernate её не отслеживает (она не в persistence context) — изменения такой копии молча не сохранятся.
 3. **`final` мешает прокси и ленивой загрузке.** Hibernate подменяет сущность прокси-подклассом (ByteBuddy) и инициализирует `@ManyToOne`/lazy-поля по требованию. Kotlin-класс и его геттеры `final` по умолчанию, поэтому подкласс не построить — класс нужно открывать плагином `allopen`, настроенным на `jakarta.persistence.Entity`.
 
-**Решение:** обычный `class` с `var`-полями и ручными `equals`/`hashCode`. Класс открывает плагин `allopen` (настроенный на `jakarta.persistence.Entity`), no-arg конструктор даёт `kotlin-jpa` — без них этот листинг Hibernate не запустит:
+**Решение:** обычный `class` с `var`-полями и ручными `equals`/`hashCode`. No-arg конструктор даёт `kotlin-jpa` — без него Hibernate упадёт при первой инстанциации сущности («No default constructor for entity»). Открытие класса нужно ленивым прокси: без `allopen`, настроенного на `jakarta.persistence.Entity`, Hibernate пишет HHH000305 и отключает прокси самой сущности, так что LAZY у `@ManyToOne`/`@OneToOne` деградирует до жадной загрузки (ленивые коллекции при этом работают как работали):
 
 ```kotlin
 @Entity
