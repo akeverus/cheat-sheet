@@ -198,9 +198,9 @@ if (obj instanceof Triple(Integer i, Pair(String s1, String s2), Double d)) {
 
 ```java
 public sealed interface Shape permits Circle, Square, Triangle {}
-public record Circle(double radius) implements Shape {}
-public record Square(double side) implements Shape {}
-public record Triangle(double base, double height) implements Shape {}
+record Circle(double radius) implements Shape {}
+record Square(double side) implements Shape {}
+record Triangle(double base, double height) implements Shape {}
 
 // Exhaustive switch — компилятор знает ВСЕ возможные подклассы
 double area(Shape shape) {
@@ -212,11 +212,12 @@ double area(Shape shape) {
     };
 }
 
-// При добавлении новой формы правок две, и первая обязательна:
+// При добавлении новой формы правок две, и обе обязательны:
 // 1) sealed interface Shape permits Circle, Square, Triangle, Oval
-// 2) public record Oval(double width, double height) implements Shape {}
-// Без первой — «class is not allowed to extend sealed class: Shape»,
-// после обеих area() больше не exhaustive → нужно добавить case
+// 2) record Oval(double width, double height) implements Shape {}
+// Без второй — «cannot find symbol: class Oval» и «invalid permits clause»,
+// без первой — «class is not allowed to extend sealed class: Shape».
+// После обеих area() больше не exhaustive → нужно добавить case
 ```
 
 ## Q6. Что такое Guarded Patterns (`when` clause) и почему порядок case критичен?
@@ -309,7 +310,8 @@ public interface VisitableShape {
 }
 // ...много бойлерплейта
 
-// Pattern matching (Java 21+) — по sealed-иерархии Shape из Q5:
+// Visitor требует accept в самой иерархии, поэтому она здесь своя (VisitableShape).
+// Pattern matching обходится без этого — ниже switch по sealed-иерархии Shape из Q5:
 // sealed interface Shape permits Circle, Square, Triangle
 double area(Shape shape) {
     return switch (shape) {
@@ -334,7 +336,7 @@ Shape scaled(Shape shape, double k) {
 
 **Плюсы pattern matching:** новую операцию добавляешь одним методом, не трогая иерархию и не плодя visitor-классы; код компактнее и читаемее.
 
-**Компромисс с Visitor.** На `sealed`-иерархии pattern matching дешевле по обеим осям: новая операция — обычный метод со switch, а забытый подтип ловит exhaustiveness. Остаточная ценность Visitor не в дешевизне, а в другом: операция там — объект, её можно передать, подменить и собрать целиком в одном классе; и он применим там, где иерархию нельзя объявить `sealed` (чужая библиотека, разные модули).
+**Компромисс с Visitor.** На `sealed`-иерархии pattern matching дешевле по обеим осям: новая операция — обычный метод со switch, а забытый подтип ловит exhaustiveness. Остаточная ценность Visitor не в дешевизне, а в другом: операция там — объект, её можно передать, подменить и собрать целиком в одном классе; и он применим там, где типы свои, но `sealed` объявить нельзя — наследники разнесены по модулям или иерархию намеренно держат открытой внутри своего кода.
 
 Новый подтип дорог обоим и обоим требует правки исходного кода: у sealed — списка `permits` и всех exhaustive switch, у Visitor — интерфейса `ShapeVisitor` и всех его реализаций (`Rhombus.accept` не скомпилируется: `no suitable method found for visit(Rhombus)`). Для иерархии, открытой сторонним реализациям, не годится ни то ни другое: `permits` третья сторона не расширит, visitor-интерфейс тоже. Там работает обычный полиморфный метод в самом интерфейсе.
 
