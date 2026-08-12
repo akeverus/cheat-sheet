@@ -91,10 +91,10 @@ updated: "2026-04-25"
 implementation("org.springframework.boot:spring-boot-starter-validation")
 ```
 
-Этот стартер тянет за собой всё необходимое:
+Этот стартер тянет за собой всё необходимое для самих проверок:
 - `hibernate-validator` — реализация Bean Validation, которая фактически проверяет ограничения
 - `jakarta.validation:jakarta.validation-api` — сам API (аннотации, интерфейсы), приезжает транзитивно
-- `tomcat-embed-el` — EL для интерполяции сообщений
+- `tomcat-embed-el` — реализация Jakarta EL: саму интерполяцию (подстановку `{min}`, чтение `ValidationMessages.properties`) делает Hibernate Validator, а EL нужен ему, чтобы вычислять выражения вида `${validatedValue}` внутри шаблона сообщения
 
 Саму привязку к MVC (запуск валидации, когда на аргументе контроллера стоит `@Valid`/`@Validated`) приносит `spring-boot-starter-web`, а автоконфигурация поднимает бин `Validator` (`LocalValidatorFactoryBean`). Без реализации на classpath аннотации на полях остаются просто метаданными: проверять их некому.
 
@@ -267,7 +267,7 @@ record ValidationErrorResponse(List<ValidationError> errors) {}
 ```
 
 - `MethodArgumentNotValidException` — когда невалиден `@RequestBody`/`@RequestPart` (тело читается конвертером и биндится в объект, ошибки собираются в `BindingResult`). Для `@Valid @ModelAttribute` без `BindingResult` прилетает `BindException` — в Spring 6 `MethodArgumentNotValidException` от неё и наследуется.
-- `HandlerMethodValidationException` — начиная со Spring Boot 3.2 при невалидных `@RequestParam`, `@PathVariable`, `@RequestHeader` прямо в контроллере: method validation там встроена, `@Validated` на классе не нужен. Spring штатно переводит её в `400`, отдельный хендлер нужен только ради своего формата ответа.
+- `HandlerMethodValidationException` — начиная со Spring Boot 3.2 при невалидных `@RequestParam`, `@PathVariable`, `@RequestHeader` прямо в контроллере: method validation там встроена, `@Validated` на классе не нужен — более того, с этой аннотацией встроенная проверка отключается (Spring отдаёт валидацию AOP-прокси, чтобы не проверять дважды), и нарушения снова прилетают как `ConstraintViolationException`. Spring штатно переводит её в `400`, отдельный хендлер нужен только ради своего формата ответа.
 - `ConstraintViolationException` — когда невалидны аргументы метода обычного бина (`@Validated` на сервисе, см. Q11).
 
 Хендлер для `ConstraintViolationException` регистрировать обязательно: без него ошибка из сервисного слоя «протечёт» как `500 Internal Server Error` вместо `400`.
@@ -587,7 +587,7 @@ public class UserService {
 | Аспект | Spring MVC (@Valid в контроллере) | Сервисный уровень (@Validated + MethodValidation) |
 |---|---|---|
 | Механизм | `HandlerMethodArgumentResolver` | AOP proxy (`MethodValidationPostProcessor`) |
-| Исключение | `MethodArgumentNotValidException` для `@RequestBody`, `BindException` для `@ModelAttribute`, `HandlerMethodValidationException` для параметров (Boot 3.2+) | `ConstraintViolationException` |
+| Исключение | `MethodArgumentNotValidException` для `@RequestBody`, `BindException` для `@ModelAttribute`, `HandlerMethodValidationException` для параметров (Boot 3.2+, если на классе нет `@Validated`) | `ConstraintViolationException` |
 | `BindingResult` | Можно перехватить в методе | Недоступен |
 | Применимость | Аргументы методов-обработчиков; тот же резолверный механизм работает и для `@Payload @Valid` в слушателях сообщений | Любой проксируемый Spring-бин |
 | Self-invocation | N/A | Не работает (AOP проблема) |
@@ -703,10 +703,10 @@ public class BulkRequest {
 public ResponseEntity<?> createBulk(@Valid @RequestBody BulkRequest req) { ... }
 ```
 
-**Вариант 2 — `List` параметром напрямую, без обёртки** (ограничения в generic доступны с Bean Validation 2.0, то есть со Spring Boot 2.0). Класс помечают `@Validated`, а в сигнатуре используют ограничение внутри generic — `List<@Valid CreateUserRequest>`. Экономит DTO-обёртку, но валидация идёт через метод-уровень: до Spring Boot 3.2 ошибки прилетали как `ConstraintViolationException`, начиная с 3.2 встроенная method validation бросает `HandlerMethodValidationException`:
+**Вариант 2 — `List` параметром напрямую, без обёртки** (ограничения в generic доступны с Bean Validation 2.0, то есть со Spring Boot 2.0). В сигнатуре используют ограничение внутри generic — `List<@Valid CreateUserRequest>`. Экономит DTO-обёртку, но валидация идёт через метод-уровень, и тип ошибки зависит от того, помечен ли класс `@Validated`: с этой аннотацией проверку выполняет AOP-прокси и прилетает `ConstraintViolationException`, без неё на Spring Boot 3.2+ работает встроенная method validation и прилетает `HandlerMethodValidationException`, который Spring сам переводит в `400`. До 3.2 `@Validated` была обязательна:
 
 ```java
-@Validated
+@Validated  // на Boot 3.2+ аннотацию убирают: она отключает встроенную method validation
 @RestController
 public class UserController {
 
@@ -719,7 +719,7 @@ public class UserController {
 **Вариант 3 — коллекция в `@RequestParam`.** Тот же приём с ограничением в generic, но для query-параметров: `@NotBlank` внутри `List<@NotBlank String>` проверяет каждый тег, а `@Size`/`@NotEmpty` на самом параметре — список целиком:
 
 ```java
-@Validated
+@Validated  // на Boot 3.2+ не нужна — без неё те же ограничения проверит встроенная method validation
 @RestController
 public class SearchController {
 
