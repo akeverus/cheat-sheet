@@ -104,8 +104,8 @@ fun area(shape: Shape): Double = when (shape) {  // все подтипы пер
 
 // Если добавить в тело Shape новый подкласс → ошибка компиляции
 // data class Rectangle(val width: Double, val height: Double) : Shape()
-// area больше не компилируется: 'when' expression must be exhaustive,
-// add necessary 'is Shape.Rectangle' branch or 'else' branch instead
+// area больше не компилируется. kotlinc 2.x:
+// 'when' expression must be exhaustive. Add the 'is Rectangle' branch or an 'else' branch.
 ```
 
 **Нужно ли что-то делать, чтобы проверка сработала.** С Kotlin 1.7 — нет: компилятор требует полноты от `when` по sealed-типу (а также по enum и `Boolean`), и неважно, используется он как *выражение* или как *statement* (значение отбрасывается). На произвольных типах вроде `String` или `Int` такого требования нет. Непокрытый вариант без `else` — ошибка компиляции. История вопроса: до Kotlin 1.6 неполный `when`-statement компилировался молча — отсюда старые приёмы вроде `.also { }`, `.let { }` или extension-property `.exhaustive`, превращавшие statement в выражение, чтобы включить проверку вручную. В 1.6 к такому statement добавилось предупреждение, а с 1.7 это ошибка компиляции, и приём стал не нужен.
