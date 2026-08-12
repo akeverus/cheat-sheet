@@ -130,15 +130,17 @@ data class ConnectionRefused(val host: String) : NetworkError
 ```
 
 ```kotlin
-// Применение
+// Применение: пересекающийся тип разбирают ПЕРВЫМ
 fun handle(error: AppError): String = when (error) {
+    is TimeoutError -> "Timeout"          // входит и в IOError, и в NetworkError
     is IOError -> "IO problem"
     is NetworkError -> "Network problem"
     // exhaustive: у AppError ровно два прямых наследника — IOError и NetworkError, оба покрыты
-    // (TimeoutError реализует оба интерфейса и попадёт в первую подходящую ветку — is IOError:
-    //  сетевой таймаут отчитается как "IO problem", и это уже баг разбора — при пересечении
-    //  иерархий ветку is TimeoutError ставят выше, до is IOError)
 }
+
+// Так — не надо: TimeoutError уйдёт в первую подходящую ветку,
+// и сетевой таймаут отчитается как "IO problem"
+// when (error) { is IOError -> "IO problem"; is NetworkError -> "Network problem" }
 
 fun handleIO(error: IOError): String = when (error) {
     is FileNotFound -> "Missing: ${error.path}"
