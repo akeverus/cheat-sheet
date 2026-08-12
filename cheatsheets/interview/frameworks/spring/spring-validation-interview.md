@@ -74,7 +74,7 @@ updated: "2026-04-25"
 
 ## Q1. Что такое Bean Validation и как подключить в Spring Boot?
 
-**Bean Validation (JSR 380)** — стандарт Java (теперь Jakarta), который описывает правила валидации прямо в модели через аннотации: вешаешь `@NotBlank`, `@Email`, `@Min` на поля DTO — и сам объект знает, что значит «корректный». Это декларативный подход: правила лежат рядом с данными, а не разбросаны по if-проверкам в коде. Стандарт описывает только API; конкретную проверку выполняет реализация — **Hibernate Validator** (референсная реализация).
+**Jakarta Validation** (прежнее имя — Bean Validation; JSR 380 — это версия 2.0 с пакетом `javax.validation`, а в Spring Boot 3.x работает Jakarta Validation 3.x с пакетом `jakarta.validation`) — стандарт, который описывает правила валидации прямо в модели через аннотации: вешаешь `@NotBlank`, `@Email`, `@Min` на поля DTO — и сам объект знает, что значит «корректный». Это декларативный подход: правила лежат рядом с данными, а не разбросаны по if-проверкам в коде. Стандарт описывает только API; конкретную проверку выполняет реализация — **Hibernate Validator** (референсная реализация).
 
 **Подключение в Spring Boot:**
 
@@ -93,29 +93,29 @@ implementation("org.springframework.boot:spring-boot-starter-validation")
 
 Этот стартер тянет за собой всё необходимое:
 - `hibernate-validator` — реализация Bean Validation, которая фактически проверяет ограничения
-- `jakarta.validation:jakarta.validation-api` — сам API (аннотации, интерфейсы)
-- интеграцию с Spring MVC — Spring сам запускает валидацию, когда видит `@Valid`/`@Validated` на параметре контроллера
+- `jakarta.validation:jakarta.validation-api` — сам API (аннотации, интерфейсы), приезжает транзитивно
+- `tomcat-embed-el` — EL для интерполяции сообщений
 
-Без этого стартера аннотации на полях есть, но никто их не проверяет — они остаются просто метаданными.
+Саму привязку к MVC (запуск валидации, когда на аргументе контроллера стоит `@Valid`/`@Validated`) приносит `spring-boot-starter-web`, а автоконфигурация поднимает бин `Validator` (`LocalValidatorFactoryBean`). Без реализации на classpath аннотации на полях остаются просто метаданными: проверять их некому.
 
 **Базовый пример:**
 
 ```java
-public class CreateUserRequest {
-    @NotBlank
-    private String name;
-
-    @Email
-    @NotNull
-    private String email;
-
-    @Min(18)
-    private int age;
-}
+public record CreateUserRequest(
+    @NotBlank String name,
+    @Email @NotNull String email,
+    @Min(18) int age
+) {}
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
+
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @PostMapping
     public ResponseEntity<User> create(@Valid @RequestBody CreateUserRequest req) {
@@ -124,7 +124,7 @@ public class UserController {
 }
 ```
 
-При нарушении любого ограничения Spring сам прерывает обработку запроса и возвращает `400 Bad Request` — контроллер даже не вызывается. Это и есть смысл декларативной валидации: проверки выполняются «на входе», до бизнес-логики.
+При нарушении ограничения на `@Valid @RequestBody` Spring бросает `MethodArgumentNotValidException`, стандартный обработчик отдаёт `400 Bad Request`, и тело метода не выполняется — проверки идут «на входе», до бизнес-логики. Две оговорки: если сразу после валидируемого аргумента объявить `BindingResult`, метод всё-таки вызовется и разбирать ошибки придётся самому (см. Q4), а валидация аргументов методов сервиса бросает другое исключение со своим кодом ответа (см. Q11).
 
 ## Q2. Какие стандартные constraint-аннотации есть в Bean Validation?
 
@@ -150,7 +150,7 @@ public class UserController {
 | `@PositiveOrZero` | >= 0 |
 | `@Negative` | < 0 |
 | `@Digits(integer, fraction)` | ограничение на цифры |
-| `@DecimalMin / @DecimalMax` | для BigDecimal |
+| `@DecimalMin / @DecimalMax` | граница задаётся строкой, поэтому допускает дробную часть; работает с `BigDecimal`, `BigInteger`, строкой и целочисленными типами, `inclusive = false` делает сравнение строгим |
 
 **Строковые:**
 
@@ -190,9 +190,9 @@ public class EventRequest {
 
 ## Q3. Чем `@Valid` отличается от `@Validated`?
 
-Коротко: `@Valid` — из стандарта Jakarta, умеет **каскадную** валидацию (заходит внутрь вложенных объектов), но не знает про группы. `@Validated` — Spring-аннотация, умеет **группы** и включает валидацию методов на любом бине, но сама каскад не запускает. Это не конкуренты, а инструменты для разных задач, их часто используют вместе.
+Коротко: `@Valid` — из стандарта Jakarta, умеет **каскадную** валидацию (заходит внутрь вложенных объектов), но не знает про группы. `@Validated` — Spring-аннотация, умеет **группы** и включает валидацию методов на бине, который Spring может проксировать (нужен `MethodValidationPostProcessor`, вызов снаружи бина и не-final метод), но сама каскад не запускает. Это не конкуренты, а инструменты для разных задач, их часто используют вместе.
 
-| Параметр | `@Valid` (javax/jakarta) | `@Validated` (Spring) |
+| Параметр | `@Valid` (`jakarta.validation`) | `@Validated` (Spring) |
 |---|---|---|
 | Источник | Jakarta Validation API | Spring Framework |
 | Группы валидации | Нет | Да — `@Validated(Group.class)` |
@@ -234,37 +234,43 @@ public class UserService {
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationErrors(
+    public ResponseEntity<ValidationErrorResponse> handleValidationErrors(
             MethodArgumentNotValidException ex) {
 
-        List<FieldError> errors = ex.getBindingResult().getFieldErrors()
+        List<ValidationError> errors = ex.getBindingResult().getFieldErrors()
             .stream()
-            .map(e -> new FieldError(e.getField(), e.getDefaultMessage()))
+            .map(e -> new ValidationError(e.getField(), e.getDefaultMessage()))
             .toList();
 
-        return ResponseEntity.badRequest().body(new ErrorResponse(errors));
+        return ResponseEntity.badRequest().body(new ValidationErrorResponse(errors));
     }
 
     // Для @Validated на сервисном уровне
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ErrorResponse> handleConstraintViolation(
+    public ResponseEntity<ValidationErrorResponse> handleConstraintViolation(
             ConstraintViolationException ex) {
 
-        List<FieldError> errors = ex.getConstraintViolations().stream()
-            .map(v -> new FieldError(
+        List<ValidationError> errors = ex.getConstraintViolations().stream()
+            .map(v -> new ValidationError(
                 v.getPropertyPath().toString(),
                 v.getMessage()))
             .toList();
 
-        return ResponseEntity.badRequest().body(new ErrorResponse(errors));
+        return ResponseEntity.badRequest().body(new ValidationErrorResponse(errors));
     }
 }
+
+// собственные типы, чтобы не сталкиваться со Spring: org.springframework.validation.FieldError
+// и org.springframework.web.ErrorResponse заняты фреймворком
+record ValidationError(String field, String message) {}
+record ValidationErrorResponse(List<ValidationError> errors) {}
 ```
 
-- `MethodArgumentNotValidException` — когда невалиден `@RequestBody`/`@ModelAttribute` (тело запроса биндится в объект, ошибки собираются в `BindingResult`).
-- `ConstraintViolationException` — когда невалидны `@RequestParam`, `@PathVariable` или аргументы метода сервиса (валидация на уровне метода, без биндинга в объект).
+- `MethodArgumentNotValidException` — когда невалиден `@RequestBody`/`@RequestPart` (тело читается конвертером и биндится в объект, ошибки собираются в `BindingResult`). Для `@Valid @ModelAttribute` без `BindingResult` прилетает `BindException` — в Spring 6 `MethodArgumentNotValidException` от неё и наследуется.
+- `HandlerMethodValidationException` — начиная со Spring Boot 3.2 при невалидных `@RequestParam`, `@PathVariable`, `@RequestHeader` прямо в контроллере: method validation там встроена, `@Validated` на классе не нужен. Spring штатно переводит её в `400`, отдельный хендлер нужен только ради своего формата ответа.
+- `ConstraintViolationException` — когда невалидны аргументы метода обычного бина (`@Validated` на сервисе, см. Q11).
 
-Зарегистрировать стоит оба хендлера: иначе вторая группа ошибок «протечёт» как `500 Internal Server Error` вместо `400`.
+Хендлер для `ConstraintViolationException` регистрировать обязательно: без него ошибка из сервисного слоя «протечёт» как `500 Internal Server Error` вместо `400`.
 
 **Вариант через `BindingResult`** — если хочется обработать ошибки прямо в методе, а не глобально. Добавляешь `BindingResult` параметром сразу после валидируемого объекта (порядок важен!), и тогда Spring не бросает исключение, а складывает ошибки туда — ответственность за реакцию переходит к тебе:
 
@@ -347,15 +353,19 @@ public ResponseEntity<?> update(
 `@GroupSequence` задаёт **порядок** проверки групп: следующая группа проверяется только если предыдущая прошла без ошибок. Это позволяет делать дешёвые проверки раньше дорогих — например, сначала формат поля, и только потом обращение к БД на уникальность:
 
 ```java
-@GroupSequence({Default.class, OnCreate.class, OnUpdate.class})
+public interface ExpensiveChecks {}       // уникальность e-mail проверяется запросом в БД
+
+@GroupSequence({Default.class, ExpensiveChecks.class})
 public interface OrderedChecks {}
 ```
 
+Смешивать в одной последовательности взаимоисключающие контекстные группы (`OnCreate` и `OnUpdate` из примера выше) нельзя: их ограничения на `id` противоречат друг другу, и такая последовательность не пройдёт никогда.
+
 ## Q7. Как создать кастомную constraint-аннотацию?
 
-Когда стандартных ограничений не хватает (своя бизнес-логика, особый формат), пишут собственное. Это всегда **два артефакта**: сама аннотация (объявляет ограничение и его параметры) и класс-валидатор `ConstraintValidator`, который содержит логику проверки. Аннотация связывается с валидатором через `@Constraint(validatedBy = ...)`.
+Когда стандартных ограничений не хватает (своя бизнес-логика, особый формат), пишут собственное. Обычно это **два артефакта**: сама аннотация (объявляет ограничение и его параметры) и класс-валидатор `ConstraintValidator`, который содержит логику проверки. Исключение — композитные ограничения из Q10: там пишут `@Constraint(validatedBy = {})`, а работу делают навешенные сверху готовые ограничения. Аннотация связывается с валидатором через `@Constraint(validatedBy = ...)`.
 
-**Шаг 1 — объявить аннотацию.** Три элемента (`message`, `groups`, `payload`) обязательны по спецификации — без них код не скомпилируется как constraint. Свои параметры (вроде `regexp`) добавляются по необходимости:
+**Шаг 1 — объявить аннотацию.** Три элемента (`message`, `groups`, `payload`) обязательны по спецификации. Компилятору они безразличны — код соберётся и без них, но при первой же валидации Hibernate Validator бросит `ConstraintDefinitionException`. Свои параметры (вроде `regexp`) добавляются по необходимости:
 
 ```java
 @Target({ElementType.FIELD, ElementType.PARAMETER})
@@ -403,7 +413,7 @@ public class UserRequest {
 }
 ```
 
-**Эмпирическое правило:** в `isValid()` не проверять `null` — за обязательность поля отвечает отдельный `@NotNull`. На `null` всегда `return true` (ограничение считается ненарушенным). Так каждое ограничение отвечает за одно, и `@Phone` без `@NotNull` корректно пропускает пустое необязательное поле, не превращая отсутствие значения в ошибку формата.
+**Эмпирическое правило:** для форматных ограничений в `isValid()` не проверять `null` — за обязательность поля отвечает отдельный `@NotNull`, поэтому на `null` возвращают `true`. Исключение — ограничения, которые сами требуют наличия значения (как `@NotNull`/`@NotEmpty`): они на `null` обязаны возвращать `false`. Так каждое ограничение отвечает за одно, и `@Phone` без `@NotNull` корректно пропускает пустое необязательное поле, не превращая отсутствие значения в ошибку формата.
 
 ## Q8. Как реализовать кросс-field валидацию?
 
@@ -460,6 +470,11 @@ public class PasswordMatchValidator
 public class RegisterRequest {
     @NotBlank private String password;
     @NotBlank private String confirmPassword;
+
+    // BeanWrapperImpl читает свойства через геттеры, а не через приватные поля —
+    // без них getPropertyValue бросит NotReadablePropertyException
+    public String getPassword() { return password; }
+    public String getConfirmPassword() { return confirmPassword; }
 }
 ```
 
@@ -469,7 +484,7 @@ public class RegisterRequest {
 
 Иногда валидатору нужны зависимости — например, проверка уникальности email требует обращения к `UserRepository`. Проблема в том, что «голый» Hibernate Validator создаёт валидаторы через `new`, и в такой объект Spring ничего не заинжектит. Решение — отдать создание валидаторов Spring-контейнеру: тогда `@Autowired` внутри валидатора работает как в обычном бине.
 
-В Spring Boot это уже настроено из коробки: `LocalValidatorFactoryBean` подставляет `SpringConstraintValidatorFactory`, которая создаёт валидаторы через контейнер. От тебя нужно только пометить класс `@Component`:
+В Spring Boot это уже настроено из коробки: `LocalValidatorFactoryBean` подставляет `SpringConstraintValidatorFactory`, а она создаёт валидатор через `AutowireCapableBeanFactory.createBean()` — то есть с полным циклом внедрения зависимостей. Помечать класс `@Component` для этого не обязательно; ставят его обычно ради единообразия и чтобы валидатор было видно как компонент:
 
 ```java
 @Component  // Spring управляет жизненным циклом
@@ -534,7 +549,7 @@ public class UserRequest {
 
 ## Q11. Как включить валидацию на уровне сервиса (не только контроллера)?
 
-«Из коробки» Bean Validation срабатывает только в контроллерах — там за неё отвечает MVC через `HandlerMethodArgumentResolver`. Если сервис вызывается напрямую (из другого сервиса, из теста, из обработчика Kafka), эта валидация не запускается. Чтобы проверять аргументы методов любого бина, нужен `MethodValidationPostProcessor` — он навешивает на бин AOP-прокси, который валидирует параметры при каждом вызове:
+В веб-слое Bean Validation срабатывает на аргументах методов контроллера: `@Valid` у `@RequestBody`/`@ModelAttribute` разворачивает `HandlerMethodArgumentResolver`, а ограничения прямо на `@RequestParam`/`@PathVariable` с версии Spring 6.1 проверяет встроенная method validation. Вне веба автоматически валидируются `@Validated`-`@ConfigurationProperties` при старте и JPA-сущности перед сохранением. А вот аргументы обычного сервиса, вызванного напрямую (из другого сервиса, из теста, из обработчика Kafka), сами по себе не проверяются. Чтобы проверять аргументы методов любого бина, нужен `MethodValidationPostProcessor` — он навешивает на бин AOP-прокси, который валидирует параметры при каждом вызове:
 
 ```java
 @Configuration
@@ -572,9 +587,9 @@ public class UserService {
 | Аспект | Spring MVC (@Valid в контроллере) | Сервисный уровень (@Validated + MethodValidation) |
 |---|---|---|
 | Механизм | `HandlerMethodArgumentResolver` | AOP proxy (`MethodValidationPostProcessor`) |
-| Исключение | `MethodArgumentNotValidException` | `ConstraintViolationException` |
+| Исключение | `MethodArgumentNotValidException` для `@RequestBody`, `BindException` для `@ModelAttribute`, `HandlerMethodValidationException` для параметров (Boot 3.2+) | `ConstraintViolationException` |
 | `BindingResult` | Можно перехватить в методе | Недоступен |
-| Применимость | Только в контроллерах | Любой Spring-бин |
+| Применимость | Аргументы методов-обработчиков; тот же резолверный механизм работает и для `@Payload @Valid` в слушателях сообщений | Любой проксируемый Spring-бин |
 | Self-invocation | N/A | Не работает (AOP проблема) |
 
 **Про self-invocation:** валидация на сервисном уровне идёт через прокси, поэтому вызов одного метода бина из другого метода **этого же** бина (`this.method()`) проходит мимо прокси — и не валидируется. Это та же ловушка, что у `@Transactional`.
@@ -607,7 +622,7 @@ user.email.invalid=Некорректный email
 private String name;
 ```
 
-**Spring-специфика:** Spring Boot связывает `ValidationMessages.properties` со своим `MessageSource`, поэтому сообщения валидации подхватывают общую инфраструктуру i18n приложения.
+**Spring-специфика:** по умолчанию `ValidationMessages.properties` читает сам Hibernate Validator, отдельно от Spring `MessageSource`. Чтобы сообщения брались из общего `messages.properties` и уважали `LocaleResolver`, у `LocalValidatorFactoryBean` явно задают `setValidationMessageSource(messageSource)`.
 
 **3. Интерполяция плейсхолдеров** внутри текста сообщения — чтобы вставить параметры ограничения или само проверяемое значение:
 - `{min}`, `{max}`, `{value}` — атрибуты аннотации (например, границы `@Size`);
@@ -662,10 +677,11 @@ public class OrderController {
 ```
 
 **Сценарии применения:**
-- сложная бизнес-логика, которой нужны сервисные зависимости;
-- валидация с состоянием (обращение к БД, проверка по справочникам);
-- когда нужен прямой доступ к `BindingResult`/`Errors`;
+- ветвящиеся правила, охватывающие объект целиком, а не отдельное поле;
+- когда нужен прямой доступ к `BindingResult`/`Errors` и кодам сообщений;
 - легаси-проекты, написанные до распространения Bean Validation.
+
+Отдельные зависимости и обращения к БД сами по себе поводом не являются: их закрывает кастомный `ConstraintValidator` со Spring DI (см. Q9).
 
 **Что выбрать:** в новых проектах по умолчанию — Bean Validation, а зависимости и состояние решаются кастомными валидаторами через Spring DI (см. Q9). Spring Validator оставляют для действительно сложной, ветвящейся бизнес-логики, где декларативные аннотации становятся громоздкими.
 
@@ -687,7 +703,7 @@ public class BulkRequest {
 public ResponseEntity<?> createBulk(@Valid @RequestBody BulkRequest req) { ... }
 ```
 
-**Вариант 2 — `List` параметром напрямую, без обёртки** (Spring Boot 3+). Класс помечают `@Validated`, а в сигнатуре используют ограничение внутри generic — `List<@Valid CreateUserRequest>`. Экономит DTO-обёртку, но валидация идёт через метод-уровень, поэтому ошибки прилетят как `ConstraintViolationException`:
+**Вариант 2 — `List` параметром напрямую, без обёртки** (ограничения в generic доступны с Bean Validation 2.0, то есть со Spring Boot 2.0). Класс помечают `@Validated`, а в сигнатуре используют ограничение внутри generic — `List<@Valid CreateUserRequest>`. Экономит DTO-обёртку, но валидация идёт через метод-уровень: до Spring Boot 3.2 ошибки прилетали как `ConstraintViolationException`, начиная с 3.2 встроенная method validation бросает `HandlerMethodValidationException`:
 
 ```java
 @Validated
@@ -717,14 +733,14 @@ public class SearchController {
 
 ## Q16. Типичные ошибки при работе с Bean Validation?
 
-Почти все «валидация не работает» сводятся к одному из сценариев ниже. Общий корень — валидация запускается только если её явно попросили (`@Valid`/`@Validated`) и если вызов прошёл через нужный механизм (MVC-resolver или AOP-прокси).
+Почти все «валидация не работает» сводятся к одному из сценариев ниже. Общий корень — валидация чаще всего запускается там, где её явно попросили (`@Valid`/`@Validated`) и где вызов прошёл через нужный механизм (MVC-resolver или AOP-прокси). Отдельные интеграции вроде JPA-валидации перед сохранением работают и без этих аннотаций.
 
 | Симптом | Причина | Решение |
 |---|---|---|
-| Валидация не срабатывает | Забыли `@Valid`/`@Validated` | Добавить аннотацию на параметр |
+| Валидация не срабатывает | Забыли `@Valid`/`@Validated` | В контроллере — на параметр; для сервиса — `@Validated` на классе, иначе прокси не создастся |
 | Вложенные объекты не валидируются | Нет `@Valid` на поле | Добавить `@Valid` на поле вложенного объекта |
-| `ConstraintViolationException` вместо 400 | Нет `@ControllerAdvice` | Добавить `@ExceptionHandler(ConstraintViolationException.class)` |
-| Кастомный validator не получает DI | Не через Spring-контекст | Добавить `@Component`, проверить autoconfigure |
+| `ConstraintViolationException` вместо 400 | Прилетела из сервисного бина, хендлера нет | Добавить `@ExceptionHandler(ConstraintViolationException.class)`; ошибки параметров контроллера Spring и так отдаёт как 400 |
+| Кастомный validator не получает DI | Валидатор создан не Spring-фабрикой — например, через `Validation.buildDefaultValidatorFactory()` | Валидировать через Spring-бин `Validator` (`LocalValidatorFactoryBean`) — тогда зависимости внедряются, `@Component` для этого не требуется |
 | Self-invocation не валидируется | AOP проблема | Вынести в отдельный бин или inject self |
 | Groups не работают | Используется `@Valid` вместо `@Validated` | Для групп нужен `@Validated(Group.class)` |
 | `null` не проходит `@NotBlank` | `@NotBlank` включает проверку null | Нормальное поведение; `@NotBlank` = `@NotNull` + не пусто |
