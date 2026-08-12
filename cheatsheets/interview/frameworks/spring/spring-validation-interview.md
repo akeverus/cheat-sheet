@@ -266,7 +266,7 @@ record ValidationError(String field, String message) {}
 record ValidationErrorResponse(List<ValidationError> errors) {}
 ```
 
-- `MethodArgumentNotValidException` — когда невалиден `@RequestBody`/`@RequestPart` (тело читается конвертером и биндится в объект, ошибки собираются в `BindingResult`). Для `@Valid @ModelAttribute` без `BindingResult` прилетает `BindException` — в Spring 6 `MethodArgumentNotValidException` от неё и наследуется.
+- `MethodArgumentNotValidException` — когда невалиден `@RequestBody`/`@RequestPart` (тело читается конвертером и биндится в объект, ошибки собираются в `BindingResult`). Для `@Valid @ModelAttribute` без `BindingResult` в Spring 6 прилетает тоже `MethodArgumentNotValidException` (в Spring 5 там был `BindException`); совместимость сохранена тем, что `MethodArgumentNotValidException` наследуется от `BindException`, поэтому хендлер, объявленный на `BindException`, накрывает оба случая.
 - `HandlerMethodValidationException` — начиная со Spring Boot 3.2 при невалидных `@RequestParam`, `@PathVariable`, `@RequestHeader` прямо в контроллере: method validation там встроена, `@Validated` на классе не нужен — более того, с этой аннотацией встроенная проверка отключается (Spring отдаёт валидацию AOP-прокси, чтобы не проверять дважды), и нарушения снова прилетают как `ConstraintViolationException`. Spring штатно переводит её в `400`, отдельный хендлер нужен только ради своего формата ответа.
 - `ConstraintViolationException` — когда невалидны аргументы метода обычного бина (`@Validated` на сервисе, см. Q11).
 
@@ -587,7 +587,7 @@ public class UserService {
 | Аспект | Spring MVC (@Valid в контроллере) | Сервисный уровень (@Validated + MethodValidation) |
 |---|---|---|
 | Механизм | `HandlerMethodArgumentResolver` | AOP proxy (`MethodValidationPostProcessor`) |
-| Исключение | `MethodArgumentNotValidException` для `@RequestBody`, `BindException` для `@ModelAttribute`, `HandlerMethodValidationException` для параметров (Boot 3.2+, если на классе нет `@Validated`) | `ConstraintViolationException` |
+| Исключение | `MethodArgumentNotValidException` для `@RequestBody` и `@ModelAttribute` (наследник `BindException`), `HandlerMethodValidationException` для параметров (Boot 3.2+, если на классе нет `@Validated`) | `ConstraintViolationException` |
 | `BindingResult` | Можно перехватить в методе | Недоступен |
 | Применимость | Аргументы методов-обработчиков; тот же резолверный механизм работает и для `@Payload @Valid` в слушателях сообщений | Любой проксируемый Spring-бин |
 | Self-invocation | N/A | Не работает (AOP проблема) |
