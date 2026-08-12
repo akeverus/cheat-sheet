@@ -192,7 +192,7 @@ if (obj instanceof Triple(Integer i, Pair(String s1, String s2), Double d)) {
 
 ## Q5. Что такое Sealed Classes и как они связаны с pattern matching?
 
-**Sealed-классы и -интерфейсы** (Java 17, JEP 409) перечисляют наследников через `permits`; если клауза опущена, списком становятся наследники, объявленные в том же файле. Это превращает открытую иерархию в закрытый, известный компилятору набор вариантов — фактически алгебраический тип-сумму (ADT).
+**Sealed-классы и -интерфейсы** (Java 17, JEP 409) перечисляют наследников через `permits`; если клауза опущена, списком становятся наследники, объявленные в том же файле. Каждый разрешённый подтип обязан сам объявить, что делает дальше: `final` (record'ы такие по умолчанию), снова `sealed` — или `non-sealed`, если ветку намеренно открывают для чужих реализаций. Это превращает открытую иерархию в закрытый, известный компилятору набор вариантов — фактически алгебраический тип-сумму (ADT).
 
 **Связь с pattern matching:** раз компилятор знает все возможные подтипы, он может проверить **exhaustiveness** — что `switch` покрывает их все. Если покрыты — `default` не нужен. Это и есть главная выгода связки: добавили новый подтип в `permits`, забыли обработать его в `switch` — при пересборке этого switch получили ошибку компиляции, а не тихий баг. Если switch не пересобран (раздельная компиляция), непокрытое значение даёт `MatchException` в рантайме — см. Q10. Без `sealed` тот же `switch` пришлось бы замыкать вручную — `default` или тотальным шаблоном.
 
@@ -308,7 +308,11 @@ public interface ShapeVisitor<R> {
 public interface VisitableShape {
     <R> R accept(ShapeVisitor<R> visitor);
 }
-// ...много бойлерплейта
+// и каждый тип иерархии дописывает accept:
+record Circle(double radius) implements Shape, VisitableShape {
+    public <R> R accept(ShapeVisitor<R> v) { return v.visit(this); }
+}
+// ...и так для Square, Triangle — это и есть бойлерплейт
 
 // Visitor требует accept в самой иерархии, поэтому она здесь своя (VisitableShape).
 // Pattern matching обходится без этого — ниже switch по sealed-иерархии Shape из Q5:
@@ -327,8 +331,8 @@ Shape scaled(Shape shape, double k) {
         case Circle(double r) -> new Circle(r * k);
         case Square(double s) -> new Square(s * k);
         case Triangle(double b, double h) -> {
-            double factor = Math.abs(k);
-            yield new Triangle(b * factor, h * factor);
+            double scaledBase = b * k;
+            yield new Triangle(scaledBase, h * k);
         }
     };
 }
@@ -338,7 +342,7 @@ Shape scaled(Shape shape, double k) {
 
 **Компромисс с Visitor.** На `sealed`-иерархии pattern matching дешевле по обеим осям: новая операция — обычный метод со switch, а забытый подтип ловит exhaustiveness. Остаточная ценность Visitor не в дешевизне, а в другом: операция там — объект, её можно передать, подменить и собрать целиком в одном классе; и он применим там, где типы свои, но `sealed` объявить нельзя — наследники разнесены по модулям или иерархию намеренно держат открытой внутри своего кода.
 
-Новый подтип дорог обоим и обоим требует правки исходного кода: у sealed — списка `permits` и всех exhaustive switch, у Visitor — интерфейса `ShapeVisitor` и всех его реализаций (`Rhombus.accept` не скомпилируется: `no suitable method found for visit(Rhombus)`). Для иерархии, открытой сторонним реализациям, не годится ни то ни другое: `permits` третья сторона не расширит, visitor-интерфейс тоже. Там работает обычный полиморфный метод в самом интерфейсе.
+Новый подтип дорог обоим и обоим требует правки исходного кода: у sealed — списка `permits` и всех exhaustive switch, у Visitor — интерфейса `ShapeVisitor` и всех его реализаций (`Rhombus.accept` не скомпилируется: `no suitable method found for visit(Rhombus)`). Для иерархии, открытой сторонним реализациям, не годится ни то ни другое: `permits` третья сторона не расширит, visitor-интерфейс тоже. Промежуточный выход — `non-sealed`-подтип: чужие реализации наследуются от него, switch остаётся полным, но все они попадают в одну общую ветку. Если различать их надо по-настоящему, работает обычный полиморфный метод в самом интерфейсе.
 
 ## Q9. Что такое `yield` в switch expression и когда он нужен?
 
