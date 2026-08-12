@@ -51,17 +51,17 @@ plugins {
 }
 ```
 
-**Суть:** Spring генерирует прокси-подклассы через CGLIB, Hibernate — через ByteBuddy (CGLIB там не используется с 5.3), а для `@Entity` нужен ещё и no-arg конструктор. Но в Kotlin классы по умолчанию `final`, и no-arg конструктора у них нет. Плагины снимают эти ограничения автоматически — иначе пришлось бы вручную помечать каждый класс `open` и дописывать default-значения.
+**Суть:** Spring генерирует прокси-подклассы через CGLIB, Hibernate — через ByteBuddy (он стал дефолтным вместо Javassist в 5.3; CGLIB Hibernate не использует со времён 4.x), а для `@Entity` нужен ещё и no-arg конструктор. Но в Kotlin классы по умолчанию `final`, и no-arg конструктора у них нет. Плагины снимают эти ограничения автоматически — иначе пришлось бы вручную помечать каждый класс `open` и дописывать default-значения.
 
 Что делает каждый плагин:
-- **`kotlin-spring`** — делает `open` все классы со Spring-аннотациями (`@Service`, `@Configuration`, `@Transactional` и т.п.). Без него final-класс нельзя проксировать подклассом: `@Configuration` роняет старт сообщением «@Configuration class ... may not be final», обычный бин — `AopConfigException: Could not generate CGLIB subclass`. Final-методы в нефинальном классе CGLIB не роняют сборку, а молча пропускает с WARN — advice на них просто не срабатывает.
+- **`kotlin-spring`** — делает `open` все классы со Spring-аннотациями (`@Service`, `@Configuration`, `@Transactional` и т.п.). Без него final-класс нельзя проксировать подклассом: `@Configuration` с дефолтным `proxyBeanMethods = true` роняет старт сообщением «@Configuration class ... may not be final», а бин под AOP (`@Transactional`, `@Async`, `@Cacheable`) — `AopConfigException: Could not generate CGLIB subclass`. Классу без advice прокси не нужен, и финальность ему не мешает. Final-методы в нефинальном классе CGLIB не роняют сборку, а молча пропускает с WARN — advice на них просто не срабатывает.
 - **`kotlin-jpa`** — генерирует синтетический no-arg конструктор для классов с `@Entity`, `@MappedSuperclass`, `@Embeddable`. Без него сущность придётся готовить вручную: либо задать значения по умолчанию всем параметрам конструктора, либо дописать пустой вторичный конструктор — иначе JPA не создаст экземпляр через рефлексию.
 - **`kotlin-allopen`** — обобщение: делает классы `open` по любым аннотациям, которые вы перечислите сами. По сути `kotlin-spring` — это `allopen`, заранее настроенный на Spring-аннотации.
 
 ```kotlin
 allOpen {
     annotation("jakarta.persistence.Entity")
-    annotation("org.springframework.stereotype.Component")
+    annotation("com.example.OpenForTesting")   // свои аннотации; Spring-овые уже покрыты kotlin-spring
 }
 ```
 
@@ -69,7 +69,7 @@ allOpen {
 
 В Kotlin зависимости внедряют через первичный конструктор с `private val`. Это естественный для языка способ: `val` даёт immutable-зависимости, а единственный конструктор Spring выбирает автоматически — `@Autowired` над ним писать не нужно (начиная со Spring 4.3).
 
-Field injection (`@Autowired` над свойством) в Kotlin работает плохо: non-null свойство нельзя оставить неинициализированным, поэтому приходится использовать `lateinit var`. Это убирает immutability, мешает тестам (нельзя подставить mock через конструктор) и прячет зависимости от глаз.
+Field injection (`@Autowired` над свойством) в Kotlin работает плохо: non-null свойство нельзя оставить неинициализированным, поэтому обычно берут `lateinit var` (альтернативы — nullable-свойство или `@set:Autowired`, и обе проигрывают конструктору). Это убирает immutability, мешает тестам (нельзя подставить mock через конструктор) и прячет зависимости от глаз.
 
 ```kotlin
 // В Kotlin используется constructor injection — идеально для immutable зависимостей
