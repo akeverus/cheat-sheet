@@ -622,7 +622,7 @@ user.email.invalid=Некорректный email
 private String name;
 ```
 
-**Spring-специфика:** по умолчанию `ValidationMessages.properties` читает сам Hibernate Validator, отдельно от Spring `MessageSource`. Чтобы сообщения брались из общего `messages.properties` и уважали `LocaleResolver`, у `LocalValidatorFactoryBean` явно задают `setValidationMessageSource(messageSource)`.
+**Spring-специфика:** сам стандарт отдаёт `ValidationMessages.properties` реализации — их читает Hibernate Validator. Spring Boot поверх этого пропускает сообщения через `MessageSource` приложения: ключ вида `{user.name.required}` резолвится из общего `messages.properties` по текущей локали и без всякой настройки, а уже потом отрабатывает стандартный интерполятор. В чистом Spring без Boot такой связки нет — там у `LocalValidatorFactoryBean` явно задают `setValidationMessageSource(messageSource)`.
 
 **3. Интерполяция плейсхолдеров** внутри текста сообщения — чтобы вставить параметры ограничения или само проверяемое значение:
 - `{min}`, `{max}`, `{value}` — атрибуты аннотации (например, границы `@Size`);
