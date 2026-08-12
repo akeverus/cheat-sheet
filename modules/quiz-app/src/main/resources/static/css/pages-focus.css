@@ -352,6 +352,29 @@ html[data-design] .focus-page .focus-topbar { margin-bottom: 0; }
 html[data-design] .focus-page .question-zone-head,
 html[data-design] .focus-page .focus-aside.focus-session-rail { margin-bottom: var(--space-2); }
 html[data-design] .focus-page .focus-aside .today-chip { margin-bottom: 0; }
+
+/* Вход в разбор ошибок — место в раскладке рельса, а НЕ вид кнопки: коробку,
+   контур и ранг держит компонент (.secondary-btn). Подпись слева, число справа —
+   так же, как читаются соседние факты («Пройдено по банку 149/9818», «27 из 9818
+   к повтору»): слева что, справа сколько.
+
+   Ширину задаёт не `width: 100%`, а доля в полосе рельса — как у соседей. С
+   `width: 100%` замер Chromium 1512×982 дал кнопку 1160×44 над вопросом: рельс
+   вне сессии разворачивается в горизонтальную полосу контекста, и элемент без
+   собственной flex-доли уезжал на свою строку во всю её ширину. Это был уже не
+   вход в режим, а баннер поперёк экрана. Доля та же, что у чипа очереди
+   (14rem), поэтому в широкой полосе вход встаёт третьим блоком в ряд, а в
+   узком рельсе — своей строкой. */
+html[data-design] .focus-page .focus-review-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+}
+html[data-design] .focus-page .focus-review-entry-count {
+  font-family: var(--font-family-mono);
+  font-variant-numeric: tabular-nums;
+}
 html[data-design] .focus-page .focus-question-reason { margin-bottom: var(--space-4); }
 /* .zone-chip / .zone-hint (база) вынесены в components-answer.css (@layer
    components, D3f Волны 3): shared — рендерятся через fragments/result-zone-head.html,
@@ -1438,6 +1461,7 @@ html[data-design] .focus-page .focus-training .focus-aside .focus-progress-line 
 html[data-design] .focus-page .focus-training .focus-aside .session-progress-track { flex: 1 1 8rem; }
 html[data-design] .focus-page .focus-training .focus-aside .focus-bank-progress,
 html[data-design] .focus-page .focus-training .focus-aside .today-chip { flex: 1 1 14rem; }
+html[data-design] .focus-page .focus-training .focus-aside .focus-review-entry { flex: 1 1 14rem; }
 html[data-design] .focus-page .focus-training .focus-aside .focus-session-more { flex: 1 1 10rem; }
 html[data-design] .focus-page .focus-training .focus-aside .focus-session-more-summary { width: 100%; }
 

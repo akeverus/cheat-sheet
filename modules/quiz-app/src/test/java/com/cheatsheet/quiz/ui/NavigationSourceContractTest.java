@@ -147,6 +147,44 @@ class NavigationSourceContractTest {
                 .isEmpty();
     }
 
+    /**
+     * Первый уровень — РАЗДЕЛЫ, а не режимы одного и того же экрана.
+     *
+     * <p>Шестым пунктом здесь стояли «Ошибки» → {@code /review}. Разделом он не был:
+     * {@code /review} и {@code /} рендерят один шаблон {@code focus-training.html}, а вся
+     * разница между ними — {@code ReviewModeService}, который форсит один флаг фильтра
+     * ({@code onlyWrong=true}); тот же отбор человек уже включал чипом «Ошибки» в
+     * конструкторе сессии. Пункт при этом ничего не сообщал о главном — есть ли что
+     * разбирать: он выглядел одинаково и при 123 ошибках, и при нуле.</p>
+     *
+     * <p>Проверяется пара утверждений, которые обязаны держаться вместе: режима нет в
+     * первом уровне И вход в него есть внутри тренировки, с числом и с обратным выходом.
+     * Порознь любое из них — это либо возврат пункта-режима, либо потерянный режим.</p>
+     */
+    @Test
+    void firstLevelHoldsSectionsNotModesAndTheModeKeepsItsOwnEntry() {
+        assertThat(NavSection.all().stream().map(NavSection::path))
+                .as("режим тренировки снова объявлен разделом первого уровня. /review — это тот же "
+                        + "экран с одним флагом фильтра, а не отдельное место в продукте")
+                .doesNotContain("/review");
+
+        String focus = read(TEMPLATES.resolve("focus-training.html"));
+        String markup = focus.replaceAll("(?s)<!--.*?-->", "\n");
+
+        assertThat(markup)
+                .as("вход в разбор ошибок исчез с экрана тренировки: режим убран из навигации и "
+                        + "теперь недостижим ничем, кроме сохранённой ссылки")
+                .contains("@{/review}");
+        assertThat(markup)
+                .as("вход в разбор показывается всегда — в том числе когда разбирать нечего. "
+                        + "Постоянная ссылка в пустое состояние «Пока нет ошибок» — приглашение в тупик")
+                .contains("filterWrongCount > 0");
+        assertThat(markup)
+                .as("на самом /review нет обратного выхода: клик по активному пункту навигации как "
+                        + "способ выйти из режима — догадка, а не интерфейс")
+                .containsPattern("(?s)reviewMode != null and reviewMode\\}\"\\s*\\n?\\s*th:href=\"@\\{/\\}");
+    }
+
     /** Содержимое элемента {@code <nav>} фрагмента — только список пунктов. */
     private static String navBlock(Path fragment) {
         String source = read(fragment);

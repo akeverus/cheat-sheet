@@ -16,7 +16,7 @@
 <svg th:replace="~{fragments/icons :: sprite}"></svg>
 <div class="app"
      th:attr="data-session-wrong=${interviewSession != null ? interviewSession.getWrong() : 0}">
-    <aside th:replace="~{fragments/sidebar :: sidebar(active=${reviewMode != null and reviewMode} ? 'review' : 'focus')}"></aside>
+    <aside th:replace="~{fragments/sidebar :: sidebar(active='focus')}"></aside>
     <div class="shell-main">
         <th:block th:replace="~{fragments/shell-head :: shell-head}"></th:block>
 
@@ -165,6 +165,44 @@
 
                 <!--/* Компактный «сегодня»-чип: стрик (🔥) + due. Информативный, без CTA. */-->
                 <div th:replace="~{fragments/today-widget :: today-chip(stats=${stats})}"></div>
+
+                <!--/* ВХОД В РАЗБОР ОШИБОК — ЗДЕСЬ, А НЕ В ПЕРВОМ УРОВНЕ НАВИГАЦИИ.
+                     Раньше «Ошибки» были шестым пунктом рельса и нижней полосы, наравне
+                     с разделами. Разделом этот пункт не был: /review и / рендерят ОДИН
+                     шаблон, вся разница — ReviewModeService, форсящий один флаг фильтра
+                     (onlyWrong=true), а тот же отбор уже включается чипом «Ошибки» в
+                     конструкторе сессии. Пункт меню при этом молчал о главном: есть ли
+                     вообще что разбирать — он выглядел одинаково и при 27 ошибках, и при нуле.
+
+                     Вход стоит внутри тренировки, среди фактов о моём прогрессе, и несёт
+                     ЧИСЛО. Появляется он тогда, когда есть что разбирать: вести человека
+                     в пустое состояние «Пока нет ошибок» одним из шести постоянных пунктов
+                     — это приглашение в тупик.
+
+                     Число берётся из уже посчитанного filterWrongCount (тот же источник,
+                     что у чипа конструктора и у строки «Ошибок к разбору» на самом
+                     /review): SurfaceState строится на каждом рендере экрана, второго
+                     запроса нет.
+
+                     Во время сессии входа нет: человек внутри набора, и увести его из
+                     набора — не помощь. */-->
+                <a class="btn secondary-btn focus-review-entry"
+                   th:if="${(reviewMode == null or !reviewMode) and interviewSession == null
+                            and filterWrongCount != null and filterWrongCount > 0}"
+                   th:href="@{/review}">
+                    <span>Разобрать ошибки</span>
+                    <span class="focus-review-entry-count" th:text="${filterWrongCount}">0</span>
+                </a>
+
+                <!--/* Обратный выход из режима: на /review активным разделом подсвечена
+                     «Тренировка» (раздел тот же, режим другой), но клик по активному
+                     пункту как способ выйти — догадка, а не интерфейс. Ссылка называет
+                     выход словами и стоит там же, где стоял вход. */-->
+                <a class="btn secondary-btn focus-review-entry"
+                   th:if="${reviewMode != null and reviewMode}"
+                   th:href="@{/}">
+                    <span>Вся тренировка</span>
+                </a>
 
                 <!--/* UX-003: пауза и завершение — в overflow-меню с confirm перед finish.
                      Прямой one-click finish убран: случайное нажатие не обрывает сессию. */-->
@@ -706,7 +744,7 @@
 </main>
     </div>
 </div>
-<nav th:replace="~{fragments/mobile-nav :: mobile-nav(active=${reviewMode != null and reviewMode} ? 'review' : 'focus')}"></nav>
+<nav th:replace="~{fragments/mobile-nav :: mobile-nav(active='focus')}"></nav>
 
 <script th:replace="~{fragments/scripts :: app-script}"></script>
 </body>
