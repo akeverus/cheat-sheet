@@ -1,0 +1,81 @@
+/* Каталог тем `/topics` — единственные собственные правила страницы.
+
+   До iter-103 своего CSS у неё не было, и это было верно: страница печатала
+   десять карточек с таблицами, а карточка, таблица и жёлоб прокрутки — общие
+   компоненты. Правила появились вместе с раскрытием раздела: у `<details>` есть
+   собственная шапка, которой у `<div>` не было. */
+@layer pages {
+
+/* Карточка отдаёт свои поля шапке и таблице. Иначе поля удваиваются, а клик по
+   «пустому» полю карточки не открывает раздел — цель у шапки должна быть во всю
+   ширину карточки, а не в её середине. */
+html[data-design] .topics-page .catalog-group { padding: 0; }
+
+/* Нативный треугольник снят и заменён своим: `display: flex` на `<summary>`
+   гасит маркер в обоих движках (он рождается из `display: list-item`), а без
+   flex шапку не разложить в строку. Свой маркер к тому же поворачивается по
+   состоянию раздела и красится текущим цветом, то есть виден в обеих темах. */
+html[data-design] .topics-page .catalog-group-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-5);
+  padding: var(--space-5);
+  cursor: pointer;
+  list-style: none;
+}
+html[data-design] .topics-page .catalog-group-summary::-webkit-details-marker { display: none; }
+/* Уголок: два борта квадрата, повёрнутые на 45°. Переход не объявляется —
+   поворот происходит сразу, и выключать в `prefers-reduced-motion` нечего. */
+html[data-design] .topics-page .catalog-group-summary::before {
+  content: "";
+  flex: none;
+  width: 0.5em;
+  height: 0.5em;
+  margin-right: calc(-1 * var(--space-2));
+  border-right: 2px solid var(--color-text-tertiary);
+  border-bottom: 2px solid var(--color-text-tertiary);
+  transform: rotate(-45deg);
+}
+html[data-design] .topics-page .catalog-group[open] .catalog-group-summary::before {
+  transform: rotate(45deg);
+}
+html[data-design] .topics-page .catalog-group-summary:hover .catalog-group-title {
+  color: var(--color-accent-strong);
+}
+html[data-design] .topics-page .catalog-group-summary:hover::before {
+  border-color: var(--color-accent-strong);
+}
+
+html[data-design] .topics-page .catalog-group-headings {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 18rem;
+}
+html[data-design] .topics-page .catalog-group-title {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  line-height: var(--line-height-tight);
+}
+html[data-design] .topics-page .catalog-group-lead {
+  font-size: var(--font-size-sm);
+}
+/* Числа раздела — одной строкой у правой кромки; на узкой ширине уезжают под
+   заголовок обычным переносом flex-строки, без медиазапроса. */
+html[data-design] .topics-page .catalog-group-kpi {
+  margin: 0;
+  flex: 0 1 auto;
+}
+
+/* Открытый раздел: кромка отделяет шапку от таблицы, поля таблицы — свои. */
+html[data-design] .topics-page .catalog-group[open] .catalog-group-summary {
+  border-bottom: var(--rule-weight) solid var(--color-border-secondary);
+}
+html[data-design] .topics-page .catalog-group .table-scroll {
+  padding: var(--space-4) var(--space-5) var(--space-5);
+}
+
+}

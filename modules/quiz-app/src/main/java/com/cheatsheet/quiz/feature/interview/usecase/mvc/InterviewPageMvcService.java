@@ -167,11 +167,16 @@ public class InterviewPageMvcService {
     }
 
     /** Каталог тем: разделы банка и темы внутри них с состоянием освоения. */
-    public String topics(Model model) {
-        TopicsPageService.TopicsPageState state = topicsPageService.build();
+    public String topics(String query, String topicState, Model model) {
+        TopicsPageService.TopicsQuery catalogQuery = TopicsPageService.TopicsQuery.of(query, topicState);
+        TopicsPageService.TopicsPageState state = topicsPageService.build(catalogQuery);
         model.addAttribute("catalogSections", state.sections());
         model.addAttribute("catalogTopicCount", state.topicCount());
         model.addAttribute("catalogQuestionCount", state.questionCount());
+        model.addAttribute("catalogMatchedCount", state.matchedTopicCount());
+        model.addAttribute("catalogQuery", state.query().q());
+        model.addAttribute("catalogState", state.query().state());
+        model.addAttribute("catalogFilterActive", state.query().active());
         return navigationService.topicsView();
     }
 

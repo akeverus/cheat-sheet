@@ -286,10 +286,18 @@ public class InterviewMvcController {
         );
     }
 
-    /** Каталог тем — полноценный адрес первого уровня, а не якорь внутри аналитики. */
+    /**
+     * Каталог тем — полноценный адрес первого уровня, а не якорь внутри аналитики.
+     *
+     * <p>Отбор живёт в адресе, а не в скрипте: страницу с найденным набором можно
+     * сохранить и переслать, а без JS форма работает обычной GET-отправкой.
+     */
     @GetMapping("/topics")
-    public String topics(Model model) {
-        return interviewPageMvcService.topics(model);
+    public String topics(
+            @RequestParam(value = "q", required = false) String query,
+            @RequestParam(value = "state", required = false) String topicState,
+            Model model) {
+        return interviewPageMvcService.topics(query, topicState, model);
     }
 
     @GetMapping("/bookmarks")
