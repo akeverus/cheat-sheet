@@ -77,14 +77,61 @@ html[data-design] .btn-favorite {
   font-family: var(--font-family-body); font-size: var(--font-size-base); font-weight: var(--font-weight-medium);
   background: transparent; color: var(--color-text-primary);
   /* Рамка кнопки — pixel-контур. Не «border плюс декор поверх»: два контура на
-     одной форме и давали ту самую вторую систему. */
-  border: 0; border-radius: 0; box-shadow: var(--px-edge);
+     одной форме и давали ту самую вторую систему.
+
+     КОНТУР ИДЁТ ЗА ЗАЛИВКОЙ, А НЕ ЗА ФОРМОЙ. В базе стоял чернильный
+     `--px-edge` (#12100b) — и приезжал КАЖДОМУ рангу, включая поверхностные и
+     прозрачные. Правило проекта записано в pixel-fx.css рядом с самим токеном:
+     чернила — только для НАСЫЩЕННОЙ АКЦЕНТНОЙ заливки, поверхность → 
+     `--px-edge-surface`. База ему противоречила.
+
+     Замер (Chromium, пять страниц, обе темы): 102 элемента несли чернильный
+     контур, и НИ У ОДНОГО не было акцентной заливки — 64 `.secondary-btn`
+     (фон #fdfbf5 в светлой, #272219 в тёмной), 28 `.quiet-btn` и 5
+     `.icon-button` (фон прозрачный). В светлой теме это почти чёрная рамка 3px
+     на пергаменте — та самая «толстая рамка», которую §58 называет карикатурой;
+     в тёмной #12100b на #272219 почти не виден, то есть работа впустую.
+
+     Теперь база несёт контур поверхности (тёплый, с веткой на тему), акцентные
+     ранги ниже возвращают себе чернила, а прозрачные — обходятся без контура. */
+  border: 0; border-radius: 0; box-shadow: var(--px-edge-surface);
   text-decoration: none; cursor: pointer; touch-action: manipulation;
   text-transform: none; image-rendering: pixelated; position: relative;
   /* Переход гасится намеренно: pixel-нажатие — это ступенчатый сдвиг на 2px,
      а не плавная заливка. Раньше `transition: none !important` приходил из
      слоя-стирателя, и объявленный здесь плавный переход не работал. */
   transition: none;
+}
+
+/* Акцентным рангам контур даёт слой pixel (`--px-edge-brass`, глубокая латунь
+   под латунной заливкой) — правило здесь было бы мёртвым объявлением: замер
+   показывает у `.next-btn` контур rgb(107,82,24), то есть побеждает pixel. */
+
+/* Прозрачные ранги живут без контура в покое — рамка вокруг пустоты читается как
+   «ненастоящая кнопка» (§63). Тот же приём уже держат `.skip-btn` и
+   `.report-trigger` ниже; здесь он распространён на остальные прозрачные. */
+html[data-design] .quiet-btn,
+html[data-design] .icon-button {
+  box-shadow: none;
+}
+/* Ранг «тихая кнопка в строке списка»: обслуживает элемент рядом с другим таким
+   же контролом (раскрытием заметки), поэтому кегль и вес у них общие, а базовый
+   ранг делал удаление тяжелее правки. Коробка объявлена ЗДЕСЬ, а не на странице:
+   страница задаёт кнопке место, компонент — вид (гейт pageFilesDoNotRedeclareTheButtonBox
+   поймал первую попытку сделать это в pages-bookmarks.css и был прав).
+   Порог касания добирается на грубом указателе — тот же приём, что у `.skip-btn`. */
+html[data-design] .quiet-btn {
+  min-height: 0;
+  padding: var(--space-1) 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+@media (pointer: coarse) {
+  html[data-design] .quiet-btn { min-height: 44px; }
+}
+html[data-design] .quiet-btn:hover:not(:disabled),
+html[data-design] .icon-button:hover:not(:disabled) {
+  box-shadow: var(--px-edge-surface);
 }
 
 /* Ранг «главное действие флоу»: на 4px выше базового и с бо́льшими полями —
