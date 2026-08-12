@@ -35,7 +35,8 @@ class EmptyStateSystemContractTest {
 
     /** Шаблоны, где пустые состояния живут сегодня. */
     private static final List<String> HOST_TEMPLATES =
-            List.of("templates/focus-training.html", "templates/bookmarks.html", "templates/stats.html");
+            List.of("templates/focus-training.html", "templates/bookmarks.html", "templates/stats.html",
+                    "templates/topics.html");
 
     /**
      * Имена трёх вытесненных систем. Любое из них в разметке или в CSS означает,
@@ -43,7 +44,13 @@ class EmptyStateSystemContractTest {
      */
     private static final List<String> RETIRED = List.of(
             "empty-card-inner", "empty-pixel-art", "empty-title", "empty-description", "empty-actions",
-            "bookmarks-empty", "stats-empty");
+            "bookmarks-empty", "stats-empty",
+            // Четвёртое имя, заведённое уже ПОСЛЕ сборки компонента: каталог тем
+            // рисовал глиф классом `empty-state-art`, которому ни один файл не
+            // давал правил, и с размером в HTML-атрибутах. Замер в браузере — в
+            // комментарии topics.html. Дефект возвращается именно так: новая
+            // страница, «всего одно исключение».
+            "empty-state-art");
 
     private String read(String classpathLocation) throws IOException {
         return new String(new ClassPathResource(classpathLocation).getInputStream().readAllBytes(),
@@ -146,7 +153,11 @@ class EmptyStateSystemContractTest {
             assertThat(markup).as("%s: глиф не из спрайта состояний", template)
                     .contains("empty-state-illus");
         }
-        assertThat(total).as("все восемь состояний трёх страниц").isEqualTo(8);
+        // Число сверяется с фактом, а не растёт «на всякий случай»: восемь
+        // состояний трёх страниц плюс два состояния каталога тем (банк не
+        // импортирован / отбор ничего не нашёл), пришедших в компонент из
+        // собственного класса-пустышки.
+        assertThat(total).as("все десять состояний четырёх страниц").isEqualTo(10);
     }
 
     /**
@@ -184,10 +195,13 @@ class EmptyStateSystemContractTest {
     @Test
     void emptyStateGlyphsComeFromTheStateSpriteOnly() throws IOException {
         String sprite = read("templates/fragments/state-illustrations.html");
-        for (String symbol : List.of("px-portcullis", "px-chest", "px-spyglass", "px-empty-chart")) {
-            assertThat(sprite).as("символ %s отсутствует в спрайте", symbol)
-                    .contains("id=\"" + symbol + "\"");
-        }
+        // Список требуемых символов не перечисляется здесь руками: он ВЫВОДИТСЯ
+        // из разметки состояний. Фиксированный список ловил ровно четыре глифа
+        // и при этом пропускал остальные пять, а после чистки словаря сам стал
+        // требовать удалённый px-empty-chart — гейт держал не факт, а свой
+        // прошлый снимок. Вывод из шаблонов покрывает ВСЕ состояния и не
+        // устаревает при добавлении нового.
+        List<String> referenced = new ArrayList<>();
 
         for (String template : HOST_TEMPLATES) {
             String markup = TEMPLATE_COMMENT.matcher(read(template)).replaceAll("\n");
@@ -197,10 +211,17 @@ class EmptyStateSystemContractTest {
             while (m.find()) {
                 found++;
                 assertThat(m.group(1)).as("%s: глиф не из спрайта состояний", template).startsWith("px-");
+                referenced.add(m.group(1));
             }
             assertThat(found).as("%s: глифы пустых состояний", template).isPositive();
             assertThat(markup).as("%s: растровый маскот в пустом состоянии", template)
                     .doesNotContain("/img/pixel/empty");
+        }
+
+        assertThat(referenced).as("ссылки на глифы состояний").isNotEmpty();
+        for (String symbol : referenced) {
+            assertThat(sprite).as("символ %s отсутствует в спрайте", symbol)
+                    .contains("id=\"" + symbol + "\"");
         }
     }
 }
