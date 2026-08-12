@@ -125,7 +125,10 @@ def parse_markdown(md_path: Path) -> dict[int, dict]:
     out = {}
     for idx, (line_no, num, title) in enumerate(heads):
         end = heads[idx + 1][0] if idx + 1 < len(heads) else stop_at
+        # маркер «важный вопрос» в корпусе стоит и перед заголовком, и после него —
+        # это декорация, а не часть вопроса, поэтому снимаем в обеих позициях
         title = re.sub(r"^\(!\)\s*", "", title).strip()
+        title = re.sub(r"\s*\(!\)$", "", title).strip()
         out[num] = {
             "title": title,
             "body": "\n".join(lines[line_no + 1:end]),
