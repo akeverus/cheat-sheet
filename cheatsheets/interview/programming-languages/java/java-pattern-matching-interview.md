@@ -192,9 +192,9 @@ if (obj instanceof Triple(Integer i, Pair(String s1, String s2), Double d)) {
 
 ## Q5. Что такое Sealed Classes и как они связаны с pattern matching?
 
-**Sealed-классы и -интерфейсы** (Java 17, JEP 409) явно перечисляют через `permits` полный список наследников. Это превращает открытую иерархию в закрытый, известный компилятору набор вариантов — фактически алгебраический тип-сумму (ADT).
+**Sealed-классы и -интерфейсы** (Java 17, JEP 409) перечисляют наследников через `permits`; если клауза опущена, списком становятся наследники, объявленные в том же файле. Это превращает открытую иерархию в закрытый, известный компилятору набор вариантов — фактически алгебраический тип-сумму (ADT).
 
-**Связь с pattern matching:** раз компилятор знает все возможные подтипы, он может проверить **exhaustiveness** — что `switch` покрывает их все. Если покрыты — `default` не нужен. Это и есть главная выгода связки: добавили новый подтип в `permits`, забыли обработать его в `switch` — получили ошибку компиляции, а не тихий баг в рантайме. Без `sealed` тот же `switch` пришлось бы замыкать вручную — `default` или тотальным шаблоном.
+**Связь с pattern matching:** раз компилятор знает все возможные подтипы, он может проверить **exhaustiveness** — что `switch` покрывает их все. Если покрыты — `default` не нужен. Это и есть главная выгода связки: добавили новый подтип в `permits`, забыли обработать его в `switch` — при пересборке этого switch получили ошибку компиляции, а не тихий баг. Если switch не пересобран (раздельная компиляция), непокрытое значение даёт `MatchException` в рантайме — см. Q10. Без `sealed` тот же `switch` пришлось бы замыкать вручную — `default` или тотальным шаблоном.
 
 ```java
 public sealed interface Shape permits Circle, Square, Triangle {}
@@ -212,9 +212,11 @@ double area(Shape shape) {
     };
 }
 
-// При добавлении новой формы → ошибка компиляции
-// public record Oval(double width, double height) implements Shape {}
-// area() больше не exhaustive → нужно добавить case
+// При добавлении новой формы правок две, и первая обязательна:
+// 1) sealed interface Shape permits Circle, Square, Triangle, Oval
+// 2) public record Oval(double width, double height) implements Shape {}
+// Без первой — «class is not allowed to extend sealed class: Shape»,
+// после обеих area() больше не exhaustive → нужно добавить case
 ```
 
 ## Q6. Что такое Guarded Patterns (`when` clause) и почему порядок case критичен?
