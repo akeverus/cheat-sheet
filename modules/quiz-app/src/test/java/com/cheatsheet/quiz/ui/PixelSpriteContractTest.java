@@ -109,28 +109,40 @@ class PixelSpriteContractTest {
     /**
      * Обратная сторона: объявленная роль обязана кем-то использоваться.
      *
-     * <p>{@code --pixel-*} никто не потребляет через {@code var()} — их
-     * потребитель растровый, поэтому мёртвое объявление не проявится ни в UI,
-     * ни в CSS-линтере. Оно проявится позже: следующий автор увидит имя, решит,
-     * что роль существует, и заведёт под неё цвет.
+     * <p>Раньше потребитель у {@code --pixel-*} был только растровый, и проверка искала
+     * цвет роли в спрайтах. В iter-118 восемнадцать растровых значков заменены
+     * одноцветными масками, которые красятся токеном через {@code var()} — например,
+     * огонёк серии берёт {@code var(--pixel-flame)}. Роль стала живой, не встречаясь ни в
+     * одном PNG.</p>
+     *
+     * <p>Поэтому потребитель теперь любой из двух: пиксель в спрайте ИЛИ ссылка в CSS.
+     * Это не ослабление — роль без обоих потребителей по-прежнему падает, а именно она и
+     * опасна: следующий автор увидит имя, решит, что роль существует, и заведёт под неё
+     * цвет.</p>
      */
     @Test
-    void everyDecorativeRampTokenIsUsedBySomeSprite() throws IOException {
+    void everyDecorativeRampTokenIsUsedBySomeSpriteOrStylesheet() throws IOException {
         Set<Integer> used = new LinkedHashSet<>();
         for (Path sprite : sprites()) {
             used.addAll(opaqueColors(ImageIO.read(sprite.toFile())));
         }
+        StringBuilder css = new StringBuilder();
+        for (Path file : Files.walk(Path.of("src/main/resources/static/css"))
+                .filter(p -> p.toString().endsWith(".css")).toList()) {
+            css.append(Files.readString(file, StandardCharsets.UTF_8));
+        }
+        String stylesheets = css.toString();
 
         List<String> dead = new ArrayList<>();
         decorativeRamp().forEach((name, rgb) -> {
-            if (!used.contains(rgb)) {
+            if (!used.contains(rgb) && !stylesheets.contains("var(" + name + ")")) {
                 dead.add(name + " (#" + hex(rgb) + ")");
             }
         });
 
         assertThat(dead)
-                .as("роли --pixel-*, которых нет ни в одном спрайте: объявление без ассета — "
-                        + "приглашение завести под него цвет")
+                .as("роли --pixel-*, которых нет ни в спрайте, ни в CSS: объявление без "
+                        + "потребителя — приглашение завести под него цвет")
                 .isEmpty();
     }
 

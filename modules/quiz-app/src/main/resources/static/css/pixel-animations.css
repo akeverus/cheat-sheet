@@ -61,8 +61,11 @@ html[data-design] .accuracy-bar-fill {
   position: relative;
   overflow: visible !important;
   transition: width 0.55s steps(8);
+  /* Растровый тайл xp-bar-fill.png снят (iter-118): он лежал ПОВЕРХ градиента, который
+     и рисует пиксельные ступени, и добавлял к ним собственные цвета, не знающие темы.
+     Замер: под тайлом тот же повторяющийся градиент из двух акцентов — то есть слой
+     дублировал соседа и при этом ломал его цвет в светлой теме. */
   background:
-    url("/img/pixel/xp-bar-fill.png") left center / auto 100% repeat-x,
     repeating-linear-gradient(
       90deg,
       var(--color-accent-2) 0 4px,
@@ -88,7 +91,9 @@ html[data-design] .session-progress-fill::after {
   width: var(--px-m);
   height: 20px;
   transform: translateY(-50%);
-  background: url("/img/pixel/fire-sheet.png") 0 0 / 48px 20px no-repeat;
+  background: var(--pixel-flame);
+  -webkit-mask: var(--px-mask-flame) center / contain no-repeat;
+  mask: var(--px-mask-flame) center / contain no-repeat;
   image-rendering: pixelated;
 }
 html[data-design][data-pixel="high"] .session-progress-fill::after {
@@ -102,8 +107,11 @@ html[data-design] .streak-progress-fill::after {
   width: var(--px-m);
   height: var(--px-m);
   transform: translateY(-50%);
-  background: url("/img/pixel/streak-fire.png") center / contain no-repeat;
-  image-rendering: pixelated;
+  /* Огонёк — маска того же пламени, что несёт спрайт иконок (#flame): один рисунок
+     на одно понятие. Растр красил себя сам и в светлой теме выпадал из палитры. */
+  background: var(--pixel-flame);
+  -webkit-mask: var(--px-mask-flame) center / contain no-repeat;
+  mask: var(--px-mask-flame) center / contain no-repeat;
   filter: drop-shadow(0 0 6px color-mix(in srgb, var(--pixel-flame) 70%, transparent));
 }
 html[data-design][data-pixel="high"] .streak-progress-fill::after {
@@ -240,7 +248,9 @@ html[data-design] .result-xp::before {
   height: var(--px-m);
   margin-right: 6px;
   vertical-align: -2px;
-  background: url("/img/pixel/potion.png") center / contain no-repeat;
+  background: currentColor;
+  -webkit-mask: var(--px-mask-flask) center / contain no-repeat;
+  mask: var(--px-mask-flask) center / contain no-repeat;
   image-rendering: crisp-edges;
   image-rendering: pixelated;
 }
@@ -352,8 +362,9 @@ html[data-design] .summary-kpi::after {
   bottom: 6px;
   width: 12px;
   height: 12px;
-  background: url("/img/pixel/corner-br.png") center / contain no-repeat;
-  image-rendering: pixelated;
+  background: currentColor;
+  -webkit-mask: var(--px-mask-corner-br) center / contain no-repeat;
+  mask: var(--px-mask-corner-br) center / contain no-repeat;
   opacity: 0.7;
   pointer-events: none;
 }
@@ -373,8 +384,10 @@ html[data-design] .summary-kpi::before {
   top: 6px;
   width: 12px;
   height: 12px;
-  background: url("/img/pixel/corner-tl.png") center / contain no-repeat;
-  image-rendering: pixelated;
+  /* Брекет — маска: форма та же, цвет берётся от темы, а не из файла. */
+  background: currentColor;
+  -webkit-mask: var(--px-mask-corner-tl) center / contain no-repeat;
+  mask: var(--px-mask-corner-tl) center / contain no-repeat;
   opacity: 0.65;
   pointer-events: none;
   z-index: 2;
@@ -401,15 +414,7 @@ html[data-design] .summary-kpi::before {
    которого — отменить эту. Обе копии и встречное правило удалены; квадрат
    иконочной кнопки живёт в components-controls.css (ранг «иконка», 44×44). */
 html[data-design] .icon-button[aria-label*="lay"]::before,
-html[data-design] .icon-button[data-pixel-icon="play"]::before {
-  content: "";
-  display: block;
-  width: 16px;
-  height: 16px;
-  margin: 0 auto;
-  background: url("/img/pixel/btn-play.png") center / contain no-repeat;
-  image-rendering: pixelated;
-}
+
 html[data-design] .icon-button[data-pixel-icon="pause"]::before,
 html[data-design] .rail-pause-btn::before {
   content: "";
@@ -418,7 +423,9 @@ html[data-design] .rail-pause-btn::before {
   height: var(--px-m);
   margin-right: 6px;
   vertical-align: -2px;
-  background: url("/img/pixel/btn-pause.png") center / contain no-repeat;
+  background: currentColor;
+  -webkit-mask: var(--px-mask-pause) center / contain no-repeat;
+  mask: var(--px-mask-pause) center / contain no-repeat;
   image-rendering: crisp-edges;
   image-rendering: pixelated;
 }
@@ -483,32 +490,11 @@ html[data-design] .pixel-stage-intro.is-out {
 html[data-design] .summary-page .summary-hero {
   overflow: visible;
 }
-html[data-design] .summary-page .summary-hero.is-celebrating::after {
-  content: "";
-  position: absolute;
-  right: 16px;
-  top: 16px;
-  width: var(--px-xl);
-  height: var(--px-xl);
-  background: url("/img/pixel/trophy-pixel.png") center / contain no-repeat;
-  image-rendering: pixelated;
-  animation: trophyPop 0.7s steps(5) both;
-  filter: drop-shadow(0 0 12px color-mix(in srgb, var(--color-accent-secondary) 70%, transparent));
-  z-index: 3;
-}
+
 html[data-design][data-pixel="high"] .summary-page .summary-hero.is-celebrating::after {
   animation: trophyPop 0.7s steps(5) both, gemTwinkle 1s steps(2) 0.7s infinite;
 }
-html[data-design] .summary-page .score-ring.is-portal::before {
-  content: "";
-  position: absolute;
-  inset: -12px;
-  background: url("/img/pixel/portal-sheet.png") 0 0 / 72px 24px no-repeat;
-  image-rendering: pixelated;
-  opacity: 0.55;
-  pointer-events: none;
-  z-index: 0;
-}
+
 html[data-design][data-pixel="high"] .summary-page .score-ring.is-portal::before {
   animation: portalSheet 0.6s steps(3) infinite, portalSpin 1.2s steps(6) infinite;
 }
@@ -552,22 +538,7 @@ html[data-design] .pixel-portal-wipe {
   pointer-events: none;
   animation: portalWipeIn 0.12s steps(2) both;
 }
-html[data-design] .pixel-portal-wipe.is-done {
-  animation: portalWipeOut 0.08s steps(2) both;
-}
-/* Кадры портала крутит ОДИН элемент — `.pixel-portal-wipe-glyph` (спрайт-лист
-   в background). Вариант на <img> (`.pixel-portal-wipe-img`) остался от первой
-   версии эффекта, до перехода на спрайт-лист, и в разметку его больше никто не
-   вставляет. Frame cycle via background on wipe glyph (fixed 24px — no size jump 24↔16) */
-html[data-design] .pixel-portal-wipe-glyph {
-  width: var(--px-l);
-  height: var(--px-l);
-  image-rendering: crisp-edges;
-  image-rendering: pixelated;
-  background: url("/img/pixel/portal-sheet.png") 0 0 / 72px 24px no-repeat;
-  animation: portalSheet 0.36s steps(3) infinite, portalSpin 0.45s steps(6) infinite;
-  filter: drop-shadow(0 0 18px color-mix(in srgb, var(--color-status-purple) 70%, transparent));
-}
+
 @keyframes portalWipeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -578,28 +549,8 @@ html[data-design] .pixel-portal-wipe-glyph {
 }
 
 /* Wave 3: coin-spin XP pickup toward HUD bar */
-html[data-design] .pixel-coin-pickup {
-  position: fixed;
-  z-index: 9997;
-  width: var(--px-l);
-  height: var(--px-l);
-  margin-left: -12px;
-  margin-top: -12px;
-  image-rendering: crisp-edges;
-  image-rendering: pixelated;
-  pointer-events: none;
-  transition: transform 0.5s steps(8), opacity 0.5s steps(4);
-  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--color-accent-secondary) 85%, transparent));
-}
-html[data-design] .pixel-coin-pickup.pixel-coin-spin-css {
-  display: block;
-  width: var(--px-l);
-  height: var(--px-l);
-  margin-left: -12px;
-  margin-top: -12px;
-  background: url("/img/pixel/coin-spin-sheet.png") 0 0 / 32px 16px no-repeat;
-  animation: coinSpinSheet 0.16s steps(2) infinite;
-}
+
+
 
 /* Mascot idle polish (no setInterval src-swap) */
 html[data-design] img.pixel-mascot-anim {
@@ -613,27 +564,39 @@ html[data-design] img.pixel-mascot-anim {
 html[data-design] .settings-page .filter-chip {
   position: relative;
 }
-html[data-design] .settings-page .filter-chip input[type="checkbox"]:not(:checked) + .filter-chip-label::before {
+/* МАРКЕР ВЫБОРА ЗНАЕТ ТЕМУ (iter-118).
+
+   Здесь стояли два растровых PNG (checkbox-off / checkbox-on, 16×16). Растр не
+   наследует цвет, и замер это показал буквально: один и тот же файл рисовался в обеих
+   темах, поэтому в СВЕТЛОЙ теме маркер невыбранного чипа выглядел чёрным залитым
+   квадратом — то есть «не выбрано» читалось как «выбрано». Состояние врало.
+
+   Теперь маркер — SVG-маска, а красит его `background: currentColor`: цвет приходит от
+   темы через цвет текста самого чипа. Форма при этом остаётся пиксельной (прямоугольники
+   по клеткам 16×16, как в спрайте иконок) и различает состояния НЕ цветом: пустая рамка
+   против рамки с галочкой. */
+html[data-design] .settings-page .filter-chip .filter-chip-label::before {
   content: "";
   display: inline-block;
   width: var(--px-s);
   height: var(--px-s);
   margin-right: 4px;
   vertical-align: -1px;
-  image-rendering: crisp-edges;
-  image-rendering: pixelated;
-  background: url("/img/pixel/checkbox-off.png") center / contain no-repeat;
+  background: currentColor;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  /* Пустая рамка 16×16: четыре стороны по одному пикселю. */
+  -webkit-mask-image: var(--px-mask-checkbox-off);
+  mask-image: var(--px-mask-checkbox-off);
 }
 html[data-design] .settings-page .filter-chip input[type="checkbox"]:checked + .filter-chip-label::before {
-  content: "";
-  display: inline-block;
-  width: var(--px-s);
-  height: var(--px-s);
-  margin-right: 4px;
-  vertical-align: -1px;
-  image-rendering: crisp-edges;
-  image-rendering: pixelated;
-  background: url("/img/pixel/checkbox-on.png") center / contain no-repeat;
+  /* Та же рамка плюс галочка внутри — состояние различимо формой, а не только цветом. */
+  -webkit-mask-image: var(--px-mask-checkbox-on);
+  mask-image: var(--px-mask-checkbox-on);
 }
 
 /* Option letter as pixel stamp (separate from resultStampIn) */

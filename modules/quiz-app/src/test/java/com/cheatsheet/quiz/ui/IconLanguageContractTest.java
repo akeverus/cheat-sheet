@@ -173,6 +173,39 @@ class IconLanguageContractTest {
                 + "масштабируется дробно — это мыло, а не «чуть крупнее»").isEmpty();
     }
 
+    /**
+     * Значок интерфейса не бывает растровым.
+     *
+     * <p>После iter-112 язык иконок стал один — пиксельный SVG, — но мелкие значки,
+     * которые рисует не разметка, а псевдоэлемент, остались растровыми: восемнадцать PNG
+     * в CSS. Растр не наследует тему, и замер показал это буквально: один и тот же
+     * {@code checkbox-off.png} рисовался в обеих темах, поэтому в СВЕТЛОЙ теме маркер
+     * невыбранного чипа выглядел чёрным залитым квадратом — «не выбрано» читалось как
+     * «выбрано». Состояние врало.</p>
+     *
+     * <p>Теперь такие значки — маски ({@code mask-image} + {@code currentColor}), и цвет
+     * им даёт тема. Растровыми остаются только две вещи, которые значками не являются:
+     * бренд ({@code mascot.png}) и сцена страницы ошибки ({@code portal.png}).</p>
+     */
+    @Test
+    void interfaceGlyphsAreNeverRaster() {
+        List<String> offenders = new ArrayList<>();
+        for (Path css : list(RESOURCES.resolve("static/css"))) {
+            if (!css.toString().endsWith(".css")) {
+                continue;
+            }
+            String source = read(css).replaceAll("(?s)/\\*.*?\\*/", "\n");
+            Matcher raster = Pattern.compile("url\\(\"?/img/pixel/([a-z0-9-]+\\.png)").matcher(source);
+            while (raster.find()) {
+                offenders.add(css.getFileName() + " → " + raster.group(1));
+            }
+        }
+        assertThat(offenders)
+                .as("растровый значок вернулся в CSS. PNG не знает темы: именно так маркер "
+                        + "невыбранного чипа в светлой теме выглядел закрашенным")
+                .isEmpty();
+    }
+
     private static Set<String> symbols(Path sprite) {
         Set<String> found = new LinkedHashSet<>();
         Matcher m = SYMBOL.matcher(COMMENT.matcher(read(sprite)).replaceAll("\n"));
