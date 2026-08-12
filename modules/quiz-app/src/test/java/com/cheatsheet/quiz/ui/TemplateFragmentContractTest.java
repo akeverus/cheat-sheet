@@ -1042,6 +1042,35 @@ class TemplateFragmentContractTest {
      * <p>Гейт структурный: проверяем ЯКОРЬ вставки в скрипте, потому что сам блок появляется
      * только в браузере (без JS обеих кнопок нет — они без него бесполезны).
      */
+    /**
+     * Экран разбора ошибок называет размер набора, который разбирает.
+     *
+     * <h2>Найденный дефект, а не гипотеза</h2>
+     * На {@code /review} рельс печатал ту же строку «Пройдено по банку 129/9818», что и на
+     * тренировке. Экран, открытый ради конкретного набора, о самом наборе не сообщал ничего:
+     * чип режима говорил «Повтор ошибок», причина — «Последний ответ был неверным», а сколько
+     * ошибок ждёт разбора, можно было увидеть только в чипе конструктора на {@code /settings}.
+     *
+     * <p>Гейт держит два условия сразу: строка масштаба существует и она ветвится по
+     * {@code reviewMode}. Без второго условия «Пройдено по банку» вернулось бы на разбор
+     * рядом с новой строкой — два ответа на один вопрос в одном рельсе.
+     */
+    @Test
+    void reviewRailStatesTheSizeOfTheSetItReviews() throws IOException {
+        String focus = stripHtmlComments(readTemplate("templates/focus-training.html"));
+
+        assertThat(focus)
+                .as("рельс разбора перестал называть размер набора: экран открыт ради ошибок, "
+                        + "а сколько их — не сказано нигде")
+                .contains("Ошибок к разбору")
+                .contains("${filterWrongCount != null ? filterWrongCount : 0}");
+        assertThat(focus)
+                .as("строка масштаба не ветвится по reviewMode — либо «Пройдено по банку» "
+                        + "вернулось на разбор, либо «Ошибок к разбору» уехало на тренировку")
+                .contains("th:if=\"${reviewMode != null and reviewMode}\"")
+                .contains("th:unless=\"${reviewMode != null and reviewMode}\"");
+    }
+
     @Test
     void summaryToolsAreInjectedAfterThePlanNotBeforeIt() throws IOException {
         String script = readTemplate("static/js/summary/share-tools.js");

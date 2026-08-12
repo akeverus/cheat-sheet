@@ -112,7 +112,21 @@
                      это честные «0 из 9818» и «—» вместо точности, а не исчезающий блок,
                      иначе композиция схлопывалась бы обратно в жёлоб. */-->
                 <div class="focus-bank-progress" th:if="${interviewSession == null and metrics != null}">
-                    <div class="focus-progress-line">
+                    <!--/* РАЗБОР ОШИБОК ЗНАЕТ СВОЙ МАСШТАБ. На /review рельс показывал ту же
+                         строку «Пройдено по банку 129/9818», что и на тренировке, — то есть
+                         экран, открытый ради конкретного набора, о самом наборе не сообщал
+                         ничего: сколько ошибок ждёт разбора, видно было только в чипе
+                         конструктора сессии на /settings. Замер на живом экране: чип режима
+                         «Повтор ошибок», причина «Последний ответ был неверным», рельс —
+                         прогресс банка; размер набора не назван нигде.
+                         Число берётся из уже посчитанного `filterWrongCount` (тот же источник,
+                         что у чипа «Ошибки» в конструкторе): SurfaceState строится на каждом
+                         рендере экрана вопроса, второго запроса тут нет. */-->
+                    <div class="focus-progress-line" th:if="${reviewMode != null and reviewMode}">
+                        <span class="muted tiny kpi-role">Ошибок к разбору</span>
+                        <span th:text="${filterWrongCount != null ? filterWrongCount : 0}">0</span>
+                    </div>
+                    <div class="focus-progress-line" th:unless="${reviewMode != null and reviewMode}">
                         <span class="muted tiny kpi-role">Пройдено по банку</span>
                         <span>
                             <span class="bank-progress-seen" th:text="${metrics.cardsSeen()}">0</span>/<span th:text="${metrics.cardsTotal()}">0</span>
