@@ -1,8 +1,8 @@
 /** Small DOM helpers shared across modules. */
 
 export function icon(name, extraClass) {
-  return '<svg class="ed-icon' + (extraClass ? ' ' + extraClass : '') +
-    '" aria-hidden="true"><use href="#i-' + name + '"></use></svg>';
+  return '<svg class="px-icon' + (extraClass ? ' ' + extraClass : '') +
+    '" aria-hidden="true"><use href="#' + name + '"></use></svg>';
 }
 
 /**

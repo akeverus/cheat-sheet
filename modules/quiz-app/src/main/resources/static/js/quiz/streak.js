@@ -23,7 +23,7 @@ export function initStreakBar() {
         const daysEl = bar.querySelector('[data-streak-days]');
         const fillEl = bar.querySelector('[data-streak-fill]');
         const countEl = bar.querySelector('[data-streak-count]');
-        const fireEl = bar.querySelector('.streak-fire, .ed-icon');
+        const fireEl = bar.querySelector('.streak-fire, .px-icon');
         const hasGoalProgress = !!fillEl || !!countEl;
         if (d.streak > 0) {
           if (daysEl) { daysEl.textContent = daysText(d); daysEl.classList.remove('hidden'); }

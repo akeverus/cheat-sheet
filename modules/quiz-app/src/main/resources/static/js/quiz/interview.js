@@ -241,8 +241,8 @@ export function initInterviewForm() {
   // Java для no-JS-страницы, — и редакции разъезжались.
   function buildVerdictLine(data) {
     const name = data.correct ? 'circle-check' : 'circle-x';
-    const tone = data.correct ? 'ed-icon-success' : 'ed-icon-error';
-    return icon(name, 'ed-icon-lead ' + tone)
+    const tone = data.correct ? 'px-icon-success' : 'px-icon-error';
+    return icon(name, 'px-icon-lead ' + tone)
       + `<span>${escapeHtml(data.verdictText || '')}</span>`;
   }
 
@@ -401,7 +401,7 @@ export function initInterviewForm() {
 
     const relatedDiv = document.createElement('div');
     relatedDiv.className = 'related-questions';
-    let relatedHtml = '<h2 class="related-questions-title">' + icon('link', 'ed-icon-lead') + 'Похожие вопросы для закрепления:</h2>';
+    let relatedHtml = '<h2 class="related-questions-title">' + icon('link', 'px-icon-lead') + 'Похожие вопросы для закрепления:</h2>';
     relatedHtml += '<div class="related-questions-list" role="list">';
     data.relatedQuestions.forEach((rq) => {
       relatedHtml += '<div role="listitem"><a class="related-question-item" href="/?topic=' + encodeURIComponent(rq.topic)

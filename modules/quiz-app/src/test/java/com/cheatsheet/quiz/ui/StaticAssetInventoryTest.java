@@ -29,7 +29,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * реальностью: заголовок {@code pixel-fx.js} перечислял в KEEP спрайты
  * {@code hero-1..3}, на которые не ссылались ни CSS, ни JS, а рядом лежала
  * вторая, целиком мёртвая система иконок (12 КБ спрайта плюс шесть одиночных
- * SVG) — при живых {@code fragments/icons.html} и {@code fragments/pixel-sprite.html}.
+ * SVG) — при живом тогда {@code fragments/icons.html}. Второй спрайт
+ * ({@code fragments/pixel-sprite.html}) снят в iter-112 вместе с 17 мёртвыми символами.
  * Мёртвый ассет не падает в рантайме и не виден в UI, поэтому обнаруживается
  * только замером. Этот тест и есть замер.
  */

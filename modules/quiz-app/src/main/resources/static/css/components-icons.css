@@ -1,36 +1,33 @@
-/* @layer components — базовая геометрия монохромного Lucide-спрайта (.ed-icon).
-   Перенесено из pages-focus.css при page-scope focus (Волна 3, D3b): блок
-   ГЛОБАЛЬНЫЙ — иконки на всех страницах (masthead/widgets/кнопки/вердикт/
-   settings/summary), жил в page-файле focus и пропал бы на остальных при скоупе.
+/* @layer components — геометрия ЕДИНСТВЕННОГО спрайта интерфейсных иконок
+   (.px-icon, fragments/icons.html). До iter-112 здесь описывалась геометрия
+   линейного Lucide-спрайта: `fill: none; stroke: currentColor; stroke-width: 2`.
+   Пиксельные глифы рисуются заливкой, поэтому старая база сделала бы их
+   невидимыми — замена реализации и замена языка идут вместе, иначе продукт
+   рендерил бы пустоту.
 
-   ⚠️ КАСКАД (D3b-урок, durable): база жила в @layer pages, из-за чего @layer
-   components-оверрайды размера иконки (.content-tab/.code-copy-btn/
-   .streak-inline/.today-chip-due/.summary-tools .ed-icon — все 0,2,2) были
-   ПОДАВЛЕНЫ по слою (@pages > @components) и НИКОГДА не срабатывали, хотя
-   специфичнее базы (0,2,1). Перенос базы в @components уравнивает слой → эти
-   contextual-оверрайды наконец выигрывают по специфичности и дают заложенные
-   дизайном фиксированные размеры (15/14/14/14/16px). Это НЕ 0-diff-релокация,
-   а вынос + латентный баг-фикс: 5 контекстных иконок получают правильный размер.
-   Оверрайды в @pages (settings .danger-zone-title/
-   .streak-fire) и @shell (.content-box-title, .diagram-source-summary) выигрывали и раньше
-   (same/higher-layer) → их поведение НЕ меняется. */
+   ⚠️ КАСКАД (D3b-урок, durable): база обязана жить в @layer components. Пока она
+   стояла в @layer pages, контекстные оверрайды размера (0,2,2) подавлялись по
+   слою и не срабатывали, хотя были специфичнее базы (0,2,1). */
 @layer components {
 
-/* Монохромный Lucide-спрайт (см. fragments/icons.html). Цвет, толщина штриха и
-   геометрия наследуются от currentColor → одинаково в обеих темах. Размер по
-   умолчанию = 1em (под кегль соседнего текста), оптическое смещение вниз для
-   выравнивания с засечным шрифтом. Заменяют разноцветные эмодзи. */
-html[data-design] .ed-icon {
-  display: inline-block; width: 1em; height: 1em; vertical-align: -0.14em; flex: none;
-  fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
-  overflow: visible;
+/* Размер ТОЛЬКО целочисленный. У сетки 16×16 дробный масштаб — это мыло: при
+   кегле 18px прежняя база `1em` давала 1.125 device-пикселя на клетку, и глиф
+   размывался ровно там, где пиксельность и есть смысл. 16px = 1:1.
+
+   Оптическое смещение вниз оставлено: иконка в строке серифа садится на базовую
+   линию текста, а не висит по центру кегля. */
+html[data-design] .px-icon {
+  display: inline-block; width: 16px; height: 16px; vertical-align: -0.14em; flex: none;
+  fill: currentColor; stroke: none;
+  shape-rendering: crispEdges;
 }
-/* Иконка-префикс перед заголовком/строкой: чуть крупнее текста + воздух справа. */
-html[data-design] .ed-icon-lead { width: 1.06em; height: 1.06em; margin-right: 0.45em; }
+/* Иконка-префикс перед заголовком/строкой: тот же размер, воздух справа.
+   Прежние 1.06em сняты — дробный масштаб сетки не бывает «чуть крупнее». */
+html[data-design] .px-icon-lead { margin-right: 0.45em; }
 /* Семантические статус-цвета (вердикт верно/неверно). */
-html[data-design] .ed-icon-success { color: var(--color-status-success); }
-html[data-design] .ed-icon-error { color: var(--color-status-error); }
+html[data-design] .px-icon-success { color: var(--color-status-success); }
+html[data-design] .px-icon-error { color: var(--color-status-error); }
 /* Звезда «в избранном» — заливаем акцентом (активное состояние кнопки). */
-html[data-design] .btn-favorite.active .ed-icon { fill: var(--color-accent-primary); stroke: var(--color-accent-primary); }
+html[data-design] .btn-favorite.active .px-icon { fill: var(--color-accent-primary); }
 
 }
